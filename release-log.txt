@@ -1,6 +1,7 @@
 -- Oozie 3.0.0 release
 
 GH-0630 Fixing Paused status for Coordinator
+GH-0633 no FAILED sla event when coord job failed to create wf job.
 GH-0632 remove extra fields in oozie jobs -jobtype bundle -verbose.
 GH-0583 rerun bundle job by name and date. all actions are rerun
 GH-0079 Oozie command line documentation for Ops

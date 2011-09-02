@@ -222,6 +222,8 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
                     else {
                         log.error(ErrorCode.E0610);
                     }
+                    SLADbOperations.writeStausEvent(coordAction.getSlaXml(), coordAction.getId(), Status.FAILED,
+                            SlaAppType.COORDINATOR_ACTION, log); //Update SLA events
                     queue(new CoordActionReadyXCommand(coordAction.getJobId()));
                 }
             }
