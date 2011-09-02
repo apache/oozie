@@ -125,14 +125,13 @@ public class BundleJobChangeXCommand extends XCommand<Void> {
                 bundleJob.setPauseTime(newPauseTime);
 
                 for (BundleActionBean action : this.bundleActions) {
-                    if (action.getStatus() == Job.Status.RUNNING || action.getStatus() == Job.Status.PREP
-                            || action.getStatus() == Job.Status.SUCCEEDED) {
-                        // queue coord change commands;
-                        if (action.getCoordId() != null) {
-                            queue(new CoordChangeXCommand(action.getCoordId(), changeValue));
-                            action.setPending(action.getPending()+1);
-                            jpaService.execute(new BundleActionUpdateJPAExecutor(action));
-                        }
+                    // queue coord change commands;
+                    if (action.getStatus() != Job.Status.KILLED && action.getCoordId() != null) {
+                        queue(new CoordChangeXCommand(action.getCoordId(), changeValue));
+                        LOG.info("Queuing CoordChangeXCommand coord job = " + action.getCoordId() + " to change "
+                                + changeValue);
+                        action.setPending(action.getPending() + 1);
+                        jpaService.execute(new BundleActionUpdateJPAExecutor(action));
                     }
                 }
                 jpaService.execute(new BundleJobUpdateJPAExecutor(bundleJob));

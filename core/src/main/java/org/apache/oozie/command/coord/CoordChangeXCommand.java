@@ -15,6 +15,7 @@ import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.executor.jpa.CoordActionRemoveJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetActionByActionNumberJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
@@ -36,6 +37,7 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
     private boolean resetPauseTime = false;
     private CoordinatorJobBean coordJob;
     private JPAService jpaService = null;
+    private Job.Status prevStatus;
 
     private static final Set<String> ALLOWED_CHANGE_OPTIONS = new HashSet<String>();
     static {
@@ -257,7 +259,8 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
         try {
             if (newEndTime != null) {
                 coordJob.setEndTime(newEndTime);
-                if (coordJob.getStatus() == CoordinatorJob.Status.SUCCEEDED) {
+                if (coordJob.getStatus() == CoordinatorJob.Status.SUCCEEDED
+                        || (coordJob.getStatus() == CoordinatorJob.Status.RUNNING && coordJob.isPending())) {
                     coordJob.setStatus(CoordinatorJob.Status.RUNNING);
                     coordJob.resetPending();
                 }
@@ -269,12 +272,12 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
 
             if (newPauseTime != null || resetPauseTime == true) {
                 this.coordJob.setPauseTime(newPauseTime);
-                if(oldPauseTime != null && newPauseTime != null){
-                    if(oldPauseTime.before(newPauseTime) && this.coordJob.getStatus() == Job.Status.PAUSED){
+                if (oldPauseTime != null && newPauseTime != null) {
+                    if (oldPauseTime.before(newPauseTime) && this.coordJob.getStatus() == Job.Status.PAUSED) {
                         this.coordJob.setStatus(Job.Status.RUNNING);
                     }
                 }
-                else if(oldPauseTime != null && newPauseTime == null && this.coordJob.getStatus() == Job.Status.PAUSED){
+                else if (oldPauseTime != null && newPauseTime == null && this.coordJob.getStatus() == Job.Status.PAUSED) {
                     this.coordJob.setStatus(Job.Status.RUNNING);
                 }
 
@@ -292,6 +295,11 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
         }
         finally {
             LOG.info("ENDED CoordChangeXCommand for jobId=" + jobId);
+            //update bundle action
+            if (coordJob.getBundleId() != null) {
+                BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, prevStatus);
+                bundleStatusUpdate.call();
+            }
         }
     }
 
@@ -316,7 +324,8 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
 
         try {
             this.coordJob = jpaService.execute(new CoordJobGetJPAExecutor(jobId));
-            oldPauseTime = this.coordJob.getPauseTime();
+            oldPauseTime = coordJob.getPauseTime();
+            prevStatus = coordJob.getStatus();
         }
         catch (JPAExecutorException e) {
             throw new CommandException(e);

@@ -19,6 +19,7 @@ import java.util.Date;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.CoordinatorJob;
+import org.apache.oozie.client.Job;
 import org.apache.oozie.client.CoordinatorJob.Execution;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
@@ -27,10 +28,10 @@ import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.store.StoreException;
-import org.apache.oozie.test.XTestCase;
+import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
 
-public class TestCoordChangeXCommand extends XTestCase {
+public class TestCoordChangeXCommand extends XDataTestCase {
     private Services services;
 
     @Override
@@ -193,7 +194,7 @@ public class TestCoordChangeXCommand extends XTestCase {
                 fail("Error code should be E1015.");
             }
         }
-        
+
         try {
             new CoordChangeXCommand(jobId, "pausetime=2009-02-01T01:08Z").call();
             fail("Should not reach here.");
@@ -203,6 +204,33 @@ public class TestCoordChangeXCommand extends XTestCase {
                 fail("Error code should be E1015.");
             }
         }
+    }
+
+    /**
+     * test end time change : pending should mark false if job is running with pending true
+     *
+     * @throws Exception
+     */
+    public void testCoordChangeEndTime() throws Exception {
+        Date start = DateUtils.parseDateUTC("2011-02-01T01:00Z");
+        Date end = DateUtils.parseDateUTC("2011-02-20T23:59Z");
+        final CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, start, end, true, 0);
+
+        new CoordChangeXCommand(job.getId(), "endtime=2012-12-01T05:00Z;pausetime=2011-11-01T05:00Z").call();
+        try {
+            checkCoordJobs(job.getId(), DateUtils.parseDateUTC("2012-12-01T05:00Z"), null, DateUtils
+                    .parseDateUTC("2011-11-01T05:00Z"), true);
+        }
+        catch (Exception ex) {
+            ex.printStackTrace();
+            fail("Invalid date" + ex);
+        }
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        CoordJobGetJPAExecutor coordGetCmd = new CoordJobGetJPAExecutor(job.getId());
+        CoordinatorJobBean coordJob = jpaService.execute(coordGetCmd);
+        assertEquals(Job.Status.RUNNING, coordJob.getStatus());
+        assertFalse(coordJob.isPending());
     }
 
     private void addRecordToJobTable(String jobId) throws Exception {
@@ -291,10 +319,10 @@ public class TestCoordChangeXCommand extends XTestCase {
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
             assertNotNull(jpaService);
-            CoordJobGetJPAExecutor coordInsertCmd = new CoordJobGetJPAExecutor(jobId);
+            CoordJobGetJPAExecutor coordGetCmd = new CoordJobGetJPAExecutor(jobId);
             CoordinatorJobBean job = null;
 
-            job = jpaService.execute(coordInsertCmd);
+            job = jpaService.execute(coordGetCmd);
 
             if (endTime != null) {
                 Date d = job.getEndTime();
