@@ -537,10 +537,15 @@ public class JavaActionExecutor extends ActionExecutor {
                 log.debug(WorkflowAppService.HADOOP_NN_KERBEROS_NAME + " = "
                         + launcherJobConf.get(WorkflowAppService.HADOOP_NN_KERBEROS_NAME));
 
-                // insert credentials tokens to launcher job conf
-                for (Token<? extends TokenIdentifier> tk : credentialsConf.getCredentials().getAllTokens()) {
-                    log.debug("ADDING TOKEN: " + tk.getKind().toString());
-                    launcherJobConf.getCredentials().addToken(tk.getKind(), tk);
+                // insert credentials tokens to launcher job conf if needed
+                if (needInjectCredentials()) {
+                    for (Token<? extends TokenIdentifier> tk : credentialsConf.getCredentials().getAllTokens()) {
+                        log.debug("ADDING TOKEN: " + tk.getKind().toString());
+                        launcherJobConf.getCredentials().addToken(tk.getKind(), tk);
+                    }
+                }
+                else {
+                    log.info("No need to inject credentials.");
                 }
                 runningJob = jobClient.submitJob(launcherJobConf);
                 if (runningJob == null) {
@@ -574,6 +579,24 @@ public class JavaActionExecutor extends ActionExecutor {
                 }
             }
         }
+    }
+
+    private boolean needInjectCredentials() {
+        boolean methodExists = true;
+
+        Class klass;
+        try {
+            klass = Class.forName("org.apache.hadoop.mapred.JobConf");
+            klass.getMethod("getCredentials");
+        }
+        catch (ClassNotFoundException ex) {
+            methodExists = false;
+        }        
+        catch (NoSuchMethodException ex) {
+            methodExists = false;
+        }
+
+        return methodExists;
     }
 
     protected HashMap<String, CredentialsProperties> setAuthenticationPropertyToActionConf(Context context,
