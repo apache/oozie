@@ -23,7 +23,7 @@ Tomcat should be installed and running.
 
 ---++ Server Installation
 
-Download the latest Oozie distribution from [[http://yahoo.github.com/oozie/downloads]].
+Download the latest Oozie distribution from [[http://github.com/yahoo/oozie/downloads]].
 
 Expand the Oozie distribution =tar.gz=.
 
