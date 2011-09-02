@@ -1,3 +1,24 @@
+-- Oozie 2.3.0 release
+
+GH-0024 leverage Hadoop rules for JT/NN Kerberos principal resolution
+GH-0034 update/simplify examples
+GH-0050 Oozie jobs configuration properties with variables should be resolved to concrete values.
+GH-0004 Oozie console references the RowExpander.js file from an incorrect path.
+GH-0132 master branch version should be updated to 2.3.0-SNAPSHOT 
+GH-0053 release notes are not up to date since 2.2.1 tag
+GH-0054 Implement better way of managing test users in unit tests
+GH-0023 addtowar.sh script should take extjs ZIP file 
+GH-0025 javadoc generation does encoding warning
+GH-0014 oozie-default.xml in documentation is not displayed
+GH-0019 missing internal repo reference for artifacts in main POM 
+GH-0017 XTestCase starts minicluster with hardcoded group for proxyusers
+GH-0016 Enable build to include Hadoop JARs in oozie.war
+GH-0015 oozie client shell script has an invalid/not-needed variable 
+GH-0013 add mkdistro-*.out output files to .gitignore file
+GH-0012 parameterize pig artifactIds in the POMs
+GH-0011 Annotate Oozie group IDs in the POMs
+GH-0003 The XTestCase.getTestUser() method returns the hardcoded username test.
+
 -- Oozie 2.2.3 release
 
 GH-0055 Oozie should not materialize a coordinator job right after its submission if the job will only run in far future
