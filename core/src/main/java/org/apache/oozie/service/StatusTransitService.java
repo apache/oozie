@@ -103,7 +103,7 @@ public class StatusTransitService implements Service {
                 }
             }
             catch (Exception ex) {
-                LOG.warn("Exception happened during bundle job status transition", ex);
+                LOG.warn("Exception happened during StatusTransitRunnable ", ex);
             }
             finally {
                 // release lock;
@@ -154,37 +154,114 @@ public class StatusTransitService implements Service {
                 runningJobCheckList = pendingJobCheckList;
                 bundleLists.add(pendingJobCheckList);
             }
-            updateBundleJobStatus(bundleLists);
+            aggregateBundleJobsStatus(bundleLists);
         }
 
-        private void updateBundleJobStatus(List<List<BundleJobBean>> bundleLists) throws JPAExecutorException,
+        private void aggregateBundleJobsStatus(List<List<BundleJobBean>> bundleLists) throws JPAExecutorException,
                 CommandException {
             if (bundleLists != null) {
                 for (List<BundleJobBean> listBundleBean : bundleLists) {
                     for (BundleJobBean bundleJob : listBundleBean) {
-                        String jobId = bundleJob.getId();
-                        Job.Status[] bundleStatus = new Job.Status[1];
-                        bundleStatus[0] = bundleJob.getStatus();
-                        List<BundleActionBean> bundleActions = jpaService
-                                .execute(new BundleActionsGetJPAExecutor(jobId));
-                        HashMap<Job.Status, Integer> bundleActionStatus = new HashMap<Job.Status, Integer>();
+                        try {
+                            String jobId = bundleJob.getId();
+                            Job.Status[] bundleStatus = new Job.Status[1];
+                            bundleStatus[0] = bundleJob.getStatus();
+                            List<BundleActionBean> bundleActions = jpaService.execute(new BundleActionsGetJPAExecutor(
+                                    jobId));
+                            HashMap<Job.Status, Integer> bundleActionStatus = new HashMap<Job.Status, Integer>();
+                            boolean foundPending = false;
+                            for (BundleActionBean bAction : bundleActions) {
+                                if (!bAction.isPending()) {
+                                    int counter = 0;
+                                    if (bundleActionStatus.containsKey(bAction.getStatus())) {
+                                        counter = bundleActionStatus.get(bAction.getStatus()) + 1;
+                                    }
+                                    else {
+                                        ++counter;
+                                    }
+                                    bundleActionStatus.put(bAction.getStatus(), counter);
+                                    if (bAction.getCoordId() == null
+                                            && (bAction.getStatus() == Job.Status.FAILED || bAction.getStatus() == Job.Status.KILLED)) {
+                                        (new BundleKillXCommand(jobId)).call();
+                                        LOG.info("Bundle job ["+ jobId
+                                                        + "] has been killed since one of its coordinator job failed submission.");
+                                    }
+                                }
+                                else {
+                                    foundPending = true;
+                                    break;
+                                }
+                            }
+
+                            if (foundPending) {
+                                continue;
+                            }
+
+                            if (checkTerminalStatus(bundleActionStatus, bundleActions, bundleStatus)) {
+                                LOG.info("Set bundle job [" + jobId + "] status to '" + bundleStatus[0].toString()
+                                        + "' from '" + bundleJob.getStatus() + "'");
+                                updateBundleJob(bundleActionStatus, bundleActions, bundleJob, bundleStatus[0]);
+                            }
+                            else if (checkPrepStatus(bundleActionStatus, bundleActions, bundleStatus)) {
+                                LOG.info("Set bundle job [" + jobId + "] status to '" + bundleStatus[0].toString()
+                                        + "' from '" + bundleJob.getStatus() + "'");
+                                updateBundleJob(bundleActionStatus, bundleActions, bundleJob, bundleStatus[0]);
+                            }
+                            else if (checkPausedStatus(bundleActionStatus, bundleActions, bundleStatus)) {
+                                LOG.info("Set bundle job [" + jobId + "] status to '" + bundleStatus[0].toString()
+                                        + "' from '" + bundleJob.getStatus() + "'");
+                                updateBundleJob(bundleActionStatus, bundleActions, bundleJob, bundleStatus[0]);
+                            }
+                            else if (checkSuspendStatus(bundleActionStatus, bundleActions, bundleStatus)) {
+                                LOG.info("Set bundle job [" + jobId + "] status to '" + bundleStatus[0].toString()
+                                        + "' from '" + bundleJob.getStatus() + "'");
+                                updateBundleJob(bundleActionStatus, bundleActions, bundleJob, bundleStatus[0]);
+                            }
+                            else if (checkRunningStatus(bundleActionStatus, bundleActions, bundleStatus)) {
+                                LOG.info("Set bundle job [" + jobId + "] status to '" + bundleStatus[0].toString()
+                                        + "' from '" + bundleJob.getStatus() + "'");
+                                updateBundleJob(bundleActionStatus, bundleActions, bundleJob, bundleStatus[0]);
+                            }
+                        }
+                        catch (Exception ex) {
+                            LOG.error("Exception happened during aggregate bundle job's status, job = "
+                                    + bundleJob.getId(), ex);
+                        }
+                    }
+                }
+            }
+        }
+
+        private void aggregateCoordJobsStatus(List<CoordinatorJobBean> CoordList) throws JPAExecutorException,
+                CommandException {
+            if (CoordList != null) {
+                Configuration conf = Services.get().getConf();
+                boolean backwardSupportForCoordStatus = conf.getBoolean(CONF_BACKWARD_SUPPORT_FOR_COORD_STATUS, false);
+
+                for (CoordinatorJobBean coordJob : CoordList) {
+                    try {
+                        // if namespace 0.1 is used and backward support is true, then ignore this coord job
+                        if (backwardSupportForCoordStatus == true && coordJob.getAppNamespace() != null
+                                && coordJob.getAppNamespace().equals(SchemaService.COORDINATOR_NAMESPACE_URI_1)) {
+                            continue;
+                        }
+                        String jobId = coordJob.getId();
+                        Job.Status[] coordStatus = new Job.Status[1];
+                        coordStatus[0] = coordJob.getStatus();
+                        List<CoordinatorActionBean> coordActions = jpaService
+                                .execute(new CoordJobGetActionsJPAExecutor(jobId));
+                        HashMap<CoordinatorAction.Status, Integer> coordActionStatus = new HashMap<CoordinatorAction.Status, Integer>();
                         boolean foundPending = false;
-                        for (BundleActionBean bAction : bundleActions) {
-                            if (!bAction.isPending()) {
+                        for (CoordinatorActionBean cAction : coordActions) {
+                            if (!cAction.isPending()) {
                                 int counter = 0;
-                                if (bundleActionStatus.containsKey(bAction.getStatus())) {
-                                    counter = bundleActionStatus.get(bAction.getStatus()) + 1;
+                                if (coordActionStatus.containsKey(cAction.getStatus())) {
+                                    counter = coordActionStatus.get(cAction.getStatus()) + 1;
                                 }
                                 else {
                                     ++counter;
                                 }
-                                bundleActionStatus.put(bAction.getStatus(), counter);
-                                if (bAction.getCoordId() == null
-                                        && (bAction.getStatus() == Job.Status.FAILED || bAction.getStatus() == Job.Status.KILLED)) {
-                                    (new BundleKillXCommand(jobId)).call();
-                                    LOG.info("Bundle job [" + jobId
-                                            + "] has been killed since one of its coordinator job failed submission.");
-                                }
+                                coordActionStatus.put(cAction.getStatus(), counter);
                             }
                             else {
                                 foundPending = true;
@@ -192,97 +269,35 @@ public class StatusTransitService implements Service {
                             }
                         }
 
-                        if(foundPending){
+                        if (foundPending) {
                             continue;
                         }
 
-                        if (checkTerminalStatus(bundleActionStatus, bundleActions, bundleStatus)) {
-                            LOG.info("Bundle job [" + jobId + "] Status set to " + bundleStatus[0].toString());
-                            updateBundleJob(bundleActionStatus, bundleActions, bundleJob, bundleStatus[0]);
-                            continue;
+                        if (coordJob.isDoneMaterialization()
+                                && checkCoordTerminalStatus(coordActionStatus, coordActions, coordStatus)) {
+                            LOG.info("Set coordinator job [" + jobId + "] status to '" + coordStatus[0].toString()
+                                    + "' from '" + coordJob.getStatus() + "'");
+                            updateCoordJob(coordActionStatus, coordActions, coordJob, coordStatus[0]);
                         }
-                        else if (checkPrepStatus(bundleActionStatus, bundleActions, bundleStatus)) {
-                            LOG.info("Bundle job [" + jobId + "] Status set to " + bundleStatus[0].toString());
-                            updateBundleJob(bundleActionStatus, bundleActions, bundleJob, bundleStatus[0]);
-                            continue;
+                        else if (coordJob.isDoneMaterialization()
+                                && checkCoordSuspendStatus(coordActionStatus, coordActions, coordStatus)) {
+                            LOG.info("Set coordinator job [" + jobId + "] status to " + coordStatus[0].toString()
+                                    + "' from '" + coordJob.getStatus() + "'");
+                            updateCoordJob(coordActionStatus, coordActions, coordJob, coordStatus[0]);
                         }
-                        else if (checkPausedStatus(bundleActionStatus, bundleActions, bundleStatus)) {
-                            LOG.info("Bundle job [" + jobId + "] Status set to " + bundleStatus[0].toString());
-                            updateBundleJob(bundleActionStatus, bundleActions, bundleJob, bundleStatus[0]);
-                            continue;
+                        else if (checkCoordRunningStatus(coordActionStatus, coordActions, coordStatus)) {
+                            LOG.info("Set coordinator job [" + jobId + "] status to " + coordStatus[0].toString()
+                                    + "' from '" + coordJob.getStatus() + "'");
+                            updateCoordJob(coordActionStatus, coordActions, coordJob, coordStatus[0]);
                         }
-                        else if (checkSuspendStatus(bundleActionStatus, bundleActions, bundleStatus)) {
-                            LOG.info("Bundle job [" + jobId + "] Status set to " + bundleStatus[0].toString());
-                            updateBundleJob(bundleActionStatus, bundleActions, bundleJob, bundleStatus[0]);
-                            continue;
-                        }
-                        else if (checkRunningStatus(bundleActionStatus, bundleActions, bundleStatus)) {
-                            LOG.info("Bundle job [" + jobId + "] Status set to " + bundleStatus[0].toString());
-                            updateBundleJob(bundleActionStatus, bundleActions, bundleJob, bundleStatus[0]);
-                            continue;
-                        }
-                    }
-                }
-            }
-        }
-
-        private void updateCoordJobStatus(List<CoordinatorJobBean> CoordList) throws JPAExecutorException,
-                CommandException {
-            if (CoordList != null) {
-                Configuration conf = Services.get().getConf();
-                boolean backwardSupportForCoordStatus = conf.getBoolean(CONF_BACKWARD_SUPPORT_FOR_COORD_STATUS, false);
-
-                for (CoordinatorJobBean coordJob : CoordList) {
-                    // if namespace 0.1 is used and backward support is true, then ignore this coord job
-                    if (backwardSupportForCoordStatus == true && coordJob.getAppNamespace() != null
-                            && coordJob.getAppNamespace().equals(SchemaService.COORDINATOR_NAMESPACE_URI_1)) {
-                        continue;
-                    }
-                    String jobId = coordJob.getId();
-                    Job.Status[] coordStatus = new Job.Status[1];
-                    coordStatus[0] = coordJob.getStatus();
-                    List<CoordinatorActionBean> coordActions = jpaService.execute(new CoordJobGetActionsJPAExecutor(
-                            jobId));
-                    HashMap<CoordinatorAction.Status, Integer> coordActionStatus = new HashMap<CoordinatorAction.Status, Integer>();
-                    boolean foundPending = false;
-                    for (CoordinatorActionBean cAction : coordActions) {
-                        if (!cAction.isPending()) {
-                            int counter = 0;
-                            if (coordActionStatus.containsKey(cAction.getStatus())) {
-                                counter = coordActionStatus.get(cAction.getStatus()) + 1;
-                            }
-                            else {
-                                ++counter;
-                            }
-                            coordActionStatus.put(cAction.getStatus(), counter);
-                        }
+                        // checking pending flag for job when user killed or suspended the job
                         else {
-                            foundPending = true;
-                            break;
+                            checkCoordPending(coordActionStatus, coordActions, coordJob, true);
                         }
                     }
-
-                    if (foundPending) {
-                        continue;
-                    }
-
-                    if (coordJob.isDoneMaterialization()
-                            && checkCoordTerminalStatus(coordActionStatus, coordActions, coordStatus)) {
-                        LOG.info("Coord job [" + jobId + "] Status set to " + coordStatus[0].toString());
-                        updateCoordJob(coordActionStatus, coordActions, coordJob, coordStatus[0]);
-                    }
-                    else if (coordJob.isDoneMaterialization()
-                            && checkCoordSuspendStatus(coordActionStatus, coordActions, coordStatus)) {
-                        LOG.info("Coord job [" + jobId + "] Status set to " + coordStatus[0].toString());
-                        updateCoordJob(coordActionStatus, coordActions, coordJob, coordStatus[0]);
-                    }
-                    else if (checkCoordRunningStatus(coordActionStatus, coordActions, coordStatus)) {
-                        LOG.info("Coord job [" + jobId + "] Status set to " + coordStatus[0].toString());
-                        updateCoordJob(coordActionStatus, coordActions, coordJob, coordStatus[0]);
-                    }
-                    // checking pending flag for job when user killed or suspended the job
-                    else {
-                        checkCoordPending(coordActionStatus, coordActions, coordJob, true);
+                    catch (Exception ex) {
+                        LOG.error("Exception happened during aggregate coordinator job's status, job = "
+                                + coordJob.getId(), ex);
                     }
                 }
 
@@ -453,7 +468,7 @@ public class StatusTransitService implements Service {
                     coordStatus[0] = Job.Status.RUNNING;
                     ret = true;
                 }
-                else if (coordActionStatus.get(Job.Status.RUNNING) > 0) {
+                else if (coordActionStatus.get(CoordinatorAction.Status.RUNNING) > 0) {
                     if ((coordActionStatus.containsKey(CoordinatorAction.Status.FAILED) && coordActionStatus.get(CoordinatorAction.Status.FAILED) > 0)
                             || (coordActionStatus.containsKey(CoordinatorAction.Status.KILLED) && coordActionStatus
                                     .get(CoordinatorAction.Status.KILLED) > 0)
@@ -612,7 +627,7 @@ public class StatusTransitService implements Service {
                     }
                 }
             }
-            updateCoordJobStatus(pendingJobCheckList);
+            aggregateCoordJobsStatus(pendingJobCheckList);
         }
     }
 

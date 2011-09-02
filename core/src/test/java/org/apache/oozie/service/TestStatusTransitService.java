@@ -363,11 +363,42 @@ public class TestStatusTransitService extends XDataTestCase {
      *
      * @throws Exception
      */
-    public void testCoordStatusTransitServiceRunning() throws Exception {
+    public void testCoordStatusTransitServiceRunning1() throws Exception {
         Date start = DateUtils.parseDateUTC("2009-02-01T01:00Z");
         Date end = DateUtils.parseDateUTC("2009-02-02T23:59Z");
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, start, end, true, false, 3);
         addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0);
+        addRecordToCoordActionTable(job.getId(), 2, CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0);
+        addRecordToCoordActionTable(job.getId(), 3, CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0);
+
+        final String jobId = job.getId();
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+
+        Runnable runnable = new StatusTransitRunnable();
+        runnable.run();
+        waitFor(5 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                CoordinatorJobBean coordJob = jpaService.execute(new CoordJobGetJPAExecutor(jobId));
+                return coordJob.isPending() == false;
+            }
+        });
+
+        CoordJobGetJPAExecutor coordGetCmd = new CoordJobGetJPAExecutor(job.getId());
+        job = jpaService.execute(coordGetCmd);
+        assertFalse(job.isPending());
+    }
+
+    /**
+     * Test : all coord actions are running, job pending is reset
+     *
+     * @throws Exception
+     */
+    public void testCoordStatusTransitServiceRunning2() throws Exception {
+        Date start = DateUtils.parseDateUTC("2009-02-01T01:00Z");
+        Date end = DateUtils.parseDateUTC("2009-02-02T23:59Z");
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, start, end, true, false, 3);
+        addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
         addRecordToCoordActionTable(job.getId(), 2, CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0);
         addRecordToCoordActionTable(job.getId(), 3, CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0);
 

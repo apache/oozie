@@ -1,5 +1,6 @@
 -- Oozie 3.0.1 release
 
+OOZIE-88 fix the status-transit-service to aggregate coordinator job running state
 OOZIE-83 add parameter userName to bundle xml in example
 OOZIE-85 kill a SUCCEEDED coordinator job with 0.1 schema and backward compatibility is true
 OOZIE-84 add bundle id to coordinator submit
