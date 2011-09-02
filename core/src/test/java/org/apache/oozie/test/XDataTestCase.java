@@ -200,6 +200,7 @@ public abstract class XDataTestCase extends XFsTestCase {
         coordJob.setTimeUnit(Timeunit.DAY);
         coordJob.setExecution(Execution.FIFO);
         coordJob.setConcurrency(1);
+        coordJob.setMatThrottling(1);
         try {
             coordJob.setStartTime(DateUtils.parseDateUTC("2009-12-15T01:00Z"));
             coordJob.setEndTime(DateUtils.parseDateUTC("2009-12-17T01:00Z"));
@@ -250,6 +251,7 @@ public abstract class XDataTestCase extends XFsTestCase {
         coordJob.setTimeUnit(Timeunit.DAY);
         coordJob.setExecution(Execution.FIFO);
         coordJob.setConcurrency(1);
+        coordJob.setMatThrottling(1);
         try {
             coordJob.setStartTime(start);
             coordJob.setEndTime(end);

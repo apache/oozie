@@ -67,11 +67,6 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
     private CoordinatorJob.Status prevStatus = null;
 
     /**
-     * Default timeout for catchup jobs, in minutes, after which coordinator input check will timeout
-     */
-    public static final String CONF_DEFAULT_TIMEOUT_CATCHUP = Service.CONF_PREFIX + "coord.catchup.default.timeout";
-
-    /**
      * Default MAX timeout in minutes, after which coordinator input check will timeout
      */
     public static final String CONF_DEFAULT_MAX_TIMEOUT = Service.CONF_PREFIX + "coord.default.max.timeout";
@@ -185,12 +180,6 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
 
         if (coordJob.getNextMaterializedTimestamp() != null
                 && coordJob.getNextMaterializedTimestamp().compareTo(coordJob.getEndTimestamp()) >= 0) {
-            throw new PreconditionException(ErrorCode.E1100, "CoordMaterializeTransitionXCommand for jobId=" + jobId
-                    + " job is already materialized");
-        }
-
-        if (coordJob.getNextMaterializedTimestamp() != null
-                && coordJob.getNextMaterializedTimestamp().compareTo(new Timestamp(System.currentTimeMillis())) >= 0) {
             throw new PreconditionException(ErrorCode.E1100, "CoordMaterializeTransitionXCommand for jobId=" + jobId
                     + " job is already materialized");
         }
@@ -320,9 +309,9 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         String action = null;
         JPAService jpaService = Services.get().get(JPAService.class);
         int numWaitingActions = jpaService.execute(new CoordActionsActiveCountJPAExecutor(coordJob.getId()));
-        int maxActionToBeCreated = coordJob.getConcurrency() - numWaitingActions;
+        int maxActionToBeCreated = coordJob.getMatThrottling() - numWaitingActions;
         LOG.debug("Coordinator job :" + coordJob.getId() + ", maxActionToBeCreated :" + maxActionToBeCreated
-                + ", concurrency :" + coordJob.getConcurrency() + ", numWaitingActions :" + numWaitingActions);
+                + ", Mat_Throttle :" + coordJob.getMatThrottling() + ", numWaitingActions :" + numWaitingActions);
         while (effStart.compareTo(end) < 0 && maxActionToBeCreated-- > 0) {
             if (pause != null && effStart.compareTo(pause) >= 0) {
                 break;

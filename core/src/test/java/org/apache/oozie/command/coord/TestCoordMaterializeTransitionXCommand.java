@@ -25,6 +25,7 @@ import org.apache.oozie.client.CoordinatorJob.Timeunit;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetActionsJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobGetRunningActionsCountJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.SLAEventsGetForSeqIdJPAExecutor;
@@ -111,6 +112,14 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         checkCoordJobs(job.getId(), CoordinatorJob.Status.RUNNING);
     }
 
+    public void testMatThrottle() throws Exception {
+        Date startTime = DateUtils.parseDateUTC("2009-02-01T01:00Z");
+        Date endTime = DateUtils.parseDateUTC("2009-02-03T23:59Z");
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, startTime, endTime, false, 0);
+        new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
+        checkCoordWaiting(job.getId(), job.getMatThrottling());
+    }
+
     /**
      * Test a coordinator job that will run in far future,
      * materialization should not happen.
@@ -165,6 +174,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         coordJob.setTimeUnit(Timeunit.MINUTE);
         coordJob.setTimeout(timeout);
         coordJob.setConcurrency(3);
+        coordJob.setMatThrottling(3);
 
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
@@ -195,10 +205,21 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         }
     }
 
+    private void checkCoordWaiting(String jobId, int expectedValue) {
+        try {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            int numWaitingActions = jpaService.execute(new CoordJobGetRunningActionsCountJPAExecutor(jobId));
+            assert (numWaitingActions <= expectedValue);
+        }
+        catch (JPAExecutorException se) {
+            fail("Job ID " + jobId + " was not stored properly in db");
+        }
+    }
+
     private CoordinatorActionBean checkCoordAction(String actionId) throws JPAExecutorException {
         long lastSeqId[] = new long[1];
         JPAService jpaService = Services.get().get(JPAService.class);
-        List<SLAEventBean> slaEventList = jpaService.execute(new SLAEventsGetForSeqIdJPAExecutor(0, 10, lastSeqId));
+        List<SLAEventBean> slaEventList = jpaService.execute(new SLAEventsGetForSeqIdJPAExecutor(-1, 10, lastSeqId));
 
         if (slaEventList.size() == 0) {
             fail("Unable to GET any record of sequence id greater than 0");

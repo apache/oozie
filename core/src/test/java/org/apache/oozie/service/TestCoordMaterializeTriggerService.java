@@ -75,7 +75,7 @@ public class TestCoordMaterializeTriggerService extends XDataTestCase {
         assertEquals(CoordinatorJob.Status.RUNNING, coordJob.getStatus());
 
         int numWaitingActions = jpaService.execute(new CoordJobGetRunningActionsCountJPAExecutor(coordJob.getId()));
-        assert(numWaitingActions <= coordJob.getConcurrency());
+        assert (numWaitingActions <= coordJob.getMatThrottling());
     }
 
     /**
@@ -137,6 +137,7 @@ public class TestCoordMaterializeTriggerService extends XDataTestCase {
         coordJob.setTimeUnit(Timeunit.DAY);
         coordJob.setExecution(Execution.FIFO);
         coordJob.setConcurrency(1);
+        coordJob.setMatThrottling(1);
         try {
             coordJob.setStartTime(start);
             coordJob.setEndTime(end);

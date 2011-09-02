@@ -275,7 +275,7 @@ public abstract class XCommand<T> implements XCallable<T> {
             }
         }
         catch(PreconditionException pex){
-            LOG.warn(pex.getMessage().toString() + ", Error Code: "+ pex.getErrorCode().toString());
+            LOG.warn(pex.getMessage().toString() + ", Error Code: " + pex.getErrorCode().toString(), pex);
             instrumentation.incr(INSTRUMENTATION_GROUP, getName() + ".preconditionfailed", 1);
             return null;
         }

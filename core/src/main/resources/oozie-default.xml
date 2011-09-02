@@ -290,35 +290,36 @@
     <property>
 		<name>oozie.service.coord.normal.default.timeout
 		</name>
-		<value>120</value>
+		<value>10080</value>
 		<description>Default timeout for a coordinator action input check (in minutes) for normal job.
-            -1 means infinite timeout</description>
+            </description>
 	</property>
 
 	<property>
-		<name>oozie.service.coord.catchup.default.timeout
-		</name>
-		<value>-1</value>
-		<description>Default timeout for a coordinator action input check (in minutes) for catchup jobs.
-            -1 means infinite timeout</description>
-	</property>
-	
-	<property>
 		<name>oozie.service.coord.default.max.timeout
 		</name>
-		<value>129600</value>
-		<description>Default maximum timeout for a coordinator action input check (in minutes). 129600= 90days
+		<value>86400</value>
+		<description>Default maximum timeout for a coordinator action input check (in minutes). 86400= 60days
         </description>
 	</property>
 	
 	<property>
 		<name>oozie.service.coord.default.concurrency
 		</name>
-		<value>6</value>
+		<value>-1</value>
 		<description>Default concurrency for a coordinator job to determine how many maximum action should 
-		be materialized or executed at the same time.</description>
+		be executed at the same time.</description>
 	</property>
-    <!-- ELService -->
+
+	<property>
+		<name>oozie.service.coord.materialization.throttling.factor
+		</name>
+		<value>0.10</value>
+		<description>Determine how many actions should be in WAITING state for a single job at any time. The value is calculated by 
+		this factor X the total queue size.</description>
+	</property>
+
+	<!-- ELService -->
     <!--  List of supported groups for ELService -->
 	<property>
         <name>oozie.service.ELService.groups</name>

@@ -271,6 +271,7 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
         WritableUtils.writeStr(dataOutput, getGroup());
         WritableUtils.writeStr(dataOutput, getExternalId());
         dataOutput.writeInt(getTimeout());
+        dataOutput.writeInt(getMatThrottling());
     }
 
     /**
@@ -312,6 +313,7 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
         setGroup(WritableUtils.readStr(dataInput));
         setExternalId(WritableUtils.readStr(dataInput));
         setTimeout(dataInput.readInt());
+        setMatThrottling(dataInput.readInt());
     }
 
     @Override

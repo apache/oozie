@@ -84,6 +84,10 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
     @Basic
     @Column(name = "concurrency")
     private int concurrency = 0;
+    
+    @Basic
+    @Column(name = "mat_throttling")
+    private int matThrottling = 0;
 
     @Transient
     private Timeunit timeUnit = CoordinatorJob.Timeunit.MINUTE;
@@ -150,6 +154,7 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
         user = (String) json.get(JsonTags.COORDINATOR_JOB_USER);
         group = (String) json.get(JsonTags.COORDINATOR_JOB_GROUP);
         consoleUrl = (String) json.get(JsonTags.COORDINATOR_JOB_CONSOLE_URL);
+        matThrottling = (int) JsonUtils.getLongValue(json, JsonTags.COORDINATOR_JOB_MAT_THROTTLING);
         actions = JsonCoordinatorAction.fromJSONArray((JSONArray) json.get(JsonTags.COORDINATOR_ACTIONS));
     }
 
@@ -176,6 +181,7 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
         json.put(JsonTags.COORDINATOR_JOB_USER, getUser());
         json.put(JsonTags.COORDINATOR_JOB_GROUP, getGroup());
         json.put(JsonTags.COORDINATOR_JOB_CONSOLE_URL, getConsoleUrl());
+        json.put(JsonTags.COORDINATOR_JOB_MAT_THROTTLING, getMatThrottling());
         json.put(JsonTags.COORDINATOR_ACTIONS, JsonCoordinatorAction.toJSONArray(actions));
 
         return json;
@@ -259,6 +265,14 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
 
     public int getConcurrency() {
         return concurrency;
+    }
+
+    public int getMatThrottling() {
+        return matThrottling;
+    }
+
+    public void setMatThrottling(int matThrottling) {
+        this.matThrottling = matThrottling;
     }
 
     public void setExecutionOrder(Execution order) {

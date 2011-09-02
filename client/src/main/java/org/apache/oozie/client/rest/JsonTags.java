@@ -77,6 +77,7 @@ public interface JsonTags {
     public static final String COORDINATOR_JOB_TIMEUNIT = "timeUnit";
     public static final String COORDINATOR_JOB_TIMEZONE = "timeZone";
     public static final String COORDINATOR_JOB_CONCURRENCY = "concurrency";
+    public static final String COORDINATOR_JOB_MAT_THROTTLING = "mat_throttling";
     public static final String COORDINATOR_JOB_EXECUTION = "execution";
     public static final String COORDINATOR_JOB_TIMEOUT = "timeOut";
     public static final String COORDINATOR_JOB_LAST_ACTION_TIME = "lastAction";

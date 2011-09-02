@@ -100,7 +100,6 @@ public class CoordMaterializeTriggerService implements Service {
         private void runCoordJobMatLookup() {
             XLog.Info.get().clear();
             XLog LOG = XLog.getLog(getClass());
-
             JPAService jpaService = Services.get().get(JPAService.class);
             try {
 
@@ -116,11 +115,11 @@ public class CoordMaterializeTriggerService implements Service {
                             INSTR_MAT_JOBS_COUNTER, 1);
                     int numWaitingActions = jpaService
                             .execute(new CoordActionsActiveCountJPAExecutor(coordJob.getId()));
-                    LOG.debug("Job :" + coordJob.getId() + "  numWaitingActions : " + numWaitingActions + " concurrrency : "
-                            + coordJob.getConcurrency());
-                    if (numWaitingActions >= coordJob.getConcurrency()) {
+                    LOG.debug("Job :" + coordJob.getId() + "  numWaitingActions : " + numWaitingActions + " MatThrottle : "
+                            + coordJob.getMatThrottling());
+                    if (numWaitingActions >= coordJob.getMatThrottling()) {
                         LOG.debug("Materialization skipped for JobID [" + coordJob.getId() + " already waiting "
-                                + numWaitingActions + " actions. Concurrency is : " + coordJob.getConcurrency());
+                                + numWaitingActions + " actions. MatThrottle is : " + coordJob.getMatThrottling());
                         continue;
                     }
                     queueCallable(new CoordMaterializeTransitionXCommand(coordJob.getId(), materializationWindow));
