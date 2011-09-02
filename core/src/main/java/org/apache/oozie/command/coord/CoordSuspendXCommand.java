@@ -25,7 +25,7 @@ import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.wf.SuspendXCommand;
-import org.apache.oozie.executor.jpa.CoordActionsGetForJobJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobGetActionsJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobUpdateJPAExecutor;
 import org.apache.oozie.service.JPAService;
@@ -57,7 +57,7 @@ public class CoordSuspendXCommand extends CoordinatorXCommand<Void> {
             InstrumentUtils.incrJobCounter(getName(), 1, getInstrumentation());
             coordJobBean.setStatus(CoordinatorJob.Status.SUSPENDED);
             coordJobBean.setSuspendedTime(new Date());
-            List<CoordinatorActionBean> actionList = jpaService.execute(new CoordActionsGetForJobJPAExecutor(jobId));
+            List<CoordinatorActionBean> actionList = jpaService.execute(new CoordJobGetActionsJPAExecutor(jobId));
             for (CoordinatorActionBean action : actionList) {
                 if (action.getStatus() == CoordinatorActionBean.Status.RUNNING) {
                     // queue a SuspendCommand
