@@ -92,9 +92,8 @@ public class CoordActionInputCheckCommand extends CoordinatorCommand<Void> {
                     log.info("[" + actionId + "]::ActionInputCheck:: No missing deps,  NonResolvedList:"
                             + nonResolvedList.toString());
                 }
-                Date actualTime = new Date();
-                boolean status = checkInput(actionXml, existList, nonExistList, actionConf, actualTime);
-                coordAction.setLastModifiedTime(actualTime);
+                boolean status = checkInput(actionXml, existList, nonExistList, actionConf);
+                coordAction.setLastModifiedTime(currentTime);
                 coordAction.setActionXml(actionXml.toString());
                 if (nonResolvedList.length() > 0 && status == false) {
                     nonExistList.append(CoordCommandUtils.RESOLVED_UNRESOLVED_SEPARATOR).append(nonResolvedList);
@@ -106,7 +105,7 @@ public class CoordActionInputCheckCommand extends CoordinatorCommand<Void> {
                     queueCallable(new CoordActionReadyCommand(coordAction.getJobId()), 100);
                 }
                 else {
-                    long waitingTime = (actualTime.getTime() - Math.max(coordAction.getNominalTime().getTime(),
+                    long waitingTime = (currentTime.getTime() - Math.max(coordAction.getNominalTime().getTime(),
                             coordAction.getCreatedTime().getTime())) / (60 * 1000);
                     int timeOut = coordAction.getTimeOut();
                     if ((timeOut >= 0) && (waitingTime > timeOut)) {
@@ -133,12 +132,12 @@ public class CoordActionInputCheckCommand extends CoordinatorCommand<Void> {
     }
 
     protected boolean checkInput(StringBuilder actionXml, StringBuilder existList, StringBuilder nonExistList,
-            Configuration conf, Date actualTime) throws Exception {
+            Configuration conf) throws Exception {
         Element eAction = XmlUtils.parseXml(actionXml.toString());
         boolean allExist = checkResolvedUris(eAction, existList, nonExistList, conf);
         if (allExist) {
             log.debug("[" + actionId + "]::ActionInputCheck:: Checking Latest/future");
-            allExist = checkUnresolvedInstances(eAction, conf, actualTime);
+            allExist = checkUnresolvedInstances(eAction, conf);
         }
         if (allExist == true) {
             materializeDataProperties(eAction, conf);
@@ -182,10 +181,11 @@ public class CoordActionInputCheckCommand extends CoordinatorCommand<Void> {
         }
     }
 
-    private boolean checkUnresolvedInstances(Element eAction, Configuration actionConf, Date actualTime)
+    private boolean checkUnresolvedInstances(Element eAction, Configuration actionConf)
             throws Exception {
         String strAction = XmlUtils.prettyPrint(eAction).toString();
         Date nominalTime = DateUtils.parseDateUTC(eAction.getAttributeValue("action-nominal-time"));
+        Date actualTime = DateUtils.parseDateUTC(eAction.getAttributeValue("action-actual-time"));
         StringBuffer resultedXml = new StringBuffer();
 
         boolean ret;

@@ -141,7 +141,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         Configuration conf = new XConfiguration();
         String appPath = getTestCaseDir() + File.separator + "coordinator.xml";
         String appXml = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" start=\"2009-02-01T01:00Z\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
-                + "xmlns=\"uri:oozie:coordinator:0.2\"> <controls> <concurrency>2</concurrency> "
+                + "xmlns=\"uri:oozie:coordinator:0.1\"> <controls> <concurrency>2</concurrency> "
                 + "<execution>LIFO</execution> </controls> <datasets> "
                 + "<dataset name=\"a\" frequency=\"${coord:days(7)}\" initial-instance=\"2009-02-01T01:00Z\" "
                 + "timezone=\"UTC\"> <uri-template>file:///tmp/coord/workflows/${YEAR}/${DAY}</uri-template> </dataset> "

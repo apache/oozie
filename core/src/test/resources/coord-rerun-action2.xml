@@ -12,7 +12,7 @@
   See the License for the specific language governing permissions and
   limitations under the License. See accompanying LICENSE file.
 -->
-<coordinator-app xmlns="uri:oozie:coordinator:0.2" name="COORD-TEST" frequency="1" timezone="UTC" freq_timeunit="DAY" end_of_duration="NONE" instance-number="2" action-nominal-time="2009-12-16T01:00Z">
+<coordinator-app xmlns="uri:oozie:coordinator:0.2" name="COORD-TEST" frequency="1" timezone="UTC" freq_timeunit="DAY" end_of_duration="NONE" instance-number="2" action-nominal-time="2009-12-16T01:00Z" action-actual-time="2010-10-01T00:00Z">
   <controls>
     <timeout>10</timeout>
     <concurrency>1</concurrency>

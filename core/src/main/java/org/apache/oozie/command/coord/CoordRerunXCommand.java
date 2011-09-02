@@ -317,8 +317,9 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
         }
         String jobXml = coordJob.getJobXml();
         Element eJob = XmlUtils.parseXml(jobXml);
+        Date actualTime = new Date();
         String actionXml = CoordCommandUtils.materializeOneInstance(jobId, dryrun, (Element) eJob.clone(), coordAction
-                .getNominalTime(), coordAction.getActionNumber(), jobConf, coordAction);
+                .getNominalTime(), actualTime, coordAction.getActionNumber(), jobConf, coordAction);
         LOG.debug("Refresh Action actionId=" + coordAction.getId() + ", actionXml="
                 + XmlUtils.prettyPrint(actionXml).toString());
         coordAction.setActionXml(actionXml);

@@ -184,8 +184,9 @@ public class CoordActionMaterializeCommand extends CoordinatorCommand<Void> {
             int timeout = jobBean.getTimeout();
             log.debug(origStart.getTime() + " Materializing action for time=" + effStart.getTime()
                     + ", lastactionnumber=" + lastActionNumber);
+            Date actualTime = new Date();
             action = CoordCommandUtils.materializeOneInstance(jobId, dryrun, (Element) eJob.clone(),
-                    effStart.getTime(), lastActionNumber, conf, actionBean);
+                    effStart.getTime(), actualTime, lastActionNumber, conf, actionBean);
             int catchUpTOMultiplier = 1; // This value might be could be changed in future
             if (actionBean.getNominalTimestamp().before(jobBean.getCreatedTimestamp())) {
                 // Catchup action

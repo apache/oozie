@@ -104,9 +104,8 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
 
             LOG.info("[" + actionId + "]::CoordActionInputCheck:: Missing deps:" + nonExistList.toString() + " "
                     + nonResolvedList.toString());
-            Date actualTime = new Date();
-            boolean status = checkInput(actionXml, existList, nonExistList, actionConf, actualTime);
-            coordAction.setLastModifiedTime(actualTime);
+            boolean status = checkInput(actionXml, existList, nonExistList, actionConf);
+            coordAction.setLastModifiedTime(currentTime);
             coordAction.setActionXml(actionXml.toString());
             if (nonResolvedList.length() > 0 && status == false) {
                 nonExistList.append(CoordCommandUtils.RESOLVED_UNRESOLVED_SEPARATOR).append(nonResolvedList);
@@ -118,7 +117,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                 queue(new CoordActionReadyXCommand(coordAction.getJobId()), 100);
             }
             else {
-                long waitingTime = (actualTime.getTime() - Math.max(coordAction.getNominalTime().getTime(), coordAction
+                long waitingTime = (currentTime.getTime() - Math.max(coordAction.getNominalTime().getTime(), coordAction
                         .getCreatedTime().getTime()))
                         / (60 * 1000);
                 int timeOut = coordAction.getTimeOut();
@@ -148,17 +147,16 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
      * @param existList the list of existed paths
      * @param nonExistList the list of non existed paths
      * @param conf action configuration
-     * @param actualTime current time
      * @return true if all input paths are existed
      * @throws Exception thrown of unable to check input path
      */
     protected boolean checkInput(StringBuilder actionXml, StringBuilder existList, StringBuilder nonExistList,
-            Configuration conf, Date actualTime) throws Exception {
+            Configuration conf) throws Exception {
         Element eAction = XmlUtils.parseXml(actionXml.toString());
         boolean allExist = checkResolvedUris(eAction, existList, nonExistList, conf);
         if (allExist) {
             LOG.debug("[" + actionId + "]::ActionInputCheck:: Checking Latest/future");
-            allExist = checkUnresolvedInstances(eAction, conf, actualTime);
+            allExist = checkUnresolvedInstances(eAction, conf);
         }
         if (allExist == true) {
             materializeDataProperties(eAction, conf);
@@ -216,15 +214,15 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
      *
      * @param eAction action element
      * @param actionConf action configuration
-     * @param actualTime current time
      * @return true if successful to resolve input and output paths
      * @throws Exception thrown if failed to resolve data input and output paths
      */
     @SuppressWarnings("unchecked")
-    private boolean checkUnresolvedInstances(Element eAction, Configuration actionConf, Date actualTime)
+    private boolean checkUnresolvedInstances(Element eAction, Configuration actionConf)
             throws Exception {
         String strAction = XmlUtils.prettyPrint(eAction).toString();
         Date nominalTime = DateUtils.parseDateUTC(eAction.getAttributeValue("action-nominal-time"));
+        Date actualTime = DateUtils.parseDateUTC(eAction.getAttributeValue("action-actual-time"));
         StringBuffer resultedXml = new StringBuffer();
 
         boolean ret;

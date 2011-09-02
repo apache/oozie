@@ -30,15 +30,12 @@ import org.apache.oozie.CoordinatorActionInfo;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
-import org.apache.oozie.action.ActionExecutorException;
-import org.apache.oozie.action.hadoop.FsActionExecutor;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.coord.CoordELFunctions;
-import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.store.CoordinatorStore;
@@ -339,8 +336,9 @@ public class CoordRerunCommand extends CoordinatorCommand<CoordinatorActionInfo>
         }
         String jobXml = coordJob.getJobXml();
         Element eJob = XmlUtils.parseXml(jobXml);
+        Date actualTime = new Date();
         String actionXml = CoordCommandUtils.materializeOneInstance(jobId, dryrun, (Element) eJob.clone(), coordAction
-                .getNominalTime(), coordAction.getActionNumber(), jobConf, coordAction);
+                .getNominalTime(), actualTime, coordAction.getActionNumber(), jobConf, coordAction);
         log.debug("Refresh Action actionId=" + coordAction.getId() + ", actionXml="
                 + XmlUtils.prettyPrint(actionXml).toString());
         coordAction.setActionXml(actionXml);

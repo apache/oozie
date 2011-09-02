@@ -358,6 +358,7 @@ public class CoordCommandUtils {
      * @param dryrun true if it is dryrun
      * @param eAction frequency unexploded-job
      * @param nominalTime materialization time
+     * @param actualTime action actual time
      * @param instanceCount instance numbers
      * @param conf job configuration
      * @param actionBean CoordinatorActionBean to materialize
@@ -366,12 +367,13 @@ public class CoordCommandUtils {
      */
     @SuppressWarnings("unchecked")
     public static String materializeOneInstance(String jobId, boolean dryrun, Element eAction, Date nominalTime,
-            int instanceCount, Configuration conf, CoordinatorActionBean actionBean) throws Exception {
+            Date actualTime, int instanceCount, Configuration conf, CoordinatorActionBean actionBean) throws Exception {
         String actionId = Services.get().get(UUIDService.class).generateChildId(jobId, instanceCount + "");
         SyncCoordAction appInst = new SyncCoordAction();
         appInst.setActionId(actionId);
         appInst.setName(eAction.getAttributeValue("name"));
         appInst.setNominalTime(nominalTime);
+        appInst.setActualTime(actualTime);
         int frequency = Integer.parseInt(eAction.getAttributeValue("frequency"));
         appInst.setFrequency(frequency);
         appInst.setTimeUnit(TimeUnit.valueOf(eAction.getAttributeValue("freq_timeunit")));
@@ -400,6 +402,7 @@ public class CoordCommandUtils {
         eAction.removeAttribute("end");
         eAction.setAttribute("instance-number", Integer.toString(instanceCount));
         eAction.setAttribute("action-nominal-time", DateUtils.formatDateUTC(nominalTime));
+        eAction.setAttribute("action-actual-time", DateUtils.formatDateUTC(actualTime));
 
         boolean isSla = CoordCommandUtils.materializeSLA(eAction.getChild("action", eAction.getNamespace()).getChild(
                 "info", eAction.getNamespace("sla")), nominalTime, conf);
@@ -407,7 +410,7 @@ public class CoordCommandUtils {
         // Setting up action bean
         actionBean.setCreatedConf(XmlUtils.prettyPrint(conf).toString());
         actionBean.setRunConf(XmlUtils.prettyPrint(conf).toString());
-        actionBean.setCreatedTime(new Date());
+        actionBean.setCreatedTime(actualTime);
         actionBean.setJobId(jobId);
         actionBean.setId(actionId);
         actionBean.setLastModifiedTime(new Date());
@@ -437,9 +440,8 @@ public class CoordCommandUtils {
             StringBuilder nonExistList = new StringBuilder();
             StringBuilder nonResolvedList = new StringBuilder();
             getResolvedList(actionBean.getMissingDependencies(), nonExistList, nonResolvedList);
-            Date actualTime = new Date();
             Configuration actionConf = new XConfiguration(new StringReader(actionBean.getRunConf()));
-            coordActionInput.checkInput(actionXml, existList, nonExistList, actionConf, actualTime);
+            coordActionInput.checkInput(actionXml, existList, nonExistList, actionConf);
             return actionXml.toString();
         }
     }

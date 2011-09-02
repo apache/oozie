@@ -309,8 +309,9 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
             int timeout = coordJob.getTimeout();
             LOG.debug("Materializing action for time=" + effStart.getTime() + ", lastactionnumber=" + lastActionNumber
                     + " timeout=" + timeout + " minutes");
+            Date actualTime = new Date();
             action = CoordCommandUtils.materializeOneInstance(jobId, dryrun, (Element) eJob.clone(),
-                    effStart.getTime(), lastActionNumber, jobConf, actionBean);
+                    effStart.getTime(), actualTime, lastActionNumber, jobConf, actionBean);
             actionBean.setTimeOut(timeout);
 
             if (!dryrun) {

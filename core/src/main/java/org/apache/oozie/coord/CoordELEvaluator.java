@@ -27,7 +27,6 @@ import org.apache.oozie.service.ELService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ELEvaluator;
-import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
 
@@ -101,9 +100,9 @@ public class CoordELEvaluator {
         ELEvaluator eval = Services.get().get(ELService.class).createEvaluator("coord-action-start");
         setConfigToEval(eval, conf);
         SyncCoordDataset ds = getDSObject(dEvent);
-        SyncCoordAction appInst = new SyncCoordAction();// TODO:
+        SyncCoordAction appInst = new SyncCoordAction();
         appInst.setNominalTime(nominalTime);
-        appInst.setActualTime(actualTime);// TODO:
+        appInst.setActualTime(actualTime);
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
         eval.setVariable(CoordELFunctions.CONFIGURATION, conf);
         return eval;
@@ -143,6 +142,10 @@ public class CoordELEvaluator {
             appInst.setNominalTime(DateUtils.parseDateUTC(strNominalTime));
             appInst.setActionId(actionId);
             appInst.setName(eJob.getAttributeValue("name"));
+        }
+        String strActualTime = eJob.getAttributeValue("action-actual-time");
+        if (strActualTime != null) {
+            appInst.setActualTime(DateUtils.parseDateUTC(strActualTime));
         }
         CoordELFunctions.configureEvaluator(e, null, appInst);
         Element events = eJob.getChild("input-events", eJob.getNamespace());

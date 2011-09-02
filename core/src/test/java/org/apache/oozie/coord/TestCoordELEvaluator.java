@@ -14,13 +14,10 @@
  */
 package org.apache.oozie.coord;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.Calendar;
 import java.util.Date;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.oozie.service.ServiceException;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.DateUtils;
@@ -28,11 +25,9 @@ import org.apache.oozie.util.DateUtils;
 import java.io.StringReader;
 
 import org.apache.oozie.util.ELEvaluator;
-import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 
 public class TestCoordELEvaluator extends XTestCase {
     public void testSetup() throws Exception {
@@ -114,7 +109,8 @@ public class TestCoordELEvaluator extends XTestCase {
     }
 
     public void testCreateDataEvaluator() throws Exception {
-        String jobXml = "<coordinator-app name=\"mycoordinator-app\" start=\"2009-02-01T01:00GMT\" end=\"2009-02-03T23:59GMT\" frequency=\"720\" action-nominal-time='2009-09-01T00:00Z'>";
+        String jobXml = "<coordinator-app name=\"mycoordinator-app\" start=\"2009-02-01T01:00GMT\" end=\"2009-02-03T23:59GMT\" frequency=\"720\"";
+        jobXml += " action-nominal-time='2009-09-01T00:00Z' action-actual-time='2010-10-01T00:00Z'>";
         jobXml += "<input-events><data-in name=\"A\" dataset=\"a\"><uris>file:///tmp/coord/US/2009/1/30|file:///tmp/coord/US/2009/1/31</uris>";
         jobXml += "<dataset name=\"a\" frequency=\"1440\" initial-instance=\"2009-01-01T00:00Z\">";
         jobXml += "<uri-template>file:///tmp/coord/US/${YEAR}/${MONTH}/${DAY}</uri-template></dataset></data-in></input-events>";
@@ -122,23 +118,23 @@ public class TestCoordELEvaluator extends XTestCase {
         jobXml += "<configuration><property><name>inputA</name><value>${coord:dataIn('A')}</value></property>";
         jobXml += "<property><name>ACTIONID</name><value>${coord:actionId()}</value></property>";
         jobXml += "<property><name>NAME</name><value>${coord:name()}</value></property>";
+        jobXml += "<property><name>NOMINALTIME</name><value>${coord:nominalTime()}</value></property>";
+        jobXml += "<property><name>ACTUALTIME</name><value>${coord:actualTime()}</value></property>";
         jobXml += "</configuration></workflow></action></coordinator-app>";
+
         String reply = "<action><workflow><url>http://foobar.com:8080/oozie</url><app-path>hdfs://foobarfoobar.com:9000/usr/tucu/mywf</app-path>";
         reply += "<configuration><property><name>inputA</name><value>file:///tmp/coord/US/2009/1/30|file:///tmp/coord/US/2009/1/31</value></property>";
         reply += "<property><name>ACTIONID</name><value>00000-oozie-C@1</value></property>";
         reply += "<property><name>NAME</name><value>mycoordinator-app</value></property>";
+        reply += "<property><name>NOMINALTIME</name><value>2009-09-01T00:00Z</value></property>";
+        reply += "<property><name>ACTUALTIME</name><value>2010-10-01T00:00Z</value></property>";
         reply += "</configuration></workflow></action>";
         Element eJob = XmlUtils.parseXml(jobXml);
-        // Configuration conf = new
-        // XConfiguration(IOUtils.getResourceAsReader("org/apache/oozie/coord/conf.xml",
-        // -1));
-        Configuration conf = new XConfiguration(new StringReader(
-                getConfString()));
+        Configuration conf = new XConfiguration(new StringReader(getConfString()));
         ELEvaluator eval = CoordELEvaluator.createDataEvaluator(eJob, conf, "00000-oozie-C@1");
         Element action = eJob.getChild("action", eJob.getNamespace());
         String str = XmlUtils.prettyPrint(action).toString();
-        assertEquals(XmlUtils.prettyPrint(XmlUtils.parseXml(reply)).toString(),
-                     CoordELFunctions.evalAndWrap(eval, str));
+        assertEquals(XmlUtils.prettyPrint(XmlUtils.parseXml(reply)).toString(), CoordELFunctions.evalAndWrap(eval, str));
     }
 
     public void testCreateInstancesELEvaluator() throws Exception {
@@ -148,6 +144,7 @@ public class TestCoordELEvaluator extends XTestCase {
         Element event = XmlUtils.parseXml(dataEvntXML);
         SyncCoordAction appInst = new SyncCoordAction();
         appInst.setNominalTime(DateUtils.parseDateUTC("2009-09-08T01:00Z"));
+        appInst.setActualTime(DateUtils.parseDateUTC("2010-10-01T00:00Z"));
         appInst.setTimeUnit(TimeUnit.MINUTE);
         // Configuration conf = new
         // XConfiguration(IOUtils.getResourceAsReader("org/apache/oozie/coord/conf.xml",

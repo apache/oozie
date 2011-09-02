@@ -195,6 +195,7 @@ public class TestCoordELFunctions extends XTestCase {
 
         ds.setInitInstance(DateUtils.parseDateUTC("2009-01-01T08:00Z"));
         appInst.setNominalTime(DateUtils.parseDateUTC("2009-01-01T08:00Z"));
+        appInst.setActualTime(DateUtils.parseDateUTC("2010-10-01T00:00Z"));
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
         expr = "${coord:hoursInDay(0)}";
         assertEquals("24", CoordELFunctions.evalAndWrap(eval, expr));
@@ -207,6 +208,7 @@ public class TestCoordELFunctions extends XTestCase {
         assertEquals("24", CoordELFunctions.evalAndWrap(eval, expr));
 
         appInst.setNominalTime(DateUtils.parseDateUTC("2009-03-08T08:00Z"));
+        appInst.setActualTime(DateUtils.parseDateUTC("2010-10-01T00:00Z"));
         ds.setTimeZone(DateUtils.getTimeZone("UTC"));
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
         expr = "${coord:hoursInDay(0)}";
@@ -218,6 +220,7 @@ public class TestCoordELFunctions extends XTestCase {
         assertEquals("24", CoordELFunctions.evalAndWrap(eval, expr));
 
         appInst.setNominalTime(DateUtils.parseDateUTC("2009-03-08T08:00Z"));
+        appInst.setActualTime(DateUtils.parseDateUTC("2010-10-01T00:00Z"));
         ds.setTimeZone(DateUtils.getTimeZone("America/Los_Angeles"));
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
         expr = "${coord:hoursInDay(0)}";
@@ -227,11 +230,13 @@ public class TestCoordELFunctions extends XTestCase {
         assertEquals("24", CoordELFunctions.evalAndWrap(eval, expr));
 
         appInst.setNominalTime(DateUtils.parseDateUTC("2009-11-01T08:00Z"));
+        appInst.setActualTime(DateUtils.parseDateUTC("2010-10-01T00:00Z"));
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
         expr = "${coord:hoursInDay(0)}";
         assertEquals("25", CoordELFunctions.evalAndWrap(eval, expr));
 
         appInst.setNominalTime(DateUtils.parseDateUTC("2009-03-08T08:00Z"));
+        appInst.setActualTime(DateUtils.parseDateUTC("2010-10-01T00:00Z"));
         ds.setTimeZone(DateUtils.getTimeZone("America/Los_Angeles"));
         ds.setEndOfDuration(TimeUnit.END_OF_DAY);
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
@@ -266,6 +271,7 @@ public class TestCoordELFunctions extends XTestCase {
 
         ds.setInitInstance(DateUtils.parseDateUTC("2009-01-01T00:00Z"));
         appInst.setNominalTime(DateUtils.parseDateUTC("2009-02-01T11:00Z"));
+        appInst.setActualTime(DateUtils.parseDateUTC("2010-10-01T00:00Z"));
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
         expr = "${coord:daysInMonth(0)}";
         assertEquals("28", CoordELFunctions.evalAndWrap(eval, expr));
@@ -284,6 +290,7 @@ public class TestCoordELFunctions extends XTestCase {
 
         ds.setTimeZone(DateUtils.getTimeZone("America/Los_Angeles"));
         appInst.setNominalTime(DateUtils.parseDateUTC("2009-02-01T11:00Z")); // Feb
+        appInst.setActualTime(DateUtils.parseDateUTC("2010-10-01T00:00Z"));
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
         expr = "${coord:daysInMonth(0)}";
         assertEquals("28", CoordELFunctions.evalAndWrap(eval, expr)); // Jan
@@ -303,6 +310,7 @@ public class TestCoordELFunctions extends XTestCase {
         // Case 1
         ds.setInitInstance(DateUtils.parseDateUTC("2009-01-01T00:00Z"));
         appInst.setNominalTime(DateUtils.parseDateUTC("2009-02-01T11:00Z"));
+        appInst.setActualTime(DateUtils.parseDateUTC("2010-10-01T00:00Z"));
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
         expr = "${coord:daysInMonth(0)}";
         assertEquals("28", CoordELFunctions.evalAndWrap(eval, expr));
@@ -321,6 +329,7 @@ public class TestCoordELFunctions extends XTestCase {
 
         ds.setTimeZone(DateUtils.getTimeZone("America/Los_Angeles"));
         appInst.setNominalTime(DateUtils.parseDateUTC("2009-02-01T11:00Z")); // Feb
+        appInst.setActualTime(DateUtils.parseDateUTC("2010-10-01T00:00Z"));
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
         expr = "${coord:daysInMonth(0)}";
         assertEquals("28", CoordELFunctions.evalAndWrap(eval, expr)); // Jan
