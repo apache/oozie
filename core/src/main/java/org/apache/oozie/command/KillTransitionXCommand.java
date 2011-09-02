@@ -46,8 +46,8 @@ public abstract class KillTransitionXCommand extends TransitionXCommand<Void> {
     protected Void execute() throws CommandException {
         try {
             transitToNext();
-            updateJob();
             killChildren();
+            updateJob();
         }
         finally {
             notifyParent();
