@@ -387,11 +387,11 @@ public class JavaActionExecutor extends ActionExecutor {
     JobConf createLauncherConf(Context context, WorkflowAction action, Element actionXml, Configuration actionConf)
             throws ActionExecutorException {
         try {
-            Path appPath = new Path(context.getWorkflow().getAppPath());
+            Path appPathRoot = new Path(context.getWorkflow().getAppPath()).getParent();
 
             // launcher job configuration
             Configuration launcherConf = createBaseHadoopConf(context, actionXml);
-            setupLauncherConf(launcherConf, actionXml, appPath, context);
+            setupLauncherConf(launcherConf, actionXml, appPathRoot, context);
 
             // we are doing init+copy because if not we are getting 'hdfs'
             // scheme not known
@@ -399,7 +399,7 @@ public class JavaActionExecutor extends ActionExecutor {
             // assumes parameter Conf does.
             JobConf launcherJobConf = new JobConf();
             XConfiguration.copy(launcherConf, launcherJobConf);
-            setLibFilesArchives(context, actionXml, appPath, launcherJobConf);
+            setLibFilesArchives(context, actionXml, appPathRoot, launcherJobConf);
             String jobName = XLog.format("oozie:launcher:T={0}:W={1}:A={2}:ID={3}", getType(), context.getWorkflow()
                     .getAppName(), action.getName(), context.getWorkflow().getId());
             launcherJobConf.setJobName(jobName);
@@ -475,14 +475,14 @@ public class JavaActionExecutor extends ActionExecutor {
         JobClient jobClient = null;
         boolean exception = false;
         try {
-            Path appPath = new Path(context.getWorkflow().getAppPath());
+            Path appPathRoot = new Path(context.getWorkflow().getAppPath()).getParent();
             Element actionXml = XmlUtils.parseXml(action.getConf());
 
             // action job configuration
             Configuration actionConf = createBaseHadoopConf(context, actionXml);
-            setupActionConf(actionConf, context, actionXml, appPath);
+            setupActionConf(actionConf, context, actionXml, appPathRoot);
             XLog.getLog(getClass()).debug("Setting LibFilesArchives ");
-            setLibFilesArchives(context, actionXml, appPath, actionConf);
+            setLibFilesArchives(context, actionXml, appPathRoot, actionConf);
             String jobName = XLog.format("oozie:action:T={0}:W={1}:A={2}:ID={3}", getType(), context.getWorkflow()
                     .getAppName(), action.getName(), context.getWorkflow().getId());
             actionConf.set("mapred.job.name", jobName);

@@ -181,7 +181,7 @@ public abstract class ActionExecutorTestCase extends XFsTestCase {
 
     // it contains one action with no configuration.
     protected WorkflowJobBean createBaseWorkflow(XConfiguration protoConf, String actionName) {
-        Path appUri = getAppPath();
+        Path appUri = new Path(getAppPath(), "workflow.xml");
         XConfiguration wfConf = new XConfiguration();
         wfConf.set(OozieClient.USER_NAME, protoConf.get(OozieClient.USER_NAME));
         wfConf.set(OozieClient.GROUP_NAME, getTestGroup());
