@@ -20,15 +20,16 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.coord.CoordActionInfoCommand;
 import org.apache.oozie.command.coord.CoordActionInfoXCommand;
@@ -242,7 +243,7 @@ public class CoordinatorEngine extends BaseEngine {
     public CoordinatorActionInfo reRun(String jobId, String rerunType, String scope, boolean refresh, boolean noCleanup)
             throws BaseEngineException {
         try {
-            if  (useXCommand) {
+            if (useXCommand) {
                 return new CoordRerunXCommand(jobId, rerunType, scope, refresh, noCleanup).call();
             }
             else {
@@ -295,6 +296,84 @@ public class CoordinatorEngine extends BaseEngine {
         Services.get().get(XLogService.class).streamLog(filter, job.getCreatedTime(), new Date(), writer);
     }
 
+    /**
+     * Add list of actions to the filter based on conditions
+     *
+     * @param jobId Job Id
+     * @param logRetrievalScope Value for the retrieval type
+     * @param logRetrievalType Based on which filter criteria the log is retrieved
+     * @param writer writer to stream the log to
+     * @throws IOException
+     * @throws BaseEngineException
+     * @throws CommandException
+     */
+    public void streamLog(String jobId, String logRetrievalScope, String logRetrievalType, Writer writer)
+            throws IOException, BaseEngineException, CommandException {
+        XLogStreamer.Filter filter = new XLogStreamer.Filter();
+        filter.setParameter(DagXLogInfoService.JOB, jobId);
+        if (logRetrievalScope != null && logRetrievalType != null) {
+            if (logRetrievalType.equals(RestConstants.JOB_LOG_ACTION)) {
+                Set<String> actions = new HashSet<String>();
+                String[] list = logRetrievalScope.split(",");
+                for (String s : list) {
+                    s = s.trim();
+                    if (s.contains("-")) {
+                        String[] range = s.split("-");
+                        if (range.length != 2) {
+                            throw new CommandException(ErrorCode.E0302, "format is wrong for action's range '" + s
+                                    + "'");
+                        }
+                        int start;
+                        int end;
+                        try {
+                            start = Integer.parseInt(range[0].trim());
+                            end = Integer.parseInt(range[1].trim());
+                            if (start > end) {
+                                throw new CommandException(ErrorCode.E0302, "format is wrong for action's range '" + s
+                                        + "'");
+                            }
+                        }
+                        catch (NumberFormatException ne) {
+                            throw new CommandException(ErrorCode.E0302, ne);
+                        }
+                        for (int i = start; i <= end; i++) {
+                            actions.add(jobId + "@" + i);
+                        }
+                    }
+                    else {
+                        try {
+                            Integer.parseInt(s);
+                        }
+                        catch (NumberFormatException ne) {
+                            throw new CommandException(ErrorCode.E0302, "format is wrong for action id'" + s
+                                    + "'. Integer only.");
+                        }
+                        actions.add(jobId + "@" + s);
+                    }
+                }
+
+                Iterator<String> actionsIterator = actions.iterator();
+                StringBuilder commaSeparatedActions = new StringBuilder("");
+                int commaRequired = 0;
+
+                while (actionsIterator.hasNext()) {
+                    if (commaRequired == 1) {
+                        commaSeparatedActions.append(",");
+                    }
+                    commaSeparatedActions.append(actionsIterator.next().toString());
+                    commaRequired = 1;
+                }
+                filter.setParameter(DagXLogInfoService.ACTION, commaSeparatedActions.toString());
+            }
+            CoordinatorJobBean job = getCoordJobWithNoActionInfo(jobId);
+            Services.get().get(XLogService.class).streamLog(filter, job.getCreatedTime(), new Date(), writer);
+        }
+        else {
+            CoordinatorJobBean job = getCoordJobWithNoActionInfo(jobId);
+            Services.get().get(XLogService.class).streamLog(filter, job.getCreatedTime(), new Date(), writer);
+        }
+    }
+
     /*
      * (non-Javadoc)
      *
@@ -338,7 +417,7 @@ public class CoordinatorEngine extends BaseEngine {
             }
             else {
                 CoordSubmitCommand submit = new CoordSubmitCommand(true, conf, getAuthToken());
-                jobId = submit.call();                
+                jobId = submit.call();
             }
             return jobId;
         }
@@ -435,11 +514,11 @@ public class CoordinatorEngine extends BaseEngine {
                     String[] pair = token.split("=");
                     if (pair.length != 2) {
                         throw new CoordinatorEngineException(ErrorCode.E0420, filter,
-                                                             "elements must be name=value pairs");
+                                "elements must be name=value pairs");
                     }
                     if (!FILTER_NAMES.contains(pair[0])) {
                         throw new CoordinatorEngineException(ErrorCode.E0420, filter, XLog.format("invalid name [{0}]",
-                                                                                                  pair[0]));
+                                pair[0]));
                     }
                     if (pair[0].equals("status")) {
                         try {

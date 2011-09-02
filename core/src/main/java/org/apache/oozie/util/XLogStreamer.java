@@ -45,7 +45,7 @@ public class XLogStreamer {
         private boolean noFilter;
         private Pattern filterPattern;
 
-        //TODO Patterns to be read from config file
+        // TODO Patterns to be read from config file
         private static final String DEFAULT_REGEX = "[^\\]]*";
 
         public static final String ALLOW_ALL_REGEX = "(.*)";
@@ -155,6 +155,21 @@ public class XLogStreamer {
             else {
                 sb.append("(.* - ");
                 for (int i = 0; i < parameters.size(); i++) {
+                    if (parameters.get(i).equals("ACTION")) {
+                        String[] actionsList = filterParams.get(parameters.get(i)).split(",");
+                        sb.append("(");
+
+                        for (int counter = 0; counter < actionsList.length; counter++) {
+                            if (counter != 0) {
+                                sb.append("|");
+                            }
+                            sb.append("ACTION" + "\\[");
+                            sb.append(actionsList[counter] + "\\]");
+                        }
+
+                        sb.append(") ");
+                        continue;
+                    }
                     sb.append(parameters.get(i) + "\\[");
                     sb.append(filterParams.get(parameters.get(i)) + "\\] ");
                 }
@@ -196,6 +211,10 @@ public class XLogStreamer {
     public void streamLog(Date startTime, Date endTime) throws IOException {
         long startTimeMillis = 0;
         long endTimeMillis;
+        String fileName;
+        InputStream ifs;
+        XLogReader logReader;
+
         if (startTime != null) {
             startTimeMillis = startTime.getTime();
         }
@@ -208,9 +227,9 @@ public class XLogStreamer {
         File dir = new File(logPath);
         ArrayList<FileInfo> fileList = getFileList(dir, startTimeMillis, endTimeMillis, logRotation, logFile);
         for (int i = 0; i < fileList.size(); i++) {
-            InputStream ifs;
+            fileName = fileList.get(i).getFileName();
             ifs = new FileInputStream(fileList.get(i).getFileName());
-            XLogReader logReader = new XLogReader(ifs, logFilter, logWriter);
+            logReader = new XLogReader(ifs, logFilter, logWriter);
             logReader.processLog();
         }
     }
@@ -237,11 +256,13 @@ public class XLogStreamer {
 
         public int compareTo(FileInfo fileInfo) {
             long diff = this.modTime - fileInfo.modTime;
-            if(diff > 0) {
+            if (diff > 0) {
                 return 1;
-            } else if(diff < 0) {
+            }
+            else if (diff < 0) {
                 return -1;
-            } else {
+            }
+            else {
                 return 0;
             }
         }
@@ -257,20 +278,23 @@ public class XLogStreamer {
      * @param logFile
      * @return List of files to be streamed
      */
-    private ArrayList<FileInfo> getFileList(File dir, long startTime, long endTime, long logRotationTime,
-                                            String logFile) {
+    private ArrayList<FileInfo> getFileList(File dir, long startTime, long endTime, long logRotationTime, String logFile) {
         String[] children = dir.list();
+        String fileName;
+        File file;
         ArrayList<FileInfo> fileList = new ArrayList<FileInfo>();
+
         if (children == null) {
             return fileList;
         }
         else {
             for (int i = 0; i < children.length; i++) {
-                String filename = children[i];
-                if (!filename.startsWith(logFile) && !filename.equals(logFile)) {
+                fileName = children[i];
+                file = new File(dir.getAbsolutePath(), fileName);
+                if (!fileName.startsWith(logFile) && !fileName.equals(logFile)) {
                     continue;
                 }
-                File file = new File(dir.getAbsolutePath(), filename);
+                file = new File(dir.getAbsolutePath(), fileName);
                 long modTime = file.lastModified();
                 if (modTime < startTime) {
                     continue;

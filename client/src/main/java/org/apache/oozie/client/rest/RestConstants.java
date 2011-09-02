@@ -59,7 +59,7 @@ public interface RestConstants {
     public static final String JOB_ACTION_RERUN = "rerun";
 
     public static final String JOB_COORD_ACTION_RERUN = "coord-rerun";
-    
+
     public static final String JOB_BUNDLE_ACTION_RERUN = "bundle-rerun";
 
     public static final String JOB_SHOW_PARAM = "show";
@@ -73,9 +73,9 @@ public interface RestConstants {
     public static final String JOB_SHOW_DEFINITION = "definition";
 
     public static final String JOB_BUNDLE_RERUN_COORD_SCOPE_PARAM = "coord-scope";
-    
+
     public static final String JOB_BUNDLE_RERUN_DATE_SCOPE_PARAM = "date-scope";
-    
+
     public static final String JOB_COORD_RERUN_TYPE_PARAM = "type";
 
     public static final String JOB_COORD_RERUN_DATE = "date";
@@ -87,6 +87,12 @@ public interface RestConstants {
     public static final String JOB_COORD_RERUN_REFRESH_PARAM = "refresh";
 
     public static final String JOB_COORD_RERUN_NOCLEANUP_PARAM = "nocleanup";
+
+    public static final String JOB_LOG_ACTION = "action";
+
+    public static final String JOB_LOG_SCOPE_PARAM = "scope";
+
+    public static final String JOB_LOG_TYPE_PARAM = "type";
 
     public static final String JOBS_FILTER_PARAM = "filter";
 

@@ -178,6 +178,14 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
             writer.write(LOG);
         }
 
+        @Override
+        public void streamLog(String jobId, String logRetrievalScope, String logRetrievalType, Writer writer)
+                throws IOException, BaseEngineException {
+            did = RestConstants.JOB_SHOW_LOG;
+            validateCoordinatorIdx(jobId);
+            writer.write(LOG);
+        }
+
         private int validateCoordinatorIdx(String jobId) throws CoordinatorEngineException {
             int idx = -1;
             try {
@@ -273,6 +281,5 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
         action.setCreatedConf(CONFIGURATION);
         return action;
     }
-
 
 }

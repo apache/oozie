@@ -51,7 +51,7 @@ import org.apache.oozie.util.XLogStreamer;
 
 public abstract class BaseEngine {
     public static final String USE_XCOMMAND = "oozie.useXCommand";
-    
+
     protected String user;
     protected String authToken;
 
@@ -74,7 +74,9 @@ public abstract class BaseEngine {
     }
 
     /**
-     * Submit a job. <p/> It validates configuration properties.
+     * Submit a job.
+     * <p/>
+     * It validates configuration properties.
      *
      * @param conf job configuration.
      * @param startJob indicates if the job should be started or not.
@@ -133,7 +135,6 @@ public abstract class BaseEngine {
      */
     public abstract void reRun(String jobId, Configuration conf) throws BaseEngineException;
 
-
     /**
      * Return the info about a wf job.
      *
@@ -190,12 +191,14 @@ public abstract class BaseEngine {
      * @param writer writer to stream the log to.
      * @throws IOException thrown if the log cannot be streamed.
      * @throws BaseEngineException thrown if there is error in getting the Workflow/Coordinator Job Information for
-     * jobId.
+     *         jobId.
      */
     public abstract void streamLog(String jobId, Writer writer) throws IOException, BaseEngineException;
 
     /**
-     * Return the workflow Job ID for an external ID. <p/> This is reverse lookup for recovery purposes.
+     * Return the workflow Job ID for an external ID.
+     * <p/>
+     * This is reverse lookup for recovery purposes.
      *
      * @param externalId external ID provided at job submission time.
      * @return the associated workflow job ID if any, <code>null</code> if none.
@@ -203,7 +206,6 @@ public abstract class BaseEngine {
      */
     public abstract String getJobIdForExternalId(String externalId) throws BaseEngineException;
 
-    public abstract String dryrunSubmit(Configuration conf, boolean startJob)
-            throws BaseEngineException;
+    public abstract String dryrunSubmit(Configuration conf, boolean startJob) throws BaseEngineException;
 
 }

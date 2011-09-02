@@ -29,6 +29,7 @@ import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorActionInfo;
 import org.apache.oozie.CoordinatorEngine;
 import org.apache.oozie.CoordinatorEngineException;
+import org.apache.oozie.command.CommandException;
 import org.apache.oozie.DagEngine;
 import org.apache.oozie.DagEngineException;
 import org.apache.oozie.ErrorCode;
@@ -160,6 +161,7 @@ public class V1JobServlet extends BaseJobServlet {
      * @throws XServletException
      * @throws IOException
      */
+    @Override
     protected void changeJob(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException {
         String jobId = getResourceName(request);
@@ -274,9 +276,9 @@ public class V1JobServlet extends BaseJobServlet {
 
     /**
      * Start wf job
-     * 
+     *
      * @param request servlet request
-     * @param response servlet response 
+     * @param response servlet response
      * @throws XServletException
      */
     private void startWorkflowJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
@@ -373,7 +375,7 @@ public class V1JobServlet extends BaseJobServlet {
 
     /**
      * Suspend a wf job
-     * 
+     *
      * @param request servlet request
      * @param response servlet response
      * @throws XServletException
@@ -506,7 +508,7 @@ public class V1JobServlet extends BaseJobServlet {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
         }
     }
-    
+
     /**
      * Change a bundle job
      *
@@ -530,7 +532,7 @@ public class V1JobServlet extends BaseJobServlet {
 
     /**
      * Rerun a wf job
-     * 
+     *
      * @param request servlet request
      * @param response servlet response
      * @param conf configuration object
@@ -652,8 +654,8 @@ public class V1JobServlet extends BaseJobServlet {
 
     /**
      * Get wf action info
-     * 
-     * @param request servlet request 
+     *
+     * @param request servlet request
      * @param response servlet response
      * @return JsonBean WorkflowActionBean
      * @throws XServletException
@@ -677,7 +679,7 @@ public class V1JobServlet extends BaseJobServlet {
 
     /**
      * Get coord job info
-     * 
+     *
      * @param request servlet request
      * @param response servlet response
      * @return JsonBean CoordinatorJobBean
@@ -760,7 +762,7 @@ public class V1JobServlet extends BaseJobServlet {
 
     /**
      * Get wf job definition
-     * 
+     *
      * @param request servlet request
      * @param response servlet response
      * @return String wf definition
@@ -832,7 +834,7 @@ public class V1JobServlet extends BaseJobServlet {
 
     /**
      * Stream wf job log
-     * 
+     *
      * @param request servlet request
      * @param response servlet response
      * @throws XServletException
@@ -874,7 +876,7 @@ public class V1JobServlet extends BaseJobServlet {
     /**
      * Stream coordinator job log
      *
-     * @param request servlet request 
+     * @param request servlet request
      * @param response servlet response
      * @throws XServletException
      * @throws IOException
@@ -884,13 +886,16 @@ public class V1JobServlet extends BaseJobServlet {
 
         CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(
                 getUser(request), getAuthToken(request));
-
         String jobId = getResourceName(request);
-
+        String logRetrievalScope = request.getParameter(RestConstants.JOB_LOG_SCOPE_PARAM);
+        String logRetrievalType = request.getParameter(RestConstants.JOB_LOG_TYPE_PARAM);
         try {
-            coordEngine.streamLog(jobId, response.getWriter());
+            coordEngine.streamLog(jobId, logRetrievalScope, logRetrievalType, response.getWriter());
         }
         catch (BaseEngineException ex) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
+        }
+        catch (CommandException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
         }
     }

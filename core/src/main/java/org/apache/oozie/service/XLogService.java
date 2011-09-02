@@ -37,7 +37,7 @@ import java.util.Map;
 import java.util.Date;
 
 /**
- * Built-in service that initializes and manages Logging via  Log4j.
+ * Built-in service that initializes and manages Logging via Log4j.
  * <p/>
  * Oozie Lo4gj default configuration file is <code>oozie-log4j.properties</code>.
  * <p/>
@@ -52,8 +52,8 @@ import java.util.Date;
  * <p/>
  * If the Log4j configuration file is loaded from the classpath, automatic reloading is disabled.
  * <p/>
- * the automatic reloading interval is defined by the Java System property <code>oozie.log4j.reload</code>.
- * The default value is 10 seconds.
+ * the automatic reloading interval is defined by the Java System property <code>oozie.log4j.reload</code>. The default
+ * value is 10 seconds.
  */
 public class XLogService implements Service, Instrumentable {
     private static final String INSTRUMENTATION_GROUP = "logging";
@@ -148,10 +148,9 @@ public class XLogService implements Service, Instrumentable {
             log = new XLog(LogFactory.getLog(getClass()));
 
             log.info(XLog.OPS, STARTUP_MESSAGE, BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_VERSION),
-                     BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_USER_NAME), BuildInfo.getBuildInfo()
-                    .getProperty(BuildInfo.BUILD_TIME), BuildInfo.getBuildInfo().getProperty(
-                    BuildInfo.BUILD_VC_REVISION), BuildInfo.getBuildInfo()
-                    .getProperty(BuildInfo.BUILD_VC_URL));
+                    BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_USER_NAME), BuildInfo.getBuildInfo()
+                            .getProperty(BuildInfo.BUILD_TIME), BuildInfo.getBuildInfo().getProperty(
+                            BuildInfo.BUILD_VC_REVISION), BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_VC_URL));
 
             String from = (fromClasspath) ? "CLASSPATH" : configPath;
             String reload = (fromClasspath) ? "disabled" : Long.toString(interval) + " sec";
@@ -186,14 +185,15 @@ public class XLogService implements Service, Instrumentable {
         }
         String logFile = conf.get("log4j.appender.oozie.File");
         if (logFile == null) {
-            log.warn("Oozie WS log will be disabled, missing property 'log4j.appender.oozie.File' for 'oozie' appender");
+            log.warn("Oozie WS log will be disabled, missing property 'log4j.appender.oozie.File' for 'oozie' "
+                    + "appender");
         }
         else {
             logFile = logFile.trim();
             int i = logFile.lastIndexOf("/");
             if (i == -1) {
                 log.warn("Oozie WS log will be disabled, log file is not an absolute path [{0}] for 'oozie' appender",
-                         logFile);
+                        logFile);
                 logOverWS = false;
             }
             else {
@@ -213,7 +213,7 @@ public class XLogService implements Service, Instrumentable {
                         }
                         else {
                             log.warn("Oozie WS log will be disabled, DatePattern [{0}] should end with 'HH' or 'dd'",
-                                     pattern);
+                                    pattern);
                             logOverWS = false;
                         }
                     }
@@ -258,8 +258,9 @@ public class XLogService implements Service, Instrumentable {
     }
 
     /**
-     * Instruments the log service. <p/> It sets instrumentation variables indicating the config file, reload interval
-     * and if loaded from the classpath.
+     * Instruments the log service.
+     * <p/>
+     * It sets instrumentation variables indicating the config file, reload interval and if loaded from the classpath.
      *
      * @param instr instrumentation to use.
      */

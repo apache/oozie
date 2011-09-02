@@ -16,8 +16,10 @@ package org.apache.oozie.client;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.PrintStream;
 import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -125,7 +127,7 @@ public class OozieClient {
     public static enum SYSTEM_MODE {
         NORMAL, NOWEBSERVICE, SAFEMODE
     };
-    
+
     /**
      * debugMode =0 means no debugging. > 0 means debugging on.
      */
@@ -372,8 +374,8 @@ public class OozieClient {
                     return call(conn);
                 }
                 else {
-                    System.out
-                            .println("Option not supported in target server. Supported only on Oozie-2.0 or greater. Use 'oozie help' for details");
+                    System.out.println("Option not supported in target server. Supported only on Oozie-2.0 or greater."
+                            + " Use 'oozie help' for details");
                     throw new OozieClientException(OozieClientException.UNSUPPORTED_VERSION, new Exception());
                 }
             }
@@ -687,10 +689,27 @@ public class OozieClient {
         return new JobLog(jobId).call();
     }
 
-    private class JobLog extends JobMetadata {
+    /**
+     * Get the log of a job.
+     *
+     * @param jobId job Id.
+     * @param logRetrievalType Based on which filter criteria the log is retrieved
+     * @param logRetrievalScope Value for the retrieval type
+     * @param ps Printstream of command line interface
+     * @throws OozieClientException thrown if the job info could not be retrieved.
+     */
+    public void getJobLog(String jobId, String logRetrievalType, String logRetrievalScope, PrintStream ps)
+            throws OozieClientException {
+        new JobLog(jobId, logRetrievalType, logRetrievalScope, ps).call();
+    }
 
+    private class JobLog extends JobMetadata {
         JobLog(String jobId) {
             super(jobId, RestConstants.JOB_SHOW_LOG);
+        }
+
+        JobLog(String jobId, String logRetrievalType, String logRetrievalScope, PrintStream ps) {
+            super(jobId, logRetrievalType, logRetrievalScope, RestConstants.JOB_SHOW_LOG, ps);
         }
     }
 
@@ -713,23 +732,73 @@ public class OozieClient {
     }
 
     private class JobMetadata extends ClientCallable<String> {
+        PrintStream printStream;
 
         JobMetadata(String jobId, String metaType) {
             super("GET", RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.JOB_SHOW_PARAM,
                     metaType));
         }
 
+        JobMetadata(String jobId, String logRetrievalType, String logRetrievalScope, String metaType, PrintStream ps) {
+            super("GET", RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.JOB_SHOW_PARAM,
+                    metaType, RestConstants.JOB_LOG_TYPE_PARAM, logRetrievalType, RestConstants.JOB_LOG_SCOPE_PARAM,
+                    logRetrievalScope));
+            printStream = ps;
+        }
+
         @Override
         protected String call(HttpURLConnection conn) throws IOException, OozieClientException {
+            String returnVal = null;
             if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
-
-                String output = getReaderAsString(new InputStreamReader(conn.getInputStream()), -1);
-                return output;
+                InputStream is = conn.getInputStream();
+                InputStreamReader isr = new InputStreamReader(is);
+                try {
+                    if (printStream != null) {
+                        sendToOutputStream(isr, -1);
+                    }
+                    else {
+                        returnVal = getReaderAsString(isr, -1);
+                    }
+                }
+                finally {
+                    isr.close();
+                }
             }
             else {
                 handleError(conn);
             }
-            return null;
+            return returnVal;
+        }
+
+        /**
+         * Output the log to command line interface
+         *
+         * @param reader reader to read into a string.
+         * @param maxLen max content length allowed, if -1 there is no limit.
+         * @param ps Printstream of command line interface
+         * @throws IOException
+         */
+        private void sendToOutputStream(Reader reader, int maxLen) throws IOException {
+            if (reader == null) {
+                throw new IllegalArgumentException("reader cannot be null");
+            }
+            StringBuilder sb = new StringBuilder();
+            char[] buffer = new char[2048];
+            int read;
+            int count = 0;
+            int noOfCharstoFlush = 1024;
+            while ((read = reader.read(buffer)) > -1) {
+                count += read;
+                if ((maxLen > -1) && (count > maxLen)) {
+                    break;
+                }
+                sb.append(buffer, 0, read);
+                if (sb.length() > noOfCharstoFlush) {
+                    printStream.print(sb.toString());
+                    sb = new StringBuilder("");
+                }
+            }
+            printStream.print(sb.toString());
         }
 
         /**
@@ -745,7 +814,6 @@ public class OozieClient {
             if (reader == null) {
                 throw new IllegalArgumentException("reader cannot be null");
             }
-
             StringBuffer sb = new StringBuffer();
             char[] buffer = new char[2048];
             int read;
