@@ -89,32 +89,47 @@ public class BundlePauseStartService implements Service {
         }
 
         private void updateBundle() {
+            Date d = new Date(); // records the start time of this service run;
+            List<BundleJobBean> jobList = null;
+            // pause bundles as needed;
             try {
-                Date d = new Date(); // records the start time of this service run;
-                // pause bundles as needed;
-                List<BundleJobBean> jobList = jpaService.execute(new BundleJobsGetUnpausedJPAExecutor(-1));
-                for (BundleJobBean bundleJob : jobList) {
-                    if ((bundleJob.getPauseTime() != null) && !bundleJob.getPauseTime().after(d)) {
-                        new BundlePauseXCommand(bundleJob).call();
-                        LOG.debug("Calling BundlePauseXCommand for bundle job = " + bundleJob.getId());
+                jobList = jpaService.execute(new BundleJobsGetUnpausedJPAExecutor(-1));
+                if (jobList != null) {
+                    for (BundleJobBean bundleJob : jobList) {
+                        if ((bundleJob.getPauseTime() != null) && !bundleJob.getPauseTime().after(d)) {
+                            new BundlePauseXCommand(bundleJob).call();
+                            LOG.debug("Calling BundlePauseXCommand for bundle job = " + bundleJob.getId());
+                        }
                     }
                 }
-
-                // unpause bundles as needed;
+            }
+            catch (Exception ex) {
+                LOG.warn("Exception happened when pausing/unpausing/starting Bundle jobs", ex);
+            }
+            // unpause bundles as needed;
+            try {
                 jobList = jpaService.execute(new BundleJobsGetPausedJPAExecutor(-1));
-                for (BundleJobBean bundleJob : jobList) {
-                    if ((bundleJob.getPauseTime() == null || bundleJob.getPauseTime().after(d))) {
-                        new BundleUnpauseXCommand(bundleJob).call();
-                        LOG.debug("Calling BundleUnpauseXCommand for bundle job = " + bundleJob.getId());
+                if (jobList != null) {
+                    for (BundleJobBean bundleJob : jobList) {
+                        if ((bundleJob.getPauseTime() == null || bundleJob.getPauseTime().after(d))) {
+                            new BundleUnpauseXCommand(bundleJob).call();
+                            LOG.debug("Calling BundleUnpauseXCommand for bundle job = " + bundleJob.getId());
+                        }
                     }
                 }
-
-                // start bundles as needed;
+            }
+            catch (Exception ex) {
+                LOG.warn("Exception happened when pausing/unpausing/starting Bundle jobs", ex);
+            }
+            // start bundles as needed;
+            try {
                 jobList = jpaService.execute(new BundleJobsGetNeedStartJPAExecutor(d));
-                for (BundleJobBean bundleJob : jobList) {
-                    bundleJob.setKickoffTime(d);
-                    new BundleStartXCommand(bundleJob.getId()).call();
-                    LOG.debug("Calling BundleStartXCommand for bundle job = " + bundleJob.getId());
+                if (jobList != null) {
+                    for (BundleJobBean bundleJob : jobList) {
+                        bundleJob.setKickoffTime(d);
+                        new BundleStartXCommand(bundleJob.getId()).call();
+                        LOG.debug("Calling BundleStartXCommand for bundle job = " + bundleJob.getId());
+                    }
                 }
             }
             catch (Exception ex) {
@@ -123,23 +138,32 @@ public class BundlePauseStartService implements Service {
         }
 
         private void updateCoord() {
+            Date d = new Date(); // records the start time of this service run;
+            List<CoordinatorJobBean> jobList = null;
+            // pause coordinators as needed;
             try {
-                Date d = new Date(); // records the start time of this service run;
-                // pause coordinators as needed;
-                List<CoordinatorJobBean> jobList = jpaService.execute(new CoordJobsGetUnpausedJPAExecutor(-1));
-                for (CoordinatorJobBean coordJob : jobList) {
-                    if ((coordJob.getPauseTime() != null) && !coordJob.getPauseTime().after(d)) {
-                        new CoordPauseXCommand(coordJob).call();
-                        LOG.debug("Calling CoordPauseXCommand for coordinator job = " + coordJob.getId());
+                jobList = jpaService.execute(new CoordJobsGetUnpausedJPAExecutor(-1));
+                if (jobList != null) {
+                    for (CoordinatorJobBean coordJob : jobList) {
+                        if ((coordJob.getPauseTime() != null) && !coordJob.getPauseTime().after(d)) {
+                            new CoordPauseXCommand(coordJob).call();
+                            LOG.debug("Calling CoordPauseXCommand for coordinator job = " + coordJob.getId());
+                        }
                     }
                 }
-
-                // unpause coordinators as needed;
+            }
+            catch (Exception ex) {
+                LOG.warn("Exception happened when pausing/unpausing Coordinator jobs", ex);
+            }
+            // unpause coordinators as needed;
+            try {
                 jobList = jpaService.execute(new CoordJobsGetPausedJPAExecutor(-1));
-                for (CoordinatorJobBean coordJob : jobList) {
-                    if ((coordJob.getPauseTime() == null || coordJob.getPauseTime().after(d))) {
-                        new CoordUnpauseXCommand(coordJob).call();
-                        LOG.debug("Calling CoordUnpauseXCommand for coordinator job = " + coordJob.getId());
+                if (jobList != null) {
+                    for (CoordinatorJobBean coordJob : jobList) {
+                        if ((coordJob.getPauseTime() == null || coordJob.getPauseTime().after(d))) {
+                            new CoordUnpauseXCommand(coordJob).call();
+                            LOG.debug("Calling CoordUnpauseXCommand for coordinator job = " + coordJob.getId());
+                        }
                     }
                 }
             }
