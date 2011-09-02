@@ -30,39 +30,4 @@ done
 BASEDIR=`dirname ${PRG}`
 BASEDIR=`cd ${BASEDIR}/..;pwd`
 
-source ${BASEDIR}/bin/oozie-sys.sh
-
-# The Java System property 'oozie.http.port' it is not used by Oozie,
-# it is used in Tomcat's server.xml configuration file
-#
-echo "Using   CATALINA_OPTS:       ${CATALINA_OPTS}"
-
-catalina_opts="-Doozie.home.dir=${OOZIE_HOME}";
-catalina_opts="${catalina_opts} -Doozie.config.dir=${OOZIE_CONFIG}";
-catalina_opts="${catalina_opts} -Doozie.log.dir=${OOZIE_LOG}";
-catalina_opts="${catalina_opts} -Doozie.data.dir=${OOZIE_DATA}";
-
-catalina_opts="${catalina_opts} -Doozie.config.file=${OOZIE_CONFIG_FILE}";
-
-catalina_opts="${catalina_opts} -Doozie.log4j.file=${OOZIE_LOG4J_FILE}";
-catalina_opts="${catalina_opts} -Doozie.log4j.reload=${OOZIE_LOG4J_RELOAD}";
-
-catalina_opts="${catalina_opts} -Doozie.http.hostname=${OOZIE_HTTP_HOSTNAME}";
-catalina_opts="${catalina_opts} -Doozie.http.port=${OOZIE_HTTP_PORT}";
-catalina_opts="${catalina_opts} -Doozie.base.url=${OOZIE_BASE_URL}";
-
-echo "Adding to CATALINA_OPTS:     ${catalina_opts}"
-
-export CATALINA_OPTS="${CATALINA_OPTS} ${catalina_opts}"
-
-if [ ! -e "${CATALINA_BASE}/webapps/oozie.war" ]; then
-  echo "WARN: Oozie WAR has not been set up at ''${CATALINA_BASE}/webapps'', doing default set up"
-  ${BASEDIR}/bin/oozie-setup.sh
-  if [ "$?" != "0" ]; then
-    exit -1
-  fi
-fi
-echo
-
-${BASEDIR}/oozie-server/bin/catalina.sh run
-
+exec ${BASEDIR}/bin/oozied.sh run 
