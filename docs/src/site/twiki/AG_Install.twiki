@@ -6,43 +6,37 @@
 
 %TOC%
 
----++ System Requirements
+---++ Basic Setup
 
-   * Unix (tested in Linux and Mac OS X)
-   * Java 1.6+
-   * Hadoop
-      * [[http://hadoop.apache.org][Apache Hadoop]] (tested with 0.20.2)
-      * [[http://developer.yahoo.com/hadoop][Yahoo! Hadoop]] (tested with 0.20.104.2)
-   * [[http://tomcat.apache.org][Tomcat 6.x]] (tested with 6.0.18)
-
----++ Download Oozie
-
-Download the latest Oozie distribution from [[http://yahoo.github.com/oozie/downloads]].
-
-Expand the Oozie distribution =tar.gz=.
+Follow the instructions at [[DG_QuickStart][Oozie Quick Start]].
 
 ---++ Environment Setup
 
-Java JRE should be in the =PATH=.
+The =OOZIE_HOME= environment variable is used to determine Oozie =conf/= and =logs/= directories. If not set the
+parent's parent directory of the =oozie-start.sh= command will be used.
 
-Set the =OOZIE_HOME= environment variable to the directory where the expanded Oozie distribution is located.
+The =OOZIE_HTTP_PORT= environment variable specifies the port Oozie server runs on. If not set, the default value
+is =11000=.
 
-*NOTE:* The =OOZIE_HOME= environment variable is only required and used by the Oozie server. It is not used by the
-Oozie client.
+The =OOZIE_HTTP_HOSTNAME= environment variable specifies the host name Oozie server runs on. If not set, the default
+value is =`hostname -f`.
 
-Add =${OOZIE_HOME}/bin= to the =PATH=.
+The =OOZIE_BASE_URL= environment variable specifies Oozie base URL for callback URLs. If not set, the default value
+is =http://${OOZIE_HTTP_HOSTNAME}:${OOZIE_HTTP_PORT}/oozie=.
 
----++ Oozie WAR Setup
+---++ Oozie Server Setup
 
-Oozie WAR is bundled without the Hadoop JAR files and without the ExtJS library. The Hadoop JARs are required to run
-Oozie. The ExtJS library is optional (only required for the Oozie web-console to work).
+Oozie is bundled without Hadoop JAR files and without the ExtJS library.
 
-The ExtJS library can be downloaded from [[http://www.extjs.com/learn/Ext_Version_Archives][ExtJS 2.2]] (it must be
-version 2.2). The ExtJS library is not bundled with Oozie because it uses a different license.
+   * The Hadoop JARs are required to run Oozie
+   * The ExtJS library is optional (only required for the Oozie web-console to work)
 
-Use the =${OOZIE_HOME}/bin/addtowar.sh= script to add the Hadoop JARs and the ExtJS library to the Oozie WAR file.
+The =addtowar.sh= script or the convenience =oozie-setup.sh= script must be used to prepare an Oozie server.
 
-Usage:
+These scripts add Hadoop JARs, JDBC JARs and the ExtJS library to the Oozie WAR file.
+
+The =addtowar.sh= script options are:
+
 <verbatim>
  Usage  : addtowar <OPTIONS>
  Options: -inputwar INPUT_OOZIE_WAR
@@ -51,6 +45,22 @@ Usage:
           [-extjs EXTJS_PATH]
           [-jars JARS_PATH] (multiple JAR path separated by ':')
 </verbatim>
+
+The =setup-oozie.sh= script options are:
+
+<verbatim>
+Usage  : oozie-setup.sh <OPTIONS>"
+         [-extjs EXTJS_PATH] (expanded or ZIP, to enable the Oozie webconsole)"
+         [-hadoop HADOOP_VERSION HADOOP_PATH] (Hadoop version [0.20.1|0.20.2|0.20.104|0.20.200]"
+                                               and Hadoop install dir)"
+         [-jars JARS_PATH] (multiple JAR path separated by ':')"
+         (without options does default setup, without the Oozie webconsole)"
+</verbatim>
+
+NOTE: The =setup-oozie.sh= script prepares the embedded Tomcat server to run Oozie. The =addtowar.sh= script should
+be used only if an alternate servlet container is used.
+
+---+++ Setting Up Oozie with an Alternate Tomcat
 
 The original Oozie WAR file is at =${OOZIE_HOME}/oozie.war=.
 
@@ -68,13 +78,13 @@ directory.
 Oozie works with HSQL, MySQL and Oracle databases.
 
 If using HSQL, Oozie bundles HSQL JDBC driver. HSQL is an embedded in-memory database, all data is lost when Oozie
-stops running.
+is restarted.
 
 If using MySQL or Oracle, the corresponding JDBC driver JARs files must be in Oozie classpath (added to Oozie WAR or
 in Tomcat's =common/lib= directory). A database should be created for Oozie, Oozie creates its tables automatically.
 
-The =bin/addtowar.sh= script has an option =-jars= that can be used to add the Oracle or MySQL JDBC driver JARs to the
-Oozie WAR file.
+The =oozie-setup.sh= and the=addtowar.sh= scripts have an option =-jars= that can be used to add the Oracle or MySQL
+JDBC driver JARs to the Oozie WAR file.
 
 ---++ Oozie Configuration
 
@@ -218,15 +228,6 @@ shown):
 
 <verbatim>
   oozie.system.id=oozie-${user.name}
-</verbatim>
-
----+++ Oozie URL Configuration
-
-Oozie needs to know its public base URL <code>SCHEME ://HOST:PORT/CONTEXT</code>. This base URL is used to
-create callback URLs for actions and the console URL for Oozie workflow jobs (default value shown):
-
-<verbatim>
-  oozie.base.url=http://localhost:8080/oozie
 </verbatim>
 
 ---+++ Fine Tuning an Oozie Server

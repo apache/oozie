@@ -22,3 +22,4 @@ core/build
 core/mem
 examples/oozietests
 mkdistro-*.out
+distro/downloads

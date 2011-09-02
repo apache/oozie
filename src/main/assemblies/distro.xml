@@ -67,6 +67,22 @@
             </includes>
             <fileMode>0444</fileMode>
         </fileSet>
+        <!-- Embedded Tomcat -->
+        <fileSet>
+            <directory>${basedir}/target/tomcat/oozie-server</directory>
+            <outputDirectory>/oozie-server</outputDirectory>
+            <excludes>
+                <exclude>bin/*.sh</exclude>
+            </excludes>
+        </fileSet>
+        <fileSet>
+            <directory>${basedir}/target/tomcat/oozie-server/bin</directory>
+            <outputDirectory>/oozie-server/bin</outputDirectory>
+            <includes>
+                <include>*.sh</include>
+            </includes>
+            <fileMode>0555</fileMode>
+        </fileSet>
     </fileSets>
     <files>
         <!-- Oozie configuration files -->

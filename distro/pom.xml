@@ -76,6 +76,37 @@
                     </descriptors>
                 </configuration>
             </plugin>
+            <!-- Downloading Tomcat TAR.GZ, using downloads/ dir to avoid downloading over an over -->
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.6</version>
+                <executions>
+                    <execution>
+                        <configuration>
+                            <target>
+                                <mkdir dir="downloads"></mkdir>
+                                <get src="http://www.apache.org/dist/tomcat/tomcat-6/v6.0.29/bin/apache-tomcat-6.0.29.tar.gz"
+                                     dest="downloads/tomcat.tar.gz"
+                                     verbose="true"
+                                     skipexisting="true"/>
+                                <delete dir="target/tomcat"/>
+                                <mkdir dir="target/tomcat"/>
+                                <gunzip src="downloads/tomcat.tar.gz" dest="target/tomcat/tomcat.tar"/>
+                                <untar src="target/tomcat/tomcat.tar" dest="target/tomcat"/>
+                                <move file="target/tomcat/apache-tomcat-6.0.29" tofile="target/tomcat/oozie-server"/>
+                                <delete dir="target/tomcat/oozie-server/webapps"/>
+                                <mkdir dir="target/tomcat/oozie-server/webapps"/>
+                                <delete file="target/tomcat/oozie-server/conf/server.xml"/>
+                                <copy file="src/main/tomcat/server.xml" toDir="target/tomcat/oozie-server/conf"/>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <phase>package</phase>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 

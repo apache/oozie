@@ -8,7 +8,7 @@
 
 ---++ System Requirements
 
-   * Unix box (tested on Mac OS X or Linux)
+   * Unix box (tested on Mac OS X and Linux)
    * Java JDK 1.6+
    * [[http://archive.apache.org/dist/maven/binaries/apache-maven-2.2.0-bin.tar.gz][Maven 2.2.0]]
    * [[http://hadoop.apache.org/core/releases.html][Hadoop 0.20.2+]]
@@ -168,6 +168,9 @@ When changing the Oozie version, it must be changed through out the =pom.xml= fi
 <code><!-- OOZIE_VERSION --></code> in the =pom.xml= files to find all the locations to change it.
 
 ---++ Building an Oozie Distribution
+
+An Oozie distribution bundles an embedded Tomcat server. The Oozie distro module downloads Tomcat TAR.GZ from Apache
+once (in the =distro/downloads/= directory) and uses when creating the distro.
 
 The following Maven invocation builds an Oozie distribution:
 
