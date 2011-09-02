@@ -188,7 +188,9 @@ public class CoordResumeXCommand extends ResumeTransitionXCommand {
     }
 
     private void updateCoordAction(CoordinatorActionBean action) throws CommandException {
-        action.setStatus(CoordinatorActionBean.Status.RUNNING);
+        if(action.getStatus() == CoordinatorActionBean.Status.SUSPENDED){
+            action.setStatus(CoordinatorActionBean.Status.RUNNING);
+        }
         action.incrementAndGetPending();
         action.setLastModifiedTime(new Date());
         try {

@@ -207,10 +207,10 @@ public class TestBundleStartXCommand extends XDataTestCase {
         waitFor(120000, new Predicate() {
             public boolean evaluate() throws Exception {
                 BundleJobBean job1 = jpaService.execute(bundleJobGetExecutor);
-                return job1.getStatus().equals(Job.Status.DONEWITHERROR);
+                return job1.getStatus().equals(Job.Status.FAILED);
             }
         });
         job = jpaService.execute(bundleJobGetExecutor);
-        assertEquals(Job.Status.DONEWITHERROR, job.getStatus());
+        assertEquals(Job.Status.FAILED, job.getStatus());
     }
 }

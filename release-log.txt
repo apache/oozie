@@ -1,5 +1,6 @@
 -- Oozie 3.0.0 release
 
+GH-0610 Fixing Bundle status service and Coordinator Action resume
 GH-0480 Support new Pig API to submit pig job
 GH-0529 Update Tomcat download URL
 GH-0562 oozie job -log returns incomplete or empty log
