@@ -64,7 +64,10 @@ public class SchemaService implements Service {
         String[] schemas = conf.getStrings(extSchema);
         if (schemas != null) {
             for (String schema : schemas) {
-                sources.add(new StreamSource(IOUtils.getResourceAsStream(schema, -1)));
+                schema = schema.replace("\n", "").trim();
+                if (schema.length() > 0) {
+                    sources.add(new StreamSource(IOUtils.getResourceAsStream(schema, -1)));
+                }
             }
         }
         SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);

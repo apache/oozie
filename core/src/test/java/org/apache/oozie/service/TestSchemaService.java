@@ -106,7 +106,7 @@ public class TestSchemaService extends XTestCase {
 
     public void testExtSchema() throws Exception {
         Services.get().destroy();
-        setSystemProperty(SchemaService.WF_CONF_EXT_SCHEMAS, "wf-ext-schema.xsd");
+        setSystemProperty(SchemaService.WF_CONF_EXT_SCHEMAS, " wf-ext-schema.xsd \n ");
         new Services().init();
         SchemaService wss = Services.get().get(SchemaService.class);
         Validator validator = wss.getSchema(SchemaName.WORKFLOW).newValidator();

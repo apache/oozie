@@ -1,5 +1,6 @@
 -- Oozie 3.0.0 release
 
+GH-0302 the ...wf.ext.schemas property should allow spaces/enters between schema files
 GH-0288 update readme file to point to 2.3 documentation
 GH-0296 JPA log configuration uses wrong variable
 GH-0304 index.twiki and DG_QuickStart.twiki need update on distro contents
