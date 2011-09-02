@@ -143,7 +143,7 @@ public class JavaActionExecutor extends ActionExecutor {
         }
     }
 
-    Configuration createBaseHadoopConf(Context context, Element actionXml) {
+    public Configuration createBaseHadoopConf(Context context, Element actionXml) {
         Configuration conf = new XConfiguration();
         conf.set(HADOOP_USER, context.getProtoActionConf().get(WorkflowAppService.HADOOP_USER));
         conf.set(HADOOP_UGI, context.getProtoActionConf().get(WorkflowAppService.HADOOP_UGI));
@@ -306,7 +306,7 @@ public class JavaActionExecutor extends ActionExecutor {
         }
     }
 
-    void prepareActionDir(FileSystem actionFs, Context context) throws ActionExecutorException {
+    public void prepareActionDir(FileSystem actionFs, Context context) throws ActionExecutorException {
         try {
             Path actionDir = context.getActionDir();
             Path tempActionDir = new Path(actionDir.getParent(), actionDir.getName() + ".tmp");
@@ -471,7 +471,7 @@ public class JavaActionExecutor extends ActionExecutor {
         injectCallback(context, launcherConf);
     }
 
-    void submitLauncher(Context context, WorkflowAction action) throws ActionExecutorException {
+    public void submitLauncher(Context context, WorkflowAction action) throws ActionExecutorException {
         JobClient jobClient = null;
         boolean exception = false;
         try {
