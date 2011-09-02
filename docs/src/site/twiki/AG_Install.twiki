@@ -114,17 +114,34 @@ The SQL database used by Oozie is configured using the following configuration p
 
 <verbatim>
   oozie.db.schema.name=oozie
-  oozie.db.schema.create=true
-  oozie.service.StoreService.jdbc.driver=org.apache.derby.jdbc.EmbeddedDriver
-  oozie.service.StoreService.jdbc.url=jdbc:derby:${oozie.data.dir}/${oozie.db.schema.name}-db;create=true
-  oozie.service.StoreService.jdbc.username=sa
-  oozie.service.StoreService.jdbc.password=
-  oozie.service.StoreService.pool.max.active.conn=10
+  oozie.service.JPAService.create.db.schema=true
+  oozie.service.JPAService.validate.db.connection=false
+  oozie.service.JPAService.jdbc.driver=org.apache.derby.jdbc.EmbeddedDriver
+  oozie.service.JPAService.jdbc.url=jdbc:derby:${oozie.data.dir}/${oozie.db.schema.name}-db;create=true
+  oozie.service.JPAService.jdbc.username=sa
+  oozie.service.JPAService.jdbc.password=
+  oozie.service.JPAService.pool.max.active.conn=10
+</verbatim>
+
+If using HSQL, these following configuration properties have to be in oozie-site.xml:
+
+<verbatim>
+  oozie.db.schema.name=oozie
+  oozie.service.JPAService.create.db.schema=true
+  oozie.service.JPAService.validate.db.connection=false
+  oozie.service.JPAService.jdbc.driver=org.hsqldb.jdbcDriver
+  oozie.service.JPAService.jdbc.url=jdbc:hsqldb:mem:${oozie.db.schema.name}
+  oozie.service.JPAService.jdbc.username=sa
+  oozie.service.JPAService.jdbc.password=
+  oozie.service.JPAService.pool.max.active.conn=10
 </verbatim>
 
 *NOTE:* If the =oozie.db.schema.create= property is set to =true= (default) the Oozie tables will be created
 automatically if they are not found in the database at Oozie start up time. In a production system this option should
 be set to =false= once the databaset tables have been created.
+
+*NOTE:* If the =oozie.db.schema.create= property is set to true, the =oozie.service.JPAService.validate.db.connection=
+property value is ignored and Oozie handles it as set to =false=.
 
 ---++ Oozie Configuration
 

@@ -27,12 +27,15 @@ public class InstrumentedBasicDataSource extends BasicDataSource {
      * The created datasource instruments the active DB connections.
      */
     public InstrumentedBasicDataSource() {
-        Instrumentation instr = Services.get().get(InstrumentationService.class).get();
-        instr.addSampler(INSTR_GROUP, INSTR_NAME, 60, 1, new Instrumentation.Variable<Long>() {
-            public Long getValue() {
-                return (long) getNumActive();
-            }
-        });
+        InstrumentationService instrumentationService = Services.get().get(InstrumentationService.class);
+        if (instrumentationService != null) {
+            Instrumentation instr = instrumentationService.get();
+            instr.addSampler(INSTR_GROUP, INSTR_NAME, 60, 1, new Instrumentation.Variable<Long>() {
+                public Long getValue() {
+                    return (long) getNumActive();
+                }
+            });
+        }
     }
 
 }
