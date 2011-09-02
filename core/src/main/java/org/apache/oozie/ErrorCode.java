@@ -194,7 +194,7 @@ public enum ErrorCode {
     E1316(XLog.STD, "Bundle job can not be unpaused, {0}"),
     E1317(XLog.STD, "Invalid bundle job change value {0}, {1}"),
     E1318(XLog.STD, "No coord jobs for the bundle=[{0}], fail the bundle"),
-
+    E1319(XLog.STD, "Invalid bundle coord job namespace, [{0}]"),
 
     ETEST(XLog.STD, "THIS SHOULD HAPPEN ONLY IN TESTING, invalid job id [{0}]"),;
 

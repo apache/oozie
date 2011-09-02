@@ -683,15 +683,15 @@ public abstract class XDataTestCase extends XFsTestCase {
      * Create bundle action bean and save to db
      *
      * @param jobId bundle job id
-     * @param actionId bnudle action id
+     * @param coordName coordinator name
      * @param pending true if action is pending
      * @param status job status
      * @return bundle action bean
      * @throws Exception
      */
-    protected BundleActionBean addRecordToBundleActionTable(String jobId, String actionId, int pending,
+    protected BundleActionBean addRecordToBundleActionTable(String jobId, String coordName, int pending,
             Job.Status status) throws Exception {
-        BundleActionBean action = createBundleAction(jobId, actionId, pending, status);
+        BundleActionBean action = createBundleAction(jobId, coordName, pending, status);
 
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
@@ -712,20 +712,20 @@ public abstract class XDataTestCase extends XFsTestCase {
      * Create bundle action bean
      *
      * @param jobId bundle job id
-     * @param actionId bnudle action id
+     * @param coordName coordinator name
      * @param pending true if action is pending
      * @param status job status
      * @return bundle action bean
      * @throws Exception
      */
-    protected BundleActionBean createBundleAction(String jobId, String actionId, int pending, Job.Status status)
+    protected BundleActionBean createBundleAction(String jobId, String coordName, int pending, Job.Status status)
             throws Exception {
         BundleActionBean action = new BundleActionBean();
         action.setBundleId(jobId);
-        action.setBundleActionId(jobId + "_" + actionId);
+        action.setBundleActionId(jobId + "_" + coordName);
         action.setPending(pending);
-        action.setCoordId(actionId);
-        action.setCoordName(actionId);
+        action.setCoordId(coordName);
+        action.setCoordName(coordName);
         action.setStatus(status);
         action.setLastModifiedTime(new Date());
 

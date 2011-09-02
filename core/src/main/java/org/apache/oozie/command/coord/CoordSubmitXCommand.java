@@ -200,17 +200,11 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
 
             String appXml = readAndValidateXml();
             coordJob.setOrigJobXml(appXml);
-
-            if (this.bundleId != null) {
-                // this coord job is created from bundle
-                coordJob.setBundleId(this.bundleId);
-            }
-            if (this.coordName != null) {
-                // this coord job is created from bundle
-                coordJob.setAppName(this.coordName);
-            }
-
             LOG.debug("jobXml after initial validation " + XmlUtils.prettyPrint(appXml).toString());
+
+            String appNamespace = readAppNamespace(appXml);
+            coordJob.setAppNamespace(appNamespace);
+
             appXml = XmlUtils.removeComments(appXml);
             initEvaluators();
             Element eJob = basicResolveAndIncludeDS(appXml, conf, coordJob);
@@ -314,6 +308,34 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         catch (IOException ex) {
             LOG.warn("IOException :", ex);
             throw new CoordinatorJobException(ErrorCode.E0702, ex.getMessage(), ex);
+        }
+    }
+
+    /**
+     * Read the application XML schema namespace
+     *
+     * @param xmlContent input coordinator xml
+     * @return app xml namespace
+     * @throws CoordinatorJobException
+     */
+    private String readAppNamespace(String xmlContent) throws CoordinatorJobException {
+        try {
+            Element coordXmlElement = XmlUtils.parseXml(xmlContent);
+            Namespace ns = coordXmlElement.getNamespace();
+            if (ns != null && bundleId != null && ns.getURI().equals(SchemaService.COORDINATOR_NAMESPACE_URI_1)) {
+                throw new CoordinatorJobException(ErrorCode.E1319, "bundle app can not submit coordinator namespace "
+                        + SchemaService.COORDINATOR_NAMESPACE_URI_1 + ", please use 0.2 or later");
+            }
+            if (ns != null) {
+                return ns.getURI();
+            }
+            else {
+                throw new CoordinatorJobException(ErrorCode.E0700, "the application xml namespace is not given");
+            }
+        }
+        catch (JDOMException ex) {
+            LOG.warn("JDOMException :", ex);
+            throw new CoordinatorJobException(ErrorCode.E0700, ex.getMessage(), ex);
         }
     }
 
@@ -926,6 +948,14 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
             throw new CommandException(ErrorCode.E0610);
         }
         coordJob = new CoordinatorJobBean();
+        if (this.bundleId != null) {
+            // this coord job is created from bundle
+            coordJob.setBundleId(this.bundleId);
+        }
+        if (this.coordName != null) {
+            // this coord job is created from bundle
+            coordJob.setAppName(this.coordName);
+        }
         setJob(coordJob);
     }
 

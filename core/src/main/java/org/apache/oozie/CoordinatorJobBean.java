@@ -139,6 +139,185 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
     @Column(name = "done_materialization")
     private int doneMaterialization = 0;
 
+    @Basic
+    @Column(name = "app_namespace")
+    private String appNamespace = null;
+
+    /**
+     * Get start timestamp
+     *
+     * @return start timestamp
+     */
+    public java.sql.Timestamp getStartTimestamp() {
+        return startTimestamp;
+    }
+
+    /**
+     * Set start timestamp
+     *
+     * @param startTimestamp start timestamp
+     */
+    public void setStartTimestamp(java.sql.Timestamp startTimestamp) {
+        super.setStartTime(DateUtils.toDate(startTimestamp));
+        this.startTimestamp = startTimestamp;
+    }
+
+    /**
+     * Get end timestamp
+     *
+     * @return end timestamp
+     */
+    public java.sql.Timestamp getEndTimestamp() {
+        return endTimestamp;
+    }
+
+    /**
+     * Set end timestamp
+     *
+     * @param endTimestamp end timestamp
+     */
+    public void setEndTimestamp(java.sql.Timestamp endTimestamp) {
+        super.setEndTime(DateUtils.toDate(endTimestamp));
+        this.endTimestamp = endTimestamp;
+    }
+
+    /**
+     * Get next materialized timestamp
+     *
+     * @return next materialized timestamp
+     */
+    public Timestamp getNextMaterializedTimestamp() {
+        return nextMaterializedTimestamp;
+    }
+
+    /**
+     * Set next materialized timestamp
+     *
+     * @param nextMaterializedTimestamp next materialized timestamp
+     */
+    public void setNextMaterializedTimestamp(java.sql.Timestamp nextMaterializedTimestamp) {
+        super.setNextMaterializedTime(DateUtils.toDate(nextMaterializedTimestamp));
+        this.nextMaterializedTimestamp = nextMaterializedTimestamp;
+    }
+
+    /**
+     * Get last modified timestamp
+     *
+     * @return last modified timestamp
+     */
+    public Timestamp getLastModifiedTimestamp() {
+        return lastModifiedTimestamp;
+    }
+
+    /**
+     * Set last modified timestamp
+     *
+     * @param lastModifiedTimestamp last modified timestamp
+     */
+    public void setLastModifiedTimestamp(java.sql.Timestamp lastModifiedTimestamp) {
+        this.lastModifiedTimestamp = lastModifiedTimestamp;
+    }
+
+    /**
+     * Get suspended timestamp
+     *
+     * @return suspended timestamp
+     */
+    public Timestamp getSuspendedTimestamp() {
+        return suspendedTimestamp;
+    }
+
+    /**
+     * Set suspended timestamp
+     *
+     * @param suspendedTimestamp suspended timestamp
+     */
+    public void setSuspendedTimestamp(java.sql.Timestamp suspendedTimestamp) {
+        this.suspendedTimestamp = suspendedTimestamp;
+    }
+
+    /**
+     * Get job xml
+     *
+     * @return job xml
+     */
+    public String getJobXml() {
+        return jobXml;
+    }
+
+    /**
+     * Set job xml
+     *
+     * @param jobXml job xml
+     */
+    public void setJobXml(String jobXml) {
+        this.jobXml = jobXml;
+    }
+
+    /**
+     * Get original job xml
+     *
+     * @return original job xml
+     */
+    public String getOrigJobXml() {
+        return origJobXml;
+    }
+
+    /**
+     * Set original job xml
+     *
+     * @param origJobXml
+     */
+    public void setOrigJobXml(String origJobXml) {
+        this.origJobXml = origJobXml;
+    }
+
+    /**
+     * Get sla xml
+     *
+     * @return sla xml
+     */
+    public String getSlaXml() {
+        return slaXml;
+    }
+
+    /**
+     * Set sla xml
+     *
+     * @param slaXml sla xml
+     */
+    public void setSlaXml(String slaXml) {
+        this.slaXml = slaXml;
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.oozie.client.rest.JsonCoordinatorJob#setTimeUnit(org.apache.oozie.client.CoordinatorJob.Timeunit)
+     */
+    @Override
+    public void setTimeUnit(Timeunit timeUnit) {
+        super.setTimeUnit(timeUnit);
+        this.timeUnitStr = timeUnit.toString();
+    }
+
+    /**
+     * Set last action timestamp
+     *
+     * @param lastActionTimestamp last action timestamp
+     */
+    public void setLastActionTimestamp(java.sql.Timestamp lastActionTimestamp) {
+        super.setLastActionTime(DateUtils.toDate(lastActionTimestamp));
+        this.lastActionTimestamp = lastActionTimestamp;
+    }
+
+    /**
+     * Set auth token
+     *
+     * @param authToken auth token
+     */
+    public void setAuthToken(String authToken) {
+        this.authToken = authToken;
+    }
+
     /**
      * Set pending to true
      */
@@ -189,86 +368,23 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
         return doneMaterialization == 1 ? true : false;
     }
 
-    public java.sql.Timestamp getStartTimestamp() {
-        return startTimestamp;
+
+    /**
+     * Get app namespce
+     *
+     * @return app namespce
+     */
+    public String getAppNamespace() {
+        return appNamespace;
     }
 
-    public void setStartTimestamp(java.sql.Timestamp startTimestamp) {
-        super.setStartTime(DateUtils.toDate(startTimestamp));
-        this.startTimestamp = startTimestamp;
-    }
-
-    public java.sql.Timestamp getEndTimestamp() {
-        return endTimestamp;
-    }
-
-    public void setEndTimestamp(java.sql.Timestamp endTimestamp) {
-        super.setEndTime(DateUtils.toDate(endTimestamp));
-        this.endTimestamp = endTimestamp;
-    }
-
-    public Timestamp getNextMaterializedTimestamp() {
-        return nextMaterializedTimestamp;
-    }
-
-    public void setNextMaterializedTimestamp(java.sql.Timestamp nextMaterializedTimestamp) {
-        super.setNextMaterializedTime(DateUtils.toDate(nextMaterializedTimestamp));
-        this.nextMaterializedTimestamp = nextMaterializedTimestamp;
-    }
-
-    public Timestamp getLastModifiedTimestamp() {
-        return lastModifiedTimestamp;
-    }
-
-    public void setLastModifiedTimestamp(java.sql.Timestamp lastModifiedTimestamp) {
-        this.lastModifiedTimestamp = lastModifiedTimestamp;
-    }
-
-    public Timestamp getSuspendedTimestamp() {
-        return suspendedTimestamp;
-    }
-
-    public void setSuspendedTimestamp(java.sql.Timestamp suspendedTimestamp) {
-        this.suspendedTimestamp = suspendedTimestamp;
-    }
-
-    public String getJobXml() {
-        return jobXml;
-    }
-
-    public void setJobXml(String jobXml) {
-        this.jobXml = jobXml;
-    }
-
-    public String getOrigJobXml() {
-        return origJobXml;
-    }
-
-    public void setOrigJobXml(String origJobXml) {
-        this.origJobXml = origJobXml;
-    }
-
-    public String getSlaXml() {
-        return slaXml;
-    }
-
-    public void setSlaXml(String slaXml) {
-        this.slaXml = slaXml;
-    }
-
-    @Override
-    public void setTimeUnit(Timeunit timeUnit) {
-        super.setTimeUnit(timeUnit);
-        this.timeUnitStr = timeUnit.toString();
-    }
-
-    public void setLastActionTimestamp(java.sql.Timestamp lastActionTimestamp) {
-        super.setLastActionTime(DateUtils.toDate(lastActionTimestamp));
-        this.lastActionTimestamp = lastActionTimestamp;
-    }
-
-    public void setAuthToken(String authToken) {
-        this.authToken = authToken;
+    /**
+     * Set app namespce
+     *
+     * @param appNamespace the app namespce to set
+     */
+    public void setAppNamespace(String appNamespace) {
+        this.appNamespace = appNamespace;
     }
 
     public CoordinatorJobBean() {
@@ -299,6 +415,17 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
         WritableUtils.writeStr(dataOutput, getExternalId());
         dataOutput.writeInt(getTimeout());
         dataOutput.writeInt(getMatThrottling());
+        if (isPending()) {
+            dataOutput.writeInt(1);
+        } else {
+            dataOutput.writeInt(0);
+        }
+        if (isDoneMaterialization()) {
+            dataOutput.writeInt(1);
+        } else {
+            dataOutput.writeInt(0);
+        }
+        WritableUtils.writeStr(dataOutput, getAppNamespace());
     }
 
     /**
@@ -341,135 +468,253 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
         setExternalId(WritableUtils.readStr(dataInput));
         setTimeout(dataInput.readInt());
         setMatThrottling(dataInput.readInt());
+
+        d = dataInput.readInt();
+        if (d == 1) {
+            setPending();
+        }
+
+        d = dataInput.readInt();
+        if (d == 1) {
+            setDoneMaterialization();
+        }
+
+        setAppNamespace(WritableUtils.readStr(dataInput));
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.client.rest.JsonCoordinatorJob#getStatus()
+     */
     @Override
     public Status getStatus() {
         return Status.valueOf(this.status);
     }
 
+    /**
+     * Get status
+     *
+     * @return status
+     */
     public String getStatusStr() {
         return status;
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.client.rest.JsonCoordinatorJob#setStatus(org.apache.oozie.client.Job.Status)
+     */
     @Override
     public void setStatus(Status val) {
         super.setStatus(val);
         this.status = val.toString();
     }
 
+    /**
+     * Get time unit
+     *
+     * @return time unit
+     */
     public String getTimeUnitStr() {
         return timeUnitStr;
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.client.rest.JsonCoordinatorJob#getTimeUnit()
+     */
     @Override
     public Timeunit getTimeUnit() {
         return Timeunit.valueOf(this.timeUnitStr);
     }
 
+    /**
+     * Set order
+     *
+     * @param order
+     */
     public void setExecution(Execution order) {
         this.execution = order.toString();
         super.setExecutionOrder(order);
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.client.rest.JsonCoordinatorJob#getExecutionOrder()
+     */
     @Override
     public Execution getExecutionOrder() {
         return Execution.valueOf(this.execution);
     }
 
+    /**
+     * Get execution
+     *
+     * @return execution
+     */
     public String getExecution() {
         return execution;
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.client.rest.JsonCoordinatorJob#setLastActionTime(java.util.Date)
+     */
     @Override
     public void setLastActionTime(Date lastAction) {
         this.lastActionTimestamp = DateUtils.convertDateToTimestamp(lastAction);
         super.setLastActionTime(lastAction);
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.client.rest.JsonCoordinatorJob#getLastActionTime()
+     */
     @Override
     public Date getLastActionTime() {
         return DateUtils.toDate(lastActionTimestamp);
     }
 
+    /**
+     * Get last action timestamp
+     *
+     * @return last action timestamp
+     */
     public Timestamp getLastActionTimestamp() {
         return lastActionTimestamp;
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.client.rest.JsonCoordinatorJob#setNextMaterializedTime(java.util.Date)
+     */
     @Override
     public void setNextMaterializedTime(Date nextMaterializedTime) {
         super.setNextMaterializedTime(nextMaterializedTime);
         this.nextMaterializedTimestamp = DateUtils.convertDateToTimestamp(nextMaterializedTime);
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.client.rest.JsonCoordinatorJob#getNextMaterializedTime()
+     */
     @Override
     public Date getNextMaterializedTime() {
         return DateUtils.toDate(nextMaterializedTimestamp);
     }
 
+    /**
+     * Set last modified time
+     *
+     * @param lastModifiedTime last modified time
+     */
     public void setLastModifiedTime(Date lastModifiedTime) {
         this.lastModifiedTimestamp = DateUtils.convertDateToTimestamp(lastModifiedTime);
     }
 
+    /**
+     * Get last modified time
+     *
+     * @return last modified time
+     */
     public Date getLastModifiedTime() {
         return DateUtils.toDate(lastModifiedTimestamp);
     }
 
+    /**
+     * Set suspended time
+     *
+     * @param suspendedTime suspended time
+     */
     public void setSuspendedTime(Date suspendedTime) {
         this.suspendedTimestamp = DateUtils.convertDateToTimestamp(suspendedTime);
     }
 
+    /**
+     * Get suspended time
+     *
+     * @return suspended time
+     */
     public Date getSuspendedTime() {
         return DateUtils.toDate(suspendedTimestamp);
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.client.rest.JsonCoordinatorJob#setStartTime(java.util.Date)
+     */
     @Override
     public void setStartTime(Date startTime) {
         super.setStartTime(startTime);
         this.startTimestamp = DateUtils.convertDateToTimestamp(startTime);
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.client.rest.JsonCoordinatorJob#getStartTime()
+     */
     @Override
     public Date getStartTime() {
         return DateUtils.toDate(startTimestamp);
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.client.rest.JsonCoordinatorJob#setEndTime(java.util.Date)
+     */
     @Override
     public void setEndTime(Date endTime) {
         super.setEndTime(endTime);
         this.endTimestamp = DateUtils.convertDateToTimestamp(endTime);
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.client.rest.JsonCoordinatorJob#setPauseTime(java.util.Date)
+     */
     @Override
     public void setPauseTime(Date pauseTime) {
         super.setPauseTime(pauseTime);
         this.pauseTimestamp = DateUtils.convertDateToTimestamp(pauseTime);
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.client.rest.JsonCoordinatorJob#getEndTime()
+     */
     @Override
     public Date getEndTime() {
         return DateUtils.toDate(endTimestamp);
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.client.rest.JsonCoordinatorJob#getPauseTime()
+     */
     @Override
     public Date getPauseTime() {
         return DateUtils.toDate(pauseTimestamp);
     }
 
+    /**
+     * Set created time
+     *
+     * @param createTime created time
+     */
     public void setCreatedTime(Date createTime) {
         this.createdTimestamp = DateUtils.convertDateToTimestamp(createTime);
     }
 
+    /**
+     * Get created time
+     *
+     * @return created time
+     */
     public Date getCreatedTime() {
         return DateUtils.toDate(createdTimestamp);
     }
 
+    /**
+     * Get created timestamp
+     *
+     * @return created timestamp
+     */
     public Timestamp getCreatedTimestamp() {
         return createdTimestamp;
     }
 
+    /**
+     * Get auth token
+     *
+     * @return auth token
+     */
     public String getAuthToken() {
-        // TODO Auto-generated method stub
         return this.authToken;
     }
 
