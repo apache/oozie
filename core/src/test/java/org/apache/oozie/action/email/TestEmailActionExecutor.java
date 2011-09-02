@@ -17,6 +17,7 @@ package org.apache.oozie.action.email;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.action.hadoop.ActionExecutorTestCase;
+import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
@@ -47,12 +48,18 @@ public class TestEmailActionExecutor extends ActionExecutorTestCase {
     private Context createNormalContext(String actionXml) throws Exception {
         EmailActionExecutor ae = new EmailActionExecutor();
 
+        Services.get().getConf().setInt("oozie.email.smtp.port", server.getSmtp().getPort());
+        Services.get().getConf().set("oozie.email.smtp.host", "localhost");
+        Services.get().getConf().set("oozie.email.from.address", "test@oozie.com");
+
+        // Disable auth tests by default.
+        Services.get().getConf().setBoolean("oozie.email.smtp.auth", false);
+        Services.get().getConf().set("oozie.email.smtp.username", "");
+        Services.get().getConf().set("oozie.email.smtp.password", "");
+
         XConfiguration protoConf = new XConfiguration();
         protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
         protoConf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
-        protoConf.setInt("oozie.email.smtp.port", server.getSmtp().getPort());
-        protoConf.set("oozie.email.smtp.host", "localhost");
-        protoConf.set("oozie.email.from.address", "test@oozie.com");
         injectKerberosInfo(protoConf);
 
         WorkflowJobBean wf = createBaseWorkflow(protoConf, "email-action");
@@ -65,9 +72,11 @@ public class TestEmailActionExecutor extends ActionExecutorTestCase {
 
     private Context createAuthContext(String actionXml) throws Exception {
         Context ctx = createNormalContext(actionXml);
-        ctx.getProtoActionConf().setBoolean("oozie.email.smtp.auth", true);
-        ctx.getProtoActionConf().set("oozie.email.smtp.username", "test@oozie.com");
-        ctx.getProtoActionConf().set("oozie.email.smtp.password", "oozie");
+
+        // Override and enable auth.
+        Services.get().getConf().setBoolean("oozie.email.smtp.auth", true);
+        Services.get().getConf().set("oozie.email.smtp.username", "test@oozie.com");
+        Services.get().getConf().set("oozie.email.smtp.password", "oozie");
         return ctx;
     }
 

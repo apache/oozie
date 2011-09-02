@@ -30,7 +30,6 @@ import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.action.ActionExecutorException.ErrorType;
@@ -110,12 +109,12 @@ public class EmailActionExecutor extends ActionExecutor {
 
     protected void email(Context context, String[] to, String[] cc, String subject, String body) throws ActionExecutorException {
         // Get mailing server details.
-        String smtpHost = context.getProtoActionConf().get("oozie.email.smtp.host");
-        String smtpPort = context.getProtoActionConf().get("oozie.email.smtp.port", "25");
-        Boolean smtpAuth = context.getProtoActionConf().getBoolean("oozie.email.smtp.auth", false);
-        String smtpUser = context.getProtoActionConf().get("oozie.email.smtp.username", "");
-        String smtpPassword = context.getProtoActionConf().get("oozie.email.smtp.password", "");
-        String fromAddr = context.getProtoActionConf().get("oozie.email.from.address");
+        String smtpHost = getOozieConf().get("oozie.email.smtp.host");
+        String smtpPort = getOozieConf().get("oozie.email.smtp.port", "25");
+        Boolean smtpAuth = getOozieConf().getBoolean("oozie.email.smtp.auth", false);
+        String smtpUser = getOozieConf().get("oozie.email.smtp.username", "");
+        String smtpPassword = getOozieConf().get("oozie.email.smtp.password", "");
+        String fromAddr = getOozieConf().get("oozie.email.from.address");
 
         Properties properties = new Properties();
         properties.setProperty("mail.smtp.host", smtpHost);
@@ -123,10 +122,12 @@ public class EmailActionExecutor extends ActionExecutor {
         properties.setProperty("mail.smtp.auth", smtpAuth.toString());
 
         Session session;
+        // Do not use default instance (i.e. Session.getDefaultInstance)
+        // (cause it may lead to issues when used second time).
         if (!smtpAuth) {
-            session = Session.getDefaultInstance(properties);
+            session = Session.getInstance(properties);
         } else {
-            session = Session.getDefaultInstance(properties, new JavaMailAuthenticator(smtpUser, smtpPassword));
+            session = Session.getInstance(properties, new JavaMailAuthenticator(smtpUser, smtpPassword));
         }
 
         Message message = new MimeMessage(session);

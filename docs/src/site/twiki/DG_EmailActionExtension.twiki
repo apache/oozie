@@ -50,7 +50,7 @@ The =email= action requires some SMTP server configuration to be present (in ooz
 it looks for:
 
 =oozie.email.smtp.host= - The host where the email action may find the SMTP server (localhost by default).
-=oozie.email.smtp.host= - The port to connect to for the SMTP server (25 by default).
+=oozie.email.smtp.port= - The port to connect to for the SMTP server (25 by default).
 =oozie.email.from.address= - The from address to be used for mailing all emails (oozie@localhost by default).
 =oozie.email.smtp.auth= - Boolean property that toggles if authentication is to be done or not. (false by default).
 =oozie.email.smtp.username= - If authentication is enabled, the username to login as (empty by default).
