@@ -38,54 +38,46 @@
     </organization>
 
     <dependencies>
+
         <dependency>
             <groupId>com.yahoo.oozie</groupId> <!-- OOZIE_GROUP_ID -->
             <artifactId>oozie-core</artifactId>
             <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
+
         <dependency>
             <groupId>com.yahoo.oozie</groupId> <!-- OOZIE_GROUP_ID -->
             <artifactId>oozie-client</artifactId>
             <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
+
         <dependency>
             <groupId>com.yahoo.oozie</groupId> <!-- OOZIE_GROUP_ID -->
             <artifactId>oozie-sharelib</artifactId>
             <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>
+
         <dependency>
             <groupId>${hadoopGroupId}</groupId>
             <artifactId>hadoop-core</artifactId>
-            <version>${hadoopVersion}</version>
             <scope>provided</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.commons</groupId>
-                    <artifactId>commons-cli</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
+
         <dependency>
             <groupId>${hadoopGroupId}</groupId>
             <artifactId>hadoop-test</artifactId>
-            <version>${hadoopVersion}</version>
             <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.commons</groupId>
-                    <artifactId>commons-cli</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
+
         <dependency>
            <groupId>org.slf4j</groupId>
            <artifactId>slf4j-log4j12</artifactId>
-           <version>1.4.3</version>
            <scope>test</scope>
         </dependency>
+
     </dependencies>
     <build>
         <plugins>

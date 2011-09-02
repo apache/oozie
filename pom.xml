@@ -15,9 +15,11 @@
 -->
 <project>
     <modelVersion>4.0.0</modelVersion>
-    <groupId>com.yahoo.oozie</groupId> <!-- OOZIE_GROUP_ID -->
+    <groupId>com.yahoo.oozie</groupId>
+    <!-- OOZIE_GROUP_ID -->
     <artifactId>oozie-main</artifactId>
-    <version>2.3.0-SNAPSHOT</version> <!-- OOZIE_VERSION -->
+    <version>2.3.0-SNAPSHOT</version>
+    <!-- OOZIE_VERSION -->
     <description>Oozie Main</description>
     <name>Oozie Main</name>
     <packaging>pom</packaging>
@@ -33,7 +35,7 @@
         <name>Yahoo</name>
         <url>http://www.yahoo.com</url>
     </organization>
-    
+
     <properties>
         <!-- to be able to run a single test case from the main project -->
         <failIfNoTests>false</failIfNoTests>
@@ -84,6 +86,36 @@
         <!-- platform encoding override -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <!-- Dependencies versions -->
+        
+        <json-simple.version>1.1</json-simple.version>
+        <commons-cli.version>1.2</commons-cli.version>
+        <junit.version>3.8.1</junit.version>
+        <persistence-api.version>1.0</persistence-api.version>
+        <openjpa-persistence.version>1.2.1</openjpa-persistence.version>
+        <openjpa-jdbc.version>1.2.1</openjpa-jdbc.version>
+        <openjpa-persistence-jdbc.version>1.2.1</openjpa-persistence-jdbc.version>
+        <commons-codec.version>1.3</commons-codec.version>
+        <hadoop-core.version>${hadoopVersion}</hadoop-core.version>
+        <hadoop-test.version>${hadoopVersion}</hadoop-test.version>
+        <hadoop-streaming.version>${hadoopVersion}</hadoop-streaming.version>
+        <pig-core.version>${pigVersion}</pig-core.version>
+        <jline.version>0.9.94</jline.version>
+        <slf4j-log4j12.version>1.4.3</slf4j-log4j12.version>
+        <json-simple.version>1.1</json-simple.version>
+        <commons-logging.version>1.1</commons-logging.version>
+        <log4j.version>1.2.15</log4j.version>
+        <servlet-api.version>2.5</servlet-api.version>
+        <jsp-api.version>2.0</jsp-api.version>
+        <commons-el.version>1.0</commons-el.version>
+        <jdom.version>1.1</jdom.version>
+        <jetty.version>6.1.14</jetty.version>
+        <commons-pool.version>1.5.4</commons-pool.version>
+        <commons-dbcp.version>1.4</commons-dbcp.version>
+        <hsqldb.version>1.8.0.7</hsqldb.version>
+        <mysql-connector-java.version>5.1.6</mysql-connector-java.version>
+        <ojdbc6.version>11.2.0.1.0</ojdbc6.version>
     </properties>
 
     <modules>
@@ -106,12 +138,12 @@
 
     <repositories>
         <repository>
-          <id>internal.maven.repo</id>
-          <name>Internal Repository for Integration</name>
-          <url>${internal.maven.repository}</url>
-          <snapshots>
-              <enabled>true</enabled>
-          </snapshots>
+            <id>internal.maven.repo</id>
+            <name>Internal Repository for Integration</name>
+            <url>${internal.maven.repository}</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
         </repository>
         <repository>
             <id>central</id>
@@ -137,14 +169,14 @@
     </repositories>
 
     <pluginRepositories>
-      <pluginRepository>
-          <id>internal.maven.repo</id>
-          <name>Internal Repository for Integration</name>
-          <url>${internal.maven.repository}</url>
-          <snapshots>
-              <enabled>true</enabled>
-          </snapshots>
-      </pluginRepository>
+        <pluginRepository>
+            <id>internal.maven.repo</id>
+            <name>Internal Repository for Integration</name>
+            <url>${internal.maven.repository}</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </pluginRepository>
         <pluginRepository>
             <id>yahoo.github</id>
             <url>http://yahoo.github.com/maven/repository</url>
@@ -153,6 +185,258 @@
             </snapshots>
         </pluginRepository>
     </pluginRepositories>
+
+    <dependencyManagement>
+        <dependencies>
+
+            <!-- client -->
+            <dependency>
+                <groupId>com.googlecode.json-simple</groupId>
+                <artifactId>json-simple</artifactId>
+                <version>${json-simple.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>commons-cli</groupId>
+                <artifactId>commons-cli</artifactId>
+                <version>${commons-cli.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>${junit.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>javax.persistence</groupId>
+                <artifactId>persistence-api</artifactId>
+                <version>${persistence-api.version}</version>
+            </dependency>
+
+            <!-- core -->
+            <dependency>
+                <groupId>org.apache.openjpa</groupId>
+                <artifactId>openjpa-persistence</artifactId>
+                <version>${openjpa-persistence.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.openjpa</groupId>
+                <artifactId>openjpa-jdbc</artifactId>
+                <version>${openjpa-jdbc.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>postgresql</groupId>
+                        <artifactId>postgresql</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.openjpa</groupId>
+                <artifactId>openjpa-persistence-jdbc</artifactId>
+                <version>${openjpa-persistence-jdbc.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>commons-codec</groupId>
+                <artifactId>commons-codec</artifactId>
+                <version>${commons-codec.version}</version>
+            </dependency>
+            
+            <dependency>
+                <groupId>${hadoopGroupId}</groupId>
+                <artifactId>hadoop-core</artifactId>
+                <version>${hadoop-core.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.apache.commons</groupId>
+                        <artifactId>commons-cli</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>${hadoopGroupId}</groupId>
+                <artifactId>hadoop-test</artifactId>
+                <version>${hadoop-test.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.apache.commons</groupId>
+                        <artifactId>commons-cli</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>commons-cli</groupId>
+                        <artifactId>commons-cli</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-api</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-log4j12</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>${hadoopGroupId}</groupId>
+                <artifactId>hadoop-streaming</artifactId>
+                <version>${hadoop-streaming.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.apache.commons</groupId>
+                        <artifactId>commons-cli</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>${pigGroupId}</groupId>
+                <artifactId>${pigArtifactId}</artifactId>
+                <version>${pig-core.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>${hadoopGroupId}</groupId>
+                        <artifactId>hadoop-core</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.apache.hadoop</groupId>
+                        <artifactId>hadoop-core</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>jline</groupId>
+                <artifactId>jline</artifactId>
+                <version>${jline.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-log4j12</artifactId>
+                <version>${slf4j-log4j12.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.googlecode.json-simple</groupId>
+                <artifactId>json-simple</artifactId>
+                <version>${json-simple.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>commons-logging</groupId>
+                <artifactId>commons-logging</artifactId>
+                <version>${commons-logging.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>avalon-framework</groupId>
+                        <artifactId>avalon-framework</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>logkit</groupId>
+                        <artifactId>logkit</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>javax.servlet</groupId>
+                        <artifactId>servlet-api</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>log4j</groupId>
+                <artifactId>log4j</artifactId>
+                <version>${log4j.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.sun.jdmk</groupId>
+                        <artifactId>jmxtools</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>com.sun.jmx</groupId>
+                        <artifactId>jmxri</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>javax.mail</groupId>
+                        <artifactId>mail</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>javax.jms</groupId>
+                        <artifactId>jmx</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>javax.jms</groupId>
+                        <artifactId>jms</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>javax.servlet</groupId>
+                <artifactId>servlet-api</artifactId>
+                <version>${servlet-api.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>javax.servlet</groupId>
+                <artifactId>jsp-api</artifactId>
+                <version>${jsp-api.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>commons-el</groupId>
+                <artifactId>commons-el</artifactId>
+                <version>${commons-el.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.jdom</groupId>
+                <artifactId>jdom</artifactId>
+                <version>${jdom.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.mortbay.jetty</groupId>
+                <artifactId>jetty</artifactId>
+                <version>${jetty.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>commons-pool</groupId>
+                <artifactId>commons-pool</artifactId>
+                <version>${commons-pool.version}</version>
+            </dependency>
+            
+            <dependency>
+                <groupId>commons-dbcp</groupId>
+                <artifactId>commons-dbcp</artifactId>
+                <version>${commons-dbcp.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>hsqldb</groupId>
+                <artifactId>hsqldb</artifactId>
+                <version>${hsqldb.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>mysql</groupId>
+                <artifactId>mysql-connector-java</artifactId>
+                <version>${mysql-connector-java.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.oracle</groupId>
+                <artifactId>ojdbc6</artifactId>
+                <version>${ojdbc6.version}</version>
+            </dependency>
+            
+        </dependencies>
+    </dependencyManagement>
 
     <build>
         <plugins>
