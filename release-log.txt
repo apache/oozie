@@ -1,6 +1,5 @@
 -- Oozie 3.0.0 release
 
-OOZIE-23 Update oozie examples with new namespace version for workflow and coordinator.
 GH-0069 Create a coordinator bundle.
 GH-0070 Start a coordinator bundle.
 GH-0071 Pause a coordinator bundle.
@@ -28,6 +27,7 @@ GH-0361 Throttle coordinator action/workflow creation per coordinator job .
 GH-0480 Support new Pig API to submit pig job
 GH-0461 Mapping the workflow ID to coordinator ID
 GH-0588 Adding Bundle to recovery service.
+OOZIE-23 Update oozie examples with new namespace version for workflow and coordinator.
 
 -- Oozie 2.3.0 release
 

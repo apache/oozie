@@ -10,6 +10,8 @@
 
    * Rerun coordinator action must be in TIMEDOUT/SUCCEEDED/KILLED/FAILED.
    * Coordinator actions cannot be rerun if the coordinator job is in the KILLED or FAILED state.
+   * Rerun a PAUSED coordinator job, the status and pause time and pending flag will not be reset.
+   * Rerun a SUSPENDED coordinator job, the status will reset to RUNNING.
    * All rerun actions must exist already.
    * Coordinator Rerun will only use the original configs from first run.
    * Coordinator Rerun will not re-read the coordinator.xml in hdfs.
@@ -35,7 +37,7 @@ $oozie job -rerun <coord_Job_id> [-nocleanup] [-refresh]
 
 ---++ Rerun coordinator actions
 
-   * Rerun terminated coordinator actions.
+   * Rerun terminated (timeout, succeeded, killed, failed) coordinator actions.
    * By default, Oozie will delete the 'output-event' directories before changing actions' status and materializing actions.
    * If coordinator job is RUNNING, rerun actions will be materialized and compete with current running actions.
    * Rerun for job, user should use job's start date and end date in -date.

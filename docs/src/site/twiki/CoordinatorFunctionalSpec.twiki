@@ -620,7 +620,7 @@ Conversely, when a user requests to resume a *PREPSUSPEND* coordinator job, oozi
 
 When a coordinator job starts, oozie puts the job in status *RUNNING* and start materializing workflow jobs based on job frequency.
 
-When a user requests to kill a coordinator job, oozie puts the job in status *KILLED* and it sends kill to all submitted workflow jobs.
+When a user requests to kill a coordinator job, oozie puts the job in status *KILLED* and it sends kill to all submitted workflow jobs. If any coordinator action finishes with not *KILLED*, oozie puts the coordinator job into *DONEWITHERROR*.
 
 When a user requests to suspend a coordinator job that is in *RUNNING* status, oozie puts the job in status *SUSPEND* and it suspends all submitted workflow jobs.
 
@@ -630,7 +630,8 @@ Conversely, when a user requests to resume a *SUSPEND* coordinator job, oozie pu
 
 A coordinator job creates workflow jobs (commonly coordinator actions) only for the duration of the coordinator job and only if the coordinator job is in *RUNNING* status. If the coordinator job has been suspended, when resumed it will create all the coordinator actions that should have been created during the time it was suspended, actions will not be lost, they will delayed.
 
-When the coordinator job materialization finishs and all workflow jobs finish, oozie updates the coordinator status accordingly. For example, if all workflows are SUCCEEDED, oozie put the coordinator job into *SUCCEEDED* status. However, if any workflow job finishes with not *SUCCEEDED* (e.g. *KILLED* or *FAILED*), oozie puts the coordinator job into *DONEWITHERROR*.
+When the coordinator job materialization finishs and all workflow jobs finish, oozie updates the coordinator status accordingly. For example, if all workflows are *SUCCEEDED*, oozie put the coordinator job into *SUCCEEDED* status. However, if any workflow job finishes with not *SUCCEEDED* (e.g. *KILLED* or *FAILED* or *TIMEOUT*), oozie puts the coordinator job into *DONEWITHERROR*. If all coordinator actions are *TIMEDOUT*, oozie puts the coordinator job into *DONEWITHERROR*.
+
 
 ---++++ 6.1.3. Coordinator Action
 
@@ -2634,7 +2635,7 @@ $oozie job -rerun <coord_Job_id> [-nocleanup] [-refresh]
 </verbatim>
 
 The =rerun= option reruns a terminated (=TIMEDOUT=, =SUCCEEDED=, =KILLED=, =FAILED=) coordiantor action when coordiator job
-is not in =FAILED= or =KILLED= or =PREP= or =PREPPAUSED= or =PREPSUSPENDED= state.
+is not in =FAILED= or =KILLED= state.
 
 After the command is executed the rerun coordiator action will be in =WAITING= status.
 

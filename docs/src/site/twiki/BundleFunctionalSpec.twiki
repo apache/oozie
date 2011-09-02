@@ -53,12 +53,12 @@ At any time, a bundle job is in one of the following status: PREP, RUNNING, PREP
 
 Valid bundle job status transitions are:
 
-   * PREP --> PREPSUSPENDED | PREPPAUSED | RUNNING | KILLED
-   * RUNNING --> SUSPENDED | PAUSED | SUCCEEDED | DONWITHERROR | KILLED | FAILED
-   * PREPSUSPENDED --> PREP | KILLED
-   * SUSPENDED --> RUNNING | KILLED
-   * PREPPAUSED --> PREP | KILLED
-   * PAUSED --> SUSPENDED | RUNNING | KILLED
+   * *PREP --> PREPSUSPENDED | PREPPAUSED | RUNNING | KILLED*
+   * *RUNNING --> SUSPENDED | PAUSED | SUCCEEDED | DONWITHERROR | KILLED | FAILED*
+   * *PREPSUSPENDED --> PREP | KILLED*
+   * *SUSPENDED --> RUNNING | KILLED*
+   * *PREPPAUSED --> PREP | KILLED*
+   * *PAUSED --> SUSPENDED | RUNNING | KILLED*
 
 ---+++ 4.3. Details of Status Transitions
 When a bundle job is submitted, oozie parses the bundle job XML. Oozie then creates a record for the bundle with status *PREP* and returns a unique ID.
@@ -79,7 +79,7 @@ When a user requests to suspend a bundle job that is not in *PREP* status, oozie
 
 When pause time reaches for a bundle job that is not in *PREP* status, oozie puts the job in status *PAUSED*. When the paused time is reset, Oozie puts back the job in status *RUNNING*.
 
-When all the coordinator jobs finish, oozie updates the bundle status accordingly. If all coordinators reaches to the _same_ terminal state, bundle job status also move to the same status. For example, if all coordinators are SUCCEEDED, oozie puts the bundle job into *SUCCEEDED* status. However, if all coordinator jobs don't finish with the same status, oozie puts the bundle job into DONEWITHERROR.
+When all the coordinator jobs finish, oozie updates the bundle status accordingly. If all coordinators reaches to the _same_ terminal state, bundle job status also move to the same status. For example, if all coordinators are *SUCCEEDED*, oozie puts the bundle job into *SUCCEEDED* status. However, if all coordinator jobs don't finish with the same status, oozie puts the bundle job into *DONEWITHERROR*.
     
 
 ---+++ 4.3.  Bundle Application Definition
