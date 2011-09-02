@@ -23,6 +23,7 @@ import org.apache.oozie.executor.jpa.BundleJobUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.XLog;
 
 public class BundleUnpauseXCommand extends UnpauseTransitionXCommand {
@@ -62,7 +63,7 @@ public class BundleUnpauseXCommand extends UnpauseTransitionXCommand {
      */
     @Override
     public void loadState() throws CommandException {
-        // no need to load state, we have have bundle job bean;
+        LogUtils.setLogInfo(bundleJob, logInfo);
     }
 
     /*

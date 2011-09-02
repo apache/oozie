@@ -36,6 +36,7 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.util.InstrumentUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
+import org.apache.oozie.util.LogUtils;
 
 public class BundleJobSuspendXCommand extends SuspendTransitionXCommand {
     private final String jobId;
@@ -110,6 +111,8 @@ public class BundleJobSuspendXCommand extends SuspendTransitionXCommand {
         catch (Exception Ex) {
             throw new CommandException(ErrorCode.E1311, jobId);
         }
+        
+        LogUtils.setLogInfo(bundleJob, logInfo);
     }
 
     /* (non-Javadoc)

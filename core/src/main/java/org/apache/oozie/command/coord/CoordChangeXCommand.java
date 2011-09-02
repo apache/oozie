@@ -33,7 +33,7 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
     private Integer newConcurrency = null;
     private Date newPauseTime = null;
     private boolean resetPauseTime = false;
-    private final XLog LOG = XLog.getLog(CoordChangeXCommand.class);
+    private static XLog LOG = XLog.getLog(CoordChangeXCommand.class);
     private CoordinatorJobBean coordJob;
     private JPAService jpaService = null;
 
@@ -255,8 +255,6 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
         LOG.info("STARTED CoordChangeXCommand for jobId=" + jobId);
 
         try {
-            LogUtils.setLogInfo(this.coordJob, logInfo);
-
             if (newEndTime != null) {
                 coordJob.setEndTime(newEndTime);
                 if (coordJob.getStatus() == CoordinatorJob.Status.SUCCEEDED) {
@@ -301,7 +299,7 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
      */
     @Override
     protected void loadState() throws CommandException{
-         jpaService = Services.get().get(JPAService.class);
+        jpaService = Services.get().get(JPAService.class);
 
         if (jpaService == null) {
             throw new CommandException(ErrorCode.E0610);
@@ -313,6 +311,8 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
         catch (JPAExecutorException e) {
             throw new CommandException(e);
         }
+        
+        LogUtils.setLogInfo(this.coordJob, logInfo);
     }
 
     /* (non-Javadoc)

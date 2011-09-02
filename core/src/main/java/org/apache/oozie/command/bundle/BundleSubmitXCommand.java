@@ -54,6 +54,7 @@ import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.InstrumentUtils;
+import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.PropertiesUtils;
 import org.apache.oozie.util.XConfiguration;
@@ -73,7 +74,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
     private final String authToken;
     public static final String CONFIG_DEFAULT = "bundle-config-default.xml";
     public static final String BUNDLE_XML_FILE = "bundle.xml";
-    private final XLog log = XLog.getLog(getClass());
+    private static XLog LOG = XLog.getLog(BundleSubmitXCommand.class);
     private final BundleJobBean bundleBean = new BundleJobBean();
     private String jobId;
     private JPAService jpaService = null;
@@ -124,7 +125,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
      */
     @Override
     protected String submit() throws CommandException {
-        log.info("STARTED Bundle Submit");
+        LOG.info("STARTED Bundle Submit");
         try {
             InstrumentUtils.incrJobCounter(getName(), 1, getInstrumentation());
 
@@ -142,6 +143,8 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
             //verify the uniqueness of coord names
             verifyCoordNameUnique(resolvedJobXml);
             this.jobId = storeToDB(bundleBean, resolvedJobXml);
+            LogUtils.setLogInfo(bundleBean, logInfo);
+            LOG = XLog.getLog(BundleSubmitXCommand.class);
 
             if (dryrun) {
                 Date startTime = bundleBean.getStartTime();
@@ -153,13 +156,13 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
                     endTime = jobEndTime;
                 }
                 jobId = bundleBean.getId();
-                log.info("[" + jobId + "]: Update status to PREP");
+                LOG.info("[" + jobId + "]: Update status to PREP");
                 bundleBean.setStatus(Job.Status.PREP);
                 try {
                     new XConfiguration(new StringReader(bundleBean.getConf()));
                 }
                 catch (IOException e1) {
-                    log.warn("Configuration parse error. read from DB :" + bundleBean.getConf(), e1);
+                    LOG.warn("Configuration parse error. read from DB :" + bundleBean.getConf(), e1);
                 }
                 String output = bundleBean.getJobXml() + System.getProperty("line.separator");
                 return output;
@@ -168,7 +171,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
         catch (Exception ex) {
             throw new CommandException(ErrorCode.E1310, ex.getMessage(), ex);
         }
-        log.info("ENDED Bundle Submit");
+        LOG.info("ENDED Bundle Submit");
         return this.jobId;
     }
 
@@ -231,18 +234,18 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
             mergeDefaultConfig();
             String appXml = readAndValidateXml();
             bundleBean.setOrigJobXml(appXml);
-            log.debug("jobXml after initial validation " + XmlUtils.prettyPrint(appXml).toString());
+            LOG.debug("jobXml after initial validation " + XmlUtils.prettyPrint(appXml).toString());
         }
         catch (BundleJobException ex) {
-            log.warn("BundleJobException:  ", ex);
+            LOG.warn("BundleJobException:  ", ex);
             throw new CommandException(ex);
         }
         catch (IllegalArgumentException iex) {
-            log.warn("IllegalArgumentException:  ", iex);
+            LOG.warn("IllegalArgumentException:  ", iex);
             throw new CommandException(ErrorCode.E1310, iex);
         }
         catch (Exception ex) {
-            log.warn("Exception:  ", ex);
+            LOG.warn("Exception:  ", ex);
             throw new CommandException(ErrorCode.E1310, ex);
         }
     }
@@ -267,7 +270,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
                 XConfiguration.injectDefaults(defaultConf, conf);
             }
             else {
-                log.info("configDefault Doesn't exist " + configDefault);
+                LOG.info("configDefault Doesn't exist " + configDefault);
             }
             PropertiesUtils.checkDisallowedProperties(conf, DISALLOWED_USER_PROPERTIES);
         }
@@ -278,7 +281,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
         catch (HadoopAccessorException e) {
             throw new CommandException(e);
         }
-        log.debug("Merged CONF :" + XmlUtils.prettyPrint(conf).toString());
+        LOG.debug("Merged CONF :" + XmlUtils.prettyPrint(conf).toString());
     }
 
     /**
@@ -310,7 +313,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
         //Configuration confHadoop = CoordUtils.getHadoopConf(conf);
         try {
             URI uri = new URI(appPath);
-            log.debug("user =" + user + " group =" + group);
+            LOG.debug("user =" + user + " group =" + group);
             FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, group, uri,
                     new Configuration());
             Path p = new Path(uri.getPath());
@@ -321,18 +324,18 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
             return writer.toString();
         }
         catch (IOException ex) {
-            log.warn("IOException :" + XmlUtils.prettyPrint(conf), ex);
+            LOG.warn("IOException :" + XmlUtils.prettyPrint(conf), ex);
             throw new BundleJobException(ErrorCode.E1301, ex.getMessage(), ex);
         }
         catch (URISyntaxException ex) {
-            log.warn("URISyException :" + ex.getMessage());
+            LOG.warn("URISyException :" + ex.getMessage());
             throw new BundleJobException(ErrorCode.E1302, appPath, ex.getMessage(), ex);
         }
         catch (HadoopAccessorException ex) {
             throw new BundleJobException(ex);
         }
         catch (Exception ex) {
-            log.warn("Exception :", ex);
+            LOG.warn("Exception :", ex);
             throw new BundleJobException(ErrorCode.E1301, ex.getMessage(), ex);
         }
     }
@@ -350,11 +353,11 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
             validator.validate(new StreamSource(new StringReader(xmlContent)));
         }
         catch (SAXException ex) {
-            log.warn("SAXException :", ex);
+            LOG.warn("SAXException :", ex);
             throw new BundleJobException(ErrorCode.E0701, ex.getMessage(), ex);
         }
         catch (IOException ex) {
-            log.warn("IOException :", ex);
+            LOG.warn("IOException :", ex);
             throw new BundleJobException(ErrorCode.E0702, ex.getMessage(), ex);
         }
     }

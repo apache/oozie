@@ -34,6 +34,7 @@ import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.InstrumentUtils;
+import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
 
@@ -158,6 +159,7 @@ public class BundleJobResumeXCommand extends ResumeTransitionXCommand {
             throw new CommandException(ErrorCode.E0604, bundleId);
         }
 
+        LogUtils.setLogInfo(bundleJob, logInfo);
     }
 
     /* (non-Javadoc)

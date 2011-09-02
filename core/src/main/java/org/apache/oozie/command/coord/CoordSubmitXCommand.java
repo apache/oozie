@@ -122,7 +122,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
 
     public static final String CONF_QUEUE_SIZE = Service.CONF_PREFIX + "CallableQueueService.queue.size";
 
-    private final XLog log = XLog.getLog(getClass());
+    private static XLog LOG = XLog.getLog(CoordSubmitXCommand.class);
     private ELEvaluator evalFreq = null;
     private ELEvaluator evalNofuncs = null;
     private ELEvaluator evalData = null;
@@ -191,7 +191,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
     @Override
     protected String submit() throws CommandException {
         String jobId = null;
-        log.info("STARTED Coordinator Submit");
+        LOG.info("STARTED Coordinator Submit");
         InstrumentUtils.incrJobCounter(getName(), 1, getInstrumentation());
 
         boolean exceptionOccured = false;
@@ -211,15 +211,16 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
                 coordJob.setAppName(this.coordName);
             }
 
-            log.debug("jobXml after initial validation " + XmlUtils.prettyPrint(appXml).toString());
+            LOG.debug("jobXml after initial validation " + XmlUtils.prettyPrint(appXml).toString());
             appXml = XmlUtils.removeComments(appXml);
             initEvaluators();
             Element eJob = basicResolveAndIncludeDS(appXml, conf, coordJob);
-            log.debug("jobXml after all validation " + XmlUtils.prettyPrint(eJob).toString());
+            LOG.debug("jobXml after all validation " + XmlUtils.prettyPrint(eJob).toString());
 
             jobId = storeToDB(eJob, coordJob);
             // log job info for coordinator jobs
             LogUtils.setLogInfo(coordJob, logInfo);
+            LOG = XLog.getLog(CoordSubmitXCommand.class);
 
             if (!dryrun) {
                 // submit a command to materialize jobs for the next 1 hour (3600 secs)
@@ -236,7 +237,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
                     endTime = jobEndTime;
                 }
                 jobId = coordJob.getId();
-                log.info("[" + jobId + "]: Update status to RUNNING");
+                LOG.info("[" + jobId + "]: Update status to RUNNING");
                 coordJob.setStatus(Job.Status.RUNNING);
                 coordJob.resetPending();
                 CoordActionMaterializeCommand coordActionMatCom = new CoordActionMaterializeCommand(jobId, startTime,
@@ -246,7 +247,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
                     jobConf = new XConfiguration(new StringReader(coordJob.getConf()));
                 }
                 catch (IOException e1) {
-                    log.warn("Configuration parse error. read from DB :" + coordJob.getConf(), e1);
+                    LOG.warn("Configuration parse error. read from DB :" + coordJob.getConf(), e1);
                 }
                 String action = coordActionMatCom.materializeJobs(true, coordJob, jobConf, null);
                 String output = coordJob.getJobXml() + System.getProperty("line.separator")
@@ -256,17 +257,17 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         }
         catch (CoordinatorJobException cex) {
             exceptionOccured = true;
-            log.warn("ERROR:  ", cex);
+            LOG.warn("ERROR:  ", cex);
             throw new CommandException(cex);
         }
         catch (IllegalArgumentException iex) {
             exceptionOccured = true;
-            log.warn("ERROR:  ", iex);
+            LOG.warn("ERROR:  ", iex);
             throw new CommandException(ErrorCode.E1003, iex);
         }
         catch (Exception ex) {
             exceptionOccured = true;
-            log.warn("ERROR:  ", ex);
+            LOG.warn("ERROR:  ", ex);
             throw new CommandException(ErrorCode.E0803, ex);
         }
         finally {
@@ -278,7 +279,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
             }
         }
 
-        log.info("ENDED Coordinator Submit jobId=" + jobId);
+        LOG.info("ENDED Coordinator Submit jobId=" + jobId);
         return jobId;
     }
 
@@ -309,11 +310,11 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
             validator.validate(new StreamSource(new StringReader(xmlContent)));
         }
         catch (SAXException ex) {
-            log.warn("SAXException :", ex);
+            LOG.warn("SAXException :", ex);
             throw new CoordinatorJobException(ErrorCode.E0701, ex.getMessage(), ex);
         }
         catch (IOException ex) {
-            log.warn("IOException :", ex);
+            LOG.warn("IOException :", ex);
             throw new CoordinatorJobException(ErrorCode.E0702, ex.getMessage(), ex);
         }
     }
@@ -338,7 +339,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
                 XConfiguration.injectDefaults(defaultConf, conf);
             }
             else {
-                log.info("configDefault Doesn't exist " + configDefault);
+                LOG.info("configDefault Doesn't exist " + configDefault);
             }
             PropertiesUtils.checkDisallowedProperties(conf, DISALLOWED_USER_PROPERTIES);
         }
@@ -349,7 +350,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         catch (HadoopAccessorException e) {
             throw new CommandException(e);
         }
-        log.debug("Merged CONF :" + XmlUtils.prettyPrint(conf).toString());
+        LOG.debug("Merged CONF :" + XmlUtils.prettyPrint(conf).toString());
     }
 
     /**
@@ -501,7 +502,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         if (ival > maxThrottle || ival < 1) {
             ival = maxThrottle;
         }
-        log.debug("max throttle " + ival);
+        LOG.debug("max throttle " + ival);
         coordJob.setMatThrottling(ival);
 
         val = resolveTagContents("execution", eAppXml.getChild("controls", eAppXml.getNamespace()), evalNofuncs);
@@ -776,11 +777,11 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         Element tmpDataSets = null;
         try {
             String dsXml = readDefinition(incDSFile);
-            log.debug("DSFILE :" + incDSFile + "\n" + dsXml);
+            LOG.debug("DSFILE :" + incDSFile + "\n" + dsXml);
             tmpDataSets = XmlUtils.parseXml(dsXml);
         }
         catch (JDOMException e) {
-            log.warn("Error parsing included dataset [{0}].  Message [{1}]", incDSFile, e.getMessage());
+            LOG.warn("Error parsing included dataset [{0}].  Message [{1}]", incDSFile, e.getMessage());
             throw new CoordinatorJobException(ErrorCode.E0700, e.getMessage());
         }
         resolveDataSets(tmpDataSets.getChildren("dataset"));
@@ -835,7 +836,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         // Configuration confHadoop = CoordUtils.getHadoopConf(conf);
         try {
             URI uri = new URI(appPath);
-            log.debug("user =" + user + " group =" + group);
+            LOG.debug("user =" + user + " group =" + group);
             FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, group, uri,
                     new Configuration());
             Path p = new Path(uri.getPath());
@@ -846,18 +847,18 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
             return writer.toString();
         }
         catch (IOException ex) {
-            log.warn("IOException :" + XmlUtils.prettyPrint(conf), ex);
+            LOG.warn("IOException :" + XmlUtils.prettyPrint(conf), ex);
             throw new CoordinatorJobException(ErrorCode.E1001, ex.getMessage(), ex);
         }
         catch (URISyntaxException ex) {
-            log.warn("URISyException :" + ex.getMessage());
+            LOG.warn("URISyException :" + ex.getMessage());
             throw new CoordinatorJobException(ErrorCode.E1002, appPath, ex.getMessage(), ex);
         }
         catch (HadoopAccessorException ex) {
             throw new CoordinatorJobException(ex);
         }
         catch (Exception ex) {
-            log.warn("Exception :", ex);
+            LOG.warn("Exception :", ex);
             throw new CoordinatorJobException(ErrorCode.E1001, ex.getMessage(), ex);
         }
     }
@@ -944,7 +945,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
     public void notifyParent() throws CommandException {
         // update bundle action
         if (this.bundleId != null) {
-            log.debug("Updating bundle record: " + bundleId + " for coord id: " + coordJob.getId());
+            LOG.debug("Updating bundle record: " + bundleId + " for coord id: " + coordJob.getId());
             BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, prevStatus);
             bundleStatusUpdate.call();
         }
