@@ -38,9 +38,11 @@ import org.apache.hadoop.fs.Path;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.CoordinatorJob;
+import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.CoordinatorJob.Execution;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.command.SubmitTransitionXCommand;
 import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.coord.CoordELEvaluator;
 import org.apache.oozie.coord.CoordELFunctions;
@@ -76,15 +78,14 @@ import org.jdom.Namespace;
 import org.xml.sax.SAXException;
 
 /**
- * This class provides the functionalities to resolve a coordinator job XML and
- * write the job information into a DB table.
+ * This class provides the functionalities to resolve a coordinator job XML and write the job information into a DB
+ * table.
  * <p/>
- * Specifically it performs the following functions: 1. Resolve all the
- * variables or properties using job configurations. 2. Insert all datasets
- * definition as part of the <data-in> and <data-out> tags. 3. Validate the XML
+ * Specifically it performs the following functions: 1. Resolve all the variables or properties using job
+ * configurations. 2. Insert all datasets definition as part of the <data-in> and <data-out> tags. 3. Validate the XML
  * at runtime.
  */
-public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
+public class CoordSubmitXCommand extends SubmitTransitionXCommand {
 
     private final Configuration conf;
     private final String authToken;
@@ -98,9 +99,10 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
 
     private static final Set<String> DISALLOWED_USER_PROPERTIES = new HashSet<String>();
     private static final Set<String> DISALLOWED_DEFAULT_PROPERTIES = new HashSet<String>();
+
+    private CoordinatorJobBean coordJob = null;
     /**
-     * Default timeout for normal jobs, in minutes, after which coordinator
-     * input check will timeout
+     * Default timeout for normal jobs, in minutes, after which coordinator input check will timeout
      */
     public static final String CONF_DEFAULT_TIMEOUT_NORMAL = Service.CONF_PREFIX + "coord.normal.default.timeout";
 
@@ -171,11 +173,10 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
      * @see org.apache.oozie.command.XCommand#execute()
      */
     @Override
-    protected String execute() throws CommandException {
+    protected String submit() throws CommandException {
         String jobId = null;
         log.info("STARTED Coordinator Submit");
         InstrumentUtils.incrJobCounter(getName(), 1, getInstrumentation());
-        CoordinatorJobBean coordJob = new CoordinatorJobBean();
         CoordinatorJob.Status prevStatus = CoordinatorJob.Status.PREP;
         boolean exceptionOccured = false;
         try {
@@ -219,8 +220,8 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
                     endTime = jobEndTime;
                 }
                 jobId = coordJob.getId();
-                log.info("[" + jobId + "]: Update status to PREMATER");
-                coordJob.setStatus(CoordinatorJob.Status.PREMATER);
+                log.info("[" + jobId + "]: Update status to RUNNING");
+                coordJob.setStatus(Job.Status.RUNNING);
                 CoordActionMaterializeCommand coordActionMatCom = new CoordActionMaterializeCommand(jobId, startTime,
                         endTime);
                 Configuration jobConf = null;
@@ -232,7 +233,7 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
                 }
                 String action = coordActionMatCom.materializeJobs(true, coordJob, jobConf, null);
                 String output = coordJob.getJobXml() + System.getProperty("line.separator")
-                        + "***actions for instance***" + action;
+                + "***actions for instance***" + action;
                 return output;
             }
         }
@@ -253,9 +254,11 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
         }
         finally {
             if (exceptionOccured) {
-                coordJob.setStatus(CoordinatorJob.Status.FAILED);
+                if(coordJob.getId() == null || coordJob.getId().equalsIgnoreCase("")){
+                    coordJob.setStatus(CoordinatorJob.Status.FAILED);
+                }
             }
-            //update bundle action
+            // update bundle action
             if (this.bundleId != null) {
                 log.debug("Updating bundle record: " + bundleId + " for coord id: " + coordJob.getId());
                 BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, prevStatus);
@@ -338,8 +341,8 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
     }
 
     /**
-     * The method resolve all the variables that are defined in configuration.
-     * It also include the data set definition from dataset file into XML.
+     * The method resolve all the variables that are defined in configuration. It also include the data set definition
+     * from dataset file into XML.
      *
      * @param appXml : Original job XML
      * @param conf : Configuration of the job
@@ -349,7 +352,7 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
      * @throws Exception thrown if failed to resolve basic entities or include referred datasets
      */
     public Element basicResolveAndIncludeDS(String appXml, Configuration conf, CoordinatorJobBean coordJob)
-            throws CoordinatorJobException, Exception {
+    throws CoordinatorJobException, Exception {
         Element basicResolvedApp = resolveInitial(conf, appXml, coordJob);
         includeDataSets(basicResolvedApp, conf);
         return basicResolvedApp;
@@ -421,7 +424,7 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
      */
     @SuppressWarnings("unchecked")
     protected Element resolveInitial(Configuration conf, String appXml, CoordinatorJobBean coordJob)
-            throws CoordinatorJobException, Exception {
+    throws CoordinatorJobException, Exception {
         Element eAppXml = XmlUtils.parseXml(appXml);
         // job's main attributes
         // frequency
@@ -735,7 +738,7 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
      */
     @SuppressWarnings("unchecked")
     private void includeOneDSFile(String incDSFile, List<String> dsList, Element allDataSets, Namespace dsNameSpace)
-            throws CoordinatorJobException {
+    throws CoordinatorJobException {
         Element tmpDataSets = null;
         try {
             String dsXml = readDefinition(incDSFile);
@@ -843,7 +846,6 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
         }
 
         coordJob.setAppPath(conf.get(OozieClient.COORDINATOR_APP_PATH));
-        coordJob.setStatus(CoordinatorJob.Status.PREP);
         coordJob.setCreatedTime(new Date());
         coordJob.setUser(conf.get(OozieClient.USER_NAME));
         coordJob.setGroup(conf.get(OozieClient.GROUP_NAME));
@@ -889,6 +891,8 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
         if (jpaService == null) {
             throw new CommandException(ErrorCode.E0610);
         }
+        coordJob = new CoordinatorJobBean();
+        setJob(coordJob);
     }
 
     /* (non-Javadoc)
@@ -897,5 +901,19 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
     @Override
     protected void verifyPrecondition() throws CommandException {
 
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.TransitionXCommand#notifyParent()
+     */
+    @Override
+    public void notifyParent() throws CommandException {
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.TransitionXCommand#updateJob()
+     */
+    @Override
+    public void updateJob() throws CommandException {
     }
 }

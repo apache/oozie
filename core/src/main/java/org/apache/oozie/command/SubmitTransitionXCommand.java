@@ -54,7 +54,7 @@ public abstract class SubmitTransitionXCommand extends TransitionXCommand<String
      * @return the id
      * @throws CommandException thrown if unable to submit
      */
-    public abstract String submit() throws CommandException;
+    protected abstract String submit() throws CommandException;
 
     /* (non-Javadoc)
      * @see org.apache.oozie.command.TransitionXCommand#transitToNext()
@@ -73,7 +73,6 @@ public abstract class SubmitTransitionXCommand extends TransitionXCommand<String
      */
     @Override
     protected String execute() throws CommandException {
-        loadState();
         transitToNext();
         String jobId = submit();
         notifyParent();

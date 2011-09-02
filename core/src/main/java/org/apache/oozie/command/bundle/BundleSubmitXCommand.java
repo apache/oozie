@@ -74,7 +74,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
     public static final String CONFIG_DEFAULT = "bundle-config-default.xml";
     public static final String BUNDLE_XML_FILE = "bundle.xml";
     private final XLog log = XLog.getLog(getClass());
-    private BundleJobBean bundleBean = new BundleJobBean();
+    private final BundleJobBean bundleBean = new BundleJobBean();
     private String jobId;
     private JPAService jpaService = null;
 
@@ -123,7 +123,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
      * @see org.apache.oozie.command.SubmitTransitionXCommand#submit()
      */
     @Override
-    public String submit() throws CommandException {
+    protected String submit() throws CommandException {
         log.info("STARTED Bundle Submit");
         try {
             InstrumentUtils.incrJobCounter(getName(), 1, getInstrumentation());

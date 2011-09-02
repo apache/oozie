@@ -61,7 +61,6 @@ public abstract class TransitionXCommand<T> extends XCommand<T> {
      */
     @Override
     protected T execute() throws CommandException {
-        loadState();
         transitToNext();
         updateJob();
         notifyParent();
