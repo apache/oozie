@@ -28,14 +28,12 @@ import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.ParamChecker;
-import org.apache.oozie.util.XLog;
 
 /**
  * Command for Getting the Bundle job bean it also gets coordinators information in the Bundle job.
  */
 public class BundleJobXCommand extends XCommand<BundleJobBean> {
     private final String id;
-    private final XLog LOG = XLog.getLog(BundleJobXCommand.class);
 
     /**
      * Command for Getting the Bundle job bean it also gets coordinators information in the Bundle job.

@@ -29,7 +29,6 @@ import java.net.URL;
 
 public class NotificationXCommand extends WorkflowXCommand<Void> {
 
-    private static XLog LOG = XLog.getLog(NotificationXCommand.class);
     private static final String STATUS_PATTERN = "\\$status";
     private static final String JOB_ID_PATTERN = "\\$jobId";
     private static final String NODE_NAME_PATTERN = "\\$nodeName";

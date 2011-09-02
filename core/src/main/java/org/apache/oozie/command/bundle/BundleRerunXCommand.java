@@ -37,7 +37,6 @@ import org.apache.oozie.util.XLog;
  */
 public class BundleRerunXCommand extends RerunTransitionXCommand<Void> {
 
-    protected final XLog LOG = XLog.getLog(BundleRerunXCommand.class);
     private final String coordScope;
     private final String dateScope;
     private final boolean refresh;
@@ -117,7 +116,7 @@ public class BundleRerunXCommand extends RerunTransitionXCommand<Void> {
                         continue;
                     }
                     CoordinatorJobBean coordJob = getCoordJob(coordId);
-                    
+
                     String rerunDateScope;
                     if (dateScope != null && !dateScope.isEmpty()) {
                         rerunDateScope = dateScope;

@@ -43,7 +43,6 @@ import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.InstrumentUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.XConfiguration;
-import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.util.db.SLADbXOperations;
@@ -59,7 +58,6 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
 
     protected static final String INSTR_SUCCEEDED_JOBS_COUNTER_NAME = "succeeded";
 
-    private final XLog LOG = XLog.getLog(getClass());
     private JPAService jpaService = null;
     private String jobId;
     private String actionId;
@@ -264,7 +262,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
         catch (JPAExecutorException je) {
             throw new CommandException(je);
         }
-        XLog.getLog(getClass()).debug(
+        LOG.debug(
                 "Updated the workflow status to " + wfJob.getId() + "  status =" + wfJob.getStatusStr());
         if (wfJob.getStatus() != WorkflowJob.Status.RUNNING && wfJob.getStatus() != WorkflowJob.Status.SUSPENDED) {
             // update coordinator action

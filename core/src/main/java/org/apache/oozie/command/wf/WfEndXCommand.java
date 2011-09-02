@@ -30,7 +30,6 @@ import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.XConfiguration;
-import org.apache.oozie.util.XLog;
 
 /**
  * This Command is expected to be called when a Workflow moves to any terminal
@@ -40,7 +39,6 @@ import org.apache.oozie.util.XLog;
 public class WfEndXCommand extends WorkflowXCommand<Void> {
 
     private WorkflowJob job = null;
-    private static XLog LOG = XLog.getLog(WfEndXCommand.class);
 
     public WfEndXCommand(WorkflowJob job) {
         super("wf_end", "wf_end", 1);

@@ -33,7 +33,7 @@ import org.apache.oozie.util.XLog;
 
 public class CoordActionReadyXCommand extends CoordinatorXCommand<Void> {
     private String jobId;
-    private final static XLog log = XLog.getLog(CoordActionReadyXCommand.class);
+    private final XLog log = getLog();
     private CoordinatorJobBean coordJob = null;
     private JPAService jpaService = null;
 

@@ -25,7 +25,6 @@ import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
-import org.apache.oozie.util.XLog;
 
 public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
     private final String jobId;
@@ -33,7 +32,6 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
     private Integer newConcurrency = null;
     private Date newPauseTime = null;
     private boolean resetPauseTime = false;
-    private static XLog LOG = XLog.getLog(CoordChangeXCommand.class);
     private CoordinatorJobBean coordJob;
     private JPAService jpaService = null;
 
@@ -311,7 +309,7 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
         catch (JPAExecutorException e) {
             throw new CommandException(e);
         }
-        
+
         LogUtils.setLogInfo(this.coordJob, logInfo);
     }
 

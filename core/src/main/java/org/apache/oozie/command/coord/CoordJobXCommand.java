@@ -27,7 +27,6 @@ import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.ParamChecker;
-import org.apache.oozie.util.XLog;
 
 /**
  * Command for loading a coordinator job information
@@ -37,11 +36,10 @@ public class CoordJobXCommand extends CoordinatorXCommand<CoordinatorJobBean> {
     private final boolean getActionInfo;
     private int start = 1;
     private int len = Integer.MAX_VALUE;
-    private final XLog LOG = XLog.getLog(CoordJobXCommand.class);
 
     /**
      * Constructor for loading a coordinator job information
-     * 
+     *
      * @param id coord jobId
      */
     public CoordJobXCommand(String id) {
@@ -50,7 +48,7 @@ public class CoordJobXCommand extends CoordinatorXCommand<CoordinatorJobBean> {
 
     /**
      * Constructor for loading a coordinator job information
-     * 
+     *
      * @param id coord jobId
      * @param start starting index in the list of actions belonging to the job
      * @param length number of actions to be returned
@@ -65,7 +63,7 @@ public class CoordJobXCommand extends CoordinatorXCommand<CoordinatorJobBean> {
 
     /**
      * Constructor for loading a coordinator job information
-     * 
+     *
      * @param id coord jobId
      * @param getActionInfo false to ignore loading actions for the job
      */

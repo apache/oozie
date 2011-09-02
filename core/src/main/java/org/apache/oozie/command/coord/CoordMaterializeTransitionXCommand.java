@@ -46,7 +46,6 @@ import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
-import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.util.db.SLADbOperations;
 import org.jdom.Element;
@@ -56,7 +55,6 @@ import org.jdom.Element;
  */
 public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCommand {
     private static final int LOOKAHEAD_WINDOW = 300; // We look ahead 5 minutes for materialization;
-    private final XLog LOG = XLog.getLog(CoordMaterializeTransitionXCommand.class);
     private JPAService jpaService = null;
     private CoordinatorJobBean coordJob = null;
     private String jobId = null;

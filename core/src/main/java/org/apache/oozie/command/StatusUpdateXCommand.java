@@ -14,14 +14,10 @@
  */
 package org.apache.oozie.command;
 
-import org.apache.oozie.util.XLog;
-
 /**
  * Transition command for update status.
  */
 public abstract class StatusUpdateXCommand extends XCommand<Void>{
-
-    protected final XLog LOG = XLog.getLog(StatusUpdateXCommand.class);
 
     /**
      * The constructor for abstract class {@link StatusUpdateXCommand}

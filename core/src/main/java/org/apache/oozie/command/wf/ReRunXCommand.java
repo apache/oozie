@@ -33,7 +33,6 @@ import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
-import org.apache.oozie.command.XCommand;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionDeleteJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionsGetForJobJPAExecutor;
@@ -88,8 +87,6 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
         PropertiesUtils.createPropertySet(badUserProps, DISALLOWED_DEFAULT_PROPERTIES);
         PropertiesUtils.createPropertySet(badDefaultProps, DISALLOWED_DEFAULT_PROPERTIES);
     }
-
-    private static XLog LOG = XLog.getLog(XCommand.class);
 
     public ReRunXCommand(String jobId, Configuration conf, String authToken) {
         super("rerun", "rerun", 1);
@@ -206,7 +203,7 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
                     LOG.debug("Skipnode size :" + nodesToSkip.size());
                 }
                 else {
-                    for (WorkflowActionBean action : actions) { // Rerun from failed nodes 
+                    for (WorkflowActionBean action : actions) { // Rerun from failed nodes
                         if (action.getStatus() == WorkflowAction.Status.OK) {
                             nodesToSkip.add(action.getName());
                         }

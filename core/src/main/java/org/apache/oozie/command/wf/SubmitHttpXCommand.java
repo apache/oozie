@@ -48,8 +48,7 @@ import java.util.Set;
 import java.util.HashSet;
 
 public abstract class SubmitHttpXCommand extends WorkflowXCommand<String> {
-    private static XLog LOG = XLog.getLog(SubmitHttpXCommand.class);
-    
+
     protected static final Set<String> MANDATORY_OOZIE_CONFS = new HashSet<String>();
     protected static final Set<String> OPTIONAL_OOZIE_CONFS = new HashSet<String>();
 

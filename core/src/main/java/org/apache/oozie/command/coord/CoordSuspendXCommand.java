@@ -38,7 +38,6 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.util.InstrumentUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
-import org.apache.oozie.util.XLog;
 
 /**
  * Suspend coordinator job and actions.
@@ -46,7 +45,6 @@ import org.apache.oozie.util.XLog;
  */
 public class CoordSuspendXCommand extends SuspendTransitionXCommand {
     private final String jobId;
-    private final XLog LOG = XLog.getLog(getClass());
     private CoordinatorJobBean coordJob;
     private JPAService jpaService;
     private boolean exceptionOccured = false;

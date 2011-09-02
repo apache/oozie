@@ -34,7 +34,6 @@ import org.apache.oozie.util.XLog;
  * This class is used for bundle purge command
  */
 public class BundlePurgeXCommand extends XCommand<Void> {
-    private static XLog LOG = XLog.getLog(BundlePurgeXCommand.class);
     private JPAService jpaService = null;
     private final int olderThan;
     private final int limit;

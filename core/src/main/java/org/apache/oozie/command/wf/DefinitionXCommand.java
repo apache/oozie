@@ -24,12 +24,10 @@ import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
-import org.apache.oozie.util.XLog;
 
 public class DefinitionXCommand extends WorkflowXCommand<String> {
     private String jobId;
     private WorkflowJobBean wfJob;
-    private final XLog LOG = XLog.getLog(DefinitionXCommand.class);
 
     public DefinitionXCommand(String jobId) {
         super("definition", "definition", 1);

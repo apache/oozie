@@ -27,14 +27,12 @@ import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
-import org.apache.oozie.util.XLog;
 
 /**
  * This class updates the Time out in the action bean
  */
 public class CoordActionTimeOutXCommand extends CoordinatorXCommand<Void> {
     private CoordinatorActionBean actionBean;
-    private static XLog log = XLog.getLog(CoordActionTimeOutXCommand.class);
     private JPAService jpaService = null;
 
     public CoordActionTimeOutXCommand(CoordinatorActionBean actionBean) {

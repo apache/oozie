@@ -25,7 +25,6 @@ import org.apache.oozie.command.XCommand;
 import org.apache.oozie.executor.jpa.SLAEventsGetForSeqIdJPAExecutor;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.util.XLog;
 
 /**
  * The command to get a list of SLAEvents which are greater than given seqId.
@@ -33,7 +32,6 @@ import org.apache.oozie.util.XLog;
  */
 public class SLAEventsXCommand extends XCommand<List<SLAEventBean>> {
 
-    private final XLog LOG = XLog.getLog(SLAEventsXCommand.class);
     private long seqId = 0;
     private int maxNoEvents = 100; // Default
     private long lastSeqId = -1;

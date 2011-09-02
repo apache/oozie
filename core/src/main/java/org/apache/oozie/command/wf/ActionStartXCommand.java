@@ -57,7 +57,6 @@ public class ActionStartXCommand extends ActionXCommand<Void> {
     public static final String START_DATA_MISSING = "START_DATA_MISSING";
     public static final String EXEC_DATA_MISSING = "EXEC_DATA_MISSING";
 
-    private final XLog LOG = XLog.getLog(getClass());
     private String jobId = null;
     private String actionId = null;
     private WorkflowJobBean wfJob = null;

@@ -42,7 +42,6 @@ import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.InstrumentUtils;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.XConfiguration;
-import org.apache.oozie.util.XLog;
 import org.apache.oozie.workflow.WorkflowException;
 import org.apache.oozie.workflow.WorkflowInstance;
 import org.apache.oozie.workflow.lite.LiteWorkflowInstance;
@@ -57,8 +56,6 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<Void> {
     protected static final String INSTR_FAILED_JOBS_COUNTER = "failed";
 
     protected static final String RECOVERY_ID_SEPARATOR = "@";
-
-    private final XLog LOG = XLog.getLog(getClass());
 
     public ActionXCommand(String name, String type, int priority) {
         super(name, type, priority);
@@ -77,7 +74,7 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<Void> {
      */
     protected boolean handleTransient(ActionExecutor.Context context, ActionExecutor executor,
             WorkflowAction.Status status) throws CommandException {
-        XLog.getLog(getClass()).debug("Attempting to retry");
+        LOG.debug("Attempting to retry");
         ActionExecutorContext aContext = (ActionExecutorContext) context;
         WorkflowActionBean action = (WorkflowActionBean) aContext.getAction();
         incrActionErrorCounter(action.getType(), "transient", 1);

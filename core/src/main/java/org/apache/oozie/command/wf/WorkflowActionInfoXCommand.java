@@ -21,14 +21,12 @@ import org.apache.oozie.command.CommandException;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionGetJPAExecutor;
 import org.apache.oozie.util.ParamChecker;
-import org.apache.oozie.util.XLog;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 
 public class WorkflowActionInfoXCommand extends WorkflowXCommand<WorkflowActionBean> {
     private String id;
-    private static XLog LOG = XLog.getLog(WorkflowActionInfoXCommand.class);
-    
+
     public WorkflowActionInfoXCommand(String id) {
         super("action.info", "action.info", 1);
         this.id = ParamChecker.notEmpty(id, "id");
@@ -36,7 +34,7 @@ public class WorkflowActionInfoXCommand extends WorkflowXCommand<WorkflowActionB
     }
 
     @Override
-    protected WorkflowActionBean execute() throws CommandException {        
+    protected WorkflowActionBean execute() throws CommandException {
         JPAService jpaService = Services.get().get(JPAService.class);
         if (jpaService != null) {
             WorkflowActionBean action;
@@ -67,7 +65,7 @@ public class WorkflowActionInfoXCommand extends WorkflowXCommand<WorkflowActionB
      */
     @Override
     protected void loadState() {
-        
+
     }
 
     /* (non-Javadoc)
@@ -75,7 +73,7 @@ public class WorkflowActionInfoXCommand extends WorkflowXCommand<WorkflowActionB
      */
     @Override
     protected void verifyPrecondition() throws CommandException {
-        
+
     }
 
     @Override

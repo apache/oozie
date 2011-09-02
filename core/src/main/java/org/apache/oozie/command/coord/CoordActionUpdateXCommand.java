@@ -23,7 +23,6 @@ import org.apache.oozie.XException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.LogUtils;
-import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.db.SLADbOperations;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.WorkflowJob;
@@ -35,7 +34,6 @@ import org.apache.oozie.executor.jpa.CoordActionGetForExternalIdJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 
 public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
-    private final static XLog LOG = XLog.getLog(CoordActionUpdateXCommand.class);
     private WorkflowJobBean workflow;
     private CoordinatorActionBean coordAction = null;
     private JPAService jpaService = null;

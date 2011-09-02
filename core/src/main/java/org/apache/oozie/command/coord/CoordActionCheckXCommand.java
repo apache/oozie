@@ -26,7 +26,6 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.util.InstrumentUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
-import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.db.SLADbOperations;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.WorkflowJob;
@@ -43,7 +42,6 @@ import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 public class CoordActionCheckXCommand extends CoordinatorXCommand<Void> {
     private String actionId;
     private int actionCheckDelay;
-    private static XLog LOG = XLog.getLog(CoordActionCheckXCommand.class);
     private CoordinatorActionBean coordAction = null;
     private JPAService jpaService = null;
 

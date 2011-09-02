@@ -35,7 +35,6 @@ import org.apache.oozie.util.XLog;
  */
 public class CoordActionNotificationXCommand extends CoordinatorXCommand<Void> {
 
-    private static XLog LOG = XLog.getLog(CoordActionNotificationXCommand.class);
     private final CoordinatorActionBean actionBean;
     private static final String STATUS_PATTERN = "\\$status";
     private static final String ACTION_ID_PATTERN = "\\$actionId";

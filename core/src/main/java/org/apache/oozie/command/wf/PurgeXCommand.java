@@ -21,7 +21,6 @@ import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.XException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.util.XLog;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
@@ -30,7 +29,6 @@ import org.apache.oozie.executor.jpa.WorkflowJobDeleteJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobsGetForPurgeJPAExecutor;
 
 public class PurgeXCommand extends WorkflowXCommand<Void> {
-    private static XLog LOG = XLog.getLog(PurgeXCommand.class);
     private JPAService jpaService = null;
     private int olderThan;
     private int limit;

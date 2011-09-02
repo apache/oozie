@@ -34,15 +34,12 @@ import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
-import org.apache.oozie.util.XLog;
-
 import java.util.Date;
 import java.util.List;
 
 public class CoordKillXCommand extends KillTransitionXCommand {
 
     private final String jobId;
-    private final XLog LOG = XLog.getLog(CoordKillXCommand.class);
     private CoordinatorJobBean coordJob;
     private List<CoordinatorActionBean> actionList;
     private JPAService jpaService = null;

@@ -44,7 +44,6 @@ import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
-import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
 
@@ -54,7 +53,6 @@ import org.jdom.Element;
 public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
 
     private final String actionId;
-    private static XLog LOG = XLog.getLog(CoordActionInputCheckXCommand.class);
     private int COMMAND_REQUEUE_INTERVAL = 60000; // 1 minute
     private CoordinatorActionBean coordAction = null;
     private CoordinatorJobBean coordJob = null;

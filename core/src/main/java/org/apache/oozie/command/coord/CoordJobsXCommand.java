@@ -25,7 +25,6 @@ import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.executor.jpa.CoordJobInfoGetJPAExecutor;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.util.XLog;
 
 /**
  * The command to get a job info for a list of coordinator jobs by given filters.
@@ -34,7 +33,6 @@ public class CoordJobsXCommand extends CoordinatorXCommand<CoordinatorJobInfo> {
     private Map<String, List<String>> filter;
     private int start = 1;
     private int len = 50;
-    private final XLog LOG = XLog.getLog(CoordJobsXCommand.class);
 
     public CoordJobsXCommand(Map<String, List<String>> filter, int start, int length) {
         super("coord.job.info", "coord.job.info", 1);

@@ -24,10 +24,8 @@ import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.LogUtils;
-import org.apache.oozie.util.XLog;
 
 public class BundleUnpauseXCommand extends UnpauseTransitionXCommand {
-    protected final static XLog LOG = XLog.getLog(BundleUnpauseXCommand.class);
     private BundleJobBean bundleJob;
     private JPAService jpaService = Services.get().get(JPAService.class);
 
@@ -38,7 +36,7 @@ public class BundleUnpauseXCommand extends UnpauseTransitionXCommand {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.apache.oozie.command.XCommand#getEntityKey()
      */
     @Override
@@ -48,7 +46,7 @@ public class BundleUnpauseXCommand extends UnpauseTransitionXCommand {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.apache.oozie.command.XCommand#isLockRequired()
      */
     @Override
@@ -58,7 +56,7 @@ public class BundleUnpauseXCommand extends UnpauseTransitionXCommand {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.apache.oozie.command.XCommand#loadState()
      */
     @Override
@@ -68,7 +66,7 @@ public class BundleUnpauseXCommand extends UnpauseTransitionXCommand {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.apache.oozie.command.XCommand#verifyPrecondition()
      */
     @Override
@@ -77,7 +75,7 @@ public class BundleUnpauseXCommand extends UnpauseTransitionXCommand {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.apache.oozie.command.TransitionXCommand#notifyParent()
      */
     @Override
@@ -86,7 +84,7 @@ public class BundleUnpauseXCommand extends UnpauseTransitionXCommand {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.apache.oozie.command.TransitionXCommand#getJob()
      */
     @Override
@@ -96,7 +94,7 @@ public class BundleUnpauseXCommand extends UnpauseTransitionXCommand {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.apache.oozie.command.TransitionXCommand#updateJob()
      */
     @Override

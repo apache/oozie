@@ -45,7 +45,6 @@ import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
-import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Attribute;
 import org.jdom.Element;
@@ -58,7 +57,6 @@ public class BundleStartXCommand extends StartTransitionXCommand {
     private final String jobId;
     private BundleJobBean bundleJob;
     private JPAService jpaService = null;
-    protected final XLog LOG = XLog.getLog(BundleStartXCommand.class);
 
     /**
      * The constructor for class {@link BundleStartXCommand}

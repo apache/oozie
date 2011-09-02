@@ -26,13 +26,11 @@ import org.apache.oozie.command.XCommand;
 import org.apache.oozie.executor.jpa.BundleJobInfoGetJPAExecutor;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.util.XLog;
 
 /**
  * The command to get a job info for a list of bundle jobs by given filters.
  */
 public class BundleJobsXCommand extends XCommand<BundleJobInfo> {
-    private final XLog LOG = XLog.getLog(BundleJobsXCommand.class);
     private Map<String, List<String>> filter;
     private int start = 1;
     private int len = 50;

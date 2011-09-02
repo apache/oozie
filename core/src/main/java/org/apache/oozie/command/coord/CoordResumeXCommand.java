@@ -38,7 +38,6 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.util.InstrumentUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
-import org.apache.oozie.util.XLog;
 
 /**
  * Resume coordinator job and actions.
@@ -46,7 +45,6 @@ import org.apache.oozie.util.XLog;
  */
 public class CoordResumeXCommand extends ResumeTransitionXCommand {
     private final String jobId;
-    private final static XLog LOG = XLog.getLog(CoordResumeXCommand.class);
     private CoordinatorJobBean coordJob = null;
     private JPAService jpaService = null;
     private boolean exceptionOccured = false;

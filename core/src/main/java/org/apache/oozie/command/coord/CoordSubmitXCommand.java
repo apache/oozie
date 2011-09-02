@@ -113,7 +113,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
 
     public static final String CONF_MAT_THROTTLING_FACTOR = Service.CONF_PREFIX
             + "coord.materialization.throttling.factor";
-    
+
     /**
      * Default MAX timeout in minutes, after which coordinator input check will timeout
      */
@@ -122,7 +122,6 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
 
     public static final String CONF_QUEUE_SIZE = Service.CONF_PREFIX + "CallableQueueService.queue.size";
 
-    private static XLog LOG = XLog.getLog(CoordSubmitXCommand.class);
     private ELEvaluator evalFreq = null;
     private ELEvaluator evalNofuncs = null;
     private ELEvaluator evalData = null;
@@ -220,7 +219,6 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
             jobId = storeToDB(eJob, coordJob);
             // log job info for coordinator jobs
             LogUtils.setLogInfo(coordJob, logInfo);
-            LOG = XLog.getLog(CoordSubmitXCommand.class);
 
             if (!dryrun) {
                 // submit a command to materialize jobs for the next 1 hour (3600 secs)

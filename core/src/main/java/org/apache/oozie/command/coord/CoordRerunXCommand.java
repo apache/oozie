@@ -77,7 +77,6 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
     private String scope;
     private boolean refresh;
     private boolean noCleanup;
-    private static XLog LOG = XLog.getLog(CoordRerunXCommand.class);
     private CoordinatorJobBean coordJob = null;
     private JPAService jpaService = null;
     private CoordinatorJob.Status prevStatus = null;

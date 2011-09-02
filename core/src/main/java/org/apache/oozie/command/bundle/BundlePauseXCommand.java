@@ -24,10 +24,8 @@ import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.LogUtils;
-import org.apache.oozie.util.XLog;
 
 public class BundlePauseXCommand extends PauseTransitionXCommand {
-    protected final static XLog LOG = XLog.getLog(BundlePauseXCommand.class);
     private BundleJobBean bundleJob;
     private JPAService jpaService = Services.get().get(JPAService.class);
 

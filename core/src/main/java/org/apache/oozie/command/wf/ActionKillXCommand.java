@@ -34,7 +34,6 @@ import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.LogUtils;
-import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.db.SLADbXOperations;
 
@@ -47,7 +46,6 @@ public class ActionKillXCommand extends ActionXCommand<Void> {
     private String jobId;
     private WorkflowJobBean wfJob;
     private WorkflowActionBean wfAction;
-    private final static XLog LOG = XLog.getLog(ActionKillXCommand.class);
     private JPAService jpaService = null;
 
     public ActionKillXCommand(String actionId, String type) {
@@ -142,7 +140,7 @@ public class ActionKillXCommand extends ActionXCommand<Void> {
                     // What will happen to WF and COORD_ACTION, NOTIFICATION?
                     SLADbXOperations.writeStausEvent(wfAction.getSlaXml(), wfAction.getId(), Status.FAILED,
                             SlaAppType.WORKFLOW_ACTION);
-                    XLog.getLog(getClass()).warn("Exception while executing kill(). Error Code [{0}], Message[{1}]",
+                    LOG.warn("Exception while executing kill(). Error Code [{0}], Message[{1}]",
                             ex.getErrorCode(), ex.getMessage(), ex);
                 }
                 catch (JPAExecutorException je) {

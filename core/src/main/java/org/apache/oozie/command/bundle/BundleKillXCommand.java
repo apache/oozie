@@ -36,10 +36,8 @@ import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
-import org.apache.oozie.util.XLog;
 
 public class BundleKillXCommand extends KillTransitionXCommand {
-    protected final XLog LOG = XLog.getLog(BundleKillXCommand.class);
     private final String jobId;
     private BundleJobBean bundleJob;
     private List<BundleActionBean> bundleActions;

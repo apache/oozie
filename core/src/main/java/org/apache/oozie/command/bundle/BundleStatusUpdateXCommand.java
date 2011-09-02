@@ -30,13 +30,11 @@ import org.apache.oozie.executor.jpa.BundleActionUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.util.XLog;
 
 /**
  * The command to update Bundle status
  */
 public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
-    private final XLog LOG = XLog.getLog(BundleStatusUpdateXCommand.class);
     private final CoordinatorJobBean coordjob;
     private JPAService jpaService = null;
     private BundleActionBean bundleaction;

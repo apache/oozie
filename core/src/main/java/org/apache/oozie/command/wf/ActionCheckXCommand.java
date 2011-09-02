@@ -48,7 +48,6 @@ import org.apache.oozie.util.XLog;
  */
 public class ActionCheckXCommand extends ActionXCommand<Void> {
     public static final String EXEC_DATA_MISSING = "EXEC_DATA_MISSING";
-    private final XLog LOG = XLog.getLog(getClass());
     private String actionId;
     private String jobId;
     private int actionCheckDelay;

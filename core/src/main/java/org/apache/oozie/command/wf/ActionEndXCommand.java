@@ -50,7 +50,6 @@ public class ActionEndXCommand extends ActionXCommand<Void> {
     public static final String COULD_NOT_END = "COULD_NOT_END";
     public static final String END_DATA_MISSING = "END_DATA_MISSING";
 
-    private final XLog LOG = XLog.getLog(getClass());
     private String jobId = null;
     private String actionId = null;
     private WorkflowJobBean wfJob = null;

@@ -19,14 +19,12 @@ import org.apache.oozie.XException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.ParamChecker;
-import org.apache.oozie.util.XLog;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.executor.jpa.WorkflowIdGetForExternalIdJPAExecutor;
 
 public class ExternalIdXCommand extends WorkflowXCommand<String> {
     private String externalId;
-    private final XLog LOG = XLog.getLog(getClass());
 
     public ExternalIdXCommand(String externalId) {
         super("externalId", "externalId", 1);

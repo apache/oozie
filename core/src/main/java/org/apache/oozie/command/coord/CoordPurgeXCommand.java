@@ -27,13 +27,11 @@ import org.apache.oozie.executor.jpa.CoordJobsGetForPurgeJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.util.XLog;
 
 /**
  * This class is used for coordinator purge command
  */
 public class CoordPurgeXCommand extends CoordinatorXCommand<Void> {
-    private static XLog LOG = XLog.getLog(CoordPurgeXCommand.class);
     private JPAService jpaService = null;
     private final int olderThan;
     private final int limit;

@@ -35,7 +35,6 @@ import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.InstrumentUtils;
 import org.apache.oozie.util.ParamChecker;
-import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.LogUtils;
 
 public class BundleJobSuspendXCommand extends SuspendTransitionXCommand {
@@ -43,7 +42,6 @@ public class BundleJobSuspendXCommand extends SuspendTransitionXCommand {
     private JPAService jpaService;
     private List<BundleActionBean> bundleActions;
     private BundleJobBean bundleJob;
-    private final XLog LOG = XLog.getLog(BundleJobSuspendXCommand.class);
 
     public BundleJobSuspendXCommand(String id) {
         super("bundle_suspend", "bundle_suspend", 1);
@@ -111,7 +109,7 @@ public class BundleJobSuspendXCommand extends SuspendTransitionXCommand {
         catch (Exception Ex) {
             throw new CommandException(ErrorCode.E1311, jobId);
         }
-        
+
         LogUtils.setLogInfo(bundleJob, logInfo);
     }
 

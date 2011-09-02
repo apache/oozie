@@ -55,7 +55,7 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
     public static final String START_DATA_MISSING = "START_DATA_MISSING";
     public static final String EXEC_DATA_MISSING = "EXEC_DATA_MISSING";
 
-    private final XLog log = XLog.getLog(getClass());
+    private final XLog log = getLog();
     private String actionId = null;
     private String user = null;
     private String authToken = null;

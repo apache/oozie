@@ -58,8 +58,6 @@ import java.util.HashSet;
 import java.io.IOException;
 
 public class SubmitXCommand extends WorkflowXCommand<String> {
-    private static XLog LOG = XLog.getLog(SubmitXCommand.class);
-    
     public static final String CONFIG_DEFAULT = "config-default.xml";
 
     private Configuration conf;

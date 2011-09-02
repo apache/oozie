@@ -56,7 +56,7 @@ public abstract class XCommand<T> implements XCallable<T> {
 
     public static final Long DEFAULT_REQUEUE_DELAY = 10L;
 
-    private static XLog LOG = XLog.getLog(XCommand.class);
+    public final XLog LOG = XLog.getLog(getClass());
 
     private String key;
     private String name;
@@ -432,6 +432,15 @@ public abstract class XCommand<T> implements XCallable<T> {
     @Override
     public String getKey(){
         return this.key;
+    }
+
+    /**
+     * Get XLog log
+     *
+     * @return XLog
+     */
+    public XLog getLog() {
+        return LOG;
     }
 
 }

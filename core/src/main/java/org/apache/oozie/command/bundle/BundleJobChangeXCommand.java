@@ -40,7 +40,6 @@ import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
-import org.apache.oozie.util.XLog;
 
 public class BundleJobChangeXCommand extends XCommand<Void> {
     private String jobId;
@@ -48,7 +47,6 @@ public class BundleJobChangeXCommand extends XCommand<Void> {
     private JPAService jpaService;
     private List<BundleActionBean> bundleActions;
     private BundleJobBean bundleJob;
-    private static final XLog LOG = XLog.getLog(BundleJobChangeXCommand.class);
     private Date newPauseTime = null;
     boolean isChangePauseTime = false;
 

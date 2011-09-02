@@ -23,14 +23,12 @@ import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.ParamChecker;
-import org.apache.oozie.util.XLog;
 
 public class CoordActionInfoXCommand extends CoordinatorXCommand<CoordinatorActionBean> {
     /**
      * This class gets the Coordinator action info based on coordinator action id.
      */
     private final String id;
-    private static XLog LOG = XLog.getLog(CoordinatorXCommand.class);
 
     public CoordActionInfoXCommand(String id) {
         super("action.info", "action.info", 1);

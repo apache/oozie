@@ -58,7 +58,6 @@ import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.PropertiesUtils;
 import org.apache.oozie.util.XConfiguration;
-import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Attribute;
 import org.jdom.Element;
@@ -74,7 +73,6 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
     private final String authToken;
     public static final String CONFIG_DEFAULT = "bundle-config-default.xml";
     public static final String BUNDLE_XML_FILE = "bundle.xml";
-    private static XLog LOG = XLog.getLog(BundleSubmitXCommand.class);
     private final BundleJobBean bundleBean = new BundleJobBean();
     private String jobId;
     private JPAService jpaService = null;
@@ -144,7 +142,6 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
             verifyCoordNameUnique(resolvedJobXml);
             this.jobId = storeToDB(bundleBean, resolvedJobXml);
             LogUtils.setLogInfo(bundleBean, logInfo);
-            LOG = XLog.getLog(BundleSubmitXCommand.class);
 
             if (dryrun) {
                 Date startTime = bundleBean.getStartTime();

@@ -37,7 +37,6 @@ import org.apache.oozie.workflow.lite.LiteWorkflowInstance;
 import org.apache.oozie.util.InstrumentUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
-import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.db.SLADbXOperations;
 
 import java.util.Date;
@@ -50,7 +49,6 @@ import java.util.List;
 public class KillXCommand extends WorkflowXCommand<Void> {
 
     private String wfId;
-    private final XLog LOG = XLog.getLog(getClass());
     private WorkflowJobBean wfJob;
     private List<WorkflowActionBean> actionList;
     private JPAService jpaService = null;

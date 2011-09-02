@@ -36,7 +36,6 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.util.InstrumentUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
-import org.apache.oozie.util.XLog;
 
 public class BundleJobResumeXCommand extends ResumeTransitionXCommand {
 
@@ -44,7 +43,6 @@ public class BundleJobResumeXCommand extends ResumeTransitionXCommand {
     private JPAService jpaService = null;
     private BundleJobBean bundleJob;
     private List<BundleActionBean> bundleActions;
-    private final XLog LOG = XLog.getLog(BundleJobResumeXCommand.class);
 
     /**
      * Constructor to create the Bundle Resume Command.
