@@ -43,7 +43,7 @@ Oozie is bundled without Hadoop JAR files and without the ExtJS library.
    * The Hadoop JARs are required to run Oozie
    * The ExtJS library is optional (only required for the Oozie web-console to work)
 
-*IMPORTANT:* all the Oozie server scripts (=oozie-setup.sh=, =oozie-start.sh=
+*IMPORTANT:* all the Oozie server scripts (=oozie-setup.sh=, =oozie-start.sh=, =oozie-run.sh=
 and =oozie-stop.sh=) only run under the Oozie Unix user, if necessary use =sudo -u OOZIE_USER=
 when invoking the scripts.
 
@@ -53,10 +53,16 @@ Use the =oozie-setup.sh= script to add the Hadoop JARs and the ExtJS library to 
 $ oozie bin/oozie-setup.sh -hadoop 0.20.200 ${HADOOP_HOME} -extjs /tmp/ext-2.2.zip
 </verbatim>
 
-Start Oozie.
+To start Oozie as a daemon process run:
 
 <verbatim>
 $ oozie bin/oozie-start.sh
+</verbatim>
+
+To start Oozie as a foreground process run:
+
+<verbatim>
+$ oozie bin/oozie-run.sh
 </verbatim>
 
 Check the Oozie log file =logs/oozie.log= to ensure Oozie started properly.

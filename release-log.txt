@@ -2,6 +2,7 @@
 
 GH-0208 Initialization of FS instances are wrong in many places and fail with Kerberos
 GH-0215 TestPigMain leaves pig.properties in CP that makes testcases fail
+GH-0212 add an oozie-run.sh command
 GH-0206 add a dependency management section to main pom
 GH-0189 make ENV setting flexible to allow Unix standard layout for conf/logs/data/tmp
 GH-0192 add favicon to Oozie embedded tomcat
