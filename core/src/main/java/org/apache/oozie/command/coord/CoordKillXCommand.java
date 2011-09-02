@@ -83,9 +83,9 @@ public class CoordKillXCommand extends KillTransitionXCommand {
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
         if (coordJob.getStatus() == CoordinatorJob.Status.SUCCEEDED
-                || coordJob.getStatus() == CoordinatorJob.Status.FAILED) {
-            LOG.info("CoordKillCommand not killed - job either " + "finished successfully or does not exist "
-                    + jobId);
+                || coordJob.getStatus() == CoordinatorJob.Status.FAILED || coordJob.getStatus() == CoordinatorJob.Status.DONEWITHERROR) {
+            LOG.info("CoordKillXCommand not killed - job either " + "finished SUCCEEDED or DONEWITHERROR or does not exist, job id = "
+                    + jobId + ", status = " + coordJob.getStatus());
             throw new PreconditionException(ErrorCode.E1020, jobId);
         }
     }

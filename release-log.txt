@@ -1,5 +1,7 @@
 -- Oozie 3.0.1 release
 
+OOZIE-54 Coord job in DoneWithError should not be Killed
+OOZIE-55 Coord Actions in SUSPENDED should not be rerun
 OOZIE-56 Fix Oozie pom version
 OOZIE-50 Update the POM files with new version 3.0.1-SNAPSHOT
 
