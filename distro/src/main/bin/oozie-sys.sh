@@ -137,6 +137,10 @@ else
   print "Using   OOZIE_LOG:           ${OOZIE_LOG}"
 fi
 
+if [ ! -f ${OOZIE_LOG} ]; then
+  mkdir -p ${OOZIE_LOG}
+fi
+
 if [ "${OOZIE_LOG4J_FILE}" = "" ]; then
   export OOZIE_LOG4J_FILE="oozie-log4j.properties"
   print "Setting OOZIE_LOG4J_FILE:    ${OOZIE_LOG4J_FILE}"
