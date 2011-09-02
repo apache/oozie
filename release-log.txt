@@ -1,5 +1,6 @@
 -- Oozie 2.3.0 release
 
+GH-0214 WF spec mentions invalid nodeStatus() EL function
 GH-0045 display warning message in browser with extjs is not installed
 GH-0208 Initialization of FS instances are wrong in many places and fail with Kerberos
 GH-0215 TestPigMain leaves pig.properties in CP that makes testcases fail

@@ -313,11 +313,7 @@ Predicates are JSP Expression Language (EL) expressions (refer to section 4.2 of
 boolean value, =true= or =false=. For example:
 
 <verbatim>
-    ${wf:nodeStatus('myfirstjob') == 'OK'}
-</verbatim>
-
-<verbatim>
-    ${fs:size('/usr/foo/myinputdir') gt 10 * GB}
+    ${fs:fileSize('/usr/foo/myinputdir') gt 10 * GB}
 </verbatim>
 
 *Syntax:*
@@ -356,10 +352,10 @@ state if none of the predicates evaluates to true.
     <decision name="mydecision">
         <switch>
             <case to="reconsolidatejob">
-              ${fs:size(secondjobOutputDir) gt 10 * GB}
+              ${fs:fileSize(secondjobOutputDir) gt 10 * GB}
             </case>
             <case to="rexpandjob">
-              ${fs:size(secondjobOutputDir) lt 100 * MB}
+              ${fs:filSize(secondjobOutputDir) lt 100 * MB}
             </case>
             <case to="recomputejob">
               ${ hadoop:counters('secondjob')[RECORDS][REDUCE_OUT] lt 1000000 }
