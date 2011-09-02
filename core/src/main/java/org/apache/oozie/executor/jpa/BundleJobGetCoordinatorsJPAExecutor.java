@@ -54,6 +54,14 @@ public class BundleJobGetCoordinatorsJPAExecutor implements JPAExecutor<List<Coo
             q.setParameter("bundleId", bundleId);
             coordJobBeans = q.getResultList();
 
+            for (CoordinatorJobBean cjBean : coordJobBeans) {
+                cjBean.setStatus(cjBean.getStatus());
+                cjBean.setTimeUnit(cjBean.getTimeUnit());
+                cjBean.setStartTimestamp(cjBean.getStartTimestamp());
+                cjBean.setEndTimestamp(cjBean.getEndTimestamp());
+                cjBean.setNextMaterializedTimestamp(cjBean.getNextMaterializedTimestamp());
+            }
+
             return coordJobBeans;
         }
         catch (Exception e) {

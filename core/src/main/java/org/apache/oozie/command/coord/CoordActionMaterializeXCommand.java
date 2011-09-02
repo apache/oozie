@@ -28,6 +28,7 @@ import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.executor.jpa.CoordActionInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobUpdateJPAExecutor;
@@ -36,7 +37,6 @@ import org.apache.oozie.coord.TimeUnit;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.store.StoreException;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.LogUtils;
@@ -46,7 +46,6 @@ import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.util.db.SLADbOperations;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 
 public class CoordActionMaterializeXCommand extends CoordinatorXCommand<Void> {
     private String jobId;
@@ -58,7 +57,7 @@ public class CoordActionMaterializeXCommand extends CoordinatorXCommand<Void> {
     private String group;
     private JPAService jpaService = null;
     CoordinatorJobBean job = null;
-    
+
     /**
      * Default timeout for catchup jobs, in minutes, after which coordinator input check will timeout
      */
@@ -171,6 +170,7 @@ public class CoordActionMaterializeXCommand extends CoordinatorXCommand<Void> {
                     + ", lastactionnumber=" + lastActionNumber);
             action = CoordCommandUtils.materializeOneInstance(jobId, dryrun, (Element) eJob.clone(),
                     effStart.getTime(), lastActionNumber, conf, actionBean);
+
             int catchUpTOMultiplier = 1; // This value might be could be changed in future
             if (actionBean.getNominalTimestamp().before(jobBean.getCreatedTimestamp())) {
                 // Catchup action
@@ -230,6 +230,12 @@ public class CoordActionMaterializeXCommand extends CoordinatorXCommand<Void> {
         if (jobEndTime.compareTo(endTime) <= 0) {
             job.setStatus(CoordinatorJob.Status.SUCCEEDED);
             log.info("[" + job.getId() + "]: Update status from PREMATER to SUCCEEDED");
+
+            //update bundle action
+            if (job.getBundleId() != null) {
+                BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(job, CoordinatorJob.Status.PREMATER);
+                bundleStatusUpdate.call();
+            }
         }
         else {
             job.setStatus(CoordinatorJob.Status.RUNNING);
@@ -260,7 +266,7 @@ public class CoordActionMaterializeXCommand extends CoordinatorXCommand<Void> {
         if (jpaService == null) {
             log.error(ErrorCode.E0610);
         }
-        
+
         try {
             job = jpaService.execute(new CoordJobGetJPAExecutor(jobId));
         }
@@ -287,9 +293,9 @@ public class CoordActionMaterializeXCommand extends CoordinatorXCommand<Void> {
             if (job.getStatus() == CoordinatorJob.Status.PREMATER) {
                 job.setStatus(CoordinatorJob.Status.RUNNING);
             }
-            
+
             job.setLastModifiedTime(new Date());
-            
+
             try {
                 jpaService.execute(new CoordJobUpdateJPAExecutor(job));
             }

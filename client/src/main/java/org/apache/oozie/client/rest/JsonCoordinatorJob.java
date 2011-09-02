@@ -152,26 +152,26 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
     @SuppressWarnings("unchecked")
     public JSONObject toJSONObject() {
         JSONObject json = new JSONObject();
-        json.put(JsonTags.COORDINATOR_JOB_PATH, appPath);
-        json.put(JsonTags.COORDINATOR_JOB_NAME, appName);
-        json.put(JsonTags.COORDINATOR_JOB_ID, id);
-        json.put(JsonTags.COORDINATOR_JOB_EXTERNAL_ID, externalId);
-        json.put(JsonTags.COORDINATOR_JOB_CONF, conf);
-        json.put(JsonTags.COORDINATOR_JOB_STATUS, status.toString());
-        json.put(JsonTags.COORDINATOR_JOB_EXECUTIONPOLICY, executionOrder.toString());
-        json.put(JsonTags.COORDINATOR_JOB_FREQUENCY, frequency);
-        json.put(JsonTags.COORDINATOR_JOB_TIMEUNIT, timeUnit.toString());
-        json.put(JsonTags.COORDINATOR_JOB_TIMEZONE, timeZone);
-        json.put(JsonTags.COORDINATOR_JOB_CONCURRENCY, concurrency);
-        json.put(JsonTags.COORDINATOR_JOB_TIMEOUT, timeOut);
-        json.put(JsonTags.COORDINATOR_JOB_LAST_ACTION_TIME, JsonUtils.formatDateRfc822(lastAction));
-        json.put(JsonTags.COORDINATOR_JOB_NEXT_MATERIALIZED_TIME, JsonUtils.formatDateRfc822(nextMaterializedTime));
-        json.put(JsonTags.COORDINATOR_JOB_START_TIME, JsonUtils.formatDateRfc822(startTime));
-        json.put(JsonTags.COORDINATOR_JOB_END_TIME, JsonUtils.formatDateRfc822(endTime));
-        json.put(JsonTags.COORDINATOR_JOB_PAUSE_TIME, JsonUtils.formatDateRfc822(pauseTime));
-        json.put(JsonTags.COORDINATOR_JOB_USER, user);
-        json.put(JsonTags.COORDINATOR_JOB_GROUP, group);
-        json.put(JsonTags.COORDINATOR_JOB_CONSOLE_URL, consoleUrl);
+        json.put(JsonTags.COORDINATOR_JOB_PATH, getAppPath());
+        json.put(JsonTags.COORDINATOR_JOB_NAME, getAppName());
+        json.put(JsonTags.COORDINATOR_JOB_ID, getId());
+        json.put(JsonTags.COORDINATOR_JOB_EXTERNAL_ID, getExternalId());
+        json.put(JsonTags.COORDINATOR_JOB_CONF, getConf());
+        json.put(JsonTags.COORDINATOR_JOB_STATUS, getStatus().toString());
+        json.put(JsonTags.COORDINATOR_JOB_EXECUTIONPOLICY, getExecutionOrder().toString());
+        json.put(JsonTags.COORDINATOR_JOB_FREQUENCY, getFrequency());
+        json.put(JsonTags.COORDINATOR_JOB_TIMEUNIT, getTimeUnit().toString());
+        json.put(JsonTags.COORDINATOR_JOB_TIMEZONE, getTimeZone());
+        json.put(JsonTags.COORDINATOR_JOB_CONCURRENCY, getConcurrency());
+        json.put(JsonTags.COORDINATOR_JOB_TIMEOUT, getTimeout());
+        json.put(JsonTags.COORDINATOR_JOB_LAST_ACTION_TIME, JsonUtils.formatDateRfc822(getLastActionTime()));
+        json.put(JsonTags.COORDINATOR_JOB_NEXT_MATERIALIZED_TIME, JsonUtils.formatDateRfc822(getNextMaterializedTime()));
+        json.put(JsonTags.COORDINATOR_JOB_START_TIME, JsonUtils.formatDateRfc822(getStartTime()));
+        json.put(JsonTags.COORDINATOR_JOB_END_TIME, JsonUtils.formatDateRfc822(getEndTime()));
+        json.put(JsonTags.COORDINATOR_JOB_PAUSE_TIME, JsonUtils.formatDateRfc822(getPauseTime()));
+        json.put(JsonTags.COORDINATOR_JOB_USER, getUser());
+        json.put(JsonTags.COORDINATOR_JOB_GROUP, getGroup());
+        json.put(JsonTags.COORDINATOR_JOB_CONSOLE_URL, getConsoleUrl());
         json.put(JsonTags.COORDINATOR_ACTIONS, JsonCoordinatorAction.toJSONArray(actions));
 
         return json;
@@ -339,7 +339,7 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
 
     /**
      * Return the coordinate application console URL.
-     * 
+     *
      * @return the coordinate application console URL.
      */
     public String getConsoleUrl() {
@@ -348,7 +348,7 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
 
     /**
      * Set the coordinate application console URL.
-     * 
+     *
      * @param consoleUrl the coordinate application console URL.
      */
     public void setConsoleUrl(String consoleUrl) {
@@ -371,7 +371,7 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
 
     /**
      * Convert a coordinator application list into a JSONArray.
-     * 
+     *
      * @param application list.
      * @return the corresponding JSON array.
      */
@@ -388,7 +388,7 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
 
     /**
      * Convert a JSONArray into a application list.
-     * 
+     *
      * @param array JSON array.
      * @return the corresponding application list.
      */
