@@ -16,9 +16,11 @@
 
 #Creating temporary directory
 function prepare() {
-  tmpDir=/tmp/oozie-war-$$
+  tmpDir=/tmp/oozie-war-packing-$$
   rm -rf ${tmpDir}
   mkdir ${tmpDir}	
+  tmpWarDir=${tmpDir}/oozie-war
+  mkdir ${tmpWarDir}	
   checkExec "creating staging directory ${tmpDir}"
 }
 
@@ -26,7 +28,7 @@ function prepare() {
 function cleanUp() {
   if [ ! "${tmpDir}" = "" ]; then
     rm -rf ${tmpDir}    
-	checkExec "deleting staging directory ${tmpDir}"
+    checkExec "deleting staging directory ${tmpDir}"
   fi
 }
 
@@ -116,7 +118,7 @@ function printUsage() {
   echo " Options: -inputwar INPUT_OOZIE_WAR"
   echo "          -outputwar OUTPUT_OOZIE_WAR"
   echo "          [-hadoop HADOOP_VERSION HADOOP_PATH]"
-  echo "          [-extjs EXTJS_PATH]"
+  echo "          [-extjs EXTJS_PATH] (expanded or ZIP)"
   echo "          [-jars JARS_PATH] (multiple JAR path separated by ':')"
   echo
 }
@@ -239,14 +241,14 @@ if [ "${addJars}" = "true" ]; then
 fi
 
 #Unpacking original war
-unzip ${inputWar} -d ${tmpDir} > /dev/null
+unzip ${inputWar} -d ${tmpWarDir} > /dev/null
 checkExec "unzipping Oozie input WAR"
 
 components=""
 
 if [ "${addHadoop}" = "true" ]; then
   components="Hadoop JARs";
-  found=`ls ${tmpDir}/WEB-INF/lib/hadoop*core*jar 2> /dev/null | wc -l`
+  found=`ls ${tmpWarDir}/WEB-INF/lib/hadoop*core*jar 2> /dev/null | wc -l`
   checkExec "looking for Hadoop JARs in input WAR"
   if [ ! $found = 0 ]; then
     echo
@@ -260,7 +262,7 @@ if [ "${addHadoop}" = "true" ]; then
     do
       findFile ${hadoopHome} ${jar}
       jar=${RET}
-      cp ${jar} ${tmpDir}/WEB-INF/lib/
+      cp ${jar} ${tmpWarDir}/WEB-INF/lib/
       checkExec "copying jar ${jar} to staging"
     done  
 fi
@@ -270,15 +272,20 @@ if [ "${addExtjs}" = "true" ]; then
     components="${components}, "
   fi
   components="${components}ExtJS library"
-  if [ -e ${tmpDir}/ext-2.2 ]; then
+  if [ -e ${tmpWarDir}/ext-2.2 ]; then
     echo
     echo "Specified Oozie WAR '${inputWar}' already contains ExtJS library files"
     echo
     cleanUp
     exit -1
   fi
+  #If the extjs path given is a ZIP, expand it and use it from there
+  if [ -f ${extjsHome} ]; then
+    unzip ${extjsHome} -d ${tmpDir} > /dev/null
+    extjsHome=${tmpDir}/ext-2.2
+  fi
   #Inject the library in oozie war
-  cp -r ${extjsHome} ${tmpDir}/ext-2.2
+  cp -r ${extjsHome} ${tmpWarDir}/ext-2.2
   checkExec "copying ExtJS files into staging"
 fi
 
@@ -290,7 +297,7 @@ if [ "${addJars}" = "true" ]; then
 
   for jarPath in ${jarsPath//:/$'\n'}
   do
-    found=`ls ${tmpDir}/WEB-INF/lib/${jarPath} 2> /dev/null | wc -l`
+    found=`ls ${tmpWarDir}/WEB-INF/lib/${jarPath} 2> /dev/null | wc -l`
     checkExec "looking for JAR ${jarPath} in input WAR"
     if [ ! $found = 0 ]; then
       echo
@@ -299,20 +306,20 @@ if [ "${addJars}" = "true" ]; then
       cleanUp
       exit -1
     fi
-    cp ${jarPath} ${tmpDir}/WEB-INF/lib/
+    cp ${jarPath} ${tmpWarDir}/WEB-INF/lib/
     checkExec "copying jar ${jarPath} to staging"
   done
 fi
 
 #Creating new Oozie WAR
 currentDir=`pwd`
-cd ${tmpDir}
+cd ${tmpWarDir}
 zip -r oozie.war * > /dev/null
 checkExec "creating new Oozie WAR"
 cd ${currentDir}
 
 #copying new Oozie WAR to asked location
-cp ${tmpDir}/oozie.war ${outputWar}
+cp ${tmpWarDir}/oozie.war ${outputWar}
 checkExec "copying new Oozie WAR"
 
 echo 
