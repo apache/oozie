@@ -1,5 +1,6 @@
 -- Oozie 3.0.0 release
 
+GH-0341 oozie-jpa.log file is created in extra log directory
 GH-0307 check for oozie setup owner in setup/start/stop scripts should be optional
 GH-0295 subworkflow action fails if workflow URI is a directory
 GH-0302 the ...wf.ext.schemas property should allow spaces/enters between schema files
