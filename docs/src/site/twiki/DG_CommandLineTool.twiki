@@ -106,7 +106,7 @@ Example:
 <verbatim>
 $ oozie job -oozie http://localhost:8080/oozie -config job.properties -submit
 .
-job: 14-20090525161321-oozie-tucu
+job: 14-20090525161321-oozie-joe
 </verbatim>
 
 The parameters for the job must be provided in a file, either a Java Properties file (.properties) or a Hadoop XML
@@ -123,12 +123,12 @@ The job will be created, but it will not be started, it will be in =PREP= status
 Example:
 
 <verbatim>
-$ oozie job -oozie http://localhost:8080/oozie -start 14-20090525161321-oozie-tucu
+$ oozie job -oozie http://localhost:8080/oozie -start 14-20090525161321-oozie-joe
 </verbatim>
 
 The =start= option starts a previously submitted workflow job or coordinator job that is in =PREP= status.
 
-After the command is executed the workflow job will be in =RUNNING= status and coordinator job will be in =PREMATER= status.
+After the command is executed the workflow job will be in =RUNNING= status and coordinator job will be in =RUNNING= status.
 
 ---+++ Running a Workflow Job or Coordinator Job
 
@@ -137,7 +137,7 @@ Example:
 <verbatim>
 $ oozie job -oozie http://localhost:8080/oozie -config job.properties -run
 .
-job: 15-20090525161321-oozie-tucu
+job: 15-20090525161321-oozie-joe
 </verbatim>
 
 The =run= option creates and starts a workflow job or coordinator job.
@@ -156,7 +156,7 @@ The job will be created and it will started, the job will be in =RUNNING= status
 Example:
 
 <verbatim>
-$ oozie job -oozie http://localhost:8080/oozie -suspend 14-20090525161321-oozie-tucu
+$ oozie job -oozie http://localhost:8080/oozie -suspend 14-20090525161321-oozie-joe
 </verbatim>
 
 The =suspend= option suspends a job in =RUNNING= status.
@@ -170,7 +170,7 @@ When the coordinator job is suspended, running coordinator actions will stay in 
 Example:
 
 <verbatim>
-$ oozie job -oozie http://localhost:8080/oozie -resume 14-20090525161321-oozie-tucu
+$ oozie job -oozie http://localhost:8080/oozie -resume 14-20090525161321-oozie-joe
 </verbatim>
 
 The =resume= option resumes a job in =SUSPENDED= status.
@@ -188,11 +188,11 @@ it was suspended, actions will not be lost, they will delayed.
 Example:
 
 <verbatim>
-$ oozie job -oozie http://localhost:8080/oozie -kill 14-20090525161321-oozie-tucu
+$ oozie job -oozie http://localhost:8080/oozie -kill 14-20090525161321-oozie-joe
 </verbatim>
 
 The =kill= option kills a workflow job in =PREP=, =SUSPENDED= or =RUNNING= status and a coordinator job in
-=PREP=, =PREMATER=, =SUSPENDED= or =RUNNING= status.
+=PREP=, =RUNNING=, =PREPSUSPENDED=, =SUSPENDED=, =PREPPAUSED=, or =PAUSED=  status.
 
 After the command is executed the job will be in =KILLED= status.
 
@@ -201,7 +201,7 @@ After the command is executed the job will be in =KILLED= status.
 Example:
 
 <verbatim>
-$ oozie job -oozie http://localhost:8080/oozie -change 14-20090525161321-oozie-tucu -value endtime=2011-12-01T05:00Z\;concurrency=100\;2011-10-01T05:00Z
+$ oozie job -oozie http://localhost:8080/oozie -change 14-20090525161321-oozie-joe -value endtime=2011-12-01T05:00Z\;concurrency=100\;2011-10-01T05:00Z
 </verbatim>
 
 The =change= option changes a coordinator job that is not in =KILLED= status.
@@ -222,7 +222,7 @@ After the command is executed the job's end time, concurrency or pause time shou
 Example:
 
 <verbatim>
-$ oozie job -oozie http://localhost:8080/oozie -config job.properties -rerun 14-20090525161321-oozie-tucu
+$ oozie job -oozie http://localhost:8080/oozie -config job.properties -rerun 14-20090525161321-oozie-joe
 </verbatim>
 
 The =rerun= option reruns a completed ( =SUCCCEDED=, =FAILED= or =KILLED= ) job skipping the specified nodes.
@@ -263,14 +263,14 @@ Refer to the [[DG_CoordinatorRerun][Rerunning Coordinator Actions]] for details 
 Example:
 
 <verbatim>
-$ oozie job -oozie http://localhost:8080/oozie -info 14-20090525161321-oozie-tucu
+$ oozie job -oozie http://localhost:8080/oozie -info 14-20090525161321-oozie-joe
 .
 .----------------------------------------------------------------------------------------------------------------------------------------------------------------
 Workflow Name :  map-reduce-wf
-App Path      :  hdfs://localhost:9000/user/tucu/workflows/map-reduce
+App Path      :  hdfs://localhost:9000/user/joe/workflows/map-reduce
 Status        :  SUCCEEDED
 Run           :  0
-User          :  tucu
+User          :  joe
 Group         :  users
 Created       :  2009-05-26 05:01 +0000
 Started       :  2009-05-26 05:01 +0000
@@ -296,7 +296,7 @@ The =verbose= option gives more detailed information for all the actions, if che
 Example:
 
 <verbatim>
-$ oozie job -oozie http://localhost:8080/oozie -definition 14-20090525161321-oozie-tucu
+$ oozie job -oozie http://localhost:8080/oozie -definition 14-20090525161321-oozie-joe
 
 <workflow-app xmlns="uri:oozie:workflow:0.2" name="sm3-segment-2413">
 	<start to="p0"/>
@@ -313,7 +313,7 @@ Example:
 
 <verbatim>
 
-$ oozie job -oozie http://localhost:8080/oozie -log 14-20090525161321-oozie-tucu
+$ oozie job -oozie http://localhost:8080/oozie -log 14-20090525161321-oozie-joe
 
 </verbatim>
 
@@ -381,8 +381,8 @@ $ oozie jobs -oozie http://localhost:8080/oozie -localtime -len 2 -fliter status
 .
 Job Id                          Workflow Name         Status     Run  User      Group     Created                Started                 Ended
 .----------------------------------------------------------------------------------------------------------------------------------------------------------------
-4-20090527151008-oozie-tucu     hadoopel-wf           RUNNING    0    tucu      other     2009-05-27 15:34 +0530 2009-05-27 15:34 +0530  -
-0-20090527151008-oozie-tucu     hadoopel-wf           RUNNING    0    tucu      other     2009-05-27 15:15 +0530 2009-05-27 15:15 +0530  -
+4-20090527151008-oozie-joe     hadoopel-wf           RUNNING    0    joe      other     2009-05-27 15:34 +0530 2009-05-27 15:34 +0530  -
+0-20090527151008-oozie-joe     hadoopel-wf           RUNNING    0    joe      other     2009-05-27 15:15 +0530 2009-05-27 15:15 +0530  -
 .----------------------------------------------------------------------------------------------------------------------------------------------------------------
 </verbatim>
 
@@ -543,7 +543,7 @@ Example:
 <verbatim>
 $ oozie pig -oozie http://localhost:8080/oozie -file pigScriptFile -config job.properties -X -param_file params
 .
-job: 14-20090525161321-oozie-tucu-W
+job: 14-20090525161321-oozie-joe-W
 .
 $cat job.properties
 fs.default.name=hdfs://localhost:9000

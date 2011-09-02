@@ -8,11 +8,13 @@
 
 The goal of this document is to define a coordinator engine system specialized in submitting workflows based on time and data triggers.
 
-*Authors:* Anil Pillai and Alejandro Abdelnur
-
 %TOC%
 
 ---++ Changelog
+
+---+++!! 09/MAR/2011:
+
+   * Update coordinator status
 
 ---+++!! 02/DEC/2010:
 
@@ -597,18 +599,36 @@ To create a coordinator job, a job configuration that resolves all coordinator a
 
 A coordinator job is a running instance of a coordinator application running from a start time to an end time.
 
-At any time, a coordinator job is in one of the following status: *PREP, PREMATER, RUNNING, SUSPENDED, SUCCEEDED, KILLED, FAILED*.
+At any time, a coordinator job is in one of the following status: *PREP, RUNNING, PREPSUSPENDED, SUSPENDED, PREPPAUSED, PAUSED, SUCCEEDED, DONWITHERROR, KILLED, FAILED*.
 
 Valid coordinator job status transitions are:
 
-   * *PREP --> PREMATER | SUSPENDED | KILLED*
-   * *PREMATER --> RUNNING | SUSPENDED | KILLED | FAILED | SUCCEEDED* 
-   * *RUNNING --> PREMATER | SUSPENDED | KILLED*
-   * *SUSPENDED --> PREP | KILLED*
+   * *PREP --> PREPSUSPENDED | PREPPAUSED | RUNNING | KILLED*
+   * *RUNNING --> SUSPENDED | PAUSED | SUCCEEDED | DONWITHERROR | KILLED | FAILED*
+   * *PREPSUSPENDED --> PREP | KILLED*
+   * *SUSPENDED --> RUNNING | KILLED*
+   * *PREPPAUSED --> PREP | KILLED*
+   * *PAUSED --> SUSPENDED | RUNNING | KILLED*
 
-NOTE: when a coordinator job is resumed, it will transit to *PREP*.
+When a coordinator job is submitted, oozie parses the coordinator job XML. Oozie then creates a record for the coordinator with status *PREP* and returns a unique ID. The coordinator is also started immediately if pause time is not set.
 
-A coordinator job creates coordinator actions (commonly workflow jobs) only for the duration of the coordinator job and only if the coordinator job is in *RUNNING* status. If the coordinator job has been suspended, when resumed it will create all the coordinator actions that should have been created during the time it was suspended, actions will not be lost, they will delayed.
+When a user requests to suspend a coordinator job that is in *PREP* state, oozie puts the job in status *PREPSUSPEND*. Similarly, when pause time reaches for a coordinator job with *PREP* status, oozie puts the job in status *PREPPAUSED*.
+
+Conversely, when a user requests to resume a *PREPSUSPEND* coordinator job, oozie puts the job in status *PREP*. And when pause time is reset for a coordinator job and job status is *PREPPAUSED*, oozie puts the job in status *PREP*.
+
+When a coordinator job starts, oozie puts the job in status *RUNNING* and start materializing workflow jobs based on job frequency.
+
+When a user requests to kill a coordinator job, oozie puts the job in status *KILLED* and it sends kill to all submitted workflow jobs.
+
+When a user requests to suspend a coordinator job that is in *RUNNING* status, oozie puts the job in status *SUSPEND* and it suspends all submitted workflow jobs.
+
+When pause time reaches for a coordinator job that is in *RUNNING* status, oozie puts the job in status *PAUSED*.
+
+Conversely, when a user requests to resume a *SUSPEND* coordinator job, oozie puts the job in status *RUNNING*. And when pause time is reset for a coordinator job and job status is *PAUSED*, oozie puts the job in status *RUNNING*.
+
+A coordinator job creates workflow jobs (commonly coordinator actions) only for the duration of the coordinator job and only if the coordinator job is in *RUNNING* status. If the coordinator job has been suspended, when resumed it will create all the coordinator actions that should have been created during the time it was suspended, actions will not be lost, they will delayed.
+
+When the coordinator job materialization finishs and all workflow jobs finish, oozie updates the coordinator status accordingly. For example, if all workflows are SUCCEEDED, oozie put the coordinator job into *SUCCEEDED* status. However, if any workflow job finishes with not *SUCCEEDED* (e.g. *KILLED* or *FAILED*), oozie puts the coordinator job into *DONEWITHERROR*.
 
 ---++++ 6.1.3. Coordinator Action
 
@@ -835,7 +855,7 @@ The following example describes a synchronous coordinator application that runs 
       </output-events>
       <action>
         <workflow>
-          <app-path>hdfs://bar:9000/usr/tucu/logsprocessor-wf</app-path>
+          <app-path>hdfs://bar:9000/usr/joe/logsprocessor-wf</app-path>
           <configuration>
             <property>
               <name>wfInput</name>
@@ -859,7 +879,7 @@ The workflow job invocation for the single coordinator action would resolve to:
 
 <verbatim>
   <workflow>
-    <app-path>hdfs://bar:9000/usr/tucu/logsprocessor-wf</app-path>
+    <app-path>hdfs://bar:9000/usr/joe/logsprocessor-wf</app-path>
     <configuration>
       <property>
         <name>wfInput</name>
@@ -914,7 +934,7 @@ The coordinator application is identical, except for the frequency, 'end' date a
       </output-events>
       <action>
         <workflow>
-          <app-path>hdfs://bar:9000/usr/tucu/logsprocessor-wf</app-path>
+          <app-path>hdfs://bar:9000/usr/joe/logsprocessor-wf</app-path>
           <configuration>
             <property>
               <name>wfInput</name>
@@ -940,7 +960,7 @@ The workflow job invocation for the first coordinator action would resolve to:
 
 <verbatim>
   <workflow>
-    <app-path>hdfs://bar:9000/usr/tucu/logsprocessor-wf</app-path>
+    <app-path>hdfs://bar:9000/usr/joe/logsprocessor-wf</app-path>
     <configuration>
       <property>
         <name>wfInput</name>
@@ -958,7 +978,7 @@ For the second coordinator action it would resolve to:
 
 <verbatim>
   <workflow>
-    <app-path>hdfs://bar:9000/usr/tucu/logsprocessor-wf</app-path>
+    <app-path>hdfs://bar:9000/usr/joe/logsprocessor-wf</app-path>
     <configuration>
       <property>
         <name>wfInput</name>
@@ -1012,7 +1032,7 @@ The coordinator application frequency is weekly and it starts on the 7th day of 
       </output-events>
       <action>
         <workflow>
-          <app-path>hdfs://bar:9000/usr/tucu/logsprocessor-wf</app-path>
+          <app-path>hdfs://bar:9000/usr/joe/logsprocessor-wf</app-path>
           <configuration>
             <property>
               <name>wfInput</name>
@@ -1038,7 +1058,7 @@ The workflow job invocation for the first coordinator action would resolve to:
 
 <verbatim>
   <workflow>
-    <app-path>hdfs://bar:9000/usr/tucu/logsprocessor-wf</app-path>
+    <app-path>hdfs://bar:9000/usr/joe/logsprocessor-wf</app-path>
     <configuration>
       <property>
         <name>wfInput</name>
@@ -1061,7 +1081,7 @@ For the second coordinator action it would resolve to:
 
 <verbatim>
   <workflow>
-    <app-path>hdfs://bar:9000/usr/tucu/logsprocessor-wf</app-path>
+    <app-path>hdfs://bar:9000/usr/joe/logsprocessor-wf</app-path>
     <configuration>
       <property>
         <name>wfInput</name>
@@ -1769,7 +1789,7 @@ Coordinator application definition:
       </input-events>
       <action>
         <workflow>
-          <app-path>hdfs://bar:9000/usr/tucu/logsprocessor-wf</app-path>
+          <app-path>hdfs://bar:9000/usr/joe/logsprocessor-wf</app-path>
           <configuration>
             <property>
               <name>wfInput</name>
@@ -1844,7 +1864,7 @@ Coordinator application definition:
       </output-events>
       <action>
         <workflow>
-          <app-path>hdfs://bar:9000/usr/tucu/logsaggretor-wf</app-path>
+          <app-path>hdfs://bar:9000/usr/joe/logsaggretor-wf</app-path>
           <configuration>
             <property>
               <name>wfInput</name>
@@ -1942,7 +1962,7 @@ For example, if baseDate is '2009-01-01T00:00Z', instance is '2' and timeUnit is
       ......
       <action>
         <workflow>
-          <app-path>hdfs://bar:9000/usr/tucu/logsaggretor-wf</app-path>
+          <app-path>hdfs://bar:9000/usr/joe/logsaggretor-wf</app-path>
           <configuration>
             <property>
               <name>nextInstance</name>
@@ -2027,7 +2047,7 @@ The following 2 use cases will be used to show how Oozie Coordinator built-in fu
   </input-events>
   <action>
    <workflow>
-     <app-path>hdfs://bar:9000/usr/tucu/logsaggretor-wf</app-path>
+     <app-path>hdfs://bar:9000/usr/joe/logsaggretor-wf</app-path>
      <configuration>
        <property>
          <name>wfInput</name>
@@ -2079,7 +2099,7 @@ Note that because the coordinator application and the dataset are in the same ti
   </input-events>
   <action>
    <workflow>
-     <app-path>hdfs://bar:9000/usr/tucu/logsaggretor-wf</app-path>
+     <app-path>hdfs://bar:9000/usr/joe/logsaggretor-wf</app-path>
      <configuration>
        <property>
          <name>wfInput</name>
@@ -2129,7 +2149,7 @@ The data input range for the East coast dataset must be adjusted (with -3) in or
   </input-events>
   <action>
    <workflow>
-     <app-path>hdfs://bar:9000/usr/tucu/logsaggretor-wf</app-path>
+     <app-path>hdfs://bar:9000/usr/joe/logsaggretor-wf</app-path>
      <configuration>
        <property>
          <name>wfInput</name>
@@ -2223,11 +2243,11 @@ All the coordinator job properties, the HDFS path for the coordinator applicatio
 <configuration>
     <property>
         <name>user.name</name>
-        <value>tucu</value>
+        <value>joe</value>
     </property>
     <property>
         <name>oozie.coord.application.path</name>
-        <value>hdfs://foo:9000/user/tucu/myapps/hello-coord.xml</value>
+        <value>hdfs://foo:9000/user/joe/myapps/hello-coord.xml</value>
     </property>
     ...
 </configuration>
@@ -2264,7 +2284,7 @@ If you add *sla* tags to the Coordinator or Workflow XML files, then the SLA inf
     </input-events>
     <action>
         <workflow>
-            <app-path>hdfs://bar:9000/usr/tucu/hello-wf</app-path>
+            <app-path>hdfs://bar:9000/usr/joe/hello-wf</app-path>
             <configuration>
                 <property>
                     <name>input</name>
@@ -2277,7 +2297,7 @@ If you add *sla* tags to the Coordinator or Workflow XML files, then the SLA inf
             <sla:should-start>${5 * MINUTES}</sla:should-start>
             <sla:should-end>${55 * MINUTES}</sla:should-end>
             <sla:message>log processor run for: ${coord:nominalTime()}</sla:message>
-            <sla:alert-contact>tucu@yahoo-inc.com</sla:alert-contact>
+            <sla:alert-contact>joe@yahoo-inc.com</sla:alert-contact>
             <sla:dev-contact>abc@yahoo-inc.com</sla:dev-contact>
             <sla:qa-contact>abc@yahoo-inc.com</sla:qa-contact>
             <sla:se-contact>abc@yahoo-inc.com</sla:se-contact>
@@ -2322,7 +2342,7 @@ If you add *sla* tags to the Coordinator or Workflow XML files, then the SLA inf
         <sla:should-start>${10 * MINUTES}</sla:should-start>
         <sla:should-end>${30 * MINUTES}</sla:should-end>
         <sla:message>abc.grouper for input ${input}</sla:message>
-        <sla:alert-contact>tucu@yahoo-inc.com</sla:alert-contact>
+        <sla:alert-contact>joe@yahoo-inc.com</sla:alert-contact>
         <sla:dev-contact>abc@yahoo-inc.com</sla:dev-contact>
         <sla:qa-contact>abc@yahoo-inc.com</sla:qa-contact>
         <sla:se-contact>abc@yahoo-inc.com</sla:se-contact>
