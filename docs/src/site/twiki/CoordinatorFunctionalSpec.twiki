@@ -383,7 +383,7 @@ A synchronous dataset definition contains the following information:
    * *%BLUE% uri-template:%ENDCOLOR%* The URI template that identifies the dataset and can be resolved into concrete URIs to identify a particular dataset instance. The URI template is constructed using:
       * *%BLUE% constants %ENDCOLOR%* See the allowable EL Time Constants below. Ex: ${YEAR}/${MONTH}.
       * *%BLUE% variables %ENDCOLOR%* Variables must be resolved at the time a coordinator job is submitted to the coordinator engine. They are normally provided a job parameters (configuration properties). Ex: ${market}/${language}
-   * *%BLUE% done-flag:%ENDCOLOR%* The done file for the data set. The default done file is '_SUCCESS' if done-flag is not specified. To ignore the done file, set done-flag with a space in the value.
+   * *%BLUE% done-flag:%ENDCOLOR%* The done file for the data set. If done-flag is not specified, then Oozie configures Hadoop to create a _SUCCESS file in the output directory. To ignore the done file, set done-flag with a space in the value.
 
 The following EL constants can be used within synchronous dataset URI templates:
 
