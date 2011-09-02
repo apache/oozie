@@ -25,6 +25,8 @@ import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.XLog;
 
 public class CoordJobMatLookupCommand extends CoordinatorCommand<Void> {
+    private static final int LOOKAHEAD_WINDOW = 300; // We look ahead 5 minutes for materialization;
+    
     private final XLog log = XLog.getLog(getClass());
     private int materializationWindow;
     private String jobId;
@@ -62,6 +64,11 @@ public class CoordJobMatLookupCommand extends CoordinatorCommand<Void> {
         Timestamp startTime = coordJob.getNextMaterializedTimestamp();
         if (startTime == null) {
             startTime = coordJob.getStartTimestamp();
+            
+            if (startTime.after(new Timestamp(System.currentTimeMillis() + LOOKAHEAD_WINDOW * 1000))) {
+                log.debug("CoordJobMatLookupCommand for jobId=" + jobId + " job's start time is not reached yet - nothing to materialize");
+                return null;
+            }
         }
         // calculate end time by adding materializationWindow to start time.
         // need to convert materializationWindow from secs to milliseconds

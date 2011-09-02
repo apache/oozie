@@ -14,6 +14,7 @@
  */
 package org.apache.oozie.command.coord;
 
+import java.sql.Timestamp;
 import java.util.Date;
 
 import org.apache.oozie.CoordinatorJobBean;
@@ -39,22 +40,63 @@ public class TestCoordJobMatLookupCommand extends XTestCase {
         super.tearDown();
     }
 
-    public void testMatLookupCommand() throws StoreException, CommandException {
+    public void testMatLookupCommand1() throws Exception {
         String jobId = "0000000-" + new Date().getTime()
                 + "-testMatLookupCommand-C";
-        addRecordToJobTable(jobId);
+        
+        Date start = DateUtils.parseDateUTC("2009-02-01T01:00Z");
+        Date end = DateUtils.parseDateUTC("2009-02-03T23:59Z");
+        addRecordToJobTable(jobId, start, end);
         new CoordJobMatLookupCommand(jobId, 3600).call();
-        checkCoordJobs(jobId);
-
+        checkCoordJobs(jobId, CoordinatorJob.Status.PREMATER);
+    }
+    
+    // Test a coordinator job that will run in far future,
+    // materialization should not happen.
+    public void testMatLookupCommand2() throws Exception {
+        String jobId = "0000000-" + new Date().getTime()
+                + "-testMatLookupCommand-C";
+        
+        Date start = DateUtils.parseDateUTC("2099-02-01T01:00Z");
+        Date end = DateUtils.parseDateUTC("2099-02-03T23:59Z");
+        addRecordToJobTable(jobId, start, end);
+        new CoordJobMatLookupCommand(jobId, 3600).call();
+        checkCoordJobs(jobId, CoordinatorJob.Status.PREP);
+    }
+    
+    // Test a coordinator job that will run within 5 minutes from now,
+    // materilization should happen.
+    public void testMatLookupCommand3() throws Exception {
+        String jobId = "0000000-" + new Date().getTime()
+                + "-testMatLookupCommand-C";
+        
+        Date start = DateUtils.toDate(new Timestamp(System.currentTimeMillis() + 180 * 1000));
+        Date end = DateUtils.parseDateUTC("2099-02-03T23:59Z");
+        addRecordToJobTable(jobId, start, end);
+        new CoordJobMatLookupCommand(jobId, 3600).call();
+        checkCoordJobs(jobId, CoordinatorJob.Status.PREMATER);
+    }
+    
+    // Test a coordinator job that will run beyond 5 minutes from now,
+    // materilization should not happen.
+    public void testMatLookupCommand4() throws Exception {
+        String jobId = "0000000-" + new Date().getTime()
+                + "-testMatLookupCommand-C";
+        
+        Date start = DateUtils.toDate(new Timestamp(System.currentTimeMillis() + 360 * 1000));
+        Date end = DateUtils.parseDateUTC("2099-02-03T23:59Z");
+        addRecordToJobTable(jobId, start, end);
+        new CoordJobMatLookupCommand(jobId, 3600).call();
+        checkCoordJobs(jobId, CoordinatorJob.Status.PREP);
     }
 
-    private void checkCoordJobs(String jobId) throws StoreException {
+    private void checkCoordJobs(String jobId, CoordinatorJob.Status expectedStatus) throws StoreException {
         CoordinatorStore store = new CoordinatorStore(false);
         try {
             CoordinatorJobBean job = store.getCoordinatorJob(jobId, false);
-            if (job.getStatus() != CoordinatorJob.Status.PREMATER) {
+            if (job.getStatus() != expectedStatus) {
                 fail("CoordJobMatLookupCommand didn't work because the status for job id"
-                        + jobId + " is :" + job.getStatusStr());
+                        + jobId + " is : " + job.getStatusStr() + "; however expected status is : " + expectedStatus.toString());
             }
         }
         catch (StoreException se) {
@@ -62,7 +104,7 @@ public class TestCoordJobMatLookupCommand extends XTestCase {
         }
     }
 
-    private void addRecordToJobTable(String jobId) throws StoreException {
+    private void addRecordToJobTable(String jobId, Date start, Date end) throws StoreException {
         CoordinatorStore store = new CoordinatorStore(false);
         CoordinatorJobBean coordJob = new CoordinatorJobBean();
         coordJob.setId(jobId);
@@ -76,41 +118,25 @@ public class TestCoordJobMatLookupCommand extends XTestCase {
 
         String confStr = "<configuration></configuration>";
         coordJob.setConf(confStr);
-        String appXml = "<coordinator-app xmlns='uri:oozie:coordinator:0.1' name='NAME' frequency=\"1\" start='2009-02-01T01:00Z' end='2009-02-03T23:59Z' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
+        String startDateStr = null, endDateStr = null;
+        try {
+            startDateStr = DateUtils.formatDateUTC(start);
+            endDateStr = DateUtils.formatDateUTC(end);
+        }
+        catch (Exception ex) {
+            ex.printStackTrace();
+            fail("Could not format dates");   
+        }
+        String appXml = "<coordinator-app xmlns='uri:oozie:coordinator:0.1' name='NAME' frequency=\"1\" start='" + startDateStr + "' end='" + endDateStr + "'";
+        
         appXml += "<controls>";
         appXml += "<timeout>10</timeout>";
         appXml += "<concurrency>2</concurrency>";
         appXml += "<execution>LIFO</execution>";
         appXml += "</controls>";
-        appXml += "<input-events>";
-        appXml += "<data-in name='A' dataset='a'>";
-        appXml += "<dataset name='a' frequency='7' initial-instance='2009-02-01T01:00Z' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
-        appXml += "<uri-template>file:///tmp/coord/workflows/${YEAR}/${DAY}</uri-template>";
-        appXml += "</dataset>";
-        appXml += "<instance>${coord:latest(0)}</instance>";
-        appXml += "</data-in>";
-        appXml += "</input-events>";
-        appXml += "<output-events>";
-        appXml += "<data-out name='LOCAL_A' dataset='local_a'>";
-        appXml += "<dataset name='local_a' frequency='7' initial-instance='2009-02-01T01:00Z' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
-        appXml += "<uri-template>file:///tmp/coord/workflows/${YEAR}/${DAY}</uri-template>";
-        appXml += "</dataset>";
-        appXml += "<instance>${coord:current(-1)}</instance>";
-        appXml += "</data-out>";
-        appXml += "</output-events>";
         appXml += "<action>";
         appXml += "<workflow>";
         appXml += "<app-path>hdfs:///tmp/workflows/</app-path>";
-        appXml += "<configuration>";
-        appXml += "<property>";
-        appXml += "<name>inputA</name>";
-        appXml += "<value>${coord:dataIn('A')}</value>";
-        appXml += "</property>";
-        appXml += "<property>";
-        appXml += "<name>inputB</name>";
-        appXml += "<value>${coord:dataOut('LOCAL_A')}</value>";
-        appXml += "</property>";
-        appXml += "</configuration>";
         appXml += "</workflow>";
         appXml += "</action>";
         appXml += "</coordinator-app>";
@@ -118,8 +144,8 @@ public class TestCoordJobMatLookupCommand extends XTestCase {
         coordJob.setLastActionNumber(0);
         coordJob.setFrequency(1);
         try {
-            coordJob.setEndTime(DateUtils.parseDateUTC("2009-02-03T23:59Z"));
-            coordJob.setStartTime(DateUtils.parseDateUTC("2009-02-01T23:59Z"));
+            coordJob.setStartTime(start);
+            coordJob.setEndTime(end);
         }
         catch (Exception e) {
             e.printStackTrace();
