@@ -219,10 +219,11 @@ public abstract class XDataTestCase extends XFsTestCase {
         String actionId = Services.get().get(UUIDService.class).generateChildId(jobId, actionNum + "");
         Path appPath = new Path(getFsTestCaseDir(), "coord");
         String actionXml = getCoordActionXml(appPath, resourceXmlName);
-        String actionNomialTime = getActionNomialTime(actionXml);
+        String actionNomialTime = getActionNominalTime(actionXml);
 
         CoordinatorActionBean action = new CoordinatorActionBean();
         action.setId(actionId);
+        action.setExternalId(actionId + "_E");
         action.setJobId(jobId);
         action.setActionNumber(actionNum);
         try {
@@ -452,7 +453,12 @@ public abstract class XDataTestCase extends XFsTestCase {
         writer.close();
     }
 
-    private String getActionNomialTime(String actionXml) {
+    /**
+     * Get action nominal time.
+     * @param actionXml
+     * @return
+     */
+    protected String getActionNominalTime(String actionXml) {
         Element eAction;
         try {
             eAction = XmlUtils.parseXml(actionXml);
