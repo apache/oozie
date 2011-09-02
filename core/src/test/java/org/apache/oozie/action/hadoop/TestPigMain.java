@@ -117,13 +117,14 @@ public class TestPigMain extends MainTestCase {
         assertTrue(classPathDir.exists());
         Properties props = jobConf.toProperties();
         assertEquals(props.getProperty("oozie.pig.args.size"), "1");
-        Writer wr = new FileWriter(new File(classPathDir, "pig.properties"));
-        props.store(wr, "");
-        wr.close();
+        File pigProps = new File(classPathDir, "pig.properties");
 
         new LauncherSecurityManager();
         String user = System.getProperty("user.name");
         try {
+            Writer wr = new FileWriter(pigProps);
+            props.store(wr, "");
+            wr.close();
             PigMain.main(null);
         }
         catch (SecurityException ex) {
@@ -139,6 +140,7 @@ public class TestPigMain extends MainTestCase {
             }
         }
         finally {
+            pigProps.delete();
             System.setProperty("user.name", user);
         }
 
