@@ -78,6 +78,8 @@ public abstract class XTestCase extends TestCase {
 
     private static final String OOZIE_TEST_PROPERTIES = "oozie.test.properties";
 
+    public static float WAITFOR_RATIO = Float.parseFloat(System.getProperty("oozie.test.waitfor.ratio", "1"));
+
     static {
         try {
             // by default uses 'test.properties'
@@ -473,7 +475,7 @@ public abstract class XTestCase extends TestCase {
         ParamChecker.notNull(predicate, "predicate");
         XLog log = new XLog(LogFactory.getLog(getClass()));
         long started = System.currentTimeMillis();
-        long mustEnd = System.currentTimeMillis() + timeout;
+        long mustEnd = System.currentTimeMillis() + (long)(WAITFOR_RATIO * timeout);
         long lastEcho = 0;
         try {
             long waiting = mustEnd - System.currentTimeMillis();

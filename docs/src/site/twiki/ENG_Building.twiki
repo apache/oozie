@@ -122,6 +122,9 @@ default value is 'hsqldb'. IMPORTANT, when using 'derby' a Maven profile is acti
 *oozie.test.properties* (*): indicates the file to load the test properties from, by default is =test.properties=.
 Having this option allows having different test properties sets, for example: minicluster, simple & kerberos.
 
+*oozie.test.waitfor.ratio*= : multiplication factor for testcases using waitfor, the ratio is used to adjust the
+effective time out. For slow machines the ratio should be increased. The default value is =1=.
+
 *oozie.test.config.file*= : indicates a custom Oozie configuration file for running the testcases. The specified file
 must be an absolute path. For example, it can be useful to specify different database than HSQL for running the
 testcases.

@@ -93,12 +93,20 @@ public class TestXLogService extends XTestCase {
         Thread.sleep(1 * 1000);
         is = cl.getResourceAsStream("test-custom-log4j.properties");
         IOUtils.copyStream(is, new FileOutputStream(log4jFile));
-        waitFor(5 * 1000, new Predicate() {
-            public boolean evaluate() throws Exception {
-                return !LogFactory.getLog("a").isTraceEnabled();
-            }
-        });
-        assertFalse(LogFactory.getLog("a").isTraceEnabled());
+        float originalRatio = XTestCase.WAITFOR_RATIO;
+        try {
+            XTestCase.WAITFOR_RATIO = 1;
+
+            waitFor(5 * 1000, new Predicate() {
+                public boolean evaluate() throws Exception {
+                    return !LogFactory.getLog("a").isTraceEnabled();
+                }
+            });
+            assertFalse(LogFactory.getLog("a").isTraceEnabled());
+        }
+        finally {
+            XTestCase.WAITFOR_RATIO = originalRatio;
+        }
         ls.destroy();
     }
 

@@ -265,11 +265,18 @@ public class TestCallableQueueService extends XTestCase {
             queueservice.queue(new CLCallable(), 10);
         }
 
-        waitFor(2000, new Predicate() {
-            public boolean evaluate() throws Exception {
-                return queueservice.queueSize() == 0;
-            }
-        });
+        float originalRatio = XTestCase.WAITFOR_RATIO;
+        try{
+            XTestCase.WAITFOR_RATIO = 1;
+            waitFor(2000, new Predicate() {
+                public boolean evaluate() throws Exception {
+                    return queueservice.queueSize() == 0;
+                }
+            });
+        }
+        finally {
+            XTestCase.WAITFOR_RATIO = originalRatio;
+        }
 
         System.out.println("Callable Queue Size :" + queueservice.queueSize());
         System.out.println("CLCallable Concurrency :" + CLCallable.getConcurrency());

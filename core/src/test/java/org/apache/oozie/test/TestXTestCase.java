@@ -132,16 +132,43 @@ public class TestXTestCase extends TestCase {
         }
 
         public void testWaitForTimeOut() {
-            if (TESTING) {
-                long start = System.currentTimeMillis();
-                long waited = waitFor(1000, new Predicate() {
-                    public boolean evaluate() throws Exception {
-                        return false;
-                    }
-                });
-                long end = System.currentTimeMillis();
-                assertEquals(1000, waited, 100);
-                assertEquals(1000, end - start, 300);
+            float originalRatio = XTestCase.WAITFOR_RATIO;
+            try {
+                XTestCase.WAITFOR_RATIO = 1;
+                if (TESTING) {
+                    long start = System.currentTimeMillis();
+                    long waited = waitFor(1000, new Predicate() {
+                        public boolean evaluate() throws Exception {
+                            return false;
+                        }
+                    });
+                    long end = System.currentTimeMillis();
+                    assertEquals(1000 * XTestCase.WAITFOR_RATIO, waited, 100);
+                    assertEquals(1000 * XTestCase.WAITFOR_RATIO, end - start, 300);
+                }
+            }
+            finally {
+                XTestCase.WAITFOR_RATIO = originalRatio;
+            }
+        }
+
+        public void testWaitForTimeOutWithRatio() {
+            float originalRatio = XTestCase.WAITFOR_RATIO;
+            try {
+                XTestCase.WAITFOR_RATIO = 2;
+                if (TESTING) {
+                    long start = System.currentTimeMillis();
+                    long waited = waitFor(1000, new Predicate() {
+                        public boolean evaluate() throws Exception {
+                            return false;
+                        }
+                    });
+                    long end = System.currentTimeMillis();
+                    assertEquals(1000 * XTestCase.WAITFOR_RATIO, end - start, 300);
+                }
+            }
+            finally {
+                XTestCase.WAITFOR_RATIO = originalRatio;
             }
         }
 
