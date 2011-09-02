@@ -25,19 +25,24 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.fs.permission.FsPermission;
+import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.DagEngine;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.ForTestingActionExecutor;
+import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.OozieClient;
-import org.apache.oozie.test.XFsTestCase;
+import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
+import org.apache.oozie.workflow.WorkflowInstance;
 
 /**
  * Tests the authorization service.
  */
-public class TestAuthorizationService extends XFsTestCase {
+public class TestAuthorizationService extends XDataTestCase {
 
     private Services services;
 
@@ -58,6 +63,7 @@ public class TestAuthorizationService extends XFsTestCase {
         services.getConf().setBoolean(AuthorizationService.CONF_SECURITY_ENABLED, true);
         services.get(AuthorizationService.class).init(services);
         services.get(ActionService.class).register(ForTestingActionExecutor.class);
+        cleanUpDBTables();
     }
 
     @Override
@@ -144,6 +150,15 @@ public class TestAuthorizationService extends XFsTestCase {
         as.authorizeForJob("blah", jobId, true);
     }
 
+    public void testAuthorizationServiceForCoord() throws Exception {
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP);
+        assertNotNull(job);
+        AuthorizationService as = services.get(AuthorizationService.class);
+        assertNotNull(as);
+        as.authorizeForJob(getTestUser(), job.getId(), false);
+        as.authorizeForJob(getTestUser(), job.getId(), true);
+    }
+
     public void testDefaultGroup() throws Exception {
         AuthorizationService as = services.get(AuthorizationService.class);
         assertNotNull(as);
@@ -223,9 +238,9 @@ public class TestAuthorizationService extends XFsTestCase {
             assertEquals(ErrorCode.E0604, ex.getErrorCode());
         }
 
-        services.setService(ForTestWorkflowStoreService.class);
+        WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
         try {
-            as.authorizeForJob(getTestUser3(), "1-W", true);
+            as.authorizeForJob(getTestUser3(), job.getId(), true);
             fail();
         }
         catch (AuthorizationException ex) {

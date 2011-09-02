@@ -14,7 +14,7 @@
  */
 package org.apache.oozie.service;
 
-import org.apache.oozie.command.wf.ReRunCommand;
+import org.apache.oozie.command.wf.ReRunXCommand;
 
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.WorkflowActionBean;
@@ -48,7 +48,7 @@ public abstract class LiteWorkflowStoreService extends WorkflowStoreService {
         String jobId = context.getProcessInstance().getId();
         String nodeName = context.getNodeDef().getName();
         String skipVar = context.getProcessInstance().getVar(context.getNodeDef().getName()
-                + WorkflowInstance.NODE_VAR_SEPARATOR + ReRunCommand.TO_SKIP);
+                + WorkflowInstance.NODE_VAR_SEPARATOR + ReRunXCommand.TO_SKIP);
         boolean skipAction = false;
         if (skipVar != null) {
             skipAction = skipVar.equals("true");
@@ -132,13 +132,16 @@ public abstract class LiteWorkflowStoreService extends WorkflowStoreService {
             liteExecute(context);
         }
 
+        @Override
         public void end(Context context) {
         }
 
+        @Override
         public void kill(Context context) {
             liteKill(context);
         }
 
+        @Override
         public void fail(Context context) {
             liteFail(context);
         }
@@ -152,13 +155,16 @@ public abstract class LiteWorkflowStoreService extends WorkflowStoreService {
             liteExecute(context);
         }
 
+        @Override
         public void end(Context context) {
         }
 
+        @Override
         public void kill(Context context) {
             liteKill(context);
         }
 
+        @Override
         public void fail(Context context) {
             liteFail(context);
         }

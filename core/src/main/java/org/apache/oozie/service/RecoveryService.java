@@ -24,12 +24,19 @@ import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.command.coord.CoordActionInputCheckCommand;
+import org.apache.oozie.command.coord.CoordActionInputCheckXCommand;
 import org.apache.oozie.command.coord.CoordActionReadyCommand;
+import org.apache.oozie.command.coord.CoordActionReadyXCommand;
 import org.apache.oozie.command.coord.CoordActionStartCommand;
+import org.apache.oozie.command.coord.CoordActionStartXCommand;
 import org.apache.oozie.command.coord.CoordRecoveryCommand;
+import org.apache.oozie.command.coord.CoordRecoveryXCommand;
 import org.apache.oozie.command.wf.ActionEndCommand;
+import org.apache.oozie.command.wf.ActionEndXCommand;
 import org.apache.oozie.command.wf.ActionStartCommand;
+import org.apache.oozie.command.wf.ActionStartXCommand;
 import org.apache.oozie.command.wf.SignalCommand;
+import org.apache.oozie.command.wf.SignalXCommand;
 import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.store.Store;
 import org.apache.oozie.store.StoreException;
@@ -67,6 +74,8 @@ public class RecoveryService implements Service {
     private static final String INSTR_RECOVERED_ACTIONS_COUNTER = "actions";
     private static final String INSTR_RECOVERED_COORD_JOBS_COUNTER = "coord_jobs";
     private static final String INSTR_RECOVERED_COORD_ACTIONS_COUNTER = "coord_actions";
+
+    private static boolean useXCommand = true;
 
     /**
      * RecoveryRunnable is the Runnable which is scheduled to run with the configured interval, and takes care of the
@@ -137,7 +146,11 @@ public class RecoveryService implements Service {
                 for (CoordinatorJobBean coordJob : jobs) {
                     Services.get().get(InstrumentationService.class).get().incr(INSTRUMENTATION_GROUP,
                                                                                 INSTR_RECOVERED_COORD_JOBS_COUNTER, 1);
-                    queueCallable(new CoordRecoveryCommand(coordJob.getId()));
+                    if (useXCommand) {
+                        queueCallable(new CoordRecoveryXCommand(coordJob.getId()));
+                    } else {
+                        queueCallable(new CoordRecoveryCommand(coordJob.getId()));
+                    }
                 }
 
                 store.commitTrx();
@@ -195,14 +208,25 @@ public class RecoveryService implements Service {
                     Services.get().get(InstrumentationService.class).get().incr(INSTRUMENTATION_GROUP,
                                                                                 INSTR_RECOVERED_COORD_ACTIONS_COUNTER, 1);
                     if (caction.getStatus() == CoordinatorActionBean.Status.WAITING) {
-                        queueCallable(new CoordActionInputCheckCommand(caction.getId()));
+                        if (useXCommand) {
+                            queueCallable(new CoordActionInputCheckXCommand(caction.getId()));
+                        } else {
+                            queueCallable(new CoordActionInputCheckCommand(caction.getId()));
+                        }
+
                         log.info("Recover a WAITTING coord action :" + caction.getId());
                     }
                     else {
                         if (caction.getStatus() == CoordinatorActionBean.Status.SUBMITTED) {
                             CoordinatorJobBean coordJob = store.getCoordinatorJob(caction.getJobId(), false);
-                            queueCallable(new CoordActionStartCommand(caction.getId(), coordJob.getUser(), coordJob
-                                    .getAuthToken()));
+                            if (useXCommand) {
+                                queueCallable(new CoordActionStartXCommand(caction.getId(), coordJob.getUser(), coordJob
+                                        .getAuthToken()));
+                            } else {
+                                queueCallable(new CoordActionStartCommand(caction.getId(), coordJob.getUser(), coordJob
+                                        .getAuthToken()));
+                            }
+
                             log.info("Recover a SUBMITTED coord action :" + caction.getId());
                         }
                     }
@@ -258,7 +282,12 @@ public class RecoveryService implements Service {
                 //log.debug("QUEUING[{0}] READY coord jobs for potential recovery", jobids.size());
                 msg.append(", COORD_READY_JOBS : " + jobids.size());
                 for (String jobid : jobids) {
-                    queueCallable(new CoordActionReadyCommand(jobid));
+                    if (useXCommand) {
+                        queueCallable(new CoordActionReadyXCommand(jobid));
+                    } else {
+                        queueCallable(new CoordActionReadyCommand(jobid));
+                    }
+
                     log.info("Recover READY coord actions for jobid :" + jobid);
                 }
                 store.commitTrx();
@@ -320,36 +349,56 @@ public class RecoveryService implements Service {
 
                 for (WorkflowActionBean action : actions) {
                     Services.get().get(InstrumentationService.class).get().incr(INSTRUMENTATION_GROUP,
-                                                                                INSTR_RECOVERED_ACTIONS_COUNTER, 1);
+                            INSTR_RECOVERED_ACTIONS_COUNTER, 1);
                     if (action.getStatus() == WorkflowActionBean.Status.PREP
                             || action.getStatus() == WorkflowActionBean.Status.START_MANUAL) {
-                        queueCallable(new ActionStartCommand(action.getId(), action.getType()));
+
+                        if (useXCommand) {
+                            queueCallable(new ActionStartXCommand(action.getId(), action.getType()));
+                        } else {
+                            queueCallable(new ActionStartCommand(action.getId(), action.getType()));
+                        }
+
                     }
-                    else {
-                        if (action.getStatus() == WorkflowActionBean.Status.START_RETRY) {
-                            Date nextRunTime = action.getPendingAge();
+                    else if (action.getStatus() == WorkflowActionBean.Status.START_RETRY) {
+                        Date nextRunTime = action.getPendingAge();
+                        if (useXCommand) {
+                            queueCallable(new ActionStartXCommand(action.getId(), action.getType()), nextRunTime.getTime()
+                                    - System.currentTimeMillis());
+                        } else {
                             queueCallable(new ActionStartCommand(action.getId(), action.getType()), nextRunTime.getTime()
                                     - System.currentTimeMillis());
                         }
-                        else {
-                            if (action.getStatus() == WorkflowActionBean.Status.DONE
-                                    || action.getStatus() == WorkflowActionBean.Status.END_MANUAL) {
-                                queueCallable(new ActionEndCommand(action.getId(), action.getType()));
-                            }
-                            else {
-                                if (action.getStatus() == WorkflowActionBean.Status.END_RETRY) {
-                                    Date nextRunTime = action.getPendingAge();
-                                    queueCallable(new ActionEndCommand(action.getId(), action.getType()), nextRunTime.getTime()
-                                            - System.currentTimeMillis());
-                                }
-                                else {
-                                    if (action.getStatus() == WorkflowActionBean.Status.OK
-                                            || action.getStatus() == WorkflowActionBean.Status.ERROR) {
-                                        queueCallable(new SignalCommand(action.getJobId(), action.getId()));
-                                    }
-                                }
-                            }
+
+                    }
+                    else if (action.getStatus() == WorkflowActionBean.Status.DONE
+                            || action.getStatus() == WorkflowActionBean.Status.END_MANUAL) {
+                        if (useXCommand) {
+                            queueCallable(new ActionEndXCommand(action.getId(), action.getType()));
+                        } else {
+                            queueCallable(new ActionEndCommand(action.getId(), action.getType()));
                         }
+
+                    }
+                    else if (action.getStatus() == WorkflowActionBean.Status.END_RETRY) {
+                        Date nextRunTime = action.getPendingAge();
+                        if (useXCommand) {
+                            queueCallable(new ActionEndXCommand(action.getId(), action.getType()), nextRunTime.getTime()
+                                    - System.currentTimeMillis());
+                        } else {
+                            queueCallable(new ActionEndCommand(action.getId(), action.getType()), nextRunTime.getTime()
+                                    - System.currentTimeMillis());
+                        }
+
+                    }
+                    else if (action.getStatus() == WorkflowActionBean.Status.OK
+                            || action.getStatus() == WorkflowActionBean.Status.ERROR) {
+                        if (useXCommand) {
+                            queueCallable(new SignalXCommand(action.getJobId(), action.getId()));
+                        } else {
+                            queueCallable(new SignalCommand(action.getJobId(), action.getId()));
+                        }
+
                     }
                 }
                 store.commitTrx();
@@ -450,6 +499,10 @@ public class RecoveryService implements Service {
                 CONF_COORD_OLDER_THAN, 600));
         services.get(SchedulerService.class).schedule(recoveryRunnable, 10, conf.getInt(CONF_SERVICE_INTERVAL, 600),
                                                       SchedulerService.Unit.SEC);
+
+        if (Services.get().getConf().getBoolean(USE_XCOMMAND, true) == false) {
+            useXCommand = false;
+        }
     }
 
     /**

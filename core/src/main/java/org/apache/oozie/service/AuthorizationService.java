@@ -30,9 +30,9 @@ import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.XOozieClient;
-import org.apache.oozie.store.CoordinatorStore;
-import org.apache.oozie.store.StoreException;
-import org.apache.oozie.store.WorkflowStore;
+import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.XLog;
 
@@ -299,7 +299,7 @@ public class AuthorizationService implements Service {
                             incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
                             throw new AuthorizationException(ErrorCode.E0506, appPath);
                         }
-                        fs.open(appXml).close();                                
+                        fs.open(appXml).close();
                     }
                 }
             }
@@ -333,47 +333,17 @@ public class AuthorizationService implements Service {
             // handle workflow jobs
             if (jobId.endsWith("-W")) {
                 WorkflowJobBean jobBean = null;
-                WorkflowStore store = null;
-                try {
-                    store = Services.get().get(WorkflowStoreService.class).create();
-                    store.beginTrx();
-                    jobBean = store.getWorkflow(jobId, false);
-                    store.commitTrx();
-                }
-                catch (StoreException ex) {
-                    incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
-                    if (store != null) {
-                        store.rollbackTrx();
+                JPAService jpaService = Services.get().get(JPAService.class);
+                if (jpaService != null) {
+                    try {
+                        jobBean = jpaService.execute(new WorkflowJobGetJPAExecutor(jobId));
                     }
-                    throw new AuthorizationException(ex);
-                }
-                catch (Exception ex) {
-                    incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
-                    log.error("Exception, {0}", ex.getMessage(), ex);
-                    if (store != null && store.isActive()) {
-                        try {
-                            store.rollbackTrx();
-                        }
-                        catch (RuntimeException rex) {
-                            log.warn("openjpa error, {0}", rex.getMessage(), rex);
-                        }
+                    catch (JPAExecutorException je) {
+                        throw new AuthorizationException(je);
                     }
-                    throw new AuthorizationException(ErrorCode.E0501, ex);
                 }
-                finally {
-                    if (store != null) {
-                        if (!store.isActive()) {
-                            try {
-                                store.closeTrx();
-                            }
-                            catch (RuntimeException rex) {
-                                log.warn("Exception while attempting to close store", rex);
-                            }
-                        }
-                        else {
-                            log.warn("transaction is not committed or rolled back before closing entitymanager.");
-                        }
-                    }
+                else {
+                    throw new AuthorizationException(ErrorCode.E0610);
                 }
                 if (jobBean != null && !jobBean.getUser().equals(user)) {
                     if (!isUserInGroup(user, jobBean.getGroup())) {
@@ -385,47 +355,17 @@ public class AuthorizationService implements Service {
             // handle coordinator jobs
             else {
                 CoordinatorJobBean jobBean = null;
-                CoordinatorStore store = null;
-                try {
-                    store = Services.get().get(CoordinatorStoreService.class).create();
-                    store.beginTrx();
-                    jobBean = store.getCoordinatorJob(jobId, false);
-                    store.commitTrx();
-                }
-                catch (StoreException ex) {
-                    incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
-                    if (store != null) {
-                        store.rollbackTrx();
+                JPAService jpaService = Services.get().get(JPAService.class);
+                if (jpaService != null) {
+                    try {
+                        jobBean = jpaService.execute(new CoordJobGetJPAExecutor(jobId));
                     }
-                    throw new AuthorizationException(ex);
-                }
-                catch (Exception ex) {
-                    incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
-                    log.error("Exception, {0}", ex.getMessage(), ex);
-                    if (store != null && store.isActive()) {
-                        try {
-                            store.rollbackTrx();
-                        }
-                        catch (RuntimeException rex) {
-                            log.warn("openjpa error, {0}", rex.getMessage(), rex);
-                        }
+                    catch (JPAExecutorException je) {
+                        throw new AuthorizationException(je);
                     }
-                    throw new AuthorizationException(ErrorCode.E0501, ex);
                 }
-                finally {
-                    if (store != null) {
-                        if (!store.isActive()) {
-                            try {
-                                store.closeTrx();
-                            }
-                            catch (RuntimeException rex) {
-                                log.warn("Exception while attempting to close store", rex);
-                            }
-                        }
-                        else {
-                            log.warn("transaction is not committed or rolled back before closing entitymanager.");
-                        }
-                    }
+                else {
+                    throw new AuthorizationException(ErrorCode.E0610);
                 }
                 if (jobBean != null && !jobBean.getUser().equals(user)) {
                     if (!isUserInGroup(user, jobBean.getGroup())) {

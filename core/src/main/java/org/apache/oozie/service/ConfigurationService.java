@@ -268,8 +268,9 @@ public class ConfigurationService implements Service, Instrumentable {
             String value = get(name);
             if (value == null) {
                 boolean maskValue = name.endsWith(PASSWORD_PROPERTY_END);
-                value = (maskValue) ? "**MASKED**" : defaultValue;
-                log.warn(XLog.OPS, "Configuration property [{0}] not found, using default [{1}]", name, value);
+                value = defaultValue;
+                String logValue = (maskValue) ? "**MASKED**" : defaultValue;
+                log.warn(XLog.OPS, "Configuration property [{0}] not found, using default [{1}]", name, logValue);
             }
             return value;
         }

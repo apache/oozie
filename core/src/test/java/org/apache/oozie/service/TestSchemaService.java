@@ -106,7 +106,7 @@ public class TestSchemaService extends XTestCase {
 
     public void testExtSchema() throws Exception {
         Services.get().destroy();
-        setSystemProperty(SchemaService.WF_CONF_EXT_SCHEMAS, " wf-ext-schema.xsd \n ");
+        setSystemProperty(SchemaService.WF_CONF_EXT_SCHEMAS, "wf-ext-schema.xsd");
         new Services().init();
         SchemaService wss = Services.get().get(SchemaService.class);
         Validator validator = wss.getSchema(SchemaName.WORKFLOW).newValidator();
@@ -158,6 +158,21 @@ public class TestSchemaService extends XTestCase {
         Element e = XmlUtils.parseXml(COORD_APP1);
         // System.out.println("XML :"+ XmlUtils.prettyPrint(e));
         validator.validate(new StreamSource(new StringReader(COORD_APP1)));
+    }
+
+    public void testBundleSchema() throws Exception {
+        SchemaService wss = Services.get().get(SchemaService.class);
+        Validator validator = wss.getSchema(SchemaName.BUNDLE).newValidator();
+        String BUNDLE_APP = "<bundle-app name='NAME' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='uri:oozie:bundle:0.1'> "
+                + "<controls> <kick-off-time>2009-02-02T00:00Z</kick-off-time> </controls> "
+                + "<coordinator name='c12'> "
+                + "<app-path>hdfs://localhost:9001/tmp/bundle-apps/coordinator1.xml</app-path>"
+                + "<configuration> "
+                + "<property> <name>START_TIME</name> <value>2009-02-01T00:00Z</value> </property> </configuration> "
+                + "</coordinator></bundle-app>";
+        Element e = XmlUtils.parseXml(BUNDLE_APP);
+        // System.out.println("XML :"+ XmlUtils.prettyPrint(e));
+        validator.validate(new StreamSource(new StringReader(BUNDLE_APP)));
     }
 
 }

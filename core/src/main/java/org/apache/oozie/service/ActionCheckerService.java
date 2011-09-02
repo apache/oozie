@@ -19,20 +19,24 @@ import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorActionBean;
+import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowActionBean;
+import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.coord.CoordActionCheckCommand;
+import org.apache.oozie.command.coord.CoordActionCheckXCommand;
 import org.apache.oozie.command.wf.ActionCheckCommand;
-import org.apache.oozie.store.CoordinatorStore;
-import org.apache.oozie.store.Store;
-import org.apache.oozie.store.StoreException;
-import org.apache.oozie.store.WorkflowStore;
+import org.apache.oozie.command.wf.ActionCheckXCommand;
+import org.apache.oozie.executor.jpa.CoordActionsRunningGetJPAExecutor;
+import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.executor.jpa.WorkflowActionsRunningGetJPAExecutor;
 import org.apache.oozie.util.XCallable;
 import org.apache.oozie.util.XLog;
 
 /**
- * The Action Checker Service queue ActionCheckCommands to check the status of running actions and
- * CoordActionCheckCommands to check the status of coordinator actions. The delay between checks on the same action can
- * be configured.
+ * The Action Checker Service queue ActionCheckCommands to check the status of
+ * running actions and CoordActionCheckCommands to check the status of
+ * coordinator actions. The delay between checks on the same action can be
+ * configured.
  */
 public class ActionCheckerService implements Service {
 
@@ -55,10 +59,13 @@ public class ActionCheckerService implements Service {
     protected static final String INSTR_CHECK_ACTIONS_COUNTER = "checks_wf_actions";
     protected static final String INSTR_CHECK_COORD_ACTIONS_COUNTER = "checks_coord_actions";
 
+    private static boolean useXCommand = true;
+
     /**
-     * {@link ActionCheckRunnable} is the runnable which is scheduled to run and queue Action checks.
+     * {@link ActionCheckRunnable} is the runnable which is scheduled to run and
+     * queue Action checks.
      */
-    static class ActionCheckRunnable<S extends Store> implements Runnable {
+    static class ActionCheckRunnable implements Runnable {
         private int actionCheckDelay;
         private List<XCallable<Void>> callables;
         private StringBuilder msg = null;
@@ -69,15 +76,21 @@ public class ActionCheckerService implements Service {
 
         public void run() {
             XLog.Info.get().clear();
-            XLog log = XLog.getLog(getClass());
+            XLog LOG = XLog.getLog(getClass());
             msg = new StringBuilder();
-            runWFActionCheck();
-            runCoordActionCheck();
-            log.debug("QUEUING [{0}] for potential checking", msg.toString());
+            try {
+                runWFActionCheck();
+                runCoordActionCheck();
+            }
+            catch (CommandException ce) {
+                LOG.error("Unable to run action checks, ", ce);
+            }
+
+            LOG.debug("QUEUING [{0}] for potential checking", msg.toString());
             if (null != callables) {
                 boolean ret = Services.get().get(CallableQueueService.class).queueSerial(callables);
                 if (ret == false) {
-                    log.warn("Unable to queue the callables commands for CheckerService. "
+                    LOG.warn("Unable to queue the callables commands for CheckerService. "
                             + "Most possibly command queue is full. Queue size is :"
                             + Services.get().get(CallableQueueService.class).queueSize());
                 }
@@ -87,115 +100,85 @@ public class ActionCheckerService implements Service {
 
         /**
          * check workflow actions
+         *
+         * @throws CommandException
          */
-        private void runWFActionCheck() {
-            XLog.Info.get().clear();
-            XLog log = XLog.getLog(getClass());
+        private void runWFActionCheck() throws CommandException {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            if (jpaService == null) {
+                throw new CommandException(ErrorCode.E0610);
+            }
 
-            WorkflowStore store = null;
+            List<WorkflowActionBean> actions;
             try {
-                store = (WorkflowStore) Services.get().get(StoreService.class).getStore(WorkflowStore.class);
-                store.beginTrx();
-                List<WorkflowActionBean> actions = store.getRunningActions(actionCheckDelay);
-                msg.append(" WF_ACTIONS : " + actions.size());
-                for (WorkflowActionBean action : actions) {
-                    Services.get().get(InstrumentationService.class).get().incr(INSTRUMENTATION_GROUP,
-                                                                                INSTR_CHECK_ACTIONS_COUNTER, 1);
+                actions = jpaService
+                        .execute(new WorkflowActionsRunningGetJPAExecutor(actionCheckDelay));
+            }
+            catch (JPAExecutorException je) {
+                throw new CommandException(je);
+            }
+
+            if (actions == null || actions.size() == 0) {
+                return;
+            }
+            msg.append(" WF_ACTIONS : " + actions.size());
+
+            for (WorkflowActionBean action : actions) {
+                Services.get().get(InstrumentationService.class).get().incr(INSTRUMENTATION_GROUP,
+                        INSTR_CHECK_ACTIONS_COUNTER, 1);
+                if (useXCommand) {
+                    queueCallable(new ActionCheckXCommand(action.getId()));
+                }
+                else {
                     queueCallable(new ActionCheckCommand(action.getId()));
                 }
-                store.commitTrx();
             }
-            catch (StoreException ex) {
-                if (store != null) {
-                    store.rollbackTrx();
-                }
-                log.warn("Exception while accessing the store", ex);
-            }
-            catch (Exception ex) {
-                log.error("Exception, {0}", ex.getMessage(), ex);
-                if (store != null && store.isActive()) {
-                    try {
-                        store.rollbackTrx();
-                    }
-                    catch (RuntimeException rex) {
-                        log.warn("openjpa error, {0}", rex.getMessage(), rex);
-                    }
-                }
-            }
-            finally {
-                if (store != null) {
-                    if (!store.isActive()) {
-                        try {
-                            store.closeTrx();
-                        }
-                        catch (RuntimeException rex) {
-                            log.warn("Exception while attempting to close store", rex);
-                        }
-                    }
-                    else {
-                        log.warn("transaction is not committed or rolled back before closing entitymanager.");
-                    }
-                }
-            }
+
         }
 
         /**
          * check coordinator actions
+         *
+         * @throws CommandException
          */
-        private void runCoordActionCheck() {
-            XLog.Info.get().clear();
-            XLog log = XLog.getLog(getClass());
+        private void runCoordActionCheck() throws CommandException {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            if (jpaService == null) {
+                throw new CommandException(ErrorCode.E0610);
+            }
 
-            CoordinatorStore store = null;
+            List<CoordinatorActionBean> cactions;
             try {
-                store = Services.get().get(StoreService.class).getStore(CoordinatorStore.class);
-                store.beginTrx();
-                List<CoordinatorActionBean> cactions = store.getRunningActionsOlderThan(actionCheckDelay, false);
-                msg.append(" COORD_ACTIONS : " + cactions.size());
-                for (CoordinatorActionBean caction : cactions) {
-                    Services.get().get(InstrumentationService.class).get().incr(INSTRUMENTATION_GROUP,
-                                                                                INSTR_CHECK_COORD_ACTIONS_COUNTER, 1);
+                cactions = jpaService.execute(new CoordActionsRunningGetJPAExecutor(
+                        actionCheckDelay));
+            }
+            catch (JPAExecutorException je) {
+                throw new CommandException(je);
+            }
+
+            if (cactions == null || cactions.size() == 0) {
+                return;
+            }
+
+            msg.append(" COORD_ACTIONS : " + cactions.size());
+
+            for (CoordinatorActionBean caction : cactions) {
+                Services.get().get(InstrumentationService.class).get().incr(INSTRUMENTATION_GROUP,
+                        INSTR_CHECK_COORD_ACTIONS_COUNTER, 1);
+                if (useXCommand) {
+                    queueCallable(new CoordActionCheckXCommand(caction.getId(), actionCheckDelay));
+                }
+                else {
                     queueCallable(new CoordActionCheckCommand(caction.getId(), actionCheckDelay));
                 }
-                store.commitTrx();
             }
-            catch (StoreException ex) {
-                if (store != null) {
-                    store.rollbackTrx();
-                }
-                log.warn("Exception while accessing the store", ex);
-            }
-            catch (Exception ex) {
-                log.error("Exception, {0}", ex.getMessage(), ex);
-                if (store != null && store.isActive()) {
-                    try {
-                        store.rollbackTrx();
-                    }
-                    catch (RuntimeException rex) {
-                        log.warn("openjpa error, {0}", rex.getMessage(), rex);
-                    }
-                }
-            }
-            finally {
-                if (store != null) {
-                    if (!store.isActive()) {
-                        try {
-                            store.closeTrx();
-                        }
-                        catch (RuntimeException rex) {
-                            log.warn("Exception while attempting to close store", rex);
-                        }
-                    }
-                    else {
-                        log.warn("transaction is not committed or rolled back before closing entitymanager.");
-                    }
-                }
-            }
+
         }
 
         /**
-         * Adds callables to a list. If the number of callables in the list reaches {@link
-         * ActionCheckerService#CONF_CALLABLE_BATCH_SIZE}, the entire batch is queued and the callables list is reset.
+         * Adds callables to a list. If the number of callables in the list
+         * reaches {@link ActionCheckerService#CONF_CALLABLE_BATCH_SIZE}, the
+         * entire batch is queued and the callables list is reset.
          *
          * @param callable the callable to queue.
          */
@@ -227,7 +210,12 @@ public class ActionCheckerService implements Service {
         Configuration conf = services.getConf();
         Runnable actionCheckRunnable = new ActionCheckRunnable(conf.getInt(CONF_ACTION_CHECK_DELAY, 600));
         services.get(SchedulerService.class).schedule(actionCheckRunnable, 10,
-                                                      conf.getInt(CONF_ACTION_CHECK_INTERVAL, 60), SchedulerService.Unit.SEC);
+                conf.getInt(CONF_ACTION_CHECK_INTERVAL, 60), SchedulerService.Unit.SEC);
+
+        if (Services.get().getConf().getBoolean(USE_XCOMMAND, true) == false) {
+            useXCommand = false;
+        }
+
     }
 
     /**

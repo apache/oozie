@@ -14,19 +14,23 @@
  */
 package org.apache.oozie.service;
 
-import org.apache.oozie.util.ParamChecker;
-import org.apache.oozie.util.XLog;
-import org.apache.oozie.ErrorCode;
-
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.oozie.ErrorCode;
+import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.util.XLog;
+
 /**
- * The UUID service generates unique IDs. <p/> The configuration property {@link #CONF_GENERATOR} specifies the ID
- * generation type, 'random' or 'counter'. <p/> For 'random' uses the JDK UUID.randomUUID() method. <p/> For 'counter'
- * uses a counter postfixed wit the system start up time.
+ * The UUID service generates unique IDs.
+ * <p/>
+ * The configuration property {@link #CONF_GENERATOR} specifies the ID generation type, 'random' or 'counter'.
+ * <p/>
+ * For 'random' uses the JDK UUID.randomUUID() method.
+ * <p/>
+ * For 'counter' uses a counter postfixed wit the system start up time.
  */
 public class UUIDService implements Service {
 
@@ -115,7 +119,9 @@ public class UUIDService implements Service {
     }
 
     /**
-     * Create a child ID. <p/> If the same child name is given the returned child ID is the same.
+     * Create a child ID.
+     * <p/>
+     * If the same child name is given the returned child ID is the same.
      *
      * @param id unique ID.
      * @param childName child name.
@@ -160,8 +166,8 @@ public class UUIDService implements Service {
     }
 
     public enum ApplicationType {
-        WORKFLOW('W'), COORDINATOR('C');
-        private char type;
+        WORKFLOW('W'), COORDINATOR('C'), BUNDLE('B');
+        private final char type;
 
         private ApplicationType(char type) {
             this.type = type;

@@ -14,16 +14,21 @@
  */
 package org.apache.oozie.service;
 
-
 /**
  * A service is component managed by the {@link Services} singleton.
  */
 public interface Service {
+    public static final String DEFAULT_LOCK_TIMEOUT = "oozie.service.default.lock.timeout";
 
     /**
      * Prefix for all services configuration properties.
      */
     public static final String CONF_PREFIX = "oozie.service.";
+
+    /**
+     * Constant for XCommand
+     */
+    public static final String USE_XCOMMAND = "oozie.useXCommand";
 
     /**
      * Initialize the service. <p/> Invoked by the {@link Service} singleton at start up time.
@@ -45,5 +50,10 @@ public interface Service {
      * @return the interface of the service.
      */
     public Class<? extends Service> getInterface();
+
+    /**
+     * Lock timeout value if service is only allowed to have one single running instance.
+     */
+    public static long lockTimeout = Services.get().getConf().getLong(DEFAULT_LOCK_TIMEOUT, 5 * 1000);
 
 }

@@ -16,7 +16,9 @@ package org.apache.oozie.service;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.command.coord.CoordPurgeCommand;
+import org.apache.oozie.command.coord.CoordPurgeXCommand;
 import org.apache.oozie.command.wf.PurgeCommand;
+import org.apache.oozie.command.wf.PurgeXCommand;
 import org.apache.oozie.service.CallableQueueService;
 import org.apache.oozie.service.SchedulerService;
 import org.apache.oozie.service.Service;
@@ -39,6 +41,8 @@ public class PurgeService implements Service {
     public static final String CONF_PURGE_INTERVAL = CONF_PREFIX + "purge.interval";
     private static final String COORD_PURGE_LIMIT = CONF_PREFIX + "coord.purge.limit";
 
+    private static boolean useXCommand = true;
+
     /**
      * PurgeRunnable is the runnable which is scheduled to run at the configured interval. PurgeCommand is queued to
      * remove completed jobs and associated actions older than the configured age.
@@ -55,8 +59,13 @@ public class PurgeService implements Service {
         }
 
         public void run() {
-            Services.get().get(CallableQueueService.class).queue(new PurgeCommand(olderThan, limit));
-            Services.get().get(CallableQueueService.class).queue(new CoordPurgeCommand(coordOlderThan, limit));
+            if (useXCommand) {
+                Services.get().get(CallableQueueService.class).queue(new PurgeXCommand(olderThan, limit));
+                Services.get().get(CallableQueueService.class).queue(new CoordPurgeXCommand(coordOlderThan, limit));
+            } else {
+                Services.get().get(CallableQueueService.class).queue(new PurgeCommand(olderThan, limit));
+                Services.get().get(CallableQueueService.class).queue(new CoordPurgeCommand(coordOlderThan, limit));
+            }
         }
 
     }
@@ -74,6 +83,10 @@ public class PurgeService implements Service {
                                       conf.getInt(COORD_PURGE_LIMIT, 100));
         services.get(SchedulerService.class).schedule(purgeJobsRunnable, 10, conf.getInt(CONF_PURGE_INTERVAL, 3600),
                                                       SchedulerService.Unit.SEC);
+
+        if (Services.get().getConf().getBoolean(USE_XCOMMAND, true) == false) {
+            useXCommand = false;
+        }
     }
 
     /**

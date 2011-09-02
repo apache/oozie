@@ -21,6 +21,7 @@ import java.util.List;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.command.coord.CoordJobMatLookupCommand;
+import org.apache.oozie.command.coord.CoordJobMatLookupXCommand;
 import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.util.XCallable;
@@ -50,6 +51,8 @@ public class CoordJobMatLookupTriggerService implements Service {
     private static final String INSTR_MAT_JOBS_COUNTER = "jobs";
     private static final int CONF_LOOKUP_INTERVAL_DEFAULT = 300;
     private static final int CONF_MATERIALIZATION_WINDOW_DEFAULT = 3600;
+
+    private static boolean useXCommand = true;
 
     /**
      * This runnable class will run in every "interval" to queue CoordJobMatLookupTriggerCommand.
@@ -113,7 +116,11 @@ public class CoordJobMatLookupTriggerService implements Service {
                 for (CoordinatorJobBean coordJob : materializeJobs) {
                     Services.get().get(InstrumentationService.class).get().incr(INSTRUMENTATION_GROUP,
                                                                                 INSTR_MAT_JOBS_COUNTER, 1);
-                    queueCallable(new CoordJobMatLookupCommand(coordJob.getId(), materializationWindow));
+                    if (useXCommand) {
+                        queueCallable(new CoordJobMatLookupXCommand(coordJob.getId(), materializationWindow));
+                    } else {
+                        queueCallable(new CoordJobMatLookupCommand(coordJob.getId(), materializationWindow));
+                    }
                 }
 
                 store.commitTrx();
@@ -213,7 +220,10 @@ public class CoordJobMatLookupTriggerService implements Service {
         services.get(SchedulerService.class).schedule(lookupTriggerJobsRunnable, 10,
                                                       conf.getInt(CONF_LOOKUP_INTERVAL, CONF_LOOKUP_INTERVAL_DEFAULT),// Default is 5 minutes
                                                       SchedulerService.Unit.SEC);
-        return;
+        if (Services.get().getConf().getBoolean(USE_XCOMMAND, true) == false) {
+            useXCommand = false;
+        }
+
     }
 
     @Override
