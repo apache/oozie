@@ -212,6 +212,7 @@ $oozie job -rerun <bundle_Job_id> [-coordinator <list of coordinator name separa
 </verbatim>
 
    * The =rerun= option reruns a bundle job that is *not* in (=KILLED=,  =FAILED=, =PREP=, =PREPPAUSED=, =PREPSUSPENDED=).
+   * Rerun a bundle job that is in =PAUSED= state will reset the paused time.
    * The option -coordinator determines the name of coordinator that will be rerun. By default all coordinators are rerun.
    * Multiple ranges can be used in -date. See the above examples.
    * The dates specified in -date must be UTC.

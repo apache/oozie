@@ -17,6 +17,7 @@ package org.apache.oozie.service;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.oozie.test.XTestCase;
@@ -213,7 +214,7 @@ public class TestCallableQueueService extends XTestCase {
         public String getType() {
             return "type";
         }
-        
+
 		@Override
 		public String getKey() {
 			return "name" + "_" + UUID.randomUUID();
@@ -232,16 +233,16 @@ public class TestCallableQueueService extends XTestCase {
             return null;
         }
 
-        private static int counter;
+        private static AtomicInteger counter;
         private static int max;
 
-        private synchronized void incr() {
-            counter++;
-            max = Math.max(max, counter);
+        private void incr() {
+            counter.incrementAndGet();
+            max = Math.max(max, counter.intValue());
         }
 
-        private synchronized void decr() {
-            counter--;
+        private void decr() {
+            counter.decrementAndGet();
         }
 
         public static int getConcurrency() {
@@ -404,9 +405,9 @@ public class TestCallableQueueService extends XTestCase {
         EXEC_ORDER = new AtomicLong();
         Services services = new Services();
         services.init();
-        final MyCallable callable1 = new MyCallable("key", "1", 0, 100);
-        final MyCallable callable2 = new MyCallable("key", "2", 0, 100);
-        final MyCallable callable3 = new MyCallable("key", "3", 0, 100);
+        final MyCallable callable1 = new MyCallable("key", "1", 0, 1000);
+        final MyCallable callable2 = new MyCallable("key", "2", 0, 1000);
+        final MyCallable callable3 = new MyCallable("key", "3", 0, 1000);
 
         List<MyCallable> callables = Arrays.asList(callable1, callable2, callable3);
 
@@ -417,7 +418,7 @@ public class TestCallableQueueService extends XTestCase {
             queueservice.queueSerial(Arrays.asList(c, new MyCallable(type = type + "x", 0, 0)));
         }
 
-        waitFor(200, new Predicate() {
+        waitFor(2000, new Predicate() {
             public boolean evaluate() throws Exception {
                 return callable1.executed != 0 && callable2.executed == 0 && callable3.executed == 0;
             }

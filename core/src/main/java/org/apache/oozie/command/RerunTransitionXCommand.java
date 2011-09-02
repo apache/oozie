@@ -2,7 +2,6 @@ package org.apache.oozie.command;
 
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.Job;
-import org.apache.oozie.util.XLog;
 
 /**
  * Transition command for rerun the job. The derived class has to override these following functions:
@@ -109,15 +108,6 @@ public abstract class RerunTransitionXCommand<T> extends TransitionXCommand<T> {
             throw new PreconditionException(ErrorCode.E1100, "Not able to rerun the job Id= " + getJob().getId()
                     + ". job is in wrong state= " + getJob().getStatus());
         }
-    }
-
-    /**
-     * Get XLog object
-     *
-     * @return log object
-     */
-    public XLog getLog() {
-        return null;
     }
 
     /**

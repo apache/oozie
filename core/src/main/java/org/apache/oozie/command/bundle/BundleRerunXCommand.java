@@ -195,6 +195,9 @@ public class BundleRerunXCommand extends RerunTransitionXCommand<Void> {
     @Override
     public void updateJob() throws CommandException {
         try {
+            if (prevStatus.equals(Job.Status.PAUSED)) {
+                bundleJob.setPauseTime(null);
+            }
             bundleJob.setPending();
             jpaService.execute(new BundleJobUpdateJPAExecutor(bundleJob));
         }

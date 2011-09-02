@@ -2634,7 +2634,7 @@ $oozie job -rerun <coord_Job_id> [-nocleanup] [-refresh]
 </verbatim>
 
 The =rerun= option reruns a terminated (=TIMEDOUT=, =SUCCEEDED=, =KILLED=, =FAILED=) coordiantor action when coordiator job
-is not in =FAILED= or =KILLED= state.
+is not in =FAILED= or =KILLED= or =PREP= or =PREPPAUSED= or =PREPSUSPENDED= state.
 
 After the command is executed the rerun coordiator action will be in =WAITING= status.
 

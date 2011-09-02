@@ -269,7 +269,8 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
 
             if (newPauseTime != null || resetPauseTime == true) {
                 this.coordJob.setPauseTime(newPauseTime);
-                if(oldPauseTime != null && oldPauseTime.before(newPauseTime) && this.coordJob.getStatus() == Job.Status.PAUSED){
+                if (oldPauseTime != null && newPauseTime != null && oldPauseTime.before(newPauseTime)
+                        && this.coordJob.getStatus() == Job.Status.PAUSED) {
                     this.coordJob.setStatus(Job.Status.RUNNING);
                 }
                 if (!resetPauseTime) {

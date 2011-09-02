@@ -72,7 +72,6 @@ import org.jdom.JDOMException;
  */
 public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActionInfo> {
 
-    private String jobId;
     private String rerunType;
     private String scope;
     private boolean refresh;
