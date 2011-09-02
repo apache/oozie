@@ -378,10 +378,13 @@ public class JavaActionExecutor extends ActionExecutor {
         return e.getTextTrim();
     }
 
+    private static final String QUEUE_NAME = "mapred.job.queue.name";
+    private static final String OOZIE_LAUNCHER_QUEUE_NAME = "oozie.launcher.mapred.job.queue.name";
+
     private static final Set<String> SPECIAL_PROPERTIES = new HashSet<String>();
 
     static {
-        SPECIAL_PROPERTIES.add("mapred.job.queue.name");
+        SPECIAL_PROPERTIES.add(QUEUE_NAME);
         SPECIAL_PROPERTIES.add("mapreduce.jobtracker.kerberos.principal");
         SPECIAL_PROPERTIES.add("dfs.namenode.kerberos.principal");
     }
@@ -444,7 +447,10 @@ public class JavaActionExecutor extends ActionExecutor {
             for (String name : SPECIAL_PROPERTIES) {
                 String value = actionConf.get(name);
                 if (value != null) {
-                    launcherJobConf.set(name, value);
+                    if (!name.equals(QUEUE_NAME) ||
+                        (name.equals(QUEUE_NAME) && launcherJobConf.get(OOZIE_LAUNCHER_QUEUE_NAME) == null)) {
+                        launcherJobConf.set(name, value);
+                    }
                 }
             }
 

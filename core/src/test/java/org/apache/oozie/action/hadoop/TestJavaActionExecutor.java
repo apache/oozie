@@ -248,6 +248,40 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         assertTrue(getFileSystem().exists(new Path(context.getActionDir(), LauncherMapper.ACTION_CONF_XML)));
 
+        actionXml = XmlUtils.parseXml("<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<name-node>" + getNameNodeUri() + "</name-node> <configuration>" +
+                "<property><name>mapred.job.queue.name</name><value>AQ</value></property>" +
+                "</configuration>" + "<main-class>MAIN-CLASS</main-class>" +
+                "</java>");
+        actionConf = ae.createBaseHadoopConf(context, actionXml);
+        ae.setupActionConf(actionConf, context, actionXml, appPath);
+        conf = ae.createLauncherConf(getFileSystem(), context, action, actionXml, actionConf);
+        assertEquals("AQ", conf.get("mapred.job.queue.name"));
+        assertEquals("AQ", actionConf.get("mapred.job.queue.name"));
+
+        actionXml = XmlUtils.parseXml("<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<name-node>" + getNameNodeUri() + "</name-node> <configuration>" +
+                "<property><name>oozie.launcher.mapred.job.queue.name</name><value>LQ</value></property>" +
+                "</configuration>" + "<main-class>MAIN-CLASS</main-class>" +
+                "</java>");
+        actionConf = ae.createBaseHadoopConf(context, actionXml);
+        ae.setupActionConf(actionConf, context, actionXml, appPath);
+        conf = ae.createLauncherConf(getFileSystem(), context, action, actionXml, actionConf);
+        assertEquals("LQ", conf.get("mapred.job.queue.name"));
+
+        actionXml = XmlUtils.parseXml("<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<name-node>" + getNameNodeUri() + "</name-node> <configuration>" +
+                "<property><name>oozie.launcher.mapred.job.queue.name</name><value>LQ</value></property>" +
+                "<property><name>mapred.job.queue.name</name><value>AQ</value></property>" +
+                "</configuration>" + "<main-class>MAIN-CLASS</main-class>" +
+                "</java>");
+        actionConf = ae.createBaseHadoopConf(context, actionXml);
+        ae.setupActionConf(actionConf, context, actionXml, appPath);
+        conf = ae.createLauncherConf(getFileSystem(), context, action, actionXml, actionConf);
+        assertEquals("LQ", conf.get("mapred.job.queue.name"));
+        assertEquals("AQ", actionConf.get("mapred.job.queue.name"));
+
+
     }
 
     protected Context createContext(String actionXml) throws Exception {

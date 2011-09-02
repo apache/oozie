@@ -1,5 +1,6 @@
 -- Oozie 3.1.0 release
 
+OOZIE-9 (Apache) Launcher job should be able to run in different queue than job itself
 OOZIE-20 add sql scripts for oozie 3.1.0
 OOZIE-135 support multiple shared lib path in oozie
 OOZIE-18 Option to view Workflow job details from Coordinator job detail popup
