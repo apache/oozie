@@ -1,5 +1,6 @@
 -- Oozie 2.3.0 release
 
+GH-0262 WorkflowAppService should always inject Kerberos principal rules regardless of Kerberos/Simple auth
 GH-0254 XConfiguration should give precedence to variables over sys-props in ${} expressions
 GH-0251 ENG build docs should mention test properties settings
 GH-0245 pre-populate oozie-site.xml with common props with default settings

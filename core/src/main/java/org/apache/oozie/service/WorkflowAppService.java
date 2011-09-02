@@ -143,10 +143,8 @@ public abstract class WorkflowAppService implements Service {
             conf.set(OozieClient.GROUP_NAME, group);
             conf.set(HADOOP_UGI, hadoopUgi);
 
-            if (Services.get().getConf().getBoolean("oozie.service.HadoopAccessorService.kerberos.enabled", false)) {
-                conf.set(HADOOP_JT_KERBEROS_NAME, jobConf.get(HADOOP_JT_KERBEROS_NAME));
-                conf.set(HADOOP_NN_KERBEROS_NAME, jobConf.get(HADOOP_NN_KERBEROS_NAME));
-            }
+            conf.set(HADOOP_JT_KERBEROS_NAME, jobConf.get(HADOOP_JT_KERBEROS_NAME));
+            conf.set(HADOOP_NN_KERBEROS_NAME, jobConf.get(HADOOP_NN_KERBEROS_NAME));
 
             URI uri = new URI(jobConf.get(OozieClient.APP_PATH));
 
