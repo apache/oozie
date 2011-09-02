@@ -15,8 +15,6 @@
 package org.apache.oozie.command.wf;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.oozie.client.OozieClient;
-import org.apache.oozie.service.Services;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
 import org.jdom.Namespace;
