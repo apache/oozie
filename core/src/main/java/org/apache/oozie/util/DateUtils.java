@@ -98,6 +98,12 @@ public class DateUtils {
         dateFormat.setTimeZone(UTC);
         return dateFormat;
     }
+    
+    private static DateFormat getSpecificDateFormat(String format) {
+        DateFormat dateFormat = new SimpleDateFormat(format);
+        dateFormat.setTimeZone(UTC);
+        return dateFormat;
+    }
 
     public static TimeZone getTimeZone(String tzId) {
         if (tzId == null) {
@@ -116,6 +122,10 @@ public class DateUtils {
 
     public static String formatDateUTC(Date d) throws Exception {
         return (d != null) ? getISO8601DateFormat().format(d) : "NULL";
+    }
+
+    public static String formatDateCustom(Date d, String format) throws Exception {
+        return (d != null) ? getSpecificDateFormat(format).format(d) : "NULL";
     }
 
     public static String formatDateUTC(Calendar c) throws Exception {

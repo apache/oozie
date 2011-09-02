@@ -306,6 +306,25 @@ public class CoordELFunctions {
     }
 
     /**
+     * Convert from standard date-time formatting to a desired format.
+     * <p/>
+     * @param dateTimeStr - A timestamp in standard (ISO8601) format.
+     * @param format - A string representing the desired format.
+     * @return coordinator action creation or materialization date time
+     * @throws Exception if unable to format the Date object to String
+     */
+    public static String ph2_coord_formatTime(String dateTimeStr, String format)
+        throws Exception {
+        Date dateTime = DateUtils.parseDateUTC(dateTimeStr);
+        return DateUtils.formatDateCustom(dateTime, format);
+    }
+
+    public static String ph3_coord_formatTime(String dateTimeStr, String format)
+        throws Exception {
+        return ph2_coord_formatTime(dateTimeStr, format);
+    }
+
+    /**
      * Return Action Id. <p/>
      *
      * @return coordinator action Id
@@ -544,6 +563,11 @@ public class CoordELFunctions {
 
     public static String ph1_coord_dateOffset_echo(String n, String offset, String unit) {
         return echoUnResolved("dateOffset", n + " , " + offset + " , " + unit);
+    }
+
+    public static String ph1_coord_formatTime_echo(String dateTime, String format) {
+        // Quote the dateTime value since it would contain a ':'.
+        return echoUnResolved("formatTime", "'"+dateTime+"'" + " , " + format);
     }
 
     public static String ph1_coord_latest_echo(String n) {

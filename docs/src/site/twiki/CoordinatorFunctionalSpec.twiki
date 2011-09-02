@@ -1984,6 +1984,14 @@ For example, if baseDate is '2009-01-01T00:00Z', instance is '2' and timeUnit is
 
 In this example, the 'nextInstance' will be '2009-01-02T24:00Z' for the first action. And the value of 'previousInstance' will be  '2008-12-31T24:00Z' for the same instance.
 
+---++++ 6.8.2. coord:formatTime(String ts, String format) EL Function (since Oozie 2.3.2)
+
+The =${coord:formatTime(String timeStamp, String format)}= function allows transformation of the standard ISO8601 timestamp strings into other desired formats.
+
+The format string should be in Java's [[http://download.oracle.com/javase/6/docs/api/java/text/SimpleDateFormat.html][SimpleDateFormat]] format.
+
+For example, if timeStamp is '2009-01-01T00:00Z' and format is 'yyyy', the returned date string will be '2009'.
+
 ---++ 7. Handling Timezones and Daylight Saving Time
 
 As mentioned in section #4.1.1 'Timezones and Daylight-Saving', the coordinator engine works exclusively in UTC, and dataset and application definitions are always expressed in UTC.

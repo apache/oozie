@@ -574,6 +574,7 @@
             coord:current=org.apache.oozie.coord.CoordELFunctions#ph1_coord_current_echo,
             coord:latest=org.apache.oozie.coord.CoordELFunctions#ph1_coord_latest_echo,
             coord:future=org.apache.oozie.coord.CoordELFunctions#ph1_coord_future_echo,
+            coord:formatTime=org.apache.oozie.coord.CoordELFunctions#ph1_coord_formatTime_echo,
             coord:user=org.apache.oozie.coord.CoordELFunctions#coord_user
         </value>
         <description>
@@ -621,6 +622,7 @@
             coord:nominalTime=org.apache.oozie.coord.CoordELFunctions#ph1_coord_nominalTime_echo_wrap,
             coord:actualTime=org.apache.oozie.coord.CoordELFunctions#ph1_coord_actualTime_echo_wrap,
             coord:dateOffset=org.apache.oozie.coord.CoordELFunctions#ph1_coord_dateOffset_echo,
+            coord:formatTime=org.apache.oozie.coord.CoordELFunctions#ph1_coord_formatTime_echo,
             coord:actionId=org.apache.oozie.coord.CoordELFunctions#ph1_coord_actionId_echo,
             coord:name=org.apache.oozie.coord.CoordELFunctions#ph1_coord_name_echo,
             coord:user=org.apache.oozie.coord.CoordELFunctions#coord_user
@@ -716,6 +718,7 @@
             coord:future=org.apache.oozie.coord.CoordELFunctions#ph2_coord_future_echo,
             coord:actionId=org.apache.oozie.coord.CoordELFunctions#ph2_coord_actionId,
             coord:name=org.apache.oozie.coord.CoordELFunctions#ph2_coord_name,
+            coord:formatTime=org.apache.oozie.coord.CoordELFunctions#ph2_coord_formatTime,
             coord:user=org.apache.oozie.coord.CoordELFunctions#coord_user
         </value>
         <description>
@@ -764,6 +767,7 @@
             coord:current=org.apache.oozie.coord.CoordELFunctions#ph2_coord_current_echo,
             coord:latest=org.apache.oozie.coord.CoordELFunctions#ph2_coord_latest_echo,
             coord:future=org.apache.oozie.coord.CoordELFunctions#ph2_coord_future_echo,
+            coord:formatTime=org.apache.oozie.coord.CoordELFunctions#ph2_coord_formatTime,
             coord:user=org.apache.oozie.coord.CoordELFunctions#coord_user
         </value>
         <description>
@@ -858,6 +862,7 @@
             coord:nominalTime=org.apache.oozie.coord.CoordELFunctions#ph3_coord_nominalTime,
             coord:actualTime=org.apache.oozie.coord.CoordELFunctions#ph3_coord_actualTime,
             coord:dateOffset=org.apache.oozie.coord.CoordELFunctions#ph3_coord_dateOffset,
+            coord:formatTime=org.apache.oozie.coord.CoordELFunctions#ph3_coord_formatTime,
             coord:actionId=org.apache.oozie.coord.CoordELFunctions#ph3_coord_actionId,
             coord:name=org.apache.oozie.coord.CoordELFunctions#ph3_coord_name,
             coord:user=org.apache.oozie.coord.CoordELFunctions#coord_user

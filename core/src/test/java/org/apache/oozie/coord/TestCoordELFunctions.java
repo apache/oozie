@@ -709,6 +709,30 @@ public class TestCoordELFunctions extends XTestCase {
         assertEquals(expr, CoordELFunctions.evalAndWrap(eval, expr));
     }
 
+    public void testFormatTime() throws Exception {
+        String expr1 = "${coord:formatTime(\"2009-09-08T23:59Z\", \"yyyy\")}";
+        String expr2 = "${coord:formatTime(\"2009-09-08T23:59Z\", \"yyyyMMdd_HHmmss\")}";
+        init("coord-action-create");
+        assertEquals("2009", CoordELFunctions.evalAndWrap(eval, expr1));
+        assertEquals("20090908_235900", CoordELFunctions.evalAndWrap(eval, expr2));
+        init("coord-action-create-inst");
+        assertEquals("2009", CoordELFunctions.evalAndWrap(eval, expr1));
+        assertEquals("20090908_235900", CoordELFunctions.evalAndWrap(eval, expr2));
+        init("coord-action-start");
+        assertEquals("2009", CoordELFunctions.evalAndWrap(eval, expr1));
+        assertEquals("20090908_235900", CoordELFunctions.evalAndWrap(eval, expr2));
+
+        String utcDate = "2009-09-08T23:59Z";
+        String expr3 = "${coord:formatTime(date, \"yyyy\")}";
+        String expr3_eval = "${coord:formatTime('" + utcDate + "' , " + "yyyy)}";
+        init("coord-job-submit-instances");
+        eval.setVariable("date", utcDate);
+        assertEquals(expr3_eval, CoordELFunctions.evalAndWrap(eval, expr3));
+        init("coord-job-submit-data");
+        eval.setVariable("date", utcDate);
+        assertEquals(expr3_eval, CoordELFunctions.evalAndWrap(eval, expr3));
+    }
+
     public void testFuture() throws Exception {
         init("coord-job-submit-instances");
         String expr = "${coord:future(1, 20)}";
