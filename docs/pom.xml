@@ -59,23 +59,6 @@
         </plugins>
     </build>
 
-    <reporting>
-        <plugins>
-             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-project-info-reports-plugin</artifactId>
-                 <!-- Don't change version as doc generation may fail -->
-                <version>2.0-beta-3</version>
-                <reportSets>
-                    <reportSet>
-                        <reports>
-                        </reports>
-                    </reportSet>
-                </reportSets>
-            </plugin>
-        </plugins>
-    </reporting>
-
     <profiles>
         <profile>
             <id>generateDocs</id>
@@ -85,25 +68,40 @@
                     <name>generateDocs</name>
                 </property>
             </activation>
+            <reporting>
+                <plugins>
+                     <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-project-info-reports-plugin</artifactId>
+                         <!-- Using version because plugin management does not work for reporting plugins -->
+                         <version>2.2</version>
+                        <reportSets>
+                            <reportSet>
+                                <reports>
+                                </reports>
+                            </reportSet>
+                        </reportSets>
+                    </plugin>
+                </plugins>
+            </reporting>
             <build>
                 <plugins>
-                    <!-- Customized Doxia Maven Plugin for twiki documentation -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-site-plugin</artifactId>
-                        <!-- Don't change version as doc generation may fail -->
-                        <version>2.0-beta-6</version>
                         <configuration>
                             <port>8888</port>
                             <outputEncoding>UTF-8</outputEncoding>
                         </configuration>
                         <dependencies>
                             <dependency>
+                                <!-- Customized Doxia Maven Plugin for twiki documentation -->
                                 <groupId>org.apache.maven.doxia</groupId>
                                 <artifactId>doxia-module-twiki</artifactId>
                                 <version>1.0-alpha-9.2y</version>
                             </dependency>
                             <dependency>
+                                <!-- Customized Doxia Maven Plugin for twiki documentation -->
                                 <groupId>org.apache.maven.doxia</groupId>
                                 <artifactId>doxia-core</artifactId>
                                 <version>1.0-alpha-9.2y</version>

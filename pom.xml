@@ -423,6 +423,11 @@
             <plugins>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                    <version>1.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>2.3.2</version>
                 </plugin>
@@ -456,10 +461,68 @@
                     <artifactId>maven-antrun-plugin</artifactId>
                     <version>1.6</version>
                 </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-site-plugin</artifactId>
+                    <!-- Don't change version as doc generation may fail -->
+                    <!-- (using custom doxia for twiki pages generation) -->
+                    <version>2.0-beta-6</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-project-info-reports-plugin</artifactId>
+                    <version>2.2</version>                    
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-war-plugin</artifactId>
+                    <version>2.1</version>                    
+                </plugin>
             </plugins>
         </pluginManagement>
 
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <inherited>false</inherited>
+                <configuration>
+                    <rules>
+                        <requireMavenVersion>
+                            <version>[3.0.0,)</version>
+                        </requireMavenVersion>
+                        <requireJavaVersion>
+                            <version>1.6</version>
+                        </requireJavaVersion>
+                        <requireOS>
+                            <family>unix</family>
+                        </requireOS>
+                    </rules>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>clean</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <phase>pre-clean</phase>
+                    </execution>
+                    <execution>
+                        <id>default</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <phase>validate</phase>
+                    </execution>
+                    <execution>
+                         <id>site</id>
+                         <goals>
+                             <goal>enforce</goal>
+                         </goals>
+                         <phase>pre-site</phase>
+                     </execution>
+                 </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>

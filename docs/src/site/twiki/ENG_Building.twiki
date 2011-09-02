@@ -10,7 +10,7 @@
 
    * Unix box (tested on Mac OS X and Linux)
    * Java JDK 1.6+
-   * [[http://archive.apache.org/dist/maven/binaries/apache-maven-2.2.0-bin.tar.gz][Maven 2.2.0]]
+   * [[http://maven.apache.org/][Maven 3.0.1+]]
    * [[http://hadoop.apache.org/core/releases.html][Hadoop 0.20.2+]]
    * [[http://hadoop.apache.org/pig/releases.html][Pig 0.7+]]
 
@@ -93,6 +93,11 @@ $ mvn clean test -Dmysql -Doozie.test.config.file=/home/tucu/oozie-site-mysql.xm
 </verbatim>
 
 ---+++ Build Options Reference
+
+All these options are set using *-D*.
+
+*includeHadoopJars* : includes Hadoop JARs and its transitive dependencies in the Oozie WAR file, default is
+undefined (Hadoop JARs are not included).
 
 *generateSite* : generates Oozie documentation, default is undefined (no documentation is generated)
 

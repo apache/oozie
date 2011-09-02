@@ -1,5 +1,6 @@
 -- Oozie 2.3.0 release
 
+GH-0246 Move build to use Maven 3, fix issues in POMs
 GH-0048 Update CoordinatorFunctionalSpec with done-flag examples
 GH-0064 Create a config to turn on openjpa log
 GH-0238 it should be possible to submit oozie pig jobs using the system library by default
