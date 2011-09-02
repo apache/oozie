@@ -33,6 +33,7 @@ import javax.persistence.Query;
 import junit.framework.TestCase;
 
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -577,6 +578,13 @@ public abstract class XTestCase extends TestCase {
             conf.set("hadoop.proxyuser." + oozieUser + ".groups", getTestGroup());
             conf.set("mapred.tasktracker.map.tasks.maximum", "4");
             conf.set("mapred.tasktracker.reduce.tasks.maximum", "4");
+
+            String [] userGroups = new String[] { getTestGroup() };
+            UserGroupInformation.createUserForTesting(oozieUser, userGroups);
+            UserGroupInformation.createUserForTesting(getTestUser(), userGroups);
+            UserGroupInformation.createUserForTesting(getTestUser2(), userGroups);
+            UserGroupInformation.createUserForTesting(getTestUser3(), new String[] { "users" } );
+
             dfsCluster = new MiniDFSCluster(conf, dataNodes, true, null);
             FileSystem fileSystem = dfsCluster.getFileSystem();
             fileSystem.mkdirs(new Path("/tmp"));
