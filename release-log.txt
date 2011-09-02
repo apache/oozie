@@ -1,5 +1,6 @@
 -- Oozie 3.0.0 release
 
+OOZIE-33 Fixing coord job status when all actions in SUSPENDED  
 OOZIE-31 reset pending for coordjob with running pending true when change end time
 OOZIE-30 set coord paused time to null when rerun a paused coord job
 OOZIE-29 bundle rerun by name only doesn't work.
