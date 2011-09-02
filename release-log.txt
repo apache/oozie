@@ -1,5 +1,6 @@
 -- Oozie 2.3.0 release
 
+GH-0236 add support for -Dname=value to oozie CLI and make -config optional
 GH-0225 Remove groupId/artifactId/version parameterization from POMs
 GH-0108 Add support for Derby as Oozie DB
 GH-0227 log directory should be created if doesn't exist

@@ -45,6 +45,7 @@ public class MockDagEngineService extends DagEngineService {
 
     public static final String LOG = "log";
 
+    public static Configuration submittedConf;
     public static String did = null;
     public static Properties properties;
     public static List<WorkflowJob> workflows;
@@ -88,6 +89,7 @@ public class MockDagEngineService extends DagEngineService {
         @Override
         public String submitJob(Configuration conf, boolean startJob) throws DagEngineException {
             did = "submit";
+            submittedConf = conf;
             int idx = workflows.size();
             workflows.add(createDummyWorkflow(idx, XmlUtils.prettyPrint(conf).toString()));
             started.add(startJob);

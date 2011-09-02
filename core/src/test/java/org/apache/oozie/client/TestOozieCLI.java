@@ -77,6 +77,7 @@ public class TestOozieCLI extends DagServletTestCase {
         props.setProperty(OozieClient.GROUP_NAME, getTestGroup());
         props.setProperty(OozieClient.APP_PATH, appPath);
         props.setProperty(OozieClient.RERUN_SKIP_NODES, "node");
+        props.setProperty("a", "A");
         injectKerberosInfo(props);
         OutputStream os = new FileOutputStream(path);
         props.store(os, "");
@@ -136,6 +137,29 @@ public class TestOozieCLI extends DagServletTestCase {
                 catch (Exception e) {
                     //job was not submitted, so its fine
                 }
+                return null;
+            }
+        });
+    }
+
+    public void testSubmitWithPropertyArguments() throws Exception {
+        runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED, new Callable<Void>() {
+            public Void call() throws Exception {
+                String oozieUrl = getContextURL();
+                int wfCount = MockDagEngineService.INIT_WF_COUNT;
+
+                Path appPath = new Path(getFsTestCaseDir(), "app");
+                getFileSystem().mkdirs(appPath);
+                getFileSystem().create(new Path(appPath, "workflow.xml")).close();
+
+                String[] args = new String[]{"job", "-submit", "-oozie", oozieUrl, "-config",
+                        createConfigFile(appPath.toString()), "-Da=X", "-Db=B"};
+                assertEquals(0, new OozieCLI().run(args));
+                assertEquals("submit", MockDagEngineService.did);
+                assertFalse(MockDagEngineService.started.get(wfCount));
+
+                assertEquals("X", MockDagEngineService.submittedConf.get("a"));
+                assertEquals("B", MockDagEngineService.submittedConf.get("b"));
                 return null;
             }
         });

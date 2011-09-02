@@ -39,6 +39,7 @@ import javax.xml.validation.Validator;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
@@ -203,6 +204,8 @@ public class OozieCLI {
                 "re-materialize the coordinator rerun actions (requires -rerun)");
         Option rerun_nocleanup = new Option(RERUN_NOCLEANUP_OPTION, false,
                 "do not clean up output-events of the coordiantor rerun actions (requires -rerun)");
+        Option property = OptionBuilder.withArgName( "property=value" ).hasArgs(2)
+                .withValueSeparator().withDescription( "set/override value for given property" ).create( "D" );
 
         OptionGroup actions = new OptionGroup();
         actions.addOption(submit);
@@ -221,6 +224,7 @@ public class OozieCLI {
         Options jobOptions = new Options();
         jobOptions.addOption(oozie);
         jobOptions.addOption(config);
+        jobOptions.addOption(property);
         jobOptions.addOption(changeValue);
         jobOptions.addOption(localtime);
         jobOptions.addOption(verbose);
@@ -273,9 +277,12 @@ public class OozieCLI {
         Option oozie = new Option(OOZIE_OPTION, true, "Oozie URL");
         Option config = new Option(CONFIG_OPTION, true, "job configuration file '.properties'");
         Option pigFile = new Option(PIGFILE_OPTION, true, "Pig script");
+        Option property = OptionBuilder.withArgName( "property=value" ).hasArgs(2)
+                .withValueSeparator().withDescription( "set/override value for given property" ).create( "D" );
         Options pigOptions = new Options();
         pigOptions.addOption(oozie);
         pigOptions.addOption(config);
+        pigOptions.addOption(property);
         pigOptions.addOption(pigFile);
         return pigOptions;
     }
@@ -432,10 +439,7 @@ public class OozieCLI {
         Properties conf = new Properties();
         conf.setProperty("user.name", System.getProperty("user.name"));
         String configFile = commandLine.getOptionValue(CONFIG_OPTION);
-        if (configFile == null) {
-            throw new IOException("configuration file not specified");
-        }
-        else {
+        if (configFile != null) {
             File file = new File(configFile);
             if (!file.exists()) {
                 throw new IOException("configuration file [" + configFile + "] not found");
@@ -449,6 +453,10 @@ public class OozieCLI {
             else {
                 throw new IllegalArgumentException("configuration must be a '.properties' or a '.xml' file");
             }
+        }
+        if (commandLine.hasOption("D")) {
+            Properties commandLineProperties = commandLine.getOptionProperties("D");
+            conf.putAll(commandLineProperties);
         }
         return conf;
     }
@@ -1053,10 +1061,6 @@ public class OozieCLI {
 
         if (!options.contains(PIGFILE_OPTION)) {
             throw new OozieCLIException("Need to specify -file <scriptfile>");
-        }
-
-        if (!options.contains(CONFIG_OPTION)) {
-            throw new OozieCLIException("Need to specify -config <configfile>");
         }
 
         Properties conf = getConfiguration(commandLine);
