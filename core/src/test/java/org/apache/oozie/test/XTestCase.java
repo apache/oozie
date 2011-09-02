@@ -466,11 +466,11 @@ public abstract class XTestCase extends TestCase {
     }
 
     public String getJobTrackerPrincipal() {
-        return System.getProperty("oozie.test.kerberos.jobtracker.principal", "mapred/localhost") + "@" + getRealm();
+        return System.getProperty("oozie.test.kerberos.jobtracker.principal", "mapred/_HOST") + "@" + getRealm();
     }
 
     public String getNamenodePrincipal() {
-        return System.getProperty("oozie.test.kerberos.namenode.principal", "hdfs/localhost") + "@" + getRealm();
+        return System.getProperty("oozie.test.kerberos.namenode.principal", "hdfs/_HOST") + "@" + getRealm();
     }
 
     public <C extends Configuration> C injectKerberosInfo(C conf) {

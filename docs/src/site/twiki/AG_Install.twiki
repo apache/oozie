@@ -130,8 +130,9 @@ Oozie authentication is configured using the following configuration properties 
 <verbatim>
   oozie.services.ext=org.apache.oozie.service.HadoopAccessorService
   oozie.service.HadoopAccessorService.kerberos.enabled=false
+  local.realm=LOCALHOST
   oozie.service.HadoopAccessorService.keytab.file=${user.home}/oozie.keytab
-  oozie.service.HadoopAccessorService.kerberos.principal=${user.name}/localhost@LOCALHOST
+  oozie.service.HadoopAccessorService.kerberos.principal=${user.name}/localhost@{local.realm}
 </verbatim>
 
 The above default values are for a Hadoop 0.20.2 distribution without Kerberos authentication.
@@ -152,8 +153,9 @@ To enable Kerberos authentication, the following property must be set:
 When using Kerberos authentication, the following properties must be set to the correct values (default values shown):
 
 <verbatim>
+  local.realm=LOCALHOST
   oozie.service.HadoopAccessorService.keytab.file=${user.home}/oozie.keytab
-  oozie.service.HadoopAccessorService.kerberos.principal=${user.name}/localhost@LOCALHOST
+  oozie.service.HadoopAccessorService.kerberos.principal=${user.name}/localhost@{local.realm}
 </verbatim>
 
 *IMPORTANT:* When using Oozie with a Hadoop 20 with Security distribution, the Oozie user in Hadoop must be configured

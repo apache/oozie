@@ -1108,6 +1108,14 @@
     </property>
 
     <property>
+        <name>local.realm</name>
+        <value>LOCALHOST</value>
+        <description>
+            Kerberos Realm used by Oozie and Hadoop. Using 'local.realm' to be aligned with Hadoop configuration
+        </description>
+    </property>
+
+    <property>
         <name>oozie.service.HadoopAccessorService.keytab.file</name>
         <value>${user.home}/oozie.keytab</value>
         <description>
@@ -1117,7 +1125,7 @@
 
     <property>
         <name>oozie.service.HadoopAccessorService.kerberos.principal</name>
-        <value>${user.name}/localhost@LOCALHOST</value>
+        <value>${user.name}/localhost@${local.realm}</value>
         <description>
             Kerberos principal for Oozie service.
         </description>
