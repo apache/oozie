@@ -50,7 +50,7 @@ public class TestCoordKillXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testCoordKillSuccess1() throws Exception {
-        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false);
         CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.READY, "coord-action-get.xml");
 
         JPAService jpaService = Services.get().get(JPAService.class);
@@ -60,7 +60,7 @@ public class TestCoordKillXCommand extends XDataTestCase {
 
         job = jpaService.execute(coordJobGetCmd);
         action = jpaService.execute(coordActionGetCmd);
-        assertEquals(job.getStatus(), CoordinatorJob.Status.SUCCEEDED);
+        assertEquals(job.getStatus(), CoordinatorJob.Status.RUNNING);
         assertEquals(action.getStatus(), CoordinatorAction.Status.READY);
 
         new CoordKillXCommand(job.getId()).call();
@@ -77,7 +77,7 @@ public class TestCoordKillXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testCoordKillSuccess2() throws Exception {
-        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false);
         CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.RUNNING, "coord-action-get.xml");
 
         JPAService jpaService = Services.get().get(JPAService.class);
@@ -87,7 +87,7 @@ public class TestCoordKillXCommand extends XDataTestCase {
 
         job = jpaService.execute(coordJobGetCmd);
         action = jpaService.execute(coordActionGetCmd);
-        assertEquals(job.getStatus(), CoordinatorJob.Status.SUCCEEDED);
+        assertEquals(job.getStatus(), CoordinatorJob.Status.RUNNING);
         assertEquals(action.getStatus(), CoordinatorAction.Status.RUNNING);
 
         new CoordKillXCommand(job.getId()).call();
@@ -121,7 +121,7 @@ public class TestCoordKillXCommand extends XDataTestCase {
 
         job = jpaService.execute(coordJobGetCmd);
         action = jpaService.execute(coordActionGetCmd);
-        assertEquals(job.getStatus(), CoordinatorJob.Status.KILLED);
+        assertEquals(job.getStatus(), CoordinatorJob.Status.SUCCEEDED);
         assertEquals(action.getStatus(), CoordinatorAction.Status.SUCCEEDED);
     }
 

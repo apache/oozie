@@ -41,7 +41,7 @@ import java.util.List;
 
 public class CoordKillXCommand extends KillTransitionXCommand {
 
-    private String jobId;
+    private final String jobId;
     private final XLog LOG = XLog.getLog(CoordKillXCommand.class);
     private CoordinatorJobBean coordJob;
     private List<CoordinatorActionBean> actionList;
@@ -85,6 +85,12 @@ public class CoordKillXCommand extends KillTransitionXCommand {
 
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
+        if (coordJob.getStatus() == CoordinatorJob.Status.SUCCEEDED
+                || coordJob.getStatus() == CoordinatorJob.Status.FAILED) {
+            LOG.info("CoordKillCommand not killed - job either " + "finished successfully or does not exist "
+                    + jobId);
+            throw new PreconditionException(ErrorCode.E1020, jobId);
+        }
     }
 
     private void updateCoordAction(CoordinatorActionBean action) throws CommandException {
