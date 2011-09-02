@@ -156,17 +156,18 @@ public abstract class WorkflowAppService implements Service {
             XLog.getLog(getClass()).debug("jobConf.libPath = " + jobConf.get(OozieClient.LIBPATH));
             XLog.getLog(getClass()).debug("jobConf.appPath = " + appPath);
 
-            List<String> filePaths = null;
+            List<String> filePaths;
             if (isWorkflowJob) {
                 filePaths = getLibFiles(fs, new Path(appPath.getParent(), "lib"));
-                if (jobConf.get(OozieClient.LIBPATH) != null) {
-                    Path libPath = new Path(jobConf.get(OozieClient.LIBPATH));
-                    List<String> libPaths = getLibFiles(fs, libPath);
-                    filePaths.addAll(libPaths);
-                }
             }
             else {
-                filePaths = getLibFiles(fs, new Path(appPath.getParent(), "lib"));
+                filePaths = new ArrayList<String>();
+            }
+            
+            if (jobConf.get(OozieClient.LIBPATH) != null) {
+                Path libPath = new Path(jobConf.get(OozieClient.LIBPATH));
+                List<String> libPaths = getLibFiles(fs, libPath);
+                filePaths.addAll(libPaths);
             }
 
             if (systemLibPath != null && jobConf.getBoolean(OozieClient.USE_SYSTEM_LIBPATH, false)) {

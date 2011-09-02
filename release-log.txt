@@ -1,5 +1,6 @@
 -- Oozie 2.3.0 release
 
+GH-0237 oozie pig jobs fail to add oozie.libpath to the DistributedCache (regression)
 GH-0236 add support for -Dname=value to oozie CLI and make -config optional
 GH-0225 Remove groupId/artifactId/version parameterization from POMs
 GH-0108 Add support for Derby as Oozie DB
