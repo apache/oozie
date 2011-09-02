@@ -13,12 +13,12 @@
   See the License for the specific language governing permissions and
   limitations under the License. See accompanying LICENSE file.
 -->
-<project>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.yahoo.oozie</groupId>
         <artifactId>oozie-main</artifactId>
-        <version>2.3.0-SNAPSHOT</version>
+        <version>3.0.0-SNAPSHOT</version>
     </parent>
     <!-- calling the artifact oozie to the generated distro file is oozie- -->
     <artifactId>oozie</artifactId>
@@ -82,23 +82,20 @@
                     <execution>
                         <configuration>
                             <target>
-                                <mkdir dir="downloads"/>
-                                <get src="http://www.apache.org/dist/tomcat/tomcat-6/v6.0.29/bin/apache-tomcat-6.0.29.tar.gz"
-                                     dest="downloads/tomcat.tar.gz"
-                                     verbose="true"
-                                     skipexisting="true"/>
-                                <delete dir="target/tomcat"/>
-                                <mkdir dir="target/tomcat"/>
-                                <gunzip src="downloads/tomcat.tar.gz" dest="target/tomcat/tomcat.tar"/>
-                                <untar src="target/tomcat/tomcat.tar" dest="target/tomcat"/>
-                                <move file="target/tomcat/apache-tomcat-6.0.29" tofile="target/tomcat/oozie-server"/>
-                                <delete dir="target/tomcat/oozie-server/webapps"/>
-                                <mkdir dir="target/tomcat/oozie-server/webapps"/>
-                                <delete file="target/tomcat/oozie-server/conf/server.xml"/>
-                                <copy file="src/main/tomcat/server.xml" toDir="target/tomcat/oozie-server/conf"/>
-                                <copy file="src/main/tomcat/logging.properties" toDir="target/tomcat/oozie-server/conf"/>
+                                <mkdir dir="downloads" />
+                                <get src="http://www.apache.org/dist/tomcat/tomcat-6/v6.0.29/bin/apache-tomcat-6.0.29.tar.gz" dest="downloads/tomcat.tar.gz" verbose="true" skipexisting="true" />
+                                <delete dir="target/tomcat" />
+                                <mkdir dir="target/tomcat" />
+                                <gunzip src="downloads/tomcat.tar.gz" dest="target/tomcat/tomcat.tar" />
+                                <untar src="target/tomcat/tomcat.tar" dest="target/tomcat" />
+                                <move file="target/tomcat/apache-tomcat-6.0.29" tofile="target/tomcat/oozie-server" />
+                                <delete dir="target/tomcat/oozie-server/webapps" />
+                                <mkdir dir="target/tomcat/oozie-server/webapps" />
+                                <delete file="target/tomcat/oozie-server/conf/server.xml" />
+                                <copy file="src/main/tomcat/server.xml" toDir="target/tomcat/oozie-server/conf" />
+                                <copy file="src/main/tomcat/logging.properties" toDir="target/tomcat/oozie-server/conf" />
                                 <copy todir="target/tomcat/oozie-server/webapps/ROOT">
-                                    <fileset dir="src/main/tomcat/ROOT"/>
+                                    <fileset dir="src/main/tomcat/ROOT" />
                                 </copy>
                             </target>
                         </configuration>

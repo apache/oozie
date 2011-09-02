@@ -13,12 +13,12 @@
   See the License for the specific language governing permissions and
   limitations under the License. See accompanying LICENSE file.
 -->
-<project>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.yahoo.oozie</groupId>
         <artifactId>oozie-main</artifactId>
-        <version>2.3.0-SNAPSHOT</version>
+        <version>3.0.0-SNAPSHOT</version>
     </parent>
     <artifactId>oozie-core</artifactId>
     <description>Oozie Core</description>
@@ -272,30 +272,29 @@
                         <configuration>
                             <target>
                                 <path id="cp">
-                                    <path refid="maven.test.classpath"/>
-                                    <path refid="maven.compile.classpath"/>
-                                    <path refid="maven.dependency.classpath"/>
+                                    <path refid="maven.test.classpath" />
+                                    <path refid="maven.compile.classpath" />
+                                    <path refid="maven.dependency.classpath" />
                                 </path>
-                                <taskdef name="openjpac" classname=
-                                        "org.apache.openjpa.ant.PCEnhancerTask">
-                                    <classpath refid="cp"/>
+                                <taskdef name="openjpac" classname="org.apache.openjpa.ant.PCEnhancerTask">
+                                    <classpath refid="cp" />
                                 </taskdef>
                                 <fileset id="enhance.path.ref" dir="../core/target/classes">
-                                    <include name="**/JsonWorkflowJob.class"/>
-                                    <include name="**/JsonWorkflowAction.class"/>
-                                    <include name="**/JsonCoordinatorJob.class"/>
-                                    <include name="**/JsonCoordinatorAction.class"/>
-                                    <include name="**/JsonSLAEvent.class"/>
+                                    <include name="**/JsonWorkflowJob.class" />
+                                    <include name="**/JsonWorkflowAction.class" />
+                                    <include name="**/JsonCoordinatorJob.class" />
+                                    <include name="**/JsonCoordinatorAction.class" />
+                                    <include name="**/JsonSLAEvent.class" />
 
-                                    <include name="**/WorkflowJobBean.class"/>
-                                    <include name="**/WorkflowActionBean.class"/>
-                                    <include name="**/CoordinatorJobBean.class"/>
-                                    <include name="**/CoordinatorActionBean.class"/>
-                                    <include name="**/SLAEventBean.class"/>
+                                    <include name="**/WorkflowJobBean.class" />
+                                    <include name="**/WorkflowActionBean.class" />
+                                    <include name="**/CoordinatorJobBean.class" />
+                                    <include name="**/CoordinatorActionBean.class" />
+                                    <include name="**/SLAEventBean.class" />
                                 </fileset>
                                 <openjpac>
-                                    <classpath refid="cp"/>
-                                    <fileset refid="enhance.path.ref"/>
+                                    <classpath refid="cp" />
+                                    <fileset refid="enhance.path.ref" />
                                 </openjpac>
                             </target>
                         </configuration>
