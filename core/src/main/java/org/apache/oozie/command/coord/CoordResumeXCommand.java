@@ -128,16 +128,18 @@ public class CoordResumeXCommand extends ResumeTransitionXCommand {
             List<CoordinatorActionBean> actionList = jpaService.execute(new CoordJobGetActionsJPAExecutor(jobId));
 
             for (CoordinatorActionBean action : actionList) {
-                // queue a ResumeXCommand
-                if (action.getExternalId() != null) {
-                    queue(new ResumeXCommand(action.getExternalId()));
-                    updateCoordAction(action);
-                    LOG.debug("Resume coord action = [{0}], new status = [{1}], pending = [{2}] and queue ResumeXCommand for [{3}]",
-                                    action.getId(), action.getStatus(), action.getPending(), action.getExternalId());
-                }else {
-                    updateCoordAction(action);
-                    LOG.debug("Resume coord action = [{0}], new status = [{1}], pending = [{2}] and external id is null",
-                            action.getId(), action.getStatus(), action.getPending());
+                if(action.getStatus() == CoordinatorActionBean.Status.SUSPENDED){
+                    // queue a ResumeXCommand
+                    if (action.getExternalId() != null) {
+                        queue(new ResumeXCommand(action.getExternalId()));
+                        updateCoordAction(action);
+                        LOG.debug("Resume coord action = [{0}], new status = [{1}], pending = [{2}] and queue ResumeXCommand for [{3}]",
+                                action.getId(), action.getStatus(), action.getPending(), action.getExternalId());
+                    }else {
+                        updateCoordAction(action);
+                        LOG.debug("Resume coord action = [{0}], new status = [{1}], pending = [{2}] and external id is null",
+                                action.getId(), action.getStatus(), action.getPending());
+                    }
                 }
             }
         }
@@ -174,9 +176,7 @@ public class CoordResumeXCommand extends ResumeTransitionXCommand {
     }
 
     private void updateCoordAction(CoordinatorActionBean action) throws CommandException {
-        if(action.getStatus() == CoordinatorActionBean.Status.SUSPENDED){
-            action.setStatus(CoordinatorActionBean.Status.RUNNING);
-        }
+        action.setStatus(CoordinatorActionBean.Status.RUNNING);
         action.incrementAndGetPending();
         action.setLastModifiedTime(new Date());
         try {

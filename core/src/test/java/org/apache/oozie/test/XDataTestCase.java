@@ -176,6 +176,7 @@ public abstract class XDataTestCase extends XFsTestCase {
      * @param status job status
      * @param pending true if pending is true
      * @param doneMatd true if doneMaterialization is true
+     * @param lastActionNumber last action number
      * @return coordinator job bean
      * @throws Exception
      */

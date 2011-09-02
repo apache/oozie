@@ -31,6 +31,7 @@ import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.command.bundle.BundleJobResumeXCommand;
 import org.apache.oozie.command.bundle.BundleJobSuspendXCommand;
 import org.apache.oozie.command.coord.CoordKillXCommand;
+import org.apache.oozie.command.coord.CoordResumeXCommand;
 import org.apache.oozie.command.coord.CoordSuspendXCommand;
 import org.apache.oozie.executor.jpa.BundleActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
@@ -303,6 +304,58 @@ public class TestStatusTransitService extends XDataTestCase {
         job = jpaService.execute(coordGetCmd);
         assertEquals(CoordinatorJob.Status.SUSPENDED, job.getStatus());
         assertFalse(job.isPending());
+    }
+
+    /**
+     * Test : Suspend and resume a coordinator job which has finished materialization and all actions are succeeded.
+     * </p>
+     * Coordinator job changes to succeeded after resume
+     *
+     * @throws Exception
+     */
+    public void testCoordStatusTransitServiceSuspendAndResume() throws Exception {
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+
+        CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, true);
+        final String coordJobId = coordJob.getId();
+
+        final CoordinatorActionBean coordAction1_1 = addRecordToCoordActionTable(coordJobId, 1,
+                CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
+        final CoordinatorActionBean coordAction1_2 = addRecordToCoordActionTable(coordJobId, 2,
+                CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
+
+        this.addRecordToWfJobTable(coordAction1_1.getExternalId(), WorkflowJob.Status.SUCCEEDED,
+                WorkflowInstance.Status.SUCCEEDED);
+        this.addRecordToWfJobTable(coordAction1_2.getExternalId(), WorkflowJob.Status.SUCCEEDED,
+                WorkflowInstance.Status.SUCCEEDED);
+
+        new CoordSuspendXCommand(coordJobId).call();
+
+        CoordJobGetJPAExecutor coordJobGetCmd = new CoordJobGetJPAExecutor(coordJobId);
+        coordJob = jpaService.execute(coordJobGetCmd);
+
+        assertEquals(Job.Status.SUSPENDED, coordJob.getStatus());
+
+        Thread.sleep(3000);
+
+        new CoordResumeXCommand(coordJobId).call();
+
+        coordJob = jpaService.execute(coordJobGetCmd);
+
+        Runnable runnable = new StatusTransitRunnable();
+        runnable.run();
+
+        waitFor(5 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                CoordinatorJobBean job = jpaService.execute(new CoordJobGetJPAExecutor(coordJobId));
+                return job.getStatus().equals(Job.Status.SUCCEEDED);
+            }
+        });
+
+        CoordinatorJobBean coordJob1 = jpaService.execute(new CoordJobGetJPAExecutor(coordJobId));
+        assertFalse(coordJob1.isPending());
+        assertEquals(Job.Status.SUCCEEDED, coordJob1.getStatus());
     }
 
     /**
