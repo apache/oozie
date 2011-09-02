@@ -93,7 +93,7 @@ public class TestPurgeService extends XTestCase {
         });
         assertEquals(WorkflowJob.Status.SUCCEEDED, engine.getJob(jobId)
                 .getStatus());
-        new PurgeCommand(1).call();
+        new PurgeCommand(1, 10000).call();
         Thread.sleep(1000);
 
         final WorkflowStore store = Services.get().get(

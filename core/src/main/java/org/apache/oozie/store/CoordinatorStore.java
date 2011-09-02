@@ -488,66 +488,38 @@ public class CoordinatorStore extends Store {
         q.setParameter("status", aBean.getStatus().toString());
     }
 
-    public int purgeActions(final long olderThanDays, final long limit) throws StoreException {
-
-        Integer count = doOperation("coord-purge-actions", new Callable<Integer>() {
-            public Integer call() throws SQLException, StoreException, WorkflowException {
-                Timestamp createdTime = new Timestamp(System.currentTimeMillis() - (olderThanDays * DAY_IN_MS));
-                /*
-                 * this may be better - but does not work? Query g =
-                 * entityManager
-                 * .createNamedQuery("DELETE_COMPLETED_COORD_ACTIONS");
-                 * g.setParameter("id", id); int deleted_action =
-                 * g.executeUpdate();
-                 */
-                Query q = entityManager.createNamedQuery("GET_COMPLETED_ACTIONS_OLDER_THAN");
-                q.setParameter("createdTime", createdTime);
-                q.setMaxResults((int) limit);
-                List<CoordinatorActionBean> coordactions = q.getResultList();
-                for (CoordinatorActionBean a : coordactions) {
-                    String id = a.getId();
-                    // remove surely removes - but expensive - to be compared?
-                    entityManager.remove(a);
-
-                }
-
-                return coordactions.size();
-            }
-        });
-        return Integer.valueOf(count);
-    }
-
-    public int purgeJobs(final long olderThanDays, final long limit) throws StoreException {
-
-        Integer count = doOperation("coord-purge-jobs", new Callable<Integer>() {
-            public Integer call() throws SQLException, StoreException, WorkflowException {
-
+    
+    /**
+     * Purge the coordinators completed older than given days.
+     *
+     * @param olderThanDays number of days for which to preserve the coordinators
+     * @param limit maximum number of coordinator jobs to be purged
+     * @throws StoreException
+     */
+    public void purge(final long olderThanDays, final int limit) throws StoreException {
+        doOperation("coord-purge", new Callable<Void>() {
+            public Void call() throws SQLException, StoreException, WorkflowException {
                 Timestamp lastModTm = new Timestamp(System.currentTimeMillis() - (olderThanDays * DAY_IN_MS));
-
                 Query jobQ = entityManager.createNamedQuery("GET_COMPLETED_COORD_JOBS_OLDER_THAN_STATUS");
                 jobQ.setParameter("lastModTime", lastModTm);
-                jobQ.setMaxResults((int) limit);
+                jobQ.setMaxResults(limit);
                 List<CoordinatorJobBean> coordJobs = jobQ.getResultList();
-                int deleted = 0;
-                for (CoordinatorJobBean a : coordJobs) {
-                    String jobId = a.getId();
-
-                    Query actionQ = entityManager.createNamedQuery("GET_COORD_ACTIONS_COUNT_BY_JOBID");
-                    actionQ.setParameter("jobId", jobId);
-                    Long count = (Long) actionQ.getSingleResult();
-
-                    if (count.intValue() == 0) {
-                        // remove surely removes - but expensive - to be
-                        // compared?
-                        entityManager.remove(a);
-                        deleted++;
+                
+                int actionDeleted = 0;
+                if (coordJobs.size() != 0) {
+                    for (CoordinatorJobBean coord : coordJobs) {
+                        String jobId = coord.getId();
+                        entityManager.remove(coord);
+                        Query g = entityManager.createNamedQuery("DELETE_COMPLETED_ACTIONS_FOR_COORDINATOR");
+                        g.setParameter("jobId", jobId);
+                        actionDeleted += g.executeUpdate();
                     }
                 }
-
-                return deleted;
+                
+                XLog.getLog(getClass()).debug("ENDED Coord Purge deleted jobs :" + coordJobs.size() + " and actions " + actionDeleted);
+                return null;
             }
         });
-        return Integer.valueOf(count);
     }
 
     public void commit() throws StoreException {

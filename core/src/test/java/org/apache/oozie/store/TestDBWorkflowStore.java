@@ -485,7 +485,7 @@ public class TestDBWorkflowStore extends XTestCase {
         store.insertAction(a31);
         store.commitTrx();
         store.beginTrx();
-        store.purge(30);
+        store.purge(30, 10000);
         store.commitTrx();
 /*
  * SqlStatement s = getCount(OozieTable.WF_JOBS); ResultSet rs =

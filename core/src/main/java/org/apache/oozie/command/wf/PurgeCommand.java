@@ -16,24 +16,25 @@ package org.apache.oozie.command.wf;
 
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.store.WorkflowStore;
-import org.apache.oozie.store.Store;
 import org.apache.oozie.util.XLog;
-import org.apache.oozie.command.Command;
 import org.apache.oozie.command.CommandException;
 
 public class PurgeCommand extends WorkflowCommand<Void> {
+    private static XLog LOG = XLog.getLog(PurgeCommand.class);
     private int olderThan;
+    private int limit;
 
-    public PurgeCommand(int olderThan) {
+    public PurgeCommand(int olderThan, int limit) {
         super("purge", "purge", 0, XLog.OPS);
         this.olderThan = olderThan;
+        this.limit = limit;
     }
 
     @Override
     protected Void call(WorkflowStore store) throws StoreException, CommandException {
-        XLog.getLog(getClass()).debug("Attempting to purge Jobs older than [{0}] days.", olderThan);
-        store.purge(this.olderThan);
-        XLog.getLog(getClass()).debug("Purge succeeded ");
+        LOG.debug("Attempting to purge Jobs older than [{0}] days.", olderThan);
+        store.purge(olderThan, limit);
+        LOG.debug("Purge succeeded ");
         return null;
     }
 

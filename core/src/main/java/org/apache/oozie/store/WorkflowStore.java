@@ -773,23 +773,27 @@ public class WorkflowStore extends Store {
      * @param olderThanDays number of days for which to preserve the workflows
      * @throws StoreException
      */
-    public void purge(final long olderThanDays) throws StoreException {
+    public void purge(final long olderThanDays, final int limit) throws StoreException {
         doOperation("purge", new Callable<Void>() {
             public Void call() throws SQLException, StoreException, WorkflowException {
                 Timestamp maxEndTime = new Timestamp(System.currentTimeMillis() - (olderThanDays * DAY_IN_MS));
                 Query q = entityManager.createNamedQuery("GET_COMPLETED_WORKFLOWS_OLDER_THAN");
                 q.setParameter("endTime", maxEndTime);
+                q.setMaxResults(limit);
                 List<WorkflowJobBean> workflows = q.getResultList();
+                
+                int actionDeleted = 0;
                 if (workflows.size() != 0) {
                     for (WorkflowJobBean w : workflows) {
                         String wfId = w.getId();
                         entityManager.remove(w);
                         Query g = entityManager.createNamedQuery("DELETE_ACTIONS_FOR_WORKFLOW");
                         g.setParameter("wfId", wfId);
-                        int deleted_action = g.executeUpdate();
+                        actionDeleted += g.executeUpdate();
                     }
                 }
 
+                XLog.getLog(getClass()).debug("ENDED Workflow Purge deleted jobs :" + workflows.size() + " and actions " + actionDeleted);
                 return null;
             }
         });

@@ -55,7 +55,7 @@ public class PurgeService implements Service {
         }
 
         public void run() {
-            Services.get().get(CallableQueueService.class).queue(new PurgeCommand(olderThan));
+            Services.get().get(CallableQueueService.class).queue(new PurgeCommand(olderThan, limit));
             Services.get().get(CallableQueueService.class).queue(new CoordPurgeCommand(coordOlderThan, limit));
         }
 
