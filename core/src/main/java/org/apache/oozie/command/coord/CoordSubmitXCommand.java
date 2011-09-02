@@ -195,7 +195,6 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
 
         boolean exceptionOccured = false;
         try {
-            XLog.Info.get().setParameter(DagXLogInfoService.TOKEN, conf.get(OozieClient.LOG_TOKEN));
             mergeDefaultConfig();
 
             String appXml = readAndValidateXml();
@@ -211,8 +210,9 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
             LOG.debug("jobXml after all validation " + XmlUtils.prettyPrint(eJob).toString());
 
             jobId = storeToDB(eJob, coordJob);
-            // log job info for coordinator jobs
+            // log job info for coordinator job
             LogUtils.setLogInfo(coordJob, logInfo);
+            LOG = XLog.resetPrefix(LOG);
 
             if (!dryrun) {
                 // submit a command to materialize jobs for the next 1 hour (3600 secs)
@@ -951,12 +951,16 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         if (this.bundleId != null) {
             // this coord job is created from bundle
             coordJob.setBundleId(this.bundleId);
+            // first use bundle id if submit thru bundle
+            logInfo.setParameter(DagXLogInfoService.JOB, this.bundleId);
+            LogUtils.setLogInfo(logInfo);
         }
         if (this.coordName != null) {
             // this coord job is created from bundle
             coordJob.setAppName(this.coordName);
         }
         setJob(coordJob);
+
     }
 
     /* (non-Javadoc)
@@ -985,5 +989,13 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
      */
     @Override
     public void updateJob() throws CommandException {
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.TransitionXCommand#getJob()
+     */
+    @Override
+    public Job getJob() {
+        return coordJob;
     }
 }
