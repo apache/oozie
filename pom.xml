@@ -49,6 +49,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
+        <test.exclude>_</test.exclude>
+        <test.exclude.pattern>_</test.exclude.pattern>
     </properties>
 
     <modules>
@@ -551,6 +553,10 @@
                     <systemPropertiesVariables>
                         <hadoop.log.dir>/tmp</hadoop.log.dir>
                     </systemPropertiesVariables>
+                    <excludes>
+                        <exclude>**/${test.exclude}.java</exclude>
+                        <exclude>${test.exclude.pattern}</exclude>
+                    </excludes>
                 </configuration>
             </plugin>
             <plugin>

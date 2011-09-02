@@ -180,6 +180,10 @@ The =oozietests= directory is used by testcases when they need a local filesyste
 *hadoop.log.dir*= : specifies the directory where Hadoop minicluster will write its logs during testcases, default
 value is =/tmp=.
 
+*test.exclude*= : specifies a testcase class (just the class name) to exclude for the tests run, for example =TestSubmitCommand=.
+
+*test.exclude.pattern*= : specifies one or more patterns for testcases to exclude, for example =**/Test*Command.java=.
+
 ---++ Building an Oozie Distribution
 
 An Oozie distribution bundles an embedded Tomcat server. The Oozie distro module downloads Tomcat TAR.GZ from Apache
