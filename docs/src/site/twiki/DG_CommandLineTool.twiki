@@ -16,7 +16,7 @@ The =oozie= CLI interacts with Oozie via its WS API.
 ---++ Oozie Command Line Usage
 
 <verbatim>
-  usage:
+usage:
       the env variable 'OOZIE_URL' is used as default value for the '-oozie' option
       custom headers for Oozie web services can be specified using '-Dheader:NAME=VALUE'
 
@@ -25,32 +25,33 @@ The =oozie= CLI interacts with Oozie via its WS API.
       oozie version : show client version
 
       oozie job <OPTIONS> : job operations
-                -action <arg>       coordinator rerun on action ids (requires -rerun)
-                -change <arg>       change a coordinator job
-                -config <arg>       job configuration file '.xml' or '.properties'
-                -date <arg>         coordinator rerun on action dates (requires -rerun)
-                -definition <arg>   job definition
-                -dryrun             Supported in Oozie-2.0 or later versions ONLY - dryrun or test
-                                    run a coordinator job (requires -config) - job is not queued
-                -info <arg>         info of a job
-                -kill <arg>         kill a job
-                -len <arg>          number of actions (default TOTAL ACTIONS, requires -info)
-                -localtime          use local time (default GMT)
-                -log <arg>          job log
-                -nocleanup          do not clean up output-events of the coordiantor rerun actions
-                                    (requires -rerun)
-                -offset <arg>       job info offset of actions (default '1', requires -info)
-                -oozie <arg>        Oozie URL
-                -refresh            re-materialize the coordinator rerun actions (requires -rerun)
-                -rerun <arg>        rerun a job  (workflow requires -config, coordinator requires
-                                    -action or -date)
-                -resume <arg>       resume a job
-                -run                run a job    (requires -config)
-                -start <arg>        start a job
-                -submit             submit a job (requires -config)
-                -suspend <arg>      suspend a job
-                -value <arg>        new endtime/concurrency/pausetime value for changing a coordinator job
-                -verbose            verbose mode
+                -action <arg>         coordinator rerun on action ids (requires -rerun)
+                -change <arg>         change a coordinator job
+                -config <arg>         job configuration file '.xml' or '.properties'
+                -D <property=value>   set/override value for given property
+                -date <arg>           coordinator rerun on action dates (requires -rerun)
+                -definition <arg>     job definition
+                -dryrun               Supported in Oozie-2.0 or later versions ONLY - dryrun or test
+                                      run a coordinator job, job is not queued
+                -info <arg>           info of a job
+                -kill <arg>           kill a job
+                -len <arg>            number of actions (default TOTAL ACTIONS, requires -info)
+                -localtime            use local time (default GMT)
+                -log <arg>            job log
+                -nocleanup            do not clean up output-events of the coordiantor rerun actions
+                                      (requires -rerun)
+                -offset <arg>         job info offset of actions (default '1', requires -info)
+                -oozie <arg>          Oozie URL
+                -refresh              re-materialize the coordinator rerun actions (requires -rerun)
+                -rerun <arg>          rerun a job  (coordinator requires -action or -date)
+                -resume <arg>         resume a job
+                -run                  run a job
+                -start <arg>          start a job
+                -submit               submit a job
+                -suspend <arg>        suspend a job
+                -value <arg>          new endtime/concurrency/pausetime value for changing a
+                                      coordinator job
+                -verbose              verbose mode
 
       oozie jobs <OPTIONS> : jobs status
                  -filter <arg>    user=<U>;name=<N>;group=<G>;status=<S>;...
@@ -78,9 +79,10 @@ The =oozie= CLI interacts with Oozie via its WS API.
                 -oozie <arg>    Oozie URL
 
       oozie pig <OPTIONS> -X <ARGS> : submit a pig job, everything after '-X' are pass-through parameters to pig
-                -config <arg>   job configuration file '.properties'
-                -file <arg>     Pig script
-                -oozie <arg>    Oozie URL
+                -config <arg>         job configuration file '.properties'
+                -D <property=value>   set/override value for given property
+                -file <arg>           Pig script
+                -oozie <arg>          Oozie URL
 </verbatim>
 
 ---++ Common CLI Options

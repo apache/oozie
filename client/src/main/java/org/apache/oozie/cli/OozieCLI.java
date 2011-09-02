@@ -179,12 +179,12 @@ public class OozieCLI {
     protected Options createJobOptions() {
         Option oozie = new Option(OOZIE_OPTION, true, "Oozie URL");
         Option config = new Option(CONFIG_OPTION, true, "job configuration file '.xml' or '.properties'");
-        Option submit = new Option(SUBMIT_OPTION, false, "submit a job (requires -config)");
-        Option run = new Option(RUN_OPTION, false, "run a job    (requires -config)");
+        Option submit = new Option(SUBMIT_OPTION, false, "submit a job");
+        Option run = new Option(RUN_OPTION, false, "run a job");
         Option rerun = new Option(RERUN_OPTION, true,
-                "rerun a job  (workflow requires -config, coordinator requires -action or -date)");
+                "rerun a job  (coordinator requires -action or -date)");
         Option dryrun = new Option(DRYRUN_OPTION, false,
-                "Supported in Oozie-2.0 or later versions ONLY - dryrun or test run a coordinator job (requires -config) - job is not queued");
+                "Supported in Oozie-2.0 or later versions ONLY - dryrun or test run a coordinator job, job is not queued");
         Option start = new Option(START_OPTION, true, "start a job");
         Option suspend = new Option(SUSPEND_OPTION, true, "suspend a job");
         Option resume = new Option(RESUME_OPTION, true, "resume a job");
