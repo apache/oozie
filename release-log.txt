@@ -1,5 +1,6 @@
 -- Oozie 3.0.0 release
 
+GH-0442 Add Hudson CI script to master trunk
 GH-0354 change jsp-api dependency groupId to javax.servlet.jsp
 GH-0346 add support for a test.properties file to load test system properties
 GH-0141 Oozie uses excessive memory when doing purging
