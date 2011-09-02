@@ -15,6 +15,9 @@ Author: Alejandro Abdelnur
 %TOC%
 
 ---++ Changelog
+---+++!! 2011AUG17
+
+   * #3.2.4 fs 'chmod' xml closing element typo in Example corrected
 ---+++!! 2011AUG12
 
    * #3.2.4 fs 'move' action characteristics updated, to allow for consistent source and target paths and existing target path only if directory
@@ -1039,7 +1042,6 @@ If relative paths are used it will be relative to the specified user home direct
             <mkdir path='archives/${wf:id()}'/>
             <move source='${jobInput}' target='archives/${wf:id()}/processed-input'/>
             <chmod path='${jobOutput}' permissions='-rwxrw-rw-' dir-files='true'/>
-            </chmod>
         </fs>
         <ok to="myotherjob"/>
         <error to="errorcleanup"/>
