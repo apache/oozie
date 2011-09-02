@@ -85,7 +85,7 @@ public class CoordKillXCommand extends KillTransitionXCommand {
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
         // if namespace 0.1 is used and backward support is true, SUCCEEDED coord job can be killed
-        if (StatusUtils.isVersionOneSucceededCoordjobKillable(coordJob)) {
+        if (StatusUtils.isV1CoordjobKillable(coordJob)) {
             return;
         }
         if (coordJob.getStatus() == CoordinatorJob.Status.SUCCEEDED

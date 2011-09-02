@@ -78,7 +78,7 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
                 coordAction.decrementAndGetPending();
             }
             else if (workflow.getStatus() == WorkflowJob.Status.RUNNING) {
-                //resume workflow job and update coord action accordingly
+                // resume workflow job and update coord action accordingly
                 coordAction.setStatus(CoordinatorAction.Status.RUNNING);
                 coordAction.decrementAndGetPending();
             }
@@ -91,14 +91,17 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
                 return null;
             }
 
-            LOG.info("Updating Coordintaor id :" + coordAction.getId() + " status from " + preCoordStatus + " to " + coordAction.getStatus());
+            LOG.info("Updating Coordintaor action id :" + coordAction.getId() + " status from " + preCoordStatus
+                    + " to " + coordAction.getStatus() + ", pending = " + coordAction.getPending());
+
             coordAction.setLastModifiedTime(new Date());
             jpaService.execute(new CoordActionUpdateJPAExecutor(coordAction));
             if (slaStatus != null) {
                 SLADbOperations.writeStausEvent(coordAction.getSlaXml(), coordAction.getId(), slaStatus,
                         SlaAppType.COORDINATOR_ACTION, LOG);
             }
-            if (workflow.getStatus() != WorkflowJob.Status.SUSPENDED && workflow.getStatus() != WorkflowJob.Status.RUNNING) {
+            if (workflow.getStatus() != WorkflowJob.Status.SUSPENDED
+                    && workflow.getStatus() != WorkflowJob.Status.RUNNING) {
                 queue(new CoordActionReadyXCommand(coordAction.getJobId()));
             }
             LOG.debug("ENDED CoordActionUpdateXCommand for wfId=" + workflow.getId());

@@ -67,7 +67,7 @@ public class StatusUtils {
      * @param coordJob the coordinator job
      * @return true if namespace 0.1 is used and backward support is true, SUCCEEDED coord job can be killed
      */
-    public static boolean isVersionOneSucceededCoordjobKillable(CoordinatorJobBean coordJob) {
+    public static boolean isV1CoordjobKillable(CoordinatorJobBean coordJob) {
         boolean ret = false;
         if (coordJob != null) {
             Configuration conf = Services.get().getConf();
