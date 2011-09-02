@@ -83,8 +83,11 @@
             org.apache.oozie.service.RecoveryService,
             org.apache.oozie.service.PurgeService,
             org.apache.oozie.service.CoordinatorEngineService,
+            org.apache.oozie.service.BundleEngineService,
             org.apache.oozie.service.DagEngineService,
-            org.apache.oozie.service.CoordJobMatLookupTriggerService
+            org.apache.oozie.service.CoordJobMatLookupTriggerService,
+            org.apache.oozie.service.StatusTransitService,
+            org.apache.oozie.service.BundlePauseStartService
         </value>
         <description>
             All services to be created and managed by Oozie Services singleton.
