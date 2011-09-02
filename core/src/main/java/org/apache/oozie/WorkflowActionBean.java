@@ -91,7 +91,7 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
     private java.sql.Timestamp startTimestamp = null;
 
     @Basic
-    @Column(name = "execution_path")
+    @Column(name = "execution_path", length = 1024)
     private String executionPath = null;
 
     @Basic

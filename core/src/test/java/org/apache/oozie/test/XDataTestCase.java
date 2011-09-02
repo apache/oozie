@@ -575,7 +575,13 @@ public abstract class XDataTestCase extends XFsTestCase {
      */
     protected WorkflowActionBean addRecordToWfActionTable(String wfId, String actionName, WorkflowAction.Status status)
             throws Exception {
+        return addRecordToWfActionTable(wfId, actionName, status, "");
+    }
+
+    protected WorkflowActionBean addRecordToWfActionTable(String wfId, String actionName, WorkflowAction.Status status,
+            String execPath) throws Exception {
         WorkflowActionBean action = createWorkflowAction(wfId, actionName, status);
+        action.setExecutionPath(execPath);
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
             assertNotNull(jpaService);

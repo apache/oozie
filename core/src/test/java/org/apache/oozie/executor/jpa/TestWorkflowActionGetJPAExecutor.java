@@ -56,4 +56,24 @@ public class TestWorkflowActionGetJPAExecutor extends XDataTestCase {
         assertEquals(ret.getId(), actionId);
     }
 
+    public void testWfActionGetWithExecPath() throws Exception {
+        WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
+        StringBuilder execPath = new StringBuilder("");
+        for (int i = 0; i < 20; i++) {
+            execPath.append("/fork" + i);
+        }
+        WorkflowActionBean action = addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.PREP, execPath
+                .toString());
+        _testGetActionWithExecPath(action.getId(), execPath.toString());
+    }
+
+    private void _testGetActionWithExecPath(String actionId, String execPath) throws Exception {
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+        WorkflowActionGetJPAExecutor actionGetCmd = new WorkflowActionGetJPAExecutor(actionId);
+        WorkflowActionBean ret = jpaService.execute(actionGetCmd);
+        assertNotNull(ret);
+        assertEquals(ret.getId(), actionId);
+        assertEquals(ret.getExecutionPath(), execPath);
+    }
 }
