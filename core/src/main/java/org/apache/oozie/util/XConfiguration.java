@@ -99,6 +99,23 @@ public class XConfiguration extends Configuration {
 
     // overriding get() & substitueVars from Configuration to honor defined variables
     // over system properties
+    //wee need this because substituteVars() is a private method and does not behave like virtual
+    //in Configuration
+    /**
+     * Get the value of the <code>name</code> property, <code>null</code> if
+     * no such property exists.
+     *
+     * Values are processed for <a href="#VariableExpansion">variable expansion</a>
+     * before being returned.
+     *
+     * @param name the property name.
+     * @return the value of the <code>name</code> property,
+     *         or null if no such property exists.
+     */
+    @Override
+    public String get(String name) {
+      return substituteVars(getRaw(name));
+    }
 
     /**
      * Get the value of the <code>name</code> property. If no such property
@@ -109,6 +126,7 @@ public class XConfiguration extends Configuration {
      * @return property value, or <code>defaultValue</code> if the property
      *         doesn't exist.
      */
+    @Override
     public String get(String name, String defaultValue) {
         String value = getRaw(name);
         if (value == null) {
