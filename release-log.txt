@@ -1,6 +1,7 @@
 -- Oozie 3.0.0 release
 
 GH-0479 Add time ratio property to XTestCase waitFor
+GH-0478 quick install doc corrections
 GH-0528 Refactor CoordActionMaterializeXCommand and CoordJobMatLookupXCommand to TransitionXCommand
 GH-0542 Refactor CoordSuspendXCommand & CoordResumeXCommand to TransitionXCommand based
 GH-0543 Refactor CoordRerunXCommand to TransitionXCommand based

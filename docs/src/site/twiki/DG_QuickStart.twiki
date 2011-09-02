@@ -16,7 +16,7 @@ For detailed install and configuration instructions refer to [[AG_Install][Oozie
       * [[http://hadoop.apache.org][Apache Hadoop]] (tested with 0.20.2)
       * [[http://developer.yahoo.com/hadoop][Yahoo! Hadoop]] (tested with 0.20.104.2)
    * ExtJS library (optional, to enable Oozie webconsole)
-      * [[http://www.extjs.com/learn/Ext_Version_Archives][ExtJS 2.2]]
+      * [[http://extjs.com/deploy/ext-2.2.zip][ExtJS 2.2]]
 
 The Java 1.6+ =bin= directory should be in the command path.
 
@@ -48,19 +48,19 @@ if necessary use =sudo -u OOZIE_USER= when invoking the scripts.
 Use the =oozie-setup.sh= script to add the Hadoop JARs and the ExtJS library to Oozie.
 
 <verbatim>
-$ oozie bin/oozie-setup.sh -hadoop 0.20.200 ${HADOOP_HOME} -extjs /tmp/ext-2.2.zip
+$ bin/oozie-setup.sh -hadoop 0.20.200 ${HADOOP_HOME} -extjs /tmp/ext-2.2.zip
 </verbatim>
 
 To start Oozie as a daemon process run:
 
 <verbatim>
-$ oozie bin/oozie-start.sh
+$ bin/oozie-start.sh
 </verbatim>
 
 To start Oozie as a foreground process run:
 
 <verbatim>
-$ oozie bin/oozie-run.sh
+$ bin/oozie-run.sh
 </verbatim>
 
 Check the Oozie log file =logs/oozie.log= to ensure Oozie started properly.
