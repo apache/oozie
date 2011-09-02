@@ -1,6 +1,7 @@
 -- Oozie 3.0.0 release
 
-GH-0630 Fixing Paused status for Coordinator
+GH-0651 Fix refresh button on bundle job to reload coord jobs.
+GH-0630 Fixing Paused status for Coordinator.
 GH-0633 no FAILED sla event when coord job failed to create wf job.
 GH-0632 remove extra fields in oozie jobs -jobtype bundle -verbose.
 GH-0636 coord job should be started immediately if no kick-off time specified in bundle.xml.

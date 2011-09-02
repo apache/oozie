@@ -938,7 +938,7 @@ function bundleJobDetailsPopup(response, request) {
                     url: getOozieBase() + 'job/' + bundleJobId,
                     success: function(response, request) {
                         jobDetails = eval("(" + response.responseText + ")");
-                        jobActionStatus.loadData(jobDetails["coordJobs"]);
+                        jobActionStatus.loadData(jobDetails["bundleCoordJobs"]);
                         fs.getForm().setValues(jobDetails);
                     }
 
