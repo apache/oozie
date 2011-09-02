@@ -34,6 +34,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
 import org.apache.oozie.util.Instrumentable;
 import org.apache.oozie.util.Instrumentation;
+import org.apache.oozie.util.PollablePriorityDelayQueue;
 import org.apache.oozie.util.PriorityDelayQueue;
 import org.apache.oozie.util.XCallable;
 import org.apache.oozie.util.XLog;
@@ -74,6 +75,7 @@ public class CallableQueueService implements Service, Instrumentable {
     public static final String CONF_QUEUE_SIZE = CONF_PREFIX + "queue.size";
     public static final String CONF_THREADS = CONF_PREFIX + "threads";
     public static final String CONF_CALLABLE_CONCURRENCY = CONF_PREFIX + "callable.concurrency";
+    public static final String CONF_CALLABLE_NEXT_ELIGIBLE = CONF_PREFIX + "callable.next.eligible";
 
     public static final int CONCURRENCY_DELAY = 500;
 
@@ -108,6 +110,19 @@ public class CallableQueueService implements Service, Instrumentable {
             }
             else {
                 counter.decrementAndGet();
+            }
+        }
+    }
+
+    private boolean callableReachMaxConcurrency(XCallable<?> callable) {
+        synchronized (activeCallables) {
+            AtomicInteger counter = activeCallables.get(callable.getType());
+            if (counter == null) {
+                return true;
+            }
+            else {
+                int i = counter.get();
+                return i < maxCallableConcurrency;
             }
         }
     }
@@ -402,13 +417,40 @@ public class CallableQueueService implements Service, Instrumentable {
 
         queueSize = conf.getInt(CONF_QUEUE_SIZE, 10000);
         int threads = conf.getInt(CONF_THREADS, 10);
+        boolean callableNextEligible = conf.getBoolean(CONF_CALLABLE_NEXT_ELIGIBLE, true);
 
-        queue = new PriorityDelayQueue<CallableWrapper>(3, 1000 * 30, TimeUnit.MILLISECONDS, queueSize) {
-            @Override
-            protected void debug(String msgTemplate, Object... msgArgs) {
-                log.trace(msgTemplate, msgArgs);
-            }
-        };
+        if (!callableNextEligible) {
+            queue = new PriorityDelayQueue<CallableWrapper>(3, 1000 * 30, TimeUnit.MILLISECONDS, queueSize) {
+                @Override
+                protected void debug(String msgTemplate, Object... msgArgs) {
+                    log.trace(msgTemplate, msgArgs);
+                }
+            };
+        }
+        else {
+            // If the head of this queue has already reached max concurrency, continuously find next one
+            // which has not yet reach max concurrency.Overrided method 'eligibleToPoll' to check if the
+            // element of this queue has reached the maximum concurrency.
+            queue = new PollablePriorityDelayQueue<CallableWrapper>(3, 1000 * 30, TimeUnit.MILLISECONDS,
+                    queueSize) {
+                @Override
+                protected void debug(String msgTemplate, Object... msgArgs) {
+                    log.debug(msgTemplate, msgArgs);
+                }
+
+                @Override
+                protected boolean eligibleToPoll(QueueElement<?> element) {
+                    if (element != null) {
+                        CallableWrapper wrapper = (CallableWrapper) element;
+                        if (element.getElement() != null) {
+                            return callableReachMaxConcurrency(wrapper.getElement());
+                        }
+                    }
+                    return false;
+                }
+
+            };
+        }
 
         // IMPORTANT: The ThreadPoolExecutor does not always the execute
         // commands out of the queue, there are

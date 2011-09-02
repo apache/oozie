@@ -1,4 +1,6 @@
 -- Oozie 3.1.0 release
+
+OOZIE-106 add new queue class to iterate next callable when current callable type has reached max concorrency
 OOZIE-108 Upgrade pom version to 3.1.0.
 
 -- Oozie 3.0.1 release

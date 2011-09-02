@@ -259,7 +259,16 @@
             the action type as the callable type.
         </description>
     </property>
-
+    
+    <property>
+        <name>oozie.service.CallableQueueService.callable.next.eligible</name>
+        <value>true</value>
+        <description>
+            If true, when a callable in the queue has already reached max concurrency,
+            Oozie continuously find next one which has not yet reach max concurrency.
+        </description>
+    </property>
+    
     <!--  CoordMaterializeTriggerService -->
 
 	<property>

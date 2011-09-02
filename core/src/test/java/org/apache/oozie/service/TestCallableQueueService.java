@@ -26,7 +26,7 @@ import org.apache.oozie.util.XCallable;
 public class TestCallableQueueService extends XTestCase {
     static AtomicLong EXEC_ORDER = new AtomicLong();
 
-    public class MyCallable implements XCallable<Void> {
+    public static class MyCallable implements XCallable<Void> {
         String type;
         int priority;
         long executed = 0;
@@ -97,7 +97,6 @@ public class TestCallableQueueService extends XTestCase {
         public String getKey() {
             return this.key;
         }
-
     }
 
     public void testQueuing() throws Exception {
@@ -233,8 +232,8 @@ public class TestCallableQueueService extends XTestCase {
             return null;
         }
 
-        private static AtomicInteger counter;
-        private static int max;
+        private static AtomicInteger counter = new AtomicInteger();
+        private static int max = 0;
 
         private void incr() {
             counter.incrementAndGet();
@@ -287,21 +286,78 @@ public class TestCallableQueueService extends XTestCase {
         services.destroy();
     }
 
-    public void testSerialConcurrencyLimit() throws Exception {
-        EXEC_ORDER = new AtomicLong();
+    /**
+     * When using config 'oozie.service.CallableQueueService.callable.next.eligible' true, the next other type of callables
+     * should be invoked when top one in the queue is reached max concurrency.
+     *
+     * @throws Exception
+     */
+    public void testConcurrencyReachedAndChooseNextEligible() throws Exception {
+        setSystemProperty(CallableQueueService.CONF_CALLABLE_NEXT_ELIGIBLE, "true");
         Services services = new Services();
         services.init();
+
+        CLCallable.resetConcurrency();
+        final CallableQueueService queueservice = services.get(CallableQueueService.class);
+
         final MyCallable callable1 = new MyCallable(0, 100);
         final MyCallable callable2 = new MyCallable(0, 100);
         final MyCallable callable3 = new MyCallable(0, 100);
         final MyCallable callable4 = new MyCallable(0, 100);
         final MyCallable callable5 = new MyCallable(0, 100);
+        final MyCallable callable6 = new MyCallable(0, 100);
+        List<MyCallable> callables = Arrays.asList(callable1, callable2, callable3, callable4, callable5, callable6);
+
+        final MyCallable callableOther = new MyCallable("other", 0, 100);
+        queueservice.queue(callableOther, 1000);
+
+        for (MyCallable c : callables) {
+            queueservice.queue(c, 10);
+        }
+
+        float originalRatio = XTestCase.WAITFOR_RATIO;
+        try{
+            XTestCase.WAITFOR_RATIO = 1;
+            waitFor(2000, new Predicate() {
+                public boolean evaluate() throws Exception {
+                    return queueservice.queueSize() == 0;
+                }
+            });
+        }
+        finally {
+            XTestCase.WAITFOR_RATIO = originalRatio;
+        }
+
+        System.out.println("Callable Queue Size :" + queueservice.queueSize());
+
+        long last = Long.MIN_VALUE;
+        for (MyCallable c : callables) {
+            System.out.println("Callable C executed :" + c.executed);
+            assertTrue(c.executed != 0);
+            last = Math.max(last, c.executed);
+        }
+        System.out.println("Callable callableOther executed :" + callableOther.executed);
+
+        assertTrue(callableOther.executed < last);
+
+        services.destroy();
+    }
+
+    public void testSerialConcurrencyLimit() throws Exception {
+        EXEC_ORDER = new AtomicLong();
+        Services services = new Services();
+        services.init();
+        final MyCallable callable1 = new MyCallable("TestSerialConcurrencyLimit", 0, 100);
+        final MyCallable callable2 = new MyCallable("TestSerialConcurrencyLimit", 0, 100);
+        final MyCallable callable3 = new MyCallable("TestSerialConcurrencyLimit", 0, 100);
+        final MyCallable callable4 = new MyCallable("TestSerialConcurrencyLimit", 0, 100);
+        final MyCallable callable5 = new MyCallable("TestSerialConcurrencyLimit", 0, 100);
 
         List<MyCallable> callables = Arrays.asList(callable1, callable2, callable3, callable4, callable5);
 
         CallableQueueService queueservice = services.get(CallableQueueService.class);
 
-        String type = "";
+        String type = "SerialConcurrencyLimit";
         for (MyCallable c : callables) {
             queueservice.queueSerial(Arrays.asList(c, new MyCallable(type = type + "x", 0, 0)));
         }
@@ -321,11 +377,11 @@ public class TestCallableQueueService extends XTestCase {
 
         int secondBatch = 0;
         for (MyCallable c : callables) {
-            if (c.executed - first > CallableQueueService.CONCURRENCY_DELAY) {
+            if (c.executed - first > 0) {
                 secondBatch++;
             }
         }
-        assertEquals(2, secondBatch);
+        assertTrue(secondBatch >= 2);
 
         services.destroy();
     }
@@ -334,11 +390,11 @@ public class TestCallableQueueService extends XTestCase {
         EXEC_ORDER = new AtomicLong();
         Services services = new Services();
         services.init();
-        final MyCallable callable1 = new MyCallable("1", 0, 100);
-        final MyCallable callable2 = new MyCallable("2", 0, 100);
-        final MyCallable callable3 = new MyCallable("3", 0, 100);
-        final MyCallable callable4 = new MyCallable("4", 0, 100);
-        final MyCallable callable5 = new MyCallable("5", 0, 100);
+        final MyCallable callable1 = new MyCallable("TestConcurrency", 0, 100);
+        final MyCallable callable2 = new MyCallable("TestConcurrency", 0, 100);
+        final MyCallable callable3 = new MyCallable("TestConcurrency", 0, 100);
+        final MyCallable callable4 = new MyCallable("TestConcurrency", 0, 100);
+        final MyCallable callable5 = new MyCallable("TestConcurrency", 0, 100);
 
         List<MyCallable> callables = Arrays.asList(callable1, callable2, callable3, callable4, callable5);
 
@@ -363,11 +419,11 @@ public class TestCallableQueueService extends XTestCase {
 
         int secondBatch = 0;
         for (MyCallable c : callables) {
-            if (c.executed - first > CallableQueueService.CONCURRENCY_DELAY) {
+            if (c.executed - first > 0) {
                 secondBatch++;
             }
         }
-        assertEquals(0, secondBatch);
+        assertTrue(secondBatch >= 2);
 
         services.destroy();
     }
@@ -376,9 +432,9 @@ public class TestCallableQueueService extends XTestCase {
         EXEC_ORDER = new AtomicLong();
         Services services = new Services();
         services.init();
-        final MyCallable callable1 = new MyCallable("key", "1", 0, 100);
-        final MyCallable callable2 = new MyCallable("key", "2", 0, 100);
-        final MyCallable callable3 = new MyCallable("key", "3", 0, 100);
+        final MyCallable callable1 = new MyCallable("QueueUniquenessWithSameKey", "QueueUniquenessWithSameKey", 0, 100);
+        final MyCallable callable2 = new MyCallable("QueueUniquenessWithSameKey", "QueueUniquenessWithSameKey", 0, 100);
+        final MyCallable callable3 = new MyCallable("QueueUniquenessWithSameKey", "QueueUniquenessWithSameKey", 0, 100);
 
         List<MyCallable> callables = Arrays.asList(callable1, callable2, callable3);
 
@@ -405,17 +461,17 @@ public class TestCallableQueueService extends XTestCase {
         EXEC_ORDER = new AtomicLong();
         Services services = new Services();
         services.init();
-        final MyCallable callable1 = new MyCallable("key", "1", 0, 1000);
-        final MyCallable callable2 = new MyCallable("key", "2", 0, 1000);
-        final MyCallable callable3 = new MyCallable("key", "3", 0, 1000);
+        final MyCallable callable1 = new MyCallable("QueueUniquenessWithSameKeyInComposite", "QueueUniquenessWithSameKeyInComposite", 0, 200);
+        final MyCallable callable2 = new MyCallable("QueueUniquenessWithSameKeyInComposite", "QueueUniquenessWithSameKeyInComposite", 0, 200);
+        final MyCallable callable3 = new MyCallable("QueueUniquenessWithSameKeyInComposite", "QueueUniquenessWithSameKeyInComposite", 0, 200);
 
         List<MyCallable> callables = Arrays.asList(callable1, callable2, callable3);
 
         CallableQueueService queueservice = services.get(CallableQueueService.class);
 
-        String type = "";
+        String type = "QueueUniquenessWithSameKeyInComposite";
         for (MyCallable c : callables) {
-            queueservice.queueSerial(Arrays.asList(c, new MyCallable(type = type + "x", 0, 0)));
+            queueservice.queueSerial(Arrays.asList(c, new MyCallable(type = type + "x", 0, 0)), 200);
         }
 
         waitFor(2000, new Predicate() {
@@ -435,9 +491,9 @@ public class TestCallableQueueService extends XTestCase {
         EXEC_ORDER = new AtomicLong();
         Services services = new Services();
         services.init();
-        final MyCallable callable1 = new MyCallable("key", "1", 0, 100);
-        final MyCallable callable2 = new MyCallable("key", "2", 0, 100);
-        final MyCallable callable3 = new MyCallable("key", "3", 0, 100);
+        final MyCallable callable1 = new MyCallable("QueueUniquenessWithSameKeyInOneComposite", "QueueUniquenessWithSameKeyInOneComposite", 0, 100);
+        final MyCallable callable2 = new MyCallable("QueueUniquenessWithSameKeyInOneComposite", "QueueUniquenessWithSameKeyInOneComposite", 0, 100);
+        final MyCallable callable3 = new MyCallable("QueueUniquenessWithSameKeyInOneComposite", "QueueUniquenessWithSameKeyInOneComposite", 0, 100);
 
         CallableQueueService queueservice = services.get(CallableQueueService.class);
 
@@ -460,9 +516,9 @@ public class TestCallableQueueService extends XTestCase {
         EXEC_ORDER = new AtomicLong();
         Services services = new Services();
         services.init();
-        final MyCallable callable1 = new MyCallable("key1", "1", 0, 100);
-        final MyCallable callable2 = new MyCallable("key2", "2", 0, 100);
-        final MyCallable callable3 = new MyCallable("key3", "3", 0, 100);
+        final MyCallable callable1 = new MyCallable("QueueUniquenessWithDiffKey1", "QueueUniquenessWithDiffKey", 0, 100);
+        final MyCallable callable2 = new MyCallable("QueueUniquenessWithDiffKey2", "QueueUniquenessWithDiffKey", 0, 100);
+        final MyCallable callable3 = new MyCallable("QueueUniquenessWithDiffKey3", "QueueUniquenessWithDiffKey", 0, 100);
 
         List<MyCallable> callables = Arrays.asList(callable1, callable2, callable3);
 
@@ -489,15 +545,15 @@ public class TestCallableQueueService extends XTestCase {
         EXEC_ORDER = new AtomicLong();
         Services services = new Services();
         services.init();
-        final MyCallable callable1 = new MyCallable("key1", "1", 0, 100);
-        final MyCallable callable2 = new MyCallable("key2", "2", 0, 100);
-        final MyCallable callable3 = new MyCallable("key3", "3", 0, 100);
+        final MyCallable callable1 = new MyCallable("QueueUniquenessWithDiffKeyInComposite1", "QueueUniquenessWithDiffKeyInComposite", 0, 100);
+        final MyCallable callable2 = new MyCallable("QueueUniquenessWithDiffKeyInComposite2", "QueueUniquenessWithDiffKeyInComposite", 0, 100);
+        final MyCallable callable3 = new MyCallable("QueueUniquenessWithDiffKeyInComposite3", "QueueUniquenessWithDiffKeyInComposite", 0, 100);
 
         List<MyCallable> callables = Arrays.asList(callable1, callable2, callable3);
 
         CallableQueueService queueservice = services.get(CallableQueueService.class);
 
-        String type = "";
+        String type = "QueueUniquenessWithDiffKeyInComposite";
         for (MyCallable c : callables) {
             queueservice.queueSerial(Arrays.asList(c, new MyCallable(type = type + "x", 0, 0)));
         }
@@ -519,9 +575,9 @@ public class TestCallableQueueService extends XTestCase {
         EXEC_ORDER = new AtomicLong();
         Services services = new Services();
         services.init();
-        final MyCallable callable1 = new MyCallable("key1", "1", 0, 100);
-        final MyCallable callable2 = new MyCallable("key2", "2", 0, 100);
-        final MyCallable callable3 = new MyCallable("key3", "3", 0, 100);
+        final MyCallable callable1 = new MyCallable("QueueUniquenessWithDiffKeyInOneComposite1", "QueueUniquenessWithDiffKeyInOneComposite", 0, 100);
+        final MyCallable callable2 = new MyCallable("QueueUniquenessWithDiffKeyInOneComposite2", "QueueUniquenessWithDiffKeyInOneComposite", 0, 100);
+        final MyCallable callable3 = new MyCallable("QueueUniquenessWithDiffKeyInOneComposite3", "QueueUniquenessWithDiffKeyInOneComposite", 0, 100);
 
         CallableQueueService queueservice = services.get(CallableQueueService.class);
 

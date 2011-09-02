@@ -59,7 +59,7 @@ public class PriorityDelayQueue<E> extends AbstractQueue<PriorityDelayQueue.Queu
         private E element;
         private int priority;
         private long baseTime;
-        private boolean inQueue;
+        boolean inQueue;
 
         /**
          * Create an Element wrapper.
@@ -174,13 +174,13 @@ public class PriorityDelayQueue<E> extends AbstractQueue<PriorityDelayQueue.Queu
      */
     public static final long ANTI_STARVATION_INTERVAL = 500;
 
-    private int priorities;
-    private DelayQueue<QueueElement<E>>[] queues;
-    private transient final ReentrantLock lock = new ReentrantLock();
+    protected int priorities;
+    protected DelayQueue<QueueElement<E>>[] queues;
+    protected transient final ReentrantLock lock = new ReentrantLock();
     private transient long lastAntiStarvationCheck = 0;
     private long maxWait;
     private int maxSize;
-    private AtomicInteger currentSize;
+    protected AtomicInteger currentSize;
 
     /**
      * Create a <code>PriorityDelayQueue</code>.
@@ -400,7 +400,7 @@ public class PriorityDelayQueue<E> extends AbstractQueue<PriorityDelayQueue.Queu
                     currentSize.decrementAndGet();
                 }
                 e.inQueue = false;
-                debug("poll(): [{1}], from P[{2}]", e.getElement().toString(), i);
+                debug("poll(): [{0}], from P[{1}]", e.getElement().toString(), i);
             }
             return e;
         }
@@ -479,7 +479,7 @@ public class PriorityDelayQueue<E> extends AbstractQueue<PriorityDelayQueue.Queu
      * <p/>
      * It promotes elements beyond max wait time to the next higher priority sub-queue.
      */
-    private void antiStarvation() {
+    protected void antiStarvation() {
         long now = System.currentTimeMillis();
         if (now - lastAntiStarvationCheck > ANTI_STARVATION_INTERVAL) {
             for (int i = 0; i < queues.length - 1; i++) {
@@ -533,8 +533,6 @@ public class PriorityDelayQueue<E> extends AbstractQueue<PriorityDelayQueue.Queu
      */
     protected void debug(String msgTemplate, Object... msgArgs) {
     }
-
-    //BlockingQueue implementation
 
     /**
      * Insert the specified element into this queue, waiting if necessary
