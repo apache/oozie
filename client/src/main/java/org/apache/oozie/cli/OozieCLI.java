@@ -67,6 +67,7 @@ import org.xml.sax.SAXException;
  */
 public class OozieCLI {
     public static final String ENV_OOZIE_URL = "OOZIE_URL";
+    public static final String ENV_OOZIE_DEBUG = "OOZIE_DEBUG";
     public static final String WS_HEADER_PREFIX = "header:";
 
     public static final String HELP_CMD = "help";
@@ -509,6 +510,7 @@ public class OozieCLI {
     protected OozieClient createOozieClient(CommandLine commandLine) throws OozieCLIException {
         OozieClient wc = new OozieClient(getOozieUrl(commandLine));
         addHeader(wc);
+        setDebugMode(wc);
         return wc;
     }
 
@@ -524,7 +526,23 @@ public class OozieCLI {
     protected XOozieClient createXOozieClient(CommandLine commandLine) throws OozieCLIException {
         XOozieClient wc = new XOozieClient(getOozieUrl(commandLine));
         addHeader(wc);
+        setDebugMode(wc);
         return wc;
+    }
+
+    protected void setDebugMode(OozieClient wc) {
+        String debug = System.getenv(ENV_OOZIE_DEBUG);
+        if (debug != null && !debug.isEmpty()) {
+            int debugVal = 0;
+            try {
+                debugVal = Integer.parseInt(debug.trim());
+            }
+            catch (Exception ex) {
+                System.out.println("Unable to parse the debug settings. May be not an integer [" + debug + "]");
+                ex.printStackTrace();
+            }
+            wc.setDebugMode(debugVal);
+        }
     }
 
     private static String JOB_ID_PREFIX = "job: ";
