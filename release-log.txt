@@ -1,107 +1,33 @@
 -- Oozie 3.0.0 release
 
-OOZIE-36 rerun a paused coordinator job should not reset status and pause time and pending flag
-OOZIE-33 Fixing coord job status when all actions in SUSPENDED  
-OOZIE-31 reset pending for coordjob with running pending true when change end time
-OOZIE-30 set coord paused time to null when rerun a paused coord job
-OOZIE-29 bundle rerun by name only doesn't work.
-GH-0682 Fixing Coord Rerun for date range. 
-OOZIE-21 modify the POM to enable exclusion of testcases via command line when invoking maven
-OOZIE-19 oozie-setup.sh should add all JARs from an extensions directory
-OOZIE-27 fix NonTransient suspend to update coordinator action
 OOZIE-23 Update oozie examples with new namespace version for workflow and coordinator.
-OOZIE-20 examples job properties have hardcoded values, and use non-default Hadoop ports
-GH-0674 Fixing Bundle status after rerun. 
-GH-0677 OOZIE-24 fix paused bundle job and status in bundle actions
-GH-0676 Coord jobs are getting in to Pause status 5 mins earlier
-GH-0510 credentialsConf should be initialized without loading defaults
-GH-0663 rerun PAUSED bundle should reset pause time
-GH-0665 XCommand log object has to reset after the logInfo has reset
-GH-0568 DOC: Add Bundle specifications
-GH-0482 coordinator default config is looked up in the wrong place (regression)
-GH-0653 Adding Pause status update in service. 
-GH-0656 create sql scripts for table updates
-GH-0654 Fix workflow web console for missing columns
-GH-0649 Fixing Bundle status service for Done with error status. 
-GH-0647 rerun TIMEDOUT action and it uses the timeout value and timedout again
-GH-0651 Fix refresh button on bundle job to reload coord jobs.
-GH-0630 Fixing Paused status for Coordinator.
-GH-0633 no FAILED sla event when coord job failed to create wf job.
-GH-0632 remove extra fields in oozie jobs -jobtype bundle -verbose.
-GH-0636 coord job should be started immediately if no kick-off time specified in bundle.xml.
-GH-0583 rerun bundle job by name and date. all actions are rerun
-GH-0079 Oozie command line documentation for Ops
-GH-0626 Fixing Bundle Rerun for invalid timestamps of coordinator actions
-GH-0620 Adding Precondition for Coordinator Kill Command. 
-GH-0619 Allow oozie client to print the exact URL point in debug mode.
-GH-0613 Display configuration content for bundle jobs.
-GH-0623 does oozie allow bundle rerun on a PREP bundle?
-GH-0624 SUCCEEDED bundle job should not be KILLED.
-GH-0614 Fixing CLient Proxy to work for toString calls 
-GH-0610 Fixing Bundle status service and Coordinator Action resume
-GH-0480 Support new Pig API to submit pig job
-GH-0529 Update Tomcat download URL
-GH-0562 oozie job -log returns incomplete or empty log
-GH-0606 Encountered java.lang.NoSuchMethodError error after submitting a job
-GH-0608 Oozie default and max throttle and concurrency is not being verified.
-GH-0550 remove dependency on JPA persistency from oozie-client
-GH-0603 ORA-01408 error when restart yjava_tomcat after drop bundle_actions table.
-GH-0601 bundle status did not change from PREPSUSPENDED to PREP after resume.
-GH-0598 Fixing Coordinator Resume command to resume after suspend. 
-GH-0594 Coordinator action materialization concurrency should use new properties.
-GH-0588 Adding Bundle to recovery service. 
-GH-0580 Fix Bundle rerun by coord names
-GH-0569 Bundle status stays RUNNING when rerun a non-existing coord job
-GH-0553 coord job should not materialize new actions when WAITING actions exceed concurrency.
-GH-0557 Update StatusTransitService to aggregate coordinator status
-GH-0125 Query GET_WORKFLOWS_COLUMNS should order by createdTimestamp instead of starttime
-GH-0559 kill a wf job by CLI command left the hdfs temp dir not deleted.
-GH-0515 LauncherMapper should add OOZIE_JOB/ACTION_ID to action configuration
-GH-0506 mkdistro.sh does not exit !=0 on failures
-GH-0564 E0605 error is wrapped by E0603
-GH-0525 bundle pausetime change not passed to all coord jobs
-GH-0500 TestRerun should not use SSH action
-GH-0483 tests using pig 0.8 fails if a hadoop-site.xml or core-site.xml file is not in the classpath
-GH-0479 Add time ratio property to XTestCase waitFor
-GH-0478 quick install doc corrections
-GH-0528 Refactor CoordActionMaterializeXCommand and CoordJobMatLookupXCommand to TransitionXCommand
-GH-0542 Refactor CoordSuspendXCommand & CoordResumeXCommand to TransitionXCommand based
-GH-0543 Refactor CoordRerunXCommand to TransitionXCommand based
-GH-0530 Update workflow rerun twiki.
-GH-0537 migrate CoordKillXCommand to transition based
-GH-0532 update to apache-tomcat-6.0.32.tar.gz from apache-tomcat-6.0.29.tar.gz
-GH-0533 Add uniqueness to master branch
-GH-0078 Option to rerun from failed node.
-GH-0522 Bundle rerun failed.
-GH-0086 Clean up temporary files in the user HDFS directory upon completion.
-GH-0497 bundle status is RUNNING when fail to create coord job
-GH-0514 bundle_change did not set pausetime on a PREP bundle
-GH-0518 Provide a basic UI for bundle jobs and jobs command for bundle jobs
-GH-0512 Make pauseTime only future time for coordinator jobs
-GH-0499 Fix bundle suspend, kill and add test cases
-GH-0503 Fix coordinator web console NullPointerException
+GH-0069 Create a coordinator bundle.
+GH-0070 Start a coordinator bundle.
+GH-0071 Pause a coordinator bundle.
+GH-0073 Suspend a coordinator bundle.
+GH-0072 Resume a coordinator bundle.
+GH-0065 Kill a coordinator bundle.
+GH-0074 Variable definition at coordinator bundle level.
+GH-0098 XCommand Code refactoring. 
+GH-0099 JPA command refactor.
+GH-0077 Reprocessing of coordinator jobs.
+GH-0078 Option to rerun from failed node. 
 GH-0075 Provide access to date list.
+GH-0077 Reprocess a complete coordinator bundle.
+GH-0110 Redesign Coordinator Job's status.
+GH-0111 Enforce precondition checking when executing coordinator commands.
+GH-0066 Oozie should not queue the same command more than once.
+GH-0067 Input data check should have a timeout for catch-up mode too.
+GH-0084 Reduce Oozie DB issues related to update SQL commands and excessive logging.
+GH-0079 Oozie command line documentation for Ops.
+GH-0086 Clean up temporary files in the user HDFS directory upon completion.
+GH-0141 Oozie uses excessive memory when doing purging.
 GH-0166 Modify the logic of adding .so and .so.1 files into cache.
-GH-0067 input data check should have a timeout for catch-up mode
-GH-0361 Throttle coordinator action/workflow creation per coordinator job
+GH-0362 getting the job configuration through oozie command line.
+GH-0361 Throttle coordinator action/workflow creation per coordinator job .
+GH-0480 Support new Pig API to submit pig job
 GH-0461 Mapping the workflow ID to coordinator ID
-GH-0391 Add support for filters to the EmbeddedServletContainer
-GH-0404 assembly plugin 2.2-beta-5 breaks file permissions
-GH-0442 Add Hudson CI script to master trunk
-GH-0387 default jdbc URL has wrong value
-GH-0354 change jsp-api dependency groupId to javax.servlet.jsp
-GH-0346 add support for a test.properties file to load test system properties
-GH-0341 oozie-jpa.log file is created in extra log directory
-GH-0307 check for oozie setup owner in setup/start/stop scripts should be optional
-GH-0295 subworkflow action fails if workflow URI is a directory
-GH-0302 the ...wf.ext.schemas property should allow spaces/enters between schema files
-GH-0288 update readme file to point to 2.3 documentation
-GH-0296 JPA log configuration uses wrong variable
-GH-0304 index.twiki and DG_QuickStart.twiki need update on distro contents
-GH-0306 core module should depend on sharelib module
-GH-0284 TestLocalOozieExample should extend XTestCase
-GH-0263 TestCallableQueueService.testConcurrencyLimit() fails randomly
-GH-0276 bump up version to 3.0-SNAPSHOT in master after creating 2.3 branch
+GH-0588 Adding Bundle to recovery service.
 
 -- Oozie 2.3.0 release
 
