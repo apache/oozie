@@ -1,6 +1,7 @@
 -- Oozie 3.0.0 release
 
 GH-0630 Fixing Paused status for Coordinator
+GH-0632 remove extra fields in oozie jobs -jobtype bundle -verbose.
 GH-0583 rerun bundle job by name and date. all actions are rerun
 GH-0079 Oozie command line documentation for Ops
 GH-0626 Fixing Bundle Rerun for invalid timestamps of coordinator actions

@@ -1011,20 +1011,19 @@ public class OozieCLI {
             if (verbose) {
                 System.out.println("Job ID" + VERBOSE_DELIMITER + "Bundle Name" + VERBOSE_DELIMITER + "Bundle Path"
                         + VERBOSE_DELIMITER + "User" + VERBOSE_DELIMITER + "Group" + VERBOSE_DELIMITER + "Status"
-                        + VERBOSE_DELIMITER + "Kickoff" + VERBOSE_DELIMITER + "Pause"
-                        + VERBOSE_DELIMITER + "Created" + VERBOSE_DELIMITER + "Console URL"
-                        + VERBOSE_DELIMITER + "External ID" + VERBOSE_DELIMITER + "Unit"
-                        + VERBOSE_DELIMITER + "Timeout");
+                        + VERBOSE_DELIMITER + "Kickoff" + VERBOSE_DELIMITER + "Pause" + VERBOSE_DELIMITER + "Created"
+                        + VERBOSE_DELIMITER + "Console URL");
                 System.out.println(RULER);
 
                 for (BundleJob job : jobs) {
                     System.out.println(maskIfNull(job.getId()) + VERBOSE_DELIMITER + maskIfNull(job.getAppName())
                             + VERBOSE_DELIMITER + maskIfNull(job.getAppPath()) + VERBOSE_DELIMITER
                             + maskIfNull(job.getUser()) + VERBOSE_DELIMITER + maskIfNull(job.getGroup())
-                            + VERBOSE_DELIMITER + job.getStatus() + VERBOSE_DELIMITER + maskDate(job.getKickoffTime(), localtime)
-                            + VERBOSE_DELIMITER + maskDate(job.getPauseTime(), localtime) + VERBOSE_DELIMITER + maskDate(job.getCreatedTime(), localtime)
-                            + VERBOSE_DELIMITER + maskIfNull(job.getConsoleUrl()) + VERBOSE_DELIMITER + maskIfNull(job.getExternalId())
-                            + VERBOSE_DELIMITER + job.getTimeUnit() + VERBOSE_DELIMITER + job.getTimeout());
+                            + VERBOSE_DELIMITER + job.getStatus() + VERBOSE_DELIMITER
+                            + maskDate(job.getKickoffTime(), localtime) + VERBOSE_DELIMITER
+                            + maskDate(job.getPauseTime(), localtime) + VERBOSE_DELIMITER
+                            + maskDate(job.getCreatedTime(), localtime) + VERBOSE_DELIMITER
+                            + maskIfNull(job.getConsoleUrl()));
 
                     System.out.println(RULER);
                 }
