@@ -133,7 +133,7 @@ public class JPAService implements Service, Instrumentable {
 
         factory = Persistence.createEntityManagerFactory(persistentUnit, props);
 
-        EntityManager entityManager = factory.createEntityManager();
+        EntityManager entityManager = getEntityManager();
         entityManager.find(WorkflowActionBean.class, 1);
         entityManager.find(WorkflowJobBean.class, 1);
         entityManager.find(CoordinatorActionBean.class, 1);
@@ -149,18 +149,17 @@ public class JPAService implements Service, Instrumentable {
         // need to use a pseudo no-op transaction so all entities, datasource
         // and connection pool are initialized one time only
         entityManager.getTransaction().begin();
-        entityManager.getTransaction().commit();
-        entityManager.close();
-
         OpenJPAEntityManagerFactorySPI spi = (OpenJPAEntityManagerFactorySPI) factory;
         LOG.info("JPA configuration: {0}", spi.getConfiguration().getConnectionProperties());
+        entityManager.getTransaction().commit();
+        entityManager.close();
     }
 
     /**
      * Destroy the JPAService
      */
     public void destroy() {
-        if (factory != null) {
+        if (factory != null && factory.isOpen()) {
             factory.close();
         }
     }
@@ -173,7 +172,7 @@ public class JPAService implements Service, Instrumentable {
      * @throws JPAExecutorException thrown if an jpa executor failed
      */
     public <T> T execute(JPAExecutor<T> executor) throws JPAExecutorException {
-        EntityManager em = factory.createEntityManager();
+        EntityManager em = getEntityManager();
         Instrumentation.Cron cron = new Instrumentation.Cron();
         try {
             LOG.trace("Executing JPAExecutor [{0}]", executor.getName());

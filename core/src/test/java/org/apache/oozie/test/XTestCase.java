@@ -146,20 +146,20 @@ public abstract class XTestCase extends TestCase {
      */
     public static final String HADOOP_VERSION = "hadoop.version";
 
-    /** 
+    /**
      * System property that specifies the user that test oozie instance runs as.
      * The value of this property defaults to the "${user.name} system property.
      */
     public static final String TEST_OOZIE_USER_PROP = "oozie.test.user.oozie";
 
     /**
-     * System property that specifies the default test user name used by 
+     * System property that specifies the default test user name used by
      * the tests. The defalt value of this property is <tt>test</tt>.
      */
     public static final String TEST_USER1_PROP = "oozie.test.user.test";
 
     /**
-     * System property that specifies an auxilliary test user name used by the 
+     * System property that specifies an auxilliary test user name used by the
      * tests. The default value of this property is <tt>test2</tt>.
      */
     public static final String TEST_USER2_PROP = "oozie.test.user.test2";
@@ -243,13 +243,13 @@ public abstract class XTestCase extends TestCase {
         }
 
         if (System.getProperty("oozie.test.db", "hsqldb").equals("hsqldb")) {
-            setSystemProperty("oozie.service.StoreService.jdbc.driver", "org.hsqldb.jdbcDriver");
-            setSystemProperty("oozie.service.StoreService.jdbc.url", "jdbc:hsqldb:mem:oozie-db;create=true");
+            setSystemProperty("oozie.service.JPAService.jdbc.driver", "org.hsqldb.jdbcDriver");
+            setSystemProperty("oozie.service.JPAService.jdbc.url", "jdbc:hsqldb:mem:oozie-db;create=true");
         }
         if (System.getProperty("oozie.test.db", "hsqldb").equals("derby")) {
             delete(new File(baseDir, "oozie-derby"));
-            setSystemProperty("oozie.service.StoreService.jdbc.driver", "org.apache.derby.jdbc.EmbeddedDriver");
-            setSystemProperty("oozie.service.StoreService.jdbc.url", "jdbc:derby:" + baseDir +
+            setSystemProperty("oozie.service.JPAService.jdbc.driver", "org.apache.derby.jdbc.EmbeddedDriver");
+            setSystemProperty("oozie.service.JPAService.jdbc.url", "jdbc:derby:" + baseDir +
                                                                      "/oozie-derby;create=true");
         }
     }
@@ -307,7 +307,7 @@ public abstract class XTestCase extends TestCase {
     }
 
     /**
-     * Return an alternate test user Id that belongs 
+     * Return an alternate test user Id that belongs
        to the test group.
      *
      * @return the user Id.
@@ -317,7 +317,7 @@ public abstract class XTestCase extends TestCase {
     }
 
     /**
-     * Return an alternate test user Id that does not belong 
+     * Return an alternate test user Id that does not belong
      * to the test group.
      *
      * @return the user Id.
@@ -336,8 +336,8 @@ public abstract class XTestCase extends TestCase {
     }
 
     /**
-     * Return the test working directory. 
-     * <p/> 
+     * Return the test working directory.
+     * <p/>
      * It returns <code>${oozie.test.dir}/oozietests/TESTCLASSNAME/TESTMETHODNAME</code>.
      *
      * @param testCase testcase instance to obtain the working directory.

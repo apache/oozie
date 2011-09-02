@@ -39,7 +39,7 @@ public interface JPAExecutor<T> {
      *
      * @param em an active {@link EntityManager}
      * @return a return value if any.
-     * @throws JPAExecutorException thrown if an jpa executor failed
+     * @throws JPAExecutorException thrown if a jpa executor failed
      */
     public T execute(EntityManager em) throws JPAExecutorException;
 
