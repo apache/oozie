@@ -100,7 +100,9 @@ public abstract class RerunTransitionXCommand<T> extends TransitionXCommand<T> {
      */
     @Override
     protected void eagerVerifyPrecondition() throws CommandException, PreconditionException {
-        if (getJob().getStatus() == Job.Status.KILLED || getJob().getStatus() == Job.Status.FAILED) {
+        if (getJob().getStatus() == Job.Status.KILLED || getJob().getStatus() == Job.Status.FAILED
+                || getJob().getStatus() == Job.Status.PREP || getJob().getStatus() == Job.Status.PREPPAUSED
+                || getJob().getStatus() == Job.Status.PREPSUSPENDED) {
             getLog().warn(
                     "RerunCommand is not able to run because job status=" + getJob().getStatus() + ", jobid="
                             + getJob().getId());
