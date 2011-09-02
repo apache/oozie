@@ -133,6 +133,8 @@ public interface JsonTags {
     public static final String BUNDLE_JOB_EXTERNAL_ID = "bundleExternalId";
     public static final String BUNDLE_COORDINATOR_JOBS = "bundleCoordJobs";
 
+    public static final String TO_STRING = "toString";
+
 
     public static final String ERROR = "error";
     public static final String ERROR_CODE = "code";

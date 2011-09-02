@@ -139,6 +139,7 @@ public class JsonCoordinatorAction implements CoordinatorAction, JsonBean {
         json.put(JsonTags.COORDINATOR_ACTION_CONSOLE_URL, consoleUrl);
         json.put(JsonTags.COORDINATOR_ACTION_ERROR_CODE, errorCode);
         json.put(JsonTags.COORDINATOR_ACTION_ERROR_MESSAGE, errorMessage);
+        json.put(JsonTags.TO_STRING, toString());
         return json;
     }
 

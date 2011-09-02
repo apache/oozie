@@ -15,6 +15,7 @@
 
 package org.apache.oozie.client.rest;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -153,6 +154,7 @@ public class JsonBundleJob implements BundleJob, JsonBean {
         json.put(JsonTags.BUNDLE_JOB_GROUP, getGroup());
         json.put(JsonTags.BUNDLE_JOB_CONSOLE_URL, getConsoleUrl());
         json.put(JsonTags.BUNDLE_COORDINATOR_JOBS, JsonCoordinatorJob.toJSONArray(coordJobs));
+        json.put(JsonTags.TO_STRING, toString());
 
         return json;
     }
@@ -486,4 +488,8 @@ public class JsonBundleJob implements BundleJob, JsonBean {
         this.pending = 0;
     }
 
+    @Override
+    public String toString() {
+        return MessageFormat.format("Bundle id[{0}] status[{1}]", getId(), getStatus());
+    }
 }

@@ -84,7 +84,7 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
     @Basic
     @Column(name = "concurrency")
     private int concurrency = 0;
-    
+
     @Basic
     @Column(name = "mat_throttling")
     private int matThrottling = 0;
@@ -157,6 +157,7 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
         json.put(JsonTags.COORDINATOR_JOB_CONSOLE_URL, getConsoleUrl());
         json.put(JsonTags.COORDINATOR_JOB_MAT_THROTTLING, getMatThrottling());
         json.put(JsonTags.COORDINATOR_ACTIONS, JsonCoordinatorAction.toJSONArray(actions));
+        json.put(JsonTags.TO_STRING,toString());
 
         return json;
     }
