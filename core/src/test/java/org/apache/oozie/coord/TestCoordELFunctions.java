@@ -764,6 +764,36 @@ public class TestCoordELFunctions extends XTestCase {
         assertEquals("mycoordinator-app", CoordELFunctions.evalAndWrap(eval, expr));
     }
 
+    public void testUser() throws Exception {
+        init("coord-job-submit-freq");
+        String expr = "${coord:user()}";
+        assertEquals("test_user", CoordELFunctions.evalAndWrap(eval, expr));
+        init("coord-job-submit-instances");
+         expr = "${coord:user()}";
+        assertEquals("test_user", CoordELFunctions.evalAndWrap(eval, expr));
+        init("coord-job-submit-data");
+         expr = "${coord:user()}";
+        assertEquals("test_user", CoordELFunctions.evalAndWrap(eval, expr));
+        init("coord-sla-submit");
+         expr = "${coord:user()}";
+        assertEquals("test_user", CoordELFunctions.evalAndWrap(eval, expr));
+        init("coord-action-create");
+         expr = "${coord:user()}";
+        assertEquals("test_user", CoordELFunctions.evalAndWrap(eval, expr));
+        init("coord-action-create-inst");
+         expr = "${coord:user()}";
+        assertEquals("test_user", CoordELFunctions.evalAndWrap(eval, expr));
+        init("coord-sla-create");
+         expr = "${coord:user()}";
+        assertEquals("test_user", CoordELFunctions.evalAndWrap(eval, expr));
+        init("coord-action-start");
+         expr = "${coord:user()}";
+        assertEquals("test_user", CoordELFunctions.evalAndWrap(eval, expr));
+        init("coord-action-create-inst");
+         expr = "${coord:user()}";
+        assertEquals("test_user", CoordELFunctions.evalAndWrap(eval, expr));
+    }
+
     /*
      * public void testDetach() throws Exception { Services.get().destroy(); }
      */

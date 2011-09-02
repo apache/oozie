@@ -1015,4 +1015,13 @@ public class CoordELFunctions {
         return ds.getEndOfDuration();// == null ? "": ds.getEndOfDuration();
     }
 
+    /**
+     * Return the user that submitted the coordinator job.
+     *
+     * @return the user that submitted the coordinator job.
+     */
+    public static String coord_user() {
+        ELEvaluator eval = ELEvaluator.getCurrent();
+        return (String) eval.getVariable(OozieClient.USER_NAME);
+    }
 }

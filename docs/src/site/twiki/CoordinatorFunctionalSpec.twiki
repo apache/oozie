@@ -1859,6 +1859,10 @@ The nominal times for the coordinator actions of this coordinator application ex
 
 These are the times the action where created (materialized).
 
+---++++ 6.7.4. coord:nominalTime() EL Function (since Oozie 2.3)
+
+The =coord:user()= function returns the user that started the coordinator job.
+
 ---+++ 6.8. Parameterization of Coordinator Application
 
 This section describes the EL functions that could be used to parameterized both data-set and coordination application action.
