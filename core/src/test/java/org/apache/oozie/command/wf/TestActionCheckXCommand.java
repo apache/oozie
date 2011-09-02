@@ -32,7 +32,6 @@ import org.apache.oozie.action.hadoop.MapReduceActionExecutor;
 import org.apache.oozie.action.hadoop.MapperReducerForTest;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
-import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.XCommand;
 import org.apache.oozie.command.wf.ActionXCommand.ActionExecutorContext;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
@@ -76,12 +75,22 @@ public class TestActionCheckXCommand extends XDataTestCase {
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
         WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.PREP);
 
-        assertNull(inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP));
         ActionCheckXCommand checkCmd = new ActionCheckXCommand(action.getId(), 10);
+
+        Long counterVal = new Long(0);
+
+        try {
+            counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP).get(checkCmd.getName() + ".preconditionfailed").getValue();
+        } catch (NullPointerException e){
+            //counter might be null
+        }
+
+        assertEquals(new Long(0), new Long(counterVal));
+
         checkCmd.call();
 
         //precondition failed because of actionCheckDelay > 0
-        Long counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP).get(checkCmd.getName() + ".preconditionfailed").getValue();
+        counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP).get(checkCmd.getName() + ".preconditionfailed").getValue();
         assertEquals(new Long(1), new Long(counterVal));
     }
 
@@ -96,12 +105,22 @@ public class TestActionCheckXCommand extends XDataTestCase {
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
         WorkflowActionBean action = super.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.RUNNING);
 
-        assertNull(inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP));
         ActionCheckXCommand checkCmd = new ActionCheckXCommand(action.getId());
+
+        Long counterVal = new Long(0);
+
+        try {
+            counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP).get(checkCmd.getName() + ".preconditionfailed").getValue();
+        } catch (NullPointerException e){
+            //counter might be null
+        }
+
+        assertEquals(new Long(0), new Long(counterVal));
+
         checkCmd.call();
 
         //precondition failed because of pending = false
-        Long counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP).get(checkCmd.getName() + ".preconditionfailed").getValue();
+        counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP).get(checkCmd.getName() + ".preconditionfailed").getValue();
         assertEquals(new Long(1), new Long(counterVal));
     }
 
@@ -116,12 +135,22 @@ public class TestActionCheckXCommand extends XDataTestCase {
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
         WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.PREP);
 
-        assertNull(inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP));
         ActionCheckXCommand checkCmd = new ActionCheckXCommand(action.getId());
+
+        Long counterVal = new Long(0);
+
+        try{
+            counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP).get(checkCmd.getName() + ".preconditionfailed").getValue();
+        } catch (NullPointerException e){
+            //counter might be null
+        }
+
+        assertEquals(new Long(0), new Long(counterVal));
+
         checkCmd.call();
 
         //precondition failed because of action != RUNNING
-        Long counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP).get(checkCmd.getName() + ".preconditionfailed").getValue();
+        counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP).get(checkCmd.getName() + ".preconditionfailed").getValue();
         assertEquals(new Long(1), new Long(counterVal));
     }
 
@@ -136,12 +165,22 @@ public class TestActionCheckXCommand extends XDataTestCase {
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.FAILED, WorkflowInstance.Status.FAILED);
         WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.PREP);
 
-        assertNull(inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP));
         ActionCheckXCommand checkCmd = new ActionCheckXCommand(action.getId());
+
+        Long counterVal = new Long(0);
+
+        try {
+            counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP).get(checkCmd.getName() + ".preconditionfailed").getValue();
+        } catch (NullPointerException e){
+            //counter might be null
+        }
+
+        assertEquals(new Long(0), new Long(counterVal));
+
         checkCmd.call();
 
         //precondition failed because of job != RUNNING
-        Long counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP).get(checkCmd.getName() + ".preconditionfailed").getValue();
+        counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP).get(checkCmd.getName() + ".preconditionfailed").getValue();
         assertEquals(new Long(1), new Long(counterVal));
     }
 

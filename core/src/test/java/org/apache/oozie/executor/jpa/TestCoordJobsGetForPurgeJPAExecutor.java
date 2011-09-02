@@ -61,7 +61,7 @@ public class TestCoordJobsGetForPurgeJPAExecutor extends XFsTestCase {
     }
 
     public void testCoordJobsToBeMaterializedCommand() throws Exception {
-        String jobId = "00000-" + new Date().getTime() + "-TestCoordJobUpdateCommand-C";
+        String jobId = "00000-" + new Date().getTime() + "-TestCoordJobsGetForPurgeJPAExecutor-C";
         insertJob(jobId, CoordinatorJob.Status.SUCCEEDED, DateUtils.parseDateUTC("2011-01-01T01:00Z"));
         _testCoordJobsForPurge(10, 1);
         _testCoordJobsForPurge(100, 0);
@@ -70,7 +70,7 @@ public class TestCoordJobsGetForPurgeJPAExecutor extends XFsTestCase {
     private void _testCoordJobsForPurge(int olderThan, int expected) throws Exception {
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
-        
+
         CoordJobsGetForPurgeJPAExecutor executor = new CoordJobsGetForPurgeJPAExecutor(olderThan, 50);
         List<CoordinatorJobBean> jobList = jpaService.execute(executor);
         assertEquals(expected, jobList.size());

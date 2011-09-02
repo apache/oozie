@@ -61,7 +61,7 @@ public class TestCoordJobsToBeMaterializedJPAExecutor extends XFsTestCase {
     }
 
     public void testCoordJobsToBeMaterializedCommand() throws Exception {
-        String jobId = "00000-" + new Date().getTime() + "-TestCoordJobUpdateCommand-C";
+        String jobId = "00000-" + new Date().getTime() + "-TestCoordJobsToBeMaterializedJPAExecutor-C";
         insertJob(jobId, CoordinatorJob.Status.PREP);
         _testCoordJobsToBeMaterialized();
     }
