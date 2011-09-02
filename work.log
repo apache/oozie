@@ -1,6 +1,7 @@
 ###This file contains details release-log inteneded for internal developers.
 -- Oozie 3.0.0 release
 
+OOZIE-38 add bundle example to oozie-examples.
 OOZIE-39 update coordinator spec and bundle spec for status changes
 OOZIE-25 Modify the release log.
 OOZIE-36 rerun a paused coordinator job should not reset status and pause time and pending flag
