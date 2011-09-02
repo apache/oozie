@@ -144,6 +144,9 @@ public class KillXCommand extends WorkflowXCommand<Void> {
         catch (JPAExecutorException je) {
             throw new CommandException(je);
         }
+        if(wfJob.getStatus() == WorkflowJob.Status.KILLED) {
+            new WfEndXCommand(wfJob).call(); //To delete the WF temp dir
+        }
         queue(new NotificationXCommand(wfJob));
 
         LOG.info("ENDED WorkflowKillXCommand for jobId=" + wfId);

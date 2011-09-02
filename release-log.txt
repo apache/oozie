@@ -1,5 +1,5 @@
 -- Oozie 3.0.0 release
-
+GH-0559 kill a wf job by CLI command left the hdfs temp dir not deleted.
 GH-0515 LauncherMapper should add OOZIE_JOB/ACTION_ID to action configuration
 GH-0506 mkdistro.sh does not exit !=0 on failures
 GH-0564 E0605 error is wrapped by E0603
