@@ -48,7 +48,7 @@ import org.apache.openjpa.persistence.jdbc.Index;
     @NamedQuery(name = "GET_WORKFLOWS", query = "select OBJECT(w) from WorkflowJobBean w order by w.startTimestamp desc"),
 
     @NamedQuery(name = "GET_WORKFLOWS_COLUMNS", query = "select w.id, w.appName, w.status, w.run, w.user, w.group, w.createdTimestamp, "
-            + "w.startTimestamp, w.lastModifiedTimestamp, w.endTimestamp from WorkflowJobBean w order by w.startTimestamp desc"),
+            + "w.startTimestamp, w.lastModifiedTimestamp, w.endTimestamp from WorkflowJobBean w order by w.createdTimestamp desc"),
 
     @NamedQuery(name = "GET_WORKFLOWS_COUNT", query = "select count(w) from WorkflowJobBean w"),
 

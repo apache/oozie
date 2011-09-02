@@ -60,6 +60,7 @@ import org.apache.oozie.util.XCallable;
 import org.apache.oozie.util.XLog;
 
 import java.io.Writer;
+import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
@@ -439,7 +440,11 @@ public class DagEngine extends BaseEngine {
         XLogStreamer.Filter filter = new XLogStreamer.Filter();
         filter.setParameter(DagXLogInfoService.JOB, jobId);
         WorkflowJob job = getJob(jobId);
-        Services.get().get(XLogService.class).streamLog(filter, job.getStartTime(), job.getEndTime(), writer);
+        Date lastTime = job.getEndTime();
+        if (lastTime == null) {
+            lastTime = job.getLastModifiedTime();
+        }
+        Services.get().get(XLogService.class).streamLog(filter, job.getCreatedTime(), lastTime, writer);
     }
 
     private static final Set<String> FILTER_NAMES = new HashSet<String>();
