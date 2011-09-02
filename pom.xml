@@ -50,6 +50,8 @@
 
         <pigVersion>0.7.0</pigVersion>
 
+        <hadoopScope>provided</hadoopScope>
+
         <oozie.test.config.file></oozie.test.config.file>
 
         <oozie.test.dir>/tmp</oozie.test.dir>

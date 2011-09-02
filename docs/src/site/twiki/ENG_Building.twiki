@@ -124,6 +124,9 @@ $ mvn clean test -Doozie.test.config.file=/home/tucu/oozie-site-mysql.xml
 
 *hadoopVersion*= : indicates the Hadoop artifacts version to use, default value '0.20.104.2'
 
+*hadoopScope*= : indicates the Hadoop artifacts scope, default is 'provided' and the generated ozie.war does not 
+include Hadoop JARs. If 'compile' is used the generated oozie.war will contain Hadoop JARs.
+
 *pigGroupId*= : indicates the Pig artifact group ID to use, default value 'com.yahoo.hadoop'
 
 *pigVersion*= : indicates the Pig artifact version to use, default value '0.7.0'

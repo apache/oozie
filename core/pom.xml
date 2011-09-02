@@ -85,7 +85,7 @@
             <groupId>${hadoopGroupId}</groupId>
             <artifactId>hadoop-core</artifactId>
             <version>${hadoopVersion}</version>
-            <scope>provided</scope>
+            <scope>${hadoopScope}</scope>
             <exclusions>
                 <exclusion>
                     <groupId>org.apache.commons</groupId>
