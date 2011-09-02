@@ -1,5 +1,6 @@
 -- Oozie 3.0.0 release
 
+GH-0284 TestLocalOozieExample should extend XTestCase
 GH-0263 TestCallableQueueService.testConcurrencyLimit() fails randomly
 GH-0276 bump up version to 3.0-SNAPSHOT in master after creating 2.3 branch
 

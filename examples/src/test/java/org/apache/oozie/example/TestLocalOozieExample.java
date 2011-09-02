@@ -20,6 +20,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowAppService;
+import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
@@ -31,7 +32,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
-public class TestLocalOozieExample extends TestCase {
+public class TestLocalOozieExample extends XTestCase {
     private String oozieLocalLog;
     private String testDir;
     private FileSystem fileSystem;
@@ -46,16 +47,10 @@ public class TestLocalOozieExample extends TestCase {
         dir.mkdirs();
         testDir = dir.getAbsolutePath();
         final Configuration conf = new Configuration();
-        conf.set(WorkflowAppService.HADOOP_USER, "test");
-        conf.set(WorkflowAppService.HADOOP_UGI, "test,users");
-        String jtKerberosPrincipal = System.getProperty("oozie.test.kerberos.jobtracker.principal",
-                                                        "mapred/localhost") + "@" +
-                System.getProperty("oozie.test.kerberos.realm", "LOCALHOST");
-        String nnKerberosPrincipal = System.getProperty("oozie.test.kerberos.namenode.principal",
-                                                        "hdfs/localhost") + "@" +
-                System.getProperty("oozie.test.kerberos.realm", "LOCALHOST");
-        conf.set(WorkflowAppService.HADOOP_JT_KERBEROS_NAME, jtKerberosPrincipal);
-        conf.set(WorkflowAppService.HADOOP_NN_KERBEROS_NAME, nnKerberosPrincipal);
+        conf.set(WorkflowAppService.HADOOP_USER, getTestUser());
+        conf.set("mapred.job.tracker", getJobTrackerUri());
+        conf.set("fs.default.name", getNameNodeUri());
+        injectKerberosInfo(conf);
 
 // TODO restore this when getting rid of DoAs trick
 
@@ -89,7 +84,7 @@ public class TestLocalOozieExample extends TestCase {
                 return null;
             }
         });
-        doAs.setUser("test");
+        doAs.setUser(getTestUser());
         doAs.call();
         fileSystem = fs[0];
 

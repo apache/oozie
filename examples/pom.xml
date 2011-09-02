@@ -47,6 +47,13 @@
 
         <dependency>
             <groupId>com.yahoo.oozie</groupId>
+            <artifactId>oozie-core</artifactId>
+            <classifier>tests</classifier>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.yahoo.oozie</groupId>
             <artifactId>oozie-client</artifactId>
             <scope>provided</scope>
         </dependency>
