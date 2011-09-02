@@ -30,6 +30,7 @@ import org.apache.oozie.executor.jpa.BundleActionUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleActionsGetJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobUpdateJPAExecutor;
+import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.InstrumentUtils;
@@ -53,12 +54,11 @@ public class BundleJobResumeXCommand extends ResumeTransitionXCommand {
     }
 
     /* (non-Javadoc)
-     * @see org.apache.oozie.command.ResumeTransitionXCommand#resume()
+     * @see org.apache.oozie.command.ResumeTransitionXCommand#resumeChildren()
      */
     @Override
-    public void resume() throws CommandException {
+    public void resumeChildren() throws CommandException {
         try {
-            InstrumentUtils.incrJobCounter("bundle_resume", 1, null);
             for (BundleActionBean action : bundleActions) {
                 // queue a ResumeCommand
                 if (action.getCoordId() != null) {
@@ -67,10 +67,6 @@ public class BundleJobResumeXCommand extends ResumeTransitionXCommand {
                     jpaService.execute(new BundleActionUpdateJPAExecutor(action));
                 }
             }
-            bundleJob.setSuspendedTime(new Date());
-            jpaService.execute(new BundleJobUpdateJPAExecutor(bundleJob));
-
-            return;
         }
         catch (XException ex) {
             throw new CommandException(ex);
@@ -90,6 +86,14 @@ public class BundleJobResumeXCommand extends ResumeTransitionXCommand {
      */
     @Override
     public void updateJob() throws CommandException {
+        InstrumentUtils.incrJobCounter("bundle_resume", 1, null);
+        try {
+            bundleJob.setSuspendedTime(null);
+            jpaService.execute(new BundleJobUpdateJPAExecutor(bundleJob));
+        }
+        catch (JPAExecutorException e) {
+            throw new CommandException(e);
+        }
     }
 
     /* (non-Javadoc)
@@ -113,11 +117,23 @@ public class BundleJobResumeXCommand extends ResumeTransitionXCommand {
      */
     @Override
     protected void loadState() throws CommandException {
+        jpaService = Services.get().get(JPAService.class);
+        if (jpaService == null) {
+            throw new CommandException(ErrorCode.E0610);
+        }
+
         try {
-            this.bundleActions = jpaService.execute(new BundleActionsGetJPAExecutor(bundleId));
+            bundleJob = jpaService.execute(new BundleJobGetJPAExecutor(bundleId));
         }
         catch (Exception Ex) {
-            throw new CommandException(ErrorCode.E1311, this.bundleId);
+            throw new CommandException(ErrorCode.E0604, bundleId);
+        }
+
+        try {
+            bundleActions = jpaService.execute(new BundleActionsGetJPAExecutor(bundleId));
+        }
+        catch (Exception Ex) {
+            throw new CommandException(ErrorCode.E1311, bundleId);
         }
     }
 
@@ -126,30 +142,6 @@ public class BundleJobResumeXCommand extends ResumeTransitionXCommand {
      */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
-    }
-
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#eagerLoadState()
-     */
-    @Override
-    protected void eagerLoadState() throws CommandException {
-        jpaService = Services.get().get(JPAService.class);
-        if (jpaService == null) {
-            throw new CommandException(ErrorCode.E0610);
-        }
-        try {
-            bundleJob = jpaService.execute(new BundleJobGetJPAExecutor(bundleId));
-        }
-        catch (Exception Ex) {
-            new CommandException(ErrorCode.E0604, bundleId);
-        }
-    }
-
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#eagerVerifyPrecondition()
-     */
-    @Override
-    protected void eagerVerifyPrecondition() throws CommandException, PreconditionException {
         if (bundleJob.getStatus() != Job.Status.SUSPENDED) {
             throw new PreconditionException(ErrorCode.E1100, "BundleResumeCommand not Resumed - "
                     + "job not in SUSPENDED state " + bundleId);

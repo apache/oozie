@@ -1,5 +1,6 @@
 -- Oozie 3.0.0 release
 
+GH-0542 Refactor CoordSuspendXCommand & CoordResumeXCommand to TransitionXCommand based
 GH-0543 Refactor CoordRerunXCommand to TransitionXCommand based
 GH-0530 Update workflow rerun twiki.
 GH-0537 migrate CoordKillXCommand to transition based

@@ -16,20 +16,20 @@ package org.apache.oozie.command;
 
 import org.apache.oozie.client.Job;
 
-public abstract class ResumeTransitionXCommand extends TransitionXCommand<Void> {
+public abstract class SuspendTransitionXCommand extends TransitionXCommand<Void> {
 
     /**
-     * Resume all children of the job
+     * Suspend all children of the job
      *
      * @throws CommandException
      */
-    public abstract void resumeChildren() throws CommandException;
+    public abstract void suspendChildren() throws CommandException;
 
-    public ResumeTransitionXCommand(String name, String type, int priority) {
+    public SuspendTransitionXCommand(String name, String type, int priority) {
         super(name, type, priority);
     }
 
-    public ResumeTransitionXCommand(String name, String type, int priority, boolean dryrun) {
+    public SuspendTransitionXCommand(String name, String type, int priority, boolean dryrun) {
         super(name, type, priority, dryrun);
     }
 
@@ -41,11 +41,11 @@ public abstract class ResumeTransitionXCommand extends TransitionXCommand<Void> 
         if (job == null) {
             job = this.getJob();
         }
-        if (job.getStatus() == Job.Status.PREPSUSPENDED) {
-            job.setStatus(Job.Status.PREP);
+        if (job.getStatus() == Job.Status.PREP) {
+            job.setStatus(Job.Status.PREPSUSPENDED);
         }
-        else if (job.getStatus() == Job.Status.SUSPENDED) {
-            job.setStatus(Job.Status.RUNNING);
+        else if (job.getStatus() == Job.Status.RUNNING) {
+            job.setStatus(Job.Status.SUSPENDED);
         }
         job.setPending();
     }
@@ -57,7 +57,7 @@ public abstract class ResumeTransitionXCommand extends TransitionXCommand<Void> 
     protected Void execute() throws CommandException {
         transitToNext();
         updateJob();
-        resumeChildren();
+        suspendChildren();
         notifyParent();
         return null;
     }

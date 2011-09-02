@@ -24,12 +24,14 @@ import org.apache.oozie.XException;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.command.SuspendTransitionXCommand;
 import org.apache.oozie.command.TransitionXCommand;
 import org.apache.oozie.command.coord.CoordSuspendXCommand;
 import org.apache.oozie.executor.jpa.BundleActionUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleActionsGetJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobUpdateJPAExecutor;
+import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.InstrumentUtils;
@@ -37,12 +39,12 @@ import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
 
-public class BundleJobSuspendXCommand extends TransitionXCommand<Void> {
+public class BundleJobSuspendXCommand extends SuspendTransitionXCommand {
     private final String jobId;
     private JPAService jpaService;
     private List<BundleActionBean> bundleActions;
     private BundleJobBean bundleJob;
-    private final XLog log = XLog.getLog(getClass());
+    private static final XLog LOG = XLog.getLog(SuspendTransitionXCommand.class);
 
     public BundleJobSuspendXCommand(String id) {
         super("bundle_suspend", "bundle_suspend", 1);
@@ -54,7 +56,7 @@ public class BundleJobSuspendXCommand extends TransitionXCommand<Void> {
      */
     @Override
     public Job getJob() {
-        return null;
+        return bundleJob;
     }
 
     /* (non-Javadoc)
@@ -69,48 +71,6 @@ public class BundleJobSuspendXCommand extends TransitionXCommand<Void> {
      */
     @Override
     public void setJob(Job job) {
-    }
-
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#transitToNext()
-     */
-    @Override
-    public void transitToNext() throws CommandException {
-    }
-
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#execute()
-     */
-    @Override
-    protected Void execute() throws CommandException {
-        try {
-            InstrumentUtils.incrJobCounter("bundle_suspend", 1, null);
-            if (bundleJob.getStatus() == Job.Status.PREP) {
-                bundleJob.setStatus(Job.Status.PREPSUSPENDED);
-            }
-            else if (bundleJob.getStatus() == Job.Status.RUNNING) {
-                bundleJob.setStatus(Job.Status.SUSPENDED);
-            }
-            bundleJob.setPending();
-            bundleJob.setSuspendedTime(new Date());
-            bundleJob.setLastModifiedTime(new Date());
-
-            for (BundleActionBean action : this.bundleActions) {
-                if (action.getStatus() == Job.Status.RUNNING || action.getStatus() == Job.Status.PREP) {
-                    // queue a CoordSuspendXCommand
-                    if (action.getCoordId() != null) {
-                        queue(new CoordSuspendXCommand(action.getCoordId()));
-                        action.setPending(action.getPending() + 1);
-                        jpaService.execute(new BundleActionUpdateJPAExecutor(action));
-                    }
-                }
-            }
-            jpaService.execute(new BundleJobUpdateJPAExecutor(bundleJob));
-            return null;
-        }
-        catch (XException ex) {
-            throw new CommandException(ex);
-        }
     }
 
     /* (non-Javadoc)
@@ -134,11 +94,23 @@ public class BundleJobSuspendXCommand extends TransitionXCommand<Void> {
      */
     @Override
     protected void loadState() throws CommandException {
+        jpaService = Services.get().get(JPAService.class);
+        if (jpaService == null) {
+            throw new CommandException(ErrorCode.E0610);
+        }
+
         try {
-            this.bundleActions = jpaService.execute(new BundleActionsGetJPAExecutor(jobId));
+            bundleJob = jpaService.execute(new BundleJobGetJPAExecutor(jobId));
         }
         catch (Exception Ex) {
-            throw new CommandException(ErrorCode.E1311, this.jobId);
+            throw new CommandException(ErrorCode.E0604, jobId);
+        }
+
+        try {
+            bundleActions = jpaService.execute(new BundleActionsGetJPAExecutor(jobId));
+        }
+        catch (Exception Ex) {
+            throw new CommandException(ErrorCode.E1311, jobId);
         }
     }
 
@@ -147,37 +119,8 @@ public class BundleJobSuspendXCommand extends TransitionXCommand<Void> {
      */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
-    }
-
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#eagerLoadState()
-     */
-    @Override
-    protected void eagerLoadState() throws CommandException {
-
-        try {
-            jpaService = Services.get().get(JPAService.class);
-
-            if (jpaService != null) {
-                this.bundleJob = jpaService.execute(new BundleJobGetJPAExecutor(jobId));
-                LogUtils.setLogInfo(bundleJob, logInfo);
-            }
-            else {
-                throw new CommandException(ErrorCode.E0610);
-            }
-        }
-        catch (XException ex) {
-            throw new CommandException(ex);
-        }
-    }
-
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#eagerVerifyPrecondition()
-     */
-    @Override
-    protected void eagerVerifyPrecondition() throws CommandException, PreconditionException {
         if (bundleJob.getStatus() == Job.Status.SUCCEEDED || bundleJob.getStatus() == Job.Status.FAILED) {
-            log.info("BundleSuspendCommand not suspended - " + "job finished or does not exist " + jobId);
+            LOG.info("BundleSuspendCommand not suspended - " + "job finished or does not exist " + jobId);
             throw new PreconditionException(ErrorCode.E1312, jobId, bundleJob.getStatus().toString());
         }
     }
@@ -187,5 +130,35 @@ public class BundleJobSuspendXCommand extends TransitionXCommand<Void> {
      */
     @Override
     public void updateJob() throws CommandException {
+        InstrumentUtils.incrJobCounter("bundle_suspend", 1, null);
+        bundleJob.setSuspendedTime(new Date());
+        bundleJob.setLastModifiedTime(new Date());
+
+        try {
+            jpaService.execute(new BundleJobUpdateJPAExecutor(bundleJob));
+        }
+        catch (JPAExecutorException e) {
+            throw new CommandException(e);
+        }
+    }
+
+    @Override
+    public void suspendChildren() throws CommandException {
+        try {
+            for (BundleActionBean action : this.bundleActions) {
+                if (action.getStatus() == Job.Status.RUNNING || action.getStatus() == Job.Status.PREP) {
+                    // queue a CoordSuspendXCommand
+                    if (action.getCoordId() != null) {
+                        queue(new CoordSuspendXCommand(action.getCoordId()));
+                        action.setPending(action.getPending() + 1);
+                        jpaService.execute(new BundleActionUpdateJPAExecutor(action));
+                    }
+                }
+            }
+            jpaService.execute(new BundleJobUpdateJPAExecutor(bundleJob));
+        }
+        catch (XException ex) {
+            throw new CommandException(ex);
+        }
     }
 }
