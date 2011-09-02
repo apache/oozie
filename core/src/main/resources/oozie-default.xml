@@ -905,7 +905,7 @@
 
     <property>
         <name>oozie.service.JPAService.jdbc.url</name>
-        <value>jdbc:derby:${oozie.home.dir}/${oozie.db.schema.name}-db;create=true</value>
+        <value>jdbc:derby:${oozie.data.dir}/${oozie.db.schema.name}-db;create=true</value>
         <description>
             JDBC URL.
         </description>

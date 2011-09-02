@@ -25,6 +25,7 @@ GH-0461 Mapping the workflow ID to coordinator ID
 GH-0391 Add support for filters to the EmbeddedServletContainer
 GH-0404 assembly plugin 2.2-beta-5 breaks file permissions
 GH-0442 Add Hudson CI script to master trunk
+GH-0387 default jdbc URL has wrong value
 GH-0354 change jsp-api dependency groupId to javax.servlet.jsp
 GH-0346 add support for a test.properties file to load test system properties
 GH-0341 oozie-jpa.log file is created in extra log directory

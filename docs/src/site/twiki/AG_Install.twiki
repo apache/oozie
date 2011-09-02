@@ -110,7 +110,7 @@ The SQL database used by Oozie is configured using the following configuration p
   oozie.db.schema.name=oozie
   oozie.db.schema.create=true
   oozie.service.StoreService.jdbc.driver=org.apache.derby.jdbc.EmbeddedDriver
-  oozie.service.StoreService.jdbc.url=jdbc:derby:${oozie.home.dir}/${oozie.db.schema.name}-db;create=true
+  oozie.service.StoreService.jdbc.url=jdbc:derby:${oozie.data.dir}/${oozie.db.schema.name}-db;create=true
   oozie.service.StoreService.jdbc.username=sa
   oozie.service.StoreService.jdbc.password=
   oozie.service.StoreService.pool.max.active.conn=10
