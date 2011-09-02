@@ -5,6 +5,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.oozie.BundleActionBean;
+import org.apache.oozie.BundleJobBean;
+import org.apache.oozie.ErrorCode;
+import org.apache.oozie.XException;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.command.CommandException;
@@ -20,10 +24,6 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
-import org.apache.oozie.BundleActionBean;
-import org.apache.oozie.BundleJobBean;
-import org.apache.oozie.ErrorCode;
-import org.apache.oozie.XException;
 
 /**
  * Rerun bundle coordinator jobs by a list of coordinator names or dates. User can specify if refresh or noCleanup.
@@ -35,12 +35,13 @@ import org.apache.oozie.XException;
 public class BundleRerunXCommand extends RerunTransitionXCommand<Void> {
 
     protected final XLog LOG = XLog.getLog(BundleRerunXCommand.class);
-    private String coordScope;
-    private String dateScope;
-    private boolean refresh;
-    private boolean noCleanup;
+    private final String coordScope;
+    private final String dateScope;
+    private final boolean refresh;
+    private final boolean noCleanup;
     private BundleJobBean bundleJob;
     private List<BundleActionBean> bundleActions;
+    protected boolean prevPending;
 
     private JPAService jpaService = null;
 
@@ -75,6 +76,7 @@ public class BundleRerunXCommand extends RerunTransitionXCommand<Void> {
                 this.bundleActions = jpaService.execute(new BundleActionsGetJPAExecutor(jobId));
                 LogUtils.setLogInfo(bundleJob, logInfo);
                 super.setJob(bundleJob);
+                prevPending = bundleJob.isPending();
             }
             else {
                 throw new CommandException(ErrorCode.E0610);
@@ -91,16 +93,17 @@ public class BundleRerunXCommand extends RerunTransitionXCommand<Void> {
      */
     @Override
     public void rerunChildren() throws CommandException {
+        boolean isUpdateActionDone = false;
         Map<String, BundleActionBean> coordNameToBAMapping = new HashMap<String, BundleActionBean>();
         if (bundleActions != null) {
             for (BundleActionBean action : bundleActions) {
                 if (action.getCoordName() != null) {
-                    coordNameToBAMapping.put(action.getCoordName(),action);
+                    coordNameToBAMapping.put(action.getCoordName(), action);
                 }
             }
         }
 
-        if(coordScope != null && !coordScope.isEmpty()) {
+        if (coordScope != null && !coordScope.isEmpty()) {
             String[] list = coordScope.split(",");
             for (String s : list) {
                 s = s.trim();
@@ -113,6 +116,7 @@ public class BundleRerunXCommand extends RerunTransitionXCommand<Void> {
                     LOG.debug("Queuing rerun for coord id " + id + " of bundle " + bundleJob.getId());
                     queue(new CoordRerunXCommand(id, RestConstants.JOB_COORD_RERUN_DATE, dateScope, refresh, noCleanup));
                     updateBundleAction(coordNameToBAMapping.get(s));
+                    isUpdateActionDone = true;
                 }
                 else {
                     LOG.info("Rerun for coord " + s + " NOT performed because it is not in bundle ", bundleJob.getId());
@@ -128,13 +132,28 @@ public class BundleRerunXCommand extends RerunTransitionXCommand<Void> {
                         continue;
                     }
                     LOG.debug("Queuing rerun for coord id :" + action.getCoordId());
-                    queue(new CoordRerunXCommand(action.getCoordId(), RestConstants.JOB_COORD_RERUN_DATE, dateScope, refresh, noCleanup));
+                    queue(new CoordRerunXCommand(action.getCoordId(), RestConstants.JOB_COORD_RERUN_DATE, dateScope,
+                            refresh, noCleanup));
                     updateBundleAction(action);
+                    isUpdateActionDone = true;
                 }
             }
         }
-
+        if (!isUpdateActionDone) {
+            transitToPrevious();
+        }
         LOG.info("Rerun coord jobs for the bundle=[{0}]", jobId);
+    }
+
+    private final void transitToPrevious() throws CommandException {
+        bundleJob.setStatus(getPrevStatus());
+        if (!prevPending) {
+            bundleJob.resetPending();
+        }
+        else {
+            bundleJob.setPending();
+        }
+        updateJob();
     }
 
     /**

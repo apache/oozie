@@ -16,6 +16,7 @@ import org.apache.oozie.util.XLog;
 public abstract class RerunTransitionXCommand<T> extends TransitionXCommand<T> {
     protected String jobId;
     protected T ret;
+    protected Job.Status prevStatus;
 
     /**
      * The constructor for abstract class {@link RerunTransitionXCommand}
@@ -48,6 +49,7 @@ public abstract class RerunTransitionXCommand<T> extends TransitionXCommand<T> {
         if (job == null) {
             job = this.getJob();
         }
+        prevStatus = job.getStatus();
         job.setStatus(Job.Status.RUNNING);
         job.resetPending();
     }
@@ -110,5 +112,19 @@ public abstract class RerunTransitionXCommand<T> extends TransitionXCommand<T> {
      */
     public XLog getLog() {
         return null;
+    }
+
+    /**
+     * This method will return the previous status.
+     *
+     * @return JOB Status
+     */
+    public Job.Status getPrevStatus() {
+        if (prevStatus != null) {
+            return prevStatus;
+        }
+        else {
+            return job.getStatus();
+        }
     }
 }

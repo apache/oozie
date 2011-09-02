@@ -1,5 +1,6 @@
 -- Oozie 3.0.0 release
 
+GH-0569 Bundle status stays RUNNING when rerun a non-existing coord job
 GH-0553 coord job should not materialize new actions when WAITING actions exceed concurrency.
 GH-0557 Update StatusTransitService to aggregate coordinator status
 GH-0125 Query GET_WORKFLOWS_COLUMNS should order by createdTimestamp instead of starttime
