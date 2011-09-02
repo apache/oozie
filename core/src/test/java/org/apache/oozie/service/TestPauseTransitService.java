@@ -30,10 +30,10 @@ import org.apache.oozie.executor.jpa.CoordJobUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.service.BundlePauseStartService.BundlePauseStartRunnable;
+import org.apache.oozie.service.PauseTransitService.PauseTransitRunnable;
 import org.apache.oozie.test.XDataTestCase;
 
-public class TestBundlePauseStartService extends XDataTestCase {
+public class TestPauseTransitService extends XDataTestCase {
     private Services services;
 
     @Override
@@ -64,7 +64,7 @@ public class TestBundlePauseStartService extends XDataTestCase {
         job.setKickoffTime(new Date(new Date().getTime() + 3600 * 1000));
         jpaService.execute(new BundleJobUpdateJPAExecutor(job));
 
-        Runnable pauseStartRunnable = new BundlePauseStartRunnable();
+        Runnable pauseStartRunnable = new PauseTransitRunnable();
         pauseStartRunnable.run();
 
         final String jobId = job.getId();
@@ -108,7 +108,7 @@ public class TestBundlePauseStartService extends XDataTestCase {
         job.setKickoffTime(new Date(new Date().getTime() + 3600 * 1000));
         jpaService.execute(new BundleJobUpdateJPAExecutor(job));
 
-        Runnable pauseStartRunnable = new BundlePauseStartRunnable();
+        Runnable pauseStartRunnable = new PauseTransitRunnable();
         pauseStartRunnable.run();
 
         final String jobId = job.getId();
@@ -168,7 +168,7 @@ public class TestBundlePauseStartService extends XDataTestCase {
         job = jpaService.execute(bundleJobGetExecutor);
         assertEquals(Job.Status.RUNNING, job.getStatus());
 
-        Runnable pauseStartRunnable = new BundlePauseStartRunnable();
+        Runnable pauseStartRunnable = new PauseTransitRunnable();
         pauseStartRunnable.run();
 
         final String jobId = job.getId();
@@ -234,7 +234,7 @@ public class TestBundlePauseStartService extends XDataTestCase {
         job = jpaService.execute(bundleJobGetExecutor);
         assertEquals(Job.Status.PAUSED, job.getStatus());
 
-        Runnable pauseStartRunnable = new BundlePauseStartRunnable();
+        Runnable pauseStartRunnable = new PauseTransitRunnable();
         pauseStartRunnable.run();
 
         final String jobId = job.getId();
@@ -273,6 +273,53 @@ public class TestBundlePauseStartService extends XDataTestCase {
 
 
     /**
+     * Test : Pause a RUNNING coordinator, but set oozie.service.StatusTransitService.backward.support.for.coord.status=true
+     * and use uri:oozie:coordinator:0.1 namespace, the status should not be changed to PAUSED
+     *
+     * @throws Exception
+     */
+    public void testPauseCoordinatorForBackwardSupport() throws Exception {
+        Services.get().destroy();
+        setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_COORD_STATUS, "true");
+        new Services().init();
+
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+
+        Date pauseTime = new Date(new Date().getTime() - 30 * 1000);
+
+        CoordinatorJobBean coordJob1 = addRecordToCoordJobTable("action1", CoordinatorJob.Status.RUNNING, false);
+        CoordinatorJobBean coordJob2 = addRecordToCoordJobTable("action2", CoordinatorJob.Status.RUNNING, false);
+
+        coordJob1.setAppNamespace(SchemaService.COORDINATOR_NAMESPACE_URI_1);
+        coordJob1.setPauseTime(pauseTime);
+        jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob1));
+        coordJob2.setAppNamespace(SchemaService.COORDINATOR_NAMESPACE_URI_1);
+        coordJob2.setPauseTime(pauseTime);
+        jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob2));
+
+        Runnable pauseStartRunnable = new PauseTransitRunnable();
+        pauseStartRunnable.run();
+
+        final String coordJobId1 = coordJob1.getId();
+        final String coordJobId2 = coordJob2.getId();
+        waitFor(10 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                CoordinatorJobBean cJob1 = jpaService.execute(new CoordJobGetJPAExecutor(coordJobId1));
+                return cJob1.getStatus() == Job.Status.RUNNING;
+            }
+        });
+
+        coordJob1 = jpaService.execute(new CoordJobGetJPAExecutor(coordJobId1));
+        assertEquals(Job.Status.RUNNING, coordJob1.getStatus());
+
+        coordJob2 = jpaService.execute(new CoordJobGetJPAExecutor(coordJobId2));
+        assertEquals(Job.Status.RUNNING, coordJob2.getStatus());
+
+
+    }
+
+    /**
      * Test : Start a PREP bundle when its kickoff time reaches.
      *
      * @throws Exception
@@ -285,7 +332,7 @@ public class TestBundlePauseStartService extends XDataTestCase {
         job.setKickoffTime(new Date(new Date().getTime() - 30 * 1000));
         jpaService.execute(new BundleJobUpdateJPAExecutor(job));
 
-        Runnable pauseStartRunnable = new BundlePauseStartRunnable();
+        Runnable pauseStartRunnable = new PauseTransitRunnable();
         pauseStartRunnable.run();
 
         final String jobId = job.getId();
@@ -313,7 +360,7 @@ public class TestBundlePauseStartService extends XDataTestCase {
         job.setKickoffTime(new Date(new Date().getTime() - 30 * 1000));
         jpaService.execute(new BundleJobUpdateJPAExecutor(job));
 
-        Runnable pauseStartRunnable = new BundlePauseStartRunnable();
+        Runnable pauseStartRunnable = new PauseTransitRunnable();
         pauseStartRunnable.run();
 
         final String jobId = job.getId();

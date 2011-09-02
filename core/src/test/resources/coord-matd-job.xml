@@ -12,7 +12,7 @@
   See the License for the specific language governing permissions and
   limitations under the License. See accompanying LICENSE file.
 -->
-<coordinator-app xmlns='uri:oozie:coordinator:0.1'
+<coordinator-app xmlns='uri:oozie:coordinator:0.2'
 	xmlns:sla='uri:oozie:sla:0.1' name='NAME' frequency="5"
 	start='#start' end='#end' timezone='America/Los_Angeles'
 	freq_timeunit='MINUTE' end_of_duration='NONE'>

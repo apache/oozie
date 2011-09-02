@@ -37,23 +37,23 @@ import org.apache.oozie.util.MemoryLocks;
 import org.apache.oozie.util.XLog;
 
 /**
- * BundlePauseStartService is the runnable which is scheduled to run at the configured interval, it checks all bundles
+ * PauseTransitService is the runnable which is scheduled to run at the configured interval, it checks all bundles
  * to see if they should be paused, un-paused or started.
  */
-public class BundlePauseStartService implements Service {
-    public static final String CONF_PREFIX = Service.CONF_PREFIX + "BundlePauseStartService.";
-    public static final String CONF_BUNDLE_PAUSE_START_INTERVAL = CONF_PREFIX + "BundlePauseStart.interval";
-    private final static XLog LOG = XLog.getLog(BundlePauseStartService.class);
+public class PauseTransitService implements Service {
+    public static final String CONF_PREFIX = Service.CONF_PREFIX + "PauseTransitService.";
+    public static final String CONF_BUNDLE_PAUSE_START_INTERVAL = CONF_PREFIX + "PauseTransit.interval";
+    private final static XLog LOG = XLog.getLog(PauseTransitService.class);
 
     /**
-     * BundlePauseStartRunnable is the runnable which is scheduled to run at the configured interval, it checks all
+     * PauseTransitRunnable is the runnable which is scheduled to run at the configured interval, it checks all
      * bundles to see if they should be paused, un-paused or started.
      */
-    static class BundlePauseStartRunnable implements Runnable {
+    static class PauseTransitRunnable implements Runnable {
         private JPAService jpaService = null;
         private MemoryLocks.LockToken lock;
 
-        public BundlePauseStartRunnable() {
+        public PauseTransitRunnable() {
             jpaService = Services.get().get(JPAService.class);
             if (jpaService == null) {
                 LOG.error("Missing JPAService");
@@ -64,13 +64,13 @@ public class BundlePauseStartService implements Service {
             try {
                 // first check if there is some other running instance from the same service;
                 lock = Services.get().get(MemoryLocksService.class).getWriteLock(
-                        BundlePauseStartService.class.getName(), lockTimeout);
+                        PauseTransitService.class.getName(), lockTimeout);
                 if (lock == null) {
-                    LOG.info("This BundlePauseStartService instance will"
+                    LOG.info("This PauseTransitService instance will"
                             + "not run since there is already an instance running");
                 }
                 else {
-                    LOG.info("Acquired lock for [{0}]", BundlePauseStartService.class.getName());
+                    LOG.info("Acquired lock for [{0}]", PauseTransitService.class.getName());
 
                     updateBundle();
                     updateCoord();
@@ -83,7 +83,7 @@ public class BundlePauseStartService implements Service {
                 // release lock;
                 if (lock != null) {
                     lock.release();
-                    LOG.info("Released lock for [{0}]", BundlePauseStartService.class.getName());
+                    LOG.info("Released lock for [{0}]", PauseTransitService.class.getName());
                 }
             }
         }
@@ -140,11 +140,19 @@ public class BundlePauseStartService implements Service {
         private void updateCoord() {
             Date d = new Date(); // records the start time of this service run;
             List<CoordinatorJobBean> jobList = null;
+            Configuration conf = Services.get().getConf();
+            boolean backwardSupportForCoordStatus = conf.getBoolean(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_COORD_STATUS, false);
+
             // pause coordinators as needed;
             try {
                 jobList = jpaService.execute(new CoordJobsGetUnpausedJPAExecutor(-1));
                 if (jobList != null) {
                     for (CoordinatorJobBean coordJob : jobList) {
+                        // if namespace 0.1 is used and backward support is true, then ignore this coord job
+                        if (backwardSupportForCoordStatus == true && coordJob.getAppNamespace() != null
+                                && coordJob.getAppNamespace().equals(SchemaService.COORDINATOR_NAMESPACE_URI_1)) {
+                            continue;
+                        }
                         if ((coordJob.getPauseTime() != null) && !coordJob.getPauseTime().after(d)) {
                             new CoordPauseXCommand(coordJob).call();
                             LOG.debug("Calling CoordPauseXCommand for coordinator job = " + coordJob.getId());
@@ -160,6 +168,11 @@ public class BundlePauseStartService implements Service {
                 jobList = jpaService.execute(new CoordJobsGetPausedJPAExecutor(-1));
                 if (jobList != null) {
                     for (CoordinatorJobBean coordJob : jobList) {
+                        // if namespace 0.1 is used and backward support is true, then ignore this coord job
+                        if (backwardSupportForCoordStatus == true && coordJob.getAppNamespace() != null
+                                && coordJob.getAppNamespace().equals(SchemaService.COORDINATOR_NAMESPACE_URI_1)) {
+                            continue;
+                        }
                         if ((coordJob.getPauseTime() == null || coordJob.getPauseTime().after(d))) {
                             new CoordUnpauseXCommand(coordJob).call();
                             LOG.debug("Calling CoordUnpauseXCommand for coordinator job = " + coordJob.getId());
@@ -174,14 +187,14 @@ public class BundlePauseStartService implements Service {
     }
 
     /**
-     * Initializes the {@link BundlePauseStartService}.
+     * Initializes the {@link PauseTransitService}.
      *
      * @param services services instance.
      */
     @Override
     public void init(Services services) {
         Configuration conf = services.getConf();
-        Runnable bundlePauseStartRunnable = new BundlePauseStartRunnable();
+        Runnable bundlePauseStartRunnable = new PauseTransitRunnable();
         services.get(SchedulerService.class).schedule(bundlePauseStartRunnable, 10,
                 conf.getInt(CONF_BUNDLE_PAUSE_START_INTERVAL, 60), SchedulerService.Unit.SEC);
     }
@@ -196,10 +209,10 @@ public class BundlePauseStartService implements Service {
     /**
      * Return the public interface for the purge jobs service.
      *
-     * @return {@link BundlePauseStartService}.
+     * @return {@link PauseTransitService}.
      */
     @Override
     public Class<? extends Service> getInterface() {
-        return BundlePauseStartService.class;
+        return PauseTransitService.class;
     }
 }

@@ -37,7 +37,7 @@ public class TestSchemaService extends XTestCase {
 
     private static final String APP_V25 = "<workflow-app xmlns='uri:oozie:workflow:0.2.5' name='app'>" + "<credentials></credentials>"+"<start to='end'/>"
     + "<end name='end'/>" + "</workflow-app>";
-    
+
     private static final String WF_SLA_APP = "<workflow-app xmlns='uri:oozie:workflow:0.2' name='app'  xmlns:sla='uri:oozie:sla:0.1'>"
             + "<start to='end'/>"
             + "<end name='end'/>"
@@ -56,7 +56,7 @@ public class TestSchemaService extends XTestCase {
             + " <sla:qa-contact>abc@yahoo.com</sla:qa-contact> <sla:se-contact>abc@yahoo.com</sla:se-contact>"
             + "</sla:info>" + "</workflow-app>";
 
-    private static final String COORD_APP1 = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" start=\"${start}\" end=\"${end}\" timezone=\"${timezone}\" xmlns=\"uri:oozie:coordinator:0.1\">"
+    private static final String COORD_APP1 = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" start=\"${start}\" end=\"${end}\" timezone=\"${timezone}\" xmlns=\"uri:oozie:coordinator:0.2\">"
             + "<controls> <timeout>${timeout}</timeout> <concurrency>${concurrency_level}</concurrency> <execution>${execution_order}</execution> </controls>"
             + "<datasets> <include>${include_ds_files}</include> <!-- Synchronous datasets --> <dataset name=\"local_a\" frequency=\"${coord:days(7)}\" initial-instance=\"${start}\" timezone=\"${timezone}\"> "
             + "<uri-template>${baseFsURI}/${YEAR}/${DAY}</uri-template> </dataset> </datasets> "
@@ -81,11 +81,13 @@ public class TestSchemaService extends XTestCase {
             "<end name='end'/>" +
             "</workflow-app>";
 
+    @Override
     protected void setUp() throws Exception {
         super.setUp();
         new Services().init();
     }
 
+    @Override
     protected void tearDown() throws Exception {
         Services.get().destroy();
         super.tearDown();
@@ -112,7 +114,7 @@ public class TestSchemaService extends XTestCase {
         Validator validator = wss.getSchema(SchemaName.WORKFLOW).newValidator();
         validator.validate(new StreamSource(new StringReader(APP_V25)));
     }
-    
+
     public void testExtSchema() throws Exception {
         Services.get().destroy();
         setSystemProperty(SchemaService.WF_CONF_EXT_SCHEMAS, "wf-ext-schema.xsd");
@@ -168,7 +170,7 @@ public class TestSchemaService extends XTestCase {
         SchemaService wss = Services.get().get(SchemaService.class);
         Validator validator = wss.getSchema(SchemaName.COORDINATOR)
                 .newValidator();
-        String COORD_APP1 = "<coordinator-app name='NAME' frequency='${coord:days(1)}' start='2009-02-01T01:00Z' end='2009-02-03T23:59Z' timezone='UTC' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='uri:oozie:coordinator:0.1' xmlns:sla='uri:oozie:sla:0.1'> "
+        String COORD_APP1 = "<coordinator-app name='NAME' frequency='${coord:days(1)}' start='2009-02-01T01:00Z' end='2009-02-03T23:59Z' timezone='UTC' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='uri:oozie:coordinator:0.2' xmlns:sla='uri:oozie:sla:0.1'> "
                 + "<controls> <timeout>10</timeout> <concurrency>2</concurrency> <execution>LIFO</execution> </controls> <datasets> <dataset name='a' frequency='${coord:days(7)}' initial-instance='2009-02-01T01:00Z' timezone='UTC'> <uri-template>file:///tmp/coord/workflows/${YEAR}/${DAY}</uri-template> </dataset> <dataset name='local_a' frequency='${coord:days(7)}' initial-instance='2009-02-01T01:00Z' timezone='UTC'> <uri-template>file:///tmp/coord/workflows/${YEAR}/${DAY}</uri-template> </dataset> </datasets> <input-events> <data-in name='A' dataset='a'> <instance>${coord:latest(0)}</instance> </data-in>  </input-events> <output-events> <data-out name='LOCAL_A' dataset='local_a'> <instance>${coord:current(-1)}</instance> </data-out> </output-events> <action> <workflow> <app-path>hdfs:///tmp/workflows/</app-path> <configuration> <property> <name>inputA</name> <value>${coord:dataIn('A')}</value> </property> <property> <name>inputB</name> <value>${coord:dataOut('LOCAL_A')}</value> </property></configuration> </workflow>  "
                 + "<sla:info> <sla:app-name>5</sla:app-name> <sla:nominal-time>2009-03-06T010:00Z</sla:nominal-time> "
                 + "<sla:should-start>5</sla:should-start> <sla:should-end>50</sla:should-end> "

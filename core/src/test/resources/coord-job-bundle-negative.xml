@@ -14,7 +14,7 @@
 -->
 <coordinator-app name="COORD-TEST" frequency="${coord:days(1)}"
 	start="${START_TIME_XXX}" end="${END_TIME_YYY}" timezone="UTC"
-	xmlns="uri:oozie:coordinator:0.1">
+	xmlns="uri:oozie:coordinator:0.2">
 	<controls>
 		<concurrency>2</concurrency>
 		<execution>LIFO</execution>

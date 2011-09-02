@@ -87,7 +87,7 @@
             org.apache.oozie.service.DagEngineService,
             org.apache.oozie.service.CoordMaterializeTriggerService,
             org.apache.oozie.service.StatusTransitService,
-            org.apache.oozie.service.BundlePauseStartService
+            org.apache.oozie.service.PauseTransitService
         </value>
         <description>
             All services to be created and managed by Oozie Services singleton.
@@ -1103,6 +1103,37 @@
         </description>
     </property>
 
+    <!-- StatusTransitService -->
+    <property>
+        <name>oozie.service.StatusTransitService.statusTransit.interval</name>
+        <value>60</value>
+        <description>
+            The frequency in seconds at which the StatusTransitService will run.
+        </description>
+    </property>
+    
+    <property>
+        <name>oozie.service.StatusTransitService.backward.support.for.coord.status</name>
+        <value>false</value>
+        <description>
+            true, if coordinator job submits using 'uri:oozie:coordinator:0.1' namespace and wants to keep Oozie 2.x status transit.
+            if set true,
+            1. SUCCEEDED state in coordinator job means materialization done.
+            2. No DONEWITHERROR state in coordinator job
+            3. No PAUSED or PREPPAUSED state in coordinator job
+            4. PREPSUSPENDED becomes SUSPENDED in coordinator job
+        </description>
+    </property>
+    
+    <!-- PauseTransitService -->
+    <property>
+        <name>oozie.service.PauseTransitService.PauseTransit.interval</name>
+        <value>60</value>
+        <description>
+            The frequency in seconds at which the PauseTransitService will run.
+        </description>
+    </property>
+    
     <!-- HadoopActionExecutor -->
     <!-- This is common to the subclasses action executors for map-reduce and pig -->
 

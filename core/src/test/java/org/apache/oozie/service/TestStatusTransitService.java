@@ -37,6 +37,7 @@ import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobInsertJPAExecutor;
@@ -90,6 +91,68 @@ public class TestStatusTransitService extends XDataTestCase {
         CoordJobGetJPAExecutor coordGetCmd = new CoordJobGetJPAExecutor(job.getId());
         CoordinatorJobBean coordJob = jpaService.execute(coordGetCmd);
         assertEquals(CoordinatorJob.Status.SUCCEEDED, coordJob.getStatus());
+    }
+
+    /**
+     * Tests functionality of the StatusTransitService Runnable command. </p> Insert a coordinator job with RUNNING and
+     * pending true and coordinator actions with pending false, but one of action is KILLED.
+     * Then, runs the StatusTransitService runnable and ensures the job status changes to DONEWITHERROR.
+     *
+     * @throws Exception
+     */
+    public void testCoordStatusTransitServiceDoneWithError() throws Exception {
+
+        Date start = DateUtils.parseDateUTC("2009-02-01T01:00Z");
+        Date end = DateUtils.parseDateUTC("2009-02-02T23:59Z");
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, start, end, true, true, 3);
+        addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.KILLED, "coord-action-get.xml", 0);
+        addRecordToCoordActionTable(job.getId(), 2, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
+        addRecordToCoordActionTable(job.getId(), 3, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
+
+        Runnable runnable = new StatusTransitRunnable();
+        runnable.run();
+        Thread.sleep(1000);
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        CoordJobGetJPAExecutor coordGetCmd = new CoordJobGetJPAExecutor(job.getId());
+        CoordinatorJobBean coordJob = jpaService.execute(coordGetCmd);
+        assertEquals(CoordinatorJob.Status.DONEWITHERROR, coordJob.getStatus());
+    }
+
+    /**
+     * Tests functionality of the StatusTransitService Runnable command. </p> Insert a coordinator job with RUNNING and
+     * pending true and coordinator actions with pending false, but one of action is KILLED.
+     * Set oozie.service.StatusTransitService.backward.support.for.coord.status=true
+     * and use uri:oozie:coordinator:0.1 namespace, then, runs the StatusTransitService runnable and
+     * ensures the job status stay in RUNNING.
+     *
+     * @throws Exception
+     */
+    public void testCoordStatusTransitServiceNoDoneWithErrorForBackwardSupport() throws Exception {
+        Services.get().destroy();
+        setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_COORD_STATUS, "true");
+        new Services().init();
+
+        Date start = DateUtils.parseDateUTC("2009-02-01T01:00Z");
+        Date end = DateUtils.parseDateUTC("2009-02-02T23:59Z");
+        CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, start, end, true, true, 3);
+
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+        coordJob.setAppNamespace(SchemaService.COORDINATOR_NAMESPACE_URI_1);
+        jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
+
+        addRecordToCoordActionTable(coordJob.getId(), 1, CoordinatorAction.Status.KILLED, "coord-action-get.xml", 0);
+        addRecordToCoordActionTable(coordJob.getId(), 2, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
+        addRecordToCoordActionTable(coordJob.getId(), 3, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
+
+        Runnable runnable = new StatusTransitRunnable();
+        runnable.run();
+        Thread.sleep(1000);
+
+        CoordJobGetJPAExecutor coordGetCmd = new CoordJobGetJPAExecutor(coordJob.getId());
+        coordJob = jpaService.execute(coordGetCmd);
+        assertEquals(CoordinatorJob.Status.RUNNING, coordJob.getStatus());
     }
 
     /**

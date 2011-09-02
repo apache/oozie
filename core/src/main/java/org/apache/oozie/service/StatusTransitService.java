@@ -60,6 +60,7 @@ import org.apache.oozie.util.XLog;
 public class StatusTransitService implements Service {
     public static final String CONF_PREFIX = Service.CONF_PREFIX + "StatusTransitService.";
     public static final String CONF_STATUSTRANSIT_INTERVAL = CONF_PREFIX + "statusTransit.interval";
+    public static final String CONF_BACKWARD_SUPPORT_FOR_COORD_STATUS = CONF_PREFIX + "backward.support.for.coord.status";
     private static int limit = -1;
     private static Date lastInstanceStartTime = null;
     private final static XLog LOG = XLog.getLog(StatusTransitRunnable.class);
@@ -230,8 +231,15 @@ public class StatusTransitService implements Service {
         private void updateCoordJobStatus(List<CoordinatorJobBean> CoordList) throws JPAExecutorException,
                 CommandException {
             if (CoordList != null) {
+                Configuration conf = Services.get().getConf();
+                boolean backwardSupportForCoordStatus = conf.getBoolean(CONF_BACKWARD_SUPPORT_FOR_COORD_STATUS, false);
 
                 for (CoordinatorJobBean coordJob : CoordList) {
+                    // if namespace 0.1 is used and backward support is true, then ignore this coord job
+                    if (backwardSupportForCoordStatus == true && coordJob.getAppNamespace() != null
+                            && coordJob.getAppNamespace().equals(SchemaService.COORDINATOR_NAMESPACE_URI_1)) {
+                        continue;
+                    }
                     String jobId = coordJob.getId();
                     Job.Status[] coordStatus = new Job.Status[1];
                     coordStatus[0] = coordJob.getStatus();
@@ -260,11 +268,13 @@ public class StatusTransitService implements Service {
                         continue;
                     }
 
-                    if (coordJob.isDoneMaterialization() && checkCoordTerminalStatus(coordActionStatus, coordActions, coordStatus)) {
+                    if (coordJob.isDoneMaterialization()
+                            && checkCoordTerminalStatus(coordActionStatus, coordActions, coordStatus)) {
                         LOG.info("Coord job [" + jobId + "] Status set to " + coordStatus[0].toString());
                         updateCoordJob(coordActionStatus, coordActions, coordJob, coordStatus[0]);
                     }
-                    else if (coordJob.isDoneMaterialization() && checkCoordSuspendStatus(coordActionStatus, coordActions, coordStatus)) {
+                    else if (coordJob.isDoneMaterialization()
+                            && checkCoordSuspendStatus(coordActionStatus, coordActions, coordStatus)) {
                         LOG.info("Coord job [" + jobId + "] Status set to " + coordStatus[0].toString());
                         updateCoordJob(coordActionStatus, coordActions, coordJob, coordStatus[0]);
                     }
