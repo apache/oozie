@@ -16,9 +16,9 @@
 <project>
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>com.yahoo.oozie</groupId> <!-- OOZIE_GROUP_ID -->
+        <groupId>com.yahoo.oozie</groupId>
         <artifactId>oozie-main</artifactId>
-        <version>2.3.0-SNAPSHOT</version> <!-- OOZIE_VERSION -->
+        <version>2.3.0-SNAPSHOT</version>
     </parent>
     <artifactId>oozie-core</artifactId>
     <description>Oozie Core</description>
@@ -76,24 +76,28 @@
         </dependency>
 
         <dependency>
-            <groupId>${hadoopGroupId}</groupId>
+            <!-- groupId to be correct by GH-0226 -->
+            <groupId>com.yahoo.hadoop</groupId>
             <artifactId>hadoop-core</artifactId>
-            <scope>${hadoopScope}</scope>
+            <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>${hadoopGroupId}</groupId>
+            <!-- groupId to be correct by GH-0226 -->
+            <groupId>com.yahoo.hadoop</groupId>
             <artifactId>hadoop-test</artifactId>
             <scope>test</scope>
         </dependency>
 
         <dependency>
-            <groupId>${hadoopGroupId}</groupId>
+            <!-- groupId to be correct by GH-0226 -->
+            <groupId>com.yahoo.hadoop</groupId>
             <artifactId>hadoop-streaming</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>${pigGroupId}</groupId>
-            <artifactId>${pigArtifactId}</artifactId>
+            <!-- groupId to be correct by GH-0226 -->
+            <groupId>com.yahoo.hadoop</groupId>
+            <artifactId>pig</artifactId>
             <scope>provided</scope>
         </dependency>
 
@@ -259,47 +263,48 @@
                     </descriptors>
                 </configuration>
             </plugin>
-           <plugin>
-            <artifactId>maven-antrun-plugin</artifactId>
-            <executions>
-                <execution>
-               <phase>process-classes</phase>
-               <configuration>
-                   <tasks>
-                  <path id="cp">
-                      <path refid="maven.test.classpath"/>
-                      <path refid="maven.compile.classpath"/>
-                      <path refid="maven.dependency.classpath"/>
-                  </path>
-                  <taskdef name="openjpac" classname=
-                      "org.apache.openjpa.ant.PCEnhancerTask">
-                      <classpath refid="cp"/>
-                  </taskdef>
-                  <fileset id="enhance.path.ref" dir="../core/target/classes">
-                      <include name="**/JsonWorkflowJob.class"/>
-                      <include name="**/JsonWorkflowAction.class"/>
-                      <include name="**/JsonCoordinatorJob.class"/>
-                      <include name="**/JsonCoordinatorAction.class"/>
-                      <include name="**/JsonSLAEvent.class"/>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>process-classes</phase>
+                        <configuration>
+                            <target>
+                                <path id="cp">
+                                    <path refid="maven.test.classpath"/>
+                                    <path refid="maven.compile.classpath"/>
+                                    <path refid="maven.dependency.classpath"/>
+                                </path>
+                                <taskdef name="openjpac" classname=
+                                        "org.apache.openjpa.ant.PCEnhancerTask">
+                                    <classpath refid="cp"/>
+                                </taskdef>
+                                <fileset id="enhance.path.ref" dir="../core/target/classes">
+                                    <include name="**/JsonWorkflowJob.class"/>
+                                    <include name="**/JsonWorkflowAction.class"/>
+                                    <include name="**/JsonCoordinatorJob.class"/>
+                                    <include name="**/JsonCoordinatorAction.class"/>
+                                    <include name="**/JsonSLAEvent.class"/>
 
-                      <include name="**/WorkflowJobBean.class"/>
-                      <include name="**/WorkflowActionBean.class"/>
-                      <include name="**/CoordinatorJobBean.class"/>
-                      <include name="**/CoordinatorActionBean.class"/>
-                      <include name="**/SLAEventBean.class"/>
-                  </fileset>
-                  <openjpac>
-                      <classpath refid="cp"/>
-                      <fileset refid="enhance.path.ref"/>
-                  </openjpac>
-                   </tasks>
-               </configuration>
-               <goals>
-                   <goal>run</goal>
-               </goals>
-                </execution>
-            </executions>
-           </plugin>
+                                    <include name="**/WorkflowJobBean.class"/>
+                                    <include name="**/WorkflowActionBean.class"/>
+                                    <include name="**/CoordinatorJobBean.class"/>
+                                    <include name="**/CoordinatorActionBean.class"/>
+                                    <include name="**/SLAEventBean.class"/>
+                                </fileset>
+                                <openjpac>
+                                    <classpath refid="cp"/>
+                                    <fileset refid="enhance.path.ref"/>
+                                </openjpac>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
@@ -308,6 +313,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.7</version>
                 <configuration>
                     <linksource>true</linksource>
                     <quiet>true</quiet>

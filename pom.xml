@@ -16,10 +16,8 @@
 <project>
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.yahoo.oozie</groupId>
-    <!-- OOZIE_GROUP_ID -->
     <artifactId>oozie-main</artifactId>
     <version>2.3.0-SNAPSHOT</version>
-    <!-- OOZIE_VERSION -->
     <description>Oozie Main</description>
     <name>Oozie Main</name>
     <packaging>pom</packaging>
@@ -40,86 +38,12 @@
         <!-- to be able to run a single test case from the main project -->
         <failIfNoTests>false</failIfNoTests>
 
-        <hadoop20>false</hadoop20>
-
-        <pigArtifactId>pig</pigArtifactId>
-
-        <hadoopGroupId>com.yahoo.hadoop</hadoopGroupId>
-
-        <hadoopVersion>0.20.104.2</hadoopVersion>
-
-        <pigGroupId>com.yahoo.hadoop</pigGroupId>
-
-        <pigVersion>0.7.0</pigVersion>
-
-        <hadoopScope>provided</hadoopScope>
-
-        <oozie.test.forkMode>once</oozie.test.forkMode>
-        
-        <oozie.test.config.file></oozie.test.config.file>
-
-        <oozie.test.dir>/tmp</oozie.test.dir>
-
-        <oozie.test.job.tracker>localhost:9001</oozie.test.job.tracker>
-
-        <oozie.test.name.node>hdfs://localhost:9000</oozie.test.name.node>
-
-        <oozie.test.hadoop.minicluster>true</oozie.test.hadoop.minicluster>
-        <hadoop.log.dir>/tmp</hadoop.log.dir>
-
-        <oozie.test.hadoop.pipes>false</oozie.test.hadoop.pipes>
-
-        <oozie.test.db>hsqldb</oozie.test.db>
-
-        <oozie.test.user.oozie>${user.name}</oozie.test.user.oozie>
-        <oozie.test.user.test>test</oozie.test.user.test>
-        <oozie.test.user.test2>test2</oozie.test.user.test2>
-        <oozie.test.user.test3>test3</oozie.test.user.test3>
-        <oozie.test.group>testg</oozie.test.group>
-
-        <oozie.test.hadoop.security>simple</oozie.test.hadoop.security>
-
-        <oozie.test.kerberos.keytab.file>${user.home}/oozie.keytab</oozie.test.kerberos.keytab.file>
-        <oozie.test.kerberos.realm>LOCALHOST</oozie.test.kerberos.realm>
-        <oozie.test.kerberos.oozie.principal>${user.name}/localhost</oozie.test.kerberos.oozie.principal>
-        <oozie.test.kerberos.jobtracker.principal>mapred/localhost</oozie.test.kerberos.jobtracker.principal>
-        <oozie.test.kerberos.namenode.principal>hdfs/localhost</oozie.test.kerberos.namenode.principal>
-
         <internal.maven.repository>file:///tmp/internalmavenrepo</internal.maven.repository>
 
         <!-- platform encoding override -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <!-- Dependencies versions -->
-        
-        <json-simple.version>1.1</json-simple.version>
-        <commons-cli.version>1.2</commons-cli.version>
-        <junit.version>3.8.1</junit.version>
-        <persistence-api.version>1.0</persistence-api.version>
-        <openjpa-persistence.version>1.2.1</openjpa-persistence.version>
-        <openjpa-jdbc.version>1.2.1</openjpa-jdbc.version>
-        <openjpa-persistence-jdbc.version>1.2.1</openjpa-persistence-jdbc.version>
-        <commons-codec.version>1.3</commons-codec.version>
-        <hadoop-core.version>${hadoopVersion}</hadoop-core.version>
-        <hadoop-test.version>${hadoopVersion}</hadoop-test.version>
-        <hadoop-streaming.version>${hadoopVersion}</hadoop-streaming.version>
-        <pig-core.version>${pigVersion}</pig-core.version>
-        <jline.version>0.9.94</jline.version>
-        <slf4j-log4j12.version>1.4.3</slf4j-log4j12.version>
-        <json-simple.version>1.1</json-simple.version>
-        <commons-logging.version>1.1</commons-logging.version>
-        <log4j.version>1.2.15</log4j.version>
-        <servlet-api.version>2.5</servlet-api.version>
-        <jsp-api.version>2.0</jsp-api.version>
-        <commons-el.version>1.0</commons-el.version>
-        <jdom.version>1.1</jdom.version>
-        <jetty.version>6.1.14</jetty.version>
-        <commons-pool.version>1.5.4</commons-pool.version>
-        <commons-dbcp.version>1.4</commons-dbcp.version>
-        <hsqldb.version>1.8.0.7</hsqldb.version>
-        <mysql-connector-java.version>5.1.6</mysql-connector-java.version>
-        <ojdbc6.version>11.2.0.1.0</ojdbc6.version>
     </properties>
 
     <modules>
@@ -193,42 +117,81 @@
     <dependencyManagement>
         <dependencies>
 
+            <dependency>
+                <groupId>com.yahoo.oozie</groupId>
+                <artifactId>oozie-client</artifactId>
+                <version>2.3.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>com.yahoo.oozie</groupId>
+                <artifactId>oozie-core</artifactId>
+                <version>2.3.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>com.yahoo.oozie</groupId>
+                <artifactId>oozie-examples</artifactId>
+                <version>2.3.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>com.yahoo.oozie</groupId>
+                <artifactId>oozie-sharelib</artifactId>
+                <version>2.3.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>com.yahoo.oozie</groupId>
+                <artifactId>oozie-docs</artifactId>
+                <version>2.3.0-SNAPSHOT</version>
+                <type>war</type>
+            </dependency>
+            <dependency>
+                <groupId>com.yahoo.oozie</groupId>
+                <artifactId>oozie-webapp</artifactId>
+                <version>2.3.0-SNAPSHOT</version>
+                <type>war</type>
+            </dependency>
+            
             <!-- client -->
             <dependency>
                 <groupId>com.googlecode.json-simple</groupId>
                 <artifactId>json-simple</artifactId>
-                <version>${json-simple.version}</version>
+                <version>1.1</version>
             </dependency>
 
             <dependency>
                 <groupId>commons-cli</groupId>
                 <artifactId>commons-cli</artifactId>
-                <version>${commons-cli.version}</version>
+                <version>1.2</version>
             </dependency>
 
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
-                <version>${junit.version}</version>
+                <version>3.8.1</version>
             </dependency>
 
             <dependency>
                 <groupId>javax.persistence</groupId>
                 <artifactId>persistence-api</artifactId>
-                <version>${persistence-api.version}</version>
+                <version>1.0</version>
             </dependency>
 
             <!-- core -->
             <dependency>
                 <groupId>org.apache.openjpa</groupId>
                 <artifactId>openjpa-persistence</artifactId>
-                <version>${openjpa-persistence.version}</version>
+                <version>1.2.1</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>junit</groupId>
+                        <artifactId>junit</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
 
             <dependency>
                 <groupId>org.apache.openjpa</groupId>
                 <artifactId>openjpa-jdbc</artifactId>
-                <version>${openjpa-jdbc.version}</version>
+                <version>1.2.1</version>
                 <exclusions>
                     <exclusion>
                         <groupId>postgresql</groupId>
@@ -240,19 +203,20 @@
             <dependency>
                 <groupId>org.apache.openjpa</groupId>
                 <artifactId>openjpa-persistence-jdbc</artifactId>
-                <version>${openjpa-persistence-jdbc.version}</version>
+                <version>1.2.1</version>
             </dependency>
 
             <dependency>
                 <groupId>commons-codec</groupId>
                 <artifactId>commons-codec</artifactId>
-                <version>${commons-codec.version}</version>
+                <version>1.3</version>
             </dependency>
             
             <dependency>
-                <groupId>${hadoopGroupId}</groupId>
+                <!-- groupId to be correct by GH-0226 -->
+                <groupId>com.yahoo.hadoop</groupId>
                 <artifactId>hadoop-core</artifactId>
-                <version>${hadoop-core.version}</version>
+                <version>0.20.104.2</version>
                 <exclusions>
                     <exclusion>
                         <groupId>org.apache.commons</groupId>
@@ -262,9 +226,10 @@
             </dependency>
 
             <dependency>
-                <groupId>${hadoopGroupId}</groupId>
+                <!-- groupId to be correct by GH-0226 -->
+                <groupId>com.yahoo.hadoop</groupId>
                 <artifactId>hadoop-test</artifactId>
-                <version>${hadoop-test.version}</version>
+                <version>0.20.104.2</version>
                 <exclusions>
                     <exclusion>
                         <groupId>org.apache.commons</groupId>
@@ -286,9 +251,10 @@
             </dependency>
 
             <dependency>
-                <groupId>${hadoopGroupId}</groupId>
+                <!-- groupId to be correct by GH-0226 -->
+                <groupId>com.yahoo.hadoop</groupId>
                 <artifactId>hadoop-streaming</artifactId>
-                <version>${hadoop-streaming.version}</version>
+                <version>0.20.104.2</version>
                 <exclusions>
                     <exclusion>
                         <groupId>org.apache.commons</groupId>
@@ -298,14 +264,17 @@
             </dependency>
 
             <dependency>
-                <groupId>${pigGroupId}</groupId>
-                <artifactId>${pigArtifactId}</artifactId>
-                <version>${pig-core.version}</version>
+                <!-- groupId to be correct by GH-0226 -->
+                <groupId>com.yahoo.hadoop</groupId>
+                <artifactId>pig</artifactId>
+                <version>0.7.0</version>
                 <exclusions>
                     <exclusion>
-                        <groupId>${hadoopGroupId}</groupId>
+                        <!-- groupId to be correct by GH-0226 -->
+                        <groupId>com.yahoo.hadoop</groupId>
                         <artifactId>hadoop-core</artifactId>
                     </exclusion>
+                    <!-- this exclusion to be removed by GH-0226 -->
                     <exclusion>
                         <groupId>org.apache.hadoop</groupId>
                         <artifactId>hadoop-core</artifactId>
@@ -316,25 +285,25 @@
             <dependency>
                 <groupId>jline</groupId>
                 <artifactId>jline</artifactId>
-                <version>${jline.version}</version>
+                <version>0.9.94</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>junit</groupId>
+                        <artifactId>junit</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
 
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-log4j12</artifactId>
-                <version>${slf4j-log4j12.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.googlecode.json-simple</groupId>
-                <artifactId>json-simple</artifactId>
-                <version>${json-simple.version}</version>
+                <version>1.4.3</version>
             </dependency>
 
             <dependency>
                 <groupId>commons-logging</groupId>
                 <artifactId>commons-logging</artifactId>
-                <version>${commons-logging.version}</version>
+                <version>1.1</version>
                 <exclusions>
                     <exclusion>
                         <groupId>avalon-framework</groupId>
@@ -354,7 +323,7 @@
             <dependency>
                 <groupId>log4j</groupId>
                 <artifactId>log4j</artifactId>
-                <version>${log4j.version}</version>
+                <version>1.2.15</version>
                 <exclusions>
                     <exclusion>
                         <groupId>com.sun.jdmk</groupId>
@@ -382,61 +351,61 @@
             <dependency>
                 <groupId>javax.servlet</groupId>
                 <artifactId>servlet-api</artifactId>
-                <version>${servlet-api.version}</version>
+                <version>2.5</version>
             </dependency>
 
             <dependency>
                 <groupId>javax.servlet</groupId>
                 <artifactId>jsp-api</artifactId>
-                <version>${jsp-api.version}</version>
+                <version>2.0</version>
             </dependency>
 
             <dependency>
                 <groupId>commons-el</groupId>
                 <artifactId>commons-el</artifactId>
-                <version>${commons-el.version}</version>
+                <version>1.0</version>
             </dependency>
 
             <dependency>
                 <groupId>org.jdom</groupId>
                 <artifactId>jdom</artifactId>
-                <version>${jdom.version}</version>
+                <version>1.1</version>
             </dependency>
 
             <dependency>
                 <groupId>org.mortbay.jetty</groupId>
                 <artifactId>jetty</artifactId>
-                <version>${jetty.version}</version>
+                <version>6.1.14</version>
             </dependency>
 
             <dependency>
                 <groupId>commons-pool</groupId>
                 <artifactId>commons-pool</artifactId>
-                <version>${commons-pool.version}</version>
+                <version>1.5.4</version>
             </dependency>
             
             <dependency>
                 <groupId>commons-dbcp</groupId>
                 <artifactId>commons-dbcp</artifactId>
-                <version>${commons-dbcp.version}</version>
+                <version>1.4</version>
             </dependency>
 
             <dependency>
                 <groupId>hsqldb</groupId>
                 <artifactId>hsqldb</artifactId>
-                <version>${hsqldb.version}</version>
+                <version>1.8.0.7</version>
             </dependency>
 
             <dependency>
                 <groupId>mysql</groupId>
                 <artifactId>mysql-connector-java</artifactId>
-                <version>${mysql-connector-java.version}</version>
+                <version>5.1.6</version>
             </dependency>
 
             <dependency>
                 <groupId>com.oracle</groupId>
                 <artifactId>ojdbc6</artifactId>
-                <version>${ojdbc6.version}</version>
+                <version>11.2.0.1.0</version>
             </dependency>
 
             <dependency>
@@ -450,6 +419,46 @@
     </dependencyManagement>
 
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>2.3.2</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>2.6</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>2.3.1</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <version>2.2-beta-5</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>2.7</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>build-helper-maven-plugin</artifactId>
+                    <version>1.5</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-antrun-plugin</artifactId>
+                    <version>1.6</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -465,104 +474,19 @@
                 <configuration>
                     <forkMode>${oozie.test.forkMode}</forkMode>
                     <argLine>-Xmx1024m</argLine>
-                    <systemProperties>
-                        <property>
-                            <name>oozie.test.config.file</name>
-                            <value>${oozie.test.config.file}</value>
-                        </property>
-                        <property>
-                            <name>oozie.test.user.oozie</name>
-                            <value>${oozie.test.user.oozie}</value>
-                        </property>
-                        <property>
-                            <name>oozie.test.user.test</name>
-                            <value>${oozie.test.user.test}</value>
-                        </property>
-                        <property>
-                            <name>oozie.test.user.test2</name>
-                            <value>${oozie.test.user.test2}</value>
-                        </property>
-                        <property>
-                            <name>oozie.test.user.test3</name>
-                            <value>${oozie.test.user.test3}</value>
-                        </property>
-                        <property>
-                            <name>oozie.test.group</name>
-                            <value>${oozie.test.group}</value>
-                        </property>
-                        <property>
-                            <name>oozie.test.dir</name>
-                            <value>${oozie.test.dir}</value>
-                        </property>
-                        <property>
-                            <name>hadoop20</name>
-                            <value>${hadoop20}</value>
-                        </property>
-                        <property>
-                            <name>hadoop.version</name>
-                            <value>${hadoopVersion}</value>
-                        </property>
-                        <property>
-                            <name>oozie.test.job.tracker</name>
-                            <value>${oozie.test.job.tracker}</value>
-                        </property>
-                        <property>
-                            <name>oozie.test.name.node</name>
-                            <value>${oozie.test.name.node}</value>
-                        </property>
-                        <property>
-                            <name>oozie.test.kerberos.keytab.file</name>
-                            <value>${oozie.test.kerberos.keytab.file}</value>
-                        </property>
-                        <property>
-                            <name>oozie.test.kerberos.realm</name>
-                            <value>${oozie.test.kerberos.realm}</value>
-                        </property>
-                        <property>
-                            <name>oozie.test.kerberos.oozie.principal</name>
-                            <value>${oozie.test.kerberos.oozie.principal}</value>
-                        </property>
-                        <property>
-                            <name>oozie.test.kerberos.jobtracker.principal</name>
-                            <value>${oozie.test.kerberos.jobtracker.principal}</value>
-                        </property>
-                        <property>
-                            <name>oozie.test.kerberos.namenode.principal</name>
-                            <value>${oozie.test.kerberos.namenode.principal}</value>
-                        </property>
-                        <property>
-                            <name>oozie.test.hadoop.minicluster</name>
-                            <value>${oozie.test.hadoop.minicluster}</value>
-                        </property>
-                        <property>
-                            <name>hadoop.log.dir</name>
-                            <value>${hadoop.log.dir}</value>
-                        </property>
-                        <property>
-                            <name>oozie.test.hadoop.security</name>
-                            <value>${oozie.test.hadoop.security}</value>
-                        </property>
-                        <property>
-                            <name>oozie.test.hadoop.pipes</name>
-                            <value>${oozie.test.hadoop.pipes}</value>
-                        </property>
-                        <property>
-                            <name>oozie.test.db</name>
-                            <value>${oozie.test.db}</value>
-                        </property>
-                    </systemProperties>
+                    <systemPropertiesVariables>
+                        <hadoop.log.dir>/tmp</hadoop.log.dir>
+                    </systemPropertiesVariables>
                 </configuration>
             </plugin>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.2-beta-3</version>
                 <configuration>
                     <descriptors>
                         <descriptor>src/main/assemblies/empty.xml</descriptor>
                     </descriptors>
                 </configuration>
             </plugin>
-            <!-- ADDITIONAL PLUGINS -->
         </plugins>
     </build>
 

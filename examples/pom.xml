@@ -16,9 +16,9 @@
 <project>
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>com.yahoo.oozie</groupId> <!-- OOZIE_GROUP_ID -->
+        <groupId>com.yahoo.oozie</groupId>
         <artifactId>oozie-main</artifactId>
-        <version>2.3.0-SNAPSHOT</version> <!-- OOZIE_VERSION -->
+        <version>2.3.0-SNAPSHOT</version>
     </parent>
     <artifactId>oozie-examples</artifactId>
     <description>Oozie Examples</description>
@@ -40,34 +40,33 @@
     <dependencies>
 
         <dependency>
-            <groupId>com.yahoo.oozie</groupId> <!-- OOZIE_GROUP_ID -->
+            <groupId>com.yahoo.oozie</groupId>
             <artifactId>oozie-core</artifactId>
-            <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
 
         <dependency>
-            <groupId>com.yahoo.oozie</groupId> <!-- OOZIE_GROUP_ID -->
+            <groupId>com.yahoo.oozie</groupId>
             <artifactId>oozie-client</artifactId>
-            <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
 
         <dependency>
-            <groupId>com.yahoo.oozie</groupId> <!-- OOZIE_GROUP_ID -->
+            <groupId>com.yahoo.oozie</groupId>
             <artifactId>oozie-sharelib</artifactId>
-            <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>
 
         <dependency>
-            <groupId>${hadoopGroupId}</groupId>
+            <!-- groupId to be correct by GH-0226 -->
+            <groupId>com.yahoo.hadoop</groupId>
             <artifactId>hadoop-core</artifactId>
             <scope>provided</scope>
         </dependency>
 
         <dependency>
-            <groupId>${hadoopGroupId}</groupId>
+            <!-- groupId to be correct by GH-0226 -->
+            <groupId>com.yahoo.hadoop</groupId>
             <artifactId>hadoop-test</artifactId>
             <scope>test</scope>
         </dependency>
@@ -82,6 +81,7 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <configuration>
                     <descriptors>
