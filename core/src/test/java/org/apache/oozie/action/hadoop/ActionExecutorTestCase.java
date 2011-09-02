@@ -41,8 +41,10 @@ import org.apache.oozie.workflow.lite.LiteWorkflowApp;
 import org.apache.oozie.workflow.lite.StartNodeDef;
 
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.StringReader;
+import java.io.Writer;
 import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.HashMap;
@@ -201,6 +203,12 @@ public abstract class ActionExecutorTestCase extends XFsTestCase {
      */
     protected WorkflowJobBean createBaseWorkflow(XConfiguration protoConf, String actionName) throws Exception {
         Path appUri = new Path(getAppPath(), "workflow.xml");
+
+        String content = "<workflow-app xmlns='uri:oozie:workflow:0.1'  xmlns:sla='uri:oozie:sla:0.1' name='no-op-wf'>";
+        content += "<start to='end' />";
+        content += "<end name='end' /></workflow-app>";
+        writeToFile(content, getAppPath(), "workflow.xml");
+
         WorkflowApp app = new LiteWorkflowApp("testApp", "<workflow-app/>", new StartNodeDef("end"))
                 .addNode(new EndNodeDef("end"));
         XConfiguration wfConf = new XConfiguration();
@@ -232,6 +240,8 @@ public abstract class ActionExecutorTestCase extends XFsTestCase {
         Path appUri = new Path(getAppPath(), "workflow.xml");
         Reader reader = IOUtils.getResourceAsReader("wf-credentials.xml", -1);
         String wfxml = IOUtils.getReaderAsString(reader, -1);
+
+        writeToFile(wfxml, getAppPath(), "workflow.xml");
 
         WorkflowApp app = new LiteWorkflowApp("test-wf-cred", wfxml, new StartNodeDef("start")).addNode(new EndNodeDef(
                 "end"));
@@ -271,6 +281,13 @@ public abstract class ActionExecutorTestCase extends XFsTestCase {
         workflow.setAuthToken(authToken);
         workflow.setWorkflowInstance(wfInstance);
         return workflow;
+    }
+
+    private void writeToFile(String content, Path appPath, String fileName) throws IOException {
+        FileSystem fs = getFileSystem();
+        Writer writer = new OutputStreamWriter(fs.create(new Path(appPath, fileName), true));
+        writer.write(content);
+        writer.close();
     }
 
 }

@@ -101,7 +101,14 @@ public abstract class WorkflowAppService implements Service {
             URI uri = new URI(appPath);
             FileSystem fs = Services.get().get(HadoopAccessorService.class).
                     createFileSystem(user, group, uri, new Configuration());
-            Reader reader = new InputStreamReader(fs.open(new Path(uri.getPath())));
+
+            // app path could be a directory
+            Path path = new Path(uri.getPath());
+            if (!fs.isFile(path)) {
+                path = new Path(path, "workflow.xml");
+            }
+
+            Reader reader = new InputStreamReader(fs.open(path));
             StringWriter writer = new StringWriter();
             IOUtils.copyCharStream(reader, writer);
             return writer.toString();
@@ -156,12 +163,18 @@ public abstract class WorkflowAppService implements Service {
 
             List<String> filePaths;
             if (isWorkflowJob) {
-                filePaths = getLibFiles(fs, new Path(appPath.getParent(), "lib"));
+                // app path could be a directory
+                Path path = new Path(uri.getPath());
+                if (!fs.isFile(path)) {
+                    filePaths = getLibFiles(fs, new Path(appPath + "/lib"));
+                } else {
+                    filePaths = getLibFiles(fs, new Path(appPath.getParent(), "lib"));
+                }
             }
             else {
                 filePaths = new ArrayList<String>();
             }
-            
+
             if (jobConf.get(OozieClient.LIBPATH) != null) {
                 Path libPath = new Path(jobConf.get(OozieClient.LIBPATH));
                 List<String> libPaths = getLibFiles(fs, libPath);

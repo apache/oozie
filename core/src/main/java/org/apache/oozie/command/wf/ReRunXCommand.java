@@ -15,6 +15,8 @@
 package org.apache.oozie.command.wf;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -112,10 +114,18 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
             XConfiguration protoActionConf = wps.createProtoActionConf(conf, authToken, true);
             WorkflowLib workflowLib = Services.get().get(WorkflowStoreService.class).getWorkflowLibWithNoDB();
 
-            Path configDefault = new Path(new Path(conf.get(OozieClient.APP_PATH)).getParent(),
-                    SubmitCommand.CONFIG_DEFAULT);
+            URI uri = new URI(conf.get(OozieClient.APP_PATH));
             FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(wfBean.getUser(),
-                    wfBean.getGroup(), configDefault.toUri(), new Configuration());
+                    wfBean.getGroup(), uri, new Configuration());
+
+            Path configDefault = null;
+            // app path could be a directory
+            Path path = new Path(uri.getPath());
+            if (!fs.isFile(path)) {
+                configDefault = new Path(path, SubmitCommand.CONFIG_DEFAULT);
+            } else {
+                configDefault = new Path(path.getParent(), SubmitCommand.CONFIG_DEFAULT);
+            }
 
             if (fs.exists(configDefault)) {
                 Configuration defaultConf = new XConfiguration(fs.open(configDefault));
@@ -140,8 +150,11 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
         catch (IOException ex) {
             throw new CommandException(ErrorCode.E0803, ex);
         }
-        catch (HadoopAccessorException e) {
-            throw new CommandException(e);
+        catch (HadoopAccessorException ex) {
+            throw new CommandException(ex);
+        }
+        catch (URISyntaxException ex) {
+            throw new CommandException(ErrorCode.E0711, ex.getMessage(), ex);
         }
 
         try {

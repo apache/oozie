@@ -16,6 +16,10 @@ OOZIE-98 parametrization of 'name' attribute in workflow/coordinator/bundle
 OOZIE-106 add new queue class to iterate next callable when current callable type has reached max concorrency
 OOZIE-108 Upgrade pom version to 3.1.0.
 
+-- Oozie 3.0.2 release
+
+OOZIE-115 oozie should check if app path is directory and read the app xml under it
+
 -- Oozie 3.0.1 release
 
 OOZIE-93 coordinator start and end instances doesn't work with float number.

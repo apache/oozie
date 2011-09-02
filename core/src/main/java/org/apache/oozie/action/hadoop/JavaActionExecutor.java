@@ -387,10 +387,15 @@ public class JavaActionExecutor extends ActionExecutor {
     }
 
     @SuppressWarnings("unchecked")
-    JobConf createLauncherConf(Context context, WorkflowAction action, Element actionXml, Configuration actionConf)
+    JobConf createLauncherConf(FileSystem actionFs, Context context, WorkflowAction action, Element actionXml, Configuration actionConf)
             throws ActionExecutorException {
         try {
-            Path appPathRoot = new Path(context.getWorkflow().getAppPath()).getParent();
+
+            // app path could be a file
+            Path appPathRoot = new Path(context.getWorkflow().getAppPath());
+            if (actionFs.isFile(appPathRoot)) {
+                appPathRoot = appPathRoot.getParent();
+            }
 
             // launcher job configuration
             Configuration launcherConf = createBaseHadoopConf(context, actionXml);
@@ -473,11 +478,17 @@ public class JavaActionExecutor extends ActionExecutor {
         injectCallback(context, launcherConf);
     }
 
-    public void submitLauncher(Context context, WorkflowAction action) throws ActionExecutorException {
+    public void submitLauncher(FileSystem actionFs, Context context, WorkflowAction action) throws ActionExecutorException {
         JobClient jobClient = null;
         boolean exception = false;
         try {
-            Path appPathRoot = new Path(context.getWorkflow().getAppPath()).getParent();
+            Path appPathRoot = new Path(context.getWorkflow().getAppPath());
+
+            // app path could be a file
+            if (actionFs.isFile(appPathRoot)) {
+                appPathRoot = appPathRoot.getParent();
+            }
+
             Element actionXml = XmlUtils.parseXml(action.getConf());
 
             // action job configuration
@@ -510,7 +521,7 @@ public class JavaActionExecutor extends ActionExecutor {
                 }
             }
 
-            JobConf launcherJobConf = createLauncherConf(context, action, actionXml, actionConf);
+            JobConf launcherJobConf = createLauncherConf(actionFs, context, action, actionXml, actionConf);
             injectLauncherCallback(context, launcherJobConf);
             XLog.getLog(getClass()).debug("Creating Job Client for action " + action.getId());
             jobClient = createJobClient(context, launcherJobConf);
@@ -592,7 +603,7 @@ public class JavaActionExecutor extends ActionExecutor {
         }
         catch (ClassNotFoundException ex) {
             methodExists = false;
-        }        
+        }
         catch (NoSuchMethodException ex) {
             methodExists = false;
         }
@@ -722,7 +733,7 @@ public class JavaActionExecutor extends ActionExecutor {
             XLog.getLog(getClass()).debug("Preparing action Dir through copying " + context.getActionDir());
             prepareActionDir(actionFs, context);
             XLog.getLog(getClass()).debug("Action Dir is ready. Submitting the action ");
-            submitLauncher(context, action);
+            submitLauncher(actionFs, context, action);
             XLog.getLog(getClass()).debug("Action submit completed. Performing check ");
             check(context, action);
             XLog.getLog(getClass()).debug("Action check is done after submission");

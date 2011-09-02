@@ -19,7 +19,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.ErrorCode;
@@ -76,14 +75,6 @@ public class JobUtils {
             throw new IOException("Error: " + appPathStr + " does not exist");
         }
 
-        FileStatus fileStatus = fs.getFileStatus(appPath);
-        Path appXml = appPath;
-        // Normalize appPath here - it will always point to a workflow/coordinator/bundle xml definition file;
-        if (fileStatus.isDir()) {
-            appXml = new Path(appPath, (wfPathStr != null)? "workflow.xml" : (coordPathStr != null ? "coordinator.xml" : "bundle.xml"));
-            normalizedAppPathStr = appXml.toString();
-        }
-
         if (wfPathStr != null) {
             conf.set(OozieClient.APP_PATH, normalizedAppPathStr);
         }
@@ -98,7 +89,7 @@ public class JobUtils {
     /**
      * This Function will parse the value of the changed values in key value manner. the change value would be
      * key1=value1;key2=value2
-     * 
+     *
      * @param changeValue change value.
      * @return This returns the hash with hash<[key1,value1],[key2,value2]>
      * @throws CommandException thrown if changeValue cannot be parsed properly.

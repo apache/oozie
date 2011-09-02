@@ -261,14 +261,22 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
      * @throws CommandException thrown if failed to merge configuration
      */
     protected void mergeDefaultConfig() throws CommandException {
-        Path appPath = new Path(conf.get(OozieClient.BUNDLE_APP_PATH));
-        Path configDefault = new Path(appPath.getParent(), CONFIG_DEFAULT);
-        FileSystem fs;
+        Path configDefault = null;
         try {
+            String bundleAppPathStr = conf.get(OozieClient.BUNDLE_APP_PATH);
+            Path bundleAppPath = new Path(bundleAppPathStr);
             String user = ParamChecker.notEmpty(conf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
             String group = ParamChecker.notEmpty(conf.get(OozieClient.GROUP_NAME), OozieClient.GROUP_NAME);
-            fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, group, configDefault.toUri(),
+            FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, group, bundleAppPath.toUri(),
                     new Configuration());
+
+            // app path could be a directory
+            if (!fs.isFile(bundleAppPath)) {
+                configDefault = new Path(bundleAppPath, CONFIG_DEFAULT);
+            } else {
+                configDefault = new Path(bundleAppPath.getParent(), CONFIG_DEFAULT);
+            }
+
             if (fs.exists(configDefault)) {
                 Configuration defaultConf = new XConfiguration(fs.open(configDefault));
                 PropertiesUtils.checkDisallowedProperties(defaultConf, DISALLOWED_DEFAULT_PROPERTIES);
@@ -321,9 +329,17 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
             LOG.debug("user =" + user + " group =" + group);
             FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, group, uri,
                     new Configuration());
-            Path p = new Path(uri.getPath());
+            Path appDefPath = null;
 
-            Reader reader = new InputStreamReader(fs.open(p));
+            // app path could be a directory
+            Path path = new Path(uri.getPath());
+            if (!fs.isFile(path)) {
+                appDefPath = new Path(path, BUNDLE_XML_FILE);
+            } else {
+                appDefPath = path;
+            }
+
+            Reader reader = new InputStreamReader(fs.open(appDefPath));
             StringWriter writer = new StringWriter();
             IOUtils.copyCharStream(reader, writer);
             return writer.toString();

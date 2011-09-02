@@ -240,7 +240,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         ae.setupActionConf(actionConf, context, actionXml, getFsTestCaseDir());
 
 
-        conf = ae.createLauncherConf(context, action, actionXml, actionConf);
+        conf = ae.createLauncherConf(getFileSystem(), context, action, actionXml, actionConf);
         ae.setupLauncherConf(conf, actionXml, getFsTestCaseDir(), context);
         assertEquals("MAIN-CLASS", ae.getLauncherMain(conf, actionXml));
         assertTrue(conf.get("mapred.child.java.opts").contains("JAVA-OPTS"));
@@ -283,7 +283,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         WorkflowAction action = context.getAction();
 
         ae.prepareActionDir(getFileSystem(), context);
-        ae.submitLauncher(context, action);
+        ae.submitLauncher(getFileSystem(), context, action);
 
         String jobId = action.getExternalId();
         String jobTracker = action.getTrackerUri();

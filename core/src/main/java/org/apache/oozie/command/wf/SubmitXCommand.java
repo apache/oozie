@@ -56,6 +56,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
 import java.io.IOException;
+import java.net.URI;
 
 public class SubmitXCommand extends WorkflowXCommand<String> {
     public static final String CONFIG_DEFAULT = "config-default.xml";
@@ -95,11 +96,20 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
             XConfiguration protoActionConf = wps.createProtoActionConf(conf, authToken, true);
             WorkflowLib workflowLib = Services.get().get(WorkflowStoreService.class).getWorkflowLibWithNoDB();
 
-            Path configDefault = new Path(new Path(conf.get(OozieClient.APP_PATH)).getParent(), CONFIG_DEFAULT);
             String user = conf.get(OozieClient.USER_NAME);
             String group = conf.get(OozieClient.GROUP_NAME);
-            FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, group,
-                                                                                             configDefault.toUri(), new Configuration());
+            URI uri = new URI(conf.get(OozieClient.APP_PATH));
+            FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user,
+                    group, uri, new Configuration());
+
+            Path configDefault = null;
+            // app path could be a directory
+            Path path = new Path(uri.getPath());
+            if (!fs.isFile(path)) {
+                configDefault = new Path(path, SubmitCommand.CONFIG_DEFAULT);
+            } else {
+                configDefault = new Path(path.getParent(), SubmitCommand.CONFIG_DEFAULT);
+            }
 
             if (fs.exists(configDefault)) {
                 try {
@@ -216,7 +226,7 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
 
     /**
      * Resolve variables in sla xml element.
-     * 
+     *
      * @param eSla sla xml element
      * @param evalSla sla evaluator
      * @return sla xml string after evaluation
@@ -238,7 +248,7 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
 
     /**
      * Create an EL evaluator for a given group.
-     * 
+     *
      * @param conf configuration variable
      * @param group group variable
      * @return the evaluator created for the group

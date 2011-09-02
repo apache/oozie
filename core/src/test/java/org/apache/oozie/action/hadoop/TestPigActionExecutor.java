@@ -145,7 +145,7 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         WorkflowAction action = context.getAction();
 
         ae.prepareActionDir(getFileSystem(), context);
-        ae.submitLauncher(context, action);
+        ae.submitLauncher(getFileSystem(), context, action);
 
         String jobId = action.getExternalId();
         String jobTracker = action.getTrackerUri();
