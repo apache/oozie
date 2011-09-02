@@ -76,7 +76,6 @@ public abstract class PauseTransitionXCommand extends TransitionXCommand<Void> {
      */
     @Override
     protected Void execute() throws CommandException {
-        loadState();
         transitToNext();
         updateJob();
         pauseChildren();

@@ -14,69 +14,53 @@
  */
 package org.apache.oozie.command;
 
-import org.apache.oozie.client.Job;
-
 /**
- * Transition command for start the job. The derived class has to override these following functions:
+ * Transition command for materialize the job. The derived class has to override these following functions:
  * <p/>
  * loadState() : load the job's and/or actions' state
  * updateJob() : update job status and attributes
  * StartChildren() : submit or queue commands to start children
  * notifyParent() : update the status to upstream if any
  */
-public abstract class StartTransitionXCommand extends TransitionXCommand<Void> {
+public abstract class MaterializeTransitionXCommand extends TransitionXCommand<Void> {
 
     /**
-     * The constructor for abstract class {@link StartTransitionXCommand}
+     * The constructor for abstract class {@link MaterializeTransitionXCommand}
      *
      * @param name the command name
      * @param type the command type
      * @param priority the command priority
      */
-    public StartTransitionXCommand(String name, String type, int priority) {
+    public MaterializeTransitionXCommand(String name, String type, int priority) {
         super(name, type, priority);
     }
 
     /**
-     * The constructor for abstract class {@link StartTransitionXCommand}
+     * The constructor for abstract class {@link MaterializeTransitionXCommand}
      *
      * @param name the command name
      * @param type the command type
      * @param priority the command priority
      * @param dryrun true if dryrun is enable
      */
-    public StartTransitionXCommand(String name, String type, int priority, boolean dryrun) {
+    public MaterializeTransitionXCommand(String name, String type, int priority, boolean dryrun) {
         super(name, type, priority, dryrun);
     }
 
     /**
-     * Start actions associated with the job
-     *
-     * @throws CommandException thrown if failed to start actions
+     * Materialize the actions for current job
+     * @throws CommandException thrown if failed to materialize
      */
-    public abstract void StartChildren() throws CommandException;
-
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#transitToNext()
-     */
-    @Override
-    public final void transitToNext() {
-        if (job == null) {
-            job = this.getJob();
-        }
-        job.setStatus(Job.Status.RUNNING);
-        job.setPending();
-    }
+    protected abstract void materialize() throws CommandException;
 
     /* (non-Javadoc)
      * @see org.apache.oozie.command.TransitionXCommand#execute()
      */
     @Override
     protected Void execute() throws CommandException {
-        transitToNext();
+        materialize();
         updateJob();
-        StartChildren();
-        notifyParent();
         return null;
     }
+
 }

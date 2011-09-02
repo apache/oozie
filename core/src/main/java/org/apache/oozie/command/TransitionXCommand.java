@@ -71,7 +71,7 @@ public abstract class TransitionXCommand<T> extends XCommand<T> {
     /**
      * Get the Job for the command.
      *
-     * @return
+     * @return the job
      */
     public Job getJob() {
         return job;
@@ -80,7 +80,7 @@ public abstract class TransitionXCommand<T> extends XCommand<T> {
     /**
      * Set the Job for the command.
      *
-     * @param job
+     * @param job the job
      */
     public void setJob(Job job) {
         this.job = ParamChecker.notNull(job, "job");

@@ -53,7 +53,7 @@ public abstract class UnpauseTransitionXCommand extends TransitionXCommand<Void>
         if (job == null) {
             job = this.getJob();
         }
-        
+
         if (job.getStatus() == Job.Status.PAUSED) {
             job.setStatus(Job.Status.RUNNING);
         }
@@ -76,7 +76,6 @@ public abstract class UnpauseTransitionXCommand extends TransitionXCommand<Void>
      */
     @Override
     protected Void execute() throws CommandException {
-        loadState();
         transitToNext();
         updateJob();
         unpauseChildren();

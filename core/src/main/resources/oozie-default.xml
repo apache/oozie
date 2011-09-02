@@ -85,7 +85,7 @@
             org.apache.oozie.service.CoordinatorEngineService,
             org.apache.oozie.service.BundleEngineService,
             org.apache.oozie.service.DagEngineService,
-            org.apache.oozie.service.CoordJobMatLookupTriggerService,
+            org.apache.oozie.service.CoordMaterializeTriggerService,
             org.apache.oozie.service.StatusTransitService,
             org.apache.oozie.service.BundlePauseStartService
         </value>
@@ -244,10 +244,10 @@
         </description>
     </property>
 
-	<!--  CoordJobMatLookupTriggerService -->
+    <!--  CoordMaterializeTriggerService -->
 
 	<property>
-		<name>oozie.service.CoordJobMatLookupTriggerService.lookup.interval
+		<name>oozie.service.CoordMaterializeTriggerService.lookup.interval
 		</name>
 		<value>300</value>
 		<description> Coordinator Job Lookup trigger command is scheduled at
@@ -255,7 +255,7 @@
 	</property>
 
 	<property>
-		<name>oozie.service.CoordJobMatLookupTriggerService.materialization.window
+		<name>oozie.service.CoordMaterializeTriggerService.materialization.window
 		</name>
 		<value>3600</value>
 		<description> Coordinator Job Lookup command materialized each job for
@@ -263,7 +263,7 @@
 	</property>
 
     <property>
-        <name>oozie.service.CoordJobMatLookupTriggerService.callable.batch.size</name>
+        <name>oozie.service.CoordMaterializeTriggerService.callable.batch.size</name>
         <value>10</value>
         <description>
             This value determines the number of callable which will be batched together

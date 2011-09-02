@@ -159,49 +159,6 @@ public class TestRecoveryService extends XTestCase {
     }
 
     /**
-     * Tests functionality of the Recovery Service Runnable command. </p> Insert a coordinator job with PREPMATER. Then,
-     * runs the recovery runnable and ensures the state changes to RUNNING.
-     *
-     * @throws Exception
-     */
-    public void testCoordJobRecoveryService() throws Exception {
-        final String jobId = "0000000-" + new Date().getTime() + "-testCoordRecoveryService-C";
-        final CoordinatorEngine ce = new CoordinatorEngine(getTestUser(), "UNIT_TESTING");
-        CoordinatorStore store = Services.get().get(StoreService.class).getStore(CoordinatorStore.class);
-        store.beginTrx();
-        try {
-            createTestCaseSubDir("no-op");
-            createTestCaseSubDir("no-op/lib");
-            createTestCaseSubDir("workflows");
-            createTestCaseSubDir("in");
-            addRecordToJobTable(jobId, store, getTestCaseDir());
-            store.commitTrx();
-        }
-        finally {
-            store.closeTrx();
-        }
-
-        Thread.sleep(3000);
-        Runnable recoveryRunnable = new RecoveryRunnable(0, 1);
-        recoveryRunnable.run();
-        Thread.sleep(3000);
-
-        waitFor(200000, new Predicate() {
-            public boolean evaluate() throws Exception {
-                return (ce.getCoordJob(jobId).getStatus() == CoordinatorJobBean.Status.RUNNING);
-            }
-        });
-
-        CoordinatorStore store2 = Services.get().get(StoreService.class).getStore(CoordinatorStore.class);
-        store2.beginTrx();
-        CoordinatorJobBean recoveredJob = store2.getCoordinatorJob(jobId, false);
-        assertEquals(CoordinatorJobBean.Status.RUNNING, recoveredJob.getStatus());
-        store2.commitTrx();
-        store2.closeTrx();
-
-    }
-
-    /**
      * Tests functionality of the Recovery Service Runnable command. </p> Insert a coordinator job with PREPMATER and
      * action with SUBMITTED. Then, runs the recovery runnable and ensures the action status changes to READY.
      *

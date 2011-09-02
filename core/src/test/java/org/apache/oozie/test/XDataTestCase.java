@@ -102,6 +102,34 @@ public abstract class XDataTestCase extends XFsTestCase {
     }
 
     /**
+     * Insert coord job for testing.
+     *
+     * @param status
+     * @param start
+     * @param end
+     * @return coord job bean
+     * @throws Exception
+     */
+    protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date start, Date end) throws Exception {
+        CoordinatorJobBean coordJob = createCoordJob(status, start, end);
+
+        try {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            assertNotNull(jpaService);
+            CoordJobInsertJPAExecutor coordInsertCmd = new CoordJobInsertJPAExecutor(coordJob);
+            jpaService.execute(coordInsertCmd);
+        }
+        catch (JPAExecutorException je) {
+            je.printStackTrace();
+            fail("Unable to insert the test coord job record to table");
+            throw je;
+        }
+
+        return coordJob;
+
+    }
+
+    /**
      * Create coord job bean
      *
      * @param status
@@ -137,6 +165,50 @@ public abstract class XDataTestCase extends XFsTestCase {
         try {
             coordJob.setStartTime(DateUtils.parseDateUTC("2009-12-15T01:00Z"));
             coordJob.setEndTime(DateUtils.parseDateUTC("2009-12-17T01:00Z"));
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            fail("Could not set Date/time");
+        }
+        return coordJob;
+    }
+
+    /**
+     * Create coord job bean
+     *
+     * @param status
+     * @param appPath
+     * @param appXml
+     * @return coord job bean
+     * @throws IOException
+     */
+    protected CoordinatorJobBean createCoordJob(CoordinatorJob.Status status, Date start, Date end) throws Exception {
+        Path appPath = new Path(getFsTestCaseDir(), "coord");
+        String appXml = writeCoordXml(appPath);
+
+        CoordinatorJobBean coordJob = new CoordinatorJobBean();
+        coordJob.setId(Services.get().get(UUIDService.class).generateId(ApplicationType.COORDINATOR));
+        coordJob.setAppName("COORD-TEST");
+        coordJob.setAppPath(appPath.toString());
+        coordJob.setStatus(status);
+        coordJob.setTimeZone("America/Los_Angeles");
+        coordJob.setCreatedTime(new Date());
+        coordJob.setLastModifiedTime(new Date());
+        coordJob.setUser(getTestUser());
+        coordJob.setGroup(getTestGroup());
+        coordJob.setAuthToken("notoken");
+
+        Configuration conf = getCoordConf(appPath);
+        coordJob.setConf(XmlUtils.prettyPrint(conf).toString());
+        coordJob.setJobXml(appXml);
+        coordJob.setLastActionNumber(0);
+        coordJob.setFrequency(1);
+        coordJob.setTimeUnit(Timeunit.DAY);
+        coordJob.setExecution(Execution.FIFO);
+        coordJob.setConcurrency(1);
+        try {
+            coordJob.setStartTime(start);
+            coordJob.setEndTime(end);
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -375,7 +447,7 @@ public abstract class XDataTestCase extends XFsTestCase {
         }
         return bundle;
     }
-    
+
     /**
      * Insert a bad bundle job for testing negative cases.
      *
@@ -655,7 +727,7 @@ public abstract class XDataTestCase extends XFsTestCase {
 
         return bundle;
     }
-    
+
     /**
      * Create bundle job that contains bad coordinator jobs
      *
