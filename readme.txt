@@ -21,19 +21,19 @@ PLEASE NOTE:
 --------------------------------------
 Oozie Documentation:
 
-  http://yahoo.github.com/oozie/releases/2.2.0
+  http://yahoo.github.com/oozie/releases/2.3.0
 
 Oozie Quick Start:
 
-  http://yahoo.github.com/oozie/releases/2.2.0/DG_QuickStart.html
+  http://yahoo.github.com/oozie/releases/2.3.0/DG_QuickStart.html
 
 Oozie Detailed Installation and Configuration:
 
-  http://yahoo.github.com/oozie/releases/2.2.0/AG_Install.html
+  http://yahoo.github.com/oozie/releases/2.3.0/AG_Install.html
 
 Building Oozie:
 
-  http://yahoo.github.com/oozie/releases/2.2.0/ENG_Building.html
+  http://yahoo.github.com/oozie/releases/2.3.0/ENG_Building.html
 
 --------------------------------------
 
