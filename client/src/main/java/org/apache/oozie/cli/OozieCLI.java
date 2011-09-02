@@ -1073,7 +1073,7 @@ public class OozieCLI {
                 System.out.println("System mode: " + status);
             }
             else if (options.contains(QUEUE_DUMP_OPTION)) {
-                System.out.println("[Server Queue Dump]:");
+
                 List<String> list = wc.getQueueDump();
                 if (list != null && list.size() != 0) {
                     for (String str : list) {

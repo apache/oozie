@@ -39,6 +39,7 @@ public class ActionKillCommand extends ActionCommand<Void> {
         this.id = id;
     }
 
+    @Override
     protected Void call(WorkflowStore store) throws StoreException, CommandException {
         // String jobId = Services.get().get(UUIDService.class).getId(id);
         WorkflowJobBean workflow = store.getWorkflow(jobId, false);
@@ -97,12 +98,12 @@ public class ActionKillCommand extends ActionCommand<Void> {
                 call(store);
             }
             else {
-                queueCallable(new ActionKillCommand(id, type), LOCK_FAILURE_REQUEUE_INTERVAL);
+                queueCallable(new ActionKillCommand(id, getType()), LOCK_FAILURE_REQUEUE_INTERVAL);
                 XLog.getLog(getClass()).warn("ActionKill lock was not acquired - failed {0}", id);
             }
         }
         catch (InterruptedException e) {
-            queueCallable(new ActionKillCommand(id, type), LOCK_FAILURE_REQUEUE_INTERVAL);
+            queueCallable(new ActionKillCommand(id, getType()), LOCK_FAILURE_REQUEUE_INTERVAL);
             XLog.getLog(getClass()).warn("ActionKill lock was not acquired - interrupted exception failed {0}", id);
         }
         finally {

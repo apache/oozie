@@ -249,12 +249,12 @@ public class ActionStartCommand extends ActionCommand<Void> {
                 call(store);
             }
             else {
-                queueCallable(new ActionStartCommand(id, type), LOCK_FAILURE_REQUEUE_INTERVAL);
+                queueCallable(new ActionStartCommand(id, getType()), LOCK_FAILURE_REQUEUE_INTERVAL);
                 XLog.getLog(getClass()).warn("ActionStartCommand lock was not acquired - failed {0}", id);
             }
         }
         catch (InterruptedException e) {
-            queueCallable(new ActionStartCommand(id, type), LOCK_FAILURE_REQUEUE_INTERVAL);
+            queueCallable(new ActionStartCommand(id, getType()), LOCK_FAILURE_REQUEUE_INTERVAL);
             XLog.getLog(getClass()).warn("ActionStartCommand lock was not acquired - interrupted exception failed {0}",
                                          id);
         }

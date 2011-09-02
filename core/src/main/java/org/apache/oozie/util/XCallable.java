@@ -52,4 +52,11 @@ public interface XCallable<T> extends Callable<T> {
      */
     public long getCreatedTime();
 
+    /**
+     * Return the key of the callable
+     *
+     * @return the callable key
+     */
+    public String getKey();
+
 }

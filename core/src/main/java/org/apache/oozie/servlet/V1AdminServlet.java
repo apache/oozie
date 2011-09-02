@@ -96,7 +96,7 @@ public class V1AdminServlet extends BaseAdminServlet {
     }
 
     /**
-     * Get a json array of queue dump
+     * Get a json array of queue dump and a json array of unique map dump
      *
      * @param JSONObject the result json object that contains a JSONArray for the callable dump
      *
@@ -107,14 +107,23 @@ public class V1AdminServlet extends BaseAdminServlet {
     @SuppressWarnings("unchecked")
     @Override
     protected void getQueueDump(JSONObject json) throws XServletException {
-        List<String> list = Services.get().get(CallableQueueService.class).getQueueDump();
-        JSONArray array = new JSONArray();
-        for (String str: list) {
+        List<String> queueDumpList = Services.get().get(CallableQueueService.class).getQueueDump();
+        JSONArray queueDumpArray = new JSONArray();
+        for (String str: queueDumpList) {
             JSONObject jObject = new JSONObject();
             jObject.put(JsonTags.CALLABLE_DUMP, str);
-            array.add(jObject);
+            queueDumpArray.add(jObject);
         }
-        json.put(JsonTags.QUEUE_DUMP, array);
+        json.put(JsonTags.QUEUE_DUMP, queueDumpArray);
+
+        List<String> uniqueDumpList = Services.get().get(CallableQueueService.class).getUniqueDump();
+        JSONArray uniqueDumpArray = new JSONArray();
+        for (String str: uniqueDumpList) {
+            JSONObject jObject = new JSONObject();
+            jObject.put(JsonTags.UNIQUE_ENTRY_DUMP, str);
+            uniqueDumpArray.add(jObject);
+        }
+        json.put(JsonTags.UNIQUE_MAP_DUMP, uniqueDumpArray);
     }
 
 }

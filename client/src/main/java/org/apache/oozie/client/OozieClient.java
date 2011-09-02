@@ -1248,15 +1248,34 @@ public class OozieClient {
             if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
                 Reader reader = new InputStreamReader(conn.getInputStream());
                 JSONObject json = (JSONObject) JSONValue.parse(reader);
-                JSONArray array = (JSONArray) json.get(JsonTags.QUEUE_DUMP);
+                JSONArray queueDumpArray = (JSONArray) json.get(JsonTags.QUEUE_DUMP);
 
                 List<String> list = new ArrayList<String>();
-                for (Object o : array) {
+                list.add("[Server Queue Dump]:");
+                for (Object o : queueDumpArray) {
                     JSONObject entry = (JSONObject) o;
                     if (entry.get(JsonTags.CALLABLE_DUMP) != null) {
                         String value = (String) entry.get(JsonTags.CALLABLE_DUMP);
                         list.add(value);
                     }
+                }
+                if (queueDumpArray.size() == 0) {
+                    list.add("Queue dump is null!");
+                }
+
+                list.add("******************************************");
+                list.add("[Server Uniqueness Map Dump]:");
+
+                JSONArray uniqueDumpArray = (JSONArray) json.get(JsonTags.UNIQUE_MAP_DUMP);
+                for (Object o : uniqueDumpArray) {
+                    JSONObject entry = (JSONObject) o;
+                    if (entry.get(JsonTags.UNIQUE_ENTRY_DUMP) != null) {
+                        String value = (String) entry.get(JsonTags.UNIQUE_ENTRY_DUMP);
+                        list.add(value);
+                    }
+                }
+                if (uniqueDumpArray.size() == 0) {
+                    list.add("Uniqueness dump is null!");
                 }
                 return list;
             }

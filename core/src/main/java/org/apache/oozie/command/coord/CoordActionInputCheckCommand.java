@@ -375,20 +375,12 @@ public class CoordActionInputCheckCommand extends CoordinatorCommand<Void> {
         return null;
     }
 
-    /**
-     * @param args
-     * @throws Exception
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.Command#getKey()
      */
-    public static void main(String[] args) throws Exception {
-        new Services().init();
-        String actionId = "0000000-091221141623042-oozie-dani-C@4";
-        try {
-            new CoordActionInputCheckCommand(actionId).call();
-            Thread.sleep(10000);
-        }
-        finally {
-            new Services().destroy();
-        }
+    @Override
+    public String getKey(){
+        return getName() + "_" + actionId;
     }
 
 }

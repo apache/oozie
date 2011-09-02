@@ -190,12 +190,12 @@ public class ActionEndCommand extends ActionCommand<Void> {
                 call(store);
             }
             else {
-                queueCallable(new ActionEndCommand(id, type), LOCK_FAILURE_REQUEUE_INTERVAL);
+                queueCallable(new ActionEndCommand(id, getType()), LOCK_FAILURE_REQUEUE_INTERVAL);
                 XLog.getLog(getClass()).warn("ActionEnd lock was not acquired - failed {0}", id);
             }
         }
         catch (InterruptedException e) {
-            queueCallable(new ActionEndCommand(id, type), LOCK_FAILURE_REQUEUE_INTERVAL);
+            queueCallable(new ActionEndCommand(id, getType()), LOCK_FAILURE_REQUEUE_INTERVAL);
             XLog.getLog(getClass()).warn("ActionEnd lock was not acquired - interrupted exception failed {0}", id);
         }
         finally {

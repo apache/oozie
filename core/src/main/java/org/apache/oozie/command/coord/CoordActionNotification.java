@@ -38,11 +38,11 @@ public class CoordActionNotification extends CoordinatorCommand<Void> {
     private int retries = 0;
     private final XLog log = XLog.getLog(getClass());
 
-	public CoordActionNotification(CoordinatorActionBean actionBean) {
-		super("coord_action_notification", "coord_action_notification", 0,
-				XLog.STD);
-		this.actionBean = actionBean;
-	}
+    public CoordActionNotification(CoordinatorActionBean actionBean) {
+        super("coord_action_notification", "coord_action_notification", 0,
+                XLog.STD);
+        this.actionBean = actionBean;
+    }
 
     @Override
     protected Void call(CoordinatorStore store) throws StoreException,

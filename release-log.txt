@@ -46,6 +46,10 @@ GH-0106 support for a system share lib directory in HDFS for workflow action bin
 GH-0034 update/simplify examples
 GH-0050 Oozie jobs configuration properties with variables should be resolved to concrete values.
 
+-- Oozie 2.2.5 release
+
+GH-0066 Add Uniqueness functionality to queue
+
 -- Oozie 2.2.3 release
 
 GH-0055 Oozie should not materialize a coordinator job right after its submission if the job will only run in far future

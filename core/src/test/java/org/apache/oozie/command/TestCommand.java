@@ -28,15 +28,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 public class TestCommand extends XTestCase {
     private static List<String> EXECUTED = Collections.synchronizedList(new ArrayList<String>());
 
     private static class DummyXCallable implements XCallable<Void> {
         private String name;
+        private String key = null;
 
         public DummyXCallable(String name) {
             this.name = name;
+            this.key = name + "_" + UUID.randomUUID();
         }
 
         @Override
@@ -71,6 +74,12 @@ public class TestCommand extends XTestCase {
             EXECUTED.add(name);
             return null;
         }
+
+        @Override
+        public String getKey() {
+            return this.key;
+        }
+
     }
 
     private static class MyCommand extends Command<Object, WorkflowStore> {
@@ -81,6 +90,7 @@ public class TestCommand extends XTestCase {
             this.exception = exception;
         }
 
+        @Override
         protected Object call(WorkflowStore store) throws StoreException, CommandException {
             assertTrue(logInfo.createPrefix().contains("JOB[job]"));
             assertTrue(XLog.Info.get().createPrefix().contains("JOB[job]"));
@@ -106,6 +116,7 @@ public class TestCommand extends XTestCase {
          *
          * @return {@link WorkflowStore}
          */
+        @Override
         public Class<? extends Store> getStoreClass() {
             return WorkflowStore.class;
         }

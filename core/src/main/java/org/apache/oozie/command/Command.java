@@ -16,6 +16,7 @@ package org.apache.oozie.command;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
@@ -65,11 +66,12 @@ public abstract class Command<T, S extends Store> implements XCallable<T> {
     private long delay = 0;
     private List<XCallable<Void>> exceptionCallables;
     private String name;
+    private String type;
+    private String key;
     private int priority;
     private int logMask;
     private boolean withStore;
     protected boolean dryrun = false;
-    protected String type;
     private ArrayList<LockToken> locks = null;
 
     /**
@@ -102,6 +104,7 @@ public abstract class Command<T, S extends Store> implements XCallable<T> {
     public Command(String name, String type, int priority, int logMask, boolean withStore) {
         this.name = ParamChecker.notEmpty(name, "name");
         this.type = ParamChecker.notEmpty(type, "type");
+        this.key = name + "_" + UUID.randomUUID();
         this.priority = priority;
         this.withStore = withStore;
         this.logMask = logMask;
@@ -586,4 +589,15 @@ public abstract class Command<T, S extends Store> implements XCallable<T> {
         T result = call(store);
         return result;
     }
+
+    /**
+     * Get command key
+     *
+     * @return command key
+     */
+    @Override
+    public String getKey(){
+        return this.key;
+    }
+
 }
