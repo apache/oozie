@@ -244,7 +244,7 @@ public abstract class XTestCase extends TestCase {
      *
      * @return the user Id.
      */
-    protected String getTestUser() {
+    protected static String getTestUser() {
         return System.getProperty(TEST_USER1_PROP, "test");
     }
 
@@ -254,7 +254,7 @@ public abstract class XTestCase extends TestCase {
      *
      * @return the user Id.
      */
-    protected String getTestUser2() {
+    protected static String getTestUser2() {
         return System.getProperty(TEST_USER2_PROP, "test2");
     }
 
@@ -264,7 +264,7 @@ public abstract class XTestCase extends TestCase {
      *
      * @return the user Id.
      */
-    protected String getTestUser3() {
+    protected static String getTestUser3() {
         return System.getProperty(TEST_USER3_PROP, "test3");
     }
 
