@@ -82,16 +82,17 @@ public class ActionEndCommand extends ActionCommand<Void> {
                                 "End, name [{0}] type [{1}] status[{2}] external status [{3}] signal value [{4}]",
                                 action.getName(), action.getType(), action.getStatus(), action.getExternalStatus(),
                                 action.getSignalValue());
-                        WorkflowInstance wfInstance = workflow.getWorkflowInstance();
-                        DagELFunctions.setActionInfo(wfInstance, action);
-                        workflow.setWorkflowInstance(wfInstance);
-                        incrActionCounter(action.getType(), 1);
 
                         Instrumentation.Cron cron = new Instrumentation.Cron();
                         cron.start();
                         executor.end(context, action);
                         cron.stop();
                         addActionCron(action.getType(), cron);
+
+                        WorkflowInstance wfInstance = workflow.getWorkflowInstance();
+                        DagELFunctions.setActionInfo(wfInstance, action);
+                        workflow.setWorkflowInstance(wfInstance);
+                        incrActionCounter(action.getType(), 1);
 
                         if (!context.isEnded()) {
                             XLog.getLog(getClass()).warn(XLog.OPS,

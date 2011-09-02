@@ -1,5 +1,7 @@
 -- Oozie 3.1.0 release
 
+OOZIE-101 ${wf:lastErrorNode()} is not set when an action ends in error
+OOZIE-99 action errorMessage is not being set
 OOZIE-107 add test case to test uniqueness of CoordActionInputCheckXCommand
 OOZIE-100 escape characters for xml when create dag evaluator
 OOZIE-98 parametrization of 'name' attribute in workflow/coordinator/bundle
@@ -8,7 +10,6 @@ OOZIE-108 Upgrade pom version to 3.1.0.
 
 -- Oozie 3.0.1 release
 
-OOZIE-99 action errorMessage is not being set
 OOZIE-93 coordinator start and end instances doesn't work with float number.
 OOZIE-80 Make coordinator backward compatible
 OOZIE-58 Add date/time formatting function to coord.
