@@ -157,7 +157,8 @@ public class BundleJobChangeXCommand extends TransitionXCommand<Void> {
                 bundleJob.setPauseTime(newPauseTime);
 
                 for (BundleActionBean action : this.bundleActions) {
-                    if (action.getStatus() == Job.Status.RUNNING || action.getStatus() == Job.Status.PREP) {
+                    if (action.getStatus() == Job.Status.RUNNING || action.getStatus() == Job.Status.PREP
+                            || action.getStatus() == Job.Status.SUCCEEDED) {
                         // queue coord change commands;
                         if (action.getCoordId() != null) {
                             queue(new CoordChangeXCommand(action.getCoordId(), changeValue));
