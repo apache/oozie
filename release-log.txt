@@ -2,6 +2,7 @@
 
 GH-0626 Fixing Bundle Rerun for invalid timestamps of coordinator actions
 GH-0620 Adding Precondition for Coordinator Kill Command. 
+GH-0613 Display configuration content for bundle jobs.
 GH-0614 Fixing CLient Proxy to work for toString calls 
 GH-0610 Fixing Bundle status service and Coordinator Action resume
 GH-0480 Support new Pig API to submit pig job

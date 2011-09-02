@@ -689,9 +689,13 @@ public class OozieCLI {
                 else if (commandLine.getOptionValue(CONFIG_CONTENT_OPTION).endsWith("-W")) {
                     System.out.println(wc.getJobInfo(commandLine.getOptionValue(CONFIG_CONTENT_OPTION)).getConf());
                 }
+                else if (commandLine.getOptionValue(CONFIG_CONTENT_OPTION).endsWith("-B")) {
+                    System.out
+                            .println(wc.getBundleJobInfo(commandLine.getOptionValue(CONFIG_CONTENT_OPTION)).getConf());
+                }
                 else {
                     System.out.println("ERROR:  job id [" + commandLine.getOptionValue(CONFIG_CONTENT_OPTION)
-                            + "] doesn't end with either C or W");
+                            + "] doesn't end with either C or W or B");
                 }
             }
         }
