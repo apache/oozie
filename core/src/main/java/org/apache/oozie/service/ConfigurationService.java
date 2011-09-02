@@ -61,6 +61,11 @@ public class ConfigurationService implements Service, Instrumentable {
     public static final String CONF_IGNORE_SYS_PROPS = CONF_PREFIX + "ignore.system.properties";
 
     /**
+     * System property that indicates the configuration directory.
+     */
+    public static final String OOZIE_CONFIG_DIR_ENV = "OOZIE_CONFIG_DIR";
+
+    /**
      * System property that indicates the name of the site configuration file to load.
      */
     public static final String OOZIE_CONFIG_FILE_ENV = "OOZIE_CONFIG_FILE";
@@ -122,16 +127,17 @@ public class ConfigurationService implements Service, Instrumentable {
         if (configFile.contains("/")) {
             throw new ServiceException(ErrorCode.E0022, configFile);
         }
-        log.info("Oozie home [{0}]", configDir);
-        log.info("Oozie site [{0}]", configFile);
+        log.info("Oozie home dir  [{0}]", Services.getOozieHome());
+        log.info("Oozie conf dir  [{0}]", configDir);
+        log.info("Oozie conf file [{0}]", configFile);
         configFile = new File(configDir, configFile).toString();
         configuration = loadConf();
     }
 
     public static String getConfigurationDirectory() throws ServiceException {
         String oozieHome = Services.getOozieHome();
-        String configDir = new File(oozieHome, "conf").toString();
-        File file = new File(oozieHome);
+        String configDir = getEnvValue(OOZIE_CONFIG_DIR_ENV, oozieHome + "/conf");
+        File file = new File(configDir);
         if (!file.exists()) {
             throw new ServiceException(ErrorCode.E0024, configDir);
         }

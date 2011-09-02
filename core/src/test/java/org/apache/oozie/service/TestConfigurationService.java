@@ -72,7 +72,6 @@ public class TestConfigurationService extends XTestCase {
         cl.destroy();
     }
 
-
     public void testSysPropOverride() throws Exception {
         prepareOozieConfDir("oozie-site2.xml");
         setSystemProperty("oozie.dummy", "OVERRIDE");
@@ -82,4 +81,18 @@ public class TestConfigurationService extends XTestCase {
         cl.destroy();
     }
 
+    public void testAlternateConfDir() throws Exception {
+        String customConfDir = createTestCaseSubDir("xconf");
+        setSystemProperty(ConfigurationService.OOZIE_CONFIG_DIR_ENV, customConfDir);
+
+        IOUtils.copyStream(IOUtils.getResourceAsStream("oozie-site1.xml", -1),
+                           new FileOutputStream(new File(customConfDir, "oozie-site.xml")));
+
+        ConfigurationService cl = new ConfigurationService();
+        cl.init(null);
+        assertEquals("oozie-" + System.getProperty("user.name"), cl.getConf().get("oozie.system.id"));
+        assertNull(cl.getConf().get("oozie.dummy"));
+        cl.destroy();
+
+    }
 }

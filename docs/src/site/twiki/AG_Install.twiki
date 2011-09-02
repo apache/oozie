@@ -106,8 +106,13 @@ Oozie resolves configuration property values in the following order:
    * Else, if the Oozie configuration file (=oozie-site.xml=) contains the property, it uses its value
    * Else, it uses the default value documented in the =oozie-default.xml= file
 
+Oozie configuration is loaded from the directory specified in the  =OOZIE_CONFIG_DIR= environment variable.
+
+If the =OOZIE_CONFIG_DIR= environment variable is not defined, Oozie configuration is loaded from the
+ =${OOZIE_HOME}/conf/= directory.
+
 The =OOZIE_CONFIG_FILE= environment variable can be set to indicate an alternate Oozie configuration file than
-the =oozie-site.xml= file. The alternate file must be in the =${OOZIE_HOME}/conf/= directory.
+the =oozie-site.xml= file. The alternate file must be in the configuration directory.
 
 *NOTE:* The =oozie-default.xml= file found in the =${OOZIE_HOME}/conf/= directory is not used by Oozie, it is there
 for reference purposes only.
