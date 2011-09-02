@@ -40,6 +40,10 @@ command =hostname -f=.
 *OOZIE_BASE_URL* : The base URL for actions callback URLs to Oozie. The default value
 is =http://${OOZIE_HTTP_HOSTNAME}:${OOZIE_HTTP_PORT}/oozie=.
 
+*OOZIE_CHECK_OWNER* : If set to =true=, Oozie setup/start/run/stop scripts will check that the
+owner of the Oozie installation directory matches the user invoking the script. The default
+value is undefined and interpreted as a =false=.
+
 ---++ Oozie Server Setup
 
 The =setup-oozie.sh= script prepares the embedded Tomcat server to run Oozie.

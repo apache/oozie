@@ -55,15 +55,17 @@ export OOZIE_HOME=${BASEDIR}
 oozie_home=${OOZIE_HOME}
 print "Setting OOZIE_HOME:          ${OOZIE_HOME}"
 
-# checking that the user starting/stopping/setting-up Oozie is the owner
-#
-oozie_user=`ls -ld ${OOZIE_HOME} | awk '{print $3}'`
-current_user=`id | awk '{print $1}' | sed 's/.*(//' | sed 's/).*//'`
-if [ "${oozie_user}" != "${current_user}" ]; then
-  echo
-  echo "ERROR: current user '${current_user}' different from Oozie user '${oozie_user}'"
-  echo
-  exit -1
+if [ "${OOZIE_CHECK_OWNER}" = "true" ]; then
+  # checking that the user starting/stopping/setting-up Oozie is the owner
+  #
+  oozie_user=`ls -ld ${OOZIE_HOME} | awk '{print $3}'`
+  current_user=`id | awk '{print $1}' | sed 's/.*(//' | sed 's/).*//'`
+  if [ "${oozie_user}" != "${current_user}" ]; then
+    echo
+    echo "ERROR: current user '${current_user}' different from Oozie user '${oozie_user}'"
+    echo
+    exit -1
+  fi
 fi
 
 # if the installation has a env file, source it
