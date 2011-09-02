@@ -951,6 +951,27 @@
             If the 'oozie.service.JPAService.create.db.schema' property is set to true, this property is ignored.
         </description>
     </property>
+    
+    <property>
+        <name>oozie.service.JPAService.validate.db.connection.eviction.interval</name>
+        <value>300000</value>
+        <description>
+            Validates DB connections from the DB connection pool.
+            When validate db connection 'TestWhileIdle' is true, the number of milliseconds to sleep 
+            between runs of the idle object evictor thread.
+        </description>
+    </property>
+    
+    <property>
+        <name>oozie.service.JPAService.validate.db.connection.eviction.num</name>
+        <value>10</value>
+        <description>
+            Validates DB connections from the DB connection pool.
+            When validate db connection 'TestWhileIdle' is true, the number of objects to examine during
+            each run of the idle object evictor thread.
+        </description>
+    </property>
+
 
     <property>
         <name>oozie.service.JPAService.connection.data.source</name>

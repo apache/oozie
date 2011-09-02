@@ -1,5 +1,6 @@
 -- Oozie 3.1.0 release
 
+OOZIE-111 adjust configuration for DBCP data source 
 OOZIE-105 bring JPA changes to master from integration branch
 OOZIE-103 upgrade openjpa jar to 2.1.0
 OOZIE-110 add coordinator 0.3 schema for app name parametrization

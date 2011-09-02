@@ -347,57 +347,6 @@ public class TestCallableQueueService extends XTestCase {
         EXEC_ORDER = new AtomicLong();
         Services services = new Services();
         services.init();
-
-        CLCallable.resetConcurrency();
-        final CallableQueueService queueservice = services.get(CallableQueueService.class);
-
-        final MyCallable callable1 = new MyCallable(0, 100);
-        final MyCallable callable2 = new MyCallable(0, 100);
-        final MyCallable callable3 = new MyCallable(0, 100);
-        final MyCallable callable4 = new MyCallable(0, 100);
-        final MyCallable callable5 = new MyCallable(0, 100);
-        final MyCallable callable6 = new MyCallable(0, 100);
-        List<MyCallable> callables = Arrays.asList(callable1, callable2, callable3, callable4, callable5, callable6);
-
-        final MyCallable callableOther = new MyCallable("other", 0, 100);
-        queueservice.queue(callableOther, 1000);
-
-        for (MyCallable c : callables) {
-            queueservice.queue(c, 10);
-        }
-
-        float originalRatio = XTestCase.WAITFOR_RATIO;
-        try{
-            XTestCase.WAITFOR_RATIO = 1;
-            waitFor(2000, new Predicate() {
-                public boolean evaluate() throws Exception {
-                    return queueservice.queueSize() == 0;
-                }
-            });
-        }
-        finally {
-            XTestCase.WAITFOR_RATIO = originalRatio;
-        }
-
-        System.out.println("Callable Queue Size :" + queueservice.queueSize());
-
-        long last = Long.MIN_VALUE;
-        for (MyCallable c : callables) {
-            System.out.println("Callable C executed :" + c.executed);
-            assertTrue(c.executed != 0);
-            last = Math.max(last, c.executed);
-        }
-        System.out.println("Callable callableOther executed :" + callableOther.executed);
-
-        assertTrue(callableOther.executed < last);
-
-        services.destroy();
-    }
-
-    public void testSerialConcurrencyLimit() throws Exception {
-        EXEC_ORDER = new AtomicLong();
-        Services services = new Services();
-        services.init();
         final MyCallable callable1 = new MyCallable("TestSerialConcurrencyLimit", 0, 100);
         final MyCallable callable2 = new MyCallable("TestSerialConcurrencyLimit", 0, 100);
         final MyCallable callable3 = new MyCallable("TestSerialConcurrencyLimit", 0, 100);
