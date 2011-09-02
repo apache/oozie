@@ -995,7 +995,7 @@ executed. Thus there is less chance of an error occurring while the =fs= action 
             ...
             <move source='[SOURCE-PATH]' target='[TARGET-PATH]'/>
             ...
-            <chmod path='[PATH]' permissions='[PERMISSIONS]' dir-files="false />
+            <chmod path='[PATH]' permissions='[PERMISSIONS]' dir-files='false' />
             ...
         </fs>
         <ok to="[NODE-NAME]"/>
@@ -1029,8 +1029,7 @@ If relative paths are used it will be relative to the specified user home direct
             <delete path='hdfs://foo:9000/usr/tucu/temp-data'/>
             <mkdir path='archives/${wf:id()}'/>
             <move source='${jobInput}' target='archives/${wf:id()}/processed-input'/>
-            <chmod path='${jobOutput}' permissions='-rwxrw-rw-'>
-                <dir-files>true</dir-files>
+            <chmod path='${jobOutput}' permissions='-rwxrw-rw-' dir-files='true'/>
             </chmod>
         </fs>
         <ok to="myotherjob"/>
