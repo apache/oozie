@@ -159,20 +159,14 @@ public abstract class BaseJobsServlet extends JsonRestServlet {
                     OozieClient.USER_NAME);
         }
 
-        //TODO: it should use KerberosHadoopAccessorService.KERBEROS_AUTH_ENABLED once 20.1 is not used anymore
-        if (Services.get().getConf().getBoolean("oozie.service.HadoopAccessorService.kerberos.enabled", false)) {
-            if (conf.get(WorkflowAppService.HADOOP_JT_KERBEROS_NAME) == null) {
-                throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0401,
-                        WorkflowAppService.HADOOP_JT_KERBEROS_NAME);
-            }
-            if (conf.get(WorkflowAppService.HADOOP_NN_KERBEROS_NAME) == null) {
-                throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0401,
-                        WorkflowAppService.HADOOP_NN_KERBEROS_NAME);
-            }
+        String localRealm = Services.get().getConf().get("local.realm");
+
+        //if the job properties don't define JT/NN Kerberos principals, add default value
+        if (conf.get(WorkflowAppService.HADOOP_JT_KERBEROS_NAME) == null) {
+            conf.set(WorkflowAppService.HADOOP_JT_KERBEROS_NAME, "mapred/_HOST@" + localRealm);
         }
-        else {
-            conf.set(WorkflowAppService.HADOOP_JT_KERBEROS_NAME, "");
-            conf.set(WorkflowAppService.HADOOP_NN_KERBEROS_NAME, "");
+        if (conf.get(WorkflowAppService.HADOOP_NN_KERBEROS_NAME) == null) {
+            conf.set(WorkflowAppService.HADOOP_NN_KERBEROS_NAME, "hdfs/_HOST@" + localRealm);
         }
     }
 }
