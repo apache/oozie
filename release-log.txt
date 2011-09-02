@@ -1,5 +1,6 @@
 -- Oozie 3.0.1 release
 
+OOZIE-93 coordinator start and end instances doesn't work with float number.
 OOZIE-89 coord job status keep in SUCCEEDED when rerun in backward support state
 OOZIE-88 fix the status-transit-service to aggregate coordinator job running state
 OOZIE-83 add parameter userName to bundle xml in example

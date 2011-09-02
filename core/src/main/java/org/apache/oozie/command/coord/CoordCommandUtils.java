@@ -75,7 +75,7 @@ public class CoordCommandUtils {
         if (firstPos >= 0 && lastPos > firstPos) {
             String tmp = funcName.substring(firstPos + 1, lastPos).trim();
             if (tmp.length() > 0) {
-                return Integer.parseInt(tmp);
+                return (int) Double.parseDouble(tmp);
             }
         }
         throw new RuntimeException("Unformatted function :" + funcName);
@@ -89,7 +89,7 @@ public class CoordCommandUtils {
             String tmp = funcName.substring(firstPos + 1, secondPos).trim();
             if (tmp.length() > 0) {
                 restArg.append(funcName.substring(secondPos + 1, lastPos).trim());
-                return Integer.parseInt(tmp);
+                return (int) Double.parseDouble(tmp);
             }
         }
         throw new RuntimeException("Unformatted function :" + funcName);
