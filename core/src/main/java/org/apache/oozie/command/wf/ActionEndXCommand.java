@@ -198,6 +198,7 @@ public class ActionEndXCommand extends ActionXCommand<Void> {
                     wfAction.getName(), ex.getErrorType(), ex.getErrorCode(), ex.getMessage());
             wfAction.setErrorInfo(ex.getErrorCode(), ex.getMessage());
             wfAction.setEndTime(null);
+
             switch (ex.getErrorType()) {
                 case TRANSIENT:
                     if (!handleTransient(context, executor, WorkflowAction.Status.END_RETRY)) {
@@ -219,6 +220,11 @@ public class ActionEndXCommand extends ActionXCommand<Void> {
                     failJob(context);
                     break;
             }
+
+            WorkflowInstance wfInstance = wfJob.getWorkflowInstance();
+            DagELFunctions.setActionInfo(wfInstance, wfAction);
+            wfJob.setWorkflowInstance(wfInstance);
+
             try {
                 jpaService.execute(new WorkflowActionUpdateJPAExecutor(wfAction));
                 jpaService.execute(new WorkflowJobUpdateJPAExecutor(wfJob));
@@ -226,6 +232,7 @@ public class ActionEndXCommand extends ActionXCommand<Void> {
             catch (JPAExecutorException je) {
                 throw new CommandException(je);
             }
+
         }
         catch (JPAExecutorException je) {
             throw new CommandException(je);

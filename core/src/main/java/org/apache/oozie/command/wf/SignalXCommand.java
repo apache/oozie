@@ -25,6 +25,7 @@ import org.apache.oozie.XException;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.coord.CoordActionUpdateXCommand;
+import org.apache.oozie.command.wf.ActionXCommand.ActionExecutorContext;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionInsertJPAExecutor;
@@ -39,6 +40,8 @@ import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.WorkflowStoreService;
 import org.apache.oozie.workflow.WorkflowException;
 import org.apache.oozie.workflow.WorkflowInstance;
+import org.apache.oozie.workflow.lite.KillNodeDef;
+import org.apache.oozie.workflow.lite.NodeDef;
 import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.InstrumentUtils;
 import org.apache.oozie.util.LogUtils;
@@ -220,6 +223,34 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
             if (wfJob.getStatus() == WorkflowJob.Status.SUCCEEDED) {
                 InstrumentUtils.incrJobCounter(INSTR_SUCCEEDED_JOBS_COUNTER_NAME, 1, getInstrumentation());
             }
+
+            // output message for Kill node
+            if (wfAction != null) { // wfAction could be a no-op job
+                NodeDef nodeDef = workflowInstance.getNodeDef(wfAction.getExecutionPath());
+                if (nodeDef instanceof KillNodeDef) {
+                    ActionExecutorContext context = new ActionXCommand.ActionExecutorContext(wfJob, wfAction, false);
+                    try {
+                        String tmpNodeConf = nodeDef.getConf();
+                        String actionConf = context.getELEvaluator().evaluate(tmpNodeConf, String.class);
+                        LOG.debug("Try to resolve KillNode message for jobid [{0}], actionId [{1}], before resolve [{2}], after resolve [{3}]",
+                                jobId, actionId, tmpNodeConf, actionConf);
+                        if (wfAction.getErrorCode() != null) {
+                            wfAction.setErrorInfo(wfAction.getErrorCode(), actionConf);
+                        } else {
+                            wfAction.setErrorInfo(ErrorCode.E0729.toString(), actionConf);
+                        }
+                        jpaService.execute(new WorkflowActionUpdateJPAExecutor(wfAction));
+                    }
+                    catch (JPAExecutorException je) {
+                        throw new CommandException(je);
+                    }
+                    catch (Exception ex) {
+                        LOG.warn("Exception in SignalXCommand ", ex.getMessage(), ex);
+                        throw new CommandException(ErrorCode.E0729, wfAction.getName(), ex);
+                    }
+                }
+            }
+
         }
         else {
             for (WorkflowActionBean newAction : WorkflowStoreService.getStartedActions(workflowInstance)) {

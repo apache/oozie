@@ -435,7 +435,7 @@ public class CallableQueueService implements Service, Instrumentable {
                     queueSize) {
                 @Override
                 protected void debug(String msgTemplate, Object... msgArgs) {
-                    log.debug(msgTemplate, msgArgs);
+                    log.trace(msgTemplate, msgArgs);
                 }
 
                 @Override

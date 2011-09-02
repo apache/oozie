@@ -305,6 +305,23 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
         return status.isEndState();
     }
 
+    /**
+     * Get NodeDef from workflow instance
+     * @param executionPath execution path
+     * @return node def
+     */
+    public NodeDef getNodeDef(String executionPath) {
+        NodeInstance nodeJob = executionPaths.get(executionPath);
+        if (nodeJob == null) {
+            log.error("invalid execution path [{0}]", executionPath);
+        }
+        NodeDef nodeDef = def.getNode(nodeJob.nodeName);
+        if (nodeDef == null) {
+            log.error("invalid transition [{0}]", nodeJob.nodeName);
+        }
+        return nodeDef;
+    }
+
     public synchronized void fail(String nodeName) throws WorkflowException {
         if (status.isEndState()) {
             throw new WorkflowException(ErrorCode.E0718);
@@ -601,10 +618,12 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
         return persistentVars.get(node + WorkflowInstance.NODE_VAR_SEPARATOR + TRANSITION_TO);
     }
 
+    @Override
     public boolean equals(Object o) {
         return (o != null) && (getClass().isInstance(o)) && ((WorkflowInstance) o).getId().equals(instanceId);
     }
 
+    @Override
     public int hashCode() {
         return instanceId.hashCode();
     }

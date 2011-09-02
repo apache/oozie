@@ -30,6 +30,7 @@ import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.executor.jpa.CoordActionGetForExternalIdJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionUpdateJPAExecutor;
@@ -209,6 +210,52 @@ public class TestActionErrors extends XDataTestCase {
      */
     public void testEndDataNotSet() throws Exception {
         _testDataNotSet("avoid-set-end-data", ActionEndCommand.END_DATA_MISSING);
+    }
+
+    /**
+     * Provides functionality to test kill node message
+     *
+     * @throws Exception
+     */
+    public void testKillNodeErrorMessage() throws Exception {
+        Reader reader = IOUtils.getResourceAsReader("wf-test-kill-node-message.xml", -1);
+        Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
+        IOUtils.copyCharStream(reader, writer);
+
+        final DagEngine engine = new DagEngine("u", "a");
+        Configuration conf = new XConfiguration();
+        conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        conf.set(OozieClient.GROUP_NAME, getTestGroup());
+        injectKerberosInfo(conf);
+        conf.set(OozieClient.LOG_TOKEN, "t");
+        conf.set("error", "end.error");
+        conf.set("external-status", "FAILED/KILLED");
+        conf.set("signal-value", "fail");
+
+        final String jobId = engine.submitJob(conf, true);
+
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        final WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(jobId);
+
+        waitFor(50000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                WorkflowJobBean job = jpaService.execute(wfJobGetCmd);
+                return (job.getWorkflowInstance().getStatus() == WorkflowInstance.Status.KILLED);
+            }
+        });
+
+        WorkflowJobBean job = jpaService.execute(wfJobGetCmd);
+        assertEquals(WorkflowJob.Status.KILLED, job.getStatus());
+
+        WorkflowActionsGetForJobJPAExecutor wfActionsGetCmd = new WorkflowActionsGetForJobJPAExecutor(jobId);
+        List<WorkflowActionBean> actions = jpaService.execute(wfActionsGetCmd);
+
+        int n = actions.size();
+        WorkflowActionBean action = actions.get(n - 1);
+        assertEquals("TEST_ERROR", action.getErrorCode());
+        assertEquals("[end]", action.getErrorMessage());
+        assertEquals(WorkflowAction.Status.ERROR, action.getStatus());
     }
 
     /**

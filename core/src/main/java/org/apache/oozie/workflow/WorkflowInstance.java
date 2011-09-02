@@ -15,6 +15,7 @@
 package org.apache.oozie.workflow;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.workflow.lite.NodeDef;
 
 import java.util.Map;
 
@@ -184,5 +185,12 @@ public interface WorkflowInstance {
      * @return the transition the node did, <code>null</code> if the node didn't execute yet.
      */
     public String getTransition(String node);
+
+    /**
+     * Get NodeDef from workflow instance
+     * @param executionPath execution path
+     * @return node def
+     */
+    public NodeDef getNodeDef(String executionPath);
 
 }

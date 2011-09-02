@@ -1,5 +1,7 @@
 -- Oozie 3.1.0 release
 
+OOZIE-113 merge changes for OOZIE-101 to ActionEndXCommand 
+OOZIE-112 workflow kill node message is not resolved and set it to action error message
 OOZIE-111 adjust configuration for DBCP data source 
 OOZIE-105 bring JPA changes to master from integration branch
 OOZIE-103 upgrade openjpa jar to 2.1.0
