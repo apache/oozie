@@ -13,7 +13,7 @@
   limitations under the License. See accompanying LICENSE file.
 -->
 <coordinator-app name="aggregator-coord" frequency="${coord:hours(1)}" start="${start}" end="${end}" timezone="UTC"
-                 xmlns="uri:oozie:coordinator:0.1">
+                 xmlns="uri:oozie:coordinator:0.2">
     <controls>
         <concurrency>1</concurrency>
     </controls>

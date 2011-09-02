@@ -12,7 +12,7 @@
   See the License for the specific language governing permissions and
   limitations under the License. See accompanying LICENSE file.
 -->
-<workflow-app xmlns="uri:oozie:workflow:0.1" name="demo-wf">
+<workflow-app xmlns="uri:oozie:workflow:0.2" name="demo-wf">
 
     <start to="cleanup-node"/>
 
@@ -131,24 +131,13 @@
                 </property>
             </configuration>
         </map-reduce>
-        <ok to="ssh-node"/>
-        <error to="fail"/>
-    </action>
-
-    <action name="ssh-node">
-        <ssh>
-            <host>localhost</host>
-            <command>/bin/echo</command>
-            <args>do=${sshAction}</args>
-            <capture-output/>
-        </ssh>
         <ok to="decision-node"/>
         <error to="fail"/>
     </action>
 
     <decision name="decision-node">
         <switch>
-            <case to="hdfs-node">${wf:actionData("ssh-node")["do"] == "rename"}</case>
+            <case to="hdfs-node">${fs:exists(concat(concat(concat(concat(concat(nameNode, '/user/'), wf:user()), '/'), examplesRoot), '/output-data/demo/mr-node')) == "true"}</case>
             <default to="end"/>
         </switch>
     </decision>

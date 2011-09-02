@@ -1,5 +1,6 @@
 -- Oozie 3.0.0 release
 
+OOZIE-23 Update oozie examples with new namespace version for workflow and coordinator.
 OOZIE-20 examples job properties have hardcoded values, and use non-default Hadoop ports
 GH-0674 Fixing Bundle status after rerun. 
 GH-0677 OOZIE-24 fix paused bundle job and status in bundle actions
