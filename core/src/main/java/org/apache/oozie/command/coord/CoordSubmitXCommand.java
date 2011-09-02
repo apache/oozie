@@ -478,9 +478,15 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         // coordJob.setEndOfDuration(tmp) // TODO: Add new attribute in Job bean
 
         // Application name
-        val = resolveAttribute("name", eAppXml, evalNofuncs);
-        coordJob.setAppName(val);
-        
+        if (this.coordName == null) {
+            val = resolveAttribute("name", eAppXml, evalNofuncs);
+            coordJob.setAppName(val);
+        }
+        else {
+            // this coord job is created from bundle
+            coordJob.setAppName(this.coordName);
+        }
+
         // start time
         val = resolveAttribute("start", eAppXml, evalNofuncs);
         ParamChecker.checkUTC(val, "start");
@@ -900,10 +906,6 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         coordJob.setId(jobId);
         coordJob.setAuthToken(this.authToken);
 
-        if (this.coordName == null) {
-            coordJob.setAppName(eJob.getAttributeValue("name"));
-        }
-
         coordJob.setAppPath(conf.get(OozieClient.COORDINATOR_APP_PATH));
         coordJob.setCreatedTime(new Date());
         coordJob.setUser(conf.get(OozieClient.USER_NAME));
@@ -957,10 +959,6 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
             // first use bundle id if submit thru bundle
             logInfo.setParameter(DagXLogInfoService.JOB, this.bundleId);
             LogUtils.setLogInfo(logInfo);
-        }
-        if (this.coordName != null) {
-            // this coord job is created from bundle
-            coordJob.setAppName(this.coordName);
         }
         setJob(coordJob);
 

@@ -25,6 +25,7 @@ import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.util.Date;
+import java.util.List;
 import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
@@ -32,6 +33,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
+import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.action.hadoop.MapperReducerForTest;
 import org.apache.oozie.client.CoordinatorAction;
@@ -42,6 +44,8 @@ import org.apache.oozie.command.CommandException;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.executor.jpa.WorkflowActionGetJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowActionsGetForJobJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
@@ -101,14 +105,26 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
         }
 
         final String wfId = action.getExternalId();
-        waitFor(20 * 1000, new Predicate() {
+
+        waitFor(3000, new Predicate() {
             public boolean evaluate() throws Exception {
-                WorkflowJobBean wfJob = jpaService.execute(new WorkflowJobGetJPAExecutor(wfId));
-                return wfJob.getExternalId() != null;
+                List<WorkflowActionBean> wfActions = jpaService.execute(new WorkflowActionsGetForJobJPAExecutor(wfId));
+                return wfActions.size() > 0;
             }
         });
-        WorkflowJobBean wfJob = jpaService.execute(new WorkflowJobGetJPAExecutor(wfId));
-        assertNotNull(wfJob.getExternalId());
+        List<WorkflowActionBean> wfActions = jpaService.execute(new WorkflowActionsGetForJobJPAExecutor(wfId));
+        assertTrue(wfActions.size() > 0);
+
+        final String wfActionId = wfActions.get(0).getId();
+        waitFor(20 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                WorkflowActionBean wfAction = jpaService.execute(new WorkflowActionGetJPAExecutor(wfActionId));
+                return wfAction.getExternalId() != null;
+            }
+        });
+
+        WorkflowActionBean wfAction = jpaService.execute(new WorkflowActionGetJPAExecutor(wfActionId));
+        assertNotNull(wfAction.getExternalId());
     }
 
     @Override
