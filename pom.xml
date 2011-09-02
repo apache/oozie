@@ -61,6 +61,12 @@
 
         <oozie.test.hadoop.pipes>false</oozie.test.hadoop.pipes>
 
+        <oozie.test.user.oozie>${user.name}</oozie.test.user.oozie>
+        <oozie.test.user.test>test</oozie.test.user.test>
+        <oozie.test.user.test2>test2</oozie.test.user.test2>
+        <oozie.test.user.test3>test3</oozie.test.user.test3>
+        <oozie.test.group>testg</oozie.test.group>
+
         <oozie.test.hadoop.security>simple</oozie.test.hadoop.security>
 
         <oozie.test.kerberos.keytab.file>${user.home}/oozie.keytab</oozie.test.kerberos.keytab.file>
@@ -173,6 +179,26 @@
                         <property>
                             <name>oozie.test.config.file</name>
                             <value>${oozie.test.config.file}</value>
+                        </property>
+                        <property>
+                            <name>oozie.test.user.oozie</name>
+                            <value>${oozie.test.user.oozie}</value>
+                        </property>
+                        <property>
+                            <name>oozie.test.user.test</name>
+                            <value>${oozie.test.user.test}</value>
+                        </property>
+                        <property>
+                            <name>oozie.test.user.test2</name>
+                            <value>${oozie.test.user.test2}</value>
+                        </property>
+                        <property>
+                            <name>oozie.test.user.test3</name>
+                            <value>${oozie.test.user.test3}</value>
+                        </property>
+                        <property>
+                            <name>oozie.test.group</name>
+                            <value>${oozie.test.group}</value>
                         </property>
                         <property>
                             <name>oozie.test.dir</name>

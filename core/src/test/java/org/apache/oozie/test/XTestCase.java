@@ -100,6 +100,36 @@ public abstract class XTestCase extends TestCase {
      */
     public static final String HADOOP_VERSION = "hadoop.version";
 
+    /** 
+     * System property that specifies the user that test oozie instance runs as.
+     * The value of this property defaults to the "${user.name} system property.
+     */
+    public static final String TEST_OOZIE_USER_PROP = "oozie.test.user.oozie";
+
+    /**
+     * System property that specifies the default test user name used by 
+     * the tests. The defalt value of this property is <tt>test</tt>.
+     */
+    public static final String TEST_USER1_PROP = "oozie.test.user.test";
+
+    /**
+     * System property that specifies an auxilliary test user name used by the 
+     * tests. The default value of this property is <tt>test2</tt>.
+     */
+    public static final String TEST_USER2_PROP = "oozie.test.user.test2";
+
+    /**
+     * System property that specifies another auxilliary test user name used by
+     * the tests. The default value of this property is <tt>test3</tt>.
+     */
+    public static final String TEST_USER3_PROP = "oozie.test.user.test3";
+
+    /**
+     * System property that specifies the test groiup used by the tests.
+     * The default value of this property is <tt>testg</tt>.
+     */
+    public static final String TEST_GROUP_PROP = "oozie.test.group";
+
     /**
      * Initialize the test working directory. <p/> If it does not exist it creates it, if it already exists it deletes
      * all its contents. <p/> The test working directory it is not deleted after the test runs. <p/>
@@ -200,30 +230,57 @@ public abstract class XTestCase extends TestCase {
         return hadoopVersion;
     }
 
-    protected String getTestUser() {
-        return "test";
-    }
-
-    protected String getTestUser2() {
-        return "test2";
-    }
-
-    protected String getTestUser3() {
-        return "test3";
+    /**
+     *  Return the user Id use to run Oozie during the test cases.
+     *
+     * @return Oozie's user Id for running the test cases.
+     */
+    public static String getOozieUser() {
+        return System.getProperty(TEST_OOZIE_USER_PROP, System.getProperty("user.name"));
     }
 
     /**
-     * Return the user to use in testcases.
+     * Return the defaul test user Id. The user belongs to the test group.
      *
-     * @return the user to use in testcases.
+     * @return the user Id.
+     */
+    protected String getTestUser() {
+        return System.getProperty(TEST_USER1_PROP, "test");
+    }
+
+    /**
+     * Return an alternate test user Id that belongs 
+       to the test group.
+     *
+     * @return the user Id.
+     */
+    protected String getTestUser2() {
+        return System.getProperty(TEST_USER2_PROP, "test2");
+    }
+
+    /**
+     * Return an alternate test user Id that does not belong 
+     * to the test group.
+     *
+     * @return the user Id.
+     */
+    protected String getTestUser3() {
+        return System.getProperty(TEST_USER3_PROP, "test3");
+    }
+
+    /**
+     * Return the test group.
+     *
+     * @return the test group.
      */
     protected String getTestGroup() {
-      return "testg";
+        return System.getProperty(TEST_GROUP_PROP, "testg");
     }
 
     /**
-     * Return the test working directory. <p/> It returns <code>${oozie.test.dir}/oozietests/TESTCLASSNAME/TESTMETHODNAME</code>.
-     * <p/>
+     * Return the test working directory. 
+     * <p/> 
+     * It returns <code>${oozie.test.dir}/oozietests/TESTCLASSNAME/TESTMETHODNAME</code>.
      *
      * @param testCase testcase instance to obtain the working directory.
      * @return the test working directory.
@@ -405,7 +462,7 @@ public abstract class XTestCase extends TestCase {
 
     public String getOoziePrincipal() {
         return System.getProperty("oozie.test.kerberos.oozie.principal",
-                                  System.getProperty("user.name") + "/localhost") + "@" + getRealm();
+                                  getOozieUser() + "/localhost") + "@" + getRealm();
     }
 
     public String getJobTrackerPrincipal() {
@@ -511,12 +568,13 @@ public abstract class XTestCase extends TestCase {
             }
             int taskTrackers = 2;
             int dataNodes = 2;
+            String oozieUser = getOozieUser();
             JobConf conf = new JobConf();
             conf.set("dfs.block.access.token.enable", "false");
             conf.set("dfs.permissions", "true");
             conf.set("hadoop.security.authentication", "simple");
-            conf.set("hadoop.proxyuser." + System.getProperty("user.name") + ".hosts", "localhost");
-            conf.set("hadoop.proxyuser." + System.getProperty("user.name") + ".groups", "users");
+            conf.set("hadoop.proxyuser." + oozieUser + ".hosts", "localhost");
+            conf.set("hadoop.proxyuser." + oozieUser + ".groups", "users");
             conf.set("mapred.tasktracker.map.tasks.maximum", "4");
             conf.set("mapred.tasktracker.reduce.tasks.maximum", "4");
             dfsCluster = new MiniDFSCluster(conf, dataNodes, true, null);
