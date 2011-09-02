@@ -412,7 +412,7 @@ fork arrive to the join node.
     </fork>
     <action name="firstparallejob">
         <map-reduce>
-            <job-traker>foo:9001</job-tracker>
+            <job-tracker>foo:9001</job-tracker>
             <name-node>bar:9000</name-node>
             <job-xml>job1.xml</job-xml>
         </map-reduce>
@@ -421,7 +421,7 @@ fork arrive to the join node.
     </action>
     <action name="secondparalleljob">
         <map-reduce>
-            <job-traker>foo:9001</job-tracker>
+            <job-tracker>foo:9001</job-tracker>
             <name-node>bar:9000</name-node>
             <job-xml>job2.xml</job-xml>
         </map-reduce>
@@ -659,7 +659,7 @@ The =mapper= and =reducer= process for streaming jobs, should specify the execut
     ...
     <action name="myfirstHadoopJob">
         <map-reduce>
-            <job-traker>foo:9001</job-tracker>
+            <job-tracker>foo:9001</job-tracker>
             <name-node>bar:9000</name-node>
             <prepare>
                 <delete path="hdfs://foo:9000/usr/tucu/output-data"/>
@@ -697,7 +697,7 @@ the workflow job configuration when creating the workflow job.
     ...
     <action name="firstjob">
         <map-reduce>
-            <job-traker>foo:9001</job-tracker>
+            <job-tracker>foo:9001</job-tracker>
             <name-node>bar:9000</name-node>
             <prepare>
                 <delete path="${output}"/>
@@ -738,7 +738,7 @@ the workflow job configuration when creating the workflow job.
     ...
     <action name="firstjob">
         <map-reduce>
-            <job-traker>foo:9001</job-tracker>
+            <job-tracker>foo:9001</job-tracker>
             <name-node>bar:9000</name-node>
             <prepare>
                 <delete path="${output}"/>
@@ -910,7 +910,7 @@ All the above elements can be parameterized (templatized) using EL expressions.
     ...
     <action name="myfirstpigjob">
         <pig>
-            <job-traker>foo:9001</job-tracker>
+            <job-tracker>foo:9001</job-tracker>
             <name-node>bar:9000</name-node>
             <prepare>
                 <delete path="${jobOutput}"/>
@@ -942,7 +942,7 @@ All the above elements can be parameterized (templatized) using EL expressions.
     ...
     <action name="myfirstpigjob">
         <pig>
-            <job-traker>foo:9001</job-tracker>
+            <job-tracker>foo:9001</job-tracker>
             <name-node>bar:9000</name-node>
             <prepare>
                 <delete path="${jobOutput}"/>
@@ -1294,7 +1294,7 @@ All the above elements can be parameterized (templatized) using EL expressions.
     ...
     <action name="myfirstjavajob">
         <java>
-            <job-traker>foo:9001</job-tracker>
+            <job-tracker>foo:9001</job-tracker>
             <name-node>bar:9000</name-node>
             <prepare>
                 <delete path="${jobOutput}"/>
