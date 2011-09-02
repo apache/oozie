@@ -129,6 +129,10 @@ public class CoordinatorActionBean extends JsonCoordinatorAction implements
     @Column(name = "sla_xml")
     @Lob
     private String slaXml = null;
+    
+    @Basic
+    @Column(name = "pending")
+    private int pending = 0;
 
     public CoordinatorActionBean() {
     }
@@ -302,4 +306,50 @@ public class CoordinatorActionBean extends JsonCoordinatorAction implements
         return isTerminal;
     }
 
+    /**
+     * Set some actions are in progress for particular coordinator action.
+     *
+     * @param pending set pending to true
+     */
+    public void setPending(int pending) {
+        this.pending = pending;
+    }
+
+    /**
+     * increment pending and return it
+     *
+     * @return pending
+     */
+    public int incrementAndGetPending() {
+        this.pending++;
+        return pending;
+    }
+
+    /**
+     * decrement pending and return it
+     *
+     * @return pending
+     */
+    public int decrementAndGetPending() {
+        this.pending--;
+        return pending;
+    }
+
+    /**
+     * Get some actions are in progress for particular bundle action.
+     *
+     * @return pending
+     */
+    public int getPending() {
+        return this.pending;
+    }
+
+    /**
+     * Return if the action is pending.
+     *
+     * @return if the action is pending.
+     */
+    public boolean isPending() {
+        return pending > 0 ? true : false;
+    }
 }

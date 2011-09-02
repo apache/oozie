@@ -29,7 +29,7 @@ import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.CoordinatorJobInfo;
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.client.CoordinatorJob.Status;
+import org.apache.oozie.client.Job.Status;
 import org.apache.oozie.client.CoordinatorJob.Timeunit;
 import org.apache.oozie.service.InstrumentationService;
 import org.apache.oozie.service.Services;

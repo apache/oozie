@@ -199,7 +199,7 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
      * @return job status
      */
     public static Job.Status convertCoordStatustoJob(CoordinatorJob.Status coordStatus) {
-        if (coordStatus == CoordinatorJob.Status.PREMATER) {
+        if (coordStatus == Job.Status.PREMATER) {
             coordStatus = CoordinatorJob.Status.RUNNING;
         }
 

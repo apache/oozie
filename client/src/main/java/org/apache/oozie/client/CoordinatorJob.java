@@ -20,14 +20,7 @@ import java.util.List;
 /**
  * Bean that represents an Oozie application.
  */
-public interface CoordinatorJob {
-
-    /**
-     * Defines the possible stati of an Oozie application.
-     */
-    public static enum Status {
-        PREP, PREMATER, RUNNING, SUSPENDED, SUCCEEDED, KILLED, FAILED
-    }
+public interface CoordinatorJob extends Job {
 
     /**
      * Defines the possible execution order of an Oozie application.

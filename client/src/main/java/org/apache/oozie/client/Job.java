@@ -24,7 +24,7 @@ public interface Job {
      * Defines the possible status of an Oozie JOB.
      */
     public static enum Status {
-        PREP, RUNNING, SUSPENDED, SUCCEEDED, KILLED, FAILED, PAUSED, PREPPAUSED, PREPSUSPENDED, RUNNINGWITHERROR, SUSPENDEDWITHERROR, PAUSEDWITHERROR, DONEWITHERROR
+        PREMATER, PREP, RUNNING, SUSPENDED, SUCCEEDED, KILLED, FAILED, PAUSED, PREPPAUSED, PREPSUSPENDED, RUNNINGWITHERROR, SUSPENDEDWITHERROR, PAUSEDWITHERROR, DONEWITHERROR
     }
 
     /**
@@ -89,13 +89,6 @@ public interface Job {
      * @return the JOB start time.
      */
     Date getStartTime();
-
-    /**
-     * Return the JOB Kickoff time.
-     *
-     * @return the JOB Kickoff time.
-     */
-    Date getKickoffTime();
 
     /**
      * Return the JOB end time.

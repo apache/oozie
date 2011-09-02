@@ -124,6 +124,40 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
     @Column(name = "sla_xml")
     @Lob
     private String slaXml = null;
+    
+    @Basic
+    @Column(name = "pending")
+    private int pending = 0;
+    
+    /**
+     * Set pending to true
+     *
+     * @param pending set pending to true
+     */
+    @Override
+    public void setPending() {
+        this.pending = 1;
+    }
+
+    /**
+     * Set pending to false
+     *
+     * @param pending set pending to false
+     */
+    @Override
+    public void resetPending() {
+        this.pending = 0;
+    }
+
+    /**
+     * Return if the action is pending.
+     *
+     * @return if the action is pending.
+     */
+    @Override
+    public boolean isPending() {
+        return pending == 1 ? true : false;
+    }
 
     public java.sql.Timestamp getStartTimestamp() {
         return startTimestamp;

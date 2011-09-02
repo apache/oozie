@@ -1,5 +1,8 @@
 -- Oozie 3.0.0 release
 
+GH-0537 migrate CoordKillXCommand to transition based
+GH-0532 update to apache-tomcat-6.0.32.tar.gz from apache-tomcat-6.0.29.tar.gz
+GH-0533 Add uniqueness to master branch
 GH-0078 Option to rerun from failed node.
 GH-0522 Bundle rerun failed.
 GH-0086 Clean up temporary files in the user HDFS directory upon completion.

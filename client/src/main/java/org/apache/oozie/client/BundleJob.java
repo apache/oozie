@@ -15,6 +15,7 @@
 
 package org.apache.oozie.client;
 
+import java.util.Date;
 import java.util.List;
 
 import org.apache.oozie.client.rest.JsonCoordinatorJob;
@@ -51,5 +52,12 @@ public interface BundleJob extends Job {
      * @return the list of CoordinatorJob.
      */
     List<CoordinatorJob> getCoordinators();
+    
+    /**
+     * Return the JOB Kickoff time.
+     *
+     * @return the JOB Kickoff time.
+     */
+    Date getKickoffTime();
 
 }

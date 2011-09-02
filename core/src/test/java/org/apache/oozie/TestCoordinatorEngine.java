@@ -24,7 +24,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.OozieClient;
-import org.apache.oozie.client.CoordinatorJob.Status;
+import org.apache.oozie.client.Job.Status;
 import org.apache.oozie.client.rest.JsonCoordinatorAction;
 import org.apache.oozie.command.coord.CoordSubmitCommand;
 import org.apache.oozie.service.Services;

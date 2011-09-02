@@ -24,7 +24,7 @@ import javax.persistence.Query;
 
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.CoordinatorJobInfo;
-import org.apache.oozie.client.CoordinatorJob.Status;
+import org.apache.oozie.client.Job.Status;
 import org.apache.oozie.client.CoordinatorJob.Timeunit;
 import org.apache.oozie.store.StoreStatusFilter;
 import org.apache.oozie.util.ParamChecker;

@@ -119,6 +119,11 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
 
     @Transient
     private List<? extends JsonCoordinatorAction> actions;
+    
+    @Basic
+    @Column(name = "pending")
+    private int pending = 0;
+
 
     public JsonCoordinatorJob() {
         actions = new ArrayList<JsonCoordinatorAction>();
@@ -407,5 +412,28 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
 
     public void setLastActionNumber(int lastActionNumber) {
         this.lastActionNumber = lastActionNumber;
+    }
+    
+    /**
+     * @param pending set pending to true
+     */
+    public void setPending() {
+        this.pending = 1;
+    }
+
+    /**
+     * @param pending set pending to false
+     */
+    public void resetPending() {
+        this.pending = 0;
+    }
+
+    /**
+     * Return if the action is pending.
+     *
+     * @return if the action is pending.
+     */
+    public boolean isPending() {
+        return pending == 1 ? true : false;
     }
 }
