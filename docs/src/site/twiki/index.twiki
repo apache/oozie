@@ -36,7 +36,6 @@ Enough reading already? Follow the steps in [[DG_QuickStart][Oozie Quick Start]]
    * [[http://java.sun.com/j2ee/1.4/docs/tutorial/doc/JSPIntro7.html#wp77280][EL Expression Language Quick Reference]]
    * [[DG_CommandLineTool][Command Line Tool]]
    * [[DG_WorkflowReRun][Workflow Re-runs Explained]]
-   * [[DG_UsingHadoopKerberos][Using a Hadoop cluster with Kerberos Authentication]]
 
    * [[DG_CustomActionExecutor][Writing a Custom Action Executor]]
    * [[./apidocs/index.html][Oozie Javadocs]]
