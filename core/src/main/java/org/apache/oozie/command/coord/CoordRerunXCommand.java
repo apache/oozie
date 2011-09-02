@@ -498,10 +498,16 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
 
     @Override
     public void updateJob() throws CommandException {
+        // rerun a paused coordinator job will keep job status at paused and pending at previous pending
         if (prevStatus.equals(Job.Status.PAUSED)) {
-            coordJob.setPauseTime(null);
+            coordJob.setStatus(Job.Status.PAUSED);
+            if (prevPending) {
+                coordJob.setPending();
+            }
         }
-        updateCoordJobPending();
+        else {
+            updateCoordJobPending();
+        }
         try {
             jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
         }

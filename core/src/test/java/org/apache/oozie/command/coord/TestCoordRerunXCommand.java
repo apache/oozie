@@ -690,8 +690,8 @@ public class TestCoordRerunXCommand extends XDataTestCase {
                 .call();
 
         job = jpaService.execute(coordJobGetExecutor);
-        assertEquals(Job.Status.RUNNING, job.getStatus());
-        assertNull(job.getPauseTime());
+        assertEquals(Job.Status.PAUSED, job.getStatus());
+        assertNotNull(job.getPauseTime());
     }
 
     /**
