@@ -26,6 +26,7 @@ import org.apache.oozie.service.XLogService;
  * logging utilities.
  */
 public class LogUtils {
+
     /**
      * Set the log info with the context of the given coordinator bean.
      *
@@ -44,7 +45,6 @@ public class LogUtils {
         logInfo.setParameter(DagXLogInfoService.APP, cBean.getAppName());
         XLog.Info.get().setParameters(logInfo);
     }
-
 
     /**
      * Set the log info with the context of the given coordinator action bean.
