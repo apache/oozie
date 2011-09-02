@@ -133,40 +133,11 @@
 
     <dependencySets>
         <dependencySet>
-            <outputDirectory>/examples/apps/demo/lib</outputDirectory>
+            <outputDirectory>/examples/apps/examples-lib</outputDirectory>
             <unpack>false</unpack>
             <includes>
                 <include>${pigGroupId}:${pigArtifactId}</include>
                 <include>jline:jline</include>
-                <include>${hadoopGroupId}:hadoop-streaming</include>
-            </includes>
-            <fileMode>0444</fileMode>
-        </dependencySet>
-
-        <dependencySet>
-            <outputDirectory>/examples/apps/pig/lib</outputDirectory>
-            <unpack>false</unpack>
-            <includes>
-                <include>${pigGroupId}:${pigArtifactId}</include>
-                <include>jline:jline</include>
-            </includes>
-            <fileMode>0444</fileMode>
-        </dependencySet>
-
-        <dependencySet>
-            <outputDirectory>/examples/apps/custom-main/lib</outputDirectory>
-            <unpack>false</unpack>
-            <includes>
-                <include>${pigGroupId}:${pigArtifactId}</include>
-                <include>jline:jline</include>
-            </includes>
-            <fileMode>0444</fileMode>
-        </dependencySet>
-
-        <dependencySet>
-            <outputDirectory>/examples/apps/streaming/lib</outputDirectory>
-            <unpack>false</unpack>
-            <includes>
                 <include>${hadoopGroupId}:hadoop-streaming</include>
             </includes>
             <fileMode>0444</fileMode>

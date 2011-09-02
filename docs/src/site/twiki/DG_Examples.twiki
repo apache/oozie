@@ -80,6 +80,17 @@ $
 $ oozie job -info 14-20090525161321-oozie-tucu
 </verbatim>
 
+---++ Examples Share Lib
+
+The streaming, pig, demo and custom-main examples pick up the streaming and pig JARs from an example share lib
+bundled with the examples =examples/apps/examples-lib/= .
+
+The setting for the share lib is done in the job properties using the =oozie.libpath= property.
+
+<verbatim>
+oozie.libpath=/user/${user.name}/examples/apps/examples-lib
+</verbatim>
+
 ---++ Java API Example
 
 Oozie provides a =[[./apidocs/org/org/apache/oozie/client/package-summary.html][Java Client API]] that simplifies
