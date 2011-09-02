@@ -142,7 +142,6 @@
                                     <directory>../core/src/main/resources</directory>
                                     <includes>
                                         <include>oozie-default.xml</include>
-                                        <include>oozie-log4j.properties</include>
                                     </includes>
                                     <targetPath>docs</targetPath>
                                 </resource>

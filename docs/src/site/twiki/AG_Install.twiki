@@ -229,7 +229,7 @@ create callback URLs for actions and the console URL for Oozie workflow jobs (de
 
 ---+++ Fine Tuning an Oozie Server
 
-Refer to the [[oozie-default.xml][oozie-default.xml.txt]] for details.
+Refer to the [[./oozie-default.xml][oozie-default.xml]] for details.
 
 ---++ Starting and Stopping Oozie
 
