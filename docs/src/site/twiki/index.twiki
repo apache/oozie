@@ -55,6 +55,8 @@ Oozie is distributed under [[http://www.apache.org/licenses/LICENSE-2.0][Apache 
 For details on the license of the dependent components, refer to the
 [[./dependencies.html#Licenses][Dependencies Report, Licenses section]].
 
+Oozie bundles an embedded Apache Tomcat 6.x.
+
 Some of the components in the dependencies report don't mention their license in the published POM. They are:
 
    * JDOM: [[http://www.jdom.org/docs/faq.html#a0030][JDOM License]] (Apache style).
