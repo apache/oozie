@@ -494,14 +494,14 @@ public class JavaActionExecutor extends ActionExecutor {
             // group to kill the jobs.
             actionConf.set("mapreduce.job.acl-modify-job", context.getWorkflow().getGroup());
 
-            // Setting the authentication properties in launcher conf
-            HashMap<String, CredentialsProperties> credentialsProperties = setAuthenticationPropertyToActionConf(context,
+            // Setting the credential properties in launcher conf
+            HashMap<String, CredentialsProperties> credentialsProperties = setCredentialPropertyToActionConf(context,
                     action, actionConf);
 
-            // Adding if action need to set more authentication tokens
+            // Adding if action need to set more credential tokens
             JobConf credentialsConf = new JobConf();
             XConfiguration.copy(actionConf, credentialsConf);
-            setAuthenticationTokens(credentialsConf, context, action, credentialsProperties);
+            setCredentialTokens(credentialsConf, context, action, credentialsProperties);
 
             // insert conf to action conf from credentialsConf
             for (Entry<String, String> entry : credentialsConf) {
@@ -600,7 +600,7 @@ public class JavaActionExecutor extends ActionExecutor {
         return methodExists;
     }
 
-    protected HashMap<String, CredentialsProperties> setAuthenticationPropertyToActionConf(Context context,
+    protected HashMap<String, CredentialsProperties> setCredentialPropertyToActionConf(Context context,
             WorkflowAction action, Configuration actionConf) throws Exception {
         HashMap<String, CredentialsProperties> credPropertiesMap = null;
         if (context != null && action != null) {
@@ -609,7 +609,7 @@ public class JavaActionExecutor extends ActionExecutor {
                 for (String key : credPropertiesMap.keySet()) {
                     CredentialsProperties prop = credPropertiesMap.get(key);
                     if (prop != null) {
-                        log.debug("Credential Properties set for Action: " + action.getId());
+                        log.debug("Credential Properties set for action : " + action.getId());
                         for (String property : prop.getProperties().keySet()) {
                             actionConf.set(property, prop.getProperties().get(property));
                             log.debug("property : '" + property + "', value : '" + prop.getProperties().get(property) + "'");
@@ -618,7 +618,7 @@ public class JavaActionExecutor extends ActionExecutor {
                 }
             }
             else {
-                log.warn("No authentication properties found");
+                log.warn("No credential properties found for action : " + action.getId() + ", cred : " + action.getCred());
             }
         }
         else {
@@ -627,7 +627,7 @@ public class JavaActionExecutor extends ActionExecutor {
         return credPropertiesMap;
     }
 
-    protected void setAuthenticationTokens(JobConf jobconf, Context context, WorkflowAction action,
+    protected void setCredentialTokens(JobConf jobconf, Context context, WorkflowAction action,
             HashMap<String, CredentialsProperties> credPropertiesMap) throws Exception {
 
         if (context != null && action != null && credPropertiesMap != null) {
@@ -635,8 +635,8 @@ public class JavaActionExecutor extends ActionExecutor {
                 String credName = entry.getKey();
                 CredentialsProperties credProps = entry.getValue();
                 if (credProps != null) {
-                    CredentialsProvider authprovider = new CredentialsProvider(credProps.getType());
-                    Credentials credentialObject = authprovider.createAuthenticator();
+                    CredentialsProvider credProvider = new CredentialsProvider(credProps.getType());
+                    Credentials credentialObject = credProvider.createCredentialObject();
                     if (credentialObject != null) {
                         credentialObject.addtoJobConf(jobconf, credProps, context);
                         log.debug("Retrieved Credential '" + credName + "' for action " + action.getId());
@@ -658,11 +658,11 @@ public class JavaActionExecutor extends ActionExecutor {
         HashMap<String, CredentialsProperties> props = new HashMap<String, CredentialsProperties>();
         if (context != null && action != null) {
             String credsInAction = action.getCred();
-            log.debug("Auth credentials '" + credsInAction + "' for action name : " + action.getName());
+            log.debug("Get credential '" + credsInAction + "' properties for action : " + action.getId());
             String[] credNames = credsInAction.split(",");
             for (String credName : credNames) {
-                CredentialsProperties authprop = getCredProperties(context, credName);
-                props.put(credName, authprop);
+                CredentialsProperties credProps = getCredProperties(context, credName);
+                props.put(credName, credProps);
             }
         }
         else {
@@ -677,16 +677,16 @@ public class JavaActionExecutor extends ActionExecutor {
         CredentialsProperties credProp = null;
         String workflowXml = ((WorkflowJobBean) context.getWorkflow()).getWorkflowInstance().getApp().getDefinition();
         Element elementJob = XmlUtils.parseXml(workflowXml);
-        Element authentications = elementJob.getChild("credentials", elementJob.getNamespace());
-        if (authentications != null) {
-            for (Element authentication : (List<Element>) authentications.getChildren("credential", authentications
+        Element credentials = elementJob.getChild("credentials", elementJob.getNamespace());
+        if (credentials != null) {
+            for (Element credential : (List<Element>) credentials.getChildren("credential", credentials
                     .getNamespace())) {
-                String name = authentication.getAttributeValue("name");
-                String type = authentication.getAttributeValue("type");
+                String name = credential.getAttributeValue("name");
+                String type = credential.getAttributeValue("type");
                 log.debug("getCredProperties: Name: " + name + ", Type: " + type);
                 if (name.equalsIgnoreCase(credName)) {
                     credProp = new CredentialsProperties(name, type);
-                    for (Element property : (List<Element>) authentication.getChildren("property", authentication
+                    for (Element property : (List<Element>) credential.getChildren("property", credential
                             .getNamespace())) {
                         credProp.getProperties().put(property.getChildText("name", property.getNamespace()),
                                 property.getChildText("value", property.getNamespace()));
@@ -698,7 +698,7 @@ public class JavaActionExecutor extends ActionExecutor {
             }
         }
         else {
-            log.warn("authentications is null for the action");
+            log.warn("credentials is null for the action");
         }
         return credProp;
     }

@@ -16,19 +16,20 @@ package org.apache.oozie.action.hadoop;
 
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.oozie.action.ActionExecutor.Context;
-import org.apache.oozie.client.WorkflowAction;
-import org.jdom.Element;
 
+@SuppressWarnings("deprecation")
 public abstract class Credentials {
 
     /**
-     * This is the interface for all the Credentials implementation. Any new credential implementaion must implement 
-     * this function. This function should modify the jobconf which will be used further to pass the credentials
-     * to the tasks while running it. Creentials properties and context is also provided by that user can get all the 
-     * necessary configuration.  
-     * @param jobconf
-     * @param props
-     * @throws Exception 
+     * This is the interface for all the Credentials implementation. Any new credential implementaion must implement
+     * this function. This function should modify the jobconf which will be used further to pass the credentials to the
+     * tasks while running it. Credentials properties and context is also provided by that user can get all the
+     * necessary configuration.
+     *
+     * @param jobconf job conf where the token will insert into
+     * @param props properties for getting credential token or certificate
+     * @param context workflow context
+     * @throws Exception thrown if failed
      */
-    public abstract void addtoJobConf(JobConf jobconf, CredentialsProperties props,Context context) throws Exception;
+    public abstract void addtoJobConf(JobConf jobconf, CredentialsProperties props, Context context) throws Exception;
 }

@@ -36,7 +36,6 @@ public abstract class WorkflowStoreService implements Service {
     final static String ACTIONS_TO_KILL = TRANSIENT_VAR_PREFIX + "actions.to.kill";
     final static String ACTIONS_TO_FAIL = TRANSIENT_VAR_PREFIX + "actions.to.fail";
     final static String ACTIONS_TO_START = TRANSIENT_VAR_PREFIX + "actions.to.start";
-    final static String ACTION_AUTH_ATTRIBUTE = "auth";
 
     /**
      * Return the public interface of the service.
@@ -70,7 +69,7 @@ public abstract class WorkflowStoreService implements Service {
      * @return a workflow store.
      * @throws StoreException thrown if the workflow store could not be created.
      */
-    //to do this method can be abstract or should be overridden 
+    //to do this method can be abstract or should be overridden
     public <S extends Store> WorkflowStore create(S store) throws StoreException {
         return null;
     }

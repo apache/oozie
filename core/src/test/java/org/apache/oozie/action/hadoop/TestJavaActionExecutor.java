@@ -665,7 +665,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
                 + "<credential name='abcname' type='abc'>" + "<property>" + "<name>property1</name>"
                 + "<value>value1</value>" + "</property>" + "<property>" + "<name>property2</name>"
                 + "<value>value2</value>" + "</property>" + "</credential>" + "</credentials>"
-                + "<start to='pig1' />" + "<action name='pig1' auth='abcname'>" + "<pig>" + "</pig>"
+                + "<start to='pig1' />" + "<action name='pig1' cred='abcname'>" + "<pig>" + "</pig>"
                 + "<ok to='end' />" + "<error to='fail' />" + "</action>" + "<kill name='fail'>"
                 + "<message>Pig failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>" + "</kill>"
                 + "<end name='end' />" + "</workflow-app>";
@@ -688,22 +688,22 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         // action job configuration
         Configuration actionConf = ae.createBaseHadoopConf(context, actionXmlconf);
 
-        // Setting the authentication properties in launcher conf
-        HashMap<String, CredentialsProperties> authProperties = ae.setAuthenticationPropertyToActionConf(context,
+        // Setting the credential properties in launcher conf
+        HashMap<String, CredentialsProperties> credProperties = ae.setCredentialPropertyToActionConf(context,
                 action, actionConf);
 
-        CredentialsProperties prop = authProperties.get("abcname");
+        CredentialsProperties prop = credProperties.get("abcname");
         assertEquals("value1", prop.getProperties().get("property1"));
         assertEquals("value2", prop.getProperties().get("property2"));
 
         Configuration conf = Services.get().getConf();
         conf.set("oozie.credentials.credentialclasses", "abc=org.apache.oozie.action.hadoop.InsertTestToken");
 
-        // Adding if action need to set more authentication tokens
+        // Adding if action need to set more credential tokens
         JobConf credentialsConf = new JobConf();
         Configuration launcherConf = ae.createBaseHadoopConf(context, actionXmlconf);
         XConfiguration.copy(launcherConf, credentialsConf);
-        ae.setAuthenticationTokens(credentialsConf, context, action, authProperties);
+        ae.setCredentialTokens(credentialsConf, context, action, credProperties);
 
         Token<? extends TokenIdentifier> tk = credentialsConf.getCredentials().getToken(new Text("ABC Token"));
         assertNotNull(tk);

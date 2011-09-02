@@ -20,41 +20,38 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.util.XLog;
 
 public class CredentialsProvider {
-    Credentials auth;
+    Credentials cred;
     String type;
-    private static final String AUTH_KEY = "oozie.credentials.credentialclasses";
+    private static final String CRED_KEY = "oozie.credentials.credentialclasses";
     private static final XLog LOG = XLog.getLog(CredentialsProvider.class);
 
-    /**
-     * @param type
-     */
     public CredentialsProvider(String type) {
         this.type = type;
-        this.auth = null;
+        this.cred = null;
         LOG.debug("Credentials Provider is created for Type: " + type);
     }
 
     /**
-     * Create Credentials object
+     * Create Credential object
      *
-     * @return Credentials object
+     * @return Credential object
      * @throws Exception
      */
-    public Credentials createAuthenticator() throws Exception {
+    public Credentials createCredentialObject() throws Exception {
         Configuration conf;
         String type;
         String classname;
         conf = Services.get().getConf();
-        if (conf.get(AUTH_KEY, "").trim().length() > 0) {
-            for (String function : conf.getStrings(AUTH_KEY)) {
+        if (conf.get(CRED_KEY, "").trim().length() > 0) {
+            for (String function : conf.getStrings(CRED_KEY)) {
                 function = Trim(function);
-                LOG.debug("Creating Credentials class for : " + function);
+                LOG.debug("Creating Credential class for : " + function);
                 String[] str = function.split("=");
                 if (str.length > 0) {
                     type = str[0];
                     classname = str[1];
                     if (classname != null) {
-                        LOG.debug("Creating Credentials type : '" + type + "', class Name : '" + classname + "'");
+                        LOG.debug("Creating Credential type : '" + type + "', class Name : '" + classname + "'");
                         if (this.type.equalsIgnoreCase(str[0])) {
                             Class<?> klass = null;
                             try {
@@ -65,13 +62,13 @@ public class CredentialsProvider {
                                 throw ex;
                             }
 
-                            auth = (Credentials) ReflectionUtils.newInstance(klass, null);
+                            cred = (Credentials) ReflectionUtils.newInstance(klass, null);
                         }
                     }
                 }
             }
         }
-        return auth;
+        return cred;
     }
 
     /**

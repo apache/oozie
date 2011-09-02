@@ -28,6 +28,8 @@ public class CredentialsProperties {
     }
 
     /**
+     * Get the name
+     *
      * @return the name
      */
     public String getName() {
@@ -35,6 +37,8 @@ public class CredentialsProperties {
     }
 
     /**
+     * Set the name
+     *
      * @param name the name to set
      */
     public void setName(String name) {
@@ -42,6 +46,8 @@ public class CredentialsProperties {
     }
 
     /**
+     * Get the type
+     *
      * @return the type
      */
     public String getType() {
@@ -49,6 +55,8 @@ public class CredentialsProperties {
     }
 
     /**
+     * Set the type
+     *
      * @param type the type to set
      */
     public void setType(String type) {
@@ -56,6 +64,8 @@ public class CredentialsProperties {
     }
 
     /**
+     * Get the properties
+     *
      * @return the properties
      */
     public HashMap<String, String> getProperties() {
@@ -63,6 +73,8 @@ public class CredentialsProperties {
     }
 
     /**
+     * Set the properties
+     *
      * @param properties the properties to set
      */
     public void setProperties(HashMap<String, String> properties) {

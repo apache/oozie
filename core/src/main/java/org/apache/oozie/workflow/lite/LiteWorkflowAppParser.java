@@ -16,7 +16,6 @@ package org.apache.oozie.workflow.lite;
 
 import org.apache.oozie.workflow.WorkflowException;
 import org.apache.oozie.util.IOUtils;
-import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.ErrorCode;
@@ -54,9 +53,9 @@ public class LiteWorkflowAppParser {
 
     private static final String SLA_INFO = "info";
     private static final String CREDENTIALS = "credentials";
-    
+
     private static final String NAME_A = "name";
-    private static final String AUTH_A = "auth";
+    private static final String CRED_A = "cred";
     private static final String TO_A = "to";
 
     private static final String FORK_PATH_E = "path";
@@ -199,7 +198,7 @@ public class LiteWorkflowAppParser {
                                         }
                                         String actionConf = XmlUtils.prettyPrint(eActionConf).toString();
                                         def.addNode(new ActionNodeDef(eNode.getAttributeValue(NAME_A), actionConf, actionHandlerClass,
-                                                                      transitions[0], transitions[1],eNode.getAttributeValue(AUTH_A)));
+                                                                      transitions[0], transitions[1], eNode.getAttributeValue(CRED_A)));
                                     }
                                     else {
                                         if (SLA_INFO.equals(eNode.getName()) || CREDENTIALS.equals(eNode.getName())) {
