@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Base class for synchronous and asynchronous commands.
@@ -57,6 +58,7 @@ public abstract class XCommand<T> implements XCallable<T> {
 
     private static XLog LOG = XLog.getLog(XCommand.class);
 
+    private String key;
     private String name;
     private int priority;
     private String type;
@@ -81,6 +83,7 @@ public abstract class XCommand<T> implements XCallable<T> {
         this.name = name;
         this.type = type;
         this.priority = priority;
+        this.key = name + "_" + UUID.randomUUID();
         createdTime = System.currentTimeMillis();
         logInfo = new XLog.Info();
         instrumentation = Services.get().get(InstrumentationService.class).get();
@@ -419,6 +422,16 @@ public abstract class XCommand<T> implements XCallable<T> {
      */
     protected Long getRequeueDelay() {
         return DEFAULT_REQUEUE_DELAY;
+    }
+    
+    /**
+     * Get command key
+     *
+     * @return command key
+     */
+    @Override
+    public String getKey(){
+        return this.key;
     }
 
 }

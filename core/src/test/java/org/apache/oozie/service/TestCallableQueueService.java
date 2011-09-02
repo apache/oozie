@@ -213,6 +213,11 @@ public class TestCallableQueueService extends XTestCase {
         public String getType() {
             return "type";
         }
+        
+		@Override
+		public String getKey() {
+			return "name" + "_" + UUID.randomUUID();
+		}
 
         @Override
         public long getCreatedTime() {
@@ -246,6 +251,7 @@ public class TestCallableQueueService extends XTestCase {
         public static void resetConcurrency() {
             max = 0;
         }
+
     }
 
     public void testConcurrencyLimit() throws Exception {

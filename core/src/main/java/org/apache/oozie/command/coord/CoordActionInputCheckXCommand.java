@@ -468,5 +468,13 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                     + coordAction.getStatus());
         }
     }
+    
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.XCommand#getKey()
+     */
+    @Override
+    public String getKey(){
+        return getName() + "_" + actionId;
+    }
 
 }

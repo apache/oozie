@@ -86,7 +86,7 @@ public class JsonUtils {
      * @return the List<String> value associated with it, or null if not defined.
      */
     public static List<String> getListString(JSONObject json, String name) {
-        ArrayList<String> values = new ArrayList();
+        ArrayList<String> values = new ArrayList<String>();
         JSONArray array = (JSONArray) json.get(name);
         if (array == null) {
             return null;
