@@ -1,11 +1,11 @@
 -- Oozie 3.0.0 release
 
+GH-0510 credentialsConf should be initialized without loading defaults
 GH-0663 rerun PAUSED bundle should reset pause time
 GH-0665 XCommand log object has to reset after the logInfo has reset
 GH-0568 DOC: Add Bundle specifications
 GH-0482 coordinator default config is looked up in the wrong place (regression)
 GH-0653 Adding Pause status update in service. 
-GH-0510 credentialsConf should be initialized without loading defaults
 GH-0656 create sql scripts for table updates
 GH-0654 Fix workflow web console for missing columns
 GH-0649 Fixing Bundle status service for Done with error status. 
