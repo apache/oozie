@@ -1,5 +1,6 @@
 -- Oozie 3.1.0 release
 
+OOZIE-37 Documentation related modifications for "log -action" option
 OOZIE-35 add auto-rerun for error codes JA008 and JA009 in action executor
 OOZIE-21 Fixed bug forked subwf not returning status to the parent wf job
 OOZIE-28 update coordinator name to coord job at loadstate of coord-submit to avoid exception of bundle-status-update 
