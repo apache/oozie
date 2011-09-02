@@ -115,9 +115,9 @@ undefined (Hadoop JARs are not included).
 
 *hadoop20*= (*) : indicates the build/test should not include classes for Hadoop 20S, default is 'false'
 
-*oozie.test.db*= (*): indicates the database to use for running the testcases, supported values are 'hsqldb' and 'derby',
+*oozie.test.db*= (*): indicates the database to use for running the testcases, supported values are 'hsqldb', 'derby' and 'other';
 default value is 'hsqldb'. IMPORTANT, when using 'derby' a Maven profile is activated to run all the testcases in
-'always' fork mode (otherwise Derby driver goes bonker after 50 testcases or so due to repeated initializations).
+'always' fork mode (otherwise Derby driver goes bonker after 50 testcases or so due to repeated initializations). Use 'other' when using MySQL, Oracle or PostgreSQL databases, if using 'other' a '-Doozie.test.config.file=' must be used with the correct JDBC information must be provided (the core/src/test/resources/ directory has samples for the different databases).
 
 *oozie.test.properties* (*): indicates the file to load the test properties from, by default is =test.properties=.
 Having this option allows having different test properties sets, for example: minicluster, simple & kerberos.
