@@ -40,6 +40,8 @@
 
         <hadoop20>false</hadoop20>
 
+        <pigArtifactId>pig</pigArtifactId>
+
         <hadoopGroupId>com.yahoo.hadoop</hadoopGroupId>
 
         <hadoopVersion>0.20.104.1</hadoopVersion>

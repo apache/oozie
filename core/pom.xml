@@ -132,7 +132,7 @@
         </dependency>
         <dependency>
             <groupId>${pigGroupId}</groupId>
-            <artifactId>pig</artifactId>
+            <artifactId>${pigArtifactId}</artifactId>
             <version>${pigVersion}</version>
             <scope>provided</scope>
             <exclusions>
