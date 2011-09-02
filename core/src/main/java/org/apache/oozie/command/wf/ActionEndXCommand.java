@@ -140,16 +140,17 @@ public class ActionEndXCommand extends ActionXCommand<Void> {
                     "End, name [{0}] type [{1}] status[{2}] external status [{3}] signal value [{4}]",
                     wfAction.getName(), wfAction.getType(), wfAction.getStatus(), wfAction.getExternalStatus(),
                     wfAction.getSignalValue());
-            WorkflowInstance wfInstance = wfJob.getWorkflowInstance();
-            DagELFunctions.setActionInfo(wfInstance, wfAction);
-            wfJob.setWorkflowInstance(wfInstance);
-            incrActionCounter(wfAction.getType(), 1);
 
             Instrumentation.Cron cron = new Instrumentation.Cron();
             cron.start();
             executor.end(context, wfAction);
             cron.stop();
             addActionCron(wfAction.getType(), cron);
+
+            WorkflowInstance wfInstance = wfJob.getWorkflowInstance();
+            DagELFunctions.setActionInfo(wfInstance, wfAction);
+            wfJob.setWorkflowInstance(wfInstance);
+            incrActionCounter(wfAction.getType(), 1);
 
             if (!context.isEnded()) {
                 LOG.warn(XLog.OPS, "Action Ended, ActionExecutor [{0}] must call setEndData()",
