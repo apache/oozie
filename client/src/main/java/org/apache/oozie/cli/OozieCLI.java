@@ -95,6 +95,7 @@ public class OozieCLI {
     public static final String INFO_OPTION = "info";
     public static final String LOG_OPTION = "log";
     public static final String DEFINITION_OPTION = "definition";
+    public static final String CONFIG_CONTENT_OPTION = "configcontent";
 
     public static final String LEN_OPTION = "len";
     public static final String FILTER_OPTION = "filter";
@@ -198,6 +199,7 @@ public class OozieCLI {
         Option localtime = new Option(LOCAL_TIME_OPTION, false, "use local time (default GMT)");
         Option log = new Option(LOG_OPTION, true, "job log");
         Option definition = new Option(DEFINITION_OPTION, true, "job definition");
+        Option config_content = new Option(CONFIG_CONTENT_OPTION, true, "job configuration");
         Option verbose = new Option(VERBOSE_OPTION, false, "verbose mode");
         Option rerun_action = new Option(RERUN_ACTION_OPTION, true, "coordinator rerun on action ids (requires -rerun)");
         Option rerun_date = new Option(RERUN_DATE_OPTION, true, "coordinator rerun on action dates (requires -rerun)");
@@ -221,6 +223,7 @@ public class OozieCLI {
         actions.addOption(rerun);
         actions.addOption(log);
         actions.addOption(definition);
+        actions.addOption(config_content);
         actions.setRequired(true);
         Options jobOptions = new Options();
         jobOptions.addOption(oozie);
@@ -568,7 +571,8 @@ public class OozieCLI {
             else if (options.contains(RERUN_OPTION)) {
                 if (commandLine.getOptionValue(RERUN_OPTION).contains("-W")) {
                     wc.reRun(commandLine.getOptionValue(RERUN_OPTION), getConfiguration(commandLine));
-                } else {
+                }
+                else {
                     String coordJobId = commandLine.getOptionValue(RERUN_OPTION);
                     String scope = null;
                     String rerunType = null;
@@ -581,7 +585,8 @@ public class OozieCLI {
                     if (options.contains(RERUN_DATE_OPTION)) {
                         rerunType = RestConstants.JOB_COORD_RERUN_DATE;
                         scope = commandLine.getOptionValue(RERUN_DATE_OPTION);
-                    } else if (options.contains(RERUN_ACTION_OPTION)){
+                    }
+                    else if (options.contains(RERUN_ACTION_OPTION)) {
                         rerunType = RestConstants.JOB_COORD_RERUN_ACTION;
                         scope = commandLine.getOptionValue(RERUN_ACTION_OPTION);
                     }
@@ -632,6 +637,18 @@ public class OozieCLI {
             else if (options.contains(DEFINITION_OPTION)) {
                 System.out.println(wc.getJobDefinition(commandLine.getOptionValue(DEFINITION_OPTION)));
             }
+            else if (options.contains(CONFIG_CONTENT_OPTION)) {
+                if (commandLine.getOptionValue(CONFIG_CONTENT_OPTION).endsWith("-C")) {
+                    System.out.println(wc.getCoordJobInfo(commandLine.getOptionValue(CONFIG_CONTENT_OPTION)).getConf());
+                }
+                else if (commandLine.getOptionValue(CONFIG_CONTENT_OPTION).endsWith("-W")) {
+                    System.out.println(wc.getJobInfo(commandLine.getOptionValue(CONFIG_CONTENT_OPTION)).getConf());
+                }
+                else {
+                    System.out.println("ERROR:  job id [" + commandLine.getOptionValue(CONFIG_CONTENT_OPTION)
+                            + "] doesn't end with either C or W");
+                }
+            }
         }
         catch (OozieClientException ex) {
             throw new OozieCLIException(ex.toString(), ex);
@@ -654,7 +671,8 @@ public class OozieCLI {
                     + VERBOSE_DELIMITER + "Error Code" + VERBOSE_DELIMITER + "Error Message" + VERBOSE_DELIMITER
                     + "External ID" + VERBOSE_DELIMITER + "External Status" + VERBOSE_DELIMITER + "Job ID"
                     + VERBOSE_DELIMITER + "Tracker URI" + VERBOSE_DELIMITER + "Created" + VERBOSE_DELIMITER
-                    + "Nominal Time" + VERBOSE_DELIMITER + "Status" + VERBOSE_DELIMITER + "Last Modified" + VERBOSE_DELIMITER + "Missing Dependencies");
+                    + "Nominal Time" + VERBOSE_DELIMITER + "Status" + VERBOSE_DELIMITER + "Last Modified"
+                    + VERBOSE_DELIMITER + "Missing Dependencies");
             System.out.println(RULER);
 
             for (CoordinatorAction action : actions) {
@@ -664,8 +682,9 @@ public class OozieCLI {
                         + VERBOSE_DELIMITER + maskIfNull(action.getExternalId()) + VERBOSE_DELIMITER
                         + maskIfNull(action.getExternalStatus()) + VERBOSE_DELIMITER + maskIfNull(action.getJobId())
                         + VERBOSE_DELIMITER + maskIfNull(action.getTrackerUri()) + VERBOSE_DELIMITER
-                        + maskDate(action.getCreatedTime(), localtime) + VERBOSE_DELIMITER +  maskDate(action.getNominalTime(), localtime)
-                        + action.getStatus() + VERBOSE_DELIMITER + maskDate(action.getLastModifiedTime(), localtime) + VERBOSE_DELIMITER
+                        + maskDate(action.getCreatedTime(), localtime) + VERBOSE_DELIMITER
+                        + maskDate(action.getNominalTime(), localtime) + action.getStatus() + VERBOSE_DELIMITER
+                        + maskDate(action.getLastModifiedTime(), localtime) + VERBOSE_DELIMITER
                         + maskIfNull(action.getMissingDependencies()));
 
                 System.out.println(RULER);
@@ -676,11 +695,10 @@ public class OozieCLI {
                     "Nominal Time", "Last Mod"));
 
             for (CoordinatorAction action : actions) {
-                System.out.println(String
-                        .format(COORD_ACTION_FORMATTER, maskIfNull(action.getId()), action.getStatus(),
-                                maskIfNull(action.getExternalId()), maskIfNull(action.getErrorCode()), maskDate(action
-                                        .getCreatedTime(), localtime), maskDate(action.getNominalTime(), localtime),
-                                maskDate(action.getLastModifiedTime(), localtime)));
+                System.out.println(String.format(COORD_ACTION_FORMATTER, maskIfNull(action.getId()),
+                        action.getStatus(), maskIfNull(action.getExternalId()), maskIfNull(action.getErrorCode()),
+                        maskDate(action.getCreatedTime(), localtime), maskDate(action.getNominalTime(), localtime),
+                        maskDate(action.getLastModifiedTime(), localtime)));
 
                 System.out.println(RULER);
             }
@@ -917,27 +935,27 @@ public class OozieCLI {
                 System.out.println("Oozie server build version: " + wc.getServerBuildVersion());
             }
             else if (options.contains(SYSTEM_MODE_OPTION)) {
-                    String systemModeOption = commandLine.getOptionValue(SYSTEM_MODE_OPTION).toUpperCase();
-                    try {
-                        status = SYSTEM_MODE.valueOf(systemModeOption);
-                    }
-                    catch (Exception e) {
-                        throw new OozieCLIException("Invalid input provided for option: " + SYSTEM_MODE_OPTION
-                                + " value given :" + systemModeOption
-                                + " Expected values are: NORMAL/NOWEBSERVICE/SAFEMODE ");
-                    }
-                    wc.setSystemMode(status);
-                    System.out.println("System mode: " + status);
+                String systemModeOption = commandLine.getOptionValue(SYSTEM_MODE_OPTION).toUpperCase();
+                try {
+                    status = SYSTEM_MODE.valueOf(systemModeOption);
+                }
+                catch (Exception e) {
+                    throw new OozieCLIException("Invalid input provided for option: " + SYSTEM_MODE_OPTION
+                            + " value given :" + systemModeOption
+                            + " Expected values are: NORMAL/NOWEBSERVICE/SAFEMODE ");
+                }
+                wc.setSystemMode(status);
+                System.out.println("System mode: " + status);
             }
             else if (options.contains(STATUS_OPTION)) {
-                    status = wc.getSystemMode();
-                    System.out.println("System mode: " + status);
+                status = wc.getSystemMode();
+                System.out.println("System mode: " + status);
             }
             else if (options.contains(QUEUE_DUMP_OPTION)) {
                 System.out.println("[Server Queue Dump]:");
                 List<String> list = wc.getQueueDump();
                 if (list != null && list.size() != 0) {
-                    for (String str: list) {
+                    for (String str : list) {
                         System.out.println(str);
                     }
                 }
