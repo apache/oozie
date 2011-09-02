@@ -16,7 +16,6 @@ package org.apache.oozie.command.wf;
 
 import java.sql.Timestamp;
 import java.util.Date;
-
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
@@ -151,7 +150,8 @@ public class ActionCheckXCommand extends ActionXCommand<Void> {
         ActionExecutorContext context = null;
         try {
             boolean isRetry = false;
-            context = new ActionXCommand.ActionExecutorContext(wfJob, wfAction, isRetry);
+            boolean isUserRetry = false;
+            context = new ActionXCommand.ActionExecutorContext(wfJob, wfAction, isRetry, isUserRetry);
             incrActionCounter(wfAction.getType(), 1);
 
             Instrumentation.Cron cron = new Instrumentation.Cron();
@@ -183,9 +183,14 @@ public class ActionCheckXCommand extends ActionXCommand<Void> {
             LOG.warn("Exception while executing check(). Error Code [{0}], Message[{1}]", ex.getErrorCode(), ex
                     .getMessage(), ex);
 
+            wfAction.setErrorInfo(ex.getErrorCode(), ex.getMessage());
+
             switch (ex.getErrorType()) {
                 case FAILED:
                     failAction(wfJob, wfAction);
+                    break;
+                case ERROR:
+                    handleUserRetry(wfAction);
                     break;
             }
             wfAction.setLastCheckTime(new Date());
@@ -207,10 +212,12 @@ public class ActionCheckXCommand extends ActionXCommand<Void> {
     }
 
     private void failAction(WorkflowJobBean workflow, WorkflowActionBean action) throws CommandException {
-        LOG.warn("Failing Job [{0}] due to failed action [{1}]", workflow.getId(), action.getId());
-        action.resetPending();
-        action.setStatus(Status.FAILED);
-        workflow.setStatus(WorkflowJob.Status.FAILED);
-        InstrumentUtils.incrJobCounter(INSTR_FAILED_JOBS_COUNTER, 1, getInstrumentation());
+        if (!handleUserRetry(action)) {
+            LOG.warn("Failing Job [{0}] due to failed action [{1}]", workflow.getId(), action.getId());
+            action.resetPending();
+            action.setStatus(Status.FAILED);
+            workflow.setStatus(WorkflowJob.Status.FAILED);
+            InstrumentUtils.incrJobCounter(INSTR_FAILED_JOBS_COUNTER, 1, getInstrumentation());
+        }
     }
 }

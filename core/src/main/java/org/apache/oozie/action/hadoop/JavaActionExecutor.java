@@ -43,6 +43,7 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.util.DiskChecker;
+import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
@@ -536,7 +537,10 @@ public class JavaActionExecutor extends ActionExecutor {
             boolean alreadyRunning = launcherId != null;
             RunningJob runningJob;
 
-            if (alreadyRunning) {
+            // if user-retry is on, always submit new launcher
+            boolean isUserRetry = ((WorkflowActionBean)action).isUserRetry();
+
+            if (alreadyRunning && !isUserRetry) {
                 runningJob = jobClient.getJob(JobID.forName(launcherId));
                 if (runningJob == null) {
                     String jobTracker = launcherJobConf.get("mapred.job.tracker");

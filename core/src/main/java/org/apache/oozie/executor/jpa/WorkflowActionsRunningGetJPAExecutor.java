@@ -102,6 +102,9 @@ public class WorkflowActionsRunningGetJPAExecutor implements JPAExecutor<List<Wo
             action.setStartTime(bean.getStartTime());
             action.setStatus(bean.getStatus());
             action.setJobId(bean.getWfId());
+            action.setUserRetryCount(bean.getUserRetryCount());
+            action.setUserRetryInterval(bean.getUserRetryInterval());
+            action.setUserRetryMax(bean.getUserRetryMax());
             return action;
         }
         return null;

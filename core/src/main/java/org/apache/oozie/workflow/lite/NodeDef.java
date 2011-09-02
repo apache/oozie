@@ -15,8 +15,9 @@
 package org.apache.oozie.workflow.lite;
 
 import org.apache.hadoop.io.Writable;
+import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.util.ParamChecker;
-import org.apache.oozie.util.XLog;
+import org.apache.oozie.workflow.WorkflowException;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -25,13 +26,19 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-//TODO javadoc
+/**
+ * This node definition is serialized object and should provide readFields() and write() for read and write of fields in
+ * this class.
+ */
 public class NodeDef implements Writable {
-    private String name;
+    private String nodeDefVersion = null;
+    private String name = null;
     private Class<? extends NodeHandler> handlerClass;
-    private String conf;
+    private String conf = null;
     private List<String> transitions = new ArrayList<String>();
-    private String cred;
+    private String cred = "null";
+    private String userRetryMax = "null";
+    private String userRetryInterval = "null";
 
     NodeDef() {
     }
@@ -41,26 +48,31 @@ public class NodeDef implements Writable {
         this.conf = conf;
         this.handlerClass = ParamChecker.notNull(handlerClass, "handlerClass");
         this.transitions = Collections.unmodifiableList(ParamChecker.notEmptyElements(transitions, "transitions"));
-        this.cred = "null";
     }
 
-    NodeDef(String name, String conf, Class<? extends NodeHandler> handlerClass, List<String> transitions,String cred) {
-        this.name = ParamChecker.notEmpty(name, "name");
-        this.conf = conf;
-        this.handlerClass = ParamChecker.notNull(handlerClass, "handlerClass");
-        this.transitions = Collections.unmodifiableList(ParamChecker.notEmptyElements(transitions, "transitions"));
-        if(cred != null){
+    NodeDef(String name, String conf, Class<? extends NodeHandler> handlerClass, List<String> transitions, String cred) {
+        this(name, conf, handlerClass, transitions);
+        if (cred != null) {
             this.cred = cred;
         }
-        else{
-            this.cred = "null";
+    }
+
+    NodeDef(String name, String conf, Class<? extends NodeHandler> handlerClass, List<String> transitions, String cred,
+            String userRetryMax, String userRetryInterval) {
+        this(name, conf, handlerClass, transitions, cred);
+        if (userRetryMax != null) {
+            this.userRetryMax = userRetryMax;
+        }
+        if (userRetryInterval != null) {
+            this.userRetryInterval = userRetryInterval;
         }
     }
-    
+
     public boolean equals(NodeDef other) {
         return !(other == null || getClass() != other.getClass() || !getName().equals(other.getName()));
     }
 
+    @Override
     public int hashCode() {
         return name.hashCode();
     }
@@ -69,9 +81,6 @@ public class NodeDef implements Writable {
         return name;
     }
 
-    /**
-     * @return the auth
-     */
     public String getCred() {
         return cred;
     }
@@ -88,10 +97,34 @@ public class NodeDef implements Writable {
         return conf;
     }
 
-    @Override
+    public String getUserRetryMax() {
+        return userRetryMax;
+    }
+
+    public String getUserRetryInterval() {
+        return userRetryInterval;
+    }
+
+    public String getNodeDefVersion() {
+        if (nodeDefVersion == null) {
+            try {
+                nodeDefVersion = LiteWorkflowStoreService.getNodeDefDefaultVersion();
+            }
+            catch (WorkflowException e) {
+                nodeDefVersion = LiteWorkflowStoreService.NODE_DEF_VERSION_1;
+            }
+        }
+        return nodeDefVersion;
+    }
+
     @SuppressWarnings("unchecked")
-    public void readFields(DataInput dataInput) throws IOException {
-        name = dataInput.readUTF();
+    private void readVersionZero(DataInput dataInput, String firstField) throws IOException {
+        if (firstField.equals(LiteWorkflowStoreService.NODE_DEF_VERSION_0)) {
+            name = dataInput.readUTF();
+        } else {
+            name = firstField;
+        }
+        nodeDefVersion = LiteWorkflowStoreService.NODE_DEF_VERSION_0;
         cred = dataInput.readUTF();
         String handlerClassName = dataInput.readUTF();
         if ((handlerClassName != null) && (handlerClassName.length() > 0)) {
@@ -112,16 +145,56 @@ public class NodeDef implements Writable {
             transitions.add(dataInput.readUTF());
         }
     }
+    @SuppressWarnings("unchecked")
+    private void readVersionOne(DataInput dataInput, String firstField) throws IOException {
+        nodeDefVersion = LiteWorkflowStoreService.NODE_DEF_VERSION_1;
+        name = dataInput.readUTF();
+        cred = dataInput.readUTF();
+        String handlerClassName = dataInput.readUTF();
+        if ((handlerClassName != null) && (handlerClassName.length() > 0)) {
+            try {
+                handlerClass = (Class<? extends NodeHandler>) Class.forName(handlerClassName);
+            }
+            catch (ClassNotFoundException ex) {
+                throw new IOException(ex);
+            }
+        }
+        conf = dataInput.readUTF();
+        if (conf.equals("null")) {
+            conf = null;
+        }
+        int numTrans = dataInput.readInt();
+        transitions = new ArrayList<String>(numTrans);
+        for (int i = 0; i < numTrans; i++) {
+            transitions.add(dataInput.readUTF());
+        }
+        userRetryMax = dataInput.readUTF();
+        userRetryInterval = dataInput.readUTF();
+    }
 
+    /* (non-Javadoc)
+     * @see org.apache.hadoop.io.Writable#readFields(java.io.DataInput)
+     */
     @Override
-    public void write(DataOutput dataOutput) throws IOException {
+    public void readFields(DataInput dataInput) throws IOException {
+        String firstField = dataInput.readUTF();
+        if (!firstField.equals(LiteWorkflowStoreService.NODE_DEF_VERSION_1)) {
+            readVersionZero(dataInput, firstField);
+        } else {
+            //since oozie version 3.1
+            readVersionOne(dataInput, firstField);
+        }
+    }
+
+    private void writeVersionZero(DataOutput dataOutput) throws IOException {
+        dataOutput.writeUTF(nodeDefVersion);
         dataOutput.writeUTF(name);
-        if(cred != null){
+        if (cred != null) {
             dataOutput.writeUTF(cred);
-        }else{
+        }
+        else {
             dataOutput.writeUTF("null");
         }
-        XLog.getLog(getClass()).debug("write: Name:" + name +" Cred: "+ cred);
         dataOutput.writeUTF(handlerClass.getName());
         if (conf != null) {
             dataOutput.writeUTF(conf);
@@ -132,6 +205,59 @@ public class NodeDef implements Writable {
         dataOutput.writeInt(transitions.size());
         for (String transition : transitions) {
             dataOutput.writeUTF(transition);
+        }
+    }
+
+    /**
+     * Write as version one format, this version was since 3.1.
+     *
+     * @param dataOutput data output to serialize node def
+     * @throws IOException thrown if fail to write
+     */
+    private void writeVersionOne(DataOutput dataOutput) throws IOException {
+        dataOutput.writeUTF(nodeDefVersion);
+        dataOutput.writeUTF(name);
+        if (cred != null) {
+            dataOutput.writeUTF(cred);
+        }
+        else {
+            dataOutput.writeUTF("null");
+        }
+        dataOutput.writeUTF(handlerClass.getName());
+        if (conf != null) {
+            dataOutput.writeUTF(conf);
+        }
+        else {
+            dataOutput.writeUTF("null");
+        }
+        dataOutput.writeInt(transitions.size());
+        for (String transition : transitions) {
+            dataOutput.writeUTF(transition);
+        }
+        if (userRetryMax != null) {
+            dataOutput.writeUTF(userRetryMax);
+        }
+        else {
+            dataOutput.writeUTF("null");
+        }
+        if (userRetryInterval != null) {
+            dataOutput.writeUTF(userRetryInterval);
+        }
+        else {
+            dataOutput.writeUTF("null");
+        }
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.hadoop.io.Writable#write(java.io.DataOutput)
+     */
+    @Override
+    public void write(DataOutput dataOutput) throws IOException {
+        if (!getNodeDefVersion().equals(LiteWorkflowStoreService.NODE_DEF_VERSION_1)) {
+            writeVersionZero(dataOutput);
+        } else {
+            //since oozie version 3.1
+            writeVersionOne(dataOutput);
         }
     }
 

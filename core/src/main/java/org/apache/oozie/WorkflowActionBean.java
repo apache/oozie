@@ -158,6 +158,9 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
         dataOutput.writeLong((pendingAge != null) ? pendingAge.getTime() : -1);
         WritableUtils.writeStr(dataOutput, signalValue);
         WritableUtils.writeStr(dataOutput, logToken);
+        dataOutput.writeInt(getUserRetryCount());
+        dataOutput.writeInt(getUserRetryInterval());
+        dataOutput.writeInt(getUserRetryMax());
     }
 
     /**
@@ -203,6 +206,9 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
         }
         signalValue = WritableUtils.readStr(dataInput);
         logToken = WritableUtils.readStr(dataInput);
+        setUserRetryCount(dataInput.readInt());
+        setUserRetryInterval(dataInput.readInt());
+        setUserRetryMax(dataInput.readInt());
     }
 
     /**
@@ -224,6 +230,15 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
     public boolean isRetryOrManual() {
         return (getStatus() == WorkflowAction.Status.START_RETRY || getStatus() == WorkflowAction.Status.START_MANUAL
                 || getStatus() == WorkflowAction.Status.END_RETRY || getStatus() == WorkflowAction.Status.END_MANUAL);
+    }
+    
+    /**
+     * Return true if the action is USER_RETRY
+     *
+     * @return boolean true if status is USER_RETRY
+     */
+    public boolean isUserRetry() {
+        return (getStatus() == WorkflowAction.Status.USER_RETRY);
     }
 
     /**

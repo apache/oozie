@@ -133,7 +133,8 @@ public class ActionEndXCommand extends ActionXCommand<Void> {
                 || wfAction.getStatus() == WorkflowActionBean.Status.END_MANUAL) {
             isRetry = true;
         }
-        ActionExecutorContext context = new ActionXCommand.ActionExecutorContext(wfJob, wfAction, isRetry);
+        boolean isUserRetry = false;
+        ActionExecutorContext context = new ActionXCommand.ActionExecutorContext(wfJob, wfAction, isRetry, isUserRetry);
         try {
 
             LOG.debug(
@@ -163,9 +164,8 @@ public class ActionEndXCommand extends ActionXCommand<Void> {
             }
             wfAction.setRetries(0);
             wfAction.setEndTime(new Date());
-            jpaService.execute(new WorkflowActionUpdateJPAExecutor(wfAction));
-            jpaService.execute(new WorkflowJobUpdateJPAExecutor(wfJob));
 
+            boolean shouldHandleUserRetry = false;
             Status slaStatus = null;
             switch (wfAction.getStatus()) {
                 case OK:
@@ -176,21 +176,29 @@ public class ActionEndXCommand extends ActionXCommand<Void> {
                     break;
                 case FAILED:
                     slaStatus = Status.FAILED;
+                    shouldHandleUserRetry = true;
                     break;
                 case ERROR:
                     LOG.info("ERROR is considered as FAILED for SLA");
                     slaStatus = Status.KILLED;
+                    shouldHandleUserRetry = true;
                     break;
                 default:
                     slaStatus = Status.FAILED;
+                    shouldHandleUserRetry = true;
                     break;
             }
-            SLADbXOperations.writeStausEvent(wfAction.getSlaXml(), wfAction.getId(), slaStatus, SlaAppType.WORKFLOW_ACTION);
-            queue(new NotificationXCommand(wfJob, wfAction));
-            LOG.debug(
-                    "Queuing commands for action=" + actionId + ", status=" + wfAction.getStatus()
-                    + ", Set pending=" + wfAction.getPending());
-            queue(new SignalXCommand(jobId, actionId));
+            if (!shouldHandleUserRetry || !handleUserRetry(wfAction)) {
+                SLADbXOperations.writeStausEvent(wfAction.getSlaXml(), wfAction.getId(), slaStatus, SlaAppType.WORKFLOW_ACTION);
+                queue(new NotificationXCommand(wfJob, wfAction));
+                LOG.debug(
+                        "Queuing commands for action=" + actionId + ", status=" + wfAction.getStatus()
+                        + ", Set pending=" + wfAction.getPending());
+                queue(new SignalXCommand(jobId, actionId));
+            }
+
+            jpaService.execute(new WorkflowActionUpdateJPAExecutor(wfAction));
+            jpaService.execute(new WorkflowJobUpdateJPAExecutor(wfJob));
         }
         catch (ActionExecutorException ex) {
             LOG.warn(

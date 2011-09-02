@@ -1029,7 +1029,7 @@
 
    <!-- SchemaService -->
 
-     <property>
+    <property>
         <name>oozie.service.SchemaService.wf.ext.schemas</name>
         <value>oozie-sla-0.1.xsd</value>
         <description>
@@ -1039,6 +1039,7 @@
                        if empty Configuration assumes it is NULL.
         </description>
     </property>
+    
     <property>
         <name>oozie.service.SchemaService.coord.ext.schemas</name>
         <value>oozie-sla-0.1.xsd</value>
@@ -1049,6 +1050,7 @@
                        if empty Configuration assumes it is NULL.
         </description>
     </property>
+
     <property>
         <name>oozie.service.SchemaService.sla.ext.schemas</name>
         <value> </value>
@@ -1329,6 +1331,56 @@
         <value>5000</value>
         <description>
             Default timeout (in milliseconds) for commands for acquiring an exclusive lock on an entity.
+        </description>
+    </property>
+    
+   <!-- LiteWorkflowStoreService, Workflow Action Automatic Retry -->
+
+    <property>
+        <name>oozie.service.LiteWorkflowStoreService.user.retry.max</name>
+        <value>3</value>
+        <description>
+            Automatic retry max count for workflow action is 3 in default.
+        </description>
+    </property>
+    
+    <property>
+        <name>oozie.service.LiteWorkflowStoreService.user.retry.inteval</name>
+        <value>10</value>
+        <description>
+            Automatic retry interval for workflow action is in minutes and the default value is 10 minutes.
+        </description>
+    </property>
+    
+    <property>
+        <name>oozie.service.LiteWorkflowStoreService.user.retry.error.code</name>
+        <value>
+            JA017,
+            JA018,
+            FS009,
+            FS008
+        </value>
+        <description>
+            Automatic retry interval for workflow action is handled for these specified error code:
+            FS009, FS008 is file exists error when using chmod in fs action.
+            JA018 is output directory exists error in workflow map-reduce action.
+            JA017 is job not exists error in action executor.
+        </description>
+    </property>
+    
+    <property>
+        <name>oozie.service.LiteWorkflowStoreService.user.retry.error.code.ext</name>
+        <value> </value>
+        <description>
+            Automatic retry interval for workflow action is handled for these specified extra error code.
+        </description>
+    </property>
+    
+    <property>
+        <name>oozie.service.LiteWorkflowStoreService.node.def.version</name>
+        <value>_oozie_inst_v_1</value>
+        <description>
+            NodeDef default version, _oozie_inst_v_0 or _oozie_inst_v_1
         </description>
     </property>
 

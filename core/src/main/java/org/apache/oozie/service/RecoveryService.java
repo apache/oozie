@@ -365,6 +365,9 @@ public class RecoveryService implements Service {
                         }
 
                     }
+                    else if (action.getStatus() == WorkflowActionBean.Status.USER_RETRY) {
+                    	queueCallable(new ActionStartXCommand(action.getId(), action.getType()));
+                    }
                 }
             }
             catch (Exception ex) {

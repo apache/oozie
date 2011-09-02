@@ -109,7 +109,10 @@ public class ActionStartXCommand extends ActionXCommand<Void> {
         }
         if (wfAction.isPending()
                 && (wfAction.getStatus() == WorkflowActionBean.Status.PREP
-                        || wfAction.getStatus() == WorkflowActionBean.Status.START_RETRY || wfAction.getStatus() == WorkflowActionBean.Status.START_MANUAL)) {
+                        || wfAction.getStatus() == WorkflowActionBean.Status.START_RETRY
+                        || wfAction.getStatus() == WorkflowActionBean.Status.START_MANUAL
+                        || wfAction.getStatus() == WorkflowActionBean.Status.USER_RETRY
+                        )) {
             if (wfJob.getStatus() != WorkflowJob.Status.RUNNING) {
                 throw new PreconditionException(ErrorCode.E0810, WorkflowJob.Status.RUNNING.toString());
             }
@@ -142,7 +145,11 @@ public class ActionStartXCommand extends ActionXCommand<Void> {
                     || wfAction.getStatus() == WorkflowActionBean.Status.START_MANUAL) {
                 isRetry = true;
             }
-            context = new ActionXCommand.ActionExecutorContext(wfJob, wfAction, isRetry);
+            boolean isUserRetry = false;
+            if (wfAction.getStatus() == WorkflowActionBean.Status.USER_RETRY) {
+                isUserRetry = true;
+            }
+            context = new ActionXCommand.ActionExecutorContext(wfJob, wfAction, isRetry, isUserRetry);
             try {
                 String tmpActionConf = XmlUtils.removeComments(wfAction.getConf());
                 String actionConf = context.getELEvaluator().evaluate(tmpActionConf, String.class);
@@ -176,6 +183,10 @@ public class ActionStartXCommand extends ActionXCommand<Void> {
             }
             wfAction.setErrorInfo(null, null);
             incrActionCounter(wfAction.getType(), 1);
+
+            LOG.info("Start action [{0}] with user-retry state : userRetryCount [{1}], userRetryMax [{2}], userRetryInterval [{3}]",
+                            wfAction.getId(), wfAction.getUserRetryCount(), wfAction.getUserRetryMax(), wfAction
+                                    .getUserRetryInterval());
 
             Instrumentation.Cron cron = new Instrumentation.Cron();
             cron.start();
@@ -247,7 +258,7 @@ public class ActionStartXCommand extends ActionXCommand<Void> {
                         failJob(context);
                         // update coordinator action
                         new CoordActionUpdateXCommand(wfJob, 3).call();
-                        new WfEndXCommand(wfJob).call(); //To delete the WF temp dir
+                        new WfEndXCommand(wfJob).call(); // To delete the WF temp dir
                         SLADbXOperations.writeStausEvent(wfAction.getSlaXml(), wfAction.getId(), Status.FAILED,
                                 SlaAppType.WORKFLOW_ACTION);
                         SLADbXOperations.writeStausEvent(wfJob.getSlaXml(), wfJob.getId(), Status.FAILED,
@@ -291,6 +302,14 @@ public class ActionStartXCommand extends ActionXCommand<Void> {
         new CoordActionUpdateXCommand(workflow, 3).call();
         new WfEndXCommand(wfJob).call(); //To delete the WF temp dir
         return;
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.XCommand#getKey()
+     */
+    @Override
+    public String getKey(){
+        return getName() + "_" + actionId;
     }
 
 }

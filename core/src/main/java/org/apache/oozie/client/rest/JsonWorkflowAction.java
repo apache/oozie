@@ -58,6 +58,18 @@ public class JsonWorkflowAction implements WorkflowAction, JsonBean {
     @Basic
     @Column(name = "retries")
     private int retries;
+    
+    @Basic
+    @Column(name = "user_retry_count")
+    private int userRetryCount;
+    
+    @Basic
+    @Column(name = "user_retry_max")
+    private int userRetryMax;
+    
+    @Basic
+    @Column(name = "user_retry_interval")
+    private int userRetryInterval;
 
     @Transient
     private Date startTime;
@@ -178,6 +190,34 @@ public class JsonWorkflowAction implements WorkflowAction, JsonBean {
 
     public void setRetries(int retries) {
         this.retries = retries;
+    }
+    
+    public int getUserRetryCount() {
+        return userRetryCount;
+    }
+
+    public void setUserRetryCount(int retryCount) {
+        this.userRetryCount = retryCount;
+    }
+    
+    public void incrmentUserRetryCount() {
+        this.userRetryCount++;
+    }
+    
+    public int getUserRetryMax() {
+        return userRetryMax;
+    }
+
+    public void setUserRetryMax(int retryMax) {
+        this.userRetryMax = retryMax;
+    }
+    
+    public int getUserRetryInterval() {
+        return userRetryInterval;
+    }
+
+    public void setUserRetryInterval(int retryInterval) {
+        this.userRetryInterval = retryInterval;
     }
 
     public Date getStartTime() {

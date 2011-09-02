@@ -38,6 +38,7 @@ import org.apache.oozie.executor.jpa.WorkflowActionsGetForJobJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 import org.apache.oozie.service.ActionService;
 import org.apache.oozie.service.JPAService;
+import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.SchemaService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowStoreService;
@@ -58,6 +59,7 @@ public class TestActionErrors extends XDataTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         setSystemProperty(SchemaService.WF_CONF_EXT_SCHEMAS, "wf-ext-schema.xsd");
+        setSystemProperty(LiteWorkflowStoreService.CONF_USER_RETRY_ERROR_CODE_EXT, ForTestingActionExecutor.TEST_ERROR);
         services = new Services();
         services.init();
         cleanUpDBTables();
@@ -191,7 +193,29 @@ public class TestActionErrors extends XDataTestCase {
         _testError("end.error", "ok", "OK");
         assertTrue(true);
     }
-
+    
+    /**
+     * Tests for correct functionality when a {@link org.apache.oozie.action.ActionExecutorException.ErrorType#ERROR} is
+     * generated when executing start. </p> Checks for user retry is applied to actions for specified retry-max=2.
+     *
+     * @throws Exception
+     */
+    public void testStartErrorWithUserRetry() throws Exception {
+    	_testErrorWithUserRetry("start.error", "error", "based_on_action_status");
+        assertTrue(true);
+    }
+    
+    /**
+     * Tests for correct functionality when a {@link org.apache.oozie.action.ActionExecutorException.ErrorType#ERROR} is
+     * generated when executing end. </p> Checks for user retry is applied to actions for specified retry-max=2.
+     *
+     * @throws Exception
+     */
+    public void testEndErrorWithUserRetry() throws Exception {
+    	_testErrorWithUserRetry("end.error", "ok", "OK");
+        assertTrue(true);
+    }
+    
     /**
      * Tests for the job to be KILLED and status set to FAILED in case an Action Handler does not call setExecutionData
      * in it's start() implementation.
@@ -511,6 +535,49 @@ public class TestActionErrors extends XDataTestCase {
         assertEquals(WorkflowJob.Status.KILLED, engine.getJob(jobId).getStatus());
         store.commitTrx();
         store.closeTrx();
+    }
+    
+    /**
+     * Provides functionality to test user retry
+     *
+     * @param errorType the error type. (start.non-transient, end.non-transient)
+     * @param externalStatus the external status to set.
+     * @param signalValue the signal value to set.
+     * @throws Exception
+     */
+    private void _testErrorWithUserRetry(String errorType, String externalStatus, String signalValue) throws Exception {
+        Reader reader = IOUtils.getResourceAsReader("wf-ext-schema-valid-user-retry.xml", -1);
+        Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
+        IOUtils.copyCharStream(reader, writer);
+
+        final DagEngine engine = new DagEngine("u", "a");
+        Configuration conf = new XConfiguration();
+        conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        conf.set(OozieClient.GROUP_NAME, getTestGroup());
+        injectKerberosInfo(conf);
+        conf.set(OozieClient.LOG_TOKEN, "t");
+        conf.set("error", errorType);
+        conf.set("external-status", externalStatus);
+        conf.set("signal-value", signalValue);
+
+        final String jobId = engine.submitJob(conf, true);
+
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        final WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(jobId);
+    
+        final WorkflowActionsGetForJobJPAExecutor actionsGetExecutor = new WorkflowActionsGetForJobJPAExecutor(jobId);
+        waitFor(5000, new Predicate() {
+            public boolean evaluate() throws Exception {
+            	List<WorkflowActionBean> actions = jpaService.execute(actionsGetExecutor);
+                WorkflowActionBean action = actions.get(0);
+                return (action.getUserRetryCount() == 2);
+            }
+        });
+        
+        List<WorkflowActionBean> actions = jpaService.execute(actionsGetExecutor);
+        WorkflowActionBean action = actions.get(0);
+        assertEquals(2, action.getUserRetryCount());
     }
 
     /**

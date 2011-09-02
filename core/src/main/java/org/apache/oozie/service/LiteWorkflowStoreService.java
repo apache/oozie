@@ -14,6 +14,7 @@
  */
 package org.apache.oozie.service;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.command.wf.ReRunXCommand;
 
 import org.apache.oozie.client.WorkflowAction;
@@ -22,7 +23,6 @@ import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.workflow.WorkflowException;
 import org.apache.oozie.workflow.WorkflowInstance;
-import org.apache.oozie.workflow.lite.ActionNodeDef;
 import org.apache.oozie.workflow.lite.ActionNodeHandler;
 import org.apache.oozie.workflow.lite.DecisionNodeHandler;
 import org.apache.oozie.workflow.lite.NodeHandler;
@@ -32,9 +32,23 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public abstract class LiteWorkflowStoreService extends WorkflowStoreService {
+
+    public static final String CONF_PREFIX = Service.CONF_PREFIX + "LiteWorkflowStoreService.";
+    public static final String CONF_PREFIX_USER_RETRY = CONF_PREFIX + "user.retry.";
+    public static final String CONF_USER_RETRY_MAX = CONF_PREFIX_USER_RETRY + "max";
+    public static final String CONF_USER_RETRY_INTEVAL = CONF_PREFIX_USER_RETRY + "inteval";
+    public static final String CONF_USER_RETRY_ERROR_CODE = CONF_PREFIX_USER_RETRY + "error.code";
+    public static final String CONF_USER_RETRY_ERROR_CODE_EXT = CONF_PREFIX_USER_RETRY + "error.code.ext";
+
+    public static final String NODE_DEF_VERSION_0 = "_oozie_inst_v_0";
+    public static final String NODE_DEF_VERSION_1 = "_oozie_inst_v_1";
+    public static final String CONF_NODE_DEF_VERSION = CONF_PREFIX + "node.def.version";
 
     /**
      * Delegation method used by the Action and Decision {@link NodeHandler} on start. <p/> This method provides the
@@ -56,7 +70,7 @@ public abstract class LiteWorkflowStoreService extends WorkflowStoreService {
         }
         WorkflowActionBean action = new WorkflowActionBean();
         String actionId = Services.get().get(UUIDService.class).generateChildId(jobId, nodeName);
-        
+
         if (!skipAction) {
             String nodeConf = context.getNodeDef().getConf();
             String executionPath = context.getExecutionPath();
@@ -80,7 +94,18 @@ public abstract class LiteWorkflowStoreService extends WorkflowStoreService {
             action.setJobId(jobId);
         }
         action.setCred(context.getNodeDef().getCred());
-        log.debug("liteExecute: Setting the Auth type for action "+context.getNodeDef().getCred() + " Name: "+context.getNodeDef().getName());
+        log.debug("Setting action for cred: '"+context.getNodeDef().getCred() +
+        		"', name: '"+ context.getNodeDef().getName() + "'");
+
+        action.setUserRetryCount(0);
+        int userRetryMax = getUserRetryMax(context);
+        int userRetryInterval = getUserRetryInterval(context);
+        action.setUserRetryMax(userRetryMax);
+        action.setUserRetryInterval(userRetryInterval);
+        log.debug("Setting action for userRetryMax: '"+ userRetryMax +
+        		"', userRetryInterval: '" + userRetryInterval +
+        		"', name: '"+ context.getNodeDef().getName() + "'");
+
         action.setName(nodeName);
         action.setId(actionId);
         context.setVar(nodeName + WorkflowInstance.NODE_VAR_SEPARATOR + ACTION_ID, actionId);
@@ -90,6 +115,77 @@ public abstract class LiteWorkflowStoreService extends WorkflowStoreService {
             context.setTransientVar(ACTIONS_TO_START, list);
         }
         list.add(action);
+    }
+
+    private static int getUserRetryInterval(NodeHandler.Context context) throws WorkflowException {
+        Configuration conf = Services.get().get(ConfigurationService.class).getConf();
+        int ret = conf.getInt(CONF_USER_RETRY_INTEVAL, 5);
+        String userRetryInterval = context.getNodeDef().getUserRetryInterval();
+
+        if (!userRetryInterval.equals("null")) {
+            try {
+                ret = Integer.parseInt(userRetryInterval);
+            }
+            catch (NumberFormatException nfe) {
+                throw new WorkflowException(ErrorCode.E0700, nfe.getMessage(), nfe);
+            }
+        }
+        return ret;
+    }
+
+    private static int getUserRetryMax(NodeHandler.Context context) throws WorkflowException {
+        XLog log = XLog.getLog(LiteWorkflowStoreService.class);
+        Configuration conf = Services.get().get(ConfigurationService.class).getConf();
+        int ret = conf.getInt(CONF_USER_RETRY_MAX, 0);
+        int max = ret;
+        String userRetryMax = context.getNodeDef().getUserRetryMax();
+
+        if (!userRetryMax.equals("null")) {
+            try {
+                ret = Integer.parseInt(userRetryMax);
+                if (ret > max) {
+                    ret = max;
+                    log.warn(ErrorCode.E0820.getTemplate(), ret, max);
+                }
+            }
+            catch (NumberFormatException nfe) {
+                throw new WorkflowException(ErrorCode.E0700, nfe.getMessage(), nfe);
+            }
+        }
+        else {
+            ret = 0;
+        }
+        return ret;
+    }
+
+    /**
+     * Get system defined and instance defined error codes for which USER_RETRY is allowed
+     *
+     * @return set of error code user-retry is allowed for
+     */
+    public static Set<String> getUserRetryErrorCode() {
+        Configuration conf = Services.get().get(ConfigurationService.class).getConf();
+        Collection<String> strings = (Collection<String>) conf.getStringCollection(CONF_USER_RETRY_ERROR_CODE);
+        Collection<String> extra = (Collection<String>) conf.getStringCollection(CONF_USER_RETRY_ERROR_CODE_EXT);
+        Set<String> set = new HashSet<String>();
+        set.addAll(strings);
+        set.addAll(extra);
+        return set;
+    }
+
+    /**
+     * Get NodeDef default version, _oozie_inst_v_0 or _oozie_inst_v_1
+     *
+     * @return nodedef default version
+     * @throws WorkflowException thrown if there was an error parsing the action configuration.
+    */
+    public static String getNodeDefDefaultVersion() throws WorkflowException {
+        Configuration conf = Services.get().get(ConfigurationService.class).getConf();
+        String ret = conf.get(CONF_NODE_DEF_VERSION);
+        if (ret == null) {
+            ret = NODE_DEF_VERSION_1;
+        }
+        return ret;
     }
 
     /**

@@ -228,15 +228,19 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
             if (wfAction != null) { // wfAction could be a no-op job
                 NodeDef nodeDef = workflowInstance.getNodeDef(wfAction.getExecutionPath());
                 if (nodeDef instanceof KillNodeDef) {
-                    ActionExecutorContext context = new ActionXCommand.ActionExecutorContext(wfJob, wfAction, false);
+                    boolean isRetry = false;
+                    boolean isUserRetry = false;
+                    ActionExecutorContext context = new ActionXCommand.ActionExecutorContext(wfJob, wfAction, isRetry,
+                            isUserRetry);
                     try {
                         String tmpNodeConf = nodeDef.getConf();
                         String actionConf = context.getELEvaluator().evaluate(tmpNodeConf, String.class);
                         LOG.debug("Try to resolve KillNode message for jobid [{0}], actionId [{1}], before resolve [{2}], after resolve [{3}]",
-                                jobId, actionId, tmpNodeConf, actionConf);
+                                        jobId, actionId, tmpNodeConf, actionConf);
                         if (wfAction.getErrorCode() != null) {
                             wfAction.setErrorInfo(wfAction.getErrorCode(), actionConf);
-                        } else {
+                        }
+                        else {
                             wfAction.setErrorInfo(ErrorCode.E0729.toString(), actionConf);
                         }
                         jpaService.execute(new WorkflowActionUpdateJPAExecutor(wfAction));

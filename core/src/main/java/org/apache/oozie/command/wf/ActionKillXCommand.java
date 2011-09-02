@@ -104,8 +104,9 @@ public class ActionKillXCommand extends ActionXCommand<Void> {
             if (executor != null) {
                 try {
                     boolean isRetry = false;
+                    boolean isUserRetry = false;
                     ActionExecutorContext context = new ActionXCommand.ActionExecutorContext(wfJob, wfAction,
-                            isRetry);
+                            isRetry, isUserRetry);
                     incrActionCounter(wfAction.getType(), 1);
 
                     Instrumentation.Cron cron = new Instrumentation.Cron();

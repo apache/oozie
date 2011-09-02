@@ -194,7 +194,7 @@ public class TestActionCheckXCommand extends XDataTestCase {
         new ActionStartXCommand(action.getId(), "map-reduce").call();
         action = jpaService.execute(wfActionGetCmd);
 
-        ActionExecutorContext context = new ActionXCommand.ActionExecutorContext(job, action, false);
+        ActionExecutorContext context = new ActionXCommand.ActionExecutorContext(job, action, false, false);
         MapReduceActionExecutor actionExecutor = new MapReduceActionExecutor();
         Configuration conf = actionExecutor.createBaseHadoopConf(context, XmlUtils.parseXml(action.getConf()));
         String user = conf.get("user.name");

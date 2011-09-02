@@ -940,6 +940,9 @@ public class WorkflowStore extends Store {
             action.setStartTime(a.getStartTime());
             action.setStatus(a.getStatus());
             action.setJobId(a.getWfId());
+            action.setUserRetryCount(a.getUserRetryCount());
+            action.setUserRetryInterval(a.getUserRetryInterval());
+            action.setUserRetryMax(a.getUserRetryMax());
             return action;
         }
         return null;

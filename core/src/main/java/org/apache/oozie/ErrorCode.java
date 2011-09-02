@@ -143,7 +143,8 @@ public enum ErrorCode {
     E0816(XLog.STD, "Action pending=[{0}], status=[{1}]. Skipping ActionStart Execution"),
     E0817(XLog.STD, "The wf action [{0}] has been udated recently. Ignoring ActionCheck."),
     E0818(XLog.STD, "Action [{0}] status is running but WF Job [{1}] status is [{2}]. Expected status is RUNNING."),
-    E0819(XLog.STD, "Unable to delete the temp dir of job WF Job [{1}]."),
+    E0819(XLog.STD, "Unable to delete the temp dir of job WF Job [{0}]."),
+    E0820(XLog.STD, "Action user retry max [{0}] is over system defined max [{1}], re-assign to use system max."),
 
     E0900(XLog.OPS, "Jobtracker [{0}] not allowed, not in Oozie's whitelist"),
     E0901(XLog.OPS, "Namenode [{0}] not allowed, not in Oozie's whitelist"),
@@ -171,7 +172,7 @@ public enum ErrorCode {
     E1020(XLog.STD, "Could not kill coord job, this job either finished successfully or does not exist , [{0}]"),
     E1021(XLog.STD, "Coord Action Input Check Error: {0}"),
 
-    E1100(XLog.STD, "Command precondition does not hold before execution"),
+    E1100(XLog.STD, "Command precondition does not hold before execution, [{0}]"),
 
     E1101(XLog.STD, "SLA Nominal time is required."),
     E1102(XLog.STD, "SLA should-start can't be empty."),

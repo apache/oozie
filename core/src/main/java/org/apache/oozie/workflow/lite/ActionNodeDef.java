@@ -19,7 +19,11 @@ import org.apache.oozie.util.XLog;
 
 import java.util.Arrays;
 
-//TODO javadoc
+/**
+ * Node definition for workflow action. This node definition is serialized object and should provide
+ * readFields() and write() for read and write of fields in this class.  
+ *
+ */
 public class ActionNodeDef extends NodeDef {
 
     ActionNodeDef() {
@@ -31,7 +35,12 @@ public class ActionNodeDef extends NodeDef {
     }
     
     public ActionNodeDef(String name, String conf, Class<? extends ActionNodeHandler> actionHandlerClass, String onOk,
-            String onError,String cred) {
-        super(name, ParamChecker.notNull(conf, "conf"), actionHandlerClass, Arrays.asList(onOk, onError),cred);
+            String onError, String cred) {
+        super(name, ParamChecker.notNull(conf, "conf"), actionHandlerClass, Arrays.asList(onOk, onError), cred);
+    }
+    
+    public ActionNodeDef(String name, String conf, Class<? extends ActionNodeHandler> actionHandlerClass, String onOk,
+            String onError, String cred, String userRetryMax, String userRetryInterval) {
+        super(name, ParamChecker.notNull(conf, "conf"), actionHandlerClass, Arrays.asList(onOk, onError), cred, userRetryMax, userRetryInterval);
     }
 }

@@ -24,7 +24,10 @@ import org.apache.oozie.command.CommandException;
 import org.apache.oozie.executor.jpa.WorkflowActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 import org.apache.oozie.service.JPAService;
+import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.UUIDService;
+import org.apache.oozie.service.UUIDService.ApplicationType;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.workflow.WorkflowInstance;
 
@@ -75,7 +78,7 @@ public class TestWorkflowKillXCommand extends XDataTestCase {
         wfInstance = job.getWorkflowInstance();
         assertEquals(wfInstance.getStatus(), WorkflowInstance.Status.KILLED);
     }
-    
+
     /**
      * Test : kill RUNNING job and RUNNING action successfully.
      *
@@ -105,6 +108,77 @@ public class TestWorkflowKillXCommand extends XDataTestCase {
         assertEquals(action.getStatus(), WorkflowAction.Status.KILLED);
         wfInstance = job.getWorkflowInstance();
         assertEquals(wfInstance.getStatus(), WorkflowInstance.Status.KILLED);
+    }
+
+    /**
+     * Test : kill RUNNING job after NodeDef upgrade.
+     *
+     * @throws Exception
+     */
+    public void testWfKillSuccessAfterNodeDefUpgrade() throws Exception {
+        services.destroy();
+
+        setSystemProperty(LiteWorkflowStoreService.CONF_NODE_DEF_VERSION, LiteWorkflowStoreService.NODE_DEF_VERSION_0);
+        services = new Services();
+        services.init();
+
+        WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
+        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.PREP);
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+        WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(job.getId());
+        WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(action.getId());
+
+        job = jpaService.execute(wfJobGetCmd);
+        action = jpaService.execute(wfActionGetCmd);
+        assertEquals(job.getStatus(), WorkflowJob.Status.RUNNING);
+        assertEquals(action.getStatus(), WorkflowAction.Status.PREP);
+        WorkflowInstance wfInstance = job.getWorkflowInstance();
+        assertEquals(wfInstance.getStatus(), WorkflowInstance.Status.RUNNING);
+
+        services.destroy();
+
+        Thread.sleep(5000);
+
+        setSystemProperty(LiteWorkflowStoreService.CONF_NODE_DEF_VERSION, LiteWorkflowStoreService.NODE_DEF_VERSION_1);
+        services = new Services();
+        services.init();
+
+        Thread.sleep(5000);
+
+        new KillXCommand(job.getId()).call();
+
+        jpaService = Services.get().get(JPAService.class);
+        job = jpaService.execute(wfJobGetCmd);
+        action = jpaService.execute(wfActionGetCmd);
+        assertEquals(job.getStatus(), WorkflowJob.Status.KILLED);
+        assertEquals(action.getStatus(), WorkflowAction.Status.KILLED);
+        wfInstance = job.getWorkflowInstance();
+        assertEquals(wfInstance.getStatus(), WorkflowInstance.Status.KILLED);
+    }
+
+
+    public void testChildId() throws Exception {
+        setSystemProperty(UUIDService.CONF_GENERATOR, "counter");
+        Services services = new Services();
+        services.init();
+        UUIDService uuid = services.get(UUIDService.class);
+        String id = uuid.generateId(ApplicationType.WORKFLOW);
+        String childId = uuid.generateChildId(id, "a");
+        assertEquals(id, uuid.getId(childId));
+        assertEquals("a", uuid.getChildName(childId));
+        services.destroy();
+
+        setSystemProperty(UUIDService.CONF_GENERATOR, "random");
+        services = new Services();
+        services.init();
+        uuid = services.get(UUIDService.class);
+        id = uuid.generateId(ApplicationType.WORKFLOW);
+        childId = uuid.generateChildId(id, "a");
+        assertEquals(id, uuid.getId(childId));
+        assertEquals("a", uuid.getChildName(childId));
+        services.destroy();
     }
 
     /**

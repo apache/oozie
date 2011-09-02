@@ -150,7 +150,7 @@ public class TestActionStartXCommand extends XDataTestCase {
         action = jpaService.execute(wfActionGetCmd);
         assertNotNull(action.getExternalId());
 
-        ActionExecutorContext context = new ActionXCommand.ActionExecutorContext(job, action, false);
+        ActionExecutorContext context = new ActionXCommand.ActionExecutorContext(job, action, false, false);
         MapReduceActionExecutor actionExecutor = new MapReduceActionExecutor();
         Configuration conf = actionExecutor.createBaseHadoopConf(context, XmlUtils.parseXml(action.getConf()));
         String user = conf.get("user.name");

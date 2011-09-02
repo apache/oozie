@@ -20,6 +20,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.Properties;
+import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -38,6 +39,7 @@ import org.apache.oozie.service.ELService;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.JPAService;
+import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.InstrumentUtils;
@@ -146,14 +148,17 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<Void> {
         LOG.warn("Setting Action Status to [{0}]", status);
         ActionExecutorContext aContext = (ActionExecutorContext) context;
         WorkflowActionBean action = (WorkflowActionBean) aContext.getAction();
-        incrActionErrorCounter(action.getType(), "error", 1);
-        action.setPending();
-        if (isStart) {
-            action.setExecutionData(message, null);
-            queue(new ActionEndXCommand(action.getId(), action.getType()));
-        }
-        else {
-            action.setEndData(status, WorkflowAction.Status.ERROR.toString());
+
+        if (!handleUserRetry(action)) {
+            incrActionErrorCounter(action.getType(), "error", 1);
+            action.setPending();
+            if (isStart) {
+                action.setExecutionData(message, null);
+                queue(new ActionEndXCommand(action.getId(), action.getType()));
+            }
+            else {
+                action.setEndData(status, WorkflowAction.Status.ERROR.toString());
+            }
         }
     }
 
@@ -166,24 +171,52 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<Void> {
     public void failJob(ActionExecutor.Context context) throws CommandException {
         ActionExecutorContext aContext = (ActionExecutorContext) context;
         WorkflowActionBean action = (WorkflowActionBean) aContext.getAction();
-        incrActionErrorCounter(action.getType(), "failed", 1);
         WorkflowJobBean workflow = (WorkflowJobBean) context.getWorkflow();
-        LOG.warn("Failing Job due to failed action [{0}]", action.getName());
-        try {
-            workflow.getWorkflowInstance().fail(action.getName());
-            WorkflowInstance wfInstance = workflow.getWorkflowInstance();
-            ((LiteWorkflowInstance) wfInstance).setStatus(WorkflowInstance.Status.FAILED);
-            workflow.setWorkflowInstance(wfInstance);
-            workflow.setStatus(WorkflowJob.Status.FAILED);
-            action.setStatus(WorkflowAction.Status.FAILED);
-            action.resetPending();
-            queue(new NotificationXCommand(workflow, action));
-            queue(new KillXCommand(workflow.getId()));
-            InstrumentUtils.incrJobCounter(INSTR_FAILED_JOBS_COUNTER, 1, getInstrumentation());
+
+        if (!handleUserRetry(action)) {
+            incrActionErrorCounter(action.getType(), "failed", 1);
+            LOG.warn("Failing Job due to failed action [{0}]", action.getName());
+            try {
+                workflow.getWorkflowInstance().fail(action.getName());
+                WorkflowInstance wfInstance = workflow.getWorkflowInstance();
+                ((LiteWorkflowInstance) wfInstance).setStatus(WorkflowInstance.Status.FAILED);
+                workflow.setWorkflowInstance(wfInstance);
+                workflow.setStatus(WorkflowJob.Status.FAILED);
+                action.setStatus(WorkflowAction.Status.FAILED);
+                action.resetPending();
+                queue(new NotificationXCommand(workflow, action));
+                queue(new KillXCommand(workflow.getId()));
+                InstrumentUtils.incrJobCounter(INSTR_FAILED_JOBS_COUNTER, 1, getInstrumentation());
+            }
+            catch (WorkflowException ex) {
+                throw new CommandException(ex);
+            }
         }
-        catch (WorkflowException ex) {
-            throw new CommandException(ex);
+    }
+
+    /**
+     * Execute retry for action if this action is eligible for user-retry
+     *
+     * @param context the execution context.
+     * @return true if user-retry has to be handled for this action
+     * @throws CommandException thrown if unable to fail job
+     */
+    public boolean handleUserRetry(WorkflowActionBean action) throws CommandException {
+        String errorCode = action.getErrorCode();
+        Set<String> allowedRetryCode = LiteWorkflowStoreService.getUserRetryErrorCode();
+
+        if (allowedRetryCode.contains(errorCode) && action.getUserRetryCount() < action.getUserRetryMax()) {
+            LOG.info("Preparing retry this action [{0}], errorCode [{1}], userRetryCount [{2}], "
+                    + "userRetryMax [{3}], userRetryInterval [{4}]", action.getId(), errorCode, action
+                    .getUserRetryCount(), action.getUserRetryMax(), action.getUserRetryInterval());
+            int interval = action.getUserRetryInterval() * 60 * 1000;
+            action.setStatus(WorkflowAction.Status.USER_RETRY);
+            action.incrmentUserRetryCount();
+            action.setPending();
+            queue(new ActionStartXCommand(action.getId(), action.getType()), interval);
+            return true;
         }
+        return false;
     }
 
     private void incrActionErrorCounter(String type, String error, int count) {
@@ -207,14 +240,16 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<Void> {
         private Configuration protoConf;
         private final WorkflowActionBean action;
         private final boolean isRetry;
+        private final boolean isUserRetry;
         private boolean started;
         private boolean ended;
         private boolean executed;
 
-        public ActionExecutorContext(WorkflowJobBean workflow, WorkflowActionBean action, boolean isRetry) {
+        public ActionExecutorContext(WorkflowJobBean workflow, WorkflowActionBean action, boolean isRetry, boolean isUserRetry) {
             this.workflow = workflow;
             this.action = action;
             this.isRetry = isRetry;
+            this.isUserRetry = isUserRetry;
             try {
                 protoConf = new XConfiguration(new StringReader(workflow.getProtoActionConf()));
             }
@@ -274,6 +309,10 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<Void> {
 
         public boolean isRetry() {
             return isRetry;
+        }
+
+        public boolean isUserRetry() {
+            return isUserRetry;
         }
 
         /**

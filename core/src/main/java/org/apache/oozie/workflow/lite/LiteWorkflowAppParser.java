@@ -56,6 +56,8 @@ public class LiteWorkflowAppParser {
 
     private static final String NAME_A = "name";
     private static final String CRED_A = "cred";
+    private static final String USER_RETRY_MAX_A = "retry-max";
+    private static final String USER_RETRY_INTERVAL_A = "retry-interval";
     private static final String TO_A = "to";
 
     private static final String FORK_PATH_E = "path";
@@ -196,9 +198,15 @@ public class LiteWorkflowAppParser {
                                                 }
                                             }
                                         }
+                                        
+                                        String credStr = eNode.getAttributeValue(CRED_A);
+                                        String userRetryMaxStr = eNode.getAttributeValue(USER_RETRY_MAX_A);
+                                        String userRetryIntervalStr = eNode.getAttributeValue(USER_RETRY_INTERVAL_A);
+                                        
                                         String actionConf = XmlUtils.prettyPrint(eActionConf).toString();
                                         def.addNode(new ActionNodeDef(eNode.getAttributeValue(NAME_A), actionConf, actionHandlerClass,
-                                                                      transitions[0], transitions[1], eNode.getAttributeValue(CRED_A)));
+                                                                      transitions[0], transitions[1], credStr,
+                                                                      userRetryMaxStr, userRetryIntervalStr));
                                     }
                                     else {
                                         if (SLA_INFO.equals(eNode.getName()) || CREDENTIALS.equals(eNode.getName())) {
