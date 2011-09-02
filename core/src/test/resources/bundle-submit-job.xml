@@ -13,6 +13,9 @@
   limitations under the License. See accompanying LICENSE file.
 -->
 <bundle-app name='BUNDLE-TEST' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='uri:oozie:bundle:0.1'>
+          <controls> 
+                 <kick-off-time>2099-02-01T00:00Z</kick-off-time>
+          </controls>
           <coordinator name='coord1' critical='true'>
                  <app-path>#app_path1</app-path>
                  <configuration>

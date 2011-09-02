@@ -322,8 +322,8 @@
 	<property>
 		<name>oozie.service.coord.materialization.throttling.factor
 		</name>
-		<value>0.10</value>
-		<description>Determine how many actions should be in WAITING state for a single job at any time. The value is calculated by 
+		<value>0.05</value>
+		<description>Determine how many maximum actions should be in WAITING state for a single job at any time. The value is calculated by 
 		this factor X the total queue size.</description>
 	</property>
 

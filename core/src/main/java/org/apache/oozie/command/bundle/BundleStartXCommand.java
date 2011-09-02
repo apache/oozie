@@ -102,13 +102,33 @@ public class BundleStartXCommand extends StartTransitionXCommand {
      */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
+        eagerVerifyPrecondition();
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.XCommand#eagerVerifyPrecondition()
+     */
+    @Override
+    protected void eagerVerifyPrecondition() throws CommandException, PreconditionException {
+        if (bundleJob.getStatus() != Job.Status.PREP) {
+            String msg = "Bundle " + bundleJob.getId() + " is not in PREP status. It is in : " + bundleJob.getStatus();
+            LOG.info(msg);
+            throw new PreconditionException(ErrorCode.E1100, msg);
+        }
+    }
     /* (non-Javadoc)
      * @see org.apache.oozie.command.XCommand#loadState()
      */
     @Override
     public void loadState() throws CommandException {
+        eagerLoadState();
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.XCommand#eagerLoadState()
+     */
+    @Override
+    public void eagerLoadState() throws CommandException {
         try {
             jpaService = Services.get().get(JPAService.class);
 
