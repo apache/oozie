@@ -1,4 +1,6 @@
 -- Oozie 3.0.1 release
+
+OOZIE-56 Fix Oozie pom version
 OOZIE-50 Update the POM files with new version 3.0.1-SNAPSHOT
 
 -- Oozie 3.0.0 release
