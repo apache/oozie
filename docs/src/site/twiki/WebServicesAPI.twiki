@@ -681,7 +681,6 @@ The syntax for the filter is <verbatim>[NAME=VALUE][;NAME=VALUE]*</verbatim>
 
 Valid filter names are:
 
-   * type: the type of job, =workflow=, =coordinator= or =bundle=
    * name: the application name from the workflow/coordinator/bundle definition
    * user: the user that submitted the job
    * group: the group for the job
@@ -693,6 +692,8 @@ The query will do an OR among all the filter values for the same name. Multiple 
 name value pairs.
 
 Additionally the =start= and =len= parameters can be used for pagination. The start parameter is base 1.
+Moreover, the =jobtype= parameter could be used to determine what type of job is looking for.
+The valid values of job type are: =workflow=, =coordinator= or =bundle=.
 
 </noautolink>
 
