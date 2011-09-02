@@ -14,6 +14,7 @@
  */
 package org.apache.oozie.command.coord;
 
+import java.util.Date;
 import java.util.List;
 
 import org.apache.oozie.CoordinatorActionBean;
@@ -26,6 +27,7 @@ import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.ResumeTransitionXCommand;
 import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.command.wf.ResumeXCommand;
+import org.apache.oozie.executor.jpa.CoordActionUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetActionsJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobUpdateJPAExecutor;
@@ -106,13 +108,26 @@ public class CoordResumeXCommand extends ResumeTransitionXCommand {
     @Override
     public void updateJob() throws CommandException {
         InstrumentUtils.incrJobCounter(getName(), 1, getInstrumentation());
+        updateCoordJobPending();
         coordJob.setSuspendedTime(null);
-        LOG.debug("Resume coordinator job id = " + jobId + ", status = " + coordJob.getStatus());
+        coordJob.setLastModifiedTime(new Date());
+        LOG.debug("Resume coordinator job id = " + jobId + ", status = " + coordJob.getStatus() + ", pending = " + coordJob.isPending());
         try {
             jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
         }
         catch (JPAExecutorException e) {
             throw new CommandException(e);
+        }
+    }
+
+    private void updateCoordJobPending() {
+        // if the job endtime == action endtime, we don't need to materialize this job anymore
+        Date endMatdTime = coordJob.getLastActionTime();
+        Date jobEndTime = coordJob.getEndTime();
+
+        if (jobEndTime.compareTo(endMatdTime) <= 0) {
+            // set pending when materialization is done
+            coordJob.setPending();
         }
     }
 
@@ -128,6 +143,13 @@ public class CoordResumeXCommand extends ResumeTransitionXCommand {
                 // queue a ResumeXCommand
                 if (action.getExternalId() != null) {
                     queue(new ResumeXCommand(action.getExternalId()));
+                    updateCoordAction(action);
+                    LOG.debug("Resume coord action = [{0}], new status = [{1}], pending = [{2}] and queue ResumeXCommand for [{3}]",
+                                    action.getId(), action.getStatus(), action.getPending(), action.getExternalId());
+                }else {
+                    updateCoordAction(action);
+                    LOG.debug("Resume coord action = [{0}], new status = [{1}], pending = [{2}] and external id is null",
+                            action.getId(), action.getStatus(), action.getPending());
                 }
             }
         }
@@ -160,6 +182,18 @@ public class CoordResumeXCommand extends ResumeTransitionXCommand {
         if (this.coordJob.getBundleId() != null) {
             BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, prevStatus);
             bundleStatusUpdate.call();
+        }
+    }
+
+    private void updateCoordAction(CoordinatorActionBean action) throws CommandException {
+        action.setStatus(CoordinatorActionBean.Status.RUNNING);
+        action.incrementAndGetPending();
+        action.setLastModifiedTime(new Date());
+        try {
+            jpaService.execute(new CoordActionUpdateJPAExecutor(action));
+        }
+        catch (JPAExecutorException e) {
+            throw new CommandException(e);
         }
     }
 

@@ -35,6 +35,7 @@ import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.InstrumentUtils;
 import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.util.XLog;
 
 public class BundleJobResumeXCommand extends ResumeTransitionXCommand {
 
@@ -42,6 +43,7 @@ public class BundleJobResumeXCommand extends ResumeTransitionXCommand {
     private JPAService jpaService = null;
     private BundleJobBean bundleJob;
     private List<BundleActionBean> bundleActions;
+    private final XLog LOG = XLog.getLog(BundleJobResumeXCommand.class);
 
     /**
      * Constructor to create the Bundle Resume Command.
@@ -63,13 +65,36 @@ public class BundleJobResumeXCommand extends ResumeTransitionXCommand {
                 // queue a ResumeCommand
                 if (action.getCoordId() != null) {
                     queue(new CoordResumeXCommand(action.getCoordId()));
-                    action.setPending(action.getPending() + 1);
-                    jpaService.execute(new BundleActionUpdateJPAExecutor(action));
+                    updateBundleAction(action);
+                    LOG.debug("Resume bundle action = [{0}], new status = [{1}], pending = [{2}] and queue CoordResumeXCommand for [{3}]",
+                            action.getBundleActionId(), action.getStatus(), action.getPending(), action.getCoordId());
+                } else {
+                    updateBundleAction(action);
+                    LOG.debug("Resume bundle action = [{0}], new status = [{1}], pending = [{2}] and coord id is null",
+                            action.getBundleActionId(), action.getStatus(), action.getPending());
                 }
             }
+            LOG.debug("Resume bundle actions for the bundle=[{0}]", bundleId);
         }
         catch (XException ex) {
             throw new CommandException(ex);
+        }
+    }
+
+    private void updateBundleAction(BundleActionBean action) throws CommandException {
+        if (action.getStatus() == Job.Status.PREPSUSPENDED) {
+            action.setStatus(Job.Status.PREP);
+        }
+        else if (action.getStatus() == Job.Status.SUSPENDED) {
+            action.setStatus(Job.Status.RUNNING);
+        }
+        action.incrementAndGetPending();
+        action.setLastModifiedTime(new Date());
+        try {
+            jpaService.execute(new BundleActionUpdateJPAExecutor(action));
+        }
+        catch (JPAExecutorException e) {
+            throw new CommandException(e);
         }
     }
 
@@ -87,8 +112,11 @@ public class BundleJobResumeXCommand extends ResumeTransitionXCommand {
     @Override
     public void updateJob() throws CommandException {
         InstrumentUtils.incrJobCounter("bundle_resume", 1, null);
+        bundleJob.setPending();
+        bundleJob.setSuspendedTime(null);
+        bundleJob.setLastModifiedTime(new Date());
+        LOG.debug("Resume bundle job id = " + bundleId + ", status = " + bundleJob.getStatus() + ", pending = " + bundleJob.isPending());
         try {
-            bundleJob.setSuspendedTime(null);
             jpaService.execute(new BundleJobUpdateJPAExecutor(bundleJob));
         }
         catch (JPAExecutorException e) {
@@ -124,17 +152,12 @@ public class BundleJobResumeXCommand extends ResumeTransitionXCommand {
 
         try {
             bundleJob = jpaService.execute(new BundleJobGetJPAExecutor(bundleId));
+            bundleActions = jpaService.execute(new BundleActionsGetJPAExecutor(bundleId));
         }
         catch (Exception Ex) {
             throw new CommandException(ErrorCode.E0604, bundleId);
         }
 
-        try {
-            bundleActions = jpaService.execute(new BundleActionsGetJPAExecutor(bundleId));
-        }
-        catch (Exception Ex) {
-            throw new CommandException(ErrorCode.E1311, bundleId);
-        }
     }
 
     /* (non-Javadoc)

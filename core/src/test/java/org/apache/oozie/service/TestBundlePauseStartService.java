@@ -47,7 +47,7 @@ public class TestBundlePauseStartService extends XDataTestCase {
      * @throws Exception
      */
     public void testPauseUnpause1() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP);
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP, false);
         final JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
 
@@ -86,7 +86,7 @@ public class TestBundlePauseStartService extends XDataTestCase {
      * @throws Exception
      */
     public void testPauseUnpause2() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP);
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP, false);
         final JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
 
@@ -125,7 +125,7 @@ public class TestBundlePauseStartService extends XDataTestCase {
      * @throws Exception
      */
     public void testStart1() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP);
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP, false);
         final JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
 
@@ -150,7 +150,7 @@ public class TestBundlePauseStartService extends XDataTestCase {
      * @throws Exception
      */
     public void testStart2() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP);
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP, false);
         final JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
 

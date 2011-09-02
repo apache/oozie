@@ -53,7 +53,7 @@ public class TestBundleChangeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testBundleChange1() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP);
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP, false);
         String dateStr = "2099-01-01T01:00Z";
 
         JPAService jpaService = Services.get().get(JPAService.class);
@@ -75,7 +75,7 @@ public class TestBundleChangeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testBundleChange2() throws Exception {
-        BundleJobBean bundleJob = this.addRecordToBundleJobTable(Job.Status.RUNNING);
+        BundleJobBean bundleJob = this.addRecordToBundleJobTable(Job.Status.RUNNING, false);
 
         CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false);
         coordJob.setBundleId(bundleJob.getId());
@@ -117,7 +117,7 @@ public class TestBundleChangeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testBundleChangeNegative1() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP);
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP, false);
         String dateStr = "2099-01-01Ta1:00Z";
 
         JPAService jpaService = Services.get().get(JPAService.class);
@@ -141,7 +141,7 @@ public class TestBundleChangeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testBundleChangeNegative2() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP);
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP, false);
         String dateStr = "2009-01-01T01:00Z";
 
         JPAService jpaService = Services.get().get(JPAService.class);

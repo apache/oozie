@@ -151,8 +151,7 @@ public class KillXCommand extends WorkflowXCommand<Void> {
                  new WfEndXCommand(wfJob).call(); //To delete the WF temp dir
             }
             // update coordinator action
-            CoordActionUpdateXCommand coordActionUpdate = new CoordActionUpdateXCommand(wfJob);
-            coordActionUpdate.call();
+            new CoordActionUpdateXCommand(wfJob).call();
         }
 
         LOG.info("ENDED WorkflowKillXCommand for jobId=" + wfId);

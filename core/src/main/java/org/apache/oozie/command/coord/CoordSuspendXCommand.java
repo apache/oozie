@@ -28,6 +28,7 @@ import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.SuspendTransitionXCommand;
 import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.command.wf.SuspendXCommand;
+import org.apache.oozie.executor.jpa.CoordActionUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetActionsJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobUpdateJPAExecutor;
@@ -121,9 +122,18 @@ public class CoordSuspendXCommand extends SuspendTransitionXCommand {
                     // queue a SuspendXCommand
                     if (action.getExternalId() != null) {
                         queue(new SuspendXCommand(action.getExternalId()));
+                        updateCoordAction(action);
+                        LOG.debug("Suspend coord action = [{0}], new status = [{1}], pending = [{2}] and queue SuspendXCommand for [{3}]",
+                                        action.getId(), action.getStatus(), action.getPending(), action.getExternalId());
+                    } else {
+                        updateCoordAction(action);
+                        LOG.debug("Suspend coord action = [{0}], new status = [{1}], pending = [{2}] and external id is null",
+                                action.getId(), action.getStatus(), action.getPending());
                     }
+
                 }
             }
+            LOG.debug("Suspended coordinator actions for the coordinator=[{0}]", jobId);
         }
         catch (XException ex) {
             exceptionOccured = true;
@@ -162,11 +172,24 @@ public class CoordSuspendXCommand extends SuspendTransitionXCommand {
     @Override
     public void updateJob() throws CommandException {
         InstrumentUtils.incrJobCounter(getName(), 1, getInstrumentation());
-        coordJob.setStatus(CoordinatorJob.Status.SUSPENDED);
+        coordJob.setPending();
+        coordJob.setLastModifiedTime(new Date());
         coordJob.setSuspendedTime(new Date());
-        LOG.debug("Suspend coordinator job id = " + jobId + ", status = " + coordJob.getStatus());
+        LOG.debug("Suspend coordinator job id = " + jobId + ", status = " + coordJob.getStatus() + ", pending = " + coordJob.isPending());
         try {
             jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
+        }
+        catch (JPAExecutorException e) {
+            throw new CommandException(e);
+        }
+    }
+
+    private void updateCoordAction(CoordinatorActionBean action) throws CommandException {
+        action.setStatus(CoordinatorActionBean.Status.SUSPENDED);
+        action.incrementAndGetPending();
+        action.setLastModifiedTime(new Date());
+        try {
+            jpaService.execute(new CoordActionUpdateJPAExecutor(action));
         }
         catch (JPAExecutorException e) {
             throw new CommandException(e);

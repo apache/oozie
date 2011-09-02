@@ -162,7 +162,7 @@ public class TestAuthorizationService extends XDataTestCase {
     }
 
     public void testAuthorizationServiceForBundle() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP);
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP, false);
         assertNotNull(job);
         AuthorizationService as = services.get(AuthorizationService.class);
         assertNotNull(as);

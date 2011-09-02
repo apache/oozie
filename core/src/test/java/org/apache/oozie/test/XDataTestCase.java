@@ -134,6 +134,38 @@ public abstract class XDataTestCase extends XFsTestCase {
     }
 
     /**
+     * Add coordinator job bean with bundle id info.
+     *
+     * @param bundleId bundle id
+     * @param coordId coord id and coord name
+     * @param status job status
+     * @param pending true if pending
+     * @return coordinator job bean
+     * @throws Exception
+     */
+    protected CoordinatorJobBean addRecordToCoordJobTableWithBundle(String bundleId, String coordId, CoordinatorJob.Status status, boolean pending, int lastActionNumber) throws Exception {
+        CoordinatorJobBean coordJob = createCoordJob(status, pending);
+        coordJob.setBundleId(bundleId);
+        //coord id and coord name are the same
+        coordJob.setId(coordId);
+        coordJob.setAppName(coordId);
+        coordJob.setLastActionNumber(lastActionNumber);
+        try {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            assertNotNull(jpaService);
+            CoordJobInsertJPAExecutor coordInsertCmd = new CoordJobInsertJPAExecutor(coordJob);
+            jpaService.execute(coordInsertCmd);
+        }
+        catch (JPAExecutorException je) {
+            je.printStackTrace();
+            fail("Unable to insert the test coord job record to table");
+            throw je;
+        }
+
+        return coordJob;
+    }
+
+    /**
      * Create coord job bean
      *
      * @param status coord job status
@@ -496,12 +528,13 @@ public abstract class XDataTestCase extends XFsTestCase {
     /**
      * Insert bundle job for testing.
      *
-     * @param jobStatus
+     * @param jobStatus job status
+     * @param pending true if pending
      * @return bundle job bean
      * @throws Exception
      */
-    protected BundleJobBean addRecordToBundleJobTable(Job.Status jobStatus) throws Exception {
-        BundleJobBean bundle = createBundleJob(jobStatus);
+    protected BundleJobBean addRecordToBundleJobTable(Job.Status jobStatus, boolean pending) throws Exception {
+        BundleJobBean bundle = createBundleJob(jobStatus, pending);
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
             assertNotNull(jpaService);
@@ -519,7 +552,7 @@ public abstract class XDataTestCase extends XFsTestCase {
     /**
      * Insert a bad bundle job for testing negative cases.
      *
-     * @param jobStatus
+     * @param jobStatus job status
      * @return bundle job bean
      * @throws Exception
      */
@@ -829,11 +862,12 @@ public abstract class XDataTestCase extends XFsTestCase {
     /**
      * Create bundle job bean
      *
-     * @param jobStatus
+     * @param jobStatus job status
+     * @param pending true if pending
      * @return bundle job bean
      * @throws Exception
      */
-    protected BundleJobBean createBundleJob(Job.Status jobStatus) throws Exception {
+    protected BundleJobBean createBundleJob(Job.Status jobStatus, boolean pending) throws Exception {
         Path coordPath1 = new Path(getFsTestCaseDir(), "coord1");
         Path coordPath2 = new Path(getFsTestCaseDir(), "coord2");
         writeCoordXml(coordPath1, "coord-job-bundle.xml");
@@ -873,7 +907,11 @@ public abstract class XDataTestCase extends XFsTestCase {
         bundle.setJobXml(bundleAppXml);
         bundle.setLastModifiedTime(new Date());
         bundle.setOrigJobXml(bundleAppXml);
-        bundle.setPending();
+        if (pending) {
+            bundle.setPending();
+        } else {
+            bundle.resetPending();
+        }
         bundle.setStatus(jobStatus);
         bundle.setUser(conf.get(OozieClient.USER_NAME));
         bundle.setGroup(conf.get(OozieClient.GROUP_NAME));

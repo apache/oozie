@@ -105,8 +105,15 @@ public class BundleKillXCommand extends KillTransitionXCommand {
             for (BundleActionBean action : bundleActions) {
                 if (action.getCoordId() != null) {
                     queue(new CoordKillXCommand(action.getCoordId()));
+                    updateBundleAction(action);
+                    LOG.debug("Killed bundle action = [{0}], new status = [{1}], pending = [{2}] and queue CoordKillXCommand for [{3}]",
+                            action.getBundleActionId(), action.getStatus(), action.getPending(), action.getCoordId());
+                } else {
+                    updateBundleAction(action);
+                    LOG.debug("Killed bundle action = [{0}], current status = [{1}], pending = [{2}]", action.getBundleActionId(), action
+                            .getStatus(), action.getPending());
                 }
-                updateBundleAction(action);
+
             }
         }
         LOG.debug("Killed coord jobs for the bundle=[{0}]", jobId);
@@ -121,6 +128,7 @@ public class BundleKillXCommand extends KillTransitionXCommand {
     private void updateBundleAction(BundleActionBean action) throws CommandException {
         action.incrementAndGetPending();
         action.setLastModifiedTime(new Date());
+        action.setStatus(Job.Status.KILLED);
         try {
             jpaService.execute(new BundleActionUpdateJPAExecutor(action));
         }

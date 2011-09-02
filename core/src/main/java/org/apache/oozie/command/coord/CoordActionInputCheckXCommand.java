@@ -22,14 +22,17 @@ import java.util.List;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.CoordinatorActionBean;
+import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.CoordinatorAction;
+import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.coord.CoordELEvaluator;
 import org.apache.oozie.coord.CoordELFunctions;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
@@ -54,6 +57,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
     private static XLog LOG = XLog.getLog(CoordActionInputCheckXCommand.class);
     private int COMMAND_REQUEUE_INTERVAL = 60000; // 1 minute
     private CoordinatorActionBean coordAction = null;
+    private CoordinatorJobBean coordJob = null;
     private JPAService jpaService = null;
 
     public CoordActionInputCheckXCommand(String actionId) {
@@ -438,17 +442,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
      */
     @Override
     protected void eagerLoadState() throws CommandException {
-        jpaService = Services.get().get(JPAService.class);
-        if (jpaService == null) {
-            throw new CommandException(ErrorCode.E0610);
-        }
-        try {
-            coordAction = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
-        }
-        catch (JPAExecutorException je) {
-            throw new CommandException(je);
-        }
-        LogUtils.setLogInfo(coordAction, logInfo);
+        loadState();
     }
 
     /* (non-Javadoc)
@@ -456,7 +450,17 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
      */
     @Override
     protected void loadState() throws CommandException {
-
+        if (jpaService == null) {
+            jpaService = Services.get().get(JPAService.class);
+        }
+        try {
+            coordAction = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
+            coordJob = jpaService.execute(new CoordJobGetJPAExecutor(coordAction.getJobId()));
+        }
+        catch (JPAExecutorException je) {
+            throw new CommandException(je);
+        }
+        LogUtils.setLogInfo(coordAction, logInfo);
     }
 
     /* (non-Javadoc)
@@ -466,8 +470,13 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
     protected void verifyPrecondition() throws CommandException, PreconditionException {
         if (coordAction.getStatus() != CoordinatorActionBean.Status.WAITING) {
             throw new PreconditionException(ErrorCode.E1100, "[" + actionId
-                    + "]::ActionInputCheck:: Ignoring action. Should be in WAITING state, but state="
+                    + "]::CoordActionInputCheck:: Ignoring action. Should be in WAITING state, but state="
                     + coordAction.getStatus());
+        }
+        if (coordJob.getStatus() != Job.Status.RUNNING) {
+            throw new PreconditionException(ErrorCode.E1100, "[" + actionId
+                    + "]::CoordActionInputCheck:: Ignoring action. Coordinator job is not in RUNNING state, but state="
+                    + coordJob.getStatus());
         }
     }
 

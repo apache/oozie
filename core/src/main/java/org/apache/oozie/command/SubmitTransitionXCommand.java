@@ -73,9 +73,13 @@ public abstract class SubmitTransitionXCommand extends TransitionXCommand<String
      */
     @Override
     protected String execute() throws CommandException {
-        transitToNext();
-        String jobId = submit();
-        notifyParent();
-        return jobId;
+        try {
+            transitToNext();
+            String jobId = submit();
+            return jobId;
+        }
+        finally {
+            notifyParent();
+        }
     }
 }

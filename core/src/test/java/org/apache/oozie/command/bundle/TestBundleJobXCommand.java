@@ -46,7 +46,7 @@ public class TestBundleJobXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testBundleJobInfo1() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP);
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP, false);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
@@ -67,7 +67,7 @@ public class TestBundleJobXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testBundleJobInfoFailed() throws Exception {
-        this.addRecordToBundleJobTable(Job.Status.PREP);
+        this.addRecordToBundleJobTable(Job.Status.PREP, false);
 
         try {
             new BundleJobXCommand("bundle-id").call();

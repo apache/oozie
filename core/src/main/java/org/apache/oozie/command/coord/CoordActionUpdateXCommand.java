@@ -155,6 +155,9 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
         if (workflow.getStatus() == WorkflowJob.Status.RUNNING || workflow.getStatus() == WorkflowJob.Status.SUSPENDED) {
             // update lastModifiedTime
             coordAction.setLastModifiedTime(new Date());
+            if (workflow.getStatus() == WorkflowJob.Status.SUSPENDED) {
+                coordAction.decrementAndGetPending();
+            }
             try {
                 jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionUpdateJPAExecutor(coordAction));
             }

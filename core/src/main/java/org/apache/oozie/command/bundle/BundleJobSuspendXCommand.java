@@ -42,7 +42,7 @@ public class BundleJobSuspendXCommand extends SuspendTransitionXCommand {
     private JPAService jpaService;
     private List<BundleActionBean> bundleActions;
     private BundleJobBean bundleJob;
-    private static final XLog LOG = XLog.getLog(SuspendTransitionXCommand.class);
+    private final XLog LOG = XLog.getLog(BundleJobSuspendXCommand.class);
 
     public BundleJobSuspendXCommand(String id) {
         super("bundle_suspend", "bundle_suspend", 1);
@@ -131,9 +131,11 @@ public class BundleJobSuspendXCommand extends SuspendTransitionXCommand {
     @Override
     public void updateJob() throws CommandException {
         InstrumentUtils.incrJobCounter("bundle_suspend", 1, null);
+        bundleJob.setPending();
         bundleJob.setSuspendedTime(new Date());
         bundleJob.setLastModifiedTime(new Date());
 
+        LOG.debug("Suspend bundle job id = " + jobId + ", status = " + bundleJob.getStatus() + ", pending = " + bundleJob.isPending());
         try {
             jpaService.execute(new BundleJobUpdateJPAExecutor(bundleJob));
         }
@@ -150,15 +152,38 @@ public class BundleJobSuspendXCommand extends SuspendTransitionXCommand {
                     // queue a CoordSuspendXCommand
                     if (action.getCoordId() != null) {
                         queue(new CoordSuspendXCommand(action.getCoordId()));
-                        action.setPending(action.getPending() + 1);
-                        jpaService.execute(new BundleActionUpdateJPAExecutor(action));
+                        updateBundleAction(action);
+                        LOG.debug("Suspend bundle action = [{0}], new status = [{1}], pending = [{2}] and queue CoordSuspendXCommand for [{3}]",
+                                action.getBundleActionId(), action.getStatus(), action.getPending(), action.getCoordId());
+                    } else {
+                        updateBundleAction(action);
+                        LOG.debug("Suspend bundle action = [{0}], new status = [{1}], pending = [{2}] and coord id is null",
+                                action.getBundleActionId(), action.getStatus(), action.getPending());
                     }
+
                 }
             }
-            jpaService.execute(new BundleJobUpdateJPAExecutor(bundleJob));
+            LOG.debug("Suspended bundle actions for the bundle=[{0}]", jobId);
         }
         catch (XException ex) {
             throw new CommandException(ex);
+        }
+    }
+
+    private void updateBundleAction(BundleActionBean action) throws CommandException {
+        if (action.getStatus() == Job.Status.PREP) {
+            action.setStatus(Job.Status.PREPSUSPENDED);
+        }
+        else if (action.getStatus() == Job.Status.RUNNING) {
+            action.setStatus(Job.Status.SUSPENDED);
+        }
+        action.incrementAndGetPending();
+        action.setLastModifiedTime(new Date());
+        try {
+            jpaService.execute(new BundleActionUpdateJPAExecutor(action));
+        }
+        catch (JPAExecutorException e) {
+            throw new CommandException(e);
         }
     }
 }

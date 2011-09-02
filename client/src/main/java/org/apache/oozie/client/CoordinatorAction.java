@@ -14,7 +14,6 @@
  */
 package org.apache.oozie.client;
 
-import java.util.List;
 import java.util.Date;
 
 /**
@@ -30,6 +29,7 @@ public interface CoordinatorAction {
         READY,
         SUBMITTED,
         RUNNING,
+        SUSPENDED,
         TIMEDOUT,
         SUCCEEDED,
         KILLED,

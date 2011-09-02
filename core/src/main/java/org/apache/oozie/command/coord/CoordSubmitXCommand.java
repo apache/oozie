@@ -93,6 +93,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
     private final String coordName;
     private boolean dryrun;
     private JPAService jpaService = null;
+    private CoordinatorJob.Status prevStatus = CoordinatorJob.Status.PREP;
 
     public static final String CONFIG_DEFAULT = "coord-config-default.xml";
     public static final String COORDINATOR_XML_FILE = "coordinator.xml";
@@ -105,7 +106,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
      * Default timeout for normal jobs, in minutes, after which coordinator input check will timeout
      */
     public static final String CONF_DEFAULT_TIMEOUT_NORMAL = Service.CONF_PREFIX + "coord.normal.default.timeout";
-    
+
     public static final String CONF_DEFAULT_CONCURRENCY = Service.CONF_PREFIX + "coord.default.concurrency";
 
     private final XLog log = XLog.getLog(getClass());
@@ -179,7 +180,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         String jobId = null;
         log.info("STARTED Coordinator Submit");
         InstrumentUtils.incrJobCounter(getName(), 1, getInstrumentation());
-        CoordinatorJob.Status prevStatus = CoordinatorJob.Status.PREP;
+
         boolean exceptionOccured = false;
         try {
             XLog.Info.get().setParameter(DagXLogInfoService.TOKEN, conf.get(OozieClient.LOG_TOKEN));
@@ -261,12 +262,6 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
                     coordJob.setStatus(CoordinatorJob.Status.FAILED);
                     coordJob.resetPending();
                 }
-            }
-            // update bundle action
-            if (this.bundleId != null) {
-                log.debug("Updating bundle record: " + bundleId + " for coord id: " + coordJob.getId());
-                BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, prevStatus);
-                bundleStatusUpdate.call();
             }
         }
 
@@ -912,6 +907,12 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
      */
     @Override
     public void notifyParent() throws CommandException {
+        // update bundle action
+        if (this.bundleId != null) {
+            log.debug("Updating bundle record: " + bundleId + " for coord id: " + coordJob.getId());
+            BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, prevStatus);
+            bundleStatusUpdate.call();
+        }
     }
 
     /* (non-Javadoc)

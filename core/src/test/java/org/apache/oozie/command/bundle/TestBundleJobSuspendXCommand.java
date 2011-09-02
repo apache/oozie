@@ -59,7 +59,7 @@ public class TestBundleJobSuspendXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testBundleSuspend1() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.RUNNING);
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.RUNNING, false);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
@@ -79,7 +79,7 @@ public class TestBundleJobSuspendXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testBundleSuspend2() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP);
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP, false);
 
         final JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
@@ -157,7 +157,7 @@ public class TestBundleJobSuspendXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testBundleSuspend3() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP);
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP, false);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
@@ -193,7 +193,7 @@ public class TestBundleJobSuspendXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testBundleSuspendFailed() throws Exception {
-        this.addRecordToBundleJobTable(Job.Status.PREP);
+        this.addRecordToBundleJobTable(Job.Status.PREP, false);
 
         try {
             new BundleJobSuspendXCommand("bundle-id").call();

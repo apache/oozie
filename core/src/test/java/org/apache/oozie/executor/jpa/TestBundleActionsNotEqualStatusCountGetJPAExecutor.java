@@ -41,7 +41,7 @@ public class TestBundleActionsNotEqualStatusCountGetJPAExecutor extends XDataTes
     }
 
     public void testBundleActionsNotEqualStatusCountGet() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.RUNNING);
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.RUNNING, false);
         this.addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.SUCCEEDED);
 
         _testNotEqualFalseStatusCount(job.getId(), 0);

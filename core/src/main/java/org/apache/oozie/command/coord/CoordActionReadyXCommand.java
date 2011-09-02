@@ -20,7 +20,9 @@ import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.CoordinatorAction;
+import org.apache.oozie.client.Job;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.executor.jpa.CoordJobGetReadyActionsJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetRunningActionsCountJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
@@ -137,7 +139,6 @@ public class CoordActionReadyXCommand extends CoordinatorXCommand<Void> {
         if (jpaService == null) {
             throw new CommandException(ErrorCode.E0610);
         }
-
         try {
             coordJob = jpaService.execute(new org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor(jobId));
         }
@@ -148,7 +149,11 @@ public class CoordActionReadyXCommand extends CoordinatorXCommand<Void> {
     }
 
     @Override
-    protected void verifyPrecondition() throws CommandException {
-
+    protected void verifyPrecondition() throws CommandException, PreconditionException {
+        if (coordJob.getStatus() != Job.Status.RUNNING) {
+            throw new PreconditionException(ErrorCode.E1100, "[" + jobId
+                    + "]::CoordActionReady:: Ignoring job. Coordinator job is not in RUNNING state, but state="
+                    + coordJob.getStatus());
+        }
     }
 }

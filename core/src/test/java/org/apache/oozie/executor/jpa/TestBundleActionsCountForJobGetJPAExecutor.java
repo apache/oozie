@@ -41,7 +41,7 @@ public class TestBundleActionsCountForJobGetJPAExecutor extends XDataTestCase {
     }
 
     public void testBundleActionsForJobCountGet() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.RUNNING);
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.RUNNING, false);
         this.addRecordToBundleActionTable(job.getId(), "action1", 1, Job.Status.RUNNING);
 
         _testGetForJobCount(job.getId(), 1);

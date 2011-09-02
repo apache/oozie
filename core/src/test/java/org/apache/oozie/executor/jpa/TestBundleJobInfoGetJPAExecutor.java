@@ -44,12 +44,12 @@ public class TestBundleJobInfoGetJPAExecutor extends XDataTestCase {
     }
 
     public void testBundleJobInfoGet() throws Exception {
-        addRecordToBundleJobTable(Job.Status.PREP);
-        addRecordToBundleJobTable(Job.Status.RUNNING);
+        addRecordToBundleJobTable(Job.Status.PREP, false);
+        addRecordToBundleJobTable(Job.Status.RUNNING, false);
         _testGetJobInfoForStatus();
         _testGetJobInfoForGroup();
-        addRecordToBundleJobTable(Job.Status.KILLED);
-        addRecordToBundleJobTable(Job.Status.SUCCEEDED);
+        addRecordToBundleJobTable(Job.Status.KILLED, false);
+        addRecordToBundleJobTable(Job.Status.SUCCEEDED, false);
         _testGetJobInfoForAppName();
         _testGetJobInfoForUser();
         _testGetJobInfoForUserAndStatus();

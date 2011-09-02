@@ -35,7 +35,7 @@ public class TestBundleRerunXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testBundleRerun1() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.SUCCEEDED);
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.SUCCEEDED, false);
         this.addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.SUCCEEDED);
         this.addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.SUCCEEDED);
         addRecordToCoordJobTable("action1", CoordinatorJob.Status.SUCCEEDED, false);
@@ -59,7 +59,7 @@ public class TestBundleRerunXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testBundleRerun2() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.SUCCEEDED);
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.SUCCEEDED, false);
         this.addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.SUCCEEDED);
         this.addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.SUCCEEDED);
         addRecordToCoordJobTable("action1", CoordinatorJob.Status.SUCCEEDED, false);

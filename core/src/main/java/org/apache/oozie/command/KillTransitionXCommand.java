@@ -44,10 +44,14 @@ public abstract class KillTransitionXCommand extends TransitionXCommand<Void> {
      */
     @Override
     protected Void execute() throws CommandException {
-        transitToNext();
-        updateJob();
-        killChildren();
-        notifyParent();
+        try {
+            transitToNext();
+            updateJob();
+            killChildren();
+        }
+        finally {
+            notifyParent();
+        }
         return null;
     }
 }

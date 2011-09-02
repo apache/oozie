@@ -67,10 +67,14 @@ public abstract class RerunTransitionXCommand<T> extends TransitionXCommand<T> {
     @Override
     protected T execute() throws CommandException {
         getLog().info("STARTED " + getClass().getSimpleName() + " for jobId=" + jobId);
-        transitToNext();
-        updateJob();
-        rerunChildren();
-        notifyParent();
+        try {
+            transitToNext();
+            updateJob();
+            rerunChildren();
+        }
+        finally {
+            notifyParent();
+        }
         getLog().info("ENDED " + getClass().getSimpleName() + " for jobId=" + jobId);
         return ret;
     }

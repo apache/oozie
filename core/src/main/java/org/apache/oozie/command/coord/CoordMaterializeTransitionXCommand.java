@@ -252,7 +252,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         cron.start();
         try {
             materializeActions(false);
-            updateJobTable(coordJob);
+            updateJobMaterializeInfo(coordJob);
         }
         catch (CommandException ex) {
             LOG.warn("Exception occurs:" + ex.getMessage() + " Making the job failed ", ex);
@@ -389,7 +389,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
                 .getUser(), coordJob.getGroup(), LOG);
     }
 
-    private void updateJobTable(CoordinatorJobBean job) throws CommandException {
+    private void updateJobMaterializeInfo(CoordinatorJobBean job) throws CommandException {
         job.setLastActionTime(endMatdTime);
         job.setLastActionNumber(lastActionNumber);
         // if the job endtime == action endtime, we don't need to materialize this job anymore
@@ -406,12 +406,6 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         }
 
         job.setNextMaterializedTime(endMatdTime);
-        try {
-            jpaService.execute(new CoordJobUpdateJPAExecutor(job));
-        }
-        catch (JPAExecutorException ex) {
-            throw new CommandException(ex);
-        }
     }
 
     /* (non-Javadoc)

@@ -112,7 +112,13 @@ public class CoordKillXCommand extends KillTransitionXCommand {
                         if (action.getExternalId() != null) {
                             queue(new KillXCommand(action.getExternalId()));
                             updateCoordAction(action);
-                            LOG.debug("Killed coord action = [{0}]", action.getId());
+                            LOG.debug("Killed coord action = [{0}], new status = [{1}], pending = [{2}] and queue KillXCommand for [{3}]",
+                                            action.getId(), action.getStatus(), action.getPending(), action.getExternalId());
+                        }
+                        else {
+                            updateCoordAction(action);
+                            LOG.debug("Killed coord action = [{0}], current status = [{1}], pending = [{2}]", action.getId(), action
+                                    .getStatus(), action.getPending());
                         }
                     }
                 }
@@ -124,17 +130,15 @@ public class CoordKillXCommand extends KillTransitionXCommand {
         catch (JPAExecutorException ex) {
             throw new CommandException(ex);
         }
-        finally {
-            // update bundle action
-            if (coordJob.getBundleId() != null) {
-                BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, prevStatus);
-                bundleStatusUpdate.call();
-            }
-        }
     }
 
     @Override
     public void notifyParent() throws CommandException {
+        // update bundle action
+        if (coordJob.getBundleId() != null) {
+            BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, prevStatus);
+            bundleStatusUpdate.call();
+        }
     }
 
     @Override

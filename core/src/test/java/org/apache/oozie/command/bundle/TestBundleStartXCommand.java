@@ -57,7 +57,7 @@ public class TestBundleStartXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testBundleStart1() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP);
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP, false);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
@@ -88,7 +88,7 @@ public class TestBundleStartXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testBundleStart2() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP);
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP, false);
 
         final JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
@@ -146,7 +146,7 @@ public class TestBundleStartXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testBundleStartDryrun() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP);
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP, false);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
@@ -177,7 +177,7 @@ public class TestBundleStartXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testBundleStartNegative1() throws Exception {
-        this.addRecordToBundleJobTable(Job.Status.PREP);
+        this.addRecordToBundleJobTable(Job.Status.PREP, false);
 
         try {
             new BundleStartXCommand("bundle-id").call();
@@ -187,7 +187,7 @@ public class TestBundleStartXCommand extends XDataTestCase {
             // Job doesn't exist. Exception is expected.
         }
     }
-    
+
     /**
      * Test : Start bundle job that contains bad coordinator job
      *
@@ -207,10 +207,10 @@ public class TestBundleStartXCommand extends XDataTestCase {
         waitFor(120000, new Predicate() {
             public boolean evaluate() throws Exception {
                 BundleJobBean job1 = jpaService.execute(bundleJobGetExecutor);
-                return job1.getStatus().equals(Job.Status.KILLED);
+                return job1.getStatus().equals(Job.Status.DONEWITHERROR);
             }
         });
         job = jpaService.execute(bundleJobGetExecutor);
-        assertEquals(job.getStatus(), Job.Status.KILLED);
+        assertEquals(Job.Status.DONEWITHERROR, job.getStatus());
     }
 }

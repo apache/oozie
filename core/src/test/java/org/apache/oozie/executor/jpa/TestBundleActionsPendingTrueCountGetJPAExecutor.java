@@ -41,7 +41,7 @@ public class TestBundleActionsPendingTrueCountGetJPAExecutor extends XDataTestCa
     }
 
     public void testBundleActionsPendingTrueCountGet() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.RUNNING);
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.RUNNING, false);
         this.addRecordToBundleActionTable(job.getId(), "action1", 1, Job.Status.RUNNING);
 
         _testPendingTrueCount(job.getId(), 1);

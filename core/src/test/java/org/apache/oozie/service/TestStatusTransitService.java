@@ -16,6 +16,9 @@ package org.apache.oozie.service;
 
 import java.util.Date;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
@@ -23,8 +26,11 @@ import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.Job;
+import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.command.coord.CoordKillXCommand;
+import org.apache.oozie.command.coord.CoordSuspendXCommand;
+import org.apache.oozie.executor.jpa.BundleActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
@@ -32,9 +38,14 @@ import org.apache.oozie.executor.jpa.CoordActionInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobInsertJPAExecutor;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
+import org.apache.oozie.workflow.WorkflowApp;
 import org.apache.oozie.workflow.WorkflowInstance;
+import org.apache.oozie.workflow.lite.EndNodeDef;
+import org.apache.oozie.workflow.lite.LiteWorkflowApp;
+import org.apache.oozie.workflow.lite.StartNodeDef;
 import org.apache.oozie.service.StatusTransitService.StatusTransitRunnable;
 
 public class TestStatusTransitService extends XDataTestCase {
@@ -94,8 +105,8 @@ public class TestStatusTransitService extends XDataTestCase {
         CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, start, end, false, 1);
         WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
         final String wfJobId = wfJob.getId();
-        CoordinatorActionBean coordAction = addRecordToCoordActionTable(coordJob.getId(), 1, CoordinatorAction.Status.RUNNING,
-                "coord-action-get.xml", wfJobId, "RUNNING");
+        CoordinatorActionBean coordAction = addRecordToCoordActionTable(coordJob.getId(), 1,
+                CoordinatorAction.Status.RUNNING, "coord-action-get.xml", wfJobId, "RUNNING");
 
         new CoordKillXCommand(coordJob.getId()).call();
 
@@ -155,12 +166,214 @@ public class TestStatusTransitService extends XDataTestCase {
     }
 
     /**
-     * Test : all bundle actions are done - update bundle job's pending flag to 0;
+     * Test : all bundle actions are succeeded - bundle job's status will be updated to succeeded.
      *
      * @throws Exception
      */
     public void testBundleStatusTransitService1() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.RUNNING);
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.RUNNING, false);
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+
+        final String jobId = job.getId();
+        BundleActionBean ba1 = addRecordToBundleActionTable(jobId, "action1", 0, Job.Status.SUCCEEDED);
+        addRecordToBundleActionTable(jobId, "action2", 0, Job.Status.SUCCEEDED);
+        addRecordToBundleActionTable(jobId, "action3", 0, Job.Status.SUCCEEDED);
+
+
+        Runnable runnable = new StatusTransitRunnable();
+        runnable.run();
+
+        waitFor(5 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                BundleJobBean bundle = jpaService.execute(new BundleJobGetJPAExecutor(jobId));
+                return bundle.getStatus().equals(Job.Status.SUCCEEDED);
+            }
+        });
+
+        job = jpaService.execute(new BundleJobGetJPAExecutor(jobId));
+        assertEquals(Job.Status.SUCCEEDED, job.getStatus());
+    }
+
+    /**
+     * Test : all coord jobs are succeeded - bundle job's status will be updated to succeeded. coordinator action ->
+     * coordinator job -> bundle action -> bundle job
+     *
+     * @throws Exception
+     */
+    public void testBundleStatusTransitService2() throws Exception {
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.RUNNING, false);
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+
+        final String bundleId = job.getId();
+        addRecordToBundleActionTable(bundleId, "action1", 0, Job.Status.RUNNING);
+        addRecordToBundleActionTable(bundleId, "action2", 0, Job.Status.RUNNING);
+
+        addRecordToCoordJobTableWithBundle(bundleId, "action1", CoordinatorJob.Status.RUNNING, true, 2);
+        addRecordToCoordJobTableWithBundle(bundleId, "action2", CoordinatorJob.Status.RUNNING, true, 2);
+
+        addRecordToCoordActionTable("action1", 1, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml");
+        addRecordToCoordActionTable("action1", 2, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml");
+
+        addRecordToCoordActionTable("action2", 1, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml");
+        addRecordToCoordActionTable("action2", 2, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml");
+
+        Runnable runnable = new StatusTransitRunnable();
+        runnable.run();
+
+        waitFor(5 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                BundleJobBean bundle = jpaService.execute(new BundleJobGetJPAExecutor(bundleId));
+                return bundle.getStatus().equals(Job.Status.SUCCEEDED);
+            }
+        });
+
+        job = jpaService.execute(new BundleJobGetJPAExecutor(bundleId));
+        assertEquals(Job.Status.SUCCEEDED, job.getStatus());
+    }
+
+    /**
+     * Test : kill a bundle job - bundle job's pending will be updated to false.
+     * <p/>
+     * The pending is updated bottom-up.
+     * workflow job -> coordinator action -> coordinator job -> bundle action -> bundle job
+     *
+     * @throws Exception
+     */
+    public void testBundleStatusTransitService3() throws Exception {
+        BundleJobBean bundleJob = this.addRecordToBundleJobTable(Job.Status.KILLED, true);
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+
+        final String bundleId = bundleJob.getId();
+        addRecordToBundleActionTable(bundleId, "action1", 1, Job.Status.KILLED);
+        addRecordToBundleActionTable(bundleId, "action2", 1, Job.Status.KILLED);
+
+        addRecordToCoordJobTableWithBundle(bundleId, "action1", CoordinatorJob.Status.RUNNING, false, 2);
+        addRecordToCoordJobTableWithBundle(bundleId, "action2", CoordinatorJob.Status.RUNNING, false, 2);
+
+        final CoordinatorActionBean coordAction1_1 = addRecordToCoordActionTable("action1", 1, CoordinatorAction.Status.RUNNING, "coord-action-get.xml");
+        final CoordinatorActionBean coordAction1_2 = addRecordToCoordActionTable("action1", 2, CoordinatorAction.Status.RUNNING, "coord-action-get.xml");
+
+        final CoordinatorActionBean coordAction1_3 = addRecordToCoordActionTable("action2", 1, CoordinatorAction.Status.RUNNING, "coord-action-get.xml");
+        final CoordinatorActionBean coordAction1_4 = addRecordToCoordActionTable("action2", 2, CoordinatorAction.Status.RUNNING, "coord-action-get.xml");
+
+        this.addRecordToWfJobTable(coordAction1_1.getExternalId(), WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
+        this.addRecordToWfJobTable(coordAction1_2.getExternalId(), WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
+        this.addRecordToWfJobTable(coordAction1_3.getExternalId(), WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
+        this.addRecordToWfJobTable(coordAction1_4.getExternalId(), WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
+
+        new CoordKillXCommand("action1").call();
+        new CoordKillXCommand("action2").call();
+
+        waitFor(5 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                WorkflowJobBean wfJob = jpaService.execute(new WorkflowJobGetJPAExecutor(coordAction1_4.getExternalId()));
+                return wfJob.getStatus().equals(Job.Status.KILLED);
+            }
+        });
+
+        Runnable runnable = new StatusTransitRunnable();
+        runnable.run();
+
+        waitFor(5 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                BundleJobBean bundle = jpaService.execute(new BundleJobGetJPAExecutor(bundleId));
+                return bundle.isPending() == false;
+            }
+        });
+
+        bundleJob = jpaService.execute(new BundleJobGetJPAExecutor(bundleId));
+        assertFalse(bundleJob.isPending());
+
+        BundleActionBean bundleAction1 = jpaService.execute(new BundleActionGetJPAExecutor(bundleId, "action1"));
+        assertFalse(bundleAction1.isPending());
+
+        CoordinatorJobBean coordJob1 = jpaService.execute(new CoordJobGetJPAExecutor("action1"));
+        assertFalse(coordJob1.isPending());
+
+        BundleActionBean bundleAction2 = jpaService.execute(new BundleActionGetJPAExecutor(bundleId, "action2"));
+        assertFalse(bundleAction2.isPending());
+
+        CoordinatorJobBean coordJob2 = jpaService.execute(new CoordJobGetJPAExecutor("action2"));
+        assertFalse(coordJob2.isPending());
+    }
+
+    /**
+     * Test : Suspend a bundle job - bundle job's pending will be updated to false.
+     * <p/>
+     * The pending is updated bottom-up.
+     * workflow job -> coordinator action -> coordinator job -> bundle action -> bundle job
+     *
+     * @throws Exception
+     */
+    public void testBundleStatusTransitService4() throws Exception {
+        BundleJobBean bundleJob = this.addRecordToBundleJobTable(Job.Status.SUSPENDED, true);
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+
+        final String bundleId = bundleJob.getId();
+        addRecordToBundleActionTable(bundleId, "action1", 1, Job.Status.SUSPENDED);
+        addRecordToBundleActionTable(bundleId, "action2", 1, Job.Status.SUSPENDED);
+
+        addRecordToCoordJobTableWithBundle(bundleId, "action1", CoordinatorJob.Status.RUNNING, false, 2);
+        addRecordToCoordJobTableWithBundle(bundleId, "action2", CoordinatorJob.Status.RUNNING, false, 2);
+
+        final CoordinatorActionBean coordAction1_1 = addRecordToCoordActionTable("action1", 1, CoordinatorAction.Status.RUNNING, "coord-action-get.xml");
+        final CoordinatorActionBean coordAction1_2 = addRecordToCoordActionTable("action1", 2, CoordinatorAction.Status.RUNNING, "coord-action-get.xml");
+
+        final CoordinatorActionBean coordAction1_3 = addRecordToCoordActionTable("action2", 1, CoordinatorAction.Status.RUNNING, "coord-action-get.xml");
+        final CoordinatorActionBean coordAction1_4 = addRecordToCoordActionTable("action2", 2, CoordinatorAction.Status.RUNNING, "coord-action-get.xml");
+
+        this.addRecordToWfJobTable(coordAction1_1.getExternalId(), WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
+        this.addRecordToWfJobTable(coordAction1_2.getExternalId(), WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
+        this.addRecordToWfJobTable(coordAction1_3.getExternalId(), WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
+        this.addRecordToWfJobTable(coordAction1_4.getExternalId(), WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
+
+        new CoordSuspendXCommand("action1").call();
+        new CoordSuspendXCommand("action2").call();
+
+        waitFor(5 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                WorkflowJobBean wfJob = jpaService.execute(new WorkflowJobGetJPAExecutor(coordAction1_4.getExternalId()));
+                return wfJob.getStatus().equals(Job.Status.SUSPENDED);
+            }
+        });
+
+        Runnable runnable = new StatusTransitRunnable();
+        runnable.run();
+
+        waitFor(5 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                BundleJobBean bundle = jpaService.execute(new BundleJobGetJPAExecutor(bundleId));
+                return bundle.isPending() == false;
+            }
+        });
+
+        bundleJob = jpaService.execute(new BundleJobGetJPAExecutor(bundleId));
+        assertFalse(bundleJob.isPending());
+
+        BundleActionBean bundleAction1 = jpaService.execute(new BundleActionGetJPAExecutor(bundleId, "action1"));
+        assertFalse(bundleAction1.isPending());
+
+        CoordinatorJobBean coordJob1 = jpaService.execute(new CoordJobGetJPAExecutor("action1"));
+        assertFalse(coordJob1.isPending());
+
+        BundleActionBean bundleAction2 = jpaService.execute(new BundleActionGetJPAExecutor(bundleId, "action2"));
+        assertFalse(bundleAction2.isPending());
+
+        CoordinatorJobBean coordJob2 = jpaService.execute(new CoordJobGetJPAExecutor("action2"));
+        assertFalse(coordJob2.isPending());
+    }
+
+    /**
+     * Test : all bundle actions are done - update bundle job's pending flag to 0;
+     *
+     * @throws Exception
+     */
+    public void testBundleStatusTransitServiceX() throws Exception {
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.RUNNING, false);
         final JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
 
@@ -172,7 +385,10 @@ public class TestStatusTransitService extends XDataTestCase {
         addRecordToBundleActionTable(jobId, "2", 0, Job.Status.PAUSED);
         addRecordToBundleActionTable(jobId, "3", 0, Job.Status.PAUSED);
 
-        waitFor(120 * 1000, new Predicate() {
+        Runnable runnable = new StatusTransitRunnable();
+        runnable.run();
+
+        waitFor(5 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
                 BundleJobBean job1 = jpaService.execute(new BundleJobGetJPAExecutor(jobId));
                 return job1.getPending() == 0;
@@ -188,9 +404,8 @@ public class TestStatusTransitService extends XDataTestCase {
      *
      * @throws Exception
      */
-    public void testBundleStatusTransitService2() throws Exception {
-        cleanUpDBTables();
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.RUNNING);
+    public void testBundleStatusTransitServiceXX() throws Exception {
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.RUNNING, false);
         final JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
 
@@ -202,7 +417,10 @@ public class TestStatusTransitService extends XDataTestCase {
         addRecordToBundleActionTable(jobId, "2", 1, Job.Status.PAUSED);
         addRecordToBundleActionTable(jobId, "3", 2, Job.Status.PAUSED);
 
-        waitFor(120 * 1000, new Predicate() {
+        Runnable runnable = new StatusTransitRunnable();
+        runnable.run();
+
+        waitFor(5 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
                 BundleJobBean job1 = jpaService.execute(new BundleJobGetJPAExecutor(jobId));
                 return job1.getPending() == 1;
@@ -218,9 +436,8 @@ public class TestStatusTransitService extends XDataTestCase {
      *
      * @throws Exception
      */
-    public void testBundleStatusTransitService3() throws Exception {
-        cleanUpDBTables();
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.RUNNING);
+    public void testBundleStatusTransitServiceXXX() throws Exception {
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.RUNNING, false);
         final JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
 
@@ -232,7 +449,10 @@ public class TestStatusTransitService extends XDataTestCase {
         addRecordToBundleActionTable(jobId, "2", 1, Job.Status.PAUSED);
         addRecordToBundleActionTable(jobId, "3", 2, Job.Status.PAUSED);
 
-        waitFor(120 * 1000, new Predicate() {
+        Runnable runnable = new StatusTransitRunnable();
+        runnable.run();
+
+        waitFor(5 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
                 BundleJobBean job1 = jpaService.execute(new BundleJobGetJPAExecutor(jobId));
                 return job1.getPending() == 1;
@@ -243,31 +463,31 @@ public class TestStatusTransitService extends XDataTestCase {
         assertEquals(job.getPending(), 1);
     }
 
-    /**
-     * Test : not all bundle actions are succeeded - bundle job's status will be updated to succeeded.
-     *
-     * @throws Exception
-     */
-    public void testBundleStatusTransitService4() throws Exception {
-        cleanUpDBTables();
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.RUNNING);
-        final JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
-
-        final String jobId = job.getId();
-        addRecordToBundleActionTable(jobId, "1", 0, Job.Status.SUCCEEDED);
-        addRecordToBundleActionTable(jobId, "2", 1, Job.Status.SUCCEEDED);
-        addRecordToBundleActionTable(jobId, "3", 2, Job.Status.SUCCEEDED);
-
-        waitFor(120 * 1000, new Predicate() {
-            public boolean evaluate() throws Exception {
-                BundleJobBean job1 = jpaService.execute(new BundleJobGetJPAExecutor(jobId));
-                return job1.getStatus().equals(Job.Status.SUCCEEDED);
-            }
-        });
-
-        job = jpaService.execute(new BundleJobGetJPAExecutor(jobId));
-        assertEquals(job.getStatus(), Job.Status.SUCCEEDED);
+    protected WorkflowJobBean addRecordToWfJobTable(String wfId, WorkflowJob.Status jobStatus, WorkflowInstance.Status instanceStatus)
+            throws Exception {
+        WorkflowApp app = new LiteWorkflowApp("testApp", "<workflow-app/>", new StartNodeDef("end"))
+                .addNode(new EndNodeDef("end"));
+        Configuration conf = new Configuration();
+        Path appUri = new Path(getAppPath(), "workflow.xml");
+        conf.set(OozieClient.APP_PATH, appUri.toString());
+        conf.set(OozieClient.LOG_TOKEN, "testToken");
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        conf.set(OozieClient.GROUP_NAME, getTestGroup());
+        injectKerberosInfo(conf);
+        WorkflowJobBean wfBean = createWorkflow(app, conf, "auth", jobStatus, instanceStatus);
+        wfBean.setId(wfId);
+        try {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            assertNotNull(jpaService);
+            WorkflowJobInsertJPAExecutor wfInsertCmd = new WorkflowJobInsertJPAExecutor(wfBean);
+            jpaService.execute(wfInsertCmd);
+        }
+        catch (JPAExecutorException je) {
+            je.printStackTrace();
+            fail("Unable to insert the test wf job record to table");
+            throw je;
+        }
+        return wfBean;
     }
 
 }

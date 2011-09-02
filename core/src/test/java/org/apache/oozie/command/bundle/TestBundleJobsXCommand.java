@@ -43,14 +43,14 @@ public class TestBundleJobsXCommand extends XDataTestCase {
     }
 
     public void testBundleJobsGet() throws Exception {
-        addRecordToBundleJobTable(Job.Status.PREP);
-        addRecordToBundleJobTable(Job.Status.PREP);
-        addRecordToBundleJobTable(Job.Status.RUNNING);
-        addRecordToBundleJobTable(Job.Status.RUNNING);
+        addRecordToBundleJobTable(Job.Status.PREP, false);
+        addRecordToBundleJobTable(Job.Status.PREP, false);
+        addRecordToBundleJobTable(Job.Status.RUNNING, false);
+        addRecordToBundleJobTable(Job.Status.RUNNING, false);
         _testGetJobsForStatus();
         _testGetJobsForGroup();
-        addRecordToBundleJobTable(Job.Status.KILLED);
-        addRecordToBundleJobTable(Job.Status.SUCCEEDED);
+        addRecordToBundleJobTable(Job.Status.KILLED, false);
+        addRecordToBundleJobTable(Job.Status.SUCCEEDED, false);
         _testGetJobsForAppName();
         _testGetJobInfoForUser();
         _testGetJobsForUserAndStatus();

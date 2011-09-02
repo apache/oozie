@@ -44,11 +44,11 @@ public class TestCoordActionsPendingFalseCountGetJPAExecutor extends XDataTestCa
     public void testCoordActionsPendingFalseCountGet() throws Exception {
         int actionNum = 1;
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false);
-        addRecordToCoordActionTable(job.getId(), actionNum++, CoordinatorAction.Status.WAITING, "coord-action-get.xml");
+        addRecordToCoordActionTable(job.getId(), actionNum++, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml");
         _testPendingFalseCount(job.getId(), 1);
-        addRecordToCoordActionTable(job.getId(), actionNum++, CoordinatorAction.Status.RUNNING, "coord-action-get.xml");
+        addRecordToCoordActionTable(job.getId(), actionNum++, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml");
 
-        addRecordToCoordActionTable(job.getId(), actionNum, CoordinatorAction.Status.WAITING, "coord-action-get.xml");
+        addRecordToCoordActionTable(job.getId(), actionNum, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml");
         _testPendingFalseCount(job.getId(), 3);
     }
 
@@ -57,7 +57,7 @@ public class TestCoordActionsPendingFalseCountGetJPAExecutor extends XDataTestCa
         assertNotNull(jpaService);
         CoordActionsPendingFalseCountGetJPAExecutor actionPendingFalseCmd = new CoordActionsPendingFalseCountGetJPAExecutor(jobId);
         int cnt = jpaService.execute(actionPendingFalseCmd);
-        assertEquals(cnt, expected);
+        assertEquals(expected, cnt);
     }
 
 }

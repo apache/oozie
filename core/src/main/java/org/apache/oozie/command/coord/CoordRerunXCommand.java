@@ -460,13 +460,6 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
         catch (Exception ex) {
             throw new CommandException(ErrorCode.E1018, ex);
         }
-        finally {
-            //update bundle action
-            if (coordJob.getBundleId() != null) {
-                BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, prevStatus);
-                bundleStatusUpdate.call();
-            }
-        }
     }
 
     /*
@@ -480,15 +473,36 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
 
     @Override
     public void notifyParent() throws CommandException {
+        //update bundle action
+        if (coordJob.getBundleId() != null) {
+            BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, prevStatus);
+            bundleStatusUpdate.call();
+        }
     }
 
     @Override
     public void updateJob() throws CommandException {
+        updateCoordJobPending();
         try {
             jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
         }
         catch (JPAExecutorException je) {
             throw new CommandException(je);
+        }
+    }
+
+    private void updateCoordJobPending() {
+        // if the job endtime == action endtime, we don't need to materialize this job anymore
+        Date endMatdTime = coordJob.getLastActionTime();
+        Date jobEndTime = coordJob.getEndTime();
+
+        if (jobEndTime == null || endMatdTime == null) {
+            return;
+        }
+
+        if (jobEndTime.compareTo(endMatdTime) <= 0) {
+            // set pending when materialization is done
+            coordJob.setPending();
         }
     }
 

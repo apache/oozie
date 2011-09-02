@@ -51,7 +51,7 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
     public BundleStatusUpdateXCommand(CoordinatorJobBean coordjob, CoordinatorJob.Status prevStatus) {
         super("BundleStatusUpdate", "BundleStatusUpdate", 1);
         this.coordjob = coordjob;
-        this.prevStatus = convertCoordStatustoJob(prevStatus);
+        this.prevStatus = prevStatus;
     }
 
     /* (non-Javadoc)
@@ -62,7 +62,7 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
         try {
             LOG.debug("STARTED BundleStatusUpdateXCommand with bubdle id : " + coordjob.getBundleId()
                     + " coord job ID: " + coordjob.getId() + " coord Status " + coordjob.getStatus());
-            Job.Status coordCurrentStatus = convertCoordStatustoJob(coordjob.getStatus());
+            Job.Status coordCurrentStatus = coordjob.getStatus();
             LOG.info("Update bundle action [{0}] from prev status [{1}] to current coord status [{2}]", bundleaction
                     .getBundleActionId(), bundleaction.getStatusStr(), coordCurrentStatus);
             bundleaction.setStatus(coordCurrentStatus);
@@ -141,29 +141,18 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
             if (bundleaction.isPending()) {
                 bundleaction.decrementAndGetPending();
             }
+            bundleaction.setLastModifiedTime(new Date());
             try {
                 jpaService.execute(new BundleActionUpdateJPAExecutor(bundleaction));
             }
             catch (JPAExecutorException je) {
                 throw new CommandException(je);
             }
+            LOG.info("Bundle action [{0}] status [{1}] is different from prev coord status [{2}], decrement pending so new pending = [{3}]",
+                            bundleaction.getBundleActionId(), bundleaction.getStatusStr(), prevStatus.toString(),
+                            bundleaction.getPending());
             throw new PreconditionException(ErrorCode.E1308, bundleaction.getStatusStr(), prevStatus.toString());
         }
-    }
-
-    /**
-     * Convert coordinator job status to job status.
-     *
-     * @param coordStatus coordinator job status
-     * @return job status
-     */
-    public static Job.Status convertCoordStatustoJob(CoordinatorJob.Status coordStatus) {
-        for (Job.Status js : Job.Status.values()) {
-            if (coordStatus.toString().compareToIgnoreCase(js.toString()) == 0) {
-                return js;
-            }
-        }
-        return null;
     }
 
 }

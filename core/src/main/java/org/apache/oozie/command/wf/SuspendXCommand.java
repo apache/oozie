@@ -22,6 +22,7 @@ import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.command.coord.CoordActionUpdateXCommand;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionRetryManualGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionUpdateJPAExecutor;
@@ -29,7 +30,6 @@ import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobUpdateJPAExecutor;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.store.StoreException;
 import org.apache.oozie.util.InstrumentUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
@@ -63,6 +63,10 @@ public class SuspendXCommand extends WorkflowXCommand<Void> {
         }
         catch (JPAExecutorException je) {
             throw new CommandException(je);
+        }
+        finally {
+            // update coordinator action
+            new CoordActionUpdateXCommand(wfJobBean).call();
         }
         return null;
     }

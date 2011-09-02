@@ -44,7 +44,7 @@ public class TestBundleActionsFailedAndNullCoordCountGetJPAExecutor extends XDat
     }
 
     public void testBundleActionsFailedAndNullCoordCountGet() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.RUNNING);
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.RUNNING, false);
         this.addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.FAILED);
 
         _testFailedAndNullCoordCount(job.getId(), 1);

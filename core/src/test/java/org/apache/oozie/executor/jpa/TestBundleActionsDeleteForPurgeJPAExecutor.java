@@ -65,7 +65,7 @@ public class TestBundleActionsDeleteForPurgeJPAExecutor extends XDataTestCase {
     }
 
     protected BundleJobBean addRecordToBundleJobTable(Job.Status jobStatus, Date lastModifiedTime) throws Exception {
-        BundleJobBean bundle = createBundleJob(jobStatus);
+        BundleJobBean bundle = createBundleJob(jobStatus, false);
         bundle.setLastModifiedTime(lastModifiedTime);
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
