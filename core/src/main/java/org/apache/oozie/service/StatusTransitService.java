@@ -238,7 +238,12 @@ public class StatusTransitService implements Service {
                 totalValuesKilled = bundleActionStatus.get(Job.Status.KILLED);
             }
 
-            if (bundleActions.size() == (totalValuesSucceed + totalValuesFailed + totalValuesKilled)) {
+            int totalValuesDoneWithError = 0;
+            if (bundleActionStatus.containsKey(Job.Status.DONEWITHERROR)) {
+                totalValuesDoneWithError = bundleActionStatus.get(Job.Status.DONEWITHERROR);
+            }
+
+            if (bundleActions.size() == (totalValuesSucceed + totalValuesFailed + totalValuesKilled + totalValuesDoneWithError)) {
                 // If all the bundle actions are succeeded then bundle job should be succeeded.
                 if (bundleActions.size() == totalValuesSucceed) {
                     bundleStatus[0] = Job.Status.SUCCEEDED;
