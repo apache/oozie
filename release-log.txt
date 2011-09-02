@@ -1,5 +1,6 @@
 -- Oozie 2.3.0 release
 
+GH-0027 support for a share lib directory in HDFS for workflow action binaries
 GH-0024 leverage Hadoop rules for JT/NN Kerberos principal resolution
 GH-0034 update/simplify examples
 GH-0050 Oozie jobs configuration properties with variables should be resolved to concrete values.
