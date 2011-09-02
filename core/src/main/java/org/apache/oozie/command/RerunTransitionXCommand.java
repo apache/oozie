@@ -15,6 +15,7 @@ import org.apache.oozie.util.XLog;
  */
 public abstract class RerunTransitionXCommand<T> extends TransitionXCommand<T> {
     protected String jobId;
+    protected T ret;
 
     /**
      * The constructor for abstract class {@link RerunTransitionXCommand}
@@ -69,7 +70,7 @@ public abstract class RerunTransitionXCommand<T> extends TransitionXCommand<T> {
         rerunChildren();
         notifyParent();
         getLog().info("ENDED " + getClass().getSimpleName() + " for jobId=" + jobId);
-        return null;
+        return ret;
     }
 
     /* (non-Javadoc)
@@ -97,8 +98,8 @@ public abstract class RerunTransitionXCommand<T> extends TransitionXCommand<T> {
             getLog().warn(
                     "RerunCommand is not able to run because job status=" + getJob().getStatus() + ", jobid="
                             + getJob().getId());
-            throw new PreconditionException(ErrorCode.E1100, "Not able to rerun the bundle Id= " + getJob().getId()
-                    + ". Bundle is in wrong state= " + getJob().getStatus());
+            throw new PreconditionException(ErrorCode.E1100, "Not able to rerun the job Id= " + getJob().getId()
+                    + ". job is in wrong state= " + getJob().getStatus());
         }
     }
 

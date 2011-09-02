@@ -668,7 +668,7 @@ public class TestCoordRerunCommand extends XFsTestCase {
 
  /**
      * Negative Test : rerun <jobId> -action 1 -nocleanup.
-     * Coordiantor job is killed, so no actions are able to rerun.
+     * Coordinator job is killed, so no actions are able to rerun.
      *
      * @throws Exception
      */
