@@ -383,7 +383,7 @@ A synchronous dataset definition contains the following information:
    * *%BLUE% uri-template:%ENDCOLOR%* The URI template that identifies the dataset and can be resolved into concrete URIs to identify a particular dataset instance. The URI template is constructed using:
       * *%BLUE% constants %ENDCOLOR%* See the allowable EL Time Constants below. Ex: ${YEAR}/${MONTH}.
       * *%BLUE% variables %ENDCOLOR%* Variables must be resolved at the time a coordinator job is submitted to the coordinator engine. They are normally provided a job parameters (configuration properties). Ex: ${market}/${language}
-   * *%BLUE% done-flag:%ENDCOLOR%* The done file for the data set. If done-flag is not specified, then Oozie configures Hadoop to create a _SUCCESS file in the output directory. To ignore the done file, set done-flag with empty string in the value.
+   * *%BLUE% done-flag:%ENDCOLOR%* The done file for the data set. If done-flag is not specified, then Oozie configures Hadoop to create a _SUCCESS file in the output directory. If the done flag is set to empty, then Coordinator looks for the existence of the directory itself.
 
 The following EL constants can be used within synchronous dataset URI templates:
 
@@ -408,7 +408,7 @@ IMPORTANT: The values of the EL constants in the dataset URIs (in HDFS) are expe
 
 *%GREEN% Examples: %ENDCOLOR%*
 
-1. *A dataset produced once every day at 00:15 PST8PDT and done-flag is empty:*
+1. *A dataset produced once every day at 00:15 PST8PDT and done-flag is set to empty:*
 
 <verbatim>
   <dataset name="logs" frequency="${coord:days(1)}"
@@ -421,7 +421,7 @@ IMPORTANT: The values of the EL constants in the dataset URIs (in HDFS) are expe
 </verbatim>
 
 
-The dataset would resolve to the following URIs and are ready until the paths exist:
+The dataset would resolve to the following URIs and Coordinator looks for the existence of the directory itself:
 
 <verbatim>
   [market] will be replaced with user given property.
