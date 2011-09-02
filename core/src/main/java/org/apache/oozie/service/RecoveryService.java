@@ -14,32 +14,53 @@
  */
 package org.apache.oozie.service;
 
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.BundleActionBean;
+import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
+import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowActionBean;
+import org.apache.oozie.client.Job;
+import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.coord.CoordActionInputCheckCommand;
 import org.apache.oozie.command.coord.CoordActionInputCheckXCommand;
 import org.apache.oozie.command.coord.CoordActionReadyCommand;
 import org.apache.oozie.command.coord.CoordActionReadyXCommand;
 import org.apache.oozie.command.coord.CoordActionStartCommand;
 import org.apache.oozie.command.coord.CoordActionStartXCommand;
+import org.apache.oozie.command.coord.CoordKillXCommand;
+import org.apache.oozie.command.coord.CoordResumeXCommand;
+import org.apache.oozie.command.coord.CoordSubmitXCommand;
+import org.apache.oozie.command.coord.CoordSuspendXCommand;
 import org.apache.oozie.command.wf.ActionEndCommand;
 import org.apache.oozie.command.wf.ActionEndXCommand;
 import org.apache.oozie.command.wf.ActionStartCommand;
 import org.apache.oozie.command.wf.ActionStartXCommand;
 import org.apache.oozie.command.wf.SignalCommand;
 import org.apache.oozie.command.wf.SignalXCommand;
-import org.apache.oozie.store.CoordinatorStore;
-import org.apache.oozie.store.Store;
-import org.apache.oozie.store.StoreException;
-import org.apache.oozie.store.WorkflowStore;
+import org.apache.oozie.executor.jpa.BundleActionsGetWaitingOlderJPAExecutor;
+import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionGetWaitingOlderJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionsGetReadyGroupbyJobIDJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.executor.jpa.WorkflowActionsGetPendingJPAExecutor;
+import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.XCallable;
+import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
+import org.apache.oozie.util.XmlUtils;
+import org.jdom.Attribute;
+import org.jdom.Element;
+import org.jdom.JDOMException;
 
 /**
  * The Recovery Service checks for pending actions and premater coordinator jobs older than a configured age and then
@@ -50,6 +71,7 @@ public class RecoveryService implements Service {
     public static final String CONF_PREFIX = Service.CONF_PREFIX + "RecoveryService.";
     public static final String CONF_PREFIX_WF_ACTIONS = Service.CONF_PREFIX + "wf.actions.";
     public static final String CONF_PREFIX_COORD = Service.CONF_PREFIX + "coord.";
+    public static final String CONF_PREFIX_BUNDLE = Service.CONF_PREFIX + "bundle.";
     /**
      * Time interval, in seconds, at which the recovery service will be scheduled to run.
      */
@@ -67,37 +89,48 @@ public class RecoveryService implements Service {
      */
     public static final String CONF_COORD_OLDER_THAN = CONF_PREFIX_COORD + "older.than";
 
+    /**
+     * Age of Bundle jobs to recover, in seconds.
+     */
+    public static final String CONF_BUNDLE_OLDER_THAN = CONF_PREFIX_BUNDLE + "older.than";
+
     private static final String INSTRUMENTATION_GROUP = "recovery";
     private static final String INSTR_RECOVERED_ACTIONS_COUNTER = "actions";
-    private static final String INSTR_RECOVERED_COORD_JOBS_COUNTER = "coord_jobs";
     private static final String INSTR_RECOVERED_COORD_ACTIONS_COUNTER = "coord_actions";
+    private static final String INSTR_RECOVERED_BUNDLE_ACTIONS_COUNTER = "bundle_actions";
 
     private static boolean useXCommand = true;
+
 
     /**
      * RecoveryRunnable is the Runnable which is scheduled to run with the configured interval, and takes care of the
      * queuing of commands.
      */
-    static class RecoveryRunnable<S extends Store> implements Runnable {
-        private long olderThan;
-        private long coordOlderThan;
+    static class RecoveryRunnable implements Runnable {
+        private final long olderThan;
+        private final long coordOlderThan;
+        private final long bundleOlderThan;
         private long delay = 0;
-        private List<XCallable<Void>> callables;
-        private List<XCallable<Void>> delayedCallables;
+        private List<XCallable<?>> callables;
+        private List<XCallable<?>> delayedCallables;
         private StringBuilder msg = null;
+        private JPAService jpaService = null;
 
-        public RecoveryRunnable(long olderThan, long coordOlderThan) {
+        public RecoveryRunnable(long olderThan, long coordOlderThan,long bundleOlderThan) {
             this.olderThan = olderThan;
             this.coordOlderThan = coordOlderThan;
+            this.bundleOlderThan = bundleOlderThan;
         }
 
         public void run() {
             XLog.Info.get().clear();
             XLog log = XLog.getLog(getClass());
             msg = new StringBuilder();
+            jpaService = Services.get().get(JPAService.class);
             runWFRecovery();
             runCoordActionRecovery();
             runCoordActionRecoveryForReady();
+            runBundleRecovery();
             log.debug("QUEUING [{0}] for potential recovery", msg.toString());
             boolean ret = false;
             if (null != callables) {
@@ -121,6 +154,56 @@ public class RecoveryService implements Service {
             }
         }
 
+        private void runBundleRecovery(){
+            XLog.Info.get().clear();
+            XLog log = XLog.getLog(getClass());
+
+            try {
+                List<BundleActionBean> bactions = jpaService.execute(new BundleActionsGetWaitingOlderJPAExecutor(bundleOlderThan));
+                msg.append(", BUNDLE_ACTIONS : " + bactions.size());
+                for (BundleActionBean baction : bactions) {
+                    Services.get().get(InstrumentationService.class).get().incr(INSTRUMENTATION_GROUP,
+                            INSTR_RECOVERED_BUNDLE_ACTIONS_COUNTER, 1);
+                    if(baction.getStatus() == Job.Status.PREP){
+                        BundleJobBean bundleJob = null;
+                        try {
+                            if (jpaService != null) {
+                                bundleJob = jpaService.execute(new BundleJobGetJPAExecutor(baction.getBundleId()));
+                            }
+                            if(bundleJob != null){
+                                Element bAppXml = XmlUtils.parseXml(bundleJob.getJobXml());
+                                List<Element> coordElems = bAppXml.getChildren("coordinator", bAppXml.getNamespace());
+                                for (Element coordElem : coordElems) {
+                                    Attribute name = coordElem.getAttribute("name");
+                                    Configuration coordConf = mergeConfig(coordElem,bundleJob);
+                                    coordConf.set(OozieClient.BUNDLE_ID, baction.getBundleId());
+                                    queueCallable(new CoordSubmitXCommand(coordConf, bundleJob.getAuthToken(), bundleJob.getId(), name.getValue()));
+                                }
+                            }
+                        }
+                        catch (JDOMException jex) {
+                            throw new CommandException(ErrorCode.E1301, jex);
+                        }
+                        catch (JPAExecutorException je) {
+                            throw new CommandException(je);
+                        }
+                    }
+                    else if(baction.getStatus() == Job.Status.KILLED){
+                        queueCallable(new CoordKillXCommand(baction.getCoordId()));
+                    }
+                    else if(baction.getStatus() == Job.Status.SUSPENDED){
+                        queueCallable(new CoordSuspendXCommand(baction.getCoordId()));
+                    }
+                    else if(baction.getStatus() == Job.Status.RUNNING){
+                        queueCallable(new CoordResumeXCommand(baction.getCoordId()));
+                    }
+                }
+            }
+            catch (Exception ex) {
+                log.error("Exception, {0}", ex.getMessage(), ex);
+            }
+        }
+
         /**
          * Recover coordinator actions that are staying in WAITING or SUBMITTED too long
          */
@@ -128,13 +211,8 @@ public class RecoveryService implements Service {
             XLog.Info.get().clear();
             XLog log = XLog.getLog(getClass());
 
-            CoordinatorStore store = null;
             try {
-                store = Services.get().get(StoreService.class).getStore(CoordinatorStore.class);
-                store.beginTrx();
-
-                List<CoordinatorActionBean> cactions = store.getRecoveryActionsOlderThan(coordOlderThan, false);
-                //log.debug("QUEUING[{0}] WAITING and SUBMITTED coord actions for potential recovery", cactions.size());
+                List<CoordinatorActionBean> cactions = jpaService.execute(new CoordActionGetWaitingOlderJPAExecutor(coordOlderThan));
                 msg.append(", COORD_ACTIONS : " + cactions.size());
                 for (CoordinatorActionBean caction : cactions) {
                     Services.get().get(InstrumentationService.class).get().incr(INSTRUMENTATION_GROUP,
@@ -150,7 +228,8 @@ public class RecoveryService implements Service {
                     }
                     else {
                         if (caction.getStatus() == CoordinatorActionBean.Status.SUBMITTED) {
-                            CoordinatorJobBean coordJob = store.getCoordinatorJob(caction.getJobId(), false);
+                            CoordinatorJobBean coordJob = jpaService.execute(new CoordJobGetJPAExecutor(caction.getJobId()));
+
                             if (useXCommand) {
                                 queueCallable(new CoordActionStartXCommand(caction.getId(), coordJob.getUser(), coordJob
                                         .getAuthToken()));
@@ -163,39 +242,9 @@ public class RecoveryService implements Service {
                         }
                     }
                 }
-                store.commitTrx();
-            }
-            catch (StoreException ex) {
-                if (store != null) {
-                    store.rollbackTrx();
-                }
-                log.warn("Exception while accessing the store", ex);
             }
             catch (Exception ex) {
                 log.error("Exception, {0}", ex.getMessage(), ex);
-                if (store != null && store.isActive()) {
-                    try {
-                        store.rollbackTrx();
-                    }
-                    catch (RuntimeException rex) {
-                        log.warn("openjpa error, {0}", rex.getMessage(), rex);
-                    }
-                }
-            }
-            finally {
-                if (store != null) {
-                    if (!store.isActive()) {
-                        try {
-                            store.closeTrx();
-                        }
-                        catch (RuntimeException rex) {
-                            log.warn("Exception while attempting to close store", rex);
-                        }
-                    }
-                    else {
-                        log.warn("transaction is not committed or rolled back before closing entitymanager.");
-                    }
-                }
             }
         }
 
@@ -206,12 +255,8 @@ public class RecoveryService implements Service {
             XLog.Info.get().clear();
             XLog log = XLog.getLog(getClass());
 
-            CoordinatorStore store = null;
             try {
-                store = Services.get().get(StoreService.class).getStore(CoordinatorStore.class);
-                store.beginTrx();
-                List<String> jobids = store.getRecoveryActionsGroupByJobId(coordOlderThan);
-                //log.debug("QUEUING[{0}] READY coord jobs for potential recovery", jobids.size());
+                List<String> jobids = jpaService.execute(new CoordActionsGetReadyGroupbyJobIDJPAExecutor(coordOlderThan));
                 msg.append(", COORD_READY_JOBS : " + jobids.size());
                 for (String jobid : jobids) {
                     if (useXCommand) {
@@ -222,39 +267,9 @@ public class RecoveryService implements Service {
 
                     log.info("Recover READY coord actions for jobid :" + jobid);
                 }
-                store.commitTrx();
-            }
-            catch (StoreException ex) {
-                if (store != null) {
-                    store.rollbackTrx();
-                }
-                log.warn("Exception while accessing the store", ex);
             }
             catch (Exception ex) {
                 log.error("Exception, {0}", ex.getMessage(), ex);
-                if (store != null && store.isActive()) {
-                    try {
-                        store.rollbackTrx();
-                    }
-                    catch (RuntimeException rex) {
-                        log.warn("openjpa error, {0}", rex.getMessage(), rex);
-                    }
-                }
-            }
-            finally {
-                if (store != null) {
-                    if (!store.isActive()) {
-                        try {
-                            store.closeTrx();
-                        }
-                        catch (RuntimeException rex) {
-                            log.warn("Exception while attempting to close store", rex);
-                        }
-                    }
-                    else {
-                        log.warn("transaction is not committed or rolled back before closing entitymanager.");
-                    }
-                }
             }
         }
 
@@ -265,15 +280,12 @@ public class RecoveryService implements Service {
             XLog.Info.get().clear();
             XLog log = XLog.getLog(getClass());
             // queue command for action recovery
-            WorkflowStore store = null;
             try {
-                store = Services.get().get(StoreService.class).getStore(WorkflowStore.class);
-                store.beginTrx();
                 List<WorkflowActionBean> actions = null;
                 try {
-                    actions = store.getPendingActions(olderThan);
+                    actions = jpaService.execute(new WorkflowActionsGetPendingJPAExecutor(olderThan));
                 }
-                catch (StoreException ex) {
+                catch (JPAExecutorException ex) {
                     log.warn("Exception while reading pending actions from storage", ex);
                 }
                 //log.debug("QUEUING[{0}] pending wf actions for potential recovery", actions.size());
@@ -333,39 +345,9 @@ public class RecoveryService implements Service {
 
                     }
                 }
-                store.commitTrx();
-            }
-            catch (StoreException ex) {
-                if (store != null) {
-                    store.rollbackTrx();
-                }
-                log.warn("Exception while getting store to get pending actions", ex);
             }
             catch (Exception ex) {
                 log.error("Exception, {0}", ex.getMessage(), ex);
-                if (store != null && store.isActive()) {
-                    try {
-                        store.rollbackTrx();
-                    }
-                    catch (RuntimeException rex) {
-                        log.warn("openjpa error, {0}", rex.getMessage(), rex);
-                    }
-                }
-            }
-            finally {
-                if (store != null) {
-                    if (!store.isActive()) {
-                        try {
-                            store.closeTrx();
-                        }
-                        catch (RuntimeException rex) {
-                            log.warn("Exception while attempting to close store", rex);
-                        }
-                    }
-                    else {
-                        log.warn("transaction is not committed or rolled back before closing entitymanager.");
-                    }
-                }
             }
         }
 
@@ -375,9 +357,9 @@ public class RecoveryService implements Service {
          *
          * @param callable the callable to queue.
          */
-        private void queueCallable(XCallable<Void> callable) {
+        private void queueCallable(XCallable<?> callable) {
             if (callables == null) {
-                callables = new ArrayList<XCallable<Void>>();
+                callables = new ArrayList<XCallable<?>>();
             }
             callables.add(callable);
             if (callables.size() == Services.get().getConf().getInt(CONF_CALLABLE_BATCH_SIZE, 10)) {
@@ -388,7 +370,7 @@ public class RecoveryService implements Service {
                                     + "Most possibly command queue is full. Queue size is :"
                                     + Services.get().get(CallableQueueService.class).queueSize());
                 }
-                callables = new ArrayList<XCallable<Void>>();
+                callables = new ArrayList<XCallable<?>>();
             }
         }
 
@@ -400,9 +382,9 @@ public class RecoveryService implements Service {
          * @param callable the callable to queue.
          * @param delay the delay for the callable.
          */
-        private void queueCallable(XCallable<Void> callable, long delay) {
+        private void queueCallable(XCallable<?> callable, long delay) {
             if (delayedCallables == null) {
-                delayedCallables = new ArrayList<XCallable<Void>>();
+                delayedCallables = new ArrayList<XCallable<?>>();
             }
             this.delay = Math.max(this.delay, delay);
             delayedCallables.add(callable);
@@ -413,7 +395,7 @@ public class RecoveryService implements Service {
                             + "Most possibly Callable queue is full. Queue size is :"
                             + Services.get().get(CallableQueueService.class).queueSize());
                 }
-                delayedCallables = new ArrayList<XCallable<Void>>();
+                delayedCallables = new ArrayList<XCallable<?>>();
                 this.delay = 0;
             }
         }
@@ -428,7 +410,7 @@ public class RecoveryService implements Service {
     public void init(Services services) {
         Configuration conf = services.getConf();
         Runnable recoveryRunnable = new RecoveryRunnable(conf.getInt(CONF_WF_ACTIONS_OLDER_THAN, 120), conf.getInt(
-                CONF_COORD_OLDER_THAN, 600));
+                CONF_COORD_OLDER_THAN, 600),conf.getInt(CONF_BUNDLE_OLDER_THAN, 600));
         services.get(SchedulerService.class).schedule(recoveryRunnable, 10, conf.getInt(CONF_SERVICE_INTERVAL, 600),
                                                       SchedulerService.Unit.SEC);
 
@@ -452,5 +434,61 @@ public class RecoveryService implements Service {
     @Override
     public Class<? extends Service> getInterface() {
         return RecoveryService.class;
+    }
+
+    /**
+     * Merge Bundle job config and the configuration from the coord job to pass
+     * to Coord Engine
+     *
+     * @param coordElem the coordinator configuration
+     * @return Configuration merged configuration
+     * @throws CommandException thrown if failed to merge configuration
+     */
+    private static Configuration mergeConfig(Element coordElem,BundleJobBean bundleJob) throws CommandException {
+        XLog.Info.get().clear();
+        XLog log = XLog.getLog("RecoveryService");
+
+        String jobConf = bundleJob.getConf();
+        // Step 1: runConf = jobConf
+        Configuration runConf = null;
+        try {
+            runConf = new XConfiguration(new StringReader(jobConf));
+        }
+        catch (IOException e1) {
+            log.warn("Configuration parse error in:" + jobConf);
+            throw new CommandException(ErrorCode.E1306, e1.getMessage(), e1);
+        }
+        // Step 2: Merge local properties into runConf
+        // extract 'property' tags under 'configuration' block in the coordElem
+        // convert Element to XConfiguration
+        Element localConfigElement = coordElem.getChild("configuration", coordElem.getNamespace());
+
+        if (localConfigElement != null) {
+            String strConfig = XmlUtils.prettyPrint(localConfigElement).toString();
+            Configuration localConf;
+            try {
+                localConf = new XConfiguration(new StringReader(strConfig));
+            }
+            catch (IOException e1) {
+                log.warn("Configuration parse error in:" + strConfig);
+                throw new CommandException(ErrorCode.E1307, e1.getMessage(), e1);
+            }
+
+            // copy configuration properties in the coordElem to the runConf
+            XConfiguration.copy(localConf, runConf);
+        }
+
+        // Step 3: Extract value of 'app-path' in coordElem, save it as a
+        // new property called 'oozie.coord.application.path', and normalize.
+        String appPath = coordElem.getChild("app-path", coordElem.getNamespace()).getValue();
+        runConf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
+        // Normalize coordinator appPath here;
+        try {
+            JobUtils.normalizeAppPath(runConf.get(OozieClient.USER_NAME), runConf.get(OozieClient.GROUP_NAME), runConf);
+        }
+        catch (IOException e) {
+            throw new CommandException(ErrorCode.E1001, runConf.get(OozieClient.COORDINATOR_APP_PATH));
+        }
+        return runConf;
     }
 }

@@ -19,30 +19,27 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Reader;
-import java.io.Writer;
 import java.io.StringReader;
+import java.io.Writer;
 import java.util.Date;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.oozie.client.CoordinatorAction;
-import org.apache.oozie.client.CoordinatorJob;
-import org.apache.oozie.client.WorkflowJob;
-import org.apache.oozie.client.OozieClient;
-import org.apache.oozie.client.CoordinatorJob.Execution;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorEngine;
 import org.apache.oozie.CoordinatorJobBean;
-import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.DagEngine;
 import org.apache.oozie.ForTestingActionExecutor;
+import org.apache.oozie.WorkflowActionBean;
+import org.apache.oozie.client.CoordinatorAction;
+import org.apache.oozie.client.CoordinatorJob;
+import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.client.CoordinatorJob.Execution;
 import org.apache.oozie.service.RecoveryService.RecoveryRunnable;
 import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.store.WorkflowStore;
-import org.apache.oozie.service.Services;
-import org.apache.oozie.service.ActionService;
-import org.apache.oozie.service.WorkflowStoreService;
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.IOUtils;
@@ -123,7 +120,7 @@ public class TestRecoveryService extends XTestCase {
         store.commitTrx();
         store.closeTrx();
 
-        Runnable recoveryRunnable = new RecoveryRunnable(0, 60);
+        Runnable recoveryRunnable = new RecoveryRunnable(0, 60, 60);
         recoveryRunnable.run();
         Thread.sleep(3000);
 
@@ -185,7 +182,7 @@ public class TestRecoveryService extends XTestCase {
         }
 
         Thread.sleep(3000);
-        Runnable recoveryRunnable = new RecoveryRunnable(0, 1);
+        Runnable recoveryRunnable = new RecoveryRunnable(0, 1,1);
         recoveryRunnable.run();
 
         waitFor(10000, new Predicate() {

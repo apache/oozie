@@ -218,6 +218,14 @@
         </description>
     </property>
 
+	<property>
+        <name>oozie.service.RecoveryService.bundle.older.than</name>
+        <value>600</value>
+        <description>
+            Age of the Bundle jobs which are eligible to be queued for recovery, in seconds.
+        </description>
+    </property>
+
     <!-- CallableQueueService -->
 
     <property>
