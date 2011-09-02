@@ -146,7 +146,7 @@ public class ReRunCommand extends WorkflowCommand<Void> {
         try {
             XLog.Info.get().setParameter(DagXLogInfoService.TOKEN, conf.get(OozieClient.LOG_TOKEN));
             WorkflowApp app = wps.parseDef(conf, authToken);
-            XConfiguration protoActionConf = wps.createProtoActionConf(conf, authToken);
+            XConfiguration protoActionConf = wps.createProtoActionConf(conf, authToken, true);
             WorkflowLib workflowLib = Services.get().get(WorkflowStoreService.class).getWorkflowLibWithNoDB();
 
             Path configDefault = new Path(conf.get(OozieClient.APP_PATH), SubmitCommand.CONFIG_DEFAULT);

@@ -29,7 +29,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowJobBean;
-import org.apache.oozie.client.XOozieClient;
+import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.store.WorkflowStore;
@@ -288,7 +288,7 @@ public class AuthorizationService implements Service {
                     incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
                     throw new AuthorizationException(ErrorCode.E0504, appPath);
                 }
-                if (conf.get(XOozieClient.LIBPATH) == null) { // Only check existance of wfXml for non http submission jobs;
+                if (conf.get(OozieClient.LIBPATH) == null) { // Only check existance of wfXml for non http submission jobs;
                     Path wfXml = new Path(path, fileName);
                     if (!fs.exists(wfXml)) {
                         incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);

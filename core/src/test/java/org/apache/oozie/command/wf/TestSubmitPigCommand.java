@@ -16,6 +16,7 @@ package org.apache.oozie.command.wf;
 
 import junit.framework.Assert;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.local.LocalOozie;
 import org.apache.oozie.action.hadoop.MapReduceMain;
 import org.apache.oozie.client.XOozieClient;
@@ -44,7 +45,7 @@ public class TestSubmitPigCommand extends XFsTestCase {
 
         conf.set(XOozieClient.JT, "jobtracker");
         conf.set(XOozieClient.NN, "namenode");
-        conf.set(XOozieClient.LIBPATH, "libpath");
+        conf.set(OozieClient.LIBPATH, "libpath");
 
         conf.set(XOozieClient.FILES, "/user/oozie/input1.txt,/user/oozie/input2.txt#my.txt");
         conf.set(XOozieClient.ARCHIVES, "/user/oozie/udf1.jar,/user/oozie/udf2.jar#my.jar");
@@ -111,7 +112,7 @@ public class TestSubmitPigCommand extends XFsTestCase {
 
         conf.set(XOozieClient.JT, "jobtracker");
         conf.set(XOozieClient.NN, "namenode");
-        conf.set(XOozieClient.LIBPATH, "libpath");
+        conf.set(OozieClient.LIBPATH, "libpath");
 
         conf.set(XOozieClient.FILES, "/user/oozie/input1.txt,/user/oozie/input2.txt");
         conf.set(XOozieClient.ARCHIVES, "/user/oozie/udf1.jar,/user/oozie/udf2.jar");

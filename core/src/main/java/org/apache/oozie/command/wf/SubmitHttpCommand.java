@@ -51,7 +51,7 @@ public abstract class SubmitHttpCommand extends WorkflowCommand<String> {
     static {
         MANDATORY_OOZIE_CONFS.add(XOozieClient.JT);
         MANDATORY_OOZIE_CONFS.add(XOozieClient.NN);
-        MANDATORY_OOZIE_CONFS.add(XOozieClient.LIBPATH);
+        MANDATORY_OOZIE_CONFS.add(OozieClient.LIBPATH);
 
         OPTIONAL_OOZIE_CONFS.add(XOozieClient.FILES);
         OPTIONAL_OOZIE_CONFS.add(XOozieClient.ARCHIVES);
@@ -100,7 +100,7 @@ public abstract class SubmitHttpCommand extends WorkflowCommand<String> {
             XLog.getLog(getClass()).debug("workflow xml created on the server side is :\n");
             XLog.getLog(getClass()).debug(wfXml);
             WorkflowApp app = wps.parseDef(wfXml);
-            XConfiguration protoActionConf = wps.createProtoActionConf(conf, authToken);
+            XConfiguration protoActionConf = wps.createProtoActionConf(conf, authToken, false);
             WorkflowLib workflowLib = Services.get().get(WorkflowStoreService.class).getWorkflowLibWithNoDB();
 
             PropertiesUtils.checkDisallowedProperties(conf, DISALLOWED_USER_PROPERTIES);

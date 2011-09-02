@@ -16,17 +16,12 @@ package org.apache.oozie.client;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
-import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
 import org.apache.hadoop.fs.Path;
-import org.apache.oozie.BuildInfo;
-import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
-import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.servlet.DagServletTestCase;
 import org.apache.oozie.servlet.MockDagEngineService;
-import org.apache.oozie.servlet.V0JobServlet;
 import org.apache.oozie.servlet.V1JobsServlet;
 import org.apache.oozie.servlet.V1AdminServlet;
 
@@ -58,7 +53,7 @@ public class TestWorkflowXClient extends DagServletTestCase {
                 Properties conf = wc.createConfiguration();
                 Path libPath = new Path(getFsTestCaseDir(), "lib");
                 getFileSystem().mkdirs(libPath);
-                conf.setProperty(XOozieClient.LIBPATH, libPath.toString());
+                conf.setProperty(OozieClient.LIBPATH, libPath.toString());
                 conf.setProperty(XOozieClient.JT, "localhost:9001");
                 conf.setProperty(XOozieClient.NN, "hdfs://localhost:9000");
 
@@ -85,7 +80,7 @@ public class TestWorkflowXClient extends DagServletTestCase {
                 Properties conf = wc.createConfiguration();
                 Path libPath = new Path(getFsTestCaseDir(), "lib");
                 getFileSystem().mkdirs(libPath);
-                conf.setProperty(XOozieClient.LIBPATH, libPath.toString());
+                conf.setProperty(OozieClient.LIBPATH, libPath.toString());
                 conf.setProperty(XOozieClient.JT, "localhost:9001");
                 conf.setProperty(XOozieClient.NN, "hdfs://localhost:9000");
 

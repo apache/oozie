@@ -37,8 +37,6 @@ public class XOozieClient extends OozieClient {
 
     public static final String NN_PRINCIPAL = "dfs.namenode.kerberos.principal";
 
-    public static final String LIBPATH = "oozie.libpath";
-
     public static final String PIG_SCRIPT = "oozie.pig.script";
 
     public static final String PIG_OPTIONS = "oozie.pig.options";
@@ -104,13 +102,13 @@ public class XOozieClient extends OozieClient {
             throw new RuntimeException("namenode is not specified in conf");
         }
 
-        String libPath = conf.getProperty(XOozieClient.LIBPATH);
+        String libPath = conf.getProperty(LIBPATH);
         if (libPath == null) {
             throw new RuntimeException("libpath is not specified in conf");
         }
         if (!libPath.startsWith("hdfs://")) {
             String newLibPath = NN + libPath;
-            conf.setProperty(XOozieClient.LIBPATH, newLibPath);
+            conf.setProperty(LIBPATH, newLibPath);
         }
     }
 
@@ -186,7 +184,7 @@ public class XOozieClient extends OozieClient {
      * @param path lib HDFS path.
      */
     public void setLib(Properties conf, String pathStr) {
-        conf.setProperty(XOozieClient.LIBPATH, pathStr);
+        conf.setProperty(LIBPATH, pathStr);
     }
 
     /**

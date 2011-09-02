@@ -16,6 +16,7 @@ package org.apache.oozie.command.wf;
 
 import junit.framework.Assert;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.local.LocalOozie;
 import org.apache.oozie.client.XOozieClient;
 import org.apache.oozie.test.XFsTestCase;
@@ -43,7 +44,7 @@ public class TestSubmitMRCommand extends XFsTestCase {
 
         conf.set(XOozieClient.JT, "jobtracker");
         conf.set(XOozieClient.NN, "namenode");
-        conf.set(XOozieClient.LIBPATH, "libpath");
+        conf.set(OozieClient.LIBPATH, "libpath");
 
         conf.set("mapred.mapper.class", "A.Mapper");
         conf.set("mapred.reducer.class", "A.Reducer");

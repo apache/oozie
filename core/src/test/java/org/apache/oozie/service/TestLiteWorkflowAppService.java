@@ -20,8 +20,6 @@ import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.workflow.WorkflowApp;
 import org.apache.oozie.workflow.WorkflowException;
 import org.apache.oozie.workflow.lite.LiteWorkflowApp;
-import org.apache.oozie.service.Services;
-import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
@@ -32,6 +30,9 @@ import org.apache.oozie.ErrorCode;
 import java.io.FileWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import junit.framework.Assert;
 
@@ -280,7 +281,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
         jobConf.set(OozieClient.USER_NAME, getTestUser());
         jobConf.set(OozieClient.GROUP_NAME, getTestGroup());
         injectKerberosInfo(jobConf);
-        Configuration protoConf = wps.createProtoActionConf(jobConf, "authToken");
+        Configuration protoConf = wps.createProtoActionConf(jobConf, "authToken", true);
         assertEquals(getTestUser(), protoConf.get(OozieClient.USER_NAME));
         assertEquals(getTestGroup(), protoConf.get(OozieClient.GROUP_NAME));
 
@@ -293,4 +294,48 @@ public class TestLiteWorkflowAppService extends XTestCase {
         Assert.assertTrue(f2.equals(ref1) || f2.equals(ref2));
         Assert.assertTrue(!f1.equals(f2));
     }
+
+    public void testCreateprotoConfWithLibPath() throws Exception {
+        Reader reader = IOUtils.getResourceAsReader("wf-schema-valid.xml", -1);
+        Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
+        IOUtils.copyCharStream(reader, writer);
+
+        createTestCaseSubDir("lib");
+        writer = new FileWriter(getTestCaseDir() + "/lib/maputil.jar");
+        writer.write("bla bla");
+        writer.close();
+        writer = new FileWriter(getTestCaseDir() + "/lib/reduceutil.so");
+        writer.write("bla bla");
+        writer.close();
+        createTestCaseSubDir("libx");
+        writer = new FileWriter(getTestCaseDir() + "/libx/maputilx.jar");
+        writer.write("bla bla");
+        writer.close();
+        Services services = new Services();
+        services.init();
+        WorkflowAppService wps = services.get(WorkflowAppService.class);
+        Configuration jobConf = new XConfiguration();
+        jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir());
+        jobConf.set(OozieClient.LIBPATH, "file://" + getTestCaseDir() + "/libx");
+        jobConf.set(OozieClient.USER_NAME, getTestUser());
+        jobConf.set(OozieClient.GROUP_NAME, getTestGroup());
+        injectKerberosInfo(jobConf);
+        Configuration protoConf = wps.createProtoActionConf(jobConf, "authToken", true);
+        assertEquals(getTestUser(), protoConf.get(OozieClient.USER_NAME));
+        assertEquals(getTestGroup(), protoConf.get(OozieClient.GROUP_NAME));
+
+        assertEquals(3, protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST).length);
+        List<String> found = new ArrayList<String>();
+        found.add(protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST)[0]);
+        found.add(protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST)[1]);
+        found.add(protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST)[2]);
+        List<String> expected = new ArrayList<String>();
+        expected.add(getTestCaseDir() + "/lib/reduceutil.so");
+        expected.add(getTestCaseDir() + "/lib/maputil.jar");
+        expected.add(getTestCaseDir() + "/libx/maputilx.jar");
+        Collections.sort(found);
+        Collections.sort(expected);
+        assertEquals(expected, found);
+    }
+
 }
