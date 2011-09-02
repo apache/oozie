@@ -14,43 +14,10 @@
  */
 package org.apache.oozie.action.hadoop;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.JobClient;
-import org.apache.hadoop.mapred.RunningJob;
-import org.apache.hadoop.mapred.JobID;
-import org.apache.hadoop.security.token.Token;
-import org.apache.hadoop.security.token.TokenIdentifier;
-import org.apache.hadoop.filecache.DistributedCache;
-import org.apache.hadoop.io.Text;
-import org.apache.oozie.WorkflowActionBean;
-import org.apache.oozie.WorkflowJobBean;
-import org.apache.oozie.action.ActionExecutor;
-import org.apache.oozie.action.ActionExecutorException;
-import org.apache.oozie.client.WorkflowAction;
-import org.apache.oozie.client.OozieClient;
-import org.apache.oozie.client.WorkflowJob;
-import org.apache.oozie.service.Services;
-import org.apache.oozie.service.UUIDService;
-import org.apache.oozie.service.WorkflowAppService;
-import org.apache.oozie.service.WorkflowStoreService;
-import org.apache.oozie.util.XConfiguration;
-import org.apache.oozie.util.XmlUtils;
-import org.apache.oozie.util.IOUtils;
-import org.apache.oozie.workflow.WorkflowApp;
-import org.apache.oozie.workflow.WorkflowInstance;
-import org.apache.oozie.workflow.WorkflowLib;
-import org.apache.oozie.workflow.lite.EndNodeDef;
-import org.apache.oozie.workflow.lite.LiteWorkflowApp;
-import org.apache.oozie.workflow.lite.StartNodeDef;
-import org.jdom.Element;
-
 import java.io.File;
-import java.io.OutputStream;
-import java.io.InputStream;
 import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,6 +25,39 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.filecache.DistributedCache;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapred.JobClient;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.JobID;
+import org.apache.hadoop.mapred.RunningJob;
+import org.apache.hadoop.security.token.Token;
+import org.apache.hadoop.security.token.TokenIdentifier;
+import org.apache.oozie.WorkflowActionBean;
+import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.action.ActionExecutor;
+import org.apache.oozie.action.ActionExecutorException;
+import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.service.Services;
+import org.apache.oozie.service.UUIDService;
+import org.apache.oozie.service.WorkflowAppService;
+import org.apache.oozie.service.WorkflowStoreService;
+import org.apache.oozie.util.IOUtils;
+import org.apache.oozie.util.XConfiguration;
+import org.apache.oozie.util.XmlUtils;
+import org.apache.oozie.workflow.WorkflowApp;
+import org.apache.oozie.workflow.WorkflowInstance;
+import org.apache.oozie.workflow.WorkflowLib;
+import org.apache.oozie.workflow.lite.EndNodeDef;
+import org.apache.oozie.workflow.lite.LiteWorkflowApp;
+import org.apache.oozie.workflow.lite.StartNodeDef;
+import org.jdom.Element;
 
 public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
@@ -250,7 +250,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
     }
 
-    private Context createContext(String actionXml) throws Exception {
+    protected Context createContext(String actionXml) throws Exception {
         JavaActionExecutor ae = new JavaActionExecutor();
 
         Path appJarPath = new Path("lib/test.jar");
@@ -277,7 +277,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         return new Context(wf, action);
     }
 
-    private RunningJob submitAction(Context context) throws Exception {
+    protected RunningJob submitAction(Context context) throws Exception {
         JavaActionExecutor ae = new JavaActionExecutor();
 
         WorkflowAction action = context.getAction();

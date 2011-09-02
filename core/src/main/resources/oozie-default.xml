@@ -1294,6 +1294,15 @@
         </description>
     </property>
 
+	<property>
+        <name>oozie.actions.main.classnames</name>
+        <value>distcp=org.apache.hadoop.tools.DistCp</value>
+        <description>
+            A list of class name mapping for Action classes
+        </description>
+    </property>
+	
+	
     <property>
         <name>oozie.service.WorkflowAppService.system.libpath</name>
         <value>/user/${user.name}/share/lib</value>

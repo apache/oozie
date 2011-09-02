@@ -1,8 +1,9 @@
 -- Oozie 3.1.0 release
 
+OOZIE-11  Adding Distcp Action.  
 OOZIE-6 Custom filters option and User information column added to Coordinator jobs section of Oozie Web Console
 OOZIE-124 Update documentation for job-type in WS API
-OOZIE-81 Add an email action to Oozie
+OOZIE-81  Add an email action to Oozie
 OOZIE-113 merge changes for OOZIE-101 to ActionEndXCommand 
 OOZIE-112 workflow kill node message is not resolved and set it to action error message
 OOZIE-111 adjust configuration for DBCP data source 
