@@ -8,6 +8,7 @@ OOZIE-108 Upgrade pom version to 3.1.0.
 
 -- Oozie 3.0.1 release
 
+OOZIE-99 action errorMessage is not being set
 OOZIE-93 coordinator start and end instances doesn't work with float number.
 OOZIE-80 Make coordinator backward compatible
 OOZIE-58 Add date/time formatting function to coord.

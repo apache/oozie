@@ -104,7 +104,7 @@ public class DagELFunctions {
             workflowInstance.setVar(action.getName() + WorkflowInstance.NODE_VAR_SEPARATOR + ACTION_ERROR_CODE,
                                     action.getErrorCode());
         }
-        if (action.getData() != null) {
+        if (action.getErrorMessage() != null) {
             workflowInstance.setVar(action.getName() + WorkflowInstance.NODE_VAR_SEPARATOR + ACTION_ERROR_MESSAGE,
                                     action.getErrorMessage());
         }
