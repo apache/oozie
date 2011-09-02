@@ -54,11 +54,10 @@ function installJar {
 cd ${BASEDIR}
 checkExitStatus
 
-#Hadoop 0.20.0
-installArtifact org.apache.hadoop hadoop-core 0.20.0
-installArtifact org.apache.hadoop hadoop-streaming 0.20.0
+#Hadoop 0.20.1
 installArtifact org.apache.hadoop hadoop-core 0.20.1
 installArtifact org.apache.hadoop hadoop-streaming 0.20.1
+installArtifact org.apache.hadoop hadoop-test 0.20.1
 
 #Pig 0.2.0
 installArtifact org.apache.hadoop pig 0.2.0-H20-J660

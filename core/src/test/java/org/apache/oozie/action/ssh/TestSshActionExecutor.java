@@ -134,10 +134,10 @@ public class TestSshActionExecutor extends XFsTestCase {
         super.setUp();
         services = new Services();
         services.init();
-        
+
         XConfiguration conf = new XConfiguration();
-        conf.setStrings(WorkflowAppService.HADOOP_USER, System.getProperty("user.name"));
-        conf.setStrings(WorkflowAppService.HADOOP_UGI, System.getProperty("user.name") + ",other");
+        conf.setStrings(WorkflowAppService.HADOOP_USER, getTestUser());
+        conf.setStrings(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
         Path path = new Path(getNameNodeUri(), getTestCaseDir());
         FileSystem fs = getFileSystem();
         fs.delete(path, true);
@@ -148,8 +148,9 @@ public class TestSshActionExecutor extends XFsTestCase {
         Path appPath = new Path(getNameNodeUri(), baseDir);
 
         XConfiguration protoConf = new XConfiguration();
-        protoConf.setStrings(WorkflowAppService.HADOOP_USER, System.getProperty("user.name"));
-        protoConf.setStrings(WorkflowAppService.HADOOP_UGI, System.getProperty("user.name") + ",other");
+        protoConf.setStrings(WorkflowAppService.HADOOP_USER, getTestUser());
+        protoConf.setStrings(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
+        injectKerberosInfo(protoConf);
 
         XConfiguration wfConf = new XConfiguration();
         wfConf.set(OozieClient.APP_PATH, appPath.toString());
@@ -189,8 +190,9 @@ public class TestSshActionExecutor extends XFsTestCase {
         Path appPath = new Path(getNameNodeUri(), baseDir);
 
         XConfiguration protoConf = new XConfiguration();
-        protoConf.setStrings(WorkflowAppService.HADOOP_USER, System.getProperty("user.name"));
-        protoConf.setStrings(WorkflowAppService.HADOOP_UGI, System.getProperty("user.name") + ",other");
+        protoConf.setStrings(WorkflowAppService.HADOOP_USER, getTestUser());
+        protoConf.setStrings(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
+        injectKerberosInfo(protoConf);
 
         XConfiguration wfConf = new XConfiguration();
         wfConf.set(OozieClient.APP_PATH, appPath.toString());
@@ -251,8 +253,8 @@ public class TestSshActionExecutor extends XFsTestCase {
 //
 //        Services.get().getConf().setBoolean(SshActionExecutor.CONF_SSH_ALLOW_USER_AT_HOST, false);
 //        XConfiguration protoConf = new XConfiguration();
-//        protoConf.setStrings(WorkflowAppService.HADOOP_USER, System.getProperty("user.name"));
-//        protoConf.setStrings(WorkflowAppService.HADOOP_UGI, System.getProperty("user.name") + ",other");
+//        protoConf.setStrings(WorkflowAppService.HADOOP_USER, getTestUser());
+//        protoConf.setStrings(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
 //
 //        XConfiguration wfConf = new XConfiguration();
 //        wfConf.set(OozieClient.APP_PATH, appPath.toString());
@@ -290,8 +292,9 @@ public class TestSshActionExecutor extends XFsTestCase {
         Path appPath = new Path(getNameNodeUri(), baseDir);
 
         XConfiguration protoConf = new XConfiguration();
-        protoConf.setStrings(WorkflowAppService.HADOOP_USER, System.getProperty("user.name"));
-        protoConf.setStrings(WorkflowAppService.HADOOP_UGI, System.getProperty("user.name") + ",other");
+        protoConf.setStrings(WorkflowAppService.HADOOP_USER, getTestUser());
+        protoConf.setStrings(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
+        injectKerberosInfo(protoConf);
 
         XConfiguration wfConf = new XConfiguration();
         wfConf.set(OozieClient.APP_PATH, appPath.toString());

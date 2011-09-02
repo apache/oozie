@@ -31,10 +31,6 @@ import org.apache.oozie.DagEngine;
 import org.apache.oozie.ForTestingActionExecutor;
 import org.apache.oozie.service.ActionCheckerService.ActionCheckRunnable;
 import org.apache.oozie.store.WorkflowStore;
-import org.apache.oozie.service.Services;
-import org.apache.oozie.service.ActionService;
-import org.apache.oozie.service.WorkflowSchemaService;
-import org.apache.oozie.service.WorkflowStoreService;
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
@@ -80,8 +76,10 @@ public class TestActionCheckerService extends XTestCase {
         final DagEngine engine = new DagEngine("u", "a");
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, getTestCaseDir());
-        conf.set(OozieClient.USER_NAME, "u");
-        conf.set(OozieClient.GROUP_NAME, "g");
+        conf.set(WorkflowAppService.HADOOP_USER, getTestUser());
+        conf.set(OozieClient.GROUP_NAME, getTestGroup());
+        conf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
+        injectKerberosInfo(conf);
         conf.set(OozieClient.LOG_TOKEN, "t");
 
         conf.set("external-status", "ok");
@@ -141,8 +139,10 @@ public class TestActionCheckerService extends XTestCase {
         final DagEngine engine = new DagEngine("u", "a");
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, getTestCaseDir());
-        conf.set(OozieClient.USER_NAME, "u");
-        conf.set(OozieClient.GROUP_NAME, "g");
+        conf.setStrings(WorkflowAppService.HADOOP_USER, getTestUser());
+        conf.setStrings(OozieClient.GROUP_NAME, getTestGroup());
+        conf.setStrings(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
+        injectKerberosInfo(conf);
         conf.set(OozieClient.LOG_TOKEN, "t");
 
         conf.set("external-status", "ok");

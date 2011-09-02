@@ -27,7 +27,10 @@ import org.apache.hadoop.mapred.JobID;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.service.WorkflowAppService;
+import org.apache.oozie.service.Services;
+import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.util.IOUtils;
@@ -41,8 +44,10 @@ import java.io.InputStream;
 import java.io.FileInputStream;
 import java.io.Writer;
 import java.io.OutputStreamWriter;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import jline.ConsoleReaderInputStream;
 
@@ -85,8 +90,10 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
                                               "</pig>");
 
         XConfiguration protoConf = new XConfiguration();
-        protoConf.set(WorkflowAppService.HADOOP_USER, System.getProperty("user.name"));
-        protoConf.set(WorkflowAppService.HADOOP_UGI, System.getProperty("user.name") + ",other");
+        protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
+        protoConf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
+        protoConf.set(OozieClient.GROUP_NAME, getTestGroup());
+        injectKerberosInfo(protoConf);
 
         WorkflowJobBean wf = createBaseWorkflow(protoConf, "pig-action");
         WorkflowActionBean action = (WorkflowActionBean) wf.getActions().get(0);
@@ -119,8 +126,10 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
 
 
         XConfiguration protoConf = new XConfiguration();
-        protoConf.set(WorkflowAppService.HADOOP_USER, System.getProperty("user.name"));
-        protoConf.set(WorkflowAppService.HADOOP_UGI, System.getProperty("user.name") + ",other");
+        protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
+        protoConf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
+        protoConf.set(OozieClient.GROUP_NAME, getTestGroup());
+        injectKerberosInfo(protoConf);
         protoConf.setStrings(WorkflowAppService.APP_LIB_JAR_PATH_LIST, pigJar.toString(), jLineJar.toString());
 
         WorkflowJobBean wf = createBaseWorkflow(protoConf, "pig-action");
@@ -146,9 +155,18 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         assertNotNull(jobTracker);
         assertNotNull(consoleUrl);
 
-        JobConf jobConf = new JobConf();
-        jobConf.set("mapred.job.tracker", jobTracker);
-        JobClient jobClient = new JobClient(jobConf);
+        Element e = XmlUtils.parseXml(action.getConf());
+        XConfiguration conf =
+                new XConfiguration(new StringReader(XmlUtils.prettyPrint(e.getChild("configuration")).toString()));
+        conf.set("mapred.job.tracker", e.getChildTextTrim("job-tracker"));
+        conf.set("fs.default.name", e.getChildTextTrim("name-node"));
+        conf.set("user.name", context.getProtoActionConf().get("user.name"));
+        conf.set("group.name", getTestGroup());
+        injectKerberosInfo(conf);
+        JobConf jobConf = new JobConf(conf);
+        String user = jobConf.get("user.name");
+        String group = jobConf.get("group.name");
+        JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, group, jobConf);
         final RunningJob runningJob = jobClient.getJob(JobID.forName(jobId));
         assertNotNull(runningJob);
         return runningJob;
@@ -167,13 +185,17 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         assertTrue(launcherJob.isSuccessful());
 
         assertFalse(LauncherMapper.hasIdSwap(launcherJob));
-        assertFalse(LauncherMapper.hasOutputData(launcherJob));
+        assertTrue(LauncherMapper.hasOutputData(launcherJob));
 
         PigActionExecutor ae = new PigActionExecutor();
         ae.check(context, context.getAction());
         assertTrue(launcherId.equals(context.getAction().getExternalId()));
         assertEquals("SUCCEEDED", context.getAction().getExternalStatus());
-        assertNull(context.getAction().getData());
+        assertNotNull(context.getAction().getData());
+        Properties outputData = new Properties();
+        outputData.load(new StringReader(context.getAction().getData()));
+        assertTrue(outputData.containsKey("hadoopJobs"));
+        assertNotSame("", outputData.getProperty("hadoopJobs"));
         ae.end(context, context.getAction());
         assertEquals(WorkflowAction.Status.OK, context.getAction().getStatus());
     }
@@ -182,6 +204,12 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
                                              "A = load '$IN' using PigStorage(':');\n" +
                                              "B = foreach A generate $0 as id;\n" +
                                              "store B into '$OUT' USING PigStorage();\n";
+
+    protected XConfiguration getPigConfig() {
+        XConfiguration conf = new XConfiguration();
+        conf.set("oozie.pig.log.level", "INFO");
+        return conf;
+    }
 
     public void testPig() throws Exception {
         FileSystem fs = getFileSystem();
@@ -202,8 +230,7 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         String actionXml = "<pig>" +
                            "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                            "<name-node>" + getNameNodeUri() + "</name-node>" +
-                           "<configuration><property><name>oozie.pig.log.level</name>" +
-                           "<value>DEBUG</value></property></configuration>" +
+                           getPigConfig().toXmlString(false) +
                            "<script>" + script.getName() + "</script>" +
                            "<param>IN=" + inputDir.toUri().getPath() + "</param>" +
                            "<param>OUT=" + outputDir.toUri().getPath() + "</param>" +
@@ -244,6 +271,7 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         String actionXml = "<pig>" +
                            "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                            "<name-node>" + getNameNodeUri() + "</name-node>" +
+                           getPigConfig().toXmlString(false) +
                            "<script>" + script.getName() + "</script>" +
                            "<param>IN=" + inputDir.toUri().getPath() + "</param>" +
                            "<param>OUT=" + outputDir.toUri().getPath() + "</param>" +

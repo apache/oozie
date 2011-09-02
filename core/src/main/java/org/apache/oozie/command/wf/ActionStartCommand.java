@@ -18,6 +18,9 @@
 package org.apache.oozie.command.wf;
 
 import java.util.Date;
+import java.io.StringReader;
+import java.io.IOException;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
@@ -37,6 +40,7 @@ import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.util.ELEvaluationException;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.Instrumentation;
+import org.apache.oozie.util.XConfiguration;
 
 import javax.servlet.jsp.el.ELException;
 

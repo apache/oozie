@@ -58,6 +58,8 @@ public class TestReRunCommand extends XFsTestCase {
         final OozieClient wfClient = LocalOozie.getClient();
         Properties conf = wfClient.createConfiguration();
         conf.setProperty(OozieClient.APP_PATH, getTestCaseDir());
+        conf.setProperty(OozieClient.USER_NAME, getTestUser());
+        injectKerberosInfo(conf);
 
         conf.setProperty("nnbase", path.toString());
         conf.setProperty("base", path.toUri().getPath());
@@ -105,6 +107,9 @@ public class TestReRunCommand extends XFsTestCase {
         final OozieClient wfClient = LocalOozie.getClient();
         Properties conf = wfClient.createConfiguration();
         conf.setProperty(OozieClient.APP_PATH, getTestCaseDir());
+        conf.setProperty(OozieClient.USER_NAME, getTestUser());
+        injectKerberosInfo(conf);
+
         conf.setProperty("inPath", getFsTestCaseDir().toString());
         conf.setProperty("checkDir", getFsTestCaseDir().toString() + "/check");
 

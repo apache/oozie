@@ -28,7 +28,10 @@ import org.apache.hadoop.streaming.StreamJob;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.service.WorkflowAppService;
+import org.apache.oozie.service.Services;
+import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.util.IOUtils;
@@ -41,6 +44,8 @@ import java.io.InputStream;
 import java.io.FileInputStream;
 import java.io.Writer;
 import java.io.OutputStreamWriter;
+import java.io.StringReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -85,8 +90,10 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
                                               "</map-reduce>");
 
         XConfiguration protoConf = new XConfiguration();
-        protoConf.set(WorkflowAppService.HADOOP_USER, System.getProperty("user.name"));
-        protoConf.set(WorkflowAppService.HADOOP_UGI, System.getProperty("user.name") + ",other");
+        protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
+        protoConf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
+        protoConf.set(OozieClient.GROUP_NAME, getTestGroup());
+        injectKerberosInfo(protoConf);
 
         WorkflowJobBean wf = createBaseWorkflow(protoConf, "mr-action");
         WorkflowActionBean action = (WorkflowActionBean) wf.getActions().get(0);
@@ -151,7 +158,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         assertEquals("PP", conf.get("oozie.pipes.program"));
     }
 
-    private Context createContext(String actionXml) throws Exception {
+    protected Context createContext(String name, String actionXml) throws Exception {
         JavaActionExecutor ae = new JavaActionExecutor();
 
         Path appJarPath = new Path("lib/test.jar");
@@ -161,19 +168,22 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         IOUtils.copyStream(is, os);
 
         XConfiguration protoConf = new XConfiguration();
-        protoConf.set(WorkflowAppService.HADOOP_USER, System.getProperty("user.name"));
-        protoConf.set(WorkflowAppService.HADOOP_UGI, System.getProperty("user.name") + ",other");
+        protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
+        protoConf.set(OozieClient.GROUP_NAME, getTestGroup());
+        protoConf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
+        injectKerberosInfo(protoConf);
         protoConf.setStrings(WorkflowAppService.APP_LIB_JAR_PATH_LIST, appJarPath.toString());
 
         WorkflowJobBean wf = createBaseWorkflow(protoConf, "mr-action");
         WorkflowActionBean action = (WorkflowActionBean) wf.getActions().get(0);
+        action.setName(name);
         action.setType(ae.getType());
         action.setConf(actionXml);
 
         return new Context(wf, action);
     }
 
-    private RunningJob submitAction(Context context) throws Exception {
+    protected RunningJob submitAction(Context context) throws Exception {
         MapReduceActionExecutor ae = new MapReduceActionExecutor();
 
         WorkflowAction action = context.getAction();
@@ -188,20 +198,29 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         assertNotNull(jobTracker);
         assertNotNull(consoleUrl);
 
-        JobConf jobConf = new JobConf();
-        jobConf.set("mapred.job.tracker", jobTracker);
-        JobClient jobClient = new JobClient(jobConf);
+        Element e = XmlUtils.parseXml(action.getConf());
+        XConfiguration conf =
+                new XConfiguration(new StringReader(XmlUtils.prettyPrint(e.getChild("configuration")).toString()));
+        conf.set("mapred.job.tracker", e.getChildTextTrim("job-tracker"));
+        conf.set("fs.default.name", e.getChildTextTrim("name-node"));
+        conf.set("user.name", context.getProtoActionConf().get("user.name"));
+        conf.set("group.name", getTestGroup());
+        injectKerberosInfo(conf);
+        JobConf jobConf = new JobConf(conf);
+        String user = jobConf.get("user.name");
+        String group = jobConf.get("group.name");
+        JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, group, jobConf);
         final RunningJob runningJob = jobClient.getJob(JobID.forName(jobId));
         assertNotNull(runningJob);
         return runningJob;
     }
 
-    private void _testSubmit(String actionXml) throws Exception {
+    private void _testSubmit(String name, String actionXml) throws Exception {
 
-        Context context = createContext(actionXml);
+        Context context = createContext(name, actionXml);
         final RunningJob launcherJob = submitAction(context);
         String launcherId = context.getAction().getExternalId();
-        waitFor(60 * 1000, new Predicate() {
+        waitFor(120 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
                 return launcherJob.isComplete();
             }
@@ -215,10 +234,13 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         assertFalse(launcherId.equals(context.getAction().getExternalId()));
 
         Configuration conf = ae.createBaseHadoopConf(context, XmlUtils.parseXml(actionXml));
-        JobClient jobClient = new JobClient(new JobConf(conf));
+        String user = conf.get("user.name");
+        String group = conf.get("group.name");
+        JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, group,
+                                                                                              new JobConf(conf));
         final RunningJob mrJob = jobClient.getJob(JobID.forName(context.getAction().getExternalId()));
 
-        waitFor(60 * 1000, new Predicate() {
+        waitFor(120 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
                 return mrJob.isComplete();
             }
@@ -237,6 +259,15 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         assertTrue(counters.contains("Task$Counter"));
     }
 
+    protected XConfiguration getMapReduceConfig(String inputDir, String outputDir) {
+        XConfiguration conf = new XConfiguration();
+        conf.set("mapred.mapper.class", MapperReducerForTest.class.getName());
+        conf.set("mapred.reducer.class", MapperReducerForTest.class.getName());
+        conf.set("mapred.input.dir", inputDir);
+        conf.set("mapred.output.dir", outputDir);
+        return conf;
+    }
+
     public void testMapReduce() throws Exception {
         FileSystem fs = getFileSystem();
 
@@ -251,16 +282,16 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         String actionXml = "<map-reduce>" +
                            "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                            "<name-node>" + getNameNodeUri() + "</name-node>" +
-                           "<configuration>" +
-                           "<property><name>mapred.mapper.class</name><value>" + MapperReducerForTest.class.getName() +
-                           "</value></property>" +
-                           "<property><name>mapred.reducer.class</name><value>" + MapperReducerForTest.class.getName() +
-                           "</value></property>" +
-                           "<property><name>mapred.input.dir</name><value>" + inputDir+ "</value></property>" +
-                           "<property><name>mapred.output.dir</name><value>" + outputDir + "</value></property>" +
-                           "</configuration>" +
+                getMapReduceConfig(inputDir.toString(), outputDir.toString()).toXmlString(false) +
                            "</map-reduce>";
-        _testSubmit(actionXml);
+        _testSubmit("map-reduce", actionXml);
+    }
+
+    protected XConfiguration getStreamingConfig(String inputDir, String outputDir) {
+        XConfiguration conf = new XConfiguration();
+        conf.set("mapred.input.dir", inputDir);
+        conf.set("mapred.output.dir", outputDir);
+        return conf;
     }
 
     public void testStreaming() throws Exception {
@@ -286,13 +317,19 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
                            "        <mapper>cat</mapper>" +
                            "        <reducer>wc</reducer>" +
                            "      </streaming>" +
-                           "<configuration>" +
-                           "<property><name>mapred.input.dir</name><value>" + inputDir+ "</value></property>" +
-                           "<property><name>mapred.output.dir</name><value>" + outputDir + "</value></property>" +
-                           "</configuration>" +
+                 getStreamingConfig(inputDir.toString(), outputDir.toString()).toXmlString(false) +
                            "<file>" + streamingJar + "</file>" +
                            "</map-reduce>";
-        _testSubmit(actionXml);
+        _testSubmit("streaming", actionXml);
+    }
+
+    protected XConfiguration getPipesConfig(String inputDir, String outputDir) {
+        XConfiguration conf = new XConfiguration();
+        conf.setBoolean("hadoop.pipes.java.recordreader", true);
+        conf.setBoolean("hadoop.pipes.java.recordwriter", true);
+        conf.set("mapred.input.dir", inputDir);
+        conf.set("mapred.output.dir", outputDir);
+        return conf;
     }
 
     public void testPipes() throws Exception {
@@ -319,15 +356,10 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
                            "      <pipes>" +
                            "        <program>" + programPath + "#wordcount-simple" + "</program>" +
                            "      </pipes>" +
-                           "<configuration>" +
-                           "<property><name>hadoop.pipes.java.recordreader</name><value>true</value></property>" +
-                           "<property><name>hadoop.pipes.java.recordwriter</name><value>true</value></property>" +
-                           "<property><name>mapred.input.dir</name><value>" + inputDir+ "</value></property>" +
-                           "<property><name>mapred.output.dir</name><value>" + outputDir + "</value></property>" +
-                           "</configuration>" +
+                getPipesConfig(inputDir.toString(), outputDir.toString()).toXmlString(false) +
                            "<file>" + programPath + "</file>" +
                            "</map-reduce>";
-        _testSubmit(actionXml);
+        _testSubmit("pipes", actionXml);
     }
 
 }

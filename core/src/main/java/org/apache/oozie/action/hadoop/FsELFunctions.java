@@ -29,7 +29,6 @@ import org.apache.oozie.DagELFunctions;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.HadoopAccessorService;
-import org.apache.oozie.util.HadoopAccessor;
 
 /**
  * EL function for fs action executor.
@@ -40,13 +39,13 @@ public class FsELFunctions {
         WorkflowJob workflow = DagELFunctions.getWorkflow();
         String user = workflow.getUser();
         String group = workflow.getGroup();
-        HadoopAccessor ha = Services.get().get(HadoopAccessorService.class).get(user, group);
-        return ha.createFileSystem(uri, new Configuration());
+        return Services.get().get(HadoopAccessorService.class).
+                createFileSystem(user, group, uri, new Configuration());
     }
 
     /**
      * Get file status.
-     * 
+     *
      * @param pathUri fs path uri
      * @return file status
      * @throws URISyntaxException

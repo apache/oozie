@@ -41,7 +41,6 @@ import org.apache.oozie.service.WorkflowStoreService;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
-import org.apache.oozie.util.HadoopAccessor;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.command.Command;
@@ -138,9 +137,8 @@ public class ReRunCommand extends Command<Void> {
 
             Path configDefault = new Path(conf.get(OozieClient.APP_PATH), SubmitCommand.CONFIG_DEFAULT);
 
-            HadoopAccessor ha = Services.get().get(HadoopAccessorService.class).get(wfBean.getUser(),
-                                                                                    wfBean.getGroup());
-            FileSystem fs = ha.createFileSystem(configDefault.toUri(), new Configuration());
+            FileSystem fs = Services.get().get(HadoopAccessorService.class).
+                    createFileSystem(wfBean.getUser(), wfBean.getGroup(), configDefault.toUri(), new Configuration());
 
             if (fs.exists(configDefault)) {
                 Configuration defaultConf = new XConfiguration(fs.open(configDefault));

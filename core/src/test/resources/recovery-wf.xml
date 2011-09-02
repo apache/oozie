@@ -39,6 +39,10 @@
                     <value>1</value>
                 </property>
                 <property>
+                    <name>mapred.reduce.tasks</name>
+                    <value>0</value>
+                </property>
+                <property>
                     <name>mapred.mapper.class</name>
                     <value>${mrclass}</value>
                 </property>

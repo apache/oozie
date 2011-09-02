@@ -27,9 +27,6 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
-import org.apache.oozie.DagEngine;
-import org.apache.oozie.WorkflowJobBean;
-import org.apache.oozie.WorkflowsInfo;
 
 import java.io.FileWriter;
 import java.io.Reader;
@@ -72,8 +69,9 @@ public class TestDagEngine extends XTestCase {
         final DagEngine engine = new DagEngine("u", "a");
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, getTestCaseDir());
-        conf.set(OozieClient.USER_NAME, "u");
-        conf.set(OozieClient.GROUP_NAME, "g");
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        conf.set(OozieClient.GROUP_NAME, getTestGroup());
+        injectKerberosInfo(conf);
         conf.set(OozieClient.LOG_TOKEN, "t");
         conf.set("signal-value", "OK");
         conf.set("external-status", "ok");
@@ -111,8 +109,9 @@ public class TestDagEngine extends XTestCase {
         final DagEngine engine = new DagEngine("u", "a");
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, getTestCaseDir());
-        conf.set(OozieClient.USER_NAME, "u");
-        conf.set(OozieClient.GROUP_NAME, "g");
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        conf.set(OozieClient.GROUP_NAME, getTestGroup());
+        injectKerberosInfo(conf);
         conf.set(OozieClient.LOG_TOKEN, "t");
         conf.set("signal-value", "OK");
         conf.set("external-status", "ok");
@@ -132,8 +131,9 @@ public class TestDagEngine extends XTestCase {
         final DagEngine engine = new DagEngine("u", "a");
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, getTestCaseDir());
-        conf.set(OozieClient.USER_NAME, "u");
-        conf.set(OozieClient.GROUP_NAME, "g");
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        conf.set(OozieClient.GROUP_NAME, getTestGroup());
+        injectKerberosInfo(conf);
         conf.set(OozieClient.LOG_TOKEN, "t");
         conf.set("signal-value", "OK");
         conf.set("external-status", "ok");
@@ -142,29 +142,29 @@ public class TestDagEngine extends XTestCase {
         final String jobId1 = engine.submitJob(conf, true);
         String jobId2 = engine.submitJob(conf, false);
 
-        WorkflowsInfo wfInfo = engine.getJobs("group=g", 1, 1);
+        WorkflowsInfo wfInfo = engine.getJobs("group=" + getTestGroup(), 1, 1);
         List<WorkflowJobBean> workflows = wfInfo.getWorkflows();
         assertEquals(1, workflows.size());
-        assertEquals("g", workflows.get(0).getGroup());
+        assertEquals(getTestGroup(), workflows.get(0).getGroup());
         assertEquals(jobId1, workflows.get(0).getId());
 
-        wfInfo = engine.getJobs("group=g", 1, 5);
+        wfInfo = engine.getJobs("group=" + getTestGroup(), 1, 5);
         workflows = wfInfo.getWorkflows();
         assertEquals(2, workflows.size());
-        assertEquals("g", workflows.get(0).getGroup());
+        assertEquals(getTestGroup(), workflows.get(0).getGroup());
         assertEquals(jobId1, workflows.get(0).getId());
         assertEquals(jobId2, workflows.get(1).getId());
 
-        wfInfo = engine.getJobs("user=u", 1, 1);
+        wfInfo = engine.getJobs("user=" + getTestUser(), 1, 1);
         workflows = wfInfo.getWorkflows();
         assertEquals(1, workflows.size());
-        assertEquals("u", workflows.get(0).getUser());
+        assertEquals(getTestUser(), workflows.get(0).getUser());
         assertEquals(jobId1, workflows.get(0).getId());
 
-        wfInfo = engine.getJobs("user=u", 2, 5);
+        wfInfo = engine.getJobs("user=" + getTestUser(), 2, 5);
         workflows = wfInfo.getWorkflows();
         assertEquals(1, workflows.size());
-        assertEquals("u", workflows.get(0).getUser());
+        assertEquals(getTestUser(), workflows.get(0).getUser());
         assertEquals(jobId2, workflows.get(0).getId());
 
         waitFor(5000, new Predicate() {

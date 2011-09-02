@@ -28,9 +28,9 @@ import org.apache.hadoop.mapred.FileInputFormat;
 import org.apache.hadoop.mapred.FileOutputFormat;
 import org.apache.hadoop.mapred.Counters;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.security.UserGroupInformation;
 
 import org.apache.oozie.util.XLog;
-import org.apache.oozie.util.HadoopAccessor;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.HadoopAccessorService;
 
@@ -114,7 +114,11 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
             throws IOException {
         String jobId = null;
         Path recoveryFile = new Path(actionDir, recoveryId);
-        FileSystem fs = FileSystem.get(launcherConf);
+        //FileSystem fs = FileSystem.get(launcherConf);
+		FileSystem fs = Services.get().get(HadoopAccessorService.class)
+				.createFileSystem(launcherConf.get("user.name"),
+						launcherConf.get("group.name"), launcherConf);
+
         if (fs.exists(recoveryFile)) {
             InputStream is = fs.open(recoveryFile);
             BufferedReader reader = new BufferedReader(new InputStreamReader(is));
@@ -153,7 +157,9 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         launcherConf.set(OOZIE_ACTION_DIR_PATH, actionDir.toString());
         launcherConf.set(OOZIE_ACTION_RECOVERY_ID, recoveryId);
 
-        FileSystem fs = FileSystem.get(launcherConf);
+        FileSystem fs = Services.get().get(HadoopAccessorService.class).
+                createFileSystem(launcherConf.get("user.name"), launcherConf.get("group.name"), launcherConf);
+
         fs.mkdirs(actionDir);
 
         OutputStream os = fs.create(new Path(actionDir, ACTION_CONF_XML));
@@ -166,8 +172,8 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         writer.write("dummy");
         writer.close();
 
-        FileInputFormat.setInputPaths(launcherConf, inputDir);
-        FileOutputFormat.setOutputPath(launcherConf, new Path(actionDir, "output"));
+        launcherConf.set("mapred.input.dir", inputDir.toString());
+        launcherConf.set("mapred.output.dir", new Path(actionDir, "output").toString());
     }
 
     public static boolean isMainDone(RunningJob runningJob) throws IOException {
@@ -232,8 +238,8 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
             Path p = getIdSwapPath(actionDir);
             // log.debug("Checking for newId file in: [{0}]", p);
 
-            HadoopAccessor ha = Services.get().get(HadoopAccessorService.class).get(user, group);
-            FileSystem fs = ha.createFileSystem(p.toUri(), new Configuration());
+            FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, group,p. toUri(),
+                                                                                             new Configuration());
             if (fs.exists(p)) {
                 log.debug("Hadoop Counters is null, but found newID file.");
 
@@ -337,6 +343,8 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
                     System.out.println(">>> Invoking Main class now >>>");
                     System.out.println();
                     System.out.flush();
+
+
                     try {
                         Class klass = getJobConf().getClass(CONF_OOZIE_ACTION_MAIN_CLASS, Object.class);
                         Method mainMethod = klass.getMethod("main", String[].class);
@@ -456,6 +464,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         fs.copyToLocalFile(new Path(getJobConf().get(OOZIE_ACTION_DIR_PATH), ACTION_CONF_XML), new Path(new File(
                 ACTION_CONF_XML).getAbsolutePath()));
 
+        System.setProperty("oozie.launcher.job.id", getJobConf().get("mapred.job.id"));
         System.setProperty("oozie.job.id", getJobConf().get(OOZIE_JOB_ID));
         System.setProperty("oozie.action.id", getJobConf().get(OOZIE_ACTION_ID));
         System.setProperty("oozie.action.conf.xml", new File(ACTION_CONF_XML).getAbsolutePath());

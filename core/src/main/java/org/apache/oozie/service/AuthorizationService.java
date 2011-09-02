@@ -34,7 +34,6 @@ import org.apache.oozie.store.StoreException;
 import org.apache.oozie.store.WorkflowStore;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.Instrumentation;
-import org.apache.oozie.util.HadoopAccessor;
 
 /**
  * The authorization service provides all authorization checks.
@@ -235,10 +234,11 @@ public class AuthorizationService implements Service {
      * @param appPath application path.
      * @throws AuthorizationException thrown if the user is not authorized for the app.
      */
-    public void authorizeForApp(String user, String group, String appPath) throws AuthorizationException {
+    public void authorizeForApp(String user, String group, String appPath, Configuration jobConf) 
+            throws AuthorizationException {
         try {
-            HadoopAccessor ha = Services.get().get(HadoopAccessorService.class).get(user, group);
-            FileSystem fs = ha.createFileSystem(new Path(appPath).toUri(), new Configuration());
+            FileSystem fs = Services.get().get(HadoopAccessorService.class).
+                    createFileSystem(user, group, new Path(appPath).toUri(), jobConf);
 
             Path path = new Path(appPath);
             try {
@@ -284,13 +284,24 @@ public class AuthorizationService implements Service {
     public void authorizeForJob(String user, String jobId, boolean write) throws AuthorizationException {
         if (securityEnabled && write && !isAdmin(user)) {
             WorkflowJobBean jobBean;
+            WorkflowStore store = null;
             try {
-                WorkflowStore store = Services.get().get(WorkflowStoreService.class).create();
+                store = Services.get().get(WorkflowStoreService.class).create();
                 jobBean = store.getWorkflow(jobId, false);
             }
             catch (StoreException ex) {
                 incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
                 throw new AuthorizationException(ex);
+            }
+            finally {
+                try {
+                    if (store != null) {
+                        store.close();
+                    }
+                }
+                catch (StoreException ex) {
+                    throw new AuthorizationException(ex);
+                }
             }
 
             if (!jobBean.getUser().equals(user)) {

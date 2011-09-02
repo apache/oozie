@@ -20,10 +20,14 @@ package org.apache.oozie.test;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.permission.FsPermission;
+import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.oozie.util.XLog;
-import org.apache.oozie.util.HadoopAccessor;
+import org.apache.oozie.util.XConfiguration;
+import org.apache.oozie.service.HadoopAccessorService;
 
 import java.io.IOException;
 import java.net.URI;
@@ -47,6 +51,7 @@ import java.net.URI;
  *
  */
 public abstract class XFsTestCase extends XTestCase {
+    private static HadoopAccessorService has;
     private FileSystem fileSystem;
     private Path fsTestDir;
 
@@ -57,13 +62,48 @@ public abstract class XFsTestCase extends XTestCase {
      */
     protected void setUp() throws Exception {
         super.setUp();
-        fileSystem = getAccessor().createFileSystem(new URI(getNameNodeUri()), new Configuration());
+        Configuration conf = new Configuration();
+        conf.setBoolean("oozie.service.HadoopAccessorService.kerberos.enabled",
+                        System.getProperty("oozie.test.hadoop.security", "simple").equals("kerberos"));
+        conf.set("oozie.service.HadoopAccessorService.keytab.file", getKeytabFile());
+        conf.set("oozie.service.HadoopAccessorService.kerberos.principal", getOoziePrincipal());
+        injectKerberosInfo(conf);
+
+        Class hasClass;
+
+        //TODO change this for a hardcoded instantiation when we only compile 20.100 onwards
+        try {
+            hasClass = Class.forName("org.apache.oozie.service.kerberos.KerberosHadoopAccessorService");
+        }
+        catch (ClassNotFoundException ex) {
+            hasClass = HadoopAccessorService.class;
+        }
+
+        has = (HadoopAccessorService) hasClass.newInstance();
+        has.init(conf);
+        fileSystem = has.createFileSystem(getTestUser(), getTestGroup(), new URI(getNameNodeUri()), conf);
         Path path = new Path(fileSystem.getWorkingDirectory(), getTestCaseDir().substring(1));
         fsTestDir = fileSystem.makeQualified(path);
         System.out.println(XLog.format("Setting FS testcase work dir[{0}]", fsTestDir));
+        if (fileSystem.exists(fsTestDir)) {
+            setAllPermissions(fileSystem, fsTestDir);
+        }
         fileSystem.delete(fsTestDir, true);
         if (!fileSystem.mkdirs(path)) {
             throw new IOException(XLog.format("Could not create FS testcase dir [{0}]", fsTestDir));
+        }
+        fileSystem.setOwner(fsTestDir, getTestUser(), getTestGroup());
+        fileSystem.setPermission(fsTestDir, FsPermission.valueOf("-rwxrwx--x"));
+    }
+
+    private void setAllPermissions(FileSystem fileSystem, Path path) throws IOException {
+        FsPermission fsPermission = new FsPermission(FsAction.ALL, FsAction.NONE, FsAction.NONE);
+        fileSystem.setPermission(path, fsPermission);
+        FileStatus fileStatus = fileSystem.getFileStatus(path);
+        if (fileStatus.isDir()) {
+            for (FileStatus status : fileSystem.listStatus(path)) {
+                setAllPermissions(fileSystem, status.getPath());
+            }
         }
     }
 
@@ -105,13 +145,7 @@ public abstract class XFsTestCase extends XTestCase {
         JobConf conf = new JobConf();
         conf.set("mapred.job.tracker", getJobTrackerUri());
         conf.set("fs.default.name", getNameNodeUri());
-        return getAccessor().createJobClient(conf);
-    }
-
-    private HadoopAccessor getAccessor() {
-        HadoopAccessor ha = new HadoopAccessor();
-        ha.setUGI(System.getProperty("user.name"), "other");
-        return ha;
+        return has.createJobClient(getTestUser(), getTestGroup(), conf);
     }
 
 }

@@ -109,7 +109,7 @@ public class LocalOozieClient extends OozieClient {
         if (dagEngine != null) {
             conf.setProperty(USER_NAME, dagEngine.getUser());
         }
-        conf.setProperty(GROUP_NAME, "other");
+        conf.setProperty(GROUP_NAME, "users");
         return conf;
     }
 

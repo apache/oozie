@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 package org.apache.oozie.servlet;
-
+    
 import org.apache.oozie.service.AuthorizationService;
 import java.io.StringReader;
 import org.apache.oozie.service.DagEngineService;
@@ -62,12 +62,13 @@ public class TestJobsServlet extends DagServletTestCase {
                 FileSystem fs = getFileSystem();
                 Path jobXmlPath = new Path(appPath, "workflow.xml");
                 fs.create(jobXmlPath);
-                
+
                 int wfCount = MockDagEngineService.workflows.size();
                 Configuration jobConf = new XConfiguration();
-                jobConf.set(OozieClient.USER_NAME, System.getProperty("user.name"));
-                jobConf.set(OozieClient.GROUP_NAME, "others");
+                jobConf.set(OozieClient.USER_NAME, getTestUser());
+                jobConf.set(OozieClient.GROUP_NAME, getTestGroup());
                 jobConf.set(OozieClient.APP_PATH, appPath);
+                injectKerberosInfo(jobConf);
                 Map<String, String> params = new HashMap<String, String>();
                 URL url = createURL("", params);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -82,8 +83,9 @@ public class TestJobsServlet extends DagServletTestCase {
                 wfCount++;
 
                 jobConf = new XConfiguration();
-                jobConf.set(OozieClient.USER_NAME, System.getProperty("user.name"));
+                jobConf.set(OozieClient.USER_NAME, getTestUser());
                 jobConf.set(OozieClient.APP_PATH, appPath);
+                injectKerberosInfo(jobConf);
                 params = new HashMap<String, String>();
                 params.put(RestConstants.ACTION_PARAM, RestConstants.JOB_ACTION_START);
                 url = createURL("", params);
@@ -97,7 +99,7 @@ public class TestJobsServlet extends DagServletTestCase {
                 assertEquals(MockDagEngineService.JOB_ID+wfCount, obj.get(JsonTags.JOB_ID));
                 assertTrue(MockDagEngineService.started.get(wfCount));
                 Services services = Services.get();
-                DagEngine de = services.get(DagEngineService.class).getDagEngine(System.getProperty("user.name"), "undef");
+                DagEngine de = services.get(DagEngineService.class).getDagEngine(getTestUser(), "undef");
                 StringReader sr = new StringReader(de.getJob(MockDagEngineService.JOB_ID+wfCount).getConf());
                 Configuration conf1 = new XConfiguration(sr);
                 assertEquals(AuthorizationService.DEFAULT_GROUP, conf1.get(OozieClient.GROUP_NAME));

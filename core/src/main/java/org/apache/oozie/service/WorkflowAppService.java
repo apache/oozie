@@ -27,7 +27,6 @@ import org.apache.oozie.workflow.WorkflowApp;
 import org.apache.oozie.workflow.WorkflowException;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
-import org.apache.oozie.util.HadoopAccessor;
 import org.apache.oozie.ErrorCode;
 
 import java.io.IOException;
@@ -52,6 +51,10 @@ public abstract class WorkflowAppService implements Service {
     public static final String HADOOP_UGI = "hadoop.job.ugi";
 
     public static final String HADOOP_USER = "user.name";
+
+    public static final String HADOOP_JT_KERBEROS_NAME = "mapreduce.jobtracker.kerberos.principal";
+
+    public static final String HADOOP_NN_KERBEROS_NAME = "dfs.namenode.kerberos.principal";
 
     /**
      * Initialize the workflow application service.
@@ -90,8 +93,8 @@ public abstract class WorkflowAppService implements Service {
             throws WorkflowException {
         try {
             URI uri = new URI(appPath);
-            HadoopAccessor ha = Services.get().get(HadoopAccessorService.class).get(user, group);
-            FileSystem fs = ha.createFileSystem(uri, new Configuration());                        
+            FileSystem fs = Services.get().get(HadoopAccessorService.class).
+                    createFileSystem(user, group, uri, new Configuration());
             Reader reader = new InputStreamReader(fs.open(new Path(uri.getPath(), "workflow.xml")));
             StringWriter writer = new StringWriter();
             IOUtils.copyCharStream(reader, writer);
@@ -128,14 +131,15 @@ public abstract class WorkflowAppService implements Service {
             String group = jobConf.get(OozieClient.GROUP_NAME);
             String hadoopUgi = user + "," + group;
 
-            URI uri = new URI(jobConf.get(OozieClient.APP_PATH));
-
-            HadoopAccessor ha = Services.get().get(HadoopAccessorService.class).get(user, group);
-            FileSystem fs = ha.createFileSystem(uri, new Configuration());
-
             conf.set(OozieClient.USER_NAME, user);
             conf.set(OozieClient.GROUP_NAME, group);
             conf.set(HADOOP_UGI, hadoopUgi);
+            conf.set(HADOOP_JT_KERBEROS_NAME, jobConf.get(HADOOP_JT_KERBEROS_NAME));
+            conf.set(HADOOP_NN_KERBEROS_NAME, jobConf.get(HADOOP_NN_KERBEROS_NAME));
+
+            URI uri = new URI(jobConf.get(OozieClient.APP_PATH));
+
+            FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, group, uri, conf);
 
             Path appPath = new Path(uri.getPath());
             List<String> jarFilePaths = getLibPaths(fs, appPath, ".jar");

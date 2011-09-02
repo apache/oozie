@@ -1,3 +1,27 @@
+-- 2010MAY21
+- Second GitHub code drop
+
+- UGI caching
+- Make sure the signal command doesn't reprocess the same action
+- Before adding class path to DistributedCache, create FileSystem with default properties
+- For Pig security pass HADOOP_TOKEN_FILE_LOCATION as environment variable
+- ActionEndCommand should set Pending before queuing SignalCommand
+- Oozie does not handle a long running MR job
+- Making build to with Hadoop 20.1 and Hadoop 20.100
+- Hadoop Minicluster Integration for testcases
+- close WorkflowStore in AuthorizationService
+- fs action, chmod operation octal mask does not work properly
+- Hadoop 20 Security integration
+- set group that can modify MR jobs in actions started by Oozie
+- dump pig.log file to STDERR in case of error
+- capture and store pig actions hadoop job ids as output data
+- revert Action-Workflow locking order
+- actionexecutor should not be invoked within a DB transaction
+- check if Jobclient.getJob() returns null in ActionExecutors.  Will be null if JT doesn't recognize ID.  If so, fail action and workflow
+- fixing IOUtils to zip classes in different packages
+- refactor Hadoop JobClient/FileSystem creation into a factory pattern
+- close store in authorizeForJob(), otherwise we leak connections for KILL commands
+
 -- 2010MAR03
 - First GitHub code drop
 

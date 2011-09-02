@@ -26,6 +26,7 @@ import java.io.FileOutputStream;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.File;
+import java.io.IOException;
 import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
@@ -57,18 +58,32 @@ public class PigMain extends LauncherMain {
 
         actionConf.addResource(new Path("file:///", actionXml));
 
-        Properties props = new Properties();
+        Properties pigProperties = new Properties();
         for (Map.Entry<String, String> entry : actionConf) {
-            props.setProperty(entry.getKey(), entry.getValue());
+            pigProperties.setProperty(entry.getKey(), entry.getValue());
         }
+
+        //propagate delegation related props from launcher job to Pig job
+        if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
+            pigProperties.setProperty("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
+            System.out.println("------------------------");
+            System.out.println("Setting env property for mapreduce.job.credentials.binary to:"
+                    + System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
+            System.out.println("------------------------");
+            System.setProperty("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
+        }
+        else {
+            System.out.println("Non-kerberoes execution");
+        }
+
         OutputStream os = new FileOutputStream("pig.properties");
-        props.store(os, "");
+        pigProperties.store(os, "");
         os.close();
 
         System.out.println();
-        System.out.println("/pig.properties content :");
+        System.out.println("pig.properties content:");
         System.out.println("------------------------");
-        props.store(System.out, "");
+        pigProperties.store(System.out, "");
         System.out.flush();
         System.out.println("------------------------");
         System.out.println();
@@ -104,6 +119,13 @@ public class PigMain extends LauncherMain {
             arguments.add(param);
         }
 
+        String hadoopJobId = System.getProperty("oozie.launcher.job.id");
+        if (hadoopJobId == null) {
+            throw new RuntimeException("Launcher Hadoop Job ID system property not set");
+        }
+
+        String logFile = new File("pig-oozie-" + hadoopJobId + ".log").getAbsolutePath();
+
         URL log4jFile = Thread.currentThread().getContextClassLoader().getResource("log4j.properties");
         if (log4jFile != null) {
 
@@ -112,28 +134,36 @@ public class PigMain extends LauncherMain {
             // append required PIG properties to the default hadoop log4j file
             Properties hadoopProps = new Properties();
             hadoopProps.load(log4jFile.openStream());
-            hadoopProps.setProperty("log4j.logger.org.apache.pig", pigLogLevel + ", A");
+            hadoopProps.setProperty("log4j.logger.org.apache.pig", pigLogLevel + ", A, B");
             hadoopProps.setProperty("log4j.appender.A", "org.apache.log4j.ConsoleAppender");
             hadoopProps.setProperty("log4j.appender.A.layout", "org.apache.log4j.PatternLayout");
             hadoopProps.setProperty("log4j.appender.A.layout.ConversionPattern", "%-4r [%t] %-5p %c %x - %m%n");
+            hadoopProps.setProperty("log4j.appender.B", "org.apache.log4j.FileAppender");
+            hadoopProps.setProperty("log4j.appender.B.file", logFile);
+            hadoopProps.setProperty("log4j.appender.B.layout", "org.apache.log4j.PatternLayout");
+            hadoopProps.setProperty("log4j.appender.B.layout.ConversionPattern", "%-4r [%t] %-5p %c %x - %m%n");
 
-            String localProps = "piglog4j.properties";
+            String localProps = new File("piglog4j.properties").getAbsolutePath();
             OutputStream os1 = new FileOutputStream(localProps);
             hadoopProps.store(os1, "");
             os1.close();
 
-            // print out current directory
-            File localDir = new File(localProps);
-            System.out.println("Current dir = " + localDir.getAbsolutePath());
-
             arguments.add("-log4jconf");
             arguments.add(localProps);
+
+            // print out current directory
+            File localDir = new File(localProps).getParentFile();
+            System.out.println("Current (local) dir = " + localDir.getAbsolutePath());
         }
         else {
             System.out.println("log4jfile is null");
         }
 
-        System.out.println("Pig command arguments  :");
+        String pigLog = "pig-" + hadoopJobId + ".log";
+        arguments.add("-logfile");
+        arguments.add(pigLog);
+
+        System.out.println("Pig command arguments :");
         for (String arg : arguments) {
             System.out.println("             " + arg);
         }
@@ -144,10 +174,46 @@ public class PigMain extends LauncherMain {
         System.out.println();
         System.out.flush();
 
-        runPigJob(arguments.toArray(new String[arguments.size()]));
+        String userName = System.getProperty("user.name");
+        try {
+            //TODO Pig should fix this
+            //Pig somehow is taking user from Java SYS props, if task is running with cluster UNIX user this is
+            //a problem, because of this we are setting here the user.name to the oozie job user.name
+            System.setProperty("user.name", pigProperties.getProperty("user.name"));
+            runPigJob(arguments.toArray(new String[arguments.size()]));
+        }
+        catch (SecurityException ex) {
+            if (LauncherSecurityManager.getExitInvoked()) {
+                if (LauncherSecurityManager.getExitCode() != 0) {
+                    System.err.println();
+                    System.err.println("Pig logfile dump:");
+                    System.err.println();
+                    BufferedReader reader = new BufferedReader(new FileReader(pigLog));
+                    line = reader.readLine();
+                    while (line != null) {
+                        System.err.println(line);
+                        line = reader.readLine();
+                    }
+                    reader.close();
+                    throw ex;
+                }
+            }
+        }
+        finally {
+            System.setProperty("user.name", userName);
+        }
 
         System.out.println();
         System.out.println("<<< Invocation of Pig command completed <<<");
+        System.out.println();
+
+        // harvesting and recording Hadoop Job IDs
+        Properties jobIds = getHadoopJobIds(logFile);
+        File file = new File(System.getProperty("oozie.action.output.properties"));
+        os = new FileOutputStream(file);
+        jobIds.store(os, "");
+        os.close();
+        System.out.println(" Hadoop Job IDs executed by Pig: " + jobIds.getProperty("hadoopJobs"));
         System.out.println();
     }
 
@@ -159,6 +225,33 @@ public class PigMain extends LauncherMain {
     public static void setPigScript(Configuration conf, String script, String[] params) {
         conf.set("oozie.pig.script", script);
         MapReduceMain.setStrings(conf, "oozie.pig.params", params);
+    }
+
+    private static final String JOB_ID_LOG_PREFIX = "HadoopJobId: ";
+
+    protected Properties getHadoopJobIds(String logFile) throws IOException {
+        int jobCount = 0;
+        Properties props = new Properties();
+        StringBuffer sb = new StringBuffer(100);
+        BufferedReader br = new BufferedReader(new FileReader(logFile));
+        String line = br.readLine();
+        String separator = "";
+        while (line != null) {
+            if (line.contains(JOB_ID_LOG_PREFIX)) {
+                int jobIdStarts = line.indexOf(JOB_ID_LOG_PREFIX) + JOB_ID_LOG_PREFIX.length();
+                String jobId = line.substring(jobIdStarts);
+                int jobIdEnds = jobId.indexOf(" ");
+                if (jobIdEnds > -1) {
+                    jobId = jobId.substring(0, jobId.indexOf(" "));
+                }
+                sb.append(separator).append(jobId);
+                separator = ",";
+            }
+            line = br.readLine();
+        }
+        br.close();
+        props.setProperty("hadoopJobs", sb.toString());
+        return props;
     }
 
 }

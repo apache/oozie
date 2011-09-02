@@ -542,13 +542,27 @@
     <!-- HadoopAccessorService -->
 
     <property>
-        <name>oozie.service.HadoopAccessorService.accessor.class</name>
-        <value>org.apache.oozie.util.HadoopAccessor</value>
+        <name>oozie.service.HadoopAccessorService.kerberos.enabled</name>
+        <value>false</value>
         <description>
-            The HadoopAccessor class implementation to use to create Hadoop JobClient and FileSystem
-            instances.
+            Indicates if Oozie is configured to use Kerberos.
         </description>
     </property>
 
+    <property>
+        <name>oozie.service.HadoopAccessorService.keytab.file</name>
+        <value>${user.home}/oozie.keytab</value>
+        <description>
+            Location of the Oozie user keytab file.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.HadoopAccessorService.kerberos.principal</name>
+        <value>${user.name}/localhost@LOCALHOST</value>
+        <description>
+            Kerberos principal for Oozie service.
+        </description>
+    </property>
 
 </configuration>

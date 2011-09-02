@@ -30,7 +30,6 @@ import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.ELEvaluator;
-import org.apache.oozie.util.HadoopAccessor;
 import org.apache.oozie.command.Command;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.service.CallbackService;
@@ -153,13 +152,12 @@ public abstract class ActionCommand<T> extends Command<Void> {
         ActionExecutorContext aContext = (ActionExecutorContext) context;
         WorkflowActionBean action = (WorkflowActionBean) aContext.getAction();
         incrActionErrorCounter(action.getType(), "error", 1);
+        action.setPending();
         if (isStart) {
-            action.setPending();
             action.setExecutionData(message, null);
             queueCallable(new ActionEndCommand(action.getId(), action.getType()));
         }
         else {
-            action.resetPending();
             action.setEndData(status, WorkflowAction.Status.ERROR.toString());
         }
     }
@@ -313,9 +311,12 @@ public abstract class ActionCommand<T> extends Command<Void> {
 
         public FileSystem getAppFileSystem() throws IOException, URISyntaxException{
             WorkflowJob workflow = getWorkflow();
-            HadoopAccessor ha = Services.get().get(HadoopAccessorService.class).get(workflow.getUser(),
-                                                                                    workflow.getGroup());
-            return ha.createFileSystem(new URI(getWorkflow().getAppPath()), new Configuration());
+            XConfiguration jobConf = new XConfiguration(new StringReader(workflow.getConf()));
+            Configuration fsConf = new Configuration();
+            XConfiguration.copy(jobConf, fsConf);
+            return Services.get().get(HadoopAccessorService.class).
+                    createFileSystem(workflow.getUser(), workflow.getGroup(), new URI(getWorkflow().getAppPath()),
+                                     fsConf);
         }
     }
 }

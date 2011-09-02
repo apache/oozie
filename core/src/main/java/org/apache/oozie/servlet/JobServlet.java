@@ -104,6 +104,8 @@ public class JobServlet extends JsonRestServlet {
 
                 conf = XConfiguration.trim(conf);
 
+                JobsServlet.validateJobConfiguration(conf);
+
                 checkAuthorizationForApp(getUser(request),  conf);
 
                 dagEngine.reRun(jobId, conf);
@@ -148,7 +150,7 @@ public class JobServlet extends JsonRestServlet {
                 auth.authorizeForGroup(user, group);
             }
             XLog.Info.get().setParameter(XLogService.GROUP, group);
-            auth.authorizeForApp(user, group, conf.get(OozieClient.APP_PATH));
+            auth.authorizeForApp(user, group, conf.get(OozieClient.APP_PATH), conf);
         }
         catch (AuthorizationException ex) {
             throw new XServletException(HttpServletResponse.SC_UNAUTHORIZED, ex);

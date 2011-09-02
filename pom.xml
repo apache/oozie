@@ -30,7 +30,7 @@
         <failIfNoTests>false</failIfNoTests>
 
         <!-- Oozie is tied to a Hadoop version, this allows Oozie versioning within a single Hadoop version -->
-        <oozieVersion>1.5.9</oozieVersion>
+        <oozieVersion>1.6.2</oozieVersion>
 
         <hadoopVersion>0.20.1</hadoopVersion>
 
@@ -43,8 +43,19 @@
         <oozie.test.job.tracker>localhost:9001</oozie.test.job.tracker>
 
         <oozie.test.name.node>hdfs://localhost:9000</oozie.test.name.node>
+
+        <oozie.test.hadoop.minicluster>true</oozie.test.hadoop.minicluster>
+        <hadoop.log.dir>/tmp</hadoop.log.dir>
+
+        <oozie.test.hadoop.security>pre</oozie.test.hadoop.security>
+
+        <oozie.test.kerberos.keytab.file>${user.home}/oozie.keytab</oozie.test.kerberos.keytab.file>
+        <oozie.test.kerberos.realm>LOCALHOST</oozie.test.kerberos.realm>
+        <oozie.test.kerberos.oozie.principal>${user.name}/localhost</oozie.test.kerberos.oozie.principal>
+        <oozie.test.kerberos.jobtracker.principal>mapred/localhost</oozie.test.kerberos.jobtracker.principal>
+        <oozie.test.kerberos.namenode.principal>hdfs/localhost</oozie.test.kerberos.namenode.principal>
     </properties>
-    
+
     <licenses>
         <license>
             <name>The Apache Software License, Version 2.0</name>
@@ -188,6 +199,42 @@
                         <property>
                             <name>oozie.test.name.node</name>
                             <value>${oozie.test.name.node}</value>
+                        </property>
+                        <property>
+                            <name>oozie.test.kerberos</name>
+                            <value>${oozie.test.kerberos}</value>
+                        </property>
+                        <property>
+                            <name>oozie.test.kerberos.keytab.file</name>
+                            <value>${oozie.test.kerberos.keytab.file}</value>
+                        </property>
+                        <property>
+                            <name>oozie.test.kerberos.realm</name>
+                            <value>${oozie.test.kerberos.realm}</value>
+                        </property>
+                        <property>
+                            <name>oozie.test.kerberos.oozie.principal</name>
+                            <value>${oozie.test.kerberos.oozie.principal}</value>
+                        </property>
+                        <property>
+                            <name>oozie.test.kerberos.jobtracker.principal</name>
+                            <value>${oozie.test.kerberos.jobtracker.principal}</value>
+                        </property>
+                        <property>
+                            <name>oozie.test.kerberos.namenode.principal</name>
+                            <value>${oozie.test.kerberos.namenode.principal}</value>
+                        </property>
+                        <property>
+                            <name>oozie.test.hadoop.minicluster</name>
+                            <value>${oozie.test.hadoop.minicluster}</value>
+                        </property>
+                        <property>
+                            <name>hadoop.log.dir</name>
+                            <value>${hadoop.log.dir}</value>
+                        </property>
+                        <property>
+                            <name>oozie.test.hadoop.security</name>
+                            <value>${oozie.test.hadoop.security}</value>
                         </property>
                     </systemProperties>
                 </configuration>

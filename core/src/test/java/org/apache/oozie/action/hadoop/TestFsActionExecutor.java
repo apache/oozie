@@ -47,8 +47,8 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
         FsActionExecutor ae = new FsActionExecutor();
 
         XConfiguration protoConf = new XConfiguration();
-        protoConf.set(WorkflowAppService.HADOOP_USER, System.getProperty("user.name"));
-        protoConf.set(WorkflowAppService.HADOOP_UGI, System.getProperty("user.name") + ",other");
+        protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
+        protoConf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
 
         WorkflowJobBean wf = createBaseWorkflow(protoConf, "fs-action");
         WorkflowActionBean action = (WorkflowActionBean) wf.getActions().get(0);
@@ -169,26 +169,24 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
         Path child = new Path(path, "child");
         Path grandchild = new Path(child, "grandchild");
         fs.mkdirs(grandchild);
-        fs.setPermission(path, new FsPermission((short) 0));
-        fs.setPermission(child, new FsPermission((short) 0));
-        fs.setPermission(grandchild, new FsPermission((short) 0));
+        fs.setPermission(path, FsPermission.valueOf("-rwx------"));
+        fs.setPermission(child, FsPermission.valueOf("-rwxr-----"));
+        fs.setPermission(grandchild, FsPermission.valueOf("-rwx---r--"));
+        assertEquals("rwx------", fs.getFileStatus(path).getPermission().toString());
+        assertEquals("rwxr-----", fs.getFileStatus(child).getPermission().toString());
+        assertEquals("rwx---r--", fs.getFileStatus(grandchild).getPermission().toString());
 
         Context context = createContext("<fs/>");
 
-        ae.chmod(context, path, "-r--r--r--", false);
-        assertEquals("r--r--r--", fs.getFileStatus(path).getPermission().toString());
-        assertEquals("---------", fs.getFileStatus(child).getPermission().toString());
-        assertEquals("---------", fs.getFileStatus(grandchild).getPermission().toString());
+        ae.chmod(context, path, "-rwx-----x", false);
+        assertEquals("rwx-----x", fs.getFileStatus(path).getPermission().toString());
+        assertEquals("rwxr-----", fs.getFileStatus(child).getPermission().toString());
+        assertEquals("rwx---r--", fs.getFileStatus(grandchild).getPermission().toString());
 
-        ae.chmod(context, path, "111", false);
-        assertEquals(111, fs.getFileStatus(path).getPermission().toShort());
-        assertEquals(0, fs.getFileStatus(child).getPermission().toShort());
-        assertEquals(0, fs.getFileStatus(grandchild).getPermission().toShort());
-
-        ae.chmod(context, path, "-r--r--r--", true);
-        assertEquals("r--r--r--", fs.getFileStatus(path).getPermission().toString());
-        assertEquals("r--r--r--", fs.getFileStatus(child).getPermission().toString());
-        assertEquals("---------", fs.getFileStatus(grandchild).getPermission().toString());
+        ae.chmod(context, path, "-rwxr----x", true);
+        assertEquals("rwxr----x", fs.getFileStatus(path).getPermission().toString());
+        assertEquals("rwxr----x", fs.getFileStatus(child).getPermission().toString());
+        assertEquals("rwx---r--", fs.getFileStatus(grandchild).getPermission().toString());
     }
 
     public void testDoOperations() throws Exception {
@@ -203,22 +201,18 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
         Path target = new Path(new Path(getFsTestCaseDir(), "target").toUri().getPath());
         Path chmod1 = new Path(getFsTestCaseDir(), "chmod1");
         fs.mkdirs(chmod1);
-        fs.setPermission(chmod1, new FsPermission((short)0));
-        Path child1  = new Path(getFsTestCaseDir(), "child1");
+        Path child1  = new Path(chmod1, "child1");
         fs.mkdirs(child1);
-        fs.setPermission(child1, new FsPermission((short)0));
         Path chmod2  = new Path(getFsTestCaseDir(), "chmod2");
         fs.mkdirs(chmod2);
-        fs.setPermission(chmod2, new FsPermission((short)0));
-        Path child2  = new Path(getFsTestCaseDir(), "child2");
+        Path child2  = new Path(chmod2, "child2");
         fs.mkdirs(child2);
-        fs.setPermission(child2, new FsPermission((short)0));
 
         String str = MessageFormat.format("<root><mkdir path=''{0}''/>" +
                                           "<delete path=''{1}''/>" +
                                           "<move source=''{2}'' target=''{3}''/>" +
-                                          "<chmod path=''{4}'' permissions=''111''/>" +
-                                          "<chmod path=''{5}'' permissions=''222'' dir-files=''false''/>" +
+                                          "<chmod path=''{4}'' permissions=''-rwxrwxrwx''/>" +
+                                          "<chmod path=''{5}'' permissions=''-rwxrwx---'' dir-files=''false''/>" +
                                           "</root>", mkdir, delete, source, target, chmod1, chmod2);
 
         Element xml = XmlUtils.parseXml(str);
@@ -230,10 +224,10 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
         assertFalse(fs.exists(source));
         assertTrue(fs.exists(target));
 
-        assertEquals(111, fs.getFileStatus(chmod1).getPermission().toShort());
-        assertNotSame(111, fs.getFileStatus(child1).getPermission().toShort());
-        assertEquals(222, fs.getFileStatus(chmod2).getPermission().toShort());
-        assertEquals(0, fs.getFileStatus(child2).getPermission().toShort());
+        assertEquals("rwxrwxrwx", fs.getFileStatus(chmod1).getPermission().toString());
+        assertNotSame("rwxrwxrwx", fs.getFileStatus(child1).getPermission().toString());
+        assertEquals("rwxrwx---", fs.getFileStatus(chmod2).getPermission().toString());
+        assertNotSame("rwxrwx---", fs.getFileStatus(child2).getPermission().toString());
 
     }
 
@@ -249,22 +243,18 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
         Path target = new Path(new Path(getFsTestCaseDir(), "target").toUri().getPath());
         Path chmod1 = new Path(getFsTestCaseDir(), "chmod1");
         fs.mkdirs(chmod1);
-        fs.setPermission(chmod1, new FsPermission((short)0));
-        Path child1  = new Path(getFsTestCaseDir(), "child1");
+        Path child1  = new Path(chmod1, "child1");
         fs.mkdirs(child1);
-        fs.setPermission(child1, new FsPermission((short)0));
         Path chmod2  = new Path(getFsTestCaseDir(), "chmod2");
         fs.mkdirs(chmod2);
-        fs.setPermission(chmod2, new FsPermission((short)0));
-        Path child2  = new Path(getFsTestCaseDir(), "child2");
+        Path child2  = new Path(chmod2, "child2");
         fs.mkdirs(child2);
-        fs.setPermission(child2, new FsPermission((short)0));
-        
+
         String actionXml = MessageFormat.format("<fs><mkdir path=''{0}''/>" +
                                           "<delete path=''{1}''/>" +
                                           "<move source=''{2}'' target=''{3}''/>" +
-                                          "<chmod path=''{4}'' permissions=''111''/>" +
-                                          "<chmod path=''{5}'' permissions=''222'' dir-files=''false''/>" +
+                                          "<chmod path=''{4}'' permissions=''-rwxrwxrwx''/>" +
+                                          "<chmod path=''{5}'' permissions=''-rwxrwx---'' dir-files=''false''/>" +
                                           "</fs>", mkdir, delete, source, target, chmod1, chmod2);
 
 
@@ -290,10 +280,10 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
         assertFalse(fs.exists(source));
         assertTrue(fs.exists(target));
 
-        assertEquals(111, fs.getFileStatus(chmod1).getPermission().toShort());
-        assertNotSame(111, fs.getFileStatus(child1).getPermission().toShort());
-        assertEquals(222, fs.getFileStatus(chmod2).getPermission().toShort());
-        assertEquals(0, fs.getFileStatus(child2).getPermission().toShort());
+        assertEquals("rwxrwxrwx", fs.getFileStatus(chmod1).getPermission().toString());
+        assertNotSame("rwxrwxrwx", fs.getFileStatus(child1).getPermission().toString());
+        assertEquals("rwxrwx---", fs.getFileStatus(chmod2).getPermission().toString());
+        assertNotSame("rwxrwx---", fs.getFileStatus(child2).getPermission().toString());
 
     }
 
@@ -309,16 +299,12 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
         Path target = new Path(new Path(getFsTestCaseDir(), "target").toUri().getPath());
         Path chmod1 = new Path(getFsTestCaseDir(), "chmod1");
         fs.mkdirs(chmod1);
-        fs.setPermission(chmod1, new FsPermission((short)0));
-        Path child1  = new Path(getFsTestCaseDir(), "child1");
+        Path child1  = new Path(chmod1, "child1");
         fs.mkdirs(child1);
-        fs.setPermission(child1, new FsPermission((short)0));
         Path chmod2  = new Path(getFsTestCaseDir(), "chmod2");
         fs.mkdirs(chmod2);
-        fs.setPermission(chmod2, new FsPermission((short)0));
-        Path child2  = new Path(getFsTestCaseDir(), "child2");
+        Path child2  = new Path(chmod2, "child2");
         fs.mkdirs(child2);
-        fs.setPermission(child2, new FsPermission((short)0));
 
         String actionXml = MessageFormat.format("<fs>" +
                                           "<mkdir path=''{0}''/>" +
@@ -357,8 +343,8 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
                                          "<mkdir path=''{0}''/>" +
                                          "<delete path=''{1}''/>" +
                                          "<move source=''{2}'' target=''{3}''/>" +
-                                         "<chmod path=''{4}'' permissions=''111''/>" +
-                                         "<chmod path=''{5}'' permissions=''222'' dir-files=''false''/>" +
+                                         "<chmod path=''{4}'' permissions=''-rwxrwxrwx''/>" +
+                                         "<chmod path=''{5}'' permissions=''-rwxrwx---'' dir-files=''false''/>" +
                                          "</fs>", mkdir, delete, source, target, chmod1, chmod2);
 
         context = createContext(actionXml);
@@ -383,11 +369,18 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
         assertFalse(fs.exists(source));
         assertTrue(fs.exists(target));
 
-        assertEquals(111, fs.getFileStatus(chmod1).getPermission().toShort());
-        assertNotSame(111, fs.getFileStatus(child1).getPermission().toShort());
-        assertEquals(222, fs.getFileStatus(chmod2).getPermission().toShort());
-        assertEquals(0, fs.getFileStatus(child2).getPermission().toShort());
+        assertEquals("rwxrwxrwx", fs.getFileStatus(chmod1).getPermission().toString());
+        assertNotSame("rwxrwxrwx", fs.getFileStatus(child1).getPermission().toString());
+        assertEquals("rwxrwx---", fs.getFileStatus(chmod2).getPermission().toString());
+        assertNotSame("rwxrwx---", fs.getFileStatus(child2).getPermission().toString());
+    }
 
+    public void testPermissionMask() throws Exception {
+        FsActionExecutor ae = new FsActionExecutor();
+        assertEquals("rwxrwxrwx", ae.createShortPermission("777", null).toString());
+        assertEquals("rwxrwxrwx", ae.createShortPermission("-rwxrwxrwx", null).toString());
+        assertEquals("r--------", ae.createShortPermission("400", null).toString());
+        assertEquals("r--------", ae.createShortPermission("-r--------", null).toString());
     }
 
 }

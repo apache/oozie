@@ -19,9 +19,7 @@ package org.apache.oozie.action.hadoop;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.oozie.test.XFsTestCase;
 import org.apache.oozie.util.XConfiguration;
-import org.apache.oozie.util.HadoopAccessor;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -32,9 +30,9 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.Properties;
 
-public class TestMapReduceMain extends XFsTestCase {
+public class TestMapReduceMain extends MainTestCase {
 
-    public void testMain() throws Exception {
+    public Void call() throws Exception {
         FileSystem fs = getFileSystem();
 
         Path inputDir = new Path(getFsTestCaseDir(), "input");
@@ -55,9 +53,8 @@ public class TestMapReduceMain extends XFsTestCase {
         jobConf.set("mapred.input.dir", inputDir.toString());
         jobConf.set("mapred.output.dir", outputDir.toString());
 
-        jobConf.set("oozie.hadoop.accessor.class", HadoopAccessor.class.getName());
-        jobConf.set("user.name", System.getProperty("user.name"));
-        jobConf.set("hadoop.job.ugi", System.getProperty("user.name") + ",others");
+        jobConf.set("user.name", getTestUser());
+        jobConf.set("hadoop.job.ugi", getTestUser() + "," + getTestGroup());
 
         File actionXml = new File(getTestCaseDir(), "action.xml");
         OutputStream os = new FileOutputStream(actionXml);
@@ -78,6 +75,7 @@ public class TestMapReduceMain extends XFsTestCase {
         is.close();
 
         assertTrue(props.containsKey("id"));
+        return null;
     }
 
 }

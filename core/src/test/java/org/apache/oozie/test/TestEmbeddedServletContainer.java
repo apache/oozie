@@ -17,6 +17,11 @@
  */
 package org.apache.oozie.test;
 
+import org.mortbay.jetty.servlet.ServletHolder;
+import org.mortbay.jetty.servlet.Context;
+import org.mortbay.jetty.Server;
+import org.mortbay.jetty.handler.ContextHandler;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;

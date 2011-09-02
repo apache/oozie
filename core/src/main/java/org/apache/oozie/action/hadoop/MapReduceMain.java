@@ -19,11 +19,11 @@ package org.apache.oozie.action.hadoop;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RunningJob;
-import org.apache.hadoop.util.ReflectionUtils;
-import org.apache.oozie.util.HadoopAccessor;
+import org.apache.hadoop.security.UserGroupInformation;
 
 import java.util.Map;
 import java.util.Properties;
@@ -86,20 +86,19 @@ public class MapReduceMain extends LauncherMain {
     protected RunningJob submitJob(Configuration actionConf) throws Exception {
         JobConf jobConf = new JobConf();
         addActionConf(jobConf, actionConf);
-
+        
+        //propagate delegation related props from launcher job to MR job
+        if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
+            jobConf.set("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
+        }
+        
         JobClient jobClient = createJobClient(jobConf);
         return jobClient.submitJob(jobConf);
     }
 
     @SuppressWarnings("unchecked")
     protected JobClient createJobClient(JobConf jobConf) throws IOException {
-        Class klass = jobConf.getClass("oozie.hadoop.accessor.class", HadoopAccessor.class);
-        HadoopAccessor ha = (HadoopAccessor) ReflectionUtils.newInstance(klass, null);
-        String user = jobConf.get("user.name");
-        String group = jobConf.get("hadoop.job.ugi");
-        group = group.substring(group.indexOf(",") + 1);
-        ha.setUGI(user, group);
-        return ha.createJobClient(jobConf);
+        return new JobClient(jobConf);
     }
 
     // allows any character in the value, the conf.setStrings() does not allow commas

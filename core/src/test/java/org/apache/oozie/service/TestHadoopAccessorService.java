@@ -17,22 +17,66 @@
  */
 package org.apache.oozie.service;
 
-import org.apache.oozie.service.Services;
-import org.apache.oozie.service.ActionService;
 import org.apache.oozie.test.XTestCase;
-import org.apache.oozie.util.HadoopAccessor;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.JobClient;
+import org.apache.hadoop.fs.FileSystem;
+
+import java.net.URI;
 
 public class TestHadoopAccessorService extends XTestCase {
 
-    public void testService() throws Exception {
+    protected void setUp() throws Exception {
+        super.setUp();
         Services services = new Services();
         services.init();
+    }
+
+    protected void tearDown() throws Exception {
+        Services.get().destroy();
+        super.tearDown();
+    }
+
+    public void testService() throws Exception {
+        Services services = Services.get();
         HadoopAccessorService has = services.get(HadoopAccessorService.class);
         assertNotNull(has);
-        assertEquals(HadoopAccessor.class, has.getAccessorClass());
-        HadoopAccessor ha = has.get("test", "group");
-        assertNotNull(ha);
-        services.destroy();
+    }
+
+    public void testAccessor() throws Exception {
+        Services services = Services.get();
+        HadoopAccessorService has = services.get(HadoopAccessorService.class);
+        JobConf conf = new JobConf();
+        conf.set("mapred.job.tracker", getJobTrackerUri());
+        conf.set("fs.default.name", getNameNodeUri());
+        URI uri = new URI(getNameNodeUri());
+
+        String user = getTestUser() + "-invalid";
+        String group = getTestGroup();
+
+        try {
+            has.createJobClient(null, group, conf);
+            fail();
+        }
+        catch (IllegalArgumentException ex) {
+        }
+
+        try {
+            has.createJobClient(user, null, conf);
+            fail();
+        }
+        catch (IllegalArgumentException ex) {
+        }
+
+        user = getTestUser();
+        JobClient jc = has.createJobClient(user, group, conf);
+        assertNotNull(jc);
+
+        FileSystem fs = has.createFileSystem(user, group, conf);
+        assertNotNull(fs);
+
+        fs = has.createFileSystem(user, group, uri, conf);
+        assertNotNull(fs);
     }
 
 }

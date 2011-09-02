@@ -23,9 +23,6 @@ import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.workflow.WorkflowApp;
 import org.apache.oozie.workflow.WorkflowException;
 import org.apache.oozie.workflow.lite.LiteWorkflowApp;
-import org.apache.oozie.service.Services;
-import org.apache.oozie.service.WorkflowAppService;
-import org.apache.oozie.service.WorkflowSchemaService;
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
@@ -82,7 +79,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             IOUtils.copyCharStream(reader, writer);
 
             WorkflowAppService wps = services.get(WorkflowAppService.class);
-            String wfDef = wps.readDefinition("file://" + getTestCaseDir(), System.getProperty("user.name"), "group",
+            String wfDef = wps.readDefinition("file://" + getTestCaseDir(), getTestUser(), "group",
                                               "authToken");
             assertNotNull(reader.toString(), wfDef);
         }
@@ -118,7 +115,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
 
             Configuration jobConf = new XConfiguration();
             jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir());
-            jobConf.set(OozieClient.USER_NAME, System.getProperty("user.name"));
+            jobConf.set(OozieClient.USER_NAME, getTestUser());
             jobConf.set(OozieClient.GROUP_NAME, "group");
 
             WorkflowApp app = wps.parseDef(jobConf, "authToken");
@@ -158,7 +155,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
 
             Configuration jobConf = new XConfiguration();
             jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir());
-            jobConf.set(OozieClient.USER_NAME, System.getProperty("user.name"));
+            jobConf.set(OozieClient.USER_NAME, getTestUser());
             jobConf.set(OozieClient.GROUP_NAME, "group");
 
             LiteWorkflowApp app = (LiteWorkflowApp) wps.parseDef(jobConf, "authToken");
@@ -196,7 +193,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
 
             Configuration jobConf = new XConfiguration();
             jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir());
-            jobConf.set(OozieClient.USER_NAME, System.getProperty("user.name"));
+            jobConf.set(OozieClient.USER_NAME, getTestUser());
             jobConf.set(OozieClient.GROUP_NAME, "group");
 
             try {
@@ -225,7 +222,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
 
             Configuration jobConf = new XConfiguration();
             jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir());
-            jobConf.set(OozieClient.USER_NAME, System.getProperty("user.name"));
+            jobConf.set(OozieClient.USER_NAME, getTestUser());
             jobConf.set(OozieClient.GROUP_NAME, "group");
 
             LiteWorkflowApp app = (LiteWorkflowApp) wps.parseDef(jobConf, "authToken");
@@ -279,11 +276,12 @@ public class TestLiteWorkflowAppService extends XTestCase {
         WorkflowAppService wps = services.get(WorkflowAppService.class);
         Configuration jobConf = new XConfiguration();
         jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir());
-        jobConf.set(OozieClient.USER_NAME, System.getProperty("user.name"));
-        jobConf.set(OozieClient.GROUP_NAME, "group");
+        jobConf.set(OozieClient.USER_NAME, getTestUser());
+        jobConf.set(OozieClient.GROUP_NAME, getTestGroup());
+        injectKerberosInfo(jobConf);
         Configuration protoConf = wps.createProtoActionConf(jobConf, "authToken");
-        assertEquals(System.getProperty("user.name"), protoConf.get(OozieClient.USER_NAME));
-        assertEquals("group", protoConf.get(OozieClient.GROUP_NAME));
+        assertEquals(getTestUser(), protoConf.get(OozieClient.USER_NAME));
+        assertEquals(getTestGroup(), protoConf.get(OozieClient.GROUP_NAME));
         assertEquals(getTestCaseDir() + "/lib/maputil.jar", protoConf
                 .getStrings(WorkflowAppService.APP_LIB_JAR_PATH_LIST)[0]);
         assertEquals(1, protoConf.getStrings(WorkflowAppService.APP_LIB_JAR_PATH_LIST).length);

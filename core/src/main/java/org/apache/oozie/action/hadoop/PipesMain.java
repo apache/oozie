@@ -66,7 +66,10 @@ public class PipesMain extends MapReduceMain {
 
         addActionConf(jobConf, actionConf);
 
-        //TODO see how this will work with Kerberos
+        //propagate delegation related props from launcher job to MR job
+        if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
+            jobConf.set("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
+        }
         
         return Submitter.jobSubmit(jobConf);
     }

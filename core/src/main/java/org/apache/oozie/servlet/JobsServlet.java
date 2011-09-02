@@ -24,6 +24,7 @@ import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.DagEngineService;
+import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.DagEngine;
 import org.apache.oozie.DagEngineException;
 import org.apache.oozie.WorkflowsInfo;
@@ -38,7 +39,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-public class JobsServlet extends JsonRestServlet {
+public class    JobsServlet extends JsonRestServlet {
     private static final String INSTRUMENTATION_NAME = "jobs";
 
     private static final JsonRestServlet.ResourceInfo RESOURCES_INFO[] = new JsonRestServlet.ResourceInfo[1];
@@ -73,7 +74,9 @@ public class JobsServlet extends JsonRestServlet {
         stopCron();
 
         conf = XConfiguration.trim(conf);
-        
+
+        validateJobConfiguration(conf);
+
         JobServlet.checkAuthorizationForApp(getUser(request), conf);
 
         String action = request.getParameter(RestConstants.ACTION_PARAM);
@@ -96,10 +99,32 @@ public class JobsServlet extends JsonRestServlet {
         }
     }
 
+    static void validateJobConfiguration(Configuration conf) throws XServletException {
+        if (conf.get(OozieClient.USER_NAME) == null) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0401,
+                                        OozieClient.USER_NAME);
+        }
 
-/**
-* Return information about jobs.
-*/
+        //TODO: it should use KerberosHadoopAccessorService.KERBEROS_AUTH_ENABLED once 20.1 is not used anymore
+        if (Services.get().getConf().getBoolean("oozie.service.HadoopAccessorService.kerberos.enabled", false)) {
+            if (conf.get(WorkflowAppService.HADOOP_JT_KERBEROS_NAME) == null) {
+                throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0401,
+                                            WorkflowAppService.HADOOP_JT_KERBEROS_NAME);
+            }
+            if (conf.get(WorkflowAppService.HADOOP_NN_KERBEROS_NAME) == null) {
+                throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0401,
+                                            WorkflowAppService.HADOOP_NN_KERBEROS_NAME);
+            }
+        }
+        else {
+            conf.set(WorkflowAppService.HADOOP_JT_KERBEROS_NAME, "");
+            conf.set(WorkflowAppService.HADOOP_NN_KERBEROS_NAME, "");
+        }
+    }
+
+    /**
+     * Return information about jobs.
+     */
     @SuppressWarnings("unchecked")
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         try {

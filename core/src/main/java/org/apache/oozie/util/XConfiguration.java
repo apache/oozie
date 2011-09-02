@@ -242,15 +242,23 @@ public class XConfiguration extends Configuration {
      * @return a string with the configuration in XML format.
      */
     public String toXmlString() {
+        return toXmlString(true);
+    }
+
+    public String toXmlString(boolean prolog) {
+        String xml;
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             this.writeXml(baos);
             baos.close();
-            return new String(baos.toByteArray());
+            xml =  new String(baos.toByteArray());
         }
         catch (IOException ex) {
             throw new RuntimeException("It should not happen, " + ex.getMessage(), ex);
         }
+        if (!prolog) {
+            xml = xml.substring(xml.indexOf("<configuration>"));
+        }
+        return xml;
     }
-
 }

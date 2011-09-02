@@ -47,9 +47,9 @@ public class TestFsELFunctions extends XFsTestCase {
         String file2 = new Path(getFsTestCaseDir(), "file2").toString();
         String dir = new Path(getFsTestCaseDir(), "dir").toString();
         Configuration protoConf = new Configuration();
-        protoConf.set(OozieClient.USER_NAME, System.getProperty("user.name"));
+        protoConf.set(OozieClient.USER_NAME, getTestUser());
         protoConf.set(OozieClient.GROUP_NAME, "group");
-        protoConf.set("hadoop.job.ugi", System.getProperty("user.name") + "," + "group");
+        protoConf.set("hadoop.job.ugi", getTestUser() + "," + "group");
 
         FileSystem fs = getFileSystem();
         fs.mkdirs(new Path(dir));
@@ -65,7 +65,7 @@ public class TestFsELFunctions extends XFsTestCase {
 
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, "appPath");
-        conf.set(OozieClient.USER_NAME, System.getProperty("user.name"));
+        conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set(OozieClient.GROUP_NAME, "group");
         conf.set("test.dir", getTestCaseDir());
         conf.set("file1", file1);
@@ -81,7 +81,7 @@ public class TestFsELFunctions extends XFsTestCase {
         wf.setId(job.getId());
         wf.setAppName("name");
         wf.setAppPath("appPath");
-        wf.setUser(System.getProperty("user.name"));
+        wf.setUser(getTestUser());
         wf.setGroup("group");
         wf.setWorkflowInstance(job);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();

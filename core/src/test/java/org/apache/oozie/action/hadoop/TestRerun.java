@@ -17,10 +17,6 @@
  */
 package org.apache.oozie.action.hadoop;
 
-import org.apache.oozie.WorkflowJobBean;
-import org.apache.oozie.service.WorkflowStoreService;
-import org.apache.oozie.store.WorkflowStore;
-import org.apache.oozie.service.Services;
 import org.apache.oozie.service.XLogService;
 
 import java.util.List;
@@ -33,7 +29,6 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
-import java.net.URI;
 import java.util.Properties;
 import java.util.Map;
 
@@ -43,12 +38,15 @@ import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.local.LocalOozie;
 import org.apache.oozie.util.IOUtils;
+import org.apache.oozie.test.XFsTestCase;
 
-public class TestRerun extends ActionExecutorTestCase {
+public class TestRerun extends XFsTestCase {
 
     protected void setUp() throws Exception {
         super.setUp();
         setSystemProperty(XLogService.LOG4J_FILE, "oozie-log4j.properties");
+        setSystemProperty("oozie.service.ActionCheckerService.action.check.delay", "1");
+        setSystemProperty("oozie.service.ActionCheckerService.action.check.interval", "10");
         LocalOozie.start();
     }
 
@@ -57,17 +55,13 @@ public class TestRerun extends ActionExecutorTestCase {
         LocalOozie.stop();
     }
 
-    public void testDummy() {
-    }
-
     public void testRerun() throws Exception {
-        URI appUri = getAppPath().toUri();
-        String appPath = appUri.getPath();
+        Path appPath = new Path(getFsTestCaseDir(), "app");
         FileSystem fs = getFileSystem();
         fs.mkdirs(new Path(appPath, "lib"));
         File jarFile = IOUtils.createJar(new File(getTestCaseDir()), "test.jar", MapperReducerForTest.class);
         InputStream is = new FileInputStream(jarFile);
-        OutputStream os = fs.create(new Path(getAppPath(), "lib/test.jar"));
+        OutputStream os = fs.create(new Path(appPath, "lib/test.jar"));
         IOUtils.copyStream(is, os);
         Path input = new Path(appPath, "input");
         Path output = new Path(appPath, "output");
@@ -92,19 +86,21 @@ public class TestRerun extends ActionExecutorTestCase {
 
         final OozieClient wfClient = LocalOozie.getClient();
         Properties conf = wfClient.createConfiguration();
-        conf.setProperty(OozieClient.APP_PATH, getAppPath().toString());
+        conf.setProperty(OozieClient.APP_PATH, appPath.toString());
         conf.setProperty("jobTracker", getJobTrackerUri());
         conf.setProperty("nameNode", getNameNodeUri());
         conf.setProperty("mrclass", MapperReducerForTest.class.getName());
         conf.setProperty("input", input.toString());
         conf.setProperty("output", output.toString());
-        conf.setProperty("delPath", getNameNodeUri() + output.toString());
-        conf.setProperty("subWfApp", getAppPath().toString() + "/subwf");
+        conf.setProperty("delPath", output.toString());
+        conf.setProperty("subWfApp", appPath.toString() + "/subwf");
+        conf.setProperty("user.name", getTestUser());
+        injectKerberosInfo(conf);
 
         //first run
         final String jobId1 = wfClient.submit(conf);
         wfClient.start(jobId1);
-        waitFor(400 * 1000, new Predicate() {
+        waitFor(120 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
                 return wfClient.getJobInfo(jobId1).getStatus() == WorkflowJob.Status.SUCCEEDED;
             }
@@ -117,7 +113,7 @@ public class TestRerun extends ActionExecutorTestCase {
         //doing a rerun skipping no nodes
         conf.setProperty(OozieClient.RERUN_SKIP_NODES, "");
         wfClient.reRun(jobId1, conf);
-        waitFor(400 * 1000, new Predicate() {
+        waitFor(120 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
                 return wfClient.getJobInfo(jobId1).getStatus() == WorkflowJob.Status.SUCCEEDED;
             }

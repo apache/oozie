@@ -17,12 +17,12 @@
  */
 package org.apache.oozie.test;
 
-import org.mortbay.http.HttpContext;
-import org.mortbay.http.SocketListener;
 import org.mortbay.jetty.Server;
-import org.mortbay.jetty.servlet.ServletHandler;
+import org.mortbay.jetty.servlet.ServletHolder;
+import org.mortbay.jetty.servlet.Context;
 
 import java.net.InetAddress;
+import java.net.ServerSocket;
 
 /**
  * An embedded servlet container for testing purposes.
@@ -32,11 +32,11 @@ import java.net.InetAddress;
  * The servlet container is started in a free port.
  */
 public class EmbeddedServletContainer {
-    private Server webServer;
+    private Server server;
     private String host = null;
     private int port = -1;
     private String contextPath;
-    HttpContext context;
+    Context context;
 
     /**
      * Create a servlet container.
@@ -46,15 +46,10 @@ public class EmbeddedServletContainer {
      */
     public EmbeddedServletContainer(String contextPath) {
         this.contextPath = contextPath;
-        //TODO figure out how to bind the current IP instead loopback IP
-        webServer = new org.mortbay.jetty.Server();
-
-        // create web app context
-        context = new HttpContext();
-        context.setContextPath(contextPath + "/*");
-
-        // bind context to servlet engine
-        webServer.addContext(context);
+        server = new Server(0);
+        context = new Context();
+        context.setContextPath("/" + contextPath);
+        server.setHandler(context);
     }
 
     /**
@@ -65,12 +60,7 @@ public class EmbeddedServletContainer {
      * @param servletClass servlet class
      */
     public void addServletEndpoint(String servletPath, Class servletClass) {
-        // create servlet decision
-        ServletHandler handler = new ServletHandler();
-        handler.addServlet(servletClass.getName(), servletPath, servletClass.getName());
-
-        // bind servlet decision to context
-        context.addHandler(handler);
+        context.addServlet(new ServletHolder(servletClass), servletPath);
     }
 
     /**
@@ -81,15 +71,14 @@ public class EmbeddedServletContainer {
      * @throws Exception thrown if the container could not start.
      */
     public void start()  throws Exception {
-        SocketListener listener = new SocketListener();
-        listener.setPort(0);
-        // using IP, if we use name the fully qualified domain is not coming.
-        listener.setHost(InetAddress.getLocalHost().getHostAddress());
-        webServer.addListener(listener);
-
-        webServer.start();
-        port = listener.getPort();
-        host = listener.getHost();
+        host = InetAddress.getLocalHost().getHostName();
+        ServerSocket ss = new ServerSocket(0);
+        port = ss.getLocalPort();
+        ss.close();
+        server.getConnectors()[0].setHost(host);
+        server.getConnectors()[0].setPort(port);
+        server.start();
+        System.out.println("Running embedded servlet container at: http://" + host + ":" + port);
     }
 
     /**
@@ -138,14 +127,14 @@ public class EmbeddedServletContainer {
      */
     public void stop() {
         try {
-        webServer.stop();
+        server.stop();
         }
         catch (Exception e) {
             // ignore exception
         }
 
         try {
-            webServer.destroy();
+            server.destroy();
         }
         catch (Exception e) {
             // ignore exception

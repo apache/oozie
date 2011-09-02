@@ -34,7 +34,6 @@ import org.apache.oozie.service.WorkflowStoreService;
 import org.apache.oozie.store.WorkflowStore;
 import org.apache.oozie.local.LocalOozie;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.service.XLogService;
 import org.apache.oozie.test.XFsTestCase;
 import org.apache.oozie.util.IOUtils;
 
@@ -62,6 +61,9 @@ public class TestActionFailover extends XFsTestCase {
         final OozieClient wfClient = LocalOozie.getClient();
         Properties conf = wfClient.createConfiguration();
         conf.setProperty(OozieClient.APP_PATH, getTestCaseDir());
+        conf.setProperty(OozieClient.USER_NAME, getTestUser());
+        conf.setProperty(OozieClient.GROUP_NAME, getTestGroup());
+        injectKerberosInfo(conf);
         final Path source = new Path(getFsTestCaseDir(), "fsfailover-source");
         getFileSystem().mkdirs(source);
         final Path target = new Path(getFsTestCaseDir().toString(), "fsfailover-target");

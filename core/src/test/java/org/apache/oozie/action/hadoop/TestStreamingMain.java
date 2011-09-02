@@ -21,11 +21,9 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.streaming.StreamJob;
 import org.apache.hadoop.filecache.DistributedCache;
-import org.apache.oozie.test.XFsTestCase;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.ClassUtils;
 import org.apache.oozie.util.IOUtils;
-import org.apache.oozie.util.HadoopAccessor;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -36,9 +34,9 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.Properties;
 
-public class TestStreamingMain extends XFsTestCase {
+public class TestStreamingMain extends MainTestCase {
 
-    public void testMain() throws Exception {
+    public Void call() throws Exception {
         FileSystem fs = getFileSystem();
 
         Path streamingJar = new Path(getFsTestCaseDir(), "hadoop-streaming.jar");
@@ -62,12 +60,11 @@ public class TestStreamingMain extends XFsTestCase {
         jobConf.set("mapred.job.tracker", getJobTrackerUri());
         jobConf.set("fs.default.name", getNameNodeUri());
 
-        jobConf.set("oozie.hadoop.accessor.class", HadoopAccessor.class.getName());
-        jobConf.set("user.name", System.getProperty("user.name"));
-        jobConf.set("hadoop.job.ugi", System.getProperty("user.name") + ",others");
+        jobConf.set("user.name", getTestUser());
+        jobConf.set("hadoop.job.ugi", getTestUser() + "," + getTestGroup());
 
-        DistributedCache.addFileToClassPath(new Path(streamingJar.toUri().getPath()), jobConf);
-        
+        DistributedCache.addFileToClassPath(new Path(streamingJar.toUri().getPath()), fs.getConf());
+
         StreamingMain.setStreaming(jobConf, "cat", "wc", null, null, null);
 
         jobConf.set("mapred.input.dir", inputDir.toString());
@@ -93,6 +90,7 @@ public class TestStreamingMain extends XFsTestCase {
         is.close();
 
         assertTrue(props.containsKey("id"));
+        return null;
     }
 
 }

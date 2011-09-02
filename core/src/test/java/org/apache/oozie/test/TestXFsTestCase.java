@@ -29,7 +29,7 @@ public class TestXFsTestCase extends XFsTestCase {
 
         String testDir = getTestCaseDir();
         String nameNode = getNameNodeUri();
-        String user = System.getProperty("user.name");
+        String user = getTestUser();
         Path fsTestDir = getFsTestCaseDir();
 
         assertTrue(fsTestDir.toString().startsWith(nameNode));

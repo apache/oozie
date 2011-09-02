@@ -19,7 +19,6 @@ package org.apache.oozie.client;
 
 import org.apache.oozie.test.XFsTestCase;
 import org.apache.oozie.local.LocalOozie;
-import org.apache.oozie.service.XLogService;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
@@ -89,7 +88,9 @@ public class TestLocalOozie extends XFsTestCase {
             final OozieClient wc = LocalOozie.getClient();
             Properties conf = wc.createConfiguration();
             conf.setProperty(OozieClient.APP_PATH, appPath.toString());
-            conf.setProperty(OozieClient.GROUP_NAME, "other");
+            conf.setProperty(OozieClient.USER_NAME, getTestUser());
+            conf.setProperty(OozieClient.GROUP_NAME, getTestGroup());
+            injectKerberosInfo(conf);
 
             final String jobId = wc.submit(conf);
             assertNotNull(jobId);

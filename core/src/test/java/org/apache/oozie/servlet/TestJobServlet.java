@@ -110,11 +110,12 @@ public class TestJobServlet extends DagServletTestCase {
 
     public void testReRun() throws Exception {
         Configuration conf = new XConfiguration();
-        conf.set(OozieClient.USER_NAME, "user");
+        conf.set(OozieClient.USER_NAME, getTestUser());
         Path appPath = new Path(getFsTestCaseDir(), "app");
         getFileSystem().mkdirs(appPath);
         getFileSystem().create(new Path(appPath, "workflow.xml")).close();
         conf.set(OozieClient.APP_PATH, appPath.toString());
+        injectKerberosInfo(conf);
         _testAction(RestConstants.JOB_ACTION_RERUN, conf);
     }
 

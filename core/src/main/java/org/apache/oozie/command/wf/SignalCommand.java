@@ -61,90 +61,96 @@ public class SignalCommand extends Command<Void> {
             action = store.getAction(actionId, true);
             setLogInfo(action);
         }
-        try {
-            if (workflow.getStatus() == WorkflowJob.Status.RUNNING || workflow.getStatus() == WorkflowJob.Status.PREP) {
-                WorkflowInstance workflowInstance = workflow.getWorkflowInstance();
-                workflowInstance.setTransientVar(WorkflowStoreService.WORKFLOW_BEAN, workflow);
-                boolean completed;
-                if (action == null) {
-                    if (workflow.getStatus() == WorkflowJob.Status.PREP) {
-                        completed = workflowInstance.start();
-                        workflow.setStatus(WorkflowJob.Status.RUNNING);
-                        workflow.setStartTime(new Date());
-                        queueCallable(new NotificationCommand(workflow));
-                    }
-                    else {
-                        throw new CommandException(ErrorCode.E0801,
-                                                      workflow.getId());
-                    }
-                }
-                else {
-                    String skipVar = workflowInstance.getVar(action.getName() + WorkflowInstance.NODE_VAR_SEPARATOR
-                            + ReRunCommand.TO_SKIP);
-                    if(skipVar != null) {
-                        skipAction = skipVar.equals("true");
-                    }
-                    completed = workflowInstance.signal(action.getExecutionPath(), action.getSignalValue());
-                    action.resetPending();
-                    if (!skipAction) {
-                        action.setTransition(workflowInstance.getTransition(action.getName()));
-                        store.updateAction(action);
-                    }
-                }
-
-                if (completed) {
-                    for (String actionToKillId : WorkflowStoreService.getActionsToKill(workflowInstance)) {
-                        WorkflowActionBean actionToKill = store.getAction(actionToKillId, false);
-                        actionToKill.setPending();
-                        actionToKill.setStatus(WorkflowActionBean.Status.KILLED);
-                        store.updateAction(actionToKill);
-                        queueCallable(new ActionKillCommand(actionToKill.getId(), actionToKill.getType()));
-                    }
-
-                    for (String actionToFailId : WorkflowStoreService.getActionsToFail(workflowInstance)) {
-                        WorkflowActionBean actionToFail = store.getAction(actionToFailId, false);
-                        actionToFail.resetPending();
-                        actionToFail.setStatus(WorkflowActionBean.Status.FAILED);
-                        store.updateAction(actionToFail);
-                    }
-
-                    workflow.setStatus(WorkflowJob.Status.valueOf(workflowInstance.getStatus().toString()));
-                    workflow.setEndTime(new Date());
-                    queueCallable(new NotificationCommand(workflow));
-                    if (workflow.getStatus() == WorkflowJob.Status.SUCCEEDED) {
-                        incrJobCounter(INSTR_SUCCEEDED_JOBS_COUNTER_NAME, 1);
-                    }
-                }
-                else {
-                    for (WorkflowActionBean newAction : WorkflowStoreService.getStartedActions(workflowInstance)) {
-                        String skipVar = workflowInstance.getVar(newAction.getName()
-                                + WorkflowInstance.NODE_VAR_SEPARATOR + ReRunCommand.TO_SKIP);
-                        boolean skipNewAction = false;
-                        if (skipVar != null) {
-                            skipNewAction = skipVar.equals("true");
-                        }
-                        if (skipNewAction) {
-                            WorkflowActionBean oldAction = store.getAction(newAction.getId(), false);
-                            oldAction.setPending();
-                            store.updateAction(oldAction);
-                            queueCallable(new SignalCommand(jobId, oldAction.getId()));
+        if ((action == null) || (action.isComplete() && action.isPending())) {
+            try {
+                if (workflow.getStatus() == WorkflowJob.Status.RUNNING
+                        || workflow.getStatus() == WorkflowJob.Status.PREP) {
+                    WorkflowInstance workflowInstance = workflow.getWorkflowInstance();
+                    workflowInstance.setTransientVar(WorkflowStoreService.WORKFLOW_BEAN, workflow);
+                    boolean completed;
+                    if (action == null) {
+                        if (workflow.getStatus() == WorkflowJob.Status.PREP) {
+                            completed = workflowInstance.start();
+                            workflow.setStatus(WorkflowJob.Status.RUNNING);
+                            workflow.setStartTime(new Date());
+                            queueCallable(new NotificationCommand(workflow));
                         }
                         else {
-                            newAction.setPending();
-                            store.insertAction(newAction);
-                            queueCallable(new ActionStartCommand(newAction.getId(), newAction.getType()));
+                            throw new CommandException(ErrorCode.E0801, workflow.getId());
                         }
                     }
+                    else {
+                        String skipVar = workflowInstance.getVar(action.getName() + WorkflowInstance.NODE_VAR_SEPARATOR
+                                + ReRunCommand.TO_SKIP);
+                        if (skipVar != null) {
+                            skipAction = skipVar.equals("true");
+                        }
+                        completed = workflowInstance.signal(action.getExecutionPath(), action.getSignalValue());
+                        action.resetPending();
+                        if (!skipAction) {
+                            action.setTransition(workflowInstance.getTransition(action.getName()));
+                            store.updateAction(action);
+                        }
+                    }
+
+                    if (completed) {
+                        for (String actionToKillId : WorkflowStoreService.getActionsToKill(workflowInstance)) {
+                            WorkflowActionBean actionToKill = store.getAction(actionToKillId, false);
+                            actionToKill.setPending();
+                            actionToKill.setStatus(WorkflowActionBean.Status.KILLED);
+                            store.updateAction(actionToKill);
+                            queueCallable(new ActionKillCommand(actionToKill.getId(), actionToKill.getType()));
+                        }
+
+                        for (String actionToFailId : WorkflowStoreService.getActionsToFail(workflowInstance)) {
+                            WorkflowActionBean actionToFail = store.getAction(actionToFailId, false);
+                            actionToFail.resetPending();
+                            actionToFail.setStatus(WorkflowActionBean.Status.FAILED);
+                            store.updateAction(actionToFail);
+                        }
+
+                        workflow.setStatus(WorkflowJob.Status.valueOf(workflowInstance.getStatus().toString()));
+                        workflow.setEndTime(new Date());
+                        queueCallable(new NotificationCommand(workflow));
+                        if (workflow.getStatus() == WorkflowJob.Status.SUCCEEDED) {
+                            incrJobCounter(INSTR_SUCCEEDED_JOBS_COUNTER_NAME, 1);
+                        }
+                    }
+                    else {
+                        for (WorkflowActionBean newAction : WorkflowStoreService.getStartedActions(workflowInstance)) {
+                            String skipVar = workflowInstance.getVar(newAction.getName()
+                                    + WorkflowInstance.NODE_VAR_SEPARATOR + ReRunCommand.TO_SKIP);
+                            boolean skipNewAction = false;
+                            if (skipVar != null) {
+                                skipNewAction = skipVar.equals("true");
+                            }
+                            if (skipNewAction) {
+                                WorkflowActionBean oldAction = store.getAction(newAction.getId(), false);
+                                oldAction.setPending();
+                                store.updateAction(oldAction);
+                                queueCallable(new SignalCommand(jobId, oldAction.getId()));
+                            }
+                            else {
+                                newAction.setPending();
+                                store.insertAction(newAction);
+                                queueCallable(new ActionStartCommand(newAction.getId(), newAction.getType()));
+                            }
+                        }
+                    }
+                    store.updateWorkflow(workflow);
                 }
-                store.updateWorkflow(workflow);
+                else {
+                    XLog.getLog(getClass()).warn("Workflow not RUNNING, current status [{0}]", workflow.getStatus());
+                }
             }
-            else {
-                XLog.getLog(getClass())
-                        .warn("Workflow not RUNNING, current status [{0}]", workflow.getStatus());
+            catch (WorkflowException ex) {
+                throw new CommandException(ex);
             }
         }
-        catch (WorkflowException ex) {
-            throw new CommandException(ex);
+        else {
+            XLog.getLog(getClass()).warn(
+                    "SignalCommand for action id :" + actionId + " is already processed. status=" + action.getStatus()
+                            + ", Pending=" + action.isPending());
         }
         return null;
     }

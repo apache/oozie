@@ -18,7 +18,7 @@
 -->        
 <configuration>
 
-    <!-- Oozie System ID
+    <!-- Oozie System ID -->
 
     <property>
         <name>oozie.system.id</name>
@@ -28,9 +28,7 @@
         </description>
     </property>
 
-    -->
-
-    <!-- Oozie Base URL
+    <!-- Oozie Base URL -->
 
     <property>
         <name>oozie.base.url</name>
@@ -40,9 +38,9 @@
         </description>
     </property>
     
-    -->
-
     <!-- Disable automatic DB schema creation
+
+    # THIS IS COMMENTED OUT
 
     <property>
         <name>oozie.db.schema.create</name>
@@ -59,7 +57,9 @@
 
     <!-- MySQL JDBC
 
-   <property>
+    # THIS IS COMMENTED OUT
+
+    <property>
         <name>oozie.service.DataSourceService.jdbc.driver</name>
         <value>com.mysql.jdbc.Driver</value>
         <description>
@@ -97,6 +97,8 @@
 
     <!-- Security
 
+    # THIS IS COMMENTED OUT
+
     <property>
         <name>oozie.service.AuthorizationService.security.enabled</name>
         <value>true</value>
@@ -108,4 +110,31 @@
 
     -->
 
+    <!-- Kerberos Authentication -->
+
+    <property>
+        <name>oozie.service.HadoopAccessorService.kerberos.enabled</name>
+        <value>false</value>
+        <description>
+            Indicates if Oozie is configured to use Kerberos.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.HadoopAccessorService.keytab.file</name>
+        <value>${user.home}/oozie.keytab</value>
+        <description>
+            Location of the Oozie user keytab file.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.HadoopAccessorService.kerberos.principal</name>
+        <value>${user.name}/localhost@LOCALHOST</value>
+        <description>
+            Kerberos principal for Oozie service.
+        </description>
+    </property>
+
 </configuration>
+

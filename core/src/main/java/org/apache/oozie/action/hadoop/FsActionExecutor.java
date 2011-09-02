@@ -26,8 +26,6 @@ import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.util.XmlUtils;
-import org.apache.oozie.util.XConfiguration;
-import org.apache.oozie.util.HadoopAccessor;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.jdom.Element;
@@ -112,8 +110,8 @@ public class FsActionExecutor extends ActionExecutor {
     private FileSystem getFileSystemFor(Path path, Context context) throws IOException {
         String user = context.getWorkflow().getUser();
         String group = context.getWorkflow().getGroup();
-        HadoopAccessor ha = Services.get().get(HadoopAccessorService.class).get(user, group);
-        return ha.createFileSystem(path.toUri(), new Configuration());
+        return Services.get().get(HadoopAccessorService.class).
+                createFileSystem(user, group, path.toUri(), new Configuration());
     }
 
     void mkdir(Context context, Path path) throws ActionExecutorException {
@@ -222,7 +220,8 @@ public class FsActionExecutor extends ActionExecutor {
             int groupi = group - '0';
             int otheri = other - '0';
             int mask = useri * 100 + groupi * 10 + otheri;
-            return new FsPermission((short) mask);
+            short omask = Short.parseShort(Integer.toString(mask), 8);
+            return new FsPermission(omask);
         }
         else if (permissions.length() == 10) {
             return FsPermission.valueOf(permissions);

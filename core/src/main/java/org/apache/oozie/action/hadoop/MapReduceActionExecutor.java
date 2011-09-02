@@ -67,6 +67,13 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
         return mainClass;
     }
 
+    Configuration setupLauncherConf(Configuration conf, Element actionXml, Path appPath)
+            throws ActionExecutorException {
+        super.setupLauncherConf(conf, actionXml, appPath);
+        conf.setBoolean("mapreduce.job.complete.cancel.delegation.tokens", true);
+        return conf;
+    }
+
     @SuppressWarnings("unchecked")
     Configuration setupActionConf(Configuration actionConf, Context context, Element actionXml, Path appPath)
             throws ActionExecutorException {

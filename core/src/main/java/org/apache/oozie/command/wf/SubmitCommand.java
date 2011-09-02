@@ -30,7 +30,6 @@ import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
-import org.apache.oozie.util.HadoopAccessor;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.command.Command;
 import org.apache.oozie.command.CommandException;
@@ -68,6 +67,8 @@ public class SubmitCommand extends Command<String> {
     static {
         DISALLOWED_PROPERTIES.add(HADOOP_USER);
         DISALLOWED_PROPERTIES.add(HADOOP_UGI);
+        DISALLOWED_PROPERTIES.add(WorkflowAppService.HADOOP_JT_KERBEROS_NAME);
+        DISALLOWED_PROPERTIES.add(WorkflowAppService.HADOOP_NN_KERBEROS_NAME);
     }
 
     public static void validateDefaultConfiguration(Configuration conf) throws CommandException {
@@ -90,9 +91,10 @@ public class SubmitCommand extends Command<String> {
 
             Path configDefault = new Path(conf.get(OozieClient.APP_PATH), CONFIG_DEFAULT);
 
-            HadoopAccessor ha = Services.get().get(HadoopAccessorService.class).get(conf.get(OozieClient.USER_NAME),
-                                                                                    conf.get(OozieClient.GROUP_NAME));
-            FileSystem fs = ha.createFileSystem(configDefault.toUri(), new Configuration());
+            String user = conf.get(OozieClient.USER_NAME);
+            String group = conf.get(OozieClient.GROUP_NAME);
+            FileSystem fs = Services.get().get(HadoopAccessorService.class).
+                    createFileSystem(user, group, configDefault.toUri(), new Configuration());
 
             if (fs.exists(configDefault)) {
                 try {

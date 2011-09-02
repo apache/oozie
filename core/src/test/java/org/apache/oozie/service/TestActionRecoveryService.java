@@ -29,10 +29,6 @@ import org.apache.oozie.DagEngine;
 import org.apache.oozie.ForTestingActionExecutor;
 import org.apache.oozie.service.ActionRecoveryService.ActionRecoveryRunnable;
 import org.apache.oozie.store.WorkflowStore;
-import org.apache.oozie.service.Services;
-import org.apache.oozie.service.ActionService;
-import org.apache.oozie.service.WorkflowSchemaService;
-import org.apache.oozie.service.WorkflowStoreService;
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
@@ -76,8 +72,9 @@ public class TestActionRecoveryService extends XTestCase {
         final DagEngine engine = new DagEngine("u", "a");
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, getTestCaseDir());
-        conf.set(OozieClient.USER_NAME, "u");
-        conf.set(OozieClient.GROUP_NAME, "g");
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        conf.set(OozieClient.GROUP_NAME, getTestGroup());
+        injectKerberosInfo(conf);
         conf.set(OozieClient.LOG_TOKEN, "t");
 
         conf.set("external-status", "ok");

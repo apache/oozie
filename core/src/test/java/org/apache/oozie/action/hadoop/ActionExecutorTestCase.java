@@ -169,9 +169,10 @@ public abstract class ActionExecutorTestCase extends XFsTestCase {
 
     protected XConfiguration getBaseProtoConf() {
         XConfiguration protoConf = new XConfiguration();
-        protoConf.set(WorkflowAppService.HADOOP_USER, System.getProperty("user.name"));
-        protoConf.set(WorkflowAppService.HADOOP_UGI, System.getProperty("user.name") + ",other");
-        protoConf.set(OozieClient.GROUP_NAME, "other");
+        protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
+        protoConf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
+        protoConf.set(OozieClient.GROUP_NAME, getTestGroup());
+        injectKerberosInfo(protoConf);        
         return protoConf;
     }
 
@@ -180,7 +181,7 @@ public abstract class ActionExecutorTestCase extends XFsTestCase {
         Path appUri = getAppPath();
         XConfiguration wfConf = new XConfiguration();
         wfConf.set(OozieClient.USER_NAME, protoConf.get(OozieClient.USER_NAME));
-        wfConf.set(OozieClient.GROUP_NAME, "other");
+        wfConf.set(OozieClient.GROUP_NAME, getTestGroup());
         wfConf.set(OozieClient.APP_PATH, appUri.toString());
 
         WorkflowJobBean workflow = new WorkflowJobBean();

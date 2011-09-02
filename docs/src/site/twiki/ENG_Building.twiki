@@ -9,27 +9,14 @@
 ---++ System Requirements
 
    * Unix box (tested on Mac OS X or Linux)
-   * Subversion client 1.5+
    * Java JDK 1.6+
    * [[http://maven.apache.org/][Maven 2.0.8+]]
-   * [[http://hadoop.apache.org/core/releases.html][Hadoop 0.20+]]
-   * [[http://hadoop.apache.org/pig/releases.html][Pig 0.2+]]
-
-The Subversion command (svn) should be in the command path.
+   * [[http://hadoop.apache.org/core/releases.html][Hadoop 0.20.1+]]
+   * [[http://hadoop.apache.org/pig/releases.html][Pig 0.7+]]
 
 The Java commands (java, javac) should be in the command path.
 
 The Maven command (mvn) should be in the command path.
-
-Hadoop should be installed and tested that is working fine ([[ENG_HadoopQuickInstall][Hadoop Quick Install]]).
-
----++ Getting Oozie Source Code
-
-Check out the source code from Subversion at <code><OOZIE_SVN_URL></code> using the =svn= command execute:
-
-<verbatim>
-$ svn co <OOZIE_SVN_URL> oozie
-</verbatim>
 
 #InitialMavenSetup
 ---++ Initial Maven Setup
@@ -74,127 +61,104 @@ $ ssh localhost
 
 *For paranoid people:* Create the SSH key with a passphrase and use =ssh-agent=.
 
----++ Developing and Building Oozie with Different Versions of Hadoop and Pig
+---++ Building and Testing Oozie
 
 Due to Hadoop and Pig API changes and Hadoop RPC protocol constraints Oozie has to be built for a specific version of
-Hadoop and Pig.
+Hadoop.
 
-The default build is for the current version of Hadoop and the corresponding version of Pig. Hadoop and Pig JARs
-must be seeded in the local Maven repository (modify and use the =build-setup/setup-maven.sh= script mentioned in the
-[[ENG_Building#InitialMavenSetup][Initial Maven Setup]] section).
+All the following options can be used in multiple combinations.
 
-Usage:
+Use the Maven option <code>-DhadoopVersion=0.20.1</code> (default) to build Oozie with a given Hadoop version.
 
-<verbatim>
-$ mvn <MAVEN_GOALS>
-</verbatim>
+Use the Maven option <code>-DpigVersion=0.7.0</code> (default) to run the testcases with a given version of Pig.
 
-To build Oozie for a different versions of Hadoop and Pig; the corresponding Hadoop, Hadoop streaming and Pig
-JARs must be available in a Maven repository o in the local Maven cache (modify and use the =build-setup/setup-maven.sh=
-script mentioned in the [[ENG_Building#InitialMavenSetup][Initial Maven Setup]] section).
+Use the Maven option <code>-Doozie.test.hadoop.minicluster=true</code> (default) to run the testcases with minicluster
+(no Hadoop cluster necessary).
 
-The 'hadoopVersion' and 'pigVersion' properties must be specified when invoking Maven. For example:
+Use the Maven option <code>-Doozie.test.hadoop.minicluster=false</code> to run the testcases against a Hadoop cluster.
 
-<verbatim>
-$ mvn clean compile -DhadoopVersion=0.20.0 -DpigVersion=0.2.0-H20-J660
-</verbatim>
+Use the Maven option <code>-Doozie.test.job.tracker=localhost:9001</code> (default) to specify the Job Tracker of the cluster.
 
-To make an Oozie build that includes the MySQL JDBC driver, the =-Dmysql= option must be used. Also JDBC configuration 
-needs to be specified in oozie-site.xml For example:
+Use the Maven option <code>-Doozie.test.name.node=hdfs://localhost:9000</code> (default) to specify the Name Node of the cluster.
 
-<verbatim>
-$ mvn clean compile -DhadoopVersion=0.20.0 -DpigVersion=0.2.0-H20-J660 -Dmysql -Doozie.config.file=mysql-oozie-site.xml
-</verbatim>
+Use the Maven option <code>-Doozie.test.hadoop.security=pre</code> (default) for versions of Hadoop prior to 0.20.100.0.
 
----++ Compiling Oozie
+Use the Maven option <code>-Doozie.test.hadoop.security=simple</code> for versions of Hadoop 0.20.100.0 or greater with Kerberos
+OFF.
 
-From the =oozie= root source directory execute the following Maven command:
+Use the Maven option <code>-Doozie.test.hadoop.security=kerberos</code> for versions of Hadoop 0.20.100.0 or greater with Kerberos
+ON.
 
-<verbatim>
-$ mvn clean compile
-</verbatim>
+The following Maven options are available (default values shown) when testing Oozie with Hadoop post 0.20.100 with Kerberos authentication
+enabled:
 
-The first time Oozie is built Maven will download and cache all necessary dependency JARs in the local Maven repository.
+   * oozie.test.kerberos.keytab.file=${user.home}/oozie.keytab
+   * oozie.test.kerberos.realm=LOCALHOST
+   * oozie.test.kerberos.oozie.principal=${user.name}/localhost
+   * oozie.test.kerberos.jobtracker.principal=mapred/localhost
+   * oozie.test.kerberos.namenode.principal=hdfs/localhost
 
----++ Running Oozie Testcases
+*IMPORTANT:* Minicluster testing cannot be used with Kerberos ON.
 
-Make sure that Hadoop is up and running, the JobTracker should be running in =localhost:9001=, the
-Namenode should be running in port =hdfs://localhost:9000=. Refer to [[ENG_HadoopQuickInstall][Hadoop Quick Install]]
-documentation for details on how to quickly install Hadoop.
+Use the Maven options <code>-Dmysql -Doozie.config.file=mysql-oozie-site.xml</code> to build Oozie with MySQL driver.
 
-From the =oozie= root source directory execute the following Maven command:
+Use the Maven option <code>-Dtest=#TEST_CASE_CLASS_NAME#</code> to run a single test case.
+
+Use the Maven option <code>-DskipTests</code> to skip all testcases.
+
+---+++ Examples of Building and Testing Oozie
+
+Compiling and running all testcases with minicluster with Oozie's default Hadoop and Pig versions:
 
 <verbatim>
 $ mvn clean test
 </verbatim>
 
-Test data is created under the =/tmp/oozietests/= directory, to change the location of the =oozietests= directory
-use the =-Doozie.test.dir= Maven system property when running testcases.
-
-For example, from the =oozie= root source directory execute the following Maven command:
+Compiling and running all testcases with minicluster with a specific version of Hadoop pre 0.20.100:
 
 <verbatim>
-$ mvn clean test -Doozie.test.dir=/home/tucu/tmp
+$ mvn clean test -DhadoopVersion=0.20.2
 </verbatim>
 
-If Hadoop is running in another host or port it should be specified via the =oozie.test.job.tracker=
-and =oozie.test.name.node= Maven system properties.
-
-For example, from the =oozie= root source directory execute the following Maven command:
+Compiling and running one testcase with minicluster with a specific version of Hadoop pre 0.20.0100 and Pig:
 
 <verbatim>
-$ mvn clean test -Doozie.test.job.tracker=foo.com:10001 -Doozie.test.name.node=bar.com:10000
+$ mvn clean test -Dtest=TestPigMain -DhadoopVersion=0.20.1 -DpigVersion=0.7.0
 </verbatim>
 
----++ Running Oozie Testcases with Additional JARs (i.e.Hadoop Streaming and Pig)
-
-Oozie build environment has the Hadoop streaming and Pig jars in its test classpath.
-
-Refer to the =TestMapReduceActionExecutor= and =TestPigActionExecutor= test cases for examples on how to do this.
-
-If needing an additional JAR file, the JAR artifact has to be added to the =core= module =pom.xml= as a =test= scope
-dependency.
-
----++ Running a Single Oozie Testcase
-
-To run one testcase, from the =oozie= root source directory, execute the following Maven command:
+Compiling and running all testcases with minicluster with a specific version of Hadoop post 0.20.100 with simple
+authentication:
 
 <verbatim>
-$ mvn clean test -Dtest=<TEST_CASE_CLASS_NAME>
+$ mvn clean test -DhadoopVersion=0.20.100.0 -Doozie.test.hadoop.security=simple
 </verbatim>
 
-For example:
+Compiling and running all testcases with minicluster with a specific version of Hadoop post 0.20.100 with Kerberos
+authentication (it requires Hadoop 0.20.100.0 running with Kerberos ON):
 
 <verbatim>
-$ mvn clean test -Dtest=TestHadoopActionHandler
+$ mvn clean test -DhadoopVersion=0.20.100.0 -Doozie.test.hadoop.security=kerberos -Doozie.test.hadoop.minicluster=false
 </verbatim>
 
----++ Generating Oozie Testcases Coberage Report
-
-To generate testcases coberage report execute the following Maven commands:
-
-<verbatim>
-$ mvn clean install -DskipTests
-$ mvn cobertura:cobertura
-</verbatim>
-
-The report is generated at =core/target/site/cobertura/index.html=.
+The above example assumes Hadoop job tracker and namenode are running locally in ports 9001 and 9000 and the kerberos
+settings are the defaults shwon in previous section, all the <code>oozie.test.kerberos.</code> options.
 
 ---++ Building an Oozie Distribution, Different Hadoop Versions, Different DBs
 
-The =bin/mkdistro.sh= script generates an Oozie distro.
+The <code>bin/mkdistro.sh</code> script generates an Oozie distro.
 
-Built distros will be available in the =distro/target/= directory.
+Built distros will be available in the <code>distro/target/</code> directory.
 
-For example to build an Oozie distribution for a specific version of Hadoop and Pig execute the =mkdistro.sh= command
+All Maven options above can be used with the <code>mkdistro.sh</code> script.
+
+For example to build an Oozie distribution for a specific version of Hadoop and Pig execute the <code>mkdistro.sh</code> command
 with the following options:
 
 <verbatim>
-$ bin/mkdistro.sh [-full] -Dhadoop=<HADOOP_VERSION> -Dpig=<PIG_VERSION> [-Dmysql -Dooozie.config.file=mysql-oozie-site.xml]
+$ bin/mkdistro.sh [-full]
 </verbatim>
 
-The =-full= option, if specified will generate the cobertura and depedencies reports.
-(TODO: generate test and findbugs reports)
+The <code>-full</code> option, if specified will generate the cobertura and depedencies reports.
 
 ---++ Oozie Version Numbers
 
@@ -207,15 +171,22 @@ This serves 2 purposes:
 
 The Oozie version format is <code><OOZIE_VERSION>-<HADOOP_VERSION>[--<BUILD>]</code>.
 
-The =OOZIE_VERSION= indicates the Oozie version.
+The <code>OOZIE_VERSION</code> indicates the Oozie version.
 
-The =HADOOP_VERSION= indicates the Hadoop version.
+The <code>HADOOP_VERSION</code> indicates the Hadoop version.
 
-The =BUILD= can be be used to specify SNAPSHOT developer builds or a particular build.
+The <code>BUILD</code> can be be used to specify SNAPSHOT developer builds or a particular build.
 
 For example: <code>0.1-0.20.0--SNAPSHOT</code>
 
-This 3 components of the Oozie version are controlled from Oozie main POM.
+This 3 components of the Oozie version are controlled from Oozie main POM, in the properties section and they can be
+changed as Maven options <code>-D</code> for a particular build.
+
+<verbatim>
+    <oozieVersion>1.6.2</oozieVersion>
+    <hadoopVersion>0.20.100.0</hadoopVersion>
+    <build>SNAPSHOT</build>
+</verbatim>
 
 [[index][::Go back to Oozie Documentation Index::]]
 

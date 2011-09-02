@@ -56,10 +56,11 @@ public class TestOozieCLI extends DagServletTestCase {
     private String createConfigFile(String appPath) throws Exception {
         String path = getTestCaseDir() + "/" + getName() + ".xml";
         Configuration conf = new Configuration(false);
-        conf.set(OozieClient.USER_NAME, System.getProperty("user.name"));
-        conf.set(OozieClient.GROUP_NAME, "others");
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        conf.set(OozieClient.GROUP_NAME, getTestGroup());
         conf.set(OozieClient.APP_PATH, appPath);
         conf.set(OozieClient.RERUN_SKIP_NODES, "node");
+        injectKerberosInfo(conf);
         OutputStream os = new FileOutputStream(path);
         conf.writeXml(os);
         os.close();
@@ -69,10 +70,11 @@ public class TestOozieCLI extends DagServletTestCase {
     private String createPropertiesFile(String appPath) throws Exception {
         String path = getTestCaseDir() + "/" + getName() + ".properties";
         Properties props = new Properties();
-        props.setProperty(OozieClient.USER_NAME, System.getProperty("user.name"));
-        props.setProperty(OozieClient.GROUP_NAME, "others");
+        props.setProperty(OozieClient.USER_NAME, getTestUser());
+        props.setProperty(OozieClient.GROUP_NAME, getTestGroup());
         props.setProperty(OozieClient.APP_PATH, appPath);
         props.setProperty(OozieClient.RERUN_SKIP_NODES, "node");
+        injectKerberosInfo(props);
         OutputStream os = new FileOutputStream(path);
         props.store(os, "");
         os.close();

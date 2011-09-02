@@ -22,12 +22,15 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.service.WorkflowAppService;
-import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.IOUtils;
+import org.apache.oozie.util.XLog;
+import org.apache.oozie.util.XConfiguration;
+import org.apache.oozie.action.hadoop.DoAs;
 
-import java.io.IOException;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.concurrent.Callable;
 
 public class TestLocalOozieExample extends TestCase {
     private String oozieLocalLog;
@@ -43,12 +46,54 @@ public class TestLocalOozieExample extends TestCase {
         dir = new File(dir, getName());
         dir.mkdirs();
         testDir = dir.getAbsolutePath();
-        Configuration conf = new Configuration();
-        conf.set(WorkflowAppService.HADOOP_USER, System.getProperty("user.name"));
-        conf.set(WorkflowAppService.HADOOP_UGI, System.getProperty("user.name") + ",other");
-        String nameNode = System.getProperty("oozie.test.name.node", "hdfs://localhost:9000");
-        fileSystem = FileSystem.get(new Path(nameNode).toUri(), conf);
+        final Configuration conf = new Configuration();
+        conf.set(WorkflowAppService.HADOOP_USER, "test");
+        conf.set(WorkflowAppService.HADOOP_UGI, "test,users");
+        String jtKerberosPrincipal = System.getProperty("oozie.test.kerberos.jobtracker.principal",
+                                                        "mapred/localhost") + "@" +
+                System.getProperty("oozie.test.kerberos.realm", "LOCALHOST");
+        String nnKerberosPrincipal = System.getProperty("oozie.test.kerberos.namenode.principal",
+                                                        "hdfs/localhost") + "@" +
+                System.getProperty("oozie.test.kerberos.realm", "LOCALHOST");
+        conf.set(WorkflowAppService.HADOOP_JT_KERBEROS_NAME, jtKerberosPrincipal);
+        conf.set(WorkflowAppService.HADOOP_NN_KERBEROS_NAME, nnKerberosPrincipal);
 
+// TODO restore this when getting rid of DoAs trick
+
+//        if (System.getProperty("oozie.test.kerberos", "off").equals("on")) {
+//            Configuration c = new Configuration();
+//            c.set("hadoop.security.authentication", "kerberos");
+//            UserGroupInformation.setConfiguration(c);
+//            String principal = System.getProperty("oozie.test.kerberos.oozie.principal",
+//                                                  System.getProperty("user.name") + "/localhost") + "@"
+//                    + System.getProperty("oozie.test.kerberos.realm", "LOCALHOST");
+//            String defaultFile = new File(System.getProperty("user.home"), "oozie.keytab").getAbsolutePath();
+//            String keytabFile = System.getProperty("oozie.test.kerberos.keytab.file", defaultFile);
+//            UserGroupInformation.loginUserFromKeytab(principal, keytabFile);
+////            System.setProperty("oozie.service.HadoopAccessorService.kerberos.enabled", "kerberos");
+//        }
+
+        Class klass;
+        try {
+            klass = Class.forName("org.apache.oozie.action.hadoop.KerberosDoAs");
+        }
+        catch (ClassNotFoundException ex) {
+            klass = DoAs.class;
+        }
+        DoAs doAs = (DoAs) klass.newInstance();
+        final FileSystem[] fs = new FileSystem[1];
+        doAs.setCallable(new Callable<Void>() {
+            public Void call() throws Exception {
+                Configuration defaultConf = new Configuration();
+                XConfiguration.copy(conf, defaultConf);
+                fs[0] = FileSystem.get(defaultConf);
+                return null;
+            }
+        });
+        doAs.setUser("test");
+        doAs.call();
+        fileSystem = fs[0];
+        
         Path path = new Path(fileSystem.getWorkingDirectory(), "oozietests/" + getClass().getName() + "/" + getName());
         fsTestDir = fileSystem.makeQualified(path);
         System.out.println(XLog.format("Setting FS testcase work dir[{0}]", fsTestDir));

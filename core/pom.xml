@@ -140,6 +140,19 @@
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-test</artifactId>
+            <version>${hadoopVersion}</version>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-cli</groupId>
+                    <artifactId>commons-cli</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-streaming</artifactId>
             <version>${hadoopVersion}</version>
             <scope>test</scope>
@@ -244,7 +257,7 @@
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>servlet-api</artifactId>
-            <version>2.4</version>
+            <version>2.5</version>
             <scope>compile</scope>
         </dependency>
         <!--
@@ -253,9 +266,9 @@
         The web-app module should exclude it.
          -->
         <dependency>
-            <groupId>jetty</groupId>
-            <artifactId>org.mortbay.jetty</artifactId>
-            <version>5.1.4</version>
+            <groupId>org.mortbay.jetty</groupId>
+            <artifactId>jetty</artifactId>
+            <version>6.1.14</version>
             <scope>compile</scope>
         </dependency>
 
@@ -303,6 +316,93 @@
             </plugin>
         </plugins>
     </reporting>
+
+    <profiles>
+        <profile>
+            <id>preHadoopSecurity</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+                <property>
+                    <name>oozie.test.hadoop.security</name>
+                    <value>pre</value>
+                </property>
+            </activation>
+            <build>
+                <resources>
+                    <resource>
+                        <directory>src/main/resources</directory>
+                    </resource>
+                </resources>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <excludes>
+                                <exclude>**/Kerberos*.java</exclude>
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <excludes>
+                                <exclude>**/TestKerberosHadoopAccessorService.java</exclude>
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <!-- Kerberos Authentication OFF -->
+        <profile>
+            <id>hadoopSecuritySimple</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <property>
+                    <name>oozie.test.hadoop.security</name>
+                    <value>simple</value>
+                </property>
+            </activation>
+            <build>
+                <resources>
+                    <resource>
+                        <directory>src/main/resourcesS</directory>
+                    </resource>
+                </resources>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <excludes>
+                                <exclude>**/TestKerberosHadoopAccessorService.java</exclude>
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <!-- Kerberos Authentication ON -->
+        <profile>
+            <id>hadoopSecurityKerberos</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <property>
+                    <name>oozie.test.hadoop.security</name>
+                    <value>kerberos</value>
+                </property>
+            </activation>
+            <build>
+                <resources>
+                    <resource>
+                        <directory>src/main/resourcesS</directory>
+                    </resource>
+                </resources>
+            </build>
+        </profile>
+    </profiles>
 
 </project>
 

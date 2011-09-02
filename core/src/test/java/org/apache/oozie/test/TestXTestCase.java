@@ -20,12 +20,19 @@ package org.apache.oozie.test;
 import junit.framework.TestCase;
 
 public class TestXTestCase extends TestCase {
+    static boolean TESTING = false;
     static String SYS_PROP = "oozie.test.testProp";
     static String testBaseDir;
 
     protected void setUp() throws Exception {
         super.setUp();
         testBaseDir = null;
+        TESTING = true;
+    }
+
+    protected void tearDown() throws Exception {
+        TESTING = false;
+        super.tearDown();
     }
 
     public void testBaseDir() throws Exception {
@@ -85,58 +92,79 @@ public class TestXTestCase extends TestCase {
     }
 
 
-    public class MyXTestCase extends XTestCase {
+    public static class MyXTestCase extends XTestCase {
+
+        public void testDummy() {
+        }
 
         public void testBaseDir() {
-            assertTrue(TestXTestCase.testBaseDir == null ||
-                       getTestCaseDir().startsWith(TestXTestCase.testBaseDir));
+            if (TESTING) {
+                assertTrue(TestXTestCase.testBaseDir == null ||
+                           getTestCaseDir().startsWith(TestXTestCase.testBaseDir));
+            }
         }
 
         public void testUnsetSysProperty() {
-            assertNull(System.getProperty(TestXTestCase.SYS_PROP));
-            setSystemProperty(TestXTestCase.SYS_PROP, "A");
-            assertEquals("A", System.getProperty(TestXTestCase.SYS_PROP));
+            if (TESTING) {
+                assertNull(System.getProperty(TestXTestCase.SYS_PROP));
+                setSystemProperty(TestXTestCase.SYS_PROP, "A");
+                assertEquals("A", System.getProperty(TestXTestCase.SYS_PROP));
+            }
         }
 
         public void testSetSysProperty() {
-            assertEquals("B", System.getProperty(TestXTestCase.SYS_PROP));
-            setSystemProperty(TestXTestCase.SYS_PROP, "C");
-            assertEquals("C", System.getProperty(TestXTestCase.SYS_PROP));
+            if (TESTING) {
+                assertEquals("B", System.getProperty(TestXTestCase.SYS_PROP));
+                setSystemProperty(TestXTestCase.SYS_PROP, "C");
+                assertEquals("C", System.getProperty(TestXTestCase.SYS_PROP));
+            }
         }
 
         public void testWaitFor() {
-            long start = System.currentTimeMillis();
-            long waited = waitFor(60 * 1000, new Predicate() {
-                public boolean evaluate() throws Exception {
-                    return true;
-                }
-            });
-            long end = System.currentTimeMillis();
-            assertEquals(0, waited, 100);
-            assertEquals(0, end - start, 300);
+            if (TESTING) {
+                long start = System.currentTimeMillis();
+                long waited = waitFor(60 * 1000, new Predicate() {
+                    public boolean evaluate() throws Exception {
+                        return true;
+                    }
+                });
+                long end = System.currentTimeMillis();
+                assertEquals(0, waited, 100);
+                assertEquals(0, end - start, 300);
+            }
         }
 
         public void testWaitForTimeOut() {
-            long start = System.currentTimeMillis();
-            long waited = waitFor(1000, new Predicate() {
-                public boolean evaluate() throws Exception {
-                    return false;
-                }
-            });
-            long end = System.currentTimeMillis();
-            assertEquals(1000, waited, 100);
-            assertEquals(1000, end - start, 300);
+            if (TESTING) {
+                long start = System.currentTimeMillis();
+                long waited = waitFor(1000, new Predicate() {
+                    public boolean evaluate() throws Exception {
+                        return false;
+                    }
+                });
+                long end = System.currentTimeMillis();
+                assertEquals(1000, waited, 100);
+                assertEquals(1000, end - start, 300);
+            }
         }
 
         public void testHadoopSysProps() {
-            assertEquals("hdfs://localhost:9000", getNameNodeUri());
-            assertEquals("localhost:9001", getJobTrackerUri());
-            setSystemProperty(XTestCase.OOZIE_TEST_NAME_NODE, "hdfs://xyz:9000");
-            setSystemProperty(XTestCase.OOZIE_TEST_JOB_TRACKER, "xyz:9001");
-            assertEquals("hdfs://xyz:9000", getNameNodeUri());
-            assertEquals("xyz:9001", getJobTrackerUri());
+            if (TESTING) {
+                setSystemProperty(XTestCase.OOZIE_TEST_NAME_NODE, "hdfs://xyz:9000");
+                setSystemProperty(XTestCase.OOZIE_TEST_JOB_TRACKER, "xyz:9001");
+                assertEquals("hdfs://xyz:9000", getNameNodeUri());
+                assertEquals("xyz:9001", getJobTrackerUri());
+            }
         }
 
+    }
+
+    public void testHadopSysProps() throws Exception {
+        MyXTestCase testcase = new MyXTestCase();
+        testcase.setName(getName());
+        testcase.setUp();
+        testcase.testHadoopSysProps();
+        testcase.tearDown();
     }
 
 }

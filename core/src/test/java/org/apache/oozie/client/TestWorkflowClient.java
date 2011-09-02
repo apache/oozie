@@ -113,6 +113,7 @@ public class TestWorkflowClient extends DagServletTestCase {
                 getFileSystem().mkdirs(appPath);
                 getFileSystem().create(new Path(appPath, "workflow.xml")).close();
                 conf.setProperty(OozieClient.APP_PATH, appPath.toString());
+                injectKerberosInfo(conf);
                 assertEquals(MockDagEngineService.JOB_ID + wfCount, wc.submit(conf));
                 assertFalse(MockDagEngineService.started.get(wfCount));
                 return null;
@@ -131,6 +132,7 @@ public class TestWorkflowClient extends DagServletTestCase {
                 getFileSystem().mkdirs(appPath);
                 getFileSystem().create(new Path(appPath, "workflow.xml")).close();
                 conf.setProperty(OozieClient.APP_PATH, appPath.toString());
+                injectKerberosInfo(conf);
                 assertEquals(MockDagEngineService.JOB_ID+wfCount, wc.run(conf));
                 assertTrue(MockDagEngineService.started.get(wfCount));
                 return null;
@@ -200,11 +202,12 @@ public class TestWorkflowClient extends DagServletTestCase {
                 String oozieUrl = getContextURL();
                 OozieClient wc = new OozieClient(oozieUrl);
                 Properties conf = wc.createConfiguration();
-                conf.setProperty(OozieClient.USER_NAME, "x");
+                conf.setProperty(OozieClient.USER_NAME, getTestUser());
                 Path appPath = new Path(getFsTestCaseDir(), "app");
                 getFileSystem().mkdirs(appPath);
                 getFileSystem().create(new Path(appPath, "workflow.xml")).close();
                 conf.setProperty(OozieClient.APP_PATH, appPath.toString());
+                injectKerberosInfo(conf);
                 wc.reRun(MockDagEngineService.JOB_ID+1, conf);
                 assertEquals(RestConstants.JOB_ACTION_RERUN, MockDagEngineService.did);
                 assertTrue(MockDagEngineService.started.get(1));

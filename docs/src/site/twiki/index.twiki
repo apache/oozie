@@ -66,6 +66,8 @@ Enough reading already? Follow the steps in [[DG_QuickStart][Oozie Quick Start]]
 
    * [[./apidocs/index.html][Oozie Javadocs]]
 
+   * [[DG_UsingHadoopKerberos][Using a Hadoop cluster with Kerberos Authentication]]
+
 ---++ Administrator Documentation
 
    * [[AG_Install][Oozie Install]]
@@ -74,6 +76,7 @@ Enough reading already? Follow the steps in [[DG_QuickStart][Oozie Quick Start]]
    * [[AG_Configuration][Oozie Configuration]]
    * [[AG_Security][Oozie Security]]
    * [[AG_Logging][Oozie Logging]]
+   * [[AG_HadoopKerberos][Setup Oozie with Hadoop Kerberos Authentication]]
 
    * [[AG_StartStop][Oozie Start & Stop]]
    * [[AG_Monitoring][Oozie Monitoring]]

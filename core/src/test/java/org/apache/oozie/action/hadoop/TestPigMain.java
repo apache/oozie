@@ -34,13 +34,14 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.io.FileWriter;
+import java.io.FileReader;
 import java.util.Properties;
-import java.util.Map;
+import java.util.concurrent.Callable;
 import java.net.URL;
 
 import jline.ConsoleReaderInputStream;
 
-public class TestPigMain extends XFsTestCase {
+public class TestPigMain extends MainTestCase {
     private SecurityManager SECURITY_MANAGER;
 
     protected void setUp() throws Exception {
@@ -60,15 +61,8 @@ public class TestPigMain extends XFsTestCase {
             "B = foreach A generate $0 as id;\n" +
             "store B into '$OUT' USING PigStorage();\n";
 
-    public void testSysProps() throws Exception {
-        for (Map.Entry entry : System.getProperties().entrySet()) {
-            System.out.println(entry.getKey());
-        }
-   }
-
-    public void testMain() throws Exception {
+    public Void call() throws Exception {
         FileSystem fs = getFileSystem();
-
 
         Path pigJar = new Path(getFsTestCaseDir(), "pig.jar");
         InputStream is = new FileInputStream(ClassUtils.findContainingJar(Main.class));
@@ -95,14 +89,16 @@ public class TestPigMain extends XFsTestCase {
 
         XConfiguration jobConf = new XConfiguration();
 
+        jobConf.set("user.name", getTestUser());
+        jobConf.set("group.name", getTestGroup());
         jobConf.setInt("mapred.map.tasks", 1);
         jobConf.setInt("mapred.map.max.attempts", 1);
         jobConf.setInt("mapred.reduce.max.attempts", 1);
         jobConf.set("mapred.job.tracker", getJobTrackerUri());
         jobConf.set("fs.default.name", getNameNodeUri());
 
-        DistributedCache.addFileToClassPath(new Path(pigJar.toUri().getPath()), jobConf);
-        DistributedCache.addFileToClassPath(new Path(jlineJar.toUri().getPath()), jobConf);
+        DistributedCache.addFileToClassPath(new Path(pigJar.toUri().getPath()), getFileSystem().getConf());
+        DistributedCache.addFileToClassPath(new Path(jlineJar.toUri().getPath()), getFileSystem().getConf());
 
         PigMain.setPigScript(jobConf, script.toString(), new String[]{"IN=" + inputDir.toUri().getPath(),
                                                                        "OUT=" + outputDir.toUri().getPath()});
@@ -112,7 +108,11 @@ public class TestPigMain extends XFsTestCase {
         jobConf.writeXml(os);
         os.close();
 
-        System.setProperty("oozie.action.conf.xml", actionXml.getAbsolutePath());
+        File outputDataFile = new File(getTestCaseDir(), "outputdata.properties");
+
+        setSystemProperty("oozie.launcher.job.id", "" + System.currentTimeMillis());
+        setSystemProperty("oozie.action.conf.xml", actionXml.getAbsolutePath());
+        setSystemProperty("oozie.action.output.properties", outputDataFile.getAbsolutePath());
 
 
         URL url = Thread.currentThread().getContextClassLoader().getResource("PigMain.txt");
@@ -124,6 +124,7 @@ public class TestPigMain extends XFsTestCase {
         wr.close();
 
         new LauncherSecurityManager();
+        String user = System.getProperty("user.name");
         try {
             PigMain.main(null);
         }
@@ -139,7 +140,17 @@ public class TestPigMain extends XFsTestCase {
                 throw ex;
             }
         }
+        finally {
+            System.setProperty("user.name", user);
+        }
 
+        assertTrue(outputDataFile.exists());
+        props = new Properties();
+        props.load(new FileReader(outputDataFile));
+        assertTrue(props.containsKey("hadoopJobs"));
+        assertNotSame("", props.getProperty("hadoopJobs"));
+
+        return null;
     }
 
 }

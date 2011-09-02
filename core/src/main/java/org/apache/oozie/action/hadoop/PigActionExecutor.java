@@ -20,8 +20,11 @@ package org.apache.oozie.action.hadoop;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.action.ActionExecutorException;
+import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
 import org.jdom.Namespace;
+import org.jdom.JDOMException;
 
 import java.util.List;
 
@@ -73,6 +76,10 @@ public class PigActionExecutor extends JavaActionExecutor {
 
         PigMain.setPigScript(actionConf, pigName, strParams);
         return actionConf;
+    }
+
+    protected boolean getCaptureOutput(WorkflowAction action) throws JDOMException {
+        return true;
     }
 
 }

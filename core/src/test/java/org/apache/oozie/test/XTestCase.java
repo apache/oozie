@@ -23,12 +23,20 @@ import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.service.DataSourceService;
 import org.apache.oozie.service.DBLiteWorkflowStoreService;
+import org.apache.oozie.service.WorkflowAppService;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.MiniMRCluster;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.permission.FsPermission;
+import org.apache.hadoop.hdfs.MiniDFSCluster;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.DriverManager;
@@ -112,6 +120,12 @@ public abstract class XTestCase extends TestCase {
         if (System.getProperty("oozielocal.log") == null) {
             setSystemProperty("oozielocal.log", "/tmp/oozielocal.log");
         }
+        if (System.getProperty("oozie.test.hadoop.security", "simple").equals("kerberos")) {
+            System.setProperty("oozie.service.HadoopAccessorService.kerberos.enabled", "true");
+        }
+        if (System.getProperty("oozie.test.hadoop.minicluster", "true").equals("true")) {
+            setUpEmbeddedHadoop();
+        }
     }
 
     /**
@@ -136,6 +150,27 @@ public abstract class XTestCase extends TestCase {
 
     public String getHadoopVersion() {
         return hadoopVersion;
+    }
+
+    protected String getTestUser() {
+        return "test";
+    }
+
+    protected String getTestUser2() {
+        return "test2";
+    }
+
+    protected String getTestUser3() {
+        return "test3";
+    }
+
+    /**
+     * Return the user to use in testcases.
+     *
+     * @return the user to use in testcases.
+     */
+    protected String getTestGroup() {
+        return "testg";
     }
 
     /**
@@ -319,6 +354,39 @@ public abstract class XTestCase extends TestCase {
         return System.getProperty(OOZIE_TEST_NAME_NODE, "hdfs://localhost:9000");
     }
 
+    public String getKeytabFile() {
+        String defaultFile = new File(System.getProperty("user.home"), "oozie.keytab").getAbsolutePath();
+        return System.getProperty("oozie.test.kerberos.keytab.file", defaultFile);
+    }
+
+    public String getRealm() {
+        return System.getProperty("oozie.test.kerberos.realm", "LOCALHOST");
+    }
+
+    public String getOoziePrincipal() {
+        return System.getProperty("oozie.test.kerberos.oozie.principal",
+                                  System.getProperty("user.name") + "/localhost") + "@" + getRealm();
+    }
+
+    public String getJobTrackerPrincipal() {
+        return System.getProperty("oozie.test.kerberos.jobtracker.principal", "mapred/localhost") + "@" + getRealm();
+    }
+
+    public String getNamenodePrincipal() {
+        return System.getProperty("oozie.test.kerberos.namenode.principal", "hdfs/localhost") + "@" + getRealm();
+    }
+
+    public <C extends Configuration> C injectKerberosInfo(C conf) {
+        conf.set(WorkflowAppService.HADOOP_JT_KERBEROS_NAME, getJobTrackerPrincipal());
+        conf.set(WorkflowAppService.HADOOP_NN_KERBEROS_NAME, getNamenodePrincipal());
+        return conf;
+    }
+
+    public void injectKerberosInfo(Properties conf) {
+        conf.setProperty(WorkflowAppService.HADOOP_JT_KERBEROS_NAME, getJobTrackerPrincipal());
+        conf.setProperty(WorkflowAppService.HADOOP_NN_KERBEROS_NAME, getNamenodePrincipal());
+    }
+
     private Connection getConnection(Configuration conf) throws SQLException {
         String driver = conf.get(DataSourceService.CONF_DRIVER, "org.hsqldb.jdbcDriver");
         String url = conf.get(DataSourceService.CONF_URL, "jdbc:hsqldb:mem:testdb");
@@ -351,6 +419,65 @@ public abstract class XTestCase extends TestCase {
         }
         st.close();
         conn.close();
+    }
+
+
+    private static MiniDFSCluster dfsCluster = null;
+    private static MiniMRCluster mrCluster = null;
+
+    private static void setUpEmbeddedHadoop() throws Exception {
+        if (dfsCluster == null && mrCluster == null) {
+            if (System.getProperty("hadoop.log.dir") == null) {
+                System.setProperty("hadoop.log.dir", "/tmp");
+            }
+            int taskTrackers = 2;
+            int dataNodes = 2;
+            JobConf conf = new JobConf();
+            conf.set("dfs.block.access.token.enable", "false");
+            conf.set("dfs.permissions", "true");
+            conf.set("hadoop.security.authentication", "simple");
+            conf.set("hadoop.proxyuser." + System.getProperty("user.name") + ".hosts", "localhost");
+            conf.set("hadoop.proxyuser." + System.getProperty("user.name") + ".groups", "users");
+            conf.set("mapred.tasktracker.map.tasks.maximum", "4");
+            conf.set("mapred.tasktracker.reduce.tasks.maximum", "4");
+            dfsCluster = new MiniDFSCluster(conf, dataNodes, true, null);
+            FileSystem fileSystem = dfsCluster.getFileSystem();
+            fileSystem.mkdirs(new Path("/tmp"));
+            fileSystem.mkdirs(new Path("/user"));
+            fileSystem.mkdirs(new Path("/hadoop/mapred/system"));
+            fileSystem.setPermission(new Path("/tmp"), FsPermission.valueOf("-rwxrwxrwx"));
+            fileSystem.setPermission(new Path("/user"), FsPermission.valueOf("-rwxrwxrwx"));
+            fileSystem.setPermission(new Path("/hadoop/mapred/system"), FsPermission.valueOf("-rwx------"));
+            String nnURI = fileSystem.getUri().toString();
+            int numDirs = 1;
+            String[] racks = null;
+            String[] hosts = null;
+//            UserGroupInformation ugi = null;
+            mrCluster = new MiniMRCluster(0,0, taskTrackers, nnURI, numDirs, racks, hosts, null, conf);
+            JobConf jobConf = mrCluster.createJobConf();
+            System.setProperty(OOZIE_TEST_JOB_TRACKER, jobConf.get("mapred.job.tracker"));
+            System.setProperty(OOZIE_TEST_NAME_NODE, jobConf.get("fs.default.name"));
+            Runtime.getRuntime().addShutdownHook(new Thread() {
+                public void run() {
+                    try {
+                      if (mrCluster != null) {
+                        mrCluster.shutdown();
+                      }
+                    }
+                    catch (Exception ex) {
+                      System.out.println(ex);
+                    }
+                    try {
+                      if (dfsCluster != null) {
+                        dfsCluster.shutdown();
+                      }
+                    }
+                    catch (Exception ex) {
+                      System.out.println(ex);
+                    }
+                }
+            });
+        }
     }
 
 }

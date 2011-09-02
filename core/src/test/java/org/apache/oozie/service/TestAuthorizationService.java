@@ -80,11 +80,12 @@ public class TestAuthorizationService extends XFsTestCase {
         Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
         IOUtils.copyCharStream(reader, writer);
 
-        final DagEngine engine = new DagEngine("u", "a");
+        final DagEngine engine = new DagEngine(getTestUser(), "a");
         Configuration jobConf = new XConfiguration();
         jobConf.set(OozieClient.APP_PATH, getTestCaseDir());
-        jobConf.set(OozieClient.USER_NAME, "u");
-        jobConf.set(OozieClient.GROUP_NAME, "g");
+        jobConf.set(OozieClient.USER_NAME, getTestUser());
+        jobConf.set(OozieClient.GROUP_NAME, getTestGroup());
+        injectKerberosInfo(jobConf);
         jobConf.set(OozieClient.LOG_TOKEN, "t");
 
         jobConf.set("external-status", "ok");
@@ -92,9 +93,9 @@ public class TestAuthorizationService extends XFsTestCase {
 
         final String jobId = engine.submitJob(jobConf, true);
 
-        Configuration conf = new Configuration();
-        conf.set("hadoop.job.ugi", System.getProperty("user.name") + "," + "others");
-        FileSystem fileSystem = getFileSystem();
+        FileSystem fileSystem = Services.get().get(HadoopAccessorService.class).
+                createFileSystem(getTestUser(), getTestGroup(), getFileSystem().getUri(), new Configuration());
+
         Path path = new Path(fileSystem.getWorkingDirectory(), getTestCaseDir().substring(1));
         Path fsTestDir = fileSystem.makeQualified(path);
         System.out.println(XLog.format("Setting FS testcase work dir[{0}]", fsTestDir));
@@ -106,39 +107,45 @@ public class TestAuthorizationService extends XFsTestCase {
         String appPath = fsTestDir.toString() + "/app";
 
         Path jobXmlPath = new Path(appPath, "workflow.xml");
-        fileSystem.create(jobXmlPath);
+        fileSystem.create(jobXmlPath).close();
+        fileSystem.setOwner(jobXmlPath, getTestUser(), getTestGroup());
+
         FsPermission permissions = new FsPermission(FsAction.READ_WRITE, FsAction.READ, FsAction.NONE);
         fileSystem.setPermission(jobXmlPath, permissions);
 
         AuthorizationService as = services.get(AuthorizationService.class);
         assertNotNull(as);
-        as.authorizeForGroup("u", "g");
-        assertNotNull(as.getDefaultGroup("u"));
+        as.authorizeForGroup(getTestUser(), getTestGroup());
+        assertNotNull(as.getDefaultGroup(getTestUser()));
         as.authorizeForAdmin("admin", false);
         as.authorizeForAdmin("admin", true);
         try {
-            as.authorizeForAdmin("u", true);
+            as.authorizeForAdmin(getTestUser(), true);
             fail();
         }
         catch (AuthorizationException ex) {
         }
         try {
-            as.authorizeForAdmin("u", true);
+            as.authorizeForAdmin(getTestUser(), true);
             fail();
         }
         catch (AuthorizationException ex) {
         }
 
-        try {
-            as.authorizeForApp("u", "g", appPath);
-            fail();
-        }
-        catch (AuthorizationException ex) {
-        }
-        as.authorizeForApp(System.getProperty("user.name"), "others", appPath);
+        as.authorizeForApp(getTestUser2(), getTestGroup(), appPath, jobConf);
 
-        as.authorizeForJob("u", jobId, false);
-        as.authorizeForJob("u", jobId, true);
+        // this test fails in pre Hadoop 20S
+        if (!System.getProperty("oozie.test.hadoop.security", "pre").equals("pre")) {
+            try {
+                as.authorizeForApp(getTestUser3(), getTestGroup(), appPath, jobConf);
+                fail();
+            }
+            catch (AuthorizationException ex) {
+            }
+        }
+
+        as.authorizeForJob(getTestUser(), jobId, false);
+        as.authorizeForJob(getTestUser(), jobId, true);
         //Because of group support and all users belong to same group
         as.authorizeForJob("blah", jobId, true);
     }
@@ -146,22 +153,26 @@ public class TestAuthorizationService extends XFsTestCase {
     public void testDefaultGroup() throws Exception {
         AuthorizationService as = services.get(AuthorizationService.class);
         assertNotNull(as);
-        assertNotNull(as.getDefaultGroup("u"));
+        assertNotNull(as.getDefaultGroup(getTestUser()));
     }
 
     public void testErrors() throws Exception {
         services.setService(ForTestAuthorizationService.class);
         AuthorizationService as = services.get(AuthorizationService.class);
 
+        Configuration conf = new Configuration();
+        FileSystem fileSystem = Services.get().get(HadoopAccessorService.class).
+                createFileSystem(getTestUser(), getTestGroup(), getFileSystem().getUri(), new Configuration());
+
         try {
-            as.authorizeForGroup("u", "g");
+            as.authorizeForGroup(getTestUser3(), getTestGroup());
             fail();
         }
         catch (AuthorizationException ex) {
             assertEquals(ErrorCode.E0502, ex.getErrorCode());
         }
         try {
-            as.authorizeForAdmin("u", true);
+            as.authorizeForAdmin(getTestUser(), true);
             fail();
         }
         catch (AuthorizationException ex) {
@@ -169,7 +180,7 @@ public class TestAuthorizationService extends XFsTestCase {
         }
         try {
             Path app = new Path(getFsTestCaseDir(), "w");
-            as.authorizeForApp("u", "users", app.toString());
+            as.authorizeForApp(getTestUser(), getTestGroup(), app.toString(), conf);
             fail();
         }
         catch (AuthorizationException ex) {
@@ -177,8 +188,8 @@ public class TestAuthorizationService extends XFsTestCase {
         }
         try {
             Path app = new Path(getFsTestCaseDir(), "w");
-            getFileSystem().mkdirs(app);
-            as.authorizeForApp("u", "users", app.toString());
+            fileSystem.mkdirs(app);
+            as.authorizeForApp(getTestUser(), getTestGroup(), app.toString(), conf);
             fail();
         }
         catch (AuthorizationException ex) {
@@ -187,8 +198,8 @@ public class TestAuthorizationService extends XFsTestCase {
         try {
             Path app = new Path(getFsTestCaseDir(), "w");
             Path wf = new Path(app, "workflow.xml");
-            getFileSystem().mkdirs(wf);
-            as.authorizeForApp("u", "users", app.toString());
+            fileSystem.mkdirs(wf);
+            as.authorizeForApp(getTestUser(), getTestGroup(), app.toString(), conf);
             fail();
         }
         catch (AuthorizationException ex) {
@@ -196,13 +207,13 @@ public class TestAuthorizationService extends XFsTestCase {
         }
         try {
             Path app = new Path(getFsTestCaseDir(), "ww");
-            getFileSystem().mkdirs(app);
+            fileSystem.mkdirs(app);
             Path wf = new Path(app, "workflow.xml");
-            getFileSystem().create(wf).close();
+            fileSystem.create(wf).close();
             FsPermission fsPermission = new FsPermission(FsAction.READ, FsAction.NONE, FsAction.NONE);
-            getFileSystem().setPermission(app, fsPermission);
+            fileSystem.setPermission(app, fsPermission);
 
-            as.authorizeForApp("uu", "gg", app.toString());
+            as.authorizeForApp(getTestUser2(), getTestGroup() + "-invalid", app.toString(), conf);
             fail();
         }
         catch (AuthorizationException ex) {
@@ -210,7 +221,7 @@ public class TestAuthorizationService extends XFsTestCase {
         }
 
         try {
-            as.authorizeForJob("u", "1", true);
+            as.authorizeForJob(getTestUser(), getTestGroup(), true);
             fail();
         }
         catch (AuthorizationException ex) {
@@ -219,7 +230,7 @@ public class TestAuthorizationService extends XFsTestCase {
 
         services.setService(ForTestWorkflowStoreService.class);
         try {
-            as.authorizeForJob("uu", "1", true);
+            as.authorizeForJob(getTestUser(), getTestGroup(), true);
             fail();
         }
         catch (AuthorizationException ex) {

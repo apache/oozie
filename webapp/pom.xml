@@ -43,8 +43,8 @@
             <scope>compile</scope>
             <exclusions>
                 <exclusion>
-                    <groupId>jetty</groupId>
-                    <artifactId>org.mortbay.jetty</artifactId>
+                    <groupId>org.mortbay.jetty</groupId>
+                    <artifactId>jetty</artifactId>
                 </exclusion>
                 <exclusion>
                     <groupId>javax.servlet</groupId>

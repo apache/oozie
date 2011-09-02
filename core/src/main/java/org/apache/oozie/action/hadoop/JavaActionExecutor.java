@@ -30,6 +30,7 @@ import org.apache.hadoop.util.DiskChecker;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.HadoopAccessorService;
@@ -39,7 +40,6 @@ import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.PropertiesUtils;
-import org.apache.oozie.util.HadoopAccessor;
 import org.jdom.Element;
 import org.jdom.Namespace;
 import org.jdom.JDOMException;
@@ -83,6 +83,8 @@ public class JavaActionExecutor extends ActionExecutor {
         DISALLOWED_PROPERTIES.add(HADOOP_UGI);
         DISALLOWED_PROPERTIES.add(HADOOP_JOB_TRACKER);
         DISALLOWED_PROPERTIES.add(HADOOP_NAME_NODE);
+        DISALLOWED_PROPERTIES.add(WorkflowAppService.HADOOP_JT_KERBEROS_NAME);
+        DISALLOWED_PROPERTIES.add(WorkflowAppService.HADOOP_NN_KERBEROS_NAME);
     }
 
     public JavaActionExecutor() {
@@ -110,7 +112,6 @@ public class JavaActionExecutor extends ActionExecutor {
         maxActionOutputLen = getOozieConf().getInt(CallbackServlet.CONF_MAX_DATA_LEN, 2 * 1024);
         try {
             List<Class> classes = getLauncherClasses();
-            classes.add(Services.get().get(HadoopAccessorService.class).getAccessorClass());
             Class[] launcherClasses = classes.toArray(new Class[classes.size()]);
             IOUtils.createJar(new File(getOozieRuntimeDir()), getLauncherJarName(), launcherClasses);
 
@@ -146,16 +147,12 @@ public class JavaActionExecutor extends ActionExecutor {
         Configuration conf = new XConfiguration();
         conf.set(HADOOP_USER, context.getProtoActionConf().get(WorkflowAppService.HADOOP_USER));
         conf.set(HADOOP_UGI, context.getProtoActionConf().get(WorkflowAppService.HADOOP_UGI));
+        conf.set(OozieClient.GROUP_NAME, context.getProtoActionConf().get(OozieClient.GROUP_NAME));
         Namespace ns = actionXml.getNamespace();
         String jobTracker = actionXml.getChild("job-tracker", ns).getTextTrim();
         String nameNode = actionXml.getChild("name-node", ns).getTextTrim();
         conf.set(HADOOP_JOB_TRACKER, jobTracker);
         conf.set(HADOOP_NAME_NODE, nameNode);
-
-        // set the HadoopAccessor implementation to use from Launcher Main
-        String accessorClass = Services.get().get(HadoopAccessorService.class).getAccessorClass().getName();
-        conf.set("oozie.hadoop.accessor.class", accessorClass);
-
         return conf;
     }
 
@@ -261,7 +258,10 @@ public class JavaActionExecutor extends ActionExecutor {
                 }
                 else if (!fileName.contains("#")) {
                     path = new Path(uri.toString());
-                    DistributedCache.addFileToClassPath(path, conf);
+
+                    String user = conf.get("user.name");
+                    String group = conf.get("group.name");
+                    Services.get().get(HadoopAccessorService.class).addFileToClassPath(user, group, path, conf);
                 }
                 DistributedCache.addCacheFile(uri, conf);
             }
@@ -360,6 +360,8 @@ public class JavaActionExecutor extends ActionExecutor {
 
     static {
         SPECIAL_PROPERTIES.add("mapred.job.queue.name");
+        SPECIAL_PROPERTIES.add("mapreduce.jobtracker.kerberos.principal");
+        SPECIAL_PROPERTIES.add("dfs.namenode.kerberos.principal");
     }
 
     @SuppressWarnings("unchecked")
@@ -419,6 +421,13 @@ public class JavaActionExecutor extends ActionExecutor {
                     launcherJobConf.set(name, value);
                 }
             }
+
+            //to disable cancelation of delegation token on launcher job end
+            launcherJobConf.setBoolean("mapreduce.job.complete.cancel.delegation.tokens", false);
+
+            //setting the group owning the Oozie job to allow anybody in that group to kill the jobs.
+            launcherJobConf.set("mapreduce.job.acl-modify-job", context.getWorkflow().getGroup());
+
             return launcherJobConf;
         }
         catch (Exception ex) {
@@ -456,6 +465,9 @@ public class JavaActionExecutor extends ActionExecutor {
             actionConf.set("mapred.job.name", jobName);
             injectActionCallback(context, actionConf);
 
+            //setting the group owning the Oozie job to allow anybody in that group to kill the jobs.
+            actionConf.set("mapreduce.job.acl-modify-job", context.getWorkflow().getGroup());
+
             JobConf launcherJobConf = createLauncherConf(context, action, actionXml, actionConf);
             injectLauncherCallback(context, launcherJobConf);
 
@@ -475,6 +487,10 @@ public class JavaActionExecutor extends ActionExecutor {
             }
             else {
                 prepare(context, actionXml);
+
+                //setting up propagation of the delegation token.
+                AuthHelper.get().set(jobClient, launcherJobConf);
+
                 runningJob = jobClient.submitJob(launcherJobConf);
                 launcherId = runningJob.getID().toString();
             }
@@ -535,8 +551,7 @@ public class JavaActionExecutor extends ActionExecutor {
     protected JobClient createJobClient(Context context, JobConf jobConf) throws IOException {
         String user = context.getWorkflow().getUser();
         String group = context.getWorkflow().getGroup();
-        HadoopAccessor hadoopAccessor = Services.get().get(HadoopAccessorService.class).get(user, group);
-        return hadoopAccessor.createJobClient(jobConf);
+        return Services.get().get(HadoopAccessorService.class).createJobClient(user, group, jobConf);
     }
 
     @Override
@@ -579,10 +594,7 @@ public class JavaActionExecutor extends ActionExecutor {
                             action.getExternalId());
                     if (runningJob.isSuccessful() && LauncherMapper.isMainSuccessful(runningJob)) {
                         Properties props = null;
-                        Element eConf = XmlUtils.parseXml(action.getConf());
-                        Namespace ns = eConf.getNamespace();
-                        Element captureOutput = eConf.getChild("capture-output", ns);
-                        if (captureOutput != null) {
+                        if (getCaptureOutput(action)) {
                             props = new Properties();
                             if (LauncherMapper.hasOutputData(runningJob)) {
                                 Path actionOutput = LauncherMapper.getOutputDataPath(context.getActionDir());
@@ -637,6 +649,13 @@ public class JavaActionExecutor extends ActionExecutor {
 
             throw convertException(ex);
         }
+    }
+
+    protected boolean getCaptureOutput(WorkflowAction action) throws JDOMException {
+        Element eConf = XmlUtils.parseXml(action.getConf());
+        Namespace ns = eConf.getNamespace();
+        Element captureOutput = eConf.getChild("capture-output", ns);
+        return captureOutput != null;
     }
 
     @Override

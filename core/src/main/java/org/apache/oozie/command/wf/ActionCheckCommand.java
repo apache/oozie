@@ -81,12 +81,12 @@ public class ActionCheckCommand extends ActionCommand<Void> {
                                 store.updateWorkflow(workflow);
                                 return null;
                             }
-                            action.setLastCheckTime(new Date());
                             action.setPending();
-                            store.updateAction(action);
-                            store.updateWorkflow(workflow);
                             queueCallable(new ActionEndCommand(action.getId(), action.getType()));
                         }
+                        action.setLastCheckTime(new Date());
+                        store.updateAction(action);
+                        store.updateWorkflow(workflow);
                     }
                     catch (ActionExecutorException ex) {
                         XLog.getLog(getClass()).warn(

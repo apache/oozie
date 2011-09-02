@@ -26,10 +26,21 @@ import org.apache.hadoop.mapred.RunningJob;
 import org.apache.oozie.test.XFsTestCase;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
+import org.apache.oozie.service.Services;
 
 import java.io.File;
 
 public class TestLauncher extends XFsTestCase {
+
+    protected void setUp() throws Exception {
+        super.setUp();
+        new Services().init();
+    }
+
+    protected void tearDown() throws Exception {
+        Services.get().destroy();
+        super.tearDown();
+    }
 
     private RunningJob _test(String... arg) throws Exception {
         Path actionDir = getFsTestCaseDir();
@@ -43,19 +54,23 @@ public class TestLauncher extends XFsTestCase {
         fs.copyFromLocalFile(new Path(jar.toString()), launcherJar);
 
         JobConf jobConf = new JobConf();
+        jobConf.set("user.name", getTestUser());
+        jobConf.set("group.name", getTestGroup());
         jobConf.setInt("mapred.map.tasks", 1);
         jobConf.setInt("mapred.map.max.attempts", 1);
         jobConf.setInt("mapred.reduce.max.attempts", 1);
-        
+
         jobConf.set("mapred.job.tracker", getJobTrackerUri());
         jobConf.set("fs.default.name", getNameNodeUri());
-        LauncherMapper.setupMainClass(jobConf, LauncherMainTester.class.getName());
-        LauncherMapper.setupMainArguments(jobConf, arg);
-        LauncherMapper.setupLauncherInfo(jobConf, "1", "1@a", actionDir, "1@a-0", new XConfiguration());
+
+        LauncherMapper lm = new LauncherMapper();
+        lm.setupMainClass(jobConf, LauncherMainTester.class.getName());
+        lm.setupMainArguments(jobConf, arg);
+        lm.setupLauncherInfo(jobConf, "1", "1@a", actionDir, "1@a-0", new XConfiguration());
 
         DistributedCache.addFileToClassPath(new Path(launcherJar.toUri().getPath()), jobConf);
 
-        JobClient jobClient = new JobClient(jobConf);
+        JobClient jobClient = createJobClient();
 
         final RunningJob runningJob = jobClient.submitJob(jobConf);
 

@@ -20,7 +20,6 @@ package org.apache.oozie.action.hadoop;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.filecache.DistributedCache;
-import org.apache.oozie.test.XFsTestCase;
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.IOUtils;
@@ -35,7 +34,7 @@ import java.io.Writer;
 import java.util.Properties;
 import java.net.URI;
 
-public class TestPipesMain extends XFsTestCase {
+public class TestPipesMain extends MainTestCase {
 
     public static String getProgramName(XTestCase tc) {
         String hadoopVersion = tc.getHadoopVersion();
@@ -66,7 +65,7 @@ public class TestPipesMain extends XFsTestCase {
         return "wordcount-simple" + "_" + osSuffix + "_" + hadoopSuffix;
     }
 
-    public void testMain() throws Exception {
+    public Void call() throws Exception {
 
         String wordCountBinary = getProgramName(this);
         Path programPath = new Path(getFsTestCaseDir(), "wordcount-simple");
@@ -87,6 +86,9 @@ public class TestPipesMain extends XFsTestCase {
 
 
         XConfiguration jobConf = new XConfiguration();
+
+        jobConf.set("user.name", getTestUser());
+
         jobConf.setInt("mapred.map.tasks", 1);
         jobConf.setInt("mapred.map.max.attempts", 1);
         jobConf.setInt("mapred.reduce.max.attempts", 1);
@@ -100,7 +102,7 @@ public class TestPipesMain extends XFsTestCase {
         jobConf.set("oozie.pipes.program", programPath.toUri().getPath());
         jobConf.setBoolean("hadoop.pipes.java.recordreader", true);
 
-        DistributedCache.addCacheFile(new URI(programPath.toUri().getPath()), jobConf);
+        DistributedCache.addCacheFile(new URI(programPath.toUri().getPath()), fs.getConf());
 
         File actionXml = new File(getTestCaseDir(), "action.xml");
         os = new FileOutputStream(actionXml);
@@ -124,6 +126,7 @@ public class TestPipesMain extends XFsTestCase {
         is.close();
 
         assertTrue(props.containsKey("id"));
+        return null;
     }
 
 }

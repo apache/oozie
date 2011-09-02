@@ -17,18 +17,19 @@
  */
 package org.apache.oozie.service;
 
-import org.apache.hadoop.util.ReflectionUtils;
-import org.apache.oozie.action.ActionExecutor;
-import org.apache.oozie.service.Service;
-import org.apache.oozie.service.ServiceException;
-import org.apache.oozie.service.Services;
+import org.apache.hadoop.mapred.JobClient;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.oozie.util.ParamChecker;
-import org.apache.oozie.util.XLog;
-import org.apache.oozie.util.HadoopAccessor;
-import org.apache.oozie.ErrorCode;
+import org.apache.oozie.util.XConfiguration;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.io.IOException;
+import java.net.URI;
+import java.security.PrivilegedExceptionAction;
 
 /**
  * The HadoopAccessorService returns HadoopAccessor instances configured to work on behalf of a user-group.
@@ -43,14 +44,12 @@ public class HadoopAccessorService implements Service {
 
     public static final String CONF_PREFIX = Service.CONF_PREFIX + "HadoopAccessorService.";
 
-    public static final String HADOOP_ACCESSOR_CLASS = CONF_PREFIX + "accessor.class";
 
-    private Class<? extends HadoopAccessor> accessorClass;
-
-    @SuppressWarnings("unchecked")
     public void init(Services services) throws ServiceException {
-        accessorClass = (Class<? extends HadoopAccessor>) services.getConf().getClass(HADOOP_ACCESSOR_CLASS,
-                                                                                      HadoopAccessor.class);
+        init(services.getConf());
+    }
+
+    public void init(Configuration serviceConf) throws ServiceException {
     }
 
     public void destroy() {
@@ -61,25 +60,62 @@ public class HadoopAccessorService implements Service {
     }
 
     /**
-     * Return a user/group configured HadoopAccessor instance.
+     * Return a JobClient created with the provided user/group.
      *
-     * @param user user id.
-     * @param group group id.
-     * @return a user/group configured HadoopAccessor instance.
+     * @param conf JobConf with all necessary information to create the JobClient.
+     * @return JobClient created with the provided user/group.
+     * @throws IOException if the client could not be created.
      */
-    public HadoopAccessor get(String user, String group) {
-        HadoopAccessor accessor = ReflectionUtils.newInstance(accessorClass, null);
-        accessor.setUGI(user, group);
-        return accessor;
+    public JobClient createJobClient(String user, String group, JobConf conf) throws IOException {
+        conf = createConfiguration(user, group, conf);
+        return new JobClient(conf);
     }
 
     /**
-     * Return the HadoopAccessor class being used.
+     * Return a FileSystem created with the provided user/group.
      *
-     * @return HadoopAccessor class being used.
+     * @param conf Configuration with all necessary information to create the FileSystem.
+     * @return FileSystem created with the provided user/group.
+     * @throws IOException if the filesystem could not be created.
      */
-    public Class<? extends HadoopAccessor> getAccessorClass() {
-        return accessorClass;
+    public FileSystem createFileSystem(String user, String group, Configuration conf) throws IOException {
+        conf = createConfiguration(user, group, conf);
+        return FileSystem.get(conf);
+    }
+
+    /**
+     * Return a FileSystem created with the provided user/group for the specified URI.
+     *
+     * @param uri file system URI.
+     * @param conf Configuration with all necessary information to create the FileSystem.
+     * @return FileSystem created with the provided user/group.
+     * @throws IOException if the filesystem could not be created.
+     */
+    public FileSystem createFileSystem(String user, String group, URI uri, Configuration conf) throws IOException {
+        conf = createConfiguration(user, group, conf);
+        return FileSystem.get(uri, conf);
+    }
+
+
+    @SuppressWarnings("unchecked")
+    private <C extends Configuration> C createConfiguration(String user, String group, C conf) {
+        ParamChecker.notEmpty(user, "user");
+        ParamChecker.notEmpty(group, "group");
+        C fsConf = (C) ((conf instanceof JobConf) ? new JobConf() : new Configuration());
+        XConfiguration.copy(conf, fsConf);
+        fsConf.set("user.name", user);
+        fsConf.set("hadoop.job.ugi", user + "," + group);
+        return fsConf;
+    }
+
+    /**
+     * Add a file to the ClassPath via the DistributedCache.
+     */
+    public void addFileToClassPath(String user, String group, final Path file, final Configuration conf)
+            throws IOException {
+        Configuration defaultConf = createConfiguration(user, group, conf);
+        DistributedCache.addFileToClassPath(file, defaultConf);
+        DistributedCache.addFileToClassPath(file, conf);
     }
 
 }

@@ -30,6 +30,7 @@ import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
@@ -142,8 +143,9 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         getFileSystem().create(new Path(appPath, archivePath)).close();
 
         XConfiguration protoConf = new XConfiguration();
-        protoConf.set(WorkflowAppService.HADOOP_USER, System.getProperty("user.name"));
-        protoConf.set(WorkflowAppService.HADOOP_UGI, System.getProperty("user.name") + ",other");
+        protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
+        protoConf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
+        protoConf.set(OozieClient.GROUP_NAME, getTestGroup());
         protoConf.setStrings(WorkflowAppService.APP_LIB_JAR_PATH_LIST, appJarPath.toString());
         protoConf.setStrings(WorkflowAppService.APP_LIB_SO_PATH_LIST, appSoPath.toString());
 
@@ -241,8 +243,9 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         getFileSystem().create(new Path(getAppPath(), appSoPath)).close();
 
         XConfiguration protoConf = new XConfiguration();
-        protoConf.set(WorkflowAppService.HADOOP_USER, System.getProperty("user.name"));
-        protoConf.set(WorkflowAppService.HADOOP_UGI, System.getProperty("user.name") + ",other");
+        protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
+        protoConf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
+        protoConf.set(OozieClient.GROUP_NAME, getTestGroup());
         protoConf.setStrings(WorkflowAppService.APP_LIB_JAR_PATH_LIST, appJarPath.toString());
         protoConf.setStrings(WorkflowAppService.APP_LIB_SO_PATH_LIST, appSoPath.toString());
 
