@@ -13,6 +13,17 @@
  *  limitations under the License. See accompanying LICENSE file.
  */
 
+// Warn about dependencies
+if (typeof Ext == 'undefined'){
+    var warning = 'Missing JavaScript dependencies.';
+    var dependencies = document.getElementById('dependencies');
+    if (dependencies){
+        warning += "\n" + (dependencies.innerText || dependencies.textContent);
+        dependencies.style.display = '';
+    }
+    throw new Error(warning);
+}
+
 //so it works from remote browsers, "http://localhost:8080";
 var oozie_host = "";
 var flattenedObject;
