@@ -52,7 +52,7 @@ public class TestReRunCommand extends XFsTestCase {
 
         Path path = getFsTestCaseDir();
 
-        getFileSystem().mkdirs(new Path(path, "p2"));
+        getFileSystem().create(new Path(path, "p2"));
 
         final OozieClient wfClient = LocalOozie.getClient();
         Properties conf = wfClient.createConfiguration();
