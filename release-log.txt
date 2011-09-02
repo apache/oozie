@@ -1,5 +1,6 @@
 -- Oozie 3.0.0 release
 
+GH-0598 Fixing Coordinator Resume command to resume after suspend. 
 GH-0588 Adding Bundle to recovery service. 
 GH-0580 Fix Bundle rerun by coord names
 GH-0569 Bundle status stays RUNNING when rerun a non-existing coord job

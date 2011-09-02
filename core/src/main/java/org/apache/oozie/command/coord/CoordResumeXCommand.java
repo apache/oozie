@@ -22,6 +22,7 @@ import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
 import org.apache.oozie.client.CoordinatorJob;
+import org.apache.oozie.client.Job;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.ResumeTransitionXCommand;
@@ -87,6 +88,7 @@ public class CoordResumeXCommand extends ResumeTransitionXCommand {
         catch (JPAExecutorException e) {
             throw new CommandException(e);
         }
+        setJob(coordJob);
         prevStatus = coordJob.getStatus();
         LogUtils.setLogInfo(coordJob, logInfo);
     }
@@ -197,4 +199,11 @@ public class CoordResumeXCommand extends ResumeTransitionXCommand {
         }
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.TransitionXCommand#getJob()
+     */
+    @Override
+    public Job getJob() {
+        return coordJob;
+    }
 }
