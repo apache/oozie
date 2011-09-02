@@ -1,5 +1,6 @@
 -- Oozie 3.1.0 release
 
+OOZIE-28 update coordinator name to coord job at loadstate of coord-submit to avoid exception of bundle-status-update 
 OOZIE-22 (Apache) Add support PostgreSQL
 OOZIE-10 add user-retry in workflow action
 OOZIE-123 CoordKillXCommand command uniqueness and increase priority

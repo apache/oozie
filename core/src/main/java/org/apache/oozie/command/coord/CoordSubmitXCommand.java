@@ -988,6 +988,10 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
             logInfo.setParameter(DagXLogInfoService.JOB, this.bundleId);
             LogUtils.setLogInfo(logInfo);
         }
+        if (this.coordName != null) {
+            // this coord job is created from bundle
+            coordJob.setAppName(this.coordName);
+        }
         setJob(coordJob);
 
     }
