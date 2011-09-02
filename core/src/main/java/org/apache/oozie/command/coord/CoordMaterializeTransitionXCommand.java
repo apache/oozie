@@ -45,6 +45,7 @@ import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.util.StatusUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.util.db.SLADbOperations;
@@ -371,7 +372,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
             // set doneMaterialization to true when materialization is done
             job.setDoneMaterialization();
         }
-
+        job.setStatus(StatusUtils.getStatus(job));
         job.setNextMaterializedTime(endMatdTime);
     }
 

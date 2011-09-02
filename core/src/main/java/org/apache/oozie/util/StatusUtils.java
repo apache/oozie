@@ -14,9 +14,12 @@
  */
 package org.apache.oozie.util;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.service.SchemaService;
+import org.apache.oozie.service.Services;
+import org.apache.oozie.service.StatusTransitService;
 
 public class StatusUtils {
 
@@ -30,23 +33,28 @@ public class StatusUtils {
         Job.Status newStatus = null;
         if (coordJob != null) {
             newStatus = coordJob.getStatus();
-            if (coordJob.getAppNamespace() != null
-                    && coordJob.getAppNamespace().equals(SchemaService.COORDINATOR_NAMESPACE_URI_1)) {
+            Configuration conf = Services.get().getConf();
+            boolean backwardSupportForCoordStatus = conf.getBoolean(
+                    StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_COORD_STATUS, false);
+            if (backwardSupportForCoordStatus) {
+                if (coordJob.getAppNamespace() != null
+                        && coordJob.getAppNamespace().equals(SchemaService.COORDINATOR_NAMESPACE_URI_1)) {
 
-                if (coordJob.getStatus() == Job.Status.DONEWITHERROR) {
-                    newStatus = Job.Status.SUCCEEDED;
-                }
-                else if (coordJob.getStatus() == Job.Status.PAUSED) {
-                    newStatus = Job.Status.RUNNING;
-                }
-                else if (coordJob.getStatus() == Job.Status.RUNNING && coordJob.isDoneMaterialization()) {
-                    newStatus = Job.Status.SUCCEEDED;
-                }
-                else if (coordJob.getStatus() == Job.Status.PREPSUSPENDED) {
-                    newStatus = Job.Status.SUSPENDED;
-                }
-                else if (coordJob.getStatus() == Job.Status.PREPPAUSED) {
-                    newStatus = Job.Status.PREP;
+                    if (coordJob.getStatus() == Job.Status.DONEWITHERROR) {
+                        newStatus = Job.Status.SUCCEEDED;
+                    }
+                    else if (coordJob.getStatus() == Job.Status.PAUSED) {
+                        newStatus = Job.Status.RUNNING;
+                    }
+                    else if (coordJob.getStatus() == Job.Status.RUNNING && coordJob.isDoneMaterialization()) {
+                        newStatus = Job.Status.SUCCEEDED;
+                    }
+                    else if (coordJob.getStatus() == Job.Status.PREPSUSPENDED) {
+                        newStatus = Job.Status.SUSPENDED;
+                    }
+                    else if (coordJob.getStatus() == Job.Status.PREPPAUSED) {
+                        newStatus = Job.Status.PREP;
+                    }
                 }
             }
         }
