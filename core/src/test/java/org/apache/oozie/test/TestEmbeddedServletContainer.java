@@ -14,11 +14,6 @@
  */
 package org.apache.oozie.test;
 
-import org.mortbay.jetty.servlet.ServletHolder;
-import org.mortbay.jetty.servlet.Context;
-import org.mortbay.jetty.Server;
-import org.mortbay.jetty.handler.ContextHandler;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -29,7 +24,11 @@ public class TestEmbeddedServletContainer extends XTestCase {
     public void testEmbeddedServletContainer() throws Exception {
         EmbeddedServletContainer container = new EmbeddedServletContainer("blah");
         container.addServletEndpoint("/ping/*", PingServlet.class);
+        container.addFilter("/ping/*", PingServlet.class);
+
         try {
+            PingServlet.FILTER_INIT = false;
+            PingServlet.DO_FILTER = false;
             container.start();
             URL url = new URL(container.getServletURL("/ping/*") + "bla");
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -38,7 +37,8 @@ public class TestEmbeddedServletContainer extends XTestCase {
             BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
             assertEquals("ping", reader.readLine());
             assertEquals(null, reader.readLine());
-
+            assertTrue(PingServlet.FILTER_INIT);
+            assertTrue(PingServlet.DO_FILTER);
         }
         finally {
             container.stop();

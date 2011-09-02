@@ -14,7 +14,12 @@
  */
 package org.apache.oozie.test;
 
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -24,7 +29,7 @@ import java.io.Writer;
 /**
  * Servlet that returns a 'ping'. Used to test the ServletTestCase
  */
-public class PingServlet extends HttpServlet {
+public class PingServlet extends HttpServlet implements Filter {
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -33,4 +38,19 @@ public class PingServlet extends HttpServlet {
         w.write("ping");
     }
 
+    public static boolean FILTER_INIT;
+
+    public static boolean DO_FILTER;
+
+    @Override
+    public void init(FilterConfig filterConfig) throws ServletException {
+        FILTER_INIT = true;
+    }
+
+    @Override
+    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
+            throws IOException, ServletException {
+        filterChain.doFilter(servletRequest, servletResponse);
+        DO_FILTER = true;
+    }
 }

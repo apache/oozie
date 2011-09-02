@@ -15,6 +15,7 @@
 package org.apache.oozie.test;
 
 import org.mortbay.jetty.Server;
+import org.mortbay.jetty.servlet.FilterHolder;
 import org.mortbay.jetty.servlet.ServletHolder;
 import org.mortbay.jetty.servlet.Context;
 
@@ -55,6 +56,17 @@ public class EmbeddedServletContainer {
      */
     public void addServletEndpoint(String servletPath, Class servletClass) {
         context.addServlet(new ServletHolder(servletClass), servletPath);
+    }
+
+    /**
+     * Add a filter to the container.
+     *
+     * @param filterPath path for the filter, it should be prefixed with '/", it may contain a wild card at
+     * the end.
+     * @param filterClass servlet class
+     */
+    public void addFilter(String filterPath, Class filterClass) {
+        context.addFilter(new FilterHolder(filterClass), filterPath, 0);
     }
 
     /**
