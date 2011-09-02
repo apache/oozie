@@ -1,5 +1,6 @@
 -- Oozie 3.0.0 release
 
+GH-0665 XCommand log object has to reset after the logInfo has reset
 GH-0568 DOC: Add Bundle specifications
 GH-0482 coordinator default config is looked up in the wrong place (regression)
 GH-0653 Adding Pause status update in service. 
