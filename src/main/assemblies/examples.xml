@@ -27,64 +27,148 @@
             <fileMode>0644</fileMode>
         </fileSet>
         <fileSet>
-            <directory>${basedir}/src/main/workflows</directory>
-            <outputDirectory>/examples/seed/workflows</outputDirectory>
-            <fileMode>0644</fileMode>
-        </fileSet>
-        <fileSet>
-            <directory>${basedir}/src/main/coordinator</directory>
-            <outputDirectory>/examples/seed/coordinator</outputDirectory>
-            <fileMode>0644</fileMode>
-        </fileSet>
-        <fileSet>
-            <directory>${basedir}/src/main/input-data</directory>
-            <outputDirectory>/examples/seed/input-data</outputDirectory>
+            <directory>${basedir}/src/main/apps</directory>
+            <outputDirectory>/examples/apps</outputDirectory>
             <fileMode>0644</fileMode>
         </fileSet>
     </fileSets>
 
     <files>
         <file>
-            <source>${basedir}/src/main/bin/prepare-examples.sh</source>
-            <outputDirectory>/examples/</outputDirectory>
-            <fileMode>0555</fileMode>
+            <source>${basedir}/src/main/data/data.txt</source>
+            <outputDirectory>/examples/input-data/text</outputDirectory>
+            <fileMode>0644</fileMode>
+        </file>
+        <file>
+            <source>${basedir}/src/main/data/log01.txt</source>
+            <outputDirectory>/examples/input-data/rawLogs/2010/01/01/00/20</outputDirectory>
+            <fileMode>0644</fileMode>
+        </file>
+        <file>
+            <source>${basedir}/src/main/data/_SUCCESS</source>
+            <outputDirectory>/examples/input-data/rawLogs/2010/01/01/00/20</outputDirectory>
+            <fileMode>0644</fileMode>
+        </file>
+        <file>
+            <source>${basedir}/src/main/data/log02.txt</source>
+            <outputDirectory>/examples/input-data/rawLogs/2010/01/01/00/40</outputDirectory>
+            <fileMode>0644</fileMode>
+        </file>
+        <file>
+            <source>${basedir}/src/main/data/_SUCCESS</source>
+            <outputDirectory>/examples/input-data/rawLogs/2010/01/01/00/40</outputDirectory>
+            <fileMode>0644</fileMode>
+        </file>
+        <file>
+            <source>${basedir}/src/main/data/log03.txt</source>
+            <outputDirectory>/examples/input-data/rawLogs/2010/01/01/01/00</outputDirectory>
+            <fileMode>0644</fileMode>
+        </file>
+        <file>
+            <source>${basedir}/src/main/data/_SUCCESS</source>
+            <outputDirectory>/examples/input-data/rawLogs/2010/01/01/01/00</outputDirectory>
+            <fileMode>0644</fileMode>
+        </file>
+        <file>
+            <source>${basedir}/src/main/data/log04.txt</source>
+            <outputDirectory>/examples/input-data/rawLogs/2010/01/01/01/20</outputDirectory>
+            <fileMode>0644</fileMode>
+        </file>
+        <file>
+            <source>${basedir}/src/main/data/_SUCCESS</source>
+            <outputDirectory>/examples/input-data/rawLogs/2010/01/01/01/20</outputDirectory>
+            <fileMode>0644</fileMode>
+        </file>
+        <file>
+            <source>${basedir}/src/main/data/log05.txt</source>
+            <outputDirectory>/examples/input-data/rawLogs/2010/01/01/01/40</outputDirectory>
+            <fileMode>0644</fileMode>
+        </file>
+        <file>
+            <source>${basedir}/src/main/data/_SUCCESS</source>
+            <outputDirectory>/examples/input-data/rawLogs/2010/01/01/01/40</outputDirectory>
+            <fileMode>0644</fileMode>
+        </file>
+        <file>
+            <source>${basedir}/src/main/data/log06.txt</source>
+            <outputDirectory>/examples/input-data/rawLogs/2010/01/01/02/00</outputDirectory>
+            <fileMode>0644</fileMode>
+        </file>
+        <file>
+            <source>${basedir}/src/main/data/_SUCCESS</source>
+            <outputDirectory>/examples/input-data/rawLogs/2010/01/01/02/00</outputDirectory>
+            <fileMode>0644</fileMode>
         </file>
         <file>
             <source>${basedir}/target/${artifact.artifactId}-${artifact.version}.jar</source>
-            <outputDirectory>/examples/seed/lib</outputDirectory>
+            <outputDirectory>/examples/apps/aggregator/lib</outputDirectory>
             <fileMode>0444</fileMode>
         </file>
- 
+        <file>
+            <source>${basedir}/target/${artifact.artifactId}-${artifact.version}.jar</source>
+            <outputDirectory>/examples/apps/custom-main/lib</outputDirectory>
+            <fileMode>0444</fileMode>
+        </file>
+        <file>
+            <source>${basedir}/target/${artifact.artifactId}-${artifact.version}.jar</source>
+            <outputDirectory>/examples/apps/demo/lib</outputDirectory>
+            <fileMode>0444</fileMode>
+        </file>
+        <file>
+            <source>${basedir}/target/${artifact.artifactId}-${artifact.version}.jar</source>
+            <outputDirectory>/examples/apps/hadoop-el/lib</outputDirectory>
+            <fileMode>0444</fileMode>
+        </file>
+        <file>
+            <source>${basedir}/target/${artifact.artifactId}-${artifact.version}.jar</source>
+            <outputDirectory>/examples/apps/java-main/lib</outputDirectory>
+            <fileMode>0444</fileMode>
+        </file>
+        <file>
+            <source>${basedir}/target/${artifact.artifactId}-${artifact.version}.jar</source>
+            <outputDirectory>/examples/apps/map-reduce/lib</outputDirectory>
+            <fileMode>0444</fileMode>
+        </file> 
     </files>
 
     <dependencySets>
         <dependencySet>
-            <outputDirectory>/examples/seed/lib</outputDirectory>
+            <outputDirectory>/examples/apps/demo/lib</outputDirectory>
             <unpack>false</unpack>
-            <scope>compile</scope>
-            <excludes>
-                <exclude>commons-dbcp:commons-dbcp</exclude>
-                <exclude>commons-pool:commons-pool</exclude>
-                <exclude>hsqldb:hsqldb</exclude>
-                <exclude>jdom:jdom</exclude>
-                <exclude>jetty:org.mortbay.jetty</exclude>
-                <exclude>javax.servlet:jsp-api</exclude>
-                <exclude>log4j:log4j</exclude>
-                <exclude>org.apache.oozie:oozie-core</exclude>
-                <exclude>javax.servlet:servlet-api</exclude>
-                <exclude>org.apache.oozie:oozie-client</exclude>
-                <exclude>commons-cli:commons-cli</exclude>
-                <exclude>org.apache.hadoop:hadoop-core</exclude>
-                <exclude>commons-cli:commons-cli</exclude>
-                <exclude>commons-codec:commons-codec</exclude>
-                <exclude>commons-el:commons-el</exclude>
-                <exclude>commons-logging:commons-logging</exclude>
-                <exclude>commons-net:commons-net</exclude>
-                <exclude>json:json_simple</exclude>
-                <exclude>junit:junit</exclude>
-                <exclude>oro:oro</exclude>
-                <exclude>xmlenc:xmlenc</exclude>
-            </excludes>
+            <includes>
+                <include>${pigGroupId}:${pigArtifactId}</include>
+                <include>jline:jline</include>
+                <include>${hadoopGroupId}:hadoop-streaming</include>
+            </includes>
+            <fileMode>0444</fileMode>
+        </dependencySet>
+
+        <dependencySet>
+            <outputDirectory>/examples/apps/pig/lib</outputDirectory>
+            <unpack>false</unpack>
+            <includes>
+                <include>${pigGroupId}:${pigArtifactId}</include>
+                <include>jline:jline</include>
+            </includes>
+            <fileMode>0444</fileMode>
+        </dependencySet>
+
+        <dependencySet>
+            <outputDirectory>/examples/apps/custom-main/lib</outputDirectory>
+            <unpack>false</unpack>
+            <includes>
+                <include>${pigGroupId}:${pigArtifactId}</include>
+                <include>jline:jline</include>
+            </includes>
+            <fileMode>0444</fileMode>
+        </dependencySet>
+
+        <dependencySet>
+            <outputDirectory>/examples/apps/streaming/lib</outputDirectory>
+            <unpack>false</unpack>
+            <includes>
+                <include>${hadoopGroupId}:hadoop-streaming</include>
+            </includes>
             <fileMode>0444</fileMode>
         </dependencySet>
     </dependencySets>

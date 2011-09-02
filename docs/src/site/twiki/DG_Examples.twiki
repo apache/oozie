@@ -10,52 +10,38 @@
 
 ---+++ Setting Up the Examples
 
-Oozie examples are bundled within an Oozie distribution in the =oozie-examples.tar.gz= file.
+Oozie examples are bundled within the Oozie distribution in the =oozie-examples.tar.gz= file.
 
-Exanding this file will create an =examples/= directory.
+Expanding this file will create an =examples/= directory in the local file system.
 
-Within the =examples/= directory there is a script, =prepare-examples.sh= that setups up the examples (it is done in
-this way to avoid having multiple copies of the Hadoop streaming and Pig JAR files).
-
-In the Oozie =examples/= directory, run the script that setups up the examples:
+The =examples/= directory must be copied to the user HOME directory in HDFS:
 
 <verbatim>
-$ prepare-examples.sh
+$ hadoop fs -put examples examples
 </verbatim>
 
-Copy the sample input data to HDFS:
-
-<verbatim>
-$ hadoop fs -put input-data input-data
-</verbatim>
-
-
-Edit the file *map-reduce-job.properties* and add your userid to it
-<verbatim>
-$ cat map-reduce-job.properties
-
-#replace 'your_userid_here' with your userid
-oozie.wf.application.path=hdfs://localhost:9000/user/'your_userid_here'/examples/workflows/map-reduce
-inputDir=hdfs://localhost:9000/user/'your_userid_here'/examples/input-data
-outputDir=hdfs://localhost:9000/user/'your_userid_here'/examples/output-data-map-reduce
-jobTracker=localhost:9001
-nameNode=hdfs:/localhost:9000
-</verbatim>
-
-Copy the example workflow applications to HDFS:
-
-<verbatim>
-$ hadoop fs -put examples /user/'your_userid_here'/
-</verbatim>
+*NOTE:* If an examples directory already exists in HDFS, it must be deleted before copying it again. Otherwise files may not be
+copied.
 
 ---+++ Running the Examples
 
-Add the =bin/= directory of the Oozie directory to the =PATH= environment variable.
+Add Oozie =bin/= to the environment PATH.
 
-Run a workflow job for the application, for example:
+The examples assume the JobTracker is =localhost:9001= and the NameNode is =hdfs://localhost:9000=. If the actual
+values are different, the job properties files in the examples directory must be edited to the correct values.
+
+The example applications are under the examples/app directory, one directory per example. The directory contains the
+application XML file (workflow, or worklfow and coordinator), the =job.properties= file to submit the job and any JAR
+files the example may need.
+
+The inputs for all examples are in the =examples/input-data/= directory.
+
+The examples create output under the =examples/output-data/${EXAMPLE_NAME}= directory.
+
+*How to run an example application:*
 
 <verbatim>
-$ oozie job -oozie http://localhost:8080/oozie -config map-reduce-job.properties -run
+$ oozie job -oozie http://localhost:8080/oozie -config examples/apps/map-reduce/job.properties -run
 .
 job: 14-20090525161321-oozie-tucu
 </verbatim>
@@ -67,7 +53,7 @@ $ oozie job -oozie http://localhost:8080/oozie -info 14-20090525161321-oozie-tuc
 .
 .----------------------------------------------------------------------------------------------------------------------------------------------------------------
 Workflow Name :  map-reduce-wf
-App Path      :  hdfs://localhost:9000/user/tucu/workflows/map-reduce
+App Path      :  hdfs://localhost:9000/user/tucu/examples/apps/map-reduce
 Status        :  SUCCEEDED
 Run           :  0
 User          :  tucu
@@ -79,7 +65,7 @@ Actions
 .----------------------------------------------------------------------------------------------------------------------------------------------------------------
 Action Name             Type        Status     Transition  External Id            External Status  Error Code    Start Time              End Time
 .----------------------------------------------------------------------------------------------------------------------------------------------------------------
-hadoop1                 map-reduce  OK         end         job_200904281535_0254  SUCCEEDED        -             2009-05-26 05:01 +0000  2009-05-26 05:01 +0000
+mr-node                 map-reduce  OK         end         job_200904281535_0254  SUCCEEDED        -             2009-05-26 05:01 +0000  2009-05-26 05:01 +0000
 .----------------------------------------------------------------------------------------------------------------------------------------------------------------
 </verbatim>
 

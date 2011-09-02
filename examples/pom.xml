@@ -91,6 +91,12 @@
             </exclusions>
         </dependency>
         <dependency>
+            <groupId>jline</groupId>
+            <artifactId>jline</artifactId>
+            <version>0.9.94</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
             <groupId>${hadoopGroupId}</groupId>
             <artifactId>hadoop-test</artifactId>
             <version>${hadoopVersion}</version>
