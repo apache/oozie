@@ -22,6 +22,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.command.coord.CoordJobMatLookupCommand;
 import org.apache.oozie.command.coord.CoordJobMatLookupXCommand;
+import org.apache.oozie.executor.jpa.CoordJobGetRunningActionsCountJPAExecutor;
 import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.util.XCallable;
@@ -115,10 +116,19 @@ public class CoordJobMatLookupTriggerService implements Service {
                         + materializeJobs.size());
                 for (CoordinatorJobBean coordJob : materializeJobs) {
                     Services.get().get(InstrumentationService.class).get().incr(INSTRUMENTATION_GROUP,
-                                                                                INSTR_MAT_JOBS_COUNTER, 1);
+                            INSTR_MAT_JOBS_COUNTER, 1);
                     if (useXCommand) {
+                        JPAService jpaService = Services.get().get(JPAService.class);
+                        int numWaitingActions = jpaService.execute(new CoordJobGetRunningActionsCountJPAExecutor(
+                                coordJob.getId()));
+                        if (numWaitingActions > coordJob.getConcurrency()) {
+                            log.debug("Materialization skipped for JobID [" + coordJob.getId() + " already waiting "
+                                    + numWaitingActions + " actions. Concurrency is : " + coordJob.getConcurrency());
+                            continue;
+                        }
                         queueCallable(new CoordJobMatLookupXCommand(coordJob.getId(), materializationWindow));
-                    } else {
+                    }
+                    else {
                         queueCallable(new CoordJobMatLookupCommand(coordJob.getId(), materializationWindow));
                     }
                 }

@@ -26,6 +26,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.CoordinatorJob.Execution;
+import org.apache.oozie.executor.jpa.CoordJobGetRunningActionsCountJPAExecutor;
 import org.apache.oozie.service.CoordJobMatLookupTriggerService.CoordJobMatLookupTriggerRunnable;
 import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.store.StoreException;
@@ -72,7 +73,7 @@ public class TestCoordJobMatLookupTriggerService extends XFsTestCase {
         Runnable runnable = new CoordJobMatLookupTriggerRunnable(3600);
         runnable.run();
         Thread.sleep(6000);
-
+        
         CoordinatorStore store2 = Services.get().get(StoreService.class).getStore(CoordinatorStore.class);
         store2.beginTrx();
         CoordinatorJobBean coordJob = store2.getCoordinatorJob(jobId, false);
@@ -81,8 +82,11 @@ public class TestCoordJobMatLookupTriggerService extends XFsTestCase {
         if (!(coordJob.getStatus() == CoordinatorJob.Status.PREMATER)) {
             fail();
         }
+        JPAService jpaService = Services.get().get(JPAService.class);
+        int numWaitingActions = jpaService.execute(new CoordJobGetRunningActionsCountJPAExecutor(coordJob.getId()));
+        assert(numWaitingActions <= coordJob.getConcurrency());
     }
-    
+
     private String getCoordJobXml(Path appPath, Date start, Date end) throws Exception {
         String startDateStr = null, endDateStr = null;
         String appXml = null;
@@ -111,7 +115,7 @@ public class TestCoordJobMatLookupTriggerService extends XFsTestCase {
         ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
         Reader reader2 = new InputStreamReader(bais);
         IOUtils.copyCharStream(reader2, writer);
-        
+
         CoordinatorJobBean coordJob = new CoordinatorJobBean();
         coordJob.setId(jobId);
         coordJob.setAppName("testApp");
@@ -131,7 +135,6 @@ public class TestCoordJobMatLookupTriggerService extends XFsTestCase {
         coordJob.setConcurrency(1);
         coordJob.setStartTime(start);
         coordJob.setEndTime(end);
-
         try {
             store.insertCoordinatorJob(coordJob);
         }
