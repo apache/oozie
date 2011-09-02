@@ -1,5 +1,6 @@
 -- Oozie 3.0.1 release
 
+OOZIE-43 should reset pending when pausetime changes and materialized actions are removed
 OOZIE-37 Fixing pause service for exceptions. 
 OOZIE-53 User is not able to change End time on Bundles.
 OOZIE-52 Oozie allows users to Change the pause time for Succeeded Bundles.
