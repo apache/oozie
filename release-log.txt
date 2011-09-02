@@ -1,5 +1,6 @@
 -- Oozie 3.0.0 release
 
+GH-0067 input data check should have a timeout for catch-up mode
 GH-0361 Throttle coordinator action/workflow creation per coordinator job
 GH-0461 Mapping the workflow ID to coordinator ID
 GH-0391 Add support for filters to the EmbeddedServletContainer

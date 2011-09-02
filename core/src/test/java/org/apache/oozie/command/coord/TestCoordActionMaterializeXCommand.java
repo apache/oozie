@@ -59,16 +59,11 @@ public class TestCoordActionMaterializeXCommand extends XDataTestCase {
     }
 
     public void testActionMater() throws Exception {
-
         Date startTime = DateUtils.parseDateUTC("2009-03-06T010:00Z");
         Date endTime = DateUtils.parseDateUTC("2009-03-11T10:00Z");
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREMATER, startTime, endTime);
         new CoordActionMaterializeXCommand(job.getId(), startTime, endTime).call();
         CoordinatorActionBean action = checkCoordAction(job.getId() + "@1");
-        if (action != null) {
-            assertEquals(action.getTimeOut(), Services.get().getConf().getInt(
-                    "oozie.service.coord.catchup.default.timeout", -2));
-        }
     }
 
     public void testActionMaterWithPauseTime1() throws Exception {
@@ -101,6 +96,19 @@ public class TestCoordActionMaterializeXCommand extends XDataTestCase {
         checkCoordActions(job.getId(), 0, CoordinatorJob.Status.RUNNING);
     }
 
+    public void testTimeout() throws Exception {
+        Date startTime = DateUtils.parseDateUTC("2009-03-06T10:00Z");
+        Date endTime = DateUtils.parseDateUTC("2009-03-06T10:14Z");
+        Date pauseTime = null;
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREMATER, startTime, endTime,
+                pauseTime, 300);
+        new CoordActionMaterializeXCommand(job.getId(), startTime, endTime).call();
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        List<CoordinatorActionBean> actions = jpaService.execute(new CoordJobGetActionsJPAExecutor(job.getId()));
+        checkCoordActionsTimeout(job.getId() + "@1", 300);
+    }
+
     protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date startTime, Date endTime)
             throws Exception {
         CoordinatorJobBean coordJob = createCoordJob(status);
@@ -124,12 +132,19 @@ public class TestCoordActionMaterializeXCommand extends XDataTestCase {
 
     protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date startTime, Date endTime,
             Date pauseTime) throws Exception {
+        return addRecordToCoordJobTable(status, startTime, endTime, pauseTime, -1);
+    }
+    
+    protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date startTime, Date endTime,
+            Date pauseTime, int timeout) throws Exception {
         CoordinatorJobBean coordJob = createCoordJob(status);
         coordJob.setStartTime(startTime);
         coordJob.setEndTime(endTime);
         coordJob.setPauseTime(pauseTime);
         coordJob.setFrequency(5);
         coordJob.setTimeUnit(Timeunit.MINUTE);
+        coordJob.setTimeout(timeout);
+        coordJob.setConcurrency(3);
 
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
@@ -192,6 +207,18 @@ public class TestCoordActionMaterializeXCommand extends XDataTestCase {
         catch (JPAExecutorException se) {
             se.printStackTrace();
             fail("Job ID " + jobId + " was not stored properly in db");
+        }
+    }
+    
+    private void checkCoordActionsTimeout(String actionId, int expected) {
+        try {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            CoordinatorActionBean action = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
+            assertEquals(action.getTimeOut(), expected);
+        }
+        catch (JPAExecutorException se) {
+            se.printStackTrace();
+            fail("Action ID " + actionId + " was not stored properly in db");
         }
     }
 }

@@ -93,7 +93,9 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                 queue(new CoordActionReadyXCommand(coordAction.getJobId()), 100);
             }
             else {
-                long waitingTime = (actualTime.getTime() - coordAction.getNominalTime().getTime()) / (60 * 1000);
+                long waitingTime = (actualTime.getTime() - Math.max(coordAction.getNominalTime().getTime(), coordAction
+                        .getCreatedTime().getTime()))
+                        / (60 * 1000);
                 int timeOut = coordAction.getTimeOut();
                 if ((timeOut >= 0) && (waitingTime > timeOut)) {
                     queue(new CoordActionTimeOutXCommand(coordAction), 100);
