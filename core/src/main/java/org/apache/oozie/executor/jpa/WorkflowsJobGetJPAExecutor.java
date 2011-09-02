@@ -26,7 +26,6 @@ import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.WorkflowsInfo;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob.Status;
-import org.apache.oozie.util.XLog;
 import org.apache.openjpa.persistence.OpenJPAPersistence;
 import org.apache.openjpa.persistence.OpenJPAQuery;
 import org.apache.openjpa.persistence.jdbc.FetchDirection;
@@ -46,7 +45,7 @@ public class WorkflowsJobGetJPAExecutor implements JPAExecutor<WorkflowsInfo> {
 
     /**
      * This JPA Executor gets the workflows info for the range.
-     * 
+     *
      * @param filter
      * @param start
      * @param len
@@ -222,7 +221,6 @@ public class WorkflowsJobGetJPAExecutor implements JPAExecutor<WorkflowsInfo> {
             if (orArray.size() > 0) {
                 StringBuilder sbTotal = new StringBuilder(sb);
                 sb.append(" order by w.startTimestamp desc ");
-                XLog.getLog(getClass()).debug("Created String is **** " + sb.toString());
                 q = em.createQuery(sb.toString());
                 q.setFirstResult(start - 1);
                 q.setMaxResults(len);

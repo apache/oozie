@@ -49,7 +49,7 @@ import org.apache.openjpa.persistence.jdbc.Index;
     @NamedQuery(name = "UPDATE_COORD_ACTION", query = "update CoordinatorActionBean w set w.actionNumber = :actionNumber, w.actionXml = :actionXml, w.consoleUrl = :consoleUrl, w.createdConf = :createdConf, w.errorCode = :errorCode, w.errorMessage = :errorMessage, w.externalStatus = :externalStatus, w.missingDependencies = :missingDependencies, w.runConf = :runConf, w.timeOut = :timeOut, w.trackerUri = :trackerUri, w.type = :type, w.createdTimestamp = :createdTime, w.externalId = :externalId, w.jobId = :jobId, w.lastModifiedTimestamp = :lastModifiedTime, w.nominalTimestamp = :nominalTime, w.slaXml = :slaXml, w.status = :status where w.id = :id"),
 
     @NamedQuery(name = "UPDATE_COORD_ACTION_MIN", query = "update CoordinatorActionBean w set w.actionXml = :actionXml, w.missingDependencies = :missingDependencies, w.lastModifiedTimestamp = :lastModifiedTime, w.status = :status where w.id = :id"),
-    
+
     @NamedQuery(name = "DELETE_COMPLETED_ACTIONS_FOR_COORDINATOR", query = "delete from CoordinatorActionBean a where a.jobId = :jobId and (a.status = 'SUCCEEDED' OR a.status = 'FAILED' OR a.status= 'KILLED')"),
 
     @NamedQuery(name = "GET_COORD_ACTIONS", query = "select OBJECT(w) from CoordinatorActionBean w"),
@@ -71,7 +71,7 @@ import org.apache.openjpa.persistence.jdbc.Index;
     @NamedQuery(name = "GET_COORD_ACTIVE_ACTIONS_COUNT_BY_JOBID", query = "select count(a) from CoordinatorActionBean a where a.jobId = :jobId AND a.status = 'WAITING'"),
 
     @NamedQuery(name = "GET_ACTIONS_FOR_COORD_JOB", query = "select OBJECT(a) from CoordinatorActionBean a where a.jobId = :jobId"),
-    
+
     @NamedQuery(name = "GET_COORD_ACTION_FOR_COORD_JOB_BY_ACTION_NUMBER", query = "select OBJECT(a) from CoordinatorActionBean a where a.jobId = :jobId AND a.actionNumber = :actionNumber"),
 
     @NamedQuery(name = "GET_RUNNING_ACTIONS_FOR_COORD_JOB", query = "select OBJECT(a) from CoordinatorActionBean a where a.jobId = :jobId AND a.status = 'RUNNING'"),
@@ -149,8 +149,11 @@ public class CoordinatorActionBean extends JsonCoordinatorAction implements
         WritableUtils.writeStr(dataOutput, getRunConf());
         WritableUtils.writeStr(dataOutput, getExternalStatus());
         WritableUtils.writeStr(dataOutput, getTrackerUri());
+        WritableUtils.writeStr(dataOutput, getConsoleUrl());
         WritableUtils.writeStr(dataOutput, getErrorCode());
         WritableUtils.writeStr(dataOutput, getErrorMessage());
+        dataOutput.writeLong((getCreatedTime() != null) ? getCreatedTime().getTime() : -1);
+        dataOutput.writeLong((getLastModifiedTime() != null) ? getLastModifiedTime().getTime() : -1);
     }
 
     /**
@@ -164,12 +167,14 @@ public class CoordinatorActionBean extends JsonCoordinatorAction implements
         setType(WritableUtils.readStr(dataInput));
         setId(WritableUtils.readStr(dataInput));
         setCreatedConf(WritableUtils.readStr(dataInput));
-        setStatus(CoordinatorAction.Status.valueOf(WritableUtils
-                .readStr(dataInput)));
+        setStatus(CoordinatorAction.Status.valueOf(WritableUtils.readStr(dataInput)));
+        setActionNumber(dataInput.readInt());
         setRunConf(WritableUtils.readStr(dataInput));
         setExternalStatus(WritableUtils.readStr(dataInput));
         setTrackerUri(WritableUtils.readStr(dataInput));
         setConsoleUrl(WritableUtils.readStr(dataInput));
+        setErrorCode(WritableUtils.readStr(dataInput));
+        setErrorMessage(WritableUtils.readStr(dataInput));
         long d = dataInput.readLong();
         if (d != -1) {
             setCreatedTime(new Date(d));
@@ -178,8 +183,6 @@ public class CoordinatorActionBean extends JsonCoordinatorAction implements
         if (d != -1) {
             setLastModifiedTime(new Date(d));
         }
-        d = dataInput.readLong();
-        d = dataInput.readLong();
     }
 
     @Override

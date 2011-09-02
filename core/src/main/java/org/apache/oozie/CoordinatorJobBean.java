@@ -92,7 +92,7 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
 
     @Basic
     @Column(name = "execution")
-    private String execution = null;
+    private String execution = CoordinatorJob.Execution.FIFO.toString();
 
     @Basic
     @Column(name = "last_action")
@@ -198,10 +198,6 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
         this.timeUnitStr = timeUnit.toString();
     }
 
-    public void setExecution(String execution) {
-        this.execution = execution;
-    }
-
     public void setLastActionTimestamp(java.sql.Timestamp lastActionTimestamp) {
         super.setLastActionTime(DateUtils.toDate(lastActionTimestamp));
         this.lastActionTimestamp = lastActionTimestamp;
@@ -230,8 +226,8 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
         WritableUtils.writeStr(dataOutput, getTimeZone());
         dataOutput.writeInt(getConcurrency());
         WritableUtils.writeStr(dataOutput, getExecutionOrder().toString());
-        dataOutput.writeLong((getStartTime() != null) ? getLastActionTime().getTime() : -1);
-        dataOutput.writeLong((getStartTime() != null) ? getNextMaterializedTime().getTime() : -1);
+        dataOutput.writeLong((getLastActionTime() != null) ? getLastActionTime().getTime() : -1);
+        dataOutput.writeLong((getNextMaterializedTime() != null) ? getNextMaterializedTime().getTime() : -1);
         dataOutput.writeLong((getStartTime() != null) ? getStartTime().getTime() : -1);
         dataOutput.writeLong((getEndTime() != null) ? getEndTime().getTime() : -1);
         WritableUtils.writeStr(dataOutput, getUser());
@@ -242,7 +238,7 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
 
     /**
      * Deserialize a coordinator bean from a data input.
-     * 
+     *
      * @param dataInput data input.
      * @throws IOException thrown if the workflow bean could not be deserialized.
      */

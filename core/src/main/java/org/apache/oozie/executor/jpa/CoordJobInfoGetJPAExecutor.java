@@ -28,7 +28,6 @@ import org.apache.oozie.client.CoordinatorJob.Status;
 import org.apache.oozie.client.CoordinatorJob.Timeunit;
 import org.apache.oozie.store.StoreStatusFilter;
 import org.apache.oozie.util.ParamChecker;
-import org.apache.oozie.util.XLog;
 import org.apache.openjpa.persistence.OpenJPAPersistence;
 import org.apache.openjpa.persistence.OpenJPAQuery;
 import org.apache.openjpa.persistence.jdbc.FetchDirection;
@@ -81,7 +80,6 @@ public class CoordJobInfoGetJPAExecutor implements JPAExecutor<CoordinatorJobInf
         else {
             StringBuilder sbTotal = new StringBuilder(sb);
             sb.append(" order by w.createdTimestamp desc ");
-            XLog.getLog(getClass()).debug("Created String is **** " + sb.toString());
             q = em.createQuery(sb.toString());
             q.setFirstResult(start - 1);
             q.setMaxResults(len);

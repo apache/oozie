@@ -62,7 +62,7 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
     private Status status = CoordinatorJob.Status.PREP;
 
     @Transient
-    private Execution executionOrder = CoordinatorJob.Execution.LIFO;
+    private Execution executionOrder = CoordinatorJob.Execution.FIFO;
 
     @Transient
     private Date startTime;
