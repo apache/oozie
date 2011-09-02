@@ -81,7 +81,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
 
         final WorkflowActionBean action = (WorkflowActionBean) workflow.getActions().get(0);
         action.setConf("<sub-workflow xmlns='uri:oozie:workflow:0.1'>" +
-                "      <app-path>" + subWorkflowAppPath + File.separator + "workflow.xml" + "</app-path>" +
+                "      <app-path>" + subWorkflowAppPath + "</app-path>" +
                 "      <configuration>" +
                 "        <property>" +
                 "          <name>a</name>" +

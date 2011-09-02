@@ -26,6 +26,7 @@ import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.PropertiesUtils;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.util.XConfiguration;
@@ -149,6 +150,10 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
                 injectInline(eConf.getChild("configuration", ns), subWorkflowConf);
                 injectCallback(context, subWorkflowConf);
                 injectRecovery(extId, subWorkflowConf);
+
+                //TODO: this has to be refactored later to be done in a single place for REST calls and this
+                JobUtils.normalizeAppPath(context.getWorkflow().getUser(), context.getWorkflow().getGroup(),
+                                          subWorkflowConf);
 
                 subWorkflowId = oozieClient.run(subWorkflowConf.toProperties());
             }
