@@ -1253,7 +1253,7 @@ a. Coordinator application definition that creates a coordinator action once a d
                     start="2009-01-01T24:00Z" end="2009-12-31T24:00Z" timezone="UTC"
                     xmlns="uri:oozie:coordinator:0.1">
       <datasets>
-        <include>datasets.xml</include>
+      	<include>hdfs://foo:9000/app/dataset-definitions/datasets.xml</include>
       </datasets>
       <input-events>
         <data-in name="input" dataset="logs">
@@ -1280,7 +1280,7 @@ b. Coordinator application definition that creates a coordinator action once an 
                     start="2009-01-01T24:00Z" end="2009-12-31T24:00Z" timezone="UTC"
                     xmlns="uri:oozie:coordinator:0.1">
       <datasets>
-        <include>datasets.xml</include>
+        <include>hdfs://foo:9000/app/dataset-definitions/datasets.xml</include>
       </datasets>
       <input-events>
         <data-in name="input" dataset="logs">
@@ -1329,7 +1329,7 @@ Coordinator application definition:
                     start="2009-01-01T24:00Z" end="2009-12-31T24:00Z" timezone="UTC"
                     xmlns="uri:oozie:coordinator:0.1">
       <datasets>
-        <include>datasets.xml</include>
+        <include>hdfs://foo:9000/app/dataset-definitions/datasets.xml</include>
       </datasets>
       <input-events>
         <data-in name="input" dataset="logs">
@@ -1390,7 +1390,7 @@ Coordinator application definitions. A data-pipeline with two coordinator-applic
                     start="2009-01-01T01:00Z" end="2009-12-31T24:00Z" timezone="UTC"
                     xmlns="uri:oozie:coordinator:0.1">
       <datasets>
-        <include>datasets.xml</include>
+        <include>hdfs://foo:9000/app/dataset-definitions/datasets.xml</include>
       </datasets>
       <input-events>
         <data-in name="input" dataset="15MinLogs">
@@ -1416,7 +1416,7 @@ Coordinator application definitions. A data-pipeline with two coordinator-applic
                     start="2009-01-01T24:00Z" end="2009-12-31T24:00Z" timezone="UTC"
                     xmlns="uri:oozie:coordinator:0.1">
       <datasets>
-        <include>datasets.xml</include>
+        <include>hdfs://foo:9000/app/dataset-definitions/datasets.xml</include>
       </datasets>
       <input-events>
         <data-in name="input" dataset="1HourLogs">
@@ -1858,7 +1858,7 @@ Coordinator application definition:
                     start="2009-01-01T24:00Z" end="2009-12-31T24:00Z" timezone="UTC"
                     xmlns="uri:oozie:coordinator:0.1">
       <datasets>
-        <include>datasets.xml</include>
+        <include>hdfs://foo:9000/app/dataset-definitions/datasets.xml</include>
       </datasets>
       <input-events>
         <data-in name="inputLogs" dataset="hourlyLogs">

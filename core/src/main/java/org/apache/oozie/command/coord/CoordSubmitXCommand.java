@@ -880,6 +880,10 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
 
             // app path could be a directory
             Path path = new Path(uri.getPath());
+            // check file exists for dataset include file, app xml already checked
+            if (!fs.exists(path)) {
+                throw new URISyntaxException(path.toString(), "path not existed : " + path.toString());
+            }
             if (!fs.isFile(path)) {
                 appDefPath = new Path(path, COORDINATOR_XML_FILE);
             } else {
