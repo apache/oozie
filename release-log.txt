@@ -1,5 +1,6 @@
 -- Oozie 3.0.0 release
 
+GH-0086 Clean up temporary files in the user HDFS directory upon completion.
 GH-0497 bundle status is RUNNING when fail to create coord job
 GH-0514 bundle_change did not set pausetime on a PREP bundle
 GH-0518 Provide a basic UI for bundle jobs and jobs command for bundle jobs

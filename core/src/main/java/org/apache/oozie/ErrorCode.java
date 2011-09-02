@@ -140,6 +140,7 @@ public enum ErrorCode {
     E0816(XLog.STD, "Action pending=[{0}], status=[{1}]. Skipping ActionStart Execution"),
     E0817(XLog.STD, "The wf action [{0}] has been udated recently. Ignoring ActionCheck."),
     E0818(XLog.STD, "Action [{0}] status is running but WF Job [{1}] status is [{2}]. Expected status is RUNNING."),
+    E0819(XLog.STD, "Unable to delete the temp dir of job WF Job [{1}]."),
 
     E0900(XLog.OPS, "Jobtracker [{0}] not allowed, not in Oozie's whitelist"),
     E0901(XLog.OPS, "Namenode [{0}] not allowed, not in Oozie's whitelist"),

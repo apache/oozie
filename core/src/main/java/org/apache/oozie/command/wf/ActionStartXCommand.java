@@ -247,6 +247,7 @@ public class ActionStartXCommand extends ActionXCommand<Void> {
                     try {
                         failJob(context);
                         queue(new CoordActionUpdateXCommand(wfJob));
+                        new WfEndXCommand(wfJob).call(); //To delete the WF temp dir
                         SLADbXOperations.writeStausEvent(wfAction.getSlaXml(), wfAction.getId(), Status.FAILED,
                                 SlaAppType.WORKFLOW_ACTION);
                         SLADbXOperations.writeStausEvent(wfJob.getSlaXml(), wfJob.getId(), Status.FAILED,
@@ -287,6 +288,7 @@ public class ActionStartXCommand extends ActionXCommand<Void> {
         SLADbXOperations.writeStausEvent(action.getSlaXml(), action.getId(), Status.FAILED, SlaAppType.WORKFLOW_ACTION);
         SLADbXOperations.writeStausEvent(workflow.getSlaXml(), workflow.getId(), Status.FAILED, SlaAppType.WORKFLOW_JOB);
         queue(new CoordActionUpdateXCommand(workflow));
+        new WfEndXCommand(wfJob).call(); //To delete the WF temp dir
         return;
     }
 
