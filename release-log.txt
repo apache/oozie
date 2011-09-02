@@ -1,5 +1,6 @@
 -- Oozie 3.1.0 release
 
+OOZIE-21 Fixed bug forked subwf not returning status to the parent wf job
 OOZIE-28 update coordinator name to coord job at loadstate of coord-submit to avoid exception of bundle-status-update 
 OOZIE-22 (Apache) Add support PostgreSQL
 OOZIE-10 add user-retry in workflow action

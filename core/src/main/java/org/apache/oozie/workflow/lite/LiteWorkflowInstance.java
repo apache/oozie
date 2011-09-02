@@ -315,12 +315,12 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
         NodeDef nodeDef = null;
         if (nodeJob == null) {
             log.error("invalid execution path [{0}]", executionPath);
-        } else {
-            nodeDef = def.getNode(nodeJob.nodeName);
         }
-
-        if (nodeDef == null) {
-            log.error("invalid transition [{0}]", nodeJob.nodeName);
+        else {
+            nodeDef = def.getNode(nodeJob.nodeName);
+            if (nodeDef == null) {
+                log.error("invalid transition [{0}]", nodeJob.nodeName);
+            }
         }
         return nodeDef;
     }

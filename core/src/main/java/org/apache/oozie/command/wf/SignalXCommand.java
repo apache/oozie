@@ -227,7 +227,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
             // output message for Kill node
             if (wfAction != null) { // wfAction could be a no-op job
                 NodeDef nodeDef = workflowInstance.getNodeDef(wfAction.getExecutionPath());
-                if (nodeDef instanceof KillNodeDef) {
+                if (nodeDef != null && nodeDef instanceof KillNodeDef) {
                     boolean isRetry = false;
                     boolean isUserRetry = false;
                     ActionExecutorContext context = new ActionXCommand.ActionExecutorContext(wfJob, wfAction, isRetry,
@@ -301,7 +301,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                 "Updated the workflow status to " + wfJob.getId() + "  status =" + wfJob.getStatusStr());
         if (wfJob.getStatus() != WorkflowJob.Status.RUNNING && wfJob.getStatus() != WorkflowJob.Status.SUSPENDED) {
             // update coordinator action
-            new CoordActionUpdateXCommand(wfJob).call();
+            new CoordActionUpdateXCommand(wfJob).call();    //Note: Called even if wf is not necessarily instantiated by coordinator
             new WfEndXCommand(wfJob).call(); //To delete the WF temp dir
         }
         LOG.debug("ENDED SignalCommand for jobid=" + jobId + ", actionId=" + actionId);
