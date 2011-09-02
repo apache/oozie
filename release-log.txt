@@ -1,5 +1,6 @@
 -- Oozie 2.3.0 release
 
+GH-0184 Oozie should log Hadoop JAR version in use at startup
 GH-0186 examples should use the JARs produced by sharelib
 GH-0181 application path is resolved incorrectly to the URI of the workflow.xml
 GH-0173 Add SecurityAuth.audit file to .gitignore

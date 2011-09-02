@@ -17,6 +17,7 @@ package org.apache.oozie.service;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.ReflectionUtils;
+import org.apache.hadoop.util.VersionInfo;
 import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.Instrumentable;
@@ -107,7 +108,7 @@ public class Services {
         systemId = conf.get(CONF_SYSTEM_ID, ("oozie-" + System.getProperty("user.name")));
         if (systemId.length() > MAX_SYSTEM_ID_LEN) {
             systemId = systemId.substring(0, MAX_SYSTEM_ID_LEN);
-            XLog.getLog(getClass()).warn("System ID [{0}] exceeds maximun lenght [{1}], trimming", systemId,
+            XLog.getLog(getClass()).warn("System ID [{0}] exceeds maximum length [{1}], trimming", systemId,
                                          MAX_SYSTEM_ID_LEN);
         }
         setSystemMode(SYSTEM_MODE.valueOf(conf.get(CONF_SYSTEM_MODE, SYSTEM_MODE.NORMAL.toString())));
@@ -165,7 +166,7 @@ public class Services {
     /**
      * Set and set system mode.
      *
-     * @param .
+     * @param sysMode system mode
      */
 
     public synchronized void setSystemMode(SYSTEM_MODE sysMode) {
@@ -227,6 +228,7 @@ public class Services {
             }
         }
         log.info("Initialized");
+        log.info("Running with JARs for Hadoop version [{0}]", VersionInfo.getVersion());
         log.info("Oozie System ID [{0}] started!", getSystemId());
     }
 
