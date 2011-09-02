@@ -104,7 +104,7 @@ public class CoordJobMatLookupTriggerService implements Service {
                 store.beginTrx();
 
                 // get current date
-                Date currDate = new Date(new Date().getTime() - CONF_LOOKUP_INTERVAL_DEFAULT * 100);
+                Date currDate = new Date(new Date().getTime() + CONF_LOOKUP_INTERVAL_DEFAULT * 1000);
                 // get list of all jobs that have actions that should be
                 // materialized.
                 List<CoordinatorJobBean> materializeJobs = store.getCoordinatorJobsToBeMaterialized(currDate, 50);
