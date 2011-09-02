@@ -185,7 +185,16 @@ public class CoordActionInputCheckCommand extends CoordinatorCommand<Void> {
             throws Exception {
         String strAction = XmlUtils.prettyPrint(eAction).toString();
         Date nominalTime = DateUtils.parseDateUTC(eAction.getAttributeValue("action-nominal-time"));
-        Date actualTime = DateUtils.parseDateUTC(eAction.getAttributeValue("action-actual-time"));
+        String actualTimeStr = eAction.getAttributeValue("action-actual-time");
+        Date actualTime = null;
+        if (actualTimeStr == null) {
+            log.debug("Unable to get action-actual-time from action xml, this job is submitted " +
+            "from previous version. Assign current date to actual time, action = " + actionId);
+            actualTime = new Date();
+        } else {
+            actualTime = DateUtils.parseDateUTC(actualTimeStr);
+        }
+
         StringBuffer resultedXml = new StringBuffer();
 
         boolean ret;

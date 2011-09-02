@@ -124,7 +124,6 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                 int timeOut = coordAction.getTimeOut();
                 if ((timeOut >= 0) && (waitingTime > timeOut)) {
                     queue(new CoordActionTimeOutXCommand(coordAction), 100);
-                    coordAction.setStatus(CoordinatorAction.Status.TIMEDOUT);
                 }
                 else {
                     queue(new CoordActionInputCheckXCommand(coordAction.getId()), COMMAND_REQUEUE_INTERVAL);
@@ -134,7 +133,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionUpdateJPAExecutor(coordAction));
         }
         catch (Exception e) {
-            throw new CommandException(ErrorCode.E1005, e.getMessage(), e);
+            throw new CommandException(ErrorCode.E1021, e.getMessage(), e);
         }
         cron.stop();
 
@@ -219,11 +218,19 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
      * @throws Exception thrown if failed to resolve data input and output paths
      */
     @SuppressWarnings("unchecked")
-    private boolean checkUnresolvedInstances(Element eAction, Configuration actionConf)
-            throws Exception {
+    private boolean checkUnresolvedInstances(Element eAction, Configuration actionConf) throws Exception {
         String strAction = XmlUtils.prettyPrint(eAction).toString();
         Date nominalTime = DateUtils.parseDateUTC(eAction.getAttributeValue("action-nominal-time"));
-        Date actualTime = DateUtils.parseDateUTC(eAction.getAttributeValue("action-actual-time"));
+        String actualTimeStr = eAction.getAttributeValue("action-actual-time");
+        Date actualTime = null;
+        if (actualTimeStr == null) {
+            LOG.debug("Unable to get action-actual-time from action xml, this job is submitted " +
+            "from previous version. Assign current date to actual time, action = " + actionId);
+            actualTime = new Date();
+        } else {
+            actualTime = DateUtils.parseDateUTC(actualTimeStr);
+        }
+
         StringBuffer resultedXml = new StringBuffer();
 
         boolean ret;

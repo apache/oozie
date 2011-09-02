@@ -168,6 +168,7 @@ public enum ErrorCode {
     E1018(XLog.STD, "Coord Job Rerun Error: {0}"),
     E1019(XLog.STD, "Could not submit coord job, [{0}]"),
     E1020(XLog.STD, "Could not kill coord job, this job either finished successfully or does not exist , [{0}]"),
+    E1021(XLog.STD, "Coord Action Input Check Error: {0}"),
 
     E1100(XLog.STD, "Command precondition does not hold before execution"),
 
