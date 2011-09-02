@@ -47,6 +47,7 @@ Enough reading already? Follow the steps in [[DG_QuickStart][Oozie Quick Start]]
    * [[DG_CustomActionExecutor][Writing a Custom Action Executor]]
    * [[./client/apidocs/index.html][Oozie Client Javadocs]]
    * [[./core/apidocs/index.html][Oozie Core Javadocs]]
+   * [[WebServicesAPI][Oozie Web Services API]]
 
 ---++ Administrator Documentation
 
