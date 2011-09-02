@@ -303,6 +303,7 @@ public class CoordinatorActionBean extends JsonCoordinatorAction implements
             case READY:
             case SUBMITTED:
             case RUNNING:
+            case SUSPENDED:
                 isTerminal = false;
                 break;
             default:
