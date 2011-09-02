@@ -477,6 +477,10 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         addAnAttribute("end_of_duration", eAppXml, tmp.toString());
         // coordJob.setEndOfDuration(tmp) // TODO: Add new attribute in Job bean
 
+        // Application name
+        val = resolveAttribute("name", eAppXml, evalNofuncs);
+        coordJob.setAppName(val);
+        
         // start time
         val = resolveAttribute("start", eAppXml, evalNofuncs);
         ParamChecker.checkUTC(val, "start");
@@ -740,7 +744,6 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         if (attr != null) {
             try {
                 val = CoordELFunctions.evalAndWrap(eval, attr.getValue().trim());
-
             }
             catch (Exception e) {
                 throw new CoordinatorJobException(ErrorCode.E1004, e.getMessage(), e);
