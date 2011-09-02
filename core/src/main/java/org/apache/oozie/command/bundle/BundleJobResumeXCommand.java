@@ -165,9 +165,9 @@ public class BundleJobResumeXCommand extends ResumeTransitionXCommand {
      */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
-        if (bundleJob.getStatus() != Job.Status.SUSPENDED) {
+        if (bundleJob.getStatus() != Job.Status.SUSPENDED && bundleJob.getStatus() != Job.Status.PREPSUSPENDED) {
             throw new PreconditionException(ErrorCode.E1100, "BundleResumeCommand not Resumed - "
-                    + "job not in SUSPENDED state " + bundleId);
+                    + "job not in SUSPENDED/PREPSUSPENDED state " + bundleId);
         }
     }
 

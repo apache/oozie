@@ -1,5 +1,6 @@
 -- Oozie 3.0.0 release
 
+GH-0610 bundle status did not change from PREPSUSPENDED to PREP after resume.
 GH-0598 Fixing Coordinator Resume command to resume after suspend. 
 GH-0594 Coordinator action materialization concurrency should use new properties.
 GH-0588 Adding Bundle to recovery service. 
