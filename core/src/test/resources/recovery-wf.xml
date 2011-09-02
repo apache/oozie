@@ -13,16 +13,7 @@
   limitations under the License. See accompanying LICENSE file.
 -->
 <workflow-app xmlns="uri:oozie:workflow:0.1" name="recovery-el-wf">
-    <start to="ssh"/>
-    <action name="ssh">
-        <ssh>
-            <host>localhost</host>
-            <command>echo</command>
-            <args>"Hello Oozie!"</args>
-        </ssh>
-        <ok to="hadoop"/>
-        <error to="k"/>
-    </action>
+    <start to="hadoop"/>
     <action name="hadoop">
         <map-reduce>
             <job-tracker>${jobTracker}</job-tracker>
