@@ -1,5 +1,6 @@
 -- Oozie 3.0.0 release
 
+OOZIE-29 bundle rerun by name only doesn't work.
 GH-0682 Fixing Coord Rerun for date range. 
 OOZIE-21 modify the POM to enable exclusion of testcases via command line when invoking maven
 OOZIE-19 oozie-setup.sh should add all JARs from an extensions directory

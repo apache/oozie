@@ -607,9 +607,6 @@ public class OozieCLI {
                     if (options.contains(RERUN_DATE_OPTION)) {
                         dateScope = commandLine.getOptionValue(RERUN_DATE_OPTION);
                     }
-                    else {
-                        throw new OozieCLIException("Must provide date range for bundle rerun");
-                    }
 
                     if (options.contains(RERUN_COORD_OPTION)) {
                         coordScope = commandLine.getOptionValue(RERUN_COORD_OPTION);
