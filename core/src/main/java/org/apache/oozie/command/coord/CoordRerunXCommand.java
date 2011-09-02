@@ -37,6 +37,7 @@ import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.coord.CoordELFunctions;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetActionForNominalTimeJPAExecutor;
@@ -62,9 +63,9 @@ import org.jdom.JDOMException;
  * The "rerunType" can be set as {@link RestConstants.JOB_COORD_RERUN_DATE} or
  * {@link RestConstants.JOB_COORD_RERUN_ACTION}.
  * <p/>
- * The "refresh" is used to refresh an action's input and ouput events.
+ * The "refresh" is used to indicate if user wants to refresh an action's input and output events.
  * <p/>
- * The "noCleanup" is used to if user wants to cleanup output events for given rerun actions
+ * The "noCleanup" is used to indicate if user wants to cleanup output events for given rerun actions
  */
 public class CoordRerunXCommand extends CoordinatorXCommand<CoordinatorActionInfo> {
 
@@ -77,6 +78,15 @@ public class CoordRerunXCommand extends CoordinatorXCommand<CoordinatorActionInf
     private CoordinatorJobBean coordJob = null;
     private JPAService jpaService = null;
 
+    /**
+     * The constructor for class {@link CoordRerunXCommand}
+     *
+     * @param jobId the job id
+     * @param rerunType rerun type {@link RestConstants.JOB_COORD_RERUN_DATE} or {@link RestConstants.JOB_COORD_RERUN_ACTION}
+     * @param scope the rerun scope for given rerunType separated by ","
+     * @param refresh true if user wants to refresh input/outpur dataset urls
+     * @param noCleanup false if user wants to cleanup output events for given rerun actions
+     */
     public CoordRerunXCommand(String jobId, String rerunType, String scope, boolean refresh, boolean noCleanup) {
         super("coord_rerun", "coord_rerun", 1);
         this.jobId = ParamChecker.notEmpty(jobId, "jobId");
@@ -137,13 +147,20 @@ public class CoordRerunXCommand extends CoordinatorXCommand<CoordinatorActionInf
         catch (Exception ex) {
             throw new CommandException(ErrorCode.E1018, ex);
         }
+        finally {
+            //update bundle action
+            if (coordJob.getBundleId() != null) {
+                BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, coordJob.getStatus());
+                bundleStatusUpdate.call();
+            }
+        }
     }
 
     /**
      * Get the list of actions for given id ranges
      *
      * @param jobId coordinator job id
-     * @param scope the id range to rerun
+     * @param scope the id range to rerun separated by ","
      * @return the list of all actions to rerun
      * @throws CommandException thrown if failed to get coordinator actions by given id range
      */
@@ -207,7 +224,7 @@ public class CoordRerunXCommand extends CoordinatorXCommand<CoordinatorActionInf
      * Get the list of actions for given date ranges
      *
      * @param jobId coordinator job id
-     * @param scope the date range to rerun
+     * @param scope the date range to rerun separated by ","
      * @return the list of dates to rerun
      * @throws CommandException thrown if failed to get coordinator actions by given date range
      */

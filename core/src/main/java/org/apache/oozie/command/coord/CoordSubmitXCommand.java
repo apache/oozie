@@ -41,6 +41,7 @@ import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.CoordinatorJob.Execution;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.coord.CoordELEvaluator;
 import org.apache.oozie.coord.CoordELFunctions;
 import org.apache.oozie.coord.CoordinatorJobException;
@@ -175,6 +176,8 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
         log.info("STARTED Coordinator Submit");
         InstrumentUtils.incrJobCounter(getName(), 1, getInstrumentation());
         CoordinatorJobBean coordJob = new CoordinatorJobBean();
+        CoordinatorJob.Status prevStatus = CoordinatorJob.Status.PREP;
+        boolean exceptionOccured = false;
         try {
             XLog.Info.get().setParameter(DagXLogInfoService.TOKEN, conf.get(OozieClient.LOG_TOKEN));
             mergeDefaultConfig();
@@ -190,6 +193,7 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
             jobId = storeToDB(eJob, coordJob);
             // log job info for coordinator jobs
             LogUtils.setLogInfo(coordJob, logInfo);
+            prevStatus = CoordinatorJob.Status.PREP;
 
             if (!dryrun) {
                 // submit a command to materialize jobs for the next 1 hour (3600 secs)
@@ -224,16 +228,29 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
             }
         }
         catch (CoordinatorJobException cex) {
+            exceptionOccured = true;
             log.warn("ERROR:  ", cex);
             throw new CommandException(cex);
         }
         catch (IllegalArgumentException iex) {
+            exceptionOccured = true;
             log.warn("ERROR:  ", iex);
             throw new CommandException(ErrorCode.E1003, iex);
         }
         catch (Exception ex) {
+            exceptionOccured = true;
             log.warn("ERROR:  ", ex);
             throw new CommandException(ErrorCode.E0803, ex);
+        }
+        finally {
+            if (exceptionOccured) {
+                coordJob.setStatus(CoordinatorJob.Status.FAILED);
+            }
+            //update bundle action
+            if (this.bundleId != null) {
+                BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, prevStatus);
+                bundleStatusUpdate.call();
+            }
         }
         log.info("ENDED Coordinator Submit jobId=" + jobId);
         return jobId;

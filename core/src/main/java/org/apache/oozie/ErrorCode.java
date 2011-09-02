@@ -172,6 +172,23 @@ public enum ErrorCode {
 
     E1201(XLog.STD, "State [{0}] is invalid for job [{1}]."),
 
+    E1301(XLog.STD, "Could not read the bundle job definition, [{0}]"),
+    E1302(XLog.STD, "Invalid bundle application URI [{0}], {1}"),
+    E1303(XLog.STD, "Invalid bundle application attributes [{0}], {1}"),
+    E1304(XLog.STD, "Duplicate bundle application coordinator name [{0}]"),
+    E1305(XLog.STD, "Empty bundle application coordinator name."),
+    E1306(XLog.STD, "Could not read the bundle job configuration, [{0}]"),
+    E1307(XLog.STD, "Could not read the bundle coord job configuration, [{0}]"),
+    E1308(XLog.STD, "Bundle Action Status  [{0}] is not matching with coordinator previous status [{1}]."),
+    E1309(XLog.STD, "Bundle Action for bundle ID  [{0}] and Coordinator [{1}] could not be update by BundleStatusUpdateXCommand"),
+    E1310(XLog.STD, "Bundle Job submission Error: [{0}]"),
+    E1311(XLog.STD, "Bundle Action for bundle ID  [{0}] could not be get."),
+    E1312(XLog.STD, "Bundle Job can not be Suspended As job finished or does not exist, {0}, Status: {1}"),
+    E1313(XLog.STD, "Bundle Job can not be Changed as job finished, {0}, Status: {1}"),
+    E1314(XLog.STD, "Bundle Job can not be Changed as job does not exist, {0}"),
+    E1315(XLog.STD, "Bundle job can not be paused, {0}"),
+    E1316(XLog.STD, "Bundle job can not be unpaused, {0}"),
+
     ETEST(XLog.STD, "THIS SHOULD HAPPEN ONLY IN TESTING, invalid job id [{0}]"),;
 
     private String template;

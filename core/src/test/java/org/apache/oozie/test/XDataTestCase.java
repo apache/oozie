@@ -596,12 +596,10 @@ public abstract class XDataTestCase extends XFsTestCase {
         Path bundleAppPath = new Path(getFsTestCaseDir(), "bundle");
         String bundleAppXml = getBundleXml("bundle-submit-job.xml");
 
-        bundleAppXml = bundleAppXml
-                .replaceAll("#app_path1", coordPath1.toString() + File.separator + "coordinator.xml");
-        bundleAppXml = bundleAppXml
-                .replaceAll("#app_path2", coordPath2.toString() + File.separator + "coordinator.xml");
-        // bundleAppXml = bundleAppXml.replaceAll("#app_path1", coordPath1.toString());
-        // bundleAppXml = bundleAppXml.replaceAll("#app_path2", coordPath2.toString());
+        bundleAppXml = bundleAppXml.replaceAll("#app_path1", coordPath1.toString() + File.separator + "coordinator.xml");
+        bundleAppXml = bundleAppXml.replaceAll("#app_path2", coordPath2.toString() + File.separator + "coordinator.xml");
+        //bundleAppXml = bundleAppXml.replaceAll("#app_path1", coordPath1.toString());
+        //bundleAppXml = bundleAppXml.replaceAll("#app_path2", coordPath2.toString());
 
         writeToFile(bundleAppXml, bundleAppPath, "bundle.xml");
 
@@ -621,9 +619,9 @@ public abstract class XDataTestCase extends XFsTestCase {
         bundle.setConf(XmlUtils.prettyPrint(conf).toString());
         bundle.setConsoleUrl("consoleUrl");
         bundle.setCreatedTime(new Date());
-        // TODO bundle.setStartTime(startTime);
-        // TODO bundle.setEndTime(endTime);
-        // TODO bundle.setExternalId(externalId);
+        //TODO bundle.setStartTime(startTime);
+        //TODO bundle.setEndTime(endTime);
+        //TODO bundle.setExternalId(externalId);
         bundle.setJobXml(bundleAppXml);
         bundle.setLastModifiedTime(new Date());
         bundle.setOrigJobXml(bundleAppXml);

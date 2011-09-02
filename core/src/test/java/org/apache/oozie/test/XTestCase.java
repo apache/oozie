@@ -38,8 +38,11 @@ import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.MiniMRCluster;
+import org.apache.oozie.BundleActionBean;
+import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
+import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.service.Services;
@@ -555,28 +558,11 @@ public abstract class XTestCase extends TestCase {
      * @throws Exception
      */
     protected void cleanUpDB(Configuration conf) throws Exception {
-//        String dbName = conf.get(DBLiteWorkflowStoreService.CONF_SCHEMA_NAME);
-//        Connection conn = getConnection(conf);
-//        Statement st = conn.createStatement();
-//        try {
-//            st.executeUpdate("DROP SCHEMA " + dbName + " CASCADE");
-//        }
-//        catch (SQLException ex) {
-//            log.error("Failed to drop schema:" + dbName, ex);
-//            try {
-//                st.executeUpdate("DROP DATABASE " + dbName);
-//            }
-//            catch (SQLException ex1) {
-//                log.error("Failed to drop database:" + dbName, ex1);
-//            }
-//        }
-//        st.close();
-//        conn.close();
     }
 
 
     /**
-     * Clean up tables - COORD_JOBS, COORD_ACTIONS
+     * Clean up tables
      *
      * @throws StoreException
      */
@@ -613,12 +599,36 @@ public abstract class XTestCase extends TestCase {
             entityManager.remove(w);
         }
 
+        q = entityManager.createNamedQuery("GET_BUNDLE_JOBS");
+        List<BundleJobBean> bjBeans = q.getResultList();
+        int bjSize = bjBeans.size();
+        for (BundleJobBean w : bjBeans) {
+            entityManager.remove(w);
+        }
+
+        q = entityManager.createNamedQuery("GET_BUNDLE_ACTIONS");
+        List<BundleActionBean> baBeans = q.getResultList();
+        int baSize = baBeans.size();
+        for (BundleActionBean w : baBeans) {
+            entityManager.remove(w);
+        }
+
+        q = entityManager.createNamedQuery("GET_SLA_EVENTS");
+        List<SLAEventBean> slaBeans = q.getResultList();
+        int slaSize = slaBeans.size();
+        for (SLAEventBean w : slaBeans) {
+            entityManager.remove(w);
+        }
+
         store.commitTrx();
         store.closeTrx();
         log.info(wfjSize + " entries in WF_JOBS removed from DB!");
         log.info(wfaSize + " entries in WF_ACTIONS removed from DB!");
         log.info(cojSize + " entries in COORD_JOBS removed from DB!");
         log.info(coaSize + " entries in COORD_ACTIONS removed from DB!");
+        log.info(bjSize + " entries in BUNDLE_JOBS removed from DB!");
+        log.info(baSize + " entries in BUNDLE_ACTIONS removed from DB!");
+        log.info(slaSize + " entries in SLA_EVENTS removed from DB!");
     }
 
     private static MiniDFSCluster dfsCluster = null;

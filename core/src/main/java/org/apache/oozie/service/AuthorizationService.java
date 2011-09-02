@@ -26,10 +26,12 @@ import java.util.Set;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.XOozieClient;
+import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
@@ -349,6 +351,28 @@ public class AuthorizationService implements Service {
                     if (!isUserInGroup(user, jobBean.getGroup())) {
                         incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
                         throw new AuthorizationException(ErrorCode.E0508, user, jobId);
+                    }
+                }
+            }
+            // handle bundle jobs
+            else if (jobId.endsWith("-B")){
+                BundleJobBean jobBean = null;
+                JPAService jpaService = Services.get().get(JPAService.class);
+                if (jpaService != null) {
+                    try {
+                        jobBean = jpaService.execute(new BundleJobGetJPAExecutor(jobId));
+                    }
+                    catch (JPAExecutorException je) {
+                        throw new AuthorizationException(je);
+                    }
+                }
+                else {
+                    throw new AuthorizationException(ErrorCode.E0610);
+                }
+                if (jobBean != null && !jobBean.getUser().equals(user)) {
+                    if (!isUserInGroup(user, jobBean.getGroup())) {
+                        incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
+                        throw new AuthorizationException(ErrorCode.E0509, user, jobId);
                     }
                 }
             }

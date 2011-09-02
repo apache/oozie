@@ -19,6 +19,7 @@ import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
+import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.command.wf.KillXCommand;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
@@ -110,6 +111,13 @@ public class CoordKillXCommand extends CoordinatorXCommand<Void> {
         }
         catch (JPAExecutorException je) {
             throw new CommandException(je);
+        }
+        finally {
+            // update bundle action
+            if (coordJob.getBundleId() != null) {
+                BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, prevStatus);
+                bundleStatusUpdate.call();
+            }
         }
         LOG.info("ENDED CoordKillXCommand for jobId=" + jobId);
         return null;

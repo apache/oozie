@@ -14,6 +14,7 @@
  */
 package org.apache.oozie.util;
 
+import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.WorkflowActionBean;
@@ -29,6 +30,7 @@ public class LogUtils {
      * Set the log info with the context of the given coordinator bean.
      *
      * @param cBean coordinator bean.
+     * @param logInfo log info
      */
     public static void setLogInfo(CoordinatorJobBean cBean, XLog.Info logInfo) {
         if (logInfo.getParameter(XLogService.GROUP) == null) {
@@ -48,6 +50,7 @@ public class LogUtils {
      * Set the log info with the context of the given coordinator action bean.
      *
      * @param action action bean.
+     * @param logInfo log info
      */
     public static void setLogInfo(CoordinatorActionBean action, XLog.Info logInfo) {
         logInfo.setParameter(DagXLogInfoService.JOB, action.getJobId());
@@ -59,6 +62,7 @@ public class LogUtils {
      * Set the log info with the context of the given workflow bean.
      *
      * @param workflow workflow bean.
+     * @param logInfo log info
      */
     public static void setLogInfo(WorkflowJobBean workflow, XLog.Info logInfo) {
         logInfo.setParameter(XLogService.GROUP, workflow.getGroup());
@@ -73,6 +77,7 @@ public class LogUtils {
      * Set the log info with the context of the given action bean.
      *
      * @param action action bean.
+     * @param logInfo log info
      */
     public static void setLogInfo(WorkflowActionBean action, XLog.Info logInfo) {
         logInfo.setParameter(DagXLogInfoService.JOB, action.getJobId());
@@ -80,4 +85,24 @@ public class LogUtils {
         logInfo.setParameter(DagXLogInfoService.ACTION, action.getId());
         XLog.Info.get().setParameters(logInfo);
     }
+
+    /**
+     * Set the log info with the context of the given bundle bean.
+     *
+     * @param bBean bundle bean.
+     * @param logInfo log info
+     */
+    public static void setLogInfo(BundleJobBean bBean, XLog.Info logInfo) {
+        if (logInfo.getParameter(XLogService.GROUP) == null) {
+            logInfo.setParameter(XLogService.GROUP, bBean.getGroup());
+        }
+        if (logInfo.getParameter(XLogService.USER) == null) {
+            logInfo.setParameter(XLogService.USER, bBean.getUser());
+        }
+        logInfo.setParameter(DagXLogInfoService.JOB, bBean.getId());
+        logInfo.setParameter(DagXLogInfoService.TOKEN, "");
+        logInfo.setParameter(DagXLogInfoService.APP, bBean.getAppName());
+        XLog.Info.get().setParameters(logInfo);
+    }
+
 }
