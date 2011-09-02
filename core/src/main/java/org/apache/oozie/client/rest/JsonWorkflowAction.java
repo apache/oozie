@@ -19,7 +19,6 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.text.MessageFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -101,26 +100,6 @@ public class JsonWorkflowAction implements WorkflowAction, JsonBean {
     public JsonWorkflowAction() {
     }
 
-    public JsonWorkflowAction(JSONObject jsonObject) {
-        id = (String) jsonObject.get(JsonTags.WORKFLOW_ACTION_ID);
-        name = (String) jsonObject.get(JsonTags.WORKFLOW_ACTION_NAME);
-        cred = (String) jsonObject.get(JsonTags.WORKFLOW_ACTION_AUTH);
-        type = (String) jsonObject.get(JsonTags.WORKFLOW_ACTION_TYPE);
-        conf = (String) jsonObject.get(JsonTags.WORKFLOW_ACTION_CONF);
-        status = Status.valueOf((String) jsonObject.get(JsonTags.WORKFLOW_ACTION_STATUS));
-        retries = (int) JsonUtils.getLongValue(jsonObject, JsonTags.WORKFLOW_ACTION_RETRIES);
-        startTime = JsonUtils.parseDateRfc822((String) jsonObject.get(JsonTags.WORKFLOW_ACTION_START_TIME));
-        endTime = JsonUtils.parseDateRfc822((String) jsonObject.get(JsonTags.WORKFLOW_ACTION_END_TIME));
-        transition = (String) jsonObject.get(JsonTags.WORKFLOW_ACTION_TRANSITION);
-        data = (String) jsonObject.get(JsonTags.WORKFLOW_ACTION_DATA);
-        externalId = (String) jsonObject.get(JsonTags.WORKFLOW_ACTION_EXTERNAL_ID);
-        externalStatus = (String) jsonObject.get(JsonTags.WORKFLOW_ACTION_EXTERNAL_STATUS);
-        trackerUri = (String) jsonObject.get(JsonTags.WORKFLOW_ACTION_TRACKER_URI);
-        consoleUrl = (String) jsonObject.get(JsonTags.WORKFLOW_ACTION_CONSOLE_URL);
-        errorCode = (String) jsonObject.get(JsonTags.WORKFLOW_ACTION_ERROR_CODE);
-        errorMessage = (String) jsonObject.get(JsonTags.WORKFLOW_ACTION_ERROR_MESSAGE);
-    }
-
     @SuppressWarnings("unchecked")
     public JSONObject toJSONObject() {
         JSONObject json = new JSONObject();
@@ -129,7 +108,6 @@ public class JsonWorkflowAction implements WorkflowAction, JsonBean {
         json.put(JsonTags.WORKFLOW_ACTION_AUTH, cred);
         json.put(JsonTags.WORKFLOW_ACTION_TYPE, type);
         json.put(JsonTags.WORKFLOW_ACTION_CONF, conf);
-        json.put(JsonTags.WORKFLOW_ACTION_START_TIME, JsonUtils.formatDateRfc822(startTime));
         json.put(JsonTags.WORKFLOW_ACTION_STATUS, status.toString());
         json.put(JsonTags.WORKFLOW_ACTION_RETRIES, (long) retries);
         json.put(JsonTags.WORKFLOW_ACTION_START_TIME, JsonUtils.formatDateRfc822(startTime));
@@ -295,21 +273,6 @@ public class JsonWorkflowAction implements WorkflowAction, JsonBean {
             array.add(node.toJSONObject());
         }
         return array;
-    }
-
-    /**
-     * Convert a JSONArray into a nodes list.
-     *
-     * @param array JSON array.
-     * @return the corresponding nodes list.
-     */
-    @SuppressWarnings("unchecked")
-    public static List<JsonWorkflowAction> fromJSONArray(JSONArray array) {
-        List<JsonWorkflowAction> list = new ArrayList<JsonWorkflowAction>();
-        for (Object obj : array) {
-            list.add(new JsonWorkflowAction((JSONObject) obj));
-        }
-        return list;
     }
 
 }

@@ -53,9 +53,6 @@ import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.XOozieClient;
 import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
-import org.apache.oozie.client.rest.JsonBundleJob;
-import org.apache.oozie.client.rest.JsonCoordinatorAction;
-import org.apache.oozie.client.rest.JsonCoordinatorJob;
 import org.apache.oozie.client.rest.RestConstants;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
@@ -800,7 +797,7 @@ public class OozieCLI {
         System.out.println(RULER);
     }
 
-    private void printRerunCoordActions(List<JsonCoordinatorAction> actions) {
+    private void printRerunCoordActions(List<CoordinatorAction> actions) {
         if (actions != null && actions.size() > 0) {
             System.out.println("Action ID" + VERBOSE_DELIMITER + "Nominal Time");
             System.out.println(RULER);
@@ -942,7 +939,7 @@ public class OozieCLI {
         }
     }
 
-    private void printCoordJobs(List<JsonCoordinatorJob> jobs, boolean localtime, boolean verbose) throws IOException {
+    private void printCoordJobs(List<CoordinatorJob> jobs, boolean localtime, boolean verbose) throws IOException {
         if (jobs != null && jobs.size() > 0) {
             if (verbose) {
                 System.out.println("Job ID" + VERBOSE_DELIMITER + "App Name" + VERBOSE_DELIMITER + "App Path"
@@ -987,7 +984,7 @@ public class OozieCLI {
         }
     }
 
-    private void printBundleJobs(List<JsonBundleJob> jobs, boolean localtime, boolean verbose) throws IOException {
+    private void printBundleJobs(List<BundleJob> jobs, boolean localtime, boolean verbose) throws IOException {
         if (jobs != null && jobs.size() > 0) {
             if (verbose) {
                 System.out.println("Job ID" + VERBOSE_DELIMITER + "Bundle Name" + VERBOSE_DELIMITER + "Bundle Path"
@@ -998,7 +995,7 @@ public class OozieCLI {
                         + VERBOSE_DELIMITER + "Timeout");
                 System.out.println(RULER);
 
-                for (JsonBundleJob job : jobs) {
+                for (BundleJob job : jobs) {
                     System.out.println(maskIfNull(job.getId()) + VERBOSE_DELIMITER + maskIfNull(job.getAppName())
                             + VERBOSE_DELIMITER + maskIfNull(job.getAppPath()) + VERBOSE_DELIMITER
                             + maskIfNull(job.getUser()) + VERBOSE_DELIMITER + maskIfNull(job.getGroup())
@@ -1015,7 +1012,7 @@ public class OozieCLI {
                         "Created", "User", "Group"));
                 System.out.println(RULER);
 
-                for (JsonBundleJob job : jobs) {
+                for (BundleJob job : jobs) {
                     System.out.println(String.format(BUNDLE_JOBS_FORMATTER, maskIfNull(job.getId()), maskIfNull(job
                             .getAppName()), job.getStatus(), maskDate(job.getKickoffTime(), localtime),
                             maskDate(job.getCreatedTime(), localtime), maskIfNull(job.getUser()), maskIfNull(job.getGroup())));

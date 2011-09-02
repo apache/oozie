@@ -108,7 +108,6 @@ public class JsonBundleJob implements BundleJob, JsonBean {
      * Get the value from the json object.
      *
      * @param json
-     */
     public JsonBundleJob(JSONObject json) {
         appPath = (String) json.get(JsonTags.BUNDLE_JOB_PATH);
         appName = (String) json.get(JsonTags.BUNDLE_JOB_NAME);
@@ -128,6 +127,7 @@ public class JsonBundleJob implements BundleJob, JsonBean {
         consoleUrl = (String) json.get(JsonTags.BUNDLE_JOB_CONSOLE_URL);
         coordJobs = JsonCoordinatorJob.fromJSONArray((JSONArray) json.get(JsonTags.BUNDLE_COORDINATOR_JOBS));
     }
+*/
 
     /* (non-Javadoc)
      * @see org.apache.oozie.client.rest.JsonBean#toJSONObject()
@@ -458,20 +458,6 @@ public class JsonBundleJob implements BundleJob, JsonBean {
             }
         }
         return array;
-    }
-
-    /**
-     * Convert a JSONArray into an application list.
-     *
-     * @param array JSON array.
-     * @return the corresponding application list.
-     */
-    public static List<JsonBundleJob> fromJSONArray(JSONArray applications) {
-        List<JsonBundleJob> list = new ArrayList<JsonBundleJob>();
-        for (Object obj : applications) {
-            list.add(new JsonBundleJob((JSONObject) obj));
-        }
-        return list;
     }
 
     /* (non-Javadoc)

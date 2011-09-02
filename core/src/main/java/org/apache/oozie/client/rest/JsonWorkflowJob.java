@@ -96,26 +96,6 @@ public class JsonWorkflowJob implements WorkflowJob, JsonBean {
     }
 
     @SuppressWarnings("unchecked")
-    public JsonWorkflowJob(JSONObject json) {
-        appPath = (String) json.get(JsonTags.WORKFLOW_APP_PATH);
-        appName = (String) json.get(JsonTags.WORKFLOW_APP_NAME);
-        id = (String) json.get(JsonTags.WORKFLOW_ID);
-        externalId = (String) json.get(JsonTags.WORKFLOW_EXTERNAL_ID);
-        parentId = (String) json.get(JsonTags.WORKFLOW_PARENT_ID);
-        conf = (String) json.get(JsonTags.WORKFLOW_CONF);
-        status = Status.valueOf((String) json.get(JsonTags.WORKFLOW_STATUS));
-        lastModifiedTime = JsonUtils.parseDateRfc822((String) json.get(JsonTags.WORKFLOW_LAST_MOD_TIME));
-        createdTime = JsonUtils.parseDateRfc822((String) json.get(JsonTags.WORKFLOW_CREATED_TIME));
-        startTime = JsonUtils.parseDateRfc822((String) json.get(JsonTags.WORKFLOW_START_TIME));
-        endTime = JsonUtils.parseDateRfc822((String) json.get(JsonTags.WORKFLOW_END_TIME));
-        user = (String) json.get(JsonTags.WORKFLOW_USER);
-        group = (String) json.get(JsonTags.WORKFLOW_GROUP);
-        run = (int) JsonUtils.getLongValue(json, JsonTags.WORKFLOW_RUN);
-        consoleUrl = (String) json.get(JsonTags.WORKFLOW_CONSOLE_URL);
-        actions = JsonWorkflowAction.fromJSONArray((JSONArray) json.get(JsonTags.WORKFLOW_ACTIONS));
-    }
-
-    @SuppressWarnings("unchecked")
     public JSONObject toJSONObject() {
         JSONObject json = new JSONObject();
         json.put(JsonTags.WORKFLOW_APP_PATH, appPath);
@@ -305,21 +285,6 @@ public class JsonWorkflowJob implements WorkflowJob, JsonBean {
             }
         }
         return array;
-    }
-
-    /**
-     * Convert a JSONArray into a workflows list.
-     *
-     * @param array JSON array.
-     * @return the corresponding workflows list.
-     */
-    @SuppressWarnings("unchecked")
-    public static List<WorkflowJob> fromJSONArray(JSONArray array) {
-        List<WorkflowJob> list = new ArrayList<WorkflowJob>();
-        for (Object obj : array) {
-            list.add(new JsonWorkflowJob((JSONObject) obj));
-        }
-        return list;
     }
 
 }

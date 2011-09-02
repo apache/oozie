@@ -18,8 +18,6 @@ package org.apache.oozie.client;
 import java.util.Date;
 import java.util.List;
 
-import org.apache.oozie.client.rest.JsonCoordinatorJob;
-
 /**
  * Bean that represents an Oozie bundle.
  */
@@ -59,5 +57,12 @@ public interface BundleJob extends Job {
      * @return the JOB Kickoff time.
      */
     Date getKickoffTime();
+
+    /**
+     * Get createdTime
+     *
+     * @return createdTime
+     */
+    public Date getCreatedTime();
 
 }

@@ -3,6 +3,7 @@
 GH-0562 oozie job -log returns incomplete or empty log
 GH-0606 Encountered java.lang.NoSuchMethodError error after submitting a job
 GH-0608 Oozie default and max throttle and concurrency is not being verified.
+GH-0550 remove dependency on JPA persistency from oozie-client
 GH-0603 ORA-01408 error when restart yjava_tomcat after drop bundle_actions table.
 GH-0601 bundle status did not change from PREPSUSPENDED to PREP after resume.
 GH-0598 Fixing Coordinator Resume command to resume after suspend. 

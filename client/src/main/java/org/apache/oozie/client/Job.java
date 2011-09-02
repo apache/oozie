@@ -106,16 +106,26 @@ public interface Job {
 
     /**
      * Set pending to true
-     *
-     * @param pending set pending to true
      */
     void setPending();
 
     /**
      * Set pending to
-     *
-     * @param pending set pending to false
      */
     void resetPending();
+
+    /**
+     * Get pauseTime
+     *
+     * @return pauseTime
+     */
+    public Date getPauseTime();
+
+        /**
+     * Return externalId
+     *
+     * @return externalId
+     */
+    public String getExternalId();
 
 }

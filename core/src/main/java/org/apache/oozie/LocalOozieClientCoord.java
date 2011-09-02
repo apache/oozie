@@ -246,13 +246,13 @@ public class LocalOozieClientCoord extends OozieClient {
      * @throws OozieClientException
      */
     @Override
-    public List<JsonCoordinatorAction> reRunCoord(String jobId, String rerunType, String scope, boolean refresh,
+    public List<CoordinatorAction> reRunCoord(String jobId, String rerunType, String scope, boolean refresh,
             boolean noCleanup) throws OozieClientException {
         try {
             CoordinatorActionInfo coordInfo = coordEngine.reRun(jobId, rerunType, scope, Boolean.valueOf(refresh),
                     Boolean.valueOf(noCleanup));
             List<CoordinatorActionBean> actionBeans = coordInfo.getCoordActions();
-            List<JsonCoordinatorAction> actions = new ArrayList<JsonCoordinatorAction>();
+            List<CoordinatorAction> actions = new ArrayList<CoordinatorAction>();
             for (CoordinatorActionBean actionBean : actionBeans) {
                 actions.add(actionBean);
             }
@@ -399,10 +399,10 @@ public class LocalOozieClientCoord extends OozieClient {
      *         retrieved.
      */
     @Override
-    public List<JsonCoordinatorJob> getCoordJobsInfo(String filter, int start, int len) throws OozieClientException {
+    public List<CoordinatorJob> getCoordJobsInfo(String filter, int start, int len) throws OozieClientException {
         try {
             CoordinatorJobInfo info = coordEngine.getCoordJobs(filter, start, len);
-            List<JsonCoordinatorJob> jobs = new ArrayList<JsonCoordinatorJob>();
+            List<CoordinatorJob> jobs = new ArrayList<CoordinatorJob>();
             List<CoordinatorJobBean> jobBeans = info.getCoordJobs();
             for (CoordinatorJobBean jobBean : jobBeans) {
                 jobs.add(jobBean);

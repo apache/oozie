@@ -15,7 +15,6 @@
 package org.apache.oozie.client.rest;
 
 import java.text.MessageFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -109,46 +108,6 @@ public class JsonCoordinatorAction implements CoordinatorAction, JsonBean {
 
     public JsonCoordinatorAction() {
 
-    }
-
-    public JsonCoordinatorAction(JSONObject jsonObject) {
-        id = (String) jsonObject.get(JsonTags.COORDINATOR_ACTION_ID);
-        jobId = (String) jsonObject.get(JsonTags.COORDINATOR_JOB_ID);
-
-        type = (String) jsonObject.get(JsonTags.COORDINATOR_ACTION_TYPE);
-        actionNumber = (int) JsonUtils.getLongValue(jsonObject,
-                                                    JsonTags.COORDINATOR_ACTION_NUMBER);
-        createdConf = (String) jsonObject
-                .get(JsonTags.COORDINATOR_ACTION_CREATED_CONF);
-        createdTime = JsonUtils.parseDateRfc822((String) jsonObject
-                .get(JsonTags.COORDINATOR_ACTION_CREATED_TIME));
-        nominalTime = JsonUtils.parseDateRfc822((String) jsonObject
-                .get(JsonTags.COORDINATOR_ACTION_NOMINAL_TIME));
-        externalId = (String) jsonObject.get(JsonTags.COORDINATOR_ACTION_EXTERNALID);
-        status = Status.valueOf((String) jsonObject
-                .get(JsonTags.COORDINATOR_ACTION_STATUS));
-        lastModifiedTime = JsonUtils.parseDateRfc822((String) jsonObject
-                .get(JsonTags.COORDINATOR_ACTION_LAST_MODIFIED_TIME));
-        /*
-       * startTime = JsonUtils.parseDateRfc822((String) jsonObject
-       * .get(JsonTags.COORDINATOR_ACTION_START_TIME)); endTime =
-       * JsonUtils.parseDateRfc822((String) jsonObject
-       * .get(JsonTags.COORDINATOR_ACTION_END_TIME));
-       */
-        runConf = (String) jsonObject
-                .get(JsonTags.COORDINATOR_ACTION_RUNTIME_CONF);
-        missingDependencies = (String) jsonObject
-                .get(JsonTags.COORDINATOR_ACTION_MISSING_DEPS);
-        externalStatus = (String) jsonObject
-                .get(JsonTags.COORDINATOR_ACTION_EXTERNAL_STATUS);
-        trackerUri = (String) jsonObject
-                .get(JsonTags.COORDINATOR_ACTION_TRACKER_URI);
-        consoleUrl = (String) jsonObject
-                .get(JsonTags.COORDINATOR_ACTION_CONSOLE_URL);
-        errorCode = (String) jsonObject
-                .get(JsonTags.COORDINATOR_ACTION_ERROR_CODE);
-        errorMessage = (String) jsonObject
-                .get(JsonTags.COORDINATOR_ACTION_ERROR_MESSAGE);
     }
 
     @SuppressWarnings("unchecked")
@@ -351,32 +310,16 @@ public class JsonCoordinatorAction implements CoordinatorAction, JsonBean {
     /**
      * Convert a nodes list into a JSONArray.
      *
-     * @param nodes nodes list.
+     * @param actions nodes list.
      * @return the corresponding JSON array.
      */
     @SuppressWarnings("unchecked")
-    public static JSONArray toJSONArray(
-            List<? extends JsonCoordinatorAction> actions) {
+    public static JSONArray toJSONArray(List<? extends JsonCoordinatorAction> actions) {
         JSONArray array = new JSONArray();
         for (JsonCoordinatorAction action : actions) {
             array.add(action.toJSONObject());
         }
         return array;
-    }
-
-    /**
-     * Convert a JSONArray into a nodes list.
-     *
-     * @param array JSON array.
-     * @return the corresponding nodes list.
-     */
-    @SuppressWarnings("unchecked")
-    public static List<JsonCoordinatorAction> fromJSONArray(JSONArray array) {
-        List<JsonCoordinatorAction> list = new ArrayList<JsonCoordinatorAction>();
-        for (Object obj : array) {
-            list.add(new JsonCoordinatorAction((JSONObject) obj));
-        }
-        return list;
     }
 
     /*

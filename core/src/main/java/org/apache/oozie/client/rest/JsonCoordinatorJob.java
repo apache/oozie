@@ -132,32 +132,6 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
         actions = new ArrayList<JsonCoordinatorAction>();
     }
 
-    public JsonCoordinatorJob(JSONObject json) {
-        appPath = (String) json.get(JsonTags.COORDINATOR_JOB_PATH);
-        appName = (String) json.get(JsonTags.COORDINATOR_JOB_NAME);
-        id = (String) json.get(JsonTags.COORDINATOR_JOB_ID);
-        externalId = (String) json.get(JsonTags.COORDINATOR_JOB_EXTERNAL_ID);
-        conf = (String) json.get(JsonTags.COORDINATOR_JOB_CONF);
-        status = Status.valueOf((String) json.get(JsonTags.COORDINATOR_JOB_STATUS));
-        executionOrder = Execution.valueOf((String) json.get(JsonTags.COORDINATOR_JOB_EXECUTIONPOLICY));
-        startTime = JsonUtils.parseDateRfc822((String) json.get(JsonTags.COORDINATOR_JOB_START_TIME));
-        endTime = JsonUtils.parseDateRfc822((String) json.get(JsonTags.COORDINATOR_JOB_END_TIME));
-        pauseTime = JsonUtils.parseDateRfc822((String) json.get(JsonTags.COORDINATOR_JOB_PAUSE_TIME));
-        frequency = (int) JsonUtils.getLongValue(json, JsonTags.COORDINATOR_JOB_FREQUENCY);
-        timeUnit = Timeunit.valueOf((String) json.get(JsonTags.COORDINATOR_JOB_TIMEUNIT));
-        timeZone = (String) json.get(JsonTags.COORDINATOR_JOB_TIMEZONE);
-        concurrency = (int) JsonUtils.getLongValue(json, JsonTags.COORDINATOR_JOB_CONCURRENCY);
-        timeOut = (int) JsonUtils.getLongValue(json, JsonTags.COORDINATOR_JOB_TIMEOUT);
-        lastAction = JsonUtils.parseDateRfc822((String) json.get(JsonTags.COORDINATOR_JOB_LAST_ACTION_TIME));
-        nextMaterializedTime = JsonUtils.parseDateRfc822((String) json
-                .get(JsonTags.COORDINATOR_JOB_NEXT_MATERIALIZED_TIME));
-        user = (String) json.get(JsonTags.COORDINATOR_JOB_USER);
-        group = (String) json.get(JsonTags.COORDINATOR_JOB_GROUP);
-        consoleUrl = (String) json.get(JsonTags.COORDINATOR_JOB_CONSOLE_URL);
-        matThrottling = (int) JsonUtils.getLongValue(json, JsonTags.COORDINATOR_JOB_MAT_THROTTLING);
-        actions = JsonCoordinatorAction.fromJSONArray((JSONArray) json.get(JsonTags.COORDINATOR_ACTIONS));
-    }
-
     @SuppressWarnings("unchecked")
     public JSONObject toJSONObject() {
         JSONObject json = new JSONObject();
@@ -390,7 +364,7 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
     /**
      * Convert a coordinator application list into a JSONArray.
      *
-     * @param application list.
+     * @param applications list.
      * @return the corresponding JSON array.
      */
     @SuppressWarnings("unchecked")
@@ -402,21 +376,6 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
             }
         }
         return array;
-    }
-
-    /**
-     * Convert a JSONArray into a application list.
-     *
-     * @param array JSON array.
-     * @return the corresponding application list.
-     */
-    @SuppressWarnings("unchecked")
-    public static List<JsonCoordinatorJob> fromJSONArray(JSONArray applications) {
-        List<JsonCoordinatorJob> list = new ArrayList<JsonCoordinatorJob>();
-        for (Object obj : applications) {
-            list.add(new JsonCoordinatorJob((JSONObject) obj));
-        }
-        return list;
     }
 
     public int getLastActionNumber() {

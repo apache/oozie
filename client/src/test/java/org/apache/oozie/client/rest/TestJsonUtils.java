@@ -45,36 +45,4 @@ public class TestJsonUtils extends TestCase {
         assertEquals(null, JsonUtils.formatDateRfc822(null));
     }
 
-    @SuppressWarnings("unchecked")
-    public void testGetLong() {
-        JSONObject json = new JSONObject();
-        json.put("l", 1l);
-        assertEquals(1l, JsonUtils.getLongValue(json, "l"));
-        assertEquals(0l, JsonUtils.getLongValue(json, "ll"));
-    }
-
-    public void testGetListString() {
-        JSONObject json = new JSONObject();
-        JSONArray array = new JSONArray();
-        List<String> sList = Arrays.asList("hello", "world");
-        array.add("hello");
-        array.add("world");
-        json.put("list", array);
-        assertEquals(array, json.get("list"));
-        assertEquals(sList, JsonUtils.getListString(json, "list"));
-        assertEquals(sList.size(), JsonUtils.getListString(json, "list").size());
-    }
-
-    public void testGetListStringWithNull() {
-        JSONObject json = new JSONObject();
-        JSONArray array = new JSONArray();
-        List<String> sList = Arrays.asList("hello", null, "world");
-        array.add("hello");
-        array.add(null);
-        array.add("world");
-        json.put("list", array);
-        assertEquals(array, json.get("list"));
-        assertEquals(sList, JsonUtils.getListString(json, "list"));
-        assertEquals(sList.size(), JsonUtils.getListString(json, "list").size());
-    }
 }

@@ -66,36 +66,4 @@ public class JsonUtils {
         return null;
     }
 
-    /**
-     * Return a long value from a JSONObject.
-     *
-     * @param map JSON object.
-     * @param name name of the property.
-     * @return the long value associated with it, or 0 if not defined.
-     */
-    public static long getLongValue(JSONObject map, String name) {
-        Long l = (Long) map.get(name);
-        return (l != null) ? l : 0;
-    }
-
-    /**
-     * Return a List<String> value from a JSONObject.
-     *
-     * @param map JSON object.
-     * @param name name of the property.
-     * @return the List<String> value associated with it, or null if not defined.
-     */
-    public static List<String> getListString(JSONObject json, String name) {
-        ArrayList<String> values = new ArrayList<String>();
-        JSONArray array = (JSONArray) json.get(name);
-        if (array == null) {
-            return null;
-        }
-
-        for (Object o : array) {
-            values.add((String) o);
-        }
-        return values;
-    }
-
 }
