@@ -101,6 +101,14 @@
 
     <repositories>
         <repository>
+          <id>internal.maven.repo</id>
+          <name>Internal Repository for Integration</name>
+          <url>${internal.maven.repository}</url>
+          <snapshots>
+              <enabled>true</enabled>
+          </snapshots>
+        </repository>
+        <repository>
             <id>central</id>
             <url>http://repo1.maven.org/maven2</url>
             <snapshots>
