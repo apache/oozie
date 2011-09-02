@@ -82,7 +82,7 @@ public abstract class BaseJobsServlet extends JsonRestServlet {
 
         stopCron();
 
-        conf = conf.trim();        
+        conf = conf.trim();
         conf = conf.resolve();
 
         validateJobConfiguration(conf);
@@ -98,7 +98,6 @@ public abstract class BaseJobsServlet extends JsonRestServlet {
      * Return information about jobs.
      */
     @Override
-    @SuppressWarnings("unchecked")
     public void doGet(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
         String externalId = request
@@ -111,8 +110,6 @@ public abstract class BaseJobsServlet extends JsonRestServlet {
         }
         else {
             stopCron();
-            // Configuration conf = new
-            // XConfiguration(request.getInputStream());
             JSONObject json = getJobs(request);
             startCron();
             sendJsonResponse(response, HttpServletResponse.SC_OK, json);

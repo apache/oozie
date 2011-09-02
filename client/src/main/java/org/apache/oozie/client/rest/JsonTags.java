@@ -110,7 +110,7 @@ public interface JsonTags {
     public static final String COORDINATOR_ACTIONS = "actions";
     public static final String COORDINATOR_ACTION_DATA = "data";
     public static final String COORDINATOR_JOB_DATA = "data";
-    
+
     public static final String BUNDLE_JOB_ID = "bundleJobId";
     public static final String BUNDLE_JOB_NAME = "bundleJobName";
     public static final String BUNDLE_JOB_PATH = "bundleJobPath";
@@ -122,6 +122,7 @@ public interface JsonTags {
     public static final String BUNDLE_JOB_START_TIME = "startTime";
     public static final String BUNDLE_JOB_END_TIME = "endTime";
     public static final String BUNDLE_JOB_PAUSE_TIME = "pauseTime";
+    public static final String BUNDLE_JOB_CREATED_TIME = "createdTime";
     public static final String BUNDLE_JOB_CONSOLE_URL = "consoleUrl";
     public static final String BUNDLE_JOB_USER = "user";
     public static final String BUNDLE_JOB_GROUP = "group";
@@ -153,11 +154,16 @@ public interface JsonTags {
     public static final String INSTR_TIMER_TOTAL_MAX_TIME = "totalMaxTime";
 
     public static final String INSTR_VARIABLE_VALUE = "value";
-
     public static final String INSTR_SAMPLER_VALUE = "value";
+
     public static final Object COORDINATOR_JOBS = "coordinatorjobs";
     public static final Object COORD_JOB_TOTAL = "total";
     public static final Object COORD_JOB_OFFSET = "offset";
     public static final Object COORD_JOB_LEN = "len";
+
+    public static final Object BUNDLE_JOBS = "bundlejobs";
+    public static final Object BUNDLE_JOB_TOTAL = "total";
+    public static final Object BUNDLE_JOB_OFFSET = "offset";
+    public static final Object BUNDLE_JOB_LEN = "len";
 
 }

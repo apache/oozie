@@ -53,6 +53,7 @@ import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.XOozieClient;
 import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
+import org.apache.oozie.client.rest.JsonBundleJob;
 import org.apache.oozie.client.rest.JsonCoordinatorAction;
 import org.apache.oozie.client.rest.JsonCoordinatorJob;
 import org.apache.oozie.client.rest.RestConstants;
@@ -184,7 +185,8 @@ public class OozieCLI {
         Option config = new Option(CONFIG_OPTION, true, "job configuration file '.xml' or '.properties'");
         Option submit = new Option(SUBMIT_OPTION, false, "submit a job");
         Option run = new Option(RUN_OPTION, false, "run a job");
-        Option rerun = new Option(RERUN_OPTION, true, "rerun a job  (coordinator requires -action or -date, bundle requires -coordinator or -date)");
+        Option rerun = new Option(RERUN_OPTION, true,
+                "rerun a job  (coordinator requires -action or -date, bundle requires -coordinator or -date)");
         Option dryrun = new Option(DRYRUN_OPTION, false,
                 "Supported in Oozie-2.0 or later versions ONLY - dryrun or test run a coordinator job, job is not queued");
         Option start = new Option(START_OPTION, true, "start a job");
@@ -203,7 +205,8 @@ public class OozieCLI {
         Option config_content = new Option(CONFIG_CONTENT_OPTION, true, "job configuration");
         Option verbose = new Option(VERBOSE_OPTION, false, "verbose mode");
         Option rerun_action = new Option(RERUN_ACTION_OPTION, true, "coordinator rerun on action ids (requires -rerun)");
-        Option rerun_date = new Option(RERUN_DATE_OPTION, true, "coordinator/bundle rerun on action dates (requires -rerun)");
+        Option rerun_date = new Option(RERUN_DATE_OPTION, true,
+                "coordinator/bundle rerun on action dates (requires -rerun)");
         Option rerun_coord = new Option(RERUN_COORD_OPTION, true, "bundle rerun on coordinator names (requires -rerun)");
         Option rerun_refresh = new Option(RERUN_REFRESH_OPTION, false,
                 "re-materialize the coordinator rerun actions (requires -rerun)");
@@ -249,7 +252,7 @@ public class OozieCLI {
         Option oozie = new Option(OOZIE_OPTION, true, "Oozie URL");
         Option start = new Option(OFFSET_OPTION, true, "jobs offset (default '1')");
         Option jobtype = new Option(JOBTYPE_OPTION, true,
-                "job type ('Supported in Oozie-2.0 or later versions ONLY - coordinator' or 'wf' (default))");
+                "job type ('Supported in Oozie-2.0 or later versions ONLY - 'coordinator' or 'bundle' or 'wf'(default))");
         Option len = new Option(LEN_OPTION, true, "number of jobs (default '100')");
         Option filter = new Option(FILTER_OPTION, true, "user=<U>;name=<N>;group=<G>;status=<S>;...");
         Option localtime = new Option(LOCAL_TIME_OPTION, false, "use local time (default GMT)");
@@ -578,14 +581,15 @@ public class OozieCLI {
             else if (options.contains(RERUN_OPTION)) {
                 if (commandLine.getOptionValue(RERUN_OPTION).contains("-W")) {
                     wc.reRun(commandLine.getOptionValue(RERUN_OPTION), getConfiguration(commandLine));
-                } else if (commandLine.getOptionValue(RERUN_OPTION).contains("-B")) {
+                }
+                else if (commandLine.getOptionValue(RERUN_OPTION).contains("-B")) {
                     String bundleJobId = commandLine.getOptionValue(RERUN_OPTION);
                     String coordScope = null;
                     String dateScope = null;
                     boolean refresh = false;
                     boolean noCleanup = false;
 
-                    if (options.contains(RERUN_DATE_OPTION)){
+                    if (options.contains(RERUN_DATE_OPTION)) {
                         dateScope = commandLine.getOptionValue(RERUN_DATE_OPTION);
                     }
                     else {
@@ -604,12 +608,12 @@ public class OozieCLI {
                     }
                     wc.reRunBundle(bundleJobId, coordScope, dateScope, refresh, noCleanup);
                     if (coordScope != null && !coordScope.isEmpty()) {
-                        System.out.println("Coordinators [" + coordScope + "] of bundle " + bundleJobId + " are scheduled to rerun on date ranges ["
-                                + dateScope + "].");
+                        System.out.println("Coordinators [" + coordScope + "] of bundle " + bundleJobId
+                                + " are scheduled to rerun on date ranges [" + dateScope + "].");
                     }
                     else {
-                        System.out.println("All coordinators of bundle " + bundleJobId + " are scheduled to rerun on the date ranges ["
-                                + dateScope + "].");
+                        System.out.println("All coordinators of bundle " + bundleJobId
+                                + " are scheduled to rerun on the date ranges [" + dateScope + "].");
                     }
                 }
                 else {
@@ -761,15 +765,14 @@ public class OozieCLI {
         System.out.println("Kickoff time   : " + bundleJob.getKickoffTime());
         System.out.println(RULER);
 
-        System.out.println(String.format(BUNDLE_COORD_JOBS_FORMATTER, "Job ID", "Status", "Freq", "Unit",
-                "Started", "Next Materialized"));
+        System.out.println(String.format(BUNDLE_COORD_JOBS_FORMATTER, "Job ID", "Status", "Freq", "Unit", "Started",
+                "Next Materialized"));
         System.out.println(RULER);
 
         for (CoordinatorJob job : coordinators) {
-            System.out.println(String.format(BUNDLE_COORD_JOBS_FORMATTER, maskIfNull(job.getId()),
-                    job.getStatus(), job.getFrequency(), job.getTimeUnit(),
-                    maskDate(job.getStartTime(), localtime),
-                    maskDate(job.getNextMaterializedTime(), localtime)));
+            System.out.println(String.format(BUNDLE_COORD_JOBS_FORMATTER, maskIfNull(job.getId()), job.getStatus(), job
+                    .getFrequency(), job.getTimeUnit(), maskDate(job.getStartTime(), localtime), maskDate(job
+                    .getNextMaterializedTime(), localtime)));
 
             System.out.println(RULER);
         }
@@ -834,6 +837,7 @@ public class OozieCLI {
 
     private static final String WORKFLOW_JOBS_FORMATTER = "%-41s%-13s%-10s%-10s%-10s%-24s%-24s";
     private static final String COORD_JOBS_FORMATTER = "%-41s%-15s%-10s%-5s%-13s%-24s%-24s";
+    private static final String BUNDLE_JOBS_FORMATTER = "%-41s%-15s%-10s%-20s%-20s%-13s%-13s";
     private static final String BUNDLE_COORD_JOBS_FORMATTER = "%-41s%-10s%-5s%-13s%-24s%-24s";
 
     private static final String WORKFLOW_ACTION_FORMATTER = "%-78s%-10s%-23s%-11s%-10s";
@@ -919,12 +923,16 @@ public class OozieCLI {
         jobtype = (jobtype != null) ? jobtype : "wf";
         int len = Integer.parseInt((s != null) ? s : "0");
         try {
-            if (jobtype.contains("wf")) {
+            if (jobtype.toLowerCase().contains("wf")) {
                 printJobs(wc.getJobsInfo(filter, start, len), commandLine.hasOption(LOCAL_TIME_OPTION), commandLine
                         .hasOption(VERBOSE_OPTION));
             }
-            else {
+            else if (jobtype.toLowerCase().startsWith("coord")) {
                 printCoordJobs(wc.getCoordJobsInfo(filter, start, len), commandLine.hasOption(LOCAL_TIME_OPTION),
+                        commandLine.hasOption(VERBOSE_OPTION));
+            }
+            else if (jobtype.toLowerCase().startsWith("bundle")) {
+                printBundleJobs(wc.getBundleJobsInfo(filter, start, len), commandLine.hasOption(LOCAL_TIME_OPTION),
                         commandLine.hasOption(VERBOSE_OPTION));
             }
 
@@ -970,6 +978,47 @@ public class OozieCLI {
                             .getAppName()), job.getStatus(), job.getFrequency(), job.getTimeUnit(), maskDate(job
                             .getStartTime(), localtime), maskDate(job.getNextMaterializedTime(), localtime)));
 
+                    System.out.println(RULER);
+                }
+            }
+        }
+        else {
+            System.out.println("No Jobs match your criteria!");
+        }
+    }
+
+    private void printBundleJobs(List<JsonBundleJob> jobs, boolean localtime, boolean verbose) throws IOException {
+        if (jobs != null && jobs.size() > 0) {
+            if (verbose) {
+                System.out.println("Job ID" + VERBOSE_DELIMITER + "Bundle Name" + VERBOSE_DELIMITER + "Bundle Path"
+                        + VERBOSE_DELIMITER + "User" + VERBOSE_DELIMITER + "Group" + VERBOSE_DELIMITER + "Status"
+                        + VERBOSE_DELIMITER + "Kickoff" + VERBOSE_DELIMITER + "Pause"
+                        + VERBOSE_DELIMITER + "Created" + VERBOSE_DELIMITER + "Console URL"
+                        + VERBOSE_DELIMITER + "External ID" + VERBOSE_DELIMITER + "Unit"
+                        + VERBOSE_DELIMITER + "Timeout");
+                System.out.println(RULER);
+
+                for (JsonBundleJob job : jobs) {
+                    System.out.println(maskIfNull(job.getId()) + VERBOSE_DELIMITER + maskIfNull(job.getAppName())
+                            + VERBOSE_DELIMITER + maskIfNull(job.getAppPath()) + VERBOSE_DELIMITER
+                            + maskIfNull(job.getUser()) + VERBOSE_DELIMITER + maskIfNull(job.getGroup())
+                            + VERBOSE_DELIMITER + job.getStatus() + VERBOSE_DELIMITER + maskDate(job.getKickoffTime(), localtime)
+                            + VERBOSE_DELIMITER + maskDate(job.getPauseTime(), localtime) + VERBOSE_DELIMITER + maskDate(job.getCreatedTime(), localtime)
+                            + VERBOSE_DELIMITER + maskIfNull(job.getConsoleUrl()) + VERBOSE_DELIMITER + maskIfNull(job.getExternalId())
+                            + VERBOSE_DELIMITER + job.getTimeUnit() + VERBOSE_DELIMITER + job.getTimeout());
+
+                    System.out.println(RULER);
+                }
+            }
+            else {
+                System.out.println(String.format(BUNDLE_JOBS_FORMATTER, "Job ID", "Bundle Name", "Status", "Kickoff",
+                        "Created", "User", "Group"));
+                System.out.println(RULER);
+
+                for (JsonBundleJob job : jobs) {
+                    System.out.println(String.format(BUNDLE_JOBS_FORMATTER, maskIfNull(job.getId()), maskIfNull(job
+                            .getAppName()), job.getStatus(), maskDate(job.getKickoffTime(), localtime),
+                            maskDate(job.getCreatedTime(), localtime), maskIfNull(job.getUser()), maskIfNull(job.getGroup())));
                     System.out.println(RULER);
                 }
             }

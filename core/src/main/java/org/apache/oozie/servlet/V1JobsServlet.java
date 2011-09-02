@@ -21,6 +21,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.BundleJobBean;
+import org.apache.oozie.BundleJobInfo;
 import org.apache.oozie.CoordinatorEngine;
 import org.apache.oozie.BundleEngine;
 import org.apache.oozie.CoordinatorEngineException;
@@ -56,7 +58,7 @@ public class V1JobsServlet extends BaseJobsServlet {
      */
     @Override
     protected JSONObject submitJob(HttpServletRequest request, Configuration conf) throws XServletException,
-    IOException {
+            IOException {
         JSONObject json = null;
 
         String jobType = request.getParameter(RestConstants.JOBTYPE_PARAM);
@@ -71,7 +73,7 @@ public class V1JobsServlet extends BaseJobsServlet {
             if (wfPath != null) {
                 json = submitWorkflowJob(request, conf);
             }
-            else if (coordPath != null){
+            else if (coordPath != null) {
                 json = submitCoordinatorJob(request, conf);
             }
             else {
@@ -84,19 +86,18 @@ public class V1JobsServlet extends BaseJobsServlet {
             }
             else {
                 throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0303,
-                      RestConstants.JOBTYPE_PARAM, jobType);
+                        RestConstants.JOBTYPE_PARAM, jobType);
             }
         }
         return json;
     }
 
     /**
-     * v1 service implementation to get a JSONObject representation of a job
-     * from its external ID
+     * v1 service implementation to get a JSONObject representation of a job from its external ID
      */
     @Override
     protected JSONObject getJobIdForExternalId(HttpServletRequest request, String externalId) throws XServletException,
-    IOException {
+            IOException {
         JSONObject json = null;
         /*
          * Configuration conf = new XConfiguration(); String wfPath =
@@ -117,26 +118,23 @@ public class V1JobsServlet extends BaseJobsServlet {
     }
 
     /**
-     * v1 service implementation to get a list of workflows, with filtering or interested windows embedded in the
-     * request object
+     * v1 service implementation to get a list of workflows, coordinators, or bundles, with filtering or interested
+     * windows embedded in the request object
      */
     @Override
     protected JSONObject getJobs(HttpServletRequest request) throws XServletException, IOException {
         JSONObject json = null;
-        /*
-         * json = getWorkflowJobs(request); if (json != null) { return json; }
-         * else { json = getCoordinatorJobs(request); } return json;
-         */
-        // Configuration conf = new XConfiguration();
-
         String jobtype = request.getParameter(RestConstants.JOBTYPE_PARAM);
         jobtype = (jobtype != null) ? jobtype : "wf";
 
         if (jobtype.contains("wf")) {
             json = getWorkflowJobs(request);
         }
-        else {
+        else if (jobtype.contains("coord")) {
             json = getCoordinatorJobs(request);
+        }
+        else if (jobtype.contains("bundle")) {
+            json = getBundleJobs(request);
         }
         return json;
     }
@@ -144,6 +142,7 @@ public class V1JobsServlet extends BaseJobsServlet {
     /**
      * v1 service implementation to submit a workflow job
      */
+    @SuppressWarnings("unchecked")
     private JSONObject submitWorkflowJob(HttpServletRequest request, Configuration conf) throws XServletException {
 
         JSONObject json = new JSONObject();
@@ -170,6 +169,7 @@ public class V1JobsServlet extends BaseJobsServlet {
     /**
      * v1 service implementation to submit a coordinator job
      */
+    @SuppressWarnings("unchecked")
     private JSONObject submitCoordinatorJob(HttpServletRequest request, Configuration conf) throws XServletException {
 
         JSONObject json = new JSONObject();
@@ -208,6 +208,7 @@ public class V1JobsServlet extends BaseJobsServlet {
     /**
      * v1 service implementation to submit a bundle job
      */
+    @SuppressWarnings("unchecked")
     private JSONObject submitBundleJob(HttpServletRequest request, Configuration conf) throws XServletException {
         JSONObject json = new JSONObject();
         XLog.getLog(getClass()).warn("submitBundleJob " + XmlUtils.prettyPrint(conf).toString());
@@ -220,8 +221,8 @@ public class V1JobsServlet extends BaseJobsServlet {
             }
             boolean startJob = (action != null);
             String user = conf.get(OozieClient.USER_NAME);
-            BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(
-                    user, getAuthToken(request));
+            BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(user,
+                    getAuthToken(request));
             String id = null;
             boolean dryrun = false;
             if (action != null) {
@@ -245,8 +246,9 @@ public class V1JobsServlet extends BaseJobsServlet {
     /**
      * v1 service implementation to get a JSONObject representation of a job from its external ID
      */
+    @SuppressWarnings("unchecked")
     private JSONObject getWorkflowJobIdForExternalId(HttpServletRequest request, String externalId)
-    throws XServletException {
+            throws XServletException {
         JSONObject json = new JSONObject();
         try {
             DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
@@ -264,9 +266,8 @@ public class V1JobsServlet extends BaseJobsServlet {
      * v1 service implementation to get a JSONObject representation of a job from its external ID
      */
     private JSONObject getCoordinatorJobIdForExternalId(HttpServletRequest request, String externalId)
-    throws XServletException {
+            throws XServletException {
         JSONObject json = new JSONObject();
-        // TODO
         return json;
     }
 
@@ -332,10 +333,40 @@ public class V1JobsServlet extends BaseJobsServlet {
         return json;
     }
 
+    @SuppressWarnings("unchecked")
+    private JSONObject getBundleJobs(HttpServletRequest request) throws XServletException {
+        JSONObject json = new JSONObject();
+        try {
+            String filter = request.getParameter(RestConstants.JOBS_FILTER_PARAM);
+            String startStr = request.getParameter(RestConstants.OFFSET_PARAM);
+            String lenStr = request.getParameter(RestConstants.LEN_PARAM);
+            int start = (startStr != null) ? Integer.parseInt(startStr) : 1;
+            start = (start < 1) ? 1 : start;
+            int len = (lenStr != null) ? Integer.parseInt(lenStr) : 50;
+            len = (len < 1) ? 50 : len;
+
+            BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request),
+                    getAuthToken(request));
+            BundleJobInfo jobs = bundleEngine.getBundleJobs(filter, start, len);
+            List<BundleJobBean> jsonJobs = jobs.getBundleJobs();
+
+            json.put(JsonTags.BUNDLE_JOBS, BundleJobBean.toJSONArray(jsonJobs));
+            json.put(JsonTags.BUNDLE_JOB_TOTAL, jobs.getTotal());
+            json.put(JsonTags.BUNDLE_JOB_OFFSET, jobs.getStart());
+            json.put(JsonTags.BUNDLE_JOB_LEN, jobs.getLen());
+
+        }
+        catch (BundleEngineException ex) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
+        }
+        return json;
+    }
+
     /**
      * service implementation to submit a http job
      */
-    private JSONObject submitHttpJob(HttpServletRequest request, Configuration conf, String jobType) throws XServletException {
+    private JSONObject submitHttpJob(HttpServletRequest request, Configuration conf, String jobType)
+            throws XServletException {
         JSONObject json = new JSONObject();
 
         try {

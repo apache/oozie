@@ -28,6 +28,10 @@ public class StoreStatusFilter {
 
     public static final String wfCountStr = "Select count(w) from WorkflowJobBean w";
 
+    public static final String bundleSeletStr = "Select w.id, w.appName, w.appPath, w.conf, w.status, w.kickoffTimestamp, w.startTimestamp, w.endTimestamp, w.pauseTimestamp, w.createdTimestamp, w.user, w.group, w.timeUnitStr, w.timeOut from BundleJobBean w";
+
+    public static final String bundleCountStr = "Select count(w) from BundleJobBean w";
+
     public static void filter(Map<String, List<String>> filter, List<String> orArray, List<String> colArray, List<String> valArray, StringBuilder sb, String seletStr, String countStr) {
         boolean isStatus = false;
         boolean isGroup = false;

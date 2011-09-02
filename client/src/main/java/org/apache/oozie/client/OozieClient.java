@@ -888,7 +888,6 @@ public class OozieClient {
         }
 
         @Override
-        @SuppressWarnings("unchecked")
         protected List<JsonCoordinatorJob> call(HttpURLConnection conn) throws IOException, OozieClientException {
             conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
             if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
@@ -899,6 +898,33 @@ public class OozieClient {
                     jobs = new JSONArray();
                 }
                 return JsonCoordinatorJob.fromJSONArray(jobs);
+            }
+            else {
+                handleError(conn);
+            }
+            return null;
+        }
+    }
+
+    private class BundleJobsStatus extends ClientCallable<List<JsonBundleJob>> {
+
+        BundleJobsStatus(String filter, int start, int len) {
+            super("GET", RestConstants.JOBS, "", prepareParams(RestConstants.JOBS_FILTER_PARAM, filter,
+                    RestConstants.JOBTYPE_PARAM, "bundle", RestConstants.OFFSET_PARAM, Integer.toString(start),
+                    RestConstants.LEN_PARAM, Integer.toString(len)));
+        }
+
+        @Override
+        protected List<JsonBundleJob> call(HttpURLConnection conn) throws IOException, OozieClientException {
+            conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
+            if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
+                Reader reader = new InputStreamReader(conn.getInputStream());
+                JSONObject json = (JSONObject) JSONValue.parse(reader);
+                JSONArray jobs = (JSONArray) json.get(JsonTags.BUNDLE_JOBS);
+                if (jobs == null) {
+                    jobs = new JSONArray();
+                }
+                return JsonBundleJob.fromJSONArray(jobs);
             }
             else {
                 handleError(conn);
@@ -1195,6 +1221,19 @@ public class OozieClient {
      */
     public List<JsonCoordinatorJob> getCoordJobsInfo(String filter, int start, int len) throws OozieClientException {
         return new CoordJobsStatus(filter, start, len).call();
+    }
+
+    /**
+     * Return the info of the bundle jobs that match the filter.
+     *
+     * @param filter job filter. Refer to the {@link OozieClient} for the filter syntax.
+     * @param start jobs offset, base 1.
+     * @param len number of jobs to return.
+     * @return a list with the bundle jobs info
+     * @throws OozieClientException thrown if the jobs info could not be retrieved.
+     */
+    public List<JsonBundleJob> getBundleJobsInfo(String filter, int start, int len) throws OozieClientException {
+        return new BundleJobsStatus(filter, start, len).call();
     }
 
     private class GetQueueDump extends ClientCallable<List<String>> {

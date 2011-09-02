@@ -49,7 +49,7 @@ import org.apache.openjpa.persistence.jdbc.Index;
 
         @NamedQuery(name = "GET_BUNDLE_JOBS_COUNT", query = "select count(w) from BundleJobBean w"),
 
-        @NamedQuery(name = "GET_BUNDLE_JOBS_COLUMNS", query = "select w.id, w.appName, w.status, w.user, w.group, w.kickoffTimestamp, w.endTimestamp, w.appPath, w.createdTimestamp, w.timeUnitStr, w.timeOut from BundleJobBean w order by w.createdTimestamp desc"),
+        @NamedQuery(name = "GET_BUNDLE_JOBS_COLUMNS", query = "select w.id, w.appName, w.appPath, w.conf, w.status, w.kickoffTimestamp, w.startTimestamp, w.endTimestamp, w.pauseTimestamp, w.createdTimestamp, w.user, w.group, w.timeUnitStr, w.timeOut from BundleJobBean w order by w.createdTimestamp desc"),
 
         @NamedQuery(name = "GET_BUNDLE_JOBS_PENDING", query = "select OBJECT(w) from BundleJobBean w where w.pending = 1 order by w.lastModifiedTimestamp"),
 
@@ -218,6 +218,7 @@ public class BundleJobBean extends JsonBundleJob implements Writable {
     /**
      * @return the createdTime
      */
+    @Override
     public Date getCreatedTime() {
         return DateUtils.toDate(createdTimestamp);
     }
@@ -323,9 +324,11 @@ public class BundleJobBean extends JsonBundleJob implements Writable {
     }
 
     /**
-     * @param createTime
+     * @param createTime the createdTime to set
      */
+    @Override
     public void setCreatedTime(Date createTime) {
+        super.setCreatedTime(createTime);
         this.createdTimestamp = DateUtils.convertDateToTimestamp(createTime);
     }
 

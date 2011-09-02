@@ -74,6 +74,9 @@ public class JsonBundleJob implements BundleJob, JsonBean {
     private Date pauseTime;
 
     @Transient
+    private Date createdTime;
+
+    @Transient
     private Timeunit timeUnit = BundleJob.Timeunit.MINUTE;
 
     @Basic
@@ -118,6 +121,7 @@ public class JsonBundleJob implements BundleJob, JsonBean {
         startTime = JsonUtils.parseDateRfc822((String) json.get(JsonTags.BUNDLE_JOB_START_TIME));
         endTime = JsonUtils.parseDateRfc822((String) json.get(JsonTags.BUNDLE_JOB_END_TIME));
         pauseTime = JsonUtils.parseDateRfc822((String) json.get(JsonTags.BUNDLE_JOB_PAUSE_TIME));
+        createdTime = JsonUtils.parseDateRfc822((String) json.get(JsonTags.BUNDLE_JOB_CREATED_TIME));
         timeUnit = Timeunit.valueOf((String) json.get(JsonTags.BUNDLE_JOB_TIMEUNIT));
         timeOut = (int) JsonUtils.getLongValue(json, JsonTags.BUNDLE_JOB_TIMEOUT);
         user = (String) json.get(JsonTags.BUNDLE_JOB_USER);
@@ -138,13 +142,14 @@ public class JsonBundleJob implements BundleJob, JsonBean {
         json.put(JsonTags.BUNDLE_JOB_ID, id);
         json.put(JsonTags.BUNDLE_JOB_EXTERNAL_ID, externalId);
         json.put(JsonTags.BUNDLE_JOB_CONF, conf);
-        json.put(JsonTags.BUNDLE_JOB_STATUS, status.toString());
-        json.put(JsonTags.BUNDLE_JOB_TIMEUNIT, timeUnit.toString());
+        json.put(JsonTags.BUNDLE_JOB_STATUS, getStatus().toString());
+        json.put(JsonTags.BUNDLE_JOB_TIMEUNIT, getTimeUnit().toString());
         json.put(JsonTags.BUNDLE_JOB_TIMEOUT, timeOut);
         json.put(JsonTags.BUNDLE_JOB_KICKOFF_TIME, JsonUtils.formatDateRfc822(getKickoffTime()));
         json.put(JsonTags.BUNDLE_JOB_START_TIME, JsonUtils.formatDateRfc822(getStartTime()));
         json.put(JsonTags.BUNDLE_JOB_END_TIME, JsonUtils.formatDateRfc822(getEndTime()));
         json.put(JsonTags.BUNDLE_JOB_PAUSE_TIME, JsonUtils.formatDateRfc822(getPauseTime()));
+        json.put(JsonTags.BUNDLE_JOB_CREATED_TIME, JsonUtils.formatDateRfc822(getCreatedTime()));
         json.put(JsonTags.BUNDLE_JOB_USER, getUser());
         json.put(JsonTags.BUNDLE_JOB_GROUP, getGroup());
         json.put(JsonTags.BUNDLE_JOB_CONSOLE_URL, getConsoleUrl());
@@ -368,6 +373,24 @@ public class JsonBundleJob implements BundleJob, JsonBean {
     }
 
     /**
+     * Get createdTime
+     *
+     * @return createdTime
+     */
+    public Date getCreatedTime() {
+        return createdTime;
+    }
+
+    /**
+     * Set createdTime
+     *
+     * @param createdTime the createdTime to set
+     */
+    public void setCreatedTime(Date createdTime) {
+        this.createdTime = createdTime;
+    }
+
+    /**
      * Set timeUnit
      *
      * @param timeUnit the timeUnit to set
@@ -444,8 +467,8 @@ public class JsonBundleJob implements BundleJob, JsonBean {
      * @param array JSON array.
      * @return the corresponding application list.
      */
-    public static List<BundleJob> fromJSONArray(JSONArray applications) {
-        List<BundleJob> list = new ArrayList<BundleJob>();
+    public static List<JsonBundleJob> fromJSONArray(JSONArray applications) {
+        List<JsonBundleJob> list = new ArrayList<JsonBundleJob>();
         for (Object obj : applications) {
             list.add(new JsonBundleJob((JSONObject) obj));
         }

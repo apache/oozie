@@ -1,6 +1,9 @@
 -- Oozie 3.0.0 release
 
+GH-0518 Provide a basic UI for bundle jobs and jobs command for bundle jobs
 GH-0512 Make pauseTime only future time for coordinator jobs
+GH-0499 Fix bundle suspend, kill and add test cases
+GH-0503 Fix coordinator web console NullPointerException
 GH-0075 Provide access to date list.
 GH-0166 Modify the logic of adding .so and .so.1 files into cache.
 GH-0067 input data check should have a timeout for catch-up mode
