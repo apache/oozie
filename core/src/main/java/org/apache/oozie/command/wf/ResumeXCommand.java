@@ -22,6 +22,7 @@ import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.command.coord.CoordActionUpdateXCommand;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetActionsJPAExecutor;
@@ -57,8 +58,8 @@ public class ResumeXCommand extends WorkflowXCommand<Void> {
                 ((LiteWorkflowInstance) wfInstance).setStatus(WorkflowInstance.Status.RUNNING);
                 workflow.setWorkflowInstance(wfInstance);
                 workflow.setStatus(WorkflowJob.Status.RUNNING);
-                
-                
+
+
                 //for (WorkflowActionBean action : store.getActionsForWorkflow(id, false)) {
                 for (WorkflowActionBean action : jpaService.execute(new WorkflowJobGetActionsJPAExecutor(id))) {
 
@@ -108,6 +109,10 @@ public class ResumeXCommand extends WorkflowXCommand<Void> {
         }
         catch (JPAExecutorException e) {
             throw new CommandException(e);
+        }
+        finally {
+            // update coordinator action
+            new CoordActionUpdateXCommand(workflow).call();
         }
     }
 

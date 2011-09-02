@@ -32,6 +32,7 @@ import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.command.coord.CoordActionUpdateXCommand;
 import org.apache.oozie.service.CallbackService;
 import org.apache.oozie.service.ELService;
 import org.apache.oozie.service.HadoopAccessorException;
@@ -121,6 +122,10 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<Void> {
         }
         catch (Exception e) {
             throw new CommandException(ErrorCode.E0727, e.getMessage());
+        }
+        finally {
+            // update coordinator action
+            new CoordActionUpdateXCommand(workflow, 3).call();
         }
     }
 

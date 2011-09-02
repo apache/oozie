@@ -31,16 +31,24 @@ import org.apache.oozie.client.SLAEvent.Status;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.executor.jpa.CoordActionGetForExternalIdJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 
 public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
     private WorkflowJobBean workflow;
     private CoordinatorActionBean coordAction = null;
     private JPAService jpaService = null;
+    private int maxRetries = 1;
 
     public CoordActionUpdateXCommand(WorkflowJobBean workflow) {
         super("coord-action-update", "coord-action-update", 1);
         this.workflow = workflow;
+    }
+
+    public CoordActionUpdateXCommand(WorkflowJobBean workflow, int maxRetries) {
+        super("coord-action-update", "coord-action-update", 1);
+        this.workflow = workflow;
+        this.maxRetries = maxRetries;
     }
 
     @Override
@@ -49,7 +57,7 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
             LOG.debug("STARTED CoordActionUpdateXCommand for wfId=" + workflow.getId());
 
             Status slaStatus = null;
-
+            CoordinatorAction.Status preCoordStatus = coordAction.getStatus();
             if (workflow.getStatus() == WorkflowJob.Status.SUCCEEDED) {
                 coordAction.setStatus(CoordinatorAction.Status.SUCCEEDED);
                 coordAction.setPending(0);
@@ -65,23 +73,34 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
                 coordAction.setPending(0);
                 slaStatus = Status.KILLED;
             }
+            else if (workflow.getStatus() == WorkflowJob.Status.SUSPENDED) {
+                coordAction.setStatus(CoordinatorAction.Status.SUSPENDED);
+                coordAction.decrementAndGetPending();
+            }
+            else if (workflow.getStatus() == WorkflowJob.Status.RUNNING) {
+                //resume workflow job and update coord action accordingly
+                coordAction.setStatus(CoordinatorAction.Status.RUNNING);
+                coordAction.decrementAndGetPending();
+            }
             else {
                 LOG.warn("Unexpected workflow " + workflow.getId() + " STATUS " + workflow.getStatus());
                 // update lastModifiedTime
                 coordAction.setLastModifiedTime(new Date());
-                jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionUpdateJPAExecutor(coordAction));
+                jpaService.execute(new CoordActionUpdateJPAExecutor(coordAction));
 
                 return null;
             }
 
-            LOG.info("Updating Coordintaor id :" + coordAction.getId() + " status to " + coordAction.getStatus());
+            LOG.info("Updating Coordintaor id :" + coordAction.getId() + " status from " + preCoordStatus + " to " + coordAction.getStatus());
             coordAction.setLastModifiedTime(new Date());
-            jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionUpdateJPAExecutor(coordAction));
+            jpaService.execute(new CoordActionUpdateJPAExecutor(coordAction));
             if (slaStatus != null) {
                 SLADbOperations.writeStausEvent(coordAction.getSlaXml(), coordAction.getId(), slaStatus,
                         SlaAppType.COORDINATOR_ACTION, LOG);
             }
-            queue(new CoordActionReadyXCommand(coordAction.getJobId()));
+            if (workflow.getStatus() != WorkflowJob.Status.SUSPENDED && workflow.getStatus() != WorkflowJob.Status.RUNNING) {
+                queue(new CoordActionReadyXCommand(coordAction.getJobId()));
+            }
             LOG.debug("ENDED CoordActionUpdateXCommand for wfId=" + workflow.getId());
         }
         catch (XException ex) {
@@ -117,12 +136,26 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
             throw new CommandException(ErrorCode.E0610);
         }
 
-        try {
-            coordAction = jpaService.execute(new CoordActionGetForExternalIdJPAExecutor(workflow.getId()));
+        int retries = 0;
+        while (retries++ < maxRetries) {
+            try {
+                coordAction = jpaService.execute(new CoordActionGetForExternalIdJPAExecutor(workflow.getId()));
+                if (coordAction != null) {
+                    break;
+                }
+
+                if (retries < maxRetries) {
+                    Thread.sleep(500);
+                }
+            }
+            catch (JPAExecutorException je) {
+                LOG.warn("Could not load coord action {0}", je.getMessage(), je);
+            }
+            catch (InterruptedException ex) {
+                LOG.warn("Retry to load coord action is interrupted {0}", ex.getMessage(), ex);
+            }
         }
-        catch (JPAExecutorException je) {
-            throw new CommandException(je);
-        }
+
         if (coordAction != null) {
             LogUtils.setLogInfo(coordAction, logInfo);
         }
@@ -150,19 +183,19 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
      */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
-        if (workflow.getStatus() == WorkflowJob.Status.RUNNING || workflow.getStatus() == WorkflowJob.Status.SUSPENDED) {
+
+        // if coord action is RUNNING and pending false and workflow is RUNNING, this doesn't need to be updated.
+        if (workflow.getStatus() == WorkflowJob.Status.RUNNING
+                && coordAction.getStatus() == CoordinatorAction.Status.RUNNING && !coordAction.isPending()) {
             // update lastModifiedTime
             coordAction.setLastModifiedTime(new Date());
-            if (workflow.getStatus() == WorkflowJob.Status.SUSPENDED) {
-                coordAction.decrementAndGetPending();
-            }
             try {
                 jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionUpdateJPAExecutor(coordAction));
             }
             catch (JPAExecutorException je) {
                 throw new CommandException(je);
             }
-            throw new PreconditionException(ErrorCode.E1100, ", workflow is RUNNING or SUSPENDED");
+            throw new PreconditionException(ErrorCode.E1100, ", workflow is RUNNING and coordinator action is RUNNING and pending false");
         }
     }
 

@@ -21,18 +21,27 @@ import java.io.Writer;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.CoordinatorActionBean;
+import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.DagEngine;
 import org.apache.oozie.ForTestingActionExecutor;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.client.CoordinatorJob;
+import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.executor.jpa.CoordActionGetForExternalIdJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionUpdateJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowActionsGetForJobJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 import org.apache.oozie.service.ActionService;
+import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.SchemaService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowStoreService;
 import org.apache.oozie.store.WorkflowStore;
-import org.apache.oozie.test.XTestCase;
+import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.workflow.WorkflowInstance;
@@ -40,7 +49,7 @@ import org.apache.oozie.workflow.WorkflowInstance;
 /**
  * Test cases for checking correct functionality in case of errors while executing Actions.
  */
-public class TestActionErrors extends XTestCase {
+public class TestActionErrors extends XDataTestCase {
 
     private Services services;
 
@@ -80,6 +89,20 @@ public class TestActionErrors extends XTestCase {
 
     /**
      * Tests for correct functionality when a {@link org.apache.oozie.action.ActionExecutorException.ErrorType#NON_TRANSIENT}
+     * error is generated while attempting to start an action. </p> It first generates a {@link
+     * org.apache.oozie.action.ActionExecutorException.ErrorType#NON_TRANSIENT} error and checks for the job to go into
+     * {@link org.apache.oozie.client.WorkflowJob.Status#SUSPENDED} state. Then checks for the coordinator action to go into
+     * {@link org.apache.oozie.client.CoordinatorAction.Status#SUSPENDED} state.
+     *
+     * @throws Exception
+     */
+    public void testStartNonTransientWithCoordActionUpdate() throws Exception {
+        _testNonTransientWithCoordActionUpdate("start.non-transient", WorkflowActionBean.Status.START_MANUAL, "start");
+        assertTrue(true);
+    }
+
+    /**
+     * Tests for correct functionality when a {@link org.apache.oozie.action.ActionExecutorException.ErrorType#NON_TRANSIENT}
      * error is generated while attempting to end an action. </p> It first generates a {@link
      * org.apache.oozie.action.ActionExecutorException.ErrorType#NON_TRANSIENT} error and checks for the job to go into
      * {@link org.apache.oozie.client.WorkflowJob.Status#SUSPENDED} state. The state of the single action in the job is
@@ -93,6 +116,20 @@ public class TestActionErrors extends XTestCase {
      */
     public void testEndNonTransient() throws Exception {
         _testNonTransient("end.non-transient", WorkflowActionBean.Status.END_MANUAL, "end");
+        assertTrue(true);
+    }
+
+    /**
+     * Tests for correct functionality when a {@link org.apache.oozie.action.ActionExecutorException.ErrorType#NON_TRANSIENT}
+     * error is generated while attempting to end an action. </p> It first generates a {@link
+     * org.apache.oozie.action.ActionExecutorException.ErrorType#NON_TRANSIENT} error and checks for the job to go into
+     * {@link org.apache.oozie.client.WorkflowJob.Status#SUSPENDED} state. Then checks for the coordinator action to go into
+     * {@link org.apache.oozie.client.CoordinatorAction.Status#SUSPENDED} state.
+     *
+     * @throws Exception
+     */
+    public void testEndNonTransientWithCoordActionUpdate() throws Exception {
+        _testNonTransientWithCoordActionUpdate("end.non-transient", WorkflowActionBean.Status.END_MANUAL, "end");
         assertTrue(true);
     }
 
@@ -244,6 +281,66 @@ public class TestActionErrors extends XTestCase {
         assertEquals(WorkflowActionBean.Status.OK, action.getStatus());
         store2.commitTrx();
         store2.closeTrx();
+    }
+
+    /**
+     * Provides functionality to test non transient failures and coordinator action update
+     *
+     * @param errorType the error type. (start.non-transient, end.non-transient)
+     * @param expStatus1 expected status. (START_MANUAL, END_MANUAL)
+     * @param expErrorMsg expected error message.
+     * @throws Exception
+     */
+    private void _testNonTransientWithCoordActionUpdate(String errorType, WorkflowActionBean.Status expStatus1, String expErrorMsg) throws Exception {
+        Reader reader = IOUtils.getResourceAsReader("wf-ext-schema-valid.xml", -1);
+        Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
+        IOUtils.copyCharStream(reader, writer);
+
+        final DagEngine engine = new DagEngine("u", "a");
+        Configuration conf = new XConfiguration();
+        conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        conf.set(OozieClient.GROUP_NAME, getTestGroup());
+        injectKerberosInfo(conf);
+        conf.set(OozieClient.LOG_TOKEN, "t");
+        conf.set("signal-value", "OK");
+        conf.set("external-status", "ok");
+        conf.set("error", errorType);
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false);
+        CoordinatorActionBean coordAction = addRecordToCoordActionTable(coordJob.getId(), 1,
+                CoordinatorAction.Status.RUNNING, "coord-action-get.xml", "wfId", "RUNNING");
+
+        final String jobId = engine.submitJob(conf, true);
+
+        coordAction.setExternalId(jobId);
+        CoordActionUpdateJPAExecutor coordActionUpdateExecutor = new CoordActionUpdateJPAExecutor(coordAction);
+        jpaService.execute(coordActionUpdateExecutor);
+
+        waitFor(5000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                return (engine.getJob(jobId).getStatus() == WorkflowJob.Status.SUSPENDED);
+            }
+        });
+
+        assertNotNull(jpaService);
+        WorkflowJobGetJPAExecutor wfGetCmd = new WorkflowJobGetJPAExecutor(jobId);
+        WorkflowJobBean job = jpaService.execute(wfGetCmd);
+        WorkflowActionsGetForJobJPAExecutor actionsGetExe = new WorkflowActionsGetForJobJPAExecutor(jobId);
+        List<WorkflowActionBean> actionsList = jpaService.execute(actionsGetExe);
+
+        int n = actionsList.size();
+        WorkflowActionBean action = actionsList.get(n - 1);
+        assertEquals("TEST_ERROR", action.getErrorCode());
+        assertEquals(expErrorMsg, action.getErrorMessage());
+        assertEquals(expStatus1, action.getStatus());
+        assertFalse(action.getPending());
+
+        assertEquals (WorkflowJob.Status.SUSPENDED, job.getStatus());
+
+        coordAction = jpaService.execute(new CoordActionGetForExternalIdJPAExecutor(jobId));
+        assertEquals (CoordinatorAction.Status.SUSPENDED, coordAction.getStatus());
     }
 
     /**

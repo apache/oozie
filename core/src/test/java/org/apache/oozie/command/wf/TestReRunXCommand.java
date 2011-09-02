@@ -138,7 +138,7 @@ public class TestReRunXCommand extends XFsTestCase {
         assertEquals(WorkflowJob.Status.SUCCEEDED, wfClient.getJobInfo(jobId1).getStatus());
     }
 
-    public void testRedeploy() throws IOException, OozieClientException {
+    public void testRedeploy() throws IOException, OozieClientException, InterruptedException {
         Reader reader = IOUtils.getResourceAsReader("rerun-elerr-wf.xml", -1);
         Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
         IOUtils.copyCharStream(reader, writer);
@@ -164,6 +164,8 @@ public class TestReRunXCommand extends XFsTestCase {
         reader = IOUtils.getResourceAsReader("rerun-el-wf.xml", -1);
         writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
         IOUtils.copyCharStream(reader, writer);
+
+        Thread.sleep(5000);
 
         conf.setProperty(OozieClient.RERUN_SKIP_NODES, "hdfs11");
         wfClient.reRun(jobId1, conf);
