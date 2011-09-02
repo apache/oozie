@@ -353,19 +353,24 @@ public abstract class XTestCase extends TestCase {
     }
 
     /**
-     * Set a system property for the duration of the method test case. <p/> After the test method ends the orginal value
-     * is restored.
+     * Set a system property for the duration of the method test case.
+     * <p/>
+     * After the test method ends the original value is restored.
      *
      * @param name system property name.
      * @param value value to set.
      */
     protected void setSystemProperty(String name, String value) {
-        ParamChecker.notNull(value, "value");
         if (!sysProps.containsKey(name)) {
             String currentValue = System.getProperty(name);
             sysProps.put(name, currentValue);
         }
-        System.setProperty(name, value);
+        if (value != null) {
+            System.setProperty(name, value);
+        }
+        else {
+            System.getProperties().remove(name);
+        }
     }
 
     /**

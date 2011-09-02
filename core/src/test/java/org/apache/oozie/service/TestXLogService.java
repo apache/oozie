@@ -109,4 +109,22 @@ public class TestXLogService extends XTestCase {
         ls.destroy();
     }
 
+    public void testDefaultLogsDir() throws Exception {
+        setSystemProperty(XLogService.OOZIE_LOGS_ENV, null);
+        String logs = Services.getOozieHome() + "/logs";
+        XLogService ls = new XLogService();
+        ls.init(null);
+        assertEquals(logs, System.getProperty(XLogService.OOZIE_LOGS_ENV));
+        ls.destroy();
+    }
+
+    public void testCustomLogsDir() throws Exception {
+        String logs = "/tmp/oozie/logs";
+        setSystemProperty(XLogService.OOZIE_LOGS_ENV, logs);
+        XLogService ls = new XLogService();
+        ls.init(null);
+        assertEquals(logs, System.getProperty(XLogService.OOZIE_LOGS_ENV));
+        ls.destroy();
+    }
+
 }

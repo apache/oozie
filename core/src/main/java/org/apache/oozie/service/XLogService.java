@@ -59,6 +59,11 @@ public class XLogService implements Service, Instrumentable {
     private static final String INSTRUMENTATION_GROUP = "logging";
 
     /**
+     * System property that indicates the logs directory.
+     */
+    public static final String OOZIE_LOGS_ENV = "OOZIE_LOGS";
+
+    /**
      * System property that indicates the log4j configuration file to load.
      */
     public static final String LOG4J_FILE_ENV = "OOZIE_LOG4J_FILE";
@@ -119,7 +124,9 @@ public class XLogService implements Service, Instrumentable {
      * @throws ServiceException thrown if the log service could not be initialized.
      */
     public void init(Services services) throws ServiceException {
-        Services.getOozieHome();
+        String oozieHome = Services.getOozieHome();
+        String oozieLogs = getEnvValue(OOZIE_LOGS_ENV, oozieHome + "/logs");
+        System.setProperty(OOZIE_LOGS_ENV, oozieLogs);            
         try {
             LogManager.resetConfiguration();
             log4jFileName = getEnvValue(LOG4J_FILE_ENV, DEFAULT_LOG4J_PROPERTIES);

@@ -114,7 +114,10 @@ for reference purposes only.
 
 ---+++ Logging Configuration
 
-By default Oozie logs to the =${OOZIE_HOME}/logs/= directory in 4 different files:
+By default Oozie logs to the =${OOZIE_LOGS}= directory, if the variable =OOZIE_LOGS= is not defined, Oozie logs
+to the =${OOZIE_HOME}/logs/= directory.
+
+Oozie logs in 4 different files:
 
    * oozie.log: web services log streaming works from this log
    * oozie-ops.log: messages for Admin/Operations to monitor
@@ -125,8 +128,8 @@ Oozie log configuration is defined in the =oozie-log4j.properties= files.
 
 If the Oozie log configuration file changes, Oozie reloads the new settings dynamically.
 
-The =OOZIE_LOG4J_FILE= environment variable can be set to indicate an alternate Oozie logging configuration file. The
-alternate file must be in the =${OOZIE_HOME}/conf/= directory.
+The =OOZIE_LOG4J_FILE= environment variable can be set to indicate an alternate Oozie log configuration file. The
+alternate log configuration file must be in Oozie configuration directory.
 
 The =OOZIE_LOG4J_RELOAD= environment variable can be set to specify the logging configuration reload interval in
 seconds. The default value is 10 seconds.
