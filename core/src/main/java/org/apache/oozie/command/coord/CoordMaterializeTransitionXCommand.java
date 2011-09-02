@@ -34,10 +34,12 @@ import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.coord.TimeUnit;
 import org.apache.oozie.executor.jpa.CoordActionInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionsActiveCountJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
+import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.Instrumentation;
@@ -63,6 +65,16 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
     private int materializationWindow;
     private int lastActionNumber = 1; // over-ride by DB value
     private CoordinatorJob.Status prevStatus = null;
+
+    /**
+     * Default timeout for catchup jobs, in minutes, after which coordinator input check will timeout
+     */
+    public static final String CONF_DEFAULT_TIMEOUT_CATCHUP = Service.CONF_PREFIX + "coord.catchup.default.timeout";
+
+    /**
+     * Default MAX timeout in minutes, after which coordinator input check will timeout
+     */
+    public static final String CONF_DEFAULT_MAX_TIMEOUT = Service.CONF_PREFIX + "coord.default.max.timeout";
 
     /**
      * The constructor for class {@link CoordMaterializeTransitionXCommand}
@@ -306,7 +318,12 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         }
 
         String action = null;
-        while (effStart.compareTo(end) < 0) {
+        JPAService jpaService = Services.get().get(JPAService.class);
+        int numWaitingActions = jpaService.execute(new CoordActionsActiveCountJPAExecutor(coordJob.getId()));
+        int maxActionToBeCreated = coordJob.getConcurrency() - numWaitingActions;
+        LOG.debug("Coordinator job :" + coordJob.getId() + ", maxActionToBeCreated :" + maxActionToBeCreated
+                + ", concurrency :" + coordJob.getConcurrency() + ", numWaitingActions :" + numWaitingActions);
+        while (effStart.compareTo(end) < 0 && maxActionToBeCreated-- > 0) {
             if (pause != null && effStart.compareTo(pause) >= 0) {
                 break;
             }
@@ -314,7 +331,12 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
             lastActionNumber++;
 
             int timeout = coordJob.getTimeout();
-            LOG.debug("Materializing action for time=" + effStart.getTime() + ", lastactionnumber=" + lastActionNumber);
+            if (timeout < 0 || timeout > Services.get().getConf().getInt(CONF_DEFAULT_MAX_TIMEOUT, 129600)) {
+                // 129600 = 90 days
+                timeout = Services.get().getConf().getInt(CONF_DEFAULT_MAX_TIMEOUT, 129600);
+            }
+            LOG.debug("Materializing action for time=" + effStart.getTime() + ", lastactionnumber=" + lastActionNumber
+                    + " timeout=" + timeout + " minutes");
             action = CoordCommandUtils.materializeOneInstance(jobId, dryrun, (Element) eJob.clone(),
                     effStart.getTime(), lastActionNumber, jobConf, actionBean);
 
@@ -373,12 +395,13 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         // if the job endtime == action endtime, we don't need to materialize this job anymore
         Date jobEndTime = job.getEndTime();
 
-        LOG.info("[" + job.getId() + "]: Update status from "+ job.getStatus() + " to RUNNING");
+        LOG.info("[" + job.getId() + "]: Update status from " + job.getStatus() + " to RUNNING");
         job.setStatus(Job.Status.RUNNING);
 
         if (jobEndTime.compareTo(endMatdTime) <= 0) {
-            LOG.info("[" + job.getId() + "]: all actions have been materialized, job status = "+ job.getStatus() + ", set pending to true");
-            //set pending when materialization is done
+            LOG.info("[" + job.getId() + "]: all actions have been materialized, job status = " + job.getStatus()
+                    + ", set pending to true");
+            // set pending when materialization is done
             job.setPending();
         }
 
@@ -395,7 +418,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
      * @see org.apache.oozie.command.XCommand#getKey()
      */
     @Override
-    public String getKey(){
+    public String getKey() {
         return getName() + "_" + jobId;
     }
 

@@ -286,6 +286,22 @@
 		<description>Default timeout for a coordinator action input check (in minutes) for catchup jobs.
             -1 means infinite timeout</description>
 	</property>
+	
+	<property>
+		<name>oozie.service.coord.default.max.timeout
+		</name>
+		<value>129600</value>
+		<description>Default maximum timeout for a coordinator action input check (in minutes). 129600= 90days
+        </description>
+	</property>
+	
+	<property>
+		<name>oozie.service.coord.default.concurrency
+		</name>
+		<value>6</value>
+		<description>Default concurrency for a coordinator job to determine how many maximum action should 
+		be materialized or executed at the same time.</description>
+	</property>
     <!-- ELService -->
     <!--  List of supported groups for ELService -->
 	<property>

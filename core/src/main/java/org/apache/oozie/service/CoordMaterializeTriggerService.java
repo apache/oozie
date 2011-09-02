@@ -21,6 +21,7 @@ import java.util.List;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.command.coord.CoordMaterializeTransitionXCommand;
+import org.apache.oozie.executor.jpa.CoordActionsActiveCountJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetRunningActionsCountJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobsToBeMaterializedJPAExecutor;
@@ -113,10 +114,11 @@ public class CoordMaterializeTriggerService implements Service {
                 for (CoordinatorJobBean coordJob : materializeJobs) {
                     Services.get().get(InstrumentationService.class).get().incr(INSTRUMENTATION_GROUP,
                             INSTR_MAT_JOBS_COUNTER, 1);
-
-                    int numWaitingActions = jpaService.execute(new CoordJobGetRunningActionsCountJPAExecutor(
-                            coordJob.getId()));
-                    if (numWaitingActions > coordJob.getConcurrency()) {
+                    int numWaitingActions = jpaService
+                            .execute(new CoordActionsActiveCountJPAExecutor(coordJob.getId()));
+                    LOG.debug("Job :" + coordJob.getId() + "  numWaitingActions : " + numWaitingActions + " concurrrency : "
+                            + coordJob.getConcurrency());
+                    if (numWaitingActions >= coordJob.getConcurrency()) {
                         LOG.debug("Materialization skipped for JobID [" + coordJob.getId() + " already waiting "
                                 + numWaitingActions + " actions. Concurrency is : " + coordJob.getConcurrency());
                         continue;

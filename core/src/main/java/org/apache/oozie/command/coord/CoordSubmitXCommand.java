@@ -105,6 +105,8 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
      * Default timeout for normal jobs, in minutes, after which coordinator input check will timeout
      */
     public static final String CONF_DEFAULT_TIMEOUT_NORMAL = Service.CONF_PREFIX + "coord.normal.default.timeout";
+    
+    public static final String CONF_DEFAULT_CONCURRENCY = Service.CONF_PREFIX + "coord.default.concurrency";
 
     private final XLog log = XLog.getLog(getClass());
     private ELEvaluator evalFreq = null;
@@ -468,7 +470,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         coordJob.setTimeout(ival);
         val = resolveTagContents("concurrency", eAppXml.getChild("controls", eAppXml.getNamespace()), evalNofuncs);
         if (val == "") {
-            val = "-1";
+            val = Services.get().getConf().get(CONF_DEFAULT_CONCURRENCY, "6");
         }
         ival = ParamChecker.checkInteger(val, "concurrency");
         coordJob.setConcurrency(ival);
