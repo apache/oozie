@@ -119,5 +119,12 @@
             <destName>oozie-examples.tar.gz</destName>
             <fileMode>0444</fileMode>
         </file>
+        <!-- Oozie sharelib TAR.GZ  -->
+        <file>
+            <source>${basedir}/../sharelib/target/oozie-sharelib-${project.version}-sharelib.tar.gz</source>
+            <outputDirectory>/</outputDirectory>
+            <destName>oozie-sharelib-${project.version}.tar.gz</destName>
+            <fileMode>0444</fileMode>
+        </file>
     </files>
 </assembly>

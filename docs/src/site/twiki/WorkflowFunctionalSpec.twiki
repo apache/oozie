@@ -16,6 +16,9 @@ Author: Alejandro Abdelnur
 
 ---++ Changelog
 
+---+++!! 2010OCT31
+
+   * #17, Added new section on Shared Libraries
 ---+++!! 2010APR27
 
    * #3.2.3 Added new "arguments" tag to PIG actions
@@ -2249,6 +2252,23 @@ Oozie assumes that the remote systems are properly sized to handle the amount of
 Any prioritization of jobs in the remote systems is outside of the scope of Oozie.
 
 Workflow applications can influence the remote systems priority via configuration if the remote systems support it.
+
+#ShareLib
+---++ 17 HDFS Share Libraries for Workflow Applications (since Oozie 2.3)
+
+Oozie supports job and system share libraries for workflow jobs.
+
+Share libraries can simplify the deployment and management of common components across workflow applications.
+
+For example, if a workflow job uses a share library with the Streaming, Pig & Har JARs files it does not have to
+bundled those JARs files in the workflow application =lib/= path.
+
+If workflow job uses a share library, Oozie will include all the JAR/SO files in the library in the
+classpath/libpath for all its actions.
+
+A workflow job can specify a share library path using the job property =oozie.libpath=.
+
+A workflow job can use the system share library by setting the job property =oozie.use.system.libpath= to =true=.
 
 ---++ Appendixes
 

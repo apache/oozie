@@ -435,4 +435,47 @@ public class TestLiteWorkflowAppService extends XTestCase {
         }
     }
 
+    public void testCreateprotoConfWithMissingSystemLibPath() throws Exception {
+        setSystemProperty(WorkflowAppService.SYSTEM_LIB_PATH, getTestCaseDir() + "/missingsyslib");
+        Services services = new Services();
+        try {
+            services.init();
+            new Services().init();
+
+            Writer writer;
+            Reader reader = IOUtils.getResourceAsReader("wf-schema-valid.xml", -1);
+            writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
+            IOUtils.copyCharStream(reader, writer);
+
+            createTestCaseSubDir("lib");
+            writer = new FileWriter(getTestCaseDir() + "/lib/maputil.jar");
+            writer.write("bla bla");
+            writer.close();
+
+            // using missing system libpath
+            WorkflowAppService wps = Services.get().get(WorkflowAppService.class);
+            Configuration jobConf = new XConfiguration();
+            jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + "/workflow.xml");
+            jobConf.set(OozieClient.USER_NAME, getTestUser());
+            jobConf.set(OozieClient.GROUP_NAME, getTestGroup());
+            jobConf.setBoolean(OozieClient.USE_SYSTEM_LIBPATH, true);
+            injectKerberosInfo(jobConf);
+            Configuration protoConf = wps.createProtoActionConf(jobConf, "authToken", true);
+            assertEquals(getTestUser(), protoConf.get(OozieClient.USER_NAME));
+            assertEquals(getTestGroup(), protoConf.get(OozieClient.GROUP_NAME));
+
+            assertEquals(1, protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST).length);
+            List<String> found = new ArrayList<String>();
+            found.add(protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST)[0]);
+            List<String> expected = new ArrayList<String>();
+            expected.add(getTestCaseDir() + "/lib/maputil.jar");
+            Collections.sort(found);
+            Collections.sort(expected);
+            assertEquals(expected, found);
+        }
+        finally {
+            services.destroy();
+        }
+    }
+
 }

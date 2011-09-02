@@ -77,6 +77,19 @@ command line tool.
 NOTE: The Oozie server installation includes the Oozie client. The Oozie client should be installed in remote machines
 only.
 
+---++ Oozie Share Lib Installation
+
+Expand the =oozie-sharelib= TAR.GZ file bundled with the distribution.
+
+The =share/= directory must be copied to the Oozie HOME directory in HDFS:
+
+<verbatim>
+$ hadoop fs -put share share
+</verbatim>
+
+*NOTE:* This must be done using the Oozie Hadoop (HDFS) user. If an =share= directory already exists in HDFS, it must be
+deleted before copying it again.
+
 [[index][::Go back to Oozie Documentation Index::]]
 
 </noautolink>

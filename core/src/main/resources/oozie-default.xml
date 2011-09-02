@@ -1157,10 +1157,10 @@
 
     <property>
         <name>oozie.service.WorkflowAppService.system.libpath</name>
-        <value> </value>
+        <value>/user/${user.name}/share/lib</value>
         <description>
             System library path to use for workflow applications.
-            This path is added to worflow application if their job properties sets
+            This path is added to workflow application if their job properties sets
             the property 'oozie.use.system.libpath' to true.
         </description>
     </property>

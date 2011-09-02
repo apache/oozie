@@ -229,10 +229,15 @@ public abstract class WorkflowAppService implements Service {
      */
     private List<String> getLibFiles(FileSystem fs, Path libPath) throws IOException {
         List<String> libPaths = new ArrayList<String>();
-        FileStatus[] files = fs.listStatus(libPath, new NoPathFilter());
+        if (fs.exists(libPath)) {
+            FileStatus[] files = fs.listStatus(libPath, new NoPathFilter());
 
-        for (FileStatus file : files) {
-            libPaths.add((String) file.getPath().toUri().getPath().trim());
+            for (FileStatus file : files) {
+                libPaths.add(file.getPath().toUri().getPath().trim());
+            }
+        }
+        else {
+            XLog.getLog(getClass()).warn("libpath [{0}] does not exists", libPath);
         }
         return libPaths;
     }

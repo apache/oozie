@@ -92,6 +92,7 @@
         <module>webapp</module>
         <module>examples</module>
         <module>docs</module>
+        <module>sharelib</module>
         <module>distro</module>
     </modules>
 

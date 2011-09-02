@@ -245,6 +245,13 @@ Copy and expand the =oozie-client= TAR.GZ file bundled with the distribution. Ad
 Refer to the [[DG_CommandLineTool][Command Line Interface Utilities]] document for a a full reference of the =oozie=
 command line tool.
 
+---++ Oozie Share Lib
+
+The Oozie share lib TAR.GZ file bundled with the distribution contains the necessary files to run Oozie map-reduce
+streaming and pig actions.
+
+The bundled Streaming and Pig JARs are the ones used by Oozie testcases.
+
 [[index][::Go back to Oozie Documentation Index::]]
 
 </noautolink>
