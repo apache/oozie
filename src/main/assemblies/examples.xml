@@ -1,0 +1,90 @@
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<assembly>
+    <id>examples</id>
+    <formats>
+        <format>dir</format>
+        <format>tar.gz</format>
+    </formats>
+    <includeBaseDirectory>false</includeBaseDirectory>
+
+    <fileSets>
+        <fileSet>
+            <directory>${basedir}/src/main/java</directory>
+            <outputDirectory>/examples/src</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+        <fileSet>
+            <directory>${basedir}/src/main/workflows</directory>
+            <outputDirectory>/examples/seed/workflows</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+        <fileSet>
+            <directory>${basedir}/src/main/input-data</directory>
+            <outputDirectory>/examples/seed/input-data</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+    </fileSets>
+
+    <files>
+        <file>
+            <source>${basedir}/src/main/bin/prepare-examples.sh</source>
+            <outputDirectory>/examples/</outputDirectory>
+            <fileMode>0555</fileMode>
+        </file>
+        <file>
+            <source>${basedir}/target/${artifact.artifactId}-${artifact.version}.jar</source>
+            <outputDirectory>/examples/seed/lib</outputDirectory>
+            <fileMode>0444</fileMode>
+        </file>
+ 
+    </files>
+
+    <dependencySets>
+        <dependencySet>
+            <outputDirectory>/examples/seed/lib</outputDirectory>
+            <unpack>false</unpack>
+            <scope>compile</scope>
+            <excludes>
+                <exclude>commons-dbcp:commons-dbcp</exclude>
+                <exclude>commons-pool:commons-pool</exclude>
+                <exclude>hsqldb:hsqldb</exclude>
+                <exclude>jdom:jdom</exclude>
+                <exclude>jetty:org.mortbay.jetty</exclude>
+                <exclude>javax.servlet:jsp-api</exclude>
+                <exclude>log4j:log4j</exclude>
+                <exclude>org.apache.oozie:oozie-core</exclude>
+                <exclude>javax.servlet:servlet-api</exclude>
+                <exclude>org.apache.oozie:oozie-client</exclude>
+                <exclude>commons-cli:commons-cli</exclude>
+                <exclude>org.apache.hadoop:hadoop-core</exclude>
+                <exclude>commons-cli:commons-cli</exclude>
+                <exclude>commons-codec:commons-codec</exclude>
+                <exclude>commons-el:commons-el</exclude>
+                <exclude>commons-logging:commons-logging</exclude>
+                <exclude>commons-net:commons-net</exclude>
+                <exclude>json:json_simple</exclude>
+                <exclude>junit:junit</exclude>
+                <exclude>oro:oro</exclude>
+                <exclude>xmlenc:xmlenc</exclude>
+            </excludes>
+            <fileMode>0444</fileMode>
+        </dependencySet>
+    </dependencySets>
+
+</assembly>

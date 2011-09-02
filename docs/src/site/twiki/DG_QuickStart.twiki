@@ -1,0 +1,80 @@
+<noautolink>
+
+[[index][::Go back to Oozie Documentation Index::]]
+
+---+!! Oozie Quick Start
+
+%TOC%
+
+---++ Introduction
+
+The following instructions setup Oozie using an in-memory SQL DB (HSQLDB). To install Oozie with MySQL refer to
+[[AG_Install][Oozie Install]] documentation.
+
+---++ System Requirements
+
+   * Unix (tested in Linux and Mac OS X)
+   * Java 1.6+
+   * [[http://hadoop.apache.org][Hadoop]] (tested with 0.20.0)
+   * [[http://hadoop.apache.org/pig/releases.html][Pig 0.2.0]]
+   * [[http://tomcat.apache.org][Tomcat 6.x]] (tested with 6.0.18)
+
+The Java 1.6+ =bin= directory should be in the command path.
+
+Hadoop should be installed and running. ([[ENG_HadoopQuickInstall][Hadoop Quick Install]]).
+
+Tomcat should be installed and running.
+
+---++ Get the Right Oozie Distro
+
+Get the Oozie distro for the corresponding version of Hadoop.
+
+The =tar.gz= file contains the following components.
+
+   * Oozie server WAR file (wars/oozie.war)
+   * Oozie command line tool (bin/oozie)
+   * Oozie command line tool bundle (oozie-client.tar.gz)
+   * Oozie documentation WAR file (wars/ooziedocs.war) (for local use expanded within a =docs/= directory)
+   * Oozie examples (oozie-examples.tar.gz)
+
+---++ Install and Start Oozie server and Oozie Console
+
+Stop Tomcat.
+
+If present, delete the old =oozie.war= and =ooziedocs.war= files, and =oozie= and =ooziedocs= directories from
+Tomcat's =webapps/= directory.
+
+Copy the =oozie.war= and =ooziedocs.war= files from the distro in Tomcat's =webapps/= directory.
+
+Oozie installation assumes that Tomcat is running on localhost on port 8080
+
+If Tomcat is running in a different port or Hadoop is running in another box, then the =CATALINA_OPTS= environment
+variable of the shell from where tomcat is invoked must be set to:
+
+<verbatim>
+export CATALINA_OPTS="-Doozie.base.url=http://<TOMCAT_HOST>:<TOMCAT_PORT>/oozie"
+</verbatim>
+
+Start Tomcat.
+
+Check the Oozie log file =${CATALINA_HOME}/logs/oozie.log= to ensure Oozie started properly, there should an
+'Oozie started' log entry.
+
+*NOTE:* If the =CATALINA_HOME= environment variable has not been set, check under the directory where Tomcat has been
+installed.
+
+---++ Checking Oozie is Running via Oozie Console
+
+From a browser go to *http://localhost:8080/oozie*, the Oozie console should come up and Oozie should be *NORMAL*.
+
+---++ Oozie Documentation
+
+From a browser go to *http://localhost:8080/ooziedocs*, the Oozie Documentation should appear.
+
+---++ Running the Examples
+
+Refer to the [[DG_Examples][Running the Examples]] document for details on running the examples.
+
+[[index][::Go back to Oozie Documentation Index::]]
+
+</noautolink>

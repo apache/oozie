@@ -1,0 +1,90 @@
+<noautolink>
+
+[[index][::Go back to Oozie Documentation Index::]]
+
+---+!! Oozie Configuration
+
+%TOC%
+
+---++ Introduction
+
+How Oozie configuration is read it is explained in [[AG_ConfigurationFiles][Oozie Configuration Files]].
+
+This document explains in detail how to configure an Oozie installation.
+
+The default Oozie configuration values are defined in the [[./oozie-default.xml.txt][oozie-default.xml]] file.
+
+---++ Variable Resolution
+
+Oozie configuration is handled using Hadoop =Configuration= class.
+
+Among other features, Hadoop =Configuration= supports references to other configuration properties from property values
+and support references to Java System Properties. For example:
+
+<verbatim>
+<configuration>
+    ...
+    <property>
+        <name>oozie.base.url</name>
+        <value>http://localhost:8080/oozie</value>
+        <description>
+             Base Oozie URL.
+        </description>
+    </property>
+.
+    <property>
+        <name>oozie.system.id</name>
+        <value>oozie-${user.name}</value>
+        <description>
+            The Oozie system ID.
+        </description>
+    </property>
+.
+    <property>
+        <name>oozie.service.CallbackService.base.url</name>
+        <value>${oozie.base.url}/v0/callback</value>
+        <description>
+             Base callback URL used by ActionExecutors.
+        </description>
+    </property>
+    ....
+</verbatim>
+
+The value of the property =oozie.system.id= is resolved using the Java System Properties 'user.name' which is the OS
+user running the JVM process.
+
+The value of the property =oozie.service.CallbackService.base.url= is resolved using the value of the property
+ =oozie.base.url= defined in the configuration file itself.
+
+---++ Overriding Variables at Oozie Startup Time
+
+Oozie configuration variables can be overriden at start up time by setting them as Java System Properties when starting
+the servlet container.
+
+This is useful when needing to do a one off start of Oozie with a configuration property in a non usual value. For
+example to force the DB schema creation with the <code>oozie.db.schema.create=true<c/ode>.
+
+*NOTE:* In Tomcat, Java System Properties must be set in the =CATALINA_OPTS= environment variable in the shell from
+where Tomcat is started. For example: <code>export CATALINA_OPTS="-Doozie.system.id=oozie-foo"</code>.
+
+To reduce the risk of mistakes Java System Properties overriding can be disabled for specified configuration properties.
+
+Configuration properties specified in the =oozie.ConfigurationService.ignore.system.properties= property cannot be 
+overriden via Java System Properties.
+
+The default setting for this property is:
+
+<verbatim>
+    <property>
+        <name>oozie.ConfigurationService.ignore.system.properties</name>
+        <value>
+            oozie.service.AuthorizationService.security.enabled
+        </value>
+    </property>
+</verbatim>
+
+The =oozie.ConfigurationService.ignore.system.properties= property cannot be overriden via Java System Properties.
+
+[[index][::Go back to Oozie Documentation Index::]]
+
+</noautolink>

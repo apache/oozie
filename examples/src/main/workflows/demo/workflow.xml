@@ -1,0 +1,197 @@
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<workflow-app xmlns='uri:oozie:workflow:0.1' name='demo-wf'>
+  <start to="map_reduce_1" />
+  <action name="map_reduce_1">
+    <map-reduce>
+      <job-tracker>${jobTracker}</job-tracker>
+      <name-node>${nameNode}</name-node>
+      <configuration>
+        <property>
+          <name>mapred.mapper.class</name>
+          <value>org.apache.oozie.example.DemoMapper</value>
+        </property>
+        <property>
+            <name>mapred.mapoutput.key.class</name>
+            <value>org.apache.hadoop.io.Text</value>
+        </property>
+        <property>
+            <name>mapred.mapoutput.value.class</name>
+            <value>org.apache.hadoop.io.IntWritable</value>
+        </property>
+        <property>
+          <name>mapred.reducer.class</name>
+          <value>org.apache.oozie.example.DemoReducer</value>
+        </property>
+        <property>
+          <name>mapred.map.tasks</name>
+          <value>1</value>
+        </property>
+        <property>
+          <name>mapred.input.dir</name>
+          <value>${inputDir}</value>
+        </property>
+        <property>
+          <name>mapred.output.dir</name>
+          <value>${outputDir}/mapred_1</value>
+        </property>
+        <property>
+          <name>mapred.job.queue.name</name>
+          <value>${queueName}</value>
+        </property>
+      </configuration>
+    </map-reduce>
+    <ok to="fork_1" />
+    <error to="fail_1" />
+  </action>
+
+  <fork name='fork_1'>
+        <path start='ssh_1' />
+        <path start='hdfs_1' />
+  </fork>
+
+
+  <action name="ssh_1">
+    <ssh>
+      <host>${ssh_1_host}</host>
+      <command>${ssh_1_script}</command>
+      <args>${ssh_1_args}</args>
+    </ssh>
+    <ok to="join_1" />
+    <error to="fail_1" />
+  </action>
+
+  <action name="hdfs_1">
+    <fs>
+      <mkdir path="${nameNode}/tmp/${wf:user()}/hdfsdir1" />
+    </fs>
+    <ok to="hadoop_streaming_1" />
+    <error to="fail_1" />
+  </action>
+
+  <action name="hadoop_streaming_1">
+  <map-reduce>
+      <job-tracker>${jobTracker}</job-tracker>
+      <name-node>${nameNode}</name-node>
+      <prepare>
+        <delete path="${nameNode}/tmp/${wf:user()}/hdfsdir1" />
+      </prepare>
+      <streaming>
+        <mapper>/bin/cat</mapper>
+        <reducer>/usr/bin/wc</reducer>
+      </streaming>
+      <configuration>
+        <property>
+          <name>mapred.input.dir</name>
+          <value>${outputDir}/mapred_1</value>
+        </property>
+        <property>
+          <name>mapred.output.dir</name>
+          <value>${outputDir}/streaming</value>
+        </property>
+      </configuration>
+    </map-reduce>
+    <ok to="join_1" />
+    <error to="fail_1" />
+  </action>
+
+  <join name='join_1' to='ssh_2' />
+
+  <action name="ssh_2">
+    <ssh>
+      <host>${ssh_2_host}</host>
+      <command>${ssh_2_script}</command>
+      <args>${ssh_2_args}</args>
+      <capture-output />
+    </ssh>
+    <ok to="decision_1" />
+    <error to="fail_1" />
+  </action>
+
+  <decision name="decision_1">
+    <switch>
+    <case to="map_reduce_2">${wf:actionData('ssh_2')['ssh2_key'] == "ssh2_value"}</case>
+    <case to="pig_1">${wf:actionData('ssh_2')['ssh2_key'] != "ssh2_value"}</case>
+    <default to="fail_1" />
+    </switch>
+  </decision>
+
+   <action name="pig_1">
+    <pig>
+        <job-tracker>${jobTracker}</job-tracker>
+        <name-node>${nameNode}</name-node>
+        <configuration>
+            <property>
+                <name>mapred.map.output.compress</name>
+                <value>false</value>
+            </property>
+            <property>
+              <name>mapred.job.queue.name</name>
+              <value>${queueName}</value>
+            </property>
+        </configuration>
+        <script>org/apache/oozie/examples/pig/id.pig</script>
+        <param>INPUT=${outputDir}/mapred_1</param>
+        <param>OUTPUT=${outputDir}/pig_1</param>
+    </pig>
+    <ok to="end_1" />
+    <error to="fail_1" />
+  </action>
+
+ <action name="map_reduce_2">
+    <map-reduce>
+      <job-tracker>${jobTracker}</job-tracker>
+      <name-node>${nameNode}</name-node>
+      <configuration>
+        <property>
+          <name>mapred.mapper.class</name>
+          <value>org.apache.oozie.example.SampleMapper</value>
+        </property>
+        <property>
+          <name>mapred.reducer.class</name>
+          <value>org.apache.oozie.example.SampleReducer</value>
+        </property>
+        <property>
+          <name>mapred.map.tasks</name>
+          <value>1</value>
+        </property>
+        <property>
+          <name>mapred.input.dir</name>
+          <value>${outputDir}/mapred_1</value>
+        </property>
+        <property>
+          <name>mapred.output.dir</name>
+          <value>${outputDir}/mapred_2</value>
+        </property>
+        <property>
+          <name>mapred.job.queue.name</name>
+          <value>${queueName}</value>
+        </property>
+      </configuration>
+    </map-reduce>
+    <ok to="end_1" />
+    <error to="fail_1" />
+  </action>
+
+  <kill name="fail_1">
+   <message>Demo workflow failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>
+ </kill>
+
+ <end name="end_1" />
+
+</workflow-app>

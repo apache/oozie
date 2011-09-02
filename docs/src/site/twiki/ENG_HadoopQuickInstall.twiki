@@ -1,0 +1,104 @@
+<noautolink>
+
+[[index][::Go back to Oozie Documentation Index::]]
+
+---+!! Hadoop Quick Install
+
+%TOC%
+
+---++ Introduction
+
+The following installation instructions have been tested in Linux and Mac OS X.
+
+---++ System Requirements
+
+   * Java JDK 1.6
+
+---++ SSH Setup
+
+To avoid Hadoop start and stop commands to ask you for password 4 times (everytime you start it or stop it) follow the
+[[ENG_Building#SshSetup][Passphare-less SSH Setup]] instructions.
+
+---++ Hadoop Install
+
+Get a [[http://hadoop.apache.org][Hadoop]] distro and expand it.
+
+Configure the =HADOOP_HOME=, =HADOOP_CONF_DIR= environment variables to the appropriate values, add =${HADOOP_HOME}/bin=
+to =PATH=. in the shell that will be used to start and stop Hadoop.
+
+Modify the =hadoop/conf/hadoop-env.sh= file to set the the right path for =JAVA_HOME=, for example for Mac OS X:
+
+%BLUE%
+<verbatim>
+export JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home
+</verbatim>
+----
+%ENDCOLOR%
+
+Make sure to setup the following 3 properties in the Hadoop configuration file. For Hadoop pre 0.20.0 this is
+done in the =conf/hadoop-site.xml=, for Hadoop 0.20.0 onwards this is done in 2 files, =conf/mapred-site.xml=
+and =conf/hdfs-site.xml=
+
+<verbatim>
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<!-- Put site-specific property overrides in this file. -->
+<configuration>
+    <property>
+        <name>hadoop.tmp.dir</name>
+        <value>/usr/foo/hadoop/data</value>
+    </property>
+    <property>
+        <name>mapred.job.tracker</name>
+        <value>localhost:9001</value>
+    </property>
+    <property>
+        <name>fs.default.name</name>
+        <value>hdfs://localhost:9000</value>
+    </property>
+</configuration>
+</verbatim>
+
+Clean format of HDFS:
+
+<verbatim>
+$ rm -rf hadoop/data/*
+$ hadoop namenode -format
+</verbatim>
+
+Start Hadoop:
+
+<verbatim>
+$ start-all.sh
+</verbatim>
+
+%BLUE%
+----
+*Mac OS X:*
+
+Sometimes, when putting the machine to sleep while Hadoop is running it makes
+Hadoop and HDFS to become unstable and MR job hang on the reduce phase. It is
+recommended to stop Hadoop before putting the machine to sleep. If Hadoop
+gets funny (because you forgot to stop it) stop Hadoop do a clean format
+(you must delete the =hadoop/data/= contents) and start Hadoop again.
+----
+%ENDCOLOR%
+
+---++ Test Hadoop
+
+Create an =input= directory in HDFS and copy a text file in it. For example:
+
+<verbatim>
+$ hadoop dfs -mkdir /usr/foo/input
+$ hadoop dfs -copyFromLocal sampledata.txt /usr/foo/input
+</verbatim>
+
+Run Hadoop wordcount example from =${HADOOP_HOME}=, for example for Hadoop 0.20.0:
+
+<verbatim>
+$ hadoop jar hadoop-0.20.0-examples.jar wordcount /usr/foo/input /usr/foo/output
+</verbatim>
+
+[[index][::Go back to Oozie Documentation Index::]]
+
+</noautolink>

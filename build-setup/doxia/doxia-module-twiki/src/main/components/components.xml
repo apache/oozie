@@ -1,0 +1,22 @@
+<component-set>
+  <components>
+    <component>
+      <role>org.apache.maven.doxia.parser.Parser</role>
+      <role-hint>twiki</role-hint>
+      <implementation>org.apache.maven.doxia.module.twiki.TWikiParser</implementation>
+      <description></description>
+      <requirements>
+        <requirement>
+          <role>org.apache.maven.doxia.macro.manager.MacroManager</role>
+          <field-name>macroManager</field-name>
+        </requirement>
+      </requirements>
+    </component>
+    <component>
+      <role>org.apache.maven.doxia.module.site.SiteModule</role>
+      <role-hint>twiki</role-hint>
+      <implementation>org.apache.maven.doxia.module.twiki.TWikiSiteModule</implementation>
+      <description></description>
+    </component>
+  </components>
+</component-set>

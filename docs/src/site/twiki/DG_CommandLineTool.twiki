@@ -1,0 +1,294 @@
+<noautolink>
+
+[[index][::Go back to Oozie Documentation Index::]]
+
+---+!! Command Line Interface Utilities
+
+%TOC%
+
+---++ Introduction
+
+Oozie provides a command line utility, =oozie=, to perform job and admin tasks. All operations are done via
+sub-commands of the =oozie= CLI.
+
+The =oozie= CLI interacts with Oozie via its WS API.
+
+---++ Oozie Command Line Usage
+
+<verbatim>
+  The env variable 'OOZIE_URL' is used as default value for the '-oozie' option
+  custom headers for Oozie web services can be specified using '-Dheader:NAME=VALUE'
+.
+  oozie help                    : display usage
+.
+  oozie version                 : show client version
+.
+  oozie job   <OPTIONS>         : job operations
+              -oozie   <arg>      Oozie URL
+              -config  <arg>      job configuration file '.xml' or '.properties'
+              -run                submit and start a job. Gives back the jobId.    (requires -config)
+              -submit             submit a job. The job will not be started. Gives back the jobId. (requires -config)
+              -rerun   <arg>      rerun a job  (requires -config)
+              -start   <arg>      start a job
+              -suspend <arg>      suspend a job
+              -resume  <arg>      resume a job
+              -kill    <arg>      kill a job
+              -info    <arg>      info of a job
+              -localtime          use local time (default GMT)
+.
+  oozie jobs  <OPTIONS>         : jobs status
+              -oozie <arg>        Oozie URL
+              -filter <arg>       user=<U>;name=<N>;group=<G>;status=<S>;...
+              -offset <arg>       jobs offset (default '1')
+              -len <arg>          number of jobs (default '100')
+              -localtime          use local time (default GMT)
+.
+  oozie admin <OPTIONS>         : admin operations
+              -oozie <arg>        Oozie URL
+              -safemode <arg>     switch safemode (on|off)
+              -status             show the current system status
+              -version            show Oozie server build version
+.
+      oozie validate <ARGS> : validate a workflow XML file
+</verbatim>
+
+---++ Common CLI Options
+
+All =oozie= CLI sub-commands expect the <code>-oozie OOZIE_URL</code> option indicating the URL of the Oozie system
+to run the command against.
+
+If the <code>-oozie</code> option is not specified, the =oozie= CLI will look for the =OOZIE_URL= environment variable
+and uses it if set.
+
+If the option is not provided and the environment variable is not set, the =oozie= CLI will fail.
+
+---++ Job Operations
+
+---+++ Submitting a Workflow Job
+
+Example:
+
+<verbatim>
+$ oozie job -oozie http://localhost:8080/oozie -config job.properties -submit
+.
+job: 14-20090525161321-oozie-tucu
+</verbatim>
+
+The parameters for the job must be provided in a file, either a Java Properties file (.properties) or a Hadoop XML
+Configuration file (.xml). This file must be specified with the <code>-config</code> option.
+
+The workflow application path must be specified in the file with the =oozie.wf.application.path= property. The
+specified path must be an HDFS path.
+
+The job will be created, but it will not be started, it will be in =PREP= status.
+
+---+++ Starting a Workflow Job
+
+Example:
+
+<verbatim>
+$ oozie job -oozie http://localhost:8080/oozie -start 14-20090525161321-oozie-tucu
+</verbatim>
+
+The =start= option starts a previously submitted workflow job that is in =PREP= status.
+
+After the command is executed the job will be in =RUNNING= status.
+
+---+++ Running a Workflow Job
+
+Example:
+
+<verbatim>
+$ oozie job -oozie http://localhost:8080/oozie -config job.properties -run
+.
+job: 15-20090525161321-oozie-tucu
+</verbatim>
+
+The =run= option creates and starts a workflow job.
+
+The parameters for the job must be provided in a file, either a Java Properties file (.properties) or a Hadoop XML
+Configuration file (.xml). This file must be specified with the <code>-config</code> option.
+
+The workflow application path must be specified in the file with the =oozie.wf.application.path= property. The
+specified path must be an HDFS path.
+
+The job will be created and it will started, the job will be in =RUNNING= status.
+
+---+++ Suspending a Workflow Job
+
+Example:
+
+<verbatim>
+$ oozie job -oozie http://localhost:8080/oozie -suspend 14-20090525161321-oozie-tucu
+</verbatim>
+
+The =suspend= option suspends a job in =RUNNING= status.
+
+After the command is executed the job will be in =SUSPENDED= status.
+
+---+++ Resuming a Workflow Job
+
+Example:
+
+<verbatim>
+$ oozie job -oozie http://localhost:8080/oozie -resume 14-20090525161321-oozie-tucu
+</verbatim>
+
+The =resume= option resumes a job in =SUSPENDED= status.
+
+After the command is executed the job will be in =RUNNING= status.
+
+---+++ Killing a Workflow Job
+
+Example:
+
+<verbatim>
+$ oozie job -oozie http://localhost:8080/oozie -kill 14-20090525161321-oozie-tucu
+</verbatim>
+
+The =kill= option kills a job in =PREP=, =SUSPENDED= or =RUNNING= status.
+
+After the command is executed the job will be in =KILLED= status.
+
+---+++ Rerunning a Workflow Job
+
+Example:
+
+<verbatim>
+$ oozie job -oozie http://localhost:8080/oozie -config job.properties -rerun 14-20090525161321-oozie-tucu
+</verbatim>
+
+The =rerun= option reruns a completed ( =SUCCCEDED=, =FAILED= or =KILLED= ) job skipping the specified nodes.
+
+The parameters for the job must be provided in a file, either a Java Properties file (.properties) or a Hadoop XML
+Configuration file (.xml). This file must be specified with the <code>-config</code> option.
+
+The workflow application path must be specified in the file with the =oozie.wf.application.path= property. The
+specified path must be an HDFS path.
+
+The list of nodes to skipped must be provided in the =oozie.wf.rerun.skip.nodes= property separated by commas.
+
+After the command is executed the job will be in =RUNNING= status.
+
+Refer to the [[DG_ReRun][Rerunning Workflow Jobs]] for details on rerun.
+
+---+++ Checking the Status of a Workflow Job
+
+Example:
+
+<verbatim>
+$ oozie job -oozie http://localhost:8080/oozie -info 14-20090525161321-oozie-tucu
+.
+.----------------------------------------------------------------------------------------------------------------------------------------------------------------
+Workflow Name :  map-reduce-wf
+App Path      :  hdfs://localhost:9000/user/tucu/workflows/map-reduce
+Status        :  SUCCEEDED
+Run           :  0
+User          :  tucu
+Group         :  users
+Created       :  2009-05-26 05:01 +0000
+Started       :  2009-05-26 05:01 +0000
+Ended         :  2009-05-26 05:01 +0000
+Actions
+.----------------------------------------------------------------------------------------------------------------------------------------------------------------
+Action Name             Type        Status     Transition  External Id            External Status  Error Code    Start                   End
+.----------------------------------------------------------------------------------------------------------------------------------------------------------------
+hadoop1                 map-reduce  OK         end         job_200904281535_0254  SUCCEEDED        -             2009-05-26 05:01 +0000  2009-05-26 05:01 +0000
+.----------------------------------------------------------------------------------------------------------------------------------------------------------------
+</verbatim>
+
+The =info= option will display information about a workflow job.
+
+The =localtime= option displays times in local time, if not specified times are displayed in GMT.
+
+---+++ Checking the Status of multiple Workflow Jobs
+
+Example:
+
+<verbatim>
+$ oozie jobs -oozie http://localhost:8080/oozie -localtime -len 2 status=RUNNING
+.
+Job Id                          Workflow Name         Status     Run  User      Group     Created                Started                 Ended
+.----------------------------------------------------------------------------------------------------------------------------------------------------------------
+4-20090527151008-oozie-tucu     hadoopel-wf           RUNNING    0    tucu      other     2009-05-27 15:34 +0530 2009-05-27 15:34 +0530  -
+0-20090527151008-oozie-tucu     hadoopel-wf           RUNNING    0    tucu      other     2009-05-27 15:15 +0530 2009-05-27 15:15 +0530  -
+.----------------------------------------------------------------------------------------------------------------------------------------------------------------
+</verbatim>
+
+The =jobs= sub-command will display information about multiple jobs.
+
+The =start= and =len= option specified the offset and number of jobs to display, default values are =1= and =50=
+respectively.
+
+The =localtime= option displays times in local time, if not specified times are displayed in GMT.
+
+A filter can be specified after all options.
+
+The filter syntax is: <code>[NAME=VALUE][;NAME=VALUE]*</code>.
+
+Valid filter names are:
+
+   * name: the workflow application name from the workflow definition.
+   * user: the user that submitted the job.
+   * group: the group for the job.
+   * status: the status of the job.
+
+The query will do an AND among all the filter names. The query will do an OR among all the filter values for the same
+name. Multiple values must be specified as different  name value pairs.
+
+---++ Admin Operations
+
+---+++ Checking the Status of the Oozie System
+
+Example:
+
+<verbatim>
+$ oozie admin -oozie http://localhost:8080/oozie -status
+.
+Safemode: OFF
+</verbatim>
+
+It returns the current status of the Oozie system.
+
+---+++ Changing the Status of the Oozie System
+
+Example:
+
+<verbatim>
+$ oozie admin -oozie http://localhost:8080/oozie -safemode on
+.
+Safemode: ON
+</verbatim>
+
+It returns the current status of the Oozie system.
+
+---+++ Displaying the Build Version of the Oozie System
+
+Example:
+
+<verbatim>
+$ oozie admin -oozie http://localhost:8080/oozie -version
+.
+Oozie client build version: 0.18.3.o0.1
+</verbatim>
+
+It returns the Oozie server build version.
+
+---+++ Validating a Workflow XML
+
+Example:
+
+<verbatim>
+$ oozie validate myApp/workflow.xml
+.
+Error: Invalid workflow-app, org.xml.sax.SAXParseException: cvc-complex-type.2.4.a:
+       Invalid content was found starting with element 'xend'. One of '{"uri:oozie:workflow:0.1":decision,
+       "uri:oozie:workflow:0.1":fork, "uri:oozie:workflow:0.1":join, "uri:oozie:workflow:0.1":kill,
+       "uri:oozie:workflow:0.1":action, "uri:oozie:workflow:0.1":end}' is expected.
+</verbatim>
+
+It performs an XML Schema validation on the specified workflow XML file.
+
+[[index][::Go back to Oozie Documentation Index::]]
+
+</noautolink>

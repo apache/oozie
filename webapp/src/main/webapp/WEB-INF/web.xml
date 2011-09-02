@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE web-app
+        PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.2//EN"
+        "http://java.sun.com/dtd/web-app_2_3.dtd">
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<web-app>
+    <display-name>OOZIE</display-name>
+
+    <listener>
+        <listener-class>org.apache.oozie.servlet.ServicesLoader</listener-class>
+    </listener>
+
+    <servlet>
+        <servlet-name>versions</servlet-name>
+        <display-name>WS API for Workflow Instances</display-name>
+        <servlet-class>org.apache.oozie.servlet.VersionServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet>
+        <servlet-name>admin</servlet-name>
+        <display-name>Oozie admin</display-name>
+        <servlet-class>org.apache.oozie.servlet.AdminServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    
+    <servlet>
+        <servlet-name>callback</servlet-name>
+        <display-name>Callback Notification</display-name>
+        <servlet-class>org.apache.oozie.servlet.CallbackServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jobs</servlet-name>
+        <display-name>WS API for Workflow Jobs</display-name>
+        <servlet-class>org.apache.oozie.servlet.JobsServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet>
+        <servlet-name>job</servlet-name>
+        <display-name>WS API for a specific Workflow Job</display-name>
+        <servlet-class>org.apache.oozie.servlet.JobServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>versions</servlet-name>
+        <url-pattern>/versions</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>admin</servlet-name>
+        <url-pattern>/v0/admin/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>callback</servlet-name>
+        <url-pattern>/v0/callback/*</url-pattern>
+    </servlet-mapping>
+    
+    
+    <servlet-mapping>
+        <servlet-name>jobs</servlet-name>
+        <url-pattern>/v0/jobs</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>job</servlet-name>
+        <url-pattern>/v0/job/*</url-pattern>
+    </servlet-mapping>
+
+    <welcome-file-list>
+        <welcome-file>index.html</welcome-file>
+    </welcome-file-list>
+    
+</web-app>

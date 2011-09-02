@@ -1,0 +1,59 @@
+<noautolink>
+
+[[index][::Go back to Oozie Documentation Index::]]
+
+---+!! Oozie Start and Stop
+
+
+%TOC%
+
+---++ Introduction
+
+Starting and Stopping Oozie means starting and stopping the database server that Oozie uses for its database and the
+Tomcat server where Oozie runs.
+
+---++ Starting Oozie
+
+The database server should be running.
+
+Login to the Oozie host as the <code><OOZIE_USER></code>.
+
+Make sure the =ssh-agent= is running.
+
+Set the following environment variable to configure from where Oozie configuration is read:
+
+<verbatim>
+$ export CATALINA_OPTS="-Doozie.config.dir=/home/<OOZIE_USER>/oozie/conf"
+</verbatim>
+
+Start Tomcat:
+
+<verbatim>
+$ catalina.sh run
+</verbatim>
+
+*IMPORTANT:* Do not start Tomcat with the =start= command. Tomcat must be started with the =run= command if the
+database password is configured to be asked on the console. After the database password is set, Tomcat will go on
+background mode itself.
+
+---++ Checking Oozie Is Up and Running
+
+From a terminal window run the following command to check Oozie is running:
+
+<verbatim>
+$ oozie admin -oozie http://HOST:PORT/oozie -status
+</verbatim>
+
+Or, from a browser access the Oozie web console: =http: //HOST:PORT/oozie=
+
+---++ Stopping Oozie
+
+Simply stop Tomcat:
+
+<verbatim>
+$ catalina.sh stop
+</verbatim>
+
+[[index][::Go back to Oozie Documentation Index::]]
+
+</noautolink>

@@ -1,0 +1,30 @@
+<noautolink>
+
+[[index][::Go back to Oozie Documentation Index::]]
+
+---+!! Workflow ReRrun
+
+%TOC%
+---++ Configs
+
+   * oozie.wf.application.path
+   * oozie.wf.rerun.skip.nodes 
+   * Above two are mandatory configs.
+   * Skip nodes are comma separated list of action names. They can be any action nodes including decision node.
+
+---++ Pre-Conditions
+
+   * Workflow with id wfId should exist.
+   * Workflow with id wfId should be in SUCCEEDED/KILLED/FAILED.
+   * Nodes specified in the config oozie.wf.rerun.skip.nodes must be completed successfully.
+
+---++ ReRun
+
+   * Reloads the configs.
+   * Creates a new Workflow Instance with the same wfId.
+   * Deletes the actions that are not skipped from the DB and copies data from old Workflow Instance to new one for skipped actions.
+   * Action handler will skip the nodes given in the config with the same exit transition as before.
+
+[[index][::Go back to Oozie Documentation Index::]]
+
+</noautolink>

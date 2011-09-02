@@ -1,0 +1,185 @@
+<noautolink>
+
+[[index][::Go back to Oozie Documentation Index::]]
+
+---+!! Oozie Examples
+
+%TOC%
+
+---++ Command Line Examples
+
+---+++ Setting Up the Examples
+
+Oozie examples are bundled within an Oozie distribution in the =oozie-examples.tar.gz= file.
+
+Exanding this file will create an =examples/= directory.
+
+Within the =examples/= directory there is a script, =prepare-examples.sh= that setups up the examples (it is done in
+this way to avoid having multiple copies of the Hadoop streaming and Pig JAR files).
+
+In the Oozie =examples/= directory, run the script that setups up the examples:
+
+<verbatim>
+$ prepare-examples.sh
+</verbatim>
+
+Copy the sample input data to HDFS:
+
+<verbatim>
+$ hadoop fs -put input-data input-data
+</verbatim>
+
+Copy the example workflow applications to HDFS:
+
+<verbatim>
+$ hadoop fs -put workflows /tmp/`whoami`/workflows
+</verbatim>
+
+---+++ Running the Examples
+
+Add the =bin/= directory of the Oozie directory to the =PATH= environment variable.
+
+Run a workflow job for the application, for example:
+
+<verbatim>
+$ oozie job -oozie http://localhost:8080/oozie -config map-reduce-job.properties -run
+.
+job: 14-20090525161321-oozie-tucu
+</verbatim>
+
+Check the workflow job status:
+
+<verbatim>
+$ oozie job -oozie http://localhost:8080/oozie -info 14-20090525161321-oozie-tucu
+.
+.----------------------------------------------------------------------------------------------------------------------------------------------------------------
+Workflow Name :  map-reduce-wf
+App Path      :  hdfs://localhost:9000/user/tucu/workflows/map-reduce
+Status        :  SUCCEEDED
+Run           :  0
+User          :  tucu
+Group         :  users
+Created       :  2009-05-26 05:01 +0000
+Started       :  2009-05-26 05:01 +0000
+Ended         :  2009-05-26 05:01 +0000
+Actions
+.----------------------------------------------------------------------------------------------------------------------------------------------------------------
+Action Name             Type        Status     Transition  External Id            External Status  Error Code    Start Time              End Time
+.----------------------------------------------------------------------------------------------------------------------------------------------------------------
+hadoop1                 map-reduce  OK         end         job_200904281535_0254  SUCCEEDED        -             2009-05-26 05:01 +0000  2009-05-26 05:01 +0000
+.----------------------------------------------------------------------------------------------------------------------------------------------------------------
+</verbatim>
+
+To check the workflow job status via the Oozie web console, with a browser go to =http://localhost:8080/oozie=.
+
+To avoid having to provide the =-oozie= option with the Oozie URL with every =oozie= command, set =OOZIE_URL= env 
+variable to the Oozie URL in the shell environment. For example:
+
+<verbatim>
+$ export OOZIE_URL="http://localhost:8080/oozie"
+$
+$ oozie job -info 14-20090525161321-oozie-tucu
+</verbatim>
+
+---++ Java API Example
+
+Oozie provides a =[[./apidocs/org/org/apache/oozie/client/package-summary.html][Java Client API]] that simplifies
+integrating Oozie with Java applications. This Java Client API is a convenience API to interact with Oozie Web-Services
+API.
+
+The following code snippet shows how to submit an Oozie job using the Java Client API.
+
+<verbatim>
+import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.client.WorkflowJob;
+.
+import java.util.Properties;
+.
+    ...
+.
+    // get a WorkflowClient for local Oozie
+    WorkflowClient wc = new WorkflowClient("http://bar:8080/oozie");
+.
+    // create a workflow job configuration and set the workflow application path
+    Properties conf = wc.createConfiguration();
+    conf.setProperty(WorkflowClient.APP_PATH, "hdfs://foo:9000/usr/tucu/my-wf-app");
+.
+    // setting workflow parameters
+    conf.setProperty("jobTracker", "foo:9001");
+    conf.setProperty("inputDir", "/usr/tucu/inputdir");
+    conf.setProperty("outputDir", "/usr/tucu/outputdir");
+    ...
+.
+    // submit and start the workflow job
+    String jobId = wc.run(conf);
+    System.out.println("Workflow job submitted");
+.
+    // wait until the workflow job finishes printing the status every 10 seconds
+    while (wc.getJobInfo(jobId).getStatus() == Workflow.Status.RUNNING) {
+        System.out.println("Workflow job running ...");
+        Thread.sleep(10 * 1000);
+    }
+.
+    // print the final status o the workflow job
+    System.out.println("Workflow job completed ...");
+    System.out.println(wf.getJobInfo(jobId));
+    ...
+</verbatim>
+
+---++ Local Oozie Example
+
+Oozie provides a embedded Oozie implementation, =[[./apidocs/org/apache/oozie/local/LocalOozie.html][LocalOozie]]=, 
+which is useful for development, debugging and testing of workflow applications within the convenience of an IDE.
+
+The code snipped below shows the usage of the =LocalOozie= class. All the interaction with Oozie is done using Oozie
+ =WorkflowClient= Java API, as shown in the previous section.
+
+The examples bundled with Oozie include the complete and running class, =LocalOozieExample= from where this snipped was
+taken.
+
+<verbatim>
+import org.apache.oozie.local.LocalOozie;
+import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.client.WorkflowJob;
+.
+import java.util.Properties;
+.
+    ...
+    // start local Oozie
+    LocalOozie.start();
+.
+    // get a WorkflowClient for local Oozie
+    WorkflowClient wc = LocalOozie.getClient();
+.
+    // create a workflow job configuration and set the workflow application path
+    Properties conf = wc.createConfiguration();
+    conf.setProperty(WorkflowClient.APP_PATH, "hdfs://foo:9000/usr/tucu/my-wf-app");
+.
+    // setting workflow parameters
+    conf.setProperty("jobTracker", "foo:9001");
+    conf.setProperty("inputDir", "/usr/tucu/inputdir");
+    conf.setProperty("outputDir", "/usr/tucu/outputdir");
+    ...
+.
+    // submit and start the workflow job
+    String jobId = wc.run(conf);
+    System.out.println("Workflow job submitted");
+.
+    // wait until the workflow job finishes printing the status every 10 seconds
+    while (wc.getJobInfo(jobId).getStatus() == Workflow.Status.RUNNING) {
+        System.out.println("Workflow job running ...");
+        Thread.sleep(10 * 1000);
+    }
+.
+    // print the final status o the workflow job
+    System.out.println("Workflow job completed ...");
+    System.out.println(wf.getJobInfo(jobId));
+.
+    // stop local Oozie
+    LocalOozie.stop();
+    ...
+</verbatim>
+
+[[index][::Go back to Oozie Documentation Index::]]
+
+</noautolink>

@@ -1,0 +1,114 @@
+<noautolink>
+
+---+!! Oozie, a Hadoop Workflow System
+
+Oozie v1 is a server based _Workflow Engine_ specialized in running workflow jobs with actions that 
+execute Hadoop Map/Reduce and Pig jobs.
+
+%TOC%
+
+---++ Distribution Contents
+
+Oozie distribution consists of a single 'tar.gz' file containing:
+
+   * Readme and license: =README.txt= and =LICENSE.txt= files.
+   * Oozie Server web application: =wars/oozie.war= file.
+   * Oozie Documentation web application: =wars/ooziedocs.war= file.
+   * Server configuration: =conf/= directory.
+   * Client: expanded, =bin/= and =lib/= directories, and archived, =oozie-client.tar.gz= file.
+   * Examples: =oozie-examples.tar.gz= file.
+   * Oozie [[./oozie-release.log.txt][Release log]]
+
+---++ Quick Start
+
+Enough reading already? Follow the steps in [[DG_QuickStart][Oozie Quick Start]] to get Oozie up and running.
+
+---++ Developer Documentation
+
+   * [[DG_Overview][Overview]]
+
+   * [[DG_QuickStart][Oozie Quick Start]]
+   * [[DG_Examples][Running the Examples]]
+
+   * [[WorkflowFunctionalSpec][Workflow Functional Specification]]
+   * Specification Shortcuts
+      * [[WorkflowFunctionalSpec#WorkflowDefinition][Workflow Definition (WF Spec #2)]]
+         * [[WorkflowFunctionalSpec#StartNode][Start Node (WF Spec #3.1.1)]]
+         * [[WorkflowFunctionalSpec#EndNode][End Node (WF Spec #3.1.2)]]
+         * [[WorkflowFunctionalSpec#KillNode][Kill Node (WF Spec #3.1.3)]]
+         * [[WorkflowFunctionalSpec#DecisionNode][Decision Node (WF Spec #3.1.4)]]
+         * [[WorkflowFunctionalSpec#ForkJoinNodes][Fork and Join Nodes (WF Spec #3.1.5)]]
+         * [[WorkflowFunctionalSpec#ActionNodes][Actions Nodes (WF Spec #3.2)]]
+            * [[WorkflowFunctionalSpec#MapReduceAction][Map Reduce (WF Spec #3.2.2)]]
+            * [[WorkflowFunctionalSpec#StreamingMapReduceAction][Streaming Map Reduce (WF Spec #3.2.2.2)]]
+            * [[WorkflowFunctionalSpec#PigAction][Pig Action (WF Spec #3.2.3)]]
+            * [[WorkflowFunctionalSpec#FsAction][Fs (HDFS) Action (WF Spec #3.2.4)]]
+            * [[WorkflowFunctionalSpec#SshAction][Ssh Action (WF Spec #3.2.5)]]
+            * [[WorkflowFunctionalSpec#SubWorkflowAction][Sub-workflow (Oozie) Action (WF Spec #3.2.6)]]
+            * [[WorkflowFunctionalSpec#JavaAction][Java Action (WF Spec #3.2.7)]]
+      * [[WorkflowFunctionalSpec#WorkflowParameterization][Workflow Parameterization (WF Spec #4)]]
+         * [[WorkflowFunctionalSpec#WorkflowProperties][Job Properties (WF Spec #4.1)]]
+         * [[WorkflowFunctionalSpec#WorkflowELSupport][Expression Language Support (WF Spec #4.2)]]
+      * [[WorkflowFunctionalSpec#WorkflowNotifications][Workflow and Actions Notifications (WF Spec #5)]]
+      * [[WorkflowFunctionalSpec#UserPropagation][User Propagation (WF Spec #6)]]
+      * [[WorkflowFunctionalSpec#AppDeployment][Application Deployment (WF Spec #7)]]
+      * [[WorkflowFunctionalSpec#JobLifecycle][Workflow Job Lifecycle (WF Spec #9)]]
+      * [[WorkflowFunctionalSpec#JobReRun][Rerunning Workflow Jobs (WF Sepc #10)]]
+      * [[WorkflowFunctionalSpec#OozieWSAPI][Oozie Web Services API (WF Spec #11)]]
+
+   * [[http://java.sun.com/j2ee/1.4/docs/tutorial/doc/JSPIntro7.html#wp77280][EL Expression Language Quick Reference]]
+
+   * [[DG_CommandLineTool][Command Line Tool]]
+
+   * [[DG_WorkflowReRun][Workflow Re-runs Explained]]
+   
+   * [[DG_CustomActionExecutor][Writing a Custom Action Executor]]
+
+   * [[./apidocs/index.html][Oozie Javadocs]]
+
+---++ Administrator Documentation
+
+   * [[AG_Install][Oozie Install]]
+
+   * [[AG_ConfigurationFiles][Oozie Configuration Files]]
+   * [[AG_Configuration][Oozie Configuration]]
+   * [[AG_Security][Oozie Security]]
+   * [[AG_Logging][Oozie Logging]]
+
+   * [[AG_StartStop][Oozie Start & Stop]]
+   * [[AG_Monitoring][Oozie Monitoring]]
+   * [[DG_CommandLineTool][Command Line Tool]]
+
+#LicenseInfo
+---++ Licensing Information
+
+Oozie is distributed under [[http://www.apache.org/licenses/LICENSE-2.0][Apache License 2.0]].
+
+For details on the license of the dependent components, refer to the
+[[./dependencies.html#Licenses][Dependencies Report, Licenses section]].
+
+Some of the components in the dependencies report don't mention their license in the published POM. They are:
+
+   * JDOM: [[http://www.jdom.org/docs/faq.html#a0030][JDOM License]] (Apache style).
+   * Oro: [[http://www.apache.org/licenses/LICENSE-2.0][Apache License 2.0]].
+
+MySQL JDBC driver, [[http://www.gnu.org/licenses/gpl-2.0.html][GNU General Public License, Version 2]], is included in
+the Oozie distribution only if a MySQL Oozie distribution is created.
+
+The Oozie web console uses [[http://www.extjs.com/learn/Ext_Version_Archives][Ext JS 2.2]] which is available with a
+GNU GPL version 3.0 with an [[http://extjs.com/products/floss-exception.php][Open Source License Exception for Applications]]
+which covers projects using Apache License.
+
+IMPORTANT: The Ext JS 2.2 library is not included in the distribution, it must be installed separately, refer to the
+README.txt file in the distribution for details.
+
+Oozie uses a modified version of the Apache Doxia core and twiki plugins to generate Oozie documentation.
+
+---++ Engineering Documentation
+
+   * [[ENG_Building][Building Oozie]]
+   * [[ENG_HadoopQuickInstall][Hadoop Quick Install]]
+
+   * [[./dependencies.html][Dependencies Report]]
+
+</noautolink>

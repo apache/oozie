@@ -1,0 +1,32 @@
+<project>
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.apache.hadoop</groupId>
+    <artifactId>pig</artifactId>
+    <version>0.2.0-H20-J660</version>
+
+    <name>Pig</name>
+    <packaging>jar</packaging>
+
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+    
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-core</artifactId>
+            <version>0.20.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>jline</groupId>
+            <artifactId>jline</artifactId>
+            <version>0.9.94</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
+</project>
+

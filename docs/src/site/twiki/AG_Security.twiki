@@ -1,0 +1,91 @@
+<noautolink>
+
+[[index][::Go back to Oozie Documentation Index::]]
+
+---+!! Oozie Security
+
+%TOC%
+
+---++ Security in Oozie
+
+Oozie provides a simple authorization model.
+
+Oozie does not provide authentication or authorization checks out of the box.
+
+Oozie provides a plugglable mechanism to easily integrate existing authentication and authorization services.
+
+---++ Oozie Authorization Model
+
+   * Users have read access to all jobs
+   * Users have write access to their own jobs
+   * Users have write access to jobs for groups the users belong to
+   * Users have read access to admin operations
+
+   * Admin users have write access to all jobs
+   * Admin users have write access to admin operations
+
+If Oozie security is disabled, all users are admin users.
+
+---++ Oozie Security Activation
+
+Oozie security is disabled by default, to enabled it the =oozie.service.AuthorizationService.security.enabled=
+property must be set to =true=.
+
+---++ Adding Authentication Checks to Oozie
+
+All interaction with Oozie is via Web Services implemented as Java Servlets.
+
+Authentication can be enforced via a Java Servlet Filter.
+
+The filter should only allow requests that contain valid credentials (i.e. HTTP basic authorization, cookies).
+
+If the request does not contain valid credentials the filter must return the HTTP UNAUTHORIZED (401) error code.
+
+If the request does contain valid credetials, the filter must set the user name as the =oozie.user.name= attribute
+in the request before dispaching the request with the =doChain()= method.
+
+---++ Adding Authorization Checks to Oozie
+
+Oozie provides an =AuthorizationService= that enforces Oozie authorization model for administration and jobs.
+
+However it does not validate user-group information against any store.
+
+The user-group information for the default =AuthorizationService= is:
+
+   * The default group for all users is =users=.
+   * All users belong to all groups.
+
+The =AuthorizationService= should be subclassed and the following methods should be overriden:
+
+   * =String getDefaultGroup(String user)=
+   * =boolean isUserInGroup(String user, String group)=
+   * =boolean isAdmin(String user)=
+
+---++ Built in Admin User List
+
+The default =AuthorizationService= provides a basic mechanism to define admin users.
+
+The list of admin users is configured by adding 1 user per line to a file =adminusers.txt=, and placing this file in
+the Oozie Configuration directory. Empty lines and lines starting with '#' are ignored.
+
+The Oozie configuration directory is specified by setting the property 'oozie.config.dir'. Refer to
+[[AG_Install][Oozie Install]] for details.
+
+---++ Audit Logging
+
+Write requests are logged in an audit log (oozie-audit.log). This log is not rotated  This log captures the following
+information.
+
+   * User name
+   * Group name
+   * Workflow Application Name
+   * Job id if applicable
+   * Operation
+   * Operation parameter
+   * Operation status
+   * Response HTTP status code
+   * Error code and error message if applicable.
+
+[[index][::Go back to Oozie Documentation Index::]]
+
+</noautolink>
