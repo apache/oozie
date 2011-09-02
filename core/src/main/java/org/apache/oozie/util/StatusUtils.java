@@ -80,11 +80,12 @@ public class StatusUtils {
                 if (coordJob.getAppNamespace() != null
                         && coordJob.getAppNamespace().equals(SchemaService.COORDINATOR_NAMESPACE_URI_1)) {
 
-                    if (coordJob.getStatus() == Job.Status.RUNNING && prevStatus == Job.Status.SUSPENDED) {
+                    if (prevStatus == Job.Status.SUSPENDED) {
                         newStatus = Job.Status.SUSPENDED;
                     }
-                    else if (coordJob.getStatus() == Job.Status.RUNNING && coordJob.isDoneMaterialization()) {
+                    else if (coordJob.isDoneMaterialization() || prevStatus == Job.Status.SUCCEEDED) {
                         newStatus = Job.Status.SUCCEEDED;
+                        coordJob.setDoneMaterialization();
                     }
                 }
             }

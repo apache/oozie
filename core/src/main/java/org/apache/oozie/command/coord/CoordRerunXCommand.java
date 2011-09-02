@@ -537,6 +537,7 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
     public final void transitToNext() {
         prevStatus = coordJob.getStatus();
         coordJob.setStatus(Job.Status.RUNNING);
+        // used for backward support of coordinator 0.1 schema
         coordJob.setStatus(StatusUtils.getStatusForCoordRerun(coordJob, prevStatus));
         coordJob.setPending();
     }
