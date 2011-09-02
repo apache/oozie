@@ -333,6 +333,10 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
     private void updateAction(CoordinatorJobBean coordJob, CoordinatorActionBean coordAction, String actionXml)
             throws Exception {
         LOG.debug("updateAction for actionId=" + coordAction.getId());
+        if (coordAction.getStatus() == CoordinatorAction.Status.TIMEDOUT) {
+            LOG.debug("Updating created time for TIMEDOUT action id =" + coordAction.getId());
+            coordAction.setCreatedTime(new Date());
+        }
         coordAction.setStatus(CoordinatorAction.Status.WAITING);
         coordAction.setExternalId("");
         coordAction.setExternalStatus("");

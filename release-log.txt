@@ -1,5 +1,6 @@
 -- Oozie 3.0.0 release
 
+GH-0647 rerun TIMEDOUT action and it uses the timeout value and timedout again
 GH-0651 Fix refresh button on bundle job to reload coord jobs.
 GH-0630 Fixing Paused status for Coordinator.
 GH-0633 no FAILED sla event when coord job failed to create wf job.
