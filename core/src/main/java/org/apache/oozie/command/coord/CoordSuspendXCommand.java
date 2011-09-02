@@ -24,6 +24,7 @@ import org.apache.oozie.XException;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.command.wf.SuspendXCommand;
 import org.apache.oozie.executor.jpa.CoordJobGetActionsJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
@@ -37,7 +38,7 @@ import org.apache.oozie.util.XLog;
 
 public class CoordSuspendXCommand extends CoordinatorXCommand<Void> {
     private final String jobId;
-    private final XLog log = XLog.getLog(getClass());
+    private final XLog LOG = XLog.getLog(getClass());
     private CoordinatorJobBean coordJobBean;
     private JPAService jpaService;
     private boolean exceptionOccured = false;
@@ -53,6 +54,7 @@ public class CoordSuspendXCommand extends CoordinatorXCommand<Void> {
      */
     @Override
     protected Void execute() throws CommandException {
+
         try {
             InstrumentUtils.incrJobCounter(getName(), 1, getInstrumentation());
             coordJobBean.setStatus(CoordinatorJob.Status.SUSPENDED);
@@ -60,7 +62,7 @@ public class CoordSuspendXCommand extends CoordinatorXCommand<Void> {
             List<CoordinatorActionBean> actionList = jpaService.execute(new CoordJobGetActionsJPAExecutor(jobId));
             for (CoordinatorActionBean action : actionList) {
                 if (action.getStatus() == CoordinatorActionBean.Status.RUNNING) {
-                    // queue a SuspendCommand
+                    // queue a SuspendXCommand
                     if (action.getExternalId() != null) {
                         queue(new SuspendXCommand(action.getExternalId()));
                     }
@@ -76,6 +78,12 @@ public class CoordSuspendXCommand extends CoordinatorXCommand<Void> {
         finally {
             if (exceptionOccured) {
                 coordJobBean.setStatus(CoordinatorJob.Status.FAILED);
+            }
+
+            //update bundle action
+            if (this.coordJobBean.getBundleId() != null) {
+                BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJobBean, prevStatus);
+                bundleStatusUpdate.call();
             }
         }
     }
@@ -110,7 +118,7 @@ public class CoordSuspendXCommand extends CoordinatorXCommand<Void> {
         super.eagerVerifyPrecondition();
         if (coordJobBean.getStatus() == CoordinatorJob.Status.SUCCEEDED
                 || coordJobBean.getStatus() == CoordinatorJob.Status.FAILED) {
-            log.info("CoordSuspendCommand not suspended - " + "job finished or does not exist " + jobId);
+            LOG.info("CoordSuspendCommand not suspended - " + "job finished or does not exist " + jobId);
             throw new PreconditionException(ErrorCode.E0728, coordJobBean.getStatus().toString());
         }
     }

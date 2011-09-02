@@ -22,6 +22,7 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
@@ -66,6 +67,7 @@ public class CoordJobMatLookupXCommand extends CoordinatorXCommand<Void> {
         if (endTime.compareTo(jobEndTime) > 0) {
             endTime = jobEndTime;
         }
+        CoordinatorJob.Status prevStatus = coordJob.getStatus();
         // update status of job from PREP or RUNNING to PREMATER in coordJob
         coordJob.setStatus(CoordinatorJob.Status.PREMATER);
         coordJob.setLastModifiedTime(new Date());
@@ -74,6 +76,12 @@ public class CoordJobMatLookupXCommand extends CoordinatorXCommand<Void> {
         }
         catch (JPAExecutorException ex) {
             throw new CommandException(ex);
+        }
+
+        //update bundle action
+        if (coordJob.getBundleId() != null) {
+            BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, prevStatus);
+            bundleStatusUpdate.call();
         }
 
         LOG.debug("Materializing coord job id=" + jobId + ", start=" + DateUtils.toDate(startTime) + ", end=" + DateUtils.toDate(endTime)

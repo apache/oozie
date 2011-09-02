@@ -93,10 +93,11 @@ public class BundleJobSuspendXCommand extends TransitionXCommand<Void> {
             }
             bundleJob.setPending();
             bundleJob.setSuspendedTime(new Date());
+            bundleJob.setLastModifiedTime(new Date());
 
             for (BundleActionBean action : this.bundleActions) {
                 if (action.getStatus() == Job.Status.RUNNING || action.getStatus() == Job.Status.PREP) {
-                    // queue a SuspendCommand
+                    // queue a CoordSuspendXCommand
                     if (action.getCoordId() != null) {
                         queue(new CoordSuspendXCommand(action.getCoordId()));
                         action.setPending(action.getPending() + 1);

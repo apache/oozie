@@ -34,14 +34,13 @@ import org.apache.oozie.util.XLog;
 
 /**
  * The command to update Bundle status
- *
  */
 public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
+    private final XLog LOG = XLog.getLog(BundleStatusUpdateXCommand.class);
     private final CoordinatorJobBean coordjob;
     private JPAService jpaService = null;
     private BundleActionBean bundleaction;
     private final Job.Status prevStatus;
-    protected final XLog LOG = XLog.getLog(BundleStatusUpdateXCommand.class);
 
     /**
      * The constructor for class {@link BundleStatusUpdateXCommand}
@@ -100,6 +99,8 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
             LOG.debug("STARTED BundleStatusUpdateXCommand with bubdle id : " + coordjob.getBundleId()
                     + " coord job ID: " + coordjob.getId() + " coord Status " + coordjob.getStatus());
             Job.Status coordCurrentStatus = convertCoordStatustoJob(coordjob.getStatus());
+            LOG.info("Update bundle action [{0}] from prev status [{1}] to current coord status [{2}]", bundleaction
+                    .getBundleActionId(), bundleaction.getStatusStr(), coordCurrentStatus);
             bundleaction.setStatus(coordCurrentStatus);
 
             if (bundleaction.isPending()) {

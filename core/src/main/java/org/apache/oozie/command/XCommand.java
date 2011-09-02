@@ -53,6 +53,8 @@ public abstract class XCommand<T> implements XCallable<T> {
 
     public static final String INSTRUMENTATION_GROUP = "commands";
 
+    public static final Long DEFAULT_REQUEUE_DELAY = 10L;
+
     private static XLog LOG = XLog.getLog(XCommand.class);
 
     private String name;
@@ -187,9 +189,17 @@ public abstract class XCommand<T> implements XCallable<T> {
         if (lock == null) {
             Instrumentation instrumentation = Services.get().get(InstrumentationService.class).get();
             instrumentation.incr(INSTRUMENTATION_GROUP, getName() + ".lockTimeOut", 1);
-            throw new CommandException(ErrorCode.E0606, this.toString(), getLockTimeOut());
+            if (isReQueueRequired()) {
+                //if not acquire the lock, re-queue itself with default delay
+                resetUsed();
+                queue(this, getRequeueDelay());
+                LOG.debug("Could not get lock [{0}], timed out [{1}]ms, and requeue itself", this.toString(), getLockTimeOut());
+            } else {
+                throw new CommandException(ErrorCode.E0606, this.toString(), getLockTimeOut());
+            }
+        } else {
+            LOG.debug("Acquired lock for [{0}]", getEntityKey());
         }
-        LOG.debug("Acquired lock for [{0}]", getEntityKey());
     }
 
     /**
@@ -214,6 +224,7 @@ public abstract class XCommand<T> implements XCallable<T> {
             throw new IllegalStateException(this.getClass().getSimpleName() + " already used.");
         }
         used = true;
+        commandQueue = null;
         Instrumentation instrumentation = Services.get().get(InstrumentationService.class).get();
         instrumentation.incr(INSTRUMENTATION_GROUP, getName() + ".executions", 1);
         Instrumentation.Cron callCron = new Instrumentation.Cron();
@@ -222,6 +233,7 @@ public abstract class XCommand<T> implements XCallable<T> {
             eagerLoadState();
             eagerVerifyPrecondition();
             try {
+                T ret = null;
                 if (isLockRequired()) {
                     Instrumentation.Cron acquireLockCron = new Instrumentation.Cron();
                     acquireLockCron.start();
@@ -229,16 +241,18 @@ public abstract class XCommand<T> implements XCallable<T> {
                     acquireLockCron.stop();
                     instrumentation.addCron(INSTRUMENTATION_GROUP, getName() + ".acquireLock", acquireLockCron);
                 }
-                LOG.debug("Load state for [{0}]", getEntityKey());
-                loadState();
-                LOG.debug("Precondition check for command [{0}] key [{1}]", getName(), getEntityKey());
-                verifyPrecondition();
-                LOG.debug("Execute command [{0}] key [{1}]", getName(), getEntityKey());
-                Instrumentation.Cron executeCron = new Instrumentation.Cron();
-                executeCron.start();
-                T ret = execute();
-                executeCron.stop();
-                instrumentation.addCron(INSTRUMENTATION_GROUP, getName() + ".execute", executeCron);
+                if (!isLockRequired() || (isLockRequired() && lock != null)) {
+                    LOG.debug("Load state for [{0}]", getEntityKey());
+                    loadState();
+                    LOG.debug("Precondition check for command [{0}] key [{1}]", getName(), getEntityKey());
+                    verifyPrecondition();
+                    LOG.debug("Execute command [{0}] key [{1}]", getName(), getEntityKey());
+                    Instrumentation.Cron executeCron = new Instrumentation.Cron();
+                    executeCron.start();
+                    ret = execute();
+                    executeCron.stop();
+                    instrumentation.addCron(INSTRUMENTATION_GROUP, getName() + ".execute", executeCron);
+                }
                 if (commandQueue != null) {
                     CallableQueueService callableQueueService = Services.get().get(CallableQueueService.class);
                     for (Map.Entry<Long, List<XCommand<?>>> entry : commandQueue.entrySet()) {
@@ -315,6 +329,19 @@ public abstract class XCommand<T> implements XCallable<T> {
     protected abstract String getEntityKey();
 
     /**
+     * Indicate if the the command requires to requeue itself if the lock is not acquired.
+     * <p/>
+     * Subclasses should override this method if they don't want to requeue.
+     * <p/>
+     * Default is true.
+     *
+     * @return <code>true/false</code>
+     */
+    protected boolean isReQueueRequired() {
+        return true;
+    }
+
+    /**
      * Load the necessary state to perform an eager precondition check.
      * <p/>
      * This implementation does a NOP.
@@ -382,6 +409,16 @@ public abstract class XCommand<T> implements XCallable<T> {
      */
     public void resetUsed() {
         this.used = false;
+    }
+
+
+    /**
+     * Return the delay time for requeue
+     *
+     * @return delay time when requeue itself
+     */
+    protected Long getRequeueDelay() {
+        return DEFAULT_REQUEUE_DELAY;
     }
 
 }

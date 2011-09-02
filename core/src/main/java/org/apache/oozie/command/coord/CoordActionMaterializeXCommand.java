@@ -52,7 +52,7 @@ public class CoordActionMaterializeXCommand extends CoordinatorXCommand<Void> {
     private Date startTime;
     private Date endTime;
     private int lastActionNumber = 1; // over-ride by DB value
-    private final static XLog log = XLog.getLog(CoordActionMaterializeXCommand.class);
+    private final XLog log = XLog.getLog(CoordActionMaterializeXCommand.class);
     private String user;
     private String group;
     private JPAService jpaService = null;

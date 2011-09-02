@@ -70,16 +70,14 @@ public class TestBundleStartXCommand extends XDataTestCase {
         job = jpaService.execute(bundleJobGetExecutor);
         assertEquals(job.getStatus(), Job.Status.RUNNING);
 
+        Thread.sleep(2000);
+
         BundleActionsGetJPAExecutor bundleActionsGetExecutor = new BundleActionsGetJPAExecutor(job.getId());
         List<BundleActionBean> actions = jpaService.execute(bundleActionsGetExecutor);
 
         assertEquals(2, actions.size());
-        assertEquals(Job.Status.RUNNING, actions.get(0).getStatus());
-        assertEquals(true, actions.get(0).isPending());
         assertEquals(true, actions.get(0).isCritical());
         assertEquals(job.getId(), actions.get(0).getBundleId());
-        assertEquals(Job.Status.RUNNING, actions.get(1).getStatus());
-        assertEquals(true, actions.get(1).isPending());
         assertEquals(false, actions.get(1).isCritical());
         assertEquals(job.getId(), actions.get(0).getBundleId());
     }
@@ -92,7 +90,7 @@ public class TestBundleStartXCommand extends XDataTestCase {
     public void testBundleStart2() throws Exception {
         BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP);
 
-        JPAService jpaService = Services.get().get(JPAService.class);
+        final JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
 
         Configuration jobConf = null;
@@ -119,16 +117,25 @@ public class TestBundleStartXCommand extends XDataTestCase {
         job = jpaService.execute(bundleJobGetExecutor);
         assertEquals(job.getStatus(), Job.Status.RUNNING);
 
-        BundleActionsGetJPAExecutor bundleActionsGetExecutor = new BundleActionsGetJPAExecutor(job.getId());
-        List<BundleActionBean> actions = jpaService.execute(bundleActionsGetExecutor);
+        Thread.sleep(2000);
 
+        final BundleActionsGetJPAExecutor bundleActionsGetExecutor = new BundleActionsGetJPAExecutor(job.getId());
+        List<BundleActionBean> actions = jpaService.execute(bundleActionsGetExecutor);
         assertEquals(2, actions.size());
+
+        waitFor(200000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                List<BundleActionBean> actions = jpaService.execute(bundleActionsGetExecutor);
+                return actions.get(0).getStatus().equals(Job.Status.RUNNING)
+                        && actions.get(1).getStatus().equals(Job.Status.RUNNING);
+            }
+        });
+
+        actions = jpaService.execute(bundleActionsGetExecutor);
         assertEquals(Job.Status.RUNNING, actions.get(0).getStatus());
-        assertEquals(true, actions.get(0).isPending());
         assertEquals(true, actions.get(0).isCritical());
         assertEquals(job.getId(), actions.get(0).getBundleId());
         assertEquals(Job.Status.RUNNING, actions.get(1).getStatus());
-        assertEquals(true, actions.get(1).isPending());
         assertEquals(false, actions.get(1).isCritical());
         assertEquals(job.getId(), actions.get(1).getBundleId());
     }
@@ -152,16 +159,14 @@ public class TestBundleStartXCommand extends XDataTestCase {
         job = jpaService.execute(bundleJobGetExecutor);
         assertEquals(job.getStatus(), Job.Status.RUNNING);
 
+        Thread.sleep(2000);
+
         BundleActionsGetJPAExecutor bundleActionsGetExecutor = new BundleActionsGetJPAExecutor(job.getId());
         List<BundleActionBean> actions = jpaService.execute(bundleActionsGetExecutor);
 
         assertEquals(2, actions.size());
-        assertEquals(Job.Status.RUNNING, actions.get(0).getStatus());
-        assertEquals(true, actions.get(0).isPending());
         assertEquals(true, actions.get(0).isCritical());
         assertEquals(job.getId(), actions.get(0).getBundleId());
-        assertEquals(Job.Status.RUNNING, actions.get(1).getStatus());
-        assertEquals(true, actions.get(1).isPending());
         assertEquals(false, actions.get(1).isCritical());
         assertEquals(job.getId(), actions.get(1).getBundleId());
     }
@@ -177,8 +182,9 @@ public class TestBundleStartXCommand extends XDataTestCase {
         try {
             new BundleStartXCommand("bundle-id").call();
             fail("Job doesn't exist. Should fail.");
-        } catch (CommandException ce) {
-            //Job doesn't exist. Exception is expected.
+        }
+        catch (CommandException ce) {
+            // Job doesn't exist. Exception is expected.
         }
     }
 }

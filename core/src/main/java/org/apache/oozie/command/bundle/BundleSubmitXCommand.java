@@ -393,7 +393,6 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
             bundleJob.setLastModifiedTime(new Date());
 
             if (!dryrun) {
-                bundleJob.setLastModifiedTime(new Date());
                 jpaService.execute(new BundleJobInsertJPAExecutor(bundleJob));
             }
         }

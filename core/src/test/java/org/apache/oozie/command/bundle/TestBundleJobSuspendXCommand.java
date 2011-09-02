@@ -35,7 +35,7 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.XConfiguration;
 
-public class TestBundleKillXCommand extends XDataTestCase {
+public class TestBundleJobSuspendXCommand extends XDataTestCase {
 
     private Services services;
 
@@ -54,31 +54,31 @@ public class TestBundleKillXCommand extends XDataTestCase {
     }
 
     /**
-     * Test : Kill bundle job
+     * Test : Suspend bundle job
      *
      * @throws Exception
      */
-    public void testBundleKill1() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP);
+    public void testBundleSuspend1() throws Exception {
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.RUNNING);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
         BundleJobGetJPAExecutor bundleJobGetCmd = new BundleJobGetJPAExecutor(job.getId());
         job = jpaService.execute(bundleJobGetCmd);
-        assertEquals(Job.Status.PREP, job.getStatus());
+        assertEquals(Job.Status.RUNNING, job.getStatus());
 
-        new BundleKillXCommand(job.getId()).call();
+        new BundleJobSuspendXCommand(job.getId()).call();
 
         job = jpaService.execute(bundleJobGetCmd);
-        assertEquals(Job.Status.KILLED, job.getStatus());
+        assertEquals(Job.Status.SUSPENDED, job.getStatus());
     }
 
     /**
-     * Test : Kill bundle job
+     * Test : Suspend bundle job
      *
      * @throws Exception
      */
-    public void testBundleKill2() throws Exception {
+    public void testBundleSuspend2() throws Exception {
         BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP);
 
         final JPAService jpaService = Services.get().get(JPAService.class);
@@ -108,6 +108,7 @@ public class TestBundleKillXCommand extends XDataTestCase {
         job = jpaService.execute(bundleJobGetCmd);
         assertEquals(Job.Status.RUNNING, job.getStatus());
 
+
         Thread.sleep(2000);
 
         BundleActionsGetJPAExecutor bundleActionsGetCmd = new BundleActionsGetJPAExecutor(job.getId());
@@ -117,10 +118,10 @@ public class TestBundleKillXCommand extends XDataTestCase {
         assertNotNull(actions.get(0).getCoordId());
         assertNotNull(actions.get(1).getCoordId());
 
-        new BundleKillXCommand(job.getId()).call();
+        new BundleJobSuspendXCommand(job.getId()).call();
 
         job = jpaService.execute(bundleJobGetCmd);
-        assertEquals(Job.Status.KILLED, job.getStatus());
+        assertEquals(Job.Status.SUSPENDED, job.getStatus());
 
         actions = jpaService.execute(bundleActionsGetCmd);
 
@@ -134,31 +135,30 @@ public class TestBundleKillXCommand extends XDataTestCase {
         waitFor(200000, new Predicate() {
             public boolean evaluate() throws Exception {
                 CoordinatorJobBean job1 = jpaService.execute(coordGetCmd1);
-                return job1.getStatus().equals(CoordinatorJobBean.Status.KILLED);
+                return job1.getStatus().equals(CoordinatorJobBean.Status.SUSPENDED);
             }
         });
 
         CoordinatorJobBean job1 = jpaService.execute(coordGetCmd1);
-        assertEquals(CoordinatorJobBean.Status.KILLED, job1.getStatus());
+        assertEquals(CoordinatorJobBean.Status.SUSPENDED, job1.getStatus());
 
         waitFor(200000, new Predicate() {
             public boolean evaluate() throws Exception {
                 CoordinatorJobBean job2 = jpaService.execute(coordGetCmd2);
-                return job2.getStatus().equals(CoordinatorJobBean.Status.KILLED);
+                return job2.getStatus().equals(CoordinatorJobBean.Status.SUSPENDED);
             }
         });
 
         CoordinatorJobBean job2 = jpaService.execute(coordGetCmd2);
-        assertEquals(CoordinatorJobBean.Status.KILLED, job2.getStatus());
-
+        assertEquals(CoordinatorJobBean.Status.SUSPENDED, job2.getStatus());
     }
 
     /**
-     * Test : Kill bundle job
+     * Test : Suspend bundle job
      *
      * @throws Exception
      */
-    public void testBundleKill3() throws Exception {
+    public void testBundleSuspend3() throws Exception {
         BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP);
 
         JPAService jpaService = Services.get().get(JPAService.class);
@@ -183,22 +183,22 @@ public class TestBundleKillXCommand extends XDataTestCase {
         job = jpaService.execute(bundleJobGetCmd);
         assertEquals(Job.Status.PREP, job.getStatus());
 
-        new BundleKillXCommand(job.getId()).call();
+        new BundleJobSuspendXCommand(job.getId()).call();
 
         job = jpaService.execute(bundleJobGetCmd);
-        assertEquals(Job.Status.KILLED, job.getStatus());
+        assertEquals(Job.Status.PREPSUSPENDED, job.getStatus());
     }
 
     /**
-     * Test : Kill bundle job but jobId is wrong
+     * Test : Suspend bundle job but jobId is wrong
      *
      * @throws Exception
      */
-    public void testBundleKillFailed() throws Exception {
+    public void testBundleSuspendFailed() throws Exception {
         this.addRecordToBundleJobTable(Job.Status.PREP);
 
         try {
-            new BundleKillXCommand("bundle-id").call();
+            new BundleJobSuspendXCommand("bundle-id").call();
             fail("Job doesn't exist. Should fail.");
         } catch (CommandException ce) {
             //Job doesn't exist. Exception is expected.

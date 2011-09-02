@@ -47,14 +47,14 @@ public class TestBundlePauseStartService extends XDataTestCase {
      * @throws Exception
      */
     public void testPauseUnpause1() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP);        
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP);
         final JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
-        
+
         job.setPauseTime(new Date(new Date().getTime() + 30 * 1000));
         job.setKickoffTime(new Date(new Date().getTime() + 3600 * 1000));
         jpaService.execute(new BundleJobUpdateJPAExecutor(job));
-        
+
         final String jobId = job.getId();
         waitFor(120 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
@@ -62,38 +62,38 @@ public class TestBundlePauseStartService extends XDataTestCase {
                 return job1.getStatus() == Job.Status.PREPPAUSED;
             }
         });
-        
+
         job = jpaService.execute(new BundleJobGetJPAExecutor(jobId));
         assertEquals(Job.Status.PREPPAUSED, job.getStatus());
 
         job.setPauseTime(new Date(new Date().getTime() + 3600 * 1000));
         jpaService.execute(new BundleJobUpdateJPAExecutor(job));
-        
+
         waitFor(120 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
                 BundleJobBean job1 = jpaService.execute(new BundleJobGetJPAExecutor(jobId));
                 return job1.getStatus() == Job.Status.PREP;
             }
         });
-        
+
         job = jpaService.execute(new BundleJobGetJPAExecutor(jobId));
         assertEquals(Job.Status.PREP, job.getStatus());
     }
-    
+
     /**
      * Test : Pause a PREP bundle, then reset its pausetime to null to unpause it.
      *
      * @throws Exception
      */
     public void testPauseUnpause2() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP);        
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP);
         final JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
-        
+
         job.setPauseTime(new Date(new Date().getTime() + 30 * 1000));
         job.setKickoffTime(new Date(new Date().getTime() + 3600 * 1000));
         jpaService.execute(new BundleJobUpdateJPAExecutor(job));
-        
+
         final String jobId = job.getId();
         waitFor(120 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
@@ -101,37 +101,37 @@ public class TestBundlePauseStartService extends XDataTestCase {
                 return job1.getStatus() == Job.Status.PREPPAUSED;
             }
         });
-        
+
         job = jpaService.execute(new BundleJobGetJPAExecutor(jobId));
         assertEquals(Job.Status.PREPPAUSED, job.getStatus());
 
         job.setPauseTime(null);
         jpaService.execute(new BundleJobUpdateJPAExecutor(job));
-        
+
         waitFor(120 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
                 BundleJobBean job1 = jpaService.execute(new BundleJobGetJPAExecutor(jobId));
                 return job1.getStatus() == Job.Status.PREP;
             }
         });
-        
+
         job = jpaService.execute(new BundleJobGetJPAExecutor(jobId));
         assertEquals(Job.Status.PREP, job.getStatus());
     }
-    
+
     /**
      * Test : Start a PREP bundle when its kickoff time reaches.
      *
      * @throws Exception
      */
     public void testStart1() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP);        
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP);
         final JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
-        
+
         job.setKickoffTime(new Date(new Date().getTime() + 30 * 1000));
         jpaService.execute(new BundleJobUpdateJPAExecutor(job));
-        
+
         final String jobId = job.getId();
         waitFor(120 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
@@ -139,24 +139,24 @@ public class TestBundlePauseStartService extends XDataTestCase {
                 return job1.getStatus() == Job.Status.RUNNING;
             }
         });
-        
+
         job = jpaService.execute(new BundleJobGetJPAExecutor(jobId));
         assertEquals(Job.Status.RUNNING, job.getStatus());
    }
-    
+
     /**
      * Test : Start a PREP bundle when its kickoff time is a past time.
      *
      * @throws Exception
      */
     public void testStart2() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP);        
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP);
         final JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
-        
+
         job.setKickoffTime(new Date(new Date().getTime() - 30 * 1000));
         jpaService.execute(new BundleJobUpdateJPAExecutor(job));
-        
+
         final String jobId = job.getId();
         waitFor(120 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
@@ -164,30 +164,9 @@ public class TestBundlePauseStartService extends XDataTestCase {
                 return job1.getStatus() == Job.Status.RUNNING;
             }
         });
-        
+
         job = jpaService.execute(new BundleJobGetJPAExecutor(jobId));
         assertEquals(Job.Status.RUNNING, job.getStatus());
    }
-    
-    /**
-     * Test : Start a PREP bundle when its kickoff time is not set.
-     *
-     * @throws Exception
-     */
-    public void testStart3() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP);        
-        final JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
-                
-        final String jobId = job.getId();
-        waitFor(120 * 1000, new Predicate() {
-            public boolean evaluate() throws Exception {
-                BundleJobBean job1 = jpaService.execute(new BundleJobGetJPAExecutor(jobId));
-                return job1.getStatus() == Job.Status.RUNNING;
-            }
-        });
-        
-        job = jpaService.execute(new BundleJobGetJPAExecutor(jobId));
-        assertEquals(Job.Status.RUNNING, job.getStatus());
-   }
+
 }

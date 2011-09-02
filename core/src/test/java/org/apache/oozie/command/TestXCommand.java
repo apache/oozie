@@ -67,6 +67,11 @@ public class TestXCommand extends XTestCase {
         }
 
         @Override
+        protected boolean isReQueueRequired() {
+            return false;
+        }
+
+        @Override
         protected String getEntityKey() {
             return "key";
         }

@@ -88,7 +88,7 @@ public class CoordActionNotificationXCommand extends CoordinatorXCommand<Void> {
 
     /**
      * This method handles the retry for the coordinator action.
-     * 
+     *
      * @param url This is the URL where the notification has to be sent.
      */
     private void handleRetry(String url) {
@@ -107,7 +107,7 @@ public class CoordActionNotificationXCommand extends CoordinatorXCommand<Void> {
      */
     @Override
     protected String getEntityKey() {
-        return null;
+        return actionBean.getId();
     }
 
     /* (non-Javadoc)

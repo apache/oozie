@@ -55,7 +55,7 @@ import org.apache.openjpa.persistence.jdbc.Index;
 
         @NamedQuery(name = "GET_BUNDLE_JOBS_RUNNING", query = "select OBJECT(w) from BundleJobBean w where w.status = 'RUNNING' OR w.status = 'RUNNINGWITHERROR' order by w.lastModifiedTimestamp"),
 
-        @NamedQuery(name = "GET_BUNDLE_JOBS_NEED_START", query = "select OBJECT(w) from BundleJobBean w where w.status = 'PREP' and (w.kickoffTimestamp IS NULL OR w.kickoffTimestamp <= :currentTime) order by w.lastModifiedTimestamp"),
+        @NamedQuery(name = "GET_BUNDLE_JOBS_NEED_START", query = "select OBJECT(w) from BundleJobBean w where w.status = 'PREP' AND (w.kickoffTimestamp IS NOT NULL AND w.kickoffTimestamp <= :currentTime) order by w.lastModifiedTimestamp"),
 
         @NamedQuery(name = "GET_BUNDLE_JOBS_PAUSED", query = "select OBJECT(w) from BundleJobBean w where w.status = 'PAUSED' OR w.status = 'PAUSEDWITHERROR' OR w.status = 'PREPPAUSED' order by w.lastModifiedTimestamp"),
 
