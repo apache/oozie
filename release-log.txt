@@ -1,3 +1,6 @@
+-- Oozie 3.0.1 release
+OOZIE-50 Update the POM files with new version 3.0.1-SNAPSHOT
+
 -- Oozie 3.0.0 release
 
 GH-0069 Create a coordinator bundle.
