@@ -46,9 +46,9 @@ value is undefined and interpreted as a =false=.
 
 ---++ Oozie Server Setup
 
-The =setup-oozie.sh= script prepares the embedded Tomcat server to run Oozie.
+The =oozie-setup.sh= script prepares the embedded Tomcat server to run Oozie.
 
-The =setup-oozie.sh= script options are:
+The =oozie-setup.sh= script options are:
 
 <verbatim>
 Usage  : oozie-setup.sh <OPTIONS>"
@@ -58,6 +58,12 @@ Usage  : oozie-setup.sh <OPTIONS>"
          [-jars JARS_PATH] (multiple JAR path separated by ':')"
          (without options does default setup, without the Oozie webconsole)"
 </verbatim>
+
+If a directory =libext/= is present in Oozie installation directory, the =oozie-setup.sh= script
+include all JARs in the =libext/= directory in Oozie WAR file.
+
+If the ExtJS ZIP file is present in the =libext/= directory, it will be added to Oozie WAR as well.
+The ExtJS library file name be =ext-2.2.zip=.
 
 ---+++ Setting Up Oozie with an Alternate Tomcat
 

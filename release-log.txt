@@ -1,5 +1,6 @@
 -- Oozie 3.0.0 release
 
+OOZIE-19 oozie-setup.sh should add all JARs from an extensions directory
 OOZIE-27 fix NonTransient suspend to update coordinator action
 OOZIE-23 Update oozie examples with new namespace version for workflow and coordinator.
 OOZIE-20 examples job properties have hardcoded values, and use non-default Hadoop ports

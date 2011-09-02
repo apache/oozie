@@ -121,8 +121,29 @@ rm -rf ${outputWarExpanded}
 
 echo
 
+# Adding extension JARs
+
+libext=${OOZIE_HOME}/libext
+if [ -d "${libext}" ]; then
+  if [ `ls ${libext} | grep \.jar\$ | wc -c` != 0 ]; then
+    for i in "${libext}/"*.jar; do
+      echo "INFO: Adding extension: $i"
+      jarsPath="${jarsPath}:$i"
+      addJars="true"
+    done
+  fi
+  if [ -f "${libext}/ext-2.2.zip" ]; then
+    extjsHome=${libext}/ext-2.2.zip
+    addExtjs=true
+  fi  
+fi
+
+if [ "${addExtjs}" == "" ]; then
+  echo "INFO: Oozie webconsole disabled, ExtJS library not specified"
+fi
+
 if [ "${addExtjs}${addJars}${addHadoopJars}" == "" ]; then
-  echo "INFO: Doing default installation, Oozie webconsole disabled"
+  echo "INFO: Doing default installation"
   cp ${inputWar} ${outputWar}
 else
   OPTIONS=""
