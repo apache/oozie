@@ -1,5 +1,6 @@
 -- Oozie 3.1.0 release
 
+OOZIE-17 Group column for coordinator jobs in Oozie Web Console
 OOZIE-11  Adding Distcp Action.  
 OOZIE-6 Custom filters option and User information column added to Coordinator jobs section of Oozie Web Console
 OOZIE-124 Update documentation for job-type in WS API
