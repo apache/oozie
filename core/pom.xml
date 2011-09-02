@@ -278,12 +278,15 @@
                                     <include name="**/JsonCoordinatorJob.class" />
                                     <include name="**/JsonCoordinatorAction.class" />
                                     <include name="**/JsonSLAEvent.class" />
+                                    <include name="**/JsonBundleJob.class"/>
 
                                     <include name="**/WorkflowJobBean.class" />
                                     <include name="**/WorkflowActionBean.class" />
                                     <include name="**/CoordinatorJobBean.class" />
                                     <include name="**/CoordinatorActionBean.class" />
                                     <include name="**/SLAEventBean.class" />
+                                    <include name="**/BundleJobBean.class"/>
+                                    <include name="**/BundleActionBean.class"/>
                                 </fileset>
                                 <openjpac>
                                     <classpath refid="cp" />
