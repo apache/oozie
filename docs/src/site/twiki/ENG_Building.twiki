@@ -156,10 +156,10 @@ default value is =test=.
 default value is =test2=.
 
 *oozie.test.user.test3*= : specifies secondary user ID used as the user submitting jobs to Oozie Server in testcases,
-default value is =test2=.
+default value is =test3=.
 
 *oozie.test.group*= : specifies group ID used as group when submitting jobs to Oozie Server in testcases,
-default value is =test2=.
+default value is =testg=.
 
 NOTE: The users/group specified in *oozie.test.user.test2*, *oozie.test.user.test3*= and *oozie.test.user.group*=
 are used for the authorization testcases only.
