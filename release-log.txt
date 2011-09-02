@@ -1,5 +1,6 @@
 -- Oozie 3.0.0 release
 
+GH-0654 Fix workflow web console for missing columns
 GH-0649 Fixing Bundle status service for Done with error status. 
 GH-0647 rerun TIMEDOUT action and it uses the timeout value and timedout again
 GH-0651 Fix refresh button on bundle job to reload coord jobs.

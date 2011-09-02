@@ -98,23 +98,23 @@ public class JsonWorkflowJob implements WorkflowJob, JsonBean {
     @SuppressWarnings("unchecked")
     public JSONObject toJSONObject() {
         JSONObject json = new JSONObject();
-        json.put(JsonTags.WORKFLOW_APP_PATH, appPath);
-        json.put(JsonTags.WORKFLOW_APP_NAME, appName);
-        json.put(JsonTags.WORKFLOW_ID, id);
-        json.put(JsonTags.WORKFLOW_EXTERNAL_ID, externalId);
-        json.put(JsonTags.WORKFLOW_PARENT_ID, parentId);
-        json.put(JsonTags.WORKFLOW_CONF, conf);
-        json.put(JsonTags.WORKFLOW_STATUS, status.toString());
-        json.put(JsonTags.WORKFLOW_LAST_MOD_TIME, JsonUtils.formatDateRfc822(lastModifiedTime));
-        json.put(JsonTags.WORKFLOW_CREATED_TIME, JsonUtils.formatDateRfc822(createdTime));
-        json.put(JsonTags.WORKFLOW_START_TIME, JsonUtils.formatDateRfc822(startTime));
-        json.put(JsonTags.WORKFLOW_END_TIME, JsonUtils.formatDateRfc822(endTime));
-        json.put(JsonTags.WORKFLOW_USER, user);
-        json.put(JsonTags.WORKFLOW_GROUP, group);
-        json.put(JsonTags.WORKFLOW_RUN, (long) run);
-        json.put(JsonTags.WORKFLOW_CONSOLE_URL, consoleUrl);
+        json.put(JsonTags.WORKFLOW_APP_PATH, getAppPath());
+        json.put(JsonTags.WORKFLOW_APP_NAME, getAppName());
+        json.put(JsonTags.WORKFLOW_ID, getId());
+        json.put(JsonTags.WORKFLOW_EXTERNAL_ID, getExternalId());
+        json.put(JsonTags.WORKFLOW_PARENT_ID, getParentId());
+        json.put(JsonTags.WORKFLOW_CONF, getConf());
+        json.put(JsonTags.WORKFLOW_STATUS, getStatus().toString());
+        json.put(JsonTags.WORKFLOW_LAST_MOD_TIME, JsonUtils.formatDateRfc822(getLastModifiedTime()));
+        json.put(JsonTags.WORKFLOW_CREATED_TIME, JsonUtils.formatDateRfc822(getCreatedTime()));
+        json.put(JsonTags.WORKFLOW_START_TIME, JsonUtils.formatDateRfc822(getStartTime()));
+        json.put(JsonTags.WORKFLOW_END_TIME, JsonUtils.formatDateRfc822(getEndTime()));
+        json.put(JsonTags.WORKFLOW_USER, getUser());
+        json.put(JsonTags.WORKFLOW_GROUP, getGroup());
+        json.put(JsonTags.WORKFLOW_RUN, (long) getRun());
+        json.put(JsonTags.WORKFLOW_CONSOLE_URL, getConsoleUrl());
         json.put(JsonTags.WORKFLOW_ACTIONS, JsonWorkflowAction.toJSONArray(actions));
-        json.put(JsonTags.TO_STRING,toString());
+        json.put(JsonTags.TO_STRING, toString());
         return json;
     }
 
