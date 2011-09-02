@@ -1,10 +1,10 @@
 <project>
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.apache.hadoop</groupId>
-    <artifactId>hadoop-core</artifactId>
-    <version>0.20.0</version>
+    <artifactId>hadoop-test</artifactId>
+    <version>0.20.1</version>
 
-    <name>Hadoop</name>
+    <name>Hadoop Test</name>
     <packaging>jar</packaging>
 
     <licenses>
@@ -13,8 +13,21 @@
             <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
         </license>
     </licenses>
-    
+
     <dependencies>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-core</artifactId>
+            <version>0.20.1</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>3.8.1</version>
+            <scope>compile</scope>
+        </dependency>
+
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-cli</artifactId>
@@ -32,7 +45,7 @@
             <artifactId>commons-httpclient</artifactId>
             <version>3.0.1</version>
             <scope>compile</scope>
-        </dependency>        
+        </dependency>
         <dependency>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging-api</artifactId>
@@ -117,6 +130,7 @@
             <version>1.4.3</version>
             <scope>compile</scope>
         </dependency>
+
     </dependencies>
 </project>
 

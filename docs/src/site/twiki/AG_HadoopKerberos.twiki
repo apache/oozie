@@ -1,0 +1,109 @@
+<noautolink>
+
+[[index][::Go back to Oozie Documentation Index::]]
+
+---+!! Setup Oozie with Hadoop Kerberos Authentication
+
+%TOC%
+
+---++ Introduction
+
+How Oozie configuration is read it is explained in [[AG_ConfigurationFiles][Oozie Configuration Files]].
+
+This document explains how to setup Oozie to work with a Hadoop cluster with Kerberos authentication.
+
+---++ How Does Oozie and Hadoop with Kerberos Authentication Work?
+
+As with Hadoop with no authentication, Oozie submit jobs to Hadoop using the same user name that submitted the workflow
+job to Oozie.
+
+Oozie is configured in Hadoop as a proxy user. A proxy user is a user that is allowed to submit jobs on behalf of
+another user.
+
+Hadoop authenticates Oozie with Oozie's credentials.
+
+Oozie is allowed to submit jobs for any user belonging to a specified Unix group (this is allows to control the users
+Oozie can impersonate).
+
+---++ Oozie Configuration Properties for Hadoop Kerberos Authentication
+
+The following 3 configuration properties (default values shown) configure Oozie to work with a Hadoop
+cluster with Kerberos authentication.
+
+<verbatim>
+    <property>
+        <name>oozie.service.HadoopAccessorService.kerberos.enabled</name>
+        <value>false</value>
+        <description>
+            Indicates if Oozie is configured to use Kerberos.
+        </description>
+    </property>
+.
+    <property>
+        <name>oozie.service.HadoopAccessorService.keytab.file</name>
+        <value>${user.home}/oozie.keytab</value>
+        <description>
+            Location of the Oozie user keytab file.
+        </description>
+    </property>
+.
+    <property>
+        <name>oozie.service.HadoopAccessorService.kerberos.principal</name>
+        <value>${user.name}/localhost@LOCALHOST</value>
+        <description>
+            Kerberos principal for Oozie service.
+        </description>
+    </property>
+</verbatim>
+
+The =oozie.service.HadoopAccessorService.kerberos.enabled= property indicates if Hadoop Kerberos authentication should
+initialized and used. If set to =true= a Kerberos KDC must be available and configured to be accessible from the Unix
+box where Oozie is running.
+
+The =oozie.service.HadoopAccessorService.keytab.file= indicates the location of the Keytab file containing the keytab
+for Oozie's Kerberos principal.
+
+The =oozie.service.HadoopAccessorService.kerberos.principal= indicates the fully qualified Kerberos principal name used
+by Oozie.
+
+Note that the =${user.name}= and =${user.home}= values are resolved to the Unix user name and the home directory of the
+running Oozie server.
+
+---++ Configuration in Hadoop with Kerberos Authentication
+
+The Hadoop cluster must be configured with Kerberos Authentication enabled.
+
+The following properties must be added to the Hadoop configuration =core-site.xml= file:
+
+<verbatim>
+  <property>
+    <name>hadoop.proxyuser.#OOZIE_KERBEROS_NAME#.hosts</name>
+    <value>#OOZIE_HOST#</value>
+  </property>
+.
+  <property>
+    <name>hadoop.proxyuser.#OOZIE_KERBEROS_NAME#.groups</name>
+    <value>#GROUP#</value>
+  </property>
+</verbatim>
+
+The =#OOZIE_KERBEROS_NAME#= is the short name from the Kerberos principal name used by Oozie. For example if the
+Kerberos principal name is =oozie/bluesky@FOO.BAR= the short name is =oozie=.
+
+The =#OOZIE_HOST#= is the hostname or IP address of the host running Oozie.
+
+The =#GROUP#= is the Unix group for users that allow Oozie to run jobs in the Hadoop cluster on their behalf.
+
+---++ Important Considerations
+
+Unix users and Kerberos principals are not required to be identical.
+
+However, to ensure Oozie and Hadoop work correctly the following rules must be followed:
+
+   * The Unix user running the Oozie server must be the short name of the Kerberos principal name for Oozie.
+   * The Unix user and the Kerberos principal for user submitting jobs to Oozie must match.
+   * Oozie users must be added to the Unix group configured in the Hadoop =hadoop.proxyuser.#OOZIE_KERBEROS_NAME#.users= property.
+
+[[index][::Go back to Oozie Documentation Index::]]
+
+</noautolink>
