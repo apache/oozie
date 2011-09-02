@@ -311,6 +311,14 @@
 		be executed at the same time.</description>
 	</property>
 
+    <property>
+		<name>oozie.service.coord.default.throttle
+		</name>
+		<value>12</value>
+		<description>Default throttle for a coordinator job to determine how many maximum action should 
+		be in WAITING state at the same time.</description>
+	</property>
+
 	<property>
 		<name>oozie.service.coord.materialization.throttling.factor
 		</name>

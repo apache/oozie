@@ -109,8 +109,16 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
 
     public static final String CONF_DEFAULT_CONCURRENCY = Service.CONF_PREFIX + "coord.default.concurrency";
 
+    public static final String CONF_DEFAULT_THROTTLE = Service.CONF_PREFIX + "coord.default.throttle";
+
     public static final String CONF_MAT_THROTTLING_FACTOR = Service.CONF_PREFIX
             + "coord.materialization.throttling.factor";
+    
+    /**
+     * Default MAX timeout in minutes, after which coordinator input check will timeout
+     */
+    public static final String CONF_DEFAULT_MAX_TIMEOUT = Service.CONF_PREFIX + "coord.default.max.timeout";
+
 
     public static final String CONF_QUEUE_SIZE = Service.CONF_PREFIX + "CallableQueueService.queue.size";
 
@@ -467,7 +475,11 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         }
 
         ival = ParamChecker.checkInteger(val, "timeout");
+        if (ival < 0 || ival > Services.get().getConf().getInt(CONF_DEFAULT_MAX_TIMEOUT, 129600)) {
+            ival = Services.get().getConf().getInt(CONF_DEFAULT_MAX_TIMEOUT, 129600);
+        }
         coordJob.setTimeout(ival);
+
         val = resolveTagContents("concurrency", eAppXml.getChild("controls", eAppXml.getNamespace()), evalNofuncs);
         if (val == null || val.isEmpty()) {
             val = Services.get().getConf().get(CONF_DEFAULT_CONCURRENCY, "-1");
@@ -475,15 +487,21 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         ival = ParamChecker.checkInteger(val, "concurrency");
         coordJob.setConcurrency(ival);
 
-        val = resolveTagContents("throttle", eAppXml.getChild("controls", eAppXml.getNamespace()),
-                evalNofuncs);
+        val = resolveTagContents("throttle", eAppXml.getChild("controls", eAppXml.getNamespace()), evalNofuncs);
         if (val == null || val.isEmpty()) {
-            int maxQueue = Services.get().getConf().getInt(CONF_QUEUE_SIZE, 10000);
-            float factor = Services.get().getConf().getFloat(CONF_MAT_THROTTLING_FACTOR, 0.10f);
-            int defaultThrottle = (int) (maxQueue * factor);
-            val = String.valueOf(defaultThrottle);
+            int defaultThrottle = Services.get().getConf().getInt(CONF_DEFAULT_THROTTLE, 12);
+            ival = defaultThrottle;
         }
-        ival = ParamChecker.checkInteger(val, "throttle");
+        else {
+            ival = ParamChecker.checkInteger(val, "throttle");
+        }
+        int maxQueue = Services.get().getConf().getInt(CONF_QUEUE_SIZE, 10000);
+        float factor = Services.get().getConf().getFloat(CONF_MAT_THROTTLING_FACTOR, 0.10f);
+        int maxThrottle = (int) (maxQueue * factor);
+        if (ival > maxThrottle || ival < 1) {
+            ival = maxThrottle;
+        }
+        log.debug("max throttle " + ival);
         coordJob.setMatThrottling(ival);
 
         val = resolveTagContents("execution", eAppXml.getChild("controls", eAppXml.getNamespace()), evalNofuncs);

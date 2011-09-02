@@ -59,7 +59,6 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         Date startTime = DateUtils.parseDateUTC("2009-02-01T23:59Z");
         Date endTime = DateUtils.parseDateUTC("2009-02-02T23:59Z");
         CoordinatorJobBean job = addRecordToCoordJobTable(jobId, startTime, endTime);
-
         new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
         createDir(getTestCaseDir() + "/2009/29/");
         createDir(getTestCaseDir() + "/2009/15/");
@@ -80,6 +79,7 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         coordJob.setAuthToken("notoken");
         coordJob.setTimeZone("UTC");
         coordJob.setTimeUnit(Timeunit.DAY);
+        coordJob.setMatThrottling(2);
         try {
             coordJob.setStartTime(start);
             coordJob.setEndTime(end);

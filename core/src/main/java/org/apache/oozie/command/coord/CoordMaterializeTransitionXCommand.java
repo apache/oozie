@@ -320,23 +320,12 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
             lastActionNumber++;
 
             int timeout = coordJob.getTimeout();
-            if (timeout < 0 || timeout > Services.get().getConf().getInt(CONF_DEFAULT_MAX_TIMEOUT, 129600)) {
-                // 129600 = 90 days
-                timeout = Services.get().getConf().getInt(CONF_DEFAULT_MAX_TIMEOUT, 129600);
-            }
             LOG.debug("Materializing action for time=" + effStart.getTime() + ", lastactionnumber=" + lastActionNumber
                     + " timeout=" + timeout + " minutes");
             action = CoordCommandUtils.materializeOneInstance(jobId, dryrun, (Element) eJob.clone(),
                     effStart.getTime(), lastActionNumber, jobConf, actionBean);
-
-            int catchUpTOMultiplier = 1; // This value might be could be changed in future
-            if (actionBean.getNominalTimestamp().before(coordJob.getCreatedTimestamp())) {
-                // catchup action
-                timeout = catchUpTOMultiplier * timeout;
-                // actionBean.setTimeOut(Services.get().getConf().getInt(CONF_DEFAULT_TIMEOUT_CATCHUP, -1));
-                LOG.info("Catchup timeout is :" + actionBean.getTimeOut());
-            }
             actionBean.setTimeOut(timeout);
+
             if (!dryrun) {
                 storeToDB(actionBean, action); // Storing to table
             }
