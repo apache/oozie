@@ -27,20 +27,31 @@ import org.apache.oozie.service.CallbackService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.WorkflowAppService;
-import org.apache.oozie.service.UUIDService.ApplicationType;
+import org.apache.oozie.service.WorkflowStoreService;
 import org.apache.oozie.test.XFsTestCase;
 import org.apache.oozie.util.ELEvaluator;
+import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
+import org.apache.oozie.util.XmlUtils;
+import org.apache.oozie.workflow.WorkflowApp;
+import org.apache.oozie.workflow.WorkflowInstance;
+import org.apache.oozie.workflow.WorkflowLib;
+import org.apache.oozie.workflow.lite.EndNodeDef;
+import org.apache.oozie.workflow.lite.LiteWorkflowApp;
+import org.apache.oozie.workflow.lite.StartNodeDef;
 
 import java.io.IOException;
+import java.io.Reader;
 import java.io.StringReader;
 import java.net.URISyntaxException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
 public abstract class ActionExecutorTestCase extends XFsTestCase {
 
+    @Override
     protected void setUp() throws Exception {
         super.setUp();
         setSystemProps();
@@ -50,6 +61,7 @@ public abstract class ActionExecutorTestCase extends XFsTestCase {
     protected void setSystemProps() {
     }
 
+    @Override
     protected void tearDown() throws Exception {
         Services.get().destroy();
         super.tearDown();
@@ -179,28 +191,85 @@ public abstract class ActionExecutorTestCase extends XFsTestCase {
         return protoConf;
     }
 
-    // it contains one action with no configuration.
-    protected WorkflowJobBean createBaseWorkflow(XConfiguration protoConf, String actionName) {
+    /**
+     * Return a workflow job which contains one action with no configuration.
+     *
+     * @param protoConf
+     * @param actionName
+     * @return workflow job bean
+     * @throws Exception
+     */
+    protected WorkflowJobBean createBaseWorkflow(XConfiguration protoConf, String actionName) throws Exception {
         Path appUri = new Path(getAppPath(), "workflow.xml");
+        WorkflowApp app = new LiteWorkflowApp("testApp", "<workflow-app/>", new StartNodeDef("end"))
+                .addNode(new EndNodeDef("end"));
         XConfiguration wfConf = new XConfiguration();
-        wfConf.set(OozieClient.USER_NAME, protoConf.get(OozieClient.USER_NAME));
+        wfConf.set(OozieClient.USER_NAME, getTestUser());
         wfConf.set(OozieClient.GROUP_NAME, getTestGroup());
         wfConf.set(OozieClient.APP_PATH, appUri.toString());
+        injectKerberosInfo(wfConf);
 
-        WorkflowJobBean workflow = new WorkflowJobBean();
-        workflow.setAppPath(appUri.toString());
-        workflow.setId(Services.get().get(UUIDService.class).generateId(ApplicationType.WORKFLOW));
-        workflow.setConf(wfConf.toXmlString());
-        workflow.setUser(wfConf.get(OozieClient.USER_NAME));
-        workflow.setGroup(wfConf.get(OozieClient.GROUP_NAME));
-        workflow.setAuthToken("authToken");
-
-        workflow.setProtoActionConf(protoConf.toXmlString());
+        WorkflowJobBean workflow = createWorkflow(app, wfConf, protoConf, "auth");
 
         WorkflowActionBean action = new WorkflowActionBean();
         action.setName(actionName);
+        action.setCred("null");
         action.setId(Services.get().get(UUIDService.class).generateChildId(workflow.getId(), actionName));
         workflow.getActions().add(action);
+        return workflow;
+    }
+
+    /**
+     * Return a workflow job which contains one action with no configuration and workflow contains credentials information.
+     *
+     * @param protoConf
+     * @param actionName
+     * @return workflow job bean
+     * @throws Exception
+     */
+    protected WorkflowJobBean createBaseWorkflowWithCredentials(XConfiguration protoConf, String actionName)
+            throws Exception {
+        Path appUri = new Path(getAppPath(), "workflow.xml");
+        Reader reader = IOUtils.getResourceAsReader("wf-credentials.xml", -1);
+        String wfxml = IOUtils.getReaderAsString(reader, -1);
+
+        WorkflowApp app = new LiteWorkflowApp("test-wf-cred", wfxml, new StartNodeDef("start")).addNode(new EndNodeDef(
+                "end"));
+        XConfiguration wfConf = new XConfiguration();
+        wfConf.set(OozieClient.USER_NAME, getTestUser());
+        wfConf.set(OozieClient.GROUP_NAME, getTestGroup());
+        wfConf.set(OozieClient.APP_PATH, appUri.toString());
+        injectKerberosInfo(wfConf);
+
+        WorkflowJobBean workflow = createWorkflow(app, wfConf, protoConf, "auth");
+
+        WorkflowActionBean action = new WorkflowActionBean();
+        action.setName(actionName);
+        action.setCred("null");
+        action.setId(Services.get().get(UUIDService.class).generateChildId(workflow.getId(), actionName));
+        workflow.getActions().add(action);
+        return workflow;
+    }
+
+    private WorkflowJobBean createWorkflow(WorkflowApp app, Configuration conf, XConfiguration protoConf,
+            String authToken) throws Exception {
+        WorkflowLib workflowLib = Services.get().get(WorkflowStoreService.class).getWorkflowLibWithNoDB();
+        WorkflowInstance wfInstance;
+        wfInstance = workflowLib.createInstance(app, conf);
+        WorkflowJobBean workflow = new WorkflowJobBean();
+        workflow.setId(wfInstance.getId());
+        workflow.setAppName(app.getName());
+        workflow.setAppPath(conf.get(OozieClient.APP_PATH));
+        workflow.setConf(XmlUtils.prettyPrint(conf).toString());
+        workflow.setProtoActionConf(XmlUtils.prettyPrint(protoConf).toString());
+        workflow.setCreatedTime(new Date());
+        workflow.setLogToken(conf.get(OozieClient.LOG_TOKEN, ""));
+        workflow.setStatus(WorkflowJob.Status.PREP);
+        workflow.setRun(0);
+        workflow.setUser(conf.get(OozieClient.USER_NAME));
+        workflow.setGroup(conf.get(OozieClient.GROUP_NAME));
+        workflow.setAuthToken(authToken);
+        workflow.setWorkflowInstance(wfInstance);
         return workflow;
     }
 

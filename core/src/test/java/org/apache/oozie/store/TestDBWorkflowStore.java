@@ -144,11 +144,11 @@ public class TestDBWorkflowStore extends XTestCase {
  * SqlStatement s = getCount(OozieTable.WORKFLOWS); ResultSet rs =
  * s.prepareAndSetValues(conn).executeQuery(); rs.next(); assertEquals(2,
  * rs.getInt(1)); rs.close();
- * 
+ *
  * s = getCount(OozieTable.WORKFLOWS).where(isEqual(WF_id, wfBean1.getId())); rs =
  * s.prepareAndSetValues(conn).executeQuery(); rs.next(); assertEquals(1,
  * rs.getInt(1)); rs.close();
- * 
+ *
  * s = getCount(OozieTable.WORKFLOWS).where(isEqual(WF_id, wfBean2.getId())); rs =
  * s.prepareAndSetValues(conn).executeQuery(); rs.next(); assertEquals(1,
  * rs.getInt(1)); rs.close();
@@ -284,12 +284,12 @@ public class TestDBWorkflowStore extends XTestCase {
  * a12.setId("12"); a12.setName("a12"); a12.setJobId(wfBean1.getId());
  * a12.setStatus(WorkflowAction.Status.PREP); store.insertAction(a12);
  * store.commitTrx();
- * 
+ *
  * WorkflowActionBean a21 = new WorkflowActionBean(); store.beginTrx();
  * a21.setId("21"); a21.setName("a21"); a21.setJobId(wfBean2.getId());
  * a21.setStatus(WorkflowAction.Status.PREP); store.insertAction(a21);
  * store.commitTrx();
- * 
+ *
  * WorkflowActionBean a22 = new WorkflowActionBean(); store.beginTrx();
  * a22.setId("22"); a22.setName("a22"); a22.setJobId(wfBean2.getId());
  * a22.setStatus(WorkflowAction.Status.PREP); store.insertAction(a22);
@@ -299,19 +299,19 @@ public class TestDBWorkflowStore extends XTestCase {
  * SqlStatement s = getCount(OozieTable.ACTIONS); ResultSet rs =
  * s.prepareAndSetValues(conn).executeQuery(); rs.next(); assertEquals(4,
  * rs.getInt(1)); rs.close();
- * 
+ *
  * s = getCount(OozieTable.ACTIONS).where(isEqual(ACTIONS_wfId,
  * wfBean1.getId())); rs = s.prepareAndSetValues(conn).executeQuery();
  * rs.next(); assertEquals(2, rs.getInt(1)); rs.close();
- * 
+ *
  * s = getCount(OozieTable.ACTIONS).where(isEqual(ACTIONS_wfId,
  * wfBean2.getId())); rs = s.prepareAndSetValues(conn).executeQuery();
  * rs.next(); assertEquals(2, rs.getInt(1)); rs.close();
- * 
+ *
  * s = getCount(OozieTable.ACTIONS).where(isEqual(ACTIONS_id, "11")); rs =
  * s.prepareAndSetValues(conn).executeQuery(); rs.next(); assertEquals(1,
  * rs.getInt(1)); rs.close();
- * 
+ *
  * s = getCount(OozieTable.ACTIONS).where(isEqual(ACTIONS_id, "12")); rs =
  * s.prepareAndSetValues(conn).executeQuery(); rs.next(); assertEquals(1,
  * rs.getInt(1)); rs.close();
@@ -481,6 +481,7 @@ public class TestDBWorkflowStore extends XTestCase {
         a31.setId(str.toString());
         a31.setJobId(wfBean3.getId());
         a31.setStatus(WorkflowAction.Status.PREP);
+        a31.setCred("null");
         store.beginTrx();
         store.insertAction(a31);
         store.commitTrx();

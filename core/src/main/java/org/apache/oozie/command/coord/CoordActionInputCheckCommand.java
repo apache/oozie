@@ -280,9 +280,11 @@ public class CoordActionInputCheckCommand extends CoordinatorCommand<Void> {
     private boolean checkListOfPaths(StringBuilder existList, StringBuilder nonExistList, Configuration conf)
             throws IOException {
 
-        log.info("[" + actionId + "]::ActionInputCheck:: In checkListOfPaths for: " + nonExistList.toString());
-
         String[] uriList = nonExistList.toString().split(CoordELFunctions.INSTANCE_SEPARATOR);
+        if (uriList[0] != null) {
+            log.info("[" + actionId + "]::ActionInputCheck:: In checkListOfPaths: " + uriList[0] + " is Missing.");
+        }
+
         nonExistList.delete(0, nonExistList.length());
         boolean allExists = true;
         String existSeparator = "", nonExistSeparator = "";

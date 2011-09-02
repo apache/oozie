@@ -22,6 +22,7 @@ import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.workflow.WorkflowException;
 import org.apache.oozie.workflow.WorkflowInstance;
+import org.apache.oozie.workflow.lite.ActionNodeDef;
 import org.apache.oozie.workflow.lite.ActionNodeHandler;
 import org.apache.oozie.workflow.lite.DecisionNodeHandler;
 import org.apache.oozie.workflow.lite.NodeHandler;
@@ -55,6 +56,7 @@ public abstract class LiteWorkflowStoreService extends WorkflowStoreService {
         }
         WorkflowActionBean action = new WorkflowActionBean();
         String actionId = Services.get().get(UUIDService.class).generateChildId(jobId, nodeName);
+        
         if (!skipAction) {
             String nodeConf = context.getNodeDef().getConf();
             String executionPath = context.getExecutionPath();
@@ -77,6 +79,8 @@ public abstract class LiteWorkflowStoreService extends WorkflowStoreService {
             action.setStatus(WorkflowAction.Status.PREP);
             action.setJobId(jobId);
         }
+        action.setCred(context.getNodeDef().getCred());
+        log.debug("liteExecute: Setting the Auth type for action "+context.getNodeDef().getCred() + " Name: "+context.getNodeDef().getName());
         action.setName(nodeName);
         action.setId(actionId);
         context.setVar(nodeName + WorkflowInstance.NODE_VAR_SEPARATOR + ACTION_ID, actionId);

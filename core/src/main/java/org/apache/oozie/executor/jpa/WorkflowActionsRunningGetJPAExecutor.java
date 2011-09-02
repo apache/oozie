@@ -84,6 +84,7 @@ public class WorkflowActionsRunningGetJPAExecutor implements JPAExecutor<List<Wo
             action.setExternalId(bean.getExternalId());
             action.setExternalStatus(bean.getExternalStatus());
             action.setName(bean.getName());
+            action.setCred(bean.getCred());
             action.setRetries(bean.getRetries());
             action.setTrackerUri(bean.getTrackerUri());
             action.setTransition(bean.getTransition());

@@ -248,6 +248,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                                 .getDefinition(), wfJob.getConf());
                         newAction.setSlaXml(actionSlaXml);
                         jpaService.execute(new WorkflowActionInsertJPAExecutor(newAction));
+                        LOG.debug("SignalXCommand: Name: "+ newAction.getName() + ", Id: " +newAction.getId() + ", Authcode:" + newAction.getCred());
                         queue(new ActionStartXCommand(newAction.getId(), newAction.getType()));
                     }
                 }

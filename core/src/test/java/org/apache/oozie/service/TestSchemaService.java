@@ -35,6 +35,9 @@ public class TestSchemaService extends XTestCase {
     private static final String APP_V2 = "<workflow-app xmlns='uri:oozie:workflow:0.2' name='app'>" + "<start to='end'/>"
             + "<end name='end'/>" + "</workflow-app>";
 
+    private static final String APP_V25 = "<workflow-app xmlns='uri:oozie:workflow:0.2.5' name='app'>" + "<credentials></credentials>"+"<start to='end'/>"
+    + "<end name='end'/>" + "</workflow-app>";
+    
     private static final String WF_SLA_APP = "<workflow-app xmlns='uri:oozie:workflow:0.2' name='app'  xmlns:sla='uri:oozie:sla:0.1'>"
             + "<start to='end'/>"
             + "<end name='end'/>"
@@ -104,6 +107,12 @@ public class TestSchemaService extends XTestCase {
         validator.validate(new StreamSource(new StringReader(APP_V2)));
     }
 
+    public void testWfSchemaV25() throws Exception {
+        SchemaService wss = Services.get().get(SchemaService.class);
+        Validator validator = wss.getSchema(SchemaName.WORKFLOW).newValidator();
+        validator.validate(new StreamSource(new StringReader(APP_V25)));
+    }
+    
     public void testExtSchema() throws Exception {
         Services.get().destroy();
         setSystemProperty(SchemaService.WF_CONF_EXT_SCHEMAS, "wf-ext-schema.xsd");

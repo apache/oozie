@@ -70,6 +70,7 @@ GH-0050 Oozie jobs configuration properties with variables should be resolved to
 -- Oozie 2.2.5 release
 
 GH-0372 Change logs output for missing dependencies
+GH-0332 Adding Credentials Module
 GH-0066 Add Uniqueness functionality to queue
 GH-0141 Oozie uses excessive memory when doing purging
 

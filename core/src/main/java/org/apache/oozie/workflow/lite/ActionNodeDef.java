@@ -15,6 +15,7 @@
 package org.apache.oozie.workflow.lite;
 
 import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.util.XLog;
 
 import java.util.Arrays;
 
@@ -28,5 +29,9 @@ public class ActionNodeDef extends NodeDef {
                          String onError) {
         super(name, ParamChecker.notNull(conf, "conf"), actionHandlerClass, Arrays.asList(onOk, onError));
     }
-
+    
+    public ActionNodeDef(String name, String conf, Class<? extends ActionNodeHandler> actionHandlerClass, String onOk,
+            String onError,String cred) {
+        super(name, ParamChecker.notNull(conf, "conf"), actionHandlerClass, Arrays.asList(onOk, onError),cred);
+    }
 }

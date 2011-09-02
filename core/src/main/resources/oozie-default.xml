@@ -1183,6 +1183,15 @@
             Whitelisted job tracker for Oozie service.
         </description>
     </property>
+    
+    <!-- Credentials -->    
+    <property>
+        <name>oozie.credentials.credentialclasses</name>
+        <value> </value>
+        <description>
+            A list of credential class mapping for CredentialsProvider
+        </description>
+    </property>
 
     <property>
         <name>oozie.service.WorkflowAppService.system.libpath</name>

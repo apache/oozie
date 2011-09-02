@@ -36,6 +36,7 @@ public abstract class WorkflowStoreService implements Service {
     final static String ACTIONS_TO_KILL = TRANSIENT_VAR_PREFIX + "actions.to.kill";
     final static String ACTIONS_TO_FAIL = TRANSIENT_VAR_PREFIX + "actions.to.fail";
     final static String ACTIONS_TO_START = TRANSIENT_VAR_PREFIX + "actions.to.start";
+    final static String ACTION_AUTH_ATTRIBUTE = "auth";
 
     /**
      * Return the public interface of the service.

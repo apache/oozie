@@ -25,11 +25,13 @@ import java.net.ConnectException;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
@@ -41,6 +43,7 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.util.DiskChecker;
+import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.OozieClient;
@@ -58,6 +61,8 @@ import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.Namespace;
+import org.apache.hadoop.security.token.Token;
+import org.apache.hadoop.security.token.TokenIdentifier;
 
 public class JavaActionExecutor extends ActionExecutor {
 
@@ -117,13 +122,13 @@ public class JavaActionExecutor extends ActionExecutor {
 
             registerError(UnknownHostException.class.getName(), ActionExecutorException.ErrorType.TRANSIENT, "JA001");
             registerError(AccessControlException.class.getName(), ActionExecutorException.ErrorType.NON_TRANSIENT,
-                          "JA002");
+                    "JA002");
             registerError(DiskChecker.DiskOutOfSpaceException.class.getName(),
-                          ActionExecutorException.ErrorType.NON_TRANSIENT, "JA003");
+                    ActionExecutorException.ErrorType.NON_TRANSIENT, "JA003");
             registerError(org.apache.hadoop.hdfs.protocol.QuotaExceededException.class.getName(),
-                          ActionExecutorException.ErrorType.NON_TRANSIENT, "JA004");
+                    ActionExecutorException.ErrorType.NON_TRANSIENT, "JA004");
             registerError(org.apache.hadoop.hdfs.server.namenode.SafeModeException.class.getName(),
-                          ActionExecutorException.ErrorType.NON_TRANSIENT, "JA005");
+                    ActionExecutorException.ErrorType.NON_TRANSIENT, "JA005");
             registerError(ConnectException.class.getName(), ActionExecutorException.ErrorType.TRANSIENT, "JA006");
             registerError(JDOMException.class.getName(), ActionExecutorException.ErrorType.ERROR, "JA007");
             registerError(FileNotFoundException.class.getName(), ActionExecutorException.ErrorType.ERROR, "JA008");
@@ -138,7 +143,7 @@ public class JavaActionExecutor extends ActionExecutor {
         for (String prop : DISALLOWED_PROPERTIES) {
             if (conf.get(prop) != null) {
                 throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "JA010",
-                                                  "Property [{0}] not allowed in action [{1}] configuration", prop, confName);
+                        "Property [{0}] not allowed in action [{1}] configuration", prop, confName);
             }
         }
     }
@@ -165,7 +170,8 @@ public class JavaActionExecutor extends ActionExecutor {
         return conf;
     }
 
-    Configuration setupLauncherConf(Configuration conf, Element actionXml, Path appPath, Context context) throws ActionExecutorException {
+    Configuration setupLauncherConf(Configuration conf, Element actionXml, Path appPath, Context context)
+            throws ActionExecutorException {
         try {
             Namespace ns = actionXml.getNamespace();
             Element e = actionXml.getChild("configuration", ns);
@@ -262,7 +268,7 @@ public class JavaActionExecutor extends ActionExecutor {
                     uri = new URI(uri.getPath());
                     DistributedCache.addCacheFile(uri, conf);
                 }
-                else if (fileName.endsWith(".jar")){  // .jar files
+                else if (fileName.endsWith(".jar")) { // .jar files
                     if (!fileName.contains("#")) {
                         path = new Path(uri.toString());
 
@@ -427,8 +433,7 @@ public class JavaActionExecutor extends ActionExecutor {
                 launcherJobConf.set("mapred.child.java.opts", opts);
             }
 
-            // properties from action that are needed by the launcher (QUEUE
-            // NAME)
+            // properties from action that are needed by the launcher (QUEUE NAME)
             // maybe we should add queue to the WF schema, below job-tracker
             for (String name : SPECIAL_PROPERTIES) {
                 String value = actionConf.get(name);
@@ -488,6 +493,22 @@ public class JavaActionExecutor extends ActionExecutor {
             // group to kill the jobs.
             actionConf.set("mapreduce.job.acl-modify-job", context.getWorkflow().getGroup());
 
+            // Setting the authentication properties in launcher conf
+            HashMap<String, CredentialsProperties> credentialsProperties = setAuthenticationPropertyToActionConf(context,
+                    action, actionConf);
+
+            // Adding if action need to set more authentication tokens
+            JobConf credentialsConf = new JobConf();
+            XConfiguration.copy(actionConf, credentialsConf);
+            setAuthenticationTokens(credentialsConf, context, action, credentialsProperties);
+
+            // insert conf to action conf from credentialsConf
+            for (Entry<String, String> entry : credentialsConf) {
+                if (actionConf.get(entry.getKey()) == null) {
+                    actionConf.set(entry.getKey(), entry.getValue());
+                }
+            }
+
             JobConf launcherJobConf = createLauncherConf(context, action, actionXml, actionConf);
             injectLauncherCallback(context, launcherJobConf);
             XLog.getLog(getClass()).debug("Creating Job Client for action " + action.getId());
@@ -502,7 +523,7 @@ public class JavaActionExecutor extends ActionExecutor {
                 if (runningJob == null) {
                     String jobTracker = launcherJobConf.get("mapred.job.tracker");
                     throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "JA017",
-                                                      "unknown job [{0}@{1}], cannot recover", launcherId, jobTracker);
+                            "unknown job [{0}@{1}], cannot recover", launcherId, jobTracker);
                 }
             }
             else {
@@ -515,10 +536,16 @@ public class JavaActionExecutor extends ActionExecutor {
                         + launcherJobConf.get(WorkflowAppService.HADOOP_JT_KERBEROS_NAME));
                 log.debug(WorkflowAppService.HADOOP_NN_KERBEROS_NAME + " = "
                         + launcherJobConf.get(WorkflowAppService.HADOOP_NN_KERBEROS_NAME));
+
+                // insert credentials tokens to launcher job conf
+                for (Token<? extends TokenIdentifier> tk : credentialsConf.getCredentials().getAllTokens()) {
+                    log.debug("ADDING TOKEN: " + tk.getKind().toString());
+                    launcherJobConf.getCredentials().addToken(tk.getKind(), tk);
+                }
                 runningJob = jobClient.submitJob(launcherJobConf);
                 if (runningJob == null) {
                     throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "JA017",
-                                                      "Error submitting launcher for action [{0}]", action.getId());
+                            "Error submitting launcher for action [{0}]", action.getId());
                 }
                 launcherId = runningJob.getID().toString();
                 XLog.getLog(getClass()).debug("After submission get the launcherId " + launcherId);
@@ -547,6 +574,109 @@ public class JavaActionExecutor extends ActionExecutor {
                 }
             }
         }
+    }
+
+    protected HashMap<String, CredentialsProperties> setAuthenticationPropertyToActionConf(Context context,
+            WorkflowAction action, Configuration actionConf) throws Exception {
+        HashMap<String, CredentialsProperties> credPropertiesMap = null;
+        if (context != null && action != null) {
+            credPropertiesMap = getActionCredentialsProperties(context, action);
+            if (credPropertiesMap != null) {
+                for (String key : credPropertiesMap.keySet()) {
+                    CredentialsProperties prop = credPropertiesMap.get(key);
+                    if (prop != null) {
+                        log.debug("Credential Properties set for Action: " + action.getId());
+                        for (String property : prop.getProperties().keySet()) {
+                            actionConf.set(property, prop.getProperties().get(property));
+                            log.debug("property : '" + property + "', value : '" + prop.getProperties().get(property) + "'");
+                        }
+                    }
+                }
+            }
+            else {
+                log.warn("No authentication properties found");
+            }
+        }
+        else {
+            log.warn("context or action is null");
+        }
+        return credPropertiesMap;
+    }
+
+    protected void setAuthenticationTokens(JobConf jobconf, Context context, WorkflowAction action,
+            HashMap<String, CredentialsProperties> credPropertiesMap) throws Exception {
+
+        if (context != null && action != null && credPropertiesMap != null) {
+            for (Entry<String, CredentialsProperties> entry : credPropertiesMap.entrySet()) {
+                String credName = entry.getKey();
+                CredentialsProperties credProps = entry.getValue();
+                if (credProps != null) {
+                    CredentialsProvider authprovider = new CredentialsProvider(credProps.getType());
+                    Credentials credentialObject = authprovider.createAuthenticator();
+                    if (credentialObject != null) {
+                        credentialObject.addtoJobConf(jobconf, credProps, context);
+                        log.debug("Retrieved Credential '" + credName + "' for action " + action.getId());
+                    }
+                    else {
+                        log.debug("Credentials object is null for name= " + credName + ", type=" + credProps.getType());
+                    }
+                }
+                else {
+                    log.warn("Could not find credentials properties for: " + credName);
+                }
+            }
+        }
+
+    }
+
+    protected HashMap<String, CredentialsProperties> getActionCredentialsProperties(Context context,
+            WorkflowAction action) throws Exception {
+        HashMap<String, CredentialsProperties> props = new HashMap<String, CredentialsProperties>();
+        if (context != null && action != null) {
+            String credsInAction = action.getCred();
+            log.debug("Auth credentials '" + credsInAction + "' for action name : " + action.getName());
+            String[] credNames = credsInAction.split(",");
+            for (String credName : credNames) {
+                CredentialsProperties authprop = getCredProperties(context, credName);
+                props.put(credName, authprop);
+            }
+        }
+        else {
+            log.warn("context or action is null");
+        }
+        return props;
+    }
+
+    @SuppressWarnings("unchecked")
+    protected CredentialsProperties getCredProperties(Context context, String credName)
+            throws Exception {
+        CredentialsProperties credProp = null;
+        String workflowXml = ((WorkflowJobBean) context.getWorkflow()).getWorkflowInstance().getApp().getDefinition();
+        Element elementJob = XmlUtils.parseXml(workflowXml);
+        Element authentications = elementJob.getChild("credentials", elementJob.getNamespace());
+        if (authentications != null) {
+            for (Element authentication : (List<Element>) authentications.getChildren("credential", authentications
+                    .getNamespace())) {
+                String name = authentication.getAttributeValue("name");
+                String type = authentication.getAttributeValue("type");
+                log.debug("getCredProperties: Name: " + name + ", Type: " + type);
+                if (name.equalsIgnoreCase(credName)) {
+                    credProp = new CredentialsProperties(name, type);
+                    for (Element property : (List<Element>) authentication.getChildren("property", authentication
+                            .getNamespace())) {
+                        credProp.getProperties().put(property.getChildText("name", property.getNamespace()),
+                                property.getChildText("value", property.getNamespace()));
+                        log.debug("getCredProperties: Properties name :'"
+                                + property.getChildText("name", property.getNamespace()) + "', Value : '"
+                                + property.getChildText("value", property.getNamespace()) + "'");
+                    }
+                }
+            }
+        }
+        else {
+            log.warn("authentications is null for the action");
+        }
+        return credProp;
     }
 
     void prepare(Context context, Element actionXml) throws ActionExecutorException {
@@ -583,7 +713,7 @@ public class JavaActionExecutor extends ActionExecutor {
         try {
             String externalStatus = action.getExternalStatus();
             WorkflowAction.Status status = externalStatus.equals(SUCCEEDED) ? WorkflowAction.Status.OK
-                                           : WorkflowAction.Status.ERROR;
+                    : WorkflowAction.Status.ERROR;
             context.setEndData(status, getActionSignal(status));
         }
         catch (Exception ex) {
@@ -602,6 +732,7 @@ public class JavaActionExecutor extends ActionExecutor {
 
     /**
      * Create job client object
+     *
      * @param context
      * @param jobConf
      * @return
@@ -629,8 +760,8 @@ public class JavaActionExecutor extends ActionExecutor {
                 context.setExternalStatus(FAILED);
                 context.setExecutionData(FAILED, null);
                 throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "JA017",
-                                                  "Unknown hadoop job [{0}] associated with action [{1}].  Failing this action!", action
-                        .getExternalId(), action.getId());
+                        "Unknown hadoop job [{0}] associated with action [{1}].  Failing this action!", action
+                                .getExternalId(), action.getId());
             }
             if (runningJob.isComplete()) {
                 Path actionDir = context.getActionDir();
@@ -649,17 +780,17 @@ public class JavaActionExecutor extends ActionExecutor {
                     if (runningJob == null) {
                         context.setExternalStatus(FAILED);
                         throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "JA017",
-                                                          "Unknown hadoop job [{0}] associated with action [{1}].  Failing this action!", newId,
-                                                          action.getId());
+                                "Unknown hadoop job [{0}] associated with action [{1}].  Failing this action!", newId,
+                                action.getId());
                     }
 
                     context.setStartData(newId, action.getTrackerUri(), runningJob.getTrackingURL());
                     XLog.getLog(getClass()).info(XLog.STD, "External ID swap, old ID [{0}] new ID [{1}]", launcherId,
-                                                 newId);
+                            newId);
                 }
                 if (runningJob.isComplete()) {
                     XLog.getLog(getClass()).info(XLog.STD, "action completed, external ID [{0}]",
-                                                 action.getExternalId());
+                            action.getExternalId());
                     if (runningJob.isSuccessful() && LauncherMapper.isMainSuccessful(runningJob)) {
                         Properties props = null;
                         if (getCaptureOutput(action)) {
@@ -705,13 +836,13 @@ public class JavaActionExecutor extends ActionExecutor {
                 else {
                     context.setExternalStatus(RUNNING);
                     XLog.getLog(getClass()).info(XLog.STD, "checking action, external ID [{0}] status [{1}]",
-                                                 action.getExternalId(), action.getExternalStatus());
+                            action.getExternalId(), action.getExternalStatus());
                 }
             }
             else {
                 context.setExternalStatus(RUNNING);
                 XLog.getLog(getClass()).info(XLog.STD, "checking action, external ID [{0}] status [{1}]",
-                                             action.getExternalId(), action.getExternalStatus());
+                        action.getExternalId(), action.getExternalStatus());
             }
         }
         catch (Exception ex) {

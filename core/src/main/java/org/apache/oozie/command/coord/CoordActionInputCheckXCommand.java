@@ -86,7 +86,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             LOG.info("[" + actionId
                     + "]::ActionInputCheck:: nominal Time is newer than current time, so requeue and wait. Current="
                     + currentTime + ", nominal=" + nominalTime);
-            
+
             return null;
         }
 
@@ -334,9 +334,11 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
     private boolean checkListOfPaths(StringBuilder existList, StringBuilder nonExistList, Configuration conf)
             throws IOException {
 
-        LOG.info("[" + actionId + "]::ActionInputCheck:: In checkListOfPaths for: " + nonExistList.toString());
-
         String[] uriList = nonExistList.toString().split(CoordELFunctions.INSTANCE_SEPARATOR);
+        if (uriList[0] != null) {
+            LOG.info("[" + actionId + "]::ActionInputCheck:: In checkListOfPaths: " + uriList[0] + " is Missing.");
+        }
+
         nonExistList.delete(0, nonExistList.length());
         boolean allExists = true;
         String existSeparator = "", nonExistSeparator = "";
@@ -468,7 +470,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                     + coordAction.getStatus());
         }
     }
-    
+
     /* (non-Javadoc)
      * @see org.apache.oozie.command.XCommand#getKey()
      */

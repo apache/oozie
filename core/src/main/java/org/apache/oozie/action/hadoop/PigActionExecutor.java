@@ -53,7 +53,7 @@ public class PigActionExecutor extends JavaActionExecutor {
     }
 
     @Override
-    Configuration setupLauncherConf(Configuration conf, Element actionXml, Path appPath, Context context)
+    protected Configuration setupLauncherConf(Configuration conf, Element actionXml, Path appPath, Context context)
             throws ActionExecutorException {
         super.setupLauncherConf(conf, actionXml, appPath, context);
         Namespace ns = actionXml.getNamespace();

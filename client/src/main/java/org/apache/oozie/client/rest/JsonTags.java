@@ -53,6 +53,7 @@ public interface JsonTags {
 
     public static final String WORKFLOW_ACTION_ID = "id";
     public static final String WORKFLOW_ACTION_NAME = "name";
+    public static final String WORKFLOW_ACTION_AUTH = "cred";
     public static final String WORKFLOW_ACTION_TYPE = "type";
     public static final String WORKFLOW_ACTION_CONF = "conf";
     public static final String WORKFLOW_ACTION_RETRIES = "retries";

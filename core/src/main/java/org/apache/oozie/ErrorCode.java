@@ -79,6 +79,7 @@ public enum ErrorCode {
     E0507(XLog.OPS, "Could not access to [{0}], {1}"),
     E0508(XLog.OPS, "User [{0}] not authorized for WF job [{1}]"),
     E0509(XLog.OPS, "User [{0}] not authorized for Coord job [{1}]"),
+    E0510(XLog.OPS, "Unable to get Credential [{0}]"),
 
     E0600(XLog.OPS, "Could not get connection, {0}"),
     E0601(XLog.OPS, "Could not close connection, {0}"),

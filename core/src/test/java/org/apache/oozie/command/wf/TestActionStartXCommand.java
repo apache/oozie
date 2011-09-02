@@ -32,7 +32,6 @@ import org.apache.oozie.action.hadoop.MapReduceActionExecutor;
 import org.apache.oozie.action.hadoop.MapperReducerForTest;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
-import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.XCommand;
 import org.apache.oozie.command.wf.ActionXCommand.ActionExecutorContext;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
@@ -186,6 +185,7 @@ public class TestActionStartXCommand extends XDataTestCase {
         WorkflowActionBean action = new WorkflowActionBean();
         String actionname = "testAction";
         action.setName(actionname);
+        action.setCred("null");
         action.setId(Services.get().get(UUIDService.class).generateChildId(wfId, actionname));
         action.setJobId(wfId);
         action.setType("map-reduce");

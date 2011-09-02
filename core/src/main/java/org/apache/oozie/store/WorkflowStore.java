@@ -781,7 +781,6 @@ public class WorkflowStore extends Store {
                 q.setParameter("endTime", maxEndTime);
                 q.setMaxResults(limit);
                 List<WorkflowJobBean> workflows = q.getResultList();
-                
                 int actionDeleted = 0;
                 if (workflows.size() != 0) {
                     for (WorkflowJobBean w : workflows) {
@@ -792,7 +791,6 @@ public class WorkflowStore extends Store {
                         actionDeleted += g.executeUpdate();
                     }
                 }
-
                 XLog.getLog(getClass()).debug("ENDED Workflow Purge deleted jobs :" + workflows.size() + " and actions " + actionDeleted);
                 return null;
             }
@@ -924,6 +922,7 @@ public class WorkflowStore extends Store {
             action.setExternalId(a.getExternalId());
             action.setExternalStatus(a.getExternalStatus());
             action.setName(a.getName());
+            action.setCred(a.getCred());
             action.setRetries(a.getRetries());
             action.setTrackerUri(a.getTrackerUri());
             action.setTransition(a.getTransition());
@@ -975,6 +974,7 @@ public class WorkflowStore extends Store {
         q.setParameter("externalId", aBean.getExternalId());
         q.setParameter("externalStatus", aBean.getExternalStatus());
         q.setParameter("name", aBean.getName());
+        q.setParameter("cred", aBean.getCred());
         q.setParameter("retries", aBean.getRetries());
         q.setParameter("trackerUri", aBean.getTrackerUri());
         q.setParameter("transition", aBean.getTransition());

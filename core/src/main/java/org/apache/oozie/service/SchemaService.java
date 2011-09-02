@@ -54,7 +54,8 @@ public class SchemaService implements Service {
 
     private Schema slaSchema;
 
-    private static final String OOZIE_WORKFLOW_XSD[] = { "oozie-workflow-0.1.xsd", "oozie-workflow-0.2.xsd" };
+    private static final String OOZIE_WORKFLOW_XSD[] = { "oozie-workflow-0.1.xsd", "oozie-workflow-0.2.xsd",
+            "oozie-workflow-0.2.5.xsd" };
     private static final String OOZIE_COORDINATOR_XSD[] = { "oozie-coordinator-0.1.xsd" };
     private static final String OOZIE_BUNDLE_XSD[] = { "oozie-bundle-0.1.xsd" };
     private static final String OOZIE_SLA_SEMANTIC_XSD[] = { "gms-oozie-sla-0.1.xsd" };

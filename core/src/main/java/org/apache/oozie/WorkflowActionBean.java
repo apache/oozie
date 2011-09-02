@@ -44,7 +44,7 @@ import org.apache.openjpa.persistence.jdbc.Index;
 @Entity
 @NamedQueries({
 
-    @NamedQuery(name = "UPDATE_ACTION", query = "update WorkflowActionBean a set a.conf = :conf, a.consoleUrl = :consoleUrl, a.data = :data, a.errorCode = :errorCode, a.errorMessage = :errorMessage, a.externalId = :externalId, a.externalStatus = :externalStatus, a.name = :name, a.retries = :retries, a.trackerUri = :trackerUri, a.transition = :transition, a.type = :type, a.endTimestamp = :endTime, a.executionPath = :executionPath, a.lastCheckTimestamp = :lastCheckTime, a.logToken = :logToken, a.pending = :pending, a.pendingAgeTimestamp = :pendingAge, a.signalValue = :signalValue, a.slaXml = :slaXml, a.startTimestamp = :startTime, a.status = :status, a.wfId=:wfId where a.id = :id"),
+    @NamedQuery(name = "UPDATE_ACTION", query = "update WorkflowActionBean a set a.conf = :conf, a.consoleUrl = :consoleUrl, a.data = :data, a.errorCode = :errorCode, a.errorMessage = :errorMessage, a.externalId = :externalId, a.externalStatus = :externalStatus, a.name = :name, a.cred = :cred , a.retries = :retries, a.trackerUri = :trackerUri, a.transition = :transition, a.type = :type, a.endTimestamp = :endTime, a.executionPath = :executionPath, a.lastCheckTimestamp = :lastCheckTime, a.logToken = :logToken, a.pending = :pending, a.pendingAgeTimestamp = :pendingAge, a.signalValue = :signalValue, a.slaXml = :slaXml, a.startTimestamp = :startTime, a.status = :status, a.wfId=:wfId where a.id = :id"),
 
     @NamedQuery(name = "DELETE_ACTION", query = "delete from WorkflowActionBean a where a.id = :id"),
 
@@ -136,6 +136,7 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
     public void write(DataOutput dataOutput) throws IOException {
         WritableUtils.writeStr(dataOutput, getId());
         WritableUtils.writeStr(dataOutput, getName());
+        WritableUtils.writeStr(dataOutput, getCred());
         WritableUtils.writeStr(dataOutput, getType());
         WritableUtils.writeStr(dataOutput, getConf());
         WritableUtils.writeStr(dataOutput, getStatusStr());
@@ -168,6 +169,7 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
     public void readFields(DataInput dataInput) throws IOException {
         setId(WritableUtils.readStr(dataInput));
         setName(WritableUtils.readStr(dataInput));
+        setCred(WritableUtils.readStr(dataInput));
         setType(WritableUtils.readStr(dataInput));
         setConf(WritableUtils.readStr(dataInput));
         setStatus(WorkflowAction.Status.valueOf(WritableUtils.readStr(dataInput)));

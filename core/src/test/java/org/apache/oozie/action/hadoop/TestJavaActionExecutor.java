@@ -21,17 +21,30 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.mapred.JobID;
+import org.apache.hadoop.security.token.Token;
+import org.apache.hadoop.security.token.TokenIdentifier;
 import org.apache.hadoop.filecache.DistributedCache;
+import org.apache.hadoop.io.Text;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.service.Services;
+import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.WorkflowAppService;
+import org.apache.oozie.service.WorkflowStoreService;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.util.IOUtils;
+import org.apache.oozie.workflow.WorkflowApp;
+import org.apache.oozie.workflow.WorkflowInstance;
+import org.apache.oozie.workflow.WorkflowLib;
+import org.apache.oozie.workflow.lite.EndNodeDef;
+import org.apache.oozie.workflow.lite.LiteWorkflowApp;
+import org.apache.oozie.workflow.lite.StartNodeDef;
 import org.jdom.Element;
 
 import java.io.File;
@@ -41,11 +54,14 @@ import java.io.FileInputStream;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 
 public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
+    @Override
     protected void setSystemProps() {
         super.setSystemProps();
         setSystemProperty("oozie.service.ActionService.executor.classes", JavaActionExecutor.class.getName());
@@ -643,4 +659,95 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertFalse(fs.exists(delete));
     }
 
+    public void testCredentialsModule() throws Exception {
+        String actionXml = "<workflow-app xmlns='uri:oozie:workflow:0.2.5' name='pig-wf'>" + "<credentials>"
+                + "<credential name='abcname' type='abc'>" + "<property>" + "<name>property1</name>"
+                + "<value>value1</value>" + "</property>" + "<property>" + "<name>property2</name>"
+                + "<value>value2</value>" + "</property>" + "</credential>" + "</credentials>"
+                + "<start to='pig1' />" + "<action name='pig1' auth='abcname'>" + "<pig>" + "</pig>"
+                + "<ok to='end' />" + "<error to='fail' />" + "</action>" + "<kill name='fail'>"
+                + "<message>Pig failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>" + "</kill>"
+                + "<end name='end' />" + "</workflow-app>";
+
+        JavaActionExecutor ae = new JavaActionExecutor();
+        WorkflowJobBean wfBean = addRecordToWfJobTable("test1", actionXml);
+        WorkflowActionBean action = (WorkflowActionBean) wfBean.getActions().get(0);
+        action.setType(ae.getType());
+        action.setCred("abcname");
+        String actionxml = "<pig>" + "<job-tracker>${jobTracker}</job-tracker>" + "<name-node>${nameNode}</name-node>"
+                + "<prepare>" + "<delete path='outputdir' />" + "</prepare>" + "<configuration>" + "<property>"
+                + "<name>mapred.compress.map.output</name>" + "<value>true</value>" + "</property>" + "<property>"
+                + "<name>mapred.job.queue.name</name>" + "<value>${queueName}</value>" + "</property>"
+                + "</configuration>" + "<script>org/apache/oozie/examples/pig/id.pig</script>"
+                + "<param>INPUT=${inputDir}</param>" + "<param>OUTPUT=${outputDir}/pig-output</param>" + "</pig>";
+        action.setConf(actionxml);
+        Context context = new Context(wfBean, action);
+
+        Element actionXmlconf = XmlUtils.parseXml(action.getConf());
+        // action job configuration
+        Configuration actionConf = ae.createBaseHadoopConf(context, actionXmlconf);
+
+        // Setting the authentication properties in launcher conf
+        HashMap<String, CredentialsProperties> authProperties = ae.setAuthenticationPropertyToActionConf(context,
+                action, actionConf);
+
+        CredentialsProperties prop = authProperties.get("abcname");
+        assertEquals("value1", prop.getProperties().get("property1"));
+        assertEquals("value2", prop.getProperties().get("property2"));
+
+        Configuration conf = Services.get().getConf();
+        conf.set("oozie.credentials.credentialclasses", "abc=org.apache.oozie.action.hadoop.InsertTestToken");
+
+        // Adding if action need to set more authentication tokens
+        JobConf credentialsConf = new JobConf();
+        Configuration launcherConf = ae.createBaseHadoopConf(context, actionXmlconf);
+        XConfiguration.copy(launcherConf, credentialsConf);
+        ae.setAuthenticationTokens(credentialsConf, context, action, authProperties);
+
+        Token<? extends TokenIdentifier> tk = credentialsConf.getCredentials().getToken(new Text("ABC Token"));
+        assertNotNull(tk);
+    }
+
+    private WorkflowJobBean addRecordToWfJobTable(String wfId, String wfxml) throws Exception {
+        WorkflowApp app = new LiteWorkflowApp("testApp", wfxml, new StartNodeDef("start"))
+                .addNode(new EndNodeDef("end"));
+        Configuration conf = new Configuration();
+        conf.set(OozieClient.APP_PATH, "testPath");
+        conf.set(OozieClient.LOG_TOKEN, "testToken");
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        conf.set(OozieClient.GROUP_NAME, getTestGroup());
+        injectKerberosInfo(conf);
+        WorkflowJobBean wfBean = createWorkflow(app, conf, "auth");
+        wfBean.setId(wfId);
+        wfBean.setStatus(WorkflowJob.Status.SUCCEEDED);
+        WorkflowActionBean action = new WorkflowActionBean();
+        action.setName("test");
+        action.setCred("null");
+        action.setId(Services.get().get(UUIDService.class).generateChildId(wfBean.getId(), "test"));
+        wfBean.getActions().add(action);
+        return wfBean;
+    }
+
+    private WorkflowJobBean createWorkflow(WorkflowApp app, Configuration conf, String authToken) throws Exception {
+        WorkflowAppService wps = Services.get().get(WorkflowAppService.class);
+        Configuration protoActionConf = wps.createProtoActionConf(conf, authToken, true);
+        WorkflowLib workflowLib = Services.get().get(WorkflowStoreService.class).getWorkflowLibWithNoDB();
+        WorkflowInstance wfInstance;
+        wfInstance = workflowLib.createInstance(app, conf);
+        WorkflowJobBean workflow = new WorkflowJobBean();
+        workflow.setId(wfInstance.getId());
+        workflow.setAppName(app.getName());
+        workflow.setAppPath(conf.get(OozieClient.APP_PATH));
+        workflow.setConf(XmlUtils.prettyPrint(conf).toString());
+        workflow.setProtoActionConf(XmlUtils.prettyPrint(protoActionConf).toString());
+        workflow.setCreatedTime(new Date());
+        workflow.setLogToken(conf.get(OozieClient.LOG_TOKEN, ""));
+        workflow.setStatus(WorkflowJob.Status.PREP);
+        workflow.setRun(0);
+        workflow.setUser(conf.get(OozieClient.USER_NAME));
+        workflow.setGroup(conf.get(OozieClient.GROUP_NAME));
+        workflow.setAuthToken(authToken);
+        workflow.setWorkflowInstance(wfInstance);
+        return workflow;
+    }
 }
