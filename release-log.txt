@@ -1,5 +1,6 @@
 -- Oozie 2.3.0 release
 
+GH-0064 Create a config to turn on openjpa log
 GH-0238 it should be possible to submit oozie pig jobs using the system library by default
 GH-0237 oozie pig jobs fail to add oozie.libpath to the DistributedCache (regression)
 GH-0236 add support for -Dname=value to oozie CLI and make -config optional
