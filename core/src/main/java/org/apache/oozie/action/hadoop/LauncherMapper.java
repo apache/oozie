@@ -170,6 +170,9 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         launcherConf.set(OOZIE_ACTION_DIR_PATH, actionDir.toString());
         launcherConf.set(OOZIE_ACTION_RECOVERY_ID, recoveryId);
 
+        actionConf.set(OOZIE_JOB_ID, jobId);
+        actionConf.set(OOZIE_ACTION_ID, actionId);
+
         FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(launcherConf.get("user.name"),
                 launcherConf.get("group.name"), launcherConf);
         fs.mkdirs(actionDir);

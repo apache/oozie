@@ -14,6 +14,7 @@
  */
 package org.apache.oozie.action.hadoop;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -66,7 +67,12 @@ public class TestLauncher extends XFsTestCase {
         LauncherMapper lm = new LauncherMapper();
         lm.setupMainClass(jobConf, LauncherMainTester.class.getName());
         lm.setupMainArguments(jobConf, arg);
-        lm.setupLauncherInfo(jobConf, "1", "1@a", actionDir, "1@a-0", new XConfiguration());
+
+        Configuration actionConf = new XConfiguration();
+        lm.setupLauncherInfo(jobConf, "1", "1@a", actionDir, "1@a-0", actionConf);
+
+        assertEquals("1", actionConf.get("oozie.job.id"));
+        assertEquals("1@a", actionConf.get("oozie.action.id"));
 
         DistributedCache.addFileToClassPath(new Path(launcherJar.toUri().getPath()), jobConf);
 
