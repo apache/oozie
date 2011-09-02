@@ -117,9 +117,16 @@ public class BundleRerunXCommand extends RerunTransitionXCommand<Void> {
                         continue;
                     }
                     CoordinatorJobBean coordJob = getCoordJob(coordId);
-                    String coordStart = DateUtils.convertDateToString(coordJob.getStartTime());
-                    String coordEnd = DateUtils.convertDateToString(coordJob.getEndTime());
-                    String rerunDateScope = coordStart + "::" + coordEnd;
+                    
+                    String rerunDateScope;
+                    if (dateScope != null && !dateScope.isEmpty()) {
+                        rerunDateScope = dateScope;
+                    }
+                    else {
+                        String coordStart = DateUtils.convertDateToString(coordJob.getStartTime());
+                        String coordEnd = DateUtils.convertDateToString(coordJob.getEndTime());
+                        rerunDateScope = coordStart + "::" + coordEnd;
+                    }
                     LOG.debug("Queuing rerun range [" + rerunDateScope + "] for coord id " + coordId + " of bundle "
                             + bundleJob.getId());
                     queue(new CoordRerunXCommand(coordId, RestConstants.JOB_COORD_RERUN_DATE, rerunDateScope, refresh,
