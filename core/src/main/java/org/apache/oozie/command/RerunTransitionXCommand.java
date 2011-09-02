@@ -69,8 +69,8 @@ public abstract class RerunTransitionXCommand<T> extends TransitionXCommand<T> {
         getLog().info("STARTED " + getClass().getSimpleName() + " for jobId=" + jobId);
         try {
             transitToNext();
-            updateJob();
             rerunChildren();
+            updateJob();
         }
         finally {
             notifyParent();
