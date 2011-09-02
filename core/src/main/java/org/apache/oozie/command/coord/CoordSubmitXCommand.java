@@ -184,6 +184,16 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
 
             String appXml = readAndValidateXml();
             coordJob.setOrigJobXml(appXml);
+
+            if (this.bundleId != null) {
+                // this coord job is created from bundle
+                coordJob.setBundleId(this.bundleId);
+            }
+            if (this.coordName != null) {
+                // this coord job is created from bundle
+                coordJob.setAppName(this.coordName);
+            }
+
             log.debug("jobXml after initial validation " + XmlUtils.prettyPrint(appXml).toString());
             appXml = XmlUtils.removeComments(appXml);
             initEvaluators();
@@ -193,7 +203,6 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
             jobId = storeToDB(eJob, coordJob);
             // log job info for coordinator jobs
             LogUtils.setLogInfo(coordJob, logInfo);
-            prevStatus = CoordinatorJob.Status.PREP;
 
             if (!dryrun) {
                 // submit a command to materialize jobs for the next 1 hour (3600 secs)
@@ -253,6 +262,7 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
                 bundleStatusUpdate.call();
             }
         }
+
         log.info("ENDED Coordinator Submit jobId=" + jobId);
         return jobId;
     }
@@ -827,17 +837,11 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
         String jobId = Services.get().get(UUIDService.class).generateId(ApplicationType.COORDINATOR);
         coordJob.setId(jobId);
         coordJob.setAuthToken(this.authToken);
-        if (this.bundleId != null) {
-            // this coord job is created from bundle
-            coordJob.setBundleId(this.bundleId);
-        }
-        if (this.coordName != null) {
-            // this coord job is created from bundle
-            coordJob.setAppName(this.coordName);
-        }
-        else {
+
+        if (this.coordName == null) {
             coordJob.setAppName(eJob.getAttributeValue("name"));
         }
+
         coordJob.setAppPath(conf.get(OozieClient.COORDINATOR_APP_PATH));
         coordJob.setStatus(CoordinatorJob.Status.PREP);
         coordJob.setCreatedTime(new Date());

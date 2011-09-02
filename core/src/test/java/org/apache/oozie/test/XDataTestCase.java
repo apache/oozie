@@ -375,6 +375,29 @@ public abstract class XDataTestCase extends XFsTestCase {
         }
         return bundle;
     }
+    
+    /**
+     * Insert a bad bundle job for testing negative cases.
+     *
+     * @param jobStatus
+     * @return bundle job bean
+     * @throws Exception
+     */
+    protected BundleJobBean addRecordToBundleJobTableNegative(Job.Status jobStatus) throws Exception {
+        BundleJobBean bundle = createBundleJobNegative(jobStatus);
+        try {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            assertNotNull(jpaService);
+            BundleJobInsertJPAExecutor bundleInsertjpa = new BundleJobInsertJPAExecutor(bundle);
+            jpaService.execute(bundleInsertjpa);
+        }
+        catch (JPAExecutorException ce) {
+            ce.printStackTrace();
+            fail("Unable to insert the test bundle job record to table");
+            throw ce;
+        }
+        return bundle;
+    }
 
     /**
      * Read coord job xml from test resources
@@ -622,6 +645,53 @@ public abstract class XDataTestCase extends XFsTestCase {
         //TODO bundle.setStartTime(startTime);
         //TODO bundle.setEndTime(endTime);
         //TODO bundle.setExternalId(externalId);
+        bundle.setJobXml(bundleAppXml);
+        bundle.setLastModifiedTime(new Date());
+        bundle.setOrigJobXml(bundleAppXml);
+        bundle.resetPending();
+        bundle.setStatus(jobStatus);
+        bundle.setUser(conf.get(OozieClient.USER_NAME));
+        bundle.setGroup(conf.get(OozieClient.GROUP_NAME));
+
+        return bundle;
+    }
+    
+    /**
+     * Create bundle job that contains bad coordinator jobs
+     *
+     * @param jobStatus
+     * @return bundle job bean
+     * @throws Exception
+     */
+    protected BundleJobBean createBundleJobNegative(Job.Status jobStatus) throws Exception {
+        Path coordPath1 = new Path(getFsTestCaseDir(), "coord1");
+        Path coordPath2 = new Path(getFsTestCaseDir(), "coord2");
+        writeCoordXml(coordPath1, "coord-job-bundle-negative.xml");
+        writeCoordXml(coordPath2, "coord-job-bundle-negative.xml");
+
+        Path bundleAppPath = new Path(getFsTestCaseDir(), "bundle");
+        String bundleAppXml = getBundleXml("bundle-submit-job.xml");
+
+        bundleAppXml = bundleAppXml.replaceAll("#app_path1", coordPath1.toString() + File.separator + "coordinator.xml");
+        bundleAppXml = bundleAppXml.replaceAll("#app_path2", coordPath2.toString() + File.separator + "coordinator.xml");
+        writeToFile(bundleAppXml, bundleAppPath, "bundle.xml");
+
+        Configuration conf = new XConfiguration();
+        conf.set(OozieClient.BUNDLE_APP_PATH, bundleAppPath.toString());
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        conf.set(OozieClient.GROUP_NAME, getTestGroup());
+        conf.set("jobTracker", getJobTrackerUri());
+        conf.set("nameNode", getNameNodeUri());
+        injectKerberosInfo(conf);
+
+        BundleJobBean bundle = new BundleJobBean();
+        bundle.setId(Services.get().get(UUIDService.class).generateId(ApplicationType.BUNDLE));
+        bundle.setAppName("BUNDLE-TEST");
+        bundle.setAppPath(bundleAppPath.toString());
+        bundle.setAuthToken("authToken");
+        bundle.setConf(XmlUtils.prettyPrint(conf).toString());
+        bundle.setConsoleUrl("consoleUrl");
+        bundle.setCreatedTime(new Date());
         bundle.setJobXml(bundleAppXml);
         bundle.setLastModifiedTime(new Date());
         bundle.setOrigJobXml(bundleAppXml);

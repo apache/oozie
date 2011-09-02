@@ -24,6 +24,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.client.Job;
+import org.apache.oozie.command.bundle.BundleKillXCommand;
 import org.apache.oozie.executor.jpa.BundleActionsGetByLastModifiedTimeJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleActionsGetJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
@@ -113,9 +114,18 @@ public class StatusTransitService implements Service {
                     for (BundleJobBean bundleJob : runningJobCheckList) {
                         String jobId = bundleJob.getId();
                         List<BundleActionBean> actionList = jpaService.execute(new BundleActionsGetJPAExecutor(jobId));
+                        
+                        // If all actions succeed, bundle succeeds; 
                         if (checkAllBundleActionsSucceeded(actionList)) {
                             bundleJob.setStatus(Job.Status.SUCCEEDED);
                             jpaService.execute(new BundleJobUpdateJPAExecutor(bundleJob));
+                        }
+                        
+                        // If all actions finish submission and some submission failed, 
+                        // kill the whole bundle;
+                        if (checkActionSubmitFail(actionList)) {
+                            (new BundleKillXCommand(jobId)).call();
+                            LOG.info("Bundle " + jobId + " has been killed since one of its coordinator job failed submission.");
                         }
                     }
 
@@ -156,6 +166,24 @@ public class StatusTransitService implements Service {
             }
             
             return succeeded;
+        }
+        
+        // If all actions finish submission and some submission failed, return true;
+        // Otherwise return false;
+        private boolean checkActionSubmitFail(List<BundleActionBean> actionList) {
+            for (BundleActionBean action : actionList) {
+                if (action.getPending() != 0) {
+                    return false;
+                }
+            }
+
+            for (BundleActionBean action : actionList) {
+                if ( (action.getStatus() == Job.Status.FAILED) && (action.getCoordId() == null)) {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 

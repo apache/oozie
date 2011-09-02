@@ -176,7 +176,7 @@ public class TestBundleStartXCommand extends XDataTestCase {
      *
      * @throws Exception
      */
-    public void testBundleStartFailed() throws Exception {
+    public void testBundleStartNegative1() throws Exception {
         this.addRecordToBundleJobTable(Job.Status.PREP);
 
         try {
@@ -186,5 +186,31 @@ public class TestBundleStartXCommand extends XDataTestCase {
         catch (CommandException ce) {
             // Job doesn't exist. Exception is expected.
         }
+    }
+    
+    /**
+     * Test : Start bundle job that contains bad coordinator job
+     *
+     * @throws Exception
+     */
+    public void testBundleStartNegative2() throws Exception {
+        BundleJobBean job = this.addRecordToBundleJobTableNegative(Job.Status.PREP);
+
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+        final BundleJobGetJPAExecutor bundleJobGetExecutor = new BundleJobGetJPAExecutor(job.getId());
+        job = jpaService.execute(bundleJobGetExecutor);
+        assertEquals(job.getStatus(), Job.Status.PREP);
+
+        new BundleStartXCommand(job.getId()).call();
+
+        waitFor(120000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                BundleJobBean job1 = jpaService.execute(bundleJobGetExecutor);
+                return job1.getStatus().equals(Job.Status.KILLED);
+            }
+        });
+        job = jpaService.execute(bundleJobGetExecutor);
+        assertEquals(job.getStatus(), Job.Status.KILLED);
     }
 }
