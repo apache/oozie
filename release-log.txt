@@ -1,5 +1,6 @@
 -- Oozie 2.3.0 release
 
+GH-0183 update Oozie build to use Hadoop 0.20.104.2
 GH-0060 actions should not be materialized after nominal time for current mode jobs 
 GH-0026 add support for multiple workflow XMLs in a single HDFS
 GH-0091 typos in workflow spec doc

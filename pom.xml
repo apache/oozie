@@ -44,7 +44,7 @@
 
         <hadoopGroupId>com.yahoo.hadoop</hadoopGroupId>
 
-        <hadoopVersion>0.20.104.1</hadoopVersion>
+        <hadoopVersion>0.20.104.2</hadoopVersion>
 
         <pigGroupId>com.yahoo.hadoop</pigGroupId>
 
