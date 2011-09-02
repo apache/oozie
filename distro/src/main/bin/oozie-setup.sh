@@ -117,9 +117,7 @@ fi
 rm -rf ${outputWarExpanded}
 
 if [ "${addExtjs}${addJars}${addHadoopJars}" == "" ]; then
-  echo
-  echo "Default installation, Oozie webconsole disabled"
-  echo
+  echo "INFO: Default installation, Oozie webconsole disabled"
   cp ${inputWar} ${outputWar}
 else
   OPTIONS=""
@@ -140,6 +138,4 @@ else
   fi
 fi
 
-echo
-echo "Oozie at ${BASEDIR} is ready to be started"
-echo
+echo "INFO: Oozie at ${BASEDIR} is ready to be started"

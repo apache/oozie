@@ -31,17 +31,22 @@ BASEDIR=`dirname ${PRG}`
 BASEDIR=`cd ${BASEDIR}/..;pwd`
 
 if [ ! -e "${BASEDIR}/oozie-server/webapps/oozie.war" ]; then
-  echo
-  echo "Oozie server has not been set up, setting it up"
-  echo
+  echo "INFO: Oozie WAR has not been set up, setting it up"
   ${BASEDIR}/bin/oozie-setup.sh
 fi
 
 if [ "${OOZIE_HOME}" = "" ]; then
-  echo
-  echo "OOZIE_HOME environment variable not defined, setting it to ${BASEDIR}"
   export OOZIE_HOME=${BASEDIR}
-  echo
+fi
+echo "Using OOZIE_HOME:       ${OOZIE_HOME}"
+
+if [ "${OOZIE_CONFIG_DIR}" = "" ]; then
+  OOZIE_CONFIG_DIR=${OOZIE_HOME}/conf
+fi
+echo "Using OOZIE_CONFIG_DIR: ${OOZIE_CONFIG_DIR}"
+
+if [ -e "${OOZIE_CONFIG_DIR}/oozie-env.sh" ]; then
+  source ${OOZIE_CONFIG_DIR}/oozie-env.sh
 fi
 
 if [ "${OOZIE_HTTP_PORT}" = "" ]; then
@@ -54,14 +59,12 @@ if [ "${OOZIE_BASE_URL}" = "" ]; then
   OOZIE_BASE_URL="http://${OOZIE_HTTP_HOSTNAME}:${OOZIE_HTTP_PORT}/oozie"
 fi
 
-echo
-echo "Starting Oozie on port ${OOZIE_HTTP_PORT} (to change set OOZIE_HTTP_PORT)"
-echo
-echo "Oozie base URL ${OOZIE_BASE_URL} (to change set OOZIE_HTTP_HOSTNAME or OOZIE_BASE_URL)"
-echo
-echo "(Oozie uses a Tomcat server running from ${BASEDIR}/oozie-server)"
+echo "Using [HOST:PORT]:      [${OOZIE_HTTP_HOSTNAME}:${OOZIE_HTTP_PORT}]"
 echo
 
+# The Java System property 'oozie.http.port' it is not used by Oozie,
+# it is used in Tomcat's server.xml configuration file
+#
 export CATALINA_OPTS="${CATALINA_OPTS} -Doozie.http.port=${OOZIE_HTTP_PORT} -Doozie.base.url=${OOZIE_BASE_URL}"
 
 ${BASEDIR}/oozie-server/bin/catalina.sh start 
