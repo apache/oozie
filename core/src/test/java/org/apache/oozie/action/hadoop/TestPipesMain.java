@@ -98,7 +98,8 @@ public class TestPipesMain extends MainTestCase {
 
         jobConf.set("oozie.pipes.program", programPath.toUri().getPath());
         jobConf.setBoolean("hadoop.pipes.java.recordreader", true);
-
+        injectKerberosInfo(jobConf);
+        
         DistributedCache.addCacheFile(new URI(programPath.toUri().getPath()), fs.getConf());
 
         File actionXml = new File(getTestCaseDir(), "action.xml");

@@ -304,8 +304,8 @@ public class CoordActionInputCheckCommand extends CoordinatorCommand<Void> {
         String user = ParamChecker.notEmpty(actionConf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
         String group = ParamChecker.notEmpty(actionConf.get(OozieClient.GROUP_NAME), OozieClient.GROUP_NAME);
         try {
-            return Services.get().get(HadoopAccessorService.class).createFileSystem(user, group, path.toUri(),
-                    new Configuration()).exists(path);
+            return Services.get().get(HadoopAccessorService.class).
+                    createFileSystem(user, group, path.toUri(), actionConf).exists(path);
         }
         catch (HadoopAccessorException e) {
             throw new IOException(e);

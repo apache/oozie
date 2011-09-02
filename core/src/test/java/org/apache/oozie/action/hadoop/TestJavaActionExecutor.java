@@ -144,6 +144,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         protoConf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
         protoConf.set(OozieClient.GROUP_NAME, getTestGroup());
         protoConf.setStrings(WorkflowAppService.APP_LIB_PATH_LIST, appJarPath.toString(), appSoPath.toString());
+        injectKerberosInfo(protoConf);
 
         WorkflowJobBean wf = createBaseWorkflow(protoConf, "action");
         WorkflowActionBean action = (WorkflowActionBean) wf.getActions().get(0);
@@ -243,6 +244,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         protoConf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
         protoConf.set(OozieClient.GROUP_NAME, getTestGroup());
         protoConf.setStrings(WorkflowAppService.APP_LIB_PATH_LIST, appJarPath.toString(), appSoPath.toString());
+        injectKerberosInfo(protoConf);
 
         WorkflowJobBean wf = createBaseWorkflow(protoConf, "action");
         WorkflowActionBean action = (WorkflowActionBean) wf.getActions().get(0);
@@ -269,13 +271,14 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         JobConf jobConf = new JobConf();
         jobConf.set("mapred.job.tracker", jobTracker);
+        injectKerberosInfo(jobConf);
         JobClient jobClient = new JobClient(jobConf);
         final RunningJob runningJob = jobClient.getJob(JobID.forName(jobId));
         assertNotNull(runningJob);
         return runningJob;
     }
 
-    public void testSimpleSubmitOK() throws Exception {
+    public void testSimpestSleSubmitOK() throws Exception {
         String actionXml = "<java>" +
                 "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" +

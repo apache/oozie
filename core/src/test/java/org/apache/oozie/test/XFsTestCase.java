@@ -58,6 +58,7 @@ public abstract class XFsTestCase extends XTestCase {
                         System.getProperty("oozie.test.hadoop.security", "simple").equals("kerberos"));
         conf.set("oozie.service.HadoopAccessorService.keytab.file", getKeytabFile());
         conf.set("oozie.service.HadoopAccessorService.kerberos.principal", getOoziePrincipal());
+        conf.set("local.realm", getRealm());
         injectKerberosInfo(conf);
 
         Class hasClass;
@@ -141,6 +142,7 @@ public abstract class XFsTestCase extends XTestCase {
         JobConf conf = new JobConf();
         conf.set("mapred.job.tracker", getJobTrackerUri());
         conf.set("fs.default.name", getNameNodeUri());
+        injectKerberosInfo(conf);
         return has.createJobClient(getTestUser(), getTestGroup(), conf);
     }
 

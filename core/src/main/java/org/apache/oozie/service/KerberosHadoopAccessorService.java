@@ -56,6 +56,8 @@ public class KerberosHadoopAccessorService extends HadoopAccessorService {
 
     private ConcurrentMap<String, UserGroupInformation> userUgiMap;
 
+    private String localRealm;
+
     public void init(Configuration serviceConf) throws ServiceException {
         boolean kerberosAuthOn = serviceConf.getBoolean(KERBEROS_AUTH_ENABLED, true);
         XLog.getLog(getClass()).info("Oozie Kerberos Authentication [{0}]", (kerberosAuthOn) ? "enabled" : "disabled");
@@ -89,6 +91,8 @@ public class KerberosHadoopAccessorService extends HadoopAccessorService {
             conf.set("hadoop.security.authentication", "simple");
             UserGroupInformation.setConfiguration(conf);
         }
+        localRealm = serviceConf.get("local.realm");
+
         userUgiMap = new ConcurrentHashMap<String, UserGroupInformation>();
     }
 
@@ -188,6 +192,10 @@ public class KerberosHadoopAccessorService extends HadoopAccessorService {
             return ugi.doAs(new PrivilegedExceptionAction<FileSystem>() {
                 public FileSystem run() throws Exception {
                     Configuration defaultConf = new Configuration();
+
+                    defaultConf.set(WorkflowAppService.HADOOP_JT_KERBEROS_NAME, "mapred/_HOST@" + localRealm);
+                    defaultConf.set(WorkflowAppService.HADOOP_NN_KERBEROS_NAME, "hdfs/_HOST@" + localRealm);
+
                     XConfiguration.copy(conf, defaultConf);
                     return FileSystem.get(uri, defaultConf);
                 }

@@ -105,10 +105,7 @@ public class CoordELEvaluator {
         appInst.setNominalTime(nominalTime);
         appInst.setActualTime(actualTime);// TODO:
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
-        // Configuration tmpConf = new Configuration();
-        Configuration tmpConf = CoordUtils.getHadoopConf(conf);
-        // TODO:Set hadoop properties
-        eval.setVariable(CoordELFunctions.CONFIGURATION, tmpConf);
+        eval.setVariable(CoordELFunctions.CONFIGURATION, conf);
         return eval;
     }
 

@@ -75,6 +75,7 @@ public class TestCoordSubmitCommand extends XTestCase {
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set(OozieClient.GROUP_NAME, "other");
+        injectKerberosInfo(conf);
         CoordSubmitCommand sc = new CoordSubmitCommand(conf, "UNIT_TESTING");
         String jobId = sc.call();
 
@@ -126,6 +127,7 @@ public class TestCoordSubmitCommand extends XTestCase {
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set(OozieClient.GROUP_NAME, "other");
+        injectKerberosInfo(conf);
         CoordSubmitCommand sc = new CoordSubmitCommand(conf, "UNIT_TESTING");
         String jobId = sc.call();
 
@@ -160,6 +162,7 @@ public class TestCoordSubmitCommand extends XTestCase {
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set(OozieClient.GROUP_NAME, "other");
+        injectKerberosInfo(conf);
         CoordSubmitCommand sc = new CoordSubmitCommand(conf, "UNIT_TESTING");
         String jobId = sc.call();
 
@@ -194,6 +197,7 @@ public class TestCoordSubmitCommand extends XTestCase {
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set(OozieClient.GROUP_NAME, "other");
+        injectKerberosInfo(conf);
         CoordSubmitCommand sc = new CoordSubmitCommand(conf, "UNIT_TESTING");
         String jobId = null;
         try {
@@ -224,6 +228,7 @@ public class TestCoordSubmitCommand extends XTestCase {
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set(OozieClient.GROUP_NAME, "other");
+        injectKerberosInfo(conf);
         CoordSubmitCommand sc = new CoordSubmitCommand(conf, "UNIT_TESTING");
         String jobId = sc.call();
 
@@ -250,6 +255,7 @@ public class TestCoordSubmitCommand extends XTestCase {
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         // conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set(OozieClient.GROUP_NAME, "other");
+        injectKerberosInfo(conf);
         CoordSubmitCommand sc = new CoordSubmitCommand(conf, "UNIT_TESTING");
         String jobId = null;
         try {
@@ -278,6 +284,7 @@ public class TestCoordSubmitCommand extends XTestCase {
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set(OozieClient.GROUP_NAME, "other");
+        injectKerberosInfo(conf);
         CoordSubmitCommand sc = new CoordSubmitCommand(conf, "UNIT_TESTING");
         String jobId = sc.call();
 
@@ -319,6 +326,7 @@ public class TestCoordSubmitCommand extends XTestCase {
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set(OozieClient.GROUP_NAME, "other");
         conf.set("MY_DONE_FLAG", "complete");
+        injectKerberosInfo(conf);
         CoordSubmitCommand sc = new CoordSubmitCommand(conf, "UNIT_TESTING");
         String jobId = sc.call();
 
@@ -344,6 +352,7 @@ public class TestCoordSubmitCommand extends XTestCase {
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set(OozieClient.GROUP_NAME, "other");
         conf.set("MINUTES", "1");
+        injectKerberosInfo(conf);
         CoordSubmitCommand sc = new CoordSubmitCommand(conf, "UNIT_TESTING");
 
         try {

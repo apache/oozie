@@ -88,7 +88,7 @@ public class TestAuthorizationService extends XFsTestCase {
         final String jobId = engine.submitJob(jobConf, true);
 
         FileSystem fileSystem = Services.get().get(HadoopAccessorService.class).
-                createFileSystem(getTestUser(), getTestGroup(), getFileSystem().getUri(), new Configuration());
+                createFileSystem(getTestUser(), getTestGroup(), getFileSystem().getUri(), jobConf);
 
         Path path = new Path(fileSystem.getWorkingDirectory(), getTestCaseDir().substring(1));
         Path fsTestDir = fileSystem.makeQualified(path);
@@ -155,8 +155,9 @@ public class TestAuthorizationService extends XFsTestCase {
         AuthorizationService as = services.get(AuthorizationService.class);
 
         Configuration conf = new Configuration();
+        injectKerberosInfo(conf);
         FileSystem fileSystem = Services.get().get(HadoopAccessorService.class).
-                createFileSystem(getTestUser(), getTestGroup(), getFileSystem().getUri(), new Configuration());
+                createFileSystem(getTestUser(), getTestGroup(), getFileSystem().getUri(), conf);
 
         try {
             as.authorizeForGroup(getTestUser3(), getTestGroup());

@@ -60,13 +60,13 @@ public class TestCoordRerunCommand extends XFsTestCase {
         services = new Services();
         services.init();
         cleanUpDBTables();
+        services.destroy();
         LocalOozie.start();
     }
 
     @Override
     protected void tearDown() throws Exception {
         LocalOozie.stop();
-        services.destroy();
         super.tearDown();
     }
 

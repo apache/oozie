@@ -59,6 +59,7 @@ public class TestLauncher extends XFsTestCase {
 
         jobConf.set("mapred.job.tracker", getJobTrackerUri());
         jobConf.set("fs.default.name", getNameNodeUri());
+        injectKerberosInfo(jobConf);
 
         LauncherMapper lm = new LauncherMapper();
         lm.setupMainClass(jobConf, LauncherMainTester.class.getName());

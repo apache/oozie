@@ -120,6 +120,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
             jobConf.set(OozieClient.USER_NAME, getTestUser());
             jobConf.set(OozieClient.GROUP_NAME, "group");
+            injectKerberosInfo(jobConf);
 
             WorkflowApp app = wps.parseDef(jobConf, "authToken");
             assertNotNull(app);
@@ -160,6 +161,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
             jobConf.set(OozieClient.USER_NAME, getTestUser());
             jobConf.set(OozieClient.GROUP_NAME, "group");
+            injectKerberosInfo(jobConf);
 
             LiteWorkflowApp app = (LiteWorkflowApp) wps.parseDef(jobConf, "authToken");
             assertNotNull(app);
@@ -227,6 +229,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
             jobConf.set(OozieClient.USER_NAME, getTestUser());
             jobConf.set(OozieClient.GROUP_NAME, "group");
+            injectKerberosInfo(jobConf);
 
             LiteWorkflowApp app = (LiteWorkflowApp) wps.parseDef(jobConf, "authToken");
             assertNotNull(app);

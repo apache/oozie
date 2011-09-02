@@ -38,7 +38,7 @@ public class FsELFunctions {
         String user = workflow.getUser();
         String group = workflow.getGroup();
         return Services.get().get(HadoopAccessorService.class).
-                createFileSystem(user, group, uri, new Configuration());
+                createFileSystem(user, group, uri, DagELFunctions.getProtoActionConf());
     }
 
     /**

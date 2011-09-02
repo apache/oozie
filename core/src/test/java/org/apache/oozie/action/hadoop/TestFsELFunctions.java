@@ -47,6 +47,7 @@ public class TestFsELFunctions extends XFsTestCase {
         protoConf.set(OozieClient.USER_NAME, getTestUser());
         protoConf.set(OozieClient.GROUP_NAME, "group");
         protoConf.set("hadoop.job.ugi", getTestUser() + "," + "group");
+        injectKerberosInfo(protoConf);
 
         FileSystem fs = getFileSystem();
         fs.mkdirs(new Path(dir));
@@ -64,6 +65,7 @@ public class TestFsELFunctions extends XFsTestCase {
         conf.set(OozieClient.APP_PATH, "appPath");
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set(OozieClient.GROUP_NAME, "group");
+        injectKerberosInfo(protoConf);
         conf.set("test.dir", getTestCaseDir());
         conf.set("file1", file1);
         conf.set("file2", file2);

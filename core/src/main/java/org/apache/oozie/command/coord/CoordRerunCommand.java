@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorActionInfo;
@@ -37,6 +38,9 @@ import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.coord.CoordELFunctions;
+import org.apache.oozie.service.HadoopAccessorException;
+import org.apache.oozie.service.HadoopAccessorService;
+import org.apache.oozie.service.Services;
 import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.util.DateUtils;
@@ -87,11 +91,12 @@ public class CoordRerunCommand extends CoordinatorCommand<CoordinatorActionInfo>
                     throw new CommandException(ErrorCode.E1018, "date or action expected.");
                 }
                 if (checkAllActionsRunnable(coordActions)) {
+                    Configuration conf = new XConfiguration(new StringReader(coordJob.getConf()));
                     for (CoordinatorActionBean coordAction : coordActions) {
                         String actionXml = coordAction.getActionXml();
                         if (!noCleanup) {
                             Element eAction = XmlUtils.parseXml(actionXml);
-                            cleanupOutputEvents(eAction, coordJob.getUser(), coordJob.getGroup());
+                            cleanupOutputEvents(eAction, coordJob.getUser(), coordJob.getGroup(), conf);
                         }
                         if (refresh) {
                             refreshAction(coordJob, coordAction, store);
@@ -280,7 +285,7 @@ public class CoordRerunCommand extends CoordinatorCommand<CoordinatorActionInfo>
      * @param action
      */
     @SuppressWarnings("unchecked")
-    private void cleanupOutputEvents(Element eAction, String user, String group) {
+    private void cleanupOutputEvents(Element eAction, String user, String group, Configuration conf) {
         Element outputList = eAction.getChild("output-events", eAction.getNamespace());
         if (outputList != null) {
             for (Element data : (List<Element>) outputList.getChildren("data-out", eAction.getNamespace())) {
@@ -288,15 +293,20 @@ public class CoordRerunCommand extends CoordinatorCommand<CoordinatorActionInfo>
                     String uris = data.getChild("uris", data.getNamespace()).getTextTrim();
                     if (uris != null) {
                         String[] uriArr = uris.split(CoordELFunctions.INSTANCE_SEPARATOR);
-                        FsActionExecutor fsAe = new FsActionExecutor();
                         for (String uri : uriArr) {
                             Path path = new Path(uri);
                             try {
-                                fsAe.delete(user, group, path);
+                                FileSystem fs = Services.get().get(HadoopAccessorService.class).
+                                        createFileSystem(user, group, path.toUri(), conf);
+                                if (fs.exists(path)) {
+                                    if (!fs.delete(path, true)) {
+                                        throw new IOException();
+                                    }
+                                }
                                 log.debug("Cleanup the output dir " + path);
                             }
-                            catch (ActionExecutorException ae) {
-                                log.warn("Failed to cleanup the output dir " + uri, ae);
+                            catch (Exception ex) {
+                                log.warn("Failed to cleanup the output dir " + uri, ex);
                             }
                         }
                     }

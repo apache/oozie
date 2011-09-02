@@ -86,6 +86,7 @@ public class TestCoordinatorEngine extends XTestCase {
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set(OozieClient.GROUP_NAME, "other");
+        injectKerberosInfo(conf);
 
         final CoordinatorEngine ce = new CoordinatorEngine(getTestUser(), "UNIT_TESTING");
         final String jobId = ce.submitJob(conf, true);
@@ -140,6 +141,7 @@ public class TestCoordinatorEngine extends XTestCase {
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set(OozieClient.GROUP_NAME, "other");
+        injectKerberosInfo(conf);
 
         final CoordinatorEngine ce = new CoordinatorEngine(getTestUser(), "UNIT_TESTING");
         final String jobId = ce.submitJob(conf, true);
@@ -196,6 +198,7 @@ public class TestCoordinatorEngine extends XTestCase {
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set(OozieClient.GROUP_NAME, "other");
+        injectKerberosInfo(conf);
 
         final CoordinatorEngine ce = new CoordinatorEngine(getTestUser(), "UNIT_TESTING");
         final String jobId = ce.submitJob(conf, true);
@@ -252,6 +255,7 @@ public class TestCoordinatorEngine extends XTestCase {
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set(OozieClient.GROUP_NAME, "other");
+        injectKerberosInfo(conf);
 
         final CoordinatorEngine ce = new CoordinatorEngine(getTestUser(), "UNIT_TESTING");
         final String jobId = ce.submitJob(conf, true);
@@ -321,6 +325,8 @@ public class TestCoordinatorEngine extends XTestCase {
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set(OozieClient.GROUP_NAME, "other");
+        injectKerberosInfo(conf);
+        
         final CoordinatorEngine ce = new CoordinatorEngine(getTestUser(), "UNIT_TESTING");
         final String jobId = ce.submitJob(conf, true);
         waitFor(5000, new Predicate() {

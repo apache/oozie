@@ -33,6 +33,7 @@ import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.DateUtils;
+import org.apache.oozie.util.XConfiguration;
 
 public class TestCoordActionInputCheck extends XTestCase {
     private Services services;
@@ -100,9 +101,11 @@ public class TestCoordActionInputCheck extends XTestCase {
 
         String testDir = getTestCaseDir();
 
-        String confStr = "<configuration>" + "<property> <name>" + OozieClient.USER_NAME
-                + "</name><value>testUser</value></property>" + "<property> <name>" + OozieClient.GROUP_NAME
-                + "</name><value>testGroup</value></property>" + "</configuration>";
+        XConfiguration jobConf = new XConfiguration();
+        jobConf.set(OozieClient.USER_NAME, getTestUser());
+        jobConf.set(OozieClient.GROUP_NAME, getTestGroup());
+        injectKerberosInfo(jobConf);
+        String confStr = jobConf.toXmlString(false);
         coordJob.setConf(confStr);
         String appXml = "<coordinator-app xmlns='uri:oozie:coordinator:0.1' name='NAME' frequency=\"1\" start='2009-02-01T01:00Z' end='2009-02-03T23:59Z' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
         appXml += "<controls>";

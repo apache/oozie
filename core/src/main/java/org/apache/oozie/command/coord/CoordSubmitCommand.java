@@ -266,7 +266,7 @@ public class CoordSubmitCommand extends CoordinatorCommand<String> {
             String user = ParamChecker.notEmpty(conf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
             String group = ParamChecker.notEmpty(conf.get(OozieClient.GROUP_NAME), OozieClient.GROUP_NAME);
             fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, group, configDefault.toUri(),
-                                                                                  new Configuration());
+                                                                                  conf);
             if (fs.exists(configDefault)) {
                 Configuration defaultConf = new XConfiguration(fs.open(configDefault));
                 PropertiesUtils.checkDisallowedProperties(defaultConf, DISALLOWED_DEFAULT_PROPERTIES);
@@ -764,8 +764,7 @@ public class CoordSubmitCommand extends CoordinatorCommand<String> {
         try {
             URI uri = new URI(appPath);
             log.debug("user =" + user + " group =" + group);
-            FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, group, uri,
-                                                                                             new Configuration());
+            FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, group, uri, conf);
             Path p = new Path(uri.getPath());
 
             // Reader reader = new InputStreamReader(fs.open(new Path(uri

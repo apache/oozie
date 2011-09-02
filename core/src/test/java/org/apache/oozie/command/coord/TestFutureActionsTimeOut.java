@@ -112,6 +112,7 @@ public class TestFutureActionsTimeOut extends XTestCase {
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set(OozieClient.GROUP_NAME, "other");
+        injectKerberosInfo(conf);
         CoordinatorEngine ce = new CoordinatorEngine(getTestUser(), "UNIT_TESTING");
         String jobId = ce.submitJob(conf, true);
         assertEquals(jobId.substring(jobId.length() - 2), "-C");

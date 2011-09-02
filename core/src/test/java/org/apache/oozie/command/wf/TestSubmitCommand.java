@@ -77,6 +77,7 @@ public class TestSubmitCommand extends XFsTestCase {
         conf.set(OozieClient.APP_PATH, appPath+"/workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set(OozieClient.GROUP_NAME, "other");
+        injectKerberosInfo(conf);
         SubmitCommand sc = new SubmitCommand(conf, "UNIT_TESTING");
 
         try {
@@ -99,6 +100,7 @@ public class TestSubmitCommand extends XFsTestCase {
         conf.set(OozieClient.APP_PATH, appPath+"/test.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set(OozieClient.GROUP_NAME, "other");
+        injectKerberosInfo(conf);
         SubmitCommand sc = new SubmitCommand(conf, "UNIT_TESTING");
 
         try {
