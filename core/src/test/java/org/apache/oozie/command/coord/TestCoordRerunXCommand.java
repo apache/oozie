@@ -38,6 +38,7 @@ import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.OozieClientException;
 import org.apache.oozie.client.CoordinatorJob.Execution;
 import org.apache.oozie.client.rest.RestConstants;
+import org.apache.oozie.command.CommandException;
 import org.apache.oozie.coord.CoordELFunctions;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobInsertJPAExecutor;
@@ -670,6 +671,29 @@ public class TestCoordRerunXCommand extends XDataTestCase {
     }
 
     /**
+     * Test : Rerun FAILED coordinator job
+     *
+     * @throws Exception
+     */
+    public void testCoordRerunInFailed() throws Exception {
+        CoordinatorJobBean job = this.addRecordToCoordJobTable(Job.Status.FAILED, false, false);
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+        CoordJobGetJPAExecutor coordJobGetExecutor = new CoordJobGetJPAExecutor(job.getId());
+        job = jpaService.execute(coordJobGetExecutor);
+        assertEquals(Job.Status.FAILED, job.getStatus());
+
+        try {
+            new CoordRerunXCommand(job.getId(), RestConstants.JOB_COORD_RERUN_DATE, "2009-12-15T01:00Z", false, true)
+                    .call();
+            fail("Coordinator job is FAILED, rerun should throw exception");
+        }
+        catch (CommandException ce) {
+        }
+    }
+
+    /**
      * Test : Rerun paused coordinator job
      *
      * @throws Exception
@@ -893,7 +917,7 @@ public class TestCoordRerunXCommand extends XDataTestCase {
 
     @Override
     protected String getTestCaseDir() {
-        String testCaseDir = "/tmp/TestCoordRerunCommand/";
+        String testCaseDir = "/tmp/TestCoordRerunXCommand/";
         System.out.println(XLog.format("Setting testcase work dir[{0}]", testCaseDir));
         try {
             delete(new File(testCaseDir));

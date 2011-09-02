@@ -247,7 +247,7 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         Date pauseTime = new Date(start.getTime() + (10 * 60 * 1000));
         String pauseTimeChangeStr = "pausetime="+ DateUtils.convertDateToString(pauseTime);
         final CoordinatorJobBean job = addRecordToCoordJobTableForPauseTimeTest(CoordinatorJob.Status.RUNNING, start,
-                end, end, true, 4);
+                end, end, true, false, 4);
         addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml");
         addRecordToCoordActionTable(job.getId(), 2, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml");
         addRecordToCoordActionTable(job.getId(), 3, CoordinatorAction.Status.WAITING, "coord-action-get.xml");
@@ -260,7 +260,6 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         assertEquals(DateUtils.convertDateToString(coordJob.getPauseTime()), DateUtils.convertDateToString(pauseTime));
         assertEquals(Job.Status.RUNNING, coordJob.getStatus());
         assertEquals(2, coordJob.getLastActionNumber());
-        assertFalse(coordJob.isPending());
 
         CoordinatorActionBean actionBean = jpaService.execute(new CoordJobGetActionByActionNumberJPAExecutor(job.getId(), 3));
         assertNull(actionBean);
@@ -270,8 +269,8 @@ public class TestCoordChangeXCommand extends XDataTestCase {
     }
 
     protected CoordinatorJobBean addRecordToCoordJobTableForPauseTimeTest(CoordinatorJob.Status status, Date start,
-            Date end, Date lastActionTime, boolean pending, int lastActionNum) throws Exception {
-        CoordinatorJobBean coordJob = createCoordJob(status, start, end, pending, lastActionNum);
+            Date end, Date lastActionTime, boolean pending, boolean doneMatd, int lastActionNum) throws Exception {
+        CoordinatorJobBean coordJob = createCoordJob(status, start, end, pending, doneMatd, lastActionNum);
         coordJob.setFrequency(5);
         coordJob.setTimeUnit(Timeunit.MINUTE);
         coordJob.setLastActionNumber(lastActionNum);

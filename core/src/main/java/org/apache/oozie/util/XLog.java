@@ -219,6 +219,17 @@ public class XLog implements Log {
     }
 
     /**
+     * Reset the logger prefix
+     *
+     * @param log the named logger
+     * @return the named logger with reset prefix
+     */
+    public static XLog resetPrefix(XLog log) {
+        log.setMsgPrefix(Info.get().createPrefix());
+        return log;
+    }
+
+    /**
      * Mask for logging to the standard log.
      */
     public static final int STD = 1;

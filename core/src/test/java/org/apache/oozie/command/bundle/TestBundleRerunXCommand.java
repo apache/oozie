@@ -81,6 +81,28 @@ public class TestBundleRerunXCommand extends XDataTestCase {
     }
 
     /**
+     * Test : Rerun PREP bundle job
+     *
+     * @throws Exception
+     */
+    public void testBundleRerunInPrep() throws Exception {
+        Date curr = new Date();
+        Date pauseTime = new Date(curr.getTime() - 1000);
+        BundleJobBean job = this.addRecordToBundleJobTableWithPausedTime(Job.Status.PREP, false, pauseTime);
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+        BundleJobGetJPAExecutor bundleJobGetExecutor = new BundleJobGetJPAExecutor(job.getId());
+        job = jpaService.execute(bundleJobGetExecutor);
+        assertEquals(Job.Status.PREP, job.getStatus());
+
+        new BundleRerunXCommand(job.getId(), "action2", null, false, true).call();
+
+        job = jpaService.execute(bundleJobGetExecutor);
+        assertEquals(Job.Status.PREP, job.getStatus());
+    }
+
+    /**
      * Test : Rerun paused bundle job
      *
      * @throws Exception

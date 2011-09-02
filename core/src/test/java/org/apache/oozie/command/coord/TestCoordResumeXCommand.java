@@ -44,7 +44,7 @@ public class TestCoordResumeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testCoordSuspendAndResumeForRunning() throws Exception {
-        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
@@ -55,12 +55,10 @@ public class TestCoordResumeXCommand extends XDataTestCase {
         new CoordSuspendXCommand(job.getId()).call();
         job = jpaService.execute(coordJobGetCmd);
         assertEquals(job.getStatus(), CoordinatorJob.Status.SUSPENDED);
-        assertFalse(job.isPending());
 
         new CoordResumeXCommand(job.getId()).call();
         job = jpaService.execute(coordJobGetCmd);
         assertEquals(job.getStatus(), CoordinatorJob.Status.RUNNING);
-        assertFalse(job.isPending());
     }
 
     /**
@@ -69,7 +67,7 @@ public class TestCoordResumeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testCoordSuspendAndResumeForPrep() throws Exception {
-        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, false);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, false, false);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
@@ -80,11 +78,9 @@ public class TestCoordResumeXCommand extends XDataTestCase {
         new CoordSuspendXCommand(job.getId()).call();
         job = jpaService.execute(coordJobGetCmd);
         assertEquals(job.getStatus(), CoordinatorJob.Status.PREPSUSPENDED);
-        assertFalse(job.isPending());
 
         new CoordResumeXCommand(job.getId()).call();
         job = jpaService.execute(coordJobGetCmd);
         assertEquals(job.getStatus(), CoordinatorJob.Status.PREP);
-        assertFalse(job.isPending());
     }
 }
