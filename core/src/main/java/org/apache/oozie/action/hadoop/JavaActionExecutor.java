@@ -499,7 +499,7 @@ public class JavaActionExecutor extends ActionExecutor {
                     action, actionConf);
 
             // Adding if action need to set more credential tokens
-            JobConf credentialsConf = new JobConf();
+            JobConf credentialsConf = new JobConf(false);
             XConfiguration.copy(actionConf, credentialsConf);
             setCredentialTokens(credentialsConf, context, action, credentialsProperties);
 
