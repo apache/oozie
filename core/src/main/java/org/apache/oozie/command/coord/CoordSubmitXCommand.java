@@ -248,6 +248,7 @@ public class CoordSubmitXCommand extends CoordinatorXCommand<String> {
             }
             //update bundle action
             if (this.bundleId != null) {
+                log.debug("Updating bundle record: " + bundleId + " for coord id: " + coordJob.getId());
                 BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, prevStatus);
                 bundleStatusUpdate.call();
             }

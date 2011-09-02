@@ -30,6 +30,7 @@ import org.apache.oozie.executor.jpa.BundleActionUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.util.XLog;
 
 /**
  * The command to update Bundle status
@@ -40,6 +41,7 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
     private JPAService jpaService = null;
     private BundleActionBean bundleaction;
     private final Job.Status prevStatus;
+    protected final XLog LOG = XLog.getLog(BundleStatusUpdateXCommand.class);
 
     /**
      * The constructor for class {@link BundleStatusUpdateXCommand}
@@ -95,6 +97,8 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
     @Override
     protected Void execute() throws CommandException {
         try {
+            LOG.debug("STARTED BundleStatusUpdateXCommand with bubdle id : " + coordjob.getBundleId()
+                    + " coord job ID: " + coordjob.getId() + " coord Status " + coordjob.getStatus());
             Job.Status coordCurrentStatus = convertCoordStatustoJob(coordjob.getStatus());
             bundleaction.setStatus(coordCurrentStatus);
 
@@ -104,6 +108,8 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
             bundleaction.setLastModifiedTime(new Date());
             bundleaction.setCoordId(coordjob.getId());
             jpaService.execute(new BundleActionUpdateJPAExecutor(bundleaction));
+            LOG.debug("ENDED BundleStatusUpdateXCommand with bubdle id : " + coordjob.getBundleId() + " coord job ID: "
+                    + coordjob.getId() + " coord Status " + coordjob.getStatus());
         }
         catch (Exception ex) {
             throw new CommandException(ErrorCode.E1309, bundleaction.getBundleId(), bundleaction.getCoordName());

@@ -106,6 +106,10 @@ public class BundleRerunXCommand extends RerunTransitionXCommand<Void> {
                 s = s.trim();
                 if (coordNameToBAMapping.keySet().contains(s)) {
                     String id = coordNameToBAMapping.get(s).getCoordId();
+                    if (id == null) {
+                        LOG.info("No coord id found. Therefore, nothing to queue for coord rerun for coordname: " + s);
+                        continue;
+                    }
                     LOG.debug("Queuing rerun for coord id " + id + " of bundle " + bundleJob.getId());
                     queue(new CoordRerunXCommand(id, RestConstants.JOB_COORD_RERUN_DATE, dateScope, refresh, noCleanup));
                     updateBundleAction(coordNameToBAMapping.get(s));
@@ -118,6 +122,11 @@ public class BundleRerunXCommand extends RerunTransitionXCommand<Void> {
         else {
             if (bundleActions != null) {
                 for (BundleActionBean action : bundleActions) {
+                    if (action.getCoordId() == null) {
+                        LOG.info("No coord id found. Therefore nothing to queue for coord rerun with coord name "
+                                + action.getCoordName());
+                        continue;
+                    }
                     LOG.debug("Queuing rerun for coord id :" + action.getCoordId());
                     queue(new CoordRerunXCommand(action.getCoordId(), RestConstants.JOB_COORD_RERUN_DATE, dateScope, refresh, noCleanup));
                     updateBundleAction(action);
