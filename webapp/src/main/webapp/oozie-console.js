@@ -703,11 +703,17 @@ function coordJobDetailsPopup(response, request) {
         bbar: getPagingBar(jobActionStatus),
         listeners: {
             cellclick: {
-                fn: showCoordActionContextMenu
+                fn: showWorkflowPopup
             }
         }
 
     });
+    function showWorkflowPopup(thisGrid, rowIndex, cellIndex, e) {
+        var jobContextMenu = new Ext.menu.Menu('taskContext');
+        var actionStatus = thisGrid.store.data.items[rowIndex].data;
+        var workflowId = actionStatus["externalId"];
+        jobDetailsGridWindow(workflowId);
+    }
     // alert("Coordinator PopUP 4 inside coordDetailsPopup ");
     function showCoordActionContextMenu(thisGrid, rowIndex, cellIndex, e) {
         var jobContextMenu = new Ext.menu.Menu('taskContext');
