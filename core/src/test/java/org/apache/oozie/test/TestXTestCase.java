@@ -100,7 +100,7 @@ public class TestXTestCase extends TestCase {
         public void testBaseDir() {
             if (TESTING) {
                 assertTrue(TestXTestCase.testBaseDir == null ||
-                           getTestCaseDir().startsWith(TestXTestCase.testBaseDir));
+                        getTestCaseDir().startsWith(TestXTestCase.testBaseDir));
             }
         }
 

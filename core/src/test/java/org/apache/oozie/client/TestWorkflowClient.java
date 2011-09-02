@@ -21,12 +21,14 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
+import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
 import org.apache.oozie.client.rest.RestConstants;
-import org.apache.oozie.servlet.AdminServlet;
+import org.apache.oozie.servlet.V0AdminServlet;
 import org.apache.oozie.servlet.DagServletTestCase;
-import org.apache.oozie.servlet.JobServlet;
-import org.apache.oozie.servlet.JobsServlet;
+import org.apache.oozie.servlet.V0JobServlet;
+import org.apache.oozie.servlet.V0JobsServlet;
 import org.apache.oozie.servlet.MockDagEngineService;
+import org.apache.oozie.servlet.V1AdminServlet;
 import org.apache.oozie.BuildInfo;
 import org.apache.hadoop.fs.Path;
 
@@ -34,18 +36,18 @@ public class TestWorkflowClient extends DagServletTestCase {
 
     static {
         new HeaderTestingVersionServlet();
-        new JobServlet();
-        new JobsServlet();
-        new AdminServlet();
+        new V0JobServlet();
+        new V0JobsServlet();
+        new V1AdminServlet();
     }
 
     private static final boolean IS_SECURITY_ENABLED = false;
     static final String VERSION = "/v" + OozieClient.WS_PROTOCOL_VERSION;
-    static final String[] END_POINTS = { "/versions", VERSION + "/jobs", VERSION + "/job/*", VERSION + "/admin/*"};
-    static final Class[] SERVLET_CLASSES = {HeaderTestingVersionServlet.class, JobsServlet.class,
-                                                   JobServlet.class, AdminServlet.class};
+    static final String[] END_POINTS = {"/versions", VERSION + "/jobs", VERSION + "/job/*", VERSION + "/admin/*"};
+    static final Class[] SERVLET_CLASSES = {HeaderTestingVersionServlet.class, V0JobsServlet.class,
+            V0JobServlet.class, V1AdminServlet.class};
 
-    protected void setUp()throws Exception {
+    protected void setUp() throws Exception {
         super.setUp();
         MockDagEngineService.reset();
     }
@@ -78,17 +80,17 @@ public class TestWorkflowClient extends DagServletTestCase {
     }
 
     public void testUrls() throws Exception {
-         runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED, new Callable<Void>() {
-             public Void call() throws Exception {
-                 String oozieUrl = getContextURL();
-                 OozieClient wc = new OozieClient(oozieUrl);
-                 assertEquals(oozieUrl, wc.getOozieUrl().substring(0, wc.getOozieUrl().length() - 1));
-                 assertTrue(wc.getProtocolUrl().startsWith(wc.getOozieUrl() + "v"));
-                 return null;
-             }
-         });
+        runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED, new Callable<Void>() {
+            public Void call() throws Exception {
+                String oozieUrl = getContextURL();
+                OozieClient wc = new OozieClient(oozieUrl);
+                assertEquals(oozieUrl, wc.getOozieUrl().substring(0, wc.getOozieUrl().length() - 1));
+                assertTrue(wc.getProtocolUrl().startsWith(wc.getOozieUrl() + "v"));
+                return null;
+            }
+        });
 
-     }
+    }
 
     public void testValidateVersion() throws Exception {
         runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED, new Callable<Void>() {
@@ -100,7 +102,7 @@ public class TestWorkflowClient extends DagServletTestCase {
             }
         });
     }
-    
+
     public void testSubmit() throws Exception {
         runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED, new Callable<Void>() {
             public Void call() throws Exception {
@@ -133,7 +135,7 @@ public class TestWorkflowClient extends DagServletTestCase {
                 getFileSystem().create(new Path(appPath, "workflow.xml")).close();
                 conf.setProperty(OozieClient.APP_PATH, appPath.toString());
                 injectKerberosInfo(conf);
-                assertEquals(MockDagEngineService.JOB_ID+wfCount, wc.run(conf));
+                assertEquals(MockDagEngineService.JOB_ID + wfCount, wc.run(conf));
                 assertTrue(MockDagEngineService.started.get(wfCount));
                 return null;
             }
@@ -147,7 +149,7 @@ public class TestWorkflowClient extends DagServletTestCase {
                 OozieClient wc = new OozieClient(oozieUrl);
                 Properties conf = wc.createConfiguration();
                 conf.setProperty(OozieClient.USER_NAME, "x");
-                wc.start(MockDagEngineService.JOB_ID+1);
+                wc.start(MockDagEngineService.JOB_ID + 1);
                 assertEquals(RestConstants.JOB_ACTION_START, MockDagEngineService.did);
                 return null;
             }
@@ -161,7 +163,7 @@ public class TestWorkflowClient extends DagServletTestCase {
                 OozieClient wc = new OozieClient(oozieUrl);
                 Properties conf = wc.createConfiguration();
                 conf.setProperty(OozieClient.USER_NAME, "x");
-                wc.suspend(MockDagEngineService.JOB_ID+1);
+                wc.suspend(MockDagEngineService.JOB_ID + 1);
                 assertEquals(RestConstants.JOB_ACTION_SUSPEND, MockDagEngineService.did);
                 return null;
             }
@@ -175,7 +177,7 @@ public class TestWorkflowClient extends DagServletTestCase {
                 OozieClient wc = new OozieClient(oozieUrl);
                 Properties conf = wc.createConfiguration();
                 conf.setProperty(OozieClient.USER_NAME, "x");
-                wc.resume(MockDagEngineService.JOB_ID+1);
+                wc.resume(MockDagEngineService.JOB_ID + 1);
                 assertEquals(RestConstants.JOB_ACTION_RESUME, MockDagEngineService.did);
                 return null;
             }
@@ -189,7 +191,7 @@ public class TestWorkflowClient extends DagServletTestCase {
                 OozieClient wc = new OozieClient(oozieUrl);
                 Properties conf = wc.createConfiguration();
                 conf.setProperty(OozieClient.USER_NAME, "x");
-                wc.kill(MockDagEngineService.JOB_ID+1);
+                wc.kill(MockDagEngineService.JOB_ID + 1);
                 assertEquals(RestConstants.JOB_ACTION_KILL, MockDagEngineService.did);
                 return null;
             }
@@ -208,7 +210,7 @@ public class TestWorkflowClient extends DagServletTestCase {
                 getFileSystem().create(new Path(appPath, "workflow.xml")).close();
                 conf.setProperty(OozieClient.APP_PATH, appPath.toString());
                 injectKerberosInfo(conf);
-                wc.reRun(MockDagEngineService.JOB_ID+1, conf);
+                wc.reRun(MockDagEngineService.JOB_ID + 1, conf);
                 assertEquals(RestConstants.JOB_ACTION_RERUN, MockDagEngineService.did);
                 assertTrue(MockDagEngineService.started.get(1));
                 return null;
@@ -221,9 +223,9 @@ public class TestWorkflowClient extends DagServletTestCase {
             public Void call() throws Exception {
                 String oozieUrl = getContextURL();
                 OozieClient wc = new OozieClient(oozieUrl);
-                WorkflowJob wf = wc.getJobInfo(MockDagEngineService.JOB_ID+1);
+                WorkflowJob wf = wc.getJobInfo(MockDagEngineService.JOB_ID + 1);
                 assertEquals(RestConstants.JOB_SHOW_INFO, MockDagEngineService.did);
-                assertEquals(MockDagEngineService.JOB_ID+1, wf.getId());
+                assertEquals(MockDagEngineService.JOB_ID + 1, wf.getId());
                 return null;
             }
         });
@@ -237,17 +239,17 @@ public class TestWorkflowClient extends DagServletTestCase {
 
                 List<WorkflowJob> list = wc.getJobsInfo(null);
                 assertEquals(MockDagEngineService.INIT_WF_COUNT, list.size());
-                for(int i=0;i<MockDagEngineService.INIT_WF_COUNT; i++){
+                for (int i = 0; i < MockDagEngineService.INIT_WF_COUNT; i++) {
                     assertNotNull(list.get(i).getAppPath());
-                    assertEquals(MockDagEngineService.JOB_ID+i, list.get(i).getId());
+                    assertEquals(MockDagEngineService.JOB_ID + i, list.get(i).getId());
                 }
 
                 MockDagEngineService.reset();
                 list = wc.getJobsInfo("name=x", 3, 4);
                 assertEquals(MockDagEngineService.INIT_WF_COUNT, list.size());
-                for(int i=0;i<MockDagEngineService.INIT_WF_COUNT; i++){
+                for (int i = 0; i < MockDagEngineService.INIT_WF_COUNT; i++) {
                     assertNotNull(list.get(i).getAppPath());
-                    assertEquals(MockDagEngineService.JOB_ID+i, list.get(i).getId());
+                    assertEquals(MockDagEngineService.JOB_ID + i, list.get(i).getId());
                 }
                 return null;
             }
@@ -313,12 +315,16 @@ public class TestWorkflowClient extends DagServletTestCase {
             public Void call() throws Exception {
                 String oozieUrl = getContextURL();
                 OozieClient wc = new OozieClient(oozieUrl);
-                boolean isSafeMode = wc.isInSafeMode();
-                assertFalse(isSafeMode);
+                SYSTEM_MODE systemMode = wc.getSystemMode();
+                assertEquals(systemMode, SYSTEM_MODE.NORMAL);
 
-                wc.setSafeMode(true);
-                isSafeMode = wc.isInSafeMode();
-                assertTrue(isSafeMode);
+                wc.setSystemMode(SYSTEM_MODE.SAFEMODE);
+                systemMode = wc.getSystemMode();
+                assertEquals(systemMode, SYSTEM_MODE.SAFEMODE);
+
+                wc.setSystemMode(SYSTEM_MODE.NOWEBSERVICE);
+                systemMode = wc.getSystemMode();
+                assertEquals(systemMode, SYSTEM_MODE.NOWEBSERVICE);
                 return null;
             }
         });

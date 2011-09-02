@@ -23,7 +23,7 @@ import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 
 public class TestELConstantsFunctions extends XTestCase {
-    
+
     public void testTrim() {
         assertEquals("", ELConstantsFunctions.trim(null));
         assertEquals("a", ELConstantsFunctions.trim(" a "));

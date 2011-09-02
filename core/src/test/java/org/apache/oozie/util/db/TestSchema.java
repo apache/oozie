@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.db.Schema.Column;
 import org.apache.oozie.util.db.Schema.DBType;
@@ -39,6 +40,7 @@ public class TestSchema extends XTestCase {
 
     public static Map<Table, List<Column>> TABLE_COLUMNS = new HashMap<Table, List<Column>>();
     private static final String DB_NAME = "testdb";
+
     static {
         for (Column column : TestColumns.values()) {
             List<Column> tColumns = TABLE_COLUMNS.get(column.table());
@@ -52,6 +54,7 @@ public class TestSchema extends XTestCase {
 
     public static enum TestTable implements Table {
         TEST_TABLE;
+
         public String toString() {
             return DB_NAME + "." + name();
         }
@@ -127,29 +130,61 @@ public class TestSchema extends XTestCase {
     }
 
     public static void prepareDB(Connection conn) throws SQLException {
-        DBType type = DBType.MySQL;
-        if(Schema.isHsqlConnection(conn)) {
+        DBType type = DBType.ORACLE;
+        if (Schema.isHsqlConnection(conn)) {
             type = DBType.HSQL;
         }
-        conn.prepareStatement("CREATE " + (type.equals(DBType.MySQL) ? "DATABASE " : "SCHEMA ") + DB_NAME
-                + (type.equals(DBType.HSQL) ? " AUTHORIZATION DBA" : "")).execute();
+        else {
+            if (Schema.isMySqlConnection(conn)) {
+                type = DBType.MySQL;
+            }
+        }
+
+        if (!type.equals(DBType.ORACLE)) {
+            conn.prepareStatement(
+                    "CREATE " + (type.equals(DBType.MySQL) ? "DATABASE " : "SCHEMA ") + DB_NAME
+                            + (type.equals(DBType.HSQL) ? " AUTHORIZATION DBA" : "")).execute();
+        }
         for (Table table : TABLE_COLUMNS.keySet()) {
             String createStmt = Schema.generateCreateTableScript(table, type, TABLE_COLUMNS.get(table));
             conn.prepareStatement(createStmt).execute();
         }
     }
 
-    public static void dropSchema(Connection conn) {
-        try {
-            DBType type = DBType.MySQL;
-            if (Schema.isHsqlConnection(conn)) {
-                type = DBType.HSQL;
-            }
-            conn.prepareStatement(
-                    "DROP " + (type.equals(DBType.MySQL) ? "DATABASE " : "SCHEMA ") + DB_NAME
-                            + (type.equals(DBType.HSQL) ? " CASCADE" : "")).execute();
+    public static void dropSchema(Connection conn) throws SQLException {
+        DBType type = DBType.ORACLE;
+        if (Schema.isHsqlConnection(conn)) {
+            type = DBType.HSQL;
         }
-        catch (SQLException e) {
+        else {
+            if (Schema.isMySqlConnection(conn)) {
+                type = DBType.MySQL;
+            }
+            else {
+                // do not drop database for oracle, only drop tables
+                dropTables(conn);
+                return;
+            }
+        }
+
+        conn.prepareStatement("DROP " + ((type.equals(DBType.MySQL) || type.equals(DBType.ORACLE)) ? "DATABASE " : "SCHEMA ") +
+                ((type.equals(DBType.MySQL) || type.equals(DBType.HSQL)) ? DB_NAME : "") +
+                (type.equals(DBType.HSQL) ? " CASCADE" : "")).execute();
+    }
+
+    public static void dropTables(Connection conn) throws SQLException {
+        DBType type = DBType.ORACLE;
+        if (Schema.isHsqlConnection(conn)) {
+            type = DBType.HSQL;
+        }
+        else {
+            if (Schema.isMySqlConnection(conn)) {
+                type = DBType.MySQL;
+            }
+        }
+        for (Table table : TABLE_COLUMNS.keySet()) {
+            String dropStmt = Schema.generateDropTableScript(table, type);
+            conn.prepareStatement(dropStmt).execute();
         }
     }
 
@@ -179,7 +214,7 @@ public class TestSchema extends XTestCase {
         assertEquals(true, pkeyTest);
         String indexStmt = Schema.generateCreateIndexScript(TestIndex.TEST_INDEX, DBType.HSQL);
         conn.prepareStatement(indexStmt).execute();// Will throw an exception if
-                                                   // index cant be created
+        // index cant be created
         conn.prepareStatement("DROP TABLE " + TestTable.TEST_TABLE).execute();
         dropSchema(conn);
         conn.close();

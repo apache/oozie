@@ -38,10 +38,12 @@ public class TestCallableQueueService extends XTestCase {
             this(0, 0);
         }
 
+        @Override
         public String getName() {
             return "myCallable";
         }
 
+        @Override
         public String getType() {
             return type;
         }
@@ -56,8 +58,14 @@ public class TestCallableQueueService extends XTestCase {
             this("type", priority, wait);
         }
 
+        @Override
         public int getPriority() {
             return 0;
+        }
+
+        @Override
+        public long getCreatedTime() {
+            return 1;
         }
 
         public Void call() throws Exception {
@@ -130,7 +138,7 @@ public class TestCallableQueueService extends XTestCase {
         waitFor(3000, new Predicate() {
             public boolean evaluate() throws Exception {
                 return callable1.executed != 0 && callable2.executed != 0 && callable3.executed != 0 &&
-                       callableLow.executed != 0 && callableHigh.executed != 0;
+                        callableLow.executed != 0 && callableHigh.executed != 0;
             }
         });
         assertTrue(callable1.executed >= 0);
@@ -188,7 +196,7 @@ public class TestCallableQueueService extends XTestCase {
         waitFor(3000, new Predicate() {
             public boolean evaluate() throws Exception {
                 return callable1.executed != 0 && callable2.executed != 0 && callable3.executed != 0 &&
-                       callable4.executed != 0 && callable5.executed != 0;
+                        callable4.executed != 0 && callable5.executed != 0;
             }
         });
 
@@ -231,7 +239,7 @@ public class TestCallableQueueService extends XTestCase {
         waitFor(3000, new Predicate() {
             public boolean evaluate() throws Exception {
                 return callable1.executed != 0 && callable2.executed != 0 && callable3.executed != 0 &&
-                       callable4.executed != 0 && callable5.executed != 0;
+                        callable4.executed != 0 && callable5.executed != 0;
             }
         });
 
@@ -273,7 +281,7 @@ public class TestCallableQueueService extends XTestCase {
         waitFor(3000, new Predicate() {
             public boolean evaluate() throws Exception {
                 return callable1.executed != 0 && callable2.executed != 0 && callable3.executed != 0 &&
-                       callable4.executed != 0 && callable5.executed != 0;
+                        callable4.executed != 0 && callable5.executed != 0;
             }
         });
 

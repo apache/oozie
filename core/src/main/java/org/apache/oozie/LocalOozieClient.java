@@ -29,33 +29,20 @@ import java.util.List;
 import java.util.Properties;
 
 /**
- * Client API to submit and manage Oozie workflow jobs against an Oozie intance.
- * <p/>
- * This class is thread safe.
- * <p/>
+ * Client API to submit and manage Oozie workflow jobs against an Oozie intance. <p/> This class is thread safe. <p/>
  * Syntax for filter for the {@link #getJobsInfo(String)}  {@link #getJobsInfo(String, int, int)}  methods:
- * <code>[NAME=VALUE][;NAME=VALUE]*</code>.
- * <p/>
- * Valid filter names are:
- * <p/>
- * <ul/>
- * <li>name: the workflow application name from the workflow definition.</li>
- * <li>user: the user that submitted the job.</li>
- * <li>group: the group for the job.</li>
- * <li>status: the status of the job.</li>
- * </ul>
- * <p/>
- * The query will do an AND among all the filter names.
- * The query will do an OR among all the filter values for the same name. Multiple values must be specified as
- * different name value pairs.
+ * <code>[NAME=VALUE][;NAME=VALUE]*</code>. <p/> Valid filter names are: <p/> <ul/> <li>name: the workflow application
+ * name from the workflow definition.</li> <li>user: the user that submitted the job.</li> <li>group: the group for the
+ * job.</li> <li>status: the status of the job.</li> </ul> <p/> The query will do an AND among all the filter names. The
+ * query will do an OR among all the filter values for the same name. Multiple values must be specified as different
+ * name value pairs.
  */
 public class LocalOozieClient extends OozieClient {
 
     private DagEngine dagEngine;
 
     /**
-     * Create a workflow client for Oozie local use.
-     * <p/>
+     * Create a workflow client for Oozie local use. <p/>
      *
      * @param dagEngine the dag engine instance to use.
      */
@@ -64,9 +51,8 @@ public class LocalOozieClient extends OozieClient {
     }
 
     /**
-     * Return the Oozie URL of the workflow client instance.
-     * <p/>
-     * This URL is the base URL fo the Oozie system, with not protocol versioning.
+     * Return the Oozie URL of the workflow client instance. <p/> This URL is the base URL fo the Oozie system, with not
+     * protocol versioning.
      *
      * @return the Oozie URL of the workflow client instance.
      */
@@ -76,12 +62,12 @@ public class LocalOozieClient extends OozieClient {
     }
 
     /**
-     * Return the Oozie URL used by the client and server for WS communications.
-     * <p/>
-     * This URL is the original URL plus the versioning element path.
+     * Return the Oozie URL used by the client and server for WS communications. <p/> This URL is the original URL plus
+     * the versioning element path.
      *
      * @return the Oozie URL used by the client and server for communication.
-     * @throws org.apache.oozie.client.OozieClientException thrown in the client and the server are not protocol compatible.
+     * @throws org.apache.oozie.client.OozieClientException thrown in the client and the server are not protocol
+     * compatible.
      */
     @Override
     public String getProtocolUrl() throws OozieClientException {
@@ -91,15 +77,16 @@ public class LocalOozieClient extends OozieClient {
     /**
      * Validate that the Oozie client and server instances are protocol compatible.
      *
-     * @throws org.apache.oozie.client.OozieClientException thrown in the client and the server are not protocol compatible.
+     * @throws org.apache.oozie.client.OozieClientException thrown in the client and the server are not protocol
+     * compatible.
      */
     @Override
     public synchronized void validateWSVersion() throws OozieClientException {
     }
 
     /**
-     * Create an empty configuration with just the {@link #USER_NAME} set to the JVM user name and the
-     * {@link #GROUP_NAME} set to 'other'.
+     * Create an empty configuration with just the {@link #USER_NAME} set to the JVM user name and the {@link
+     * #GROUP_NAME} set to 'other'.
      *
      * @return an empty configuration.
      */
@@ -296,7 +283,6 @@ public class LocalOozieClient extends OozieClient {
      * @return a list with the workflow jobs info, without node details.
      * @throws org.apache.oozie.client.OozieClientException thrown if the jobs info could not be retrieved.
      */
-    @Override
     public List<WorkflowJob> getJobsInfo(String filter, int start, int len) throws OozieClientException {
         try {
             return (List<WorkflowJob>) (List) dagEngine.getJobs(filter, start, len).getWorkflows();
@@ -307,9 +293,8 @@ public class LocalOozieClient extends OozieClient {
     }
 
     /**
-     * Return the info of the workflow jobs that match the filter.
-     * <p/>
-     * It returns the first 100 jobs that match the filter.
+     * Return the info of the workflow jobs that match the filter. <p/> It returns the first 100 jobs that match the
+     * filter.
      *
      * @param filter job filter. Refer to the {@link LocalOozieClient} for the filter syntax.
      * @return a list with the workflow jobs info, without node details.
@@ -320,9 +305,7 @@ public class LocalOozieClient extends OozieClient {
     }
 
     /**
-     * Return the workflow job Id for an external Id.
-     * <p/>
-     * The external Id must have provided at job creation time.
+     * Return the workflow job Id for an external Id. <p/> The external Id must have provided at job creation time.
      *
      * @param externalId external Id given at job creation time.
      * @return the workflow job Id for an external Id, <code>null</code> if none.
@@ -344,8 +327,9 @@ public class LocalOozieClient extends OozieClient {
      * @return true if safe mode is ON<br> false if safe mode is OFF
      * @throws org.apache.oozie.client.OozieClientException throw if it could not obtain the safe mode status.
      */
-    public boolean isInSafeMode() throws OozieClientException {
-        return Services.get().isSafeMode();
-    }
+    /*public SYSTEM_MODE isInSafeMode() throws OozieClientException {
+        //return Services.get().isSafeMode();
+        return Services.get().getSystemMode() ;
+    }*/
 
 }

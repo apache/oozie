@@ -29,10 +29,23 @@ Copy the sample input data to HDFS:
 $ hadoop fs -put input-data input-data
 </verbatim>
 
+
+Edit the file *map-reduce-job.properties* and add your userid to it
+<verbatim>
+$ cat map-reduce-job.properties
+
+#replace 'your_userid_here' with your userid
+oozie.wf.application.path=hdfs://localhost:9000/user/'your_userid_here'/examples/workflows/map-reduce
+inputDir=hdfs://localhost:9000/user/'your_userid_here'/examples/input-data
+outputDir=hdfs://localhost:9000/user/'your_userid_here'/examples/output-data-map-reduce
+jobTracker=localhost:9001
+nameNode=hdfs:/localhost:9000
+</verbatim>
+
 Copy the example workflow applications to HDFS:
 
 <verbatim>
-$ hadoop fs -put workflows /tmp/`whoami`/workflows
+$ hadoop fs -put examples /user/'your_userid_here'/
 </verbatim>
 
 ---+++ Running the Examples
@@ -97,12 +110,12 @@ import java.util.Properties;
 .
     ...
 .
-    // get a WorkflowClient for local Oozie
-    WorkflowClient wc = new WorkflowClient("http://bar:8080/oozie");
+    // get a OozieClient for local Oozie
+    OozieClient wc = new OozieClient("http://bar:8080/oozie");
 .
     // create a workflow job configuration and set the workflow application path
     Properties conf = wc.createConfiguration();
-    conf.setProperty(WorkflowClient.APP_PATH, "hdfs://foo:9000/usr/tucu/my-wf-app");
+    conf.setProperty(OozieClient.APP_PATH, "hdfs://foo:9000/usr/tucu/my-wf-app");
 .
     // setting workflow parameters
     conf.setProperty("jobTracker", "foo:9001");
@@ -128,11 +141,11 @@ import java.util.Properties;
 
 ---++ Local Oozie Example
 
-Oozie provides a embedded Oozie implementation, =[[./apidocs/org/apache/oozie/local/LocalOozie.html][LocalOozie]]=, 
+Oozie provides a embedded Oozie implementation, =[[./apidocs/org/apache/oozie/local/LocalOozie.html][LocalOozie]]=,
 which is useful for development, debugging and testing of workflow applications within the convenience of an IDE.
 
 The code snipped below shows the usage of the =LocalOozie= class. All the interaction with Oozie is done using Oozie
- =WorkflowClient= Java API, as shown in the previous section.
+ =OozieClient= Java API, as shown in the previous section.
 
 The examples bundled with Oozie include the complete and running class, =LocalOozieExample= from where this snipped was
 taken.
@@ -148,12 +161,12 @@ import java.util.Properties;
     // start local Oozie
     LocalOozie.start();
 .
-    // get a WorkflowClient for local Oozie
-    WorkflowClient wc = LocalOozie.getClient();
+    // get a OozieClient for local Oozie
+    OozieClient wc = LocalOozie.getClient();
 .
     // create a workflow job configuration and set the workflow application path
     Properties conf = wc.createConfiguration();
-    conf.setProperty(WorkflowClient.APP_PATH, "hdfs://foo:9000/usr/tucu/my-wf-app");
+    conf.setProperty(OozieClient.APP_PATH, "hdfs://foo:9000/usr/tucu/my-wf-app");
 .
     // setting workflow parameters
     conf.setProperty("jobTracker", "foo:9001");

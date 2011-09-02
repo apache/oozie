@@ -53,9 +53,7 @@ public class WorkflowsInfo {
     }
 
     /**
-     * Return the offset of the workflows being returned.
-     * <p/>
-     * For pagination purposes.
+     * Return the offset of the workflows being returned. <p/> For pagination purposes.
      *
      * @return the offset of the workflows being returned.
      */
@@ -64,9 +62,7 @@ public class WorkflowsInfo {
     }
 
     /**
-     * Return the number of the workflows being returned.
-     * <p/>
-     * For pagination purposes.
+     * Return the number of the workflows being returned. <p/> For pagination purposes.
      *
      * @return the number of the workflows being returned.
      */
@@ -75,9 +71,7 @@ public class WorkflowsInfo {
     }
 
     /**
-     * Return the total number of workflows.
-     * <p/>
-     * For pagination purposes.
+     * Return the total number of workflows. <p/> For pagination purposes.
      *
      * @return the total number of workflows.
      */

@@ -1,0 +1,920 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.oozie.store;
+
+import javax.persistence.*;
+
+import org.apache.openjpa.persistence.jdbc.JDBCFetchPlan;
+import org.apache.openjpa.persistence.jdbc.ResultSetType;
+import org.apache.openjpa.persistence.jdbc.FetchDirection;
+import org.apache.openjpa.persistence.jdbc.LRSSizeAlgorithm;
+import org.apache.openjpa.persistence.OpenJPAPersistence;
+import org.apache.openjpa.persistence.OpenJPAQuery;
+
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+
+import org.apache.oozie.CoordinatorJobInfo;
+import org.apache.oozie.ErrorCode;
+import org.apache.oozie.CoordinatorJobBean;
+import org.apache.oozie.CoordinatorActionBean;
+import org.apache.oozie.client.CoordinatorJob.Status;
+import org.apache.oozie.client.CoordinatorJob.Timeunit;
+import org.apache.oozie.service.InstrumentationService;
+import org.apache.oozie.service.Services;
+import org.apache.oozie.store.StoreStatusFilter;
+import org.apache.oozie.util.Instrumentation;
+import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.workflow.WorkflowException;
+
+import org.apache.oozie.util.XLog;
+
+/**
+ * DB Implementation of Coord Store
+ */
+public class CoordinatorStore extends Store {
+    private final XLog log = XLog.getLog(getClass());
+
+    private EntityManager entityManager;
+    private static final String INSTR_GROUP = "db";
+    public static final int LOCK_TIMEOUT = 50000;
+    private static final long DAY_IN_MS = 24 * 60 * 60 * 1000;
+
+    public CoordinatorStore(boolean selectForUpdate) throws StoreException {
+        super();
+        entityManager = getEntityManager();
+    }
+
+    public CoordinatorStore(Store store, boolean selectForUpdate) throws StoreException {
+        super(store);
+        entityManager = getEntityManager();
+    }
+
+    /**
+     * Create a CoordJobBean. It also creates the process instance for the job.
+     *
+     * @param workflow workflow bean
+     * @throws StoreException
+     */
+
+    public void insertCoordinatorJob(final CoordinatorJobBean coordinatorJob) throws StoreException {
+        ParamChecker.notNull(coordinatorJob, "coordinatorJob");
+
+        doOperation("insertCoordinatorJob", new Callable<Void>() {
+            public Void call() throws StoreException {
+                entityManager.persist(coordinatorJob);
+                return null;
+            }
+        });
+    }
+
+    /**
+     * Load the CoordinatorJob into a Bean and return it. Also load the Workflow Instance into the bean. And lock the
+     * Workflow depending on the locking parameter.
+     *
+     * @param id Job ID
+     * @param locking Flag for Table Lock
+     * @return CoordinatorJobBean
+     * @throws StoreException
+     */
+    public CoordinatorJobBean getCoordinatorJob(final String id, final boolean locking) throws StoreException {
+        ParamChecker.notEmpty(id, "CoordJobId");
+        CoordinatorJobBean cjBean = doOperation("getCoordinatorJob", new Callable<CoordinatorJobBean>() {
+            @SuppressWarnings("unchecked")
+            public CoordinatorJobBean call() throws StoreException {
+                Query q = entityManager.createNamedQuery("GET_COORD_JOB");
+                q.setParameter("id", id);
+                /*
+                 * if (locking) { OpenJPAQuery oq = OpenJPAPersistence.cast(q);
+                 * // q.setHint("openjpa.FetchPlan.ReadLockMode","WRITE");
+                 * FetchPlan fetch = oq.getFetchPlan();
+                 * fetch.setReadLockMode(LockModeType.WRITE);
+                 * fetch.setLockTimeout(-1); // 1 second }
+                 */
+                List<CoordinatorJobBean> cjBeans = (List<CoordinatorJobBean>) q.getResultList();
+
+                if (cjBeans.size() > 0) {
+                    return cjBeans.get(0);
+                }
+                else {
+                    throw new StoreException(ErrorCode.E0604, id);
+                }
+            }
+        });
+
+        cjBean.setStatus(cjBean.getStatus());
+        return cjBean;
+    }
+
+    /**
+     * Get a list of Coordinator Jobs that should be materialized. Jobs with a 'last materialized time' older than the
+     * argument will be returned.
+     *
+     * @param d Date
+     * @return List of Coordinator Jobs that have a last materialized time older than input date
+     * @throws StoreException
+     */
+    public List<CoordinatorJobBean> getCoordinatorJobsToBeMaterialized(final Date d, final int limit)
+            throws StoreException {
+
+        ParamChecker.notNull(d, "Coord Job Materialization Date");
+        List<CoordinatorJobBean> cjBeans = (List<CoordinatorJobBean>) doOperation("getCoordinatorJobsToBeMaterialized",
+                                                                                  new Callable<List<CoordinatorJobBean>>() {
+                                                                                      public List<CoordinatorJobBean> call() throws StoreException {
+
+                                                                                          List<CoordinatorJobBean> cjBeans;
+                                                                                          List<CoordinatorJobBean> jobList = new ArrayList<CoordinatorJobBean>();
+                                                                                          try {
+                                                                                              Query q = entityManager.createNamedQuery("GET_COORD_JOBS_OLDER_THAN");
+                                                                                              q.setParameter("matTime", new Timestamp(d.getTime()));
+                                                                                              if (limit > 0) {
+                                                                                                  q.setMaxResults(limit);
+                                                                                              }
+                                                                                              /*
+                                                                                              OpenJPAQuery oq = OpenJPAPersistence.cast(q);
+                                                                                              FetchPlan fetch = oq.getFetchPlan();
+                                                                                              fetch.setReadLockMode(LockModeType.WRITE);
+                                                                                              fetch.setLockTimeout(-1); // no limit
+                                                                                              */
+                                                                                              cjBeans = q.getResultList();
+                                                                                              // copy results to a new object
+                                                                                              for (CoordinatorJobBean j : cjBeans) {
+                                                                                                  jobList.add(j);
+                                                                                              }
+                                                                                          }
+                                                                                          catch (IllegalStateException e) {
+                                                                                              throw new StoreException(ErrorCode.E0601, e.getMessage(), e);
+                                                                                          }
+                                                                                          return jobList;
+
+                                                                                      }
+                                                                                  });
+        return cjBeans;
+    }
+
+    /**
+     * A list of Coordinator Jobs that are matched with the status and have last materialized time' older than
+     * checkAgeSecs will be returned.
+     *
+     * @param checkAgeSecs Job age in Seconds
+     * @param status Coordinator Job Status
+     * @param limit Number of results to return
+     * @param locking Flag for Table Lock
+     * @return List of Coordinator Jobs that are matched with the parameters.
+     * @throws StoreException
+     */
+    public List<CoordinatorJobBean> getCoordinatorJobsOlderThanStatus(final long checkAgeSecs, final String status,
+                                                                      final int limit, final boolean locking) throws StoreException {
+
+        ParamChecker.notNull(status, "Coord Job Status");
+        List<CoordinatorJobBean> cjBeans = (List<CoordinatorJobBean>) doOperation("getCoordinatorJobsOlderThanStatus",
+                                                                                  new Callable<List<CoordinatorJobBean>>() {
+                                                                                      public List<CoordinatorJobBean> call() throws StoreException {
+
+                                                                                          List<CoordinatorJobBean> cjBeans;
+                                                                                          List<CoordinatorJobBean> jobList = new ArrayList<CoordinatorJobBean>();
+                                                                                          try {
+                                                                                              Query q = entityManager.createNamedQuery("GET_COORD_JOBS_OLDER_THAN_STATUS");
+                                                                                              Timestamp ts = new Timestamp(System.currentTimeMillis() - checkAgeSecs * 1000);
+                                                                                              q.setParameter("lastModTime", ts);
+                                                                                              q.setParameter("status", status);
+                                                                                              if (limit > 0) {
+                                                                                                  q.setMaxResults(limit);
+                                                                                              }
+                                                                                              /*
+                                                                                              * if (locking) { OpenJPAQuery oq =
+                                                                                              * OpenJPAPersistence.cast(q); FetchPlan fetch =
+                                                                                              * oq.getFetchPlan();
+                                                                                              * fetch.setReadLockMode(LockModeType.WRITE);
+                                                                                              * fetch.setLockTimeout(-1); // no limit }
+                                                                                              */
+                                                                                              cjBeans = q.getResultList();
+                                                                                              for (CoordinatorJobBean j : cjBeans) {
+                                                                                                  jobList.add(j);
+                                                                                              }
+                                                                                          }
+                                                                                          catch (Exception e) {
+                                                                                              throw new StoreException(ErrorCode.E0603, e.getMessage(), e);
+                                                                                          }
+                                                                                          return jobList;
+
+                                                                                      }
+                                                                                  });
+        return cjBeans;
+    }
+
+    /**
+     * Load the CoordinatorAction into a Bean and return it.
+     *
+     * @param id action ID
+     * @return CoordinatorActionBean
+     * @throws StoreException
+     */
+    public CoordinatorActionBean getCoordinatorAction(final String id, final boolean locking) throws StoreException {
+        ParamChecker.notEmpty(id, "actionID");
+        CoordinatorActionBean caBean = doOperation("getCoordinatorAction", new Callable<CoordinatorActionBean>() {
+            public CoordinatorActionBean call() throws StoreException {
+                Query q = entityManager.createNamedQuery("GET_COORD_ACTION");
+                q.setParameter("id", id);
+                OpenJPAQuery oq = OpenJPAPersistence.cast(q);
+                /*
+                 * if (locking) { //q.setHint("openjpa.FetchPlan.ReadLockMode",
+                 * "WRITE"); FetchPlan fetch = oq.getFetchPlan();
+                 * fetch.setReadLockMode(LockModeType.WRITE);
+                 * fetch.setLockTimeout(-1); // no limit }
+                 */
+
+                CoordinatorActionBean action = null;
+                List<CoordinatorActionBean> actions = q.getResultList();
+                if (actions.size() > 0) {
+                    action = (CoordinatorActionBean) actions.get(0);
+                }
+                else {
+                    throw new StoreException(ErrorCode.E0605, id);
+                }
+
+                /*
+                 * if (locking) return action; else
+                 */
+                return getBeanForRunningCoordAction(action);
+            }
+        });
+        return caBean;
+    }
+
+    /**
+     * Return CoordinatorActions for a jobID. Action should be in READY state. Number of returned actions should be <=
+     * concurrency number. Sort returned actions based on execution order (FIFO, LIFO, LAST_ONLY)
+     *
+     * @param id job ID
+     * @param numResults number of results to return
+     * @param executionOrder execution for this job - FIFO, LIFO, LAST_ONLY
+     * @return List of CoordinatorActionBean
+     * @throws StoreException
+     */
+    public List<CoordinatorActionBean> getCoordinatorActionsForJob(final String id, final int numResults,
+                                                                   final String executionOrder) throws StoreException {
+        ParamChecker.notEmpty(id, "jobID");
+        List<CoordinatorActionBean> caBeans = doOperation("getCoordinatorActionsForJob",
+                                                          new Callable<List<CoordinatorActionBean>>() {
+                                                              public List<CoordinatorActionBean> call() throws StoreException {
+
+                                                                  List<CoordinatorActionBean> caBeans;
+                                                                  Query q;
+                                                                  // check if executionOrder is FIFO, LIFO, or LAST_ONLY
+                                                                  if (executionOrder.equalsIgnoreCase("FIFO")) {
+                                                                      q = entityManager.createNamedQuery("GET_COORD_ACTIONS_FOR_JOB_FIFO");
+                                                                  }
+                                                                  else {
+                                                                      q = entityManager.createNamedQuery("GET_COORD_ACTIONS_FOR_JOB_LIFO");
+                                                                  }
+                                                                  q.setParameter("jobId", id);
+                                                                  // if executionOrder is LAST_ONLY, only retrieve first
+                                                                  // record in LIFO,
+                                                                  // otherwise, use numResults if it is positive.
+                                                                  if (executionOrder.equalsIgnoreCase("LAST_ONLY")) {
+                                                                      q.setMaxResults(1);
+                                                                  }
+                                                                  else {
+                                                                      if (numResults > 0) {
+                                                                          q.setMaxResults(numResults);
+                                                                      }
+                                                                  }
+                                                                  caBeans = q.getResultList();
+                                                                  return caBeans;
+                                                              }
+                                                          });
+        return caBeans;
+    }
+
+    /**
+     * Return CoordinatorActions for a jobID. Action should be in READY state. Number of returned actions should be <=
+     * concurrency number.
+     *
+     * @param id job ID
+     * @return Number of running actions
+     * @throws StoreException
+     */
+    public int getCoordinatorRunningActionsCount(final String id) throws StoreException {
+        ParamChecker.notEmpty(id, "jobID");
+        Integer cnt = doOperation("getCoordinatorRunningActionsCount", new Callable<Integer>() {
+            public Integer call() throws SQLException {
+
+                Query q = entityManager.createNamedQuery("GET_COORD_RUNNING_ACTIONS_COUNT");
+
+                q.setParameter("jobId", id);
+                Long count = (Long) q.getSingleResult();
+                return Integer.valueOf(count.intValue());
+            }
+        });
+        return cnt.intValue();
+    }
+
+    /**
+     * Create a new Action record in the ACTIONS table with the given Bean.
+     *
+     * @param action WorkflowActionBean
+     * @throws StoreException If the action is already present
+     */
+    public void insertCoordinatorAction(final CoordinatorActionBean action) throws StoreException {
+        ParamChecker.notNull(action, "CoordinatorActionBean");
+        doOperation("insertCoordinatorAction", new Callable<Void>() {
+            public Void call() throws StoreException {
+                entityManager.persist(action);
+                return null;
+            }
+        });
+    }
+
+    /**
+     * Update the given action bean to DB.
+     *
+     * @param action Action Bean
+     * @throws StoreException if action doesn't exist
+     */
+    public void updateCoordinatorAction(final CoordinatorActionBean action) throws StoreException {
+        ParamChecker.notNull(action, "CoordinatorActionBean");
+        doOperation("updateCoordinatorAction", new Callable<Void>() {
+            public Void call() throws StoreException {
+                Query q = entityManager.createNamedQuery("UPDATE_COORD_ACTION");
+                q.setParameter("id", action.getId());
+                setActionQueryParameters(action, q);
+                q.executeUpdate();
+                return null;
+            }
+        });
+    }
+
+    /**
+     * Update the given coordinator job bean to DB.
+     *
+     * @param jobbean Coordinator Job Bean
+     * @throws StoreException if action doesn't exist
+     */
+    public void updateCoordinatorJob(final CoordinatorJobBean job) throws StoreException {
+        ParamChecker.notNull(job, "CoordinatorJobBean");
+        doOperation("updateJob", new Callable<Void>() {
+            public Void call() throws StoreException {
+                Query q = entityManager.createNamedQuery("UPDATE_COORD_JOB");
+                q.setParameter("id", job.getId());
+                setJobQueryParameters(job, q);
+                q.executeUpdate();
+                return null;
+            }
+        });
+    }
+
+    public void updateCoordinatorJobStatus(final CoordinatorJobBean job) throws StoreException {
+        ParamChecker.notNull(job, "CoordinatorJobBean");
+        doOperation("updateJobStatus", new Callable<Void>() {
+            public Void call() throws StoreException {
+                Query q = entityManager.createNamedQuery("UPDATE_COORD_JOB_STATUS");
+                q.setParameter("id", job.getId());
+                q.setParameter("status", job.getStatus().toString());
+                q.setParameter("lastModifiedTime", new Date());
+                q.executeUpdate();
+                return null;
+            }
+        });
+    }
+
+    private <V> V doOperation(String name, Callable<V> command) throws StoreException {
+        try {
+            Instrumentation.Cron cron = new Instrumentation.Cron();
+            cron.start();
+            V retVal;
+            try {
+                retVal = command.call();
+            }
+            finally {
+                cron.stop();
+            }
+            Services.get().get(InstrumentationService.class).get().addCron(INSTR_GROUP, name, cron);
+            return retVal;
+        }
+        catch (StoreException ex) {
+            throw ex;
+        }
+        catch (SQLException ex) {
+            throw new StoreException(ErrorCode.E0603, name, ex.getMessage(), ex);
+        }
+        catch (Exception e) {
+            throw new StoreException(ErrorCode.E0607, name, e.getMessage(), e);
+        }
+    }
+
+    private void setJobQueryParameters(CoordinatorJobBean jBean, Query q) {
+        q.setParameter("appName", jBean.getAppName());
+        q.setParameter("appPath", jBean.getAppPath());
+        q.setParameter("concurrency", jBean.getConcurrency());
+        q.setParameter("conf", jBean.getConf());
+        q.setParameter("externalId", jBean.getExternalId());
+        q.setParameter("frequency", jBean.getFrequency());
+        q.setParameter("lastActionNumber", jBean.getLastActionNumber());
+        q.setParameter("timeOut", jBean.getTimeout());
+        q.setParameter("timeZone", jBean.getTimeZone());
+        q.setParameter("authToken", jBean.getAuthToken());
+        q.setParameter("createdTime", jBean.getCreatedTimestamp());
+        q.setParameter("endTime", jBean.getEndTimestamp());
+        q.setParameter("execution", jBean.getExecution());
+        q.setParameter("jobXml", jBean.getJobXml());
+        q.setParameter("lastAction", jBean.getLastActionTimestamp());
+        q.setParameter("lastModifiedTime", new Date());
+        q.setParameter("nextMaterializedTime", jBean.getNextMaterializedTimestamp());
+        q.setParameter("origJobXml", jBean.getOrigJobXml());
+        q.setParameter("slaXml", jBean.getSlaXml());
+        q.setParameter("startTime", jBean.getStartTimestamp());
+        q.setParameter("status", jBean.getStatus().toString());
+        q.setParameter("timeUnit", jBean.getTimeUnitStr());
+    }
+
+    private void setActionQueryParameters(CoordinatorActionBean aBean, Query q) {
+        q.setParameter("actionNumber", aBean.getActionNumber());
+        q.setParameter("actionXml", aBean.getActionXml());
+        q.setParameter("consoleUrl", aBean.getConsoleUrl());
+        q.setParameter("createdConf", aBean.getCreatedConf());
+        q.setParameter("errorCode", aBean.getErrorCode());
+        q.setParameter("errorMessage", aBean.getErrorMessage());
+        q.setParameter("externalStatus", aBean.getExternalStatus());
+        q.setParameter("missingDependencies", aBean.getMissingDependencies());
+        q.setParameter("runConf", aBean.getRunConf());
+        q.setParameter("timeOut", aBean.getTimeOut());
+        q.setParameter("trackerUri", aBean.getTrackerUri());
+        q.setParameter("type", aBean.getType());
+        q.setParameter("createdTime", aBean.getCreatedTimestamp());
+        q.setParameter("externalId", aBean.getExternalId());
+        q.setParameter("jobId", aBean.getJobId());
+        q.setParameter("lastModifiedTime", new Date());
+        q.setParameter("nominalTime", aBean.getNominalTimestamp());
+        q.setParameter("slaXml", aBean.getSlaXml());
+        q.setParameter("status", aBean.getStatus().toString());
+    }
+
+    public int purgeActions(final long olderThanDays, final long limit) throws StoreException {
+
+        Integer count = doOperation("coord-purge-actions", new Callable<Integer>() {
+            public Integer call() throws SQLException, StoreException, WorkflowException {
+                Timestamp createdTime = new Timestamp(System.currentTimeMillis() - (olderThanDays * DAY_IN_MS));
+                /*
+                 * this may be better - but does not work? Query g =
+                 * entityManager
+                 * .createNamedQuery("DELETE_COMPLETED_COORD_ACTIONS");
+                 * g.setParameter("id", id); int deleted_action =
+                 * g.executeUpdate();
+                 */
+                Query q = entityManager.createNamedQuery("GET_COMPLETED_ACTIONS_OLDER_THAN");
+                q.setParameter("createdTime", createdTime);
+                q.setMaxResults((int) limit);
+                List<CoordinatorActionBean> coordactions = q.getResultList();
+                for (CoordinatorActionBean a : coordactions) {
+                    String id = a.getId();
+                    // remove surely removes - but expensive - to be compared?
+                    entityManager.remove(a);
+
+                }
+
+                return coordactions.size();
+            }
+        });
+        return Integer.valueOf(count);
+    }
+
+    public int purgeJobs(final long olderThanDays, final long limit) throws StoreException {
+
+        Integer count = doOperation("coord-purge-jobs", new Callable<Integer>() {
+            public Integer call() throws SQLException, StoreException, WorkflowException {
+
+                Timestamp lastModTm = new Timestamp(System.currentTimeMillis() - (olderThanDays * DAY_IN_MS));
+
+                Query jobQ = entityManager.createNamedQuery("GET_COMPLETED_COORD_JOBS_OLDER_THAN_STATUS");
+                jobQ.setParameter("lastModTime", lastModTm);
+                jobQ.setMaxResults((int) limit);
+                List<CoordinatorJobBean> coordJobs = jobQ.getResultList();
+                int deleted = 0;
+                for (CoordinatorJobBean a : coordJobs) {
+                    String jobId = a.getId();
+
+                    Query actionQ = entityManager.createNamedQuery("GET_COORD_ACTIONS_COUNT_BY_JOBID");
+                    actionQ.setParameter("jobId", jobId);
+                    Long count = (Long) actionQ.getSingleResult();
+
+                    if (count.intValue() == 0) {
+                        // remove surely removes - but expensive - to be
+                        // compared?
+                        entityManager.remove(a);
+                        deleted++;
+                    }
+                }
+
+                return deleted;
+            }
+        });
+        return Integer.valueOf(count);
+    }
+
+    public void commit() throws StoreException {
+    }
+
+    public void close() throws StoreException {
+    }
+
+    public CoordinatorJobBean getCoordinatorJobs(String id) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public CoordinatorJobInfo getCoordinatorInfo(final Map<String, List<String>> filter, final int start, final int len)
+            throws StoreException {
+
+        CoordinatorJobInfo coordJobInfo = doOperation("getCoordinatorJobInfo", new Callable<CoordinatorJobInfo>() {
+            public CoordinatorJobInfo call() throws SQLException, StoreException {
+                List<String> orArray = new ArrayList<String>();
+                List<String> colArray = new ArrayList<String>();
+                List<String> valArray = new ArrayList<String>();
+                StringBuilder sb = new StringBuilder("");
+
+                StoreStatusFilter.filter(filter, orArray, colArray, valArray, sb, StoreStatusFilter.coordSeletStr,
+                                         StoreStatusFilter.coordCountStr);
+
+                int realLen = 0;
+
+                Query q = null;
+                Query qTotal = null;
+                if (orArray.size() == 0) {
+                    q = entityManager.createNamedQuery("GET_COORD_JOBS_COLUMNS");
+                    q.setFirstResult(start - 1);
+                    q.setMaxResults(len);
+                    qTotal = entityManager.createNamedQuery("GET_COORD_JOBS_COUNT");
+                }
+                else {
+                    StringBuilder sbTotal = new StringBuilder(sb);
+                    sb.append(" order by w.createdtime desc ");
+                    XLog.getLog(getClass()).debug("Created String is **** " + sb.toString());
+                    q = entityManager.createQuery(sb.toString());
+                    q.setFirstResult(start - 1);
+                    q.setMaxResults(len);
+                    qTotal = entityManager.createQuery(sbTotal.toString().replace(StoreStatusFilter.coordSeletStr,
+                                                                                  StoreStatusFilter.coordCountStr));
+                }
+
+                for (int i = 0; i < orArray.size(); i++) {
+                    q.setParameter(colArray.get(i), valArray.get(i));
+                    qTotal.setParameter(colArray.get(i), valArray.get(i));
+                }
+
+                OpenJPAQuery kq = OpenJPAPersistence.cast(q);
+                JDBCFetchPlan fetch = (JDBCFetchPlan) kq.getFetchPlan();
+                fetch.setFetchBatchSize(20);
+                fetch.setResultSetType(ResultSetType.SCROLL_INSENSITIVE);
+                fetch.setFetchDirection(FetchDirection.FORWARD);
+                fetch.setLRSSizeAlgorithm(LRSSizeAlgorithm.LAST);
+                List<?> resultList = q.getResultList();
+                List<Object[]> objectArrList = (List<Object[]>) resultList;
+                List<CoordinatorJobBean> coordBeansList = new ArrayList<CoordinatorJobBean>();
+
+                for (Object[] arr : objectArrList) {
+                    CoordinatorJobBean ww = getBeanForCoordinatorJobFromArray(arr);
+                    coordBeansList.add(ww);
+                }
+
+                realLen = ((Long) qTotal.getSingleResult()).intValue();
+
+                return new CoordinatorJobInfo(coordBeansList, start, len, realLen);
+            }
+        });
+        return coordJobInfo;
+    }
+
+    private CoordinatorJobBean getBeanForCoordinatorJobFromArray(Object[] arr) {
+        CoordinatorJobBean bean = new CoordinatorJobBean();
+        bean.setId((String) arr[0]);
+        if (arr[1] != null) {
+            bean.setAppName((String) arr[1]);
+        }
+        if (arr[2] != null) {
+            bean.setStatus(Status.valueOf((String) arr[2]));
+        }
+        if (arr[3] != null) {
+            bean.setUser((String) arr[3]);
+        }
+        if (arr[4] != null) {
+            bean.setGroup((String) arr[4]);
+        }
+        if (arr[5] != null) {
+            bean.setStartTime((Timestamp) arr[5]);
+        }
+        if (arr[6] != null) {
+            bean.setEndTime((Timestamp) arr[6]);
+        }
+        if (arr[7] != null) {
+            bean.setAppPath((String) arr[7]);
+        }
+        if (arr[8] != null) {
+            bean.setConcurrency(((Integer) arr[8]).intValue());
+        }
+        if (arr[9] != null) {
+            bean.setFrequency(((Integer) arr[9]).intValue());
+        }
+        if (arr[10] != null) {
+            bean.setLastActionTime((Timestamp) arr[10]);
+        }
+        if (arr[11] != null) {
+            bean.setNextMaterializedTime((Timestamp) arr[11]);
+        }
+        if (arr[13] != null) {
+            bean.setTimeUnit(Timeunit.valueOf((String) arr[13]));
+        }
+        if (arr[14] != null) {
+            bean.setTimeZone((String) arr[14]);
+        }
+        if (arr[15] != null) {
+            bean.setTimeout((Integer) arr[15]);
+        }
+        return bean;
+    }
+
+    /**
+     * Loads all actions for the given Coordinator job.
+     *
+     * @param jobId coordinator job id
+     * @param locking true if Actions are to be locked
+     * @return A List of CoordinatorActionBean
+     * @throws StoreException
+     */
+    public List<CoordinatorActionBean> getActionsForCoordinatorJob(final String jobId, final boolean locking)
+            throws StoreException {
+        ParamChecker.notEmpty(jobId, "CoordinatorJobID");
+        List<CoordinatorActionBean> actions = doOperation("getActionsForCoordinatorJob",
+                                                          new Callable<List<CoordinatorActionBean>>() {
+                                                              @SuppressWarnings("unchecked")
+                                                              public List<CoordinatorActionBean> call() throws StoreException {
+                                                                  List<CoordinatorActionBean> actions;
+                                                                  List<CoordinatorActionBean> actionList = new ArrayList<CoordinatorActionBean>();
+                                                                  try {
+                                                                      Query q = entityManager.createNamedQuery("GET_ACTIONS_FOR_COORD_JOB");
+                                                                      q.setParameter("jobId", jobId);
+                                                                      /*
+                                                                      * if (locking) { //
+                                                                      * q.setHint("openjpa.FetchPlan.ReadLockMode", //
+                                                                      * "READ"); OpenJPAQuery oq =
+                                                                      * OpenJPAPersistence.cast(q); JDBCFetchPlan fetch =
+                                                                      * (JDBCFetchPlan) oq.getFetchPlan();
+                                                                      * fetch.setReadLockMode(LockModeType.WRITE);
+                                                                      * fetch.setLockTimeout(-1); // 1 second }
+                                                                      */
+                                                                      actions = q.getResultList();
+                                                                      for (CoordinatorActionBean a : actions) {
+                                                                          CoordinatorActionBean aa = getBeanForRunningCoordAction(a);
+                                                                          actionList.add(aa);
+                                                                      }
+                                                                  }
+                                                                  catch (IllegalStateException e) {
+                                                                      throw new StoreException(ErrorCode.E0601, e.getMessage(), e);
+                                                                  }
+                                                                  /*
+                                                                  * if (locking) { return actions; } else {
+                                                                  */
+                                                                  return actionList;
+                                                                  // }
+                                                              }
+                                                          });
+        return actions;
+    }
+
+    /**
+     * Loads given number of actions for the given Coordinator job.
+     *
+     * @param jobId coordinator job id
+     * @param start offset for select statement
+     * @param len number of Workflow Actions to be returned
+     * @return A List of CoordinatorActionBean
+     * @throws StoreException
+     */
+    public List<CoordinatorActionBean> getActionsSubsetForCoordinatorJob(final String jobId, final int start,
+                                                                         final int len) throws StoreException {
+        ParamChecker.notEmpty(jobId, "CoordinatorJobID");
+        List<CoordinatorActionBean> actions = doOperation("getActionsForCoordinatorJob",
+                                                          new Callable<List<CoordinatorActionBean>>() {
+                                                              @SuppressWarnings("unchecked")
+                                                              public List<CoordinatorActionBean> call() throws StoreException {
+                                                                  List<CoordinatorActionBean> actions;
+                                                                  List<CoordinatorActionBean> actionList = new ArrayList<CoordinatorActionBean>();
+                                                                  try {
+                                                                      Query q = entityManager.createNamedQuery("GET_ACTIONS_FOR_COORD_JOB");
+                                                                      q.setParameter("jobId", jobId);
+                                                                      q.setFirstResult(start - 1);
+                                                                      q.setMaxResults(len);
+                                                                      actions = q.getResultList();
+                                                                      for (CoordinatorActionBean a : actions) {
+                                                                          CoordinatorActionBean aa = getBeanForRunningCoordAction(a);
+                                                                          actionList.add(aa);
+                                                                      }
+                                                                  }
+                                                                  catch (IllegalStateException e) {
+                                                                      throw new StoreException(ErrorCode.E0601, e.getMessage(), e);
+                                                                  }
+                                                                  return actionList;
+                                                              }
+                                                          });
+        return actions;
+    }
+
+    protected CoordinatorActionBean getBeanForRunningCoordAction(CoordinatorActionBean a) {
+        if (a != null) {
+            CoordinatorActionBean action = new CoordinatorActionBean();
+            action.setId(a.getId());
+            action.setActionNumber(a.getActionNumber());
+            action.setActionXml(a.getActionXml());
+            action.setConsoleUrl(a.getConsoleUrl());
+            action.setCreatedConf(a.getCreatedConf());
+            //action.setErrorCode(a.getErrorCode());
+            //action.setErrorMessage(a.getErrorMessage());
+            action.setExternalStatus(a.getExternalStatus());
+            action.setMissingDependencies(a.getMissingDependencies());
+            action.setRunConf(a.getRunConf());
+            action.setTimeOut(a.getTimeOut());
+            action.setTrackerUri(a.getTrackerUri());
+            action.setType(a.getType());
+            action.setCreatedTime(a.getCreatedTime());
+            action.setExternalId(a.getExternalId());
+            action.setJobId(a.getJobId());
+            action.setLastModifiedTime(a.getLastModifiedTime());
+            action.setNominalTime(a.getNominalTime());
+            action.setSlaXml(a.getSlaXml());
+            action.setStatus(a.getStatus());
+            return action;
+        }
+        return null;
+    }
+
+    public CoordinatorActionBean getAction(String id, boolean b) {
+        return null;
+    }
+
+    /*
+     * do not need this public void updateCoordinatorActionForExternalId(final
+     * CoordinatorActionBean action) throws StoreException { // TODO
+     * Auto-generated method stub ParamChecker.notNull(action,
+     * "updateCoordinatorActionForExternalId");
+     * doOperation("updateCoordinatorActionForExternalId", new Callable<Void>()
+     * { public Void call() throws SQLException, StoreException,
+     * WorkflowException { Query q =
+     * entityManager.createNamedQuery("UPDATE_COORD_ACTION_FOR_EXTERNALID");
+     * setActionQueryParameters(action,q); q.executeUpdate(); return null; } });
+     * }
+     */
+    public CoordinatorActionBean getCoordinatorActionForExternalId(final String externalId) throws StoreException {
+        // TODO Auto-generated method stub
+        ParamChecker.notEmpty(externalId, "coodinatorActionExternalId");
+        CoordinatorActionBean cBean = doOperation("getCoordinatorActionForExternalId",
+                                                  new Callable<CoordinatorActionBean>() {
+                                                      public CoordinatorActionBean call() throws StoreException {
+                                                          CoordinatorActionBean caBean = null;
+                                                          Query q = entityManager.createNamedQuery("GET_COORD_ACTION_FOR_EXTERNALID");
+                                                          q.setParameter("externalId", externalId);
+                                                          List<CoordinatorActionBean> actionList = q.getResultList();
+                                                          if (actionList.size() > 0) {
+                                                              caBean = (CoordinatorActionBean) actionList.get(0);
+                                                          }
+                                                          return caBean;
+                                                      }
+                                                  });
+        return cBean;
+    }
+
+    public List<CoordinatorActionBean> getRunningActionsForCoordinatorJob(final String jobId, final boolean locking)
+            throws StoreException {
+        ParamChecker.notEmpty(jobId, "CoordinatorJobID");
+        List<CoordinatorActionBean> actions = doOperation("getRunningActionsForCoordinatorJob",
+                                                          new Callable<List<CoordinatorActionBean>>() {
+                                                              @SuppressWarnings("unchecked")
+                                                              public List<CoordinatorActionBean> call() throws StoreException {
+                                                                  List<CoordinatorActionBean> actions;
+                                                                  try {
+                                                                      Query q = entityManager.createNamedQuery("GET_RUNNING_ACTIONS_FOR_COORD_JOB");
+                                                                      q.setParameter("jobId", jobId);
+                                                                      /*
+                                                                      * if (locking) {
+                                                                      * q.setHint("openjpa.FetchPlan.ReadLockMode",
+                                                                      * "READ"); OpenJPAQuery oq =
+                                                                      * OpenJPAPersistence.cast(q); FetchPlan fetch =
+                                                                      * oq.getFetchPlan();
+                                                                      * fetch.setReadLockMode(LockModeType.WRITE);
+                                                                      * fetch.setLockTimeout(-1); // no limit }
+                                                                      */
+                                                                      actions = q.getResultList();
+                                                                      return actions;
+                                                                  }
+                                                                  catch (IllegalStateException e) {
+                                                                      throw new StoreException(ErrorCode.E0601, e.getMessage(), e);
+                                                                  }
+                                                              }
+                                                          });
+        return actions;
+    }
+
+    public List<CoordinatorActionBean> getRunningActionsOlderThan(final long checkAgeSecs, final boolean locking)
+            throws StoreException {
+        List<CoordinatorActionBean> actions = doOperation("getRunningActionsOlderThan",
+                                                          new Callable<List<CoordinatorActionBean>>() {
+                                                              @SuppressWarnings("unchecked")
+                                                              public List<CoordinatorActionBean> call() throws StoreException {
+                                                                  List<CoordinatorActionBean> actions;
+                                                                  Timestamp ts = new Timestamp(System.currentTimeMillis() - checkAgeSecs * 1000);
+                                                                  try {
+                                                                      Query q = entityManager.createNamedQuery("GET_RUNNING_ACTIONS_OLDER_THAN");
+                                                                      q.setParameter("lastModifiedTime", ts);
+                                                                      /*
+                                                                      * if (locking) { OpenJPAQuery oq =
+                                                                      * OpenJPAPersistence.cast(q); FetchPlan fetch =
+                                                                      * oq.getFetchPlan();
+                                                                      * fetch.setReadLockMode(LockModeType.WRITE);
+                                                                      * fetch.setLockTimeout(-1); // no limit }
+                                                                      */
+                                                                      actions = q.getResultList();
+                                                                      return actions;
+                                                                  }
+                                                                  catch (IllegalStateException e) {
+                                                                      throw new StoreException(ErrorCode.E0601, e.getMessage(), e);
+                                                                  }
+                                                              }
+                                                          });
+        return actions;
+    }
+
+    public List<CoordinatorActionBean> getRecoveryActionsOlderThan(final long checkAgeSecs, final boolean locking)
+            throws StoreException {
+        List<CoordinatorActionBean> actions = doOperation("getRunningActionsOlderThan",
+                                                          new Callable<List<CoordinatorActionBean>>() {
+                                                              @SuppressWarnings("unchecked")
+                                                              public List<CoordinatorActionBean> call() throws StoreException {
+                                                                  List<CoordinatorActionBean> actions;
+                                                                  try {
+                                                                      Query q = entityManager.createNamedQuery("GET_WAITING_SUBMITTED_ACTIONS_OLDER_THAN");
+                                                                      Timestamp ts = new Timestamp(System.currentTimeMillis() - checkAgeSecs * 1000);
+                                                                      q.setParameter("lastModifiedTime", ts);
+                                                                      /*
+                                                                      * if (locking) { OpenJPAQuery oq =
+                                                                      * OpenJPAPersistence.cast(q); FetchPlan fetch =
+                                                                      * oq.getFetchPlan();
+                                                                      * fetch.setReadLockMode(LockModeType.WRITE);
+                                                                      * fetch.setLockTimeout(-1); // no limit }
+                                                                      */
+                                                                      actions = q.getResultList();
+                                                                      return actions;
+                                                                  }
+                                                                  catch (IllegalStateException e) {
+                                                                      throw new StoreException(ErrorCode.E0601, e.getMessage(), e);
+                                                                  }
+                                                              }
+                                                          });
+        return actions;
+    }
+
+    public List<String> getRecoveryActionsGroupByJobId(final long checkAgeSecs) throws StoreException {
+        List<String> jobids = doOperation("getRecoveryActionsGroupByJobId", new Callable<List<String>>() {
+            @SuppressWarnings("unchecked")
+            public List<String> call() throws StoreException {
+                List<String> jobids = new ArrayList<String>();
+                try {
+                    Query q = entityManager.createNamedQuery("GET_READY_ACTIONS_GROUP_BY_JOBID");
+                    Timestamp ts = new Timestamp(System.currentTimeMillis() - checkAgeSecs * 1000);
+                    q.setParameter(1, ts);
+                    List<Object[]> list = q.getResultList();
+
+                    for (Object[] arr : list) {
+                        if (arr != null && arr[0] != null) {
+                            jobids.add((String) arr[0]);
+                        }
+                    }
+
+                    return jobids;
+                }
+                catch (IllegalStateException e) {
+                    throw new StoreException(ErrorCode.E0601, e.getMessage(), e);
+                }
+            }
+        });
+        return jobids;
+    }
+}

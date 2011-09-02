@@ -38,6 +38,7 @@ import org.json.simple.JSONObject;
 public class MapReduceActionExecutor extends JavaActionExecutor {
 
     public static final String HADOOP_COUNTERS = "hadoop.counters";
+    private XLog log = XLog.getLog(getClass());
 
     public MapReduceActionExecutor() {
         super("map-reduce");
@@ -58,17 +59,18 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
         if (actionXml.getChild("streaming", ns) != null) {
             mainClass = launcherConf.get(LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS, StreamingMain.class.getName());
         }
-        else if (actionXml.getChild("pipes", ns) != null) {
-            mainClass = launcherConf.get(LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS, PipesMain.class.getName());
-        }
         else {
-            mainClass = launcherConf.get(LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS, MapReduceMain.class.getName());
+            if (actionXml.getChild("pipes", ns) != null) {
+                mainClass = launcherConf.get(LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS, PipesMain.class.getName());
+            }
+            else {
+                mainClass = launcherConf.get(LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS, MapReduceMain.class.getName());
+            }
         }
         return mainClass;
     }
 
-    Configuration setupLauncherConf(Configuration conf, Element actionXml, Path appPath)
-            throws ActionExecutorException {
+    Configuration setupLauncherConf(Configuration conf, Element actionXml, Path appPath) throws ActionExecutorException {
         super.setupLauncherConf(conf, actionXml, appPath);
         conf.setBoolean("mapreduce.job.complete.cancel.delegation.tokens", true);
         return conf;
@@ -95,15 +97,17 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
             }
             StreamingMain.setStreaming(actionConf, mapper, reducer, recordReader, recordReaderMapping, env);
         }
-        else if (actionXml.getChild("pipes", ns) != null) {
-            Element pipesXml = actionXml.getChild("pipes", ns);
-            String map = pipesXml.getChildTextTrim("map", ns);
-            String reduce = pipesXml.getChildTextTrim("reduce", ns);
-            String inputFormat = pipesXml.getChildTextTrim("inputformat", ns);
-            String partitioner = pipesXml.getChildTextTrim("partitioner", ns);
-            String writer = pipesXml.getChildTextTrim("writer", ns);
-            String program = pipesXml.getChildTextTrim("program", ns);
-            PipesMain.setPipes(actionConf, map, reduce, inputFormat, partitioner, writer, program);
+        else {
+            if (actionXml.getChild("pipes", ns) != null) {
+                Element pipesXml = actionXml.getChild("pipes", ns);
+                String map = pipesXml.getChildTextTrim("map", ns);
+                String reduce = pipesXml.getChildTextTrim("reduce", ns);
+                String inputFormat = pipesXml.getChildTextTrim("inputformat", ns);
+                String partitioner = pipesXml.getChildTextTrim("partitioner", ns);
+                String writer = pipesXml.getChildTextTrim("writer", ns);
+                String program = pipesXml.getChildTextTrim("program", ns);
+                PipesMain.setPipes(actionConf, map, reduce, inputFormat, partitioner, writer, program);
+            }
         }
         actionConf = super.setupActionConf(actionConf, context, actionXml, appPath);
         return actionConf;
@@ -112,18 +116,26 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
     @Override
     public void end(Context context, WorkflowAction action) throws ActionExecutorException {
         super.end(context, action);
+        JobClient jobClient = null;
+        boolean exception = false;
         try {
             if (action.getStatus() == WorkflowAction.Status.OK) {
                 Element actionXml = XmlUtils.parseXml(action.getConf());
                 Configuration conf = createBaseHadoopConf(context, actionXml);
                 JobConf jobConf = new JobConf();
                 XConfiguration.copy(conf, jobConf);
-                JobClient jobClient = createJobClient(context, jobConf);
+                jobClient = createJobClient(context, jobConf);
                 RunningJob runningJob = jobClient.getJob(JobID.forName(action.getExternalId()));
+                if (runningJob == null) {
+                    throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "MR002",
+                                                      "Unknown hadoop job [{0}] associated with action [{1}].  Failing this action!", action
+                            .getExternalId(), action.getId());
+                }
+
                 // TODO this has to be done in a better way
                 if (!runningJob.getJobName().startsWith("oozie:action:")) {
                     throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "MR001",
-                            "ID swap should have happened in launcher job [{0}]", action.getExternalId());
+                                                      "ID swap should have happened in launcher job [{0}]", action.getExternalId());
                 }
                 Counters counters = runningJob.getCounters();
                 if (counters != null) {
@@ -139,7 +151,23 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
             }
         }
         catch (Exception ex) {
+            exception = true;
             throw convertException(ex);
+        }
+        finally {
+            if (jobClient != null) {
+                try {
+                    jobClient.close();
+                }
+                catch (Exception e) {
+                    if (exception) {
+                        log.error("JobClient error: ", e);
+                    }
+                    else {
+                        throw convertException(e);
+                    }
+                }
+            }
         }
     }
 

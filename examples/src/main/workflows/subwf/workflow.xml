@@ -16,7 +16,7 @@
   limitations under the License.
 -->
 <workflow-app xmlns='uri:oozie:workflow:0.1' name='subwf'>
-    <start to='subwf1' />
+    <start to='subwf1'/>
     <action name='subwf1'>
         <sub-workflow>
             <oozie>${oozie}</oozie>
@@ -51,16 +51,16 @@
                     <value>${outputDir}/mapRed</value>
                 </property>
                 <property>
-                  <name>mapred.job.queue.name</name>
-                  <value>${queueName}</value>
+                    <name>mapred.job.queue.name</name>
+                    <value>${queueName}</value>
                 </property>
             </configuration>
         </sub-workflow>
-        <ok to="end" />
-        <error to="fail" />
+        <ok to="end"/>
+        <error to="fail"/>
     </action>
     <kill name="fail">
         <message>Sub workflow failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>
     </kill>
-    <end name='end' />
+    <end name='end'/>
 </workflow-app>

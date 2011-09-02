@@ -48,7 +48,7 @@ public class HadoopELFunctions {
         Map<String, Map<String, Long>> counters = (Map<String, Map<String, Long>>) obj;
         if (counters == null) {
             counters = getCounters(nodeName);
-            instance.setTransientVar(nodeName + WorkflowInstance.NODE_VAR_SEPARATOR +  HADOOP_COUNTERS, counters);
+            instance.setTransientVar(nodeName + WorkflowInstance.NODE_VAR_SEPARATOR + HADOOP_COUNTERS, counters);
         }
         return counters;
     }

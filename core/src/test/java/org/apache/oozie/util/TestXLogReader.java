@@ -18,10 +18,12 @@
 package org.apache.oozie.util;
 
 import org.apache.oozie.util.XLogStreamer;
+
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringWriter;
+
 import org.apache.oozie.test.XTestCase;
 
 public class TestXLogReader extends XTestCase {

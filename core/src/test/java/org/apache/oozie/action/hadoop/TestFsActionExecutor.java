@@ -201,19 +201,19 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
         Path target = new Path(new Path(getFsTestCaseDir(), "target").toUri().getPath());
         Path chmod1 = new Path(getFsTestCaseDir(), "chmod1");
         fs.mkdirs(chmod1);
-        Path child1  = new Path(chmod1, "child1");
+        Path child1 = new Path(chmod1, "child1");
         fs.mkdirs(child1);
-        Path chmod2  = new Path(getFsTestCaseDir(), "chmod2");
+        Path chmod2 = new Path(getFsTestCaseDir(), "chmod2");
         fs.mkdirs(chmod2);
-        Path child2  = new Path(chmod2, "child2");
+        Path child2 = new Path(chmod2, "child2");
         fs.mkdirs(child2);
 
         String str = MessageFormat.format("<root><mkdir path=''{0}''/>" +
-                                          "<delete path=''{1}''/>" +
-                                          "<move source=''{2}'' target=''{3}''/>" +
-                                          "<chmod path=''{4}'' permissions=''-rwxrwxrwx''/>" +
-                                          "<chmod path=''{5}'' permissions=''-rwxrwx---'' dir-files=''false''/>" +
-                                          "</root>", mkdir, delete, source, target, chmod1, chmod2);
+                "<delete path=''{1}''/>" +
+                "<move source=''{2}'' target=''{3}''/>" +
+                "<chmod path=''{4}'' permissions=''-rwxrwxrwx''/>" +
+                "<chmod path=''{5}'' permissions=''-rwxrwx---'' dir-files=''false''/>" +
+                "</root>", mkdir, delete, source, target, chmod1, chmod2);
 
         Element xml = XmlUtils.parseXml(str);
 
@@ -243,19 +243,19 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
         Path target = new Path(new Path(getFsTestCaseDir(), "target").toUri().getPath());
         Path chmod1 = new Path(getFsTestCaseDir(), "chmod1");
         fs.mkdirs(chmod1);
-        Path child1  = new Path(chmod1, "child1");
+        Path child1 = new Path(chmod1, "child1");
         fs.mkdirs(child1);
-        Path chmod2  = new Path(getFsTestCaseDir(), "chmod2");
+        Path chmod2 = new Path(getFsTestCaseDir(), "chmod2");
         fs.mkdirs(chmod2);
-        Path child2  = new Path(chmod2, "child2");
+        Path child2 = new Path(chmod2, "child2");
         fs.mkdirs(child2);
 
         String actionXml = MessageFormat.format("<fs><mkdir path=''{0}''/>" +
-                                          "<delete path=''{1}''/>" +
-                                          "<move source=''{2}'' target=''{3}''/>" +
-                                          "<chmod path=''{4}'' permissions=''-rwxrwxrwx''/>" +
-                                          "<chmod path=''{5}'' permissions=''-rwxrwx---'' dir-files=''false''/>" +
-                                          "</fs>", mkdir, delete, source, target, chmod1, chmod2);
+                "<delete path=''{1}''/>" +
+                "<move source=''{2}'' target=''{3}''/>" +
+                "<chmod path=''{4}'' permissions=''-rwxrwxrwx''/>" +
+                "<chmod path=''{5}'' permissions=''-rwxrwx---'' dir-files=''false''/>" +
+                "</fs>", mkdir, delete, source, target, chmod1, chmod2);
 
 
         Context context = createContext(actionXml);
@@ -274,7 +274,7 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
         assertEquals(WorkflowAction.Status.OK, context.getAction().getStatus());
 
         assertFalse(fs.exists(ae.getRecoveryPath(context)));
-        
+
         assertTrue(fs.exists(mkdir));
         assertFalse(fs.exists(delete));
         assertFalse(fs.exists(source));
@@ -299,27 +299,27 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
         Path target = new Path(new Path(getFsTestCaseDir(), "target").toUri().getPath());
         Path chmod1 = new Path(getFsTestCaseDir(), "chmod1");
         fs.mkdirs(chmod1);
-        Path child1  = new Path(chmod1, "child1");
+        Path child1 = new Path(chmod1, "child1");
         fs.mkdirs(child1);
-        Path chmod2  = new Path(getFsTestCaseDir(), "chmod2");
+        Path chmod2 = new Path(getFsTestCaseDir(), "chmod2");
         fs.mkdirs(chmod2);
-        Path child2  = new Path(chmod2, "child2");
+        Path child2 = new Path(chmod2, "child2");
         fs.mkdirs(child2);
 
         String actionXml = MessageFormat.format("<fs>" +
-                                          "<mkdir path=''{0}''/>" +
-                                          "<delete path=''{1}''/>" +
-                                          "<move source=''{2}'' target=''{3}''/>" +
-                                          "<chmod path=''{4}'' permissions=''111''/>" +
-                                          "<chmod path=''{5}'' permissions=''222'' dir-files=''false''/>" +
-                                          "</fs>", mkdir, delete, source.toUri().getPath(), target, chmod1, chmod2);
+                "<mkdir path=''{0}''/>" +
+                "<delete path=''{1}''/>" +
+                "<move source=''{2}'' target=''{3}''/>" +
+                "<chmod path=''{4}'' permissions=''111''/>" +
+                "<chmod path=''{5}'' permissions=''222'' dir-files=''false''/>" +
+                "</fs>", mkdir, delete, source.toUri().getPath(), target, chmod1, chmod2);
 
 
         String id = "ID" + System.currentTimeMillis();
         Context context = createContext(actionXml);
-        ((WorkflowJobBean)context.getWorkflow()).setId(id);
-        ((WorkflowActionBean)context.getWorkflow().getActions().get(0)).setJobId(id);
-        ((WorkflowActionBean)context.getWorkflow().getActions().get(0)).setId(id + "-FS");
+        ((WorkflowJobBean) context.getWorkflow()).setId(id);
+        ((WorkflowActionBean) context.getWorkflow().getActions().get(0)).setJobId(id);
+        ((WorkflowActionBean) context.getWorkflow().getActions().get(0)).setId(id + "-FS");
 
         WorkflowAction action = context.getAction();
 
@@ -340,17 +340,17 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
         assertTrue(fs.exists(ae.getRecoveryPath(context)));
 
         actionXml = MessageFormat.format("<fs>" +
-                                         "<mkdir path=''{0}''/>" +
-                                         "<delete path=''{1}''/>" +
-                                         "<move source=''{2}'' target=''{3}''/>" +
-                                         "<chmod path=''{4}'' permissions=''-rwxrwxrwx''/>" +
-                                         "<chmod path=''{5}'' permissions=''-rwxrwx---'' dir-files=''false''/>" +
-                                         "</fs>", mkdir, delete, source, target, chmod1, chmod2);
+                "<mkdir path=''{0}''/>" +
+                "<delete path=''{1}''/>" +
+                "<move source=''{2}'' target=''{3}''/>" +
+                "<chmod path=''{4}'' permissions=''-rwxrwxrwx''/>" +
+                "<chmod path=''{5}'' permissions=''-rwxrwx---'' dir-files=''false''/>" +
+                "</fs>", mkdir, delete, source, target, chmod1, chmod2);
 
         context = createContext(actionXml);
-        ((WorkflowJobBean)context.getWorkflow()).setId(id);
-        ((WorkflowActionBean)context.getWorkflow().getActions().get(0)).setJobId(id);
-        ((WorkflowActionBean)context.getWorkflow().getActions().get(0)).setId(id + "-FS");
+        ((WorkflowJobBean) context.getWorkflow()).setId(id);
+        ((WorkflowActionBean) context.getWorkflow().getActions().get(0)).setJobId(id);
+        ((WorkflowActionBean) context.getWorkflow().getActions().get(0)).setId(id + "-FS");
 
         action = context.getAction();
 

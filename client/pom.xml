@@ -54,6 +54,12 @@
             <version>3.8.1</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>javax.persistence</groupId>
+            <artifactId>persistence-api</artifactId>
+            <version>1.0</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -63,42 +69,131 @@
                 <filtering>true</filtering>
             </resource>
         </resources>
-        <plugins>
-            <plugin>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <configuration>
-                    <descriptors>
-                        <descriptor>../src/main/assemblies/client.xml</descriptor>
-                    </descriptors>
-                </configuration>
-            </plugin>
-        </plugins>
     </build>
 
     <profiles>
-        <!-- Kerberos Authentication -->
+
         <profile>
-            <id>kerberos-auth</id>
+            <id>jpaEnhancedOff</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
                 <property>
-                    <name>oozie.test.hadoop.auth</name>
-                    <value>kerberos</value>
+                    <name>oozie.build.jpa.enhanced</name>
+                    <value>false</value>
                 </property>
             </activation>
             <build>
-               <plugins>
-                 <plugin>
-                   <groupId>org.apache.maven.plugins</groupId>
-                   <artifactId>maven-surefire-plugin</artifactId>
-                   <configuration>
-                     <excludes>
-                       <exclude>**/*.java</exclude>
-                     </excludes>
-                   </configuration>
-                 </plugin>
-               </plugins>
-             </build>
+                <directory>target-no-jpa</directory>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>../src/main/assemblies/client.xml</descriptor>
+                            </descriptors>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>jpaEnhancedOn</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+                <property>
+                    <name>oozie.build.jpa.enhanced</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>javax.persistence</groupId>
+                    <artifactId>persistence-api</artifactId>
+                    <version>1.0</version>
+                    <scope>provided</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.openjpa</groupId>
+                    <artifactId>openjpa-persistence</artifactId>
+                    <version>1.2.1</version>
+                </dependency>
+                <dependency>
+                    <groupId>log4j</groupId>
+                    <artifactId>log4j</artifactId>
+                    <version>1.2.15</version>
+                    <scope>compile</scope>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>com.sun.jdmk</groupId>
+                            <artifactId>jmxtools</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>com.sun.jmx</groupId>
+                            <artifactId>jmxri</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>javax.mail</groupId>
+                            <artifactId>mail</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>javax.jms</groupId>
+                            <artifactId>jmx</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>javax.jms</groupId>
+                            <artifactId>jms</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+            </dependencies>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <phase>process-classes</phase>
+                                <configuration>
+                                    <tasks>
+                                        <path id="cp">
+                                            <path refid="maven.test.classpath"/>
+                                            <path refid="maven.compile.classpath"/>
+                                            <path refid="maven.dependency.classpath"/>
+                                        </path>
+                                        <taskdef name="openjpac" classname=
+                                                "org.apache.openjpa.ant.PCEnhancerTask">
+                                            <classpath refid="cp"/>
+                                        </taskdef>
+                                        <fileset id="enhance.path.ref" dir="target/classes">
+                                            <include name="**/JsonWorkflowJob.class"/>
+                                            <include name="**/JsonWorkflowAction.class"/>
+                                            <include name="**/JsonCoordinatorJob.class"/>
+                                            <include name="**/JsonCoordinatorAction.class"/>
+                                            <include name="**/JsonSLAEvent.class"/>
+                                        </fileset>
+                                        <openjpac>
+                                            <classpath refid="cp"/>
+                                            <fileset refid="enhance.path.ref"/>
+                                        </openjpac>
+                                    </tasks>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>../src/main/assemblies/empty.xml</descriptor>
+                            </descriptors>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
 

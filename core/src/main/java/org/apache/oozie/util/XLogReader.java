@@ -18,6 +18,7 @@
 package org.apache.oozie.util;
 
 import org.apache.oozie.util.XLogStreamer;
+
 import java.util.ArrayList;
 import java.io.Writer;
 import java.io.IOException;
@@ -26,9 +27,8 @@ import java.io.InputStreamReader;
 import java.io.InputStream;
 
 /**
- * Reads the input stream(log file) and applies the filters and writes it to
- * output stream. The filtering will also consider the log messages spilling
- * over multiline.
+ * Reads the input stream(log file) and applies the filters and writes it to output stream. The filtering will also
+ * consider the log messages spilling over multiline.
  */
 public class XLogReader {
     private BufferedReader logReader;
@@ -44,7 +44,7 @@ public class XLogReader {
 
     /**
      * Processes the Given Log and writes the output after applying the filters.
-     * 
+     *
      * @throws IOException
      */
     public void processLog() throws IOException {

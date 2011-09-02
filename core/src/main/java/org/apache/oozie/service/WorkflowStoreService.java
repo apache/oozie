@@ -23,6 +23,7 @@ import org.apache.oozie.store.WorkflowStore;
 import org.apache.oozie.workflow.WorkflowInstance;
 import org.apache.oozie.workflow.WorkflowLib;
 import org.apache.oozie.service.Service;
+import org.apache.oozie.store.Store;
 
 import java.util.Collections;
 import java.util.List;
@@ -56,14 +57,25 @@ public abstract class WorkflowStoreService implements Service {
     public abstract WorkflowLib getWorkflowLibWithNoDB();
 
     /**
-     * Return a workflow store instance with a fresh transaction.
-     * <p/>
-     * The workflow store has to be committed and then closed to commit changes, if only close it rolls back.
+     * Return a workflow store instance with a fresh transaction. <p/> The workflow store has to be committed and then
+     * closed to commit changes, if only close it rolls back.
      *
      * @return a workflow store.
      * @throws StoreException thrown if the workflow store could not be created.
      */
     public abstract WorkflowStore create() throws StoreException;
+
+    /**
+     * Return a workflow store instance with an existing transaction. <p/> The workflow store has to be committed and
+     * then closed to commit changes, if only close it rolls back.
+     *
+     * @return a workflow store.
+     * @throws StoreException thrown if the workflow store could not be created.
+     */
+    //to do this method can be abstract or should be overridden 
+    public <S extends Store> WorkflowStore create(S store) throws StoreException {
+        return null;
+    }
 
     /**
      * Return the list of actions started by a signal in an instance.

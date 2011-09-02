@@ -24,6 +24,8 @@ Test that the Java version, 1.6+, is available with the =java -version= command.
 
 ---++ SSH Setup
 
+*NOTE: SSH actions are deprecated in Oozie schema 0.1, and removed in Oozie schema 0.2*
+
 Create SSH keys for the <code><OOZIE_USER></code> account.
 
 <verbatim>

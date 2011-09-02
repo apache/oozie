@@ -17,6 +17,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
+
 <configuration>
 
     <!-- Base Oozie URL: <SCHEME>://<HOST>:<PORT>/<CONTEXT> -->
@@ -40,10 +41,10 @@
     </property>
 
     <property>
-        <name>oozie.safemode</name>
-        <value>false</value>
+        <name>oozie.systemmode</name>
+        <value>NORMAL</value>
         <description>
-            If Oozie starts in safemode.
+            System mode for  Oozie at startup.
         </description>
     </property>
 
@@ -63,20 +64,25 @@
             org.apache.oozie.service.CallableQueueService,
             org.apache.oozie.service.UUIDService,
             org.apache.oozie.service.ELService,
-            org.apache.oozie.service.DataSourceService,
             org.apache.oozie.service.AuthorizationService,
             org.apache.oozie.service.kerberos.KerberosHadoopAccessorService,
             org.apache.oozie.service.MemoryLocksService,
             org.apache.oozie.service.DagXLogInfoService,
-            org.apache.oozie.service.WorkflowSchemaService,
+            org.apache.oozie.service.SchemaService,
             org.apache.oozie.service.LiteWorkflowAppService,
+            org.apache.oozie.service.StoreService,
+            org.apache.oozie.service.CoordinatorStoreService,
+            org.apache.oozie.service.SLAStoreService,
             org.apache.oozie.service.DBLiteWorkflowStoreService,
             org.apache.oozie.service.CallbackService,
             org.apache.oozie.service.ActionService,
             org.apache.oozie.service.ActionCheckerService,
-            org.apache.oozie.service.ActionRecoveryService,
+            org.apache.oozie.service.RecoveryService,
             org.apache.oozie.service.PurgeService,
-            org.apache.oozie.service.DagEngineService
+            org.apache.oozie.service.CoordinatorEngineService,
+            org.apache.oozie.service.DagEngineService,
+            org.apache.oozie.service.CoordJobMatLookupTriggerService,
+            org.apache.oozie.service.CoordCheckRunningActionTriggerService
         </value>
         <description>
             All services to be created and managed by Oozie Services singleton.
@@ -138,7 +144,23 @@
             Jobs older than this value, in days, will be purged by the PurgeService.
         </description>
     </property>
-
+    
+    <property>
+        <name>oozie.service.PurgeService.coord.older.than</name>
+        <value>7</value>
+        <description>
+            Completed Actions older than this value, in days, will be purged by the PurgeService.
+        </description>
+    </property>
+	
+	<property>
+		<name>oozie.service.PurgeService.coord.purge.limit</name>
+		<value>100</value>
+		<description>
+			Completed Actions purge - limit each purge to this value
+        </description>
+	</property>
+	
     <property>
         <name>oozie.service.PurgeService.purge.interval</name>
         <value>3600</value>
@@ -147,10 +169,10 @@
         </description>
     </property>
 
-    <!-- ActionRecoveryService -->
+    <!-- RecoveryService -->
 
     <property>
-        <name>oozie.service.ActionRecoveryService.actions.older.than</name>
+        <name>oozie.service.RecoveryService.wf.actions.older.than</name>
         <value>120</value>
         <description>
             Age of the actions which are eligible to be queued for recovery, in seconds.
@@ -158,19 +180,27 @@
     </property>
 
     <property>
-        <name>oozie.service.ActionRecoveryService.pending.actions.interval</name>
-        <value>60</value>
+        <name>oozie.service.RecoveryService.callable.batch.size</name>
+        <value>10</value>
         <description>
-            Interval at which the ActionRecoverService will run, in seconds.
+            This value determines the number of callable which will be batched together
+            to be executed by a single thread.
         </description>
     </property>
 
     <property>
-        <name>oozie.service.ActionRecoveryService.callable.batch.size</name>
-        <value>10</value>
+        <name>oozie.service.RecoveryService.interval</name>
+        <value>60</value>
         <description>
-            This value determines the number of actions which will be batched together
-            to be executed by a single thread.
+            Interval at which the RecoverService will run, in seconds.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.RecoveryService.coord.older.than</name>
+        <value>600</value>
+        <description>
+            Age of the Coordinator jobs or actions which are eligible to be queued for recovery, in seconds.
         </description>
     </property>
 
@@ -206,10 +236,52 @@
         </description>
     </property>
 
-    <!-- ELService -->
+	<!--  CoordJobMatLookupTriggerService -->
+
+	<property>
+		<name>oozie.service.CoordJobMatLookupTriggerService.lookup.interval
+		</name>
+		<value>300</value>
+		<description> Coordinator Job Lookup trigger command is scheduled at
+			this "interval" (in seconds).</description>
+	</property>
+
+	<property>
+		<name>oozie.service.CoordJobMatLookupTriggerService.materialization.window
+		</name>
+		<value>3600</value>
+		<description> Coordinator Job Lookup command materialized each job for
+			this next "window" duration</description>
+	</property>
 
     <property>
-        <name>oozie.service.ELService.constants</name>
+        <name>oozie.service.CoordJobMatLookupTriggerService.callable.batch.size</name>
+        <value>10</value>
+        <description>
+            This value determines the number of callable which will be batched together
+            to be executed by a single thread.
+        </description>
+    </property>
+
+	<!-- CoordCheckRunningActionTriggerService -->
+	<property>
+		<name>oozie.service.CoordJobMatLookupTriggerService.check.interval
+		</name>
+		<value>300</value>
+		<description> Coordinator check running action trigger command is
+			scheduled at this "interval" (in seconds).</description>
+	</property>
+    <!-- ELService -->
+    <!--  List of supported groups for ELService -->
+	<property>
+        <name>oozie.service.ELService.groups</name>
+        <value>workflow,wf-sla-submit,coord-job-submit-freq,coord-job-submit-nofuncs,coord-job-submit-data,coord-job-submit-instances,coord-sla-submit,coord-action-create,coord-action-create-inst,coord-sla-create,coord-action-start</value>
+        <description>List of groups for different ELServices</description>
+    </property>
+
+<!-- Workflow specifics -->
+    <property>
+        <name>oozie.service.ELService.constants.workflow</name>
         <value>
             KB=org.apache.oozie.util.ELConstantsFunctions#KB,
             MB=org.apache.oozie.util.ELConstantsFunctions#MB,
@@ -229,7 +301,7 @@
     </property>
 
     <property>
-        <name>oozie.service.ELService.ext.constants</name>
+        <name>oozie.service.ELService.ext.constants.workflow</name>
         <value> </value>
         <description>
             EL constant declarations, separated by commas, format is [PREFIX:]NAME=CLASS#CONSTANT.
@@ -239,7 +311,7 @@
     </property>
 
     <property>
-        <name>oozie.service.ELService.functions</name>
+        <name>oozie.service.ELService.functions.workflow</name>
         <value>
             firstNotNull=org.apache.oozie.util.ELConstantsFunctions#firstNotNull,
             concat=org.apache.oozie.util.ELConstantsFunctions#concat,
@@ -275,7 +347,7 @@
     </property>
 
     <property>
-        <name>oozie.service.ELService.ext.functions</name>
+        <name>oozie.service.ELService.ext.functions.workflow</name>
         <value>
         </value>
         <description>
@@ -284,6 +356,456 @@
             include all the built in ones.
         </description>
     </property>
+
+    <!-- Resolve SLA information during Workflow job submission -->
+	<property>
+        <name>oozie.service.ELService.constants.wf-sla-submit</name>
+        <value>
+            MINUTES=org.apache.oozie.util.ELConstantsFunctions#SUBMIT_MINUTES,
+            HOURS=org.apache.oozie.util.ELConstantsFunctions#SUBMIT_HOURS,
+            DAYS=org.apache.oozie.util.ELConstantsFunctions#SUBMIT_DAYS
+            </value>
+        <description>
+            EL constant declarations, separated by commas, format is [PREFIX:]NAME=CLASS#CONSTANT.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.ext.constants.wf-sla-submit</name>
+        <value> </value>
+        <description>
+            EL constant declarations, separated by commas, format is [PREFIX:]NAME=CLASS#CONSTANT.
+            This property is a convenience property to add extensions to the built in executors without having to
+            include all the built in ones.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.functions.wf-sla-submit</name>
+        <value> </value>
+        <description>
+            EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
+        </description>
+    </property>
+    <property>
+        <name>oozie.service.ELService.ext.functions.wf-sla-submit</name>
+        <value>
+        </value>
+        <description>
+            EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
+            This property is a convenience property to add extensions to the built in executors without having to
+            include all the built in ones.
+        </description>
+    </property>
+
+<!-- Coordinator specifics -->l
+<!-- Phase 1 resolution during job submission -->
+<!-- EL Evalautor setup to resolve mainly frequency tags -->
+    <property>
+        <name>oozie.service.ELService.constants.coord-job-submit-freq</name>
+        <value> </value>
+        <description>
+            EL constant declarations, separated by commas, format is [PREFIX:]NAME=CLASS#CONSTANT.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.ext.constants.coord-job-submit-freq</name>
+        <value> </value>
+        <description>
+            EL constant declarations, separated by commas, format is [PREFIX:]NAME=CLASS#CONSTANT.
+            This property is a convenience property to add extensions to the built in executors without having to
+            include all the built in ones.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.functions.coord-job-submit-freq</name>
+        <value>
+            coord:days=org.apache.oozie.coord.CoordELFunctions#ph1_coord_days,
+            coord:months=org.apache.oozie.coord.CoordELFunctions#ph1_coord_months,
+            coord:hours=org.apache.oozie.coord.CoordELFunctions#ph1_coord_hours,
+            coord:minutes=org.apache.oozie.coord.CoordELFunctions#ph1_coord_minutes,
+            coord:endOfDays=org.apache.oozie.coord.CoordELFunctions#ph1_coord_endOfDays,
+            coord:endOfMonths=org.apache.oozie.coord.CoordELFunctions#ph1_coord_endOfMonths
+        </value>
+        <description>
+            EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.ext.functions.coord-job-submit-freq</name>
+        <value>
+        </value>
+        <description>
+            EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
+            This property is a convenience property to add extensions to the built in executors without having to
+            include all the built in ones.
+        </description>
+    </property>
+
+<!-- EL Evalautor setup to resolve mainly all constants/variables - no EL functions is resolved -->
+    <property>
+        <name>oozie.service.ELService.constants.coord-job-submit-nofuncs</name>
+        <value>
+            MINUTE=org.apache.oozie.coord.CoordELConstants#SUBMIT_MINUTE,
+            HOUR=org.apache.oozie.coord.CoordELConstants#SUBMIT_HOUR,
+            DAY=org.apache.oozie.coord.CoordELConstants#SUBMIT_DAY,
+            MONTH=org.apache.oozie.coord.CoordELConstants#SUBMIT_MONTH,
+            YEAR=org.apache.oozie.coord.CoordELConstants#SUBMIT_YEAR
+        </value>
+        <description>
+            EL constant declarations, separated by commas, format is [PREFIX:]NAME=CLASS#CONSTANT.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.ext.constants.coord-job-submit-nofuncs</name>
+        <value> </value>
+        <description>
+            EL constant declarations, separated by commas, format is [PREFIX:]NAME=CLASS#CONSTANT.
+            This property is a convenience property to add extensions to the built in executors without having to
+            include all the built in ones.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.functions.coord-job-submit-nofuncs</name>
+        <value> </value>
+        <description>
+            EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.ext.functions.coord-job-submit-nofuncs</name>
+        <value> </value>
+        <description>
+            EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
+            This property is a convenience property to add extensions to the built in executors without having to
+            include all the built in ones.
+        </description>
+    </property>
+
+<!-- EL Evalautor setup to **check** whether instances/start-instance/end-instances are valid
+ no EL functions will be resolved -->
+    <property>
+        <name>oozie.service.ELService.constants.coord-job-submit-instances</name>
+        <value> </value>
+        <description>
+            EL constant declarations, separated by commas, format is [PREFIX:]NAME=CLASS#CONSTANT.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.ext.constants.coord-job-submit-instances</name>
+        <value> </value>
+        <description>
+            EL constant declarations, separated by commas, format is [PREFIX:]NAME=CLASS#CONSTANT.
+            This property is a convenience property to add extensions to the built in executors without having to
+            include all the built in ones.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.functions.coord-job-submit-instances</name>
+        <value>
+            coord:hoursInDay=org.apache.oozie.coord.CoordELFunctions#ph1_coord_hoursInDay_echo,
+            coord:daysInMonth=org.apache.oozie.coord.CoordELFunctions#ph1_coord_daysInMonth_echo,
+            coord:tzOffset=org.apache.oozie.coord.CoordELFunctions#ph1_coord_tzOffset_echo,
+            coord:current=org.apache.oozie.coord.CoordELFunctions#ph1_coord_current_echo,
+            coord:latest=org.apache.oozie.coord.CoordELFunctions#ph1_coord_latest_echo
+        </value>
+        <description>
+            EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.ext.functions.coord-job-submit-instances</name>
+        <value>
+        </value>
+        <description>
+            EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
+            This property is a convenience property to add extensions to the built in executors without having to
+            include all the built in ones.
+        </description>
+    </property>
+
+<!-- EL Evalautor setup to **check** whether dataIn and dataOut are valid
+ no EL functions will be resolved -->
+
+    <property>
+        <name>oozie.service.ELService.constants.coord-job-submit-data</name>
+        <value> </value>
+        <description>
+            EL constant declarations, separated by commas, format is [PREFIX:]NAME=CLASS#CONSTANT.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.ext.constants.coord-job-submit-data</name>
+        <value> </value>
+        <description>
+            EL constant declarations, separated by commas, format is [PREFIX:]NAME=CLASS#CONSTANT.
+            This property is a convenience property to add extensions to the built in executors without having to
+            include all the built in ones.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.functions.coord-job-submit-data</name>
+        <value>
+            coord:dataIn=org.apache.oozie.coord.CoordELFunctions#ph1_coord_dataIn_echo,
+            coord:dataOut=org.apache.oozie.coord.CoordELFunctions#ph1_coord_dataOut_echo,
+            coord:nominalTime=org.apache.oozie.coord.CoordELFunctions#ph1_coord_nominalTime_echo_wrap,
+            coord:actionId=org.apache.oozie.coord.CoordELFunctions#ph1_coord_actionId_echo,
+            coord:name=org.apache.oozie.coord.CoordELFunctions#ph1_coord_name_echo
+        </value>
+        <description>
+            EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.ext.functions.coord-job-submit-data</name>
+        <value>
+        </value>
+        <description>
+            EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
+            This property is a convenience property to add extensions to the built in executors without having to
+            include all the built in ones.
+        </description>
+    </property>
+
+    <!-- Resolve SLA information during Coordinator job submission -->
+	<property>
+        <name>oozie.service.ELService.constants.coord-sla-submit</name>
+        <value>
+            MINUTES=org.apache.oozie.coord.CoordELConstants#SUBMIT_MINUTES,
+            HOURS=org.apache.oozie.coord.CoordELConstants#SUBMIT_HOURS,
+            DAYS=org.apache.oozie.coord.CoordELConstants#SUBMIT_DAYS
+            </value>
+        <description>
+            EL constant declarations, separated by commas, format is [PREFIX:]NAME=CLASS#CONSTANT.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.ext.constants.coord-sla-submit</name>
+        <value> </value>
+        <description>
+            EL constant declarations, separated by commas, format is [PREFIX:]NAME=CLASS#CONSTANT.
+            This property is a convenience property to add extensions to the built in executors without having to
+            include all the built in ones.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.functions.coord-sla-submit</name>
+        <value>
+            coord:nominalTime=org.apache.oozie.coord.CoordELFunctions#ph1_coord_nominalTime_echo_fixed
+        </value>
+        <description>
+            EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
+        </description>
+    </property>
+    <property>
+        <name>oozie.service.ELService.ext.functions.coord-sla-submit</name>
+        <value>
+        </value>
+        <description>
+            EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
+            This property is a convenience property to add extensions to the built in executors without having to
+            include all the built in ones.
+        </description>
+    </property>
+
+ <!--  Action creation for coordinator -->
+<property>
+        <name>oozie.service.ELService.constants.coord-action-create</name>
+        <value>
+        </value>
+        <description>
+            EL constant declarations, separated by commas, format is [PREFIX:]NAME=CLASS#CONSTANT.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.ext.constants.coord-action-create</name>
+        <value> </value>
+        <description>
+            EL constant declarations, separated by commas, format is [PREFIX:]NAME=CLASS#CONSTANT.
+            This property is a convenience property to add extensions to the built in executors without having to
+            include all the built in ones.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.functions.coord-action-create</name>
+        <value>
+            coord:hoursInDay=org.apache.oozie.coord.CoordELFunctions#ph2_coord_hoursInDay,
+            coord:daysInMonth=org.apache.oozie.coord.CoordELFunctions#ph2_coord_daysInMonth,
+            coord:tzOffset=org.apache.oozie.coord.CoordELFunctions#ph2_coord_tzOffset,
+            coord:current=org.apache.oozie.coord.CoordELFunctions#ph2_coord_current,
+            coord:latest=org.apache.oozie.coord.CoordELFunctions#ph2_coord_latest_echo,
+            coord:actionId=org.apache.oozie.coord.CoordELFunctions#ph2_coord_actionId,
+            coord:name=org.apache.oozie.coord.CoordELFunctions#ph2_coord_name
+        </value>
+        <description>
+            EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.ext.functions.coord-action-create</name>
+        <value>
+        </value>
+        <description>
+            EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
+            This property is a convenience property to add extensions to the built in executors without having to
+            include all the built in ones.
+        </description>
+    </property>
+
+
+ <!--  Action creation for coordinator used to only evaluate instance number like ${current (daysInMonth())}. current will be echo-ed -->
+<property>
+        <name>oozie.service.ELService.constants.coord-action-create-inst</name>
+        <value>
+        </value>
+        <description>
+            EL constant declarations, separated by commas, format is [PREFIX:]NAME=CLASS#CONSTANT.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.ext.constants.coord-action-create-inst</name>
+        <value> </value>
+        <description>
+            EL constant declarations, separated by commas, format is [PREFIX:]NAME=CLASS#CONSTANT.
+            This property is a convenience property to add extensions to the built in executors without having to
+            include all the built in ones.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.functions.coord-action-create-inst</name>
+        <value>
+            coord:hoursInDay=org.apache.oozie.coord.CoordELFunctions#ph2_coord_hoursInDay,
+            coord:daysInMonth=org.apache.oozie.coord.CoordELFunctions#ph2_coord_daysInMonth,
+            coord:tzOffset=org.apache.oozie.coord.CoordELFunctions#ph2_coord_tzOffset,
+            coord:current=org.apache.oozie.coord.CoordELFunctions#ph2_coord_current_echo,
+            coord:latest=org.apache.oozie.coord.CoordELFunctions#ph2_coord_latest_echo
+        </value>
+        <description>
+            EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.ext.functions.coord-action-create-inst</name>
+        <value>
+        </value>
+        <description>
+            EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
+            This property is a convenience property to add extensions to the built in executors without having to
+            include all the built in ones.
+        </description>
+    </property>
+    
+        <!-- Resolve SLA information during Action creation/materialization -->
+	<property>
+        <name>oozie.service.ELService.constants.coord-sla-create</name>
+        <value> </value>
+        <description>
+            EL constant declarations, separated by commas, format is [PREFIX:]NAME=CLASS#CONSTANT.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.ext.constants.coord-sla-create</name>
+        <value>
+            MINUTES=org.apache.oozie.coord.CoordELConstants#SUBMIT_MINUTES,
+            HOURS=org.apache.oozie.coord.CoordELConstants#SUBMIT_HOURS,
+            DAYS=org.apache.oozie.coord.CoordELConstants#SUBMIT_DAYS</value>
+        <description>
+            EL constant declarations, separated by commas, format is [PREFIX:]NAME=CLASS#CONSTANT.
+            This property is a convenience property to add extensions to the built in executors without having to
+            include all the built in ones.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.functions.coord-sla-create</name>
+        <value>
+            coord:nominalTime=org.apache.oozie.coord.CoordELFunctions#ph2_coord_nominalTime
+        </value>
+        <description>
+            EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
+        </description>
+    </property>
+    <property>
+        <name>oozie.service.ELService.ext.functions.coord-sla-create</name>
+        <value>
+        </value>
+        <description>
+            EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
+            This property is a convenience property to add extensions to the built in executors without having to
+            include all the built in ones.
+        </description>
+    </property>
+
+<!--  Action start for coordinator -->
+<property>
+        <name>oozie.service.ELService.constants.coord-action-start</name>
+        <value>
+        </value>
+        <description>
+            EL constant declarations, separated by commas, format is [PREFIX:]NAME=CLASS#CONSTANT.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.ext.constants.coord-action-start</name>
+        <value> </value>
+        <description>
+            EL constant declarations, separated by commas, format is [PREFIX:]NAME=CLASS#CONSTANT.
+            This property is a convenience property to add extensions to the built in executors without having to
+            include all the built in ones.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.functions.coord-action-start</name>
+        <value>
+            coord:hoursInDay=org.apache.oozie.coord.CoordELFunctions#ph3_coord_hoursInDay,
+            coord:daysInMonth=org.apache.oozie.coord.CoordELFunctions#ph3_coord_daysInMonth,
+            coord:tzOffset=org.apache.oozie.coord.CoordELFunctions#ph3_coord_tzOffset,
+            coord:latest=org.apache.oozie.coord.CoordELFunctions#ph3_coord_latest,
+            coord:dataIn=org.apache.oozie.coord.CoordELFunctions#ph3_coord_dataIn,
+            coord:dataOut=org.apache.oozie.coord.CoordELFunctions#ph3_coord_dataOut,
+            coord:nominalTime=org.apache.oozie.coord.CoordELFunctions#ph3_coord_nominalTime,
+            coord:actionId=org.apache.oozie.coord.CoordELFunctions#ph3_coord_actionId,
+            coord:name=org.apache.oozie.coord.CoordELFunctions#ph3_coord_name
+        </value>
+        <description>
+            EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.ext.functions.coord-action-start</name>
+        <value>
+        </value>
+        <description>
+            EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
+            This property is a convenience property to add extensions to the built in executors without having to
+            include all the built in ones.
+        </description>
+    </property>
+
 
     <!-- UUIDService -->
 
@@ -334,7 +856,7 @@
     </property>
 
     <!-- DataSourceService -->
-
+<!-- 
     <property>
         <name>oozie.service.DataSourceService.jdbc.driver</name>
         <value>org.hsqldb.jdbcDriver</value>
@@ -380,12 +902,60 @@
              Max number of connections.
         </description>
     </property>
-
-    <!-- WorkflowSchemaService -->
+-->
+   <!-- StoreService -->
 
     <property>
-        <name>oozie.service.WorkflowSchemaService.ext.schemas</name>
+        <name>oozie.service.StoreService.jdbc.driver</name>
+        <value>org.hsqldb.jdbcDriver</value>
+        <description>
+            JDBC driver class.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.StoreService.jdbc.url</name>
+        <value>jdbc:hsqldb:mem:${oozie.db.schema.name}</value>
+        <description>
+            JDBC URL.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.StoreService.jdbc.username</name>
+        <value>sa</value>
+        <description>
+            DB user name.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.StoreService.jdbc.password</name>
         <value> </value>
+        <description>
+            DB user password.
+
+            IMPORTANT: if password is emtpy leave a 1 space string, the service trims the value,
+                       if empty Configuration assumes it is NULL.
+
+            IMPORTANT: if the StoreServicePasswordService is active, it will reset this value with the value given in
+                       the console.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.StoreService.pool.max.active.conn</name>
+        <value>10</value>
+        <description>
+             Max number of connections.
+        </description>
+    </property>
+
+   <!-- SchemaService -->
+
+     <property>
+        <name>oozie.service.SchemaService.wf.ext.schemas</name>
+        <value>oozie-sla-0.1.xsd</value>
         <description>
             Schemas for additional actions types.
 
@@ -393,7 +963,26 @@
                        if empty Configuration assumes it is NULL.
         </description>
     </property>
+    <property>
+        <name>oozie.service.SchemaService.coord.ext.schemas</name>
+        <value>oozie-sla-0.1.xsd</value>
+        <description>
+            Schemas for additional actions types.
 
+            IMPORTANT: if there are no schemas leave a 1 space string, the service trims the value,
+                       if empty Configuration assumes it is NULL.
+        </description>
+    </property>
+    <property>
+        <name>oozie.service.SchemaService.sla.ext.schemas</name>
+        <value> </value>
+        <description>
+            Schemas for semantic validation for GMS SLA.
+
+            IMPORTANT: if there are no schemas leave a 1 space string, the service trims the value,
+                       if empty Configuration assumes it is NULL.
+        </description>
+    </property>
     <!-- CallbackService -->
 
     <property>

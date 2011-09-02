@@ -24,6 +24,7 @@ import java.security.PrivilegedExceptionAction;
 import java.util.concurrent.Callable;
 
 //TODO this class goes away when doing 20.100+ only
+
 //TODO this class is for testing, but is here to allow selective compilation
 public class KerberosDoAs extends DoAs {
 

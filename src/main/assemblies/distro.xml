@@ -50,9 +50,19 @@
             </includes>
             <fileMode>0555</fileMode>
         </fileSet>
+        <fileSet>
+            <directory>${basedir}/../</directory>
+            <outputDirectory>/</outputDirectory>
+            <includes>
+                <include>readme.txt</include>
+                <include>license.txt</include>
+                <include>notice.txt</include>
+            </includes>
+            <fileMode>0444</fileMode>
+        </fileSet>
         <!-- Client -->
         <fileSet>
-            <directory>${basedir}/../client/target/oozie-client-${artifact.version}-client.dir/bin</directory>
+            <directory>${basedir}/../client/target-no-jpa/oozie-client-${artifact.version}-client.dir/bin</directory>
             <outputDirectory>/bin</outputDirectory>
             <includes>
                 <include>*</include>
@@ -60,7 +70,7 @@
             <fileMode>0555</fileMode>
         </fileSet>
         <fileSet>
-            <directory>${basedir}/../client/target/oozie-client-${artifact.version}-client.dir/lib</directory>
+            <directory>${basedir}/../client/target-no-jpa/oozie-client-${artifact.version}-client.dir/lib</directory>
             <outputDirectory>/lib</outputDirectory>
             <includes>
                 <include>*</include>
@@ -85,7 +95,7 @@
         </file>
         <!-- Oozie Client TAR.GZ  -->
         <file>
-            <source>${basedir}/../client/target/oozie-client-${artifact.version}-client.tar.gz</source>
+            <source>${basedir}/../client/target-no-jpa/oozie-client-${artifact.version}-client.tar.gz</source>
             <outputDirectory>/</outputDirectory>
             <destName>oozie-client.tar.gz</destName>
             <fileMode>0444</fileMode>

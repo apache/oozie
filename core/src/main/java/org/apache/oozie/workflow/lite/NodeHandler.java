@@ -74,7 +74,7 @@ public abstract class NodeHandler {
         }
         context.setVar(flag, "true");
     }
-    
+
     // TRUE means immediate exit, false means has to be signal
     public abstract boolean enter(Context context) throws WorkflowException;
 

@@ -22,7 +22,8 @@ package org.apache.oozie.client.rest;
  */
 public interface JsonTags {
 
-    public static final String SYSTEM_SAFE_MODE = "safeMode";
+    public static final String OOZIE_SAFE_MODE = "safeMode"; //Applicable for V0 only
+    public static final String OOZIE_SYSTEM_MODE = "systemMode";
     public static final String BUILD_VERSION = "buildVersion";
 
     public static final String JOB_ID = "id";
@@ -48,22 +49,66 @@ public interface JsonTags {
     public static final String WORKFLOWS_OFFSET = "offset";
     public static final String WORKFLOWS_LEN = "len";
 
-    public static final String ACTION_ID = "id";
-    public static final String ACTION_NAME = "name";
-    public static final String ACTION_TYPE = "type";
-    public static final String ACTION_CONF = "conf";
-    public static final String ACTION_RETRIES = "retries";
-    public static final String ACTION_START_TIME = "startTime";
-    public static final String ACTION_END_TIME = "endTime";
-    public static final String ACTION_STATUS = "status";
-    public static final String ACTION_TRANSITION = "transition";
-    public static final String ACTION_DATA = "data";
-    public static final String ACTION_EXTERNAL_ID = "externalId";
-    public static final String ACTION_EXTERNAL_STATUS = "externalStatus";
-    public static final String ACTION_TRACKER_URI = "trackerUri";
-    public static final String ACTION_CONSOLE_URL = "consoleUrl";
-    public static final String ACTION_ERROR_CODE = "errorCode";
-    public static final String ACTION_ERROR_MESSAGE = "errorMessage";
+    public static final String WORKFLOW_ACTION_ID = "id";
+    public static final String WORKFLOW_ACTION_NAME = "name";
+    public static final String WORKFLOW_ACTION_TYPE = "type";
+    public static final String WORKFLOW_ACTION_CONF = "conf";
+    public static final String WORKFLOW_ACTION_RETRIES = "retries";
+    public static final String WORKFLOW_ACTION_START_TIME = "startTime";
+    public static final String WORKFLOW_ACTION_END_TIME = "endTime";
+    public static final String WORKFLOW_ACTION_STATUS = "status";
+    public static final String WORKFLOW_ACTION_TRANSITION = "transition";
+    public static final String WORKFLOW_ACTION_DATA = "data";
+    public static final String WORKFLOW_ACTION_EXTERNAL_ID = "externalId";
+    public static final String WORKFLOW_ACTION_EXTERNAL_STATUS = "externalStatus";
+    public static final String WORKFLOW_ACTION_TRACKER_URI = "trackerUri";
+    public static final String WORKFLOW_ACTION_CONSOLE_URL = "consoleUrl";
+    public static final String WORKFLOW_ACTION_ERROR_CODE = "errorCode";
+    public static final String WORKFLOW_ACTION_ERROR_MESSAGE = "errorMessage";
+
+
+    public static final String COORDINATOR_JOB_ID = "coordJobId";
+    public static final String COORDINATOR_JOB_NAME = "coordJobName";
+    public static final String COORDINATOR_JOB_PATH = "coordJobPath";
+    public static final String COORDINATOR_JOB_FREQUENCY = "frequency";
+    public static final String COORDINATOR_JOB_TIMEUNIT = "timeUnit";
+    public static final String COORDINATOR_JOB_TIMEZONE = "timeZone";
+    public static final String COORDINATOR_JOB_CONCURRENCY = "concurrency";
+    public static final String COORDINATOR_JOB_EXECUTION = "execution";
+    public static final String COORDINATOR_JOB_TIMEOUT = "timeOut";
+    public static final String COORDINATOR_JOB_LAST_ACTION_TIME = "lastAction";
+    public static final String COORDINATOR_JOB_NEXT_MATERIALIZED_TIME = "nextMaterializedTime";
+    public static final String COORDINATOR_JOB_CONF = "conf";
+    public static final String COORDINATOR_JOB_STATUS = "status";
+    public static final String COORDINATOR_JOB_EXECUTIONPOLICY = "executionPolicy";
+    public static final String COORDINATOR_JOB_START_TIME = "startTime";
+    public static final String COORDINATOR_JOB_END_TIME = "endTime";
+    public static final String COORDINATOR_JOB_CONSOLE_URL = "consoleUrl";
+    public static final String COORDINATOR_JOB_ACTIONS = "actions";
+    public static final String COORDINATOR_JOB_USER = "user";
+    public static final String COORDINATOR_JOB_GROUP = "group";
+    public static final String COORDINATOR_JOB_EXTERNAL_ID = "coordExternalId";
+
+    public static final String COORDINATOR_ACTION_ID = "id";
+    public static final String COORDINATOR_ACTION_NAME = "name";
+    public static final String COORDINATOR_ACTION_TYPE = "type";
+    public static final String COORDINATOR_ACTION_CREATED_CONF = "createdConf";
+    public static final String COORDINATOR_ACTION_RUNTIME_CONF = "runConf";
+    public static final String COORDINATOR_ACTION_NUMBER = "actionNumber";
+    public static final String COORDINATOR_ACTION_CREATED_TIME = "createdTime";
+    public static final String COORDINATOR_ACTION_EXTERNALID = "externalId";
+    public static final String COORDINATOR_ACTION_LAST_MODIFIED_TIME = "lastModifiedTime";
+    public static final String COORDINATOR_ACTION_NOMINAL_TIME = "nominalTime";
+    public static final String COORDINATOR_ACTION_STATUS = "status";
+    public static final String COORDINATOR_ACTION_MISSING_DEPS = "missingDependencies";
+    public static final String COORDINATOR_ACTION_EXTERNAL_STATUS = "externalStatus";
+    public static final String COORDINATOR_ACTION_TRACKER_URI = "trackerUri";
+    public static final String COORDINATOR_ACTION_CONSOLE_URL = "consoleUrl";
+    public static final String COORDINATOR_ACTION_ERROR_CODE = "errorCode";
+    public static final String COORDINATOR_ACTION_ERROR_MESSAGE = "errorMessage";
+    public static final String COORDINATOR_ACTIONS = "actions";
+    public static final String COORDINATOR_ACTION_DATA = "data";
+    public static final String COORDINATOR_JOB_DATA = "data";
 
     public static final String ERROR = "error";
     public static final String ERROR_CODE = "code";
@@ -91,5 +136,9 @@ public interface JsonTags {
     public static final String INSTR_VARIABLE_VALUE = "value";
 
     public static final String INSTR_SAMPLER_VALUE = "value";
+    public static final Object COORDINATOR_JOBS = "coordinatorjobs";
+    public static final Object COORD_JOB_TOTAL = "total";
+    public static final Object COORD_JOB_OFFSET = "offset";
+    public static final Object COORD_JOB_LEN = "len";
 
 }

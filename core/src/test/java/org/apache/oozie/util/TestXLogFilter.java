@@ -20,7 +20,9 @@ package org.apache.oozie.util;
 import org.apache.oozie.service.ServiceException;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.XLogStreamer;
+
 import java.util.ArrayList;
+
 import org.apache.oozie.test.XTestCase;
 
 public class TestXLogFilter extends XTestCase {
@@ -32,9 +34,9 @@ public class TestXLogFilter extends XTestCase {
         ArrayList<String> a = new ArrayList<String>();
         a.add("2009-06-24 02:43:13,958 DEBUG");
         a.add(" WorkflowRunnerCallable:323 - " + XLog.Info.get().createPrefix() + " test log");
-        assertEquals(true ,xf2.matches(a));
+        assertEquals(true, xf2.matches(a));
         services.destroy();
-        
+
         XLogStreamer.Filter.reset();
         XLogStreamer.Filter.defineParameter("USER");
         XLogStreamer.Filter.defineParameter("GROUP");

@@ -92,7 +92,7 @@ public class TestFsELFunctions extends XFsTestCase {
         action.setId("actionId");
         action.setName("actionName");
 
-        ELEvaluator eval = Services.get().get(ELService.class).createEvaluator();
+        ELEvaluator eval = Services.get().get(ELService.class).createEvaluator("workflow");
         DagELFunctions.configureEvaluator(eval, wf, action);
 
         assertEquals(true, (boolean) eval.evaluate("${fs:exists(wf:conf('file1'))}", Boolean.class));

@@ -93,7 +93,7 @@ public class TestLocalOozieExample extends TestCase {
         doAs.setUser("test");
         doAs.call();
         fileSystem = fs[0];
-        
+
         Path path = new Path(fileSystem.getWorkingDirectory(), "oozietests/" + getClass().getName() + "/" + getName());
         fsTestDir = fileSystem.makeQualified(path);
         System.out.println(XLog.format("Setting FS testcase work dir[{0}]", fsTestDir));

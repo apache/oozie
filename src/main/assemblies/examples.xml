@@ -35,6 +35,11 @@
             <fileMode>0644</fileMode>
         </fileSet>
         <fileSet>
+            <directory>${basedir}/src/main/coordinator</directory>
+            <outputDirectory>/examples/seed/coordinator</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+        <fileSet>
             <directory>${basedir}/src/main/input-data</directory>
             <outputDirectory>/examples/seed/input-data</outputDirectory>
             <fileMode>0644</fileMode>

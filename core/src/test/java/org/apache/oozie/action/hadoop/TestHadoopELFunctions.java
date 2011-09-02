@@ -24,6 +24,7 @@ import org.apache.oozie.command.wf.ActionCommand;
 import org.apache.oozie.service.ELService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
+import org.apache.oozie.service.UUIDService.ApplicationType;
 import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.workflow.WorkflowInstance;
@@ -37,14 +38,14 @@ public class TestHadoopELFunctions extends ActionExecutorTestCase {
 
     public void testCountersEL() throws Exception {
         String counters = "{\"g\":{\"c\":10},\"org.apache.hadoop.mapred.JobInProgress$Counter\":" +
-                          "{\"TOTAL_LAUNCHED_REDUCES\":1,\"TOTAL_LAUNCHED_MAPS\":2,\"DATA_LOCAL_MAPS\":2}," +
-                          "\"FileSystemCounters\":{\"FILE_BYTES_READ\":38,\"HDFS_BYTES_READ\":19," +
-                          "\"FILE_BYTES_WRITTEN\":146,\"HDFS_BYTES_WRITTEN\":16}," +
-                          "\"org.apache.hadoop.mapred.Task$Counter\":{\"REDUCE_INPUT_GROUPS\":2," +
-                          "\"COMBINE_OUTPUT_RECORDS\":0,\"MAP_INPUT_RECORDS\":2,\"REDUCE_SHUFFLE_BYTES\":22," +
-                          "\"REDUCE_OUTPUT_RECORDS\":2,\"SPILLED_RECORDS\":4,\"MAP_OUTPUT_BYTES\":28," +
-                          "\"MAP_INPUT_BYTES\":12,\"MAP_OUTPUT_RECORDS\":2,\"COMBINE_INPUT_RECORDS\":0," +
-                          "\"REDUCE_INPUT_RECORDS\":2}}";
+                "{\"TOTAL_LAUNCHED_REDUCES\":1,\"TOTAL_LAUNCHED_MAPS\":2,\"DATA_LOCAL_MAPS\":2}," +
+                "\"FileSystemCounters\":{\"FILE_BYTES_READ\":38,\"HDFS_BYTES_READ\":19," +
+                "\"FILE_BYTES_WRITTEN\":146,\"HDFS_BYTES_WRITTEN\":16}," +
+                "\"org.apache.hadoop.mapred.Task$Counter\":{\"REDUCE_INPUT_GROUPS\":2," +
+                "\"COMBINE_OUTPUT_RECORDS\":0,\"MAP_INPUT_RECORDS\":2,\"REDUCE_SHUFFLE_BYTES\":22," +
+                "\"REDUCE_OUTPUT_RECORDS\":2,\"SPILLED_RECORDS\":4,\"MAP_OUTPUT_BYTES\":28," +
+                "\"MAP_INPUT_BYTES\":12,\"MAP_OUTPUT_RECORDS\":2,\"COMBINE_INPUT_RECORDS\":0," +
+                "\"REDUCE_INPUT_RECORDS\":2}}";
 
 
         WorkflowJobBean workflow = new WorkflowJobBean();
@@ -54,14 +55,14 @@ public class TestHadoopELFunctions extends ActionExecutorTestCase {
         WorkflowInstance wi = new LiteWorkflowInstance(wfApp, new XConfiguration(), "1");
 
         workflow.setWorkflowInstance(wi);
-        workflow.setId(Services.get().get(UUIDService.class).generateId());
+        workflow.setId(Services.get().get(UUIDService.class).generateId(ApplicationType.WORKFLOW));
         final WorkflowActionBean action = new WorkflowActionBean();
         action.setName("H");
 
         ActionCommand.ActionExecutorContext context = new ActionCommand.ActionExecutorContext(workflow, action, false);
         context.setVar(MapReduceActionExecutor.HADOOP_COUNTERS, counters);
 
-        ELEvaluator eval = Services.get().get(ELService.class).createEvaluator();
+        ELEvaluator eval = Services.get().get(ELService.class).createEvaluator("workflow");
         DagELFunctions.configureEvaluator(eval, workflow, action);
 
         String group = "g";
@@ -77,3 +78,4 @@ public class TestHadoopELFunctions extends ActionExecutorTestCase {
     }
 
 }
+

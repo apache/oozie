@@ -17,6 +17,7 @@
  */
 package org.apache.oozie.servlet;
 
+import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.service.DagXLogInfoService;
@@ -27,6 +28,7 @@ import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.ErrorCode;
+import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.ServletConfig;
@@ -42,11 +44,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
-
 /**
- * Base class for Oozie web service API Servlets.
- * <p/>
- * This class provides common instrumentation, error logging and other common functionality.
+ * Base class for Oozie web service API Servlets. <p/> This class provides common instrumentation, error logging and
+ * other common functionality.
  */
 public abstract class JsonRestServlet extends HttpServlet {
 
@@ -55,14 +55,14 @@ public abstract class JsonRestServlet extends HttpServlet {
     protected static final String XML_UTF8 = RestConstants.XML_CONTENT_TYPE + "; charset=\"UTF-8\"";
 
     protected static final String TEXT_UTF8 = RestConstants.TEXT_CONTENT_TYPE + "; charset=\"UTF-8\"";
-    
+
     protected static final String AUDIT_OPERATION = "audit.operation";
     protected static final String AUDIT_PARAM = "audit.param";
     protected static final String AUDIT_ERROR_CODE = "audit.error.code";
     protected static final String AUDIT_ERROR_MESSAGE = "audit.error.message";
     protected static final String AUDIT_HTTP_STATUS_CODE = "audit.http.status.code";
 
-    private XLog auditLog;    
+    private XLog auditLog;
 
     /**
      * This bean defines a query string parameter.
@@ -76,10 +76,10 @@ public abstract class JsonRestServlet extends HttpServlet {
         /**
          * Creates a ParameterInfo with querystring parameter definition.
          *
-         * @param name     querystring parameter name.
-         * @param type     type for the parameter value, valid types are: <code>Integer, Boolean and String</code>
+         * @param name querystring parameter name.
+         * @param type type for the parameter value, valid types are: <code>Integer, Boolean and String</code>
          * @param required indicates if the parameter is required.
-         * @param methods  HTTP methods the parameter is used by.
+         * @param methods HTTP methods the parameter is used by.
          */
         public ParameterInfo(String name, Class type, boolean required, List<String> methods) {
             this.name = ParamChecker.notEmpty(name, "name");
@@ -105,8 +105,8 @@ public abstract class JsonRestServlet extends HttpServlet {
         /**
          * Creates a ResourceInfo with a REST resource definition.
          *
-         * @param name       name of the REST resource, it can be an fixed resource name, empty or a wildcard ('*').
-         * @param methods    HTTP methods supported by the resource.
+         * @param name name of the REST resource, it can be an fixed resource name, empty or a wildcard ('*').
+         * @param methods HTTP methods supported by the resource.
          * @param parameters parameters supported by the resource.
          */
         public ResourceInfo(String name, List<String> methods, List<ParameterInfo> parameters) {
@@ -140,8 +140,8 @@ public abstract class JsonRestServlet extends HttpServlet {
      * Creates a servlet with a specified instrumentation sampler name for its requests.
      *
      * @param instrumentationName instrumentation name for timer and samplers for the servlet.
-     * @param resourcesInfo       list of resource definitions supported by the servlet, empty and wildcard resources
-     *                            must be the last ones, in that order, first empty and the wildcard.
+     * @param resourcesInfo list of resource definitions supported by the servlet, empty and wildcard resources must be
+     * the last ones, in that order, first empty and the wildcard.
      */
     public JsonRestServlet(String instrumentationName, ResourceInfo... resourcesInfo) {
         this.instrumentationName = ParamChecker.notEmpty(instrumentationName, "instrumentationName");
@@ -156,20 +156,18 @@ public abstract class JsonRestServlet extends HttpServlet {
     /**
      * Enable HTTP POST/PUT/DELETE methods while in safe mode.
      *
-     * @param allow <code>true</code> enabled safe mode changes, <code>false</code> disable safe mode changes (default).
+     * @param allow <code>true</code> enabled safe mode changes, <code>false</code> disable safe mode changes
+     * (default).
      */
     protected void setAllowSafeModeChanges(boolean allow) {
         allowSafeModeChanges = allow;
     }
 
     /**
-     * Define an instrumentation sampler.
-     * <p/>
-     * Sampling period is 60 seconds, the sampling frequency is 1 second.
-     * <p/>
+     * Define an instrumentation sampler. <p/> Sampling period is 60 seconds, the sampling frequency is 1 second. <p/>
      * The instrumentation group used is {@link #INSTRUMENTATION_GROUP}.
      *
-     * @param samplerName    sampler name.
+     * @param samplerName sampler name.
      * @param samplerCounter sampler counter.
      */
     private void defineSampler(String samplerName, final AtomicLong samplerCounter) {
@@ -233,6 +231,7 @@ public abstract class JsonRestServlet extends HttpServlet {
 
     /**
      * Logs audit information for write requests to the audit log.
+     *
      * @param request the http request.
      */
     private void logAuditInfo(HttpServletRequest request) {
@@ -250,23 +249,25 @@ public abstract class JsonRestServlet extends HttpServlet {
             String errorCode = (String) request.getAttribute(AUDIT_ERROR_CODE);
             String errorMessage = (String) request.getAttribute(AUDIT_ERROR_MESSAGE);
 
-            auditLog.info(
-                    "USER [{0}], GROUP [{1}], APP [{2}], JOBID [{3}], OPERATION [{4}], PARAMETER [{5}], STATUS [{6}], HTTPCODE [{7}], ERRORCODE [{8}], ERRORMESSAGE [{9}]",
-                    user, group, app, jobId, operation, param, status, httpStatusCode, errorCode, errorMessage);
+            auditLog
+                    .info(
+                            "USER [{0}], GROUP [{1}], APP [{2}], JOBID [{3}], OPERATION [{4}], PARAMETER [{5}], STATUS [{6}], HTTPCODE [{7}], ERRORCODE [{8}], ERRORMESSAGE [{9}]",
+                            user, group, app, jobId, operation, param, status, httpStatusCode, errorCode, errorMessage);
         }
     }
 
     /**
-     * Dispatches to super after loginfo and intrumentation handling. In case of errors dispatches error
-     * response codes and does error logging.
+     * Dispatches to super after loginfo and intrumentation handling. In case of errors dispatches error response codes
+     * and does error logging.
      */
     @SuppressWarnings("unchecked")
-    protected final void service(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        if (Services.get().isSafeMode() && !request.getMethod().equals("GET") && !allowSafeModeChanges) {
-            sendErrorResponse(response, HttpServletResponse.SC_SERVICE_UNAVAILABLE,
-                              ErrorCode.E0002.toString(),
+    protected final void service(HttpServletRequest request, HttpServletResponse response) throws ServletException,
+            IOException {
+        //if (Services.get().isSafeMode() && !request.getMethod().equals("GET") && !allowSafeModeChanges) {
+        if (Services.get().getSystemMode() != SYSTEM_MODE.NORMAL && !request.getMethod().equals("GET") && !allowSafeModeChanges) {
+            sendErrorResponse(response, HttpServletResponse.SC_SERVICE_UNAVAILABLE, ErrorCode.E0002.toString(),
                               ErrorCode.E0002.getTemplate());
+            return;
         }
         Instrumentation.Cron cron = new Instrumentation.Cron();
         requestCron.set(cron);
@@ -282,8 +283,8 @@ public abstract class JsonRestServlet extends HttpServlet {
         }
         catch (XServletException ex) {
             XLog log = XLog.getLog(getClass());
-            log.warn("URL[{0} {1}] error[{2}], {3}", request.getMethod(), getRequestUrl(request), ex.getErrorCode(),
-                     ex.getMessage(), ex);
+            log.warn("URL[{0} {1}] error[{2}], {3}", request.getMethod(), getRequestUrl(request), ex.getErrorCode(), ex
+                    .getMessage(), ex);
             request.setAttribute(AUDIT_ERROR_MESSAGE, ex.getMessage());
             request.setAttribute(AUDIT_ERROR_CODE, ex.getErrorCode().toString());
             request.setAttribute(AUDIT_HTTP_STATUS_CODE, ex.getHttpStatusCode());
@@ -303,7 +304,7 @@ public abstract class JsonRestServlet extends HttpServlet {
             samplerCounter.decrementAndGet();
             XLog.Info.remove();
             cron.stop();
-            //TODO
+            // TODO
             incrCounter(instrumentationName, 1);
             incrCounter(instrumentationName + "-" + request.getMethod(), 1);
             addCron(instrumentationName, cron);
@@ -323,23 +324,24 @@ public abstract class JsonRestServlet extends HttpServlet {
     /**
      * Sends a JSON response.
      *
-     * @param response   servlet response.
+     * @param response servlet response.
      * @param statusCode HTTP status code.
-     * @param bean       bean to send as JSON response.
+     * @param bean bean to send as JSON response.
      * @throws java.io.IOException thrown if the bean could not be serialized to the response output stream.
      */
     protected void sendJsonResponse(HttpServletResponse response, int statusCode, JsonBean bean) throws IOException {
         response.setStatus(statusCode);
+        JSONObject json = bean.toJSONObject();
         response.setContentType(JSTON_UTF8);
-        bean.toJSONObject().writeJSONString(response.getWriter());
+        json.writeJSONString(response.getWriter());
     }
 
     /**
      * Sends a error response.
      *
-     * @param response   servlet response.
+     * @param response servlet response.
      * @param statusCode HTTP status code.
-     * @param error  error code.
+     * @param error error code.
      * @param message error message.
      * @throws java.io.IOException thrown if the error response could not be set.
      */
@@ -349,7 +351,6 @@ public abstract class JsonRestServlet extends HttpServlet {
         response.setHeader(RestConstants.OOZIE_ERROR_MESSAGE, message);
         response.sendError(statusCode);
     }
-
 
     protected void sendJsonResponse(HttpServletResponse response, int statusCode, JSONStreamAware json)
             throws IOException {
@@ -367,8 +368,8 @@ public abstract class JsonRestServlet extends HttpServlet {
     /**
      * Validates REST URL using the ResourceInfos of the servlet.
      *
-     * @param method            HTTP method.
-     * @param resourceName      resource name.
+     * @param method HTTP method.
+     * @param resourceName resource name.
      * @param queryStringParams query string parameters.
      * @throws javax.servlet.ServletException thrown if the resource name or parameters are incorrect.
      */
@@ -414,8 +415,8 @@ public abstract class JsonRestServlet extends HttpServlet {
                     }
                 }
                 for (ParameterInfo parameterInfo : resourceInfo.parameters.values()) {
-                    if (parameterInfo.methods.contains(method) && parameterInfo.required &&
-                        queryStringParams.get(parameterInfo.name) == null) {
+                    if (parameterInfo.methods.contains(method) && parameterInfo.required
+                            && queryStringParams.get(parameterInfo.name) == null) {
                         throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0305,
                                                     parameterInfo.name);
                     }
@@ -429,9 +430,8 @@ public abstract class JsonRestServlet extends HttpServlet {
     }
 
     /**
-     * Return the resource name of the request.
-     * <p/>
-     * The resource name is the whole extra path. If the extra path starts with '/', the first '/' is trimmed.
+     * Return the resource name of the request. <p/> The resource name is the whole extra path. If the extra path starts
+     * with '/', the first '/' is trimmed.
      *
      * @param request request instance
      * @return the resource name, <code>null</code> if none.
@@ -471,7 +471,7 @@ public abstract class JsonRestServlet extends HttpServlet {
     /**
      * Validate and return the content type of the request.
      *
-     * @param request  servlet request.
+     * @param request servlet request.
      * @param expected expected contentType.
      * @return the normalized content type (lowercase and without modifiers).
      * @throws XServletException thrown if the content type is invalid.

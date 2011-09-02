@@ -24,6 +24,7 @@ import org.apache.oozie.workflow.WorkflowInstance;
 import org.apache.oozie.workflow.WorkflowLib;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
+import org.apache.oozie.service.UUIDService.ApplicationType;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.hadoop.conf.Configuration;
 
@@ -53,7 +54,7 @@ public abstract class LiteWorkflowLib implements WorkflowLib {
     @Override
     public WorkflowInstance createInstance(WorkflowApp app, Configuration conf) throws WorkflowException {
         ParamChecker.notNull(app, "app");
-        String jobId = Services.get().get(UUIDService.class).generateId();
+        String jobId = Services.get().get(UUIDService.class).generateId(ApplicationType.WORKFLOW);
         return new LiteWorkflowInstance((LiteWorkflowApp) app, conf, jobId);
     }
 

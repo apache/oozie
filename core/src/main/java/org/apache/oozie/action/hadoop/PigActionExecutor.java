@@ -73,8 +73,15 @@ public class PigActionExecutor extends JavaActionExecutor {
         for (int i = 0; i < params.size(); i++) {
             strParams[i] = params.get(i).getTextTrim();
         }
-
-        PigMain.setPigScript(actionConf, pigName, strParams);
+        String[] strArgs = null;
+        List<Element> eArgs = actionXml.getChildren("argument", ns);
+        if (eArgs != null && eArgs.size() > 0) {
+            strArgs = new String[eArgs.size()];
+            for (int i = 0; i < eArgs.size(); i++) {
+                strArgs[i] = eArgs.get(i).getTextTrim();
+            }
+        }
+        PigMain.setPigScript(actionConf, pigName, strParams, strArgs);
         return actionConf;
     }
 

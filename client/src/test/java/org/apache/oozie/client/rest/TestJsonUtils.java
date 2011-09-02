@@ -19,8 +19,11 @@ package org.apache.oozie.client.rest;
 
 import junit.framework.TestCase;
 import org.json.simple.JSONObject;
+import org.json.simple.JSONArray;
 import org.apache.oozie.client.rest.JsonUtils;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Date;
 
 public class TestJsonUtils extends TestCase {
@@ -53,4 +56,28 @@ public class TestJsonUtils extends TestCase {
         assertEquals(0l, JsonUtils.getLongValue(json, "ll"));
     }
 
+    public void testGetListString() {
+        JSONObject json = new JSONObject();
+        JSONArray array = new JSONArray();
+        List<String> sList = Arrays.asList("hello", "world");
+        array.add("hello");
+        array.add("world");
+        json.put("list", array);
+        assertEquals(array, json.get("list"));
+        assertEquals(sList, JsonUtils.getListString(json, "list"));
+        assertEquals(sList.size(), JsonUtils.getListString(json, "list").size());
+    }
+
+    public void testGetListStringWithNull() {
+        JSONObject json = new JSONObject();
+        JSONArray array = new JSONArray();
+        List<String> sList = Arrays.asList("hello", null, "world");
+        array.add("hello");
+        array.add(null);
+        array.add("world");
+        json.put("list", array);
+        assertEquals(array, json.get("list"));
+        assertEquals(sList, JsonUtils.getListString(json, "list"));
+        assertEquals(sList.size(), JsonUtils.getListString(json, "list").size());
+    }
 }

@@ -21,22 +21,22 @@
     <property>
         <name>oozie.service.DataSourceService.jdbc.driver</name>
         <value>com.mysql.jdbc.Driver</value>
-        <description> JDBC driver class.</description>
+        <description>JDBC driver class.</description>
     </property>
     <property>
         <name>oozie.service.DataSourceService.jdbc.url</name>
         <value>jdbc:mysql://localhost:3306</value>
-        <description> JDBC URL.</description>
+        <description>JDBC URL.</description>
     </property>
     <property>
         <name>oozie.service.DataSourceService.jdbc.username</name>
         <value>oozie</value>
-        <description> DB user name.</description>
+        <description>DB user name.</description>
     </property>
     <property>
         <name>oozie.service.DataSourceService.jdbc.password</name>
         <value>oozie</value>
-        <description> 
+        <description>
             DB user password. IMPORTANT: if password is emtpy leave a 1 space string, the service trims the
             value, if empty Configuration assumes it is NULL.
         </description>

@@ -30,6 +30,8 @@ import org.apache.hadoop.util.DiskChecker;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.client.WorkflowAction.Status;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.service.Services;
@@ -40,6 +42,7 @@ import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.PropertiesUtils;
+import org.apache.openjpa.lib.log.Log;
 import org.jdom.Element;
 import org.jdom.Namespace;
 import org.jdom.JDOMException;
@@ -60,6 +63,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.ArrayList;
 import java.util.Properties;
+import java.util.logging.Logger;
 
 public class JavaActionExecutor extends ActionExecutor {
 
@@ -77,6 +81,7 @@ public class JavaActionExecutor extends ActionExecutor {
     private static final String FAILED = "FAILED";
     private static final String FAILED_KILLED = "FAILED/KILLED";
     private static final String RUNNING = "RUNNING";
+    private XLog log = XLog.getLog(getClass());
 
     static {
         DISALLOWED_PROPERTIES.add(HADOOP_USER);
@@ -117,13 +122,13 @@ public class JavaActionExecutor extends ActionExecutor {
 
             registerError(UnknownHostException.class.getName(), ActionExecutorException.ErrorType.TRANSIENT, "JA001");
             registerError(AccessControlException.class.getName(), ActionExecutorException.ErrorType.NON_TRANSIENT,
-                    "JA002");
+                          "JA002");
             registerError(DiskChecker.DiskOutOfSpaceException.class.getName(),
-                    ActionExecutorException.ErrorType.NON_TRANSIENT, "JA003");
+                          ActionExecutorException.ErrorType.NON_TRANSIENT, "JA003");
             registerError(org.apache.hadoop.hdfs.protocol.QuotaExceededException.class.getName(),
-                    ActionExecutorException.ErrorType.NON_TRANSIENT, "JA004");
+                          ActionExecutorException.ErrorType.NON_TRANSIENT, "JA004");
             registerError(org.apache.hadoop.hdfs.server.namenode.SafeModeException.class.getName(),
-                    ActionExecutorException.ErrorType.NON_TRANSIENT, "JA005");
+                          ActionExecutorException.ErrorType.NON_TRANSIENT, "JA005");
             registerError(ConnectException.class.getName(), ActionExecutorException.ErrorType.TRANSIENT, "JA006");
             registerError(JDOMException.class.getName(), ActionExecutorException.ErrorType.ERROR, "JA007");
             registerError(FileNotFoundException.class.getName(), ActionExecutorException.ErrorType.ERROR, "JA008");
@@ -138,7 +143,7 @@ public class JavaActionExecutor extends ActionExecutor {
         for (String prop : DISALLOWED_PROPERTIES) {
             if (conf.get(prop) != null) {
                 throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "JA010",
-                        "Property [{0}] not allowed in action [{1}] configuration", prop, confName);
+                                                  "Property [{0}] not allowed in action [{1}] configuration", prop, confName);
             }
         }
     }
@@ -153,6 +158,7 @@ public class JavaActionExecutor extends ActionExecutor {
         String nameNode = actionXml.getChild("name-node", ns).getTextTrim();
         conf.set(HADOOP_JOB_TRACKER, jobTracker);
         conf.set(HADOOP_NAME_NODE, nameNode);
+        conf.set("mapreduce.fileoutputcommitter.marksuccessfuljobs", "true");
         return conf;
     }
 
@@ -234,8 +240,8 @@ public class JavaActionExecutor extends ActionExecutor {
 
     Configuration addToCache(Configuration conf, Path appPath, String filePath, boolean archive)
             throws ActionExecutorException {
+        Path path = null;
         try {
-            Path path;
             if (filePath.startsWith("/")) {
                 path = new Path(filePath);
             }
@@ -256,12 +262,14 @@ public class JavaActionExecutor extends ActionExecutor {
                     uri = new Path(path.toString() + "#" + fileName).toUri();
                     uri = new URI(uri.getPath());
                 }
-                else if (!fileName.contains("#")) {
-                    path = new Path(uri.toString());
+                else {
+                    if (!fileName.contains("#")) {
+                        path = new Path(uri.toString());
 
-                    String user = conf.get("user.name");
-                    String group = conf.get("group.name");
-                    Services.get().get(HadoopAccessorService.class).addFileToClassPath(user, group, path, conf);
+                        String user = conf.get("user.name");
+                        String group = conf.get("group.name");
+                        Services.get().get(HadoopAccessorService.class).addFileToClassPath(user, group, path, conf);
+                    }
                 }
                 DistributedCache.addCacheFile(uri, conf);
             }
@@ -269,6 +277,9 @@ public class JavaActionExecutor extends ActionExecutor {
             return conf;
         }
         catch (Exception ex) {
+            XLog.getLog(getClass()).debug(
+                    "Errors when add to DistributedCache. Path=" + path + ", archive=" + archive + ", conf="
+                            + XmlUtils.prettyPrint(conf).toString());
             throw convertException(ex);
         }
     }
@@ -343,9 +354,11 @@ public class JavaActionExecutor extends ActionExecutor {
                 String path = eProp.getTextTrim();
                 addToCache(conf, appPath, path, false);
             }
-            else if (eProp.getName().equals("archive")) {
-                String path = eProp.getTextTrim();
-                addToCache(conf, appPath, path, true);
+            else {
+                if (eProp.getName().equals("archive")) {
+                    String path = eProp.getTextTrim();
+                    addToCache(conf, appPath, path, true);
+                }
             }
         }
     }
@@ -422,10 +435,11 @@ public class JavaActionExecutor extends ActionExecutor {
                 }
             }
 
-            //to disable cancelation of delegation token on launcher job end
+            // to disable cancelation of delegation token on launcher job end
             launcherJobConf.setBoolean("mapreduce.job.complete.cancel.delegation.tokens", false);
 
-            //setting the group owning the Oozie job to allow anybody in that group to kill the jobs.
+            // setting the group owning the Oozie job to allow anybody in that
+            // group to kill the jobs.
             launcherJobConf.set("mapreduce.job.acl-modify-job", context.getWorkflow().getGroup());
 
             return launcherJobConf;
@@ -452,6 +466,8 @@ public class JavaActionExecutor extends ActionExecutor {
     }
 
     void submitLauncher(Context context, WorkflowAction action) throws ActionExecutorException {
+        JobClient jobClient = null;
+        boolean exception = false;
         try {
             Path appPath = new Path(context.getWorkflow().getAppPath());
             Element actionXml = XmlUtils.parseXml(action.getConf());
@@ -459,19 +475,21 @@ public class JavaActionExecutor extends ActionExecutor {
             // action job configuration
             Configuration actionConf = createBaseHadoopConf(context, actionXml);
             setupActionConf(actionConf, context, actionXml, appPath);
+            XLog.getLog(getClass()).debug("Setting LibFilesArchives ");
             setLibFilesArchives(context, actionXml, appPath, actionConf);
             String jobName = XLog.format("oozie:action:T={0}:W={1}:A={2}:ID={3}", getType(), context.getWorkflow()
                     .getAppName(), action.getName(), context.getWorkflow().getId());
             actionConf.set("mapred.job.name", jobName);
             injectActionCallback(context, actionConf);
 
-            //setting the group owning the Oozie job to allow anybody in that group to kill the jobs.
+            // setting the group owning the Oozie job to allow anybody in that
+            // group to kill the jobs.
             actionConf.set("mapreduce.job.acl-modify-job", context.getWorkflow().getGroup());
 
             JobConf launcherJobConf = createLauncherConf(context, action, actionXml, actionConf);
             injectLauncherCallback(context, launcherJobConf);
-
-            JobClient jobClient = createJobClient(context, launcherJobConf);
+            XLog.getLog(getClass()).debug("Creating Job Client for action " + action.getId());
+            jobClient = createJobClient(context, launcherJobConf);
             String launcherId = LauncherMapper.getRecoveryId(launcherJobConf, context.getActionDir(), context
                     .getRecoveryId());
             boolean alreadyRunning = launcherId != null;
@@ -482,17 +500,23 @@ public class JavaActionExecutor extends ActionExecutor {
                 if (runningJob == null) {
                     String jobTracker = launcherJobConf.get("mapred.job.tracker");
                     throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "JA017",
-                            "unknown job [{0}@{1}], cannot recover", launcherId, jobTracker);
+                                                      "unknown job [{0}@{1}], cannot recover", launcherId, jobTracker);
                 }
             }
             else {
                 prepare(context, actionXml);
+                XLog.getLog(getClass()).debug("Submitting the job through Job Client for action " + action.getId());
 
-                //setting up propagation of the delegation token.
+                // setting up propagation of the delegation token.
                 AuthHelper.get().set(jobClient, launcherJobConf);
 
                 runningJob = jobClient.submitJob(launcherJobConf);
+                if (runningJob == null) {
+                    throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "JA017",
+                                                      "Error submitting launcher for action [{0}]", action.getId());
+                }
                 launcherId = runningJob.getID().toString();
+                XLog.getLog(getClass()).debug("After submission get the launcherId " + launcherId);
             }
 
             String jobTracker = launcherJobConf.get(HADOOP_JOB_TRACKER);
@@ -500,7 +524,23 @@ public class JavaActionExecutor extends ActionExecutor {
             context.setStartData(launcherId, jobTracker, consoleUrl);
         }
         catch (Exception ex) {
+            exception = true;
             throw convertException(ex);
+        }
+        finally {
+            if (jobClient != null) {
+                try {
+                    jobClient.close();
+                }
+                catch (Exception e) {
+                    if (exception) {
+                        log.error("JobClient error: ", e);
+                    }
+                    else {
+                        throw convertException(e);
+                    }
+                }
+            }
         }
     }
 
@@ -508,18 +548,25 @@ public class JavaActionExecutor extends ActionExecutor {
         Namespace ns = actionXml.getNamespace();
         Element prepare = actionXml.getChild("prepare", ns);
         if (prepare != null) {
+            XLog.getLog(getClass()).debug("Preparing the action with FileSystem operation");
             FsActionExecutor fsAe = new FsActionExecutor();
             fsAe.doOperations(context, prepare);
+            XLog.getLog(getClass()).debug("FS Operation is completed");
         }
     }
 
     @Override
     public void start(Context context, WorkflowAction action) throws ActionExecutorException {
         try {
+            XLog.getLog(getClass()).debug("Starting action " + action.getId() + " getting Action File System");
             FileSystem actionFs = getActionFileSystem(context, action);
+            XLog.getLog(getClass()).debug("Preparing action Dir through copying " + context.getActionDir());
             prepareActionDir(actionFs, context);
+            XLog.getLog(getClass()).debug("Action Dir is ready. Submitting the action ");
             submitLauncher(context, action);
+            XLog.getLog(getClass()).debug("Action submit completed. Performing check ");
             check(context, action);
+            XLog.getLog(getClass()).debug("Action check is done after submission");
         }
         catch (Exception ex) {
             throw convertException(ex);
@@ -531,7 +578,7 @@ public class JavaActionExecutor extends ActionExecutor {
         try {
             String externalStatus = action.getExternalStatus();
             WorkflowAction.Status status = externalStatus.equals(SUCCEEDED) ? WorkflowAction.Status.OK
-                    : WorkflowAction.Status.ERROR;
+                                           : WorkflowAction.Status.ERROR;
             context.setEndData(status, getActionSignal(status));
         }
         catch (Exception ex) {
@@ -556,20 +603,22 @@ public class JavaActionExecutor extends ActionExecutor {
 
     @Override
     public void check(Context context, WorkflowAction action) throws ActionExecutorException {
+        JobClient jobClient = null;
+        boolean exception = false;
         try {
             Element actionXml = XmlUtils.parseXml(action.getConf());
             FileSystem actionFs = getActionFileSystem(context, actionXml);
             Configuration conf = createBaseHadoopConf(context, actionXml);
             JobConf jobConf = new JobConf();
             XConfiguration.copy(conf, jobConf);
-            JobClient jobClient = createJobClient(context, jobConf);
+            jobClient = createJobClient(context, jobConf);
             RunningJob runningJob = jobClient.getJob(JobID.forName(action.getExternalId()));
             if (runningJob == null) {
                 context.setExternalStatus(FAILED);
                 context.setExecutionData(FAILED, null);
                 throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "JA017",
-                        "Unknown hadoop job [{0}] associated with action [{1}].  Failing this action!", action
-                                .getExternalId(), action.getId());
+                                                  "Unknown hadoop job [{0}] associated with action [{1}].  Failing this action!", action
+                        .getExternalId(), action.getId());
             }
             if (runningJob.isComplete()) {
                 Path actionDir = context.getActionDir();
@@ -585,13 +634,20 @@ public class JavaActionExecutor extends ActionExecutor {
                     reader.close();
                     String newId = props.getProperty("id");
                     runningJob = jobClient.getJob(JobID.forName(newId));
+                    if (runningJob == null) {
+                        context.setExternalStatus(FAILED);
+                        throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "JA017",
+                                                          "Unknown hadoop job [{0}] associated with action [{1}].  Failing this action!", newId,
+                                                          action.getId());
+                    }
+
                     context.setStartData(newId, action.getTrackerUri(), runningJob.getTrackingURL());
-                    XLog.getLog(getClass()).info(XLog.STD, "External ID swap, old ID [{0}] new ID [{1}]",
-                                launcherId, newId);
+                    XLog.getLog(getClass()).info(XLog.STD, "External ID swap, old ID [{0}] new ID [{1}]", launcherId,
+                                                 newId);
                 }
                 if (runningJob.isComplete()) {
                     XLog.getLog(getClass()).info(XLog.STD, "action completed, external ID [{0}]",
-                            action.getExternalId());
+                                                 action.getExternalId());
                     if (runningJob.isSuccessful() && LauncherMapper.isMainSuccessful(runningJob)) {
                         Properties props = null;
                         if (getCaptureOutput(action)) {
@@ -619,6 +675,7 @@ public class JavaActionExecutor extends ActionExecutor {
                             errorReason = props.getProperty("error.reason");
                             log.warn("Launcher ERROR, reason: {0}", errorReason);
                             String exMsg = props.getProperty("exception.message");
+                            context.setErrorInfo("JA018", exMsg);
                             String exStackTrace = props.getProperty("exception.stacktrace");
                             if (exMsg != null) {
                                 log.warn("Launcher exception: {0}{E}{1}", exMsg, exStackTrace);
@@ -635,19 +692,34 @@ public class JavaActionExecutor extends ActionExecutor {
                 else {
                     context.setExternalStatus(RUNNING);
                     XLog.getLog(getClass()).info(XLog.STD, "checking action, external ID [{0}] status [{1}]",
-                            action.getExternalId(), action.getExternalStatus());
+                                                 action.getExternalId(), action.getExternalStatus());
                 }
             }
             else {
                 context.setExternalStatus(RUNNING);
                 XLog.getLog(getClass()).info(XLog.STD, "checking action, external ID [{0}] status [{1}]",
-                        action.getExternalId(), action.getExternalStatus());
+                                             action.getExternalId(), action.getExternalStatus());
             }
         }
         catch (Exception ex) {
             XLog.getLog(getClass()).warn("Exception in check(). Message[{0}]", ex.getMessage(), ex);
-
+            exception = true;
             throw convertException(ex);
+        }
+        finally {
+            if (jobClient != null) {
+                try {
+                    jobClient.close();
+                }
+                catch (Exception e) {
+                    if (exception) {
+                        log.error("JobClient error: ", e);
+                    }
+                    else {
+                        throw convertException(e);
+                    }
+                }
+            }
         }
     }
 
@@ -660,27 +732,40 @@ public class JavaActionExecutor extends ActionExecutor {
 
     @Override
     public void kill(Context context, WorkflowAction action) throws ActionExecutorException {
+        JobClient jobClient = null;
+        boolean exception = false;
         try {
             Element actionXml = XmlUtils.parseXml(action.getConf());
             Configuration conf = createBaseHadoopConf(context, actionXml);
             JobConf jobConf = new JobConf();
             XConfiguration.copy(conf, jobConf);
-            JobClient jobClient = createJobClient(context, jobConf);
+            jobClient = createJobClient(context, jobConf);
             RunningJob runningJob = jobClient.getJob(JobID.forName(action.getExternalId()));
-            runningJob.killJob();
+            if (runningJob != null) {
+                runningJob.killJob();
+            }
             context.setExternalStatus(KILLED);
             context.setExecutionData(KILLED, null);
         }
         catch (Exception ex) {
+            exception = true;
             throw convertException(ex);
         }
         finally {
             try {
                 FileSystem actionFs = getActionFileSystem(context, action);
                 cleanUpActionDir(actionFs, context);
+                if (jobClient != null) {
+                    jobClient.close();
+                }
             }
             catch (Exception ex) {
-                throw convertException(ex);
+                if (exception) {
+                    log.error("Error: ", ex);
+                }
+                else {
+                    throw convertException(ex);
+                }
             }
         }
     }

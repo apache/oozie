@@ -54,7 +54,7 @@ public class PipesMain extends MapReduceMain {
         value = actionConf.get("oozie.pipes.writer");
         if (value != null) {
             jobConf.setBoolean("hadoop.pipes.java.recordwriter", true);
-             jobConf.set("mapred.output.format.class", value);
+            jobConf.set("mapred.output.format.class", value);
         }
         value = actionConf.get("oozie.pipes.program");
         if (value != null) {
@@ -70,7 +70,7 @@ public class PipesMain extends MapReduceMain {
         if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
             jobConf.set("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
         }
-        
+
         return Submitter.jobSubmit(jobConf);
     }
 

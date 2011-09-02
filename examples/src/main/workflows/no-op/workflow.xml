@@ -16,6 +16,6 @@
   limitations under the License.
 -->
 <workflow-app xmlns='uri:oozie:workflow:0.1' name='no-op-wf'>
-    <start to='end' />
-    <end name='end' />
+    <start to='end'/>
+    <end name='end'/>
 </workflow-app>

@@ -25,11 +25,14 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.util.HashSet;
 import java.util.Set;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.store.WorkflowStore;
 import org.apache.oozie.util.XLog;
@@ -67,10 +70,9 @@ public class AuthorizationService implements Service {
     private Instrumentation instrumentation;
 
     /**
-     * Initialize the service. <p/>
-     * Reads the security related configuration.
-     * parameters - security enabled and list of super users.
-     * 
+     * Initialize the service. <p/> Reads the security related configuration. parameters - security enabled and list of
+     * super users.
+     *
      * @param services services instance.
      * @throws ServiceException thrown if the service could not be initialized.
      */
@@ -97,8 +99,7 @@ public class AuthorizationService implements Service {
     }
 
     /**
-     * Load the list of admin users from {@link AuthorizationService#ADMIN_USERS_FILE}
-     * </p>
+     * Load the list of admin users from {@link AuthorizationService#ADMIN_USERS_FILE} </p>
      *
      * @throws ServiceException if the admin user list could not be loaded.
      */
@@ -130,21 +131,21 @@ public class AuthorizationService implements Service {
             else {
                 log.warn("Admin users file not available in config dir [{0}], running without admin users", configDir);
             }
-        } else {
+        }
+        else {
             log.warn("Reading configuration from classpath, running without admin users");
         }
     }
 
     /**
-     * Destroy the service. <p/>
-     * This implementation does a NOP.
+     * Destroy the service. <p/> This implementation does a NOP.
      */
     public void destroy() {
     }
 
     /**
      * Return the public interface of the service.
-     * 
+     *
      * @return {@link AuthorizationService}.
      */
     public Class<? extends Service> getInterface() {
@@ -152,9 +153,7 @@ public class AuthorizationService implements Service {
     }
 
     /**
-     * Check if the user belongs to the group or not.
-     * <p/>
-     * This implementation returns always <code>true</code>.
+     * Check if the user belongs to the group or not. <p/> This implementation returns always <code>true</code>.
      *
      * @param user user name.
      * @param group group name.
@@ -166,14 +165,13 @@ public class AuthorizationService implements Service {
     }
 
     /**
-     * Check if the user belongs to the group or not. <p/>
-     * <p/>
-     * Subclasses should override the {@link #isUserInGroup} method.
+     * Check if the user belongs to the group or not. <p/> <p/> Subclasses should override the {@link #isUserInGroup}
+     * method.
      *
      * @param user user name.
      * @param group group name.
-     * @throws AuthorizationException thrown if the user is not authorized for the group or if
-     *         the authorization query can not be performed.
+     * @throws AuthorizationException thrown if the user is not authorized for the group or if the authorization query
+     * can not be performed.
      */
     public void authorizeForGroup(String user, String group) throws AuthorizationException {
         if (securityEnabled && !isUserInGroup(user, group)) {
@@ -182,9 +180,7 @@ public class AuthorizationService implements Service {
     }
 
     /**
-     * Return the default group to which the user belongs.
-     * <p/>
-     * This implementation always returns 'users'.
+     * Return the default group to which the user belongs. <p/> This implementation always returns 'users'.
      *
      * @param user user name.
      * @return default group of user.
@@ -195,11 +191,8 @@ public class AuthorizationService implements Service {
     }
 
     /**
-     * Check if the user has admin privileges.
-     * <p/>
-     * If admin is disabled it returns always <code>true</code>.
-     * <p/>
-     * If admin is enabled it returns <code>true</code> if the user is in the <code>adminusers.txt</code> file.
+     * Check if the user has admin privileges. <p/> If admin is disabled it returns always <code>true</code>. <p/> If
+     * admin is enabled it returns <code>true</code> if the user is in the <code>adminusers.txt</code> file.
      *
      * @param user user name.
      * @return if the user has admin privileges or not.
@@ -209,9 +202,7 @@ public class AuthorizationService implements Service {
     }
 
     /**
-     * Check if the user has admin privileges.
-     * <p/>
-     * Subclasses should override the {@link #isUserInGroup} method.
+     * Check if the user has admin privileges. <p/> Subclasses should override the {@link #isUserInGroup} method.
      *
      * @param user user name.
      * @param write indicates if the check is for read or write admin tasks (in this implementation this is ignored)
@@ -225,20 +216,19 @@ public class AuthorizationService implements Service {
     }
 
     /**
-     * Check if the user+group is authorized to use the specified application.
-     * <p/> 
-     * The check is done by checking the file system permissions on the workflow application.
+     * Check if the user+group is authorized to use the specified application. <p/> The check is done by checking the
+     * file system permissions on the workflow application.
      *
      * @param user user name.
      * @param group group name.
      * @param appPath application path.
      * @throws AuthorizationException thrown if the user is not authorized for the app.
      */
-    public void authorizeForApp(String user, String group, String appPath, Configuration jobConf) 
+    public void authorizeForApp(String user, String group, String appPath, Configuration jobConf)
             throws AuthorizationException {
         try {
-            FileSystem fs = Services.get().get(HadoopAccessorService.class).
-                    createFileSystem(user, group, new Path(appPath).toUri(), jobConf);
+            FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, group,
+                                                                                             new Path(appPath).toUri(), jobConf);
 
             Path path = new Path(appPath);
             try {
@@ -257,7 +247,8 @@ public class AuthorizationService implements Service {
                 }
                 fs.open(wfXml).close();
             }
-            //TODO  change this when stopping support of 0.18 to the new Exception
+            // TODO change this when stopping support of 0.18 to the new
+            // Exception
             catch (org.apache.hadoop.fs.permission.AccessControlException ex) {
                 incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
                 throw new AuthorizationException(ErrorCode.E0507, appPath, ex.getMessage(), ex);
@@ -270,11 +261,59 @@ public class AuthorizationService implements Service {
     }
 
     /**
-     * Check if the user+group is authorized to operate on the specified job.
-     * <p/>
-     * Checks if the user is a super-user or the one who started the job.
-     * <p/>
-     * Read operations are allowed to all users.
+     * Check if the user+group is authorized to use the specified application. <p/> The check is done by checking the
+     * file system permissions on the workflow application.
+     *
+     * @param user user name.
+     * @param group group name.
+     * @param appPath application path.
+     * @param fileName workflow or coordinator.xml
+     * @param conf
+     * @throws AuthorizationException thrown if the user is not authorized for the app.
+     */
+    public void authorizeForApp(String user, String group, String appPath, String fileName, Configuration conf)
+            throws AuthorizationException {
+        try {
+            //Configuration conf = new Configuration();
+            //conf.set("user.name", user);
+            // TODO Temporary fix till
+            // https://issues.apache.org/jira/browse/HADOOP-4875 is resolved.
+            //conf.set("hadoop.job.ugi", user + "," + group);
+            FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, group,
+                                                                                             new Path(appPath).toUri(), conf);
+            Path path = new Path(appPath);
+            try {
+                if (!fs.exists(path)) {
+                    incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
+                    throw new AuthorizationException(ErrorCode.E0504, appPath);
+                }
+                Path wfXml = new Path(path, fileName);
+                if (!fs.exists(wfXml)) {
+                    incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
+                    throw new AuthorizationException(ErrorCode.E0505, appPath);
+                }
+                if (!fs.isFile(wfXml)) {
+                    incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
+                    throw new AuthorizationException(ErrorCode.E0506, appPath);
+                }
+                fs.open(wfXml).close();
+            }
+            // TODO change this when stopping support of 0.18 to the new
+            // Exception
+            catch (org.apache.hadoop.fs.permission.AccessControlException ex) {
+                incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
+                throw new AuthorizationException(ErrorCode.E0507, appPath, ex.getMessage(), ex);
+            }
+        }
+        catch (IOException ex) {
+            incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
+            throw new AuthorizationException(ErrorCode.E0501, ex.getMessage(), ex);
+        }
+    }
+
+    /**
+     * Check if the user+group is authorized to operate on the specified job. <p/> Checks if the user is a super-user or
+     * the one who started the job. <p/> Read operations are allowed to all users.
      *
      * @param user user name.
      * @param jobId job id.
@@ -283,32 +322,74 @@ public class AuthorizationService implements Service {
      */
     public void authorizeForJob(String user, String jobId, boolean write) throws AuthorizationException {
         if (securityEnabled && write && !isAdmin(user)) {
-            WorkflowJobBean jobBean;
-            WorkflowStore store = null;
-            try {
-                store = Services.get().get(WorkflowStoreService.class).create();
-                jobBean = store.getWorkflow(jobId, false);
-            }
-            catch (StoreException ex) {
-                incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
-                throw new AuthorizationException(ex);
-            }
-            finally {
+            // handle workflow jobs
+            if (jobId.endsWith("-W")) {
+                WorkflowJobBean jobBean;
+                WorkflowStore store = null;
                 try {
-                    if (store != null) {
-                        store.close();
-                    }
+                    store = Services.get().get(WorkflowStoreService.class).create();
+                    store.beginTrx();
+                    jobBean = store.getWorkflow(jobId, false);
+                    store.commitTrx();
                 }
                 catch (StoreException ex) {
+                    incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
+                    if (store != null) {
+                        store.rollbackTrx();
+                    }
                     throw new AuthorizationException(ex);
                 }
+                finally {
+                    if (store != null) {
+                        try {
+                            store.closeTrx();
+                        }
+                        catch (RuntimeException rex) {
+                            incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
+                            log.error("Exception while attempting to close store", rex);
+                        }
+                    }
+                }
+                if (!jobBean.getUser().equals(user)) {
+                    if (!isUserInGroup(user, jobBean.getGroup())) {
+                        incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
+                        throw new AuthorizationException(ErrorCode.E0508, user, jobId);
+                    }
+                }
             }
-
-            if (!jobBean.getUser().equals(user)) {
-                if (!isUserInGroup(user, jobBean.getGroup())) {
+            // handle coordinator jobs
+            else {
+                CoordinatorJobBean jobBean;
+                CoordinatorStore store = null;
+                try {
+                    store = Services.get().get(CoordinatorStoreService.class).create();
+                    store.beginTrx();
+                    jobBean = store.getCoordinatorJob(jobId, false);
+                    store.commitTrx();
+                }
+                catch (StoreException ex) {
                     incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
-                    throw new AuthorizationException(ErrorCode.E0508, user, jobId);
-
+                    if (store != null) {
+                        store.rollbackTrx();
+                    }
+                    throw new AuthorizationException(ex);
+                }
+                finally {
+                    if (store != null) {
+                        try {
+                            store.closeTrx();
+                        }
+                        catch (RuntimeException rex) {
+                            incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
+                            log.error("Exception while attempting to close store", rex);
+                        }
+                    }
+                }
+                if (!jobBean.getUser().equals(user)) {
+                    if (!isUserInGroup(user, jobBean.getGroup())) {
+                        incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
+                        throw new AuthorizationException(ErrorCode.E0509, user, jobId);
+                    }
                 }
             }
         }

@@ -30,9 +30,8 @@ import org.apache.oozie.util.XLog;
 import org.apache.oozie.client.OozieClient;
 
 /**
- * LocalOozie runs workflows in an embedded Oozie instance .
- * <p/>
- * LocalOozie is meant for development/debugging purposes only.
+ * LocalOozie runs workflows in an embedded Oozie instance . <p/> LocalOozie is meant for development/debugging purposes
+ * only.
  */
 public class LocalOozie {
     private static EmbeddedServletContainer container;
@@ -111,13 +110,12 @@ public class LocalOozie {
     }
 
     /**
-     * Return a {@link org.apache.oozie.client.OozieClient} for LocalOozie.
-     * <p/>
-     * The returned instance is configured with the user name of the JVM (the value of the system property 'user.name').
-     * <p/>
-     * The following methods of the client are NOP in the returned instance: {@link org.apache.oozie.client.OozieClient#validateWSVersion},
-     * {@link org.apache.oozie.client.OozieClient#setHeader}, {@link org.apache.oozie.client.OozieClient#getHeader}, {@link org.apache.oozie.client.OozieClient#removeHeader},
-     * {@link org.apache.oozie.client.OozieClient#getHeaderNames} and {@link org.apache.oozie.client.OozieClient#setSafeMode}.
+     * Return a {@link org.apache.oozie.client.OozieClient} for LocalOozie. <p/> The returned instance is configured
+     * with the user name of the JVM (the value of the system property 'user.name'). <p/> The following methods of the
+     * client are NOP in the returned instance: {@link org.apache.oozie.client.OozieClient#validateWSVersion}, {@link
+     * org.apache.oozie.client.OozieClient#setHeader}, {@link org.apache.oozie.client.OozieClient#getHeader}, {@link
+     * org.apache.oozie.client.OozieClient#removeHeader}, {@link org.apache.oozie.client.OozieClient#getHeaderNames} and
+     * {@link org.apache.oozie.client.OozieClient#setSafeMode}.
      *
      * @return a {@link org.apache.oozie.client.OozieClient} for LocalOozie.
      */
@@ -126,11 +124,11 @@ public class LocalOozie {
     }
 
     /**
-     * Return a {@link org.apache.oozie.client.OozieClient} for LocalOozie configured for a given user.
-     * <p/>
-     * The following methods of the client are NOP in the returned instance: {@link org.apache.oozie.client.OozieClient#validateWSVersion},
-     * {@link org.apache.oozie.client.OozieClient#setHeader}, {@link org.apache.oozie.client.OozieClient#getHeader}, {@link org.apache.oozie.client.OozieClient#removeHeader},
-     * {@link org.apache.oozie.client.OozieClient#getHeaderNames} and {@link org.apache.oozie.client.OozieClient#setSafeMode}.
+     * Return a {@link org.apache.oozie.client.OozieClient} for LocalOozie configured for a given user. <p/> The
+     * following methods of the client are NOP in the returned instance: {@link org.apache.oozie.client.OozieClient#validateWSVersion},
+     * {@link org.apache.oozie.client.OozieClient#setHeader}, {@link org.apache.oozie.client.OozieClient#getHeader},
+     * {@link org.apache.oozie.client.OozieClient#removeHeader}, {@link org.apache.oozie.client.OozieClient#getHeaderNames}
+     * and {@link org.apache.oozie.client.OozieClient#setSafeMode}.
      *
      * @param user user name to use in LocalOozie for running workflows.
      * @return a {@link org.apache.oozie.client.OozieClient} for LocalOozie configured for the given user.

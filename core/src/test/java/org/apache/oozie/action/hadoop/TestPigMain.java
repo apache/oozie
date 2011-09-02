@@ -56,10 +56,10 @@ public class TestPigMain extends MainTestCase {
 
     private static final String PIG_SCRIPT =
             "set job.name 'test'\n" +
-            "set debug on\n" +
-            "A = load '$IN' using PigStorage(':');\n" +
-            "B = foreach A generate $0 as id;\n" +
-            "store B into '$OUT' USING PigStorage();\n";
+                    "set debug on\n" +
+                    "A = load '$IN' using PigStorage(':');\n" +
+                    "B = foreach A generate $0 as id;\n" +
+                    "store B into '$OUT' USING PigStorage();\n";
 
     public Void call() throws Exception {
         FileSystem fs = getFileSystem();
@@ -101,7 +101,7 @@ public class TestPigMain extends MainTestCase {
         DistributedCache.addFileToClassPath(new Path(jlineJar.toUri().getPath()), getFileSystem().getConf());
 
         PigMain.setPigScript(jobConf, script.toString(), new String[]{"IN=" + inputDir.toUri().getPath(),
-                                                                       "OUT=" + outputDir.toUri().getPath()});
+                "OUT=" + outputDir.toUri().getPath()}, new String[]{"-v"});
 
         File actionXml = new File(getTestCaseDir(), "action.xml");
         os = new FileOutputStream(actionXml);
@@ -119,6 +119,7 @@ public class TestPigMain extends MainTestCase {
         File classPathDir = new File(url.getPath()).getParentFile();
         assertTrue(classPathDir.exists());
         Properties props = jobConf.toProperties();
+        assertEquals(props.getProperty("oozie.pig.args.size"), "1");
         Writer wr = new FileWriter(new File(classPathDir, "pig.properties"));
         props.store(wr, "");
         wr.close();

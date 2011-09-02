@@ -151,7 +151,7 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
     private Map<String, String> persistentVars = new HashMap<String, String>();
     private Map<String, Object> transientVars = new HashMap<String, Object>();
 
-    LiteWorkflowInstance() {
+    protected LiteWorkflowInstance() {
         log = XLog.getLog(getClass());
     }
 
@@ -224,7 +224,7 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
                         String transitionTo = getTransitionNode(fullTransitions.get(last));
 
                         persistentVars.put(nodeDef.getName() + WorkflowInstance.NODE_VAR_SEPARATOR + TRANSITION_TO,
-                                transitionTo);
+                                           transitionTo);
                     }
                 }
                 catch (WorkflowException ex) {
@@ -236,47 +236,57 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
                     status = Status.KILLED;
                     log.debug(XLog.STD, "Completing job, kill node [{0}]", nodeJob.nodeName);
                 }
-                else if (context.status == Status.FAILED) {
-                    status = Status.FAILED;
-                    log.debug(XLog.STD, "Completing job, fail node [{0}]", nodeJob.nodeName);
-                }
-                else if (context.status == Status.SUCCEEDED) {
-                    status = Status.SUCCEEDED;
+                else {
+                    if (context.status == Status.FAILED) {
+                        status = Status.FAILED;
+                        log.debug(XLog.STD, "Completing job, fail node [{0}]", nodeJob.nodeName);
+                    }
+                    else {
+                        if (context.status == Status.SUCCEEDED) {
+                            status = Status.SUCCEEDED;
+                            log.debug(XLog.STD, "Completing job, end node [{0}]", nodeJob.nodeName);
+                        }
+/*
+                else if (context.status == Status.SUSPENDED) {
+                    status = Status.SUSPENDED;
                     log.debug(XLog.STD, "Completing job, end node [{0}]", nodeJob.nodeName);
                 }
-                else {
-                    for (String fullTransition : fullTransitions) {
-                        // this is the whole trick for forking, we need the
-                        // executionpath and the transition
-                        // in the case of no forking last element of
-                        // executionpath is different from transition
-                        // in the case of forking they are the same
+*/
+                        else {
+                            for (String fullTransition : fullTransitions) {
+                                // this is the whole trick for forking, we need the
+                                // executionpath and the transition
+                                // in the case of no forking last element of
+                                // executionpath is different from transition
+                                // in the case of forking they are the same
 
-                        log.debug(XLog.STD, "Exiting node [{0}] with transition[{1}]", nodeJob.nodeName,
-                                        fullTransition);
+                                log.debug(XLog.STD, "Exiting node [{0}] with transition[{1}]", nodeJob.nodeName,
+                                          fullTransition);
 
-                        String execPathFromTransition = getExecutionPath(fullTransition);
-                        String transition = getTransitionNode(fullTransition);
-                        def.validateTransition(nodeJob.nodeName, transition);
+                                String execPathFromTransition = getExecutionPath(fullTransition);
+                                String transition = getTransitionNode(fullTransition);
+                                def.validateTransition(nodeJob.nodeName, transition);
 
-                        NodeInstance nodeJobInPath = executionPaths.get(execPathFromTransition);
-                        if ((nodeJobInPath == null) || (!transition.equals(nodeJobInPath.nodeName))) {
-                            // TODO explain this IF better
-                            // If the WfJob is signaled with the parent
-                            // execution executionPath again
-                            // The Fork node will execute again.. and replace
-                            // the Node WorkflowJobBean
-                            // so this is required to prevent that..
-                            // Question : Should we throw an error in this case
-                            // ??
-                            executionPaths.put(execPathFromTransition, new NodeInstance(transition));
-                            pathsToStart.add(execPathFromTransition);
+                                NodeInstance nodeJobInPath = executionPaths.get(execPathFromTransition);
+                                if ((nodeJobInPath == null) || (!transition.equals(nodeJobInPath.nodeName))) {
+                                    // TODO explain this IF better
+                                    // If the WfJob is signaled with the parent
+                                    // execution executionPath again
+                                    // The Fork node will execute again.. and replace
+                                    // the Node WorkflowJobBean
+                                    // so this is required to prevent that..
+                                    // Question : Should we throw an error in this case
+                                    // ??
+                                    executionPaths.put(execPathFromTransition, new NodeInstance(transition));
+                                    pathsToStart.add(execPathFromTransition);
+                                }
+
+                            }
+                            // signal all new synch transitions
+                            for (String pathToStart : pathsToStart) {
+                                signal(pathToStart, "::synch::");
+                            }
                         }
-
-                    }
-                    // signal all new synch transitions
-                    for (String pathToStart : pathsToStart) {
-                        signal(pathToStart, "::synch::");
                     }
                 }
             }
@@ -286,7 +296,8 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
                 List<String> failedNodes = terminateNodes(status);
                 log.warn(XLog.STD, "Workflow completed [{0}], failing [{1}] running nodes", status, failedNodes
                         .size());
-            } else {
+            }
+            else {
                 List<String> killedNodes = terminateNodes(Status.KILLED);
                 if (killedNodes.size() > 1) {
                     log.warn(XLog.STD, "Workflow completed [{0}], killing [{1}] running nodes", status, killedNodes
@@ -304,7 +315,8 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
         String failedNode = failNode(nodeName);
         if (failedNode != null) {
             log.warn(XLog.STD, "Workflow Failed. Failing node [{0}]", failedNode);
-        } else {
+        }
+        else {
             //TODO failed attempting to fail the action. EXCEPTION
         }
         List<String> killedNodes = killNodes();
@@ -331,7 +343,7 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
             throw new WorkflowException(ErrorCode.E0716);
         }
         log.debug(XLog.STD, "Suspending job");
-        status = Status.SUSPENDED;
+        this.status = Status.SUSPENDED;
     }
 
     public boolean isSuspended() {
@@ -401,14 +413,16 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
                     if (endStatus == Status.KILLED) {
                         nodeHandler.kill(new Context(nodeDef, entry.getKey(), null));
                     }
-                    else if (endStatus == Status.FAILED) {
-                        nodeHandler.fail(new Context(nodeDef, entry.getKey(), null));
+                    else {
+                        if (endStatus == Status.FAILED) {
+                            nodeHandler.fail(new Context(nodeDef, entry.getKey(), null));
+                        }
                     }
                     endNodes.add(nodeDef.getName());
                 }
                 catch (Exception ex) {
                     log.warn(XLog.STD, "Error Changing node state to [{0}] for Node [{1}]", endStatus.toString(),
-                            nodeDef.getName(), ex);
+                             nodeDef.getName(), ex);
                 }
             }
         }
@@ -505,6 +519,10 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
 
     public Status getStatus() {
         return status;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
     }
 
     @Override

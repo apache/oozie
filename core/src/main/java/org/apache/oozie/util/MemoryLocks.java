@@ -110,14 +110,16 @@ public class MemoryLocks {
         if (wait == -1) {
             lock.lock();
         }
-        else if (wait > 0) {
-            if (!lock.tryLock(wait, TimeUnit.MILLISECONDS)) {
-                return null;
-            }
-        }
         else {
-            if (!lock.tryLock()) {
-                return null;
+            if (wait > 0) {
+                if (!lock.tryLock(wait, TimeUnit.MILLISECONDS)) {
+                    return null;
+                }
+            }
+            else {
+                if (!lock.tryLock()) {
+                    return null;
+                }
             }
         }
         synchronized (locks) {

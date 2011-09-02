@@ -21,10 +21,9 @@ import org.apache.hadoop.conf.Configuration;
 
 
 /**
- * The workflow library provides application parsing and storage capabilities for workflow instances.
- * <p/>
- * The implementation is responsible for doing the store operations in a transactional way, either in autocommit
- * or within the scope of a transaction.
+ * The workflow library provides application parsing and storage capabilities for workflow instances. <p/> The
+ * implementation is responsible for doing the store operations in a transactional way, either in autocommit or within
+ * the scope of a transaction.
  */
 public interface WorkflowLib {
 
@@ -41,7 +40,7 @@ public interface WorkflowLib {
     /**
      * Create a workflow instance.
      *
-     * @param app  application to create a workflow instance of.
+     * @param app application to create a workflow instance of.
      * @param conf job configuration.
      * @return the newly created workflow instance.
      * @throws WorkflowException thrown if the instance could not be created.
@@ -51,7 +50,7 @@ public interface WorkflowLib {
     /**
      * Create a workflow instance with the given wfId. This will be used for re-running workflows.
      *
-     * @param app  application to create a workflow instance of.
+     * @param app application to create a workflow instance of.
      * @param conf job configuration.
      * @param wfId Workflow ID.
      * @return the newly created workflow instance.

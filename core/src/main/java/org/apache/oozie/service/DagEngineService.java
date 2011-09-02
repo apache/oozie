@@ -52,7 +52,7 @@ public class DagEngineService implements Service {
     /**
      * Return a Dag engine.
      *
-     * @param user  user for the dag engine.
+     * @param user user for the dag engine.
      * @param authToken the authentication token.
      * @return the dag engine for the specified user.
      */

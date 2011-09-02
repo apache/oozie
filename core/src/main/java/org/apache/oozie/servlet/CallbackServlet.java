@@ -60,6 +60,7 @@ public class CallbackServlet extends JsonRestServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String queryString = request.getQueryString();
+        XLog.getLog(getClass()).debug("Received a CallbackServlet.doGet() with query string " + queryString);
         CallbackService callbackService = Services.get().get(CallbackService.class);
         if (!callbackService.isValid(queryString)) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0402, queryString);
@@ -82,6 +83,7 @@ public class CallbackServlet extends JsonRestServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String queryString = request.getQueryString();
+        XLog.getLog(getClass()).debug("Received a CallbackServlet.doPost() with query string " + queryString);
         CallbackService callbackService = Services.get().get(CallbackService.class);
         if (!callbackService.isValid(queryString)) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0402, queryString);
@@ -91,7 +93,7 @@ public class CallbackServlet extends JsonRestServlet {
             XLog.getLog(getClass()).info(XLog.STD, "callback for action [{0}]",
                                          callbackService.getActionId(queryString));
             String data = IOUtils.getReaderAsString(request.getReader(), maxDataLen);
-            Properties props =  PropertiesUtils.stringToProperties(data);
+            Properties props = PropertiesUtils.stringToProperties(data);
             DagEngine dagEngine = Services.get().get(DagEngineService.class).getSystemDagEngine();
             dagEngine.processCallback(callbackService.getActionId(queryString),
                                       callbackService.getExternalStatus(queryString), props);

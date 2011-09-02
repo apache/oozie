@@ -36,25 +36,14 @@ import java.util.Set;
 import java.util.Arrays;
 
 /**
- * Built in service that initializes the services configuration.
- * <p/>
- * The configuration loading sequence is identical to Hadoop configuration loading sequence.
- * <p/>
- * First the default values are loaded from the {@link #DEFAULT_CONFIG_FILE}, then the site configured values are
- * loaded from the site configuration file.
- * <p/>
- * The {@link #DEFAULT_CONFIG_FILE} is always loaded from the classpath root.
- * <p/>
- * The site configuration file and loading location is determined as follow:
- * <p/>
- * The site configuration file name is set by the system property {@link #CONFIG_FILE}. The default value is
- * {@link #SITE_CONFIG_FILE}.
- * <p/>
- * The site configuration file is loaded from the directory specified by the system property {@link #CONFIG_PATH}. If
- * not set, no site configuration is loaded.
- * <p/>
- * Configuration properties, prefixed with 'oozie.', passed as system properties overrides default and site values.
- * <p/>
+ * Built in service that initializes the services configuration. <p/> The configuration loading sequence is identical to
+ * Hadoop configuration loading sequence. <p/> First the default values are loaded from the {@link
+ * #DEFAULT_CONFIG_FILE}, then the site configured values are loaded from the site configuration file. <p/> The {@link
+ * #DEFAULT_CONFIG_FILE} is always loaded from the classpath root. <p/> The site configuration file and loading location
+ * is determined as follow: <p/> The site configuration file name is set by the system property {@link #CONFIG_FILE}.
+ * The default value is {@link #SITE_CONFIG_FILE}. <p/> The site configuration file is loaded from the directory
+ * specified by the system property {@link #CONFIG_PATH}. If not set, no site configuration is loaded. <p/>
+ * Configuration properties, prefixed with 'oozie.', passed as system properties overrides default and site values. <p/>
  * The configuration service logs details on how the configuration was loaded as well as what properties were overriden
  * via system properties settings.
  */
@@ -199,7 +188,7 @@ public class ConfigurationService implements Service, Instrumentable {
                     XConfiguration.injectDefaults(configuration, siteConfiguration);
                     configuration = siteConfiguration;
                 }
-            } 
+            }
         }
         catch (IOException ex) {
             throw new ServiceException(ErrorCode.E0024, configFile, ex.getMessage(), ex);
@@ -238,10 +227,11 @@ public class ConfigurationService implements Service, Instrumentable {
             if (IGNORE_SYS_PROPS.contains(name) && !name.startsWith(IGNORE_SYS_PROPS_PREFIX)) {
                 log.warn("System property [{0}] in ignore list, ignored", name);
             }
-            else
-            if (name.startsWith("oozie.")) {
-                if (configuration.get(name) == null) {
-                    log.warn("System property [{0}] no defined in Oozie configuration, ignored", name);
+            else {
+                if (name.startsWith("oozie.")) {
+                    if (configuration.get(name) == null) {
+                        log.warn("System property [{0}] no defined in Oozie configuration, ignored", name);
+                    }
                 }
             }
         }
@@ -273,7 +263,7 @@ public class ConfigurationService implements Service, Instrumentable {
             }
             return value;
         }
-        
+
         public void set(String name, String value) {
             setValue(name, value);
             boolean maskValue = name.endsWith(MASK_PROPS_VALUES_POSTIX);
@@ -288,9 +278,8 @@ public class ConfigurationService implements Service, Instrumentable {
     }
 
     /**
-     * Instruments the configuration service.
-     * <p/>
-     * It sets instrumentation variables indicating the config dir and config file used.
+     * Instruments the configuration service. <p/> It sets instrumentation variables indicating the config dir and
+     * config file used.
      *
      * @param instr instrumentation to use.
      */

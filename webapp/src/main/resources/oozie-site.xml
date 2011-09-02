@@ -15,7 +15,8 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
--->        
+-->
+
 <configuration>
 
     <!-- Oozie System ID -->
@@ -34,10 +35,10 @@
         <name>oozie.base.url</name>
         <value>http://localhost:8080/oozie</value>
         <description>
-             Base Oozie URL.
+            Base Oozie URL.
         </description>
     </property>
-    
+
     <!-- Disable automatic DB schema creation
 
     # THIS IS COMMENTED OUT
@@ -77,7 +78,7 @@
 
     <property>
         <name>oozie.service.DataSourceService.jdbc.username</name>
-        <value>oozie</value>
+        <value>root</value>
         <description>
             DB user name.
         </description>
@@ -85,11 +86,22 @@
 
     <property>
         <name>oozie.service.DataSourceService.jdbc.password</name>
-        <value>oozie</value>
+        <value> </value>
         <description>
             DB user password.
             IMPORTANT: if password is emtpy leave a 1 space string, the service trims the value, if empty Configuration
                        assumes it is NULL.
+        </description>
+    </property>
+-->
+    <!-- DB user password interactive from console at start up time.
+
+    <property>
+        <name>oozie.service.DataSourcePasswordService.password.from.console</name>
+        <value>true</value>
+        <description>
+            Indicates if the password for the datasource has to be asked interactively in the console starting the
+            servlet container at Oozie start up time.
         </description>
     </property>
 
@@ -103,8 +115,7 @@
         <name>oozie.service.AuthorizationService.security.enabled</name>
         <value>true</value>
         <description>
-            Specifies whether security (user name/admin role) is enabled or not.
-            If disabled any user can manage Oozie system and manage any job.
+            Specifies whether security is to be disabled while running Ooozie.
         </description>
     </property>
 

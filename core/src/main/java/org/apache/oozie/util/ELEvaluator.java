@@ -29,16 +29,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * JSP Expression Language Evaluator.
- * <p/>
- * It provides a more convenient way of using the JSP EL Evaluator.
+ * JSP Expression Language Evaluator. <p/> It provides a more convenient way of using the JSP EL Evaluator.
  */
 public class ELEvaluator {
 
     /**
-     * Provides functions and variables for the EL evaluator.
-     * <p/>
-     * All functions and variables in the context of an EL evaluator are accessible from EL expressions.
+     * Provides functions and variables for the EL evaluator. <p/> All functions and variables in the context of an EL
+     * evaluator are accessible from EL expressions.
      */
     public static class Context implements VariableResolver, FunctionMapper {
         private Map<String, Object> vars;
@@ -53,7 +50,7 @@ public class ELEvaluator {
         }
 
         /**
-         * Add variables to the context.
+         * Add variables to the context. <p/>
          *
          * @param vars variables to add to the context.
          */
@@ -62,9 +59,9 @@ public class ELEvaluator {
         }
 
         /**
-         * Add a variable to the context.
+         * Add a variable to the context. <p/>
          *
-         * @param name  variable name.
+         * @param name variable name.
          * @param value variable value.
          */
         public void setVariable(String name, Object value) {
@@ -72,7 +69,7 @@ public class ELEvaluator {
         }
 
         /**
-         * Return a variable from the context.
+         * Return a variable from the context. <p/>
          *
          * @param name variable name.
          * @return the variable value.
@@ -82,11 +79,11 @@ public class ELEvaluator {
         }
 
         /**
-         * Add a function to the context.
+         * Add a function to the context. <p/>
          *
-         * @param prefix       function prefix.
+         * @param prefix function prefix.
          * @param functionName function name.
-         * @param method       method that will be invoked for the function, it must be a static and public method.
+         * @param method method that will be invoked for the function, it must be a static and public method.
          */
         public void addFunction(String prefix, String functionName, Method method) {
             if ((method.getModifiers() & (Modifier.PUBLIC | Modifier.STATIC)) != (Modifier.PUBLIC | Modifier.STATIC)) {
@@ -97,7 +94,7 @@ public class ELEvaluator {
         }
 
         /**
-         * Resolve a variable name. Used by the EL evaluator implemenation.
+         * Resolve a variable name. Used by the EL evaluator implemenation. <p/>
          *
          * @param name variable name.
          * @return the variable value.
@@ -111,10 +108,10 @@ public class ELEvaluator {
         }
 
         /**
-         * Resolve a function prefix:name. Used by the EL evaluator implementation.
+         * Resolve a function prefix:name. Used by the EL evaluator implementation. <p/>
          *
          * @param prefix function prefix.
-         * @param name   function name.
+         * @param name function name.
          * @return the method associated to the function.
          */
         public Method resolveFunction(String prefix, String name) {
@@ -129,10 +126,9 @@ public class ELEvaluator {
 
     /**
      * If within the scope of a EL evaluation call, it gives access to the ELEvaluator instance performing the EL
-     * evaluation.
+     * evaluation. <p/> This is useful for EL function methods to get access to the variables of the Evaluator. Because
+     * of this, ELEvaluator variables can be used to pass context to EL function methods (which must be static methods).
      * <p/>
-     * This is useful for EL function methods to get access to the variables of the Evaluator. Because of this,
-     * ELEvaluator variables can be used to pass context to EL function methods (which must be static methods).
      *
      * @return the ELEvaluator in scope, or <code>null</code> if none.
      */
@@ -152,8 +148,7 @@ public class ELEvaluator {
     }
 
     /**
-     * Creates an ELEvaluator with the functions and variables defined in the given {@link ELEvaluator.Context}.
-     * <p/>
+     * Creates an ELEvaluator with the functions and variables defined in the given {@link ELEvaluator.Context}. <p/>
      *
      * @param context the ELSupport with functions and variables to be available for EL evalution.
      */
@@ -162,7 +157,7 @@ public class ELEvaluator {
     }
 
     /**
-     * Return the context with the functions and variables of the EL evaluator.
+     * Return the context with the functions and variables of the EL evaluator. <p/>
      *
      * @return the context.
      */
@@ -171,9 +166,9 @@ public class ELEvaluator {
     }
 
     /**
-     * Convenience method that sets a variable in the EL evaluator context.
+     * Convenience method that sets a variable in the EL evaluator context. <p/>
      *
-     * @param name  variable name.
+     * @param name variable name.
      * @param value variable value.
      */
     public void setVariable(String name, Object value) {
@@ -181,7 +176,7 @@ public class ELEvaluator {
     }
 
     /**
-     * Convenience method that returns a variable from the EL evaluator context.
+     * Convenience method that returns a variable from the EL evaluator context. <p/>
      *
      * @param name variable name.
      * @return the variable value, <code>null</code> if not defined.
@@ -191,24 +186,24 @@ public class ELEvaluator {
     }
 
     /**
-     * Evaluate an EL expression.
+     * Evaluate an EL expression. <p/>
      *
-     * @param expr  EL expression to evaluate.
+     * @param expr EL expression to evaluate.
      * @param clazz return type of the EL expression.
      * @return the object the EL expression evaluated to.
-     * @throws ELException           thrown if the EL expression could not be evaluated.
-     * @throws ELEvaluationException thrown if an EL function failed due to a transient error.
+     * @throws Exception thrown if an EL function failed due to a transient error or EL expression could not be
+     * evaluated.
      */
-    @SuppressWarnings("unchecked")
-    public <T> T evaluate(String expr, Class<T> clazz) throws ELException, ELEvaluationException {
+    @SuppressWarnings({"unchecked", "deprecation"})
+    public <T> T evaluate(String expr, Class<T> clazz) throws Exception {
         ELEvaluator existing = current.get();
         try {
             current.set(this);
             return (T) evaluator.evaluate(expr, clazz, context, context);
         }
         catch (ELException ex) {
-            if (ex.getRootCause() instanceof ELEvaluationException) {
-                throw (ELEvaluationException) ex.getRootCause();
+            if (ex.getRootCause() instanceof Exception) {
+                throw (Exception) ex.getRootCause();
             }
             else {
                 throw ex;

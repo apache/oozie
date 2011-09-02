@@ -25,11 +25,8 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 
 /**
- * An embedded servlet container for testing purposes.
- * <p/>
- * It provides reduced functionality, it supports only Servlets.
- * <p/>
- * The servlet container is started in a free port.
+ * An embedded servlet container for testing purposes. <p/> It provides reduced functionality, it supports only
+ * Servlets. <p/> The servlet container is started in a free port.
  */
 public class EmbeddedServletContainer {
     private Server server;
@@ -41,8 +38,8 @@ public class EmbeddedServletContainer {
     /**
      * Create a servlet container.
      *
-     * @param contextPath  context path for the servlet, it must not be prefixed or append with
-     *                     "/", for the default context use ""
+     * @param contextPath context path for the servlet, it must not be prefixed or append with "/", for the default
+     * context use ""
      */
     public EmbeddedServletContainer(String contextPath) {
         this.contextPath = contextPath;
@@ -55,8 +52,8 @@ public class EmbeddedServletContainer {
     /**
      * Add a servlet to the container.
      *
-     * @param servletPath  servlet path for the servlet, it should be prefixed with '/", it may
-     *                     contain a wild card at the end.
+     * @param servletPath servlet path for the servlet, it should be prefixed with '/", it may contain a wild card at
+     * the end.
      * @param servletClass servlet class
      */
     public void addServletEndpoint(String servletPath, Class servletClass) {
@@ -64,13 +61,11 @@ public class EmbeddedServletContainer {
     }
 
     /**
-     * Start the servlet container.
-     * <p/>
-     * The container starts on a free port.
+     * Start the servlet container. <p/> The container starts on a free port.
      *
      * @throws Exception thrown if the container could not start.
      */
-    public void start()  throws Exception {
+    public void start() throws Exception {
         host = InetAddress.getLocalHost().getHostName();
         ServerSocket ss = new ServerSocket(0);
         port = ss.getLocalPort();
@@ -101,7 +96,7 @@ public class EmbeddedServletContainer {
 
     /**
      * Return the full URL (including protocol, host, port, context path, servlet path) for the context path.
-     * 
+     *
      * @return URL to the context path.
      */
     public String getContextURL() {
@@ -127,7 +122,7 @@ public class EmbeddedServletContainer {
      */
     public void stop() {
         try {
-        server.stop();
+            server.stop();
         }
         catch (Exception e) {
             // ignore exception

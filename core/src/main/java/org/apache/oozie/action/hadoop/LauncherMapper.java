@@ -115,9 +115,9 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         String jobId = null;
         Path recoveryFile = new Path(actionDir, recoveryId);
         //FileSystem fs = FileSystem.get(launcherConf);
-		FileSystem fs = Services.get().get(HadoopAccessorService.class)
-				.createFileSystem(launcherConf.get("user.name"),
-						launcherConf.get("group.name"), launcherConf);
+        FileSystem fs = Services.get().get(HadoopAccessorService.class)
+                .createFileSystem(launcherConf.get("user.name"),
+                                  launcherConf.get("group.name"), launcherConf);
 
         if (fs.exists(recoveryFile)) {
             InputStream is = fs.open(recoveryFile);
@@ -145,7 +145,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
     }
 
     public static void setupLauncherInfo(JobConf launcherConf, String jobId, String actionId, Path actionDir,
-            String recoveryId, Configuration actionConf) throws IOException {
+                                         String recoveryId, Configuration actionConf) throws IOException {
 
         launcherConf.setMapperClass(LauncherMapper.class);
         launcherConf.setSpeculativeExecution(false);
@@ -238,7 +238,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
             Path p = getIdSwapPath(actionDir);
             // log.debug("Checking for newId file in: [{0}]", p);
 
-            FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, group,p. toUri(),
+            FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, group, p.toUri(),
                                                                                              new Configuration());
             if (fs.exists(p)) {
                 log.debug("Hadoop Counters is null, but found newID file.");
@@ -314,6 +314,8 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
 
                     String[] args = getMainArguments(getJobConf());
 
+                    printContentsOfCurrentDir();
+
                     System.out.println();
                     System.out.println("Oozie Java/Map-Reduce/Pig action launcher-job configuration");
                     System.out.println("=================================================================");
@@ -353,14 +355,15 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
                     catch (InvocationTargetException ex) {
                         if (SecurityException.class.isInstance(ex.getCause())) {
                             if (LauncherSecurityManager.getExitInvoked()) {
-                                System.out.println("Intercepting System.exit(" + LauncherSecurityManager.getExitCode() +
-                                        ")");
-                                System.err.println("Intercepting System.exit(" + LauncherSecurityManager.getExitCode() +
-                                        ")");
-                                // if 0 main() method finished successfully, ignoring
+                                System.out.println("Intercepting System.exit(" + LauncherSecurityManager.getExitCode()
+                                        + ")");
+                                System.err.println("Intercepting System.exit(" + LauncherSecurityManager.getExitCode()
+                                        + ")");
+                                // if 0 main() method finished successfully
+                                // ignoring
                                 if (LauncherSecurityManager.getExitCode() != 0) {
-                                    errorMessage = msgPrefix + "exit code [" + LauncherSecurityManager.getExitCode() +
-                                            "]";
+                                    errorMessage = msgPrefix + "exit code [" + LauncherSecurityManager.getExitCode()
+                                            + "]";
                                     errorCause = null;
                                 }
                             }
@@ -532,6 +535,40 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         }
         catch (IOException rex) {
             throw new RuntimeException("Error while failing launcher, " + rex.getMessage(), rex);
+        }
+    }
+
+    /**
+     * Print files and directories in current directory. Will list files in the sub-directory (only 1 level deep)
+     */
+    protected void printContentsOfCurrentDir() {
+        File folder = new File(".");
+        System.out.println();
+        System.out.println("Files in current dir:" + folder.getAbsolutePath());
+        System.out.println("======================");
+
+        File[] listOfFiles = folder.listFiles();
+        for (File fileName : listOfFiles) {
+            if (fileName.isFile()) {
+                System.out.println("File: " + fileName.getName());
+            }
+            else {
+                if (fileName.isDirectory()) {
+                    System.out.println("Dir: " + fileName.getName());
+                    File subDir = new File(fileName.getName());
+                    File[] moreFiles = subDir.listFiles();
+                    for (File subFileName : moreFiles) {
+                        if (subFileName.isFile()) {
+                            System.out.println("  File: " + subFileName.getName());
+                        }
+                        else {
+                            if (subFileName.isDirectory()) {
+                                System.out.println("  Dir: " + subFileName.getName());
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 

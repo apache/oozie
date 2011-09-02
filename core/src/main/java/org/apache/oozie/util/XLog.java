@@ -28,22 +28,16 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * The <code>XLog</code> class extends the functionality of the Apache common-logging
- * <code>Log</code> interface.
- * <p/>
- * It provides common prefix support, message templating with variable parameters and
- * selective tee logging to multiple logs.
- * <p/>
- * It provides also the LogFactory functionality.
+ * The <code>XLog</code> class extends the functionality of the Apache common-logging <code>Log</code> interface. <p/>
+ * It provides common prefix support, message templating with variable parameters and selective tee logging to multiple
+ * logs. <p/> It provides also the LogFactory functionality.
  */
 public class XLog implements Log {
 
     /**
-     * <code>LogInfo</code> stores contextual information to create log prefixes.
-     * <p/>
-     * <code>LogInfo</code> uses a <code>ThreadLocal</code> to propagate the context.
-     * <p/>
-     * <code>LogInfo</code> context parameters are configurable singletons.
+     * <code>LogInfo</code> stores contextual information to create log prefixes. <p/> <code>LogInfo</code> uses a
+     * <code>ThreadLocal</code> to propagate the context. <p/> <code>LogInfo</code> context parameters are configurable
+     * singletons.
      */
     public static class Info {
         private static String template = "";
@@ -58,9 +52,8 @@ public class XLog implements Log {
         };
 
         /**
-         * Define a <code>LogInfo</code> context parameter.
-         * <p/>
-         * The parameter name and its contextual value will be used to create all prefixes.
+         * Define a <code>LogInfo</code> context parameter. <p/> The parameter name and its contextual value will be
+         * used to create all prefixes.
          *
          * @param name name of the context parameter.
          */
@@ -75,8 +68,7 @@ public class XLog implements Log {
         }
 
         /**
-         * Remove all defined context parameters.
-         * <p/>
+         * Remove all defined context parameters. <p/>
          */
         public static void reset() {
             template = "";
@@ -127,7 +119,7 @@ public class XLog implements Log {
         /**
          * Set a parameter value in the <code>LogInfo</code> context.
          *
-         * @param name  parameter name.
+         * @param name parameter name.
          * @param value parameter value.
          */
         public void setParameter(String name, String value) {
@@ -136,7 +128,7 @@ public class XLog implements Log {
             }
             parameters.put(name, value);
         }
-        
+
         /**
          * Returns the specified parameter.
          *
@@ -182,7 +174,7 @@ public class XLog implements Log {
                     params[i] = "-";
                 }
             }
-            return MessageFormat.format(template, (Object[])params);
+            return MessageFormat.format(template, (Object[]) params);
         }
 
     }
@@ -210,7 +202,7 @@ public class XLog implements Log {
     /**
      * Return the named logger.
      *
-     * @param name   logger name.
+     * @param name logger name.
      * @param prefix indicates if the {@link org.apache.oozie.util.XLog.Info} prefix has to be used or not.
      * @return the named logger.
      */
@@ -221,7 +213,7 @@ public class XLog implements Log {
     /**
      * Return the named logger.
      *
-     * @param clazz  from which the logger name will be derived.
+     * @param clazz from which the logger name will be derived.
      * @param prefix indicates if the {@link org.apache.oozie.util.XLog.Info} prefix has to be used or not.
      * @return the named logger.
      */
@@ -258,11 +250,9 @@ public class XLog implements Log {
     }
 
     /**
-     * Create a <code>XLog</code> with a common prefix.
-     * <p/>
-     * The prefix will be prepended to all log messages.
+     * Create a <code>XLog</code> with a common prefix. <p/> The prefix will be prepended to all log messages.
      *
-     * @param log    Log instance to use for logging.
+     * @param log Log instance to use for logging.
      * @param prefix common prefix to use for all log messages.
      */
     public XLog(Log log, String prefix) {
@@ -305,7 +295,7 @@ public class XLog implements Log {
     /**
      * Log a debug message and <code>Exception</code> to the common <code>Log</code>.
      *
-     * @param o         message.
+     * @param o message.
      * @param throwable exception.
      */
     @Override
@@ -326,7 +316,7 @@ public class XLog implements Log {
     /**
      * Log a error message and <code>Exception</code> to the common <code>Log</code>.
      *
-     * @param o         message.
+     * @param o message.
      * @param throwable exception.
      */
     @Override
@@ -347,7 +337,7 @@ public class XLog implements Log {
     /**
      * Log a fatal message and <code>Exception</code> to the common <code>Log</code>.
      *
-     * @param o         message.
+     * @param o message.
      * @param throwable exception.
      */
     @Override
@@ -368,7 +358,7 @@ public class XLog implements Log {
     /**
      * Log a info message and <code>Exception</code> to the common <code>Log</code>.
      *
-     * @param o         message.
+     * @param o message.
      * @param throwable exception.
      */
     @Override
@@ -389,7 +379,7 @@ public class XLog implements Log {
     /**
      * Log a trace message and <code>Exception</code> to the common <code>Log</code>.
      *
-     * @param o         message.
+     * @param o message.
      * @param throwable exception.
      */
     @Override
@@ -410,7 +400,7 @@ public class XLog implements Log {
     /**
      * Log a warn message and <code>Exception</code> to the common <code>Log</code>.
      *
-     * @param o         message.
+     * @param o message.
      * @param throwable exception.
      */
     @Override
@@ -556,8 +546,7 @@ public class XLog implements Log {
      * Log a fatal message <code>Exception</code> to the common <code>Log</code>.
      *
      * @param msgTemplate message template.
-     * @param params      parameters for the message template. If the last parameter is an exception
-     *                    it is logged as such.
+     * @param params parameters for the message template. If the last parameter is an exception it is logged as such.
      */
     public void fatal(String msgTemplate, Object... params) {
         log(Level.FATAL, STD, msgTemplate, params);
@@ -567,8 +556,7 @@ public class XLog implements Log {
      * Log a error message <code>Exception</code> to the common <code>Log</code>.
      *
      * @param msgTemplate message template.
-     * @param params      parameters for the message template. If the last parameter is an exception
-     *                    it is logged as such.
+     * @param params parameters for the message template. If the last parameter is an exception it is logged as such.
      */
     public void error(String msgTemplate, Object... params) {
         log(Level.ERROR, STD, msgTemplate, params);
@@ -578,8 +566,7 @@ public class XLog implements Log {
      * Log a info message <code>Exception</code> to the common <code>Log</code>.
      *
      * @param msgTemplate message template.
-     * @param params      parameters for the message template. If the last parameter is an exception
-     *                    it is logged as such.
+     * @param params parameters for the message template. If the last parameter is an exception it is logged as such.
      */
     public void info(String msgTemplate, Object... params) {
         log(Level.INFO, STD, msgTemplate, params);
@@ -589,8 +576,7 @@ public class XLog implements Log {
      * Log a warn message <code>Exception</code> to the common <code>Log</code>.
      *
      * @param msgTemplate message template.
-     * @param params      parameters for the message template. If the last parameter is an exception
-     *                    it is logged as such.
+     * @param params parameters for the message template. If the last parameter is an exception it is logged as such.
      */
     public void warn(String msgTemplate, Object... params) {
         log(Level.WARN, STD, msgTemplate, params);
@@ -600,8 +586,7 @@ public class XLog implements Log {
      * Log a debug message <code>Exception</code> to the common <code>Log</code>.
      *
      * @param msgTemplate message template.
-     * @param params      parameters for the message template. If the last parameter is an exception
-     *                    it is logged as such.
+     * @param params parameters for the message template. If the last parameter is an exception it is logged as such.
      */
     public void debug(String msgTemplate, Object... params) {
         log(Level.DEBUG, STD, msgTemplate, params);
@@ -611,8 +596,7 @@ public class XLog implements Log {
      * Log a trace message <code>Exception</code> to the common <code>Log</code>.
      *
      * @param msgTemplate message template.
-     * @param params      parameters for the message template. If the last parameter is an exception
-     *                    it is logged as such.
+     * @param params parameters for the message template. If the last parameter is an exception it is logged as such.
      */
     public void trace(String msgTemplate, Object... params) {
         log(Level.TRACE, STD, msgTemplate, params);
@@ -621,9 +605,9 @@ public class XLog implements Log {
     /**
      * Tee Log a fatal message <code>Exception</code> to the common log and specified <code>Log</code>s.
      *
-     * @param loggerMask  log mask, it is a bit mask, possible values are <code>APP</code> and <code>OPS</code>.
+     * @param loggerMask log mask, it is a bit mask, possible values are <code>APP</code> and <code>OPS</code>.
      * @param msgTemplate message template.
-     * @param params      parameters for the message template.
+     * @param params parameters for the message template.
      */
     public void fatal(int loggerMask, String msgTemplate, Object... params) {
         log(Level.FATAL, loggerMask, msgTemplate, params);
@@ -632,9 +616,9 @@ public class XLog implements Log {
     /**
      * Tee Log a error message <code>Exception</code> to the common log and specified <code>Log</code>s.
      *
-     * @param loggerMask  log mask, it is a bit mask, possible values are <code>APP</code> and <code>OPS</code>.
+     * @param loggerMask log mask, it is a bit mask, possible values are <code>APP</code> and <code>OPS</code>.
      * @param msgTemplate message template.
-     * @param params      parameters for the message template.
+     * @param params parameters for the message template.
      */
     public void error(int loggerMask, String msgTemplate, Object... params) {
         log(Level.ERROR, loggerMask, msgTemplate, params);
@@ -643,9 +627,9 @@ public class XLog implements Log {
     /**
      * Tee Log a info message <code>Exception</code> to the common log and specified <code>Log</code>s.
      *
-     * @param loggerMask  log mask, it is a bit mask, possible values are <code>APP</code> and <code>OPS</code>.
+     * @param loggerMask log mask, it is a bit mask, possible values are <code>APP</code> and <code>OPS</code>.
      * @param msgTemplate message template.
-     * @param params      parameters for the message template.
+     * @param params parameters for the message template.
      */
     public void info(int loggerMask, String msgTemplate, Object... params) {
         log(Level.INFO, loggerMask, msgTemplate, params);
@@ -654,9 +638,9 @@ public class XLog implements Log {
     /**
      * Tee Log a warn message <code>Exception</code> to the common log and specified <code>Log</code>s.
      *
-     * @param loggerMask  log mask, it is a bit mask, possible values are <code>APP</code> and <code>OPS</code>.
+     * @param loggerMask log mask, it is a bit mask, possible values are <code>APP</code> and <code>OPS</code>.
      * @param msgTemplate message template.
-     * @param params      parameters for the message template.
+     * @param params parameters for the message template.
      */
     public void warn(int loggerMask, String msgTemplate, Object... params) {
         log(Level.WARN, loggerMask, msgTemplate, params);
@@ -665,9 +649,9 @@ public class XLog implements Log {
     /**
      * Tee Log a debug message <code>Exception</code> to the common log and specified <code>Log</code>s.
      *
-     * @param loggerMask  log mask, it is a bit mask, possible values are <code>APP</code> and <code>OPS</code>.
+     * @param loggerMask log mask, it is a bit mask, possible values are <code>APP</code> and <code>OPS</code>.
      * @param msgTemplate message template.
-     * @param params      parameters for the message template.
+     * @param params parameters for the message template.
      */
     public void debug(int loggerMask, String msgTemplate, Object... params) {
         log(Level.DEBUG, loggerMask, msgTemplate, params);
@@ -676,25 +660,21 @@ public class XLog implements Log {
     /**
      * Tee Log a trace message <code>Exception</code> to the common log and specified <code>Log</code>s.
      *
-     * @param loggerMask  log mask, it is a bit mask, possible values are <code>APP</code> and <code>OPS</code>.
+     * @param loggerMask log mask, it is a bit mask, possible values are <code>APP</code> and <code>OPS</code>.
      * @param msgTemplate message template.
-     * @param params      parameters for the message template.
+     * @param params parameters for the message template.
      */
     public void trace(int loggerMask, String msgTemplate, Object... params) {
         log(Level.TRACE, loggerMask, msgTemplate, params);
     }
 
     /**
-     * Utility method that does uses the <code>StringFormat</code> to format the message template
-     * using the provided parameters.
-     * <p/>
-     * In addition to the <code>StringFormat</code> syntax for message templates, it supports
-     * <code>{E}</code> for ENTER.
-     * <p/>
-     * The last parameter is ignored for the formatting if it is an Exception.
+     * Utility method that does uses the <code>StringFormat</code> to format the message template using the provided
+     * parameters. <p/> In addition to the <code>StringFormat</code> syntax for message templates, it supports
+     * <code>{E}</code> for ENTER. <p/> The last parameter is ignored for the formatting if it is an Exception.
      *
      * @param msgTemplate message template.
-     * @param params      paramaters to use in the template. If the last parameter is an Exception, it is ignored.
+     * @param params paramaters to use in the template. If the last parameter is an Exception, it is ignored.
      * @return formatted message.
      */
     public static String format(String msgTemplate, Object... params) {

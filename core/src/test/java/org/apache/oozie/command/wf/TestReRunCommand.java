@@ -22,6 +22,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
+
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.local.LocalOozie;
 import org.apache.oozie.client.WorkflowJob;
@@ -66,7 +67,7 @@ public class TestReRunCommand extends XFsTestCase {
 
         final String jobId1 = wfClient.submit(conf);
         wfClient.start(jobId1);
-        waitFor(5 * 1000, new Predicate() {
+        waitFor(15 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
                 return wfClient.getJobInfo(jobId1).getStatus() == WorkflowJob.Status.KILLED;
             }
@@ -91,12 +92,12 @@ public class TestReRunCommand extends XFsTestCase {
         conf.setProperty(OozieClient.RERUN_SKIP_NODES, "fs1");
 
         wfClient.reRun(jobId1, conf);
-        waitFor(5 * 1000, new Predicate() {
+        waitFor(15 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
                 return wfClient.getJobInfo(jobId1).getStatus() == WorkflowJob.Status.SUCCEEDED;
             }
         });
-        assertEquals( WorkflowJob.Status.SUCCEEDED, wfClient.getJobInfo(jobId1).getStatus());
+        assertEquals(WorkflowJob.Status.SUCCEEDED, wfClient.getJobInfo(jobId1).getStatus());
     }
 
     public void testRedeploy() throws IOException, OozieClientException {
@@ -115,7 +116,7 @@ public class TestReRunCommand extends XFsTestCase {
 
         final String jobId1 = wfClient.submit(conf);
         wfClient.start(jobId1);
-        waitFor(5 * 1000, new Predicate() {
+        waitFor(15 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
                 return wfClient.getJobInfo(jobId1).getStatus() == WorkflowJob.Status.FAILED;
             }
@@ -128,7 +129,7 @@ public class TestReRunCommand extends XFsTestCase {
 
         conf.setProperty(OozieClient.RERUN_SKIP_NODES, "hdfs11");
         wfClient.reRun(jobId1, conf);
-        waitFor(5 * 1000, new Predicate() {
+        waitFor(15 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
                 return wfClient.getJobInfo(jobId1).getStatus() == WorkflowJob.Status.SUCCEEDED;
             }

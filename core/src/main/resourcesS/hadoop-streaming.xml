@@ -17,18 +17,48 @@
 -->
 <configuration>
 
-    <property><name>mapred.mapper.class</name><value>org.apache.hadoop.streaming.PipeMapper</value></property>
-    <property><name>mapred.reducer.class</name><value>org.apache.hadoop.streaming.PipeReducer</value></property>
-    <property><name>mapred.map.runner.class</name><value>org.apache.hadoop.streaming.PipeMapRunner</value></property>
+    <property>
+        <name>mapred.mapper.class</name>
+        <value>org.apache.hadoop.streaming.PipeMapper</value>
+    </property>
+    <property>
+        <name>mapred.reducer.class</name>
+        <value>org.apache.hadoop.streaming.PipeReducer</value>
+    </property>
+    <property>
+        <name>mapred.map.runner.class</name>
+        <value>org.apache.hadoop.streaming.PipeMapRunner</value>
+    </property>
 
-    <property><name>mapred.input.format.class</name><value>org.apache.hadoop.mapred.TextInputFormat</value></property>
-    <property><name>mapred.output.format.class</name><value>org.apache.hadoop.mapred.TextOutputFormat</value></property>
-    <property><name>mapred.output.value.class</name><value>org.apache.hadoop.io.Text</value></property>
-    <property><name>mapred.output.key.class</name><value>org.apache.hadoop.io.Text</value></property>
+    <property>
+        <name>mapred.input.format.class</name>
+        <value>org.apache.hadoop.mapred.TextInputFormat</value>
+    </property>
+    <property>
+        <name>mapred.output.format.class</name>
+        <value>org.apache.hadoop.mapred.TextOutputFormat</value>
+    </property>
+    <property>
+        <name>mapred.output.value.class</name>
+        <value>org.apache.hadoop.io.Text</value>
+    </property>
+    <property>
+        <name>mapred.output.key.class</name>
+        <value>org.apache.hadoop.io.Text</value>
+    </property>
 
-    <property><name>mapred.create.symlink</name><value>yes</value></property>
-    <property><name>mapred.used.genericoptionsparser</name><value>true</value></property>
+    <property>
+        <name>mapred.create.symlink</name>
+        <value>yes</value>
+    </property>
+    <property>
+        <name>mapred.used.genericoptionsparser</name>
+        <value>true</value>
+    </property>
 
-    <property><name>stream.addenvironment</name><value/></property>
+    <property>
+        <name>stream.addenvironment</name>
+        <value/>
+    </property>
 
 </configuration>

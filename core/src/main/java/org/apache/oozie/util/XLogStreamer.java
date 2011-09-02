@@ -31,20 +31,19 @@ import java.io.InputStream;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collections;
+
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XLogReader;
 
 /**
- * XLogStreamer streams the given log file to logWriter after applying the given
- * filter.
+ * XLogStreamer streams the given log file to logWriter after applying the given filter.
  */
 public class XLogStreamer {
 
     /**
-     * Filter that will construct the regular expression that will be used to
-     * filter the log statement. And also checks if the given log message go
-     * through the filter. Filters that can be used are logLevel(Multi values
-     * separated by "|") jobId appName actionId token
+     * Filter that will construct the regular expression that will be used to filter the log statement. And also checks
+     * if the given log message go through the filter. Filters that can be used are logLevel(Multi values separated by
+     * "|") jobId appName actionId token
      */
     public static class Filter {
         private Map<String, Integer> logLevels;
@@ -111,7 +110,7 @@ public class XLogStreamer {
 
         /**
          * Checks if the logLevel and logMessage goes through the logFilter.
-         * 
+         *
          * @param logParts
          * @return
          */
@@ -128,10 +127,9 @@ public class XLogStreamer {
         }
 
         /**
-         * Splits the log line into timestamp, logLevel and remaining log
-         * message. Returns array containing logLevel and logMessage if the
-         * pattern matches i.e A new log statement, else returns null.
-         * 
+         * Splits the log line into timestamp, logLevel and remaining log message. Returns array containing logLevel and
+         * logMessage if the pattern matches i.e A new log statement, else returns null.
+         *
          * @param logLine
          * @return Array containing log level and log message
          */
@@ -149,8 +147,8 @@ public class XLogStreamer {
         }
 
         /**
-         * Constructs the regular expression according to the filter and assigns
-         * it to fileterPattarn. ".*" will be assigned if no filters are set.
+         * Constructs the regular expression according to the filter and assigns it to fileterPattarn. ".*" will be
+         * assigned if no filters are set.
          */
         public void constructPattern() {
             if (noFilter && logLevels == null) {
@@ -195,9 +193,9 @@ public class XLogStreamer {
     }
 
     /**
-     * Gets the files that are modified between startTime and endTime in the
-     * given logPath and streams the log after applying the filters.
-     * 
+     * Gets the files that are modified between startTime and endTime in the given logPath and streams the log after
+     * applying the filters.
+     *
      * @param startTime
      * @param endTime
      * @throws IOException
@@ -251,7 +249,7 @@ public class XLogStreamer {
 
     /**
      * Gets the file list that will have the logs between startTime and endTime.
-     * 
+     *
      * @param dir
      * @param startTime
      * @param endTime

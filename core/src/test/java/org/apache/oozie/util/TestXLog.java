@@ -28,7 +28,7 @@ public class TestXLog extends XTestCase {
         XLog.Info.remove();
     }
 
-    protected void tearDown()throws Exception {
+    protected void tearDown() throws Exception {
         XLog.Info.reset();
         XLog.Info.remove();
         super.tearDown();

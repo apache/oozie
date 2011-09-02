@@ -33,7 +33,7 @@ public class TestJsonRestServlet extends XTestCase {
     static {
         new MyJsonRestServlet();
     }
-    
+
     EmbeddedServletContainer container;
 
     private int invoke(String method, String resource, String queryString) throws Exception {

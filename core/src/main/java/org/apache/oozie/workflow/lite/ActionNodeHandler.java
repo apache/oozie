@@ -41,8 +41,10 @@ public abstract class ActionNodeHandler extends NodeHandler {
         if (OK.equals(signalValue)) {
             return transitions.get(0);
         }
-        else if (ERROR.equals(signalValue)) {
-            return transitions.get(1);
+        else {
+            if (ERROR.equals(signalValue)) {
+                return transitions.get(1);
+            }
         }
         throw new WorkflowException(ErrorCode.E0722, context.getNodeDef().getName());
     }

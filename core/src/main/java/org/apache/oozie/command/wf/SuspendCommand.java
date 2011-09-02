@@ -23,11 +23,16 @@ import org.apache.oozie.command.Command;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.store.WorkflowStore;
+import org.apache.oozie.store.Store;
 import org.apache.oozie.workflow.WorkflowException;
+import org.apache.oozie.workflow.WorkflowInstance;
+import org.apache.oozie.workflow.lite.LiteWorkflowInstance;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
 
-public class SuspendCommand extends Command<Void> {
+import java.util.Date;
+
+public class SuspendCommand extends WorkflowCommand<Void> {
 
     private String id;
 
@@ -39,7 +44,7 @@ public class SuspendCommand extends Command<Void> {
     @Override
     protected Void call(WorkflowStore store) throws StoreException, CommandException {
         try {
-            WorkflowJobBean workflow = store.getWorkflow(id, true);
+            WorkflowJobBean workflow = store.getWorkflow(id, false);
             setLogInfo(workflow);
             if (workflow.getStatus() == WorkflowJob.Status.RUNNING) {
                 incrJobCounter(1);
@@ -57,7 +62,32 @@ public class SuspendCommand extends Command<Void> {
     public static void suspendJob(WorkflowJobBean workflow, String id) throws WorkflowException {
         if (workflow.getStatus() == WorkflowJob.Status.RUNNING) {
             workflow.getWorkflowInstance().suspend();
+            WorkflowInstance wfInstance = workflow.getWorkflowInstance();
+            ((LiteWorkflowInstance) wfInstance).setStatus(WorkflowInstance.Status.SUSPENDED);
             workflow.setStatus(WorkflowJob.Status.SUSPENDED);
+            workflow.setWorkflowInstance(wfInstance);
         }
+    }
+
+    @Override
+    protected Void execute(WorkflowStore store) throws CommandException, StoreException {
+        XLog.getLog(getClass()).debug("STARTED SuspendCommand for action " + id);
+        try {
+            if (lock(id)) {
+                call(store);
+            }
+            else {
+                queueCallable(new SuspendCommand(id), LOCK_FAILURE_REQUEUE_INTERVAL);
+                XLog.getLog(getClass()).warn("Suspend lock was not acquired - failed {0}", id);
+            }
+        }
+        catch (InterruptedException e) {
+            queueCallable(new SuspendCommand(id), LOCK_FAILURE_REQUEUE_INTERVAL);
+            XLog.getLog(getClass()).warn("SuspendCommand lock was not acquired - interrupted exception failed {0}", id);
+        }
+        finally {
+            XLog.getLog(getClass()).debug("ENDED SuspendCommand for action " + id);
+        }
+        return null;
     }
 }

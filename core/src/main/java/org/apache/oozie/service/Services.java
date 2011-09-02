@@ -20,6 +20,7 @@ package org.apache.oozie.service;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.ReflectionUtils;
+import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.Instrumentable;
 import org.apache.oozie.util.IOUtils;
@@ -34,23 +35,14 @@ import java.io.IOException;
 import java.io.File;
 
 /**
- * Services is a singleton that manages the lifecycle of all registered {@link Services}.
- * <p/>
- * It has 2 built in services: {@link XLogService} and {@link ConfigurationService}.
- * <p/>
- * The rest of the services are loaded from the {@link #CONF_SERVICE_CLASSES} configuration property. The services class
- * names must be separated by commas (spaces and enters are allowed).
- * <p/>
- * The {@link #CONF_SAFE_MODE} configuration property is a boolean that indicates if the system is in safe mode.
- * <p/>
- * Services are loaded and initialized in the order they are defined in the in configuration property.
- * <p/>
- * After all services are initialized, if the Instrumentation service is present, all services that implement the
- * {@link Instrumentable} are instrumented.
- * <p/>
- * Services are destroyed in reverse order.
- * <p/>
- * If services initialization fail, initialized services are immediatly destroyed.
+ * Services is a singleton that manages the lifecycle of all registered {@link Services}. <p/> It has 2 built in
+ * services: {@link XLogService} and {@link ConfigurationService}. <p/> The rest of the services are loaded from the
+ * {@link #CONF_SERVICE_CLASSES} configuration property. The services class names must be separated by commas (spaces
+ * and enters are allowed). <p/> The {@link #CONF_SYSTEM_MODE} configuration property is any of
+ * NORMAL/SAFEMODE/NOWEBSERVICE. <p/> Services are loaded and initialized in the order they are defined in the in
+ * configuration property. <p/> After all services are initialized, if the Instrumentation service is present, all
+ * services that implement the {@link Instrumentable} are instrumented. <p/> Services are destroyed in reverse order.
+ * <p/> If services initialization fail, initialized services are immediatly destroyed.
  */
 public class Services {
     private static final int MAX_SYSTEM_ID_LEN = 10;
@@ -59,22 +51,20 @@ public class Services {
 
     public static final String CONF_SERVICE_CLASSES = "oozie.services";
 
-    public static final String CONF_SAFE_MODE = "oozie.safemode";
+    public static final String CONF_SYSTEM_MODE = "oozie.systemmode";
 
     public static final String CONF_DELETE_RUNTIME_DIR = "oozie.delete.runtime.dir.on.shutdown";
 
     private static Services SERVICES;
 
-    private boolean safeMode;
+    private SYSTEM_MODE systemMode;
     private String runtimeDir;
     private Configuration conf;
     private Map<Class<? extends Service>, Service> services = new LinkedHashMap<Class<? extends Service>, Service>();
     private String systemId;
 
     /**
-     * Create a services.
-     * <p/>
-     * The built in services are initialized.
+     * Create a services. <p/> The built in services are initialized.
      *
      * @throws ServiceException thrown if any of the built in services could not initialize.
      */
@@ -94,8 +84,7 @@ public class Services {
             XLog.getLog(getClass()).warn("System ID [{0}] exceeds maximun lenght [{1}], trimming", systemId,
                                          MAX_SYSTEM_ID_LEN);
         }
-        safeMode = conf.getBoolean(CONF_SAFE_MODE, false);
-        setSafeMode(safeMode);
+        setSystemMode(SYSTEM_MODE.valueOf(conf.get(CONF_SYSTEM_MODE, SYSTEM_MODE.NORMAL.toString())));
         runtimeDir = createRuntimeDir();
     }
 
@@ -119,20 +108,18 @@ public class Services {
     }
 
     /**
-     * Return if safe mode is on.
-     * <p/>
-     * Safe mode is just a flag, no enforcement is done.
+     * Return active system mode. <p/> .
      *
-     * @return if safe mode is on.
+     * @return
      */
-    public boolean isSafeMode() {
-        return safeMode;
+
+    public SYSTEM_MODE getSystemMode() {
+        return systemMode;
     }
 
     /**
-     * Return the runtime directory of the Oozie instance.
-     * <p/>
-     * The directory is created under TMP and it is always a new directory per Services initialization.
+     * Return the runtime directory of the Oozie instance. <p/> The directory is created under TMP and it is always a
+     * new directory per Services initialization.
      *
      * @return the runtime directory of the Oozie instance.
      */
@@ -150,16 +137,17 @@ public class Services {
     }
 
     /**
-     * Set and unset safe mode.
+     * Set and set system mode.
      *
-     * @param safeMode <code>true</code> to enter safe mode, <code>false</code> to exit safe mode.
+     * @param .
      */
-    public synchronized void setSafeMode(boolean safeMode) {
-        if (this.safeMode != safeMode) {
+
+    public synchronized void setSystemMode(SYSTEM_MODE sysMode) {
+        if (this.systemMode != sysMode) {
             XLog log = XLog.getLog(getClass());
-            log.info(XLog.OPS, (safeMode) ? "Entering *SAFEMODE*" : "Exiting *SAFEMODE*");
+            log.info(XLog.OPS, "Exiting " + this.systemMode + " Entering " + sysMode);
         }
-        this.safeMode = safeMode;
+        this.systemMode = sysMode;
     }
 
     /**
@@ -191,10 +179,10 @@ public class Services {
             }
         }
         catch (RuntimeException ex) {
-            XLog.getLog(getClass()).fatal(XLog.OPS, "" + ex.getMessage(), ex);
+            XLog.getLog(getClass()).fatal(ex.getMessage(), ex);
             throw ex;
         }
-        catch(ServiceException ex) {
+        catch (ServiceException ex) {
             SERVICES = null;
             throw ex;
         }
@@ -217,7 +205,7 @@ public class Services {
         XLog log = new XLog(LogFactory.getLog(getClass()));
         log.trace("Shutting down");
         boolean deleteRuntimeDir = false;
-        if(conf != null) {
+        if (conf != null) {
             deleteRuntimeDir = conf.getBoolean(CONF_DELETE_RUNTIME_DIR, false);
         }
         if (services != null) {
@@ -240,7 +228,7 @@ public class Services {
             try {
                 IOUtils.delete(new File(runtimeDir));
             }
-            catch (IOException ex ) {
+            catch (IOException ex) {
                 log.error("Error deleting runtime directory [{0}], {1}", runtimeDir, ex.getMessage(), ex);
             }
         }
@@ -261,13 +249,12 @@ public class Services {
     }
 
     /**
-     * Set a service programmatically.
-     * <p/>
-     * The service will be initialized by the services.
-     * <p/>
-     * If a service is already defined with the same public interface it will be destroyed.
+     * Set a service programmatically. <p/> The service will be initialized by the services. <p/> If a service is
+     * already defined with the same public interface it will be destroyed.
+     *
      * @param klass service klass
-     * @throws ServiceException if the service could not be initialized, at this point all services have been destroyed.
+     * @throws ServiceException if the service could not be initialized, at this point all services have been
+     * destroyed.
      */
     public void setService(Class<? extends Service> klass) throws ServiceException {
         setServiceInternal(klass, true);
@@ -288,7 +275,7 @@ public class Services {
             services.put(newService.getInterface(), newService);
         }
         catch (ServiceException ex) {
-            XLog.getLog(getClass()).fatal(XLog.OPS, ex.getMessage(), ex);
+            XLog.getLog(getClass()).fatal(ex.getMessage(), ex);
             destroy();
             throw ex;
         }
@@ -296,6 +283,7 @@ public class Services {
 
     /**
      * Return the services singleton.
+     *
      * @return services singleton, <code>null</code> if not initialized.
      */
     public static Services get() {

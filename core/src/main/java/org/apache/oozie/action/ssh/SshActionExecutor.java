@@ -42,27 +42,20 @@ import org.jdom.JDOMException;
 import org.jdom.Namespace;
 
 /**
- * Ssh action executor.
- * <p/>
- * <ul>
- * <li>Execute the shell commands on the remote host</li>
- * <li>Copies the base and wrapper scripts on to the remote location</li>
- * <li>Base script is used to run the command on the remote host</li>
- * <li>Wrapper script is used to check the status of the submitted command</li>
- * <li>handles the submission failures</li>
- * </ul>
+ * Ssh action executor. <p/> <ul> <li>Execute the shell commands on the remote host</li> <li>Copies the base and wrapper
+ * scripts on to the remote location</li> <li>Base script is used to run the command on the remote host</li> <li>Wrapper
+ * script is used to check the status of the submitted command</li> <li>handles the submission failures</li> </ul>
  */
 public class SshActionExecutor extends ActionExecutor {
     public static final String ACTION_TYPE = "ssh";
 
     /**
-     * Configuration parameter which specifies whether the specified ssh user is
-     * allowed, or has to be the job user.
+     * Configuration parameter which specifies whether the specified ssh user is allowed, or has to be the job user.
      */
     public static final String CONF_SSH_ALLOW_USER_AT_HOST = CONF_PREFIX + "ssh.allow.user.at.host";
 
     protected static final String SSH_COMMAND_OPTIONS =
-        "-o PasswordAuthentication=no -o KbdInteractiveDevices=no -o StrictHostKeyChecking=no -o ConnectTimeout=20 ";
+            "-o PasswordAuthentication=no -o KbdInteractiveDevices=no -o StrictHostKeyChecking=no -o ConnectTimeout=20 ";
 
     protected static final String SSH_COMMAND_BASE = "ssh " + SSH_COMMAND_OPTIONS;
     protected static final String SCP_COMMAND_BASE = "scp " + SSH_COMMAND_OPTIONS;
@@ -108,7 +101,7 @@ public class SshActionExecutor extends ActionExecutor {
 
     /**
      * Check ssh action status.
-     * 
+     *
      * @param context action execution context.
      * @param action action object.
      */
@@ -123,7 +116,7 @@ public class SshActionExecutor extends ActionExecutor {
         }
         catch (JDOMException ex) {
             throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "ERR_XML_PARSE_FAILED",
-                    "unknown error", ex);
+                                              "unknown error", ex);
         }
         XLog log = XLog.getLog(getClass());
         log.debug("Capture Output: {0}", captureOutput);
@@ -142,30 +135,32 @@ public class SshActionExecutor extends ActionExecutor {
                     }
                     if (overflow) {
                         throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR,
-                                "ERR_OUTPUT_EXCEED_MAX_LEN", "unknown error");
+                                                          "ERR_OUTPUT_EXCEED_MAX_LEN", "unknown error");
                     }
                     context.setExecutionData(status.toString(), PropertiesUtils.stringToProperties(buffer.toString()));
                 }
                 catch (Exception ex) {
                     throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "ERR_UNKNOWN_ERROR",
-                            "unknown error", ex);
+                                                      "unknown error", ex);
                 }
             }
             else {
                 context.setExecutionData(status.toString(), null);
             }
         }
-        else if (status == Status.ERROR) {
-            context.setExecutionData(status.toString(), null);
-        }
         else {
-            context.setExternalStatus(status.toString());
+            if (status == Status.ERROR) {
+                context.setExecutionData(status.toString(), null);
+            }
+            else {
+                context.setExternalStatus(status.toString());
+            }
         }
     }
 
     /**
      * Kill ssh action.
-     * 
+     *
      * @param context action execution context.
      * @param action object.
      */
@@ -182,7 +177,7 @@ public class SshActionExecutor extends ActionExecutor {
 
     /**
      * Start the ssh action execution.
-     * 
+     *
      * @param context action execution context.
      * @param action action object.
      */
@@ -238,7 +233,7 @@ public class SshActionExecutor extends ActionExecutor {
                     @Override
                     public String call() throws Exception {
                         return doExecute(host, dirLocation, commandElement.getValue(), argsString, ignoreOutput,
-                                action, recoveryId);
+                                         action, recoveryId);
                     }
 
                 });
@@ -277,7 +272,7 @@ public class SshActionExecutor extends ActionExecutor {
 
     /**
      * Get remote host working location.
-     * 
+     *
      * @param context action execution context
      * @param action Action
      * @param fileExtension Extension to be added to file name
@@ -286,7 +281,7 @@ public class SshActionExecutor extends ActionExecutor {
      * @return remote host file name/Directory.
      */
     public String getRemoteFileName(Context context, WorkflowAction action, String fileExtension, boolean dirOnly,
-            boolean useExtId) {
+                                    boolean useExtId) {
         String path = getActionDirPath(context.getWorkflow().getId(), action, ACTION_TYPE, false) + "/";
         if (dirOnly) {
             return path;
@@ -300,11 +295,11 @@ public class SshActionExecutor extends ActionExecutor {
 
     /**
      * Utility method to execute command.
-     * 
+     *
      * @param command Command to execute as String.
+     * @return exit status of the execution.
      * @throws IOException if process exits with status nonzero.
      * @throws InterruptedException if process does not run properly.
-     * @return exit status of the execution.
      */
     public int executeCommand(String command) throws IOException, InterruptedException {
         Runtime runtime = Runtime.getRuntime();
@@ -324,7 +319,7 @@ public class SshActionExecutor extends ActionExecutor {
 
     /**
      * Do ssh action execution setup on remote host.
-     * 
+     *
      * @param host host name.
      * @param context action execution context.
      * @param action action object.
@@ -351,17 +346,17 @@ public class SshActionExecutor extends ActionExecutor {
         String command = XLog.format("{0}{1}  mkdir -p {2} ", SSH_COMMAND_BASE, host, remoteDirLocation).toString();
         executeCommand(command);
         command = XLog.format("{0}{1}/ssh-base.sh {2}/ssh-wrapper.sh {3}:{4}", SCP_COMMAND_BASE, localDirLocation,
-                localDirLocation, host, remoteDirLocation);
+                              localDirLocation, host, remoteDirLocation);
         executeCommand(command);
         command = XLog.format("{0}{1}  chmod +x {2}ssh-base.sh {3}ssh-wrapper.sh ", SSH_COMMAND_BASE, host,
-                remoteDirLocation, remoteDirLocation);
+                              remoteDirLocation, remoteDirLocation);
         executeCommand(command);
         return remoteDirLocation;
     }
 
     /**
      * Execute the ssh command.
-     * 
+     *
      * @param host hostname.
      * @param dirLocation location of the base and wrapper scripts.
      * @param cmnd command to be executed.
@@ -374,7 +369,7 @@ public class SshActionExecutor extends ActionExecutor {
      * @throws InterruptedException thrown if any interruption happens.
      */
     protected String doExecute(String host, String dirLocation, String cmnd, String args, boolean ignoreOutput,
-            WorkflowAction action, String recoveryId) throws IOException, InterruptedException {
+                               WorkflowAction action, String recoveryId) throws IOException, InterruptedException {
         XLog log = XLog.getLog(getClass());
         Runtime runtime = Runtime.getRuntime();
         String callbackPost = ignoreOutput ? "_" : getOozieConf().get(HTTP_COMMAND_OPTIONS).replace(" ", "%%%");
@@ -382,7 +377,7 @@ public class SshActionExecutor extends ActionExecutor {
         String callBackUrl = Services.get().get(CallbackService.class)
                 .createCallBackUrl(action.getId(), EXT_STATUS_VAR);
         String command = XLog.format("{0}{1} {2}ssh-base.sh {3} \"{4}\" \"{5}\" {6} {7} {8} ", SSH_COMMAND_BASE, host,
-                dirLocation, getOozieConf().get(HTTP_COMMAND), callBackUrl, callbackPost, recoveryId, cmnd, args)
+                                     dirLocation, getOozieConf().get(HTTP_COMMAND), callBackUrl, callbackPost, recoveryId, cmnd, args)
                 .toString();
         log.trace("Executing ssh command [{0}]", command);
         Process p = runtime.exec(command.split("\\s"));
@@ -405,7 +400,7 @@ public class SshActionExecutor extends ActionExecutor {
 
     /**
      * End action execution.
-     * 
+     *
      * @param context action execution context.
      * @param action action object.
      * @throws ActionExecutorException thrown if action end execution fails.
@@ -430,10 +425,9 @@ public class SshActionExecutor extends ActionExecutor {
 
     /**
      * Get the return value of a process.
-     * 
+     *
      * @param command command to be executed.
-     * @return zero if execution is successful and any non zero value for
-     *         failure.
+     * @return zero if execution is successful and any non zero value for failure.
      * @throws ActionExecutorException
      */
     private int getReturnValue(String command) throws ActionExecutorException {
@@ -476,11 +470,10 @@ public class SshActionExecutor extends ActionExecutor {
 
     /**
      * Get action status.
-     * 
+     *
      * @param action action object.
      * @return status of the action(RUNNING/OK/ERROR).
-     * @throws ActionExecutorException thrown if there is any error in getting
-     *         status.
+     * @throws ActionExecutorException thrown if there is any error in getting status.
      */
     protected Status getActionStatus(Context context, WorkflowAction action) throws ActionExecutorException {
         String command = SSH_COMMAND_BASE + action.getTrackerUri() + " ps -p " + action.getExternalId();
@@ -505,10 +498,9 @@ public class SshActionExecutor extends ActionExecutor {
 
     /**
      * Execute the callable.
-     * 
+     *
      * @param callable required callable.
-     * @throws ActionExecutorException thrown if there is any error in command
-     *         execution.
+     * @throws ActionExecutorException thrown if there is any error in command execution.
      */
     private <T> T execute(Callable<T> callable) throws ActionExecutorException {
         XLog log = XLog.getLog(getClass());
@@ -522,43 +514,57 @@ public class SshActionExecutor extends ActionExecutor {
                 throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, ERR_UNKNOWN_ERROR, ex
                         .getMessage(), ex);
             } // Host Resolution Issues
-            else if (errorMessage.contains("Could not resolve hostname") ||
-                     errorMessage.contains("service not known")) {
-                throw new ActionExecutorException(ActionExecutorException.ErrorType.TRANSIENT, ERR_HOST_RESOLUTION, ex
-                        .getMessage(), ex);
-            } // Connection Timeout. Host temporarily down.
-            else if (errorMessage.contains("timed out")) {
-                throw new ActionExecutorException(ActionExecutorException.ErrorType.TRANSIENT, ERR_COULD_NOT_CONNECT,
-                        ex.getMessage(), ex);
-            }// Local ssh-base or ssh-wrapper missing
-            else if (errorMessage.contains("Required Local file")) {
-                throw new ActionExecutorException(ActionExecutorException.ErrorType.TRANSIENT, ERR_FNF,
-                        ex.getMessage(), ex); // local_FNF
-            }// Required oozie bash scripts missing, after the copy was
-            // successful
-            else if (errorMessage.contains("No such file or directory")
-                    && (errorMessage.contains("ssh-base") || errorMessage.contains("ssh-wrapper"))) {
-                throw new ActionExecutorException(ActionExecutorException.ErrorType.TRANSIENT, ERR_FNF,
-                        ex.getMessage(), ex); // remote
-                // FNF
-            } // Required application execution binary missing (either
-            // caught by ssh-wrapper
-            else if (errorMessage.contains("command not found")) {
-                throw new ActionExecutorException(ActionExecutorException.ErrorType.NON_TRANSIENT, ERR_FNF, ex
-                        .getMessage(), ex); // remote
-                // FNF
-            } // Permission denied while connecting
-            else if (errorMessage.contains("Permission denied")) {
-                throw new ActionExecutorException(ActionExecutorException.ErrorType.NON_TRANSIENT, ERR_AUTH_FAILED, ex
-                        .getMessage(), ex);
-            } // Permission denied while executing
-            else if (errorMessage.contains(": Permission denied")) {
-                throw new ActionExecutorException(ActionExecutorException.ErrorType.NON_TRANSIENT, ERR_NO_EXEC_PERM, ex
-                        .getMessage(), ex);
-            }
             else {
-                throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, ERR_UNKNOWN_ERROR, ex
-                        .getMessage(), ex);
+                if (errorMessage.contains("Could not resolve hostname") ||
+                        errorMessage.contains("service not known")) {
+                    throw new ActionExecutorException(ActionExecutorException.ErrorType.TRANSIENT, ERR_HOST_RESOLUTION, ex
+                            .getMessage(), ex);
+                } // Connection Timeout. Host temporarily down.
+                else {
+                    if (errorMessage.contains("timed out")) {
+                        throw new ActionExecutorException(ActionExecutorException.ErrorType.TRANSIENT, ERR_COULD_NOT_CONNECT,
+                                                          ex.getMessage(), ex);
+                    }// Local ssh-base or ssh-wrapper missing
+                    else {
+                        if (errorMessage.contains("Required Local file")) {
+                            throw new ActionExecutorException(ActionExecutorException.ErrorType.TRANSIENT, ERR_FNF,
+                                                              ex.getMessage(), ex); // local_FNF
+                        }// Required oozie bash scripts missing, after the copy was
+                        // successful
+                        else {
+                            if (errorMessage.contains("No such file or directory")
+                                    && (errorMessage.contains("ssh-base") || errorMessage.contains("ssh-wrapper"))) {
+                                throw new ActionExecutorException(ActionExecutorException.ErrorType.TRANSIENT, ERR_FNF,
+                                                                  ex.getMessage(), ex); // remote
+                                // FNF
+                            } // Required application execution binary missing (either
+                            // caught by ssh-wrapper
+                            else {
+                                if (errorMessage.contains("command not found")) {
+                                    throw new ActionExecutorException(ActionExecutorException.ErrorType.NON_TRANSIENT, ERR_FNF, ex
+                                            .getMessage(), ex); // remote
+                                    // FNF
+                                } // Permission denied while connecting
+                                else {
+                                    if (errorMessage.contains("Permission denied")) {
+                                        throw new ActionExecutorException(ActionExecutorException.ErrorType.NON_TRANSIENT, ERR_AUTH_FAILED, ex
+                                                .getMessage(), ex);
+                                    } // Permission denied while executing
+                                    else {
+                                        if (errorMessage.contains(": Permission denied")) {
+                                            throw new ActionExecutorException(ActionExecutorException.ErrorType.NON_TRANSIENT, ERR_NO_EXEC_PERM, ex
+                                                    .getMessage(), ex);
+                                        }
+                                        else {
+                                            throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, ERR_UNKNOWN_ERROR, ex
+                                                    .getMessage(), ex);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         } // Any other type of exception
         catch (Exception ex) {
@@ -567,16 +573,13 @@ public class SshActionExecutor extends ActionExecutor {
     }
 
     /**
-     * Checks whether the system is configured to always use the oozie user for
-     * ssh, and injects the user if required.
-     * 
+     * Checks whether the system is configured to always use the oozie user for ssh, and injects the user if required.
+     *
      * @param host the host string.
      * @param context the execution context.
-     * @return the modified host string with a user parameter added on if
-     *         required.
-     * @throws ActionExecutorException in case the flag to use the oozie user is
-     *         turned on and there is a mismatch between the user specified in
-     *         the host and the oozie user.
+     * @return the modified host string with a user parameter added on if required.
+     * @throws ActionExecutorException in case the flag to use the oozie user is turned on and there is a mismatch
+     * between the user specified in the host and the oozie user.
      */
     private String prepareUserHost(String host, Context context) throws ActionExecutorException {
         String oozieUser = context.getProtoActionConf().get(OozieClient.USER_NAME);
@@ -585,11 +588,11 @@ public class SshActionExecutor extends ActionExecutor {
                 host = oozieUser + "@" + host;
             }
         }
-        else{
+        else {
             if (host.contains("@")) {
                 if (!host.toLowerCase().startsWith(oozieUser + "@")) {
                     throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, ERR_USER_MISMATCH,
-                            XLog.format("user mismatch between oozie user [{0}] and ssh host [{1}]", oozieUser, host));
+                                                      XLog.format("user mismatch between oozie user [{0}] and ssh host [{1}]", oozieUser, host));
                 }
             }
             else {
@@ -620,18 +623,14 @@ public class SshActionExecutor extends ActionExecutor {
     }
 
     /**
-     * Drains the inputStream and errorStream of the Process being executed. The
-     * contents of the streams are stored if a buffer is provided for the
-     * stream.
+     * Drains the inputStream and errorStream of the Process being executed. The contents of the streams are stored if a
+     * buffer is provided for the stream.
      *
      * @param p The Process instance.
-     * @param inputBuffer The buffer into which STDOUT is to be read. Can be
-     *        null if only draining is required.
-     * @param errorBuffer The buffer into which STDERR is to be read. Can be
-     *        null if only draining is required.
-     * @param maxLength The maximum data length to be stored in these buffers.
-     *        This is an indicative value, and the store content may exceed this
-     *        length.
+     * @param inputBuffer The buffer into which STDOUT is to be read. Can be null if only draining is required.
+     * @param errorBuffer The buffer into which STDERR is to be read. Can be null if only draining is required.
+     * @param maxLength The maximum data length to be stored in these buffers. This is an indicative value, and the
+     * store content may exceed this length.
      * @return the exit value of the process.
      * @throws IOException
      */
@@ -671,14 +670,12 @@ public class SshActionExecutor extends ActionExecutor {
      * Reads the contents of a stream and stores them into the provided buffer.
      *
      * @param br The stream to be read.
-     * @param storageBuf The buffer into which the contents of the stream are to
-     *        be stored.
-     * @param maxLength The maximum number of bytes to be stored in the buffer.
-     *        An indicative value and may be exceeded.
+     * @param storageBuf The buffer into which the contents of the stream are to be stored.
+     * @param maxLength The maximum number of bytes to be stored in the buffer. An indicative value and may be
+     * exceeded.
      * @param bytesRead The number of bytes read from this stream to date.
-     * @param readAll If true, the stream is drained while their is data
-     *        available in it. Otherwise, only a single chunk of data is read,
-     *        irrespective of how much is available.
+     * @param readAll If true, the stream is drained while their is data available in it. Otherwise, only a single chunk
+     * of data is read, irrespective of how much is available.
      * @return
      * @throws IOException
      */
@@ -699,8 +696,7 @@ public class SshActionExecutor extends ActionExecutor {
     }
 
     /**
-     * Returns the first line from a StringBuffer, recognized by the new line
-     * character \n.
+     * Returns the first line from a StringBuffer, recognized by the new line character \n.
      *
      * @param buffer The StringBuffer from which the first line is required.
      * @return The first line of the buffer.

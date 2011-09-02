@@ -30,6 +30,7 @@ import org.apache.oozie.util.XLog;
 import org.apache.oozie.DagEngine;
 import org.apache.oozie.ForTestingActionExecutor;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.service.ActionService;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -46,7 +47,7 @@ public class TestAuthorizationService extends XFsTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        setSystemProperty(WorkflowSchemaService.CONF_EXT_SCHEMAS, "wf-ext-schema.xsd");
+        setSystemProperty(SchemaService.WF_CONF_EXT_SCHEMAS, "wf-ext-schema.xsd");
 
         Reader adminListReader = IOUtils.getResourceAsReader("adminusers.txt", -1);
         Writer adminListWriter = new FileWriter(getTestCaseDir() + "/adminusers.txt");
@@ -221,7 +222,7 @@ public class TestAuthorizationService extends XFsTestCase {
         }
 
         try {
-            as.authorizeForJob(getTestUser(), getTestGroup(), true);
+            as.authorizeForJob(getTestUser(), "1", true);
             fail();
         }
         catch (AuthorizationException ex) {
@@ -230,7 +231,7 @@ public class TestAuthorizationService extends XFsTestCase {
 
         services.setService(ForTestWorkflowStoreService.class);
         try {
-            as.authorizeForJob(getTestUser(), getTestGroup(), true);
+            as.authorizeForJob(getTestUser3(), "1-W", true);
             fail();
         }
         catch (AuthorizationException ex) {

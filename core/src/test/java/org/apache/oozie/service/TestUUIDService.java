@@ -17,6 +17,7 @@
  */
 package org.apache.oozie.service;
 
+import org.apache.oozie.service.UUIDService.ApplicationType;
 import org.apache.oozie.test.XTestCase;
 
 public class TestUUIDService extends XTestCase {
@@ -49,12 +50,12 @@ public class TestUUIDService extends XTestCase {
         Services services = new Services();
         services.init();
         UUIDService uuid = services.get(UUIDService.class);
-        String id = uuid.generateId();
+        String id = uuid.generateId(ApplicationType.WORKFLOW);
         assertTrue(id.startsWith("0000000-"));
         for (int i = 0; i < 1000; i++) {
-            id = uuid.generateId();
+            id = uuid.generateId(ApplicationType.WORKFLOW);
         }
-        assertTrue(id.startsWith("0001000-"));        
+        assertTrue(id.startsWith("0001000-"));
         services.destroy();
     }
 
@@ -63,7 +64,7 @@ public class TestUUIDService extends XTestCase {
         Services services = new Services();
         services.init();
         UUIDService uuid = services.get(UUIDService.class);
-        String id = uuid.generateId();
+        String id = uuid.generateId(ApplicationType.WORKFLOW);
         String childId = uuid.generateChildId(id, "a");
         assertEquals(id, uuid.getId(childId));
         assertEquals("a", uuid.getChildName(childId));
@@ -73,7 +74,7 @@ public class TestUUIDService extends XTestCase {
         services = new Services();
         services.init();
         uuid = services.get(UUIDService.class);
-        id = uuid.generateId();
+        id = uuid.generateId(ApplicationType.WORKFLOW);
         childId = uuid.generateChildId(id, "a");
         assertEquals(id, uuid.getId(childId));
         assertEquals("a", uuid.getChildName(childId));

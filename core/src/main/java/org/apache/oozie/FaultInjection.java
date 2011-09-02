@@ -20,21 +20,13 @@ package org.apache.oozie;
 import org.apache.oozie.util.XLog;
 
 /**
- * Fault Injection support class.
- * <p/>
- * Concrete classes should be available only during testing, not in production.
- * <p/>
- * To activate fault injection the {@link #FAULT_INJECTION} system property must be set to true.
- * <p/>
- * When fault injection is activated, the concrete class (specified by name) will be call for activation.
- * <p/>
- * Concrete classes should be activated by presense of a second system property.
- * <p/>
- * This fault injection pattern provides 3 levels of safeguard: a general 'fault injection' system property,
- * the availabity of of the concrete 'fault injection' class in the classpath, a specifi 'fault injection' system
- * property.
- * <p/>
- * Refer to the <code>SkipCommitFaultInjection</code> class in the test classes for an example.
+ * Fault Injection support class. <p/> Concrete classes should be available only during testing, not in production. <p/>
+ * To activate fault injection the {@link #FAULT_INJECTION} system property must be set to true. <p/> When fault
+ * injection is activated, the concrete class (specified by name) will be call for activation. <p/> Concrete classes
+ * should be activated by presense of a second system property. <p/> This fault injection pattern provides 3 levels of
+ * safeguard: a general 'fault injection' system property, the availabity of of the concrete 'fault injection' class in
+ * the classpath, a specifi 'fault injection' system property. <p/> Refer to the <code>SkipCommitFaultInjection</code>
+ * class in the test classes for an example.
  */
 public abstract class FaultInjection {
 

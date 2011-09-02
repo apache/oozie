@@ -18,8 +18,8 @@
 package org.apache.oozie.util;
 
 /**
- * Managed entities (like services) that implement this interface are injected with the
- * system {@link Instrumentation} object.
+ * Managed entities (like services) that implement this interface are injected with the system {@link Instrumentation}
+ * object.
  */
 public interface Instrumentable {
 

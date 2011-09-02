@@ -69,16 +69,6 @@
             <resource>
                 <directory>src/main/resources</directory>
                 <filtering>false</filtering>
-                <excludes>
-                    <exclude>README.txt</exclude>
-                </excludes>
-            </resource>
-            <resource>
-                <directory>src/main/resources</directory>
-                <includes>
-                    <include>README.txt</include>
-                </includes>
-                <filtering>true</filtering>
             </resource>
         </resources>
         <plugins>

@@ -25,12 +25,9 @@ import java.util.Map;
 
 
 /**
- * This service provides an {@link Instrumentation} instance configured to support samplers.
- * <p/>
- * This service depends on the {@link SchedulerService}.
- * <p/>
- * The {@link #CONF_LOGGING_INTERVAL} configuration property indicates how often snapshots of the instrumentation
- * should be logged.
+ * This service provides an {@link Instrumentation} instance configured to support samplers. <p/> This service depends
+ * on the {@link SchedulerService}. <p/> The {@link #CONF_LOGGING_INTERVAL} configuration property indicates how often
+ * snapshots of the instrumentation should be logged.
  */
 public class InstrumentationService implements Service {
     private static final String JVM_INSTRUMENTATION_GROUP = "jvm";
@@ -97,7 +94,7 @@ public class InstrumentationService implements Service {
         for (Map.Entry<String, String> entry : map.entrySet()) {
             sb.append("    ").append(entry.getKey()).append(" = ").append(entry.getValue()).append(E);
         }
-        return sb.toString();                
+        return sb.toString();
     }
 
     /**

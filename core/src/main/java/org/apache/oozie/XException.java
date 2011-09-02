@@ -21,10 +21,7 @@ import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.ParamChecker;
 
 /**
- * Base exception for all Oozie exception.
- * <p/>
- * It requires error codes an captures the Log info at exception time.
- * <p/>
+ * Base exception for all Oozie exception. <p/> It requires error codes an captures the Log info at exception time. <p/>
  * Error codes should be modeled in subclasses as Enums.
  */
 public class XException extends Exception {
@@ -52,11 +49,9 @@ public class XException extends Exception {
     }
 
     /**
-     * Create an EXception from an error code plus parameter to create the exception message.
-     * <p/>
-     * The value of {@link ErrorCode#getTemplate} is used as a StringFormat template for the exception message.
-     * <p/>
-     * If the last parameter is an Exception it is used as the exception cause.
+     * Create an EXception from an error code plus parameter to create the exception message. <p/> The value of {@link
+     * ErrorCode#getTemplate} is used as a StringFormat template for the exception message. <p/> If the last parameter
+     * is an Exception it is used as the exception cause.
      *
      * @param errorCode the error code for the exception.
      * @param params parameters used to create the exception message together with the error code template. If the last

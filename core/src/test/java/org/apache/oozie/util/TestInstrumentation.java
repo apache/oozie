@@ -186,6 +186,7 @@ public class TestInstrumentation extends XTestCase {
 
         inst.addVariable("a", "1", new Instrumentation.Variable<Long>() {
             private long counter = 0;
+
             public Long getValue() {
                 return counter++;
             }
@@ -195,6 +196,7 @@ public class TestInstrumentation extends XTestCase {
 
         inst.addVariable("a", "2", new Instrumentation.Variable<Long>() {
             private long counter = 1;
+
             public Long getValue() {
                 return counter++;
             }
@@ -203,6 +205,7 @@ public class TestInstrumentation extends XTestCase {
         assertEquals(2, inst.getVariables().get("a").size());
         inst.addVariable("b", "1", new Instrumentation.Variable<Long>() {
             private long counter = 2;
+
             public Long getValue() {
                 return counter++;
             }
@@ -211,12 +214,12 @@ public class TestInstrumentation extends XTestCase {
         assertEquals(2, inst.getVariables().get("a").size());
         assertEquals(1, inst.getVariables().get("b").size());
 
-        assertEquals(new Long(0), ((Instrumentation.Variable)inst.getVariables().get("a").get("1")).getValue());
-        assertEquals(new Long(1), ((Instrumentation.Variable)inst.getVariables().get("a").get("2")).getValue());
-        assertEquals(new Long(2), ((Instrumentation.Variable)inst.getVariables().get("b").get("1")).getValue());
-        assertEquals(new Long(1), ((Instrumentation.Variable)inst.getVariables().get("a").get("1")).getValue());
-        assertEquals(new Long(2), ((Instrumentation.Variable)inst.getVariables().get("a").get("2")).getValue());
-        assertEquals(new Long(3), ((Instrumentation.Variable)inst.getVariables().get("b").get("1")).getValue());
+        assertEquals(new Long(0), ((Instrumentation.Variable) inst.getVariables().get("a").get("1")).getValue());
+        assertEquals(new Long(1), ((Instrumentation.Variable) inst.getVariables().get("a").get("2")).getValue());
+        assertEquals(new Long(2), ((Instrumentation.Variable) inst.getVariables().get("b").get("1")).getValue());
+        assertEquals(new Long(1), ((Instrumentation.Variable) inst.getVariables().get("a").get("1")).getValue());
+        assertEquals(new Long(2), ((Instrumentation.Variable) inst.getVariables().get("a").get("2")).getValue());
+        assertEquals(new Long(3), ((Instrumentation.Variable) inst.getVariables().get("b").get("1")).getValue());
     }
 
     public void testSamplers() throws Exception {
@@ -242,6 +245,7 @@ public class TestInstrumentation extends XTestCase {
 
         inst.addSampler("b", "1", 10, 1, new Instrumentation.Variable<Long>() {
             private long counter = 0;
+
             public Long getValue() {
                 return counter++ % 10;
             }
@@ -267,6 +271,7 @@ public class TestInstrumentation extends XTestCase {
         Instrumentation inst = new Instrumentation();
         inst.addVariable("a", "1", new Instrumentation.Variable<Long>() {
             private long counter = 0;
+
             public Long getValue() {
                 return counter++;
             }
@@ -280,9 +285,9 @@ public class TestInstrumentation extends XTestCase {
         assertEquals(1, inst.getAll().get("counters").size());
         assertEquals(1, inst.getAll().get("timers").size());
         assertEquals(0, inst.getAll().get("samplers").size());
-        assertEquals(new Long(0), ((Instrumentation.Element)inst.getAll().get("variables").get("a").get("1")).getValue());
-        assertEquals(new Long(1), ((Instrumentation.Element)inst.getAll().get("counters").get("a").get("1")).getValue());
-        assertEquals(cron1.getOwn(), ((Instrumentation.Timer)((Instrumentation.Element)inst.getAll().
+        assertEquals(new Long(0), ((Instrumentation.Element) inst.getAll().get("variables").get("a").get("1")).getValue());
+        assertEquals(new Long(1), ((Instrumentation.Element) inst.getAll().get("counters").get("a").get("1")).getValue());
+        assertEquals(cron1.getOwn(), ((Instrumentation.Timer) ((Instrumentation.Element) inst.getAll().
                 get("timers").get("a").get("1")).getValue()).getOwn());
     }
 

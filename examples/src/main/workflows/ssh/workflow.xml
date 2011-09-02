@@ -16,20 +16,20 @@
   limitations under the License.
 -->
 <workflow-app xmlns='uri:oozie:workflow:0.1' name='ssh-wf'>
-    <start to='ssh1' />
+    <start to='ssh1'/>
     <action name='ssh1'>
         <ssh>
             <host>localhost</host>
             <command>echo</command>
             <args>"Hello Oozie!"</args>
         </ssh>
-        <ok to="end" />
-        <error to="fail" />
+        <ok to="end"/>
+        <error to="fail"/>
     </action>
 
     <kill name="fail">
         <message>SSH job failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>
     </kill>
 
-    <end name='end' />
+    <end name='end'/>
 </workflow-app>

@@ -30,13 +30,13 @@ import java.io.InputStream;
 
 public class TestXLogService extends XTestCase {
 
-    protected void setUp()throws Exception {
+    protected void setUp() throws Exception {
         super.setUp();
         LogFactory.getFactory().release();
         LogManager.resetConfiguration();
     }
 
-    protected void tearDown()throws Exception {
+    protected void tearDown() throws Exception {
         LogFactory.getFactory().release();
         LogManager.resetConfiguration();
         super.tearDown();

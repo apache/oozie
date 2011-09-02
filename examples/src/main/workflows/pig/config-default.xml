@@ -25,15 +25,15 @@
         <value>hdfs://localhost:9000</value>
     </property>
     <property>
-      <name>queueName</name>
-      <value>default</value>
+        <name>queueName</name>
+        <value>default</value>
     </property>
     <property>
         <name>inputDir</name>
-        <value>./input-data</value>
+        <value>${inputDir}</value>
     </property>
     <property>
         <name>outputDir</name>
-        <value>./output-pig</value>
+        <value>${outputDir}</value>
     </property>
 </configuration>

@@ -70,9 +70,9 @@ public class TestLocalOozie extends XFsTestCase {
 
     public void testWorkflowRun() throws Exception {
         String wfApp = "<workflow-app xmlns='uri:oozie:workflow:0.1' name='test-wf'>" +
-                       "    <start to='end'/>" +
-                       "    <end name='end'/>" +
-                       "</workflow-app>";
+                "    <start to='end'/>" +
+                "    <end name='end'/>" +
+                "</workflow-app>";
 
         FileSystem fs = getFileSystem();
         Path appPath = new Path(getFsTestCaseDir(), "app");
@@ -118,5 +118,5 @@ public class TestLocalOozie extends XFsTestCase {
     }
 
     //TODO test all WF states with a more complex WF
-    
+
 }

@@ -19,12 +19,13 @@ package org.apache.oozie.command.wf;
 
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.store.WorkflowStore;
+import org.apache.oozie.store.Store;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.command.Command;
 import org.apache.oozie.command.CommandException;
 
-public class ExternalIdCommand extends Command<String> {
+public class ExternalIdCommand extends WorkflowCommand<String> {
     private String id;
 
     public ExternalIdCommand(String id) {

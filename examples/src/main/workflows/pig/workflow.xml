@@ -16,30 +16,33 @@
   limitations under the License.
 -->
 <workflow-app xmlns='uri:oozie:workflow:0.1' name='pig-wf'>
-    <start to='pig1' />
+    <start to='pig1'/>
     <action name='pig1'>
         <pig>
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
+            <prepare>
+                <delete path="${outputDir}/pig-output"/>
+            </prepare>
             <configuration>
                 <property>
                     <name>mapred.compress.map.output</name>
                     <value>true</value>
                 </property>
                 <property>
-                  <name>mapred.job.queue.name</name>
-                  <value>${queueName}</value>
+                    <name>mapred.job.queue.name</name>
+                    <value>${queueName}</value>
                 </property>
             </configuration>
             <script>org/apache/oozie/examples/pig/id.pig</script>
             <param>INPUT=${inputDir}</param>
             <param>OUTPUT=${outputDir}/pig-output</param>
         </pig>
-        <ok to="end" />
-        <error to="fail" />
+        <ok to="end"/>
+        <error to="fail"/>
     </action>
     <kill name="fail">
         <message>Pig failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>
     </kill>
-    <end name='end' />
+    <end name='end'/>
 </workflow-app>

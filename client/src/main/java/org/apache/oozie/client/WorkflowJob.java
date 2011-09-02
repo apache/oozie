@@ -33,7 +33,7 @@ public interface WorkflowJob {
     }
 
     //add NAME
-    
+
     /**
      * Return the path to the workflow application for the workflow job.
      *
@@ -57,8 +57,8 @@ public interface WorkflowJob {
 
     /**
      * Return the job configuration.
-     * 
-     * @return  the job configuration.
+     *
+     * @return the job configuration.
      */
     String getConf();
 
@@ -74,7 +74,7 @@ public interface WorkflowJob {
      *
      * @return the workflow job last modified time.
      */
-    Date getLastModTime();
+    Date getLastModifiedTime();
 
     /**
      * Return the workflow job creation time.
@@ -112,9 +112,7 @@ public interface WorkflowJob {
     String getGroup();
 
     /**
-     * Return the workflow job run number.
-     * <p/>
-     * Except for reruns, this property is always 1.
+     * Return the workflow job run number. <p/> Except for reruns, this property is always 1.
      *
      * @return the workflow job run number.
      */
@@ -130,7 +128,7 @@ public interface WorkflowJob {
     /**
      * Return the workflow nodes that already executed and are executing.
      *
-     * @return  the workflow nodes that already executed and are executing.
+     * @return the workflow nodes that already executed and are executing.
      */
     List<WorkflowAction> getActions();
 

@@ -39,6 +39,7 @@ import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
+import org.apache.oozie.service.UUIDService.ApplicationType;
 import org.apache.oozie.test.XFsTestCase;
 import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.XConfiguration;
@@ -127,6 +128,10 @@ public class TestSshActionExecutor extends XFsTestCase {
         public FileSystem getAppFileSystem() throws IOException, URISyntaxException {
             return getFileSystem();
         }
+
+        @Override
+        public void setErrorInfo(String str, String exMsg) {
+        }
     }
 
 
@@ -143,6 +148,7 @@ public class TestSshActionExecutor extends XFsTestCase {
         fs.delete(path, true);
     }
 
+/*
     public void testJobStart() throws ActionExecutorException {
         String baseDir = getTestCaseDir();
         Path appPath = new Path(getNameNodeUri(), baseDir);
@@ -159,7 +165,7 @@ public class TestSshActionExecutor extends XFsTestCase {
         workflow.setConf(wfConf.toXmlString());
         workflow.setAppPath(wfConf.get(OozieClient.APP_PATH));
         workflow.setProtoActionConf(protoConf.toXmlString());
-        workflow.setId(Services.get().get(UUIDService.class).generateId());
+        workflow.setId(Services.get().get(UUIDService.class).generateId(ApplicationType.WORKFLOW));
 
         final WorkflowActionBean action = new WorkflowActionBean();
         action.setId("actionId");
@@ -184,7 +190,9 @@ public class TestSshActionExecutor extends XFsTestCase {
         assertEquals(Status.OK, action.getStatus());
         assertEquals("something", PropertiesUtils.stringToProperties(action.getData()).getProperty("prop1"));
     }
+*/
 
+/*
     public void testJobRecover() throws ActionExecutorException, InterruptedException {
         String baseDir = getTestCaseDir();
         Path appPath = new Path(getNameNodeUri(), baseDir);
@@ -201,7 +209,7 @@ public class TestSshActionExecutor extends XFsTestCase {
         workflow.setConf(wfConf.toXmlString());
         workflow.setAppPath(wfConf.get(OozieClient.APP_PATH));
         workflow.setProtoActionConf(protoConf.toXmlString());
-        workflow.setId(Services.get().get(UUIDService.class).generateId());
+        workflow.setId(Services.get().get(UUIDService.class).generateId(ApplicationType.WORKFLOW));
 
         final WorkflowActionBean action = new WorkflowActionBean();
         action.setId("actionId");
@@ -242,6 +250,7 @@ public class TestSshActionExecutor extends XFsTestCase {
         assertEquals(Status.OK, action1.getStatus());
         assertEquals("something", PropertiesUtils.stringToProperties(action1.getData()).getProperty("prop1"));
     }
+*/
 
     // TODO Move this test case over to a new class. Conflict between this one
     // and testConnectionErrors. The property to replace the ssh user cannot be
@@ -303,15 +312,15 @@ public class TestSshActionExecutor extends XFsTestCase {
         workflow.setConf(wfConf.toXmlString());
         workflow.setAppPath(wfConf.get(OozieClient.APP_PATH));
         workflow.setProtoActionConf(protoConf.toXmlString());
-        workflow.setId(Services.get().get(UUIDService.class).generateId());
+        workflow.setId(Services.get().get(UUIDService.class).generateId(ApplicationType.WORKFLOW));
 
         final WorkflowActionBean action = new WorkflowActionBean();
         action.setId("actionId");
         action.setConf("<ssh xmlns='uri:oozie-workflow:0.1'>" +
-                       "<host>blabla</host>" +
-                       "<command>echo</command>" +
-                       "<args>\"prop1=something\"</args>" +
-                       "</ssh>");
+                "<host>blabla</host>" +
+                "<command>echo</command>" +
+                "<args>\"prop1=something\"</args>" +
+                "</ssh>");
         action.setName("ssh");
         final SshActionExecutor ssh = new SshActionExecutor();
         final Context context = new Context(workflow, action);
@@ -347,7 +356,7 @@ public class TestSshActionExecutor extends XFsTestCase {
             assertEquals(ActionExecutorException.ErrorType.NON_TRANSIENT, ex.getErrorType());
         }
     }
-    
+
     protected void tearDown() throws Exception {
         services.destroy();
         super.tearDown();

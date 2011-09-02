@@ -18,16 +18,22 @@
 package org.apache.oozie.util;
 
 import org.apache.oozie.test.XTestCase;
-import org.jdom.JDOMException;
 import org.jdom.Element;
 
 public class TestXmlUtils extends XTestCase {
 
-    private static String EXTERNAL_ENTITY_XML = "<!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]>\n" +
-                                                "<foo>&xxe;</foo>";
+    private static String EXTERNAL_ENTITY_XML = "<!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]>\n"
+            + "<foo>&xxe;</foo>";
 
     public void testExternalEntity() throws Exception {
         Element e = XmlUtils.parseXml(EXTERNAL_ENTITY_XML);
         assertEquals(0, e.getText().length());
+    }
+
+    public void testRemoveComments() throws Exception {
+        String xmlStr = "<test1> <!-- Comment1 -->1234 <test2> ABCD <!-- Comment2 --> </test2> "
+                + "<!-- Comment3 --> <test3> <!-- Comment4 -->EFGH  </test3> <!-- Comment5 --></test1>";
+        String result = XmlUtils.removeComments(xmlStr);
+        System.out.println("Result After Comments removal :\n" + result);
     }
 }

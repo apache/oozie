@@ -39,25 +39,20 @@ import java.util.Map;
 import java.util.Properties;
 
 /**
- * Extends Hadoop Configuration providing a new constructor which reads an XML configuration from an InputStream.
- * <p/>
+ * Extends Hadoop Configuration providing a new constructor which reads an XML configuration from an InputStream. <p/>
  * OConfiguration(InputStream is).
  */
 public class XConfiguration extends Configuration {
 
     /**
-     * Create an empty configuration.
-     * <p/>
-     * Default values are not loaded.
+     * Create an empty configuration. <p/> Default values are not loaded.
      */
     public XConfiguration() {
         super(false);
     }
 
     /**
-     * Create a configuration from an InputStream.
-     * <p/>
-     * Code canibalized from <code>Configuration.loadResource()</code>.
+     * Create a configuration from an InputStream. <p/> Code canibalized from <code>Configuration.loadResource()</code>.
      *
      * @param is inputstream to read the configuration from.
      * @throws IOException thrown if the configuration could not be read.
@@ -68,9 +63,7 @@ public class XConfiguration extends Configuration {
     }
 
     /**
-     * Create a configuration from an Reader.
-     * <p/>
-     * Code canibalized from <code>Configuration.loadResource()</code>.
+     * Create a configuration from an Reader. <p/> Code canibalized from <code>Configuration.loadResource()</code>.
      *
      * @param reader reader to read the configuration from.
      * @throws IOException thrown if the configuration could not be read.
@@ -101,7 +94,7 @@ public class XConfiguration extends Configuration {
     public Properties toProperties() {
         Properties props = new Properties();
         for (Map.Entry<String, String> entry : this) {
-                props.setProperty(entry.getKey(), entry.getValue());
+            props.setProperty(entry.getKey(), entry.getValue());
         }
         return props;
     }
@@ -114,8 +107,8 @@ public class XConfiguration extends Configuration {
     }
 
     /**
-     * Copy configuration key/value pairs from one configuration to another if a property exists in the target, it
-     * gets replaced.
+     * Copy configuration key/value pairs from one configuration to another if a property exists in the target, it gets
+     * replaced.
      *
      * @param source source configuration.
      * @param target target configuration.
@@ -127,10 +120,10 @@ public class XConfiguration extends Configuration {
     }
 
     /**
-     * Injects configuration key/value pairs from one configuration to another if the key does not exist
-     * in the target configuration.
+     * Injects configuration key/value pairs from one configuration to another if the key does not exist in the target
+     * configuration.
      *
-     * @param source    source configuration.
+     * @param source source configuration.
      * @param target target configuration.
      */
     public static void injectDefaults(Configuration source, Configuration target) {
@@ -251,7 +244,7 @@ public class XConfiguration extends Configuration {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             this.writeXml(baos);
             baos.close();
-            xml =  new String(baos.toByteArray());
+            xml = new String(baos.toByteArray());
         }
         catch (IOException ex) {
             throw new RuntimeException("It should not happen, " + ex.getMessage(), ex);

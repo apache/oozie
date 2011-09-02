@@ -19,18 +19,22 @@ package org.apache.oozie.service;
 
 import java.util.HashMap;
 import java.util.Map;
+
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.Instrumentable;
+
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.ResultSet;
+
 import org.apache.hadoop.conf.Configuration;
-import org.apache.oozie.store.DBWorkflowStore;
+import org.apache.oozie.service.SchemaService.SchemaName;
 import org.apache.oozie.store.OozieSchema;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.store.WorkflowStore;
+import org.apache.oozie.store.Store;
 import org.apache.oozie.store.OozieSchema.OozieIndex;
 import org.apache.oozie.store.OozieSchema.OozieTable;
 import org.apache.oozie.workflow.WorkflowLib;
@@ -61,7 +65,6 @@ public class DBLiteWorkflowStoreService extends LiteWorkflowStoreService impleme
     private Map<String, Integer> statusCounts = new HashMap<String, Integer>();
     private Map<String, Integer> statusWindowCounts = new HashMap<String, Integer>();
 
-
     /**
      * Gets the number of workflows for each status and populates the hash.
      */
@@ -71,24 +74,29 @@ public class DBLiteWorkflowStoreService extends LiteWorkflowStoreService impleme
             WorkflowStore store = null;
             try {
                 store = Services.get().get(WorkflowStoreService.class).create();
+                store.beginTrx();
                 WorkflowJob.Status[] wfStatusArr = WorkflowJob.Status.values();
                 for (int i = 0; i < wfStatusArr.length; i++) {
                     statusCounts.put(wfStatusArr[i].name(), store.getWorkflowCountWithStatus(wfStatusArr[i].name()));
-                    statusWindowCounts.put(wfStatusArr[i].name(), store
-                            .getWorkflowCountWithStatusInLastNSeconds(wfStatusArr[i].name(), statusWindow));
+                    statusWindowCounts.put(wfStatusArr[i].name(), store.getWorkflowCountWithStatusInLastNSeconds(
+                            wfStatusArr[i].name(), statusWindow));
                 }
+                store.commitTrx();
             }
             catch (StoreException e) {
+                if (store != null) {
+                    store.rollbackTrx();
+                }
                 log.warn("Exception while accessing the store", e);
             }
             finally {
                 try {
                     if (store != null) {
-                        store.close();
+                        store.closeTrx();
                     }
                 }
-                catch (StoreException ex) {
-                    log.warn("Exception while attempting to close store", ex);
+                catch (RuntimeException rex) {
+                    log.warn("Exception while attempting to close store", rex);
                 }
             }
         }
@@ -99,26 +107,33 @@ public class DBLiteWorkflowStoreService extends LiteWorkflowStoreService impleme
         schemaName = conf.get(CONF_SCHEMA_NAME, "oozie");
         statusWindow = conf.getInt(CONF_METRICS_INTERVAL_WINDOW, 3600);
         statusMetricsCollectionInterval = conf.getInt(CONF_METRICS_INTERVAL_MINS, 5);
+/*
         boolean createSchema = conf.getBoolean(CONF_CREATE_SCHEMA, true);
         OozieSchema.setOozieDbName(schemaName);
         String validation_query = OozieSchema.getValidationQuery(schemaName);
-        String jdbcUri = conf.get(DataSourceService.CONF_URL, "jdbc:hsqldb:mem:testdb");
+        String jdbcUri = conf.get(StoreService.CONF_URL, "jdbc:hsqldb:mem:testdb");
+*/
         log = XLog.getLog(getClass());
         Connection conn = null;
         try {
-            conn = Services.get().get(DataSourceService.class).getRawConnection();
+            conn = Services.get().get(StoreService.class).getRawConnection();
             DBType dbType;
             if (Schema.isHsqlConnection(conn)) {
                 dbType = DBType.HSQL;
             }
             else {
-                dbType = DBType.MySQL;
+                if (Schema.isMySqlConnection(conn)) {
+                    dbType = DBType.MySQL;
+                }
+                else {
+                    dbType = DBType.ORACLE;
+                }
             }
+/* no longer used
             boolean schemaExists = schemaExists(conn, validation_query);
-
             if (!createSchema && !schemaExists) {
-                throw new ServiceException(ErrorCode.E0141,
-                        XLog.format("Oozie Schema [{0}] does not exist at [{1}]", schemaName, jdbcUri));
+                throw new ServiceException(ErrorCode.E0141, XLog.format("Oozie Schema [{0}] does not exist at [{1}]",
+                        schemaName, jdbcUri));
             }
             if (createSchema && schemaExists) {
                 log.warn(XLog.OPS, "Oozie Schema [{0}] already exists at [{1}], ignoring create", schemaName, jdbcUri);
@@ -128,22 +143,25 @@ public class DBLiteWorkflowStoreService extends LiteWorkflowStoreService impleme
                 setupOozieSchema(conn, dbType);
                 log.info(XLog.OPS, "Oozie Schema [{0}] created at [{1}]", schemaName, jdbcUri);
             }
-
-            //switching off select for update for all SQL DBs, using memory locking instead, to avoid long running TRXs
-            //checkAndSetSelectForUpdateSupport(conn, validation_query);
-            //if (!selectForUpdate) {
-            //    log.warn(XLog.OPS, "Database does not support select for update, JDBC URI [{0}]", jdbcUri);
-            //}
+*/
+            // switching off select for update for all SQL DBs, using memory
+            // locking instead, to avoid long running TRXs
+            // checkAndSetSelectForUpdateSupport(conn, validation_query);
+            // if (!selectForUpdate) {
+            // log.warn(XLog.OPS,
+            // "Database does not support select for update, JDBC URI [{0}]",
+            // jdbcUri);
+            // }
             selectForUpdate = false;
-            
+
             WorkflowJob.Status[] wfStatusArr = WorkflowJob.Status.values();
             for (int i = 0; i < wfStatusArr.length; i++) {
                 statusCounts.put(wfStatusArr[i].name(), 0);
                 statusWindowCounts.put(wfStatusArr[i].name(), 0);
             }
             Runnable jobStatusCountCallable = new JobStatusCountCallable();
-            services.get(SchedulerService.class).schedule(jobStatusCountCallable, 1,
-                    statusMetricsCollectionInterval, SchedulerService.Unit.MIN);
+            services.get(SchedulerService.class).schedule(jobStatusCountCallable, 1, statusMetricsCollectionInterval,
+                                                          SchedulerService.Unit.MIN);
         }
         catch (SQLException e) {
             throw new ServiceException(ErrorCode.E0140, e.getMessage(), e);
@@ -154,7 +172,7 @@ public class DBLiteWorkflowStoreService extends LiteWorkflowStoreService impleme
                     conn.close();
                 }
                 catch (SQLException ex1) {
-                    log.warn(XLog.OPS, "JDBC error on close() for [{0}], {1}", jdbcUri, ex1);
+                    log.warn(XLog.OPS, "JDBC error on close() for [{0}]", ex1);
                 }
             }
         }
@@ -164,18 +182,18 @@ public class DBLiteWorkflowStoreService extends LiteWorkflowStoreService impleme
     }
 
     /**
-     * Return the workflow lib without DB connection. Will be used for parsing
-     * purpose.
-     * 
+     * Return the workflow lib without DB connection. Will be used for parsing purpose.
+     *
      * @return Workflow Library
      */
+    @Override
     public WorkflowLib getWorkflowLibWithNoDB() {
         return getWorkflowLib(null);
     }
 
     /**
      * Indicate if the database supports SELECT FOR UPDATE.
-     * 
+     *
      * @return if the database supports SELECT FOR UPDATE.
      */
     public boolean getSelectForUpdate() {
@@ -183,35 +201,45 @@ public class DBLiteWorkflowStoreService extends LiteWorkflowStoreService impleme
     }
 
     private WorkflowLib getWorkflowLib(Connection conn) {
-        javax.xml.validation.Schema schema = Services.get().get(WorkflowSchemaService.class).getSchema();
+        javax.xml.validation.Schema schema = Services.get().get(SchemaService.class).getSchema(SchemaName.WORKFLOW);
         return new DBLiteWorkflowLib(schema, LiteDecisionHandler.class, LiteActionHandler.class, conn);
     }
 
+    @Override
     public WorkflowStore create() throws StoreException {
         try {
-            Connection conn = Services.get().get(DataSourceService.class).getConnection();
-            conn.setAutoCommit(false);
-            conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
-            return new DBWorkflowStore(conn, getWorkflowLib(conn), selectForUpdate);
+            return new WorkflowStore(selectForUpdate);
         }
-        catch (SQLException ex) {
+        catch (Exception ex) {
+            throw new StoreException(ErrorCode.E0600, ex.getMessage(), ex);
+        }
+    }
+
+    @Override
+    public <S extends Store> WorkflowStore create(S store) throws StoreException {
+        try {
+            return new WorkflowStore(store, selectForUpdate);
+        }
+        catch (Exception ex) {
             throw new StoreException(ErrorCode.E0600, ex.getMessage(), ex);
         }
     }
 
     /**
-     * Set up the oozie schema, create the tables and indexes. Also insert the
-     * Version number to version table.
-     * 
+     * Set up the oozie schema, create the tables and indexes. Also insert the Version number to version table.
+     *
      * @param conn DB connection
      * @param dbType DB Type
      * @throws ServiceException On failure to create the schema
      */
+    @Deprecated
     private void setupOozieSchema(Connection conn, DBType dbType) throws ServiceException {
         String errorMessage = "";
         try {
-            errorMessage = "Failed to create Schema.\n{0}";
-            createSchema(conn, dbType);
+            if (!dbType.equals(DBType.ORACLE)) {
+                errorMessage = "Failed to create Schema.\n{0}";
+                createSchema(conn, dbType);
+            }
             errorMessage = "Failed to create Tables.\n{0}";
             createTables(conn, dbType);
             errorMessage = "Failed to create Indexes.\n{0}";
@@ -221,18 +249,18 @@ public class DBLiteWorkflowStoreService extends LiteWorkflowStoreService impleme
             errorMessage = "";
         }
         catch (SQLException e) {
-            throw new ServiceException(ErrorCode.E0141, XLog
-                    .format(errorMessage, e.getMessage()), e);
+            throw new ServiceException(ErrorCode.E0603, XLog.format(errorMessage, e.getMessage()), e);
         }
     }
 
     /**
      * Check for the existence of schema by querying the given sql.
-     * 
+     *
      * @param conn Connection
      * @param sql Sql Statement to check the connection health
      * @return true if schema is present
      */
+    @Deprecated
     private boolean schemaExists(Connection conn, String sql) {
         try {
             conn.createStatement().executeQuery(sql);
@@ -247,9 +275,9 @@ public class DBLiteWorkflowStoreService extends LiteWorkflowStoreService impleme
      * Check for the support for "select for update" by the DB.
      *
      * @param conn Connection
-     * @param validation_query query to executed. adds for update to
-     *        validation_query and will do the check
+     * @param validation_query query to executed. adds for update to validation_query and will do the check
      */
+    @Deprecated
     private void checkAndSetSelectForUpdateSupport(Connection conn, String validation_query) {
         try {
             if (validation_query != null) {
@@ -265,12 +293,15 @@ public class DBLiteWorkflowStoreService extends LiteWorkflowStoreService impleme
         }
     }
 
+    @Deprecated
     private void createSchema(Connection conn, DBType dbType) throws SQLException {
-        doUpdate(conn, "CREATE " + (dbType.equals(DBType.MySQL) ? "DATABASE " : "SCHEMA ") + schemaName
-                + (dbType.equals(DBType.HSQL) ? " AUTHORIZATION DBA" : ""));
+        doUpdate(conn, "CREATE "
+                + ((dbType.equals(DBType.MySQL) || dbType.equals(DBType.ORACLE)) ? "DATABASE " : "SCHEMA ")
+                + schemaName + (dbType.equals(DBType.HSQL) ? " AUTHORIZATION DBA" : ""));
         log.debug("Created schema [{0}]!!", schemaName);
     }
 
+    @Deprecated
     private void createTables(Connection conn, DBType dbType) throws SQLException {
         for (Table table : OozieTable.values()) {
             doUpdate(conn, OozieSchema.generateCreateTableScript(table, dbType));
@@ -278,6 +309,7 @@ public class DBLiteWorkflowStoreService extends LiteWorkflowStoreService impleme
         }
     }
 
+    @Deprecated
     private void createIndexes(Connection conn, DBType dbType) throws SQLException {
         for (OozieIndex index : OozieIndex.values()) {
             doUpdate(conn, Schema.generateCreateIndexScript(index, dbType));
@@ -285,6 +317,7 @@ public class DBLiteWorkflowStoreService extends LiteWorkflowStoreService impleme
         }
     }
 
+    @Deprecated
     private void doUpdate(Connection conn, String expression) throws SQLException {
         Statement st = conn.createStatement();
         st.executeUpdate(expression);

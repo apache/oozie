@@ -39,7 +39,7 @@ public class ServicesLoader implements ServletContextListener {
             services = new Services();
             services.init();
         }
-        catch (ServiceException ex ){
+        catch (ServiceException ex) {
             throw new RuntimeException(ex);
         }
     }

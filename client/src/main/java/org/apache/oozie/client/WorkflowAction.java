@@ -38,7 +38,7 @@ public interface WorkflowAction {
         END_RETRY,
         END_MANUAL,
         KILLED,
-        FAILED,}
+        FAILED, }
 
     /**
      * Return the action action ID.

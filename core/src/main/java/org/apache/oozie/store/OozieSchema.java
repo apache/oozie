@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.apache.oozie.util.db.Schema;
 import org.apache.oozie.util.db.Schema.Column;
 import org.apache.oozie.util.db.Schema.DBType;
@@ -35,7 +36,7 @@ public class OozieSchema {
 
     private static final String OOZIE_VERSION = "0.1";
 
-    public static Map<Table, List<Column>> TABLE_COLUMNS = new HashMap<Table, List<Column>>();
+    public static final Map<Table, List<Column>> TABLE_COLUMNS = new HashMap<Table, List<Column>>();
 
     static {
         for (Column column : OozieColumn.values()) {
@@ -56,8 +57,7 @@ public class OozieSchema {
         WORKFLOWS,
         ACTIONS,
         WF_PROCESS_INSTANCE,
-        VERSION
-        ;
+        VERSION;
 
         @Override
         public String toString() {
@@ -67,14 +67,13 @@ public class OozieSchema {
 
     public static enum OozieIndex implements Index {
         IDX_WF_APPNAME(OozieColumn.WF_appName),
-        IDX_WF_USER(OozieColumn.WF_user),
+        IDX_WF_USER(OozieColumn.WF_userName),
         IDX_WF_GROUP(OozieColumn.WF_groupName),
         IDX_WF_STATUS(OozieColumn.WF_status),
         IDX_WF_EXTERNAL_ID(OozieColumn.WF_externalId),
 
         IDX_ACTIONS_BEGINTIME(OozieColumn.ACTIONS_pendingAge),
-        IDX_ACTIONS_WFID(OozieColumn.ACTIONS_wfId)
-        ;
+        IDX_ACTIONS_WFID(OozieColumn.ACTIONS_wfId);
 
         final Column column;
 
@@ -92,7 +91,6 @@ public class OozieSchema {
         PI_wfId(OozieTable.WF_PROCESS_INSTANCE, String.class, true, 100),
         PI_state(OozieTable.WF_PROCESS_INSTANCE, Blob.class, false),
 
-
         // WorkflowJob Table
         WF_id(OozieTable.WORKFLOWS, String.class, true, 100),
         WF_externalId(OozieTable.WORKFLOWS, String.class, false, 100),
@@ -105,16 +103,15 @@ public class OozieSchema {
         WF_run(OozieTable.WORKFLOWS, Long.class, false),
         WF_lastModTime(OozieTable.WORKFLOWS, Timestamp.class, false),
         WF_createdTime(OozieTable.WORKFLOWS, Timestamp.class, false),
-        WF_startTime(OozieTable.WORKFLOWS, Timestamp.class,false),
+        WF_startTime(OozieTable.WORKFLOWS, Timestamp.class, false),
         WF_endTime(OozieTable.WORKFLOWS, Timestamp.class, false),
-        WF_user(OozieTable.WORKFLOWS, String.class, false, 100),
+        WF_userName(OozieTable.WORKFLOWS, String.class, false, 100),
         WF_groupName(OozieTable.WORKFLOWS, String.class, false, 100),
         WF_authToken(OozieTable.WORKFLOWS, String.class, false),
 
-
         // Actions Table
         ACTIONS_id(OozieTable.ACTIONS, String.class, true, 100),
-        ACTIONS_name(OozieTable.ACTIONS, String.class, false,100),
+        ACTIONS_name(OozieTable.ACTIONS, String.class, false, 100),
         ACTIONS_type(OozieTable.ACTIONS, String.class, false, 100),
         ACTIONS_wfId(OozieTable.ACTIONS, String.class, false, 100),
         ACTIONS_conf(OozieTable.ACTIONS, String.class, false),
@@ -137,10 +134,8 @@ public class OozieSchema {
         ACTIONS_signalValue(OozieTable.ACTIONS, String.class, false, 100),
         ACTIONS_logToken(OozieTable.ACTIONS, String.class, false, 100),
 
-
         // Version Table
-        VER_versionNumber(OozieTable.VERSION, String.class, false)
-        ;
+        VER_versionNumber(OozieTable.VERSION, String.class, false, 255);
 
         final Table table;
         final Class<?> type;
@@ -195,7 +190,7 @@ public class OozieSchema {
 
     /**
      * Generates the create table SQL Statement
-     * 
+     *
      * @param table
      * @param dbType
      * @return SQL Statement to create the table
@@ -206,7 +201,7 @@ public class OozieSchema {
 
     /**
      * Gets the query that will be used to validate the connection
-     * 
+     *
      * @param dbName
      * @return
      */
@@ -217,6 +212,7 @@ public class OozieSchema {
 
     /**
      * Generates the Insert statement to insert the OOZIE_VERSION to table
+     *
      * @param dbName
      * @return
      */
@@ -227,7 +223,7 @@ public class OozieSchema {
 
     /**
      * Gets the Oozie Schema Version
-     * 
+     *
      * @return
      */
     public static String getOozieVersion() {

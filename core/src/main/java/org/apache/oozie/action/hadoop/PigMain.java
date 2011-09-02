@@ -21,6 +21,7 @@ import org.apache.pig.Main;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 
+import java.io.FileNotFoundException;
 import java.io.OutputStream;
 import java.io.FileOutputStream;
 import java.io.BufferedReader;
@@ -163,6 +164,11 @@ public class PigMain extends LauncherMain {
         arguments.add("-logfile");
         arguments.add(pigLog);
 
+        String[] pigArgs = MapReduceMain.getStrings(actionConf, "oozie.pig.args");
+        for (String pigArg : pigArgs) {
+            arguments.add(pigArg);
+        }
+
         System.out.println("Pig command arguments :");
         for (String arg : arguments) {
             System.out.println("             " + arg);
@@ -174,12 +180,7 @@ public class PigMain extends LauncherMain {
         System.out.println();
         System.out.flush();
 
-        String userName = System.getProperty("user.name");
         try {
-            //TODO Pig should fix this
-            //Pig somehow is taking user from Java SYS props, if task is running with cluster UNIX user this is
-            //a problem, because of this we are setting here the user.name to the oozie job user.name
-            System.setProperty("user.name", pigProperties.getProperty("user.name"));
             runPigJob(arguments.toArray(new String[arguments.size()]));
         }
         catch (SecurityException ex) {
@@ -188,19 +189,21 @@ public class PigMain extends LauncherMain {
                     System.err.println();
                     System.err.println("Pig logfile dump:");
                     System.err.println();
-                    BufferedReader reader = new BufferedReader(new FileReader(pigLog));
-                    line = reader.readLine();
-                    while (line != null) {
-                        System.err.println(line);
+                    try {
+                        BufferedReader reader = new BufferedReader(new FileReader(pigLog));
                         line = reader.readLine();
+                        while (line != null) {
+                            System.err.println(line);
+                            line = reader.readLine();
+                        }
+                        reader.close();
                     }
-                    reader.close();
+                    catch (FileNotFoundException e) {
+                        System.err.println("pig log file: " + pigLog + "  not found.");
+                    }
                     throw ex;
                 }
             }
-        }
-        finally {
-            System.setProperty("user.name", userName);
         }
 
         System.out.println();
@@ -222,9 +225,10 @@ public class PigMain extends LauncherMain {
         Main.main(args);
     }
 
-    public static void setPigScript(Configuration conf, String script, String[] params) {
+    public static void setPigScript(Configuration conf, String script, String[] params, String[] args) {
         conf.set("oozie.pig.script", script);
         MapReduceMain.setStrings(conf, "oozie.pig.params", params);
+        MapReduceMain.setStrings(conf, "oozie.pig.args", args);
     }
 
     private static final String JOB_ID_LOG_PREFIX = "HadoopJobId: ";

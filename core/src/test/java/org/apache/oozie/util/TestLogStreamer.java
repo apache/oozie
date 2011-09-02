@@ -22,6 +22,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Date;
+
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.XLogStreamer;
 

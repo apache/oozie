@@ -24,12 +24,12 @@ public class TestMemoryLocks extends XTestCase {
 
     private MemoryLocks locks;
 
-    protected void setUp()throws Exception {
+    protected void setUp() throws Exception {
         super.setUp();
         locks = new MemoryLocks();
     }
 
-    protected void tearDown()throws Exception {
+    protected void tearDown() throws Exception {
         locks = null;
         super.tearDown();
     }

@@ -16,14 +16,16 @@
   limitations under the License.
 -->
 <workflow-app xmlns="uri:oozie:workflow:0.1" name="failover-fs-wf">
-    <start to="fs" />
+    <start to="fs"/>
     <action name="fs">
-        <fs> <move source="${source}" target="${target}"/> </fs>
-        <ok to="end" />
-        <error to="k" />
+        <fs>
+            <move source="${source}" target="${target}"/>
+        </fs>
+        <ok to="end"/>
+        <error to="k"/>
     </action>
     <kill name="k">
         <message>kill</message>
     </kill>
-    <end name="end" />
+    <end name="end"/>
 </workflow-app>

@@ -59,7 +59,7 @@ public class ForTestingActionExecutor extends ActionExecutor {
             throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, TEST_ERROR, "start");
         }
         String externalStatus = eConf.getChild("external-status", ns).getText().trim();
-        
+
         String runningMode = "sync";
         Element runningModeElement = eConf.getChild("running-mode", ns);
         if (null != runningModeElement) {
@@ -132,5 +132,5 @@ public class ForTestingActionExecutor extends ActionExecutor {
     public boolean isCompleted(String externalStatus) {
         return false;
     }
-    
+
 }

@@ -40,7 +40,7 @@ public class TestELEvaluator extends XTestCase {
     }
 
     public static String functionError() throws ELEvaluationException {
-        throw new  ELEvaluationException("m", null);
+        throw new ELEvaluationException("m", null);
     }
 
     private static Method functionA;

@@ -75,7 +75,7 @@ public class MyJsonRestServlet extends JsonRestServlet {
                              Arrays.asList(new ParameterInfo("json", String.class, true, Arrays.asList("GET"))))};
 
     static ResourceInfo[] ACTIVE = NO_RESOURCE_NO_PARAMS;
-    
+
     public MyJsonRestServlet() {
         super("my", ACTIVE);
     }
@@ -98,11 +98,12 @@ public class MyJsonRestServlet extends JsonRestServlet {
                 json.put("a", "object");
                 sendJsonResponse(response, HttpServletResponse.SC_OK, json);
             }
-            else
-            if (request.getParameter("json").equals("array")) {
-                JSONArray json = new JSONArray();
-                json.add("array");
-                sendJsonResponse(response, HttpServletResponse.SC_OK, json);
+            else {
+                if (request.getParameter("json").equals("array")) {
+                    JSONArray json = new JSONArray();
+                    json.add("array");
+                    sendJsonResponse(response, HttpServletResponse.SC_OK, json);
+                }
             }
         }
     }

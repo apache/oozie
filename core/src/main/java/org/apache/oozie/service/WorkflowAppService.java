@@ -37,10 +37,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
- * Service that provides application workflow definition reading from the path
- * and creation of the proto configuration.
+ * Service that provides application workflow definition reading from the path and creation of the proto configuration.
  */
 public abstract class WorkflowAppService implements Service {
 
@@ -82,9 +82,9 @@ public abstract class WorkflowAppService implements Service {
     /**
      * Read workflow definition.
      *
-     * @param appPath  application path.
-     * @param user     user name.
-     * @param group    group name.
+     * @param appPath application path.
+     * @param user user name.
+     * @param group group name.
      * @param autToken authentication token.
      * @return workflow definition.
      * @throws WorkflowException thrown if the definition could not be read.
@@ -113,13 +113,10 @@ public abstract class WorkflowAppService implements Service {
     }
 
     /**
-     * Create proto configuration.
-     * <p/>
-     * The proto configuration includes the user,group and the paths which need
-     * to be added to distributed cache. These paths include .jar,.so and the
-     * resource file paths.
+     * Create proto configuration. <p/> The proto configuration includes the user,group and the paths which need to be
+     * added to distributed cache. These paths include .jar,.so and the resource file paths.
      *
-     * @param jobConf   job configuration.
+     * @param jobConf job configuration.
      * @param authToken authentication token.
      * @return proto configuration.
      * @throws WorkflowException thrown if the proto action configuration could not be created.
@@ -134,8 +131,11 @@ public abstract class WorkflowAppService implements Service {
             conf.set(OozieClient.USER_NAME, user);
             conf.set(OozieClient.GROUP_NAME, group);
             conf.set(HADOOP_UGI, hadoopUgi);
-            conf.set(HADOOP_JT_KERBEROS_NAME, jobConf.get(HADOOP_JT_KERBEROS_NAME));
-            conf.set(HADOOP_NN_KERBEROS_NAME, jobConf.get(HADOOP_NN_KERBEROS_NAME));
+
+            if (Services.get().getConf().getBoolean("oozie.service.HadoopAccessorService.kerberos.enabled", false)) {
+                conf.set(HADOOP_JT_KERBEROS_NAME, jobConf.get(HADOOP_JT_KERBEROS_NAME));
+                conf.set(HADOOP_NN_KERBEROS_NAME, jobConf.get(HADOOP_NN_KERBEROS_NAME));
+            }
 
             URI uri = new URI(jobConf.get(OozieClient.APP_PATH));
 
@@ -146,8 +146,15 @@ public abstract class WorkflowAppService implements Service {
             List<String> soFilepaths = getLibPaths(fs, appPath, ".so");
             conf.setStrings(APP_LIB_JAR_PATH_LIST, jarFilePaths.toArray(new String[jarFilePaths.size()]));
             conf.setStrings(APP_LIB_SO_PATH_LIST, soFilepaths.toArray(new String[soFilepaths.size()]));
+            //Add all properties start with 'oozie.'
+            for (Map.Entry<String, String> entry : jobConf) {
+                if (entry.getKey().startsWith("oozie.")) {
+                    String name = entry.getKey();
+                    String value = entry.getValue();
+                    conf.set(name, value);
+                }
+            }
             return conf;
-
         }
         catch (IOException ex) {
             throw new WorkflowException(ErrorCode.E0712, jobConf.get(OozieClient.APP_PATH),
@@ -166,7 +173,7 @@ public abstract class WorkflowAppService implements Service {
     /**
      * Parse workflow definition.
      *
-     * @param jobConf   job configuration.
+     * @param jobConf job configuration.
      * @param authToken authentication token.
      * @return workflow application.
      * @throws WorkflowException thrown if the workflow application could not be parsed.
@@ -176,8 +183,8 @@ public abstract class WorkflowAppService implements Service {
     /**
      * Get library paths for a given extension.
      *
-     * @param fs        file system object.
-     * @param appPath   hdfs application path.
+     * @param fs file system object.
+     * @param appPath hdfs application path.
      * @param extension to be listed.
      * @return list of paths.
      * @throws IOException thrown if the lib paths could not be obtained.
@@ -202,7 +209,7 @@ public abstract class WorkflowAppService implements Service {
         /**
          * Creates library paths filter.
          *
-         * @param appPath   workflow application path.
+         * @param appPath workflow application path.
          * @param extension file extension to be listed.
          */
         public LibPathFilter(String appPath, String extension) {
@@ -214,8 +221,7 @@ public abstract class WorkflowAppService implements Service {
          * Check the library path.
          *
          * @param path path to be checked
-         * @return true if path has the extension and start with application
-         *         /lib directory else false
+         * @return true if path has the extension and start with application /lib directory else false
          */
         @Override
         public boolean accept(Path path) {

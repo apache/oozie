@@ -19,11 +19,19 @@ package org.apache.oozie.test;
 
 import junit.framework.TestCase;
 import org.apache.commons.logging.LogFactory;
+import org.apache.oozie.CoordinatorActionBean;
+import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
-import org.apache.oozie.service.DataSourceService;
+import org.apache.oozie.util.db.Schema.Table;
+import org.apache.oozie.service.ConfigurationService;
+import org.apache.oozie.service.StoreService;
 import org.apache.oozie.service.DBLiteWorkflowStoreService;
 import org.apache.oozie.service.WorkflowAppService;
+import org.apache.oozie.store.CoordinatorStore;
+import org.apache.oozie.store.OozieSchema;
+import org.apache.oozie.store.StoreException;
+import org.apache.oozie.store.OozieSchema.OozieTable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.MiniMRCluster;
@@ -35,6 +43,7 @@ import org.apache.hadoop.hdfs.MiniDFSCluster;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.sql.Connection;
@@ -42,63 +51,51 @@ import java.sql.SQLException;
 import java.sql.DriverManager;
 import java.sql.Statement;
 
+import javax.persistence.EntityManager;
+import javax.persistence.Query;
+
 /**
- * Base JUnit <code>TestCase</code> subclass used by all Oozie testcases.
- * <p/>
- * This class provides the following functionality:
- * <p/>
- * <ul>
- * <li>Creates a unique test working directory per test method.</li>
- * <li>Resets changed system properties to their original values after every test.</li>
- * <li>WaitFor that supports a predicate,to wait for a condition. It has timeout.</li>
- * </ul>
- * <p/>
- * The base directory for the test working directory must be specified via the system property
- * <code>oozie.test.dir</code>, there default value is '/tmp'.
- * <p/>
- * From within testcases, system properties must be changed using the {@link #setSystemProperty} method.
+ * Base JUnit <code>TestCase</code> subclass used by all Oozie testcases. <p/> This class provides the following
+ * functionality: <p/> <ul> <li>Creates a unique test working directory per test method.</li> <li>Resets changed system
+ * properties to their original values after every test.</li> <li>WaitFor that supports a predicate,to wait for a
+ * condition. It has timeout.</li> </ul> <p/> The base directory for the test working directory must be specified via
+ * the system property <code>oozie.test.dir</code>, there default value is '/tmp'. <p/> From within testcases, system
+ * properties must be changed using the {@link #setSystemProperty} method.
  */
 public abstract class XTestCase extends TestCase {
     private Map<String, String> sysProps;
     private String testCaseDir;
     private String hadoopVersion;
+    protected XLog log = new XLog(LogFactory.getLog(getClass()));
 
     /**
-     * System property to specify the parent directory for the 'oozietests' directory
-     * to be used as base for all test working directories.
-     * </p>
-     * If this property is not set, the assumed value is '/tmp'.
+     * System property to specify the parent directory for the 'oozietests' directory to be used as base for all test
+     * working directories. </p> If this property is not set, the assumed value is '/tmp'.
      */
     public static final String OOZIE_TEST_DIR = "oozie.test.dir";
 
     /**
-     * System property to specify the Hadoop Job Tracker to use for testing.
-     * </p>
-     * If this property is not set, the assumed value is 'locahost:9001'.
+     * System property to specify the Hadoop Job Tracker to use for testing. </p> If this property is not set, the
+     * assumed value is 'locahost:9001'.
      */
     public static final String OOZIE_TEST_JOB_TRACKER = "oozie.test.job.tracker";
 
     /**
-     * System property to specify the Hadoop Name Node to use for testing.
-     * </p>
-     * If this property is not set, the assumed value is 'locahost:9000'.
+     * System property to specify the Hadoop Name Node to use for testing. </p> If this property is not set, the assumed
+     * value is 'locahost:9000'.
      */
     public static final String OOZIE_TEST_NAME_NODE = "oozie.test.name.node";
 
     /**
-     * System property to specify the Hadoop Version to use for testing.
-     * </p>
-     * If this property is not set, the assumed value is "0.20.0"
+     * System property to specify the Hadoop Version to use for testing. </p> If this property is not set, the assumed
+     * value is "0.20.0"
      */
     public static final String HADOOP_VERSION = "hadoop.version";
 
     /**
-     * Initialize the test working directory.
-     * <p/>
-     * If it does not exist it creates it, if it already exists it deletes all its contents.
-     * <p/>
-     * The test working directory it is not deleted after the test runs.
-     * <p/>
+     * Initialize the test working directory. <p/> If it does not exist it creates it, if it already exists it deletes
+     * all its contents. <p/> The test working directory it is not deleted after the test runs. <p/>
+     *
      * @throws Exception if the test workflow working directory could not be created.
      */
     protected void setUp() throws Exception {
@@ -109,8 +106,10 @@ public abstract class XTestCase extends TestCase {
         if (!baseDir.startsWith("/")) {
             msg = XLog.format("System property [{0}]=[{1}] must be set to an absolute path", OOZIE_TEST_DIR, baseDir);
         }
-        else if (baseDir.length() < 4) {
-            msg = XLog.format("System property [{0}]=[{1}] path must be at least 4 chars", OOZIE_TEST_DIR, baseDir);
+        else {
+            if (baseDir.length() < 4) {
+                msg = XLog.format("System property [{0}]=[{1}] path must be at least 4 chars", OOZIE_TEST_DIR, baseDir);
+            }
         }
         if (msg != null) {
             throw new Error(msg);
@@ -174,9 +173,7 @@ public abstract class XTestCase extends TestCase {
     }
 
     /**
-     * Return the test working directory.
-     * <p/>
-     * It returns <code>${oozie.test.dir}/oozietests/TESTCLASSNAME/TESTMETHODNAME</code>.
+     * Return the test working directory. <p/> It returns <code>${oozie.test.dir}/oozietests/TESTCLASSNAME/TESTMETHODNAME</code>.
      * <p/>
      *
      * @param testCase testcase instance to obtain the working directory.
@@ -215,7 +212,7 @@ public abstract class XTestCase extends TestCase {
      * Create the test working directory.
      *
      * @param testCase testcase instance to obtain the working directory.
-     * @param cleanup  indicates if the directory should be cleaned up if it exists.
+     * @param cleanup indicates if the directory should be cleaned up if it exists.
      * @return return the path of the test working directory, it is always an absolute path.
      * @throws Exception if the test working directory could not be created or cleaned up.
      */
@@ -248,11 +245,10 @@ public abstract class XTestCase extends TestCase {
     }
 
     /**
-     * Set a system property for the duration of the method test case.
-     * <p/>
-     * After the test method ends the orginal value is restored.
+     * Set a system property for the duration of the method test case. <p/> After the test method ends the orginal value
+     * is restored.
      *
-     * @param name  system property name.
+     * @param name system property name.
      * @param value value to set.
      */
     protected void setSystemProperty(String name, String value) {
@@ -265,9 +261,7 @@ public abstract class XTestCase extends TestCase {
     }
 
     /**
-     * Reset changed system properties to their original values.
-     * <p/>
-     * Called from {@link #tearDown}.
+     * Reset changed system properties to their original values. <p/> Called from {@link #tearDown}.
      */
     private void resetSystemProperties() {
         for (Map.Entry<String, String> entry : sysProps.entrySet()) {
@@ -331,10 +325,8 @@ public abstract class XTestCase extends TestCase {
     }
 
     /**
-     * Return the Hadoop Job Tracker to use for testing.
-     * </p>
-     * The value is taken from the Java sytem property {@link #OOZIE_TEST_JOB_TRACKER}, if this property is not set,
-     * the assumed value is 'locahost:9001'.
+     * Return the Hadoop Job Tracker to use for testing. </p> The value is taken from the Java sytem property {@link
+     * #OOZIE_TEST_JOB_TRACKER}, if this property is not set, the assumed value is 'locahost:9001'.
      *
      * @return the job tracker URI.
      */
@@ -343,10 +335,8 @@ public abstract class XTestCase extends TestCase {
     }
 
     /**
-     * Return the Hadoop Name Node to use for testing.
-     * </p>
-     * The value is taken from the Java sytem property {@link #OOZIE_TEST_NAME_NODE}, if this property is not set,
-     * the assumed value is 'locahost:9000'.
+     * Return the Hadoop Name Node to use for testing. </p> The value is taken from the Java sytem property {@link
+     * #OOZIE_TEST_NAME_NODE}, if this property is not set, the assumed value is 'locahost:9000'.
      *
      * @return the name node URI.
      */
@@ -388,10 +378,10 @@ public abstract class XTestCase extends TestCase {
     }
 
     private Connection getConnection(Configuration conf) throws SQLException {
-        String driver = conf.get(DataSourceService.CONF_DRIVER, "org.hsqldb.jdbcDriver");
-        String url = conf.get(DataSourceService.CONF_URL, "jdbc:hsqldb:mem:testdb");
-        String user = conf.get(DataSourceService.CONF_USERNAME, "sa");
-        String password = conf.get(DataSourceService.CONF_PASSWORD, "").trim();
+        String driver = conf.get(StoreService.CONF_DRIVER, "org.hsqldb.jdbcDriver");
+        String url = conf.get(StoreService.CONF_URL, "jdbc:hsqldb:mem:testdb");
+        String user = conf.get(StoreService.CONF_USERNAME, "sa");
+        String password = conf.get(StoreService.CONF_PASSWORD, "").trim();
         try {
             Class.forName(driver);
         }
@@ -402,6 +392,12 @@ public abstract class XTestCase extends TestCase {
     }
 
     //TODO Fix this
+    /**
+     * Clean up database schema
+     *
+     * @param conf
+     * @throws Exception
+     */
     protected void cleanUpDB(Configuration conf) throws Exception {
         String dbName = conf.get(DBLiteWorkflowStoreService.CONF_SCHEMA_NAME);
         Connection conn = getConnection(conf);
@@ -410,17 +406,71 @@ public abstract class XTestCase extends TestCase {
             st.executeUpdate("DROP SCHEMA " + dbName + " CASCADE");
         }
         catch (SQLException ex) {
+            log.error("Failed to drop schema:" + dbName, ex);
             try {
                 st.executeUpdate("DROP DATABASE " + dbName);
             }
             catch (SQLException ex1) {
-                // nop
+                log.error("Failed to drop database:" + dbName, ex1);
             }
         }
         st.close();
         conn.close();
     }
 
+    /**
+     * Clean up tables
+     *
+     * @param conf
+     * @throws Exception
+     */
+    protected void dropTables(Configuration conf) throws Exception {
+        String schemaName = conf.get(DBLiteWorkflowStoreService.CONF_SCHEMA_NAME, "oozie");
+        OozieSchema.setOozieDbName(schemaName);
+        Connection conn = getConnection(conf);
+        Statement st = conn.createStatement();
+        for (Table table : OozieTable.values()) {
+            String exp = "DROP TABLE " + table.toString();
+            log.debug("Droped Table [{0}]", table);
+            try {
+                st.executeUpdate(exp);
+            }
+            catch (SQLException ex) {
+                log.error("Failed to drop table:" + table, ex);
+            }
+        }
+        st.close();
+        conn.close();
+    }
+
+    /**
+     * Clean up tables - COORD_JOBS, COORD_ACTIONS
+     *
+     * @throws StoreException
+     */
+    protected void cleanUpDBTables() throws StoreException {
+        CoordinatorStore store = new CoordinatorStore(false);
+        EntityManager entityManager = store.getEntityManager();
+        store.beginTrx();
+        Query q = entityManager.createNamedQuery("GET_COORD_JOBS");
+        List<CoordinatorJobBean> coordBeans = q.getResultList();
+        int jSize = coordBeans.size();
+        for (CoordinatorJobBean w : coordBeans) {
+            entityManager.remove(w);
+        }
+
+        q = entityManager.createNamedQuery("GET_COORD_ACTIONS");
+        List<CoordinatorActionBean> caBeans = q.getResultList();
+        int aSize = caBeans.size();
+        for (CoordinatorActionBean w : caBeans) {
+            entityManager.remove(w);
+        }
+
+        store.commitTrx();
+        store.closeTrx();
+        log.info(jSize + " entries in COORD_JOBS have removed from DB!");
+        log.info(aSize + " entries in COORD_ACTIONS have removed from DB!");
+    }
 
     private static MiniDFSCluster dfsCluster = null;
     private static MiniMRCluster mrCluster = null;
@@ -453,27 +503,27 @@ public abstract class XTestCase extends TestCase {
             String[] racks = null;
             String[] hosts = null;
 //            UserGroupInformation ugi = null;
-            mrCluster = new MiniMRCluster(0,0, taskTrackers, nnURI, numDirs, racks, hosts, null, conf);
+            mrCluster = new MiniMRCluster(0, 0, taskTrackers, nnURI, numDirs, racks, hosts, null, conf);
             JobConf jobConf = mrCluster.createJobConf();
             System.setProperty(OOZIE_TEST_JOB_TRACKER, jobConf.get("mapred.job.tracker"));
             System.setProperty(OOZIE_TEST_NAME_NODE, jobConf.get("fs.default.name"));
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 public void run() {
                     try {
-                      if (mrCluster != null) {
-                        mrCluster.shutdown();
-                      }
+                        if (mrCluster != null) {
+                            mrCluster.shutdown();
+                        }
                     }
                     catch (Exception ex) {
-                      System.out.println(ex);
+                        System.out.println(ex);
                     }
                     try {
-                      if (dfsCluster != null) {
-                        dfsCluster.shutdown();
-                      }
+                        if (dfsCluster != null) {
+                            dfsCluster.shutdown();
+                        }
                     }
                     catch (Exception ex) {
-                      System.out.println(ex);
+                        System.out.println(ex);
                     }
                 }
             });
@@ -481,3 +531,4 @@ public abstract class XTestCase extends TestCase {
     }
 
 }
+

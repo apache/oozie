@@ -20,6 +20,7 @@ package org.apache.oozie.action.hadoop;
 import java.util.concurrent.Callable;
 
 //TODO this class goes away when doing 20.100+ only
+
 //TODO this class is for testing, but is here to allow selective compilation
 public class DoAs implements Callable<Void> {
     private String user;

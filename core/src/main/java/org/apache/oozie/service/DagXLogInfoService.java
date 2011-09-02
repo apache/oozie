@@ -73,6 +73,7 @@ public class DagXLogInfoService implements Service {
 
     /**
      * Return the public interface of the service.
+     *
      * @return {@link DagXLogInfoService}.
      */
     public Class<? extends Service> getInterface() {

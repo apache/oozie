@@ -33,22 +33,15 @@ import java.io.IOException;
 import java.net.URI;
 
 /**
- * Base JUnit <code>TestCase</code> subclass used by all Oozie testcases that need Hadoop FS access.
- * <p/>
- * As part of its setup, this testcase class creates a unique test working directory per test method in the FS.
- * <p/>
- * The URI of the FS namenode must be specified via the {@link XTestCase#OOZIE_TEST_NAME_NODE} system property. The
- * default value is 'hdfs://localhost:9000'.
+ * Base JUnit <code>TestCase</code> subclass used by all Oozie testcases that need Hadoop FS access. <p/> As part of its
+ * setup, this testcase class creates a unique test working directory per test method in the FS. <p/> The URI of the FS
+ * namenode must be specified via the {@link XTestCase#OOZIE_TEST_NAME_NODE} system property. The default value is
+ * 'hdfs://localhost:9000'.
  *
- * The test working directory is created in the specified FS URI, under the current user name home directory, under
- * the subdirectory name specified wit the system property {@link XTestCase#OOZIE_TEST_DIR}. The default value is
- * '/tmp'.
- * <p/>
- * The path of the test working directory is:
- * '$FS_URI/user/$USER/$OOZIE_TEST_DIR/oozietest/$TEST_CASE_CLASS/$TEST_CASE_METHOD/'
- * <p/>
- * For example: 'hdfs://localhost:9000/user/tucu/tmp/oozietest/org.apache.oozie.service.TestELService/testEL/'
- *
+ * The test working directory is created in the specified FS URI, under the current user name home directory, under the
+ * subdirectory name specified wit the system property {@link XTestCase#OOZIE_TEST_DIR}. The default value is '/tmp'.
+ * <p/> The path of the test working directory is: '$FS_URI/user/$USER/$OOZIE_TEST_DIR/oozietest/$TEST_CASE_CLASS/$TEST_CASE_METHOD/'
+ * <p/> For example: 'hdfs://localhost:9000/user/tucu/tmp/oozietest/org.apache.oozie.service.TestELService/testEL/'
  */
 public abstract class XFsTestCase extends XTestCase {
     private static HadoopAccessorService has;
@@ -98,7 +91,12 @@ public abstract class XFsTestCase extends XTestCase {
 
     private void setAllPermissions(FileSystem fileSystem, Path path) throws IOException {
         FsPermission fsPermission = new FsPermission(FsAction.ALL, FsAction.NONE, FsAction.NONE);
-        fileSystem.setPermission(path, fsPermission);
+        try {
+            fileSystem.setPermission(path, fsPermission);
+        }
+        catch (IOException ex) {
+            //NOP
+        }
         FileStatus fileStatus = fileSystem.getFileStatus(path);
         if (fileStatus.isDir()) {
             for (FileStatus status : fileSystem.listStatus(path)) {

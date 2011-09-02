@@ -68,7 +68,8 @@ public class NodeDef implements Writable {
         return conf;
     }
 
-    @Override @SuppressWarnings("unchecked")
+    @Override
+    @SuppressWarnings("unchecked")
     public void readFields(DataInput dataInput) throws IOException {
         name = dataInput.readUTF();
         String handlerClassName = dataInput.readUTF();

@@ -19,10 +19,15 @@ package org.apache.oozie.service;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.WorkflowActionBean;
+import org.apache.oozie.command.coord.CoordActionCheckCommand;
 import org.apache.oozie.command.wf.ActionCheckCommand;
+import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.store.StoreException;
+import org.apache.oozie.store.Store;
 import org.apache.oozie.store.WorkflowStore;
 import org.apache.oozie.service.CallableQueueService;
 import org.apache.oozie.service.InstrumentationService;
@@ -33,9 +38,9 @@ import org.apache.oozie.util.XCallable;
 import org.apache.oozie.util.XLog;
 
 /**
- * The Action Checker Service queue ActionCheckCommands to check the status of
- * running actions. The delay between checks on the same action can be
- * configured.
+ * The Action Checker Service queue ActionCheckCommands to check the status of running actions and
+ * CoordActionCheckCommands to check the status of coordinator actions. The delay between checks on the same action can
+ * be configured.
  */
 public class ActionCheckerService implements Service {
 
@@ -55,15 +60,16 @@ public class ActionCheckerService implements Service {
     public static final String CONF_CALLABLE_BATCH_SIZE = CONF_PREFIX + "callable.batch.size";
 
     protected static final String INSTRUMENTATION_GROUP = "actionchecker";
-    protected static final String INSTR_CHECK_ACTIONS_COUNTER = "checks";
+    protected static final String INSTR_CHECK_ACTIONS_COUNTER = "checks_wf_actions";
+    protected static final String INSTR_CHECK_COORD_ACTIONS_COUNTER = "checks_coord_actions";
 
     /**
-     * {@link ActionCheckRunnable} is the runnable which is scheduled to run and
-     * queue Action checks.
+     * {@link ActionCheckRunnable} is the runnable which is scheduled to run and queue Action checks.
      */
-    static class ActionCheckRunnable implements Runnable {
+    static class ActionCheckRunnable<S extends Store> implements Runnable {
         private int actionCheckDelay;
         private List<XCallable<Void>> callables;
+        private StringBuilder msg = null;
 
         public ActionCheckRunnable(int actionCheckDelay) {
             this.actionCheckDelay = actionCheckDelay;
@@ -72,43 +78,100 @@ public class ActionCheckerService implements Service {
         public void run() {
             XLog.Info.get().clear();
             XLog log = XLog.getLog(getClass());
+            msg = new StringBuilder();
+            runWFActionCheck();
+            runCoordActionCheck();
+            log.debug("QUEUING [{0}] for potential checking", msg.toString());
+            if (null != callables) {
+                boolean ret = Services.get().get(CallableQueueService.class).queueSerial(callables);
+                if (ret == false) {
+                    log.warn("Unable to queue the callables commands for CheckerService. "
+                            + "Most possibly command queue is full. Queue size is :"
+                            + Services.get().get(CallableQueueService.class).queueSize());
+                }
+                callables = null;
+            }
+        }
+
+        /**
+         * check workflow actions
+         */
+        private void runWFActionCheck() {
+            XLog.Info.get().clear();
+            XLog log = XLog.getLog(getClass());
 
             WorkflowStore store = null;
             try {
-                store = Services.get().get(WorkflowStoreService.class).create();
-                List<WorkflowActionBean> actions =  store.getRunningActions(actionCheckDelay);
+                store = (WorkflowStore) Services.get().get(StoreService.class).getStore(WorkflowStore.class);
+                store.beginTrx();
+                List<WorkflowActionBean> actions = store.getRunningActions(actionCheckDelay);
+                msg.append(" WF_ACTIONS : " + actions.size());
                 for (WorkflowActionBean action : actions) {
-                    if (action.isPending() && action.getStatus() == WorkflowActionBean.Status.RUNNING) {
-                        Services.get().get(InstrumentationService.class).get().incr(INSTRUMENTATION_GROUP,
-                                INSTR_CHECK_ACTIONS_COUNTER, 1);
-                        queueCallable(new ActionCheckCommand(action.getId(), action.getType()));
-                    }
+                    Services.get().get(InstrumentationService.class).get().incr(INSTRUMENTATION_GROUP,
+                                                                                INSTR_CHECK_ACTIONS_COUNTER, 1);
+                    queueCallable(new ActionCheckCommand(action.getId()));
                 }
-                if (null != callables) {
-                    Services.get().get(CallableQueueService.class).queueSerial(callables);
-                    callables = null;
-                }
-                log.info("Queuing [{0}] running actions for external status check", actions.size());
+                store.commitTrx();
             }
             catch (StoreException ex) {
-                log.warn(XLog.OPS, "Exception while accessing the store", ex);
+                if (store != null) {
+                    store.rollbackTrx();
+                }
+                log.warn("Exception while accessing the store", ex);
             }
             finally {
                 try {
                     if (store != null) {
-                        store.close();
+                        store.closeTrx();
                     }
                 }
-                catch (StoreException ex) {
-                    log.warn("Exception while attempting to close store", ex);
+                catch (RuntimeException re) {
+                    log.warn("Exception while attempting to close store", re);
                 }
             }
         }
 
         /**
-         * Adds callables to a list. If the number of callables in the list
-         * reaches {@link ActionCheckerService#CONF_CALLABLE_BATCH_SIZE}, the
-         * entire batch is queued and the callables list is reset.
+         * check coordinator actions
+         */
+        private void runCoordActionCheck() {
+            XLog.Info.get().clear();
+            XLog log = XLog.getLog(getClass());
+
+            CoordinatorStore store = null;
+            try {
+                store = Services.get().get(StoreService.class).getStore(CoordinatorStore.class);
+                store.beginTrx();
+                List<CoordinatorActionBean> cactions = store.getRunningActionsOlderThan(actionCheckDelay, false);
+                msg.append(" COORD_ACTIONS : " + cactions.size());
+                for (CoordinatorActionBean caction : cactions) {
+                    Services.get().get(InstrumentationService.class).get().incr(INSTRUMENTATION_GROUP,
+                                                                                INSTR_CHECK_COORD_ACTIONS_COUNTER, 1);
+                    queueCallable(new CoordActionCheckCommand(caction.getId(), actionCheckDelay));
+                }
+                store.commitTrx();
+            }
+            catch (StoreException ex) {
+                if (store != null) {
+                    store.rollbackTrx();
+                }
+                log.warn("Exception while accessing the store", ex);
+            }
+            finally {
+                try {
+                    if (store != null) {
+                        store.closeTrx();
+                    }
+                }
+                catch (RuntimeException re) {
+                    log.warn("Exception while attempting to close store", re);
+                }
+            }
+        }
+
+        /**
+         * Adds callables to a list. If the number of callables in the list reaches {@link
+         * ActionCheckerService#CONF_CALLABLE_BATCH_SIZE}, the entire batch is queued and the callables list is reset.
          *
          * @param callable the callable to queue.
          */
@@ -118,7 +181,13 @@ public class ActionCheckerService implements Service {
             }
             callables.add(callable);
             if (callables.size() == Services.get().getConf().getInt(CONF_CALLABLE_BATCH_SIZE, 10)) {
-                Services.get().get(CallableQueueService.class).queueSerial(callables);
+                boolean ret = Services.get().get(CallableQueueService.class).queueSerial(callables);
+                if (ret == false) {
+                    XLog.getLog(getClass()).warn(
+                            "Unable to queue the callables commands for CheckerService. "
+                                    + "Most possibly command queue is full. Queue size is :"
+                                    + Services.get().get(CallableQueueService.class).queueSize());
+                }
                 callables = new ArrayList<XCallable<Void>>();
             }
         }
@@ -126,7 +195,7 @@ public class ActionCheckerService implements Service {
 
     /**
      * Initializes the Action Check service.
-     * 
+     *
      * @param services services instance.
      */
     @Override
@@ -134,8 +203,7 @@ public class ActionCheckerService implements Service {
         Configuration conf = services.getConf();
         Runnable actionCheckRunnable = new ActionCheckRunnable(conf.getInt(CONF_ACTION_CHECK_DELAY, 600));
         services.get(SchedulerService.class).schedule(actionCheckRunnable, 10,
-                                                      conf.getInt(CONF_ACTION_CHECK_INTERVAL, 60),
-                                                      SchedulerService.Unit.SEC);
+                                                      conf.getInt(CONF_ACTION_CHECK_INTERVAL, 60), SchedulerService.Unit.SEC);
     }
 
     /**

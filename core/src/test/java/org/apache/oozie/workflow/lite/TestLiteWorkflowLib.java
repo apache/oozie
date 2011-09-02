@@ -503,9 +503,9 @@ public class TestLiteWorkflowLib extends XTestCase {
     public void testFailWithRunningNodes() throws WorkflowException {
 
         LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>", new StartNodeDef("f"))
-                .addNode(new ForkNodeDef("f", Arrays.asList(new String[] { "a", "b" })))
-                .addNode(new NodeDef("a", null, SynchNodeHandler.class, Arrays.asList(new String[] { "j" })))
-                .addNode(new NodeDef("b", null, AsynchNodeHandler.class, Arrays.asList(new String[] { "j" })))
+                .addNode(new ForkNodeDef("f", Arrays.asList(new String[]{"a", "b"})))
+                .addNode(new NodeDef("a", null, SynchNodeHandler.class, Arrays.asList(new String[]{"j"})))
+                .addNode(new NodeDef("b", null, AsynchNodeHandler.class, Arrays.asList(new String[]{"j"})))
                 .addNode(new JoinNodeDef("j", "end")).addNode(new EndNodeDef("end"));
 
 

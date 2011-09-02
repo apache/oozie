@@ -24,13 +24,16 @@ import org.apache.oozie.command.Command;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.store.WorkflowStore;
+import org.apache.oozie.store.Store;
 import org.apache.oozie.workflow.WorkflowException;
+import org.apache.oozie.workflow.WorkflowInstance;
+import org.apache.oozie.workflow.lite.LiteWorkflowInstance;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
 
 import java.util.Date;
 
-public class ResumeCommand extends Command<Void> {
+public class ResumeCommand extends WorkflowCommand<Void> {
 
     private String id;
 
@@ -42,11 +45,14 @@ public class ResumeCommand extends Command<Void> {
     @Override
     protected Void call(WorkflowStore store) throws StoreException, CommandException {
         try {
-            WorkflowJobBean workflow = store.getWorkflow(id, true);
+            WorkflowJobBean workflow = store.getWorkflow(id, false);
             setLogInfo(workflow);
             if (workflow.getStatus() == WorkflowJob.Status.SUSPENDED) {
                 incrJobCounter(1);
                 workflow.getWorkflowInstance().resume();
+                WorkflowInstance wfInstance = workflow.getWorkflowInstance();
+                ((LiteWorkflowInstance) wfInstance).setStatus(WorkflowInstance.Status.RUNNING);
+                workflow.setWorkflowInstance(wfInstance);
                 workflow.setStatus(WorkflowJob.Status.RUNNING);
                 for (WorkflowActionBean action : store.getActionsForWorkflow(id, true)) {
                     if (action.isPending()) {
@@ -54,23 +60,30 @@ public class ResumeCommand extends Command<Void> {
                                 || action.getStatus() == WorkflowActionBean.Status.START_MANUAL) {
                             queueCallable(new ActionStartCommand(action.getId(), action.getType()));
                         }
-                        else if (action.getStatus() == WorkflowActionBean.Status.START_RETRY) {
-                            Date nextRunTime = action.getPendingAge();
-                            queueCallable(new ActionStartCommand(action.getId(), action.getType()),
-                                          nextRunTime.getTime() - System.currentTimeMillis());
-                        }
-                        else if (action.getStatus() == WorkflowActionBean.Status.DONE
-                                || action.getStatus() == WorkflowActionBean.Status.END_MANUAL) {
-                            queueCallable(new ActionEndCommand(action.getId(), action.getType()));
-                        }
-                        else if (action.getStatus() == WorkflowActionBean.Status.END_RETRY) {
-                            Date nextRunTime = action.getPendingAge();
-                            queueCallable(new ActionEndCommand(action.getId(), action.getType()),
-                                          nextRunTime.getTime() - System.currentTimeMillis());
+                        else {
+                            if (action.getStatus() == WorkflowActionBean.Status.START_RETRY) {
+                                Date nextRunTime = action.getPendingAge();
+                                queueCallable(new ActionStartCommand(action.getId(), action.getType()),
+                                              nextRunTime.getTime() - System.currentTimeMillis());
+                            }
+                            else {
+                                if (action.getStatus() == WorkflowActionBean.Status.DONE
+                                        || action.getStatus() == WorkflowActionBean.Status.END_MANUAL) {
+                                    queueCallable(new ActionEndCommand(action.getId(), action.getType()));
+                                }
+                                else {
+                                    if (action.getStatus() == WorkflowActionBean.Status.END_RETRY) {
+                                        Date nextRunTime = action.getPendingAge();
+                                        queueCallable(new ActionEndCommand(action.getId(), action.getType()),
+                                                      nextRunTime.getTime() - System.currentTimeMillis());
+                                    }
+                                }
+                            }
                         }
 
                     }
                 }
+
                 store.updateWorkflow(workflow);
                 queueCallable(new NotificationCommand(workflow));
             }
@@ -81,5 +94,25 @@ public class ResumeCommand extends Command<Void> {
         }
     }
 
-
+    @Override
+    protected Void execute(WorkflowStore store) throws CommandException, StoreException {
+        XLog.getLog(getClass()).debug("STARTED ResumeCommand for action " + id);
+        try {
+            if (lock(id)) {
+                call(store);
+            }
+            else {
+                queueCallable(new KillCommand(id), LOCK_FAILURE_REQUEUE_INTERVAL);
+                XLog.getLog(getClass()).warn("Resume lock was not acquired - failed {0}", id);
+            }
+        }
+        catch (InterruptedException e) {
+            queueCallable(new KillCommand(id), LOCK_FAILURE_REQUEUE_INTERVAL);
+            XLog.getLog(getClass()).warn("ResumeCommand lock was not acquired - interrupted exception failed {0}", id);
+        }
+        finally {
+            XLog.getLog(getClass()).debug("ENDED ResumeCommand for action " + id);
+        }
+        return null;
+    }
 }

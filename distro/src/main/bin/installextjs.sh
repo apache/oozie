@@ -60,12 +60,12 @@ unzip ${OOZIE_WAR} -d ${TMP_DIR}/ooziewar > /dev/null
 
 cd ${TMP_DIR}
 
-if [ -e ooziewar/ext-2/resources ]; then
+if [ -e ooziewar/ext-2.2/resources ]; then
   echo "Specified Oozie WAR '${OOZIE_WAR}' already contains ExtJS library files"
   exit -1
 fi
 
-mv extjs/ext-2*/* ooziewar/ext-2
+mv extjs/ext-2*/* ooziewar/ext-2.2
 
 cd ${TMP_DIR}/ooziewar
 zip -r oozie.war * > /dev/null

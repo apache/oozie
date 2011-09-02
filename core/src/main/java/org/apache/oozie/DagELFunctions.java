@@ -53,14 +53,14 @@ public class DagELFunctions {
     public static void configureEvaluator(ELEvaluator evaluator, WorkflowJobBean workflow, WorkflowActionBean action) {
         evaluator.setVariable(WORKFLOW, workflow);
         evaluator.setVariable(ACTION, action);
-        for (Map.Entry<String, String> entry  : workflow.getWorkflowInstance().getConf()) {
+        for (Map.Entry<String, String> entry : workflow.getWorkflowInstance().getConf()) {
             if (ParamChecker.isValidIdentifier(entry.getKey())) {
-                evaluator.setVariable(entry.getKey(), entry.getValue());
+                evaluator.setVariable(entry.getKey().trim(), entry.getValue().trim());
             }
         }
         try {
             evaluator.setVariable(ACTION_PROTO_CONF,
-                    new XConfiguration(new StringReader(workflow.getProtoActionConf())));
+                                  new XConfiguration(new StringReader(workflow.getProtoActionConf())));
         }
         catch (IOException ex) {
             throw new RuntimeException("It should not happen", ex);

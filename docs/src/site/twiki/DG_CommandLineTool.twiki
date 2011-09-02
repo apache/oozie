@@ -16,43 +16,62 @@ The =oozie= CLI interacts with Oozie via its WS API.
 ---++ Oozie Command Line Usage
 
 <verbatim>
-  The env variable 'OOZIE_URL' is used as default value for the '-oozie' option
-  custom headers for Oozie web services can be specified using '-Dheader:NAME=VALUE'
-.
-  oozie help                    : display usage
-.
-  oozie version                 : show client version
-.
-  oozie job   <OPTIONS>         : job operations
-              -oozie   <arg>      Oozie URL
-              -config  <arg>      job configuration file '.xml' or '.properties'
-              -run                submit and start a job. Gives back the jobId.    (requires -config)
-              -submit             submit a job. The job will not be started. Gives back the jobId. (requires -config)
-              -rerun   <arg>      rerun a job  (requires -config)
-              -start   <arg>      start a job
-              -suspend <arg>      suspend a job
-              -resume  <arg>      resume a job
-              -kill    <arg>      kill a job
-              -info    <arg>      info of a job
-              -localtime          use local time (default GMT)
-.
-  oozie jobs  <OPTIONS>         : jobs status
-              -oozie <arg>        Oozie URL
-              -filter <arg>       user=<U>;name=<N>;group=<G>;status=<S>;...
-              -offset <arg>       jobs offset (default '1')
-              -len <arg>          number of jobs (default '100')
-              -localtime          use local time (default GMT)
-.
-  oozie admin <OPTIONS>         : admin operations
-              -oozie <arg>        Oozie URL
-              -safemode <arg>     switch safemode (on|off)
-              -status             show the current system status
-              -version            show Oozie server build version
-.
+  usage:
+      the env variable 'OOZIE_URL' is used as default value for the '-oozie' option
+      custom headers for Oozie web services can be specified using '-Dheader:NAME=VALUE'
+
+      oozie help : display usage
+
+      oozie version : show client version
+
+      oozie job <OPTIONS> : job operations
+                -config <arg>       job configuration file '.xml' or '.properties'
+                -definition <arg>   job definition
+                -dryrun             Supported in Oozie-2.0 or later versions ONLY - dryrun or test
+                                    run a coordinator job (requires -config) - job is not queued
+                -info <arg>         info of a job
+                -kill <arg>         kill a job
+                -len <arg>          number of actions (default TOTAL ACTIONS, requires -info)
+                -localtime          use local time (default GMT)
+                -log <arg>          job log
+                -offset <arg>       job info offset of actions (default '1', requires -info)
+                -oozie <arg>        Oozie URL
+                -rerun <arg>        rerun a job  (requires -config)
+                -resume <arg>       resume a job
+                -run                run a job    (requires -config)
+                -start <arg>        start a job
+                -submit             submit a job (requires -config)
+                -suspend <arg>      suspend a job
+                -verbose            verbose mode
+
+      oozie jobs <OPTIONS> : jobs status
+                 -filter <arg>    user=<U>;name=<N>;group=<G>;status=<S>;...
+                 -jobtype <arg>   job type ('Supported in Oozie-2.0 or later versions ONLY -
+                                  coordinator' or 'wf' (default))
+                 -len <arg>       number of jobs (default '100')
+                 -localtime       use local time (default GMT)
+                 -offset <arg>    jobs offset (default '1')
+                 -oozie <arg>     Oozie URL
+                 -verbose         verbose mode
+
+      oozie admin <OPTIONS> : admin operations
+                  -oozie <arg>        Oozie URL
+                  -status             show the current system status
+                  -systemmode <arg>   Supported in Oozie-2.0 or later versions ONLY. Change oozie
+                                      system mode [NORMAL|NOWEBSERVICE|SAFEMODE]
+                  -version            show Oozie server build version
+
       oozie validate <ARGS> : validate a workflow XML file
+
+      oozie sla <OPTIONS> : sla operations (Supported in Oozie-2.0 or later)
+                -len <arg>      number of results (default '100')
+                -offset <arg>   start offset (default '0')
+                -oozie <arg>    Oozie URL
 </verbatim>
 
 ---++ Common CLI Options
+
+---+++ Oozie URL
 
 All =oozie= CLI sub-commands expect the <code>-oozie OOZIE_URL</code> option indicating the URL of the Oozie system
 to run the command against.
@@ -64,7 +83,7 @@ If the option is not provided and the environment variable is not set, the =oozi
 
 ---++ Job Operations
 
----+++ Submitting a Workflow Job
+---+++ Submitting a Workflow or Coordinator Job
 
 Example:
 
@@ -77,12 +96,13 @@ job: 14-20090525161321-oozie-tucu
 The parameters for the job must be provided in a file, either a Java Properties file (.properties) or a Hadoop XML
 Configuration file (.xml). This file must be specified with the <code>-config</code> option.
 
-The workflow application path must be specified in the file with the =oozie.wf.application.path= property. The
-specified path must be an HDFS path.
+The workflow application path must be specified in the file with the =oozie.wf.application.path= property.  The
+coordinator application path must be specified in the file with the =oozie.coord.application.path= property.
+Specified path must be an HDFS path.
 
 The job will be created, but it will not be started, it will be in =PREP= status.
 
----+++ Starting a Workflow Job
+---+++ Starting a Workflow Job or Coordinator Job
 
 Example:
 
@@ -90,11 +110,11 @@ Example:
 $ oozie job -oozie http://localhost:8080/oozie -start 14-20090525161321-oozie-tucu
 </verbatim>
 
-The =start= option starts a previously submitted workflow job that is in =PREP= status.
+The =start= option starts a previously submitted workflow job or coordinator job that is in =PREP= status.
 
-After the command is executed the job will be in =RUNNING= status.
+After the command is executed the workflow job will be in =RUNNING= status and coordinator job will be in =PREMATER= status.
 
----+++ Running a Workflow Job
+---+++ Running a Workflow Job or Coordinator Job
 
 Example:
 
@@ -104,17 +124,18 @@ $ oozie job -oozie http://localhost:8080/oozie -config job.properties -run
 job: 15-20090525161321-oozie-tucu
 </verbatim>
 
-The =run= option creates and starts a workflow job.
+The =run= option creates and starts a workflow job or coordinator job.
 
 The parameters for the job must be provided in a file, either a Java Properties file (.properties) or a Hadoop XML
 Configuration file (.xml). This file must be specified with the <code>-config</code> option.
 
 The workflow application path must be specified in the file with the =oozie.wf.application.path= property. The
+coordinator application path must be specified in the file with the =oozie.coord.application.path= property. The
 specified path must be an HDFS path.
 
 The job will be created and it will started, the job will be in =RUNNING= status.
 
----+++ Suspending a Workflow Job
+---+++ Suspending a Workflow Job or Coordinator Job
 
 Example:
 
@@ -126,7 +147,9 @@ The =suspend= option suspends a job in =RUNNING= status.
 
 After the command is executed the job will be in =SUSPENDED= status.
 
----+++ Resuming a Workflow Job
+When the coordinator job is suspended, running coordinator actions will stay in running and the workflows will be suspended.
+
+---+++ Resuming a Workflow Job or Coordinator Job
 
 Example:
 
@@ -138,7 +161,13 @@ The =resume= option resumes a job in =SUSPENDED= status.
 
 After the command is executed the job will be in =RUNNING= status.
 
----+++ Killing a Workflow Job
+When a coordinator job is resumed, it will transition to the status from which it was suspended, if it was RUNNING  it cannot
+transition to PREP .
+
+When the coordinator job is resumed it will create all the coordinator actions that should have been created during the time
+it was suspended, actions will not be lost, they will delayed.
+
+---+++ Killing a Workflow Job or Coordinator Job
 
 Example:
 
@@ -146,7 +175,8 @@ Example:
 $ oozie job -oozie http://localhost:8080/oozie -kill 14-20090525161321-oozie-tucu
 </verbatim>
 
-The =kill= option kills a job in =PREP=, =SUSPENDED= or =RUNNING= status.
+The =kill= option kills a workflow job in =PREP=, =SUSPENDED= or =RUNNING= status and a coordinator job in
+=PREP=, =PREMATER=, =SUSPENDED= or =RUNNING= status.
 
 After the command is executed the job will be in =KILLED= status.
 
@@ -170,9 +200,11 @@ The list of nodes to skipped must be provided in the =oozie.wf.rerun.skip.nodes=
 
 After the command is executed the job will be in =RUNNING= status.
 
-Refer to the [[DG_ReRun][Rerunning Workflow Jobs]] for details on rerun.
+Refer to the [[DG_WorkflowReRun][Rerunning Workflow Jobs]] for details on rerun.
 
----+++ Checking the Status of a Workflow Job
+* Coordinator is not supporting rerun in current release.
+
+---+++ Checking the Status of a Workflow Job or Coordinator Job or Coordinator Action
 
 Example:
 
@@ -197,16 +229,101 @@ hadoop1                 map-reduce  OK         end         job_200904281535_0254
 .----------------------------------------------------------------------------------------------------------------------------------------------------------------
 </verbatim>
 
-The =info= option will display information about a workflow job.
+The =info= option can display information about a workflow job or coordinator job or coordinator action.
+
+The =offset= and =len= option specified the offset and number of actions to display, if checking a workflow job or coordinator job.
 
 The =localtime= option displays times in local time, if not specified times are displayed in GMT.
+
+The =verbose= option gives more detailed information for all the actions, if checking for workflow job or coordinator job.
+
+---+++ Checking the xml definition of a Workflow Job or Coordinator Job
+
+Example:
+
+<verbatim>
+$ oozie job -oozie http://localhost:8080/oozie -definition 14-20090525161321-oozie-tucu
+
+<workflow-app xmlns="uri:oozie:workflow:0.2" name="sm3-segment-2413">
+	<start to="p0"/>
+    <action name="p0">
+    </action>
+	<end name="end"/>
+</workflow-app>
+
+</verbatim>
+
+---+++ Checking the server logs of a Workflow Job or Coordinator Job
+
+Example:
+
+<verbatim>
+
+$ oozie job -oozie http://localhost:8080/oozie -log 14-20090525161321-oozie-tucu
+
+</verbatim>
+
+---+++ Dryrun of Coordinator Job
+
+* This feature is only supported in Oozie 2.0 or later.
+
+Example:
+
+<verbatim>
+
+$ oozie job -oozie http://localhost:8080/oozie job -dryrun -config job.properties
+***coordJob after parsing: ***
+<coordinator-app xmlns="uri:oozie:coordinator:0.1" name="sla_coord" frequency="20"
+start="2009-03-06T010:00Z" end="2009-03-20T11:00Z" timezone="America/Los_Angeles">
+  <output-events>
+    <data-out name="Output" dataset="DayLogs">
+      <dataset name="DayLogs" frequency="1440" initial-instance="2009-01-01T00:00Z" timezone="UTC" freq_timeunit="MINUTE" end_of_duration="NONE">
+        <uri-template>hdfs://localhost:9000/user/angeloh/coord_examples/${YEAR}/${MONTH}/${DAY}</uri-template>
+      </dataset>
+      <instance>${coord:current(0)}</instance>
+    </data-out>
+  </output-events>
+  <action>
+  </action>
+</coordinator-app>
+
+***actions for instance***
+***total coord actions is 1 ***
+------------------------------------------------------------------------------------------------------------------------------------
+coordAction instance: 1:
+<coordinator-app xmlns="uri:oozie:coordinator:0.1" name="sla_coord" frequency="20"
+start="2009-03-06T010:00Z" end="2009-03-20T11:00Z" timezone="America/Los_Angeles">
+  <output-events>
+    <data-out name="Output" dataset="DayLogs">
+      <uris>hdfs://localhost:9000/user/angeloh/coord_examples/2009/03/06</uris>
+      <dataset name="DayLogs" frequency="1440" initial-instance="2009-01-01T00:00Z" timezone="UTC" freq_timeunit="MINUTE" end_of_duration="NONE">
+        <uri-template>hdfs://localhost:9000/user/angeloh/coord_examples/${YEAR}/${MONTH}/${DAY}</uri-template>
+      </dataset>
+    </data-out>
+  </output-events>
+  <action>
+  </action>
+</coordinator-app>
+------------------------------------------------------------------------------------------------------------------------------------
+
+</verbatim>
+
+The =dryrun= option tests running a coordinator job with given job properties and does not create the job.
+
+The parameters for the job must be provided in a file, either a Java Properties file (.properties) or a Hadoop XML
+Configuration file (.xml). This file must be specified with the <code>-config</code> option.
+
+The coordinator application path must be specified in the file with the =oozie.coord.application.path= property. The
+specified path must be an HDFS path.
+
+---++ Jobs Operations
 
 ---+++ Checking the Status of multiple Workflow Jobs
 
 Example:
 
 <verbatim>
-$ oozie jobs -oozie http://localhost:8080/oozie -localtime -len 2 status=RUNNING
+$ oozie jobs -oozie http://localhost:8080/oozie -localtime -len 2 -fliter status=RUNNING
 .
 Job Id                          Workflow Name         Status     Run  User      Group     Created                Started                 Ended
 .----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -217,14 +334,16 @@ Job Id                          Workflow Name         Status     Run  User      
 
 The =jobs= sub-command will display information about multiple jobs.
 
-The =start= and =len= option specified the offset and number of jobs to display, default values are =1= and =50=
+The =offset= and =len= option specified the offset and number of jobs to display, default values are =1= and =100=
 respectively.
 
 The =localtime= option displays times in local time, if not specified times are displayed in GMT.
 
+The =verbose= option gives more detailed information for each job.
+
 A filter can be specified after all options.
 
-The filter syntax is: <code>[NAME=VALUE][;NAME=VALUE]*</code>.
+The =filter=option syntax is: <code>[NAME=VALUE][;NAME=VALUE]*</code>.
 
 Valid filter names are:
 
@@ -235,6 +354,25 @@ Valid filter names are:
 
 The query will do an AND among all the filter names. The query will do an OR among all the filter values for the same
 name. Multiple values must be specified as different  name value pairs.
+
+---+++ Checking the Status of multiple Coordinator Jobs
+
+* This feature is only supported in Oozie 2.0 or later.
+
+Example:
+
+<verbatim>
+$ oozie jobs -oozie http://localhost:8080/oozie -jobtype coordinator
+.
+Job ID                                                                                   App Name               Status      Freq Unit                    Started                 Next Materialized
+.----------------------------------------------------------------------------------------------------------------------------------------------------------------
+0004165-100531045722929-oozie-wrkf-C     smaggs-xaggsptechno-coordinator SUCCEEDED 1440 MINUTE       2010-05-27 00:00        2010-05-29 00:00
+.----------------------------------------------------------------------------------------------------------------------------------------------------------------
+0003823-100531045722929-oozie-wrkf-C     coordcal2880minutescurrent SUCCEEDED 2880 MINUTE       2010-02-01 16:30        2010-02-05 16:30
+.----------------------------------------------------------------------------------------------------------------------------------------------------------------
+</verbatim>
+
+The =jobtype= option specified the job type to display, default value is 'wf'. To see the coordinator jobs, value is 'coordinator'.
 
 ---++ Admin Operations
 
@@ -252,10 +390,12 @@ It returns the current status of the Oozie system.
 
 ---+++ Changing the Status of the Oozie System
 
+* This feature is only supported in Oozie 2.0 or later.
+
 Example:
 
 <verbatim>
-$ oozie admin -oozie http://localhost:8080/oozie -safemode on
+$ oozie admin -oozie http://localhost:8080/oozie -systemmode [NORMAL|NOWEBSERVICE|SAFEMODE]
 .
 Safemode: ON
 </verbatim>
@@ -269,10 +409,12 @@ Example:
 <verbatim>
 $ oozie admin -oozie http://localhost:8080/oozie -version
 .
-Oozie client build version: 0.18.3.o0.1
+Oozie server build version: 2.0.2.1-0.20.1.3092118008--
 </verbatim>
 
 It returns the Oozie server build version.
+
+---++ Validate Operations
 
 ---+++ Validating a Workflow XML
 
@@ -288,6 +430,37 @@ Error: Invalid workflow-app, org.xml.sax.SAXParseException: cvc-complex-type.2.4
 </verbatim>
 
 It performs an XML Schema validation on the specified workflow XML file.
+
+---++ SLA Operations
+
+---+++ Getting the records of SLA events
+
+* This feature is only supported in Oozie 2.0 or later.
+
+Example:
+
+<verbatim>
+$ oozie sla -oozie http://localhost:8080/oozie -len 1
+.
+<sla-message>
+   <event>
+    <sequence-id>1091</sequence-id>
+    <status>
+      <sla-id>0000004-100521225917912-oozie-wrkf-C@1</sla-id>
+      <status-timestamp>2010-05-22T00:41Z</status-timestamp>
+      <job-status>STARTED</job-status>
+      <job-data />
+    </status>
+  </event>
+  <last-sequence-id>1091</last-sequence-id>
+</sla-message>
+
+</verbatim>
+
+The =offset= and =len= option specified the offset and number of sla events to display, default values are =1= and =100=
+respectively.
+
+The return message is XML format that can be easily consumed by SLA users.
 
 [[index][::Go back to Oozie Documentation Index::]]
 

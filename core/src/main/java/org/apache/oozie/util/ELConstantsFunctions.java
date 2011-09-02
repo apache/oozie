@@ -24,7 +24,7 @@ import java.net.URLEncoder;
 import java.io.UnsupportedEncodingException;
 
 /**
- * Base EL constants and functions. 
+ * Base EL constants and functions.
  */
 public class ELConstantsFunctions {
 
@@ -53,23 +53,25 @@ public class ELConstantsFunctions {
      */
     public static final long PB = TB * 1024;
 
+    public static final int SUBMIT_MINUTES = 1;
+    public static final int SUBMIT_HOURS = 60;
+    public static final int SUBMIT_DAYS = 24 * 60;
+
     /**
-     * Return the first not <code>null</code> value, or <code>null</code> if
-     * both are <code>null</code>. Defined for EL as 'Object
-     * firstNotNull(Object, Object)'.
+     * Return the first not <code>null</code> value, or <code>null</code> if both are <code>null</code>. Defined for EL
+     * as 'Object firstNotNull(Object, Object)'.
      *
      * @param o1 first value.
      * @param o2 second value.
-     * @return the first not <code>null</code> value, or or <code>null</code> if
-     *         both are <code>null</code>
+     * @return the first not <code>null</code> value, or or <code>null</code> if both are <code>null</code>
      */
     public static Object firstNotNull(Object o1, Object o2) {
         return (o1 != null) ? o1 : o2;
     }
 
     /**
-     * Return the concatenation of 2 strings. <p/> A string with
-     * <code>null</code> value is considered as an empty string.
+     * Return the concatenation of 2 strings. <p/> A string with <code>null</code> value is considered as an empty
+     * string.
      *
      * @param s1 first string.
      * @param s2 second string.
@@ -90,16 +92,15 @@ public class ELConstantsFunctions {
      * Return the trimmed version of the given string.
      *
      * @param input string to be trimmed
-     * @return the trimmed version of the given string or the empty string if
-     *         the given string was <code>null</code>
+     * @return the trimmed version of the given string or the empty string if the given string was <code>null</code>
      */
     public static String trim(String input) {
         return (input == null) ? "" : input.trim();
     }
 
     /**
-     * Return the UTC current date and time in W3C format down to second
-     * (yyyy-MM-ddTHH:mm:ssZ). i.e.: 1997-07-16T19:20:30Z
+     * Return the UTC current date and time in W3C format down to second (yyyy-MM-ddTHH:mm:ssZ). i.e.:
+     * 1997-07-16T19:20:30Z
      *
      * @return the formatted time string.
      */
@@ -110,9 +111,8 @@ public class ELConstantsFunctions {
     }
 
     /**
-     * Translates a string into <code>application/x-www-form-urlencoded</code>
-     * format using UTF-8 encoding scheme. Bytes for unsafe characters are also
-     * obtained using UTF-8 scheme.
+     * Translates a string into <code>application/x-www-form-urlencoded</code> format using UTF-8 encoding scheme. Bytes
+     * for unsafe characters are also obtained using UTF-8 scheme.
      *
      * @param input string to be encoded
      * @return the encoded <code>String</code>

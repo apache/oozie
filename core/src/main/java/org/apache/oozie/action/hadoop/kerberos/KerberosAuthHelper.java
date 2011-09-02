@@ -28,9 +28,9 @@ import java.io.IOException;
 
 public class KerberosAuthHelper extends AuthHelper {
 
-    public void set(JobClient jobClient, JobConf launcherJobConf) throws IOException, InterruptedException  {
+    public void set(JobClient jobClient, JobConf launcherJobConf) throws IOException, InterruptedException {
         Token<DelegationTokenIdentifier> mrdt = jobClient.getDelegationToken(new Text("mr token"));
-        launcherJobConf.getCredentials().addToken( new Text("mr token"), mrdt);
+        launcherJobConf.getCredentials().addToken(new Text("mr token"), mrdt);
     }
 
 }

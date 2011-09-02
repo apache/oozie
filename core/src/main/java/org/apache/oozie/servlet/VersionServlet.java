@@ -34,15 +34,19 @@ public class VersionServlet extends JsonRestServlet {
     private static final ResourceInfo RESOURCE_INFO =
             new ResourceInfo("", Arrays.asList("GET"), Collections.EMPTY_LIST);
 
+    // private static JSONArray versions = new JSONArray();
+
     public VersionServlet() {
         super(INSTRUMENTATION_NAME, RESOURCE_INFO);
+        // versions.add(OozieClient.WS_PROTOCOL_VERSION_0);
+        // versions.add(OozieClient.WS_PROTOCOL_VERSION);
     }
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         JSONArray versions = new JSONArray();
+        versions.add(OozieClient.WS_PROTOCOL_VERSION_0);
         versions.add(OozieClient.WS_PROTOCOL_VERSION);
         sendJsonResponse(response, HttpServletResponse.SC_OK, versions);
     }
-
 }

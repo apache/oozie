@@ -16,7 +16,7 @@
   limitations under the License.
 -->
 <workflow-app xmlns='uri:oozie:workflow:0.1' name='java-main-wf'>
-    <start to='java1' />
+    <start to='java1'/>
     <action name='java1'>
         <java>
             <job-tracker>${jobTracker}</job-tracker>
@@ -31,11 +31,11 @@
             <arg>argument1</arg>
             <arg>argument2</arg>
         </java>
-        <ok to="end" />
-        <error to="fail" />
+        <ok to="end"/>
+        <error to="fail"/>
     </action>
     <kill name="fail">
         <message>Java failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>
     </kill>
-    <end name='end' />
+    <end name='end'/>
 </workflow-app>

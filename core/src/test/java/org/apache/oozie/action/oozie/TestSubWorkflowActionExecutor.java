@@ -48,17 +48,17 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
 
         WorkflowActionBean action = (WorkflowActionBean) workflow.getActions().get(0);
         action.setConf("<sub-workflow xmlns='uri:oozie:workflow:0.1'>" +
-                       "      <app-path>hdfs://foo:9000/user/bar</app-path>" +
-                       "      <configuration>" +
-                       "        <property>" +
-                       "          <name>a</name>" +
-                       "          <value>A</value>" +
-                       "        </property>" +
-                       "      </configuration>" +
-                       "</sub-workflow>");
+                "      <app-path>hdfs://foo:9000/user/bar</app-path>" +
+                "      <configuration>" +
+                "        <property>" +
+                "          <name>a</name>" +
+                "          <value>A</value>" +
+                "        </property>" +
+                "      </configuration>" +
+                "</sub-workflow>");
 
         OozieClient oozieClient = subWorkflow.getWorkflowClient(new Context(workflow, action),
-                                                                      SubWorkflowActionExecutor.LOCAL);
+                                                                SubWorkflowActionExecutor.LOCAL);
         assertNotNull(oozieClient);
 
         oozieClient = subWorkflow.getWorkflowClient(new Context(workflow, action), "http://localhost:8080/oozie");
@@ -67,9 +67,9 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
     }
 
     private static final String APP1 = "<workflow-app xmlns='uri:oozie:workflow:0.1' name='app'>" +
-                                       "<start to='end'/>" +
-                                       "<end name='end'/>" +
-                                       "</workflow-app>";
+            "<start to='end'/>" +
+            "<end name='end'/>" +
+            "</workflow-app>";
 
     public void testSubWorkflowStart() throws Exception {
         Path subWorkflowAppPath = getFsTestCaseDir();
@@ -83,20 +83,20 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
 
         final WorkflowActionBean action = (WorkflowActionBean) workflow.getActions().get(0);
         action.setConf("<sub-workflow xmlns='uri:oozie:workflow:0.1'>" +
-                       "      <app-path>" + subWorkflowAppPath +  "</app-path>" +
-                       "      <configuration>" +
-                       "        <property>" +
-                       "          <name>a</name>" +
-                       "          <value>A</value>" +
-                       "        </property>" +
-                       "      </configuration>" +
-                       "</sub-workflow>");
+                "      <app-path>" + subWorkflowAppPath + "</app-path>" +
+                "      <configuration>" +
+                "        <property>" +
+                "          <name>a</name>" +
+                "          <value>A</value>" +
+                "        </property>" +
+                "      </configuration>" +
+                "</sub-workflow>");
 
         SubWorkflowActionExecutor subWorkflow = new SubWorkflowActionExecutor();
         subWorkflow.start(new Context(workflow, action), action);
 
         final OozieClient oozieClient = subWorkflow.getWorkflowClient(new Context(workflow, action),
-                                                                            SubWorkflowActionExecutor.LOCAL);
+                                                                      SubWorkflowActionExecutor.LOCAL);
         waitFor(JOB_TIMEOUT, new Predicate() {
             public boolean evaluate() throws Exception {
                 return oozieClient.getJobInfo(action.getExternalId()).getStatus() == WorkflowJob.Status.SUCCEEDED;
@@ -127,20 +127,20 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
 
         final WorkflowActionBean action = (WorkflowActionBean) workflow.getActions().get(0);
         action.setConf("<sub-workflow xmlns='uri:oozie:workflow:0.1'>" +
-                       "      <app-path>" + subWorkflowAppPath +  "</app-path>" +
-                       "      <configuration>" +
-                       "        <property>" +
-                       "          <name>a</name>" +
-                       "          <value>A</value>" +
-                       "        </property>" +
-                       "      </configuration>" +
-                       "</sub-workflow>");
+                "      <app-path>" + subWorkflowAppPath + "</app-path>" +
+                "      <configuration>" +
+                "        <property>" +
+                "          <name>a</name>" +
+                "          <value>A</value>" +
+                "        </property>" +
+                "      </configuration>" +
+                "</sub-workflow>");
 
         SubWorkflowActionExecutor subWorkflow = new SubWorkflowActionExecutor();
         subWorkflow.start(new Context(workflow, action), action);
 
         final OozieClient oozieClient = subWorkflow.getWorkflowClient(new Context(workflow, action),
-                SubWorkflowActionExecutor.LOCAL);
+                                                                      SubWorkflowActionExecutor.LOCAL);
         waitFor(JOB_TIMEOUT, new Predicate() {
             public boolean evaluate() throws Exception {
                 return oozieClient.getJobInfo(action.getExternalId()).getStatus() == WorkflowJob.Status.SUCCEEDED;
@@ -184,21 +184,21 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
 
         final WorkflowActionBean action = (WorkflowActionBean) workflow.getActions().get(0);
         action.setConf("<sub-workflow xmlns='uri:oozie:workflow:0.1' name='subwf'>" +
-                       "      <app-path>" + subWorkflowAppPath +  "</app-path>" +
-                       "      <propagate-configuration />" +
-                       "      <configuration>" +
-                       "        <property>" +
-                       "          <name>a</name>" +
-                       "          <value>A</value>" +
-                       "        </property>" +
-                       "      </configuration>" +
-                       "</sub-workflow>");
+                "      <app-path>" + subWorkflowAppPath + "</app-path>" +
+                "      <propagate-configuration />" +
+                "      <configuration>" +
+                "        <property>" +
+                "          <name>a</name>" +
+                "          <value>A</value>" +
+                "        </property>" +
+                "      </configuration>" +
+                "</sub-workflow>");
 
         SubWorkflowActionExecutor subWorkflow = new SubWorkflowActionExecutor();
         subWorkflow.start(new Context(workflow, action), action);
 
         final OozieClient oozieClient = subWorkflow.getWorkflowClient(new Context(workflow, action),
-                                                                            SubWorkflowActionExecutor.LOCAL);
+                                                                      SubWorkflowActionExecutor.LOCAL);
         waitFor(JOB_TIMEOUT, new Predicate() {
             public boolean evaluate() throws Exception {
                 return oozieClient.getJobInfo(action.getExternalId()).getStatus() == WorkflowJob.Status.SUCCEEDED;
@@ -236,20 +236,20 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
 
         final WorkflowActionBean action = (WorkflowActionBean) workflow.getActions().get(0);
         action.setConf("<sub-workflow xmlns='uri:oozie:workflow:0.1' name='subwf'>" +
-                       "      <app-path>" + subWorkflowAppPath +  "</app-path>" +
-                       "      <configuration>" +
-                       "        <property>" +
-                       "          <name>a</name>" +
-                       "          <value>A</value>" +
-                       "        </property>" +
-                       "      </configuration>" +
-                       "</sub-workflow>");
+                "      <app-path>" + subWorkflowAppPath + "</app-path>" +
+                "      <configuration>" +
+                "        <property>" +
+                "          <name>a</name>" +
+                "          <value>A</value>" +
+                "        </property>" +
+                "      </configuration>" +
+                "</sub-workflow>");
 
         SubWorkflowActionExecutor subWorkflow = new SubWorkflowActionExecutor();
         subWorkflow.start(new Context(workflow, action), action);
 
         final OozieClient oozieClient = subWorkflow.getWorkflowClient(new Context(workflow, action),
-                                                                            SubWorkflowActionExecutor.LOCAL);
+                                                                      SubWorkflowActionExecutor.LOCAL);
         waitFor(JOB_TIMEOUT, new Predicate() {
             public boolean evaluate() throws Exception {
                 return oozieClient.getJobInfo(action.getExternalId()).getStatus() == WorkflowJob.Status.SUCCEEDED;

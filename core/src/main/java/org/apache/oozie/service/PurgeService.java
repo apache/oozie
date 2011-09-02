@@ -18,6 +18,7 @@
 package org.apache.oozie.service;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.command.coord.CoordPurgeCommand;
 import org.apache.oozie.command.wf.PurgeCommand;
 import org.apache.oozie.service.CallableQueueService;
 import org.apache.oozie.service.SchedulerService;
@@ -25,8 +26,7 @@ import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
 
 /**
- * The PurgeService schedules purging of completed jobs and associated action
- * older than a specified age.
+ * The PurgeService schedules purging of completed jobs and associated action older than a specified age.
  */
 public class PurgeService implements Service {
 
@@ -35,39 +35,46 @@ public class PurgeService implements Service {
      * Age of completed jobs to be deleted, in days.
      */
     public static final String CONF_OLDER_THAN = CONF_PREFIX + "older.than";
+    public static final String COORD_CONF_OLDER_THAN = CONF_PREFIX + "coord.older.than";
     /**
-     * Time interval, in seconds, at which the purge jobs service will be
-     * scheduled to run.
+     * Time interval, in seconds, at which the purge jobs service will be scheduled to run.
      */
     public static final String CONF_PURGE_INTERVAL = CONF_PREFIX + "purge.interval";
+    private static final String COORD_PURGE_LIMIT = CONF_PREFIX + "coord.purge.limit";
 
     /**
-     * PurgeRunnable is the runnable which is scheduled to run at the configured
-     * interval. PurgeCommand is queued to remove completed jobs and associated
-     * actions older than the configured age.
+     * PurgeRunnable is the runnable which is scheduled to run at the configured interval. PurgeCommand is queued to
+     * remove completed jobs and associated actions older than the configured age.
      */
     static class PurgeRunnable implements Runnable {
         private int olderThan;
+        private int coordOlderThan;
+        private int limit;
 
-        public PurgeRunnable(int olderThan) {
+        public PurgeRunnable(int olderThan, int coordOlderThan, int limit) {
             this.olderThan = olderThan;
+            this.coordOlderThan = coordOlderThan;
+            this.limit = limit;
         }
 
         public void run() {
             Services.get().get(CallableQueueService.class).queue(new PurgeCommand(olderThan));
+            Services.get().get(CallableQueueService.class).queue(new CoordPurgeCommand(coordOlderThan, limit));
         }
 
     }
 
     /**
      * Initializes the {@link PurgeService}.
-     * 
+     *
      * @param services services instance.
      */
     @Override
     public void init(Services services) {
         Configuration conf = services.getConf();
-        Runnable purgeJobsRunnable = new PurgeRunnable(conf.getInt(CONF_OLDER_THAN, 30));
+        Runnable purgeJobsRunnable = new PurgeRunnable(conf.getInt(
+                CONF_OLDER_THAN, 30), conf.getInt(COORD_CONF_OLDER_THAN, 7),
+                                      conf.getInt(COORD_PURGE_LIMIT, 100));
         services.get(SchedulerService.class).schedule(purgeJobsRunnable, 10, conf.getInt(CONF_PURGE_INTERVAL, 3600),
                                                       SchedulerService.Unit.SEC);
     }
@@ -81,7 +88,7 @@ public class PurgeService implements Service {
 
     /**
      * Return the public interface for the purge jobs service.
-     * 
+     *
      * @return {@link PurgeService}.
      */
     @Override

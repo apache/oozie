@@ -21,10 +21,11 @@ import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.command.Command;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.store.WorkflowStore;
+import org.apache.oozie.store.Store;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
 
-public class DefinitionCommand extends Command<String> {
+public class DefinitionCommand extends WorkflowCommand<String> {
     private String id;
 
     public DefinitionCommand(String id) {

@@ -20,8 +20,8 @@
 <configuration>
 
     <property>
-		<name>oozie.dummy</name>
-		<value>SITE2</value>
-	</property>
+        <name>oozie.dummy</name>
+        <value>SITE2</value>
+    </property>
 
 </configuration>

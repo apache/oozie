@@ -17,16 +17,18 @@
  */
 package org.apache.oozie.service;
 
+import javax.servlet.jsp.el.ELException;
+
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.ELEvaluator;
 
 public class TestELService extends XTestCase {
 
-    public void testEL() throws Exception {
+    public void testELForWorkflow() throws Exception {
         Services services = new Services();
         services.init();
         assertNotNull(services.get(ELService.class));
-        ELEvaluator eval = services.get(ELService.class).createEvaluator();
+        ELEvaluator eval = services.get(ELService.class).createEvaluator("workflow");
         assertNotNull(eval.evaluate("${KB}", Long.class));
         assertNotNull(eval.evaluate("${MB}", Long.class));
         assertNotNull(eval.evaluate("${GB}", Long.class));

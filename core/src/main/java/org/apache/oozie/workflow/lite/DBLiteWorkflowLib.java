@@ -20,6 +20,7 @@ package org.apache.oozie.workflow.lite;
 import java.sql.Connection;
 import java.sql.SQLException;
 import javax.xml.validation.Schema;
+
 import org.apache.oozie.store.OozieSchema.OozieColumn;
 import org.apache.oozie.store.OozieSchema.OozieTable;
 import org.apache.oozie.workflow.WorkflowException;
@@ -35,14 +36,14 @@ public class DBLiteWorkflowLib extends LiteWorkflowLib {
     private final Connection connection;
 
     public DBLiteWorkflowLib(Schema schema, Class<? extends DecisionNodeHandler> decisionHandlerClass,
-            Class<? extends ActionNodeHandler> actionHandlerClass, Connection connection) {
+                             Class<? extends ActionNodeHandler> actionHandlerClass, Connection connection) {
         super(schema, decisionHandlerClass, actionHandlerClass);
         this.connection = connection;
     }
 
     /**
      * Save the Workflow Instance for the given Workflow Application.
-     * 
+     *
      * @param instance
      * @return
      * @throws WorkflowException
@@ -62,7 +63,7 @@ public class DBLiteWorkflowLib extends LiteWorkflowLib {
 
     /**
      * Loads the Workflow instance with the given ID.
-     * 
+     *
      * @param id
      * @return
      * @throws WorkflowException
@@ -76,7 +77,7 @@ public class DBLiteWorkflowLib extends LiteWorkflowLib {
                     prepareAndSetValues(connection).executeQuery());
             rs.next();
             LiteWorkflowInstance pInstance = WritableUtils.fromByteArray(rs.getByteArray(OozieColumn.PI_state),
-                    LiteWorkflowInstance.class);
+                                                                         LiteWorkflowInstance.class);
             return pInstance;
         }
         catch (SQLException e) {
@@ -86,7 +87,7 @@ public class DBLiteWorkflowLib extends LiteWorkflowLib {
 
     /**
      * Updates the Workflow Instance to DB.
-     * 
+     *
      * @param instance
      * @throws WorkflowException
      */
@@ -95,7 +96,7 @@ public class DBLiteWorkflowLib extends LiteWorkflowLib {
         ParamChecker.notNull(instance, "instance");
         try {
             SqlStatement.update(OozieTable.WF_PROCESS_INSTANCE).set(OozieColumn.PI_state,
-                    WritableUtils.toByteArray((LiteWorkflowInstance) instance)).where(
+                                                                    WritableUtils.toByteArray((LiteWorkflowInstance) instance)).where(
                     SqlStatement.isEqual(OozieColumn.PI_wfId, instance.getId())).
                     prepareAndSetValues(connection).executeUpdate();
         }
@@ -106,7 +107,7 @@ public class DBLiteWorkflowLib extends LiteWorkflowLib {
 
     /**
      * Delets the Workflow Instance with the given id.
-     * 
+     *
      * @param id
      * @throws WorkflowException
      */

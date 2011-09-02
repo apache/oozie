@@ -30,6 +30,7 @@ import org.apache.oozie.service.CallbackService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.WorkflowAppService;
+import org.apache.oozie.service.UUIDService.ApplicationType;
 import org.apache.oozie.test.XFsTestCase;
 import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.XConfiguration;
@@ -51,7 +52,7 @@ public abstract class ActionExecutorTestCase extends XFsTestCase {
 
     protected void setSystemProps() {
     }
-    
+
     protected void tearDown() throws Exception {
         Services.get().destroy();
         super.tearDown();
@@ -160,6 +161,11 @@ public abstract class ActionExecutorTestCase extends XFsTestCase {
         public FileSystem getAppFileSystem() throws IOException, URISyntaxException {
             return getFileSystem();
         }
+
+        @Override
+        public void setErrorInfo(String str, String exMsg) {
+            action.setErrorInfo(str, exMsg);
+        }
     }
 
     protected Path getAppPath() {
@@ -172,7 +178,7 @@ public abstract class ActionExecutorTestCase extends XFsTestCase {
         protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
         protoConf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
         protoConf.set(OozieClient.GROUP_NAME, getTestGroup());
-        injectKerberosInfo(protoConf);        
+        injectKerberosInfo(protoConf);
         return protoConf;
     }
 
@@ -186,7 +192,7 @@ public abstract class ActionExecutorTestCase extends XFsTestCase {
 
         WorkflowJobBean workflow = new WorkflowJobBean();
         workflow.setAppPath(appUri.toString());
-        workflow.setId(Services.get().get(UUIDService.class).generateId());
+        workflow.setId(Services.get().get(UUIDService.class).generateId(ApplicationType.WORKFLOW));
         workflow.setConf(wfConf.toXmlString());
         workflow.setUser(wfConf.get(OozieClient.USER_NAME));
         workflow.setGroup(wfConf.get(OozieClient.GROUP_NAME));

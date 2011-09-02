@@ -10,11 +10,11 @@ Components licenses:
 HSQL License      : HSQLDB
 JDOM License      : JDOM
 BSD License       : xmlenc Library
-Apache 2.0 License: Apache Log4j, Codec, Commons CLI, Commons DBCP, 
-                    Commons Pool, EL, Hadoop, JSON.simple, 
+Apache 2.0 License: Apache Log4j, Codec, Commons CLI, Commons DBCP,
+                    Commons Pool, EL, Hadoop, JSON.simple,
                     Jakarta Commons Net, Logging
 GNU GPL v3.0      : Ext JS 2.2 (with Open Source License Exception)
 
-Detailed License information can be found in the documentation 
+Detailed License information can be found in the documentation
 in the ooziedocs.war at index.html##LicenseInfo
 

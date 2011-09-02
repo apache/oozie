@@ -88,5 +88,5 @@ public class TestLiteWorkflowAppParser extends XTestCase {
             fail();
         }
     }
-    
+
 }

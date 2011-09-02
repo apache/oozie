@@ -26,6 +26,8 @@ import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.DagELFunctions;
 import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.store.WorkflowStore;
+import org.apache.oozie.store.Store;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.XConfiguration;
@@ -36,6 +38,7 @@ import org.apache.oozie.service.CallbackService;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.workflow.WorkflowException;
+import org.apache.oozie.workflow.lite.LiteWorkflowInstance;
 import org.apache.oozie.service.ELService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.HadoopAccessorService;
@@ -48,10 +51,10 @@ import java.util.Date;
 import java.util.Properties;
 
 /**
- * Base class for Action execution commands. Provides common functionality to
- * handle different types of errors while attempting to start or end an action.
+ * Base class for Action execution commands. Provides common functionality to handle different types of errors while
+ * attempting to start or end an action.
  */
-public abstract class ActionCommand<T> extends Command<Void> {
+public abstract class ActionCommand<T> extends WorkflowCommand<Void> {
     private static final String INSTRUMENTATION_GROUP = "action.executors";
 
     protected static final String INSTR_FAILED_JOBS_COUNTER = "failed";
@@ -63,16 +66,14 @@ public abstract class ActionCommand<T> extends Command<Void> {
     }
 
     /**
-     * Takes care of Transient failures. Sets the action status to retry and
-     * increments the retry count if not enough attempts have been made.
-     * Otherwise returns false.
-     * 
+     * Takes care of Transient failures. Sets the action status to retry and increments the retry count if not enough
+     * attempts have been made. Otherwise returns false.
+     *
      * @param context the execution context.
      * @param executor the executor instance being used.
      * @param status the status to be set for the action.
-     * @return true if the action is scheduled for another retry. false if the
-     *         number of retries has exceeded the maximum number of configured
-     *         retries.
+     * @return true if the action is scheduled for another retry. false if the number of retries has exceeded the
+     *         maximum number of configured retries.
      * @throws StoreException
      * @throws org.apache.oozie.command.CommandException
      */
@@ -84,7 +85,6 @@ public abstract class ActionCommand<T> extends Command<Void> {
         incrActionErrorCounter(action.getType(), "transient", 1);
 
         int actionRetryCount = action.getRetries();
-
         if (actionRetryCount >= executor.getMaxRetries()) {
             XLog.getLog(getClass()).warn("Exceeded max retry count [{0}]. Suspending Job", executor.getMaxRetries());
             return false;
@@ -96,16 +96,15 @@ public abstract class ActionCommand<T> extends Command<Void> {
             long retryDelayMillis = executor.getRetryInterval() * 1000;
             action.setPendingAge(new Date(System.currentTimeMillis() + retryDelayMillis));
             XLog.getLog(getClass()).info("Next Retry, Attempt Number [{0}] in [{1}] milliseconds",
-                    actionRetryCount + 1, retryDelayMillis);
+                                         actionRetryCount + 1, retryDelayMillis);
             queueCallable(this, retryDelayMillis);
             return true;
         }
     }
 
     /**
-     * Takes care of non transient failures. The job is suspended, and the state
-     * of the action is changed to *MANUAL
-     * 
+     * Takes care of non transient failures. The job is suspended, and the state of the action is changed to *MANUAL
+     *
      * @param context the execution context.
      * @param executor the executor instance being used.
      * @param status the status to be set for the action.
@@ -130,24 +129,19 @@ public abstract class ActionCommand<T> extends Command<Void> {
     }
 
     /**
-     * Takes care of errors.
+     * Takes care of errors. </p> For errors while attempting to start the action, the job state is updated and an
+     * {@link ActionEndCommand} is queued. </p> For errors while attempting to end the action, the job state is updated.
      * </p>
-     * For errors while attempting to start the action, the job state is updated
-     * and an {@link ActionEndCommand} is queued.
-     * </p>
-     * For errors while attempting to end the action, the job state is updated.
-     * </p>
-     * 
+     *
      * @param context the execution context.
      * @param executor the executor instance being used.
      * @param message
-     * @param isStart whether the error was generated while starting or ending
-     *        an action.
+     * @param isStart whether the error was generated while starting or ending an action.
      * @param status the status to be set for the action.
      * @throws org.apache.oozie.command.CommandException
      */
     protected void handleError(ActionExecutor.Context context, ActionExecutor executor, String message,
-            boolean isStart, WorkflowAction.Status status) throws CommandException {
+                               boolean isStart, WorkflowAction.Status status) throws CommandException {
         XLog.getLog(getClass()).warn("Setting Action Status to [{0}]", status);
         ActionExecutorContext aContext = (ActionExecutorContext) context;
         WorkflowActionBean action = (WorkflowActionBean) aContext.getAction();
@@ -170,12 +164,17 @@ public abstract class ActionCommand<T> extends Command<Void> {
         XLog.getLog(getClass()).warn("Failing Job due to failed action [{0}]", action.getName());
         try {
             workflow.getWorkflowInstance().fail(action.getName());
+            WorkflowInstance wfInstance = workflow.getWorkflowInstance();
+            ((LiteWorkflowInstance) wfInstance).setStatus(WorkflowInstance.Status.FAILED);
+            workflow.setWorkflowInstance(wfInstance);
             workflow.setStatus(WorkflowJob.Status.FAILED);
             action.setStatus(WorkflowAction.Status.FAILED);
+            action.resetPending();
             queueCallable(new NotificationCommand(workflow, action));
             queueCallable(new KillCommand(workflow.getId()));
             incrJobCounter(INSTR_FAILED_JOBS_COUNTER, 1);
-        } catch (WorkflowException ex) {
+        }
+        catch (WorkflowException ex) {
             throw new CommandException(ex);
         }
     }
@@ -230,14 +229,17 @@ public abstract class ActionCommand<T> extends Command<Void> {
         }
 
         public ELEvaluator getELEvaluator() {
-            ELEvaluator evaluator = Services.get().get(ELService.class).createEvaluator();
+            ELEvaluator evaluator = Services.get().get(ELService.class).createEvaluator("workflow");
             DagELFunctions.configureEvaluator(evaluator, workflow, action);
             return evaluator;
         }
 
         public void setVar(String name, String value) {
             name = action.getName() + WorkflowInstance.NODE_VAR_SEPARATOR + name;
-            workflow.getWorkflowInstance().setVar(name, value);
+            WorkflowInstance wfInstance = workflow.getWorkflowInstance();
+            wfInstance.setVar(name, value);
+            //workflow.getWorkflowInstance().setVar(name, value);
+            workflow.setWorkflowInstance(wfInstance);
         }
 
         public String getVar(String name) {
@@ -301,7 +303,7 @@ public abstract class ActionCommand<T> extends Command<Void> {
             return action.getId() + RECOVERY_ID_SEPARATOR + workflow.getRun();
         }
 
-        public Path getActionDir() throws URISyntaxException, IOException{
+        public Path getActionDir() throws URISyntaxException, IOException {
             String name = getWorkflow().getId() + "/" + action.getName() + "--" + action.getType();
             FileSystem fs = getAppFileSystem();
             String actionDirPath = Services.get().getSystemId() + "/" + name;
@@ -309,7 +311,7 @@ public abstract class ActionCommand<T> extends Command<Void> {
             return fqActionDir;
         }
 
-        public FileSystem getAppFileSystem() throws IOException, URISyntaxException{
+        public FileSystem getAppFileSystem() throws IOException, URISyntaxException {
             WorkflowJob workflow = getWorkflow();
             XConfiguration jobConf = new XConfiguration(new StringReader(workflow.getConf()));
             Configuration fsConf = new Configuration();
@@ -318,5 +320,11 @@ public abstract class ActionCommand<T> extends Command<Void> {
                     createFileSystem(workflow.getUser(), workflow.getGroup(), new URI(getWorkflow().getAppPath()),
                                      fsConf);
         }
+
+        @Override
+        public void setErrorInfo(String str, String exMsg) {
+            action.setErrorInfo(str, exMsg);
+        }
     }
+
 }

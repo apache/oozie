@@ -19,6 +19,7 @@ package org.apache.oozie;
 
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.rest.JsonWorkflowAction;
+import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.PropertiesUtils;
 import org.apache.oozie.util.WritableUtils;
@@ -30,17 +31,103 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.io.DataInput;
 
+import javax.persistence.Entity;
+import javax.persistence.Column;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.Basic;
+import javax.persistence.Lob;
+
+import org.apache.openjpa.persistence.jdbc.Index;
+
+import javax.persistence.Transient;
+
+import java.sql.Timestamp;
+
 /**
  * Bean that contains all the information to start an action for a workflow node.
  */
+// Following statements(INSERT_ACTION, UPDATE_ACTION) follow the same
+// numbering for place holders and uses same function
+// getActionValueMapFromBean for setting the values. So The numbering is to
+// be maintained if any change is made.
+@Entity
+@NamedQueries({
+
+    @NamedQuery(name = "UPDATE_ACTION", query = "update WorkflowActionBean a set a.conf = :conf, a.consoleUrl = :consoleUrl, a.data = :data, a.errorCode = :errorCode, a.errorMessage = :errorMessage, a.externalId = :externalId, a.externalStatus = :externalStatus, a.name = :name, a.retries = :retries, a.trackerUri = :trackerUri, a.transition = :transition, a.type = :type, a.endTimestamp = :endTime, a.executionPath = :executionPath, a.lastCheckTimestamp = :lastCheckTime, a.logToken = :logToken, a.pending = :pending, a.pendingAgeTimestamp = :pendingAge, a.signalValue = :signalValue, a.slaXml = :slaXml, a.startTimestamp = :startTime, a.status = :status, a.wfId=:wfId where a.id = :id"),
+
+    @NamedQuery(name = "DELETE_ACTION", query = "delete from WorkflowActionBean a where a.id = :id"),
+
+    @NamedQuery(name = "DELETE_ACTIONS_FOR_WORKFLOW", query = "delete from WorkflowActionBean a where a.wfId = :wfId"),
+
+    @NamedQuery(name = "GET_ACTIONS", query = "select OBJECT(a) from WorkflowActionBean a"),
+
+    @NamedQuery(name = "GET_ACTION", query = "select OBJECT(a) from WorkflowActionBean a where a.id = :id"),
+
+    @NamedQuery(name = "GET_ACTION_FOR_UPDATE", query = "select OBJECT(a) from WorkflowActionBean a where a.id = :id"),
+
+    @NamedQuery(name = "GET_ACTIONS_FOR_WORKFLOW", query = "select OBJECT(a) from WorkflowActionBean a where a.wfId = :wfId order by a.startTimestamp"),
+
+    @NamedQuery(name = "GET_ACTIONS_OF_WORKFLOW_FOR_UPDATE", query = "select OBJECT(a) from WorkflowActionBean a where a.wfId = :wfId order by a.startTimestamp"),
+
+    @NamedQuery(name = "GET_PENDING_ACTIONS", query = "select OBJECT(a) from WorkflowActionBean a where a.pending = 1 AND a.pendingAgeTimestamp < :pendingAge AND a.status <> 'RUNNING'"),
+
+    @NamedQuery(name = "GET_RUNNING_ACTIONS", query = "select OBJECT(a) from WorkflowActionBean a where a.pending = 1 AND a.status = 'RUNNING' AND a.lastCheckTimestamp < :lastCheckTime")
+        })
+
 public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
-    private String jobId;
-    private String executionPath;
-    private boolean pending;
+
+    @Basic
+    @Index
+    @Column(name = "wf_id")
+    private String wfId = null;
+
+    @Basic
+    @Index
+    @Column(name = "status")
+    private String status = WorkflowAction.Status.PREP.toString();
+
+    @Basic
+    @Column(name = "last_check_time")
+    private java.sql.Timestamp lastCheckTimestamp;
+
+    @Basic
+    @Column(name = "end_time")
+    private java.sql.Timestamp endTimestamp = null;
+
+    @Basic
+    @Column(name = "start_time")
+    private java.sql.Timestamp startTimestamp = null;
+
+    @Basic
+    @Column(name = "execution_path")
+    private String executionPath = null;
+
+    @Basic
+    @Column(name = "pending")
+    private int pending = 0;
+
+    // @Temporal(TemporalType.TIME)
+    // @Column(name="pending_age",columnDefinition="timestamp default '0000-00-00 00:00:00'")
+    @Basic
+    @Index
+    @Column(name = "pending_age")
+    private java.sql.Timestamp pendingAgeTimestamp = null;
+
+    @Basic
+    @Column(name = "signal_value")
+    private String signalValue = null;
+
+    @Basic
+    @Column(name = "log_token")
+    private String logToken = null;
+
+    @Transient
     private Date pendingAge;
-    private Date lastCheckTime;
-    private String signalValue;
-    private String logToken;
+
+    @Column(name = "sla_xml")
+    @Lob
+    private String slaXml = null;
 
     /**
      * Default constructor.
@@ -54,12 +141,13 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
      * @param dataOutput data output.
      * @throws IOException thrown if the action bean could not be serialized.
      */
+
     public void write(DataOutput dataOutput) throws IOException {
         WritableUtils.writeStr(dataOutput, getId());
         WritableUtils.writeStr(dataOutput, getName());
         WritableUtils.writeStr(dataOutput, getType());
         WritableUtils.writeStr(dataOutput, getConf());
-        WritableUtils.writeStr(dataOutput, getStatus().toString());
+        WritableUtils.writeStr(dataOutput, getStatusStr());
         dataOutput.writeInt(getRetries());
         dataOutput.writeLong((getStartTime() != null) ? getStartTime().getTime() : -1);
         dataOutput.writeLong((getEndTime() != null) ? getEndTime().getTime() : -1);
@@ -72,9 +160,9 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
         WritableUtils.writeStr(dataOutput, getConsoleUrl());
         WritableUtils.writeStr(dataOutput, getErrorCode());
         WritableUtils.writeStr(dataOutput, getErrorMessage());
-        WritableUtils.writeStr(dataOutput, jobId);
+        WritableUtils.writeStr(dataOutput, wfId);
         WritableUtils.writeStr(dataOutput, executionPath);
-        dataOutput.writeBoolean(pending);
+        dataOutput.writeInt(pending);
         dataOutput.writeLong((pendingAge != null) ? pendingAge.getTime() : -1);
         WritableUtils.writeStr(dataOutput, signalValue);
         WritableUtils.writeStr(dataOutput, logToken);
@@ -112,12 +200,13 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
         setTrackerUri(WritableUtils.readStr(dataInput));
         setConsoleUrl(WritableUtils.readStr(dataInput));
         setErrorInfo(WritableUtils.readStr(dataInput), WritableUtils.readStr(dataInput));
-        jobId = WritableUtils.readStr(dataInput);
+        wfId = WritableUtils.readStr(dataInput);
         executionPath = WritableUtils.readStr(dataInput);
-        pending = dataInput.readBoolean();
+        pending = dataInput.readInt();
         d = dataInput.readLong();
         if (d != -1) {
             pendingAge = new Date(d);
+            pendingAgeTimestamp = DateUtils.convertDateToTimestamp(pendingAge);
         }
         signalValue = WritableUtils.readStr(dataInput);
         logToken = WritableUtils.readStr(dataInput);
@@ -139,15 +228,16 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
      */
     public boolean isComplete() {
         return getStatus() == WorkflowAction.Status.OK || getStatus() == WorkflowAction.Status.KILLED ||
-               getStatus() == WorkflowAction.Status.ERROR;
+                getStatus() == WorkflowAction.Status.ERROR;
     }
 
     /**
      * Set the action as pending and the current time as pending.
      */
     public void setPending() {
-        pending = true;
+        pending = 1;
         pendingAge = new Date();
+        pendingAgeTimestamp = DateUtils.convertDateToTimestamp(pendingAge);
     }
 
     /**
@@ -157,6 +247,7 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
      */
     public void setPendingAge(Date pendingAge) {
         this.pendingAge = pendingAge;
+        this.pendingAgeTimestamp = DateUtils.convertDateToTimestamp(pendingAge);
     }
 
     /**
@@ -165,7 +256,7 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
      * @return the pending age of the action, <code>null</code> if the action is not pending.
      */
     public Date getPendingAge() {
-        return pendingAge;
+        return DateUtils.toDate(pendingAgeTimestamp);
     }
 
     /**
@@ -174,15 +265,16 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
      * @return if the action is pending.
      */
     public boolean isPending() {
-        return pending;
+        return pending == 1 ? true : false;
     }
 
     /**
      * Removes the pending flag from the action.
      */
     public void resetPending() {
-        pending = false;
+        pending = 0;
         pendingAge = null;
+        pendingAgeTimestamp = null;
     }
 
 
@@ -194,7 +286,7 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
     }
 
     /**
-     * Set a tracking information for an action, and set the action status to {@link org.apache.oozie.client.WorkflowAction.Status#DONE}
+     * Set a tracking information for an action, and set the action status to {@link Action.Status#DONE}
      *
      * @param externalId external ID for the action.
      * @param trackerUri tracker URI for the action.
@@ -211,10 +303,10 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
     }
 
     /**
-     * Set the completion information for an action start. Sets the Action status to {@link org.apache.oozie.client.WorkflowAction.Status#DONE}
+     * Set the completion information for an action start. Sets the Action status to {@link Action.Status#DONE}
      *
      * @param externalStatus action external end status.
-     * @param actionData     action output data, <code>null</code> if there is no action output data.
+     * @param actionData action output data, <code>null</code> if there is no action output data.
      */
     public void setExecutionData(String externalStatus, Properties actionData) {
         setStatus(Status.DONE);
@@ -227,10 +319,9 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
     /**
      * Set the completion information for an action end.
      *
-     * @param status action status, {@link org.apache.oozie.client.WorkflowAction.Status#OK} or
-     *        {@link org.apache.oozie.client.WorkflowAction.Status#ERROR} or {@link org.apache.oozie.client.WorkflowAction.Status#KILLED}
-     * @param signalValue the signal value. In most cases, the value should be
-     *        OK or ERROR.
+     * @param status action status, {@link Action.Status#OK} or {@link Action.Status#ERROR} or {@link
+     * Action.Status#KILLED}
+     * @param signalValue the signal value. In most cases, the value should be OK or ERROR.
      */
     public void setEndData(Status status, String signalValue) {
         if (status == null || (status != Status.OK && status != Status.ERROR && status != Status.KILLED)) {
@@ -244,13 +335,23 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
         setSignalValue(ParamChecker.notEmpty(signalValue, "signalValue"));
     }
 
+
     /**
      * Return the job Id.
      *
      * @return the job Id.
      */
     public String getJobId() {
-        return jobId;
+        return wfId;
+    }
+
+    /**
+     * Return the job Id.
+     *
+     * @return the job Id.
+     */
+    public String getWfId() {
+        return wfId;
     }
 
     /**
@@ -259,7 +360,28 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
      * @param id jobId;
      */
     public void setJobId(String id) {
-        this.jobId = id;
+        this.wfId = id;
+    }
+
+    public String getSlaXml() {
+        return slaXml;
+    }
+
+    public void setSlaXml(String slaXml) {
+        this.slaXml = slaXml;
+    }
+
+    public void setStatus(Status val) {
+        this.status = val.toString();
+        super.setStatus(val);
+    }
+
+    public String getStatusStr() {
+        return status;
+    }
+
+    public Status getStatus() {
+        return Status.valueOf(this.status);
     }
 
     /**
@@ -281,20 +403,18 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
     }
 
     /**
-     * Return the signal value for the action.
-     * <p/>
-     * For decision nodes it is the choosen transition, for actions it is OK or ERROR.
+     * Return the signal value for the action. <p/> For decision nodes it is the choosen transition, for actions it is
+     * OK or ERROR.
      *
-     * @return  the action signal value.
+     * @return the action signal value.
      */
     public String getSignalValue() {
         return signalValue;
     }
 
     /**
-     * Set the signal value for the action.
-     * <p/>
-     * For decision nodes it is the choosen transition, for actions it is OK or ERROR.
+     * Set the signal value for the action. <p/> For decision nodes it is the choosen transition, for actions it is OK
+     * or ERROR.
      *
      * @param signalValue the action signal value.
      */
@@ -319,14 +439,51 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
     public void setLogToken(String logToken) {
         this.logToken = logToken;
     }
-    
+
     /**
      * Return the action last check time
      *
      * @return the last check time
      */
     public Date getLastCheckTime() {
-        return lastCheckTime;
+        return DateUtils.toDate(lastCheckTimestamp);
+    }
+
+    /**
+     * Return the action last check time
+     *
+     * @return the last check time
+     */
+    public Timestamp getLastCheckTimestamp() {
+        return lastCheckTimestamp;
+    }
+
+    /**
+     * Return the action last check time
+     *
+     * @return the last check time
+     */
+    public Timestamp getStartTimestamp() {
+        return startTimestamp;
+    }
+
+    /**
+     * Return the action last check time
+     *
+     * @return the last check time
+     */
+    public Timestamp getEndTimestamp() {
+        return endTimestamp;
+    }
+
+
+    /**
+     * Return the action last check time
+     *
+     * @return the last check time
+     */
+    public Timestamp getPendingAgeTimestamp() {
+        return pendingAgeTimestamp;
     }
 
     /**
@@ -335,6 +492,29 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
      * @param lastCheckTime the last check time to set.
      */
     public void setLastCheckTime(Date lastCheckTime) {
-        this.lastCheckTime = lastCheckTime;
+        this.lastCheckTimestamp = DateUtils.convertDateToTimestamp(lastCheckTime);
     }
+
+    public boolean getPending() {
+        return this.pending == 1 ? true : false;
+    }
+
+    public Date getStartTime() {
+        return DateUtils.toDate(startTimestamp);
+    }
+
+    public void setStartTime(Date startTime) {
+        super.setStartTime(startTime);
+        this.startTimestamp = DateUtils.convertDateToTimestamp(startTime);
+    }
+
+    public Date getEndTime() {
+        return DateUtils.toDate(endTimestamp);
+    }
+
+    public void setEndTime(Date endTime) {
+        super.setEndTime(endTime);
+        this.endTimestamp = DateUtils.convertDateToTimestamp(endTime);
+    }
+
 }

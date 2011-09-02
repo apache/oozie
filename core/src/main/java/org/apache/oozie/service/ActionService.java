@@ -53,7 +53,7 @@ public class ActionService implements Service {
         registerExecutors(classes);
     }
 
-    private void registerExecutors(Class<?extends ActionExecutor>[] classes) throws ServiceException {
+    private void registerExecutors(Class<? extends ActionExecutor>[] classes) throws ServiceException {
         if (classes != null) {
             for (Class<? extends ActionExecutor> executorClass : classes) {
                 register(executorClass);

@@ -21,6 +21,7 @@ import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.workflow.lite.EndNodeDef;
 import org.apache.oozie.workflow.lite.LiteWorkflowApp;
+import org.apache.oozie.workflow.WorkflowInstance;
 import org.apache.oozie.workflow.lite.LiteWorkflowInstance;
 import org.apache.oozie.workflow.lite.StartNodeDef;
 import org.apache.oozie.service.ELService;
@@ -74,7 +75,7 @@ public class TestDagELFunctions extends XTestCase {
         action.setTrackerUri("tracker");
         action.setExternalStatus("externalStatus");
 
-        ELEvaluator eval = Services.get().get(ELService.class).createEvaluator();
+        ELEvaluator eval = Services.get().get(ELService.class).createEvaluator("workflow");
         DagELFunctions.configureEvaluator(eval, wf, action);
 
         assertEquals("wfId", eval.evaluate("${wf:id()}", String.class));
@@ -90,7 +91,10 @@ public class TestDagELFunctions extends XTestCase {
         assertEquals(2, (int) eval.evaluate("${wf:run()}", Integer.class));
 
         action.setStatus(WorkflowAction.Status.ERROR);
-        DagELFunctions.setActionInfo(wf.getWorkflowInstance(), action);
+        System.out.println("WorkflowInstance " + wf.getWorkflowInstance().getStatus().toString());
+        WorkflowInstance wfInstance = wf.getWorkflowInstance();
+        DagELFunctions.setActionInfo(wfInstance, action);
+        wf.setWorkflowInstance(wfInstance);
 
         assertEquals("actionName", eval.evaluate("${wf:lastErrorNode()}", String.class));
         assertEquals("ec", eval.evaluate("${wf:errorCode('actionName')}", String.class));

@@ -16,7 +16,7 @@
   limitations under the License.
 -->
 <workflow-app xmlns='uri:oozie:workflow:0.1' name='streaming-wf'>
-    <start to='streaming1' />
+    <start to='streaming1'/>
     <action name='streaming1'>
         <map-reduce>
             <job-tracker>${jobTracker}</job-tracker>
@@ -35,16 +35,16 @@
                     <value>${outputDir}/streaming-output</value>
                 </property>
                 <property>
-                  <name>mapred.job.queue.name</name>
-                  <value>${queueName}</value>
+                    <name>mapred.job.queue.name</name>
+                    <value>${queueName}</value>
                 </property>
             </configuration>
         </map-reduce>
-        <ok to="end" />
-        <error to="fail" />
+        <ok to="end"/>
+        <error to="fail"/>
     </action>
     <kill name="fail">
         <message>Streaming Map/Reduce failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>
     </kill>
-    <end name='end' />
+    <end name='end'/>
 </workflow-app>

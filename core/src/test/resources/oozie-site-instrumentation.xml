@@ -20,11 +20,11 @@
 <configuration>
 
     <property>
-		<name>oozie.services</name>
-		<value>
+        <name>oozie.services</name>
+        <value>
             org.apache.oozie.service.SchedulerService,
             org.apache.oozie.service.InstrumentationService
         </value>
-	</property>
+    </property>
 
 </configuration>

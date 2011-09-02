@@ -17,7 +17,9 @@
  */
 package org.apache.oozie.util;
 
+import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 /**
  * Utility class to check common parameter preconditions.
@@ -48,7 +50,7 @@ public class ParamChecker {
      */
     public static <T> List<T> notNullElements(List<T> list, String name) {
         notNull(list, name);
-        for (int i = 0; i < list.size(); i++ ) {
+        for (int i = 0; i < list.size(); i++) {
             notNull(list.get(i), XLog.format("list [{0}] element [{1}]", name, i));
         }
         return list;
@@ -81,7 +83,7 @@ public class ParamChecker {
      */
     public static List<String> notEmptyElements(List<String> list, String name) {
         notNull(list, name);
-        for (int i = 0; i < list.size(); i++ ) {
+        for (int i = 0; i < list.size(); i++) {
             notEmpty(list.get(i), XLog.format("list [{0}] element [{1}]", name, i));
         }
         return list;
@@ -98,19 +100,19 @@ public class ParamChecker {
     public static String validateActionName(String actionName) {
         ParamChecker.notEmpty(actionName, "action name");
         if (actionName.length() > MAX_NODE_NAME_LEN) {
-            throw new IllegalArgumentException(XLog.format("name [{0}] must be {1} chars or less",
-                                                           actionName, MAX_NODE_NAME_LEN));
+            throw new IllegalArgumentException(XLog.format("name [{0}] must be {1} chars or less", actionName,
+                                                           MAX_NODE_NAME_LEN));
         }
 
         char c = actionName.charAt(0);
-        if (!(c>='A' && c<='Z') && !(c>='a' && c<='z') && !(c=='_')) {
+        if (!(c >= 'A' && c <= 'Z') && !(c >= 'a' && c <= 'z') && !(c == '_')) {
             throw new IllegalArgumentException(XLog.format("name [{0}], must start with [A-Za-z_]", actionName));
         }
         for (int i = 1; i < actionName.length(); i++) {
             c = actionName.charAt(i);
-            if (!(c>='0' && c<='9') && !(c>='A' && c<='Z') && !(c>='a' && c<='z') && !(c=='_' || c=='-')) {
-                throw new IllegalArgumentException(XLog.format("name [{0}] must be [A-Za-z_][0-9A-Za-z_]*",
-                                                               actionName));
+            if (!(c >= '0' && c <= '9') && !(c >= 'A' && c <= 'Z') && !(c >= 'a' && c <= 'z')
+                    && !(c == '_' || c == '-')) {
+                throw new IllegalArgumentException(XLog.format("name [{0}] must be [A-Za-z_][0-9A-Za-z_]*", actionName));
             }
         }
         return actionName;
@@ -126,14 +128,124 @@ public class ParamChecker {
         ParamChecker.notEmpty(token, "identifier");
         for (int i = 0; i < token.length(); i++) {
             char c = token.charAt(i);
-            if (!(c>='0' && c<='9') && !(c>='A' && c<='Z') && !(c>='a' && c<='z') && !(c=='_')) {
+            if (!(c >= '0' && c <= '9') && !(c >= 'A' && c <= 'Z') && !(c >= 'a' && c <= 'z') && !(c == '_')) {
                 return false;
             }
-            if (i == 0 && (c>='0' && c<='9')) {
+            if (i == 0 && (c >= '0' && c <= '9')) {
                 return false;
             }
         }
         return true;
     }
 
+    /**
+     * Check whether the value is greater than or equals 0.
+     *
+     * @param value : value to test
+     * @param name : Name of the parameter
+     * @return If the value is > 0, return the value. Otherwise throw IllegalArgumentException
+     */
+    public static int checkGTZero(int value, String name) {
+        if (value <= 0) {
+            throw new IllegalArgumentException(XLog.format("parameter [{0}] = [{1}] must be greater than zero", name,
+                                                           value));
+        }
+        return value;
+    }
+
+    /**
+     * Check whether the value is greater than or equals to 0.
+     *
+     * @param value : value to test
+     * @param name : Name of the parameter
+     * @return If the value is >= 0, return the value. Otherwise throw IllegalArgumentException
+     */
+    public static int checkGEZero(int value, String name) {
+        if (value < 0) {
+            throw new IllegalArgumentException(XLog.format(
+                    "parameter [{0}] = [{1}] must be greater than or equals zero", name, value));
+        }
+        return value;
+    }
+
+    /**
+     * Check whether the value is Integer.
+     *
+     * @param value : value to test
+     * @param name : Name of the parameter
+     * @return If the value is integer, return the value. Otherwise throw IllegalArgumentException
+     */
+    public static int checkInteger(String val, String name) {
+        int ret;
+        try {
+            ret = Integer.parseInt(val);
+        }
+        catch (NumberFormatException nex) {
+            throw new IllegalArgumentException(XLog.format(
+                    "parameter [{0}] = [{1}]  must be an integer. Parsing error {2}", name, val, nex));
+        }
+        return ret;
+    }
+
+    /**
+     * Check whether the value is UTC data format.
+     *
+     * @param value : value to test
+     * @param name : Name of the parameter
+     * @return If the value is in UTC date format, return the value. Otherwise throw IllegalArgumentException
+     */
+    public static Date checkUTC(String date, String name) {
+        Date ret;
+        try {
+            ret = DateUtils.parseDateUTC(date);
+        }
+        catch (Exception ex) {
+            throw new IllegalArgumentException(XLog.format(
+                    "parameter [{0}] = [{1}] must be Date in UTC format (yyyy-MM-dd'T'HH:mm'Z')."
+                            + " Parsing error {2}", name, date, ex));
+        }
+        return ret;
+    }
+
+    /**
+     * Check whether the value mention correct Timezone.
+     *
+     * @param value : value to test
+     * @param name : Name of the parameter
+     * @return If the value is correct TZ return the value. Otherwise throw IllegalArgumentException
+     */
+    public static TimeZone checkTimeZone(String tzStr, String name) {
+        TimeZone tz;
+        try {
+            tz = DateUtils.getTimeZone(tzStr);
+        }
+        catch (Exception ex) {
+            throw new IllegalArgumentException(XLog.format("parameter [{0}] = [{1}] must be a valid TZ."
+                    + " Parsing error {2}", name, tzStr, ex));
+        }
+        return tz;
+    }
+
+    /**
+     * Check whether an item is a member of an array of string
+     *
+     * @param item : item to test
+     * @param members : List of items in string
+     * @param name : Name of the parameter
+     * @return If the item is in the member return true. Otherwise throw IllegalArgumentException
+     */
+    public static boolean isMember(String item, String[] members, String name) {
+        for (int i = 0; i < members.length; i++) {
+            if (members[i].equals(item)) {
+                return true;
+            }
+        }
+        // Error case
+        StringBuilder buff = new StringBuilder();
+        for (int i = 0; i < members.length; i++) {
+            buff.append(members[i]).append(", ");
+        }
+        throw new IllegalArgumentException(XLog.format("parameter [{0}] = [{1}] " + "must be in the list {2}", name,
+                                                       item, buff.toString()));
+    }
 }

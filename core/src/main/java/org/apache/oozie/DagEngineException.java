@@ -20,7 +20,7 @@ package org.apache.oozie;
 /**
  * Exception thrown by the {@link DagEngine}.
  */
-public class DagEngineException extends XException {
+public class DagEngineException extends BaseEngineException {
 
     /**
      * Create an dag engine exception from a XException.

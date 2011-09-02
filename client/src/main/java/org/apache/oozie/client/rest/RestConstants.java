@@ -35,7 +35,7 @@ public interface RestConstants {
     public static final String XML_CONTENT_TYPE = "application/xml";
 
     public static final String FORM_CONTENT_TYPE = "application/x-www-form-urlencoded";
-    
+
     public static final String TEXT_CONTENT_TYPE = "text/plain";
 
     public static final String ACTION_PARAM = "action";
@@ -48,6 +48,8 @@ public interface RestConstants {
 
     public static final String JOB_ACTION_START = "start";
 
+    public static final String JOB_ACTION_DRYRUN = "dryrun";
+
     public static final String JOB_ACTION_SUSPEND = "suspend";
 
     public static final String JOB_ACTION_RESUME = "resume";
@@ -58,7 +60,6 @@ public interface RestConstants {
 
     public static final String JOB_SHOW_PARAM = "show";
 
-
     public static final String JOB_SHOW_CONFIG = "config";
 
     public static final String JOB_SHOW_INFO = "info";
@@ -67,7 +68,6 @@ public interface RestConstants {
 
     public static final String JOB_SHOW_DEFINITION = "definition";
 
-
     public static final String JOBS_FILTER_PARAM = "filter";
 
     public static final String JOBS_EXTERNAL_ID_PARAM = "external-id";
@@ -75,6 +75,8 @@ public interface RestConstants {
     public static final String ADMIN_STATUS_RESOURCE = "status";
 
     public static final String ADMIN_SAFE_MODE_PARAM = "safemode";
+
+    public static final String ADMIN_SYSTEM_MODE_PARAM = "systemmode";
 
     public static final String ADMIN_LOG_RESOURCE = "log";
 
@@ -89,6 +91,14 @@ public interface RestConstants {
     public static final String ADMIN_BUILD_VERSION_RESOURCE = "build-version";
 
     public static final String OOZIE_ERROR_CODE = "oozie-error-code";
-    
+
     public static final String OOZIE_ERROR_MESSAGE = "oozie-error-message";
+
+    public static final String JOBTYPE_PARAM = "jobtype";
+
+    public static final String SLA_GT_SEQUENCE_ID = "gt-sequence-id";
+
+    public static final String MAX_EVENTS = "max-events";
+
+    public static final String SLA = "sla";
 }

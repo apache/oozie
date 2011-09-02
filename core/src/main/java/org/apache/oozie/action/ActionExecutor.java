@@ -35,9 +35,7 @@ import java.util.Properties;
 import java.util.LinkedHashMap;
 
 /**
- * Base action executor class.
- * <p/>
- * All the action executors should extend this class.
+ * Base action executor class. <p/> All the action executors should extend this class.
  */
 public abstract class ActionExecutor {
 
@@ -99,19 +97,17 @@ public abstract class ActionExecutor {
         public ELEvaluator getELEvaluator();
 
         /**
-         * Set a workflow action variable.
-         * <p/>
-         * Convenience method that prefixes the variable name with the action name plus a '.'.
+         * Set a workflow action variable. <p/> Convenience method that prefixes the variable name with the action name
+         * plus a '.'.
          *
-         * @param name  variable name.
+         * @param name variable name.
          * @param value variable value, <code>null</code> removes the variable.
          */
         public void setVar(String name, String value);
 
         /**
-         * Get a workflow action variable.
-         * <p/>
-         * Convenience method that prefixes the variable name with the action name plus a '.'.
+         * Get a workflow action variable. <p/> Convenience method that prefixes the variable name with the action name
+         * plus a '.'.
          *
          * @param name variable name.
          * @return the variable value, <code>null</code> if not set.
@@ -128,19 +124,19 @@ public abstract class ActionExecutor {
         void setStartData(String externalId, String trackerUri, String consoleUrl);
 
         /**
-         * Set the action execution completion information for an action. The action
-         * status is set to {@link org.apache.oozie.client.WorkflowAction.Status#DONE}
-         * 
+         * Set the action execution completion information for an action. The action status is set to {@link
+         * org.apache.oozie.client.WorkflowAction.Status#DONE}
+         *
          * @param externalStatus the action external end status.
-         * @param actionData the action data on completion, <code>null</code>
-         *        if none.
+         * @param actionData the action data on completion, <code>null</code> if none.
          */
         void setExecutionData(String externalStatus, Properties actionData);
 
         /**
          * Set the action end completion information for a completed action.
          *
-         * @param status         the action end status, it can be {@link org.apache.oozie.client.WorkflowAction.Status#OK} or {@link org.apache.oozie.client.WorkflowAction.Status#ERROR}.
+         * @param status the action end status, it can be {@link org.apache.oozie.client.WorkflowAction.Status#OK} or
+         * {@link org.apache.oozie.client.WorkflowAction.Status#ERROR}.
          * @param signalValue the action external end status.
          */
         void setEndData(WorkflowAction.Status status, String signalValue);
@@ -178,11 +174,12 @@ public abstract class ActionExecutor {
          * @throws URISyntaxException
          */
         public FileSystem getAppFileSystem() throws IOException, URISyntaxException;
+
+        public void setErrorInfo(String str, String exMsg);
     }
 
     /**
-     * Define the default maximum number of retry attempts for transient errors
-     * (total attempts = 1 + MAX_RETRIES).
+     * Define the default maximum number of retry attempts for transient errors (total attempts = 1 + MAX_RETRIES).
      */
     public static final int MAX_RETRIES = 3;
 
@@ -207,7 +204,7 @@ public abstract class ActionExecutor {
     /**
      * Create an action executor.
      *
-     * @param type          action executor type.
+     * @param type action executor type.
      * @param retryAttempts retry attempts.
      * @param retryInterval retry interval, in seconds.
      */
@@ -242,14 +239,10 @@ public abstract class ActionExecutor {
     }
 
     /**
-     * Invoked once at system initialization time.
-     * <p/>
-     * It can be used to register error information for the expected exceptions. Exceptions should be register from
-     * subclasses to superclasses to ensure proper detection, same thing that it is done in a normal catch.
-     * <p/>
-     * This method should invoke the {@link #registerError} method to register all its possible errors.
-     * <p/>
-     * Subclasses overriding must invoke super.
+     * Invoked once at system initialization time. <p/> It can be used to register error information for the expected
+     * exceptions. Exceptions should be register from subclasses to superclasses to ensure proper detection, same thing
+     * that it is done in a normal catch. <p/> This method should invoke the {@link #registerError} method to register
+     * all its possible errors. <p/> Subclasses overriding must invoke super.
      */
     public void initActionType() {
         ERROR_INFOS.put(getType(), new LinkedHashMap<Class, ErrorInfo>());
@@ -265,9 +258,8 @@ public abstract class ActionExecutor {
     }
 
     /**
-     * Return the runtime directory of the Oozie instance.
-     * <p/>
-     * The directory is created under TMP and it is always a new directory per system initialization.
+     * Return the runtime directory of the Oozie instance. <p/> The directory is created under TMP and it is always a
+     * new directory per system initialization.
      *
      * @return the runtime directory of the Oozie instance.
      */
@@ -276,9 +268,7 @@ public abstract class ActionExecutor {
     }
 
     /**
-     * Return Oozie configuration.
-     * <p/>
-     * This is useful for actions that need access to configuration properties.
+     * Return Oozie configuration. <p/> This is useful for actions that need access to configuration properties.
      *
      * @return Oozie configuration.
      */
@@ -289,9 +279,8 @@ public abstract class ActionExecutor {
     /**
      * Register error handling information for an exception.
      *
-     * @param exClass   excpetion class name (to work in case of a particular exception not being in the classpath,
-     *                  needed to be able to handle multiple version of Hadoop  or other JARs used by executors with
-     *                  the same codebase).
+     * @param exClass excpetion class name (to work in case of a particular exception not being in the classpath, needed
+     * to be able to handle multiple version of Hadoop  or other JARs used by executors with the same codebase).
      * @param errorType error type for the exception.
      * @param errorCode error code for the exception.
      */
@@ -358,8 +347,7 @@ public abstract class ActionExecutor {
 
     /**
      * Utility method to handle exceptions in the {@link #start}, {@link #end}, {@link #kill} and {@link #check} methods
-     * <p/>
-     * It uses the error registry to convert exceptions to {@link ActionExecutorException}s.
+     * <p/> It uses the error registry to convert exceptions to {@link ActionExecutorException}s.
      *
      * @param ex exception to convert.
      * @return ActionExecutorException converted exception.
@@ -372,7 +360,7 @@ public abstract class ActionExecutor {
         for (Map.Entry<Class, ErrorInfo> errorInfo : ERROR_INFOS.get(getType()).entrySet()) {
             if (errorInfo.getKey().isInstance(ex)) {
                 return new ActionExecutorException(errorInfo.getValue().errorType, errorInfo.getValue().errorCode,
-                                                  "{0}", ex.getMessage(), ex);
+                                                   "{0}", ex.getMessage(), ex);
             }
         }
         String errorCode = ex.getClass().getName();
@@ -401,6 +389,7 @@ public abstract class ActionExecutor {
 
     /**
      * Return the path that will be used to store action specific data
+     *
      * @param jobId Worfklow ID
      * @param action Action
      * @param key An Identifier
@@ -429,49 +418,41 @@ public abstract class ActionExecutor {
     }
 
     /**
-     * Start an action.
-     * <p/>
-     * The {@link Context#setStartData} method must be called within this method.
-     * <p/>
-     * If the action has completed, the {@link Context#setExecutionData} method must be called within this method.
+     * Start an action. <p/> The {@link Context#setStartData} method must be called within this method. <p/> If the
+     * action has completed, the {@link Context#setExecutionData} method must be called within this method.
      *
      * @param context executor context.
-     * @param action  the action to start.
+     * @param action the action to start.
      * @throws ActionExecutorException thrown if the action could not start.
      */
     public abstract void start(Context context, WorkflowAction action) throws ActionExecutorException;
 
     /**
-     * End an action after it has executed.
-     * <p/>
-     * The {@link Context#setEndData} method must be called within this method.
+     * End an action after it has executed. <p/> The {@link Context#setEndData} method must be called within this
+     * method.
      *
      * @param context executor context.
-     * @param action  the action to end.
+     * @param action the action to end.
      * @throws ActionExecutorException thrown if the action could not end.
      */
     public abstract void end(Context context, WorkflowAction action) throws ActionExecutorException;
 
     /**
-     * Check if an action has completed. This method must be implemented by Async Action Executors. 
-     * <p/>
-     * If the action has completed, the {@link Context#setExecutionData} method must be called within this method.
-     * <p/>
-     * If the action has not completed, the {@link Context#setExternalStatus} method must be called within this method.
+     * Check if an action has completed. This method must be implemented by Async Action Executors. <p/> If the action
+     * has completed, the {@link Context#setExecutionData} method must be called within this method. <p/> If the action
+     * has not completed, the {@link Context#setExternalStatus} method must be called within this method.
      *
      * @param context executor context.
-     * @param action  the action to end.
+     * @param action the action to end.
      * @throws ActionExecutorException thrown if the action could not be checked.
      */
     public abstract void check(Context context, WorkflowAction action) throws ActionExecutorException;
 
     /**
-     * Kill an action.
-     * <p/>
-     * The {@link Context#setEndData} method must be called within this method.
+     * Kill an action. <p/> The {@link Context#setEndData} method must be called within this method.
      *
      * @param context executor context.
-     * @param action  the action to kill.
+     * @param action the action to kill.
      * @throws ActionExecutorException thrown if the action could not be killed.
      */
     public abstract void kill(Context context, WorkflowAction action) throws ActionExecutorException;

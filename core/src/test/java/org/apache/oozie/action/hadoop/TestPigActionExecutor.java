@@ -82,12 +82,12 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
 
 
         Element actionXml = XmlUtils.parseXml("<pig>" +
-                                              "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
-                                              "<name-node>" + getNameNodeUri() + "</name-node>" +
-                                              "<script>SCRIPT</script>" +
-                                              "<param>a=A</param>" +
-                                              "<param>b=B</param>" +
-                                              "</pig>");
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<name-node>" + getNameNodeUri() + "</name-node>" +
+                "<script>SCRIPT</script>" +
+                "<param>a=A</param>" +
+                "<param>b=B</param>" +
+                "</pig>");
 
         XConfiguration protoConf = new XConfiguration();
         protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
@@ -177,7 +177,7 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         Context context = createContext(actionXml);
         final RunningJob launcherJob = submitAction(context);
         String launcherId = context.getAction().getExternalId();
-        waitFor(60 * 1000, new Predicate() {
+        waitFor(120 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
                 return launcherJob.isComplete();
             }
@@ -201,9 +201,9 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
     }
 
     private static final String PIG_SCRIPT = "set job.name 'test'\n" + "set debug on\n" +
-                                             "A = load '$IN' using PigStorage(':');\n" +
-                                             "B = foreach A generate $0 as id;\n" +
-                                             "store B into '$OUT' USING PigStorage();\n";
+            "A = load '$IN' using PigStorage(':');\n" +
+            "B = foreach A generate $0 as id;\n" +
+            "store B into '$OUT' USING PigStorage();\n";
 
     protected XConfiguration getPigConfig() {
         XConfiguration conf = new XConfiguration();
@@ -228,22 +228,22 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         w.close();
 
         String actionXml = "<pig>" +
-                           "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
-                           "<name-node>" + getNameNodeUri() + "</name-node>" +
-                           getPigConfig().toXmlString(false) +
-                           "<script>" + script.getName() + "</script>" +
-                           "<param>IN=" + inputDir.toUri().getPath() + "</param>" +
-                           "<param>OUT=" + outputDir.toUri().getPath() + "</param>" +
-                           "</pig>";
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<name-node>" + getNameNodeUri() + "</name-node>" +
+                getPigConfig().toXmlString(false) +
+                "<script>" + script.getName() + "</script>" +
+                "<param>IN=" + inputDir.toUri().getPath() + "</param>" +
+                "<param>OUT=" + outputDir.toUri().getPath() + "</param>" +
+                "</pig>";
         _testSubmit(actionXml);
     }
 
     private static final String UDF_PIG_SCRIPT = "register udf.jar\n" +
-                                                 "set job.name 'test'\n" + "set debug on\n" +
-                                                 "A = load '$IN' using PigStorage(':');\n" +
-                                                 "B = foreach A generate" +
-                                                 "       org.apache.oozie.action.hadoop.UDFTester($0) as id;\n" +
-                                                 "store B into '$OUT' USING PigStorage();\n";
+            "set job.name 'test'\n" + "set debug on\n" +
+            "A = load '$IN' using PigStorage(':');\n" +
+            "B = foreach A generate" +
+            "       org.apache.oozie.action.hadoop.UDFTester($0) as id;\n" +
+            "store B into '$OUT' USING PigStorage();\n";
 
     public void testUdfPig() throws Exception {
         FileSystem fs = getFileSystem();
@@ -269,14 +269,14 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         w.close();
 
         String actionXml = "<pig>" +
-                           "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
-                           "<name-node>" + getNameNodeUri() + "</name-node>" +
-                           getPigConfig().toXmlString(false) +
-                           "<script>" + script.getName() + "</script>" +
-                           "<param>IN=" + inputDir.toUri().getPath() + "</param>" +
-                           "<param>OUT=" + outputDir.toUri().getPath() + "</param>" +
-                           "<file>" + udfJar.toString() + "#" + udfJar.getName() + "</file>" +
-                           "</pig>";
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<name-node>" + getNameNodeUri() + "</name-node>" +
+                getPigConfig().toXmlString(false) +
+                "<script>" + script.getName() + "</script>" +
+                "<param>IN=" + inputDir.toUri().getPath() + "</param>" +
+                "<param>OUT=" + outputDir.toUri().getPath() + "</param>" +
+                "<file>" + udfJar.toString() + "#" + udfJar.getName() + "</file>" +
+                "</pig>";
         _testSubmit(actionXml);
     }
 

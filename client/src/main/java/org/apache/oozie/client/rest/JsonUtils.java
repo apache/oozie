@@ -18,12 +18,16 @@
 package org.apache.oozie.client.rest;
 
 import org.json.simple.JSONObject;
+import org.json.simple.JSONArray;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
+import java.util.List;
+import java.util.ArrayList;
+
 
 /**
  * Json utils methods.
@@ -77,4 +81,23 @@ public class JsonUtils {
         return (l != null) ? l : 0;
     }
 
+    /**
+     * Return a List<String> value from a JSONObject.
+     *
+     * @param map JSON object.
+     * @param name name of the property.
+     * @return the List<String> value associated with it, or null if not defined.
+     */
+    public static List<String> getListString(JSONObject json, String name) {
+        ArrayList<String> values = new ArrayList();
+        JSONArray array = (JSONArray) json.get(name);
+        if (array == null) {
+            return null;
+        }
+
+        for (Object o : array) {
+            values.add((String) o);
+        }
+        return values;
+    }
 }

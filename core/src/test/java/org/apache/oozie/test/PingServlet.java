@@ -30,7 +30,7 @@ import java.io.Writer;
 public class PingServlet extends HttpServlet {
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException {
+            throws ServletException, IOException {
         response.setStatus(HttpServletResponse.SC_OK);
         Writer w = response.getWriter();
         w.write("ping");

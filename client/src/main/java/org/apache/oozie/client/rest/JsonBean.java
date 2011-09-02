@@ -26,6 +26,7 @@ public interface JsonBean {
 
     /**
      * Return the JSONObject for the bean.
+     *
      * @return the JSONObject for the bean.
      */
     public JSONObject toJSONObject();

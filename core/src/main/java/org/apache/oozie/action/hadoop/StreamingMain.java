@@ -74,13 +74,38 @@ public class StreamingMain extends MapReduceMain {
 
         addActionConf(jobConf, actionConf);
 
-        //propagate delegation related props from launcher job to MR job
+        // propagate delegation related props from launcher job to MR job
         if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
             jobConf.set("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
         }
-        
-        JobClient jobClient = createJobClient(jobConf);
-        return jobClient.submitJob(jobConf);
+
+        JobClient jobClient = null;
+        RunningJob runJob = null;
+        boolean exception = false;
+        try {
+            jobClient = createJobClient(jobConf);
+            runJob = jobClient.submitJob(jobConf);
+        }
+        catch (Exception ex) {
+            exception = true;
+            throw ex;
+        }
+        finally {
+            try {
+                if (jobClient != null) {
+                    jobClient.close();
+                }
+            }
+            catch (Exception ex) {
+                if (exception) {
+                    System.out.println("JobClient Error: " + ex);
+                }
+                else {
+                    throw ex;
+                }
+            }
+        }
+        return runJob;
     }
 
     public static void setStreaming(Configuration conf, String mapper, String reducer, String recordReader,

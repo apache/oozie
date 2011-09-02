@@ -32,7 +32,7 @@ public class DemoReducer extends MapReduceBase implements Reducer<Text, IntWrita
     // reduce(WritableComparable, Iterator, OutputCollector, Reporter)-
     // Reducer has 3 primary phases: shuffle, sort and reduce.-
     public void reduce(Text key, Iterator<IntWritable> values, OutputCollector<Text, IntWritable> output,
-            Reporter reporter) throws IOException {
+                       Reporter reporter) throws IOException {
         int sum = 0;
         while (values.hasNext()) {
             sum += values.next().get();

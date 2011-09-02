@@ -30,13 +30,17 @@
         <failIfNoTests>false</failIfNoTests>
 
         <!-- Oozie is tied to a Hadoop version, this allows Oozie versioning within a single Hadoop version -->
-        <oozieVersion>1.6.2</oozieVersion>
+        <oozieVersion>2.0.2.1</oozieVersion>
 
-        <hadoopVersion>0.20.1</hadoopVersion>
+        <hadoopGroupId>org.apache.hadoop</hadoopGroupId>
 
-        <pigVersion>0.2.0-H20-J660</pigVersion>
+        <hadoopVersion>0.20.2</hadoopVersion>
 
-        <build>SNAPSHOT</build>
+        <pigGroupId>com.yahoo.hadoop</pigGroupId>
+
+        <pigVersion>0.7.0</pigVersion>
+
+        <build></build>
 
         <oozie.test.dir>/tmp</oozie.test.dir>
 
@@ -64,7 +68,8 @@
     </licenses>
 
     <organization>
-        <name>Yahoo! Inc.</name>
+        <name>Apache Software Foundation</name>
+        <url>http://www.apache.org</url>
     </organization>
 
     <modules>
@@ -84,8 +89,8 @@
             </snapshots>
         </repository>
         <repository>
-            <id>apache</id>
-			<url>https://repository.apache.org/content/repositories/apache-legacy-snapshots</url>
+            <id>apache.snapshots</id>
+            <url>http://repository.apache.org/snapshots</url>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
@@ -103,6 +108,20 @@
             <layout>legacy</layout>
             <snapshots>
                 <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>people.apache.snapshots</id>
+            <url>http://people.apache.org/repo/m2-snapshot-repository</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>yahoo.github</id>
+            <url>http://yahoo.github.com/maven/repository</url>
+            <snapshots>
+                <enabled>true</enabled>
             </snapshots>
         </repository>
     </repositories>
@@ -164,6 +183,21 @@
                     </reportSet>
                 </reportSets>
             </plugin>
+
+
+           <plugin>
+               <groupId>org.codehaus.mojo</groupId>
+               <artifactId>findbugs-maven-plugin</artifactId>
+               <version>2.0.1</version>
+  		<configuration>
+    			<threshold>High</threshold>
+    			<effort>Default</effort>
+  		</configuration>
+          </plugin>
+
+
+
+
         </plugins>
     </reporting>
 
@@ -289,6 +323,32 @@
                   </goals>
                 </execution>
               </executions>
+            </plugin>
+            <!--
+			<plugin>
+		        <groupId>org.apache.maven.plugins</groupId>
+		        <artifactId>maven-clover-plugin</artifactId>
+		        <configuration>
+		          <licenseLocation>build-setup/clover.license</licenseLocation>
+		        </configuration>
+		        <executions>
+		          <execution>
+		            <phase>verify</phase>
+		            <goals>
+		              <goal>instrument</goal>
+		              <goal>check</goal>
+		            </goals>
+		          </execution>
+		        </executions>
+		    </plugin>
+		    -->
+	        <plugin>
+              <groupId>com.atlassian.maven.plugins</groupId>
+              <artifactId>maven-clover2-plugin</artifactId>
+              <version>3.0.1</version>
+              <configuration>
+					<licenseLocation>/home/y/conf/clover/clover.license</licenseLocation>
+              </configuration>
             </plugin>
         </plugins>
     </build>

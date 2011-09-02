@@ -25,7 +25,7 @@ public class TestCLIParser extends TestCase {
 
     public void testEmptyParser() throws Exception {
         try {
-            CLIParser parser = new CLIParser("oozie", new String[] {});
+            CLIParser parser = new CLIParser("oozie", new String[]{});
             CLIParser.Command c = parser.parse(new String[]{"a"});
             fail();
         }
@@ -36,7 +36,7 @@ public class TestCLIParser extends TestCase {
 
     public void testCommandParser() throws Exception {
         try {
-            CLIParser parser = new CLIParser("oozie", new String[] {});
+            CLIParser parser = new CLIParser("oozie", new String[]{});
             parser.addCommand("a", "<A>", "AAAAA", new Options(), false);
             CLIParser.Command c = parser.parse(new String[]{"a", "b"});
             assertEquals("a", c.getName());

@@ -42,8 +42,8 @@
                 <mkdir path="/tmp"/>
             </prepare>
             <streaming>
-              <mapper>/mycat.sh</mapper>
-              <reducer>/mywc.sh</reducer>
+                <mapper>/mycat.sh</mapper>
+                <reducer>/mywc.sh</reducer>
             </streaming>
             <job-xml>/tmp</job-xml>
             <configuration>
@@ -91,6 +91,6 @@
     </action>
 
     <join name="f" to="g"/>
-    
+
     <end name="z"/>
 </workflow-app>

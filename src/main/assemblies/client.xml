@@ -25,7 +25,7 @@
 
     <files>
         <file>
-            <source>${basedir}/target/${artifact.artifactId}-${artifact.version}.jar</source>
+            <source>${project.build.directory}/${artifact.artifactId}-${artifact.version}.jar</source>
             <outputDirectory>lib</outputDirectory>
             <fileMode>0644</fileMode>
         </file>
@@ -47,6 +47,9 @@
             <unpack>false</unpack>
             <scope>compile</scope>
             <fileMode>0644</fileMode>
+            <excludes>
+                <exclude>javax.persistence:persistence-api</exclude>
+            </excludes>
         </dependencySet>
     </dependencySets>
 </assembly>

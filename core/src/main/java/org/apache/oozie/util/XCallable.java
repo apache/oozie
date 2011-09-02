@@ -23,19 +23,15 @@ import java.util.concurrent.Callable;
 
 
 /**
- * Extends Callable adding the concept of priority.
- * <p/>
- * The priority is useful when queuing callables for later execution via the
- * {@link org.apache.oozie.service.CallableQueueService}.
- * <p/>
- * A higher number means a higher priority.
- * <p/>
+ * Extends Callable adding the concept of priority. <p/> The priority is useful when queuing callables for later
+ * execution via the {@link org.apache.oozie.service.CallableQueueService}. <p/> A higher number means a higher
+ * priority. <p/>
  */
 public interface XCallable<T> extends Callable<T> {
 
     /**
      * Return the callable name.
-     * 
+     *
      * @return the callable name.
      */
     public String getName();
@@ -48,13 +44,18 @@ public interface XCallable<T> extends Callable<T> {
     public int getPriority();
 
     /**
-     * Return the callable type.
-     * <p/>
-     * The callable type is used for concurrency throttling in the
-     * {@link org.apache.oozie.service.CallableQueueService}.
+     * Return the callable type. <p/> The callable type is used for concurrency throttling in the {@link
+     * org.apache.oozie.service.CallableQueueService}.
      *
      * @return the callable type.
      */
     public String getType();
+
+    /**
+     * Returns the createdTime of the callable in milliseconds
+     *
+     * @return the callable createdTime
+     */
+    public long getCreatedTime();
 
 }

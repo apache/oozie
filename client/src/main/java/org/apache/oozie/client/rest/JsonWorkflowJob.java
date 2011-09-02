@@ -27,24 +27,67 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import javax.persistence.*;
+
 /**
  * Json Bean that represents an Oozie workflow job.
  */
+
+@Entity
+@Table(name = "WF_JOBS")
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "bean_type", discriminatorType = DiscriminatorType.STRING)
 public class JsonWorkflowJob implements WorkflowJob, JsonBean {
-    private String appPath;
-    private String appName;
+
+    @Id
     private String id;
-    private String externalId;
-    private String conf;
+
+    @Basic
+    @Column(name = "app_name")
+    private String appName = null;
+
+    @Basic
+    @Column(name = "app_path")
+    private String appPath = null;
+
+    @Transient
+    private String externalId = null;
+
+    @Column(name = "conf")
+    @Lob
+    private String conf = null;
+
+    @Transient
     private Status status = WorkflowJob.Status.PREP;
+
+    @Transient
     private Date createdTime;
+
+    @Transient
     private Date startTime;
+
+    @Transient
     private Date endTime;
-    private Date lastModTime;
-    private String user;
+
+    @Transient
+    private Date lastModifiedTime;
+
+    @Basic
+    @Column(name = "user_name")
+    private String user = null;
+
+    @Basic
+    @Column(name = "group_name")
     private String group;
+
+    @Basic
+    @Column(name = "run")
     private int run = 1;
+
+    @Transient
     private String consoleUrl;
+
+    @Transient
     private List<? extends JsonWorkflowAction> actions;
 
     public JsonWorkflowJob() {
@@ -59,7 +102,7 @@ public class JsonWorkflowJob implements WorkflowJob, JsonBean {
         externalId = (String) json.get(JsonTags.WORKFLOW_EXTERNAL_ID);
         conf = (String) json.get(JsonTags.WORKFLOW_CONF);
         status = Status.valueOf((String) json.get(JsonTags.WORKFLOW_STATUS));
-        lastModTime = JsonUtils.parseDateRfc822((String) json.get(JsonTags.WORKFLOW_LAST_MOD_TIME));
+        lastModifiedTime = JsonUtils.parseDateRfc822((String) json.get(JsonTags.WORKFLOW_LAST_MOD_TIME));
         createdTime = JsonUtils.parseDateRfc822((String) json.get(JsonTags.WORKFLOW_CREATED_TIME));
         startTime = JsonUtils.parseDateRfc822((String) json.get(JsonTags.WORKFLOW_START_TIME));
         endTime = JsonUtils.parseDateRfc822((String) json.get(JsonTags.WORKFLOW_END_TIME));
@@ -79,7 +122,7 @@ public class JsonWorkflowJob implements WorkflowJob, JsonBean {
         json.put(JsonTags.WORKFLOW_EXTERNAL_ID, externalId);
         json.put(JsonTags.WORKFLOW_CONF, conf);
         json.put(JsonTags.WORKFLOW_STATUS, status.toString());
-        json.put(JsonTags.WORKFLOW_LAST_MOD_TIME, JsonUtils.formatDateRfc822(lastModTime));
+        json.put(JsonTags.WORKFLOW_LAST_MOD_TIME, JsonUtils.formatDateRfc822(lastModifiedTime));
         json.put(JsonTags.WORKFLOW_CREATED_TIME, JsonUtils.formatDateRfc822(createdTime));
         json.put(JsonTags.WORKFLOW_START_TIME, JsonUtils.formatDateRfc822(startTime));
         json.put(JsonTags.WORKFLOW_END_TIME, JsonUtils.formatDateRfc822(endTime));
@@ -139,12 +182,12 @@ public class JsonWorkflowJob implements WorkflowJob, JsonBean {
         this.status = status;
     }
 
-    public Date getLastModTime() {
-        return lastModTime;
+    public Date getLastModifiedTime() {
+        return lastModifiedTime;
     }
 
-    public void setLastModTime(Date lastModTime) {
-        this.lastModTime = lastModTime;
+    public void setLastModifiedTime(Date lastModTime) {
+        this.lastModifiedTime = lastModTime;
     }
 
     public Date getCreatedTime() {
@@ -235,10 +278,10 @@ public class JsonWorkflowJob implements WorkflowJob, JsonBean {
     @SuppressWarnings("unchecked")
     public static JSONArray toJSONArray(List<? extends JsonWorkflowJob> workflows) {
         JSONArray array = new JSONArray();
-        if(workflows!=null){
-	        for (JsonWorkflowJob node : workflows) {
-	            array.add(node.toJSONObject());
-	        }
+        if (workflows != null) {
+            for (JsonWorkflowJob node : workflows) {
+                array.add(node.toJSONObject());
+            }
         }
         return array;
     }

@@ -2,6 +2,10 @@
 
 ---+!! Oozie, a Hadoop Workflow System
 
+Oozie v2 is a server based _Coordinator Engine_ specialized in running workflows based on time and data triggers.
+It can continuously run workflows based on time (e.g. run it every hour), and data availability 
+(e.g. wait for my input data to exist before running my workflow). 
+
 Oozie v1 is a server based _Workflow Engine_ specialized in running workflow jobs with actions that 
 execute Hadoop Map/Reduce and Pig jobs.
 
@@ -29,6 +33,8 @@ Enough reading already? Follow the steps in [[DG_QuickStart][Oozie Quick Start]]
 
    * [[DG_QuickStart][Oozie Quick Start]]
    * [[DG_Examples][Running the Examples]]
+
+   * [[CoordinatorFunctionalSpec][Coordinator Functional Specification]]
 
    * [[WorkflowFunctionalSpec][Workflow Functional Specification]]
    * Specification Shortcuts
@@ -98,12 +104,9 @@ Some of the components in the dependencies report don't mention their license in
 MySQL JDBC driver, [[http://www.gnu.org/licenses/gpl-2.0.html][GNU General Public License, Version 2]], is included in
 the Oozie distribution only if a MySQL Oozie distribution is created.
 
-The Oozie web console uses [[http://www.extjs.com/learn/Ext_Version_Archives][Ext JS 2.2]] which is available with a
-GNU GPL version 3.0 with an [[http://extjs.com/products/floss-exception.php][Open Source License Exception for Applications]]
-which covers projects using Apache License.
-
-IMPORTANT: The Ext JS 2.2 library is not included in the distribution, it must be installed separately, refer to the
-README.txt file in the distribution for details.
+The Oozie web console uses [[http://extjs.com/products/extjs/][Ext JS 2.2]] which is available with a GNU GPL version
+3.0 with an [[http://extjs.com/products/floss-exception.php][Open Source License Exception for Applications]] which
+covers projects using Apache License.
 
 Oozie uses a modified version of the Apache Doxia core and twiki plugins to generate Oozie documentation.
 

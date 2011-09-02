@@ -63,8 +63,7 @@ public abstract class IOUtils {
     }
 
     /**
-     * Return a reader as string.
-     * <p/>
+     * Return a reader as string. <p/>
      *
      * @param reader reader to read into a string.
      * @param maxLen max content length allowed, if -1 there is no limit.
@@ -87,11 +86,10 @@ public abstract class IOUtils {
         reader.close();
         return sb.toString();
     }
-    
+
 
     /**
-     * Return a classpath resource as a stream.
-     * <p/>
+     * Return a classpath resource as a stream. <p/>
      *
      * @param path classpath for the resource.
      * @param maxLen max content length allowed.
@@ -108,9 +106,7 @@ public abstract class IOUtils {
     }
 
     /**
-     * Return a classpath resource as a reader.
-     * <p/>
-     * It is assumed that the resource is a text resource.
+     * Return a classpath resource as a reader. <p/> It is assumed that the resource is a text resource.
      *
      * @param path classpath for the resource.
      * @param maxLen max content length allowed.
@@ -122,9 +118,7 @@ public abstract class IOUtils {
     }
 
     /**
-     * Return a classpath resource as string.
-     * <p/>
-     * It is assumed that the resource is a text resource.
+     * Return a classpath resource as string. <p/> It is assumed that the resource is a text resource.
      *
      * @param path classpath for the resource.
      * @param maxLen max content length allowed.
@@ -233,7 +227,7 @@ public abstract class IOUtils {
      * @return an absolute File to the created JAR file.
      * @throws java.io.IOException thrown if the JAR file could not be created.
      */
-    public static File createJar(File baseDir, String jarName, Class ... classes) throws IOException {
+    public static File createJar(File baseDir, String jarName, Class... classes) throws IOException {
         File classesDir = new File(baseDir, "classes");
         for (Class clazz : classes) {
             String classPath = clazz.getName().replace(".", "/") + ".class";

@@ -40,6 +40,7 @@ import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.oozie.service.WorkflowStoreService;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.util.PropertiesUtils;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
@@ -53,13 +54,29 @@ import org.apache.oozie.workflow.WorkflowInstance;
 import org.apache.oozie.workflow.WorkflowLib;
 import org.apache.oozie.workflow.lite.NodeHandler;
 
-public class ReRunCommand extends Command<Void> {
+public class ReRunCommand extends WorkflowCommand<Void> {
 
     private String jobId;
     private Configuration conf;
     private String authToken;
     private Set<String> nodesToSkip = new HashSet<String>();
     public static final String TO_SKIP = "TO_SKIP";
+
+    private static final Set<String> DISALLOWED_DEFAULT_PROPERTIES = new HashSet<String>();
+    private static final Set<String> DISALLOWED_USER_PROPERTIES = new HashSet<String>();
+
+    static {
+        String[] badUserProps = {PropertiesUtils.DAYS, PropertiesUtils.HOURS, PropertiesUtils.MINUTES,
+                PropertiesUtils.KB, PropertiesUtils.MB, PropertiesUtils.GB, PropertiesUtils.TB, PropertiesUtils.PB,
+                PropertiesUtils.RECORDS, PropertiesUtils.MAP_IN, PropertiesUtils.MAP_OUT, PropertiesUtils.REDUCE_IN,
+                PropertiesUtils.REDUCE_OUT, PropertiesUtils.GROUPS};
+        PropertiesUtils.createPropertySet(badUserProps, DISALLOWED_USER_PROPERTIES);
+
+        String[] badDefaultProps = {PropertiesUtils.HADOOP_USER, PropertiesUtils.HADOOP_UGI,
+                WorkflowAppService.HADOOP_JT_KERBEROS_NAME, WorkflowAppService.HADOOP_NN_KERBEROS_NAME};
+        PropertiesUtils.createPropertySet(badUserProps, DISALLOWED_DEFAULT_PROPERTIES);
+        PropertiesUtils.createPropertySet(badDefaultProps, DISALLOWED_DEFAULT_PROPERTIES);
+    }
 
     public ReRunCommand(String jobId, Configuration conf, String authToken) {
         super("rerun", "rerun", 0, XLog.STD);
@@ -69,24 +86,24 @@ public class ReRunCommand extends Command<Void> {
     }
 
     /**
-     * Checks the pre-conditions that are required for workflow to recover -
-     * Last run of Workflow should be completed - The nodes that are to be
-     * skipped are to be completed successfully in the base run.
-     * 
+     * Checks the pre-conditions that are required for workflow to recover - Last run of Workflow should be completed -
+     * The nodes that are to be skipped are to be completed successfully in the base run.
+     *
      * @param wfBean Workflow bean
      * @param actions List of actions of Workflow
      * @throws org.apache.oozie.command.CommandException On failure of pre-conditions
      */
     private void checkPreConditions(WorkflowJobBean wfBean, List<WorkflowActionBean> actions) throws CommandException {
-        if (!(wfBean.getStatus().equals(WorkflowJob.Status.FAILED) || wfBean.getStatus().equals(WorkflowJob.Status.KILLED) ||
-              wfBean.getStatus().equals(WorkflowJob.Status.SUCCEEDED))) {
+        if (!(wfBean.getStatus().equals(WorkflowJob.Status.FAILED)
+                || wfBean.getStatus().equals(WorkflowJob.Status.KILLED) || wfBean.getStatus().equals(
+                WorkflowJob.Status.SUCCEEDED))) {
             throw new CommandException(ErrorCode.E0805, wfBean.getStatus());
         }
         Set<String> unmachedNodes = new HashSet<String>(nodesToSkip);
         for (WorkflowActionBean action : actions) {
             if (nodesToSkip.contains(action.getName())) {
-                if (!action.getStatus().equals(WorkflowAction.Status.OK) &&
-                    !action.getStatus().equals(WorkflowAction.Status.ERROR)) {
+                if (!action.getStatus().equals(WorkflowAction.Status.OK)
+                        && !action.getStatus().equals(WorkflowAction.Status.ERROR)) {
                     throw new CommandException(ErrorCode.E0806, action.getName());
                 }
                 unmachedNodes.remove(action.getName());
@@ -104,8 +121,7 @@ public class ReRunCommand extends Command<Void> {
     }
 
     /**
-     * Parses the config and adds the nodes that are to be skipped to the
-     * skipped node list
+     * Parses the config and adds the nodes that are to be skipped to the skipped node list
      */
     private void parseSkippedNodeConf() {
         if (conf != null) {
@@ -119,9 +135,9 @@ public class ReRunCommand extends Command<Void> {
 
     protected Void call(WorkflowStore store) throws StoreException, CommandException {
         incrJobCounter(1);
-        WorkflowJobBean wfBean = store.getWorkflow(jobId, true);
+        WorkflowJobBean wfBean = store.getWorkflow(jobId, false);
         setLogInfo(wfBean);
-        List<WorkflowActionBean> actions = store.getActionsForWorkflow(jobId, true);
+        List<WorkflowActionBean> actions = store.getActionsForWorkflow(jobId, false);
         WorkflowInstance oldWfInstance = wfBean.getWorkflowInstance();
         WorkflowInstance newWfInstance;
         XLog log = XLog.getLog(getClass());
@@ -137,14 +153,17 @@ public class ReRunCommand extends Command<Void> {
 
             Path configDefault = new Path(conf.get(OozieClient.APP_PATH), SubmitCommand.CONFIG_DEFAULT);
 
-            FileSystem fs = Services.get().get(HadoopAccessorService.class).
-                    createFileSystem(wfBean.getUser(), wfBean.getGroup(), configDefault.toUri(), new Configuration());
+            FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(wfBean.getUser(),
+                                                                                             wfBean.getGroup(), configDefault.toUri(), new Configuration());
 
             if (fs.exists(configDefault)) {
                 Configuration defaultConf = new XConfiguration(fs.open(configDefault));
-                SubmitCommand.validateDefaultConfiguration(defaultConf);
+                PropertiesUtils.checkDisallowedProperties(defaultConf, DISALLOWED_DEFAULT_PROPERTIES);
                 XConfiguration.injectDefaults(defaultConf, conf);
             }
+
+            PropertiesUtils.checkDisallowedProperties(conf, DISALLOWED_USER_PROPERTIES);
+
             try {
                 newWfInstance = workflowLib.createInstance(app, conf, jobId);
             }
@@ -187,7 +206,7 @@ public class ReRunCommand extends Command<Void> {
 
     /**
      * Copys the variables for skipped nodes from the old wfInstance to new one.
-     * 
+     *
      * @param newWfInstance
      * @param oldWfInstance
      */
@@ -213,5 +232,26 @@ public class ReRunCommand extends Command<Void> {
             }
         }
         newWfInstance.setAllVars(newVars);
+    }
+
+    @Override
+    protected Void execute(WorkflowStore store) throws CommandException, StoreException {
+        try {
+            XLog.getLog(getClass()).debug("STARTED ReRunCommand for job " + jobId);
+            if (lock(jobId)) {
+                call(store);
+            }
+            else {
+                queueCallable(new ReRunCommand(jobId, conf, authToken), LOCK_FAILURE_REQUEUE_INTERVAL);
+                XLog.getLog(getClass()).warn("ReRunCommand lock was not acquired - failed {0}", jobId);
+            }
+        }
+        catch (InterruptedException e) {
+            queueCallable(new ReRunCommand(jobId, conf, authToken), LOCK_FAILURE_REQUEUE_INTERVAL);
+            XLog.getLog(getClass())
+                    .warn("ReRunCommand lock was not acquired - interrupted exception failed {0}", jobId);
+        }
+        XLog.getLog(getClass()).debug("ENDED ReRunCommand for job " + jobId);
+        return null;
     }
 }

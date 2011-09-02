@@ -37,7 +37,7 @@ public abstract class DagServletTestCase extends XFsTestCase {
     protected String getContextURL() {
         return container.getContextURL();
     }
-    
+
     protected URL createURL(String servletPath, String resource, Map<String, String> parameters) throws Exception {
         StringBuilder sb = new StringBuilder();
         sb.append(container.getServletURL(servletPath));
@@ -66,7 +66,7 @@ public abstract class DagServletTestCase extends XFsTestCase {
     }
 
     protected void runTest(String[] servletPath, Class[] servletClass, boolean securityEnabled,
-            Callable<Void> assertions) throws Exception {
+                           Callable<Void> assertions) throws Exception {
         Services services = new Services();
         this.servletPath = servletPath[0];
         try {
@@ -75,6 +75,7 @@ public abstract class DagServletTestCase extends XFsTestCase {
             Services.get().setService(ForTestAuthorizationService.class);
             Services.get().setService(ForTestWorkflowStoreService.class);
             Services.get().setService(MockDagEngineService.class);
+            Services.get().setService(MockCoordinatorEngineService.class);
             container = new EmbeddedServletContainer("oozie");
             for (int i = 0; i < servletPath.length; i++) {
                 container.addServletEndpoint(servletPath[i], servletClass[i]);

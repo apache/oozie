@@ -28,9 +28,8 @@ import java.io.IOException;
 public class ClassUtils {
 
     /**
-     * Return the path to the JAR file in the classpath containing the specified class.
-     * <p/>
-     * This method has been canibalized from Hadoop's JobConf class.
+     * Return the path to the JAR file in the classpath containing the specified class. <p/> This method has been
+     * canibalized from Hadoop's JobConf class.
      *
      * @param clazz class to find its JAR file.
      * @return the JAR file of the class.

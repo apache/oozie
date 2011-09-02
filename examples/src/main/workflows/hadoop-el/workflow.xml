@@ -16,7 +16,7 @@
   limitations under the License.
 -->
 <workflow-app xmlns='uri:oozie:workflow:0.1' name='hadoopel-wf'>
-    <start to='hadoop1' />
+    <start to='hadoop1'/>
     <action name='hadoop1'>
         <map-reduce>
             <job-tracker>${jobTracker}</job-tracker>
@@ -43,22 +43,24 @@
                     <value>${outputDir}</value>
                 </property>
                 <property>
-                  <name>mapred.job.queue.name</name>
-                  <value>${queueName}</value>
+                    <name>mapred.job.queue.name</name>
+                    <value>${queueName}</value>
                 </property>
             </configuration>
         </map-reduce>
-        <ok to="verify" />
-        <error to="fail" />
+        <ok to="verify"/>
+        <error to="fail"/>
     </action>
-  <decision name="verify">
-    <switch>
-    <case to="end">${(hadoop:counters('hadoop1')[RECORDS][MAP_IN] == hadoop:counters('hadoop1')[RECORDS][MAP_OUT]) and (hadoop:counters('hadoop1')[RECORDS][REDUCE_IN] == hadoop:counters('hadoop1')[RECORDS][REDUCE_OUT]) and (hadoop:counters('hadoop1')[RECORDS][GROUPS] gt 0)}</case>
-    <default to="fail" />
-    </switch>
-  </decision>
+    <decision name="verify">
+        <switch>
+            <case to="end">
+                ${(hadoop:counters('hadoop1')[RECORDS][MAP_IN] == hadoop:counters('hadoop1')[RECORDS][MAP_OUT]) and (hadoop:counters('hadoop1')[RECORDS][REDUCE_IN] == hadoop:counters('hadoop1')[RECORDS][REDUCE_OUT]) and (hadoop:counters('hadoop1')[RECORDS][GROUPS] gt 0)}
+            </case>
+            <default to="fail"/>
+        </switch>
+    </decision>
     <kill name="fail">
         <message>Hadoop-EL Map/Reduce failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>
     </kill>
-    <end name='end' />
+    <end name='end'/>
 </workflow-app>

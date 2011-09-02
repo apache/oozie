@@ -32,14 +32,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.apache.commons.logging.LogFactory;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.db.Schema.Column;
 import org.apache.oozie.util.db.Schema.Table;
 
 /**
- * The <code>SqlStatement</code> is used to generate SQL Statements. Prepare the
- * generated Statements and also to parse the resultSets
+ * The <code>SqlStatement</code> is used to generate SQL Statements. Prepare the generated Statements and also to parse
+ * the resultSets
  */
 public abstract class SqlStatement {
 
@@ -47,8 +48,8 @@ public abstract class SqlStatement {
     protected boolean forUpdate = false;
 
     /**
-     * <code>ResultSetReader</code> is used to parse the result set and gives
-     * methods for getting appropriate type of data given the column name
+     * <code>ResultSetReader</code> is used to parse the result set and gives methods for getting appropriate type of
+     * data given the column name
      */
     public static class ResultSetReader {
         final ResultSet rSet;
@@ -59,7 +60,7 @@ public abstract class SqlStatement {
 
         /**
          * Move the Result Set to next record
-         * 
+         *
          * @return true if there is a next record
          * @throws SQLException
          */
@@ -69,7 +70,7 @@ public abstract class SqlStatement {
 
         /**
          * Close the Result Set
-         * 
+         *
          * @throws SQLException
          */
         public void close() throws SQLException {
@@ -78,7 +79,7 @@ public abstract class SqlStatement {
 
         /**
          * Get the Column data given its type and name
-         * 
+         *
          * @param <T> Type of the column
          * @param clazz Class of the Type
          * @param col Column name
@@ -90,18 +91,20 @@ public abstract class SqlStatement {
             if (clazz.isAssignableFrom(col.getType())) {
                 return (T) rSet.getObject(col.asLabel());
             }
-            else if (String.class.equals(clazz)) {
-                return (T) ("" + rSet.getObject(col.asLabel()));
-            }
             else {
-                throw new RuntimeException("Column Error : Actual Type [" + col.getType() + "]," + " Requested Type ["
-                        + clazz + "] !!");
+                if (String.class.equals(clazz)) {
+                    return (T) ("" + rSet.getObject(col.asLabel()));
+                }
+                else {
+                    throw new RuntimeException("Column Error : Actual Type [" + col.getType() + "]," + " Requested Type ["
+                            + clazz + "] !!");
+                }
             }
         }
 
         /**
          * Get the data for columns with blob type
-         * 
+         *
          * @param col Column name
          * @return Column data
          * @throws SQLException
@@ -122,7 +125,7 @@ public abstract class SqlStatement {
                     bOut.close();
                 }
                 catch (IOException e) {
-                    new SQLException(e);
+                    throw new SQLException(e);
                 }
                 bArray = baos.toByteArray();
             }
@@ -135,7 +138,7 @@ public abstract class SqlStatement {
 
         /**
          * Get a String Column
-         * 
+         *
          * @param col Column Name
          * @return Column data
          * @throws SQLException
@@ -145,8 +148,8 @@ public abstract class SqlStatement {
         }
 
         /**
-         * Get the TimeStamp Column
-         * 
+         * Get the Timestamp Column
+         *
          * @param col Column name
          * @return Column data
          * @throws SQLException
@@ -157,7 +160,7 @@ public abstract class SqlStatement {
 
         /**
          * Get the Boolean Column
-         * 
+         *
          * @param col Column name
          * @return Column data
          * @throws SQLException
@@ -168,7 +171,7 @@ public abstract class SqlStatement {
 
         /**
          * Get the Numeric data
-         * 
+         *
          * @param col Column name
          * @return Column data
          * @throws SQLException
@@ -218,7 +221,7 @@ public abstract class SqlStatement {
 
     /**
      * Generate condition statement for IS NULL
-     * 
+     *
      * @param column column name
      * @return IS NULL condition statement
      */
@@ -228,14 +231,14 @@ public abstract class SqlStatement {
 
     /**
      * Generate condition statement for IS NOT NULL
-     * 
+     *
      * @param column column name
      * @return IS NOT NULL condition statement
      */
     public static Condition isNotNull(Column column) {
         return new Null(true, column);
     }
-    
+
     /**
      * LIKE/NOT LIKE Condition Generator
      */
@@ -249,7 +252,7 @@ public abstract class SqlStatement {
 
     /**
      * Generate condition statement for IS LIKE
-     * 
+     *
      * @param column column name
      * @param value value to be checked
      * @return IS LIKE condition statement
@@ -260,7 +263,7 @@ public abstract class SqlStatement {
 
     /**
      * Generates condition statement for IS NOT LIKE
-     * 
+     *
      * @param column column name
      * @param value value to be checked
      * @return IS NOT LIKE condition statement
@@ -287,7 +290,7 @@ public abstract class SqlStatement {
 
     /**
      * Generate Condition statement for equality check
-     * 
+     *
      * @param column
      * @param value
      * @return Equality Condition statement
@@ -298,7 +301,7 @@ public abstract class SqlStatement {
 
     /**
      * Generate InEquality Condition statement
-     * 
+     *
      * @param column
      * @param value
      * @return Inequality Condition statement
@@ -309,7 +312,7 @@ public abstract class SqlStatement {
 
     /**
      * Generate Condition statement for LESS THAN condition checking
-     * 
+     *
      * @param column
      * @param value
      * @return less than condition statement
@@ -320,7 +323,7 @@ public abstract class SqlStatement {
 
     /**
      * Generate Condition statement for GREATER THAN condition checking
-     * 
+     *
      * @param column
      * @param value
      * @return greater than condition statement
@@ -331,7 +334,7 @@ public abstract class SqlStatement {
 
     /**
      * Generate Condition statement for LESS THAN OR EQUAL condition checking
-     * 
+     *
      * @param column
      * @param value
      * @return less than or equal condition statement
@@ -342,7 +345,7 @@ public abstract class SqlStatement {
 
     /**
      * Generate Condition statement for GREATER THAN OR EQUAL condition checking
-     * 
+     *
      * @param column
      * @param value
      * @return greater than or equal condition statement
@@ -352,8 +355,7 @@ public abstract class SqlStatement {
     }
 
     /**
-     * IN/NOT IN condition statement generator for checking multiple values and
-     * for sub queries
+     * IN/NOT IN condition statement generator for checking multiple values and for sub queries
      */
     static class In extends Condition {
         In(boolean isInvert, Column column, Object... values) {
@@ -381,7 +383,7 @@ public abstract class SqlStatement {
 
     /**
      * IN Condition for checking multiple values
-     * 
+     *
      * @param column
      * @param values
      * @return In condition statement
@@ -392,7 +394,7 @@ public abstract class SqlStatement {
 
     /**
      * NOT IN Condition for checking multiple values
-     * 
+     *
      * @param column
      * @param values
      * @return not in condition statement
@@ -403,7 +405,7 @@ public abstract class SqlStatement {
 
     /**
      * Sub query with IN condition
-     * 
+     *
      * @param column
      * @param select
      * @return Sub query using in
@@ -414,7 +416,7 @@ public abstract class SqlStatement {
 
     /**
      * Sub query with NOT IN condition
-     * 
+     *
      * @param column
      * @param select
      * @return sub query using not in
@@ -440,7 +442,7 @@ public abstract class SqlStatement {
 
     /**
      * BETWEEN range checking statement
-     * 
+     *
      * @param column
      * @param lVal min value for range checking
      * @param rVal max value for range checking
@@ -452,7 +454,7 @@ public abstract class SqlStatement {
 
     /**
      * NOT BETWEEN range checking statement
-     * 
+     *
      * @param column
      * @param lVal min value for range checking
      * @param rVal max value for range checking
@@ -464,7 +466,7 @@ public abstract class SqlStatement {
 
     /**
      * Logical AND condition Generator
-     * 
+     *
      * @param conds list of conditions for AND
      * @return AND statement
      */
@@ -479,8 +481,10 @@ public abstract class SqlStatement {
                 retVal.values.addAll(conds[i].values);
             }
         }
-        else if (conds.length == 1) {
-            return conds[0];
+        else {
+            if (conds.length == 1) {
+                return conds[0];
+            }
         }
         retVal.sb.append(" )");
         return retVal;
@@ -488,7 +492,7 @@ public abstract class SqlStatement {
 
     /**
      * Logical OR condition generator
-     * 
+     *
      * @param conds list of conditions for OR
      * @return OR statement
      */
@@ -503,8 +507,10 @@ public abstract class SqlStatement {
                 retVal.values.addAll(conds[i].values);
             }
         }
-        else if (conds.length == 1) {
-            return conds[0];
+        else {
+            if (conds.length == 1) {
+                return conds[0];
+            }
         }
         retVal.sb.append(" )");
         return retVal;
@@ -514,9 +520,8 @@ public abstract class SqlStatement {
     protected List<Object> values = new ArrayList<Object>();
 
     /**
-     * Select Statement generator. Generate the SQL Statement for select
-     * statements. Provide methods to add WHERE clause, ORDER BY clause, FOR
-     * UPDATE clause.
+     * Select Statement generator. Generate the SQL Statement for select statements. Provide methods to add WHERE
+     * clause, ORDER BY clause, FOR UPDATE clause.
      */
     public static class Select extends SqlStatement {
         private Condition condition;
@@ -575,7 +580,7 @@ public abstract class SqlStatement {
 
         /**
          * Set the condition for where clause
-         * 
+         *
          * @param condition condition for where clause
          * @return <code>Select</code> for cascading
          */
@@ -588,7 +593,7 @@ public abstract class SqlStatement {
 
         /**
          * Sets the column to sort and the order of sort
-         * 
+         *
          * @param column column to sort
          * @param order true = ascending
          * @return <code>Select</code> for cascading
@@ -596,8 +601,8 @@ public abstract class SqlStatement {
         public Select orderBy(Column column, boolean order) {
             if (!isOdered) {
                 Select retVal = new Select(this);
-                retVal.orderby = new Column[] { column };
-                retVal.isAscending = new boolean[] { order };
+                retVal.orderby = new Column[]{column};
+                retVal.isAscending = new boolean[]{order};
                 retVal.isOdered = true;
                 return retVal;
             }
@@ -606,7 +611,7 @@ public abstract class SqlStatement {
 
         /**
          * To sort 2 columns
-         * 
+         *
          * @param column0 First column to be sorted
          * @param order0 true = ascending
          * @param column1 Second column to be sorted
@@ -616,8 +621,8 @@ public abstract class SqlStatement {
         public Select orderBy(Column column0, boolean order0, Column column1, boolean order1) {
             if (!isOdered) {
                 Select retVal = new Select(this);
-                retVal.orderby = new Column[] { column0, column1 };
-                retVal.isAscending = new boolean[] { order0, order1 };
+                retVal.orderby = new Column[]{column0, column1};
+                retVal.isAscending = new boolean[]{order0, order1};
                 retVal.isOdered = true;
                 return retVal;
             }
@@ -626,7 +631,7 @@ public abstract class SqlStatement {
 
         /**
          * Setting the offset and limit for LIMIT clause
-         * 
+         *
          * @param offset
          * @param limit
          * @return <code>Select</code> for cascading
@@ -644,7 +649,7 @@ public abstract class SqlStatement {
 
         /**
          * Set the "for update" flag to lock the rows for updating
-         * 
+         *
          * @return <code>Select</code> for cascading
          */
         // TODO Not working for hsql
@@ -655,8 +660,7 @@ public abstract class SqlStatement {
         }
 
         /**
-         * Generate the SQL Select Statement with conditions and other clauses
-         * that were set
+         * Generate the SQL Select Statement with conditions and other clauses that were set
          */
         public String toString() {
             String oBy = "";
@@ -697,7 +701,7 @@ public abstract class SqlStatement {
 
         /**
          * Set the where clause for DELETE
-         * 
+         *
          * @param condition condition for where clause
          * @return <code>Delete</code> for cascading
          */
@@ -737,10 +741,9 @@ public abstract class SqlStatement {
 
         /**
          * SET clause for update statement
-         * 
+         *
          * @param column column name
-         * @param value A temporary place holder which can be replaced while
-         *        preparing
+         * @param value A temporary place holder which can be replaced while preparing
          * @return <code>Update</code> for cascading
          */
         public Update set(Column column, Object value) {
@@ -752,7 +755,7 @@ public abstract class SqlStatement {
 
         /**
          * Set condition for updating
-         * 
+         *
          * @param condition condition for where clause
          * @return <code>Update</code> for cascading
          */
@@ -798,10 +801,9 @@ public abstract class SqlStatement {
 
         /**
          * Set the VALUES that are to be inserted
-         * 
+         *
          * @param column
-         * @param value A temporary place holder which will be replaced while
-         *        preparing
+         * @param value A temporary place holder which will be replaced while preparing
          * @return
          */
         public Insert value(Column column, Object value) {
@@ -824,10 +826,9 @@ public abstract class SqlStatement {
     }
 
     /**
-     * Prepare the SQL Statement that is generated and assign the values to
-     * prepared statement. setValues should be called to set the Real Values for
-     * place holders
-     * 
+     * Prepare the SQL Statement that is generated and assign the values to prepared statement. setValues should be
+     * called to set the Real Values for place holders
+     *
      * @param conn Connection
      * @return Prepared SQL Statement
      * @throws SQLException
@@ -849,9 +850,8 @@ public abstract class SqlStatement {
     }
 
     /**
-     * Assign the values to Prepared Statement. setValues should be called to
-     * set the Real Values for place holders
-     * 
+     * Assign the values to Prepared Statement. setValues should be called to set the Real Values for place holders
+     *
      * @param pStmt Prepared Statement
      * @return PreparedStatement with values set
      * @throws SQLException
@@ -868,7 +868,7 @@ public abstract class SqlStatement {
 
     /**
      * Prepare the SQL Statement. Doesn't set the values.
-     * 
+     *
      * @param conn Connection
      * @return PreparedStatement
      * @throws SQLException
@@ -883,14 +883,14 @@ public abstract class SqlStatement {
 
     /**
      * Preparing Multiple statements for batch execution.
-     * 
+     *
      * @param conn Connection
      * @param values A list of maps that contains the actual values
      * @return Prepared Statement
      * @throws SQLException
      */
     public PreparedStatement prepareForBatch(Connection conn, List<? extends Map<Object, Object>> values,
-            PreparedStatement pStmt) throws SQLException {
+                                             PreparedStatement pStmt) throws SQLException {
         String stmt = toString();
         if (forUpdate && !Schema.isHsqlConnection(conn)) {
             stmt += " FOR UPDATE";
@@ -905,11 +905,10 @@ public abstract class SqlStatement {
 
     /**
      * Replace the place holders with actual values in the sql statement
-     * 
+     *
      * @param oldVal Place holder
      * @param newVal Actual Value
-     * @return SQL Statement with oldVal(place holder) replaced with
-     *         newVal(actual value)
+     * @return SQL Statement with oldVal(place holder) replaced with newVal(actual value)
      */
     public SqlStatement setValue(Object oldVal, Object newVal) {
         ArrayList<Object> temp = new ArrayList<Object>(values);
@@ -922,10 +921,9 @@ public abstract class SqlStatement {
     }
 
     /**
-     * Replace the keys(newValues) which are place holders in the sql
-     * statements with the corresponding new values. And Gives back a new SQL
-     * Statement so that the actual statement can be re-used
-     * 
+     * Replace the keys(newValues) which are place holders in the sql statements with the corresponding new values. And
+     * Gives back a new SQL Statement so that the actual statement can be re-used
+     *
      * @param newValues
      * @return A New SQL Statement object with actual values set in its member
      */
@@ -945,7 +943,7 @@ public abstract class SqlStatement {
 
     /**
      * Create the Appropriate SQL Statement with the given values
-     * 
+     *
      * @param temp
      * @return
      */
@@ -954,14 +952,20 @@ public abstract class SqlStatement {
         if (this instanceof Select) {
             retVal = new Select((Select) this);
         }
-        else if (this instanceof Insert) {
-            retVal = new Insert((Insert) this);
-        }
-        else if (this instanceof Update) {
-            retVal = new Update((Update) this);
-        }
-        else if(this instanceof Delete){
-            retVal = new Delete((Delete) this);
+        else {
+            if (this instanceof Insert) {
+                retVal = new Insert((Insert) this);
+            }
+            else {
+                if (this instanceof Update) {
+                    retVal = new Update((Update) this);
+                }
+                else {
+                    if (this instanceof Delete) {
+                        retVal = new Delete((Delete) this);
+                    }
+                }
+            }
         }
         retVal.values.clear();
         retVal.values.addAll(temp);
@@ -969,9 +973,8 @@ public abstract class SqlStatement {
     }
 
     /**
-     * Create the <code>ResultSetReader</code> object that has the methods to
-     * access the data from the result set
-     * 
+     * Create the <code>ResultSetReader</code> object that has the methods to access the data from the result set
+     *
      * @param rSet Result Set
      * @return ResultSet Reader
      */
@@ -981,7 +984,7 @@ public abstract class SqlStatement {
 
     /**
      * Return a new Insert Statement
-     * 
+     *
      * @param table
      * @return Insert statement
      */
@@ -991,7 +994,7 @@ public abstract class SqlStatement {
 
     /**
      * Return a new Update Statement
-     * 
+     *
      * @param table
      * @return Update statement
      */
@@ -1001,7 +1004,7 @@ public abstract class SqlStatement {
 
     /**
      * Return a new Delete Statement
-     * 
+     *
      * @param table
      * @return Delete Statement
      */
@@ -1011,7 +1014,7 @@ public abstract class SqlStatement {
 
     /**
      * Return a Select All Statement
-     * 
+     *
      * @param tables
      * @return Select * statement
      */
@@ -1021,7 +1024,7 @@ public abstract class SqlStatement {
 
     /**
      * Return a Select Statement
-     * 
+     *
      * @param columns columns to select
      * @return select statement
      */
@@ -1031,7 +1034,7 @@ public abstract class SqlStatement {
 
     /**
      * Select count(*) Statement generator.
-     * 
+     *
      * @param tables
      * @return "select count(*) from tables" statement
      */

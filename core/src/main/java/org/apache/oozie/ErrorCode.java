@@ -54,6 +54,9 @@ public enum ErrorCode {
     E0303(XLog.STD, "Invalid parameter value, [{0}] = [{1}]"),
     E0304(XLog.STD, "Invalid parameter type, parameter [{0}] expected type [{1}]"),
     E0305(XLog.STD, "Missing parameter [{0}]"),
+    E0306(XLog.STD, "Invalid parameter"),
+    E0307(XLog.STD, "Runtime error [{0}]"),
+
 
     E0400(XLog.STD, "User mismatch, request user [{0}] configuration user [{1}]"),
     E0401(XLog.STD, "Missing configuration property [{0}]"),
@@ -70,8 +73,8 @@ public enum ErrorCode {
     E0505(XLog.OPS, "Workflow app definition [{0}] does not exist"),
     E0506(XLog.OPS, "Workflow app definition [{0}] is not a file"),
     E0507(XLog.OPS, "Could not access to [{0}], {1}"),
-    E0508(XLog.OPS, "User [{0}] not authorized for job [{1}]"),
-
+    E0508(XLog.OPS, "User [{0}] not authorized for WF job [{1}]"),
+    E0509(XLog.OPS, "User [{0}] not authorized for Coord job [{1}]"),
 
     E0600(XLog.OPS, "Could not get connection, {0}"),
     E0601(XLog.OPS, "Could not close connection, {0}"),
@@ -116,9 +119,23 @@ public enum ErrorCode {
     E0805(XLog.STD, "Workflow job not completed, status [{0}]"),
     E0806(XLog.STD, "Action did not complete in previous run, action [{0}]"),
     E0807(XLog.STD, "Some skip actions were not executed [{0}]"),
+    E0808(XLog.STD, "Disallowed user property [{0}]"),
 
-    ETEST(XLog.STD, "THIS SHOULD HAPPEN ONLY IN TESTING, invalid job id [{0}]"),
-    ;
+    E1001(XLog.STD, "Could not read the coordinator job definition, {0}"),
+    E1002(XLog.STD, "Invalid coordinator application URI [{0}], {1}"),
+    E1003(XLog.STD, "Invalid coordinator application attributes [{0}], {1}"),
+    E1004(XLog.STD, "Expression language evaluation error [{0}], {1}"),
+    E1005(XLog.STD, "Could not read the coordinator job configuration read from DB, {0}"),
+    E1006(XLog.STD, "Invalid coordinator application [{0}], {1}"),
+    E1007(XLog.STD, "Unable to add record to SLA table. [{0}], {1}"),
+    E1008(XLog.STD, "Not implemented. [{0}]"),
+    E1009(XLog.STD, "Unable to parse XML response. [{0}]"),
+    E1010(XLog.STD, "Invalid data in coordinator xml. [{0}]"),
+    E1011(XLog.STD, "Cannot update coordinator job [{0}], {1}"),
+    E1012(XLog.STD, "Coord Job Materialization Error: {0}"),
+    E1013(XLog.STD, "Coord Job Recovery Error: {0}"),
+
+    ETEST(XLog.STD, "THIS SHOULD HAPPEN ONLY IN TESTING, invalid job id [{0}]"),;
 
     private String template;
     private int logMask;
@@ -127,7 +144,7 @@ public enum ErrorCode {
      * Create an error code.
      *
      * @param template template for the exception message.
-     * @param logMask  log mask for the exception.
+     * @param logMask log mask for the exception.
      */
     private ErrorCode(int logMask, String template) {
         this.logMask = logMask;
@@ -158,7 +175,7 @@ public enum ErrorCode {
      * @param args the parameters for the templatized message.
      * @return error message.
      */
-    public String format(Object ... args) {
+    public String format(Object... args) {
         return XLog.format("{0}: {1}", toString(), XLog.format(getTemplate(), args));
     }
 

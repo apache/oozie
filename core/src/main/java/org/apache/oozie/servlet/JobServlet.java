@@ -44,9 +44,9 @@ public class JobServlet extends JsonRestServlet {
     private static final ResourceInfo RESOURCES_INFO[] = new ResourceInfo[1];
 
     static {
-        RESOURCES_INFO[0] = new ResourceInfo("*", Arrays.asList("PUT", "GET"), Arrays.asList(
-                new ParameterInfo(RestConstants.ACTION_PARAM, String.class, true, Arrays.asList("PUT")),
-                new ParameterInfo(RestConstants.JOB_SHOW_PARAM, String.class, false, Arrays.asList("GET"))));
+        RESOURCES_INFO[0] = new ResourceInfo("*", Arrays.asList("PUT", "GET"), Arrays.asList(new ParameterInfo(
+                RestConstants.ACTION_PARAM, String.class, true, Arrays.asList("PUT")), new ParameterInfo(
+                RestConstants.JOB_SHOW_PARAM, String.class, false, Arrays.asList("GET"))));
     }
 
     public JobServlet() {
@@ -68,8 +68,8 @@ public class JobServlet extends JsonRestServlet {
             throw new XServletException(HttpServletResponse.SC_UNAUTHORIZED, ex);
         }
 
-        DagEngine dagEngine =
-                Services.get().get(DagEngineService.class).getDagEngine(getUser(request), getAuthToken(request));
+        DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
+                                                                                      getAuthToken(request));
         try {
             String action = request.getParameter(RestConstants.ACTION_PARAM);
             if (action.equals(RestConstants.JOB_ACTION_START)) {
@@ -78,43 +78,51 @@ public class JobServlet extends JsonRestServlet {
                 startCron();
                 response.setStatus(HttpServletResponse.SC_OK);
             }
-            else if (action.equals(RestConstants.JOB_ACTION_RESUME)) {
-                stopCron();
-                dagEngine.resume(jobId);
-                startCron();
-                response.setStatus(HttpServletResponse.SC_OK);
-            }
-            else if (action.equals(RestConstants.JOB_ACTION_SUSPEND)) {
-                stopCron();
-                dagEngine.suspend(jobId);
-                startCron();
-                response.setStatus(HttpServletResponse.SC_OK);
-            }
-            else if (action.equals(RestConstants.JOB_ACTION_KILL)) {
-                stopCron();
-                dagEngine.kill(jobId);
-                startCron();
-                response.setStatus(HttpServletResponse.SC_OK);
-            }
-            else if (action.equals(RestConstants.JOB_ACTION_RERUN)) {
-                validateContentType(request, RestConstants.XML_CONTENT_TYPE);
-                Configuration conf = new XConfiguration(request.getInputStream());
-
-                stopCron();
-
-                conf = XConfiguration.trim(conf);
-
-                JobsServlet.validateJobConfiguration(conf);
-
-                checkAuthorizationForApp(getUser(request),  conf);
-
-                dagEngine.reRun(jobId, conf);
-                startCron();
-                response.setStatus(HttpServletResponse.SC_OK);
-            }
             else {
-                throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0303,
-                                            RestConstants.ACTION_PARAM, action);
+                if (action.equals(RestConstants.JOB_ACTION_RESUME)) {
+                    stopCron();
+                    dagEngine.resume(jobId);
+                    startCron();
+                    response.setStatus(HttpServletResponse.SC_OK);
+                }
+                else {
+                    if (action.equals(RestConstants.JOB_ACTION_SUSPEND)) {
+                        stopCron();
+                        dagEngine.suspend(jobId);
+                        startCron();
+                        response.setStatus(HttpServletResponse.SC_OK);
+                    }
+                    else {
+                        if (action.equals(RestConstants.JOB_ACTION_KILL)) {
+                            stopCron();
+                            dagEngine.kill(jobId);
+                            startCron();
+                            response.setStatus(HttpServletResponse.SC_OK);
+                        }
+                        else {
+                            if (action.equals(RestConstants.JOB_ACTION_RERUN)) {
+                                validateContentType(request, RestConstants.XML_CONTENT_TYPE);
+                                Configuration conf = new XConfiguration(request.getInputStream());
+
+                                stopCron();
+
+                                conf = XConfiguration.trim(conf);
+
+                                JobsServlet.validateJobConfiguration(conf);
+
+                                checkAuthorizationForApp(getUser(request), conf);
+
+                                dagEngine.reRun(jobId, conf);
+                                startCron();
+                                response.setStatus(HttpServletResponse.SC_OK);
+                            }
+                            else {
+                                throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0303,
+                                                            RestConstants.ACTION_PARAM, action);
+                            }
+                        }
+                    }
+                }
             }
         }
         catch (DagEngineException ex) {
@@ -123,20 +131,19 @@ public class JobServlet extends JsonRestServlet {
     }
 
     /**
-     * Validate the configuration user/group.
-     * <p/>
+     * Validate the configuration user/group. <p/>
      *
-     * @param requestUser  user in request.
-     * @param conf         configuration.
-     * @throws XServletException thrown if the configuration does not have a property {@link org.apache.oozie.client.OozieClient#USER_NAME}.
+     * @param requestUser user in request.
+     * @param conf configuration.
+     * @throws XServletException thrown if the configuration does not have a property {@link
+     * org.apache.oozie.client.OozieClient#USER_NAME}.
      */
     static void checkAuthorizationForApp(String requestUser, Configuration conf) throws XServletException {
         String user = conf.get(OozieClient.USER_NAME);
         String group = conf.get(OozieClient.GROUP_NAME);
         try {
             if (user == null) {
-                throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0401,
-                                            OozieClient.USER_NAME);
+                throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0401, OozieClient.USER_NAME);
             }
             if (!requestUser.equals(UNDEF) && !user.equals(requestUser)) {
                 throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0400, requestUser, user);
@@ -172,8 +179,8 @@ public class JobServlet extends JsonRestServlet {
             throw new XServletException(HttpServletResponse.SC_UNAUTHORIZED, ex);
         }
 
-        DagEngine dagEngine =
-                Services.get().get(DagEngineService.class).getDagEngine(getUser(request), getAuthToken(request));
+        DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
+                                                                                      getAuthToken(request));
         try {
             if (show == null || show.equals(RestConstants.JOB_SHOW_INFO)) {
                 stopCron();
@@ -181,21 +188,25 @@ public class JobServlet extends JsonRestServlet {
                 startCron();
                 sendJsonResponse(response, HttpServletResponse.SC_OK, job);
             }
-            else if (show.equals(RestConstants.JOB_SHOW_LOG)) {
-                response.setContentType(TEXT_UTF8);
-                dagEngine.streamLog(jobId, response.getWriter());
-            }
-            else if (show.equals(RestConstants.JOB_SHOW_DEFINITION)) {
-                stopCron();
-                response.setContentType(XML_UTF8);
-                String wfDefinition = dagEngine.getDefinition(jobId);
-                startCron();
-                response.setStatus(HttpServletResponse.SC_OK);
-                response.getWriter().write(wfDefinition);
-            }
             else {
-                throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0303,
-                                            RestConstants.JOB_SHOW_PARAM, show);
+                if (show.equals(RestConstants.JOB_SHOW_LOG)) {
+                    response.setContentType(TEXT_UTF8);
+                    dagEngine.streamLog(jobId, response.getWriter());
+                }
+                else {
+                    if (show.equals(RestConstants.JOB_SHOW_DEFINITION)) {
+                        stopCron();
+                        response.setContentType(XML_UTF8);
+                        String wfDefinition = dagEngine.getDefinition(jobId);
+                        startCron();
+                        response.setStatus(HttpServletResponse.SC_OK);
+                        response.getWriter().write(wfDefinition);
+                    }
+                    else {
+                        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0303,
+                                                    RestConstants.JOB_SHOW_PARAM, show);
+                    }
+                }
             }
         }
         catch (DagEngineException ex) {

@@ -119,14 +119,14 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         }
 
         Element actionXml = XmlUtils.parseXml("<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
-                                              "<name-node>" + getNameNodeUri() + "</name-node>" +
-                                              "<job-xml>job.xml</job-xml>" + "<configuration>" +
-                                              "<property><name>oozie.launcher.a</name><value>LA</value></property>" +
-                                              "<property><name>a</name><value>AA</value></property>" +
-                                              "<property><name>b</name><value>BB</value></property>" +
-                                              "</configuration>" + "<main-class>MAIN-CLASS</main-class>" +
-                                              "<java-opts>JAVA-OPTS</java-opts>" + "<arg>A1</arg>" + "<arg>A2</arg>" +
-                                              "<file>f.jar</file>" + "<archive>a.tar</archive>" + "</java>");
+                "<name-node>" + getNameNodeUri() + "</name-node>" +
+                "<job-xml>job.xml</job-xml>" + "<configuration>" +
+                "<property><name>oozie.launcher.a</name><value>LA</value></property>" +
+                "<property><name>a</name><value>AA</value></property>" +
+                "<property><name>b</name><value>BB</value></property>" +
+                "</configuration>" + "<main-class>MAIN-CLASS</main-class>" +
+                "<java-opts>JAVA-OPTS</java-opts>" + "<arg>A1</arg>" + "<arg>A2</arg>" +
+                "<file>f.jar</file>" + "<archive>a.tar</archive>" + "</java>");
 
         Path appPath = new Path(getFsTestCaseDir(), "wf");
 
@@ -227,7 +227,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertEquals(Arrays.asList("A1", "A2"), Arrays.asList(LauncherMapper.getMainArguments(conf)));
 
         assertTrue(getFileSystem().exists(new Path(context.getActionDir(), LauncherMapper.ACTION_CONF_XML)));
-        
+
     }
 
     private Context createContext(String actionXml) throws Exception {
@@ -282,10 +282,10 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
     public void testSimpleSubmitOK() throws Exception {
         String actionXml = "<java>" +
-                           "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
-                           "<name-node>" + getNameNodeUri() + "</name-node>" +
-                           "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
-                           "</java>";
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<name-node>" + getNameNodeUri() + "</name-node>" +
+                "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
+                "</java>";
         Context context = createContext(actionXml);
         final RunningJob runningJob = submitAction(context);
         waitFor(60 * 1000, new Predicate() {
@@ -305,12 +305,12 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
     public void testOutputSubmitOK() throws Exception {
         String actionXml = "<java>" +
-                           "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
-                           "<name-node>" + getNameNodeUri() + "</name-node>" +
-                           "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
-                           "<arg>out</arg>" +
-                           "<capture-output/>" +
-                           "</java>";
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<name-node>" + getNameNodeUri() + "</name-node>" +
+                "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
+                "<arg>out</arg>" +
+                "<capture-output/>" +
+                "</java>";
         Context context = createContext(actionXml);
         final RunningJob runningJob = submitAction(context);
         waitFor(60 * 1000, new Predicate() {
@@ -335,12 +335,12 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
     public void testIdSwapSubmitOK() throws Exception {
         String actionXml = "<java>" +
-                           "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
-                           "<name-node>" + getNameNodeUri() + "</name-node>" +
-                           "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
-                           "<arg>id</arg>" +
-                           "<capture-output/>" +
-                           "</java>";
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<name-node>" + getNameNodeUri() + "</name-node>" +
+                "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
+                "<arg>id</arg>" +
+                "<capture-output/>" +
+                "</java>";
         Context context = createContext(actionXml);
         final RunningJob runningJob = submitAction(context);
         waitFor(60 * 1000, new Predicate() {
@@ -369,11 +369,11 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         IOUtils.copyStream(is, os);
 
         String actionXml = "<java>" +
-                           "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
-                           "<name-node>" + getNameNodeUri() + "</name-node>" +
-                           "<main-class>" + LauncherMainTester2.class.getName() + "</main-class>" +
-                           "<file>" + appJarPath.toString() + "</file>" +
-                           "</java>";
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<name-node>" + getNameNodeUri() + "</name-node>" +
+                "<main-class>" + LauncherMainTester2.class.getName() + "</main-class>" +
+                "<file>" + appJarPath.toString() + "</file>" +
+                "</java>";
 
         Context context = createContext(actionXml);
         final RunningJob runningJob = submitAction(context);
@@ -395,11 +395,11 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
     public void testExit0SubmitOK() throws Exception {
         String actionXml = "<java>" +
-                           "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
-                           "<name-node>" + getNameNodeUri() + "</name-node>" +
-                           "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
-                           "<arg>exit0</arg>" +
-                           "</java>";
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<name-node>" + getNameNodeUri() + "</name-node>" +
+                "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
+                "<arg>exit0</arg>" +
+                "</java>";
 
         Context context = createContext(actionXml);
         final RunningJob runningJob = submitAction(context);
@@ -421,11 +421,11 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
     public void testExit1SubmitError() throws Exception {
         String actionXml = "<java>" +
-                           "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
-                           "<name-node>" + getNameNodeUri() + "</name-node>" +
-                           "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
-                           "<arg>exit1</arg>" +
-                           "</java>";
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<name-node>" + getNameNodeUri() + "</name-node>" +
+                "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
+                "<arg>exit1</arg>" +
+                "</java>";
 
         Context context = createContext(actionXml);
         final RunningJob runningJob = submitAction(context);
@@ -448,11 +448,11 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
     public void testExceptionSubmitError() throws Exception {
         String actionXml = "<java>" +
-                           "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
-                           "<name-node>" + getNameNodeUri() + "</name-node>" +
-                           "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
-                           "<arg>ex</arg>" +
-                           "</java>";
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<name-node>" + getNameNodeUri() + "</name-node>" +
+                "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
+                "<arg>ex</arg>" +
+                "</java>";
 
         Context context = createContext(actionXml);
         final RunningJob runningJob = submitAction(context);
@@ -475,10 +475,10 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
     public void testKill() throws Exception {
         String actionXml = "<java>" +
-                           "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
-                           "<name-node>" + getNameNodeUri() + "</name-node>" +
-                           "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
-                           "</java>";
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<name-node>" + getNameNodeUri() + "</name-node>" +
+                "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
+                "</java>";
         final Context context = createContext(actionXml);
         final RunningJob runningJob = submitAction(context);
         assertFalse(runningJob.isComplete());
@@ -499,10 +499,10 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
     public void testRecovery() throws Exception {
         final String actionXml = "<java>" +
-                           "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
-                           "<name-node>" + getNameNodeUri() + "</name-node>" +
-                           "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
-                           "</java>";
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<name-node>" + getNameNodeUri() + "</name-node>" +
+                "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
+                "</java>";
         final Context context = createContext(actionXml);
         RunningJob runningJob = submitAction(context);
         String launcherId = context.getAction().getExternalId();
@@ -564,20 +564,20 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         getFileSystem().create(rootArchive).close();
 
         String actionXml = "<map-reduce xmlns='uri:oozie:workflow:0.1'>" +
-                       "      <job-tracker>" + getJobTrackerUri() +  "</job-tracker>" +
-                       "      <name-node>" + getNameNodeUri() +  "</name-node>" +
-                       "      <main-class>CLASS</main-class>" +
-                       "      <file>" + jar.toString() + "</file>\n" +
-                       "      <file>" + rootJar.toString() + "</file>\n" +
-                       "      <file>" + file.toString() + "</file>\n" +
-                       "      <file>" + rootFile.toString() + "</file>\n" +
-                       "      <file>" + so.toString() + "</file>\n" +
-                       "      <file>" + rootSo.toString() + "</file>\n" +
-                       "      <file>" + so1.toString() + "</file>\n" +
-                       "      <file>" + rootSo1.toString() + "</file>\n" +
-                       "      <archive>" + archive.toString() + "</archive>\n" +
-                       "      <archive>" + rootArchive.toString() + "</archive>\n" +
-                       "</map-reduce>";
+                "      <job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "      <name-node>" + getNameNodeUri() + "</name-node>" +
+                "      <main-class>CLASS</main-class>" +
+                "      <file>" + jar.toString() + "</file>\n" +
+                "      <file>" + rootJar.toString() + "</file>\n" +
+                "      <file>" + file.toString() + "</file>\n" +
+                "      <file>" + rootFile.toString() + "</file>\n" +
+                "      <file>" + so.toString() + "</file>\n" +
+                "      <file>" + rootSo.toString() + "</file>\n" +
+                "      <file>" + so1.toString() + "</file>\n" +
+                "      <file>" + rootSo1.toString() + "</file>\n" +
+                "      <archive>" + archive.toString() + "</archive>\n" +
+                "      <archive>" + rootArchive.toString() + "</archive>\n" +
+                "</map-reduce>";
 
         Element eActionXml = XmlUtils.parseXml(actionXml);
 
@@ -611,14 +611,14 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         fs.mkdirs(delete);
 
         String actionXml = "<java>" +
-                           "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
-                           "<name-node>" + getNameNodeUri() + "</name-node>" +
-                           "<prepare>" +
-                           "<mkdir path='" + mkdir + "'/>" +
-                           "<delete path='" +delete + "'/>" +
-                           "</prepare>" +
-                           "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
-                           "</java>";
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<name-node>" + getNameNodeUri() + "</name-node>" +
+                "<prepare>" +
+                "<mkdir path='" + mkdir + "'/>" +
+                "<delete path='" + delete + "'/>" +
+                "</prepare>" +
+                "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
+                "</java>";
         Context context = createContext(actionXml);
         final RunningJob runningJob = submitAction(context);
         waitFor(60 * 1000, new Predicate() {

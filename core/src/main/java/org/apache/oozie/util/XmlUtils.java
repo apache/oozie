@@ -17,6 +17,7 @@
  */
 package org.apache.oozie.util;
 
+import org.jdom.Comment;
 import org.jdom.Element;
 import org.jdom.Document;
 import org.jdom.JDOMException;
@@ -27,12 +28,17 @@ import org.xml.sax.SAXException;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.service.SchemaService;
+import org.apache.oozie.service.Services;
+import org.apache.oozie.service.SchemaService.SchemaName;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import javax.xml.XMLConstants;
@@ -45,13 +51,14 @@ import javax.xml.validation.Validator;
  * XML utility methods.
  */
 public class XmlUtils {
+    public static final String SLA_NAME_SPACE_URI = "uri:oozie:sla:0.1";
 
     private static class NoExternalEntityEntityResolver implements EntityResolver {
 
         public InputSource resolveEntity(String publicId, String systemId) throws SAXException, IOException {
             return new InputSource(new ByteArrayInputStream(new byte[0]));
         }
-        
+
     }
 
     private static SAXBuilder createSAXBuilder() {
@@ -63,6 +70,46 @@ public class XmlUtils {
         //INSTEAD WE ARE JUST SETTING AN EntityResolver that does not resolve entities
         saxBuilder.setEntityResolver(new NoExternalEntityEntityResolver());
         return saxBuilder;
+    }
+
+    /**
+     * Remove comments from any Xml String.
+     *
+     * @param xmlStr XML string to remove comments.
+     * @return String after removing comments.
+     * @throws JDOMException thrown if an error happend while XML parsing.
+     */
+    public static String removeComments(String xmlStr) throws JDOMException {
+        if (xmlStr == null) {
+            return null;
+        }
+        try {
+            SAXBuilder saxBuilder = createSAXBuilder();
+            Document document = saxBuilder.build(new StringReader(xmlStr));
+            removeComments(document);
+            return prettyPrint(document.getRootElement()).toString();
+        }
+        catch (IOException ex) {
+            throw new RuntimeException("It should not happen, " + ex.getMessage(), ex);
+        }
+    }
+
+    private static void removeComments(List l) {
+        for (Iterator i = l.iterator(); i.hasNext();) {
+            Object node = i.next();
+            if (node instanceof Comment) {
+                i.remove();
+            }
+            else {
+                if (node instanceof Element) {
+                    removeComments(((Element) node).getContent());
+                }
+            }
+        }
+    }
+
+    private static void removeComments(Document doc) {
+        removeComments(doc.getContent());
     }
 
     /**
@@ -100,8 +147,8 @@ public class XmlUtils {
     }
 
     /**
-     * //TODO move this to action registry method
-     * Return the value of an attribute from the root element of an XML document.
+     * //TODO move this to action registry method Return the value of an attribute from the root element of an XML
+     * document.
      *
      * @param filePath path of the XML document.
      * @param attributeName attribute to retrieve value for.
@@ -212,31 +259,40 @@ public class XmlUtils {
     }
 
     /**
-     * Schema validation for a given xml.
-     * <p/>
+     * Schema validation for a given xml. <p/>
      *
-     *  @param schema for validation
-     *  @param xml to be validated
+     * @param schema for validation
+     * @param xml to be validated
      */
-    public static void validateXml(Schema schema, String xml) throws SAXException,IOException{
+    public static void validateXml(Schema schema, String xml) throws SAXException, IOException {
 
         Validator validator = schema.newValidator();
         validator.validate(new StreamSource(new ByteArrayInputStream(xml.getBytes())));
     }
 
-    /** Create schema object for the given xsd
+    /**
+     * Create schema object for the given xsd
      *
      * @param is inputstream to schema.
      * @return the schema object.
      */
-    public static Schema createSchema(InputStream is){
+    public static Schema createSchema(InputStream is) {
         SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
         StreamSource src = new StreamSource(is);
         try {
             return factory.newSchema(src);
         }
         catch (SAXException e) {
-            throw new RuntimeException(e.getMessage(),e);
+            throw new RuntimeException(e.getMessage(), e);
         }
     }
+
+    public static void validateData(String xmlData, SchemaName xsdFile) throws SAXException, IOException {
+        if (xmlData == null || xmlData.length() == 0) {
+            return;
+        }
+        javax.xml.validation.Schema schema = Services.get().get(SchemaService.class).getSchema(xsdFile);
+        validateXml(schema, xmlData);
+    }
+
 }

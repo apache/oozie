@@ -37,10 +37,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Instrumentation framework that supports Timers, Counters, Variables and Sampler instrumentation
- * elements.
- * <p/>
- * All instrumentation elements have a group and a name.
+ * Instrumentation framework that supports Timers, Counters, Variables and Sampler instrumentation elements. <p/> All
+ * instrumentation elements have a group and a name.
  */
 public class Instrumentation {
     private ScheduledExecutorService scheduler;
@@ -85,15 +83,10 @@ public class Instrumentation {
     }
 
     /**
-     * Cron is a stopwatch that can be started/stopped several times.
-     * <p/>
-     * This class is not thread safe, it does not need to be.
-     * <p/>
-     * It keeps track of the total time (first start to last stop) and the running time (total time
-     * minus the stopped intervals).
-     * <p/>
-     * Once a Cron is complete it must be added to the corresponding group/name in a Instrumentation
-     * instance.
+     * Cron is a stopwatch that can be started/stopped several times. <p/> This class is not thread safe, it does not
+     * need to be. <p/> It keeps track of the total time (first start to last stop) and the running time (total time
+     * minus the stopped intervals). <p/> Once a Cron is complete it must be added to the corresponding group/name in a
+     * Instrumentation instance.
      */
     public static class Cron {
         private long start;
@@ -195,10 +188,8 @@ public class Instrumentation {
     }
 
     /**
-     * Gives access to a snapshot of an Instrumentation element (Counter, Timer).
-     * <p/>
-     * Instrumentation element snapshots are returned by the {@link Instrumentation#getCounters()}
-     * and {@link Instrumentation#getTimers()} ()} methods.
+     * Gives access to a snapshot of an Instrumentation element (Counter, Timer). <p/> Instrumentation element snapshots
+     * are returned by the {@link Instrumentation#getCounters()} and {@link Instrumentation#getTimers()} ()} methods.
      */
     public interface Element<T> {
 
@@ -251,9 +242,7 @@ public class Instrumentation {
         private long totalMaxTime;
 
         /**
-         * Timer constructor.
-         * <p/>
-         * It is project private for test purposes.
+         * Timer constructor. <p/> It is project private for test purposes.
          */
         Timer() {
         }
@@ -293,9 +282,7 @@ public class Instrumentation {
         }
 
         /**
-         * Add a cron to a timer.
-         * <p/>
-         * It is project private for test purposes.
+         * Add a cron to a timer. <p/> It is project private for test purposes.
          *
          * @param cron Cron to add.
          */
@@ -355,9 +342,7 @@ public class Instrumentation {
         }
 
         /**
-         * Return the sum of the square own times.
-         * <p/>
-         * It can be used to calculate the standard deviation.
+         * Return the sum of the square own times. <p/> It can be used to calculate the standard deviation.
          *
          * @return the sum of the square own timer.
          */
@@ -366,9 +351,7 @@ public class Instrumentation {
         }
 
         /**
-         * Return the sum of the square total times.
-         * <p/>
-         * It can be used to calculate the standard deviation.
+         * Return the sum of the square total times. <p/> It can be used to calculate the standard deviation.
          *
          * @return the sum of the square own timer.
          */
@@ -449,19 +432,18 @@ public class Instrumentation {
         }
 
         private double evalStdDev(long n, long sn, long ssn) {
-            return (n < 2) ? -1 : Math.sqrt((n * ssn - sn * sn)/(n * (n - 1)));
+            return (n < 2) ? -1 : Math.sqrt((n * ssn - sn * sn) / (n * (n - 1)));
         }
 
     }
 
     /**
-     * Add a cron to an instrumentation timer. The timer is created if it does not exists.
-     * <p/>
-     * This method is thread safe.
+     * Add a cron to an instrumentation timer. The timer is created if it does not exists. <p/> This method is thread
+     * safe.
      *
      * @param group timer group.
-     * @param name  timer name.
-     * @param cron  cron to add to the timer.
+     * @param name timer name.
+     * @param cron cron to add to the timer.
      */
     public void addCron(String group, String name, Cron cron) {
         Map<String, Element<Timer>> map = timers.get(group);
@@ -496,12 +478,11 @@ public class Instrumentation {
     }
 
     /**
-     * Increment an instrumentation counter. The counter is created if it does not exists.
-     * <p/>
-     * This method is thread safe.
+     * Increment an instrumentation counter. The counter is created if it does not exists. <p/> This method is thread
+     * safe.
      *
      * @param group counter group.
-     * @param name  counter name.
+     * @param name counter name.
      * @param count increment to add to the counter.
      */
     public void incr(String group, String name, long count) {
@@ -537,20 +518,17 @@ public class Instrumentation {
     }
 
     /**
-     * Interface for instrumentation variables.
-     * <p/>
-     * For example a the database service could expose the number of currently active connections.
+     * Interface for instrumentation variables. <p/> For example a the database service could expose the number of
+     * currently active connections.
      */
     public interface Variable<T> extends Element<T> {
     }
 
     /**
-     * Add an instrumentation variable. The variable must not exist.
-     * <p/>
-     * This method is thread safe.
+     * Add an instrumentation variable. The variable must not exist. <p/> This method is thread safe.
      *
-     * @param group    counter group.
-     * @param name     counter name.
+     * @param group counter group.
+     * @param name counter name.
      * @param variable variable to add.
      */
     @SuppressWarnings("unchecked")
@@ -675,12 +653,8 @@ public class Instrumentation {
     }
 
     /**
-     * Return all the counters.
-     * <p/>
-     * This method is thread safe.
-     * <p/>
-     * The counters are live. The counter value is a snapshot at the time the {@link
-     * Instrumentation.Element#getValue()} is invoked.
+     * Return all the counters. <p/> This method is thread safe. <p/> The counters are live. The counter value is a
+     * snapshot at the time the {@link Instrumentation.Element#getValue()} is invoked.
      *
      * @return all counters.
      */
@@ -689,12 +663,9 @@ public class Instrumentation {
     }
 
     /**
-     * Return all the timers.
-     * <p/>
-     * This method is thread safe.
-     * <p/>
-     * The timers are live. Once a timer is obtained, all its values are consistent (they are
-     * snapshot at the time the {@link Instrumentation.Element#getValue()} is invoked.
+     * Return all the timers. <p/> This method is thread safe. <p/> The timers are live. Once a timer is obtained, all
+     * its values are consistent (they are snapshot at the time the {@link Instrumentation.Element#getValue()} is
+     * invoked.
      *
      * @return all counters.
      */
@@ -703,12 +674,8 @@ public class Instrumentation {
     }
 
     /**
-     * Return all the variables.
-     * <p/>
-     * This method is thread safe.
-     * <p/>
-     * The variables are live. The variable value is a snapshot at the time the {@link
-     * Instrumentation.Element#getValue()} is invoked.
+     * Return all the variables. <p/> This method is thread safe. <p/> The variables are live. The variable value is a
+     * snapshot at the time the {@link Instrumentation.Element#getValue()} is invoked.
      *
      * @return all counters.
      */
@@ -798,13 +765,11 @@ public class Instrumentation {
     }
 
     /**
-     * Add a sampling variable.
-     * <p/>
-     * This method is thread safe.
+     * Add a sampling variable. <p/> This method is thread safe.
      *
-     * @param group    timer group.
-     * @param name     timer name.
-     * @param period   sampling period to compute rate.
+     * @param group timer group.
+     * @param name timer name.
+     * @param period sampling period to compute rate.
      * @param interval sampling frequency, how often the variable is probed.
      * @param variable variable to sample.
      */
@@ -835,12 +800,8 @@ public class Instrumentation {
     }
 
     /**
-     * Return all the samplers.
-     * <p/>
-     * This method is thread safe.
-     * <p/>
-     * The samplers are live. The sampler value is a snapshot at the time the {@link
-     * Instrumentation.Element#getValue()} is invoked.
+     * Return all the samplers. <p/> This method is thread safe. <p/> The samplers are live. The sampler value is a
+     * snapshot at the time the {@link Instrumentation.Element#getValue()} is invoked.
      *
      * @return all counters.
      */

@@ -21,7 +21,9 @@ import org.apache.oozie.service.XLogService;
 
 import java.util.List;
 import java.util.HashMap;
+
 import org.apache.oozie.client.WorkflowAction;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -71,9 +73,9 @@ public class TestRerun extends XFsTestCase {
         writer.close();
 
         final String APP1 = "<workflow-app xmlns='uri:oozie:workflow:0.1' name='app'>" +
-                            "<start to='end'/>" +
-                            "<end name='end'/>" +
-                            "</workflow-app>";
+                "<start to='end'/>" +
+                "<end name='end'/>" +
+                "</workflow-app>";
         String subWorkflowAppPath = new Path(appPath, "subwf").toString();
         fs.mkdirs(new Path(appPath, "subwf"));
         Writer writer2 = new OutputStreamWriter(fs.create(new Path(subWorkflowAppPath, "workflow.xml")));

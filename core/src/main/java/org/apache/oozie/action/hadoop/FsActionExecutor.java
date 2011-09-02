@@ -35,9 +35,7 @@ import java.net.URISyntaxException;
 import java.util.List;
 
 /**
- * File system action executor.
- * <p/>
- * This executes the file system mkdir, move and delete commands
+ * File system action executor. <p/> This executes the file system mkdir, move and delete commands
  */
 public class FsActionExecutor extends ActionExecutor {
 
@@ -57,9 +55,11 @@ public class FsActionExecutor extends ActionExecutor {
                 throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS001",
                                                   "Missing scheme in path [{0}]", path);
             }
-            else if (!scheme.equals("hdfs")) {
-                throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS002",
-                                                  "Scheme [{0}] not support in path [{1}]", scheme, path);
+            else {
+                if (!scheme.equals("hdfs")) {
+                    throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS002",
+                                                      "Scheme [{0}] not support in path [{1}]", scheme, path);
+                }
             }
         }
         else {
@@ -84,21 +84,27 @@ public class FsActionExecutor extends ActionExecutor {
                     Path path = getPath(commandElement, "path");
                     mkdir(context, path);
                 }
-                else if (command.equals("delete")) {
-                    Path path = getPath(commandElement, "path");
-                    delete(context, path);
-                }
-                else if (command.equals("move")) {
-                    Path source = getPath(commandElement, "source");
-                    Path target = getPath(commandElement, "target");
-                    move(context, source, target, recovery);
-                }
-                else if (command.equals("chmod")) {
-                    Path path = getPath(commandElement, "path");
-                    String str = commandElement.getAttributeValue("dir-files");
-                    boolean dirFiles = (str == null) || Boolean.parseBoolean(str);
-                    String permissionsMask = commandElement.getAttributeValue("permissions").trim();
-                    chmod(context, path, permissionsMask, dirFiles);
+                else {
+                    if (command.equals("delete")) {
+                        Path path = getPath(commandElement, "path");
+                        delete(context, path);
+                    }
+                    else {
+                        if (command.equals("move")) {
+                            Path source = getPath(commandElement, "source");
+                            Path target = getPath(commandElement, "target");
+                            move(context, source, target, recovery);
+                        }
+                        else {
+                            if (command.equals("chmod")) {
+                                Path path = getPath(commandElement, "path");
+                                String str = commandElement.getAttributeValue("dir-files");
+                                boolean dirFiles = (str == null) || Boolean.parseBoolean(str);
+                                String permissionsMask = commandElement.getAttributeValue("permissions").trim();
+                                chmod(context, path, permissionsMask, dirFiles);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -223,12 +229,14 @@ public class FsActionExecutor extends ActionExecutor {
             short omask = Short.parseShort(Integer.toString(mask), 8);
             return new FsPermission(omask);
         }
-        else if (permissions.length() == 10) {
-            return FsPermission.valueOf(permissions);
-        }
         else {
-            throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS010",
-                                              "chmod, path [{0}] invalid permissions mask [{1}]", path, permissions);
+            if (permissions.length() == 10) {
+                return FsPermission.valueOf(permissions);
+            }
+            else {
+                throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS010",
+                                                  "chmod, path [{0}] invalid permissions mask [{1}]", path, permissions);
+            }
         }
     }
 

@@ -38,7 +38,7 @@ public class CommandException extends XException {
      * Create a dag command exception.
      *
      * @param errorCode error code.
-     * @param params    parameters for the error code message template.
+     * @param params parameters for the error code message template.
      */
     public CommandException(ErrorCode errorCode, Object... params) {
         super(errorCode, params);

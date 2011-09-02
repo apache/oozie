@@ -62,10 +62,9 @@ public class FsELFunctions {
 
     /**
      * Return if a path exists.
-     * 
+     *
      * @param pathUri file system path uri.
-     * @return <code>true</code> if the path exists, <code>false</code> if it
-     *         does not.
+     * @return <code>true</code> if the path exists, <code>false</code> if it does not.
      * @throws Exception
      */
     public static boolean fs_exists(String pathUri) throws Exception {
@@ -77,10 +76,9 @@ public class FsELFunctions {
 
     /**
      * Return if a path is a directory.
-     * 
+     *
      * @param pathUri fs path uri.
-     * @return <code>true</code> if the path exists and it is a directory,
-     *         <code>false</code> otherwise.
+     * @return <code>true</code> if the path exists and it is a directory, <code>false</code> otherwise.
      * @throws Exception
      */
     public static boolean fs_isDir(String pathUri) throws Exception {
@@ -94,10 +92,9 @@ public class FsELFunctions {
 
     /**
      * Return the len of a file.
-     * 
+     *
      * @param pathUri file system path uri.
-     * @return the file len in bytes, -1 if the file does not exist or if it is
-     *         a directory.
+     * @return the file len in bytes, -1 if the file does not exist or if it is a directory.
      * @throws Exception
      */
     public static long fs_fileSize(String pathUri) throws Exception {
@@ -111,10 +108,9 @@ public class FsELFunctions {
 
     /**
      * Return the size of all files in the directory, it is not recursive.
-     * 
+     *
      * @param pathUri file system path uri.
-     * @return the size of all files in the directory, -1 if the directory does
-     *         not exist or if it is a file.
+     * @return the size of all files in the directory, -1 if the directory does not exist or if it is a file.
      * @throws Exception
      */
     public static long fs_dirSize(String pathUri) throws Exception {
@@ -144,10 +140,9 @@ public class FsELFunctions {
 
     /**
      * Return the file block size in bytes.
-     * 
+     *
      * @param pathUri file system path uri.
-     * @return the block size of the file in bytes, -1 if the file does not
-     *         exist or if it is a directory.
+     * @return the block size of the file in bytes, -1 if the file does not exist or if it is a directory.
      * @throws Exception
      */
     public static long fs_blockSize(String pathUri) throws Exception {

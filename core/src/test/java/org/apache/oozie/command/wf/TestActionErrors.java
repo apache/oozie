@@ -1,7 +1,4 @@
 /**
- * 
- */
-/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -24,6 +21,7 @@ import java.io.FileWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.util.List;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.OozieClient;
@@ -32,8 +30,8 @@ import org.apache.oozie.DagEngine;
 import org.apache.oozie.ForTestingActionExecutor;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.service.ActionService;
+import org.apache.oozie.service.SchemaService;
 import org.apache.oozie.service.WorkflowStoreService;
-import org.apache.oozie.service.WorkflowSchemaService;
 import org.apache.oozie.store.WorkflowStore;
 import org.apache.oozie.workflow.WorkflowInstance;
 import org.apache.oozie.service.Services;
@@ -42,46 +40,38 @@ import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
 
 /**
- * Test cases for checking correct functionality in case of errors while
- * executing Actions.
+ * Test cases for checking correct functionality in case of errors while executing Actions.
  */
 public class TestActionErrors extends XTestCase {
 
     private Services services;
 
     @Override
-    protected void setUp()throws Exception {
+    protected void setUp() throws Exception {
         super.setUp();
-        setSystemProperty(WorkflowSchemaService.CONF_EXT_SCHEMAS, "wf-ext-schema.xsd");
+        setSystemProperty(SchemaService.WF_CONF_EXT_SCHEMAS, "wf-ext-schema.xsd");
         services = new Services();
         cleanUpDB(services.getConf());
         services.init();
         services.get(ActionService.class).register(ForTestingActionExecutor.class);
     }
 
-    protected void tearDown()throws Exception {
+    protected void tearDown() throws Exception {
         services.destroy();
         super.tearDown();
     }
 
     /**
-     * Tests for correct functionality when a
-     * {@link org.apache.oozie.action.ActionExecutorException.ErrorType#NON_TRANSIENT} error is
-     * generated while attempting to start an action.
-     * </p>
-     * It first generates a
-     * {@link org.apache.oozie.action.ActionExecutorException.ErrorType#NON_TRANSIENT} error and checks
-     * for the job to go into {@link org.apache.oozie.client.WorkflowJob.Status#SUSPENDED} state. The state
-     * of the single action in the job is checked to be at
-     * {@link org.apache.oozie.WorkflowActionBean.Status#START_MANUAL} and it's error code and error
-     * message are verified.
-     * </p>
-     * The job is subsequently fixed to not generate any errors, and is resumed.
-     * The job state and the action state are verified to be
-     * {@link org.apache.oozie.client.WorkflowJob.Status#SUCCEEDED} and {@link org.apache.oozie.WorkflowActionBean.Status#OK}
-     * respectively. The action error code and error message are checked to be
-     * emtpy.
-     * 
+     * Tests for correct functionality when a {@link org.apache.oozie.action.ActionExecutorException.ErrorType#NON_TRANSIENT}
+     * error is generated while attempting to start an action. </p> It first generates a {@link
+     * org.apache.oozie.action.ActionExecutorException.ErrorType#NON_TRANSIENT} error and checks for the job to go into
+     * {@link org.apache.oozie.client.WorkflowJob.Status#SUSPENDED} state. The state of the single action in the job is
+     * checked to be at {@link org.apache.oozie.WorkflowActionBean.Status#START_MANUAL} and it's error code and error
+     * message are verified. </p> The job is subsequently fixed to not generate any errors, and is resumed. The job
+     * state and the action state are verified to be {@link org.apache.oozie.client.WorkflowJob.Status#SUCCEEDED} and
+     * {@link org.apache.oozie.WorkflowActionBean.Status#OK} respectively. The action error code and error message are
+     * checked to be emtpy.
+     *
      * @throws Exception
      */
     public void testStartNonTransient() throws Exception {
@@ -90,23 +80,16 @@ public class TestActionErrors extends XTestCase {
     }
 
     /**
-     * Tests for correct functionality when a
-     * {@link org.apache.oozie.action.ActionExecutorException.ErrorType#NON_TRANSIENT} error is
-     * generated while attempting to end an action.
-     * </p>
-     * It first generates a
-     * {@link org.apache.oozie.action.ActionExecutorException.ErrorType#NON_TRANSIENT} error and checks
-     * for the job to go into {@link org.apache.oozie.client.WorkflowJob.Status#SUSPENDED} state. The state
-     * of the single action in the job is checked to be at
-     * {@link org.apache.oozie.WorkflowActionBean.Status#END_MANUAL} and it's error code and error
-     * message are verified.
-     * </p>
-     * The job is subsequently fixed to not generate any errors, and is resumed.
-     * The job state and the action state are verified to be
-     * {@link org.apache.oozie.client.WorkflowJob.Status#SUCCEEDED} and {@link org.apache.oozie.WorkflowActionBean.Status#OK}
-     * respectively. The action error code and error message are checked to be
-     * emtpy.
-     * 
+     * Tests for correct functionality when a {@link org.apache.oozie.action.ActionExecutorException.ErrorType#NON_TRANSIENT}
+     * error is generated while attempting to end an action. </p> It first generates a {@link
+     * org.apache.oozie.action.ActionExecutorException.ErrorType#NON_TRANSIENT} error and checks for the job to go into
+     * {@link org.apache.oozie.client.WorkflowJob.Status#SUSPENDED} state. The state of the single action in the job is
+     * checked to be at {@link org.apache.oozie.WorkflowActionBean.Status#END_MANUAL} and it's error code and error
+     * message are verified. </p> The job is subsequently fixed to not generate any errors, and is resumed. The job
+     * state and the action state are verified to be {@link org.apache.oozie.client.WorkflowJob.Status#SUCCEEDED} and
+     * {@link org.apache.oozie.WorkflowActionBean.Status#OK} respectively. The action error code and error message are
+     * checked to be emtpy.
+     *
      * @throws Exception
      */
     public void testEndNonTransient() throws Exception {
@@ -115,21 +98,15 @@ public class TestActionErrors extends XTestCase {
     }
 
     /**
-     * Tests for correct functionality when a
-     * {@link org.apache.oozie.action.ActionExecutorException.ErrorType#TRANSIENT} error is generated
-     * when trying to start an action.
-     * </p>
-     * It first generates a {@link org.apache.oozie.action.ActionExecutorException.ErrorType#TRANSIENT}
-     * error. 2 retries with an interval of 10 seconds between them are allowed.
-     * The state of the action is checked after each attempt to be at
-     * {@link org.apache.oozie.WorkflowActionBean.Status#START_RETRY}. Error message and Error code for
-     * the action are verified.
-     * </p>
-     * After the configured number of retry attempts, the job and actions status
-     * are checked to be {@link org.apache.oozie.client.WorkflowJob.Status#SUSPENDED} and
-     * {@link org.apache.oozie.WorkflowActionBean.Status#END_MANUAL} respectively. The error message and
-     * code are verified again.
-     * 
+     * Tests for correct functionality when a {@link org.apache.oozie.action.ActionExecutorException.ErrorType#TRANSIENT}
+     * error is generated when trying to start an action. </p> It first generates a {@link
+     * org.apache.oozie.action.ActionExecutorException.ErrorType#TRANSIENT} error. 2 retries with an interval of 10
+     * seconds between them are allowed. The state of the action is checked after each attempt to be at {@link
+     * org.apache.oozie.WorkflowActionBean.Status#START_RETRY}. Error message and Error code for the action are
+     * verified. </p> After the configured number of retry attempts, the job and actions status are checked to be {@link
+     * org.apache.oozie.client.WorkflowJob.Status#SUSPENDED} and {@link org.apache.oozie.WorkflowActionBean.Status#END_MANUAL}
+     * respectively. The error message and code are verified again.
+     *
      * @throws Exception
      */
     public void testStartTransient() throws Exception {
@@ -138,21 +115,15 @@ public class TestActionErrors extends XTestCase {
     }
 
     /**
-     * Tests for correct functionality when a
-     * {@link org.apache.oozie.action.ActionExecutorException.ErrorType#TRANSIENT} error is generated
-     * when trying to end an action.
-     * </p>
-     * It first generates a {@link org.apache.oozie.action.ActionExecutorException.ErrorType#TRANSIENT}
-     * error. 2 retries with an interval of 10 seconds between them are allowed.
-     * The state of the action is checked after each attempt to be at
-     * {@link org.apache.oozie.WorkflowActionBean.Status#END_RETRY}. Error message and Error code for
-     * the action are verified.
-     * </p>
-     * After the configured number of retry attempts, the job and actions status
-     * are checked to be {@link org.apache.oozie.client.WorkflowJob.Status#SUSPENDED} and
-     * {@link org.apache.oozie.WorkflowActionBean.Status#START_MANUAL} respectively. The error message
-     * and code are verified again.
-     * 
+     * Tests for correct functionality when a {@link org.apache.oozie.action.ActionExecutorException.ErrorType#TRANSIENT}
+     * error is generated when trying to end an action. </p> It first generates a {@link
+     * org.apache.oozie.action.ActionExecutorException.ErrorType#TRANSIENT} error. 2 retries with an interval of 10
+     * seconds between them are allowed. The state of the action is checked after each attempt to be at {@link
+     * org.apache.oozie.WorkflowActionBean.Status#END_RETRY}. Error message and Error code for the action are verified.
+     * </p> After the configured number of retry attempts, the job and actions status are checked to be {@link
+     * org.apache.oozie.client.WorkflowJob.Status#SUSPENDED} and {@link org.apache.oozie.WorkflowActionBean.Status#START_MANUAL}
+     * respectively. The error message and code are verified again.
+     *
      * @throws Exception
      */
     public void testEndTransient() throws Exception {
@@ -161,11 +132,9 @@ public class TestActionErrors extends XTestCase {
     }
 
     /**
-     * Tests for correct functionality when a
-     * {@link org.apache.oozie.action.ActionExecutorException.ErrorType#ERROR} is generated when
-     * executing start.
-     * </p>
-     * Checks for the job to go into {@link org.apache.oozie.client.WorkflowJob.Status#KILLED} state.
+     * Tests for correct functionality when a {@link org.apache.oozie.action.ActionExecutorException.ErrorType#ERROR} is
+     * generated when executing start. </p> Checks for the job to go into {@link org.apache.oozie.client.WorkflowJob.Status#KILLED}
+     * state.
      *
      * @throws Exception
      */
@@ -175,11 +144,9 @@ public class TestActionErrors extends XTestCase {
     }
 
     /**
-     * Tests for correct functionality when a
-     * {@link org.apache.oozie.action.ActionExecutorException.ErrorType#ERROR} is generated when
-     * executing end.
-     * </p>
-     * Checks for the job to go into {@link org.apache.oozie.client.WorkflowJob.Status#KILLED} state.
+     * Tests for correct functionality when a {@link org.apache.oozie.action.ActionExecutorException.ErrorType#ERROR} is
+     * generated when executing end. </p> Checks for the job to go into {@link org.apache.oozie.client.WorkflowJob.Status#KILLED}
+     * state.
      *
      * @throws Exception
      */
@@ -189,8 +156,8 @@ public class TestActionErrors extends XTestCase {
     }
 
     /**
-     * Tests for the job to be KILLED and status set to FAILED in case an Action
-     * Handler does not call setExecutionData in it's start() implementation.
+     * Tests for the job to be KILLED and status set to FAILED in case an Action Handler does not call setExecutionData
+     * in it's start() implementation.
      *
      * @throws Exception
      */
@@ -199,8 +166,8 @@ public class TestActionErrors extends XTestCase {
     }
 
     /**
-     * Tests for the job to be KILLED and status set to FAILED in case an Action
-     * Handler does not call setEndData in it's end() implementation.
+     * Tests for the job to be KILLED and status set to FAILED in case an Action Handler does not call setEndData in
+     * it's end() implementation.
      *
      * @throws Exception
      */
@@ -241,8 +208,10 @@ public class TestActionErrors extends XTestCase {
         });
 
         final WorkflowStore store = Services.get().get(WorkflowStoreService.class).create();
+        store.beginTrx();
         List<WorkflowActionBean> actions = store.getActionsForWorkflow(jobId, true);
-        WorkflowActionBean action = actions.get(0);
+        int n = actions.size();
+        WorkflowActionBean action = actions.get(n - 1);
         assertEquals("TEST_ERROR", action.getErrorCode());
         assertEquals(expErrorMsg, action.getErrorMessage());
         assertEquals(expStatus1, action.getStatus());
@@ -253,8 +222,8 @@ public class TestActionErrors extends XTestCase {
         String fixedActionConf = actionConf.replaceAll(errorType, "none");
         action.setConf(fixedActionConf);
         store.updateAction(action);
-        store.commit();
-        store.close();
+        store.commitTrx();
+        store.closeTrx();
 
         engine.resume(jobId);
 
@@ -267,12 +236,14 @@ public class TestActionErrors extends XTestCase {
         assertEquals(WorkflowJob.Status.SUCCEEDED, engine.getJob(jobId).getStatus());
 
         final WorkflowStore store2 = Services.get().get(WorkflowStoreService.class).create();
+        store2.beginTrx();
         actions = store2.getActionsForWorkflow(jobId, false);
         action = actions.get(0);
         assertEquals(null, action.getErrorCode());
         assertEquals(null, action.getErrorMessage());
         assertEquals(WorkflowActionBean.Status.OK, action.getStatus());
-        store2.close();
+        store2.commitTrx();
+        store2.closeTrx();
     }
 
     /**
@@ -288,15 +259,13 @@ public class TestActionErrors extends XTestCase {
      * Provides functionality to test transient failures.
      *
      * @param errorType the error type. (start.transient, end.transient)
-     * @param expStatus1 expected status after the first step (START_RETRY,
-     *        END_RETRY)
-     * @param expStatus2 expected status after the second step (START_MANUAL,
-     *        END_MANUAL)
+     * @param expStatus1 expected status after the first step (START_RETRY, END_RETRY)
+     * @param expStatus2 expected status after the second step (START_MANUAL, END_MANUAL)
      * @param expErrorMsg the expected error message.
      * @throws Exception
      */
     private void _testTransient(String errorType, WorkflowActionBean.Status expStatus1, WorkflowActionBean.Status expStatus2,
-            String expErrorMsg) throws Exception {
+                                String expErrorMsg) throws Exception {
         Reader reader = IOUtils.getResourceAsReader("wf-ext-schema-valid.xml", -1);
         Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
         IOUtils.copyCharStream(reader, writer);
@@ -304,6 +273,7 @@ public class TestActionErrors extends XTestCase {
         final int maxRetries = 2;
         final int retryInterval = 10;
 
+        final WorkflowStore store = Services.get().get(WorkflowStoreService.class).create();
         final DagEngine engine = new DagEngine("u", "a");
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, getTestCaseDir());
@@ -321,14 +291,14 @@ public class TestActionErrors extends XTestCase {
 
         int retryCount = 1;
         WorkflowActionBean.Status expectedStatus = expStatus1;
-        int expectedRetryCount = 1;
+        int expectedRetryCount = 2;
 
-        final WorkflowStore store = Services.get().get(WorkflowStoreService.class).create();
+        Thread.sleep(20000);
 
-        Thread.sleep(2000);
         while (retryCount <= maxRetries) {
             List<WorkflowActionBean> actions = store.getActionsForWorkflow(jobId, false);
-            WorkflowActionBean action = actions.get(0);
+            int size = actions.size();
+            WorkflowActionBean action = actions.get(size - 1);
             assertEquals(expectedStatus, action.getStatus());
             assertEquals(expectedRetryCount, action.getRetries());
             assertEquals("TEST_ERROR", action.getErrorCode());
@@ -336,6 +306,7 @@ public class TestActionErrors extends XTestCase {
             if (action.getRetries() == maxRetries) {
                 expectedRetryCount = 0;
                 expectedStatus = expStatus2;
+                break;
             }
             else {
                 expectedRetryCount++;
@@ -343,15 +314,13 @@ public class TestActionErrors extends XTestCase {
             Thread.sleep(retryInterval * 1000);
             retryCount++;
         }
-
+        Thread.sleep(5000);
         List<WorkflowActionBean> actions = store.getActionsForWorkflow(jobId, false);
         WorkflowActionBean action = actions.get(0);
-        assertEquals(expStatus2, action.getStatus());
         assertEquals("TEST_ERROR", action.getErrorCode());
         assertEquals(expErrorMsg, action.getErrorMessage());
 
         assertEquals(WorkflowJob.Status.SUSPENDED, engine.getJob(jobId).getStatus());
-        store.close();
     }
 
     /**
@@ -381,7 +350,7 @@ public class TestActionErrors extends XTestCase {
         final String jobId = engine.submitJob(conf, true);
 
         final WorkflowStore store = Services.get().get(WorkflowStoreService.class).create();
-
+        store.beginTrx();
         waitFor(5000, new Predicate() {
             public boolean evaluate() throws Exception {
                 WorkflowJobBean bean = store.getWorkflow(jobId, false);
@@ -389,12 +358,12 @@ public class TestActionErrors extends XTestCase {
             }
         });
         assertEquals(WorkflowJob.Status.KILLED, engine.getJob(jobId).getStatus());
-        store.close();
+        store.commitTrx();
+        store.closeTrx();
     }
 
     /**
-     * Provides functionality to test for set*Data calls not being made by the
-     * Action Handler.
+     * Provides functionality to test for set*Data calls not being made by the Action Handler.
      *
      * @param avoidParam set*Data function call to avoid.
      * @param expActionErrorCode the expected action error code.
@@ -419,20 +388,20 @@ public class TestActionErrors extends XTestCase {
         final String jobId = engine.submitJob(conf, true);
 
         final WorkflowStore store = Services.get().get(WorkflowStoreService.class).create();
-
+        Thread.sleep(2000);
+/*
         waitFor(5000, new Predicate() {
             public boolean evaluate() throws Exception {
                 WorkflowJobBean bean = store.getWorkflow(jobId, false);
                 return (bean.getWorkflowInstance().getStatus() == WorkflowInstance.Status.FAILED);
             }
         });
+*/
         assertEquals(WorkflowInstance.Status.FAILED, store.getWorkflow(jobId, false).getWorkflowInstance().getStatus());
         assertEquals(WorkflowJob.Status.FAILED, engine.getJob(jobId).getStatus());
 
         List<WorkflowActionBean> actions = store.getActionsForWorkflow(jobId, false);
         WorkflowActionBean action = actions.get(0);
         assertEquals(expActionErrorCode, action.getErrorCode());
-
-        store.close();
     }
 }

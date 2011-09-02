@@ -21,6 +21,7 @@ import java.io.FileWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.util.Date;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.OozieClient;
@@ -30,8 +31,12 @@ import org.apache.oozie.ForTestingActionExecutor;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.command.wf.PurgeCommand;
+import org.apache.oozie.command.wf.DefinitionCommand;
 import org.apache.oozie.service.PurgeService.PurgeRunnable;
 import org.apache.oozie.store.WorkflowStore;
+import org.apache.oozie.service.Services;
+import org.apache.oozie.service.ActionService;
+import org.apache.oozie.service.WorkflowStoreService;
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
@@ -43,31 +48,30 @@ public class TestPurgeService extends XTestCase {
     private Services services;
 
     @Override
-    protected void setUp()throws Exception {
+    protected void setUp() throws Exception {
         super.setUp();
-        setSystemProperty(WorkflowSchemaService.CONF_EXT_SCHEMAS, "wf-ext-schema.xsd");
+        setSystemProperty(SchemaService.WF_CONF_EXT_SCHEMAS,
+                          "wf-ext-schema.xsd");
         services = new Services();
         services.init();
-        services.get(ActionService.class).register(ForTestingActionExecutor.class);
+        services.get(ActionService.class).register(
+                ForTestingActionExecutor.class);
     }
 
-    protected void tearDown()throws Exception {
+    protected void tearDown() throws Exception {
         services.destroy();
         super.tearDown();
     }
 
     /**
-     * Tests the {@link org.apache.oozie.service.PurgeService}.
-     * </p>
-     * Creates and runs a new job to completion. Attempts to purge jobs older
-     * than a day. Verifies the presence of the job in the system.
-     * </p>
-     * Sets the end date for the same job to make it qualify for the purge
-     * criteria. Calls the purge service, and ensure the job does not exist in
+     * Tests the {@link org.apache.oozie.service.PurgeService}. </p> Creates and runs a new job to completion. Attempts
+     * to purge jobs older than a day. Verifies the presence of the job in the system. </p> Sets the end date for the
+     * same job to make it qualify for the purge criteria. Calls the purge service, and ensure the job does not exist in
      * the system.
      */
     public void testPurgeService() throws Exception {
-        Reader reader = IOUtils.getResourceAsReader("wf-ext-schema-valid.xml", -1);
+        Reader reader = IOUtils.getResourceAsReader("wf-ext-schema-valid.xml",
+                                                    -1);
         Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
         IOUtils.copyCharStream(reader, writer);
 
@@ -81,32 +85,34 @@ public class TestPurgeService extends XTestCase {
 
         conf.set("external-status", "ok");
         conf.set("signal-value", "based_on_action_status");
-
         final String jobId = engine.submitJob(conf, true);
-
+        /*
+*/
         waitFor(5000, new Predicate() {
             public boolean evaluate() throws Exception {
                 return (engine.getJob(jobId).getStatus() == WorkflowJob.Status.SUCCEEDED);
             }
         });
-
-        assertEquals(WorkflowJob.Status.SUCCEEDED, engine.getJob(jobId).getStatus());
-
+        assertEquals(WorkflowJob.Status.SUCCEEDED, engine.getJob(jobId)
+                .getStatus());
         new PurgeCommand(1).call();
-        assertEquals(WorkflowJob.Status.SUCCEEDED, engine.getJob(jobId).getStatus());
+        Thread.sleep(1000);
 
-        final WorkflowStore store = Services.get().get(WorkflowStoreService.class).create();
+        final WorkflowStore store = Services.get().get(
+                WorkflowStoreService.class).create();
+        store.beginTrx();
         WorkflowJobBean wfBean = store.getWorkflow(jobId, true);
-        Date endDate = new Date(System.currentTimeMillis() - 2 * 24 * 60 * 60 * 1000);
+        Date endDate = new Date(System.currentTimeMillis() - 2 * 24 * 60 * 60
+                * 1000);
         wfBean.setEndTime(endDate);
         store.updateWorkflow(wfBean);
-        store.commit();
-        store.close();
+        store.commitTrx();
+        store.closeTrx();
 
-        Runnable purgeRunnable = new PurgeRunnable(1);
+        Runnable purgeRunnable = new PurgeRunnable(1, 1, 100);
         purgeRunnable.run();
 
-        waitFor(5000, new Predicate() {
+        waitFor(10000, new Predicate() {
             public boolean evaluate() throws Exception {
                 try {
                     engine.getJob(jobId).getStatus();
@@ -120,6 +126,8 @@ public class TestPurgeService extends XTestCase {
 
         try {
             engine.getJob(jobId).getStatus();
+            System.out.println("jobId is ****** -------"
+                    + engine.getJob(jobId).toString());
             assertTrue(false);
         }
         catch (Exception ex) {
@@ -127,5 +135,6 @@ public class TestPurgeService extends XTestCase {
             DagEngineException dex = (DagEngineException) ex;
             assertEquals(ErrorCode.E0604, dex.getErrorCode());
         }
+
     }
 }

@@ -21,9 +21,9 @@
 
     <action name="a">
         <test xmlns="uri:test">
-        <signal-value>signal-value</signal-value>
-        <external-status>external-status</external-status>
-        <error>error</error>
+            <signal-value>signal-value</signal-value>
+            <external-status>external-status</external-status>
+            <error>error</error>
         </test>
         <ok to="kill"/>
         <error to="end"/>

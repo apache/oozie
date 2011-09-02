@@ -17,7 +17,10 @@
  */
 package org.apache.oozie.client;
 
+import org.apache.oozie.client.rest.JsonCoordinatorAction;
+import org.apache.oozie.client.rest.JsonCoordinatorJob;
 import org.apache.oozie.client.rest.JsonWorkflowJob;
+import org.apache.oozie.client.rest.JsonWorkflowAction;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.BuildInfo;
@@ -32,6 +35,8 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.parsers.DocumentBuilderFactory;
+
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -39,6 +44,8 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -49,30 +56,19 @@ import java.util.Enumeration;
 import java.util.concurrent.Callable;
 
 /**
- * Client API to submit and manage Oozie workflow jobs against an Oozie intance.
- * <p/>
- * This class is thread safe.
- * <p/>
- * Syntax for filter for the {@link #getJobsInfo(String)}  {@link #getJobsInfo(String, int, int)}  methods:
- * <code>[NAME=VALUE][;NAME=VALUE]*</code>.
- * <p/>
- * Valid filter names are:
- * <p/>
- * <ul/>
- * <li>name: the workflow application name from the workflow definition.</li>
- * <li>user: the user that submitted the job.</li>
- * <li>group: the group for the job.</li>
- * <li>status: the status of the job.</li>
- * </ul>
- * <p/>
- * The query will do an AND among all the filter names.
- * The query will do an OR among all the filter values for the same name. Multiple values must be specified as
- * different name value pairs.
+ * Client API to submit and manage Oozie workflow jobs against an Oozie intance. <p/> This class is thread safe. <p/>
+ * Syntax for filter for the {@link #getJobsInfo(String)} {@link #getJobsInfo(String, int, int)} methods:
+ * <code>[NAME=VALUE][;NAME=VALUE]*</code>. <p/> Valid filter names are: <p/> <ul/> <li>name: the workflow application
+ * name from the workflow definition.</li> <li>user: the user that submitted the job.</li> <li>group: the group for the
+ * job.</li> <li>status: the status of the job.</li> </ul> <p/> The query will do an AND among all the filter names. The
+ * query will do an OR among all the filter values for the same name. Multiple values must be specified as different
+ * name value pairs.
  */
 public class OozieClient {
 
-    public static final long WS_PROTOCOL_VERSION = 0;
+    public static final long WS_PROTOCOL_VERSION_0 = 0;
 
+    public static final long WS_PROTOCOL_VERSION = 1;
 
     public static final String USER_NAME = "user.name";
 
@@ -80,11 +76,15 @@ public class OozieClient {
 
     public static final String APP_PATH = "oozie.wf.application.path";
 
+    public static final String COORDINATOR_APP_PATH = "oozie.coord.application.path";
+
     public static final String EXTERNAL_ID = "oozie.wf.external.id";
 
     public static final String WORKFLOW_NOTIFICATION_URL = "oozie.wf.workflow.notification.url";
 
     public static final String ACTION_NOTIFICATION_URL = "oozie.wf.action.notification.url";
+
+    public static final String COORD_ACTION_NOTIFICATION_URL = "oozie.coord.action.notification.url";
 
     public static final String RERUN_SKIP_NODES = "oozie.wf.rerun.skip.nodes";
 
@@ -94,7 +94,6 @@ public class OozieClient {
 
     public static final String ACTION_RETRY_INTERVAL = "oozie.wf.action.retry.interval";
 
-
     public static final String FILTER_USER = "user";
 
     public static final String FILTER_GROUP = "group";
@@ -103,7 +102,11 @@ public class OozieClient {
 
     public static final String FILTER_STATUS = "status";
 
+    public static enum SYSTEM_MODE {
+        NORMAL, NOWEBSERVICE, SAFEMODE
+    }
 
+    ;
 
     private String baseUrl;
     private String protocolUrl;
@@ -143,9 +146,8 @@ public class OozieClient {
     }
 
     /**
-     * Return the Oozie URL of the workflow client instance.
-     * <p/>
-     * This URL is the base URL fo the Oozie system, with not protocol versioning.
+     * Return the Oozie URL of the workflow client instance. <p/> This URL is the base URL fo the Oozie system, with not
+     * protocol versioning.
      *
      * @return the Oozie URL of the workflow client instance.
      */
@@ -154,9 +156,8 @@ public class OozieClient {
     }
 
     /**
-     * Return the Oozie URL used by the client and server for WS communications.
-     * <p/>
-     * This URL is the original URL plus the versioning element path.
+     * Return the Oozie URL used by the client and server for WS communications. <p/> This URL is the original URL plus
+     * the versioning element path.
      *
      * @return the Oozie URL used by the client and server for communication.
      * @throws OozieClientException thrown in the client and the server are not protocol compatible.
@@ -178,16 +179,27 @@ public class OozieClient {
                 HttpURLConnection conn = createConnection(url, "GET");
                 if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
                     JSONArray array = (JSONArray) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
-                    if (!array.contains(WS_PROTOCOL_VERSION)) {
+                    if (array == null) {
+                        throw new OozieClientException("HTTP error", "no response message");
+                    }
+                    if (!array.contains(WS_PROTOCOL_VERSION) && !array.contains(WS_PROTOCOL_VERSION_0)) {
                         StringBuilder msg = new StringBuilder();
-                        msg.append("Unsupported version [").append(WS_PROTOCOL_VERSION)
-                                .append("], supported versions[");
+                        msg.append("Supported version [").append(WS_PROTOCOL_VERSION).append(
+                                "] or less, Unsupported versions[");
                         String separator = "";
                         for (Object version : array) {
                             msg.append(separator).append(version);
                         }
                         msg.append("]");
                         throw new OozieClientException(OozieClientException.UNSUPPORTED_VERSION, msg.toString());
+                    }
+                    if (array.contains(WS_PROTOCOL_VERSION)) {
+                        protocolUrl = baseUrl + "v" + WS_PROTOCOL_VERSION + "/";
+                    }
+                    else {
+                        if (array.contains(WS_PROTOCOL_VERSION_0)) {
+                            protocolUrl = baseUrl + "v" + WS_PROTOCOL_VERSION_0 + "/";
+                        }
                     }
                 }
                 else {
@@ -197,7 +209,6 @@ public class OozieClient {
             catch (IOException ex) {
                 throw new OozieClientException(OozieClientException.IO_ERROR, ex);
             }
-            protocolUrl =  baseUrl + "v" + WS_PROTOCOL_VERSION + "/";
             validatedVersion = true;
         }
     }
@@ -251,8 +262,8 @@ public class OozieClient {
         return Collections.unmodifiableMap(headers).keySet().iterator();
     }
 
-    private URL createURL(String collection, String resource, Map<String, String> parameters)
-            throws IOException, OozieClientException {
+    private URL createURL(String collection, String resource, Map<String, String> parameters) throws IOException,
+            OozieClientException {
         validateWSVersion();
         StringBuilder sb = new StringBuilder();
         sb.append(protocolUrl).append(collection);
@@ -263,13 +274,24 @@ public class OozieClient {
             String separator = "?";
             for (Map.Entry<String, String> param : parameters.entrySet()) {
                 if (param.getValue() != null) {
-                    sb.append(separator).append(URLEncoder.encode(param.getKey(), "UTF-8")).append("=")
-                            .append(URLEncoder.encode(param.getValue(), "UTF-8"));
+                    sb.append(separator).append(URLEncoder.encode(param.getKey(), "UTF-8")).append("=").append(
+                            URLEncoder.encode(param.getValue(), "UTF-8"));
                     separator = "&";
                 }
             }
         }
         return new URL(sb.toString());
+    }
+
+    private boolean validateCommand(String url) {
+        {
+            if (protocolUrl.contains(baseUrl + "v0")) {
+                if (url.contains("dryrun") || url.contains("jobtype=c") || url.contains("systemmode")) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     private HttpURLConnection createConnection(URL url, String method) throws IOException, OozieClientException {
@@ -300,8 +322,15 @@ public class OozieClient {
         public T call() throws OozieClientException {
             try {
                 URL url = createURL(collection, resource, params);
-                HttpURLConnection conn = createConnection(url, method);
-                return call(conn);
+                if (validateCommand(url.toString())) {
+                    HttpURLConnection conn = createConnection(url, method);
+                    return (T) call(conn);
+                }
+                else {
+                    System.out
+                            .println("Option not supported in target server. Supported only on Oozie-2.0 or greater. Use 'oozie help' for details");
+                    throw new OozieClientException(OozieClientException.UNSUPPORTED_VERSION, new Exception());
+                }
             }
             catch (IOException ex) {
                 throw new OozieClientException(OozieClientException.IO_ERROR, ex);
@@ -317,11 +346,11 @@ public class OozieClient {
         String error = conn.getHeaderField(RestConstants.OOZIE_ERROR_CODE);
         String message = conn.getHeaderField(RestConstants.OOZIE_ERROR_MESSAGE);
 
-        if(error == null) {
+        if (error == null) {
             error = "HTTP error code: " + status;
         }
 
-        if(message == null){
+        if (message == null) {
             message = conn.getResponseMessage();
         }
         throw new OozieClientException(error, message);
@@ -355,11 +384,11 @@ public class OozieClient {
                 conf.appendChild(propNode);
 
                 Element nameNode = doc.createElement("name");
-                nameNode.appendChild(doc.createTextNode(name));
+                nameNode.appendChild(doc.createTextNode(name.trim()));
                 propNode.appendChild(nameNode);
 
                 Element valueNode = doc.createElement("value");
-                valueNode.appendChild(doc.createTextNode(value));
+                valueNode.appendChild(doc.createTextNode(value.trim()));
                 propNode.appendChild(valueNode);
 
                 conf.appendChild(doc.createTextNode("\n"));
@@ -381,15 +410,21 @@ public class OozieClient {
 
         JobSubmit(Properties conf, boolean start) {
             super("POST", RestConstants.JOBS, "", (start) ? prepareParams(RestConstants.ACTION_PARAM,
-                                                                          RestConstants.JOB_ACTION_START)
-                                                          : prepareParams());
+                                                                          RestConstants.JOB_ACTION_START) : prepareParams());
             this.conf = notNull(conf, "conf");
         }
 
         JobSubmit(String jobId, Properties conf) {
-            super("PUT", RestConstants.JOB, notEmpty(jobId, "jobId"),
-                  prepareParams(RestConstants.ACTION_PARAM, RestConstants.JOB_ACTION_RERUN));
+            super("PUT", RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.ACTION_PARAM,
+                                                                                    RestConstants.JOB_ACTION_RERUN));
             this.conf = notNull(conf, "conf");
+        }
+
+        public JobSubmit(Properties conf, String jobActionDryrun) {
+            super("POST", RestConstants.JOBS, "", prepareParams(RestConstants.ACTION_PARAM,
+                                                                RestConstants.JOB_ACTION_DRYRUN));
+            this.conf = notNull(conf, "conf");
+            // TODO Auto-generated constructor stub
         }
 
         protected String call(HttpURLConnection conn) throws IOException, OozieClientException {
@@ -420,8 +455,7 @@ public class OozieClient {
     private class JobAction extends ClientCallable<Void> {
 
         JobAction(String jobId, String action) {
-            super("PUT", RestConstants.JOB, notEmpty(jobId, "jobId"),
-                  prepareParams(RestConstants.ACTION_PARAM, action));
+            super("PUT", RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.ACTION_PARAM, action));
         }
 
         protected Void call(HttpURLConnection conn) throws IOException, OozieClientException {
@@ -430,6 +464,15 @@ public class OozieClient {
             }
             return null;
         }
+    }
+
+    /**
+     * dryrun for a given job
+     *
+     * @param conf Job configuration.
+     */
+    public String dryrun(Properties conf) throws OozieClientException {
+        return new JobSubmit(conf, RestConstants.JOB_ACTION_DRYRUN).call();
     }
 
     /**
@@ -496,9 +539,10 @@ public class OozieClient {
 
     private class JobInfo extends ClientCallable<WorkflowJob> {
 
-        JobInfo(String jobId) {
-            super("GET", RestConstants.JOB, notEmpty(jobId, "jobId"),
-                  prepareParams(RestConstants.JOB_SHOW_PARAM, RestConstants.JOB_SHOW_INFO));
+        JobInfo(String jobId, int start, int len) {
+            super("GET", RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.JOB_SHOW_PARAM,
+                                                                                    RestConstants.JOB_SHOW_INFO, RestConstants.OFFSET_PARAM, Integer.toString(start),
+                                                                                    RestConstants.LEN_PARAM, Integer.toString(len)));
         }
 
         protected WorkflowJob call(HttpURLConnection conn) throws IOException, OozieClientException {
@@ -506,6 +550,25 @@ public class OozieClient {
                 Reader reader = new InputStreamReader(conn.getInputStream());
                 JSONObject json = (JSONObject) JSONValue.parse(reader);
                 return new JsonWorkflowJob(json);
+            }
+            else {
+                handleError(conn);
+            }
+            return null;
+        }
+    }
+
+    private class WorkflowActionInfo extends ClientCallable<WorkflowAction> {
+        WorkflowActionInfo(String actionId) {
+            super("GET", RestConstants.JOB, notEmpty(actionId, "id"), prepareParams(RestConstants.JOB_SHOW_PARAM,
+                                                                                    RestConstants.JOB_SHOW_INFO));
+        }
+
+        protected WorkflowAction call(HttpURLConnection conn) throws IOException, OozieClientException {
+            if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
+                Reader reader = new InputStreamReader(conn.getInputStream());
+                JSONObject json = (JSONObject) JSONValue.parse(reader);
+                return new JsonWorkflowAction(json);
             }
             else {
                 handleError(conn);
@@ -522,24 +585,234 @@ public class OozieClient {
      * @throws OozieClientException thrown if the job info could not be retrieved.
      */
     public WorkflowJob getJobInfo(String jobId) throws OozieClientException {
-        return new JobInfo(jobId).call();
+        return getJobInfo(jobId, 0, 0);
+    }
+
+    /**
+     * Get the info of a workflow job and subset actions.
+     *
+     * @param jobId job Id.
+     * @param start starting index in the list of actions belonging to the job
+     * @param len number of actions to be returned
+     * @return the job info.
+     * @throws OozieClientException thrown if the job info could not be retrieved.
+     */
+    public WorkflowJob getJobInfo(String jobId, int start, int len) throws OozieClientException {
+        return new JobInfo(jobId, start, len).call();
+    }
+
+    /**
+     * Get the info of a workflow action.
+     *
+     * @param actionId Id.
+     * @return the workflow action info.
+     * @throws OozieClientException thrown if the job info could not be retrieved.
+     */
+    public WorkflowAction getWorkflowActionInfo(String actionId) throws OozieClientException {
+        return new WorkflowActionInfo(actionId).call();
+    }
+
+    /**
+     * Get the log of a workflow job.
+     *
+     * @param jobId job Id.
+     * @return the job log.
+     * @throws OozieClientException thrown if the job info could not be retrieved.
+     */
+    public String getJobLog(String jobId) throws OozieClientException {
+        return new JobLog(jobId).call();
+    }
+
+    private class JobLog extends JobMetadata {
+
+        JobLog(String jobId) {
+            super(jobId, RestConstants.JOB_SHOW_LOG);
+        }
+    }
+
+    /**
+     * Get the definition of a workflow job.
+     *
+     * @param jobId job Id.
+     * @return the job log.
+     * @throws OozieClientException thrown if the job info could not be retrieved.
+     */
+    public String getJobDefinition(String jobId) throws OozieClientException {
+        return new JobDefinition(jobId).call();
+    }
+
+    private class JobDefinition extends JobMetadata {
+
+        JobDefinition(String jobId) {
+            super(jobId, RestConstants.JOB_SHOW_DEFINITION);
+        }
+    }
+
+    private class JobMetadata extends ClientCallable<String> {
+
+        JobMetadata(String jobId, String metaType) {
+            super("GET", RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.JOB_SHOW_PARAM,
+                                                                                    metaType));
+        }
+
+        protected String call(HttpURLConnection conn) throws IOException, OozieClientException {
+            if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
+
+                String output = getReaderAsString(new InputStreamReader(conn.getInputStream()), -1);
+                return output;
+            }
+            else {
+                handleError(conn);
+            }
+            return null;
+        }
+
+        /**
+         * Return a reader as string. <p/>
+         *
+         * @param reader reader to read into a string.
+         * @param maxLen max content length allowed, if -1 there is no limit.
+         * @return the reader content.
+         * @throws IOException thrown if the resource could not be read.
+         */
+        private String getReaderAsString(Reader reader, int maxLen) throws IOException {
+            if (reader == null) {
+                throw new IllegalArgumentException("reader cannot be null");
+            }
+
+            StringBuffer sb = new StringBuffer();
+            char[] buffer = new char[2048];
+            int read;
+            int count = 0;
+            while ((read = reader.read(buffer)) > -1) {
+                count += read;
+
+                // read up to maxLen chars;
+                if ((maxLen > -1) && (count > maxLen)) {
+                    break;
+                }
+                sb.append(buffer, 0, read);
+            }
+            reader.close();
+            return sb.toString();
+        }
+    }
+
+    private class CoordJobInfo extends ClientCallable<CoordinatorJob> {
+
+        CoordJobInfo(String jobId, int start, int len) {
+            super("GET", RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.JOB_SHOW_PARAM,
+                                                                                    RestConstants.JOB_SHOW_INFO, RestConstants.OFFSET_PARAM, Integer.toString(start),
+                                                                                    RestConstants.LEN_PARAM, Integer.toString(len)));
+        }
+
+        protected CoordinatorJob call(HttpURLConnection conn) throws IOException, OozieClientException {
+            if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
+                Reader reader = new InputStreamReader(conn.getInputStream());
+                JSONObject json = (JSONObject) JSONValue.parse(reader);
+                return new JsonCoordinatorJob(json);
+            }
+            else {
+                handleError(conn);
+            }
+            return null;
+        }
+    }
+
+    private class CoordActionInfo extends ClientCallable<CoordinatorAction> {
+        CoordActionInfo(String actionId) {
+            super("GET", RestConstants.JOB, notEmpty(actionId, "id"), prepareParams(RestConstants.JOB_SHOW_PARAM,
+                                                                                    RestConstants.JOB_SHOW_INFO));
+        }
+
+        protected CoordinatorAction call(HttpURLConnection conn) throws IOException, OozieClientException {
+            if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
+                Reader reader = new InputStreamReader(conn.getInputStream());
+                JSONObject json = (JSONObject) JSONValue.parse(reader);
+                return new JsonCoordinatorAction(json);
+            }
+            else {
+                handleError(conn);
+            }
+            return null;
+        }
+    }
+
+    /**
+     * Get the info of a coordinator job.
+     *
+     * @param jobId job Id.
+     * @return the job info.
+     * @throws OozieClientException thrown if the job info could not be retrieved.
+     */
+    public CoordinatorJob getCoordJobInfo(String jobId) throws OozieClientException {
+        return new CoordJobInfo(jobId, 0, 0).call();
+    }
+
+    /**
+     * Get the info of a coordinator job and subset actions.
+     *
+     * @param jobId job Id.
+     * @param start starting index in the list of actions belonging to the job
+     * @param len number of actions to be returned
+     * @return the job info.
+     * @throws OozieClientException thrown if the job info could not be retrieved.
+     */
+    public CoordinatorJob getCoordJobInfo(String jobId, int start, int len) throws OozieClientException {
+        return new CoordJobInfo(jobId, start, len).call();
+    }
+
+    /**
+     * Get the info of a coordinator action.
+     *
+     * @param actionId Id.
+     * @return the coordinator action info.
+     * @throws OozieClientException thrown if the job info could not be retrieved.
+     */
+    public CoordinatorAction getCoordActionInfo(String actionId) throws OozieClientException {
+        return new CoordActionInfo(actionId).call();
     }
 
     private class JobsStatus extends ClientCallable<List<WorkflowJob>> {
 
         JobsStatus(String filter, int start, int len) {
             super("GET", RestConstants.JOBS, "", prepareParams(RestConstants.JOBS_FILTER_PARAM, filter,
-                                                               RestConstants.OFFSET_PARAM, Integer.toString(start),
+                                                               RestConstants.JOBTYPE_PARAM, "wf", RestConstants.OFFSET_PARAM, Integer.toString(start),
                                                                RestConstants.LEN_PARAM, Integer.toString(len)));
         }
 
         @SuppressWarnings("unchecked")
         protected List<WorkflowJob> call(HttpURLConnection conn) throws IOException, OozieClientException {
+            conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
             if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
                 Reader reader = new InputStreamReader(conn.getInputStream());
                 JSONObject json = (JSONObject) JSONValue.parse(reader);
                 JSONArray workflows = (JSONArray) json.get(JsonTags.WORKFLOWS_JOBS);
                 return JsonWorkflowJob.fromJSONArray(workflows);
+            }
+            else {
+                handleError(conn);
+            }
+            return null;
+        }
+    }
+
+    private class CoordJobsStatus extends ClientCallable<List<CoordinatorJob>> {
+
+        CoordJobsStatus(String filter, int start, int len) {
+            super("GET", RestConstants.JOBS, "", prepareParams(RestConstants.JOBS_FILTER_PARAM, filter,
+                                                               RestConstants.JOBTYPE_PARAM, "coord", RestConstants.OFFSET_PARAM, Integer.toString(start),
+                                                               RestConstants.LEN_PARAM, Integer.toString(len)));
+        }
+
+        @SuppressWarnings("unchecked")
+        protected List<CoordinatorJob> call(HttpURLConnection conn) throws IOException, OozieClientException {
+            conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
+            if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
+                Reader reader = new InputStreamReader(conn.getInputStream());
+                JSONObject json = (JSONObject) JSONValue.parse(reader);
+                JSONArray jobs = (JSONArray) json.get(JsonTags.COORDINATOR_JOBS);
+                return JsonCoordinatorJob.fromJSONArray(jobs);
             }
             else {
                 handleError(conn);
@@ -562,9 +835,8 @@ public class OozieClient {
     }
 
     /**
-     * Return the info of the workflow jobs that match the filter.
-     * <p/>
-     * It returns the first 100 jobs that match the filter.
+     * Return the info of the workflow jobs that match the filter. <p/> It returns the first 100 jobs that match the
+     * filter.
      *
      * @param filter job filter. Refer to the {@link OozieClient} for the filter syntax.
      * @return a list with the workflow jobs info, without node details.
@@ -572,6 +844,42 @@ public class OozieClient {
      */
     public List<WorkflowJob> getJobsInfo(String filter) throws OozieClientException {
         return getJobsInfo(filter, 1, 50);
+    }
+
+    /**
+     * Print sla info about coordinator and workflow jobs and actions.
+     *
+     * @param start starting offset
+     * @param len number of results
+     * @return
+     * @throws OozieClientException
+     */
+    public void getSlaInfo(int start, int len) throws OozieClientException {
+        new SlaInfo(start, len).call();
+    }
+
+    private class SlaInfo extends ClientCallable<Void> {
+
+        SlaInfo(int start, int len) {
+            super("GET", RestConstants.SLA, "", prepareParams(RestConstants.SLA_GT_SEQUENCE_ID,
+                                                              Integer.toString(start), RestConstants.MAX_EVENTS, Integer.toString(len)));
+        }
+
+        @SuppressWarnings("unchecked")
+        protected Void call(HttpURLConnection conn) throws IOException, OozieClientException {
+            conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
+            if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
+                BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                String line = null;
+                while ((line = br.readLine()) != null) {
+                    System.out.println(line);
+                }
+            }
+            else {
+                handleError(conn);
+            }
+            return null;
+        }
     }
 
     private class JobIdAction extends ClientCallable<String> {
@@ -595,9 +903,7 @@ public class OozieClient {
     }
 
     /**
-     * Return the workflow job Id for an external Id.
-     * <p/>
-     * The external Id must have provided at job creation time.
+     * Return the workflow job Id for an external Id. <p/> The external Id must have provided at job creation time.
      *
      * @param externalId external Id given at job creation time.
      * @return the workflow job Id for an external Id, <code>null</code> if none.
@@ -607,13 +913,13 @@ public class OozieClient {
         return new JobIdAction(externalId).call();
     }
 
-    private class SetSafeMode extends ClientCallable<Void>{
+    private class SetSystemMode extends ClientCallable<Void> {
 
-        public SetSafeMode(boolean status) {
-            super("PUT", RestConstants.ADMIN, RestConstants.ADMIN_STATUS_RESOURCE,
-                  prepareParams(RestConstants.ADMIN_SAFE_MODE_PARAM, status+""));
+        public SetSystemMode(SYSTEM_MODE status) {
+            super("PUT", RestConstants.ADMIN, RestConstants.ADMIN_STATUS_RESOURCE, prepareParams(
+                    RestConstants.ADMIN_SYSTEM_MODE_PARAM, status + ""));
         }
-        
+
         public Void call(HttpURLConnection conn) throws IOException, OozieClientException {
             if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
                 handleError(conn);
@@ -621,47 +927,49 @@ public class OozieClient {
             return null;
         }
     }
-    
+
     /**
-     * Enable or disable safe mode. Used by OozieCLI.
-     * 
-     * In safe mode, Oozie would not accept any commands except status command to 
-     * change and view the safe mode status.
-     * 
+     * Enable or disable safe mode. Used by OozieCLI. In safe mode, Oozie would not accept any commands except status
+     * command to change and view the safe mode status.
+     *
      * @param status true to enable safe mode, false to disable safe mode.
      * @throws OozieClientException if it fails to set the safe mode status.
      */
-    public void setSafeMode(boolean status) throws OozieClientException {
-        new SetSafeMode(status).call();
+    public void setSystemMode(SYSTEM_MODE status) throws OozieClientException {
+        new SetSystemMode(status).call();
     }
 
-    private class GetSafeMode extends ClientCallable<Boolean> {
+    private class GetSystemMode extends ClientCallable<SYSTEM_MODE> {
 
-        GetSafeMode() {
+        GetSystemMode() {
             super("GET", RestConstants.ADMIN, RestConstants.ADMIN_STATUS_RESOURCE, prepareParams());
         }
 
-        protected Boolean call(HttpURLConnection conn) throws IOException, OozieClientException {
+        protected SYSTEM_MODE call(HttpURLConnection conn) throws IOException, OozieClientException {
             if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
                 Reader reader = new InputStreamReader(conn.getInputStream());
                 JSONObject json = (JSONObject) JSONValue.parse(reader);
-                return (Boolean)json.get(JsonTags.SYSTEM_SAFE_MODE);
+                return SYSTEM_MODE.valueOf((String) json.get(JsonTags.OOZIE_SYSTEM_MODE));
             }
             else {
                 handleError(conn);
             }
-            return true;
+            return SYSTEM_MODE.NORMAL;
         }
     }
 
     /**
      * Returns if Oozie is in safe mode or not.
-     * 
-     * @return true if safe mode is ON<br> false if safe mode is OFF 
+     *
+     * @return true if safe mode is ON<br> false if safe mode is OFF
      * @throws OozieClientException throw if it could not obtain the safe mode status.
      */
-    public boolean isInSafeMode() throws OozieClientException {
-        return new GetSafeMode().call();
+    /*
+     * public boolean isInSafeMode() throws OozieClientException { return new
+     * GetSafeMode().call(); }
+     */
+    public SYSTEM_MODE getSystemMode() throws OozieClientException {
+        return new GetSystemMode().call();
     }
 
     private class GetBuildVersion extends ClientCallable<String> {
@@ -674,7 +982,7 @@ public class OozieClient {
             if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
                 Reader reader = new InputStreamReader(conn.getInputStream());
                 JSONObject json = (JSONObject) JSONValue.parse(reader);
-                return (String)json.get(JsonTags.BUILD_VERSION);
+                return (String) json.get(JsonTags.BUILD_VERSION);
             }
             else {
                 handleError(conn);
@@ -702,4 +1010,16 @@ public class OozieClient {
         return BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_VERSION);
     }
 
+    /**
+     * Return the info of the coordinator jobs that match the filter.
+     *
+     * @param filter job filter. Refer to the {@link OozieClient} for the filter syntax.
+     * @param start jobs offset, base 1.
+     * @param len number of jobs to return.
+     * @return a list with the coordinator jobs info
+     * @throws OozieClientException thrown if the jobs info could not be retrieved.
+     */
+    public List<CoordinatorJob> getCoordJobsInfo(String filter, int start, int len) throws OozieClientException {
+        return new CoordJobsStatus(filter, start, len).call();
+    }
 }

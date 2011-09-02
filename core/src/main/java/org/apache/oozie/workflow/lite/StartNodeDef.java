@@ -31,9 +31,7 @@ import java.util.List;
 public class StartNodeDef extends NodeDef {
 
     /**
-     * Reserved name fo the start node.
-     * <p/>
-     * It is an invalid token, it will never match an application node name.
+     * Reserved name fo the start node. <p/> It is an invalid token, it will never match an application node name.
      */
     public static final String START = "::start::";
 
@@ -59,9 +57,7 @@ public class StartNodeDef extends NodeDef {
     }
 
     /**
-     * Start node handler.
-     * <p/>
-     * It does an immediate transition to the transitionTo node.
+     * Start node handler. <p/> It does an immediate transition to the transitionTo node.
      */
     public static class StartNodeHandler extends NodeHandler {
 

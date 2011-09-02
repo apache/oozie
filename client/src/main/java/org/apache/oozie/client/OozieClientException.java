@@ -67,7 +67,7 @@ public class OozieClientException extends Exception {
     /**
      * Return the exception error code.
      *
-     * @return  the exception error code.
+     * @return the exception error code.
      */
     public String getErrorCode() {
         return errorCode;

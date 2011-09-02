@@ -42,13 +42,10 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * The HadoopAccessorService returns HadoopAccessor instances configured to work on behalf of a user-group.
- * <p/>
- * The default accessor used is the base accessor which just injects the UGI into the configuration instance
- * used to create/obtain JobClient and ileSystem instances.
- * <p/>
- * The HadoopAccess class to use can be configured in the <code>oozie-site.xml</code> using the
- * <code>oozie.service.HadoopAccessorService.accessor.class</code> property.
+ * The HadoopAccessorService returns HadoopAccessor instances configured to work on behalf of a user-group. <p/> The
+ * default accessor used is the base accessor which just injects the UGI into the configuration instance used to
+ * create/obtain JobClient and ileSystem instances. <p/> The HadoopAccess class to use can be configured in the
+ * <code>oozie-site.xml</code> using the <code>oozie.service.HadoopAccessorService.accessor.class</code> property.
  */
 public class KerberosHadoopAccessorService extends HadoopAccessorService {
 
@@ -129,7 +126,7 @@ public class KerberosHadoopAccessorService extends HadoopAccessorService {
                 }
             });
             Token<DelegationTokenIdentifier> mrdt = jobClient.getDelegationToken(new Text("mr token"));
-            conf.getCredentials().addToken( new Text("mr token"), mrdt);
+            conf.getCredentials().addToken(new Text("mr token"), mrdt);
             return jobClient;
         }
         catch (InterruptedException ex) {
@@ -188,7 +185,6 @@ public class KerberosHadoopAccessorService extends HadoopAccessorService {
             throw new IOException(ex);
         }
     }
-
 
 
     public void addFileToClassPath(String user, String group, final Path file, final Configuration conf)

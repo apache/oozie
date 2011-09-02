@@ -16,36 +16,36 @@
   limitations under the License.
 -->
 <workflow-app xmlns="uri:oozie:workflow:0.1" name="recovery-wf">
-    <start to="fs1" />
+    <start to="fs1"/>
     <action name="fs1">
         <fs>
-            <mkdir path="${nnbase}/p1" />
+            <mkdir path="${nnbase}/p1"/>
         </fs>
-        <ok to="fs2" />
-        <error to="k" />
+        <ok to="fs2"/>
+        <error to="k"/>
     </action>
     <action name="fs2">
         <fs>
-            <move source="${nnbase}/p1" target="${base}/p2" />
+            <move source="${nnbase}/p1" target="${base}/p2"/>
         </fs>
-        <ok to="dec3" />
-        <error to="k" />
+        <ok to="dec3"/>
+        <error to="k"/>
     </action>
     <decision name="dec3">
         <switch>
             <case to="fs4">${fs:exists(concat(nnbase, '/p2'))}</case>
-            <default to="k" />
+            <default to="k"/>
         </switch>
     </decision>
     <action name="fs4">
         <fs>
-            <move source="${nnbase}/p2" target="${base}/p3" />
+            <move source="${nnbase}/p2" target="${base}/p3"/>
         </fs>
-        <ok to="end" />
-        <error to="k" />
+        <ok to="end"/>
+        <error to="k"/>
     </action>
     <kill name="k">
         <message>kill</message>
     </kill>
-    <end name="end" />
+    <end name="end"/>
 </workflow-app>

@@ -31,6 +31,7 @@ public class TestValidation extends TestCase {
         File file = new File(uri.getPath());
         return file.getAbsolutePath();
     }
+
     public void testValid() throws Exception {
         String[] args = new String[]{"validate", getPath("valid.xml")};
         assertEquals(0, new OozieCLI().run(args));

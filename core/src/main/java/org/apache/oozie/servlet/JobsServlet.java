@@ -39,19 +39,20 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-public class    JobsServlet extends JsonRestServlet {
+public class JobsServlet extends JsonRestServlet {
     private static final String INSTRUMENTATION_NAME = "jobs";
 
     private static final JsonRestServlet.ResourceInfo RESOURCES_INFO[] = new JsonRestServlet.ResourceInfo[1];
 
     static {
         RESOURCES_INFO[0] =
-        new JsonRestServlet.ResourceInfo("", Arrays.asList("POST", "GET"), Arrays.asList(
-        new JsonRestServlet.ParameterInfo(RestConstants.ACTION_PARAM, String.class, false, Arrays.asList("POST")),
-        new JsonRestServlet.ParameterInfo(RestConstants.JOBS_FILTER_PARAM, String.class, false, Arrays.asList("GET")),
-        new JsonRestServlet.ParameterInfo(RestConstants.OFFSET_PARAM, String.class, false, Arrays.asList("GET")),
-        new JsonRestServlet.ParameterInfo(RestConstants.LEN_PARAM, String.class, false, Arrays.asList("GET")),
-        new JsonRestServlet.ParameterInfo(RestConstants.JOBS_EXTERNAL_ID_PARAM, String.class, false, Arrays.asList("GET"))));
+                new JsonRestServlet.ResourceInfo("", Arrays.asList("POST", "GET"), Arrays.asList(
+                        new JsonRestServlet.ParameterInfo(RestConstants.ACTION_PARAM, String.class, false, Arrays.asList("POST")),
+                        new JsonRestServlet.ParameterInfo(RestConstants.JOBS_FILTER_PARAM, String.class, false, Arrays.asList("GET")),
+                        new JsonRestServlet.ParameterInfo(RestConstants.JOBTYPE_PARAM, String.class, false, Arrays.asList("GET")),
+                        new JsonRestServlet.ParameterInfo(RestConstants.OFFSET_PARAM, String.class, false, Arrays.asList("GET")),
+                        new JsonRestServlet.ParameterInfo(RestConstants.LEN_PARAM, String.class, false, Arrays.asList("GET")),
+                        new JsonRestServlet.ParameterInfo(RestConstants.JOBS_EXTERNAL_ID_PARAM, String.class, false, Arrays.asList("GET"))));
     }
 
     public JobsServlet() {

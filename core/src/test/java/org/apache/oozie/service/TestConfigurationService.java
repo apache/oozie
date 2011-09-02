@@ -28,7 +28,7 @@ public class TestConfigurationService extends XTestCase {
     public void testOriginalDefault() throws Exception {
         ConfigurationService cl = new ConfigurationService();
         cl.init(null);
-        assertNotNull(cl.getConf().get("oozie.safemode"));
+        assertNotNull(cl.getConf().get("oozie.systemmode"));
         cl.destroy();
     }
 

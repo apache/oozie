@@ -1,7 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE web-app
-        PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.2//EN"
-        "http://java.sun.com/dtd/web-app_2_3.dtd">
 <!--
   Licensed to the Apache Software Foundation (ASF) under one
   or more contributor license agreements.  See the NOTICE file
@@ -19,6 +16,9 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
+<!DOCTYPE web-app
+        PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.2//EN"
+        "http://java.sun.com/dtd/web-app_2_3.dtd">
 
 <web-app>
     <display-name>OOZIE</display-name>
@@ -35,12 +35,19 @@
     </servlet>
 
     <servlet>
-        <servlet-name>admin</servlet-name>
+        <servlet-name>v0admin</servlet-name>
         <display-name>Oozie admin</display-name>
-        <servlet-class>org.apache.oozie.servlet.AdminServlet</servlet-class>
+        <servlet-class>org.apache.oozie.servlet.V0AdminServlet</servlet-class>
         <load-on-startup>1</load-on-startup>
     </servlet>
-    
+
+    <servlet>
+        <servlet-name>v1admin</servlet-name>
+        <display-name>Oozie admin</display-name>
+        <servlet-class>org.apache.oozie.servlet.V1AdminServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
     <servlet>
         <servlet-name>callback</servlet-name>
         <display-name>Callback Notification</display-name>
@@ -49,16 +56,36 @@
     </servlet>
 
     <servlet>
-        <servlet-name>jobs</servlet-name>
+        <servlet-name>v0jobs</servlet-name>
         <display-name>WS API for Workflow Jobs</display-name>
-        <servlet-class>org.apache.oozie.servlet.JobsServlet</servlet-class>
+        <servlet-class>org.apache.oozie.servlet.V0JobsServlet</servlet-class>
         <load-on-startup>1</load-on-startup>
     </servlet>
 
     <servlet>
-        <servlet-name>job</servlet-name>
+        <servlet-name>v1jobs</servlet-name>
+        <display-name>WS API for Workflow Jobs</display-name>
+        <servlet-class>org.apache.oozie.servlet.V1JobsServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet>
+        <servlet-name>v0job</servlet-name>
         <display-name>WS API for a specific Workflow Job</display-name>
-        <servlet-class>org.apache.oozie.servlet.JobServlet</servlet-class>
+        <servlet-class>org.apache.oozie.servlet.V0JobServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet>
+        <servlet-name>v1job</servlet-name>
+        <display-name>WS API for a specific Workflow Job</display-name>
+        <servlet-class>org.apache.oozie.servlet.V1JobServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet>
+        <servlet-name>sla-event</servlet-name>
+        <display-name>WS API for specific SLA Events</display-name>
+        <servlet-class>org.apache.oozie.servlet.SLAServlet</servlet-class>
         <load-on-startup>1</load-on-startup>
     </servlet>
 
@@ -68,28 +95,52 @@
     </servlet-mapping>
 
     <servlet-mapping>
-        <servlet-name>admin</servlet-name>
+        <servlet-name>v0admin</servlet-name>
         <url-pattern>/v0/admin/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>v1admin</servlet-name>
+        <url-pattern>/v1/admin/*</url-pattern>
     </servlet-mapping>
 
     <servlet-mapping>
         <servlet-name>callback</servlet-name>
         <url-pattern>/v0/callback/*</url-pattern>
     </servlet-mapping>
-    
-    
+
     <servlet-mapping>
-        <servlet-name>jobs</servlet-name>
+        <servlet-name>callback</servlet-name>
+        <url-pattern>/v1/callback/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>v0jobs</servlet-name>
         <url-pattern>/v0/jobs</url-pattern>
     </servlet-mapping>
 
     <servlet-mapping>
-        <servlet-name>job</servlet-name>
+        <servlet-name>v1jobs</servlet-name>
+        <url-pattern>/v1/jobs</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>v0job</servlet-name>
         <url-pattern>/v0/job/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>v1job</servlet-name>
+        <url-pattern>/v1/job/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>sla-event</servlet-name>
+        <url-pattern>/v1/sla/*</url-pattern>
     </servlet-mapping>
 
     <welcome-file-list>
         <welcome-file>index.html</welcome-file>
     </welcome-file-list>
-    
+
 </web-app>

@@ -39,41 +39,43 @@ import java.util.List;
 import java.util.Properties;
 
 public class MockDagEngineService extends DagEngineService {
-	public static final String JOB_ID = "job-";
-	public static final String ACTION_ID = "action-";
-	public static final String EXT_ID = "ext-";
-	public static final String WORKFLOW_APP = "<workflow-app/>";
-	public static final String CONFIGURATION = "<configuration/>";
-	public static final String GROUP = "group";
-	public static final String USER = "user";
+    public static final String JOB_ID = "job-";
+    public static final String ACTION_ID = "action-";
+    public static final String EXT_ID = "ext-";
+    public static final String WORKFLOW_APP = "<workflow-app/>";
+    public static final String CONFIGURATION = "<configuration/>";
+    public static final String GROUP = "group";
+    public static final String USER = "user";
 
-	public static final String LOG = "log";
+    public static final String LOG = "log";
 
     public static String did = null;
     public static Properties properties;
-	public static List<WorkflowJob> workflows;
-	public static List<Boolean> started;
-	public static final int INIT_WF_COUNT = 3;
+    public static List<WorkflowJob> workflows;
+    public static List<Boolean> started;
+    public static final int INIT_WF_COUNT = 4;
 
-	static {
-		reset();
-	}
+    static {
+        reset();
+    }
 
     public static void reset() {
         did = null;
         properties = null;
         workflows = new ArrayList<WorkflowJob>();
         started = new ArrayList<Boolean>();
-        for(int i=0; i<INIT_WF_COUNT; i++){
+        for (int i = 0; i < INIT_WF_COUNT; i++) {
             workflows.add(createDummyWorkflow(i));
             started.add(false);
         }
     }
 
+    @Override
     public DagEngine getSystemDagEngine() {
         return new MockDagEngine();
     }
 
+    @Override
     public DagEngine getDagEngine(String user, String authToken) {
         return new MockDagEngine(user, authToken);
     }
@@ -87,44 +89,51 @@ public class MockDagEngineService extends DagEngineService {
             super(user, authToken);
         }
 
+        @Override
         public String submitJob(Configuration conf, boolean startJob) throws DagEngineException {
             did = "submit";
             int idx = workflows.size();
             workflows.add(createDummyWorkflow(idx, XmlUtils.prettyPrint(conf).toString()));
             started.add(startJob);
-            return JOB_ID+idx;
+            return JOB_ID + idx;
         }
 
+        @Override
         public void start(String jobId) throws DagEngineException {
             did = RestConstants.JOB_ACTION_START;
             int idx = validateWorkflowIdx(jobId);
             started.set(idx, true);
         }
 
+        @Override
         public void resume(String jobId) throws DagEngineException {
             did = RestConstants.JOB_ACTION_RESUME;
             int idx = validateWorkflowIdx(jobId);
             started.set(idx, true);
         }
 
+        @Override
         public void suspend(String jobId) throws DagEngineException {
             did = RestConstants.JOB_ACTION_SUSPEND;
             int idx = validateWorkflowIdx(jobId);
             started.set(idx, false);
         }
 
+        @Override
         public void kill(String jobId) throws DagEngineException {
             did = RestConstants.JOB_ACTION_KILL;
             int idx = validateWorkflowIdx(jobId);
             started.set(idx, false);
         }
 
+        @Override
         public void reRun(String jobId, Configuration conf) throws DagEngineException {
             did = RestConstants.JOB_ACTION_RERUN;
             int idx = validateWorkflowIdx(jobId);
             started.set(idx, true);
         }
 
+        @Override
         public void processCallback(String actionId, String externalStatus, Properties actionData)
                 throws DagEngineException {
             if (actionId.equals("ok") && externalStatus.equals("ok")) {
@@ -134,12 +143,14 @@ public class MockDagEngineService extends DagEngineService {
             throw new DagEngineException(ErrorCode.ETEST, actionId);
         }
 
+        @Override
         public WorkflowJob getJob(String jobId) throws DagEngineException {
             did = RestConstants.JOB_SHOW_INFO;
             int idx = validateWorkflowIdx(jobId);
             return workflows.get(idx);
         }
 
+        @Override
         public String getDefinition(String jobId) throws DagEngineException {
             did = RestConstants.JOB_SHOW_DEFINITION;
             int idx = validateWorkflowIdx(jobId);
@@ -147,18 +158,21 @@ public class MockDagEngineService extends DagEngineService {
             return WORKFLOW_APP;
         }
 
+        @Override
         public void streamLog(String jobId, Writer writer) throws IOException, DagEngineException {
             did = RestConstants.JOB_SHOW_LOG;
             validateWorkflowIdx(jobId);
             writer.write(LOG);
         }
 
+        @Override
         public WorkflowsInfo getJobs(String filter, int start, int len) throws DagEngineException {
             parseFilter(filter);
             did = RestConstants.JOBS_FILTER_PARAM;
             return new WorkflowsInfo((List<WorkflowJobBean>) (List) workflows, start, len, workflows.size());
         }
 
+        @Override
         public String getJobIdForExternalId(String externalId) throws DagEngineException {
             did = RestConstants.JOBS_EXTERNAL_ID_PARAM;
             return (externalId.equals("external-valid")) ? "id-valid" : null;

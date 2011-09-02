@@ -28,9 +28,11 @@ import org.apache.oozie.ErrorCode;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 //TODO javadoc
@@ -111,7 +113,13 @@ public class LiteWorkflowApp implements Writable, WorkflowApp {
     @Override
     public void write(DataOutput dataOutput) throws IOException {
         dataOutput.writeUTF(name);
-        dataOutput.writeUTF(definition);
+        //dataOutput.writeUTF(definition);
+        //writeUTF() has limit 65535, so split long string to multiple short strings
+        List<String> defList = divideStr(definition);
+        dataOutput.writeInt(defList.size());
+        for (String d : defList) {
+            dataOutput.writeUTF(d);
+        }
         dataOutput.writeInt(nodesMap.size());
         for (NodeDef n : getNodeDefs()) {
             dataOutput.writeUTF(n.getClass().getName());
@@ -119,10 +127,43 @@ public class LiteWorkflowApp implements Writable, WorkflowApp {
         }
     }
 
+    /**
+     * To split long string to a list of smaller strings.
+     *
+     * @param str
+     * @return List
+     */
+    private List<String> divideStr(String str) {
+        List<String> list = new ArrayList<String>();
+        int len = 20000;
+        int strlen = str.length();
+        int start = 0;
+        int end = len;
+
+        while (end < strlen) {
+            list.add(str.substring(start, end));
+            start = end;
+            end += len;
+        }
+
+        if (strlen <= end) {
+            list.add(str.substring(start, strlen));
+        }
+        return list;
+    }
+
     @Override
     public void readFields(DataInput dataInput) throws IOException {
         name = dataInput.readUTF();
-        definition = dataInput.readUTF();
+        //definition = dataInput.readUTF();
+        //read the full definition back
+        int defListSize = dataInput.readInt();
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < defListSize; i++) {
+            sb.append(dataInput.readUTF());
+        }
+        definition = sb.toString();
+
         int numNodes = dataInput.readInt();
         for (int x = 0; x < numNodes; x++) {
             try {

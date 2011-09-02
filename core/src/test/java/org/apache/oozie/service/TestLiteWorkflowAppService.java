@@ -23,6 +23,8 @@ import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.workflow.WorkflowApp;
 import org.apache.oozie.workflow.WorkflowException;
 import org.apache.oozie.workflow.lite.LiteWorkflowApp;
+import org.apache.oozie.service.Services;
+import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
@@ -141,7 +143,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
 
 
     public void testExtSchema() throws Exception {
-        setSystemProperty(WorkflowSchemaService.CONF_EXT_SCHEMAS, "wf-ext-schema.xsd");
+        setSystemProperty(SchemaService.WF_CONF_EXT_SCHEMAS, "wf-ext-schema.xsd");
         setSystemProperty("oozie.service.ActionService.executor.ext.classes", TestActionExecutor.class.getName());
         Services services = new Services();
         try {

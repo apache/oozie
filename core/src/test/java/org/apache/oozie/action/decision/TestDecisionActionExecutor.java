@@ -48,7 +48,7 @@ public class TestDecisionActionExecutor extends XFsTestCase {
         public String getCallbackUrl(String externalStatusVar) {
             return Services.get().get(CallbackService.class).createCallBackUrl(action.getId(), externalStatusVar);
         }
-        
+
         public WorkflowAction getAction() {
             return action;
         }
@@ -123,6 +123,12 @@ public class TestDecisionActionExecutor extends XFsTestCase {
         public FileSystem getAppFileSystem() throws IOException, URISyntaxException {
             return getFileSystem();
         }
+
+        @Override
+        public void setErrorInfo(String str, String exMsg) {
+            // TODO Auto-generated method stub
+            action.setErrorInfo(str, exMsg);
+        }
     }
 
     public void testDecision() throws Exception {
@@ -132,10 +138,10 @@ public class TestDecisionActionExecutor extends XFsTestCase {
 
         WorkflowActionBean action = new WorkflowActionBean();
         action.setConf("<switch xmlns='uri:oozie:workflow:0.1'>" +
-                       "<case to='a'>true</case>" +
-                       "<case to='b'>true</case>" +
-                       "<case to='c'>false</case>" +
-                       "<default to='d'/></switch>");
+                "<case to='a'>true</case>" +
+                "<case to='b'>true</case>" +
+                "<case to='c'>false</case>" +
+                "<default to='d'/></switch>");
 
         decision.start(new Context(action), action);
         assertEquals(WorkflowAction.Status.DONE, action.getStatus());
@@ -144,10 +150,10 @@ public class TestDecisionActionExecutor extends XFsTestCase {
         assertEquals("a", action.getExternalStatus());
 
         action.setConf("<switch xmlns='uri:oozie:workflow:0.1'>" +
-                       "<case to='a'>false</case>" +
-                       "<case to='b'>true</case>" +
-                       "<case to='c'>false</case>" +
-                       "<default to='d'/></switch>");
+                "<case to='a'>false</case>" +
+                "<case to='b'>true</case>" +
+                "<case to='c'>false</case>" +
+                "<default to='d'/></switch>");
 
         decision.start(new Context(action), action);
         assertEquals(WorkflowAction.Status.DONE, action.getStatus());
@@ -157,10 +163,10 @@ public class TestDecisionActionExecutor extends XFsTestCase {
 
 
         action.setConf("<switch xmlns='uri:oozie:workflow:0.1'>" +
-                       "<case to='a'>false</case>" +
-                       "<case to='b'>false</case>" +
-                       "<case to='c'>false</case>" +
-                       "<default to='d'/></switch>");
+                "<case to='a'>false</case>" +
+                "<case to='b'>false</case>" +
+                "<case to='c'>false</case>" +
+                "<default to='d'/></switch>");
 
         decision.start(new Context(action), action);
         assertEquals(WorkflowAction.Status.DONE, action.getStatus());
@@ -170,10 +176,10 @@ public class TestDecisionActionExecutor extends XFsTestCase {
 
         try {
             action.setConf("<wrong>" +
-                           "<case to='a'>false</case>" +
-                           "<case to='b'>false</case>" +
-                           "<case to='c'>false</case>" +
-                           "<default to='d'/></switch>");
+                    "<case to='a'>false</case>" +
+                    "<case to='b'>false</case>" +
+                    "<case to='c'>false</case>" +
+                    "<default to='d'/></switch>");
 
             decision.start(new Context(action), action);
             fail();

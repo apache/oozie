@@ -19,6 +19,7 @@ package org.apache.oozie.command;
 
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.store.WorkflowStore;
+import org.apache.oozie.store.Store;
 import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XTestCase;
@@ -41,16 +42,24 @@ public class TestCommand extends XTestCase {
             this.name = name;
         }
 
+        @Override
         public String getName() {
             return name;
         }
 
+        @Override
         public String getType() {
             return "type";
         }
 
+        @Override
         public int getPriority() {
             return 0;
+        }
+
+        @Override
+        public long getCreatedTime() {
+            return 1;
         }
 
         public Void call() throws Exception {
@@ -59,7 +68,7 @@ public class TestCommand extends XTestCase {
         }
     }
 
-    private static class MyCommand extends Command {
+    private static class MyCommand extends Command<Object, WorkflowStore> {
         private boolean exception;
 
         public MyCommand(boolean exception) {
@@ -85,6 +94,15 @@ public class TestCommand extends XTestCase {
                 throw new CommandException(ErrorCode.E0800);
             }
             return null;
+        }
+
+        /**
+         * Return the public interface of the Workflow Store.
+         *
+         * @return {@link WorkflowStore}
+         */
+        public Class<? extends Store> getStoreClass() {
+            return WorkflowStore.class;
         }
     }
 
@@ -143,6 +161,15 @@ public class TestCommand extends XTestCase {
 
 
         services.destroy();
+    }
+
+    /**
+     * Return the public interface of the Workflow Store.
+     *
+     * @return {@link WorkflowStore}
+     */
+    public Class<? extends Store> getStoreClass() {
+        return WorkflowStore.class;
     }
 
 }

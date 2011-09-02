@@ -26,69 +26,119 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import javax.persistence.*;
+
 /**
  * Json Bean that represents an Oozie workflow node.
  */
+@Entity
+@Table(name = "WF_ACTIONS")
+@DiscriminatorColumn(name = "bean_type", discriminatorType = DiscriminatorType.STRING)
+
 public class JsonWorkflowAction implements WorkflowAction, JsonBean {
+    @Id
     private String id;
-    private String name;
-    private String type;
-    private String conf;
+
+    @Basic
+    @Column(name = "name")
+    private String name = null;
+
+    @Basic
+    @Column(name = "type")
+    private String type = null;
+
+    @Basic
+    @Column(name = "conf")
+    @Lob
+    private String conf = null;
+
+    @Transient
     private Status status = WorkflowAction.Status.PREP;
+
+    @Basic
+    @Column(name = "retries")
     private int retries;
+
+    @Transient
     private Date startTime;
+
+    @Transient
     private Date endTime;
-    private String transition;
-    private String data;
-    private String externalId;
-    private String externalStatus;
-    private String trackerUri;
-    private String consoleUrl;
-    private String errorCode;
-    private String errorMessage;
+
+    @Basic
+    @Column(name = "transition")
+    private String transition = null;
+
+    @Column(name = "data")
+    @Lob
+    private String data = null;
+
+    @Basic
+    @Column(name = "external_id")
+    private String externalId = null;
+
+    @Basic
+    @Column(name = "external_status")
+    private String externalStatus = null;
+
+    @Basic
+    @Column(name = "tracker_uri")
+    private String trackerUri = null;
+
+    @Basic
+    @Column(name = "console_url")
+    private String consoleUrl = null;
+
+    @Basic
+    @Column(name = "error_code")
+    private String errorCode = null;
+
+    @Column(name = "error_message")
+    @Lob
+    private String errorMessage = null;
 
     public JsonWorkflowAction() {
     }
 
     public JsonWorkflowAction(JSONObject jsonObject) {
-        id = (String) jsonObject.get(JsonTags.ACTION_ID);
-        name = (String) jsonObject.get(JsonTags.ACTION_NAME);
-        type = (String) jsonObject.get(JsonTags.ACTION_TYPE);
-        conf = (String) jsonObject.get(JsonTags.ACTION_CONF);
-        status = Status.valueOf((String) jsonObject.get(JsonTags.ACTION_STATUS));
-        retries = (int) JsonUtils.getLongValue(jsonObject, JsonTags.ACTION_RETRIES);
-        startTime = JsonUtils.parseDateRfc822((String) jsonObject.get(JsonTags.ACTION_START_TIME));
-        endTime = JsonUtils.parseDateRfc822((String) jsonObject.get(JsonTags.ACTION_END_TIME));
-        transition = (String) jsonObject.get(JsonTags.ACTION_TRANSITION);
-        data = (String) jsonObject.get(JsonTags.ACTION_DATA);
-        externalId = (String) jsonObject.get(JsonTags.ACTION_EXTERNAL_ID);
-        externalStatus = (String) jsonObject.get(JsonTags.ACTION_EXTERNAL_STATUS);
-        trackerUri = (String) jsonObject.get(JsonTags.ACTION_TRACKER_URI);
-        consoleUrl = (String) jsonObject.get(JsonTags.ACTION_CONSOLE_URL);
-        errorCode = (String) jsonObject.get(JsonTags.ACTION_ERROR_CODE);
-        errorMessage = (String) jsonObject.get(JsonTags.ACTION_ERROR_MESSAGE);
+        id = (String) jsonObject.get(JsonTags.WORKFLOW_ACTION_ID);
+        name = (String) jsonObject.get(JsonTags.WORKFLOW_ACTION_NAME);
+        type = (String) jsonObject.get(JsonTags.WORKFLOW_ACTION_TYPE);
+        conf = (String) jsonObject.get(JsonTags.WORKFLOW_ACTION_CONF);
+        status = Status.valueOf((String) jsonObject.get(JsonTags.WORKFLOW_ACTION_STATUS));
+        retries = (int) JsonUtils.getLongValue(jsonObject, JsonTags.WORKFLOW_ACTION_RETRIES);
+        startTime = JsonUtils.parseDateRfc822((String) jsonObject.get(JsonTags.WORKFLOW_ACTION_START_TIME));
+        endTime = JsonUtils.parseDateRfc822((String) jsonObject.get(JsonTags.WORKFLOW_ACTION_END_TIME));
+        transition = (String) jsonObject.get(JsonTags.WORKFLOW_ACTION_TRANSITION);
+        data = (String) jsonObject.get(JsonTags.WORKFLOW_ACTION_DATA);
+        externalId = (String) jsonObject.get(JsonTags.WORKFLOW_ACTION_EXTERNAL_ID);
+        externalStatus = (String) jsonObject.get(JsonTags.WORKFLOW_ACTION_EXTERNAL_STATUS);
+        trackerUri = (String) jsonObject.get(JsonTags.WORKFLOW_ACTION_TRACKER_URI);
+        consoleUrl = (String) jsonObject.get(JsonTags.WORKFLOW_ACTION_CONSOLE_URL);
+        errorCode = (String) jsonObject.get(JsonTags.WORKFLOW_ACTION_ERROR_CODE);
+        errorMessage = (String) jsonObject.get(JsonTags.WORKFLOW_ACTION_ERROR_MESSAGE);
     }
 
     @SuppressWarnings("unchecked")
     public JSONObject toJSONObject() {
         JSONObject json = new JSONObject();
-        json.put(JsonTags.ACTION_ID, id);
-        json.put(JsonTags.ACTION_NAME, name);
-        json.put(JsonTags.ACTION_TYPE, type);
-        json.put(JsonTags.ACTION_CONF, conf);
-        json.put(JsonTags.ACTION_START_TIME, JsonUtils.formatDateRfc822(startTime));
-        json.put(JsonTags.ACTION_STATUS, status.toString());
-        json.put(JsonTags.ACTION_RETRIES, (long) retries);
-        json.put(JsonTags.ACTION_START_TIME, JsonUtils.formatDateRfc822(startTime));
-        json.put(JsonTags.ACTION_END_TIME, JsonUtils.formatDateRfc822(endTime));
-        json.put(JsonTags.ACTION_TRANSITION, transition);
-        json.put(JsonTags.ACTION_DATA, data);
-        json.put(JsonTags.ACTION_EXTERNAL_ID, externalId);
-        json.put(JsonTags.ACTION_EXTERNAL_STATUS, externalStatus);
-        json.put(JsonTags.ACTION_TRACKER_URI, trackerUri);
-        json.put(JsonTags.ACTION_CONSOLE_URL, consoleUrl);
-        json.put(JsonTags.ACTION_ERROR_CODE, errorCode);
-        json.put(JsonTags.ACTION_ERROR_MESSAGE, errorMessage);
+        json.put(JsonTags.WORKFLOW_ACTION_ID, id);
+        json.put(JsonTags.WORKFLOW_ACTION_NAME, name);
+        json.put(JsonTags.WORKFLOW_ACTION_TYPE, type);
+        json.put(JsonTags.WORKFLOW_ACTION_CONF, conf);
+        json.put(JsonTags.WORKFLOW_ACTION_START_TIME, JsonUtils.formatDateRfc822(startTime));
+        json.put(JsonTags.WORKFLOW_ACTION_STATUS, status.toString());
+        json.put(JsonTags.WORKFLOW_ACTION_RETRIES, (long) retries);
+        json.put(JsonTags.WORKFLOW_ACTION_START_TIME, JsonUtils.formatDateRfc822(startTime));
+        json.put(JsonTags.WORKFLOW_ACTION_END_TIME, JsonUtils.formatDateRfc822(endTime));
+        json.put(JsonTags.WORKFLOW_ACTION_TRANSITION, transition);
+        json.put(JsonTags.WORKFLOW_ACTION_DATA, data);
+        json.put(JsonTags.WORKFLOW_ACTION_EXTERNAL_ID, externalId);
+        json.put(JsonTags.WORKFLOW_ACTION_EXTERNAL_STATUS, externalStatus);
+        json.put(JsonTags.WORKFLOW_ACTION_TRACKER_URI, trackerUri);
+        json.put(JsonTags.WORKFLOW_ACTION_CONSOLE_URL, consoleUrl);
+        json.put(JsonTags.WORKFLOW_ACTION_ERROR_CODE, errorCode);
+        json.put(JsonTags.WORKFLOW_ACTION_ERROR_MESSAGE, errorMessage);
         return json;
     }
 
@@ -216,7 +266,7 @@ public class JsonWorkflowAction implements WorkflowAction, JsonBean {
         this.errorCode = errorCode;
         this.errorMessage = errorMessage;
     }
-    
+
     public String toString() {
         return MessageFormat.format("Action name[{0}] status[{1}]", getName(), getStatus());
     }

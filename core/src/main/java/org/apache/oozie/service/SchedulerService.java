@@ -17,6 +17,7 @@
  */
 package org.apache.oozie.service;
 
+import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
 import org.apache.oozie.util.XLog;
 
 import java.util.concurrent.Callable;
@@ -25,12 +26,9 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
- * This service executes scheduled Runnables and Callables at regular intervals.
- * <p/>
- * It uses a java.util.concurrent.ScheduledExecutorService.
- * <p/>
- * The {@link #SCHEDULER_THREADS} configuration property indicates how many threads the scheduler will use to run
- * scheduled commands.
+ * This service executes scheduled Runnables and Callables at regular intervals. <p/> It uses a
+ * java.util.concurrent.ScheduledExecutorService. <p/> The {@link #SCHEDULER_THREADS} configuration property indicates
+ * how many threads the scheduler will use to run scheduled commands.
  */
 public class SchedulerService implements Service {
 
@@ -84,8 +82,7 @@ public class SchedulerService implements Service {
     }
 
     /**
-     * Return the java.util.concurrent.ScheduledExecutorService instance used by the SchedulerService.
-     * <p/>
+     * Return the java.util.concurrent.ScheduledExecutorService instance used by the SchedulerService. <p/>
      *
      * @return the scheduled executor service instance.
      */
@@ -96,8 +93,8 @@ public class SchedulerService implements Service {
     public enum Unit {
         MILLISEC(1),
         SEC(1000),
-        MIN(1000 *60),
-        HOUR(1000 * 60 *60);
+        MIN(1000 * 60),
+        HOUR(1000 * 60 * 60);
 
         private long millis;
 
@@ -115,7 +112,7 @@ public class SchedulerService implements Service {
      * Schedule a Callable for execution.
      *
      * @param callable callable to schedule for execution.
-     * @param delay    delay for first execution since scheduling.
+     * @param delay delay for first execution since scheduling.
      * @param interval interval between executions.
      * @param unit scheduling unit.
      */
@@ -124,6 +121,10 @@ public class SchedulerService implements Service {
                   callable.getClass(), delay, interval, unit);
         Runnable r = new Runnable() {
             public void run() {
+                if (Services.get().getSystemMode() == SYSTEM_MODE.SAFEMODE) {
+                    log.trace("schedule[run/callable] System is in SAFEMODE. Therefore nothing will run");
+                    return;
+                }
                 try {
                     callable.call();
                 }
@@ -141,7 +142,7 @@ public class SchedulerService implements Service {
      * Schedule a Runnable for execution.
      *
      * @param runnable Runnable to schedule for execution.
-     * @param delay    delay for first execution since scheduling.
+     * @param delay delay for first execution since scheduling.
      * @param interval interval between executions.
      * @param unit scheduling unit.
      */
@@ -150,6 +151,10 @@ public class SchedulerService implements Service {
                   runnable.getClass(), delay, interval, unit);
         Runnable r = new Runnable() {
             public void run() {
+                if (Services.get().getSystemMode() == SYSTEM_MODE.SAFEMODE) {
+                    log.trace("schedule[run/Runnable] System is in SAFEMODE. Therefore nothing will run");
+                    return;
+                }
                 try {
                     runnable.run();
                 }

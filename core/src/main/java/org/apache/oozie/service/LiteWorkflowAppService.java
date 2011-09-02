@@ -26,8 +26,7 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.util.ParamChecker;
 
 /**
- * Service that provides workflow application definition reading, parsing and
- * creating proto configuration.
+ * Service that provides workflow application definition reading, parsing and creating proto configuration.
  */
 public class LiteWorkflowAppService extends WorkflowAppService {
     /**

@@ -74,9 +74,8 @@ public class WritableUtils {
     private static final String NULL = "||";
 
     /**
-     * Write a string to a data output supporting <code>null</code> values.
-     * <p/>
-     * It uses the '||' token to represent <code>null</code>.
+     * Write a string to a data output supporting <code>null</code> values. <p/> It uses the '||' token to represent
+     * <code>null</code>.
      *
      * @param dataOutput data output.
      * @param str string to write.
@@ -88,9 +87,8 @@ public class WritableUtils {
     }
 
     /**
-     * Read a string from a data input supporting <code>null</code> values.
-     * <p/>
-     * It uses the '||' token to represent <code>null</code>.
+     * Read a string from a data input supporting <code>null</code> values. <p/> It uses the '||' token to represent
+     * <code>null</code>.
      *
      * @param dataInput data input.
      * @return read string, <code>null</code> if the '||' token was read.

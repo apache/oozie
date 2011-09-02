@@ -19,7 +19,7 @@ package org.apache.oozie.service;
 
 import org.apache.oozie.util.db.Schema.DBType;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.oozie.service.DataSourceService;
+import org.apache.oozie.service.StoreService;
 import org.apache.oozie.service.ServiceException;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.DBLiteWorkflowStoreService;
@@ -34,24 +34,48 @@ import java.sql.Statement;
 
 public class TestDBLiteWorkflowStoreService extends XTestCase {
 
-    @SuppressWarnings({"ConstantConditions"})
-    public void testCreateDBFalseWithNoDB() throws Exception {
-        Services services = null;
-        try {
-            setSystemProperty(DBLiteWorkflowStoreService.CONF_CREATE_SCHEMA, "false");
-            services = new Services();
-            cleanUpDB(services.getConf());
-            services.init();
-            fail();
+    DBType dbType = DBType.ORACLE;
+
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        Services services = new Services();
+        services.init();
+        Connection conn = services.get(StoreService.class).getRawConnection();
+        if (Schema.isHsqlConnection(conn)) {
+            dbType = DBType.HSQL;
         }
-        catch (ServiceException ex) {
-            assertEquals(ErrorCode.E0141, ex.getErrorCode());
+        else {
+            if (Schema.isMySqlConnection(conn)) {
+                dbType = DBType.MySQL;
+            }
         }
-        finally {
-            services.destroy();
-        }
+        services.destroy();
     }
 
+    /* not used
+        @SuppressWarnings({"ConstantConditions"})
+        public void testCreateDBFalseWithNoDB() throws Exception {
+            Services services = null;
+            try {
+                setSystemProperty(DBLiteWorkflowStoreService.CONF_CREATE_SCHEMA, "false");
+                services = new Services();
+                if (dbType.equals(DBType.ORACLE)) {
+                    dropTables(services.getConf());
+                } else {
+                    cleanUpDB(services.getConf());
+                }
+                services.init();
+                fail();
+            }
+            catch (ServiceException ex) {
+                assertEquals(ErrorCode.E0141, ex.getErrorCode());
+            }
+            finally {
+                services.destroy();
+            }
+        }
+    */
     @SuppressWarnings({"ConstantConditions"})
     public void testCreateDBTrueWithNoDB() throws Exception {
         Services services = null;
@@ -65,27 +89,27 @@ public class TestDBLiteWorkflowStoreService extends XTestCase {
         }
     }
 
+    /*
     @SuppressWarnings({"ConstantConditions"})
     public void testCreateDBFalseWithDB() throws Exception {
         Services services = null;
         try {
             setSystemProperty(Services.CONF_SERVICE_CLASSES,
-                    "org.apache.oozie.service.DataSourceService, org.apache.oozie.service.SchedulerService");
+                    "org.apache.oozie.service.StoreService, org.apache.oozie.service.SchedulerService");
             services = new Services();
-            cleanUpDB(services.getConf());
+            if (dbType.equals(DBType.ORACLE)) {
+                dropTables(services.getConf());
+            } else {
+                cleanUpDB(services.getConf());
+            }
             services.init();
             Configuration conf = services.getConf();
             String dbName = conf.get(DBLiteWorkflowStoreService.CONF_SCHEMA_NAME);
-            Connection conn = services.get(DataSourceService.class).getRawConnection();
+            Connection conn = services.get(StoreService.class).getRawConnection();
             Statement st = conn.createStatement();
-            DBType dbType;
-            if (Schema.isHsqlConnection(conn)) {
-                dbType = DBType.HSQL;
+            if (!dbType.equals(DBType.ORACLE)) {
+                st.executeUpdate(generateCreateSchema(dbType, dbName));
             }
-            else {
-                dbType = DBType.MySQL;
-            }
-            st.executeUpdate(generateCreateSchema(dbType, dbName));
             for (Schema.Table table : OozieSchema.OozieTable.values()) {
                 st.executeUpdate(OozieSchema.generateCreateTableScript(table, dbType));
             }
@@ -106,22 +130,21 @@ public class TestDBLiteWorkflowStoreService extends XTestCase {
         Services services = null;
         try {
             setSystemProperty(Services.CONF_SERVICE_CLASSES,
-                    "org.apache.oozie.service.DataSourceService, org.apache.oozie.service.SchedulerService");
+                    "org.apache.oozie.service.StoreService, org.apache.oozie.service.SchedulerService");
             services = new Services();
-            cleanUpDB(services.getConf());
+            if (dbType.equals(DBType.ORACLE)) {
+                dropTables(services.getConf());
+            } else {
+                cleanUpDB(services.getConf());
+            }
             services.init();
             Configuration conf = services.getConf();
             String dbName = conf.get(DBLiteWorkflowStoreService.CONF_SCHEMA_NAME);
-            Connection conn = services.get(DataSourceService.class).getRawConnection();
-            DBType dbType;
-            if (Schema.isHsqlConnection(conn)) {
-                dbType = DBType.HSQL;
-            }
-            else {
-                dbType = DBType.MySQL;
-            }
+            Connection conn = services.get(StoreService.class).getRawConnection();
             Statement st = conn.createStatement();
-            st.executeUpdate(generateCreateSchema(dbType, dbName));
+            if (!dbType.equals(DBType.ORACLE)) {
+                st.executeUpdate(generateCreateSchema(dbType, dbName));
+            }
             for (Schema.Table table : OozieSchema.OozieTable.values()) {
                 st.executeUpdate(OozieSchema.generateCreateTableScript(table, dbType));
             }
@@ -136,9 +159,9 @@ public class TestDBLiteWorkflowStoreService extends XTestCase {
             services.destroy();
         }
     }
-
+*/
     private String generateCreateSchema(DBType dbType, String dbName) throws SQLException {
-        return "CREATE " + (dbType.equals(DBType.MySQL) ? "DATABASE " : "SCHEMA ") + dbName
+        return "CREATE " + ((dbType.equals(DBType.MySQL) || dbType.equals(DBType.ORACLE)) ? "DATABASE " : "SCHEMA ") + dbName
                 + (dbType.equals(DBType.HSQL) ? " AUTHORIZATION DBA" : "");
     }
 }

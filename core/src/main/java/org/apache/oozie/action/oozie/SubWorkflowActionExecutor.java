@@ -24,9 +24,12 @@ import org.apache.oozie.DagEngine;
 import org.apache.oozie.LocalOozieClient;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.service.DagEngineService;
+import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.command.CommandException;
+import org.apache.oozie.util.PropertiesUtils;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
@@ -43,6 +46,20 @@ import java.util.HashSet;
 public class SubWorkflowActionExecutor extends ActionExecutor {
     public static final String ACTION_TYPE = "sub-workflow";
     public static final String LOCAL = "local";
+
+    private static final Set<String> DISALLOWED_DEFAULT_PROPERTIES = new HashSet<String>();
+
+    static {
+        String[] badUserProps = {PropertiesUtils.DAYS, PropertiesUtils.HOURS, PropertiesUtils.MINUTES,
+                PropertiesUtils.KB, PropertiesUtils.MB, PropertiesUtils.GB, PropertiesUtils.TB, PropertiesUtils.PB,
+                PropertiesUtils.RECORDS, PropertiesUtils.MAP_IN, PropertiesUtils.MAP_OUT, PropertiesUtils.REDUCE_IN,
+                PropertiesUtils.REDUCE_OUT, PropertiesUtils.GROUPS};
+
+        String[] badDefaultProps = {PropertiesUtils.HADOOP_USER, PropertiesUtils.HADOOP_UGI,
+                WorkflowAppService.HADOOP_JT_KERBEROS_NAME, WorkflowAppService.HADOOP_NN_KERBEROS_NAME};
+        PropertiesUtils.createPropertySet(badUserProps, DISALLOWED_DEFAULT_PROPERTIES);
+        PropertiesUtils.createPropertySet(badDefaultProps, DISALLOWED_DEFAULT_PROPERTIES);
+    }
 
     protected SubWorkflowActionExecutor() {
         super(ACTION_TYPE);
@@ -63,18 +80,23 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
             oozieClient = new LocalOozieClient(dagEngine);
         }
         else {
-            //TODO we need to add authToken to the WC for the remote case
+            // TODO we need to add authToken to the WC for the remote case
             oozieClient = new OozieClient(oozieUri);
         }
         return oozieClient;
     }
 
-    protected void injectInline(Element eConf, Configuration subWorkflowConf)
-            throws IOException, ActionExecutorException {
+    protected void injectInline(Element eConf, Configuration subWorkflowConf) throws IOException,
+            ActionExecutorException {
         if (eConf != null) {
             String strConf = XmlUtils.prettyPrint(eConf).toString();
             Configuration conf = new XConfiguration(new StringReader(strConf));
-            checkForDisallowedProps(conf, "inline configuration");
+            try {
+                PropertiesUtils.checkDisallowedProperties(conf, DISALLOWED_DEFAULT_PROPERTIES);
+            }
+            catch (CommandException ex) {
+                throw convertException(ex);
+            }
             XConfiguration.copy(conf, subWorkflowConf);
         }
     }
@@ -95,7 +117,7 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
 
     protected String checkIfRunning(OozieClient oozieClient, String extId) throws OozieClientException {
         String jobId = oozieClient.getJobId(extId);
-        if(jobId.equals("")) {
+        if (jobId.equals("")) {
             return null;
         }
         return jobId;
@@ -111,7 +133,7 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
             String subWorkflowId = null;
             String extId = context.getRecoveryId();
             String runningJobId = null;
-            if(extId != null) {
+            if (extId != null) {
                 runningJobId = checkIfRunning(oozieClient, extId);
             }
             if (runningJobId == null) {
@@ -139,7 +161,7 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
             WorkflowJob workflow = oozieClient.getJobInfo(subWorkflowId);
             String consoleUrl = workflow.getConsoleUrl();
             context.setStartData(subWorkflowId, oozieUri, consoleUrl);
-            if(runningJobId != null) {
+            if (runningJobId != null) {
                 check(context, action);
             }
         }
@@ -148,26 +170,11 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
         }
     }
 
-    private static final Set<String> DISALLOWED_PROPERTIES = new HashSet<String>();
-
-    static {
-        DISALLOWED_PROPERTIES.add(OozieClient.USER_NAME);
-        DISALLOWED_PROPERTIES.add(OozieClient.GROUP_NAME);
-    }
-
-    protected void checkForDisallowedProps(Configuration conf, String confName) throws ActionExecutorException {
-        for (String prop : DISALLOWED_PROPERTIES) {
-            if (conf.get(prop) != null) {
-                throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "DISALLOWED_CONF_PROPERTY",
-                                                  confName);
-            }
-        }
-    }
-
     public void end(Context context, WorkflowAction action) throws ActionExecutorException {
         try {
             String externalStatus = action.getExternalStatus();
-            WorkflowAction.Status status = externalStatus.equals("SUCCEEDED") ? WorkflowAction.Status.OK : WorkflowAction.Status.ERROR;
+            WorkflowAction.Status status = externalStatus.equals("SUCCEEDED") ? WorkflowAction.Status.OK
+                                           : WorkflowAction.Status.ERROR;
             context.setEndData(status, getActionSignal(status));
         }
         catch (Exception ex) {

@@ -16,22 +16,22 @@
   limitations under the License.
 -->
 <workflow-app xmlns="uri:oozie:workflow:0.1" name="recovery-el-wf">
-    <start to="hdfs11" />
+    <start to="hdfs11"/>
     <action name="hdfs11">
         <fs>
-            <delete path="${checkDir}" />
+            <delete path="${checkDir}"/>
         </fs>
-        <ok to="dec1" />
-        <error to="k" />
+        <ok to="dec1"/>
+        <error to="k"/>
     </action>
     <decision name="dec1">
         <switch>
             <case to="end">${fs:exists(checkDir)}</case>
-            <default to="k" />
+            <default to="k"/>
         </switch>
     </decision>
     <kill name="k">
         <message>kill</message>
     </kill>
-    <end name="end" />
+    <end name="end"/>
 </workflow-app>

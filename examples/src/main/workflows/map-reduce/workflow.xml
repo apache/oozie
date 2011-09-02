@@ -16,11 +16,14 @@
   limitations under the License.
 -->
 <workflow-app xmlns='uri:oozie:workflow:0.1' name='map-reduce-wf'>
-    <start to='hadoop1' />
+    <start to='hadoop1'/>
     <action name='hadoop1'>
         <map-reduce>
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
+            <prepare>
+                <delete path="${outputDir}/mapRed"/>
+            </prepare>
             <configuration>
                 <property>
                     <name>mapred.mapper.class</name>
@@ -43,16 +46,16 @@
                     <value>${outputDir}/mapRed</value>
                 </property>
                 <property>
-                  <name>mapred.job.queue.name</name>
-                  <value>${queueName}</value>
+                    <name>mapred.job.queue.name</name>
+                    <value>${queueName}</value>
                 </property>
             </configuration>
         </map-reduce>
-        <ok to="end" />
-        <error to="fail" />
+        <ok to="end"/>
+        <error to="fail"/>
     </action>
     <kill name="fail">
         <message>Map/Reduce failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>
     </kill>
-    <end name='end' />
+    <end name='end'/>
 </workflow-app>

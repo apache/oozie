@@ -22,15 +22,13 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.util.XLog;
 
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletResponse;
 
 /**
- * Specialized Oozie servlet exception that uses Oozie error codes.
- * <p/>
- * It extends ServletException so it can be handled in the <code>Servlet.service</code> method of the
- * {@link JsonRestServlet}.
+ * Specialized Oozie servlet exception that uses Oozie error codes. <p/> It extends ServletException so it can be
+ * handled in the <code>Servlet.service</code> method of the {@link JsonRestServlet}.
  */
 public class XServletException extends ServletException {
+    private static final long serialVersionUID = 1L;
     private ErrorCode errorCode;
     private int httpStatusCode;
 
@@ -38,10 +36,10 @@ public class XServletException extends ServletException {
      * Create a DagXServletException that triggers a HTTP BAD_REQUEST (400).
      *
      * @param httpStatusCode HTTP error code to return.
-     * @param ex      cause
+     * @param ex cause
      */
     public XServletException(int httpStatusCode, XException ex) {
-        super(ex.getMessage());
+        super(ex.getMessage(), ex);
         this.errorCode = ex.getErrorCode();
         this.httpStatusCode = httpStatusCode;
     }
@@ -50,8 +48,8 @@ public class XServletException extends ServletException {
      * Create a XServletException that triggers a specified HTTP error code.
      *
      * @param httpStatusCode HTTP error code to return.
-     * @param errorCode      Oozie error code.
-     * @param params         paramaters to use in the error code template. If the last parameter is an Exception,
+     * @param errorCode Oozie error code.
+     * @param params paramaters to use in the error code template. If the last parameter is an Exception,
      */
     public XServletException(int httpStatusCode, ErrorCode errorCode, Object... params) {
         super(errorCode.format(params), XLog.getCause(params));

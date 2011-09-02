@@ -27,13 +27,9 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * The UUID service generates unique IDs.
- * <p/>
- * The configuration property {@link #CONF_GENERATOR} specifies the ID generation type, 'random' or 'counter'.
- * <p/>
- * For 'random' uses the JDK UUID.randomUUID() method.
- * <p/>
- * For 'counter' uses a counter postfixed wit the system start up time.
+ * The UUID service generates unique IDs. <p/> The configuration property {@link #CONF_GENERATOR} specifies the ID
+ * generation type, 'random' or 'counter'. <p/> For 'random' uses the JDK UUID.randomUUID() method. <p/> For 'counter'
+ * uses a counter postfixed wit the system start up time.
  */
 public class UUIDService implements Service {
 
@@ -58,8 +54,10 @@ public class UUIDService implements Service {
             counter = new AtomicLong();
             startTime = new SimpleDateFormat("yyMMddHHmmssSSS").format(new Date());
         }
-        else if (!genType.equals("random")) {
-            throw new ServiceException(ErrorCode.E0120, genType);
+        else {
+            if (!genType.equals("random")) {
+                throw new ServiceException(ErrorCode.E0120, genType);
+            }
         }
         systemId = services.getSystemId();
     }
@@ -95,9 +93,10 @@ public class UUIDService implements Service {
     /**
      * Create a unique ID.
      *
+     * @param type: Type of Id. Generally 'C' for Coordinator and 'W' for Workflow.
      * @return unique ID.
      */
-    public String generateId() {
+    public String generateId(ApplicationType type) {
         StringBuilder sb = new StringBuilder();
 
         if (counter != null) {
@@ -105,11 +104,12 @@ public class UUIDService implements Service {
         }
         else {
             sb.append(UUID.randomUUID().toString());
-            if (sb.length() > (39 - systemId.length())) {
-                sb.setLength(39 - systemId.length());
+            if (sb.length() > (37 - systemId.length())) {
+                sb.setLength(37 - systemId.length());
             }
         }
         sb.append('-').append(systemId);
+        sb.append('-').append(type.getType());
         // limitation due to current DB schema for action ID length (100)
         if (sb.length() > 40) {
             throw new RuntimeException(XLog.format("ID exceeds limit of 40 characters, [{0}]", sb));
@@ -118,9 +118,7 @@ public class UUIDService implements Service {
     }
 
     /**
-     * Create a child ID.
-     * <p/>
-     * If the same child name is given the returned child ID is the same.
+     * Create a child ID. <p/> If the same child name is given the returned child ID is the same.
      *
      * @param id unique ID.
      * @param childName child name.
@@ -164,4 +162,16 @@ public class UUIDService implements Service {
         return childId.substring(index + 1);
     }
 
+    public enum ApplicationType {
+        WORKFLOW('W'), COORDINATOR('C');
+        private char type;
+
+        private ApplicationType(char type) {
+            this.type = type;
+        }
+
+        public char getType() {
+            return type;
+        }
+    }
 }

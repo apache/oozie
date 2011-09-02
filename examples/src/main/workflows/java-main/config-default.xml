@@ -25,7 +25,7 @@
         <value>hdfs://localhost:9000</value>
     </property>
     <property>
-      <name>queueName</name>
-      <value>default</value>
+        <name>queueName</name>
+        <value>default</value>
     </property>
 </configuration>

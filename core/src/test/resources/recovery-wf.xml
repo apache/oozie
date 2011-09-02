@@ -16,22 +16,22 @@
   limitations under the License.
 -->
 <workflow-app xmlns="uri:oozie:workflow:0.1" name="recovery-el-wf">
-    <start to="ssh" />
+    <start to="ssh"/>
     <action name="ssh">
         <ssh>
             <host>localhost</host>
             <command>echo</command>
             <args>"Hello Oozie!"</args>
         </ssh>
-        <ok to="hadoop" />
-        <error to="k" />
+        <ok to="hadoop"/>
+        <error to="k"/>
     </action>
     <action name="hadoop">
         <map-reduce>
             <job-tracker>${jobTracker}</job-tracker>
-            <name-node> ${nameNode}</name-node>
+            <name-node>${nameNode}</name-node>
             <prepare>
-                <delete path="${delPath}" />
+                <delete path="${delPath}"/>
             </prepare>
             <configuration>
                 <property>
@@ -60,8 +60,8 @@
                 </property>
             </configuration>
         </map-reduce>
-        <ok to="subwf" />
-        <error to="k" />
+        <ok to="subwf"/>
+        <error to="k"/>
     </action>
     <action name="subwf">
         <sub-workflow>
@@ -73,11 +73,11 @@
                 </property>
             </configuration>
         </sub-workflow>
-        <ok to="end" />
-        <error to="k" />
+        <ok to="end"/>
+        <error to="k"/>
     </action>
     <kill name="k">
         <message>kill</message>
     </kill>
-    <end name="end" />
+    <end name="end"/>
 </workflow-app>

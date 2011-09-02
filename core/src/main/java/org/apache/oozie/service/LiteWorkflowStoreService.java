@@ -39,9 +39,8 @@ import java.util.List;
 public abstract class LiteWorkflowStoreService extends WorkflowStoreService {
 
     /**
-     * Delegation method used by the Action and Decision {@link NodeHandler} on start.
-     * <p/>
-     * This method provides the necessary information to create ActionExecutors.
+     * Delegation method used by the Action and Decision {@link NodeHandler} on start. <p/> This method provides the
+     * necessary information to create ActionExecutors.
      *
      * @param context NodeHandler context.
      * @throws WorkflowException thrown if there was an error parsing the action configuration.
@@ -93,8 +92,7 @@ public abstract class LiteWorkflowStoreService extends WorkflowStoreService {
     }
 
     /**
-     * Delegation method used when failing actions.
-     * <p/>
+     * Delegation method used when failing actions. <p/>
      *
      * @param context NodeHandler context.
      */
@@ -104,8 +102,7 @@ public abstract class LiteWorkflowStoreService extends WorkflowStoreService {
     }
 
     /**
-     * Delegation method used when killing actions.
-     * <p/>
+     * Delegation method used when killing actions. <p/>
      *
      * @param context NodeHandler context.
      */
@@ -115,8 +112,7 @@ public abstract class LiteWorkflowStoreService extends WorkflowStoreService {
     }
 
     /**
-     * Used to terminate jobs - FAIL or KILL.
-     * <p/>
+     * Used to terminate jobs - FAIL or KILL. <p/>
      *
      * @param context NodeHandler context.
      * @param transientVar The transient variable name.

@@ -44,7 +44,7 @@ public class MapReduceMain extends LauncherMain {
         System.out.println("Oozie Map-Reduce action configuration");
         System.out.println("=======================");
 
-        //loading action conf prepared by Oozie
+        // loading action conf prepared by Oozie
         Configuration actionConf = new Configuration(false);
         actionConf.addResource(new Path("file:///", System.getProperty("oozie.action.conf.xml")));
 
@@ -57,14 +57,12 @@ public class MapReduceMain extends LauncherMain {
         System.out.println("------------------------");
         System.out.println();
 
-
-
         System.out.println("Submitting Oozie action Map-Reduce job");
         System.out.println();
-        //submitting job
+        // submitting job
         RunningJob runningJob = submitJob(actionConf);
 
-        //propagating job id back to Oozie
+        // propagating job id back to Oozie
         String jobId = runningJob.getID().toString();
         Properties props = new Properties();
         props.setProperty("id", jobId);
@@ -86,14 +84,38 @@ public class MapReduceMain extends LauncherMain {
     protected RunningJob submitJob(Configuration actionConf) throws Exception {
         JobConf jobConf = new JobConf();
         addActionConf(jobConf, actionConf);
-        
-        //propagate delegation related props from launcher job to MR job
+
+        // propagate delegation related props from launcher job to MR job
         if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
             jobConf.set("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
         }
-        
-        JobClient jobClient = createJobClient(jobConf);
-        return jobClient.submitJob(jobConf);
+        JobClient jobClient = null;
+        RunningJob runJob = null;
+        boolean exception = false;
+        try {
+            jobClient = createJobClient(jobConf);
+            runJob = jobClient.submitJob(jobConf);
+        }
+        catch (Exception ex) {
+            exception = true;
+            throw ex;
+        }
+        finally {
+            try {
+                if (jobClient != null) {
+                    jobClient.close();
+                }
+            }
+            catch (Exception ex) {
+                if (exception) {
+                    System.out.println("JobClient Error: " + ex);
+                }
+                else {
+                    throw ex;
+                }
+            }
+        }
+        return runJob;
     }
 
     @SuppressWarnings("unchecked")
@@ -101,7 +123,8 @@ public class MapReduceMain extends LauncherMain {
         return new JobClient(jobConf);
     }
 
-    // allows any character in the value, the conf.setStrings() does not allow commas
+    // allows any character in the value, the conf.setStrings() does not allow
+    // commas
     public static void setStrings(Configuration conf, String key, String[] values) {
         if (values != null) {
             conf.setInt(key + ".size", values.length);
