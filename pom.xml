@@ -34,6 +34,11 @@
         <url>http://www.yahoo.com</url>
     </organization>
 
+    <scm>
+        <connection>scm:git:git://github.com/yahoo/oozie.git</connection>
+        <url>https://github.com/yahoo/oozie</url>
+    </scm>
+
     <properties>
         <!-- to be able to run a single test case from the main project -->
         <failIfNoTests>false</failIfNoTests>

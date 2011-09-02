@@ -1,5 +1,6 @@
 -- Oozie 2.3.0 release
 
+GH-0277 add SCM info in Main POM before branching
 GH-0265 Oozie CLI and docs have not been updated to reflect that -config is now optional
 GH-0262 WorkflowAppService should always inject Kerberos principal rules regardless of Kerberos/Simple auth
 GH-0254 XConfiguration should give precedence to variables over sys-props in ${} expressions
