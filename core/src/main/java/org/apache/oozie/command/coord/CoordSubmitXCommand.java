@@ -26,6 +26,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -87,7 +88,7 @@ import org.xml.sax.SAXException;
  */
 public class CoordSubmitXCommand extends SubmitTransitionXCommand {
 
-    private final Configuration conf;
+    private Configuration conf;
     private final String authToken;
     private final String bundleId;
     private final String coordName;
@@ -370,6 +371,14 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
                 LOG.info("configDefault Doesn't exist " + configDefault);
             }
             PropertiesUtils.checkDisallowedProperties(conf, DISALLOWED_USER_PROPERTIES);
+
+            // Resolving all variables in the job properties.
+            // This ensures the Hadoop Configuration semantics is preserved.
+            XConfiguration resolvedVarsConf = new XConfiguration();
+            for (Map.Entry<String, String> entry : conf) {
+                resolvedVarsConf.set(entry.getKey(), conf.get(entry.getKey()));
+            }
+            conf = resolvedVarsConf;
         }
         catch (IOException e) {
             throw new CommandException(ErrorCode.E0702, e.getMessage() + " : Problem reading default config "

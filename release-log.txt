@@ -18,6 +18,7 @@ OOZIE-108 Upgrade pom version to 3.1.0.
 
 -- Oozie 3.0.2 release
 
+OOZIE-120 coordinator resolve config default variable
 OOZIE-119 relative path in coord dataset include should throw exception if given
 OOZIE-115 oozie should check if app path is directory and read the app xml under it
 
