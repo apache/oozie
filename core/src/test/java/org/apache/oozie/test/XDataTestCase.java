@@ -585,8 +585,8 @@ public abstract class XDataTestCase extends XFsTestCase {
         action.setBundleId(jobId);
         action.setBundleActionId(actionId);
         action.setPending(pending);
-        action.setCoordId("1");
-        action.setCoordName("abc");
+        action.setCoordId(actionId);
+        action.setCoordName(actionId);
         action.setStatus(status);
         action.setLastModifiedTime(new Date());
 

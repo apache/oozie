@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
+import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
 import org.apache.oozie.client.Job;
@@ -18,9 +19,11 @@ import org.apache.oozie.executor.jpa.BundleActionUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleActionsGetJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobUpdateJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
@@ -58,7 +61,7 @@ public class BundleRerunXCommand extends RerunTransitionXCommand<Void> {
         super("bundle_rerun", "bundle_rerun", 1);
         this.jobId = ParamChecker.notEmpty(jobId, "jobId");
         this.coordScope = coordScope;
-        this.dateScope = ParamChecker.notEmpty(dateScope, "scope");
+        this.dateScope = dateScope;
         this.refresh = refresh;
         this.noCleanup = noCleanup;
     }
@@ -105,25 +108,31 @@ public class BundleRerunXCommand extends RerunTransitionXCommand<Void> {
 
         if (coordScope != null && !coordScope.isEmpty()) {
             String[] list = coordScope.split(",");
-            for (String s : list) {
-                s = s.trim();
-                if (coordNameToBAMapping.keySet().contains(s)) {
-                    String id = coordNameToBAMapping.get(s).getCoordId();
-                    if (id == null) {
-                        LOG.info("No coord id found. Therefore, nothing to queue for coord rerun for coordname: " + s);
+            for (String coordName : list) {
+                coordName = coordName.trim();
+                if (coordNameToBAMapping.keySet().contains(coordName)) {
+                    String coordId = coordNameToBAMapping.get(coordName).getCoordId();
+                    if (coordId == null) {
+                        LOG.info("No coord id found. Therefore, nothing to queue for coord rerun for coordname: " + coordName);
                         continue;
                     }
-                    LOG.debug("Queuing rerun for coord id " + id + " of bundle " + bundleJob.getId());
-                    queue(new CoordRerunXCommand(id, RestConstants.JOB_COORD_RERUN_DATE, dateScope, refresh, noCleanup));
-                    updateBundleAction(coordNameToBAMapping.get(s));
+                    CoordinatorJobBean coordJob = getCoordJob(coordId);
+                    String coordStart = DateUtils.convertDateToString(coordJob.getStartTime());
+                    String coordEnd = DateUtils.convertDateToString(coordJob.getEndTime());
+                    String rerunDateScope = coordStart + "::" + coordEnd;
+                    LOG.debug("Queuing rerun range [" + rerunDateScope + "] for coord id " + coordId + " of bundle "
+                            + bundleJob.getId());
+                    queue(new CoordRerunXCommand(coordId, RestConstants.JOB_COORD_RERUN_DATE, rerunDateScope, refresh,
+                            noCleanup));
+                    updateBundleAction(coordNameToBAMapping.get(coordName));
                     isUpdateActionDone = true;
                 }
                 else {
-                    LOG.info("Rerun for coord " + s + " NOT performed because it is not in bundle ", bundleJob.getId());
+                    LOG.info("Rerun for coord " + coordName + " NOT performed because it is not in bundle ", bundleJob.getId());
                 }
             }
         }
-        else {
+        else if (dateScope != null && !dateScope.isEmpty()) {
             if (bundleActions != null) {
                 for (BundleActionBean action : bundleActions) {
                     if (action.getCoordId() == null) {
@@ -131,7 +140,8 @@ public class BundleRerunXCommand extends RerunTransitionXCommand<Void> {
                                 + action.getCoordName());
                         continue;
                     }
-                    LOG.debug("Queuing rerun for coord id :" + action.getCoordId());
+                    LOG.debug("Queuing rerun range [" + dateScope + "] for coord id " + action.getCoordId() + " of bundle "
+                            + bundleJob.getId());
                     queue(new CoordRerunXCommand(action.getCoordId(), RestConstants.JOB_COORD_RERUN_DATE, dateScope,
                             refresh, noCleanup));
                     updateBundleAction(action);
@@ -227,6 +237,17 @@ public class BundleRerunXCommand extends RerunTransitionXCommand<Void> {
     @Override
     public XLog getLog() {
         return LOG;
+    }
+
+    private final CoordinatorJobBean getCoordJob(String coordId) throws CommandException {
+        try {
+            CoordinatorJobBean job = jpaService.execute(new CoordJobGetJPAExecutor(coordId));
+            return job;
+        }
+        catch (JPAExecutorException je) {
+            throw new CommandException(je);
+        }
+
     }
 
 }
