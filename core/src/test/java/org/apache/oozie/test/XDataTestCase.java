@@ -100,7 +100,6 @@ public abstract class XDataTestCase extends XFsTestCase {
         }
 
         return coordJob;
-
     }
 
     /**
@@ -583,7 +582,7 @@ public abstract class XDataTestCase extends XFsTestCase {
             throws Exception {
         BundleActionBean action = new BundleActionBean();
         action.setBundleId(jobId);
-        action.setBundleActionId(actionId);
+        action.setBundleActionId(jobId + "_" + actionId);
         action.setPending(pending);
         action.setCoordId(actionId);
         action.setCoordName(actionId);

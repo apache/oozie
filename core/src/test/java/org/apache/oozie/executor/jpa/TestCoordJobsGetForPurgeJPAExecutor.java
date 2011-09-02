@@ -60,7 +60,7 @@ public class TestCoordJobsGetForPurgeJPAExecutor extends XFsTestCase {
         super.tearDown();
     }
 
-    public void testCoordJobsToBeMaterializedCommand() throws Exception {
+    public void testCoordJobsGetForPurgeJPAExecutor() throws Exception {
         String jobId = "00000-" + new Date().getTime() + "-TestCoordJobsGetForPurgeJPAExecutor-C";
         insertJob(jobId, CoordinatorJob.Status.SUCCEEDED, DateUtils.parseDateUTC("2011-01-01T01:00Z"));
         _testCoordJobsForPurge(10, 1);

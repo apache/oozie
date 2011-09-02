@@ -63,7 +63,9 @@ import org.apache.openjpa.persistence.jdbc.Index;
 
         @NamedQuery(name = "GET_BUNDLE_JOBS_OLDER_THAN", query = "select OBJECT(w) from BundleJobBean w where w.startTimestamp <= :matTime AND (w.status = 'PREP' OR w.status = 'RUNNING')  order by w.lastModifiedTimestamp"),
 
-        @NamedQuery(name = "GET_BUNDLE_JOBS_OLDER_THAN_STATUS", query = "select OBJECT(w) from BundleJobBean w where w.status = :status AND w.lastModifiedTimestamp <= :lastModTime order by w.lastModifiedTimestamp") })
+        @NamedQuery(name = "GET_BUNDLE_JOBS_OLDER_THAN_STATUS", query = "select OBJECT(w) from BundleJobBean w where w.status = :status AND w.lastModifiedTimestamp <= :lastModTime order by w.lastModifiedTimestamp"),
+
+        @NamedQuery(name = "GET_COMPLETED_BUNDLE_JOBS_OLDER_THAN", query = "select OBJECT(w) from BundleJobBean w where ( w.status = 'SUCCEEDED' OR w.status = 'FAILED' OR w.status = 'KILLED' OR w.status = 'DONEWITHERROR') AND w.lastModifiedTimestamp <= :lastModTime order by w.lastModifiedTimestamp")})
 public class BundleJobBean extends JsonBundleJob implements Writable {
 
     @Basic

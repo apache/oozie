@@ -155,7 +155,7 @@
         <name>oozie.service.PurgeService.older.than</name>
         <value>30</value>
         <description>
-            Jobs older than this value, in days, will be purged by the PurgeService.
+            Completed workflow jobs older than this value, in days, will be purged by the PurgeService.
         </description>
     </property>
     
@@ -163,12 +163,20 @@
         <name>oozie.service.PurgeService.coord.older.than</name>
         <value>7</value>
         <description>
-            Completed Actions older than this value, in days, will be purged by the PurgeService.
+            Completed coordinator jobs older than this value, in days, will be purged by the PurgeService.
         </description>
     </property>
-	
-	<property>
-		<name>oozie.service.PurgeService.coord.purge.limit</name>
+    
+    <property>
+        <name>oozie.service.PurgeService.bundle.older.than</name>
+        <value>7</value>
+        <description>
+            Completed bundle jobs older than this value, in days, will be purged by the PurgeService.
+        </description>
+    </property>
+    
+    <property>
+		<name>oozie.service.PurgeService.purge.limit</name>
 		<value>100</value>
 		<description>
 			Completed Actions purge - limit each purge to this value
@@ -182,7 +190,7 @@
             Interval at which the purge service will run, in seconds.
         </description>
     </property>
-
+    
     <!-- RecoveryService -->
 
     <property>

@@ -108,7 +108,7 @@ public class TestStatusTransitService extends XDataTestCase {
         });
 
         assertNotNull(jpaService);
-        CoordJobGetJPAExecutor coordJobGetCmd = new CoordJobGetJPAExecutor(coordJob.getId());
+        final CoordJobGetJPAExecutor coordJobGetCmd = new CoordJobGetJPAExecutor(coordJob.getId());
         CoordActionGetJPAExecutor coordActionGetCmd = new CoordActionGetJPAExecutor(coordAction.getId());
         WorkflowJobGetJPAExecutor wfGetCmd = new WorkflowJobGetJPAExecutor(wfJobId);
 
@@ -123,7 +123,13 @@ public class TestStatusTransitService extends XDataTestCase {
 
         Runnable runnable = new StatusTransitRunnable();
         runnable.run();
-        Thread.sleep(1000);
+
+        waitFor(5 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                CoordinatorJobBean coordJobBean = jpaService.execute(coordJobGetCmd);
+                return !coordJobBean.isPending();
+            }
+        });
 
         coordJob = jpaService.execute(coordJobGetCmd);
         assertEquals(false, coordJob.isPending());
