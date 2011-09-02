@@ -2,6 +2,7 @@
 
 OOZIE-73 increase executionPath of wf_actions to 1k.
 OOZIE-71 Update the index.twiki of oozie 3.0.0 documentation to reflect bundle.
+OOZIE-72 Resume bundle actions should check the status is suspended or prepsuspended
 OOZIE-59 Adding util class for transforming the statuses based on app version
 OOZIE-62 client command error when bundle rerun with -action.
 GH-0566 If Java Main exit code !=0, LauncherMapper should the exit code as the error code

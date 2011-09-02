@@ -532,6 +532,7 @@ public class StatusTransitService implements Service {
 
             checkCoordPending(coordActionStatus, coordActions, coordJob, false);
             coordJob.setStatus(coordStatus);
+            coordJob.setLastModifiedTime(new Date());
             jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
             // update bundle action only when status changes in coord job
             if (coordJob.getBundleId() != null) {

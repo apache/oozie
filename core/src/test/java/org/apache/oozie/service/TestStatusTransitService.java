@@ -28,6 +28,8 @@ import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.command.bundle.BundleJobResumeXCommand;
+import org.apache.oozie.command.bundle.BundleJobSuspendXCommand;
 import org.apache.oozie.command.coord.CoordKillXCommand;
 import org.apache.oozie.command.coord.CoordSuspendXCommand;
 import org.apache.oozie.executor.jpa.BundleActionGetJPAExecutor;
@@ -101,7 +103,8 @@ public class TestStatusTransitService extends XDataTestCase {
         final JPAService jpaService = Services.get().get(JPAService.class);
         Date start = DateUtils.parseDateUTC("2009-02-01T01:00Z");
         Date end = DateUtils.parseDateUTC("2009-02-02T23:59Z");
-        CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, start, end, false, false, 1);
+        CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, start, end, false, false,
+                1);
         WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
         final String wfJobId = wfJob.getId();
         CoordinatorActionBean coordAction = addRecordToCoordActionTable(coordJob.getId(), 1,
@@ -272,8 +275,8 @@ public class TestStatusTransitService extends XDataTestCase {
 
     /**
      * Tests functionality of the StatusTransitService Runnable command. </p> Insert a coordinator job with RUNNING and
-     * pending true and coordinator actions with TIMEDOUT state. Then, runs the StatusTransitService runnable
-     * and ensures the job state changes to DONEWITHERROR.
+     * pending true and coordinator actions with TIMEDOUT state. Then, runs the StatusTransitService runnable and
+     * ensures the job state changes to DONEWITHERROR.
      *
      * @throws Exception
      */
@@ -329,7 +332,6 @@ public class TestStatusTransitService extends XDataTestCase {
         addRecordToBundleActionTable(jobId, "action2", 0, Job.Status.SUCCEEDED);
         addRecordToBundleActionTable(jobId, "action3", 0, Job.Status.SUCCEEDED);
 
-
         Runnable runnable = new StatusTransitRunnable();
         runnable.run();
 
@@ -383,10 +385,65 @@ public class TestStatusTransitService extends XDataTestCase {
     }
 
     /**
+     * Test : all coord jobs are succeeded - bundle job's status will be updated to succeeded after suspend and resume.
+     * coordinator action -> coordinator job -> bundle action -> bundle job
+     *
+     * @throws Exception
+     */
+    public void testBundleStatusTransitServiceSucceeded3() throws Exception {
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.RUNNING, false);
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+
+        final String bundleId = job.getId();
+        addRecordToBundleActionTable(bundleId, "action1", 1, Job.Status.RUNNING);
+        addRecordToBundleActionTable(bundleId, "action2", 0, Job.Status.SUCCEEDED);
+
+        addRecordToCoordJobTableWithBundle(bundleId, "action1", CoordinatorJob.Status.RUNNING, true, true, 2);
+        addRecordToCoordJobTableWithBundle(bundleId, "action2", CoordinatorJob.Status.SUCCEEDED, true, true, 2);
+
+        addRecordToCoordActionTable("action1", 1, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
+        addRecordToCoordActionTable("action1", 2, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
+
+        addRecordToCoordActionTable("action2", 1, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
+        addRecordToCoordActionTable("action2", 2, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
+
+        new BundleJobSuspendXCommand(bundleId).call();
+
+        BundleJobGetJPAExecutor bundleJobGetCmd = new BundleJobGetJPAExecutor(job.getId());
+        job = jpaService.execute(bundleJobGetCmd);
+
+        assertEquals(Job.Status.SUSPENDED, job.getStatus());
+
+        Thread.sleep(3000);
+
+        new BundleJobResumeXCommand(bundleId).call();
+
+        job = jpaService.execute(bundleJobGetCmd);
+
+        assertEquals(Job.Status.RUNNING, job.getStatus());
+
+        Thread.sleep(3000);
+
+        Runnable runnable = new StatusTransitRunnable();
+        runnable.run();
+
+        waitFor(5 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                BundleJobBean bundle = jpaService.execute(new BundleJobGetJPAExecutor(bundleId));
+                return bundle.getStatus().equals(Job.Status.SUCCEEDED);
+            }
+        });
+
+        job = jpaService.execute(new BundleJobGetJPAExecutor(bundleId));
+        assertEquals(Job.Status.SUCCEEDED, job.getStatus());
+    }
+
+    /**
      * Test : kill a bundle job - bundle job's pending will be updated to false.
      * <p/>
-     * The pending is updated bottom-up.
-     * workflow job -> coordinator action -> coordinator job -> bundle action -> bundle job
+     * The pending is updated bottom-up. workflow job -> coordinator action -> coordinator job -> bundle action ->
+     * bundle job
      *
      * @throws Exception
      */
@@ -402,23 +459,32 @@ public class TestStatusTransitService extends XDataTestCase {
         addRecordToCoordJobTableWithBundle(bundleId, "action1", CoordinatorJob.Status.RUNNING, false, false, 2);
         addRecordToCoordJobTableWithBundle(bundleId, "action2", CoordinatorJob.Status.RUNNING, false, false, 2);
 
-        final CoordinatorActionBean coordAction1_1 = addRecordToCoordActionTable("action1", 1, CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0);
-        final CoordinatorActionBean coordAction1_2 = addRecordToCoordActionTable("action1", 2, CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0);
+        final CoordinatorActionBean coordAction1_1 = addRecordToCoordActionTable("action1", 1,
+                CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0);
+        final CoordinatorActionBean coordAction1_2 = addRecordToCoordActionTable("action1", 2,
+                CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0);
 
-        final CoordinatorActionBean coordAction1_3 = addRecordToCoordActionTable("action2", 1, CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0);
-        final CoordinatorActionBean coordAction1_4 = addRecordToCoordActionTable("action2", 2, CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0);
+        final CoordinatorActionBean coordAction1_3 = addRecordToCoordActionTable("action2", 1,
+                CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0);
+        final CoordinatorActionBean coordAction1_4 = addRecordToCoordActionTable("action2", 2,
+                CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0);
 
-        this.addRecordToWfJobTable(coordAction1_1.getExternalId(), WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
-        this.addRecordToWfJobTable(coordAction1_2.getExternalId(), WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
-        this.addRecordToWfJobTable(coordAction1_3.getExternalId(), WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
-        this.addRecordToWfJobTable(coordAction1_4.getExternalId(), WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
+        this.addRecordToWfJobTable(coordAction1_1.getExternalId(), WorkflowJob.Status.RUNNING,
+                WorkflowInstance.Status.RUNNING);
+        this.addRecordToWfJobTable(coordAction1_2.getExternalId(), WorkflowJob.Status.RUNNING,
+                WorkflowInstance.Status.RUNNING);
+        this.addRecordToWfJobTable(coordAction1_3.getExternalId(), WorkflowJob.Status.RUNNING,
+                WorkflowInstance.Status.RUNNING);
+        this.addRecordToWfJobTable(coordAction1_4.getExternalId(), WorkflowJob.Status.RUNNING,
+                WorkflowInstance.Status.RUNNING);
 
         new CoordKillXCommand("action1").call();
         new CoordKillXCommand("action2").call();
 
         waitFor(5 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
-                WorkflowJobBean wfJob = jpaService.execute(new WorkflowJobGetJPAExecutor(coordAction1_4.getExternalId()));
+                WorkflowJobBean wfJob = jpaService
+                        .execute(new WorkflowJobGetJPAExecutor(coordAction1_4.getExternalId()));
                 return wfJob.getStatus().equals(Job.Status.KILLED);
             }
         });
@@ -452,8 +518,8 @@ public class TestStatusTransitService extends XDataTestCase {
     /**
      * Test : Suspend a bundle job - bundle job's pending will be updated to false.
      * <p/>
-     * The pending is updated bottom-up.
-     * workflow job -> coordinator action -> coordinator job -> bundle action -> bundle job
+     * The pending is updated bottom-up. workflow job -> coordinator action -> coordinator job -> bundle action ->
+     * bundle job
      *
      * @throws Exception
      */
@@ -469,23 +535,32 @@ public class TestStatusTransitService extends XDataTestCase {
         addRecordToCoordJobTableWithBundle(bundleId, "action1", CoordinatorJob.Status.RUNNING, false, false, 2);
         addRecordToCoordJobTableWithBundle(bundleId, "action2", CoordinatorJob.Status.RUNNING, false, false, 2);
 
-        final CoordinatorActionBean coordAction1_1 = addRecordToCoordActionTable("action1", 1, CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0);
-        final CoordinatorActionBean coordAction1_2 = addRecordToCoordActionTable("action1", 2, CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0);
+        final CoordinatorActionBean coordAction1_1 = addRecordToCoordActionTable("action1", 1,
+                CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0);
+        final CoordinatorActionBean coordAction1_2 = addRecordToCoordActionTable("action1", 2,
+                CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0);
 
-        final CoordinatorActionBean coordAction1_3 = addRecordToCoordActionTable("action2", 1, CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0);
-        final CoordinatorActionBean coordAction1_4 = addRecordToCoordActionTable("action2", 2, CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0);
+        final CoordinatorActionBean coordAction1_3 = addRecordToCoordActionTable("action2", 1,
+                CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0);
+        final CoordinatorActionBean coordAction1_4 = addRecordToCoordActionTable("action2", 2,
+                CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0);
 
-        this.addRecordToWfJobTable(coordAction1_1.getExternalId(), WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
-        this.addRecordToWfJobTable(coordAction1_2.getExternalId(), WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
-        this.addRecordToWfJobTable(coordAction1_3.getExternalId(), WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
-        this.addRecordToWfJobTable(coordAction1_4.getExternalId(), WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
+        this.addRecordToWfJobTable(coordAction1_1.getExternalId(), WorkflowJob.Status.RUNNING,
+                WorkflowInstance.Status.RUNNING);
+        this.addRecordToWfJobTable(coordAction1_2.getExternalId(), WorkflowJob.Status.RUNNING,
+                WorkflowInstance.Status.RUNNING);
+        this.addRecordToWfJobTable(coordAction1_3.getExternalId(), WorkflowJob.Status.RUNNING,
+                WorkflowInstance.Status.RUNNING);
+        this.addRecordToWfJobTable(coordAction1_4.getExternalId(), WorkflowJob.Status.RUNNING,
+                WorkflowInstance.Status.RUNNING);
 
         new CoordSuspendXCommand("action1").call();
         new CoordSuspendXCommand("action2").call();
 
         waitFor(5 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
-                WorkflowJobBean wfJob = jpaService.execute(new WorkflowJobGetJPAExecutor(coordAction1_4.getExternalId()));
+                WorkflowJobBean wfJob = jpaService
+                        .execute(new WorkflowJobGetJPAExecutor(coordAction1_4.getExternalId()));
                 return wfJob.getStatus().equals(Job.Status.SUSPENDED);
             }
         });
@@ -516,8 +591,8 @@ public class TestStatusTransitService extends XDataTestCase {
         assertFalse(coordJob2.isPending());
     }
 
-    protected WorkflowJobBean addRecordToWfJobTable(String wfId, WorkflowJob.Status jobStatus, WorkflowInstance.Status instanceStatus)
-            throws Exception {
+    protected WorkflowJobBean addRecordToWfJobTable(String wfId, WorkflowJob.Status jobStatus,
+            WorkflowInstance.Status instanceStatus) throws Exception {
         WorkflowApp app = new LiteWorkflowApp("testApp", "<workflow-app/>", new StartNodeDef("end"))
                 .addNode(new EndNodeDef("end"));
         Configuration conf = new Configuration();

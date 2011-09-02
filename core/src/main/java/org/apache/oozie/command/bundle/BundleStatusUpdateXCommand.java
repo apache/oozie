@@ -61,8 +61,7 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
             LOG.debug("STARTED BundleStatusUpdateXCommand with bubdle id : " + coordjob.getBundleId()
                     + " coord job ID: " + coordjob.getId() + " coord Status " + coordjob.getStatus());
             Job.Status coordCurrentStatus = coordjob.getStatus();
-            LOG.info("Update bundle action [{0}] from prev status [{1}] to current coord status [{2}]", bundleaction
-                    .getBundleActionId(), bundleaction.getStatusStr(), coordCurrentStatus);
+            Job.Status bundleActionStatus = bundleaction.getStatus();
             bundleaction.setStatus(coordCurrentStatus);
 
             if (bundleaction.isPending()) {
@@ -71,6 +70,9 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
             bundleaction.setLastModifiedTime(new Date());
             bundleaction.setCoordId(coordjob.getId());
             jpaService.execute(new BundleActionUpdateJPAExecutor(bundleaction));
+            LOG.info("Updated bundle action [{0}] from prev status [{1}] to current coord status [{2}], and new bundle action pending [{3}]", bundleaction
+                    .getBundleActionId(), bundleActionStatus, coordCurrentStatus, bundleaction.getPending());
+
             LOG.debug("ENDED BundleStatusUpdateXCommand with bubdle id : " + coordjob.getBundleId() + " coord job ID: "
                     + coordjob.getId() + " coord Status " + coordjob.getStatus());
         }
