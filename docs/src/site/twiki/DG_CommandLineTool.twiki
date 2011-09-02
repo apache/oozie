@@ -26,10 +26,10 @@ usage:
 
       oozie job <OPTIONS> : job operations
                 -action <arg>         coordinator rerun on action ids (requires -rerun)
-                -change <arg>         change a coordinator job
+                -change <arg>         change a coordinator/bundle job
                 -config <arg>         job configuration file '.xml' or '.properties'
                 -D <property=value>   set/override value for given property
-                -date <arg>           coordinator rerun on action dates (requires -rerun)
+                -date <arg>           coordinator/bundle rerun on action dates (requires -rerun)
                 -definition <arg>     job definition
                 -dryrun               Supported in Oozie-2.0 or later versions ONLY - dryrun or test
                                       run a coordinator job, job is not queued
@@ -38,19 +38,19 @@ usage:
                 -len <arg>            number of actions (default TOTAL ACTIONS, requires -info)
                 -localtime            use local time (default GMT)
                 -log <arg>            job log
-                -nocleanup            do not clean up output-events of the coordiantor rerun actions
+                -nocleanup            do not clean up output-events of the coordinator rerun actions
                                       (requires -rerun)
                 -offset <arg>         job info offset of actions (default '1', requires -info)
                 -oozie <arg>          Oozie URL
                 -refresh              re-materialize the coordinator rerun actions (requires -rerun)
-                -rerun <arg>          rerun a job  (coordinator requires -action or -date)
+                -rerun <arg>          rerun a job  (coordinator requires -action or -date; bundle requires -coordinator or -date)
                 -resume <arg>         resume a job
                 -run                  run a job
                 -start <arg>          start a job
                 -submit               submit a job
                 -suspend <arg>        suspend a job
                 -value <arg>          new endtime/concurrency/pausetime value for changing a
-                                      coordinator job
+                                      coordinator job; new pausetime value for changing a bundle job
                 -verbose              verbose mode
 
       oozie jobs <OPTIONS> : jobs status
@@ -99,7 +99,10 @@ If the option is not provided and the environment variable is not set, the =oozi
 
 ---++ Job Operations
 
----+++ Submitting a Workflow or Coordinator Job
+---+++ Submitting a Workflow, Coordinator or Bundle Job
+
+* Submitting bundle feature is only supported in Oozie 3.0 or later. Similarly, all bundle operation features below are only
+supported in Oozie 3.0 or later.
 
 Example:
 
@@ -113,12 +116,13 @@ The parameters for the job must be provided in a file, either a Java Properties 
 Configuration file (.xml). This file must be specified with the <code>-config</code> option.
 
 The workflow application path must be specified in the file with the =oozie.wf.application.path= property.  The
-coordinator application path must be specified in the file with the =oozie.coord.application.path= property.
+coordinator application path must be specified in the file with the =oozie.coord.application.path= property.The
+bundle application path must be specified in the file with the =oozie.bundle.application.path= property.
 Specified path must be an HDFS path.
 
 The job will be created, but it will not be started, it will be in =PREP= status.
 
----+++ Starting a Workflow Job or Coordinator Job
+---+++ Starting a Workflow, Coordinator or Bundle Job
 
 Example:
 
@@ -126,11 +130,12 @@ Example:
 $ oozie job -oozie http://localhost:8080/oozie -start 14-20090525161321-oozie-joe
 </verbatim>
 
-The =start= option starts a previously submitted workflow job or coordinator job that is in =PREP= status.
+The =start= option starts a previously submitted workflow job, coordinator job or bundle job that is in =PREP= status.
 
-After the command is executed the workflow job will be in =RUNNING= status and coordinator job will be in =RUNNING= status.
+After the command is executed the workflow job will be in =RUNNING= status, coordinator job will be in =RUNNING= status and
+bundle job will be in =RUNNING=status.
 
----+++ Running a Workflow Job or Coordinator Job
+---+++ Running a Workflow, Coordinator or Bundle Job
 
 Example:
 
@@ -140,18 +145,19 @@ $ oozie job -oozie http://localhost:8080/oozie -config job.properties -run
 job: 15-20090525161321-oozie-joe
 </verbatim>
 
-The =run= option creates and starts a workflow job or coordinator job.
+The =run= option creates and starts a workflow job, coordinator job or bundle job.
 
 The parameters for the job must be provided in a file, either a Java Properties file (.properties) or a Hadoop XML
 Configuration file (.xml). This file must be specified with the <code>-config</code> option.
 
 The workflow application path must be specified in the file with the =oozie.wf.application.path= property. The
 coordinator application path must be specified in the file with the =oozie.coord.application.path= property. The
+bundle application path must be specified in the file with the =oozie.bundle.application.path= property.The
 specified path must be an HDFS path.
 
 The job will be created and it will started, the job will be in =RUNNING= status.
 
----+++ Suspending a Workflow Job or Coordinator Job
+---+++ Suspending a Workflow, Coordinator or Bundle Job
 
 Example:
 
@@ -159,13 +165,15 @@ Example:
 $ oozie job -oozie http://localhost:8080/oozie -suspend 14-20090525161321-oozie-joe
 </verbatim>
 
-The =suspend= option suspends a job in =RUNNING= status.
+The =suspend= option suspends a workflow job in =RUNNING= status.
+After the command is executed the workflow job will be in =SUSPENDED= status.
 
-After the command is executed the job will be in =SUSPENDED= status.
+The =suspend= option suspends a coordinator/bundle  job in =RUNNING=, =RUNNIINGWITHERROR= or =PREP= status.
+When the coordinator job is suspended, running coordinator actions will stay in running and the workflows will be suspended. If the coordinator job is in =RUNNING=status, it will transit to =SUSPENDED=status; if it is in =RUNNINGWITHERROR=status, it will transit to =SUSPENDEDWITHERROR=; if it is in =PREP=status, it will transit to =PREPSUSPENDED=status.
 
-When the coordinator job is suspended, running coordinator actions will stay in running and the workflows will be suspended.
+When the bundle job is suspended, running coordinators will be suspended. If the bundle job is in =RUNNING=status, it will transit to =SUSPENDED=status; if it is in =RUNNINGWITHERROR=status, it will transit to =SUSPENDEDWITHERROR=; if it is in =PREP=status, it will transit to =PREPSUSPENDED=status.
 
----+++ Resuming a Workflow Job or Coordinator Job
+---+++ Resuming a Workflow, Coordinator or Bundle Job
 
 Example:
 
@@ -173,17 +181,21 @@ Example:
 $ oozie job -oozie http://localhost:8080/oozie -resume 14-20090525161321-oozie-joe
 </verbatim>
 
-The =resume= option resumes a job in =SUSPENDED= status.
+The =resume= option resumes a workflow job in =SUSPENDED= status.
 
-After the command is executed the job will be in =RUNNING= status.
+After the command is executed the workflow job will be in =RUNNING= status.
 
-When a coordinator job is resumed, it will transition to the status from which it was suspended, if it was RUNNING  it cannot
-transition to PREP .
+
+The =suspend= option suspends a coordinator/bundle job in =SUSPENDED=, =SUSPENDEDWITHERROR= or =PREPSUSPENDED= status.
+If the coordinator job is in =SUSPENDED=status, it will transit to =RUNNING=status; if it is in =SUSPENDEDWITHERROR=status, it will transit to =RUNNINGWITHERROR=; if it is in =PREPSUSPENDED=status, it will transit to =PREP=status.
 
 When the coordinator job is resumed it will create all the coordinator actions that should have been created during the time
 it was suspended, actions will not be lost, they will delayed.
 
----+++ Killing a Workflow Job or Coordinator Job
+When the bundle job is resumed, suspended coordinators will resume running. If the bundle job is in =SUSPENDED=status, it will transit to =RUNNING=status; if it is in =SUSPENDEDWITHERROR=status, it will transit to =RUNNINGWITHERROR=; if it is in =PREPSUSPENDED=status, it will transit to =PREP=status.
+
+
+---+++ Killing a Workflow, Coordinator or Bundle Job
 
 Example:
 
@@ -191,7 +203,7 @@ Example:
 $ oozie job -oozie http://localhost:8080/oozie -kill 14-20090525161321-oozie-joe
 </verbatim>
 
-The =kill= option kills a workflow job in =PREP=, =SUSPENDED= or =RUNNING= status and a coordinator job in
+The =kill= option kills a workflow job in =PREP=, =SUSPENDED= or =RUNNING= status and a coordinator/bundle job in
 =PREP=, =RUNNING=, =PREPSUSPENDED=, =SUSPENDED=, =PREPPAUSED=, or =PAUSED=  status.
 
 After the command is executed the job will be in =KILLED= status.
@@ -213,9 +225,26 @@ Valid value names are:
    * pausetime: the pause time of the coordinator job.
 
 Repeated value names are not allowed. New end time must not be before job's start time and last action time.
-New concurrency value has to be a valid integer. New pause time must not be before job's start time and last action time and must be before job's end time. Also empty string "" can be used to reset pause time to none.
+New concurrency value has to be a valid integer. All lookahead actions will be revoked according to the new pause time. Also empty string "" can be used to reset pause time to none.
 
 After the command is executed the job's end time, concurrency or pause time should be changed. If an already-succeeded job changes its end time, its status will become running.
+
+---+++ Changing pausetime of a Bundle Job
+
+Example:
+
+<verbatim>
+$ oozie job -oozie http://localhost:8080/oozie -change 14-20090525161321-oozie-joe -value pausetime=2011-12-01T05:00Z
+</verbatim>
+
+The =change= option changes a bundle job that is not in =KILLED= status.
+
+Valid value names are:
+   * pausetime: the pause time of the bundle job.
+
+Repeated value names are not allowed. An empty string "" can be used to reset pause time to none.
+
+After the command is executed the job's pause time should be changed. 
 
 ---+++ Rerunning a Workflow Job
 
@@ -257,8 +286,23 @@ After the command is executed the rerun coordiator action will be in =WAITING= s
 
 Refer to the [[DG_CoordinatorRerun][Rerunning Coordinator Actions]] for details on rerun.
 
+---+++ Rerunning a Bundle Job
 
----+++ Checking the Status of a Workflow Job or Coordinator Job or Coordinator Action
+Example:
+
+<verbatim>
+$oozie job -rerun <bundle_Job_id> [-nocleanup] [-refresh]
+[-coordinator c1, c3, c4] (-coordinator or -date is required to rerun.)
+[-date 2009-01-01T01:00Z::2009-05-31T23:59Z, 2009-11-10T01:00Z, 2009-12-31T22:00Z]
+(if neither -coordinator nor -date is given, the exception will be thrown.)
+</verbatim>
+
+The =rerun= option reruns coordinator actions belonging to specified coordinators within the specified date range.
+
+After the command is executed the rerun coordiator action will be in =WAITING= status.
+
+
+---+++ Checking the Status of a Workflow, Coordinator or Bundle Job or a Coordinator Action
 
 Example:
 
@@ -291,7 +335,7 @@ The =localtime= option displays times in local time, if not specified times are 
 
 The =verbose= option gives more detailed information for all the actions, if checking for workflow job or coordinator job.
 
----+++ Checking the xml definition of a Workflow Job or Coordinator Job
+---+++ Checking the xml definition of a Workflow, Coordinator or Bundle Job
 
 Example:
 
@@ -307,7 +351,7 @@ $ oozie job -oozie http://localhost:8080/oozie -definition 14-20090525161321-ooz
 
 </verbatim>
 
----+++ Checking the server logs of a Workflow Job or Coordinator Job
+---+++ Checking the server logs of a Workflow, Coordinator or Bundle Job
 
 Example:
 
@@ -427,6 +471,26 @@ Job ID                                                                          
 </verbatim>
 
 The =jobtype= option specified the job type to display, default value is 'wf'. To see the coordinator jobs, value is 'coordinator'.
+
+---+++ Checking the Status of multiple Bundle Jobs
+
+* This feature is only supported in Oozie 3.0 or later.
+
+Example:
+
+<verbatim>
+$ oozie jobs -oozie http://localhost:8080/oozie -jobtype bundle
+Job ID                                   Bundle Name    Status    Kickoff             Created             User         Group
+------------------------------------------------------------------------------------------------------------------------------------
+0000027-110322105610515-oozie-chao-B     BUNDLE-TEST    RUNNING   2012-01-15 00:24    2011-03-22 18:07    joe        users
+------------------------------------------------------------------------------------------------------------------------------------
+0000001-110322105610515-oozie-chao-B     BUNDLE-TEST    RUNNING   2012-01-15 00:24    2011-03-22 18:06    joe        users
+------------------------------------------------------------------------------------------------------------------------------------
+0000000-110322105610515-oozie-chao-B     BUNDLE-TEST    DONEWITHERROR2012-01-15 00:24    2011-03-22 17:58    joe        users       
+------------------------------------------------------------------------------------------------------------------------------------
+</verbatim>
+
+The =jobtype= option specified the job type to display, default value is 'wf'. To see the bundle jobs, value is 'bundle'.
 
 ---++ Admin Operations
 
