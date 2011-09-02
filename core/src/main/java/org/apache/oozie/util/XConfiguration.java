@@ -137,12 +137,6 @@ public class XConfiguration extends Configuration {
             String var = match.group();
             var = var.substring(2, var.length() - 1); // remove ${ .. }
 
-            // original code
-            // String val = getRaw(var);
-            // if (val == null) {
-            //     val = System.getProperty(var);
-            // }
-
             String val = getRaw(var);
             if (val == null) {
                 val = System.getProperty(var);
