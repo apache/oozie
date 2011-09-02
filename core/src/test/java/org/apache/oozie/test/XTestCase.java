@@ -273,7 +273,7 @@ public abstract class XTestCase extends TestCase {
      *
      * @return the test group.
      */
-    protected String getTestGroup() {
+    protected static String getTestGroup() {
         return System.getProperty(TEST_GROUP_PROP, "testg");
     }
 
@@ -574,7 +574,7 @@ public abstract class XTestCase extends TestCase {
             conf.set("dfs.permissions", "true");
             conf.set("hadoop.security.authentication", "simple");
             conf.set("hadoop.proxyuser." + oozieUser + ".hosts", "localhost");
-            conf.set("hadoop.proxyuser." + oozieUser + ".groups", "users");
+            conf.set("hadoop.proxyuser." + oozieUser + ".groups", getTestGroup());
             conf.set("mapred.tasktracker.map.tasks.maximum", "4");
             conf.set("mapred.tasktracker.reduce.tasks.maximum", "4");
             dfsCluster = new MiniDFSCluster(conf, dataNodes, true, null);
