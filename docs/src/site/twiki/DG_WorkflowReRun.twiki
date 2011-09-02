@@ -8,12 +8,14 @@
 ---++ Configs
 
    * oozie.wf.application.path
-   * oozie.wf.rerun.skip.nodes
-   * oozie.wf.rerun.failnodes
-   * Only one of above two is mandatory configs. Both should be defined at the same time
+    * Only one of following two configurations is mandatory. Both should not be defined at the same time
+      * oozie.wf.rerun.skip.nodes
+      * oozie.wf.rerun.failnodes
    * Skip nodes are comma separated list of action names. They can be any action nodes including decision node.
    * The valid value of  =oozie.wf.rerun.failnodes= is true or false.
-
+   * If secured hadoop version is used, the following two properties needs to be specified as well
+      * mapreduce.jobtracker.kerberos.principal
+      * dfs.namenode.kerberos.principal.
 ---++ Pre-Conditions
 
    * Workflow with id wfId should exist.

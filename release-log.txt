@@ -1,5 +1,6 @@
 -- Oozie 3.0.0 release
 
+GH-0530 Update workflow rerun twiki.
 GH-0537 migrate CoordKillXCommand to transition based
 GH-0532 update to apache-tomcat-6.0.32.tar.gz from apache-tomcat-6.0.29.tar.gz
 GH-0533 Add uniqueness to master branch
