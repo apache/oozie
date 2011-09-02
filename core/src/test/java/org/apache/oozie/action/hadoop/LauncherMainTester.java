@@ -53,6 +53,18 @@ public class LauncherMainTester {
                 os.close();
                 System.out.println(file.getAbsolutePath());
             }
+            if (args[0].equals("securityManager")) {
+                SecurityManager sm = System.getSecurityManager();
+                if (sm == null) {
+                    throw new Throwable("no security manager");
+                }
+                // by using NULL as permission, if an underlaying SecurityManager is in place
+                // a security exception will be thrown. As there is not underlaying SecurityManager
+                // this tests that the delegation logic of the LauncherMapper SecurityManager is
+                // correct for both checkPermission() signatures.
+                sm.checkPermission(null);
+                sm.checkPermission(null, sm.getSecurityContext());
+            }
         }
     }
 

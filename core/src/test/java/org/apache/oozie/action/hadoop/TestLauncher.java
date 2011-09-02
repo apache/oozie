@@ -194,4 +194,21 @@ public class TestLauncher extends XFsTestCase {
         assertFalse(fs.exists(LauncherMapper.getOutputDataPath(actionDir)));
     }
 
+    public void testSecurityManager() throws Exception {
+        Path actionDir = getFsTestCaseDir();
+        FileSystem fs = getFileSystem();
+        RunningJob runningJob = _test("securityManager");
+        Thread.sleep(2000);
+        assertTrue(runningJob.isSuccessful());
+
+        assertTrue(LauncherMapper.isMainDone(runningJob));
+        assertTrue(LauncherMapper.isMainSuccessful(runningJob));
+        assertFalse(LauncherMapper.hasOutputData(runningJob));
+        assertFalse(LauncherMapper.hasIdSwap(runningJob));
+        assertTrue(LauncherMapper.isMainDone(runningJob));
+        assertFalse(fs.exists(LauncherMapper.getErrorPath(actionDir)));
+        assertFalse(fs.exists(LauncherMapper.getIdSwapPath(actionDir)));
+        assertFalse(fs.exists(LauncherMapper.getOutputDataPath(actionDir)));
+    }
+
 }

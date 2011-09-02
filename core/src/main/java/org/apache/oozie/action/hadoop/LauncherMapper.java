@@ -624,6 +624,14 @@ class LauncherSecurityManager extends SecurityManager {
     }
 
     @Override
+    public void checkPermission(Permission perm, Object context) {
+        if (securityManager != null) {
+            // check everything with the original SecurityManager
+            securityManager.checkPermission(perm, context);
+        }
+    }
+
+    @Override
     public void checkPermission(Permission perm) {
         if (securityManager != null) {
             // check everything with the original SecurityManager
