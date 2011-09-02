@@ -1,5 +1,7 @@
 -- Oozie 3.0.0 release
 
+GH-0296 JPA log configuration uses wrong variable
+GH-0304 index.twiki and DG_QuickStart.twiki need update on distro contents
 GH-0306 core module should depend on sharelib module
 GH-0284 TestLocalOozieExample should extend XTestCase
 GH-0263 TestCallableQueueService.testConcurrencyLimit() fails randomly

@@ -68,10 +68,10 @@ Check the Oozie log file =logs/oozie.log= to ensure Oozie started properly.
 Using the Oozie command line tool check the status of Oozie:
 
 <verbatim>
-$ bin/oozie admin -oozie http://localhost:8080/oozie -status
+$ bin/oozie admin -oozie http://localhost:11000/oozie -status
 </verbatim>
 
-Using a browser go to the [[http://localhost:8080/oozie][Oozie web console]], Oozie status should be *NORMAL*.
+Using a browser go to the [[http://localhost:11000/oozie][Oozie web console]], Oozie status should be *NORMAL*.
 
 Refer to the [[DG_Examples][Running the Examples]] document for details on running the examples.
 
@@ -95,8 +95,8 @@ The =share/= directory must be copied to the Oozie HOME directory in HDFS:
 $ hadoop fs -put share share
 </verbatim>
 
-*IMPORTANT:* This must be done using the Oozie Hadoop (HDFS) user. If an =share= directory already exists in HDFS, it must be
-deleted before copying it again.
+*IMPORTANT:* This must be done using the Oozie Hadoop (HDFS) user. If a =share= directory already exists in HDFS,
+it must be deleted before copying it again.
 
 [[index][::Go back to Oozie Documentation Index::]]
 

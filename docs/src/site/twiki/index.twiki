@@ -16,11 +16,16 @@ execute Hadoop Map/Reduce and Pig jobs.
 Oozie distribution consists of a single 'tar.gz' file containing:
 
    * Readme, license, notice & [[./release-log.txt][Release log]] files.
-   * Oozie web application: =oozie.war= file.
-   * Documentation: =docs.zip= file.
-   * Configuration: =conf/= directory.
-   * Client: expanded, =bin/= and =lib/= directories, and archived, =oozie-client.tar.gz= file.
-   * Examples: =oozie-examples.tar.gz= file.
+   * Oozie server: =oozie-server= directory.
+   * Scripts: =bin/= directory, client and server scripts.
+   * Binaries: =lib/= directory, client JAR files.
+   * Configuration: =conf/= server configuration directory.
+   * Archives:
+      * =oozie-client-*.tar.gz=: Client tools.
+      * =oozie.war=: Oozie WAR file.
+      * =docs.zip=: Documentation.
+      * =oozie-examples-*.tar.gz=: Examples.
+      * =oozie-sharelib-*.tar.gz=: Share libraries (with Streaming, Pig JARs).
 
 ---++ Quick Start
 
