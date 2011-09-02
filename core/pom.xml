@@ -89,15 +89,8 @@
         </dependency>
 
         <dependency>
-            <!-- groupId to be correct by GH-0226 -->
-            <groupId>com.yahoo.hadoop</groupId>
-            <artifactId>hadoop-streaming</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <!-- groupId to be correct by GH-0226 -->
-            <groupId>com.yahoo.hadoop</groupId>
-            <artifactId>pig</artifactId>
+            <groupId>com.yahoo.oozie</groupId>
+            <artifactId>oozie-sharelib</artifactId>
             <scope>provided</scope>
         </dependency>
 
