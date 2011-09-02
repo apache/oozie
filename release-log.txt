@@ -1,5 +1,6 @@
 -- Oozie 3.0.0 release
 
+GH-0346 add support for a test.properties file to load test system properties
 GH-0141 Oozie uses excessive memory when doing purging
 GH-0341 oozie-jpa.log file is created in extra log directory
 GH-0307 check for oozie setup owner in setup/start/stop scripts should be optional

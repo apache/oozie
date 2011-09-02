@@ -17,9 +17,8 @@ package org.apache.oozie.test;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +49,6 @@ import org.apache.oozie.store.StoreException;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
-import org.apache.oozie.util.db.InstrumentedBasicDataSource;
 
 /**
  * Base JUnit <code>TestCase</code> subclass used by all Oozie testcases.
@@ -74,6 +72,55 @@ public abstract class XTestCase extends TestCase {
     private String testCaseConfDir;
     private String hadoopVersion;
     protected XLog log = new XLog(LogFactory.getLog(getClass()));
+
+    private static final String OOZIE_TEST_PROPERTIES = "oozie.test.properties";
+
+    static {
+        try {
+            // by default uses 'test.properties'
+            String testPropsFile = System.getProperty(OOZIE_TEST_PROPERTIES, "test.properties");
+            File file = new File(testPropsFile);
+            // the testPropsFile is looked at 'oozie-main' project level
+            // this trick here is to work both with Maven (runs the testcases from module directory)
+            // and IDEs (run testcases from 'oozie-main' project directory).
+            if (!file.exists()) {
+                file = new File(file.getAbsoluteFile().getParentFile().getParentFile(), testPropsFile);
+            }
+            if (file.exists()) {
+                System.out.println();
+                System.out.println("*********************************************************************************");
+                System.out.println("Loading test system properties from: " + file.getAbsolutePath());
+                System.out.println();
+                Properties props = new Properties();
+                props.load(new FileReader(file));
+                for (Map.Entry entry : props.entrySet()) {
+                    if (!System.getProperties().containsKey(entry.getKey())) {
+                        System.setProperty((String) entry.getKey(), (String) entry.getValue());
+                        System.out.println(entry.getKey() + " = " + entry.getValue());
+                    }
+                    else {
+                        System.out.println(entry.getKey() + " IGNORED, using command line value = " +
+                                           System.getProperty((String) entry.getKey()));
+                    }
+                }
+                System.out.println("*********************************************************************************");
+                System.out.println();
+            }
+            else {
+                if (System.getProperty(OOZIE_TEST_PROPERTIES) != null) {
+                    System.err.println();
+                    System.err.println("ERROR: Specified test file does not exist: "  +
+                                       System.getProperty(OOZIE_TEST_PROPERTIES));
+                    System.err.println();
+                    System.exit(-1);
+                }
+            }
+        }
+        catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+
+    }
 
     /**
      * System property to specify the parent directory for the 'oozietests' directory to be used as base for all test

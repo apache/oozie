@@ -94,30 +94,37 @@ $ mvn clean test -Dmysql -Doozie.test.config.file=/home/tucu/oozie-site-mysql.xm
 
 ---+++ Build Options Reference
 
-All these options are set using *-D*.
+All these options can be set using *-D*.
 
-*includeHadoopJars* : includes Hadoop JARs and its transitive dependencies in the Oozie WAR file, default is
+Except for the options marked with =(*)=, the options can be specified in the =test.properties= in the root
+of the Oozie project. The options marked with =(*)= are used in Maven POMs, thus they don't take effect if
+specified in the =test.properties= file (which is loaded by the =XTestCase= class at class initialization time).
+
+*includeHadoopJars* (*): includes Hadoop JARs and its transitive dependencies in the Oozie WAR file, default is
 undefined (Hadoop JARs are not included).
 
-*generateSite* : generates Oozie documentation, default is undefined (no documentation is generated)
+*generateSite* (*): generates Oozie documentation, default is undefined (no documentation is generated)
 
-*mysql* : Includes MySQL JDBC driver in the distro, default is undefined, MySQL JDBC driver is not included.
+*mysql* (*): Includes MySQL JDBC driver in the distro, default is undefined, MySQL JDBC driver is not included.
 
-*oracle* : Includes Oracle JDBC driver in the distro, default is undefined, Oracle JDBC driver is not included.
+*oracle* (*): Includes Oracle JDBC driver in the distro, default is undefined, Oracle JDBC driver is not included.
 
-*skipTests* : skips the execution of all testcases, no value required, default is undefined
+*skipTests* (*): skips the execution of all testcases, no value required, default is undefined
 
-*test*= : runs a single test case, to run a test give the test class name without package and extension, no default
+*test*= (*): runs a single test case, to run a test give the test class name without package and extension, no default
 
-*hadoop20*= : indicates the build/test should not include classes for Hadoop 20S, default is 'false'
+*hadoop20*= (*) : indicates the build/test should not include classes for Hadoop 20S, default is 'false'
+
+*oozie.test.db*= (*): indicates the database to use for running the testcases, supported values are 'hsqldb' and 'derby',
+default value is 'hsqldb'. IMPORTANT, when using 'derby' a Maven profile is activated to run all the testcases in
+'always' fork mode (otherwise Derby driver goes bonker after 50 testcases or so due to repeated initializations).
+
+*oozie.test.properties* (*): indicates the file to load the test properties from, by default is =test.properties=.
+Having this option allows having different test properties sets, for example: minicluster, simple & kerberos.
 
 *oozie.test.config.file*= : indicates a custom Oozie configuration file for running the testcases. The specified file
 must be an absolute path. For example, it can be useful to specify different database than HSQL for running the
 testcases.
-
-*oozie.test.db*= : indicates the database to use for running the testcases, supported values are 'hsqldb' and 'derby',
- default value is 'hsqldb'. IMPORTANT, when using 'derby' a Maven profile is activated to run all the testcases in
- 'always' fork mode (otherwise Derby driver goes bonker after 50 testcases or so due to repeated initializations).
 
 *oozie.test.hadoop.minicluster*= : indicates if Hadoop minicluster should be started for testcases, default value 'true'
 
