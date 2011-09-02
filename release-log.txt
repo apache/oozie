@@ -1,5 +1,6 @@
 -- Oozie 2.3.0 release
 
+GH-0189 make ENV setting flexible to allow Unix standard layout for conf/logs/data/tmp
 GH-0192 add favicon to Oozie embedded tomcat
 GH-0188 embedded tomcat should have a ROOT webapp doing a redir to /oozie
 GH-0184 Oozie should log Hadoop JAR version in use at startup

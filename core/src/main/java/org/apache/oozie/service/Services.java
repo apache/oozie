@@ -49,7 +49,7 @@ public class Services {
      * Environment variable that indicates the location of the Oozie home directory.
      * The Oozie home directory is used to pick up the conf/ directory from
      */
-    public static final String OOZIE_HOME_ENV = "OOZIE_HOME";
+    public static final String OOZIE_HOME_DIR = "oozie.home.dir";
 
     public static final String CONF_SYSTEM_ID = "oozie.system.id";
 
@@ -68,12 +68,10 @@ public class Services {
     private Configuration conf;
     private Map<Class<? extends Service>, Service> services = new LinkedHashMap<Class<? extends Service>, Service>();
     private String systemId;
+    private static String oozieHome;
 
-    public static String getOozieHome() throws ServiceException {
-        String oozieHome = System.getProperty(OOZIE_HOME_ENV);
-        if (oozieHome == null) {
-            oozieHome = System.getenv(OOZIE_HOME_ENV);
-        }
+    public static void setOozieHome() throws ServiceException {
+        oozieHome = System.getProperty(OOZIE_HOME_DIR);
         if (oozieHome == null) {
             throw new ServiceException(ErrorCode.E0000);
         }
@@ -84,8 +82,9 @@ public class Services {
         if (!file.exists()) {
             throw new ServiceException(ErrorCode.E0004, oozieHome);
         }
-        // This value is used by log4j default configuration to point the logs to ${OOZIE_HOME}/logs
-        System.setProperty("oozie.home", oozieHome);
+    }
+
+    public static String getOozieHome() throws ServiceException {
         return oozieHome;
     }
 
@@ -95,7 +94,7 @@ public class Services {
      * @throws ServiceException thrown if any of the built in services could not initialize.
      */
     public Services() throws ServiceException {
-        getOozieHome();
+        setOozieHome();
         if (SERVICES != null) {
             XLog log = XLog.getLog(getClass());
             log.warn(XLog.OPS, "Previous services singleton active, destroying it");

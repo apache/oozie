@@ -21,7 +21,7 @@ import java.io.File;
 public class TestServices extends XTestCase {
 
     public void testDefaultServices() throws Exception {
-        setSystemProperty(ConfigurationService.OOZIE_CONFIG_FILE_ENV, "oozie-dummy.xml");
+        setSystemProperty(ConfigurationService.OOZIE_CONFIG_FILE, "oozie-dummy.xml");
         setSystemProperty(Services.CONF_SERVICE_CLASSES, "");
         setSystemProperty(Services.CONF_SERVICE_EXT_CLASSES, "");
         Services services = new Services();

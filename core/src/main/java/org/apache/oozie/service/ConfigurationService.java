@@ -63,12 +63,18 @@ public class ConfigurationService implements Service, Instrumentable {
     /**
      * System property that indicates the configuration directory.
      */
-    public static final String OOZIE_CONFIG_DIR_ENV = "OOZIE_CONFIG_DIR";
+    public static final String OOZIE_CONFIG_DIR = "oozie.config.dir";
+
+
+    /**
+     * System property that indicates the data directory.
+     */
+    public static final String OOZIE_DATA_DIR = "oozie.data.dir";
 
     /**
      * System property that indicates the name of the site configuration file to load.
      */
-    public static final String OOZIE_CONFIG_FILE_ENV = "OOZIE_CONFIG_FILE";
+    public static final String OOZIE_CONFIG_FILE = "oozie.config.file";
 
     private static final Set<String> IGNORE_SYS_PROPS = new HashSet<String>();
     private static final String IGNORE_TEST_SYS_PROPS = "oozie.test.";
@@ -76,9 +82,20 @@ public class ConfigurationService implements Service, Instrumentable {
     private static final String PASSWORD_PROPERTY_END = ".password";
 
     static {
-        IGNORE_SYS_PROPS.add(XLogService.LOG4J_FILE_ENV);
-        IGNORE_SYS_PROPS.add(XLogService.LOG4J_RELOAD_ENV);
         IGNORE_SYS_PROPS.add(CONF_IGNORE_SYS_PROPS);
+
+        //all this properties are seeded as system properties, no need to log changes
+        IGNORE_SYS_PROPS.add("oozie.http.hostname");
+        IGNORE_SYS_PROPS.add("oozie.http.port");
+
+        IGNORE_SYS_PROPS.add(Services.OOZIE_HOME_DIR);
+        IGNORE_SYS_PROPS.add(OOZIE_CONFIG_DIR);
+        IGNORE_SYS_PROPS.add(OOZIE_CONFIG_FILE);
+        IGNORE_SYS_PROPS.add(OOZIE_DATA_DIR);
+
+        IGNORE_SYS_PROPS.add(XLogService.OOZIE_LOG_DIR);
+        IGNORE_SYS_PROPS.add(XLogService.LOG4J_FILE);
+        IGNORE_SYS_PROPS.add(XLogService.LOG4J_RELOAD);
     }
 
     public static final String DEFAULT_CONFIG_FILE = "oozie-default.xml";
@@ -96,26 +113,6 @@ public class ConfigurationService implements Service, Instrumentable {
     }
 
     /**
-     * Obtains the value of a system property or if not defined from an environment variable.
-     *
-     * @param envName environment variable name
-     * @param defaultValue default value if not set
-     * @return the value of the environment variable.
-     */
-    private static String getEnvValue(String envName, String defaultValue) {
-        String value = System.getProperty(envName);
-        if (value == null) {
-            value = System.getenv(envName);
-            String debugValue = (value == null) ? "variable not defined" : "value [" + value + "]";
-            log.debug("Fetching env var [{0}], {1}", envName, debugValue);
-        }
-        else {
-            log.debug("Fetching env var [{0}], Java system property overriding it, value [{1}]", envName, value);
-        }
-        return (value != null) ? value : defaultValue;
-    }
-
-    /**
      * Initialize the log service.
      *
      * @param services services instance.
@@ -123,7 +120,7 @@ public class ConfigurationService implements Service, Instrumentable {
      */
     public void init(Services services) throws ServiceException {
         configDir = getConfigurationDirectory();
-        configFile = getEnvValue(OOZIE_CONFIG_FILE_ENV, SITE_CONFIG_FILE);
+        configFile = System.getProperty(OOZIE_CONFIG_FILE, SITE_CONFIG_FILE);
         if (configFile.contains("/")) {
             throw new ServiceException(ErrorCode.E0022, configFile);
         }
@@ -136,7 +133,7 @@ public class ConfigurationService implements Service, Instrumentable {
 
     public static String getConfigurationDirectory() throws ServiceException {
         String oozieHome = Services.getOozieHome();
-        String configDir = getEnvValue(OOZIE_CONFIG_DIR_ENV, oozieHome + "/conf");
+        String configDir = System.getProperty(OOZIE_CONFIG_DIR, oozieHome + "/conf");
         File file = new File(configDir);
         if (!file.exists()) {
             throw new ServiceException(ErrorCode.E0024, configDir);
@@ -177,7 +174,7 @@ public class ConfigurationService implements Service, Instrumentable {
      *
      * @return Oozie configuration directory.
      */
-    public String getConfDirectory() {
+    public String getConfigDir() {
         return configDir;
     }
 
@@ -240,10 +237,7 @@ public class ConfigurationService implements Service, Instrumentable {
         }
         for (Map.Entry<Object, Object> entry : System.getProperties().entrySet()) {
             String name = (String) entry.getKey();
-            if (IGNORE_SYS_PROPS.contains(name)) {
-                log.warn("System property [{0}] in ignore list, ignored", name);
-            }
-            else {
+            if (!IGNORE_SYS_PROPS.contains(name)) {
                 if (name.startsWith("oozie.") && !name.startsWith(IGNORE_TEST_SYS_PROPS)) {
                     if (configuration.get(name) == null) {
                         log.warn("System property [{0}] no defined in Oozie configuration, ignored", name);

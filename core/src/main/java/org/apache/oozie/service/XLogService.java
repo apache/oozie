@@ -61,25 +61,25 @@ public class XLogService implements Service, Instrumentable {
     /**
      * System property that indicates the logs directory.
      */
-    public static final String OOZIE_LOGS_ENV = "OOZIE_LOGS";
+    public static final String OOZIE_LOG_DIR = "oozie.log.dir";
 
     /**
      * System property that indicates the log4j configuration file to load.
      */
-    public static final String LOG4J_FILE_ENV = "OOZIE_LOG4J_FILE";
+    public static final String LOG4J_FILE = "oozie.log4j.file";
 
     /**
      * System property that indicates the reload interval of the configuration file.
      */
-    public static final String LOG4J_RELOAD_ENV = "OOZIE_LOG4J_RELOAD";
+    public static final String LOG4J_RELOAD = "oozie.log4j.reload";
 
     /**
-     * Default value for the log4j configuration file if {@link #LOG4J_FILE_ENV} is not set.
+     * Default value for the log4j configuration file if {@link #LOG4J_FILE} is not set.
      */
     public static final String DEFAULT_LOG4J_PROPERTIES = "oozie-log4j.properties";
 
     /**
-     * Default value for the reload interval if {@link #LOG4J_RELOAD_ENV} is not set.
+     * Default value for the reload interval if {@link #LOG4J_RELOAD} is not set.
      */
     public static final String DEFAULT_RELOAD_INTERVAL = "10";
 
@@ -103,21 +103,6 @@ public class XLogService implements Service, Instrumentable {
     }
 
     /**
-     * Obtains the value of a system property or if not defined from an environment variable.
-     *
-     * @param envName environment variable name
-     * @param defaultValue default value if not set
-     * @return the value of the environment variable.
-     */
-    private static String getEnvValue(String envName, String defaultValue) {
-        String value = System.getProperty(envName);
-        if (value == null) {
-            value = System.getenv(envName);
-        }
-        return (value != null) ? value : defaultValue;
-    }
-
-    /**
      * Initialize the log service.
      *
      * @param services services instance.
@@ -125,11 +110,11 @@ public class XLogService implements Service, Instrumentable {
      */
     public void init(Services services) throws ServiceException {
         String oozieHome = Services.getOozieHome();
-        String oozieLogs = getEnvValue(OOZIE_LOGS_ENV, oozieHome + "/logs");
-        System.setProperty(OOZIE_LOGS_ENV, oozieLogs);            
+        String oozieLogs = System.getProperty(OOZIE_LOG_DIR, oozieHome + "/logs");
+        System.setProperty(OOZIE_LOG_DIR, oozieLogs);
         try {
             LogManager.resetConfiguration();
-            log4jFileName = getEnvValue(LOG4J_FILE_ENV, DEFAULT_LOG4J_PROPERTIES);
+            log4jFileName = System.getProperty(LOG4J_FILE, DEFAULT_LOG4J_PROPERTIES);
             if (log4jFileName.contains("/")) {
                 throw new ServiceException(ErrorCode.E0011, log4jFileName);
             }
@@ -156,7 +141,7 @@ public class XLogService implements Service, Instrumentable {
                 PropertyConfigurator.configure(log4jUrl);
             }
             else {
-                interval = Long.parseLong(getEnvValue(LOG4J_RELOAD_ENV, DEFAULT_RELOAD_INTERVAL));
+                interval = Long.parseLong(System.getProperty(LOG4J_RELOAD, DEFAULT_RELOAD_INTERVAL));
                 PropertyConfigurator.configureAndWatch(log4jFile.toString(), interval * 1000);
             }
 

@@ -55,7 +55,6 @@ public class TestAuthorizationService extends XFsTestCase {
         conf.set(Services.CONF_SERVICE_CLASSES,
                  conf.get(Services.CONF_SERVICE_CLASSES) + "," + AuthorizationService.class.getName());
         services.init();
-        setSystemProperty(ConfigurationService.getConfigurationDirectory(), getTestCaseDir());
         services.getConf().setBoolean(AuthorizationService.CONF_SECURITY_ENABLED, true);
         services.get(AuthorizationService.class).init(services);
         services.get(ActionService.class).register(ForTestingActionExecutor.class);

@@ -16,11 +16,6 @@
 
 # Set Oozie specific environment variables here.
 
-# IMPORTANT:
-#
-#   Setting OOZIE_HOME and OOZIE_CONFIG_DIR variables in this script
-#   may cause unpredictable behavior.
-
 # Settings for the Embedded Tomcat that runs Oozie
 # Java System properties for Oozie should be specified in this variable
 #
@@ -32,7 +27,7 @@
 
 # Oozie logs directory
 #
-# export OOZIE_LOGS=${OOZIE_HOME}/logs
+# export OOZIE_LOG=${OOZIE_HOME}/logs
 
 # Oozie Log4J configuration file to load from Oozie configuration directory
 #
@@ -53,3 +48,4 @@
 # The base URL for callback URLs to Oozie
 #
 # export OOZIE_BASE_URL="http://${OOZIE_HTTP_HOSTNAME}:${OOZIE_HTTP_PORT}/oozie"
+

@@ -29,7 +29,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowJobBean;
-import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.XOozieClient;
 import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.store.StoreException;
@@ -103,7 +102,7 @@ public class AuthorizationService implements Service {
      * @throws ServiceException if the admin user list could not be loaded.
      */
     private void loadAdminUsers() throws ServiceException {
-        String configDir = ConfigurationService.getConfigurationDirectory();
+        String configDir = Services.get().get(ConfigurationService.class).getConfigDir();
         if (configDir != null) {
             File file = new File(configDir, ADMIN_USERS_FILE);
             if (file.exists()) {

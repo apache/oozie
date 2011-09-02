@@ -48,7 +48,7 @@ public class TestXLogService extends XTestCase {
     }
 
     public void testCustomLog4jPropertiesFromClassLoader() throws Exception {
-        setSystemProperty(XLogService.LOG4J_FILE_ENV, "test-custom-log4j.properties");
+        setSystemProperty(XLogService.LOG4J_FILE, "test-custom-log4j.properties");
         XLogService ls = new XLogService();
         ls.init(null);
         Assert.assertTrue(ls.getFromClasspath());
@@ -73,7 +73,7 @@ public class TestXLogService extends XTestCase {
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
         InputStream is = cl.getResourceAsStream("test-oozie-log4j.properties");
         IOUtils.copyStream(is, new FileOutputStream(log4jFile));
-        setSystemProperty(XLogService.LOG4J_FILE_ENV, "test-log4j.properties");
+        setSystemProperty(XLogService.LOG4J_FILE, "test-log4j.properties");
         XLogService ls = new XLogService();
         ls.init(null);
         Assert.assertFalse(ls.getFromClasspath());
@@ -86,7 +86,7 @@ public class TestXLogService extends XTestCase {
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
         InputStream is = cl.getResourceAsStream("test-oozie-log4j.properties");
         IOUtils.copyStream(is, new FileOutputStream(log4jFile));
-        setSystemProperty(XLogService.LOG4J_RELOAD_ENV, "1");
+        setSystemProperty(XLogService.LOG4J_RELOAD, "1");
         XLogService ls = new XLogService();
         ls.init(null);
         assertTrue(LogFactory.getLog("a").isTraceEnabled());
@@ -110,20 +110,20 @@ public class TestXLogService extends XTestCase {
     }
 
     public void testDefaultLogsDir() throws Exception {
-        setSystemProperty(XLogService.OOZIE_LOGS_ENV, null);
+        setSystemProperty(XLogService.OOZIE_LOG_DIR, null);
         String logs = Services.getOozieHome() + "/logs";
         XLogService ls = new XLogService();
         ls.init(null);
-        assertEquals(logs, System.getProperty(XLogService.OOZIE_LOGS_ENV));
+        assertEquals(logs, System.getProperty(XLogService.OOZIE_LOG_DIR));
         ls.destroy();
     }
 
     public void testCustomLogsDir() throws Exception {
         String logs = "/tmp/oozie/logs";
-        setSystemProperty(XLogService.OOZIE_LOGS_ENV, logs);
+        setSystemProperty(XLogService.OOZIE_LOG_DIR, logs);
         XLogService ls = new XLogService();
         ls.init(null);
-        assertEquals(logs, System.getProperty(XLogService.OOZIE_LOGS_ENV));
+        assertEquals(logs, System.getProperty(XLogService.OOZIE_LOG_DIR));
         ls.destroy();
     }
 

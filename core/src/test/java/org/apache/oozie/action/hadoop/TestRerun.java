@@ -43,7 +43,7 @@ public class TestRerun extends XFsTestCase {
 
     protected void setUp() throws Exception {
         super.setUp();
-        setSystemProperty(XLogService.LOG4J_FILE_ENV, "oozie-log4j.properties");
+        setSystemProperty(XLogService.LOG4J_FILE, "oozie-log4j.properties");
         setSystemProperty("oozie.service.ActionCheckerService.action.check.delay", "1");
         setSystemProperty("oozie.service.ActionCheckerService.action.check.interval", "10");
         LocalOozie.start();

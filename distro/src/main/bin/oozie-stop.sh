@@ -30,9 +30,17 @@ done
 BASEDIR=`dirname ${PRG}`
 BASEDIR=`cd ${BASEDIR}/..;pwd`
 
+source ${BASEDIR}/bin/oozie-sys.sh
+
 ${BASEDIR}/oozie-server/bin/catalina.sh stop
 
-echo
-echo "Oozie stopped"
-echo
+if [ "$?" = "0" ]; then
+  echo
+  echo "Oozie stopped"
+  echo
+else
+  echo
+  echo "ERROR: Oozie stop aborted"
+  echo
+fi
 

@@ -24,41 +24,47 @@ The Java 1.6+ =bin= directory should be in the command path.
 
 ---++ Server Installation
 
+*IMPORTANT:* Oozie ignores any set value for =OOZIE_HOME=, Oozie computes its home automatically.
+
    * Download or build an Oozie binary distribution
    * Download a Hadoop binary distribution
    * Download ExtJS library (it must be version 2.2)
 
-NOTE: The ExtJS library is not bundled with Oozie because it uses a different license.
+*NOTE:* The ExtJS library is not bundled with Oozie because it uses a different license.
+
+*NOTE:* It is recommended to use a Oozie Unix user for the Oozie server.
 
 Expand the Oozie distribution =tar.gz=.
 
-Expand the Hadoop distribution =tar.gz=.
-
-Add =${OOZIE_HOME}/bin= directory to the PATH.
+Expand the Hadoop distribution =tar.gz= (as the Oozie Unix user).
 
 Oozie is bundled without Hadoop JAR files and without the ExtJS library.
 
    * The Hadoop JARs are required to run Oozie
    * The ExtJS library is optional (only required for the Oozie web-console to work)
 
+*IMPORTANT:* all the Oozie server scripts (=oozie-setup.sh=, =oozie-start.sh=
+and =oozie-stop.sh=) only run under the Oozie Unix user, if necessary use =sudo -u OOZIE_USER=
+when invoking the scripts.
+
 Use the =oozie-setup.sh= script to add the Hadoop JARs and the ExtJS library to Oozie.
 
 <verbatim>
-$ oozie-setup.sh -hadoop 0.20.200 ${HADOOP_HOME} -extjs /tmp/ext-2.2.zip
+$ oozie bin/oozie-setup.sh -hadoop 0.20.200 ${HADOOP_HOME} -extjs /tmp/ext-2.2.zip
 </verbatim>
 
 Start Oozie.
 
 <verbatim>
-$ oozie-start.sh
+$ oozie bin/oozie-start.sh
 </verbatim>
 
-Check the Oozie log file =${OOZIE_HOME}/logs/oozie.log= to ensure Oozie started properly.
+Check the Oozie log file =logs/oozie.log= to ensure Oozie started properly.
 
 Using the Oozie command line tool check the status of Oozie:
 
 <verbatim>
-oozie admin -oozie http://localhost:8080/oozie -status
+$ bin/oozie admin -oozie http://localhost:8080/oozie -status
 </verbatim>
 
 Using a browser go to the [[http://localhost:8080/oozie][Oozie web console]], Oozie status should be *NORMAL*.
@@ -68,8 +74,6 @@ Refer to the [[DG_Examples][Running the Examples]] document for details on runni
 ---++ Client Installation
 
 Copy and expand the =oozie-client= TAR.GZ file bundled with the distribution. Add the =bin/= directory to the =PATH=.
-
-Add =${OOZIE_HOME}/bin= directory to the PATH.
 
 Refer to the [[DG_CommandLineTool][Command Line Interface Utilities]] document for a a full reference of the =oozie=
 command line tool.
@@ -87,7 +91,7 @@ The =share/= directory must be copied to the Oozie HOME directory in HDFS:
 $ hadoop fs -put share share
 </verbatim>
 
-*NOTE:* This must be done using the Oozie Hadoop (HDFS) user. If an =share= directory already exists in HDFS, it must be
+*IMPORTANT:* This must be done using the Oozie Hadoop (HDFS) user. If an =share= directory already exists in HDFS, it must be
 deleted before copying it again.
 
 [[index][::Go back to Oozie Documentation Index::]]

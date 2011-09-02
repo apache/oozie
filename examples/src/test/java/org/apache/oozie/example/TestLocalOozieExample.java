@@ -114,7 +114,7 @@ public class TestLocalOozieExample extends TestCase {
             throw new RuntimeException(XLog.format("could not create path [{0}]", file.getAbsolutePath()));
         }
         //setting up Oozie HOME and an empty conf directory
-        System.setProperty(Services.OOZIE_HOME_ENV, testCaseDir);
+        System.setProperty(Services.OOZIE_HOME_DIR, testCaseDir);
     }
 
     protected void delete(File file) throws IOException {
@@ -155,7 +155,7 @@ public class TestLocalOozieExample extends TestCase {
         else {
             System.getProperties().remove("oozielocal.log");
         }
-        System.getProperties().remove(Services.OOZIE_HOME_ENV);
+        System.getProperties().remove(Services.OOZIE_HOME_DIR);
         super.tearDown();
     }
 

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Copyright (c) 2010 Yahoo! Inc. All rights reserved. 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -90,7 +90,7 @@ function checkOption() {
 }
 
 #get the list of hadoop jars that will be injected based on the hadoop version
-function getHadoopJars {
+function getHadoopJars() {
   version=$1
   if [ "${version}" = "0.20.1" ]; then
     #List is separated by ":"

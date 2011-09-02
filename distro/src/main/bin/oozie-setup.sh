@@ -43,6 +43,8 @@ done
 BASEDIR=`dirname ${PRG}`
 BASEDIR=`cd ${BASEDIR}/..;pwd`
 
+source ${BASEDIR}/bin/oozie-sys.sh -silent
+
 addExtjs=""
 addJars=""
 addHadoopJars=""
@@ -50,9 +52,9 @@ extjsHome=""
 jarsPath=""
 hadoopVersion=""
 hadoopPath=""
-inputWar="${BASEDIR}/oozie.war"
-outputWar="${BASEDIR}/oozie-server/webapps/oozie.war"
-outputWarExpanded="${BASEDIR}/oozie-server/webapps/oozie"
+inputWar="${OOZIE_HOME}/oozie.war"
+outputWar="${CATALINA_BASE}/webapps/oozie.war"
+outputWarExpanded="${CATALINA_BASE}/webapps/oozie"
 
 while [ $# -gt 0 ]
 do
@@ -104,11 +106,12 @@ do
   shift
 done
 
-echo
-echo "Stopping Oozie (if running)"
-echo
-${BASEDIR}/bin/oozie-stop.sh
-echo
+if [ -e "${CATALINA_PID}" ]; then
+  echo
+  echo "ERROR: Stop Oozie first"
+  echo
+  exit -1
+fi
 
 if [ -e "${outputWar}" ]; then
   chmod -f u+w ${outputWar}
@@ -116,8 +119,10 @@ if [ -e "${outputWar}" ]; then
 fi
 rm -rf ${outputWarExpanded}
 
+echo
+
 if [ "${addExtjs}${addJars}${addHadoopJars}" == "" ]; then
-  echo "INFO: Default installation, Oozie webconsole disabled"
+  echo "INFO: Doing default installation, Oozie webconsole disabled"
   cp ${inputWar} ${outputWar}
 else
   OPTIONS=""
@@ -131,11 +136,14 @@ else
     OPTIONS="${OPTIONS} -hadoop ${hadoopVersion} ${hadoopPath}"
   fi
 
-  ${BASEDIR}/bin/addtowar.sh -inputwar ${inputWar} -outputwar ${outputWar} ${OPTIONS}
+  ${OOZIE_HOME}/bin/addtowar.sh -inputwar ${inputWar} -outputwar ${outputWar} ${OPTIONS}
 
   if [ "$?" != "0" ]; then
     exit -1
   fi
 fi
 
-echo "INFO: Oozie at ${BASEDIR} is ready to be started"
+echo "INFO: Oozie is ready to be started"
+
+echo
+

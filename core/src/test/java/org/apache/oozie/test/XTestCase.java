@@ -18,10 +18,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +42,6 @@ import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.service.StoreService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.store.StoreException;
@@ -158,7 +153,8 @@ public abstract class XTestCase extends TestCase {
         testCaseDir = createTestCaseDir(this, true);
 
         //setting up Oozie HOME and Oozie conf directory
-        setSystemProperty(Services.OOZIE_HOME_ENV, testCaseDir);
+        setSystemProperty(Services.OOZIE_HOME_DIR, testCaseDir);
+        Services.setOozieHome();
         testCaseConfDir = createTestCaseSubDir("conf");
 
         //setting up custom Oozie site for testing if avail

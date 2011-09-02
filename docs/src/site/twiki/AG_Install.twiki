@@ -12,39 +12,37 @@ Follow the instructions at [[DG_QuickStart][Oozie Quick Start]].
 
 ---++ Environment Setup
 
-The =OOZIE_HOME= environment variable is used to determine Oozie =conf/= and =logs/= directories. If not set the
-parent's parent directory of the =oozie-start.sh= command will be used.
+*IMPORTANT:* Oozie ignores any set value for =OOZIE_HOME=, Oozie computes its home automatically.
 
-The =OOZIE_HTTP_PORT= environment variable specifies the port Oozie server runs on. If not set, the default value
-is =11000=.
+When running Oozie with its embedded Tomcat server, the =conf/oozie-env.sh= file can be
+used to configure the following environment variables used by Oozie:
 
-The =OOZIE_HTTP_HOSTNAME= environment variable specifies the host name Oozie server runs on. If not set, the default
-value is =`hostname -f`.
+*CATALINA_OPTS* : settings for the Embedded Tomcat that runs Oozie Java System properties
+for Oozie should be specified in this variable. No default value.
 
-The =OOZIE_BASE_URL= environment variable specifies Oozie base URL for callback URLs. If not set, the default value
+*OOZIE_CONFIG_FILE* : Oozie configuration file to load from Oozie configuration directory.
+Default value =oozie-site.xml=.
+
+*OOZIE_LOGS* : Oozie logs directory. Default value =logs/= directory in the Oozie installation
+directory.
+
+*OOZIE_LOG4J_FILE* :  Oozie Log4J configuration file to load from Oozie configuration directory.
+Default value =oozie-log4j.properties=.
+
+*OOZIE_LOG4J_RELOAD* : Reload interval of the Log4J configuration file, in seconds.
+Default value =10=
+
+*OOZIE_HTTP_PORT* : The port Oozie server runs. Default value =11000=.
+
+*OOZIE_HTTP_HOSTNAME* : The host name Oozie server runs on. Default value is the output of the
+command =hostname -f=.
+
+*OOZIE_BASE_URL* : The base URL for actions callback URLs to Oozie. The default value
 is =http://${OOZIE_HTTP_HOSTNAME}:${OOZIE_HTTP_PORT}/oozie=.
 
 ---++ Oozie Server Setup
 
-Oozie is bundled without Hadoop JAR files and without the ExtJS library.
-
-   * The Hadoop JARs are required to run Oozie
-   * The ExtJS library is optional (only required for the Oozie web-console to work)
-
-The =addtowar.sh= script or the convenience =oozie-setup.sh= script must be used to prepare an Oozie server.
-
-These scripts add Hadoop JARs, JDBC JARs and the ExtJS library to the Oozie WAR file.
-
-The =addtowar.sh= script options are:
-
-<verbatim>
- Usage  : addtowar <OPTIONS>
- Options: -inputwar INPUT_OOZIE_WAR
-          -outputwar OUTPUT_OOZIE_WAR
-          [-hadoop HADOOP_VERSION HADOOP_PATH]
-          [-extjs EXTJS_PATH]
-          [-jars JARS_PATH] (multiple JAR path separated by ':')
-</verbatim>
+The =setup-oozie.sh= script prepares the embedded Tomcat server to run Oozie.
 
 The =setup-oozie.sh= script options are:
 
@@ -57,19 +55,33 @@ Usage  : oozie-setup.sh <OPTIONS>"
          (without options does default setup, without the Oozie webconsole)"
 </verbatim>
 
-NOTE: The =setup-oozie.sh= script prepares the embedded Tomcat server to run Oozie. The =addtowar.sh= script should
-be used only if an alternate servlet container is used.
-
 ---+++ Setting Up Oozie with an Alternate Tomcat
 
-The original Oozie WAR file is at =${OOZIE_HOME}/oozie.war=.
+Use the =addtowar.sh= script to prepare the Oozie server only if Oozie will run with a different
+servlet  container than the embedded Tomcat provided with the distribution.
 
-After the Hadoop JARs and the ExtJS library has been added to the =oozie.war= file Oozie is ready for deployment.
+The =addtowar.sh= script adds Hadoop JARs, JDBC JARs and the ExtJS library to the Oozie WAR file.
 
-If present, delete any previous =oozie.war= and =oozie= directory from Tomcat's =webapps/= directory.
+The =addtowar.sh= script options are:
 
-Copy the =oozie.war= file (the one that contains the Hadoop JARs adn the ExtJS library) to Tomcat's =webapps/=
-directory.
+<verbatim>
+ Usage  : addtowar <OPTIONS>
+ Options: -inputwar INPUT_OOZIE_WAR
+          -outputwar OUTPUT_OOZIE_WAR
+          [-hadoop HADOOP_VERSION HADOOP_PATH]
+          [-extjs EXTJS_PATH]
+          [-jars JARS_PATH] (multiple JAR path separated by ':')
+</verbatim>
+
+The original =oozie.war= file is in the Oozie server installation directory.
+
+After the Hadoop JARs and the ExtJS library has been added to the =oozie.war= file Oozie is ready to run.
+
+Delete any previous deployment of the =oozie.war= from the servlet container (if using Tomcat, delete
+=oozie.war= and =oozie= directory from Tomcat's =webapps/= directory)
+
+Deploy the prepared =oozie.war= file (the one that contains the Hadoop JARs adn the ExtJS library) in the
+servlet container (if using Tomcat, copy the prepared =oozie.war= file to Tomcat's =webapps/= directory).
 
 *IMPORTANT:* Only one Oozie instance can be deployed per Tomcat instance.
 
@@ -88,7 +100,7 @@ JDBC driver JARs to the Oozie WAR file.
 
 ---++ Oozie Configuration
 
-Oozie configuration is always read from the =${OOZIE_HOME}/conf= directory.
+By default, Oozie configuration is read from Oozie's =conf/= directory
 
 The Oozie configuration is distributed in 3 different files:
 
@@ -106,21 +118,16 @@ Oozie resolves configuration property values in the following order:
    * Else, if the Oozie configuration file (=oozie-site.xml=) contains the property, it uses its value
    * Else, it uses the default value documented in the =oozie-default.xml= file
 
-Oozie configuration is loaded from the directory specified in the  =OOZIE_CONFIG_DIR= environment variable.
-
-If the =OOZIE_CONFIG_DIR= environment variable is not defined, Oozie configuration is loaded from the
- =${OOZIE_HOME}/conf/= directory.
-
-The =OOZIE_CONFIG_FILE= environment variable can be set to indicate an alternate Oozie configuration file than
-the =oozie-site.xml= file. The alternate file must be in the configuration directory.
-
-*NOTE:* The =oozie-default.xml= file found in the =${OOZIE_HOME}/conf/= directory is not used by Oozie, it is there
+*NOTE:* The =oozie-default.xml= file found in Oozie's =conf/= directory is not used by Oozie, it is there
 for reference purposes only.
 
 ---+++ Logging Configuration
 
-By default Oozie logs to the =${OOZIE_LOGS}= directory, if the variable =OOZIE_LOGS= is not defined, Oozie logs
-to the =${OOZIE_HOME}/logs/= directory.
+By default, Oozie log configuration is defined in the =oozie-log4j.properties= configuration file.
+
+If the Oozie log configuration file changes, Oozie reloads the new settings automatically.
+
+By default, Oozie logs to Oozie's =logs/= directory.
 
 Oozie logs in 4 different files:
 
@@ -129,15 +136,7 @@ Oozie logs in 4 different files:
    * oozie-instrumentation.log: intrumentation data, every 60 seconds (configurable)
    * oozie-audit.log: audit messages, workflow jobs changes
 
-Oozie log configuration is defined in the =oozie-log4j.properties= files.
-
-If the Oozie log configuration file changes, Oozie reloads the new settings dynamically.
-
-The =OOZIE_LOG4J_FILE= environment variable can be set to indicate an alternate Oozie log configuration file. The
-alternate log configuration file must be in Oozie configuration directory.
-
-The =OOZIE_LOG4J_RELOAD= environment variable can be set to specify the logging configuration reload interval in
-seconds. The default value is 10 seconds.
+The embedded Tomcat log files are also written to Oozie's =logs/= directory.
 
 ---+++ Oozie Authentication Configuration
 
@@ -196,7 +195,7 @@ Oozie security is set via the following configuration property (default value sh
   oozie.service.AuthorizationService.security.enabled=false
 </verbatim>
 
-If security is enabled, the admin users are read from the =${OOZIE_HOME}/conf/adminusers.txt= file:
+If security is enabled, the admin users are read from the =conf/adminusers.txt= file:
 
    * One user name per line
    * Empty lines and lines starting with '#' are ignored
@@ -257,6 +256,37 @@ The Oozie share lib TAR.GZ file bundled with the distribution contains the neces
 streaming and pig actions.
 
 The bundled Streaming and Pig JARs are the ones used by Oozie testcases.
+
+---++ Advanced/Custom Environment Settings
+
+Oozie can be configured to use Unix standard filesystem hierarchy for its different files
+(configuration, logs, data and temporary files).
+
+These settings must be done in the =bin/oozie-env.sh= script.
+
+This script is sourced before the configuration =oozie-env.sh= and supports additional
+environment variables (shown with their default values):
+
+<verbatim>
+export OOZIE_CONF=${OOZIE_HOME}/conf
+export OOZIE_DATA={OOZIE_HOME}/data
+export OOZIE_LOG={OOZIE_HOME}/logs
+export CATALINA_BASE=${OOZIE_HOME}/oozie-server
+export CATALINA_TMPDIR=${OOZIE_HOME}/oozie-server/temp
+export CATALINA_OUT=${OOZIE_LOGS}/catalina.out
+export CATALINA_PID=/tmp/oozie.pid
+</verbatim>
+
+Sample values to make Oozie follow Unix standard filesystem hierarchy:
+
+<verbatim>
+export OOZIE_CONFIG=/etc/oozie
+export OOZIE_DATA=/var/lib/oozie
+export OOZIE_LOG=/var/log/oozie
+export CATALINA_BASE=${OOZIE_DATA}/oozie-server
+export CATALINA_TMPDIR=/tmp
+export CATALINA_PID=/tmp/oozie.pid
+</verbatim>
 
 [[index][::Go back to Oozie Documentation Index::]]
 

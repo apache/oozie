@@ -30,7 +30,7 @@ public class TestSubmitPigCommand extends XFsTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        setSystemProperty(XLogService.LOG4J_FILE_ENV, "oozie-log4j.properties");
+        setSystemProperty(XLogService.LOG4J_FILE, "oozie-log4j.properties");
         LocalOozie.start();
     }
 

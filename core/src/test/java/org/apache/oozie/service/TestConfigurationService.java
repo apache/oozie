@@ -28,7 +28,7 @@ public class TestConfigurationService extends XTestCase {
 
     private void prepareOozieConfDir(String oozieSite, String alternateSiteFile) throws Exception {
         if (!alternateSiteFile.equals(ConfigurationService.SITE_CONFIG_FILE)) {
-            setSystemProperty(ConfigurationService.OOZIE_CONFIG_FILE_ENV, alternateSiteFile);
+            setSystemProperty(ConfigurationService.OOZIE_CONFIG_FILE, alternateSiteFile);
         }
         File siteFile = new File(getTestCaseConfDir(), alternateSiteFile);
         IOUtils.copyStream(IOUtils.getResourceAsStream(oozieSite, -1),
@@ -46,7 +46,7 @@ public class TestConfigurationService extends XTestCase {
 
     public void testMissingSite() throws Exception {
         prepareOozieConfDir("oozie-site2.xml");
-        setSystemProperty(ConfigurationService.OOZIE_CONFIG_FILE_ENV, "oozie-site-missing.xml");
+        setSystemProperty(ConfigurationService.OOZIE_CONFIG_FILE, "oozie-site-missing.xml");
         ConfigurationService cl = new ConfigurationService();
         cl.init(null);
         assertEquals("oozie-" + System.getProperty("user.name"), cl.getConf().get("oozie.system.id"));
@@ -83,7 +83,7 @@ public class TestConfigurationService extends XTestCase {
 
     public void testAlternateConfDir() throws Exception {
         String customConfDir = createTestCaseSubDir("xconf");
-        setSystemProperty(ConfigurationService.OOZIE_CONFIG_DIR_ENV, customConfDir);
+        setSystemProperty(ConfigurationService.OOZIE_CONFIG_DIR, customConfDir);
 
         IOUtils.copyStream(IOUtils.getResourceAsStream("oozie-site1.xml", -1),
                            new FileOutputStream(new File(customConfDir, "oozie-site.xml")));

@@ -17,7 +17,7 @@ package org.apache.oozie;
 import org.apache.oozie.util.XLog;
 
 public enum ErrorCode {
-    E0000(XLog.STD, "OOZIE_HOME environment variable not defined"),
+    E0000(XLog.STD, "System property 'oozie.home.dir' not defined"),
     E0001(XLog.OPS, "Could not create runtime directory, {0}"),
     E0002(XLog.STD, "System is in safe mode"),
     E0003(XLog.OPS, "Oozie home directory must be an absolute path [{0}]"),

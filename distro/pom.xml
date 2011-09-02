@@ -98,6 +98,7 @@
                                 <mkdir dir="target/tomcat/oozie-server/webapps"/>
                                 <delete file="target/tomcat/oozie-server/conf/server.xml"/>
                                 <copy file="src/main/tomcat/server.xml" toDir="target/tomcat/oozie-server/conf"/>
+                                <copy file="src/main/tomcat/logging.properties" toDir="target/tomcat/oozie-server/conf"/>
                                 <copy todir="target/tomcat/oozie-server/webapps/ROOT">
                                     <fileset dir="src/main/tomcat/ROOT"/>
                                 </copy>

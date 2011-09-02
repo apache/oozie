@@ -47,10 +47,10 @@ public class LocalOozie {
             throw new IllegalStateException("LocalOozie is already initialized");
         }
 
-        String log4jFile = System.getProperty(XLogService.LOG4J_FILE_ENV, null);
+        String log4jFile = System.getProperty(XLogService.LOG4J_FILE, null);
         String oozieLocalLog = System.getProperty("oozielocal.log", null);
         if (log4jFile == null) {
-            System.setProperty(XLogService.LOG4J_FILE_ENV, "localoozie-log4j.properties");
+            System.setProperty(XLogService.LOG4J_FILE, "localoozie-log4j.properties");
         }
         if (oozieLocalLog == null) {
             System.setProperty("oozielocal.log", "./oozielocal.log");
@@ -60,10 +60,10 @@ public class LocalOozie {
         new Services().init();
 
         if (log4jFile != null) {
-            System.setProperty(XLogService.LOG4J_FILE_ENV, log4jFile);
+            System.setProperty(XLogService.LOG4J_FILE, log4jFile);
         }
         else {
-            System.getProperties().remove(XLogService.LOG4J_FILE_ENV);
+            System.getProperties().remove(XLogService.LOG4J_FILE);
         }
         if (oozieLocalLog != null) {
             System.setProperty("oozielocal.log", oozieLocalLog);
