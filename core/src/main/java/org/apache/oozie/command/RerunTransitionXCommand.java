@@ -44,7 +44,7 @@ public abstract class RerunTransitionXCommand<T> extends TransitionXCommand<T> {
      * @see org.apache.oozie.command.TransitionXCommand#transitToNext()
      */
     @Override
-    public final void transitToNext() {
+    public void transitToNext() {
         if (job == null) {
             job = this.getJob();
         }

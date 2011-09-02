@@ -53,6 +53,7 @@ import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.InstrumentUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.util.StatusUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
@@ -523,6 +524,14 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
     @Override
     public XLog getLog() {
         return LOG;
+    }
+
+    @Override
+    public final void transitToNext() {
+        prevStatus = coordJob.getStatus();
+        coordJob.setStatus(Job.Status.RUNNING);
+        coordJob.setStatus(StatusUtils.getStatus(coordJob));
+        coordJob.setPending();
     }
 
     private final void transitToPrevious() throws CommandException {
