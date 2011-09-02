@@ -1,0 +1,42 @@
+<!--
+  Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License. See accompanying LICENSE file.
+-->
+<coordinator-app xmlns='uri:oozie:coordinator:0.1'
+	xmlns:sla='uri:oozie:sla:0.1' name='NAME' frequency="5"
+	start='2009-03-06T010:00Z' end='2009-03-06T10:14Z' timezone='America/Los_Angeles'
+	freq_timeunit='MINUTE' end_of_duration='NONE'>
+	<controls>
+		<timeout>10</timeout>
+		<concurrency>2</concurrency>
+		<execution>LIFO</execution>
+	</controls>
+	<action>
+		<workflow>
+			<app-path>hdfs:///tmp/workflows/</app-path>
+			<configuration></configuration>
+		</workflow>
+		<sla:info>
+			<sla:app-name>test-app</sla:app-name>
+			<sla:nominal-time>${coord:nominalTime()}</sla:nominal-time>
+			<sla:should-start>5</sla:should-start>
+			<sla:should-end>120</sla:should-end>
+			<sla:notification-msg>Notifying User for ${coord:nominalTime()}
+				nominal time </sla:notification-msg>
+			<sla:alert-contact>abc@yahoo.com</sla:alert-contact>
+			<sla:dev-contact>abc@yahoo.com</sla:dev-contact>
+			<sla:qa-contact>abc@yahoo.com</sla:qa-contact>
+			<sla:se-contact>abc@yahoo.com</sla:se-contact>
+		</sla:info>
+	</action>
+</coordinator-app>
