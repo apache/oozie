@@ -59,6 +59,8 @@ public class JPAService implements Service, Instrumentable {
     public static final String CONF_DRIVER = CONF_PREFIX + "jdbc.driver";
     public static final String CONF_USERNAME = CONF_PREFIX + "jdbc.username";
     public static final String CONF_PASSWORD = CONF_PREFIX + "jdbc.password";
+    public static final String CONF_CONN_DRIVER = CONF_PREFIX + "connection.driver";
+
     public static final String CONF_MAX_ACTIVE_CONN = CONF_PREFIX + "pool.max.active.conn";
     public static final String CONF_CREATE_DB_SCHEMA = CONF_PREFIX + "create.db.schema";
     public static final String CONF_VALIDATE_DB_CONN = CONF_PREFIX + "validate.db.connection";
@@ -96,6 +98,7 @@ public class JPAService implements Service, Instrumentable {
         String user = conf.get(CONF_USERNAME, "sa");
         String password = conf.get(CONF_PASSWORD, "").trim();
         String maxConn = conf.get(CONF_MAX_ACTIVE_CONN, "10").trim();
+        String connDriver = conf.get(CONF_CONN_DRIVER, "org.apache.commons.dbcp.BasicDataSource");
         boolean autoSchemaCreation = conf.getBoolean(CONF_CREATE_DB_SCHEMA, true);
         boolean validateDbConn = conf.getBoolean(CONF_VALIDATE_DB_CONN, false);
 
@@ -133,6 +136,8 @@ public class JPAService implements Service, Instrumentable {
             connProps = MessageFormat.format(connProps, dbSchema);
         }
         props.setProperty("openjpa.ConnectionProperties", connProps);
+
+        props.setProperty("openjpa.ConnectionDriverName", connDriver);
 
         factory = Persistence.createEntityManagerFactory(persistentUnit, props);
 

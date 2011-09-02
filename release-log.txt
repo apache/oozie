@@ -1,5 +1,6 @@
 -- Oozie 3.1.0 release
 
+OOZIE-103 upgrade openjpa jar to 2.1.0
 OOZIE-110 add coordinator 0.3 schema for app name parametrization
 OOZIE-101 ${wf:lastErrorNode()} is not set when an action ends in error
 OOZIE-99 action errorMessage is not being set

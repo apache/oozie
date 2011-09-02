@@ -953,6 +953,14 @@
     </property>
 
     <property>
+        <name>oozie.service.JPAService.connection.driver</name>
+        <value>org.apache.commons.dbcp.BasicDataSource</value>
+        <description>
+            DataSource to be used for connection pooling.
+        </description>
+    </property>
+    
+    <property>
         <name>oozie.service.JPAService.jdbc.driver</name>
         <value>org.apache.derby.jdbc.EmbeddedDriver</value>
         <description>
