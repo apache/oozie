@@ -1970,11 +1970,11 @@ For example, if baseDate is '2009-01-01T00:00Z', instance is '2' and timeUnit is
           <configuration>
             <property>
               <name>nextInstance</name>
-              <value>${coord:dateOffset(coord:nominalTime(), 1, 'DAY'}</value>
+              <value>${coord:dateOffset(coord:nominalTime(), 1, 'DAY')}</value>
             </property>
             <property>
              <name>previousInstance</name>
-              <value>${coord:dateOffset(coord:nominalTime(), -1, 'DAY'}</value>
+              <value>${coord:dateOffset(coord:nominalTime(), -1, 'DAY')}</value>
             </property>
          </configuration>
        </workflow>
