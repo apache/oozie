@@ -200,11 +200,6 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
                 Date d1 = new Date(d.getTime() + coordJob.getFrequency() * 60 * 1000);
                 coordJob.setLastActionTime(d1);
                 coordJob.setNextMaterializedTime(d1);
-
-                if (coordJob.getStatus() == CoordinatorJob.Status.RUNNING || coordJob.getStatus() == CoordinatorJob.Status.RUNNINGWITHERROR) {
-                    coordJob.setStatus(CoordinatorJob.Status.PAUSED);
-                    coordJob.resetPending();
-                }
             }
         }
     }
