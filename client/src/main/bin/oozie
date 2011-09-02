@@ -48,4 +48,4 @@ while [[ ${1} =~ ^\-D ]]; do
   JAVA_PROPERTIES="${JAVA_PROPERTIES} ${1}"
   shift
 done
-${JAVA_BIN} ${JAVA_PROPERTIES} -cp ${OOZIECPPATH} org.apache.oozie.cli.OozieCLI $EXECCLASS "${@}"
+${JAVA_BIN} ${JAVA_PROPERTIES} -cp ${OOZIECPPATH} org.apache.oozie.cli.OozieCLI "${@}"
