@@ -114,11 +114,11 @@
         <dependencySet>
             <outputDirectory>/examples/apps/examples-lib</outputDirectory>
             <unpack>false</unpack>
-            <includes>
-                <include>${pigGroupId}:${pigArtifactId}</include>
-                <include>jline:jline</include>
-                <include>${hadoopGroupId}:hadoop-streaming</include>
-            </includes>
+            <excludes>
+                <exclude>${project.groupId}:oozie-examples</exclude>
+                <exclude>${project.groupId}:oozie-sharelib</exclude>
+            </excludes>
+            <useTransitiveDependencies/>
         </dependencySet>
     </dependencySets>
 

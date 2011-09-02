@@ -51,6 +51,12 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>com.yahoo.oozie</groupId> <!-- OOZIE_GROUP_ID -->
+            <artifactId>oozie-sharelib</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
             <groupId>${hadoopGroupId}</groupId>
             <artifactId>hadoop-core</artifactId>
             <version>${hadoopVersion}</version>
@@ -61,40 +67,6 @@
                     <artifactId>commons-cli</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>${hadoopGroupId}</groupId>
-            <artifactId>hadoop-streaming</artifactId>
-            <version>${hadoopVersion}</version>
-            <scope>compile</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>${hadoopGroupId}</groupId>
-                    <artifactId>hadoop-core</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>${pigGroupId}</groupId>
-            <artifactId>${pigArtifactId}</artifactId>
-            <version>${pigVersion}</version>
-            <scope>compile</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>${hadoopGroupId}</groupId>
-                    <artifactId>hadoop-core</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.hadoop</groupId>
-                    <artifactId>hadoop-core</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>jline</groupId>
-            <artifactId>jline</artifactId>
-            <version>0.9.94</version>
-            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>${hadoopGroupId}</groupId>

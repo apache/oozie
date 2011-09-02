@@ -31,6 +31,10 @@
         <dependencySet>
             <outputDirectory>/share/lib</outputDirectory>
             <unpack>false</unpack>
+            <excludes>
+                <exclude>${project.groupId}:oozie-sharelib</exclude>
+            </excludes>
+            <useTransitiveDependencies/>
         </dependencySet>
     </dependencySets>
 
