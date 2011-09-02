@@ -1,5 +1,6 @@
 -- Oozie 2.3.0 release
 
+GH-0222 Some time sensitive testcases fail when the test machine is slow
 GH-0182 WorkflowFunctionalSpec needs to fix chmod examples
 GH-0214 WF spec mentions invalid nodeStatus() EL function
 GH-0045 display warning message in browser with extjs is not installed

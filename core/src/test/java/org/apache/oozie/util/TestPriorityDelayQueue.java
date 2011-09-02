@@ -17,7 +17,9 @@ package org.apache.oozie.util;
 import junit.framework.TestCase;
 
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -72,7 +74,7 @@ public class TestPriorityDelayQueue extends TestCase {
         PriorityDelayQueue.QueueElement<Object> e1 = new PriorityDelayQueue.QueueElement<Object>(obj);
         assertEquals(obj, e1.getElement());
         assertEquals(0, e1.getPriority());
-        assertTrue(e1.getDelay(TimeUnit.MILLISECONDS) >= 0);
+        assertTrue(e1.getDelay(TimeUnit.MILLISECONDS) <= 0);
 
         e1 = new PriorityDelayQueue.QueueElement<Object>(obj, 1, 200, TimeUnit.MILLISECONDS);
         assertEquals(obj, e1.getElement());
@@ -181,9 +183,16 @@ public class TestPriorityDelayQueue extends TestCase {
 
         Thread.sleep(11);
 
-        assertEquals((Integer) 30, q.poll().getElement());
-        assertEquals((Integer) 20, q.poll().getElement());
-        assertEquals((Integer) 10, q.poll().getElement());
+        List<Integer> list = new ArrayList<Integer>();
+        while (list.size() != 3) {
+            QueueElement<Integer> e = q.poll();
+            if (e != null) {
+                list.add(e.getElement());
+            }
+        }
+        assertEquals((Integer) 30, list.get(0));
+        assertEquals((Integer) 20, list.get(1));
+        assertEquals((Integer) 10, list.get(2));
         assertEquals(0, q.size());
 
         //test different priorities different delayed offer polling after delay
@@ -194,25 +203,34 @@ public class TestPriorityDelayQueue extends TestCase {
 
         Thread.sleep(21);
 
-        assertEquals((Integer) 30, q.poll().getElement());
-        assertEquals((Integer) 20, q.poll().getElement());
-        assertEquals((Integer) 10, q.poll().getElement());
+        list = new ArrayList<Integer>();
+        while (list.size() != 3) {
+            QueueElement<Integer> e = q.poll();
+            if (e != null) {
+                list.add(e.getElement());
+            }
+        }
+        assertEquals((Integer) 30, list.get(0));
+        assertEquals((Integer) 20, list.get(1));
+        assertEquals((Integer) 10, list.get(2));
         assertEquals(0, q.size());
 
         //test different priorities different delayed offer polling within delay
 
-        q.offer(new PriorityDelayQueue.QueueElement<Integer>(10, 0, 10, TimeUnit.MILLISECONDS));
-        q.offer(new PriorityDelayQueue.QueueElement<Integer>(30, 2, 20, TimeUnit.MILLISECONDS));
+        long start = System.currentTimeMillis();
+        q.offer(new PriorityDelayQueue.QueueElement<Integer>(10, 0, 100, TimeUnit.MILLISECONDS));
+        q.offer(new PriorityDelayQueue.QueueElement<Integer>(30, 2, 200, TimeUnit.MILLISECONDS));
         q.offer(new PriorityDelayQueue.QueueElement<Integer>(20, 1, 0, TimeUnit.MILLISECONDS));
 
         assertEquals((Integer) 20, q.poll().getElement());
-
-        Thread.sleep(10);
-
+        long delay = System.currentTimeMillis() - start;
+        Thread.sleep(101 - delay);
         assertEquals((Integer) 10, q.poll().getElement());
 
-        Thread.sleep(10);
+        start = System.currentTimeMillis();
+        delay = System.currentTimeMillis() - start;
 
+        Thread.sleep(101 - delay);
         assertEquals((Integer) 30, q.poll().getElement());
 
         assertEquals(0, q.size());
