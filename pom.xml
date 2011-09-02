@@ -80,6 +80,10 @@
         <oozie.test.kerberos.namenode.principal>hdfs/localhost</oozie.test.kerberos.namenode.principal>
 
         <internal.maven.repository>file:///tmp/internalmavenrepo</internal.maven.repository>
+
+        <!-- platform encoding override -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
 
     <modules>
