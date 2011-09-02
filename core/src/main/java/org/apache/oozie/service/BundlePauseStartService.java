@@ -77,7 +77,7 @@ public class BundlePauseStartService implements Service {
                 }
             }
             catch (Exception ex) {
-                LOG.warn("Exception happened when pausing/unpausing/starting bundle jobs", ex);
+                LOG.warn("Exception happened when pausing/unpausing/starting bundle/coord jobs", ex);
             }
             finally {
                 // release lock;
@@ -115,14 +115,7 @@ public class BundlePauseStartService implements Service {
                 }
             }
             catch (Exception ex) {
-                LOG.warn("Exception happened when pausing/unpausing/starting Coordinator jobs", ex);
-            }
-            finally {
-                // release lock;
-                if (lock != null) {
-                    lock.release();
-                    LOG.info("Released lock for [{0}]", BundlePauseStartService.class.getName());
-                }
+                LOG.warn("Exception happened when pausing/unpausing/starting Bundle jobs", ex);
             }
         }
 
@@ -146,14 +139,7 @@ public class BundlePauseStartService implements Service {
                 }
             }
             catch (Exception ex) {
-                LOG.warn("Exception happened when pausing/unpausing/starting Coordinator jobs", ex);
-            }
-            finally {
-                // release lock;
-                if (lock != null) {
-                    lock.release();
-                    LOG.info("Released lock for [{0}]", BundlePauseStartService.class.getName());
-                }
+                LOG.warn("Exception happened when pausing/unpausing Coordinator jobs", ex);
             }
         }
     }

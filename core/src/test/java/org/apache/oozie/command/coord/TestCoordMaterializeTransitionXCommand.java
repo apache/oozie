@@ -89,8 +89,13 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         Date startTime = DateUtils.parseDateUTC("2009-03-06T10:00Z");
         Date endTime = DateUtils.parseDateUTC("2009-03-06T10:14Z");
         Date pauseTime = DateUtils.parseDateUTC("2009-03-06T09:58Z");
-        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, pauseTime);
+        final CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, pauseTime);
         new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
+        waitFor(1000*60, new Predicate() {
+            public boolean evaluate() throws Exception {
+                return (getStatus(job.getId()) == CoordinatorJob.Status.PAUSED?true:false);
+            }
+        });
         checkCoordActions(job.getId(), 0, CoordinatorJob.Status.PAUSED);
     }
 
@@ -230,6 +235,18 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         actionBean = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
 
         return actionBean;
+    }
+
+    private CoordinatorJob.Status getStatus(String jobId){
+        CoordinatorJob job = null;
+        try {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            job = jpaService.execute(new CoordJobGetJPAExecutor(jobId));
+        }
+        catch (JPAExecutorException se) {
+            se.printStackTrace();
+        }
+        return job.getStatus();
     }
 
     private void checkCoordActions(String jobId, int number, CoordinatorJob.Status status) {

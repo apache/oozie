@@ -1,5 +1,6 @@
 -- Oozie 3.0.0 release
 
+GH-0676 Coord jobs are getting in to Pause status 5 mins earlier
 GH-0510 credentialsConf should be initialized without loading defaults
 GH-0663 rerun PAUSED bundle should reset pause time
 GH-0665 XCommand log object has to reset after the logInfo has reset
