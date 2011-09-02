@@ -1,3 +1,18 @@
+-- Oozie 2.2.3 release
+
+GH-0055 Oozie should not materialize a coordinator job right after its submission if the job will only run in far future
+GH-0046 Add support the coordiator job submitted to run in far future
+
+-- Oozie 2.2.2 release
+
+GH-0040 coordinator rerun doesn't consider empty output-event
+GH-0041 update ojdbc version
+GH-0001 references SVN in bin/mkdistro.sh
+
+-- Oozie 2.2.1 release
+
+GH-0010 POM cleanup, remove unneeded repositories, remove/exclude commons-cli 2.0
+
 -- Oozie 2.2.0 release
 
 - adding Pig version number to pig execution log in launcher log
