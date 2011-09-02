@@ -256,7 +256,8 @@ public class CoordSubmitCommand extends CoordinatorCommand<String> {
      * @throws CommandException
      */
     protected void mergeDefaultConfig() throws CommandException {
-        Path configDefault = new Path(conf.get(OozieClient.COORDINATOR_APP_PATH), CONFIG_DEFAULT);
+        Path coordAppDir = new Path(conf.get(OozieClient.COORDINATOR_APP_PATH)).getParent();
+        Path configDefault = new Path(coordAppDir, CONFIG_DEFAULT);
         // Configuration fsConfig = new Configuration();
         // log.warn("CONFIG :" + configDefault.toUri());
         Configuration fsConfig = CoordUtils.getHadoopConf(conf);

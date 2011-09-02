@@ -323,8 +323,9 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
      * @throws CommandException thrown if failed to read or merge configurations
      */
     protected void mergeDefaultConfig() throws CommandException {
+        Path coordAppDir = new Path(conf.get(OozieClient.COORDINATOR_APP_PATH)).getParent();
+        Path configDefault = new Path(coordAppDir, CONFIG_DEFAULT);
         Path appPath = new Path(conf.get(OozieClient.COORDINATOR_APP_PATH));
-        Path configDefault = new Path(appPath.getParent(), CONFIG_DEFAULT);
         // Configuration fsConfig = CoordUtils.getHadoopConf(conf);
         try {
             String user = ParamChecker.notEmpty(conf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);

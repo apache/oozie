@@ -21,6 +21,7 @@ import java.io.PrintWriter;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorJobBean;
+import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
@@ -333,6 +334,61 @@ public class TestCoordSubmitXCommand extends CoordXTestCase {
         catch (CommandException ce) {
 
         }
+    }
+
+
+    private void _testConfigDefaults(boolean withDefaults) throws Exception {
+        Configuration conf = new XConfiguration();
+        String appPath = getTestCaseDir() + File.separator + "coordinator.xml";
+        String appXml = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" start=\"${startTime}\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
+                + "xmlns=\"uri:oozie:coordinator:0.1\"> <controls> <concurrency>2</concurrency> "
+                + "<execution>LIFO</execution> </controls> <datasets> "
+                + "<dataset name=\"a\" frequency=\"${coord:days(7)}\" initial-instance=\"2009-02-01T01:00Z\" "
+                + "timezone=\"UTC\"> <uri-template>file:///tmp/coord/workflows/${YEAR}/${DAY}</uri-template> </dataset> "
+                + "<dataset name=\"local_a\" frequency=\"${coord:days(7)}\" initial-instance=\"2009-02-01T01:00Z\" "
+                + "timezone=\"UTC\"> <uri-template>file:///tmp/coord/workflows/${YEAR}/${DAY}</uri-template> </dataset> "
+                + "</datasets> <input-events> "
+                + "<data-in name=\"A\" dataset=\"a\"> <instance>${coord:latest(0)}</instance> </data-in>  "
+                + "</input-events> "
+                + "<output-events> <data-out name=\"LOCAL_A\" dataset=\"local_a\"> "
+                + "<instance>${coord:current(-1)}</instance> </data-out> </output-events> <action> <workflow> <app-path>hdfs:///tmp/workflows/</app-path> "
+                + "<configuration> <property> <name>inputA</name> <value>${coord:dataIn('A')}</value> </property> "
+                + "<property> <name>inputB</name> <value>${coord:dataOut('LOCAL_A')}</value> "
+                + "</property></configuration> </workflow> </action> </coordinator-app>";
+        writeToFile(appXml, appPath);
+        conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        conf.set(OozieClient.GROUP_NAME, "other");
+        injectKerberosInfo(conf);
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+
+        if (withDefaults) {
+            String defaults = "<configuration><property><name>startTime</name>" +
+                              "<value>2009-02-01T01:00Z</value></property></configuration>";
+            writeToFile(defaults, getTestCaseDir() + File.separator + CoordSubmitCommand.CONFIG_DEFAULT);
+            String jobId = sc.call();
+            assertEquals(jobId.substring(jobId.length() - 2), "-C");
+        }
+        else {
+            try {
+                sc.call();
+                fail();
+            }
+            catch (CommandException ex) {
+                assertEquals(ErrorCode.E1004, ex.getErrorCode());
+            }
+            catch (Exception ex) {
+                fail();
+            }
+        }
+    }
+
+    public void testMissingConfigDefaults() throws Exception {
+        _testConfigDefaults(false);
+    }
+
+    public void testAvailConfigDefaults() throws Exception {
+        _testConfigDefaults(true);
     }
 
     /**
