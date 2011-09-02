@@ -1,5 +1,6 @@
 -- Oozie 3.0.1 release
 
+OOZIE-15 when writing action configurations to logs, properties names containing 'password' should be masked
 OOZIE-48 fix log messages when message logged at early stages
 OOZIE-47 coordinator resume should resume PREPSUSPENDED state
 OOZIE-45 coord job set to DONEWITHERROR when coord actions are TIMEOUT

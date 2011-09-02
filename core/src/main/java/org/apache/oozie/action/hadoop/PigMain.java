@@ -28,6 +28,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.List;
@@ -101,13 +102,7 @@ public class PigMain extends LauncherMain {
         pigProperties.store(os, "");
         os.close();
 
-        System.out.println();
-        System.out.println("pig.properties content:");
-        System.out.println("------------------------");
-        pigProperties.store(System.out, "");
-        System.out.flush();
-        System.out.println("------------------------");
-        System.out.println();
+        logMasking("pig.properties:", Arrays.asList("password"), pigProperties.entrySet());
 
         List<String> arguments = new ArrayList<String>();
         String script = actionConf.get("oozie.pig.script");

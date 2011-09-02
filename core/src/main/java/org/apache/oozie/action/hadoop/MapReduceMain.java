@@ -22,6 +22,7 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.security.UserGroupInformation;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.io.ByteArrayOutputStream;
@@ -45,14 +46,7 @@ public class MapReduceMain extends LauncherMain {
         Configuration actionConf = new Configuration(false);
         actionConf.addResource(new Path("file:///", System.getProperty("oozie.action.conf.xml")));
 
-        System.out.println("Oozie Map-Reduce Configuration: ");
-        System.out.println("------------------------");
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        actionConf.writeXml(baos);
-        baos.close();
-        System.out.println(new String(baos.toByteArray()));
-        System.out.println("------------------------");
-        System.out.println();
+        logMasking("Map-Reduce job configuration:", new HashSet<String>(), actionConf);
 
         System.out.println("Submitting Oozie action Map-Reduce job");
         System.out.println();
