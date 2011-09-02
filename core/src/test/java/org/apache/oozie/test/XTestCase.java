@@ -21,10 +21,11 @@ import junit.framework.TestCase;
 import org.apache.commons.logging.LogFactory;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
+import org.apache.oozie.WorkflowActionBean;
+import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.db.Schema.Table;
-import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.StoreService;
 import org.apache.oozie.service.DBLiteWorkflowStoreService;
 import org.apache.oozie.service.WorkflowAppService;
@@ -452,24 +453,41 @@ public abstract class XTestCase extends TestCase {
         CoordinatorStore store = new CoordinatorStore(false);
         EntityManager entityManager = store.getEntityManager();
         store.beginTrx();
-        Query q = entityManager.createNamedQuery("GET_COORD_JOBS");
-        List<CoordinatorJobBean> coordBeans = q.getResultList();
-        int jSize = coordBeans.size();
-        for (CoordinatorJobBean w : coordBeans) {
+
+        Query q = entityManager.createNamedQuery("GET_WORKFLOWS");
+        List<WorkflowJobBean> wfjBeans = q.getResultList();
+        int wfjSize = wfjBeans.size();
+        for (WorkflowJobBean w : wfjBeans) {
+            entityManager.remove(w);
+        }
+
+        q = entityManager.createNamedQuery("GET_ACTIONS");
+        List<WorkflowActionBean> wfaBeans = q.getResultList();
+        int wfaSize = wfaBeans.size();
+        for (WorkflowActionBean w : wfaBeans) {
+            entityManager.remove(w);
+        }
+
+        q = entityManager.createNamedQuery("GET_COORD_JOBS");
+        List<CoordinatorJobBean> cojBeans = q.getResultList();
+        int cojSize = cojBeans.size();
+        for (CoordinatorJobBean w : cojBeans) {
             entityManager.remove(w);
         }
 
         q = entityManager.createNamedQuery("GET_COORD_ACTIONS");
-        List<CoordinatorActionBean> caBeans = q.getResultList();
-        int aSize = caBeans.size();
-        for (CoordinatorActionBean w : caBeans) {
+        List<CoordinatorActionBean> coaBeans = q.getResultList();
+        int coaSize = coaBeans.size();
+        for (CoordinatorActionBean w : coaBeans) {
             entityManager.remove(w);
         }
 
         store.commitTrx();
         store.closeTrx();
-        log.info(jSize + " entries in COORD_JOBS have removed from DB!");
-        log.info(aSize + " entries in COORD_ACTIONS have removed from DB!");
+        log.info(wfjSize + " entries in WF_JOBS have removed from DB!");
+        log.info(wfaSize + " entries in WF_ACTIONS have removed from DB!");
+        log.info(cojSize + " entries in COORD_JOBS have removed from DB!");
+        log.info(coaSize + " entries in COORD_ACTIONS have removed from DB!");
     }
 
     private static MiniDFSCluster dfsCluster = null;

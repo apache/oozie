@@ -1,4 +1,3 @@
-exit
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
  Licensed to the Apache Software Foundation (ASF) under one
@@ -70,7 +69,7 @@ exit
             -->
             <property name="openjpa.ConnectionDriverName" value="org.apache.oozie.util.db.InstrumentedBasicDataSource"/>
 
-            <property name="openjpa.ConnectionProperties" value="DriverClassName=org.hsqldb.jdbcDriver,Url=jdbc:hsqldb:mem/local;create=true,Username=root,Password=,MaxActive=100"/>
+            <property name="openjpa.ConnectionProperties" value="DriverClassName=org.hsqldb.jdbcDriver,Url=jdbc:hsqldb:mem/oozie;create=true,Username=sa,Password=,MaxActive=100"/>
             <property name="openjpa.MetaDataFactory" value="jpa(Types=org.apache.oozie.WorkflowActionBean;
                 org.apache.oozie.WorkflowJobBean;
                 org.apache.oozie.CoordinatorJobBean;

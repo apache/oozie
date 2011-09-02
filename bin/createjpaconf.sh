@@ -70,7 +70,6 @@ CONNECTSTRING="DriverClassName=${DriverClassName},Url=${Url},Username=${USERNAME
 #create persistence.xml
 mkdir ${SCRIPT_DIR}/tmp
 cat << EOF-persistence.xml > ${SCRIPT_DIR}/tmp/persistence.xml
-exit
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
  Licensed to the Apache Software Foundation (ASF) under one
