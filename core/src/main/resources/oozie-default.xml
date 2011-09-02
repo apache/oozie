@@ -1355,6 +1355,8 @@
     <property>
         <name>oozie.service.LiteWorkflowStoreService.user.retry.error.code</name>
         <value>
+            JA008,
+            JA009,
             JA017,
             JA018,
             FS009,
@@ -1365,6 +1367,8 @@
             FS009, FS008 is file exists error when using chmod in fs action.
             JA018 is output directory exists error in workflow map-reduce action.
             JA017 is job not exists error in action executor.
+            JA008 is FileNotFoundException in action executor.
+            JA009 is IOException in action executor.
         </description>
     </property>
     

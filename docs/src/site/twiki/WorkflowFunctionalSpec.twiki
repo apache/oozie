@@ -2282,7 +2282,8 @@ Oozie provides User-Retry capabilities when an action is in =ERROR= or =FAILED= 
 
 Depending on the nature of the failure, Oozie can define what type of errors allowed for User-Retry. There are certain errors
 Oozie is allowing for user-retry in default, for example, file-exists-error =FS009, FS008= when using chmod in workflow =fs=
-action, output-directory-exists-error =JA018= in workflow =map-reduce= action, and job-not-exists-error =JA017= in action executor. 
+action, output-directory-exists-error =JA018= in workflow =map-reduce= action, job-not-exists-error =JA017= in action executor,
+FileNotFoundException =JA008= in action executor, and IOException =JA009= in action executor.
 
 User-Retry allows user to give certain number of reties (must not exceed system max retries), so user can find the causes of
 that problem and fix them when action is in =USER_RETRY= state. If failure or error does not go away after max retries,
