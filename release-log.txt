@@ -1,5 +1,6 @@
 -- Oozie 3.0.1 release
 
+OOZIE-83 add parameter userName to bundle xml in example
 OOZIE-85 kill a SUCCEEDED coordinator job with 0.1 schema and backward compatibility is true
 OOZIE-84 add bundle id to coordinator submit
 OOZIE-87 Fix for change endtime not create new actions when job DONEWITHERROR/FAILED

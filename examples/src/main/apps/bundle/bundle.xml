@@ -14,7 +14,7 @@
 -->
 <bundle-app name='bundle-app' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='uri:oozie:bundle:0.1'>
           <coordinator name='coord-1'>
-                 <app-path>${nameNode}/user/${user.name}/${examplesRoot}/apps/aggregator/coordinator.xml</app-path>
+                 <app-path>${nameNode}/user/${userName}/${examplesRoot}/apps/aggregator/coordinator.xml</app-path>
                  <configuration>
                      <property>
                          <name>start</name>
