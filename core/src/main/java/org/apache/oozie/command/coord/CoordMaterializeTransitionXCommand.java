@@ -62,10 +62,10 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
     private String jobId = null;
     private Date startMatdTime = null;
     private Date endMatdTime = null;
-    private int materializationWindow;
+    private final int materializationWindow;
     private int lastActionNumber = 1; // over-ride by DB value
     private CoordinatorJob.Status prevStatus = null;
-
+    private boolean isPauseTimeReached = false;
     /**
      * Default MAX timeout in minutes, after which coordinator input check will timeout
      */
@@ -214,16 +214,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
 
         if (coordJob.getPauseTime() != null && !startMatdTime.before(coordJob.getPauseTime())) {
             // PAUSE status blocks real materialization
-            coordJob.setStatus(Job.Status.PAUSED);
-            coordJob.setLastModifiedTime(new Date());
-
-            try {
-                jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
-            }
-            catch (JPAExecutorException ex) {
-                throw new CommandException(ex);
-            }
-
+            setPauseStatus(coordJob);
             throw new PreconditionException(ErrorCode.E1100, "ENDED Coordinator materialization for jobId = " + jobId
                     + ", materialization start time = " + startMatdTime
                     + " is after or equal to coordinator job's pause time = " + coordJob.getPauseTime()
@@ -312,8 +303,10 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         int maxActionToBeCreated = coordJob.getMatThrottling() - numWaitingActions;
         LOG.debug("Coordinator job :" + coordJob.getId() + ", maxActionToBeCreated :" + maxActionToBeCreated
                 + ", Mat_Throttle :" + coordJob.getMatThrottling() + ", numWaitingActions :" + numWaitingActions);
+
         while (effStart.compareTo(end) < 0 && maxActionToBeCreated-- > 0) {
             if (pause != null && effStart.compareTo(pause) >= 0) {
+                isPauseTimeReached = true;
                 break;
             }
             CoordinatorActionBean actionBean = new CoordinatorActionBean();
@@ -384,6 +377,10 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         }
 
         job.setNextMaterializedTime(endMatdTime);
+
+        if(isPauseTimeReached){
+            setPauseStatus(job);
+        }
     }
 
     /* (non-Javadoc)
@@ -405,6 +402,19 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
                 BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, prevStatus);
                 bundleStatusUpdate.call();
             }
+        }
+    }
+
+    private void setPauseStatus(CoordinatorJobBean coordJob) throws CommandException{
+     // PAUSE status blocks real materialization
+        coordJob.setStatus(Job.Status.PAUSED);
+        coordJob.setLastModifiedTime(new Date());
+
+        try {
+            jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
+        }
+        catch (JPAExecutorException ex) {
+            throw new CommandException(ex);
         }
     }
 
