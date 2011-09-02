@@ -82,7 +82,7 @@ public class JsonWorkflowJob implements WorkflowJob, JsonBean {
     private int run = 1;
 
     @Basic
-    @Column(name = "parentId")
+    @Column(name = "parent_id")
     private String parentId;
 
     @Transient
