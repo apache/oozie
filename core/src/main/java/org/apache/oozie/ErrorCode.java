@@ -188,6 +188,7 @@ public enum ErrorCode {
     E1314(XLog.STD, "Bundle Job can not be Changed as job does not exist, {0}"),
     E1315(XLog.STD, "Bundle job can not be paused, {0}"),
     E1316(XLog.STD, "Bundle job can not be unpaused, {0}"),
+    E1317(XLog.STD, "Invalid bundle job change value {0}, {1}"),
 
     ETEST(XLog.STD, "THIS SHOULD HAPPEN ONLY IN TESTING, invalid job id [{0}]"),;
 

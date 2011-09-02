@@ -1,5 +1,6 @@
 -- Oozie 3.0.0 release
 
+GH-0514 bundle_change did not set pausetime on a PREP bundle
 GH-0518 Provide a basic UI for bundle jobs and jobs command for bundle jobs
 GH-0512 Make pauseTime only future time for coordinator jobs
 GH-0499 Fix bundle suspend, kill and add test cases
