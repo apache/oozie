@@ -58,9 +58,9 @@ public abstract class SuspendTransitionXCommand extends TransitionXCommand<Void>
     @Override
     protected Void execute() throws CommandException {
         transitToNext();
-        updateJob();
         try {
             suspendChildren();
+            updateJob();
         } finally {
             notifyParent();
         }

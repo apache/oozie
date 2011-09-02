@@ -96,9 +96,9 @@ public class CoordResumeXCommand extends ResumeTransitionXCommand {
      */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
-        if (coordJob.getStatus() != CoordinatorJob.Status.SUSPENDED) {
-            throw new PreconditionException(ErrorCode.E1100, "CoordResumeCommand not Resumed - "
-                    + "job not in SUSPENDED state " + jobId);
+        if (coordJob.getStatus() != CoordinatorJob.Status.SUSPENDED && coordJob.getStatus() != Job.Status.PREPSUSPENDED) {
+            throw new PreconditionException(ErrorCode.E1100, "CoordResumeXCommand not Resumed - "
+                    + "job not in SUSPENDED/PREPSUSPENDED state, job = " + jobId);
         }
     }
 

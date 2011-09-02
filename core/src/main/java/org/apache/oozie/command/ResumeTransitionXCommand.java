@@ -58,9 +58,9 @@ public abstract class ResumeTransitionXCommand extends TransitionXCommand<Void> 
     @Override
     protected Void execute() throws CommandException {
         transitToNext();
-        updateJob();
         try {
             resumeChildren();
+            updateJob();
         } finally {
             notifyParent();
         }
