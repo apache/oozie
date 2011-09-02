@@ -1,5 +1,6 @@
 -- Oozie 3.0.1 release
 
+OOZIE-77 add updatescripts for 3.0.0 to 3.0.1
 OOZIE-73 increase executionPath of wf_actions to 1k.
 OOZIE-71 Update the index.twiki of oozie 3.0.0 documentation to reflect bundle.
 OOZIE-72 Resume bundle actions should check the status is suspended or prepsuspended
