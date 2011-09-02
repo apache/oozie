@@ -1,5 +1,6 @@
 -- Oozie 3.0.1 release
 
+GH-0566 If Java Main exit code !=0, LauncherMapper should the exit code as the error code
 OOZIE-34 LauncherMapper security manager fails when a permission with context is check
 OOZIE-XX Fix the docs for the coord:user() and dateOffset() function
 OOZIE-15 when writing action configurations to logs, properties names containing 'password' should be masked

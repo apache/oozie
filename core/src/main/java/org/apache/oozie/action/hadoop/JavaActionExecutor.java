@@ -839,11 +839,15 @@ public class JavaActionExecutor extends ActionExecutor {
                             BufferedReader reader = new BufferedReader(new InputStreamReader(is));
                             Properties props = PropertiesUtils.readProperties(reader, -1);
                             reader.close();
+                            String errorCode = props.getProperty("error.code");
+                            if (errorCode.equals("0")) {
+                                errorCode = "JA018";
+                            }
                             errorReason = props.getProperty("error.reason");
                             log.warn("Launcher ERROR, reason: {0}", errorReason);
                             String exMsg = props.getProperty("exception.message");
                             String errorInfo = (exMsg != null) ? exMsg : errorReason;
-                            context.setErrorInfo("JA018", errorInfo);
+                            context.setErrorInfo(errorCode, errorInfo);
                             String exStackTrace = props.getProperty("exception.stacktrace");
                             if (exMsg != null) {
                                 log.warn("Launcher exception: {0}{E}{1}", exMsg, exStackTrace);

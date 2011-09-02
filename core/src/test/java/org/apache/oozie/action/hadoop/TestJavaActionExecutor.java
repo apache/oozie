@@ -461,6 +461,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         ae.check(context, context.getAction());
         assertTrue(ae.isCompleted(context.getAction().getExternalStatus()));
         assertEquals("FAILED/KILLED", context.getAction().getExternalStatus());
+        assertEquals("1", context.getAction().getErrorCode());
         assertNull(context.getAction().getData());
 
         ae.end(context, context.getAction());

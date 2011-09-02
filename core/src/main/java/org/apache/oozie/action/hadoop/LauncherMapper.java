@@ -84,7 +84,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
                     writer.close();
                 }
                 catch (IOException ex) {
-                    failLauncher("IO error", ex);
+                    failLauncher(0, "IO error", ex);
                 }
             }
             else {
@@ -93,7 +93,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
                 String id = reader.readLine();
                 reader.close();
                 if (!jobId.equals(id)) {
-                    failLauncher(MessageFormat.format(
+                    failLauncher(0, MessageFormat.format(
                             "Hadoop job Id mismatch, action file [{0}] declares Id [{1}] current Id [{2}]", path, id,
                             jobId), null);
                 }
@@ -101,7 +101,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
             }
         }
         catch (IOException ex) {
-            failLauncher("IO error", ex);
+            failLauncher(0, "IO error", ex);
         }
     }
 
@@ -326,6 +326,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
             else {
                 String mainClass = getJobConf().get(CONF_OOZIE_ACTION_MAIN_CLASS);
                 String msgPrefix = "Main class [" + mainClass + "], ";
+                int errorCode = 0;
                 Throwable errorCause = null;
                 String errorMessage = null;
 
@@ -403,9 +404,9 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
                                         + ")");
                                 // if 0 main() method finished successfully
                                 // ignoring
-                                if (LauncherSecurityManager.getExitCode() != 0) {
-                                    errorMessage = msgPrefix + "exit code [" + LauncherSecurityManager.getExitCode()
-                                            + "]";
+                                errorCode = LauncherSecurityManager.getExitCode();
+                                if (errorCode != 0) {
+                                    errorMessage = msgPrefix + "exit code [" + errorCode + "]";
                                     errorCause = null;
                                 }
                             }
@@ -431,7 +432,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
                             if (outputData.length() > maxOutputData) {
                                 String msg = MessageFormat.format("Output data size [{0}] exceeds maximum [{1}]",
                                                                   outputData.length(), maxOutputData);
-                                failLauncher(msg, null);
+                                failLauncher(0, msg, null);
                             }
                             System.out.println();
                             System.out.println("Oozie Launcher, capturing output data:");
@@ -481,7 +482,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
                 finally {
                     destroyHeartBeater();
                     if (errorMessage != null) {
-                        failLauncher(errorMessage, errorCause);
+                        failLauncher(errorCode, errorMessage, errorCause);
                     }
                 }
             }
@@ -545,12 +546,13 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         reporter.progress();
     }
 
-    private void failLauncher(String reason, Throwable ex) throws LauncherException {
+    private void failLauncher(int errorCode, String reason, Throwable ex) throws LauncherException {
         try {
             if (ex != null) {
                 reason += ", " + ex.getMessage();
             }
             Properties errorProps = new Properties();
+            errorProps.setProperty("error.code", Integer.toString(errorCode));
             errorProps.setProperty("error.reason", reason);
             if (ex != null) {
                 if (ex.getMessage() != null) {
