@@ -1,0 +1,33 @@
+<noautolink>
+
+[[index][::Go back to Oozie Documentation Index::]]
+
+---+!! Using a Hadoop Cluster with Kerberos Authentication
+
+When submitting a job or accessing HDFS on a Hadoop cluster running with Kerberos security, the configuration
+object used to establish the connection to the cluster (creating a =JobClient= or a =FileSystem= instance)
+must include the JobTracker and/or NameNode Kerberos principals.
+
+If Hadoop uses Kerberos principals of the form =mapred/JOBTRACKER_HOSTNAME@REALM= and
+ =hdfs/NAMENODE_HOSTNAME@REALM=, Oozie will resolve the principals correctly without any change required when
+submitting jobs to Oozie.
+
+However, if the Kerberos principals don't follow the above rule, the Oozie job configuration properties must
+include the following 2 properties set to the right values:
+
+   * =mapreduce.jobtracker.kerberos.principal= : the Kerberos principal name of the Hadoop Jobtracker (i.e. =mapred/bluesky@FOO.BAR= ).
+   * =dfs.namenode.kerberos.principal= : the Kerberos principal name of the Hadoop Namenode (i.e. =hdfs/bluesky@FOO.BAR= ).
+
+---++ Changes in Workflow XML Applications
+
+There are not required changed in existing workflow applications.
+
+The 2 configuration properties mentioned above are not allowed in workflow action configuration sections.
+
+---++ Limitations
+
+All actions in a workflow application must interact with the same Hadoop JobTracker and NameNode.
+
+[[index][::Go back to Oozie Documentation Index::]]
+
+</noautolink>

@@ -11,8 +11,9 @@ GH-0152 classpath of actions contains all JARs twice
 GH-0165 oozie-start.sh should source ${OOZIE_HOME}/conf/oozie-env.sh
 GH-0168 Being able to read Oozie configuration for an arbitrary directory
 GH-0164 use a system property as logs dir
-GH-0161 remove DG_UsingHadoopKerberos.twiki as it is obsolete
+GH-0161 update DG_UsingHadoopKerberos.twiki 
 GH-0160 KerberosHadoopAccessorService should be the default
+GH-0145 distro assembly permissions setting break re-build
 GH-0151 examples should use a share lib
 GH-0150 LauncherMapper should do a friendly display of the classpath of the JVM
 GH-0149 create sharelib module with Pig/Streaming JARs
