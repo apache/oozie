@@ -41,6 +41,11 @@ import java.util.Map;
  * Service that provides application workflow definition reading from the path and creation of the proto configuration.
  */
 public abstract class WorkflowAppService implements Service {
+
+    public static final String CONF_PREFIX = Service.CONF_PREFIX + "WorkflowAppService.";
+
+    public static final String SYSTEM_LIB_PATH = CONF_PREFIX + "system.libpath";
+
     public static final String APP_LIB_PATH_LIST = "oozie.wf.application.lib";
 
     public static final String HADOOP_UGI = "hadoop.job.ugi";
@@ -51,12 +56,18 @@ public abstract class WorkflowAppService implements Service {
 
     public static final String HADOOP_NN_KERBEROS_NAME = "dfs.namenode.kerberos.principal";
 
+    private Path systemLibPath;
+
     /**
      * Initialize the workflow application service.
      *
      * @param services services instance.
      */
     public void init(Services services) {
+        String path = services.getConf().get(SYSTEM_LIB_PATH, " ");
+        if (path.trim().length() > 0) {
+            systemLibPath = new Path(path.trim());
+        }
     }
 
     /**
@@ -156,6 +167,11 @@ public abstract class WorkflowAppService implements Service {
             }
             else {
                 filePaths = getLibFiles(fs, appPath);
+            }
+
+            if (systemLibPath != null && jobConf.getBoolean(OozieClient.USE_SYSTEM_LIBPATH, false)) {
+                List<String> libPaths = getLibFiles(fs, systemLibPath);
+                filePaths.addAll(libPaths);
             }
 
             conf.setStrings(APP_LIB_PATH_LIST, filePaths.toArray(new String[filePaths.size()]));
