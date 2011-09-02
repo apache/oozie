@@ -157,7 +157,7 @@ public class CoordELFunctions {
     /**
      * Returns the a date string while given a base date in 'strBaseDate',
      * offset and unit (e.g. DAY, MONTH, HOUR, MINUTE, MONTH).
-     * 
+     *
      * @param strBaseDate -- base date
      * @param offset -- any number
      * @param unit -- DAY, MONTH, HOUR, MINUTE, MONTH
@@ -195,7 +195,7 @@ public class CoordELFunctions {
      * 6. Action Creation Time
      * <p/>
      * 7. Existence of dataset's directory
-     * 
+     *
      * @param n :instance count
      *        <p/>
      *        domain: n >= 0, n is integer
@@ -290,7 +290,7 @@ public class CoordELFunctions {
     /**
      * Return nominal time or Action Creation Time.
      * <p/>
-     * 
+     *
      * @return coordinator action creation or materialization date time
      * @throws Exception if unable to format the Date object to String
      */
@@ -307,7 +307,7 @@ public class CoordELFunctions {
 
     /**
      * Return Action Id. <p/>
-     * 
+     *
      * @return coordinator action Id
      */
     public static String ph2_coord_actionId() throws Exception {
@@ -323,7 +323,7 @@ public class CoordELFunctions {
 
     /**
      * Return Job Name. <p/>
-     * 
+     *
      * @return coordinator name
      */
     public static String ph2_coord_name() throws Exception {
@@ -339,7 +339,7 @@ public class CoordELFunctions {
 
     /**
      * Return Action Start time. <p/>
-     * 
+     *
      * @return coordinator action start time
      * @throws Exception if unable to format the Date object to String
      */
@@ -497,7 +497,7 @@ public class CoordELFunctions {
     /**
      * Configure an evaluator with data set and application specific information. <p/> Helper method of associating
      * dataset and application object
-     * 
+     *
      * @param evaluator : to set variables
      * @param ds : Data Set object
      * @param coordAction : Application instance
@@ -510,7 +510,7 @@ public class CoordELFunctions {
     /**
      * Helper method to wrap around with "${..}". <p/>
      *
-     * 
+     *
      * @param eval :EL evaluator
      * @param expr : expression to evaluate
      * @return Resolved expression or echo back the same expression
@@ -593,6 +593,11 @@ public class CoordELFunctions {
 
     public static String ph1_coord_nominalTime_echo_fixed() {
         return "2009-03-06T010:00"; // Dummy resolution
+    }
+
+    public static String ph1_coord_actualTime_echo_wrap() {
+        // return "${coord:actualTime()}"; // no resolution
+        return echoUnResolved("actualTime", "");
     }
 
     public static String ph1_coord_actionId_echo() {
