@@ -1925,7 +1925,17 @@ Coordinator application definition:
         </data-in>
       </input-events>
       <action>
-      ...
+        <app-path>${nameNode}/user/${coord:user()}/examples/apps/aggregator</app-path>
+        <configuration>
+            <property>
+              <name>nextInstance</name>
+              <value>${coord:dateOffset(coord:nominalTime(), 1, 'DAY')}</value>
+            </property>
+            <property>
+             <name>previousInstance</name>
+              <value>${coord:dateOffset(coord:nominalTime(), -1, 'DAY')}</value>
+            </property>
+         </configuration>
       </action>
    </coordinator-app>
 </verbatim>
@@ -1942,7 +1952,58 @@ The nominal times for the coordinator actions of this coordinator application ex
 
 These are the times the action where created (materialized).
 
----++++ 6.7.4. coord:user() EL Function (since Oozie 2.3)
+---++++ 6.7.4. coord:actualTime() EL Function
+
+The =${coord:actualTime()}= EL function resolves to the coordinator action actual creation datetime.
+
+When the coordinator action is created based on driver event, the current time is saved to action. An action's
+actual time is less than the nominal time if coordinator job is in running in current mode. If job is running
+as catch-up mode (job's start time is in the past), the actual time is greater than the nominal time.
+
+*%GREEN% Example: %ENDCOLOR%*:
+
+Coordinator application definition:
+
+<verbatim>
+   <coordinator-app name="app-coord" frequency="${coord:days(1)}"
+                    start="2011-05-01T24:00Z" end="2011-12-31T24:00Z" timezone="UTC"
+                    xmlns="uri:oozie:coordinator:0.1">
+     <datasets>
+       <dataset name="hourlyLogs" frequency="${coord:hours(1)}"
+                initial-instance="2011-04-01T01:00Z" timezone="UTC">
+         <uri-template>hdfs://bar:9000/app/logs/${YEAR}/${MONTH}/${DAY}/${HOUR}</uri-template>
+       </dataset>
+     </datasets>
+      <input-events>
+        <data-in name="inputLogs" dataset="hourlyLogs">
+          <start-instance>${coord:current(-23)}</start-instance>
+          <end-instance>${coord:current(0)}</end-instance>
+        </data-in>
+      </input-events>
+      <action>
+        <app-path>${nameNode}/user/${coord:user()}/examples/apps/aggregator</app-path>
+        <configuration>
+            <property>
+              <name>actualTime</name>
+              <value>${coord:formatTime(coord:actualTime(), 'yyyy-MM-dd')}</value>
+            </property>
+         </configuration>
+      </action>
+   </coordinator-app>
+</verbatim>
+
+The actual time for the coordinator actions of this coordinator application example will look like:
+
+If coordinator job was started at 2011-05-01, then actions' actualTime is
+<verbatim>
+  2011-05-01
+  2011-05-02
+  2011-05-03
+  ...
+  2011-12-31
+</verbatim>
+
+---++++ 6.7.5. coord:user() EL Function (since Oozie 2.3)
 
 The =coord:user()= function returns the user that started the coordinator job.
 
