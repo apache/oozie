@@ -263,7 +263,7 @@ public class CoordELEvaluator {
      */
     private static void setConfigToEval(ELEvaluator eval, Configuration conf) {
         for (Map.Entry<String, String> entry : conf) {
-            eval.setVariable(entry.getKey(), entry.getValue());
+            eval.setVariable(entry.getKey(), entry.getValue().trim());
         }
     }
 

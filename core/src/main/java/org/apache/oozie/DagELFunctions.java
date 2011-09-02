@@ -23,6 +23,7 @@ import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.PropertiesUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.util.XmlUtils;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -52,7 +53,10 @@ public class DagELFunctions {
         evaluator.setVariable(ACTION, action);
         for (Map.Entry<String, String> entry : workflow.getWorkflowInstance().getConf()) {
             if (ParamChecker.isValidIdentifier(entry.getKey())) {
-                evaluator.setVariable(entry.getKey().trim(), entry.getValue().trim());
+                String value = entry.getValue().trim();
+                // escape the characters for xml
+                value = XmlUtils.escapeCharsForXML(value);
+                evaluator.setVariable(entry.getKey().trim(), value);
             }
         }
         try {

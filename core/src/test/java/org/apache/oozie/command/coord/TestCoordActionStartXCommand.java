@@ -15,22 +15,57 @@
 package org.apache.oozie.command.coord;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.Reader;
+import java.io.Writer;
 import java.util.Date;
+import java.util.Properties;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.oozie.CoordinatorActionBean;
+import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.action.hadoop.MapperReducerForTest;
 import org.apache.oozie.client.CoordinatorAction;
+import org.apache.oozie.client.CoordinatorJob;
+import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.CoordinatorAction.Status;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
+import org.apache.oozie.service.JPAService;
+import org.apache.oozie.service.Services;
+import org.apache.oozie.test.XDataTestCase;
+import org.apache.oozie.util.DateUtils;
+import org.apache.oozie.util.IOUtils;
+import org.apache.oozie.util.XConfiguration;
 
-public class TestCoordActionStartXCommand extends CoordXTestCase {
+public class TestCoordActionStartXCommand extends XDataTestCase {
+    private Services services;
+
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        services = new Services();
+        services.init();
+        cleanUpDBTables();
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        services.destroy();
+        super.tearDown();
+    }
 
     public void testActionStartCommand() throws IOException, JPAExecutorException, CommandException {
         String actionId = new Date().getTime() + "-COORD-ActionStartCommand-C@1";
@@ -39,7 +74,89 @@ public class TestCoordActionStartXCommand extends CoordXTestCase {
         checkCoordAction(actionId);
     }
 
+    /**
+     * Test : configuration contains url string which should be escaped before put into the evaluator.
+     * If not escape, the error 'SAXParseException' will be thrown and workflow job will not be submitted.
+     *
+     * @throws Exception
+     */
+    public void testActionStartWithEscapeStrings() throws Exception {
+        Date start = DateUtils.parseDateUTC("2009-12-15T01:00Z");
+        Date end = DateUtils.parseDateUTC("2009-12-16T01:00Z");
+        CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, start, end, false,
+                false, 1);
+
+        CoordinatorActionBean action = addRecordToCoordActionTable(coordJob.getId(), 1,
+                CoordinatorAction.Status.SUBMITTED, "coord-action-start-escape-strings.xml", 0);
+
+        String actionId = action.getId();
+        new CoordActionStartXCommand(actionId, getTestUser(), "undef").call();
+
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        action = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
+
+        if (action.getStatus() == CoordinatorAction.Status.SUBMITTED) {
+            fail("CoordActionStartCommand didn't work because the status for action id" + actionId + " is :"
+                    + action.getStatus() + " expected to be NOT SUBMITTED (i.e. RUNNING)");
+        }
+
+        final String wfId = action.getExternalId();
+        waitFor(20 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                WorkflowJobBean wfJob = jpaService.execute(new WorkflowJobGetJPAExecutor(wfId));
+                return wfJob.getExternalId() != null;
+            }
+        });
+        WorkflowJobBean wfJob = jpaService.execute(new WorkflowJobGetJPAExecutor(wfId));
+        assertNotNull(wfJob.getExternalId());
+    }
+
+    @Override
+    protected Configuration getCoordConf(Path coordAppPath) throws IOException {
+        Path wfAppPath = new Path(getFsTestCaseDir(), "app");
+        FileSystem fs = getFileSystem();
+        fs.mkdirs(new Path(wfAppPath, "lib"));
+        File jarFile = IOUtils.createJar(new File(getTestCaseDir()), "test.jar", MapperReducerForTest.class);
+        InputStream is = new FileInputStream(jarFile);
+        OutputStream os = fs.create(new Path(wfAppPath, "lib/test.jar"));
+        IOUtils.copyStream(is, os);
+        Path input = new Path(wfAppPath, "input");
+        fs.mkdirs(input);
+        Writer writer = new OutputStreamWriter(fs.create(new Path(input, "test.txt")));
+        writer.write("hello");
+        writer.close();
+
+        final String APP1 = "<workflow-app xmlns='uri:oozie:workflow:0.1' name='app'>" +
+                "<start to='end'/>" +
+                "<end name='end'/>" +
+                "</workflow-app>";
+        String subWorkflowAppPath = new Path(wfAppPath, "subwf").toString();
+        fs.mkdirs(new Path(wfAppPath, "subwf"));
+        Writer writer2 = new OutputStreamWriter(fs.create(new Path(subWorkflowAppPath, "workflow.xml")));
+        writer2.write(APP1);
+        writer2.close();
+
+        Reader reader = IOUtils.getResourceAsReader("wf-url-template.xml", -1);
+        Writer writer1 = new OutputStreamWriter(fs.create(new Path(wfAppPath + "/workflow.xml")));
+        IOUtils.copyCharStream(reader, writer1);
+
+        Properties jobConf = new Properties();
+        jobConf.setProperty(OozieClient.COORDINATOR_APP_PATH, coordAppPath.toString());
+        jobConf.setProperty(OozieClient.USER_NAME, getTestUser());
+        jobConf.setProperty(OozieClient.GROUP_NAME, getTestGroup());
+        jobConf.setProperty("myJobTracker", getJobTrackerUri());
+        jobConf.setProperty("myNameNode", getNameNodeUri());
+        jobConf.setProperty("wfAppPath", wfAppPath.toString()+ File.separator + "workflow.xml");
+        jobConf.setProperty("mrclass", MapperReducerForTest.class.getName());
+        jobConf.setProperty("delPath", wfAppPath.toString() + "/output");
+        jobConf.setProperty("subWfApp", wfAppPath.toString() + "/subwf/workflow.xml");
+        injectKerberosInfo(jobConf);
+
+        return new XConfiguration(jobConf);
+    }
+
     private void addRecordToActionTable(String actionId, int actionNum) throws IOException, JPAExecutorException {
+        final JPAService jpaService = Services.get().get(JPAService.class);
         CoordinatorActionBean action = new CoordinatorActionBean();
         action.setJobId(actionId);
         action.setId(actionId);
@@ -47,7 +164,9 @@ public class TestCoordActionStartXCommand extends CoordXTestCase {
         action.setNominalTime(new Date());
         action.setStatus(Status.SUBMITTED);
         String appPath = "/tmp/coord/no-op/";
-        String actionXml = "<coordinator-app xmlns='uri:oozie:coordinator:0.2' xmlns:sla='uri:oozie:sla:0.1' name='NAME' frequency=\"1\" start='2009-02-01T01:00Z' end='2009-02-03T23:59Z' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'  instance-number=\"1\" action-nominal-time=\"2009-02-01T01:00Z\">";
+        String actionXml = "<coordinator-app xmlns='uri:oozie:coordinator:0.2' xmlns:sla='uri:oozie:sla:0.1' name='NAME' " +
+        		"frequency=\"1\" start='2009-02-01T01:00Z' end='2009-02-03T23:59Z' timezone='UTC' freq_timeunit='DAY' " +
+        		"end_of_duration='NONE'  instance-number=\"1\" action-nominal-time=\"2009-02-01T01:00Z\">";
         actionXml += "<controls>";
         actionXml += "<timeout>10</timeout>";
         actionXml += "<concurrency>2</concurrency>";
@@ -125,11 +244,11 @@ public class TestCoordActionStartXCommand extends CoordXTestCase {
                 + "</sla:info>";
         content += "<end name='end' />" + slaXml2 + "</workflow-app>";
         writeToFile(content, appPath);
-        // System.out.println("COMMITED TRX");
     }
 
     private void checkCoordAction(String actionId) {
         try {
+            final JPAService jpaService = Services.get().get(JPAService.class);
             CoordinatorActionBean action = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
             if (action.getStatus() == CoordinatorAction.Status.SUBMITTED) {
                 fail("CoordActionStartCommand didn't work because the status for action id" + actionId + " is :"
