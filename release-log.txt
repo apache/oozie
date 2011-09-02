@@ -1,5 +1,6 @@
 -- Oozie 3.0.0 release
 
+GH-0529 Update Tomcat download URL
 GH-0562 oozie job -log returns incomplete or empty log
 GH-0606 Encountered java.lang.NoSuchMethodError error after submitting a job
 GH-0608 Oozie default and max throttle and concurrency is not being verified.
