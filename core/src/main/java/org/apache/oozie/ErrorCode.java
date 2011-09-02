@@ -85,7 +85,7 @@ public enum ErrorCode {
     E0603(XLog.OPS, "SQL error in operation [{0}], {1}"),
     E0604(XLog.STD, "Job does not exist [{0}]"),
     E0605(XLog.STD, "Action does not exist [{0}]"),
-    E0606(XLog.STD, "Could not get lock [{0}]"),
+    E0606(XLog.STD, "Could not get lock [{0}], timed out [{1}]ms"),
     E0607(XLog.OPS, "Other error in operation [{0}], {1}"),
     E0608(XLog.OPS, "JDBC setup error [{0}], {1}"),
     E0609(XLog.OPS, "Missing [{0}] ORM file [{1}]"),

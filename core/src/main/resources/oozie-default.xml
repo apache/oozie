@@ -218,7 +218,7 @@
 
     <property>
         <name>oozie.service.CallableQueueService.queue.size</name>
-        <value>1000</value>
+        <value>10000</value>
         <description>Max callable queue size</description>
     </property>
 
@@ -1173,6 +1173,14 @@
             automatically the system library path, thus not requiring users to
             specify where the Pig JAR files are. Instead, the ones from the system
             library path are used.
+        </description>
+    </property>
+    
+    <property>
+        <name>oozie.command.default.lock.timeout</name>
+        <value>5000</value>
+        <description>
+            Default timeout (in milliseconds) for commands for acquiring an exclusive lock on an entity.
         </description>
     </property>
 
