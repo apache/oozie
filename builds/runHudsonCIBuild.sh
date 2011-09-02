@@ -21,4 +21,4 @@ echo "PATH : $PATH"
 rm ~/.m2
 
 cd $WORKSPACE;
-bin/mkdistro.sh
+bin/mkdistro.sh -Doozieci

@@ -50,6 +50,7 @@ import jline.ConsoleReaderInputStream;
 
 public class TestPigActionExecutor extends ActionExecutorTestCase {
 
+    @Override
     protected void setSystemProps() {
         super.setSystemProps();
         setSystemProperty("oozie.service.ActionService.executor.classes", PigActionExecutor.class.getName());
@@ -179,8 +180,10 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
                 return launcherJob.isComplete();
             }
         });
+        Thread.sleep(2000);
         assertTrue(launcherJob.isSuccessful());
 
+        Thread.sleep(2000);
         assertFalse(LauncherMapper.hasIdSwap(launcherJob));
         if (checkForSuccess) {
             assertTrue(LauncherMapper.hasOutputData(launcherJob));

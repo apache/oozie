@@ -388,6 +388,33 @@
             </build>
         </profile>
 
+		<profile>
+			<id>oozieci</id>
+			<activation>
+				<activeByDefault>false</activeByDefault>
+				<property>
+					<name>oozieci</name>
+				</property>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<configuration>
+						    <excludes>
+						        <exclude>**/TestRerun.java</exclude>
+						        <exclude>**/TestCallableQueueService.java</exclude>
+						        <exclude>**/TestPigActionExecutor.java</exclude>
+						        <exclude>**/TestCallableQueueService.java</exclude>
+						        <exclude>**/TestSshActionExecutor.java</exclude>
+						    </excludes>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+
         <!-- Include MySQL JDBC driver -->
         <profile>
             <id>mysql</id>
