@@ -175,15 +175,20 @@ public abstract class WorkflowAppService implements Service {
                 filePaths = new ArrayList<String>();
             }
 
-            if (jobConf.get(OozieClient.LIBPATH) != null) {
-                Path libPath = new Path(jobConf.get(OozieClient.LIBPATH));
-                List<String> libPaths = getLibFiles(fs, libPath);
-                filePaths.addAll(libPaths);
+            String[] libPaths = jobConf.getStrings(OozieClient.LIBPATH);
+            if (libPaths != null && libPaths.length > 0) {
+                for (int i = 0; i < libPaths.length; i++) {
+                    if (libPaths[i].trim().length() > 0) {
+                        Path libPath = new Path(libPaths[i].trim());
+                        List<String> libFilePaths = getLibFiles(fs, libPath);
+                        filePaths.addAll(libFilePaths);
+                    }
+                }
             }
 
             if (systemLibPath != null && jobConf.getBoolean(OozieClient.USE_SYSTEM_LIBPATH, false)) {
-                List<String> libPaths = getLibFiles(fs, systemLibPath);
-                filePaths.addAll(libPaths);
+                List<String> libFilePaths = getLibFiles(fs, systemLibPath);
+                filePaths.addAll(libFilePaths);
             }
 
             conf.setStrings(APP_LIB_PATH_LIST, filePaths.toArray(new String[filePaths.size()]));

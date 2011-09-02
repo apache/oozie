@@ -351,6 +351,73 @@ public class TestLiteWorkflowAppService extends XTestCase {
             services.destroy();
         }
     }
+    
+    public void testCreateprotoConfWithMulipleLibPath() throws Exception {
+        Services services = new Services();
+        try {
+            services.init();
+            Reader reader = IOUtils.getResourceAsReader("wf-schema-valid.xml", -1);
+            Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
+            IOUtils.copyCharStream(reader, writer);
+
+            createTestCaseSubDir("lib");
+            writer = new FileWriter(getTestCaseDir() + "/lib/maputil.jar");
+            writer.write("bla bla");
+            writer.close();
+            writer = new FileWriter(getTestCaseDir() + "/lib/reduceutil.so");
+            writer.write("bla bla");
+            writer.close();
+            createTestCaseSubDir("libx");
+            writer = new FileWriter(getTestCaseDir() + "/libx/maputil_x.jar");
+            writer.write("bla bla");
+            writer.close();            
+            createTestCaseSubDir("liby");
+            writer = new FileWriter(getTestCaseDir() + "/liby/maputil_y1.jar");
+            writer.write("bla bla");
+            writer.close();
+            writer = new FileWriter(getTestCaseDir() + "/liby/maputil_y2.jar");
+            writer.write("bla bla");
+            writer.close();
+            createTestCaseSubDir("libz");
+            writer = new FileWriter(getTestCaseDir() + "/libz/maputil_z.jar");
+            writer.write("bla bla");
+            writer.close();
+
+            WorkflowAppService wps = Services.get().get(WorkflowAppService.class);
+            Configuration jobConf = new XConfiguration();
+            jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + "/workflow.xml");
+            jobConf.setStrings(OozieClient.LIBPATH, "file://" + getTestCaseDir() + "/libx",
+                    "file://" + getTestCaseDir() + "/liby", "file://" + getTestCaseDir() + "/libz");
+            jobConf.set(OozieClient.USER_NAME, getTestUser());
+            jobConf.set(OozieClient.GROUP_NAME, getTestGroup());
+            injectKerberosInfo(jobConf);
+            Configuration protoConf = wps.createProtoActionConf(jobConf, "authToken", true);
+            assertEquals(getTestUser(), protoConf.get(OozieClient.USER_NAME));
+            assertEquals(getTestGroup(), protoConf.get(OozieClient.GROUP_NAME));
+
+            assertEquals(6, protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST).length);
+            List<String> found = new ArrayList<String>();
+            found.add(protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST)[0]);
+            found.add(protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST)[1]);
+            found.add(protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST)[2]);
+            found.add(protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST)[3]);
+            found.add(protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST)[4]);
+            found.add(protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST)[5]);
+            List<String> expected = new ArrayList<String>();
+            expected.add(getTestCaseDir() + "/lib/reduceutil.so");
+            expected.add(getTestCaseDir() + "/lib/maputil.jar");
+            expected.add(getTestCaseDir() + "/libx/maputil_x.jar");
+            expected.add(getTestCaseDir() + "/liby/maputil_y1.jar");
+            expected.add(getTestCaseDir() + "/liby/maputil_y2.jar");
+            expected.add(getTestCaseDir() + "/libz/maputil_z.jar");
+            Collections.sort(found);
+            Collections.sort(expected);
+            assertEquals(expected, found);
+        }
+        finally {
+            services.destroy();
+        }
+    }
 
     public void testCreateprotoConfWithSystemLibPath() throws Exception {
         String systemLibPath = createTestCaseSubDir("syslib");
