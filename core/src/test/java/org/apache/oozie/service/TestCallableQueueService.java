@@ -249,6 +249,9 @@ public class TestCallableQueueService extends XTestCase {
             }
         });
 
+        System.out.println("Callable Queue Size :" + queueservice.queueSize());
+        System.out.println("CLCallable Concurrency :" + CLCallable.getConcurrency());
+
         assertTrue(CLCallable.getConcurrency() <= 3);
 
         services.destroy();

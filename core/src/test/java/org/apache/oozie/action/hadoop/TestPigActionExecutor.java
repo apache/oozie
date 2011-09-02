@@ -174,7 +174,7 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         Context context = createContext(actionXml);
         final RunningJob launcherJob = submitAction(context);
         String launcherId = context.getAction().getExternalId();
-        waitFor(120 * 1000, new Predicate() {
+        waitFor(180 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
                 return launcherJob.isComplete();
             }

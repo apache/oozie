@@ -29,11 +29,13 @@ import java.io.File;
 
 public class TestLauncher extends XFsTestCase {
 
+    @Override
     protected void setUp() throws Exception {
         super.setUp();
         new Services().init();
     }
 
+    @Override
     protected void tearDown() throws Exception {
         Services.get().destroy();
         super.tearDown();
@@ -75,7 +77,7 @@ public class TestLauncher extends XFsTestCase {
         System.out.println("Action Dir: " + actionDir);
         System.out.println("LauncherMapper ID: " + runningJob.getJobID().toString());
 
-        waitFor(60 * 1000, new Predicate() {
+        waitFor(180 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
                 return runningJob.isComplete();
             }
@@ -88,6 +90,7 @@ public class TestLauncher extends XFsTestCase {
         Path actionDir = getFsTestCaseDir();
         FileSystem fs = getFileSystem();
         RunningJob runningJob = _test();
+        Thread.sleep(2000);
         assertTrue(runningJob.isSuccessful());
 
         assertTrue(LauncherMapper.isMainDone(runningJob));
@@ -104,6 +107,7 @@ public class TestLauncher extends XFsTestCase {
         Path actionDir = getFsTestCaseDir();
         FileSystem fs = getFileSystem();
         RunningJob runningJob = _test("exit0");
+        Thread.sleep(2000);
         assertTrue(runningJob.isSuccessful());
 
         assertTrue(LauncherMapper.isMainDone(runningJob));
@@ -120,6 +124,7 @@ public class TestLauncher extends XFsTestCase {
         Path actionDir = getFsTestCaseDir();
         FileSystem fs = getFileSystem();
         RunningJob runningJob = _test("exit1");
+        Thread.sleep(2000);
         assertTrue(runningJob.isSuccessful());
 
         assertTrue(LauncherMapper.isMainDone(runningJob));
@@ -136,6 +141,7 @@ public class TestLauncher extends XFsTestCase {
         Path actionDir = getFsTestCaseDir();
         FileSystem fs = getFileSystem();
         RunningJob runningJob = _test("ex");
+        Thread.sleep(2000);
         assertTrue(runningJob.isSuccessful());
 
         assertTrue(LauncherMapper.isMainDone(runningJob));
@@ -152,6 +158,7 @@ public class TestLauncher extends XFsTestCase {
         Path actionDir = getFsTestCaseDir();
         FileSystem fs = getFileSystem();
         RunningJob runningJob = _test("out");
+        Thread.sleep(2000);
         assertTrue(runningJob.isSuccessful());
 
         assertTrue(LauncherMapper.isMainDone(runningJob));
@@ -168,6 +175,7 @@ public class TestLauncher extends XFsTestCase {
         Path actionDir = getFsTestCaseDir();
         FileSystem fs = getFileSystem();
         RunningJob runningJob = _test("id");
+        Thread.sleep(2000);
         assertTrue(runningJob.isSuccessful());
 
         assertTrue(LauncherMapper.isMainDone(runningJob));
