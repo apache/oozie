@@ -264,6 +264,7 @@ public class JavaActionExecutor extends ActionExecutor {
                     }
                     uri = new Path(path.toString() + "#" + fileName).toUri();
                     uri = new URI(uri.getPath());
+                    DistributedCache.addCacheFile(uri, conf);
                 }
                 else if (fileName.endsWith(".jar")){  // .jar files
                     if (!fileName.contains("#")) {
@@ -273,14 +274,17 @@ public class JavaActionExecutor extends ActionExecutor {
                         String group = conf.get("group.name");
                         Services.get().get(HadoopAccessorService.class).addFileToClassPath(user, group, path, conf);
                     }
+                    else {
+                        DistributedCache.addCacheFile(uri, conf);
+                    }
                 }
                 else { // regular files
                     if (!fileName.contains("#")) {
                         uri = new Path(path.toString() + "#" + fileName).toUri();
                         uri = new URI(uri.getPath());
                     }
+                    DistributedCache.addCacheFile(uri, conf);
                 }
-                DistributedCache.addCacheFile(uri, conf);
             }
             DistributedCache.createSymlink(conf);
             return conf;

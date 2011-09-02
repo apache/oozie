@@ -592,8 +592,8 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         // 1 launcher JAR, 1 wf lib JAR, 2 <file> JARs
         assertEquals(4, DistributedCache.getFileClassPaths(jobConf).length);
 
-        // #CLASSPATH_ENTRIES# * 2 = 8, 1 wf lib sos, 4 <file> sos, 2 <file> files
-        assertEquals(15, DistributedCache.getCacheFiles(jobConf).length);
+        // #CLASSPATH_ENTRIES# 4, 1 wf lib sos, 4 <file> sos, 2 <file> files
+        assertEquals(11, DistributedCache.getCacheFiles(jobConf).length);
 
         // 2 <archive> files
         assertEquals(2, DistributedCache.getCacheArchives(jobConf).length);
