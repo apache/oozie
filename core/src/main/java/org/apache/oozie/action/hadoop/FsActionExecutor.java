@@ -56,15 +56,27 @@ public class FsActionExecutor extends ActionExecutor {
             else {
                 if (!scheme.equals("hdfs")) {
                     throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS002",
-                                                      "Scheme [{0}] not support in path [{1}]", scheme, path);
+                                                      "Scheme [{0}] not supported in path [{1}]", scheme, path);
                 }
             }
         }
-        else {
+        else { 
             if (scheme != null) {
                 throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS003",
                                                   "Scheme [{0}] not allowed in path [{1}]", scheme, path);
             }
+        }
+    }
+
+    void validateSameNN(Path source, Path dest) throws ActionExecutorException {
+        Path destPath = new Path(source, dest);
+        String t = destPath.toUri().getScheme() + destPath.toUri().getAuthority();
+        String s = source.toUri().getScheme() + source.toUri().getAuthority();
+
+        //checking whether NN prefix of source and target is same. can modify this to adjust for a set of multiple whitelisted NN
+        if(!t.equals(s)) {
+            throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS007",
+                    "move, target NN URI different from that of source", dest);
         }
     }
 
@@ -214,18 +226,12 @@ public class FsActionExecutor extends ActionExecutor {
     public void move(Context context, Path source, Path target, boolean recovery) throws ActionExecutorException {
         try {
             validatePath(source, true);
-            validatePath(target, false);
+            validateSameNN(source, target);
             FileSystem fs = getFileSystemFor(source, context);
 
             if (!fs.exists(source) && !recovery) {
                 throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS006",
                                                   "move, source path [{0}] does not exist", source);
-            }
-
-            Path path = new Path(source, target);
-            if (fs.exists(path) && !recovery) {
-                throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS007",
-                                                  "move, target path [{0}] already exists", target);
             }
 
             if (!fs.rename(source, target) && !recovery) {

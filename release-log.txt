@@ -16,6 +16,7 @@ OOZIE-100 escape characters for xml when create dag evaluator
 OOZIE-98 parametrization of 'name' attribute in workflow/coordinator/bundle
 OOZIE-106 add new queue class to iterate next callable when current callable type has reached max concorrency
 OOZIE-108 Upgrade pom version to 3.1.0.
+OOZIE-133 Fs 'move' action made consistent and able to have existing target dir
 
 -- Oozie 3.0.2 release
 

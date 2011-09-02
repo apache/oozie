@@ -14,6 +14,7 @@
  */
 package org.apache.oozie.action.hadoop;
 
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
@@ -25,7 +26,6 @@ import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
-
 import java.text.MessageFormat;
 
 public class TestFsActionExecutor extends ActionExecutorTestCase {
@@ -55,7 +55,7 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
 
         return new Context(wf, action);
     }
-
+    
     public void testValidatePath() throws Exception {
         FsActionExecutor ae = new FsActionExecutor();
         ae.validatePath(new Path("hdfs://x/bla"), true);
@@ -65,21 +65,40 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
             ae.validatePath(new Path("hdfs://x/bla"), false);
         }
         catch (ActionExecutorException ex) {
-            assertEquals("FS003", ex.getErrorCode());
+            assertEquals("FS003", ex.getErrorCode());	
         }
 
         try {
             ae.validatePath(new Path("bla"), true);
         }
         catch (ActionExecutorException ex) {
-            assertEquals("FS001", ex.getErrorCode());
+            assertEquals("FS001", ex.getErrorCode());	
         }
 
         try {
             ae.validatePath(new Path("file://bla"), true);
         }
         catch (ActionExecutorException ex) {
-            assertEquals("FS002", ex.getErrorCode());
+            assertEquals("FS002", ex.getErrorCode());	
+        }
+    }
+    
+    public void testvalidateSameNN() throws Exception {
+        FsActionExecutor ae = new FsActionExecutor();
+        ae.validateSameNN(new Path("hdfs://x/bla"), new Path("hdfs://x/foo"));
+
+        try {
+            ae.validateSameNN(new Path("hdfs://x/bla"), new Path("viefs://x/bla"));
+        }
+        catch (ActionExecutorException ex) {
+            assertEquals("FS007", ex.getErrorCode());   
+        }
+
+        try {
+            ae.validateSameNN(new Path("hdfs://x/bla"), new Path("hdfs://y/bla"));
+        }
+        catch (ActionExecutorException ex) {
+            assertEquals("FS007", ex.getErrorCode());   
         }
     }
 
@@ -120,35 +139,45 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
         FsActionExecutor ae = new FsActionExecutor();
         FileSystem fs = getFileSystem();
 
-        Path source = new Path(getFsTestCaseDir(), "source");
+        Path source = new Path(getFsTestCaseDir(), "source");	
         Path target = new Path(getFsTestCaseDir(), "target");
-
         Context context = createContext("<fs/>");
 
         fs.mkdirs(source);
+        fs.createNewFile(new Path(source+"/newfile1"));
+        fs.mkdirs(target);
 
-        ae.move(context, source, new Path(target.toUri().getPath()), false);
+        String dest = target.toUri().getPath();
+        Path destPath = new Path(dest);
+        ae.move(context, new Path(source+"/newfile1"), destPath, false);
 
-        assertTrue(!fs.exists(source));
+        assertTrue(!fs.exists(new Path(source+"/newfile1")));
         assertTrue(fs.exists(target));
 
         try {
-            ae.move(context, source, new Path(target.toUri().getPath()), false);
-            fail();
+            ae.move(context, new Path(source+"/newfile1"), destPath, false);
+            fail();	
         }
         catch (ActionExecutorException ex) {
             assertEquals("FS006", ex.getErrorCode());
         }
 
+        fs.mkdirs(source); 
+        fs.createNewFile(new Path(source+"/newfile"));
+        Path complexTarget = new Path(target+"/a/b");
+        fs.mkdirs(complexTarget);
+
+        ae.move(context, source, complexTarget, false);
+        assertTrue(fs.exists(new Path(complexTarget+"/"+source.getName())));
+
         fs.mkdirs(source);
         try {
-            ae.move(context, source, new Path(target.toUri().getPath()), false);
-            fail();
+            ae.move(context, source, new Path(target.toUri().getScheme()+"://foo/"+destPath), false);
+        	fail();
         }
         catch (ActionExecutorException ex) {
             assertEquals("FS007", ex.getErrorCode());
         }
-
         fs.delete(source, true);
         ae.move(context, source, new Path(target.toUri().getPath()), true);
 
