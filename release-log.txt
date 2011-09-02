@@ -1,53 +1,12 @@
 -- Oozie 3.0.1 release
 
-OOZIE-96 add coordinator 0.2 schema to coord spec twiki
-OOZIE-95 rerun SUCCEEDED coord job should not change status
-OOZIE-94 check action-actual-time if is null
-OOZIE-92 add updated sql scripts for 3.0.1
-OOZIE-91 add actualTime to coordinator spec
-OOZIE-90 coord rerun add backward compatibility
 OOZIE-93 coordinator start and end instances doesn't work with float number.
-OOZIE-89 coord job status keep in SUCCEEDED when rerun in backward support state
-OOZIE-88 fix the status-transit-service to aggregate coordinator job running state
-OOZIE-83 add parameter userName to bundle xml in example
-OOZIE-85 kill a SUCCEEDED coordinator job with 0.1 schema and backward compatibility is true
-OOZIE-84 add bundle id to coordinator submit
-OOZIE-87 Fix for change endtime not create new actions when job DONEWITHERROR/FAILED
-OOZIE-86 Make bundle status RUNNING after change endtime 
-OOZIE-80 Make coordinator backward compatible for RUNNING and PREPSUSPENDED
-OOZIE-78 Resume coordinator actions should check the status is suspended
+OOZIE-80 Make coordinator backward compatible
 OOZIE-58 Add date/time formatting function to coord.
-OOZIE-76 Add coordinator state backward compatibility for DONEWITHERROR and PAUSED
-OOZIE-77 add updatescripts for 3.0.0 to 3.0.1
 OOZIE-75 fix coord el function actualTime()
 OOZIE-73 increase executionPath of wf_actions to 1k.
-OOZIE-71 Update the index.twiki of oozie 3.0.0 documentation to reflect bundle.
-OOZIE-72 Resume bundle actions should check the status is suspended or prepsuspended
-OOZIE-59 Adding util class for transforming the statuses based on app version
-OOZIE-62 client command error when bundle rerun with -action.
 GH-0566 If Java Main exit code !=0, LauncherMapper should the exit code as the error code
-OOZIE-70 Add application namespace to coord_jobs
-OOZIE-69 KillTransitionXCommand should update job after kill children
-OOZIE-68 rename wf job column parentId to parent_id
-OOZIE-64 Fix coordinator el function actualTime()
-OOZIE-66 rerun PAUSED bundle should leave status to PAUSED
-OOZIE-67 Revise recovery service for coordinator
 OOZIE-34 LauncherMapper security manager fails when a permission with context is check
-OOZIE-XX Fix the docs for the coord:user() and dateOffset() function
-OOZIE-15 when writing action configurations to logs, properties names containing 'password' should be masked
-OOZIE-48 fix log messages when message logged at early stages
-OOZIE-47 coordinator resume should resume PREPSUSPENDED state
-OOZIE-45 coord job set to DONEWITHERROR when coord actions are TIMEOUT
-OOZIE-44 fix the spaces issues in db updatescripts
-OOZIE-43 should reset pending when pausetime changes and materialized actions are removed
-OOZIE-37 Fixing pause service for exceptions. 
-OOZIE-53 User is not able to change End time on Bundles.
-OOZIE-52 Oozie allows users to Change the pause time for Succeeded Bundles.
-OOZIE-51 Add coordinator materialization flag
-OOZIE-54 Coord job in DoneWithError should not be Killed
-OOZIE-55 Coord Actions in SUSPENDED should not be rerun
-OOZIE-56 Fix Oozie pom version
-OOZIE-50 Update the POM files with new version 3.0.1-SNAPSHOT
 
 -- Oozie 3.0.0 release
 
