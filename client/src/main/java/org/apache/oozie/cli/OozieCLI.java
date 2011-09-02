@@ -135,8 +135,7 @@ public class OozieCLI {
     /**
      * Entry point for the Oozie CLI when invoked from the command line.
      * <p/>
-     * Upon completion this method exits the JVM with '0' (success) or '-1'
-     * (failure).
+     * Upon completion this method exits the JVM with '0' (success) or '-1' (failure).
      *
      * @param args options and arguments for the Oozie CLI.
      */
@@ -183,8 +182,7 @@ public class OozieCLI {
         Option config = new Option(CONFIG_OPTION, true, "job configuration file '.xml' or '.properties'");
         Option submit = new Option(SUBMIT_OPTION, false, "submit a job");
         Option run = new Option(RUN_OPTION, false, "run a job");
-        Option rerun = new Option(RERUN_OPTION, true,
-                "rerun a job  (coordinator requires -action or -date)");
+        Option rerun = new Option(RERUN_OPTION, true, "rerun a job  (coordinator requires -action or -date)");
         Option dryrun = new Option(DRYRUN_OPTION, false,
                 "Supported in Oozie-2.0 or later versions ONLY - dryrun or test run a coordinator job, job is not queued");
         Option start = new Option(START_OPTION, true, "start a job");
@@ -192,7 +190,8 @@ public class OozieCLI {
         Option resume = new Option(RESUME_OPTION, true, "resume a job");
         Option kill = new Option(KILL_OPTION, true, "kill a job");
         Option change = new Option(CHANGE_OPTION, true, "change a coordinator job");
-        Option changeValue = new Option(CHANGE_VALUE_OPTION, true, "new endtime/concurrency/pausetime value for changing a coordinator job");
+        Option changeValue = new Option(CHANGE_VALUE_OPTION, true,
+                "new endtime/concurrency/pausetime value for changing a coordinator job");
         Option info = new Option(INFO_OPTION, true, "info of a job");
         Option offset = new Option(OFFSET_OPTION, true, "job info offset of actions (default '1', requires -info)");
         Option len = new Option(LEN_OPTION, true, "number of actions (default TOTAL ACTIONS, requires -info)");
@@ -207,8 +206,8 @@ public class OozieCLI {
                 "re-materialize the coordinator rerun actions (requires -rerun)");
         Option rerun_nocleanup = new Option(RERUN_NOCLEANUP_OPTION, false,
                 "do not clean up output-events of the coordiantor rerun actions (requires -rerun)");
-        Option property = OptionBuilder.withArgName( "property=value" ).hasArgs(2)
-                .withValueSeparator().withDescription( "set/override value for given property" ).create( "D" );
+        Option property = OptionBuilder.withArgName("property=value").hasArgs(2).withValueSeparator().withDescription(
+                "set/override value for given property").create("D");
 
         OptionGroup actions = new OptionGroup();
         actions.addOption(submit);
@@ -245,7 +244,8 @@ public class OozieCLI {
     protected Options createJobsOptions() {
         Option oozie = new Option(OOZIE_OPTION, true, "Oozie URL");
         Option start = new Option(OFFSET_OPTION, true, "jobs offset (default '1')");
-        Option jobtype = new Option(JOBTYPE_OPTION, true, "job type ('Supported in Oozie-2.0 or later versions ONLY - coordinator' or 'wf' (default))");
+        Option jobtype = new Option(JOBTYPE_OPTION, true,
+                "job type ('Supported in Oozie-2.0 or later versions ONLY - coordinator' or 'wf' (default))");
         Option len = new Option(LEN_OPTION, true, "number of jobs (default '100')");
         Option filter = new Option(FILTER_OPTION, true, "user=<U>;name=<N>;group=<G>;status=<S>;...");
         Option localtime = new Option(LOCAL_TIME_OPTION, false, "use local time (default GMT)");
@@ -281,8 +281,8 @@ public class OozieCLI {
         Option oozie = new Option(OOZIE_OPTION, true, "Oozie URL");
         Option config = new Option(CONFIG_OPTION, true, "job configuration file '.properties'");
         Option pigFile = new Option(PIGFILE_OPTION, true, "Pig script");
-        Option property = OptionBuilder.withArgName( "property=value" ).hasArgs(2)
-                .withValueSeparator().withDescription( "set/override value for given property" ).create( "D" );
+        Option property = OptionBuilder.withArgName("property=value").hasArgs(2).withValueSeparator().withDescription(
+                "set/override value for given property").create("D");
         Options pigOptions = new Options();
         pigOptions.addOption(oozie);
         pigOptions.addOption(config);
@@ -316,7 +316,7 @@ public class OozieCLI {
         parser.addCommand(VALIDATE_CMD, "", "validate a workflow XML file", new Options(), true);
         parser.addCommand(SLA_CMD, "", "sla operations (Supported in Oozie-2.0 or later)", createSlaOptions(), false);
         parser.addCommand(PIG_CMD, "-X ", "submit a pig job, everything after '-X' are pass-through parameters to pig",
-                          createPigOptions(), true);
+                createPigOptions(), true);
 
         try {
             CLIParser.Command command = parser.parse(args);
@@ -491,13 +491,13 @@ public class OozieCLI {
     }
 
     /**
-     * Create a OozieClient. <p/> It injects any '-Dheader:' as header to the the {@link
-     * org.apache.oozie.client.OozieClient}.
+     * Create a OozieClient.
+     * <p/>
+     * It injects any '-Dheader:' as header to the the {@link org.apache.oozie.client.OozieClient}.
      *
      * @param commandLine the parsed command line options.
      * @return a pre configured eXtended workflow client.
-     * @throws OozieCLIException thrown if the OozieClient could not be
-     *         configured.
+     * @throws OozieCLIException thrown if the OozieClient could not be configured.
      */
     protected OozieClient createOozieClient(CommandLine commandLine) throws OozieCLIException {
         OozieClient wc = new OozieClient(getOozieUrl(commandLine));
@@ -506,13 +506,13 @@ public class OozieCLI {
     }
 
     /**
-     * Create a XOozieClient. <p/> It injects any '-Dheader:' as header to the the {@link
-     * org.apache.oozie.client.OozieClient}.
+     * Create a XOozieClient.
+     * <p/>
+     * It injects any '-Dheader:' as header to the the {@link org.apache.oozie.client.OozieClient}.
      *
      * @param commandLine the parsed command line options.
      * @return a pre configured eXtended workflow client.
-     * @throws OozieCLIException thrown if the XOozieClient could not be
-     *         configured.
+     * @throws OozieCLIException thrown if the XOozieClient could not be configured.
      */
     protected XOozieClient createXOozieClient(CommandLine commandLine) throws OozieCLIException {
         XOozieClient wc = new XOozieClient(getOozieUrl(commandLine));
@@ -1064,7 +1064,7 @@ public class OozieCLI {
     }
 
     private void pigCommand(CommandLine commandLine) throws IOException, OozieCLIException {
-        List<String> pigArgs = (List<String>) commandLine.getArgList();
+        List<String> pigArgs = commandLine.getArgList();
         if (pigArgs.size() > 0) {
             // checking is a pigArgs starts with -X (because CLIParser cannot check this)
             if (!pigArgs.get(0).equals("-X")) {

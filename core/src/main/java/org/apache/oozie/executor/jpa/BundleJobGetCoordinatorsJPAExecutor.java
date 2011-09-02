@@ -19,20 +19,19 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
-import org.apache.oozie.CoordinatorActionBean;
+import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.util.ParamChecker;
 
 /**
- * Load coordinator action by externalId.
+ * Load the coordinators for specified bundle in the Coordinator job bean
  */
-public class CoordActionGetForExternalIdJPAExecutor implements JPAExecutor<CoordinatorActionBean> {
+public class BundleJobGetCoordinatorsJPAExecutor implements JPAExecutor<List<CoordinatorJobBean>> {
+    private String bundleId = null;
 
-    private String externalId = null;
-
-    public CoordActionGetForExternalIdJPAExecutor(String externalId) {
-        ParamChecker.notNull(externalId, "externalId");
-        this.externalId = externalId;
+    public BundleJobGetCoordinatorsJPAExecutor(String bundleId) {
+        ParamChecker.notNull(bundleId, "bundleId");
+        this.bundleId = bundleId;
     }
 
     /* (non-Javadoc)
@@ -40,7 +39,7 @@ public class CoordActionGetForExternalIdJPAExecutor implements JPAExecutor<Coord
      */
     @Override
     public String getName() {
-        return "CoordActionGetForExternalIdJPAExecutor";
+        return "BundleJobGetCoordinatorsJPAExecutor";
     }
 
     /* (non-Javadoc)
@@ -48,20 +47,17 @@ public class CoordActionGetForExternalIdJPAExecutor implements JPAExecutor<Coord
      */
     @Override
     @SuppressWarnings("unchecked")
-    public CoordinatorActionBean execute(EntityManager em) throws JPAExecutorException {
+    public List<CoordinatorJobBean> execute(EntityManager em) throws JPAExecutorException {
+        List<CoordinatorJobBean> coordJobBeans;
         try {
-            CoordinatorActionBean caBean = null;
-            Query q = em.createNamedQuery("GET_COORD_ACTION_FOR_EXTERNALID");
-            q.setParameter("externalId", externalId);
-            List<CoordinatorActionBean> actionList = q.getResultList();
-            if (actionList.size() > 0) {
-                caBean = actionList.get(0);
-            }
-            return caBean;
+            Query q = em.createNamedQuery("GET_COORD_JOBS_FOR_BUNDLE");
+            q.setParameter("bundleId", bundleId);
+            coordJobBeans = q.getResultList();
+
+            return coordJobBeans;
         }
         catch (Exception e) {
             throw new JPAExecutorException(ErrorCode.E0603, e);
         }
     }
-
 }

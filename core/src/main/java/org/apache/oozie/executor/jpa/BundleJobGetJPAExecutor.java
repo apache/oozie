@@ -19,20 +19,20 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
-import org.apache.oozie.CoordinatorActionBean;
+import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.util.ParamChecker;
 
 /**
- * Load coordinator action by externalId.
+ * Load the BundleJob into a Bean and return it.
  */
-public class CoordActionGetForExternalIdJPAExecutor implements JPAExecutor<CoordinatorActionBean> {
+public class BundleJobGetJPAExecutor implements JPAExecutor<BundleJobBean> {
 
-    private String externalId = null;
+    private String bundleJobId = null;
 
-    public CoordActionGetForExternalIdJPAExecutor(String externalId) {
-        ParamChecker.notNull(externalId, "externalId");
-        this.externalId = externalId;
+    public BundleJobGetJPAExecutor(String bundleJobId) {
+        ParamChecker.notNull(bundleJobId, "bundleJobId");
+        this.bundleJobId = bundleJobId;
     }
 
     /* (non-Javadoc)
@@ -40,7 +40,7 @@ public class CoordActionGetForExternalIdJPAExecutor implements JPAExecutor<Coord
      */
     @Override
     public String getName() {
-        return "CoordActionGetForExternalIdJPAExecutor";
+        return "BundleJobGetJPAExecutor";
     }
 
     /* (non-Javadoc)
@@ -48,20 +48,24 @@ public class CoordActionGetForExternalIdJPAExecutor implements JPAExecutor<Coord
      */
     @Override
     @SuppressWarnings("unchecked")
-    public CoordinatorActionBean execute(EntityManager em) throws JPAExecutorException {
+    public BundleJobBean execute(EntityManager em) throws JPAExecutorException {
+        List<BundleJobBean> bdBeans;
         try {
-            CoordinatorActionBean caBean = null;
-            Query q = em.createNamedQuery("GET_COORD_ACTION_FOR_EXTERNALID");
-            q.setParameter("externalId", externalId);
-            List<CoordinatorActionBean> actionList = q.getResultList();
-            if (actionList.size() > 0) {
-                caBean = actionList.get(0);
-            }
-            return caBean;
+            Query q = em.createNamedQuery("GET_BUNDLE_JOB");
+            q.setParameter("id", bundleJobId);
+            bdBeans = q.getResultList();
         }
         catch (Exception e) {
             throw new JPAExecutorException(ErrorCode.E0603, e);
         }
+        BundleJobBean bean = null;
+        if (bdBeans != null && bdBeans.size() > 0) {
+            bean = bdBeans.get(0);
+            bean.setStatus(bean.getStatus());
+            return bean;
+        }
+        else {
+            throw new JPAExecutorException(ErrorCode.E0604, bundleJobId);
+        }
     }
-
 }

@@ -14,17 +14,25 @@
  */
 package org.apache.oozie.client.rest;
 
-import org.apache.oozie.client.CoordinatorJob;
-import org.apache.oozie.client.CoordinatorAction;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.ArrayList;
 
-import javax.persistence.*;
+import javax.persistence.Basic;
+import javax.persistence.Column;
+import javax.persistence.DiscriminatorColumn;
+import javax.persistence.DiscriminatorType;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Lob;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+
+import org.apache.oozie.client.CoordinatorAction;
+import org.apache.oozie.client.CoordinatorJob;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 @Entity
 @Table(name = "COORD_JOBS")
@@ -331,7 +339,7 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
 
     /**
      * Return the coordinate application console URL.
-     *
+     * 
      * @return the coordinate application console URL.
      */
     public String getConsoleUrl() {
@@ -340,13 +348,14 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
 
     /**
      * Set the coordinate application console URL.
-     *
+     * 
      * @param consoleUrl the coordinate application console URL.
      */
     public void setConsoleUrl(String consoleUrl) {
         this.consoleUrl = consoleUrl;
     }
 
+    @Override
     public String toString() {
         return MessageFormat.format("Coornidator application id[{0}] status[{1}]", getId(), getStatus());
     }
@@ -362,7 +371,7 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
 
     /**
      * Convert a coordinator application list into a JSONArray.
-     *
+     * 
      * @param application list.
      * @return the corresponding JSON array.
      */
@@ -379,10 +388,11 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
 
     /**
      * Convert a JSONArray into a application list.
-     *
+     * 
      * @param array JSON array.
      * @return the corresponding application list.
      */
+    @SuppressWarnings("unchecked")
     public static List<JsonCoordinatorJob> fromJSONArray(JSONArray applications) {
         List<JsonCoordinatorJob> list = new ArrayList<JsonCoordinatorJob>();
         for (Object obj : applications) {

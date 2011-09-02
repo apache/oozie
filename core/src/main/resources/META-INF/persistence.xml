@@ -31,11 +31,14 @@
         <class>org.apache.oozie.CoordinatorJobBean</class>
         <class>org.apache.oozie.CoordinatorActionBean</class>
         <class>org.apache.oozie.SLAEventBean</class>
-        <class>org.apache.oozie.client.rest.JsonWorkflowJob</class>
+        <class>org.apache.oozie.BundleJobBean</class>
+		<class>org.apache.oozie.BundleActionBean</class>
+		<class>org.apache.oozie.client.rest.JsonWorkflowJob</class>
         <class>org.apache.oozie.client.rest.JsonWorkflowAction</class>
         <class>org.apache.oozie.client.rest.JsonCoordinatorJob</class>
         <class>org.apache.oozie.client.rest.JsonCoordinatorAction</class>
         <class>org.apache.oozie.client.rest.JsonSLAEvent</class>
+        <class>org.apache.oozie.client.rest.JsonBundleJob</class>
 
         <properties>
             <property name="openjpa.ConnectionDriverName" value="org.apache.oozie.util.db.InstrumentedBasicDataSource"/>
@@ -48,11 +51,14 @@
                              org.apache.oozie.CoordinatorJobBean;
                              org.apache.oozie.CoordinatorActionBean;
                              org.apache.oozie.SLAEventBean;
+                             org.apache.oozie.BundleJobBean;
+                             org.apache.oozie.BundleActionBean;
                              org.apache.oozie.client.rest.JsonSLAEvent;
                              org.apache.oozie.client.rest.JsonWorkflowJob;
                              org.apache.oozie.client.rest.JsonWorkflowAction;
                              org.apache.oozie.client.rest.JsonCoordinatorJob;
-                             org.apache.oozie.client.rest.JsonCoordinatorAction)"></property>
+                             org.apache.oozie.client.rest.JsonCoordinatorAction;
+                             org.apache.oozie.client.rest.JsonBundleJob)"></property>
 
             <property name="openjpa.DetachState" value="fetch-groups(DetachedStateField=true)"/>
             <property name="openjpa.LockManager" value="pessimistic"/>
@@ -78,28 +84,35 @@
         <class>org.apache.oozie.CoordinatorJobBean</class>
         <class>org.apache.oozie.CoordinatorActionBean</class>
         <class>org.apache.oozie.SLAEventBean</class>
-        <class>org.apache.oozie.client.rest.JsonWorkflowJob</class>
+        <class>org.apache.oozie.BundleJobBean</class>
+		<class>org.apache.oozie.BundleActionBean</class>
+		<class>org.apache.oozie.client.rest.JsonWorkflowJob</class>
         <class>org.apache.oozie.client.rest.JsonWorkflowAction</class>
         <class>org.apache.oozie.client.rest.JsonCoordinatorJob</class>
         <class>org.apache.oozie.client.rest.JsonCoordinatorAction</class>
         <class>org.apache.oozie.client.rest.JsonSLAEvent</class>
+        <class>org.apache.oozie.client.rest.JsonBundleJob</class>
 
         <properties>
             <property name="openjpa.ConnectionDriverName" value="org.apache.oozie.util.db.InstrumentedBasicDataSource"/>
 
             <property name="openjpa.ConnectionProperties" value="**INVALID**"/> <!--Set by StoreService at init time -->
 
-            <property name="openjpa.MetaDataFactory" value="jpa(Types=org.apache.oozie.WorkflowActionBean;
-                org.apache.oozie.WorkflowJobBean;
-                org.apache.oozie.CoordinatorJobBean;
-                org.apache.oozie.CoordinatorActionBean;
-                org.apache.oozie.SLAEventBean;
-                org.apache.oozie.client.rest.JsonSLAEvent;
-                org.apache.oozie.client.rest.JsonWorkflowJob;
-                org.apache.oozie.client.rest.JsonWorkflowAction;
-                org.apache.oozie.client.rest.JsonCoordinatorJob;
-                org.apache.oozie.client.rest.JsonCoordinatorAction)"></property>
-
+            <property name="openjpa.MetaDataFactory"
+                      value="jpa(Types=org.apache.oozie.WorkflowActionBean;
+                             org.apache.oozie.WorkflowJobBean;
+                             org.apache.oozie.CoordinatorJobBean;
+                             org.apache.oozie.CoordinatorActionBean;
+                             org.apache.oozie.SLAEventBean;
+                             org.apache.oozie.BundleJobBean;
+                             org.apache.oozie.BundleActionBean;
+                             org.apache.oozie.client.rest.JsonSLAEvent;
+                             org.apache.oozie.client.rest.JsonWorkflowJob;
+                             org.apache.oozie.client.rest.JsonWorkflowAction;
+                             org.apache.oozie.client.rest.JsonCoordinatorJob;
+                             org.apache.oozie.client.rest.JsonCoordinatorAction;
+                             org.apache.oozie.client.rest.JsonBundleJob)"></property>
+                             
             <property name="openjpa.DetachState" value="fetch-groups(DetachedStateField=true)"/>
             <property name="openjpa.LockManager" value="pessimistic"/>
             <property name="openjpa.ReadLockLevel" value="read"/>
@@ -124,27 +137,35 @@
         <class>org.apache.oozie.CoordinatorJobBean</class>
         <class>org.apache.oozie.CoordinatorActionBean</class>
         <class>org.apache.oozie.SLAEventBean</class>
-        <class>org.apache.oozie.client.rest.JsonWorkflowJob</class>
+        <class>org.apache.oozie.BundleJobBean</class>
+		<class>org.apache.oozie.BundleActionBean</class>
+		<class>org.apache.oozie.client.rest.JsonWorkflowJob</class>
         <class>org.apache.oozie.client.rest.JsonWorkflowAction</class>
         <class>org.apache.oozie.client.rest.JsonCoordinatorJob</class>
         <class>org.apache.oozie.client.rest.JsonCoordinatorAction</class>
         <class>org.apache.oozie.client.rest.JsonSLAEvent</class>
+        <class>org.apache.oozie.client.rest.JsonBundleJob</class>
+
 
         <properties>
             <property name="openjpa.ConnectionDriverName" value="org.apache.oozie.util.db.InstrumentedBasicDataSource"/>
 
             <property name="openjpa.ConnectionProperties" value="**INVALID**"/> <!--Set by StoreService at init time -->
 
-            <property name="openjpa.MetaDataFactory" value="jpa(Types=org.apache.oozie.WorkflowActionBean;
-                org.apache.oozie.WorkflowJobBean;
-                org.apache.oozie.CoordinatorJobBean;
-                org.apache.oozie.CoordinatorActionBean;
-                org.apache.oozie.SLAEventBean;
-                org.apache.oozie.client.rest.JsonSLAEvent;
-                org.apache.oozie.client.rest.JsonWorkflowJob;
-                org.apache.oozie.client.rest.JsonWorkflowAction;
-                org.apache.oozie.client.rest.JsonCoordinatorJob;
-                org.apache.oozie.client.rest.JsonCoordinatorAction)"></property>
+            <property name="openjpa.MetaDataFactory"
+                      value="jpa(Types=org.apache.oozie.WorkflowActionBean;
+                             org.apache.oozie.WorkflowJobBean;
+                             org.apache.oozie.CoordinatorJobBean;
+                             org.apache.oozie.CoordinatorActionBean;
+                             org.apache.oozie.SLAEventBean;
+                             org.apache.oozie.BundleJobBean;
+                             org.apache.oozie.BundleActionBean;
+                             org.apache.oozie.client.rest.JsonSLAEvent;
+                             org.apache.oozie.client.rest.JsonWorkflowJob;
+                             org.apache.oozie.client.rest.JsonWorkflowAction;
+                             org.apache.oozie.client.rest.JsonCoordinatorJob;
+                             org.apache.oozie.client.rest.JsonCoordinatorAction;
+                             org.apache.oozie.client.rest.JsonBundleJob)"></property>
 
             <property name="openjpa.DetachState" value="fetch-groups(DetachedStateField=true)"/>
             <property name="openjpa.LockManager" value="pessimistic"/>

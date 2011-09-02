@@ -39,6 +39,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.apache.oozie.BuildInfo;
+import org.apache.oozie.client.rest.JsonBundleJob;
 import org.apache.oozie.client.rest.JsonCoordinatorAction;
 import org.apache.oozie.client.rest.JsonCoordinatorJob;
 import org.apache.oozie.client.rest.JsonTags;
@@ -85,6 +86,10 @@ public class OozieClient {
 
     public static final String COORDINATOR_APP_PATH = "oozie.coord.application.path";
 
+    public static final String BUNDLE_APP_PATH = "oozie.bundle.application.path";
+
+    public static final String BUNDLE_ID = "oozie.bundle.id";
+
     public static final String EXTERNAL_ID = "oozie.wf.external.id";
 
     public static final String WORKFLOW_NOTIFICATION_URL = "oozie.wf.workflow.notification.url";
@@ -114,7 +119,7 @@ public class OozieClient {
     public static final String CHANGE_VALUE_PAUSETIME = "pausetime";
 
     public static final String CHANGE_VALUE_CONCURRENCY = "concurrency";
-    
+
     public static final String LIBPATH = "oozie.libpath";
 
     public static final String USE_SYSTEM_LIBPATH = "oozie.use.system.libpath";
@@ -126,9 +131,7 @@ public class OozieClient {
     private String baseUrl;
     private String protocolUrl;
     private boolean validatedVersion = false;
-    private Map<String, String> headers = new HashMap<String, String>();
-
-
+    private final Map<String, String> headers = new HashMap<String, String>();
 
     protected OozieClient() {
     }
@@ -187,7 +190,7 @@ public class OozieClient {
                     if (!array.contains(WS_PROTOCOL_VERSION) && !array.contains(WS_PROTOCOL_VERSION_0)) {
                         StringBuilder msg = new StringBuilder();
                         msg.append("Supported version [").append(WS_PROTOCOL_VERSION).append(
-                        "] or less, Unsupported versions[");
+                                "] or less, Unsupported versions[");
                         String separator = "";
                         for (Object version : array) {
                             msg.append(separator).append(version);
@@ -274,7 +277,7 @@ public class OozieClient {
     }
 
     private URL createURL(String collection, String resource, Map<String, String> parameters) throws IOException,
-    OozieClientException {
+            OozieClientException {
         validateWSVersion();
         StringBuilder sb = new StringBuilder();
         sb.append(protocolUrl).append(collection);
@@ -327,10 +330,10 @@ public class OozieClient {
     }
 
     protected abstract class ClientCallable<T> implements Callable<T> {
-        private String method;
-        private String collection;
-        private String resource;
-        private Map<String, String> params;
+        private final String method;
+        private final String collection;
+        private final String resource;
+        private final Map<String, String> params;
 
         public ClientCallable(String method, String collection, String resource, Map<String, String> params) {
             this.method = method;
@@ -348,7 +351,7 @@ public class OozieClient {
                 }
                 else {
                     System.out
-                    .println("Option not supported in target server. Supported only on Oozie-2.0 or greater. Use 'oozie help' for details");
+                            .println("Option not supported in target server. Supported only on Oozie-2.0 or greater. Use 'oozie help' for details");
                     throw new OozieClientException(OozieClientException.UNSUPPORTED_VERSION, new Exception());
                 }
             }
@@ -426,7 +429,7 @@ public class OozieClient {
     }
 
     private class JobSubmit extends ClientCallable<String> {
-        private Properties conf;
+        private final Properties conf;
 
         JobSubmit(Properties conf, boolean start) {
             super("POST", RestConstants.JOBS, "", (start) ? prepareParams(RestConstants.ACTION_PARAM,
@@ -761,6 +764,27 @@ public class OozieClient {
         }
     }
 
+    private class BundleJobInfo extends ClientCallable<BundleJob> {
+
+        BundleJobInfo(String jobId) {
+            super("GET", RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.JOB_SHOW_PARAM,
+                    RestConstants.JOB_SHOW_INFO));
+        }
+
+        @Override
+        protected BundleJob call(HttpURLConnection conn) throws IOException, OozieClientException {
+            if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
+                Reader reader = new InputStreamReader(conn.getInputStream());
+                JSONObject json = (JSONObject) JSONValue.parse(reader);
+                return new JsonBundleJob(json);
+            }
+            else {
+                handleError(conn);
+            }
+            return null;
+        }
+    }
+
     private class CoordActionInfo extends ClientCallable<CoordinatorAction> {
         CoordActionInfo(String actionId) {
             super("GET", RestConstants.JOB, notEmpty(actionId, "id"), prepareParams(RestConstants.JOB_SHOW_PARAM,
@@ -779,6 +803,17 @@ public class OozieClient {
             }
             return null;
         }
+    }
+
+    /**
+     * Get the info of a bundle job.
+     *
+     * @param jobId job Id.
+     * @return the job info.
+     * @throws OozieClientException thrown if the job info could not be retrieved.
+     */
+    public BundleJob getBundleJobInfo(String jobId) throws OozieClientException {
+        return new BundleJobInfo(jobId).call();
     }
 
     /**
@@ -853,6 +888,7 @@ public class OozieClient {
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         protected List<JsonCoordinatorJob> call(HttpURLConnection conn) throws IOException, OozieClientException {
             conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
             if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
@@ -878,7 +914,7 @@ public class OozieClient {
                     RestConstants.JOB_COORD_ACTION_RERUN, RestConstants.JOB_COORD_RERUN_TYPE_PARAM, rerunType,
                     RestConstants.JOB_COORD_RERUN_SCOPE_PARAM, scope, RestConstants.JOB_COORD_RERUN_REFRESH_PARAM,
                     Boolean.toString(refresh), RestConstants.JOB_COORD_RERUN_NOCLEANUP_PARAM, Boolean
-                    .toString(noCleanup)));
+                            .toString(noCleanup)));
         }
 
         @Override
@@ -889,6 +925,29 @@ public class OozieClient {
                 JSONObject json = (JSONObject) JSONValue.parse(reader);
                 JSONArray coordActions = (JSONArray) json.get(JsonTags.COORDINATOR_ACTIONS);
                 return JsonCoordinatorAction.fromJSONArray(coordActions);
+            }
+            else {
+                handleError(conn);
+            }
+            return null;
+        }
+    }
+
+    private class BundleRerun extends ClientCallable<Void> {
+
+        BundleRerun(String jobId, String coordScope, String dateScope, boolean refresh, boolean noCleanup) {
+            super("PUT", RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.ACTION_PARAM,
+                    RestConstants.JOB_BUNDLE_ACTION_RERUN, RestConstants.JOB_BUNDLE_RERUN_COORD_SCOPE_PARAM,
+                    coordScope, RestConstants.JOB_BUNDLE_RERUN_DATE_SCOPE_PARAM, dateScope,
+                    RestConstants.JOB_COORD_RERUN_REFRESH_PARAM, Boolean.toString(refresh),
+                    RestConstants.JOB_COORD_RERUN_NOCLEANUP_PARAM, Boolean.toString(noCleanup)));
+        }
+
+        @Override
+        protected Void call(HttpURLConnection conn) throws IOException, OozieClientException {
+            conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
+            if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
+                return null;
             }
             else {
                 handleError(conn);
@@ -910,6 +969,21 @@ public class OozieClient {
     public List<JsonCoordinatorAction> reRunCoord(String jobId, String rerunType, String scope, boolean refresh,
             boolean noCleanup) throws OozieClientException {
         return new CoordRerun(jobId, rerunType, scope, refresh, noCleanup).call();
+    }
+
+    /**
+     * Rerun bundle coordinators.
+     *
+     * @param jobId bundle jobId
+     * @param coordScope rerun scope for coordinator jobs
+     * @param dateScope rerun scope for date
+     * @param refresh true if -refresh is given in command option
+     * @param noCleanup true if -nocleanup is given in command option
+     * @throws OozieClientException
+     */
+    public Void reRunBundle(String jobId, String coordScope, String dateScope, boolean refresh, boolean noCleanup)
+            throws OozieClientException {
+        return new BundleRerun(jobId, coordScope, dateScope, refresh, noCleanup).call();
     }
 
     /**

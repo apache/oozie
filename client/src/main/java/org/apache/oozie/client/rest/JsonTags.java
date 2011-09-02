@@ -109,6 +109,24 @@ public interface JsonTags {
     public static final String COORDINATOR_ACTIONS = "actions";
     public static final String COORDINATOR_ACTION_DATA = "data";
     public static final String COORDINATOR_JOB_DATA = "data";
+    
+    public static final String BUNDLE_JOB_ID = "bundleJobId";
+    public static final String BUNDLE_JOB_NAME = "bundleJobName";
+    public static final String BUNDLE_JOB_PATH = "bundleJobPath";
+    public static final String BUNDLE_JOB_TIMEUNIT = "timeUnit";
+    public static final String BUNDLE_JOB_TIMEOUT = "timeOut";
+    public static final String BUNDLE_JOB_CONF = "conf";
+    public static final String BUNDLE_JOB_STATUS = "status";
+    public static final String BUNDLE_JOB_KICKOFF_TIME = "kickoffTime";
+    public static final String BUNDLE_JOB_START_TIME = "startTime";
+    public static final String BUNDLE_JOB_END_TIME = "endTime";
+    public static final String BUNDLE_JOB_PAUSE_TIME = "pauseTime";
+    public static final String BUNDLE_JOB_CONSOLE_URL = "consoleUrl";
+    public static final String BUNDLE_JOB_USER = "user";
+    public static final String BUNDLE_JOB_GROUP = "group";
+    public static final String BUNDLE_JOB_EXTERNAL_ID = "bundleExternalId";
+    public static final String BUNDLE_COORDINATOR_JOBS = "bundleCoordJobs";
+
 
     public static final String ERROR = "error";
     public static final String ERROR_CODE = "code";
