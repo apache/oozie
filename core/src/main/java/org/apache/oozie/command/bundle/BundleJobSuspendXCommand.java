@@ -25,7 +25,6 @@ import org.apache.oozie.client.Job;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.SuspendTransitionXCommand;
-import org.apache.oozie.command.TransitionXCommand;
 import org.apache.oozie.command.coord.CoordSuspendXCommand;
 import org.apache.oozie.executor.jpa.BundleActionUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleActionsGetJPAExecutor;
@@ -35,7 +34,6 @@ import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.InstrumentUtils;
-import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
 
@@ -119,8 +117,10 @@ public class BundleJobSuspendXCommand extends SuspendTransitionXCommand {
      */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
-        if (bundleJob.getStatus() == Job.Status.SUCCEEDED || bundleJob.getStatus() == Job.Status.FAILED) {
-            LOG.info("BundleSuspendCommand not suspended - " + "job finished or does not exist " + jobId);
+        if (bundleJob.getStatus() == Job.Status.SUCCEEDED || bundleJob.getStatus() == Job.Status.FAILED
+                || bundleJob.getStatus() == Job.Status.KILLED) {
+            LOG.info("BundleJobSuspendXCommand is not going to execute because job finished or failed or killed, id = "
+                            + jobId + ", status = " + bundleJob.getStatus());
             throw new PreconditionException(ErrorCode.E1312, jobId, bundleJob.getStatus().toString());
         }
     }

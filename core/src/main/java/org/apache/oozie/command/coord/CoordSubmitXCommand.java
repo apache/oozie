@@ -208,7 +208,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
             if (!dryrun) {
                 // submit a command to materialize jobs for the next 1 hour (3600 secs)
                 // so we don't wait 10 mins for the Service to run.
-                queue(new CoordJobMatLookupXCommand(jobId, 3600), 100);
+                queue(new CoordMaterializeTransitionXCommand(jobId, 3600), 100);
             }
             else {
                 Date startTime = coordJob.getStartTime();
@@ -222,6 +222,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
                 jobId = coordJob.getId();
                 log.info("[" + jobId + "]: Update status to RUNNING");
                 coordJob.setStatus(Job.Status.RUNNING);
+                coordJob.resetPending();
                 CoordActionMaterializeCommand coordActionMatCom = new CoordActionMaterializeCommand(jobId, startTime,
                         endTime);
                 Configuration jobConf = null;
@@ -256,6 +257,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
             if (exceptionOccured) {
                 if(coordJob.getId() == null || coordJob.getId().equalsIgnoreCase("")){
                     coordJob.setStatus(CoordinatorJob.Status.FAILED);
+                    coordJob.resetPending();
                 }
             }
             // update bundle action

@@ -42,7 +42,7 @@ public class TestCoordJobGetJPAExecutor extends XDataTestCase {
     }
 
     public void testCoordJobGet() throws Exception {
-        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, false);
         _testGetJob(job.getId());
     }
 

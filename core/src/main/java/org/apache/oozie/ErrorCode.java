@@ -120,7 +120,7 @@ public enum ErrorCode {
     E0725(XLog.STD, "Workflow instance can not be killed, {0}"),
     E0726(XLog.STD, "Workflow action can not be killed, {0}"),
     E0727(XLog.STD, "Workflow Job can not be suspended as its not in running state, {0}, Status: {1}"),
-    E0728(XLog.STD, "Coordinator Job can not be suspended as job finished or does not exist, {0}, Status: {1}"),
+    E0728(XLog.STD, "Coordinator Job can not be suspended as job finished or failed or killed, id : {0}, status : {1}"),
 
     E0800(XLog.STD, "Action it is not running its in [{1}] state, action [{0}]"),
     E0801(XLog.STD, "Workflow already running, workflow [{0}]"),
@@ -185,12 +185,14 @@ public enum ErrorCode {
     E1309(XLog.STD, "Bundle Action for bundle ID  [{0}] and Coordinator [{1}] could not be update by BundleStatusUpdateXCommand"),
     E1310(XLog.STD, "Bundle Job submission Error: [{0}]"),
     E1311(XLog.STD, "Bundle Action for bundle ID  [{0}] could not be get."),
-    E1312(XLog.STD, "Bundle Job can not be Suspended As job finished or does not exist, {0}, Status: {1}"),
-    E1313(XLog.STD, "Bundle Job can not be Changed as job finished, {0}, Status: {1}"),
-    E1314(XLog.STD, "Bundle Job can not be Changed as job does not exist, {0}"),
+    E1312(XLog.STD, "Bundle Job can not be suspended as job finished or failed or killed, id : {0}, status : {1}"),
+    E1313(XLog.STD, "Bundle Job can not be changed as job finished, {0}, Status: {1}"),
+    E1314(XLog.STD, "Bundle Job can not be changed as job does not exist, {0}"),
     E1315(XLog.STD, "Bundle job can not be paused, {0}"),
     E1316(XLog.STD, "Bundle job can not be unpaused, {0}"),
     E1317(XLog.STD, "Invalid bundle job change value {0}, {1}"),
+    E1318(XLog.STD, "No coord jobs for the bundle=[{0}], fail the bundle"),
+
 
     ETEST(XLog.STD, "THIS SHOULD HAPPEN ONLY IN TESTING, invalid job id [{0}]"),;
 

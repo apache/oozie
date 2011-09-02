@@ -33,7 +33,9 @@ public abstract class ResumeTransitionXCommand extends TransitionXCommand<Void> 
         super(name, type, priority, dryrun);
     }
 
-    /* (non-Javadoc)
+    /**
+     * Transit job to PREP from PREPSUSPENDED or to RUNNING from SUSPENDED.
+     *
      * @see org.apache.oozie.command.TransitionXCommand#transitToNext()
      */
     @Override
@@ -47,7 +49,6 @@ public abstract class ResumeTransitionXCommand extends TransitionXCommand<Void> 
         else if (job.getStatus() == Job.Status.SUSPENDED) {
             job.setStatus(Job.Status.RUNNING);
         }
-        job.setPending();
     }
 
     /* (non-Javadoc)
@@ -57,8 +58,11 @@ public abstract class ResumeTransitionXCommand extends TransitionXCommand<Void> 
     protected Void execute() throws CommandException {
         transitToNext();
         updateJob();
-        resumeChildren();
-        notifyParent();
+        try {
+            resumeChildren();
+        } finally {
+            notifyParent();
+        }
         return null;
     }
 }

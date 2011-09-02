@@ -39,13 +39,17 @@ import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
 
+/**
+ * Suspend coordinator job and actions.
+ *
+ */
 public class CoordSuspendXCommand extends SuspendTransitionXCommand {
     private final String jobId;
     private final XLog LOG = XLog.getLog(getClass());
     private CoordinatorJobBean coordJob;
     private JPAService jpaService;
     private boolean exceptionOccured = false;
-    CoordinatorJob.Status prevStatus;
+    private CoordinatorJob.Status prevStatus = null;
 
     public CoordSuspendXCommand(String id) {
         super("coord_suspend", "coord_suspend", 1);
@@ -97,9 +101,11 @@ public class CoordSuspendXCommand extends SuspendTransitionXCommand {
     protected void verifyPrecondition() throws CommandException, PreconditionException {
         super.eagerVerifyPrecondition();
         if (coordJob.getStatus() == CoordinatorJob.Status.SUCCEEDED
-                || coordJob.getStatus() == CoordinatorJob.Status.FAILED) {
-            LOG.info("CoordSuspendCommand not suspended - " + "job finished or does not exist " + jobId);
-            throw new PreconditionException(ErrorCode.E0728, coordJob.getStatus().toString());
+                || coordJob.getStatus() == CoordinatorJob.Status.FAILED
+                || coordJob.getStatus() == CoordinatorJob.Status.KILLED) {
+            LOG.info("CoordSuspendXCommand is not going to execute because "
+                    + "job finished or failed or killed, id = " + jobId + ", status = " + coordJob.getStatus());
+            throw new PreconditionException(ErrorCode.E0728, jobId, coordJob.getStatus().toString());
         }
     }
 
@@ -126,18 +132,14 @@ public class CoordSuspendXCommand extends SuspendTransitionXCommand {
         finally {
             if (exceptionOccured) {
                 coordJob.setStatus(CoordinatorJob.Status.FAILED);
+                coordJob.resetPending();
+                LOG.debug("Exception happened, fail coordinator job id = " + jobId + ", status = " + coordJob.getStatus());
                 try {
                     jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
                 }
-                catch (JPAExecutorException ex) {
-                    throw new CommandException(ex);
+                catch (JPAExecutorException je) {
+                    LOG.error("Failed to update coordinator job : " + jobId, je);
                 }
-            }
-
-            //update bundle action
-            if (this.coordJob.getBundleId() != null) {
-                BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, prevStatus);
-                bundleStatusUpdate.call();
             }
         }
     }
@@ -147,6 +149,11 @@ public class CoordSuspendXCommand extends SuspendTransitionXCommand {
      */
     @Override
     public void notifyParent() throws CommandException {
+        // update bundle action
+        if (this.coordJob.getBundleId() != null) {
+            BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, prevStatus);
+            bundleStatusUpdate.call();
+        }
     }
 
     /* (non-Javadoc)
@@ -157,7 +164,7 @@ public class CoordSuspendXCommand extends SuspendTransitionXCommand {
         InstrumentUtils.incrJobCounter(getName(), 1, getInstrumentation());
         coordJob.setStatus(CoordinatorJob.Status.SUSPENDED);
         coordJob.setSuspendedTime(new Date());
-
+        LOG.debug("Suspend coordinator job id = " + jobId + ", status = " + coordJob.getStatus());
         try {
             jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
         }

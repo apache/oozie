@@ -196,12 +196,12 @@ public abstract class XCommand<T> implements XCallable<T> {
                 //if not acquire the lock, re-queue itself with default delay
                 resetUsed();
                 queue(this, getRequeueDelay());
-                LOG.debug("Could not get lock [{0}], timed out [{1}]ms, and requeue itself", this.toString(), getLockTimeOut());
+                LOG.debug("Could not get lock [{0}], timed out [{1}]ms, and requeue itself [{2}]", this.toString(), getLockTimeOut(), getName());
             } else {
                 throw new CommandException(ErrorCode.E0606, this.toString(), getLockTimeOut());
             }
         } else {
-            LOG.debug("Acquired lock for [{0}]", getEntityKey());
+            LOG.debug("Acquired lock for [{0}] in [{1}]", getEntityKey(), getName());
         }
     }
 
@@ -211,7 +211,7 @@ public abstract class XCommand<T> implements XCallable<T> {
     private void releaseLock() {
         if (lock != null) {
             lock.release();
-            LOG.debug("Released lock for [{0}]", getEntityKey());
+            LOG.debug("Released lock for [{0}] in [{1}]", getEntityKey(), getName());
         }
     }
 
@@ -275,7 +275,7 @@ public abstract class XCommand<T> implements XCallable<T> {
             }
         }
         catch(PreconditionException pex){
-            LOG.warn(pex.getMessage().toString() + "Error Code: "+ pex.getErrorCode().toString());
+            LOG.warn(pex.getMessage().toString() + ", Error Code: "+ pex.getErrorCode().toString());
             instrumentation.incr(INSTRUMENTATION_GROUP, getName() + ".preconditionfailed", 1);
             return null;
         }
@@ -423,7 +423,7 @@ public abstract class XCommand<T> implements XCallable<T> {
     protected Long getRequeueDelay() {
         return DEFAULT_REQUEUE_DELAY;
     }
-    
+
     /**
      * Get command key
      *

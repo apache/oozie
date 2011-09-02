@@ -36,7 +36,7 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
     private final XLog LOG = XLog.getLog(CoordChangeXCommand.class);
     private CoordinatorJobBean coordJob;
     private JPAService jpaService = null;
-    
+
     private static final Set<String> ALLOWED_CHANGE_OPTIONS = new HashSet<String>();
     static {
         ALLOWED_CHANGE_OPTIONS.add("endtime");
@@ -47,7 +47,7 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
     /**
      * This command is used to update the Coordinator job with the new values Update the coordinator job bean and update
      * that to database.
-     * 
+     *
      * @param id Coordinator job id.
      * @param changeValue This the changed value in the form key=value.
      * @throws CommandException thrown if changeValue cannot be parsed properly.
@@ -56,7 +56,7 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
         super("coord_change", "coord_change", 0);
         this.jobId = ParamChecker.notEmpty(id, "id");
         ParamChecker.notEmpty(changeValue, "value");
-        
+
         validateChangeValue(changeValue);
     }
 
@@ -124,7 +124,7 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
 
     /**
      * Check if new end time is valid.
-     * 
+     *
      * @param coordJob coordinator job id.
      * @param newEndTime new end time.
      * @throws CommandException thrown if new end time is not valid.
@@ -150,7 +150,7 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
 
     /**
      * Check if new pause time is valid.
-     * 
+     *
      * @param coordJob coordinator job id.
      * @param newPauseTime new pause time.
      * @param newEndTime new end time, can be null meaning no change on end time.
@@ -161,14 +161,14 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
         // New pauseTime has to be a non-past time.
         Date d = new Date();
         if (newPauseTime.before(d)) {
-            throw new CommandException(ErrorCode.E1015, newPauseTime, "must be a non-past time");            
+            throw new CommandException(ErrorCode.E1015, newPauseTime, "must be a non-past time");
         }
     }
-    
+
     /**
      * Process lookahead created actions that become invalid because of the new pause time,
      * These actions will be deleted from DB, also the coordinator job will be updated accordingly
-     * 
+     *
      * @param coordJob coordinator job
      * @param newPauseTime new pause time
      */
@@ -178,29 +178,30 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
             // d is the real last action time.
             Date d = new Date(lastActionTime.getTime() - coordJob.getFrequency() * 60 * 1000);
             int lastActionNumber = coordJob.getLastActionNumber();
-            
+
             boolean hasChanged = false;
             while (true) {
                 if (!newPauseTime.after(d)) {
                     deleteAction(coordJob.getId(), lastActionNumber);
                     d = new Date(d.getTime() - coordJob.getFrequency() * 60 * 1000);
                     lastActionNumber = lastActionNumber - 1;
-                    
+
                     hasChanged = true;
                 }
                 else {
                     break;
                 }
             }
-            
+
             if (hasChanged == true) {
                 coordJob.setLastActionNumber(lastActionNumber);
                 Date d1 = new Date(d.getTime() + coordJob.getFrequency() * 60 * 1000);
                 coordJob.setLastActionTime(d1);
                 coordJob.setNextMaterializedTime(d1);
-                
+
                 if (coordJob.getStatus() == CoordinatorJob.Status.SUCCEEDED) {
                     coordJob.setStatus(CoordinatorJob.Status.RUNNING);
+                    coordJob.resetPending();
                 }
             }
         }
@@ -208,7 +209,7 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
 
     /**
      * Delete last action for a coordinator job
-     * 
+     *
      * @param coordJob coordinator job
      * @param lastActionNum last action number of the coordinator job
      */
@@ -224,7 +225,7 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
 
     /**
      * Check if new end time, new concurrency, new pause time are valid.
-     * 
+     *
      * @param coordJob coordinator job id.
      * @param newEndTime new end time.
      * @param newConcurrency new concurrency.
@@ -252,14 +253,15 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
     @Override
     protected Void execute() throws CommandException {
         LOG.info("STARTED CoordChangeXCommand for jobId=" + jobId);
-        
+
         try {
             LogUtils.setLogInfo(this.coordJob, logInfo);
 
             if (newEndTime != null) {
-                this.coordJob.setEndTime(newEndTime);
-                if (this.coordJob.getStatus() == CoordinatorJob.Status.SUCCEEDED) {
-                    this.coordJob.setStatus(CoordinatorJob.Status.RUNNING);
+                coordJob.setEndTime(newEndTime);
+                if (coordJob.getStatus() == CoordinatorJob.Status.SUCCEEDED) {
+                    coordJob.setStatus(CoordinatorJob.Status.RUNNING);
+                    coordJob.resetPending();
                 }
             }
 
@@ -302,9 +304,9 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
          jpaService = Services.get().get(JPAService.class);
 
         if (jpaService == null) {
-            throw new CommandException(ErrorCode.E0610);            
+            throw new CommandException(ErrorCode.E0610);
         }
-        
+
         try {
             this.coordJob = jpaService.execute(new CoordJobGetJPAExecutor(jobId));
         }

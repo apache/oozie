@@ -322,7 +322,7 @@ public class TestRecoveryService extends XTestCase {
         coordJob.setId(jobId);
         coordJob.setAppName("testApp");
         coordJob.setAppPath("testAppPath");
-        coordJob.setStatus(CoordinatorJob.Status.PREMATER);
+        coordJob.setStatus(CoordinatorJob.Status.RUNNING);
         coordJob.setCreatedTime(new Date());
         coordJob.setLastModifiedTime(new Date());
         coordJob.setUser(getTestUser());

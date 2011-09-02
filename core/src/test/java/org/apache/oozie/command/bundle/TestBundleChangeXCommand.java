@@ -14,8 +14,6 @@
  */
 package org.apache.oozie.command.bundle;
 
-import java.util.List;
-
 import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.CoordinatorJobBean;
@@ -30,7 +28,6 @@ import org.apache.oozie.executor.jpa.CoordJobUpdateJPAExecutor;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
-import org.apache.oozie.test.XTestCase.Predicate;
 import org.apache.oozie.util.DateUtils;
 
 public class TestBundleChangeXCommand extends XDataTestCase {
@@ -78,9 +75,9 @@ public class TestBundleChangeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testBundleChange2() throws Exception {
-        BundleJobBean bundleJob = this.addRecordToBundleJobTable(Job.Status.RUNNING);        
-        
-        CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED);
+        BundleJobBean bundleJob = this.addRecordToBundleJobTable(Job.Status.RUNNING);
+
+        CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false);
         coordJob.setBundleId(bundleJob.getId());
         final JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
@@ -101,7 +98,7 @@ public class TestBundleChangeXCommand extends XDataTestCase {
         new BundleJobChangeXCommand(bundleJob.getId(), "pausetime=" + dateStr).call();
         bundleJob = jpaService.execute(bundleJobGetCmd);
         assertEquals(DateUtils.parseDateUTC(dateStr), bundleJob.getPauseTime());
-        
+
         final String coordJobId = coordJob.getId();
         waitFor(60000, new Predicate() {
             public boolean evaluate() throws Exception {
@@ -109,7 +106,7 @@ public class TestBundleChangeXCommand extends XDataTestCase {
                 return (coordJob1.getPauseTime() != null);
             }
         });
-        
+
         coordJob = jpaService.execute(new CoordJobGetJPAExecutor(coordJob.getId()));
         assertEquals(DateUtils.parseDateUTC(dateStr), coordJob.getPauseTime());
     }
@@ -137,7 +134,7 @@ public class TestBundleChangeXCommand extends XDataTestCase {
             assertEquals(ErrorCode.E1317, e.getErrorCode());
         }
     }
-    
+
     /**
      * Negative Test : pause time is a past time
      *

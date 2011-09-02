@@ -46,6 +46,7 @@ public class CoordKillXCommand extends KillTransitionXCommand {
     private CoordinatorJobBean coordJob;
     private List<CoordinatorActionBean> actionList;
     private JPAService jpaService = null;
+    private CoordinatorJob.Status prevStatus = null;
 
     public CoordKillXCommand(String id) {
         super("coord_kill", "coord_kill", 1);
@@ -70,6 +71,7 @@ public class CoordKillXCommand extends KillTransitionXCommand {
             if (jpaService != null) {
                 this.coordJob = jpaService.execute(new CoordJobGetJPAExecutor(jobId));
                 this.actionList = jpaService.execute(new CoordJobGetActionsJPAExecutor(jobId));
+                prevStatus = coordJob.getStatus();
                 LogUtils.setLogInfo(coordJob, logInfo);
             }
             else {
@@ -96,10 +98,9 @@ public class CoordKillXCommand extends KillTransitionXCommand {
             throw new CommandException(e);
         }
     }
-    
+
     @Override
     public void killChildren() throws CommandException {
-        CoordinatorJob.Status prevStatus = coordJob.getStatus();
         try {
             if (actionList != null) {
                 for (CoordinatorActionBean action : actionList) {
@@ -117,7 +118,7 @@ public class CoordKillXCommand extends KillTransitionXCommand {
                 }
             }
             jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
-            
+
             LOG.debug("Killed coord actions for the coordinator=[{0}]", jobId);
         }
         catch (JPAExecutorException ex) {
@@ -146,7 +147,7 @@ public class CoordKillXCommand extends KillTransitionXCommand {
             throw new CommandException(ex);
         }
     }
-    
+
     /* (non-Javadoc)
      * @see org.apache.oozie.command.TransitionXCommand#getJob()
      */

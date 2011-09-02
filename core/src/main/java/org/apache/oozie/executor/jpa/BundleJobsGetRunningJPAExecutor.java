@@ -24,8 +24,7 @@ import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.ErrorCode;
 
 /**
- * A list of Bundle Jobs that are matched with the status and have last materialized time' older than
- * checkAgeSecs will be returned.
+ * Get a list of Bundle Jobs that are are RUNNING or RUNNINGWITHERROR status. The result is ordered by lastModifiedTimestamp.
  */
 public class BundleJobsGetRunningJPAExecutor implements JPAExecutor<List<BundleJobBean>> {
     private int limit;
@@ -34,11 +33,17 @@ public class BundleJobsGetRunningJPAExecutor implements JPAExecutor<List<BundleJ
         this.limit = limit;
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
+     */
     @Override
     public String getName() {
         return "BundleJobsGetRunningJPAExecutor";
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
+     */
     @Override
     @SuppressWarnings("unchecked")
     public List<BundleJobBean> execute(EntityManager em) throws JPAExecutorException {

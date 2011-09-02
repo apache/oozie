@@ -94,8 +94,7 @@ public class JsonBundleJob implements BundleJob, JsonBean {
     @Transient
     private String consoleUrl;
 
-    @Basic
-    @Column(name = "pending")
+    @Transient
     private int pending = 0;
 
     @Transient
@@ -484,6 +483,8 @@ public class JsonBundleJob implements BundleJob, JsonBean {
     }
 
     /**
+     * Set pending to true
+     *
      * @param pending set pending to true
      */
     public void setPending() {
@@ -491,19 +492,12 @@ public class JsonBundleJob implements BundleJob, JsonBean {
     }
 
     /**
+     * Set pending to false
+     *
      * @param pending set pending to false
      */
     public void resetPending() {
         this.pending = 0;
-    }
-
-    /**
-     * Return if the action is pending.
-     *
-     * @return if the action is pending.
-     */
-    public boolean isPending() {
-        return pending == 1 ? true : false;
     }
 
 }

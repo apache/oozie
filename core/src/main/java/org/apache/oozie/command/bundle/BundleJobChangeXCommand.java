@@ -28,7 +28,7 @@ import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
-import org.apache.oozie.command.TransitionXCommand;
+import org.apache.oozie.command.XCommand;
 import org.apache.oozie.command.coord.CoordChangeXCommand;
 import org.apache.oozie.executor.jpa.BundleActionUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleActionsGetJPAExecutor;
@@ -42,16 +42,16 @@ import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
 
-public class BundleJobChangeXCommand extends TransitionXCommand<Void> {
+public class BundleJobChangeXCommand extends XCommand<Void> {
     private String jobId;
-    private String changeValue; 
+    private String changeValue;
     private JPAService jpaService;
     private List<BundleActionBean> bundleActions;
     private BundleJobBean bundleJob;
     private static final XLog LOG = XLog.getLog(BundleJobChangeXCommand.class);
     private Date newPauseTime = null;
     boolean isChangePauseTime = false;
-    
+
     private static final Set<String> ALLOWED_CHANGE_OPTIONS = new HashSet<String>();
     static {
         ALLOWED_CHANGE_OPTIONS.add("pausetime");
@@ -60,7 +60,7 @@ public class BundleJobChangeXCommand extends TransitionXCommand<Void> {
     /**
      * @param id bundle job id
      * @param changeValue change value
-     * 
+     *
      * @throws CommandException thrown if failed to change bundle
      */
     public BundleJobChangeXCommand(String id, String changeValue) throws CommandException {
@@ -68,10 +68,10 @@ public class BundleJobChangeXCommand extends TransitionXCommand<Void> {
         this.jobId = ParamChecker.notEmpty(id, "id");
         this.changeValue = ParamChecker.notEmpty(changeValue, "changeValue");
     }
-    
+
     /**
      * Check if new pause time is future time.
-     * 
+     *
      * @param newPauseTime new pause time.
      * @param newEndTime new end time, can be null meaning no change on end time.
      * @throws CommandException thrown if new pause time is not valid.
@@ -80,13 +80,13 @@ public class BundleJobChangeXCommand extends TransitionXCommand<Void> {
         // New pauseTime has to be a non-past time.
         Date d = new Date();
         if (newPauseTime.before(d)) {
-            throw new CommandException(ErrorCode.E1317, newPauseTime, "must be a non-past time");            
+            throw new CommandException(ErrorCode.E1317, newPauseTime, "must be a non-past time");
         }
     }
-    
+
     /**
      * validate if change value is valid.
-     * 
+     *
      * @param changeValue change value.
      * @throws CommandException thrown if changeValue cannot be parsed properly.
      */
@@ -96,7 +96,7 @@ public class BundleJobChangeXCommand extends TransitionXCommand<Void> {
         if (map.size() > ALLOWED_CHANGE_OPTIONS.size() || !map.containsKey(OozieClient.CHANGE_VALUE_PAUSETIME)) {
             throw new CommandException(ErrorCode.E1317, changeValue, "can only change pausetime");
         }
-        
+
         if (map.containsKey(OozieClient.CHANGE_VALUE_PAUSETIME)) {
             isChangePauseTime = true;
         }
@@ -112,38 +112,9 @@ public class BundleJobChangeXCommand extends TransitionXCommand<Void> {
             catch (Exception ex) {
                 throw new CommandException(ErrorCode.E1317, value, "is not a valid date");
             }
-            
+
             checkPauseTime(newPauseTime);
         }
-    }
-
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#getJob()
-     */
-    @Override
-    public Job getJob() {
-        return null;
-    }
-
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#notifyParent()
-     */
-    @Override
-    public void notifyParent() throws CommandException {
-    }
-
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#setJob(org.apache.oozie.client.Job)
-     */
-    @Override
-    public void setJob(Job job) {
-    }
-
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#transitToNext()
-     */
-    @Override
-    public void transitToNext() throws CommandException {
     }
 
     /* (non-Javadoc)
@@ -153,7 +124,6 @@ public class BundleJobChangeXCommand extends TransitionXCommand<Void> {
     protected Void execute() throws CommandException {
         try {
             if (isChangePauseTime) {
-                bundleJob.setPending();
                 bundleJob.setPauseTime(newPauseTime);
 
                 for (BundleActionBean action : this.bundleActions) {
@@ -237,9 +207,9 @@ public class BundleJobChangeXCommand extends TransitionXCommand<Void> {
      * @see org.apache.oozie.command.XCommand#eagerVerifyPrecondition()
      */
     @Override
-    protected void eagerVerifyPrecondition() throws CommandException, PreconditionException {        
+    protected void eagerVerifyPrecondition() throws CommandException, PreconditionException {
         validateChangeValue(changeValue);
-        
+
         if (bundleJob == null) {
             LOG.info("BundleChangeCommand not succeeded - " + "job " + jobId + " does not exist");
             throw new PreconditionException(ErrorCode.E1314, jobId);
@@ -251,11 +221,4 @@ public class BundleJobChangeXCommand extends TransitionXCommand<Void> {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#updateJob()
-     */
-    @Override
-    public void updateJob() throws CommandException {
-
-    }
 }

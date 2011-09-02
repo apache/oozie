@@ -65,7 +65,7 @@ public abstract class StartTransitionXCommand extends TransitionXCommand<Void> {
             job = this.getJob();
         }
         job.setStatus(Job.Status.RUNNING);
-        job.setPending();
+        job.resetPending();
     }
 
     /* (non-Javadoc)

@@ -14,7 +14,7 @@
 -->
 <coordinator-app xmlns='uri:oozie:coordinator:0.1'
 	xmlns:sla='uri:oozie:sla:0.1' name='NAME' frequency="5"
-	start='2009-03-06T010:00Z' end='2009-03-06T10:14Z' timezone='America/Los_Angeles'
+	start='#start' end='#end' timezone='America/Los_Angeles'
 	freq_timeunit='MINUTE' end_of_duration='NONE'>
 	<controls>
 		<timeout>10</timeout>

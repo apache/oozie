@@ -41,7 +41,7 @@ public class TestCoordJobUpdateJPAExecutor extends XDataTestCase {
     }
 
     public void testCoordJobUpdate() throws Exception {
-        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false);
         _testUpdateJob(job.getId());
     }
 

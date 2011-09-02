@@ -160,6 +160,7 @@ public class BundleRerunXCommand extends RerunTransitionXCommand<Void> {
     @Override
     public void updateJob() throws CommandException {
         try {
+            bundleJob.setPending();
             jpaService.execute(new BundleJobUpdateJPAExecutor(bundleJob));
         }
         catch (JPAExecutorException je) {

@@ -25,6 +25,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.command.CommandException;
@@ -61,6 +62,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
     private Date endMatdTime = null;
     private int materializationWindow;
     private int lastActionNumber = 1; // over-ride by DB value
+    private CoordinatorJob.Status prevStatus = null;
 
     /**
      * The constructor for class {@link CoordMaterializeTransitionXCommand}
@@ -74,16 +76,16 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         this.materializationWindow = materializationWindow;
     }
 
-    @Override
-    public void notifyParent() throws CommandException {
-
-    }
-
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.MaterializeTransitionXCommand#transitToNext()
+     */
     @Override
     public void transitToNext() throws CommandException {
-
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.TransitionXCommand#updateJob()
+     */
     @Override
     public void updateJob() throws CommandException {
         try {
@@ -94,6 +96,9 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         }
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.XCommand#getEntityKey()
+     */
     @Override
     protected String getEntityKey() {
         return jobId;
@@ -104,6 +109,9 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         return true;
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.XCommand#loadState()
+     */
     @Override
     protected void loadState() throws CommandException {
         jpaService = Services.get().get(JPAService.class);
@@ -113,6 +121,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
 
         try {
             coordJob = jpaService.execute(new CoordJobGetJPAExecutor(jobId));
+            prevStatus = coordJob.getStatus();
         }
         catch (JPAExecutorException jex) {
             throw new CommandException(jex);
@@ -124,6 +133,11 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         LogUtils.setLogInfo(coordJob, logInfo);
     }
 
+    /**
+     * Calculate startMatdTime and endMatdTime from job's start time if next materialized time is null
+     *
+     * @throws CommandException thrown if failed to calculate startMatdTime and endMatdTime
+     */
     protected void calcMatdTime() throws CommandException {
         Timestamp startTime = coordJob.getNextMaterializedTimestamp();
         if (startTime == null) {
@@ -147,6 +161,9 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
                 + ", window=" + materializationWindow);
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.XCommand#verifyPrecondition()
+     */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
         if (!(coordJob.getStatus() == CoordinatorJobBean.Status.PREP || coordJob.getStatus() == CoordinatorJobBean.Status.RUNNING)) {
@@ -174,6 +191,12 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
                 throw new PreconditionException(ErrorCode.E1100, "CoordMaterializeTransitionXCommand for jobId="
                         + jobId + " job's start time is not reached yet - nothing to materialize");
             }
+        }
+
+        if (coordJob.getLastActionTime() != null && coordJob.getLastActionTime().compareTo(coordJob.getEndTime()) >= 0) {
+            throw new PreconditionException(ErrorCode.E1100, "ENDED Coordinator materialization for jobId = " + jobId
+                    + ", all actions have been materialized from start time = " + coordJob.getStartTime()
+                    + " to end time = " + coordJob.getEndTime() + ", job status = " + coordJob.getStatusStr());
         }
 
         if (coordJob.getLastActionTime() != null && coordJob.getLastActionTime().compareTo(endMatdTime) >= 0) {
@@ -208,6 +231,9 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
 
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.MaterializeTransitionXCommand#materialize()
+     */
     @Override
     protected void materialize() throws CommandException {
         Instrumentation.Cron cron = new Instrumentation.Cron();
@@ -217,8 +243,9 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
             updateJobTable(coordJob);
         }
         catch (CommandException ex) {
-            LOG.warn("Exception occurs:" + ex + " Making the job failed ");
-            coordJob.setStatus(Job.Status.FAILED); // will update to db in updateJob()
+            LOG.warn("Exception occurs:" + ex.getMessage() + " Making the job failed ", ex);
+            coordJob.setStatus(Job.Status.FAILED);
+            coordJob.resetPending();
         }
         catch (Exception e) {
             LOG.error("Excepion thrown :", e);
@@ -343,24 +370,18 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
     private void updateJobTable(CoordinatorJobBean job) throws CommandException {
         job.setLastActionTime(endMatdTime);
         job.setLastActionNumber(lastActionNumber);
-        // if the job endtime == action endtime, then set status of job to succeeded
-        // we dont need to materialize this job anymore
+        // if the job endtime == action endtime, we don't need to materialize this job anymore
         Date jobEndTime = job.getEndTime();
-        if (jobEndTime.compareTo(endMatdTime) <= 0) {
-            LOG.info("[" + job.getId() + "]: Update status from "+ job.getStatus() + " to SUCCEEDED");
-            job.setStatus(Job.Status.SUCCEEDED);
 
-            // update bundle action
-            if (job.getBundleId() != null) {
-                BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(job,
-                        Job.Status.RUNNING);
-                bundleStatusUpdate.call();
-            }
+        LOG.info("[" + job.getId() + "]: Update status from "+ job.getStatus() + " to RUNNING");
+        job.setStatus(Job.Status.RUNNING);
+
+        if (jobEndTime.compareTo(endMatdTime) <= 0) {
+            LOG.info("[" + job.getId() + "]: all actions have been materialized, job status = "+ job.getStatus() + ", set pending to true");
+            //set pending when materialization is done
+            job.setPending();
         }
-        else {
-            LOG.info("[" + job.getId() + "]: Update status from "+ job.getStatus() + " to RUNNING");
-            job.setStatus(Job.Status.RUNNING);
-        }
+
         job.setNextMaterializedTime(endMatdTime);
         try {
             jpaService.execute(new CoordJobUpdateJPAExecutor(job));
@@ -370,9 +391,26 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         }
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.XCommand#getKey()
+     */
     @Override
     public String getKey(){
         return getName() + "_" + jobId;
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.TransitionXCommand#notifyParent()
+     */
+    @Override
+    public void notifyParent() throws CommandException {
+        // update bundle action only when status changes in coord job
+        if (this.coordJob.getBundleId() != null) {
+            if (!prevStatus.equals(coordJob.getStatus())) {
+                BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, prevStatus);
+                bundleStatusUpdate.call();
+            }
+        }
     }
 
 }

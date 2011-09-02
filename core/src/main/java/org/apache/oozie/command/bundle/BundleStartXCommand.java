@@ -180,6 +180,15 @@ public class BundleStartXCommand extends StartTransitionXCommand {
             }
 
             try {
+                // if there is no coordinator for this bundle, failed it.
+                if (map.isEmpty()) {
+                    bundleJob.setStatus(Job.Status.FAILED);
+                    bundleJob.resetPending();
+                    jpaService.execute(new BundleJobUpdateJPAExecutor(bundleJob));
+                    LOG.debug("No coord jobs for the bundle=[{0}], failed it!!", jobId);
+                    throw new CommandException(ErrorCode.E1318, jobId);
+                }
+
                 for (Entry<String, Boolean> coordName : map.entrySet()) {
                     BundleActionBean action = createBundleAction(jobId, coordName.getKey(), coordName.getValue());
 
@@ -319,6 +328,7 @@ public class BundleStartXCommand extends StartTransitionXCommand {
     @Override
     public void updateJob() throws CommandException {
         try {
+            bundleJob.setPending();
             jpaService.execute(new BundleJobUpdateJPAExecutor(bundleJob));
         }
         catch (JPAExecutorException je) {

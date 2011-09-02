@@ -163,6 +163,7 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
                 String wfId = dagEngine.submitJob(conf, startJob);
                 coordAction.setStatus(CoordinatorAction.Status.RUNNING);
                 coordAction.setExternalId(wfId);
+                coordAction.incrementAndGetPending();
 
                 //store.updateCoordinatorAction(coordAction);
                 JPAService jpaService = Services.get().get(JPAService.class);

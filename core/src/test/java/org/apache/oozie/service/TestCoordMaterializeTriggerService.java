@@ -61,13 +61,13 @@ public class TestCoordMaterializeTriggerService extends XDataTestCase {
     public void testCoordMaterializeTriggerService1() throws Exception {
 
         Date start = DateUtils.parseDateUTC("2009-02-01T01:00Z");
-        Date end = DateUtils.parseDateUTC("2009-02-03T23:59Z");
-        final CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, start, end);
+        Date end = DateUtils.parseDateUTC("2009-02-20T23:59Z");
+        final CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, start, end, false, 0);
 
         Thread.sleep(3000);
         Runnable runnable = new CoordMaterializeTriggerRunnable(3600);
         runnable.run();
-        Thread.sleep(6000);
+        Thread.sleep(1000);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         CoordJobGetJPAExecutor coordGetCmd = new CoordJobGetJPAExecutor(job.getId());
@@ -86,12 +86,12 @@ public class TestCoordMaterializeTriggerService extends XDataTestCase {
     public void testCoordMaterializeTriggerService2() throws Exception {
         Date start = new Date();
         Date end = new Date(start.getTime() + 3600 * 48 * 1000);
-        final CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, start, end);
+        final CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, start, end, false, 0);
 
         Thread.sleep(3000);
         Runnable runnable = new CoordMaterializeTriggerRunnable(3600);
         runnable.run();
-        Thread.sleep(6000);
+        Thread.sleep(1000);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         CoordJobGetJPAExecutor coordGetCmd = new CoordJobGetJPAExecutor(job.getId());
@@ -100,7 +100,7 @@ public class TestCoordMaterializeTriggerService extends XDataTestCase {
     }
 
     @Override
-    protected CoordinatorJobBean createCoordJob(CoordinatorJob.Status status, Date start, Date end) throws Exception {
+    protected CoordinatorJobBean createCoordJob(CoordinatorJob.Status status, Date start, Date end, boolean pending, int lastActionNum) throws Exception {
         Path appPath = new Path(getFsTestCaseDir(), "coord");
         String appXml = writeCoordXml(appPath);
 

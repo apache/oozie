@@ -19,7 +19,7 @@ import org.apache.oozie.util.XLog;
 /**
  * Transition command for update status.
  */
-public abstract class StatusUpdateXCommand extends TransitionXCommand<Void>{
+public abstract class StatusUpdateXCommand extends XCommand<Void>{
 
     protected final XLog LOG = XLog.getLog(StatusUpdateXCommand.class);
 

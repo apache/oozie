@@ -108,7 +108,6 @@ public class TestBundleJobSuspendXCommand extends XDataTestCase {
         job = jpaService.execute(bundleJobGetCmd);
         assertEquals(Job.Status.RUNNING, job.getStatus());
 
-
         Thread.sleep(2000);
 
         BundleActionsGetJPAExecutor bundleActionsGetCmd = new BundleActionsGetJPAExecutor(job.getId());
@@ -130,7 +129,6 @@ public class TestBundleJobSuspendXCommand extends XDataTestCase {
 
         final CoordJobGetJPAExecutor coordGetCmd1 = new CoordJobGetJPAExecutor(actions.get(0).getCoordId());
         final CoordJobGetJPAExecutor coordGetCmd2 = new CoordJobGetJPAExecutor(actions.get(1).getCoordId());
-
 
         waitFor(200000, new Predicate() {
             public boolean evaluate() throws Exception {

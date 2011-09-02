@@ -25,7 +25,7 @@ import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.ErrorCode;
 
 /**
- * Load the list of BundleAction return it.
+ * Load the list of BundleAction ordered by lastModifiedTime
  */
 public class BundleActionsGetByLastModifiedTimeJPAExecutor implements JPAExecutor<List<BundleActionBean>> {
     private Date d = null;

@@ -23,6 +23,7 @@ import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.XException;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.command.coord.CoordActionUpdateXCommand;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionsGetForJobJPAExecutor;
@@ -140,14 +141,19 @@ public class KillXCommand extends WorkflowXCommand<Void> {
                 }
             }
             jpaService.execute(new WorkflowJobUpdateJPAExecutor(wfJob));
+            queue(new NotificationXCommand(wfJob));
         }
         catch (JPAExecutorException je) {
             throw new CommandException(je);
         }
-        if(wfJob.getStatus() == WorkflowJob.Status.KILLED) {
-            new WfEndXCommand(wfJob).call(); //To delete the WF temp dir
+        finally {
+            if(wfJob.getStatus() == WorkflowJob.Status.KILLED) {
+                 new WfEndXCommand(wfJob).call(); //To delete the WF temp dir
+            }
+            // update coordinator action
+            CoordActionUpdateXCommand coordActionUpdate = new CoordActionUpdateXCommand(wfJob);
+            coordActionUpdate.call();
         }
-        queue(new NotificationXCommand(wfJob));
 
         LOG.info("ENDED WorkflowKillXCommand for jobId=" + wfId);
         return null;

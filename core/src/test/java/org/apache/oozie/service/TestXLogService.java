@@ -27,12 +27,14 @@ import java.io.InputStream;
 
 public class TestXLogService extends XTestCase {
 
+    @Override
     protected void setUp() throws Exception {
         super.setUp();
         LogFactory.getFactory().release();
         LogManager.resetConfiguration();
     }
 
+    @Override
     protected void tearDown() throws Exception {
         LogFactory.getFactory().release();
         LogManager.resetConfiguration();
@@ -113,6 +115,7 @@ public class TestXLogService extends XTestCase {
     public void testInfoParameters() throws Exception {
         XLogService ls = new XLogService();
         ls.init(null);
+        XLog.Info.get().clear();
         assertEquals("USER[-] GROUP[-]", XLog.Info.get().createPrefix());
         ls.destroy();
     }

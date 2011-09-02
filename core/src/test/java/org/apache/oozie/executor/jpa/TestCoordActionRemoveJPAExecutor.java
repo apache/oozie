@@ -30,7 +30,7 @@ public class TestCoordActionRemoveJPAExecutor extends XDataTestCase {
 
     public void testCoordActionRemove() throws Exception {
         int actionNum = 1;
-        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false);
         CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), actionNum,
                 CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml");
         _testCoordActionRemove(job.getId(), action.getId());

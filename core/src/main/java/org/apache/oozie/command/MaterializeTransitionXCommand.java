@@ -47,6 +47,13 @@ public abstract class MaterializeTransitionXCommand extends TransitionXCommand<V
         super(name, type, priority, dryrun);
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.TransitionXCommand#transitToNext()
+     */
+    @Override
+    public void transitToNext() throws CommandException {
+    }
+
     /**
      * Materialize the actions for current job
      * @throws CommandException thrown if failed to materialize
@@ -58,8 +65,12 @@ public abstract class MaterializeTransitionXCommand extends TransitionXCommand<V
      */
     @Override
     protected Void execute() throws CommandException {
-        materialize();
-        updateJob();
+        try {
+            materialize();
+            updateJob();
+        } finally {
+            notifyParent();
+        }
         return null;
     }
 

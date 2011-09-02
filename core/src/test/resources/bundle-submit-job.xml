@@ -26,7 +26,7 @@
                      </property>
                      <property>
                          <name>END_TIME</name>
-                         <value>2009-02-03T23:59Z</value>
+                         <value>2009-02-20T23:59Z</value>
                      </property>
                  </configuration>
           </coordinator>
@@ -43,7 +43,7 @@
                      </property>
                      <property>
                          <name>END_TIME</name>
-                         <value>2009-02-03T23:59Z</value>
+                         <value>2009-02-23T23:59Z</value>
                      </property>
                  </configuration>
           </coordinator>

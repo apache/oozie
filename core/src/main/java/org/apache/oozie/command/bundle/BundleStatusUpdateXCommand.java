@@ -55,42 +55,6 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
     }
 
     /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#getJob()
-     */
-    @Override
-    public Job getJob() {
-        return null;
-    }
-
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#notifyParent()
-     */
-    @Override
-    public void notifyParent() throws CommandException {
-    }
-
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#setJob(org.apache.oozie.client.Job)
-     */
-    @Override
-    public void setJob(Job job) {
-    }
-
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#transitToNext()
-     */
-    @Override
-    public void transitToNext() throws CommandException {
-    }
-
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#updateJob()
-     */
-    @Override
-    public void updateJob() throws CommandException {
-    }
-
-    /* (non-Javadoc)
      * @see org.apache.oozie.command.XCommand#execute()
      */
     @Override
@@ -135,10 +99,34 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
     }
 
     /* (non-Javadoc)
+     * @see org.apache.oozie.command.XCommand#eagerLoadState()
+     */
+    @Override
+    protected void eagerLoadState() throws CommandException{
+        loadState();
+    }
+
+    /* (non-Javadoc)
      * @see org.apache.oozie.command.XCommand#loadState()
      */
     @Override
     protected void loadState() throws CommandException {
+        try {
+            if (jpaService == null) {
+                jpaService = Services.get().get(JPAService.class);
+            }
+
+            if (jpaService != null) {
+                this.bundleaction = jpaService.execute(new BundleActionGetJPAExecutor(coordjob.getBundleId(), coordjob
+                        .getAppName()));
+            }
+            else {
+                throw new CommandException(ErrorCode.E0610);
+            }
+        }
+        catch (XException ex) {
+            throw new CommandException(ex);
+        }
     }
 
     /* (non-Javadoc)
@@ -163,35 +151,6 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#eagerLoadState()
-     */
-    @Override
-    protected void eagerLoadState() throws CommandException {
-        try {
-            super.eagerLoadState();
-            jpaService = Services.get().get(JPAService.class);
-
-            if (jpaService != null) {
-                this.bundleaction = jpaService.execute(new BundleActionGetJPAExecutor(coordjob.getBundleId(), coordjob
-                        .getAppName()));
-            }
-            else {
-                throw new CommandException(ErrorCode.E0610);
-            }
-        }
-        catch (XException ex) {
-            throw new CommandException(ex);
-        }
-    }
-
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#eagerVerifyPrecondition()
-     */
-    @Override
-    protected void eagerVerifyPrecondition() throws CommandException, PreconditionException {
-    }
-
     /**
      * Convert coordinator job status to job status.
      *
@@ -199,10 +158,6 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
      * @return job status
      */
     public static Job.Status convertCoordStatustoJob(CoordinatorJob.Status coordStatus) {
-        if (coordStatus == Job.Status.PREMATER) {
-            coordStatus = CoordinatorJob.Status.RUNNING;
-        }
-
         for (Job.Status js : Job.Status.values()) {
             if (coordStatus.toString().compareToIgnoreCase(js.toString()) == 0) {
                 return js;

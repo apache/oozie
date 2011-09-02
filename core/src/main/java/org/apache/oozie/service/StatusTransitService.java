@@ -23,14 +23,26 @@ import java.util.Set;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
+import org.apache.oozie.CoordinatorActionBean;
+import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.client.Job;
+import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.bundle.BundleKillXCommand;
+import org.apache.oozie.executor.jpa.BundleActionsFailedAndNullCoordCountGetJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleActionsGetByLastModifiedTimeJPAExecutor;
-import org.apache.oozie.executor.jpa.BundleActionsGetJPAExecutor;
+import org.apache.oozie.executor.jpa.BundleActionsNotEqualStatusCountGetJPAExecutor;
+import org.apache.oozie.executor.jpa.BundleActionsPendingTrueCountGetJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobsGetPendingJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobsGetRunningJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionsGetByLastModifiedTimeJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionsPendingFalseCountGetJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionsPendingFalseStatusCountGetJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobUpdateJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobsGetPendingJPAExecutor;
+import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.SchedulerService;
 import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
@@ -38,10 +50,10 @@ import org.apache.oozie.util.MemoryLocks;
 import org.apache.oozie.util.XLog;
 
 /**
- * StateTransitService is scheduled to run at the configured interval. It is to
- * update bundle job's status according to its child actions' status. If all
- * child actions' pending flag equals 0 (job done), we reset the job's pending
- * flag to 0. If all child actions are succeeded, we set the job's status to
+ * StateTransitService is scheduled to run at the configured interval.
+ * <p/>
+ * It is to update job's status according to its child actions' status. If all child actions' pending flag equals 0 (job
+ * done), we reset the job's pending flag to 0. If all child actions are succeeded, we set the job's status to
  * SUCCEEDED.
  */
 public class StatusTransitService implements Service {
@@ -50,11 +62,12 @@ public class StatusTransitService implements Service {
     private static int limit = -1;
     private static Date lastInstanceStartTime = null;
     private final static XLog LOG = XLog.getLog(StatusTransitRunnable.class);
-    
+
     /**
-     * StateTransitRunnable is the runnable which is scheduled to run at the configured interval. It is to
-     * update bundle job's status according to its child actions' status. If all child actions' pending flag equals
-     * 0 (job done), we reset the job's pending flag to 0. If all child actions are succeeded, we set the job's status to
+     * StateTransitRunnable is the runnable which is scheduled to run at the configured interval.
+     * <p/>
+     * It is to update job's status according to its child actions' status. If all child actions' pending flag equals 0
+     * (job done), we reset the job's pending flag to 0. If all child actions are succeeded, we set the job's status to
      * SUCCEEDED.
      */
     static class StatusTransitRunnable implements Runnable {
@@ -70,66 +83,22 @@ public class StatusTransitService implements Service {
 
         public void run() {
             try {
-                Date d = new Date(); // records the start time of this service run;
-                
+                Date curDate = new Date(); // records the start time of this service run;
+
                 // first check if there is some other instance running;
-                lock = Services.get().get(MemoryLocksService.class).getWriteLock(StatusTransitService.class.getName(), lockTimeout);
+                lock = Services.get().get(MemoryLocksService.class).getWriteLock(StatusTransitService.class.getName(),
+                        lockTimeout);
                 if (lock == null) {
                     LOG.info("This StatusTransitService instance will not run since there is already an instance running");
                 }
                 else {
                     LOG.info("Acquired lock for [{0}]", StatusTransitService.class.getName());
-                    
-                    List<BundleJobBean> pendingJobCheckList = null;
-                    List<BundleJobBean> runningJobCheckList = null;
-                    if (lastInstanceStartTime == null) { // this is the first instance, we need to check for all pending jobs;
-                        pendingJobCheckList = jpaService.execute(new BundleJobsGetPendingJPAExecutor(limit));
-                        runningJobCheckList = jpaService.execute(new BundleJobsGetRunningJPAExecutor(limit));
-                    }
-                    else { // this is not the first instance, we should only check jobs that have actions been 
-                           // updated >= start time of last service run;
-                        List<BundleActionBean> actionList = jpaService.execute(new BundleActionsGetByLastModifiedTimeJPAExecutor(lastInstanceStartTime));
-                        Set<String> bundleIds = new HashSet<String>();
-                        for (BundleActionBean action : actionList) {
-                            bundleIds.add(action.getBundleId());
-                        }
-                        pendingJobCheckList = new ArrayList<BundleJobBean>();
-                        for (String bundleId : bundleIds.toArray(new String[bundleIds.size()])) {
-                            BundleJobBean bundle = jpaService.execute(new BundleJobGetJPAExecutor(bundleId));
-                            pendingJobCheckList.add(bundle);
-                        }
-                        
-                        runningJobCheckList = pendingJobCheckList;
-                    }
-                    
-                    for (BundleJobBean bundleJob : pendingJobCheckList) {
-                        String jobId = bundleJob.getId();
-                        List<BundleActionBean> actionList = jpaService.execute(new BundleActionsGetJPAExecutor(jobId));
-                        if (checkAllBundleActionsDone(actionList)) {
-                            bundleJob.resetPending();
-                            jpaService.execute(new BundleJobUpdateJPAExecutor(bundleJob));
-                        }
-                    }
+                    // running bundle jobs transit service
+                    bundleTransit();
+                    // running coord jobs transit service
+                    coordTransit();
 
-                    for (BundleJobBean bundleJob : runningJobCheckList) {
-                        String jobId = bundleJob.getId();
-                        List<BundleActionBean> actionList = jpaService.execute(new BundleActionsGetJPAExecutor(jobId));
-                        
-                        // If all actions succeed, bundle succeeds; 
-                        if (checkAllBundleActionsSucceeded(actionList)) {
-                            bundleJob.setStatus(Job.Status.SUCCEEDED);
-                            jpaService.execute(new BundleJobUpdateJPAExecutor(bundleJob));
-                        }
-                        
-                        // If all actions finish submission and some submission failed, 
-                        // kill the whole bundle;
-                        if (checkActionSubmitFail(actionList)) {
-                            (new BundleKillXCommand(jobId)).call();
-                            LOG.info("Bundle " + jobId + " has been killed since one of its coordinator job failed submission.");
-                        }
-                    }
-
-                    lastInstanceStartTime = d;
+                    lastInstanceStartTime = curDate;
                 }
             }
             catch (Exception ex) {
@@ -140,51 +109,144 @@ public class StatusTransitService implements Service {
                 if (lock != null) {
                     lock.release();
                     LOG.info("Released lock for [{0}]", StatusTransitService.class.getName());
-                }                
+                }
             }
         }
 
-        private boolean checkAllBundleActionsDone(List<BundleActionBean> actionList) {
-            boolean done = true;
-            for (BundleActionBean action : actionList) {
-                if (action.isPending()) { // action is not done;
-                    done = false;
-                    break;
-                }
+        /**
+         * Aggregate bundle actions' status to bundle jobs
+         *
+         * @throws JPAExecutorException thrown if failed in db updates or retrievals
+         * @throws CommandException thrown if failed to run commands
+         */
+        private void bundleTransit() throws JPAExecutorException, CommandException {
+            List<BundleJobBean> pendingJobCheckList = null;
+            List<BundleJobBean> runningJobCheckList = null;
+            if (lastInstanceStartTime == null) { // this is the first instance, we need to check for all pending
+                // jobs;
+                pendingJobCheckList = jpaService.execute(new BundleJobsGetPendingJPAExecutor(limit));
+                runningJobCheckList = jpaService.execute(new BundleJobsGetRunningJPAExecutor(limit));
             }
-            
-            return done;
-        }
-        
-        private boolean checkAllBundleActionsSucceeded(List<BundleActionBean> actionList) {
-            boolean succeeded = true;
-            for (BundleActionBean action : actionList) {
-                if (action.getStatus() != Job.Status.SUCCEEDED) {
-                    succeeded = false;
-                    break;
+            else { // this is not the first instance, we should only check jobs that have actions been
+                // updated >= start time of last service run;
+                List<BundleActionBean> actionList = jpaService
+                        .execute(new BundleActionsGetByLastModifiedTimeJPAExecutor(lastInstanceStartTime));
+                Set<String> bundleIds = new HashSet<String>();
+                for (BundleActionBean action : actionList) {
+                    bundleIds.add(action.getBundleId());
                 }
+                pendingJobCheckList = new ArrayList<BundleJobBean>();
+                for (String bundleId : bundleIds.toArray(new String[bundleIds.size()])) {
+                    BundleJobBean bundle = jpaService.execute(new BundleJobGetJPAExecutor(bundleId));
+                    if (bundle.isPending()) {
+                        pendingJobCheckList.add(bundle);
+                    }
+                }
+
+                runningJobCheckList = pendingJobCheckList;
             }
-            
-            return succeeded;
-        }
-        
-        // If all actions finish submission and some submission failed, return true;
-        // Otherwise return false;
-        private boolean checkActionSubmitFail(List<BundleActionBean> actionList) {
-            for (BundleActionBean action : actionList) {
-                if (action.getPending() != 0) {
-                    return false;
+
+            for (BundleJobBean bundleJob : pendingJobCheckList) {
+                String jobId = bundleJob.getId();
+                // Check if if all bundle actions have pending = false.
+                BundleActionsPendingTrueCountGetJPAExecutor actionsPendingTrueCmd = new BundleActionsPendingTrueCountGetJPAExecutor(
+                        jobId);
+                int totalPendingTrue = jpaService.execute(actionsPendingTrueCmd);
+                if (totalPendingTrue == 0) {
+                    bundleJob.resetPending();
+                    jpaService.execute(new BundleJobUpdateJPAExecutor(bundleJob));
+                    LOG.debug("All bundle actions are pending=false so update bundle job [" + jobId
+                            + "] pending=false.");
                 }
             }
 
-            for (BundleActionBean action : actionList) {
-                if ( (action.getStatus() == Job.Status.FAILED) && (action.getCoordId() == null)) {
-                    return true;
+            for (BundleJobBean bundleJob : runningJobCheckList) {
+                String jobId = bundleJob.getId();
+                // If all actions succeed, bundle succeeds;
+                BundleActionsNotEqualStatusCountGetJPAExecutor actionsNotSucceedCmd = new BundleActionsNotEqualStatusCountGetJPAExecutor(
+                        jobId, Job.Status.SUCCEEDED.toString());
+                int totalNotSucceed = jpaService.execute(actionsNotSucceedCmd);
+                if (totalNotSucceed == 0) {
+                    bundleJob.setStatus(Job.Status.SUCCEEDED);
+                    jpaService.execute(new BundleJobUpdateJPAExecutor(bundleJob));
+                    LOG.info("Update bundle job [" + jobId + "] to SUCCEEDED.");
+                    continue;
+                }
+
+                BundleActionsPendingTrueCountGetJPAExecutor actionsPendingTrueCmd = new BundleActionsPendingTrueCountGetJPAExecutor(
+                        jobId);
+                int totalPendingTrue = jpaService.execute(actionsPendingTrueCmd);
+
+                if (totalPendingTrue == 0) {
+                    // If all actions finish submission and some submission failed, kill the whole bundle;
+                    BundleActionsFailedAndNullCoordCountGetJPAExecutor actionsFailedAndNullCoordCmd = new BundleActionsFailedAndNullCoordCountGetJPAExecutor(
+                            jobId);
+                    int totalFailedAndNullCoord = jpaService.execute(actionsFailedAndNullCoordCmd);
+                    if (totalFailedAndNullCoord > 0) {
+                        (new BundleKillXCommand(jobId)).call();
+                        LOG.info("Bundle job [" + jobId
+                                + "] has been killed since one of its coordinator job failed submission.");
+                    }
+                }
+            }
+        }
+
+        /**
+         * Aggregate coordinator actions' status to coordinator jobs
+         *
+         * @throws JPAExecutorException thrown if failed in db updates or retrievals
+         * @throws CommandException thrown if failed to run commands
+         */
+        private void coordTransit() throws JPAExecutorException, CommandException {
+            List<CoordinatorJobBean> pendingJobCheckList = null;
+            if (lastInstanceStartTime == null) { // this is the first instance, we need to check for all pending jobs;
+                pendingJobCheckList = jpaService.execute(new CoordJobsGetPendingJPAExecutor(limit));
+            }
+            else { // this is not the first instance, we should only check jobs that have actions been
+                // updated >= start time of last service run;
+                List<CoordinatorActionBean> actionList = jpaService
+                        .execute(new CoordActionsGetByLastModifiedTimeJPAExecutor(lastInstanceStartTime));
+                Set<String> coordIds = new HashSet<String>();
+                for (CoordinatorActionBean action : actionList) {
+                    coordIds.add(action.getJobId());
+                }
+                pendingJobCheckList = new ArrayList<CoordinatorJobBean>();
+                for (String coordId : coordIds.toArray(new String[coordIds.size()])) {
+                    CoordinatorJobBean coordJob = jpaService.execute(new CoordJobGetJPAExecutor(coordId));
+                    if (coordJob.isPending()) {
+                        pendingJobCheckList.add(coordJob);
+                    }
                 }
             }
 
-            return false;
+            for (CoordinatorJobBean coordJob : pendingJobCheckList) {
+                String jobId = coordJob.getId();
+                CoordActionsPendingFalseCountGetJPAExecutor actionsPendingFalseCmd = new CoordActionsPendingFalseCountGetJPAExecutor(
+                        jobId);
+                int totalPendingFalse = jpaService.execute(actionsPendingFalseCmd);
+                if (coordJob.getLastActionNumber() == totalPendingFalse) {
+                    coordJob.resetPending();
+                    LOG.debug("All coordinator actions are pending=false so update coordinator job [" + jobId
+                            + "] pending=false.");
+                    if (coordJob.getStatus().equals(Job.Status.RUNNING)) {
+                        // If all actions succeed, coordinator job succeeds, otherwise done with error
+                        CoordActionsPendingFalseStatusCountGetJPAExecutor actionsSucceedCmd = new CoordActionsPendingFalseStatusCountGetJPAExecutor(
+                                jobId, Job.Status.SUCCEEDED.toString());
+                        int totalSucceeds = jpaService.execute(actionsSucceedCmd);
+                        if (coordJob.getLastActionNumber() == totalSucceeds) {
+                            coordJob.setStatus(Job.Status.SUCCEEDED);
+                            LOG.info("Update coordinator job [" + jobId + "] to SUCCEEDED.");
+                        }
+                        else {
+                            coordJob.setStatus(Job.Status.DONEWITHERROR);
+                            LOG.info("Update coordinator job [" + jobId + "] to DONEWITHERROR.");
+                        }
+                    }
+                    jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
+                }
+            }
         }
+
     }
 
     /**
@@ -196,8 +258,8 @@ public class StatusTransitService implements Service {
     public void init(Services services) {
         Configuration conf = services.getConf();
         Runnable stateTransitRunnable = new StatusTransitRunnable();
-        services.get(SchedulerService.class).schedule(stateTransitRunnable, 10, conf.getInt(CONF_STATUSTRANSIT_INTERVAL, 60),
-                                                      SchedulerService.Unit.SEC);
+        services.get(SchedulerService.class).schedule(stateTransitRunnable, 10,
+                conf.getInt(CONF_STATUSTRANSIT_INTERVAL, 60), SchedulerService.Unit.SEC);
     }
 
     /**

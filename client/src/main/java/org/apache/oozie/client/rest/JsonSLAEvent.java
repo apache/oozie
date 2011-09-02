@@ -39,7 +39,7 @@ public class JsonSLAEvent implements SLAEvent, JsonBean {
     // Primary key
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "EVENT_SEQ")
-    @SequenceGenerator(name = "EVENT_SEQ", sequenceName = "EVENT_SEQ", allocationSize = 50)
+    @SequenceGenerator(name = "EVENT_SEQ", sequenceName = "EVENT_SEQ", initialValue = 1, allocationSize = 50)
     private long event_id;
 
     @Basic
@@ -135,7 +135,7 @@ public class JsonSLAEvent implements SLAEvent, JsonBean {
 
     /*
      * public String getClientId() { return clientId; }
-     * 
+     *
      * public void setClientId(String clientId) { this.clientId = clientId; }
      */
     public SlaAppType getAppType() {

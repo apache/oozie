@@ -47,11 +47,11 @@ public class TestCoordJobInfoGetJPAExecutor extends XDataTestCase {
     }
 
     public void testCoordJobGet() throws Exception {
-        addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING);
-        addRecordToCoordJobTable(CoordinatorJob.Status.KILLED);
+        addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false);
+        addRecordToCoordJobTable(CoordinatorJob.Status.KILLED, false);
         _testGetJobInfoForStatus();
         _testGetJobInfoForGroup();
-        addRecordToCoordJobTable(CoordinatorJob.Status.KILLED);
+        addRecordToCoordJobTable(CoordinatorJob.Status.KILLED, false);
         _testGetJobInfoForAppName();
         _testGetJobInfoForUser();
         _testGetJobInfoForUserAndStatus();

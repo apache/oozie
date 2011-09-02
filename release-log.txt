@@ -1,4 +1,6 @@
 -- Oozie 3.0.0 release
+
+GH-0557 Update StatusTransitService to aggregate coordinator status
 GH-0125 Query GET_WORKFLOWS_COLUMNS should order by createdTimestamp instead of starttime
 GH-0559 kill a wf job by CLI command left the hdfs temp dir not deleted.
 GH-0515 LauncherMapper should add OOZIE_JOB/ACTION_ID to action configuration

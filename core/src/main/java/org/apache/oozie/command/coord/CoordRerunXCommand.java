@@ -80,6 +80,7 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
     private static XLog LOG = XLog.getLog(CoordRerunXCommand.class);
     private CoordinatorJobBean coordJob = null;
     private JPAService jpaService = null;
+    private CoordinatorJob.Status prevStatus = null;
 
     /**
      * The constructor for class {@link CoordRerunXCommand}
@@ -386,6 +387,7 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
         }
         try {
             coordJob = jpaService.execute(new CoordJobGetJPAExecutor(jobId));
+            prevStatus = coordJob.getStatus();
         }
         catch (JPAExecutorException je) {
             throw new CommandException(je);
@@ -405,7 +407,7 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
                     "coordinator job is killed or failed so all actions are not eligible to rerun!");
         }
     }
-    
+
     @Override
     protected void eagerVerifyPrecondition() throws CommandException, PreconditionException {
         verifyPrecondition();
@@ -461,10 +463,10 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
         finally {
             //update bundle action
             if (coordJob.getBundleId() != null) {
-                BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, coordJob.getStatus());
+                BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, prevStatus);
                 bundleStatusUpdate.call();
             }
-        }    
+        }
     }
 
     /*
@@ -487,7 +489,7 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
         }
         catch (JPAExecutorException je) {
             throw new CommandException(je);
-        }   
+        }
     }
 
     /* (non-Javadoc)

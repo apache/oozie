@@ -18,6 +18,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.apache.oozie.SLAEventBean;
+import org.apache.oozie.client.SLAEvent.Status;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
@@ -40,17 +41,23 @@ public class TestSLAEventsGetForSeqIdJPAExecutor extends XDataTestCase {
     }
 
     public void testSLAEventsGetForSeqId() throws Exception {
-        final String wfId = "0000000-" + new Date().getTime() + "-TestSLAEventsGetForSeqIdCommand-W";
-        addRecordToSLAEventTable(wfId);
-        addRecordToSLAEventTable(wfId);
-        addRecordToSLAEventTable(wfId);
+        final String wfId = "0000000-" + new Date().getTime() + "-TestSLAEventsGetForSeqIdJPAExecutor-W";
+        addRecordToSLAEventTable(wfId, Status.CREATED);
+        addRecordToSLAEventTable(wfId, Status.STARTED);
+        addRecordToSLAEventTable(wfId, Status.SUCCEEDED);
         _testGetSLAEventsForSeqId(wfId);
     }
 
     private void _testGetSLAEventsForSeqId(String jobId) throws Exception {
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
-        SLAEventsGetForSeqIdJPAExecutor slaEventsGetCmd = new SLAEventsGetForSeqIdJPAExecutor(0, 10, new long[1]);
+
+        SLAEventsGetJPAExecutor slaEventsGetAllCmd = new SLAEventsGetJPAExecutor();
+        List<SLAEventBean> fullList = jpaService.execute(slaEventsGetAllCmd);
+        assertNotNull(fullList);
+        long lastId = fullList.get(0).getEvent_id();
+
+        SLAEventsGetForSeqIdJPAExecutor slaEventsGetCmd = new SLAEventsGetForSeqIdJPAExecutor(lastId, 10, new long[1]);
         List<SLAEventBean> list = jpaService.execute(slaEventsGetCmd);
         assertNotNull(list);
         assertEquals(2, list.size());

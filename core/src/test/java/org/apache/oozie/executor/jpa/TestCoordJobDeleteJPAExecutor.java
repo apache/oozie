@@ -27,7 +27,7 @@ public class TestCoordJobDeleteJPAExecutor extends XDataTestCase {
     }
 
     public void testCoordJobDelete() throws Exception {
-        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false);
         _testCoordJobDelete(job.getId());
     }
 

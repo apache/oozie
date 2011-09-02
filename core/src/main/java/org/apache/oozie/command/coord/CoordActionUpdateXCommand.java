@@ -54,14 +54,17 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
 
             if (workflow.getStatus() == WorkflowJob.Status.SUCCEEDED) {
                 coordAction.setStatus(CoordinatorAction.Status.SUCCEEDED);
+                coordAction.setPending(0);
                 slaStatus = Status.SUCCEEDED;
             }
             else if (workflow.getStatus() == WorkflowJob.Status.FAILED) {
                 coordAction.setStatus(CoordinatorAction.Status.FAILED);
+                coordAction.setPending(0);
                 slaStatus = Status.FAILED;
             }
             else if (workflow.getStatus() == WorkflowJob.Status.KILLED) {
                 coordAction.setStatus(CoordinatorAction.Status.KILLED);
+                coordAction.setPending(0);
                 slaStatus = Status.KILLED;
             }
             else {
@@ -73,7 +76,7 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
                 return null;
             }
 
-            LOG.info("Updating Coordintaor id :" + coordAction.getId() + "status to =" + coordAction.getStatus());
+            LOG.info("Updating Coordintaor id :" + coordAction.getId() + " status to " + coordAction.getStatus());
             coordAction.setLastModifiedTime(new Date());
             jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionUpdateJPAExecutor(coordAction));
             if (slaStatus != null) {

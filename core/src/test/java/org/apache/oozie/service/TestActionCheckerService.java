@@ -27,8 +27,6 @@ import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordActionInsertJPAExecutor;
-import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionsGetForJobJPAExecutor;
 import org.apache.oozie.CoordinatorActionBean;
@@ -198,11 +196,11 @@ public class TestActionCheckerService extends XDataTestCase {
     public void testActionCheckerServiceCoord() throws Exception {
         final int actionNum = 1;
         final CoordinatorEngine ce = new CoordinatorEngine(getTestUser(), "UNIT_TESTING");
-        final CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREMATER);
+        final CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false);
         final WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED,
                 WorkflowInstance.Status.SUCCEEDED);
         final CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), actionNum,
-                CoordinatorAction.Status.RUNNING, "coord-action-get.xml", wfJob.getId());
+                CoordinatorAction.Status.RUNNING, "coord-action-get.xml", wfJob.getId(), "RUNNING");
 
         Thread.sleep(3000);
         Runnable actionCheckRunnable = new ActionCheckRunnable(1);
@@ -220,23 +218,5 @@ public class TestActionCheckerService extends XDataTestCase {
         assertEquals(CoordinatorAction.Status.SUCCEEDED, recoveredAction.getStatus());
     }
 
-    protected CoordinatorActionBean addRecordToCoordActionTable(String jobId, int actionNum,
-            CoordinatorAction.Status status, String resourceXmlName, String wfId) throws Exception {
-        CoordinatorActionBean action = createCoordAction(jobId, actionNum, status, resourceXmlName);
-        action.setExternalId(wfId);
-        action.setExternalStatus("RUNNING");
-        try {
-            JPAService jpaService = Services.get().get(JPAService.class);
-            assertNotNull(jpaService);
-            CoordActionInsertJPAExecutor coordActionInsertExecutor = new CoordActionInsertJPAExecutor(action);
-            jpaService.execute(coordActionInsertExecutor);
-        }
-        catch (JPAExecutorException je) {
-            je.printStackTrace();
-            fail("Unable to insert the test coord action record to table");
-            throw je;
-        }
-        return action;
-    }
 
 }

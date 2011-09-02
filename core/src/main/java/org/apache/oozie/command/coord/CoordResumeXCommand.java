@@ -23,6 +23,8 @@ import org.apache.oozie.XException;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.command.ResumeTransitionXCommand;
+import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.command.wf.ResumeXCommand;
 import org.apache.oozie.executor.jpa.CoordJobGetActionsJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
@@ -35,9 +37,13 @@ import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
 
-public class CoordResumeXCommand extends CoordinatorXCommand<Void> {
+/**
+ * Resume coordinator job and actions.
+ *
+ */
+public class CoordResumeXCommand extends ResumeTransitionXCommand {
     private final String jobId;
-    private final static XLog log = XLog.getLog(CoordResumeXCommand.class);
+    private final static XLog LOG = XLog.getLog(CoordResumeXCommand.class);
     private CoordinatorJobBean coordJob = null;
     private JPAService jpaService = null;
     private boolean exceptionOccured = false;
@@ -48,45 +54,25 @@ public class CoordResumeXCommand extends CoordinatorXCommand<Void> {
         this.jobId = ParamChecker.notEmpty(id, "id");
     }
 
-    @Override
-    protected Void execute() throws CommandException {
-        try {
-            InstrumentUtils.incrJobCounter(getName(), 1, getInstrumentation());
-            coordJob.setStatus(CoordinatorJob.Status.PREP);
-
-            List<CoordinatorActionBean> actionList = jpaService.execute(new CoordJobGetActionsJPAExecutor(jobId));
-
-            for (CoordinatorActionBean action : actionList) {
-                // queue a ResumeCommand
-                if (action.getExternalId() != null) {
-                    queue(new ResumeXCommand(action.getExternalId()));
-                }
-            }
-            jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
-
-            return null;
-        }
-        catch (XException ex) {
-            exceptionOccured = true;
-            throw new CommandException(ex);
-        }
-        finally {
-            if (exceptionOccured) {
-                coordJob.setStatus(CoordinatorJob.Status.FAILED);
-            }
-        }
-    }
-
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.XCommand#getEntityKey()
+     */
     @Override
     protected String getEntityKey() {
         return jobId;
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.XCommand#isLockRequired()
+     */
     @Override
     protected boolean isLockRequired() {
         return true;
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.XCommand#loadState()
+     */
     @Override
     protected void loadState() throws CommandException {
         jpaService = Services.get().get(JPAService.class);
@@ -103,6 +89,9 @@ public class CoordResumeXCommand extends CoordinatorXCommand<Void> {
         LogUtils.setLogInfo(coordJob, logInfo);
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.XCommand#verifyPrecondition()
+     */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
         if (coordJob.getStatus() != CoordinatorJob.Status.SUSPENDED) {
@@ -110,4 +99,68 @@ public class CoordResumeXCommand extends CoordinatorXCommand<Void> {
                     + "job not in SUSPENDED state " + jobId);
         }
     }
+
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.TransitionXCommand#updateJob()
+     */
+    @Override
+    public void updateJob() throws CommandException {
+        InstrumentUtils.incrJobCounter(getName(), 1, getInstrumentation());
+        coordJob.setSuspendedTime(null);
+        LOG.debug("Resume coordinator job id = " + jobId + ", status = " + coordJob.getStatus());
+        try {
+            jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
+        }
+        catch (JPAExecutorException e) {
+            throw new CommandException(e);
+        }
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.ResumeTransitionXCommand#resumeChildren()
+     */
+    @Override
+    public void resumeChildren() throws CommandException {
+        try {
+            List<CoordinatorActionBean> actionList = jpaService.execute(new CoordJobGetActionsJPAExecutor(jobId));
+
+            for (CoordinatorActionBean action : actionList) {
+                // queue a ResumeXCommand
+                if (action.getExternalId() != null) {
+                    queue(new ResumeXCommand(action.getExternalId()));
+                }
+            }
+        }
+        catch (XException ex) {
+            exceptionOccured = true;
+            throw new CommandException(ex);
+        }
+        finally {
+            if (exceptionOccured) {
+                coordJob.setStatus(CoordinatorJob.Status.FAILED);
+                coordJob.resetPending();
+                LOG.warn("Resume children failed so fail coordinator, coordinator job id = " + jobId
+                        + ", status = " + coordJob.getStatus());
+                try {
+                    jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
+                }
+                catch (JPAExecutorException je) {
+                    LOG.error("Failed to update coordinator job : " + jobId, je);
+                }
+            }
+        }
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.TransitionXCommand#notifyParent()
+     */
+    @Override
+    public void notifyParent() throws CommandException {
+        // update bundle action
+        if (this.coordJob.getBundleId() != null) {
+            BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, prevStatus);
+            bundleStatusUpdate.call();
+        }
+    }
+
 }

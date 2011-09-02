@@ -50,7 +50,7 @@ public class TestCoordKillXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testCoordKillSuccess1() throws Exception {
-        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false);
         CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.READY, "coord-action-get.xml");
 
         JPAService jpaService = Services.get().get(JPAService.class);
@@ -77,7 +77,7 @@ public class TestCoordKillXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testCoordKillSuccess2() throws Exception {
-        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false);
         CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.RUNNING, "coord-action-get.xml");
 
         JPAService jpaService = Services.get().get(JPAService.class);
@@ -104,7 +104,7 @@ public class TestCoordKillXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testCoordKillFailedOnAction() throws Exception {
-        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false);
         CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml");
 
         JPAService jpaService = Services.get().get(JPAService.class);
@@ -133,7 +133,7 @@ public class TestCoordKillXCommand extends XDataTestCase {
     public void testCoordKillFailed() throws Exception {
         final String testJobId = "0000001-" + new Date().getTime() + "-testCoordKill-C";
 
-        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false);
         CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.READY, "coord-action-get.xml");
 
         JPAService jpaService = Services.get().get(JPAService.class);

@@ -46,6 +46,8 @@ import org.apache.openjpa.persistence.jdbc.Index;
 
         @NamedQuery(name = "GET_COORD_JOB", query = "select OBJECT(w) from CoordinatorJobBean w where w.id = :id"),
 
+        @NamedQuery(name = "GET_COORD_JOBS_PENDING", query = "select OBJECT(w) from CoordinatorJobBean w where w.pending = 1 order by w.lastModifiedTimestamp"),
+
         @NamedQuery(name = "GET_COORD_JOBS_COUNT", query = "select count(w) from CoordinatorJobBean w"),
 
         @NamedQuery(name = "GET_COORD_JOBS_COLUMNS", query = "select w.id, w.appName, w.status, w.user, w.group, w.startTimestamp, w.endTimestamp, w.appPath, w.concurrency, w.frequency, w.lastActionTimestamp, w.nextMaterializedTimestamp, w.createdTimestamp, w.timeUnitStr, w.timeZone, w.timeOut from CoordinatorJobBean w order by w.createdTimestamp desc"),
@@ -124,11 +126,11 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
     @Column(name = "sla_xml")
     @Lob
     private String slaXml = null;
-    
+
     @Basic
     @Column(name = "pending")
     private int pending = 0;
-    
+
     /**
      * Set pending to true
      *
@@ -136,6 +138,7 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
      */
     @Override
     public void setPending() {
+        super.setPending();
         this.pending = 1;
     }
 
@@ -146,6 +149,7 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
      */
     @Override
     public void resetPending() {
+        super.resetPending();
         this.pending = 0;
     }
 
@@ -154,7 +158,6 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
      *
      * @return if the action is pending.
      */
-    @Override
     public boolean isPending() {
         return pending == 1 ? true : false;
     }

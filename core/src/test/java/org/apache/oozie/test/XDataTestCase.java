@@ -28,6 +28,7 @@ import java.util.regex.Matcher;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
@@ -44,7 +45,7 @@ import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.CoordinatorJob.Execution;
 import org.apache.oozie.client.CoordinatorJob.Timeunit;
-import org.apache.oozie.client.SLAEvent.Status;
+import org.apache.oozie.executor.jpa.BundleActionInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobInsertJPAExecutor;
@@ -78,12 +79,13 @@ public abstract class XDataTestCase extends XFsTestCase {
     /**
      * Insert coord job for testing.
      *
-     * @param status
+     * @param status coord job status
+     * @param pending true if pending is true
      * @return coord job bean
      * @throws Exception
      */
-    protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status) throws Exception {
-        CoordinatorJobBean coordJob = createCoordJob(status);
+    protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, boolean pending) throws Exception {
+        CoordinatorJobBean coordJob = createCoordJob(status, pending);
 
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
@@ -104,14 +106,17 @@ public abstract class XDataTestCase extends XFsTestCase {
     /**
      * Insert coord job for testing.
      *
-     * @param status
-     * @param start
-     * @param end
+     * @param status coord job status
+     * @param start start time
+     * @param end end time
+     * @param pending true if pending is true
+     * @param lastActionNum last action number
      * @return coord job bean
      * @throws Exception
      */
-    protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date start, Date end) throws Exception {
-        CoordinatorJobBean coordJob = createCoordJob(status, start, end);
+    protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date start, Date end,
+            boolean pending, int lastActionNum) throws Exception {
+        CoordinatorJobBean coordJob = createCoordJob(status, start, end, pending, lastActionNum);
 
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
@@ -132,13 +137,12 @@ public abstract class XDataTestCase extends XFsTestCase {
     /**
      * Create coord job bean
      *
-     * @param status
-     * @param appPath
-     * @param appXml
+     * @param status coord job status
+     * @param pending true if pending is true
      * @return coord job bean
      * @throws IOException
      */
-    protected CoordinatorJobBean createCoordJob(CoordinatorJob.Status status) throws Exception {
+    protected CoordinatorJobBean createCoordJob(CoordinatorJob.Status status, boolean pending) throws Exception {
         Path appPath = new Path(getFsTestCaseDir(), "coord");
         String appXml = writeCoordXml(appPath);
 
@@ -153,6 +157,9 @@ public abstract class XDataTestCase extends XFsTestCase {
         coordJob.setUser(getTestUser());
         coordJob.setGroup(getTestGroup());
         coordJob.setAuthToken("notoken");
+        if (pending) {
+            coordJob.setPending();
+        }
 
         Configuration conf = getCoordConf(appPath);
         coordJob.setConf(XmlUtils.prettyPrint(conf).toString());
@@ -176,15 +183,18 @@ public abstract class XDataTestCase extends XFsTestCase {
     /**
      * Create coord job bean
      *
-     * @param status
-     * @param appPath
-     * @param appXml
+     * @param status coord job status
+     * @param start start time
+     * @param end end time
+     * @param pending true if pending is true
+     * @param lastActionNum last action number
      * @return coord job bean
      * @throws IOException
      */
-    protected CoordinatorJobBean createCoordJob(CoordinatorJob.Status status, Date start, Date end) throws Exception {
+    protected CoordinatorJobBean createCoordJob(CoordinatorJob.Status status, Date start, Date end, boolean pending,
+            int lastActionNum) throws Exception {
         Path appPath = new Path(getFsTestCaseDir(), "coord");
-        String appXml = writeCoordXml(appPath);
+        String appXml = writeCoordXml(appPath, start, end);
 
         CoordinatorJobBean coordJob = new CoordinatorJobBean();
         coordJob.setId(Services.get().get(UUIDService.class).generateId(ApplicationType.COORDINATOR));
@@ -197,11 +207,14 @@ public abstract class XDataTestCase extends XFsTestCase {
         coordJob.setUser(getTestUser());
         coordJob.setGroup(getTestGroup());
         coordJob.setAuthToken("notoken");
+        if (pending) {
+            coordJob.setPending();
+        }
+        coordJob.setLastActionNumber(lastActionNum);
 
         Configuration conf = getCoordConf(appPath);
         coordJob.setConf(XmlUtils.prettyPrint(conf).toString());
         coordJob.setJobXml(appXml);
-        coordJob.setLastActionNumber(0);
         coordJob.setFrequency(1);
         coordJob.setTimeUnit(Timeunit.DAY);
         coordJob.setExecution(Execution.FIFO);
@@ -236,6 +249,29 @@ public abstract class XDataTestCase extends XFsTestCase {
         IOUtils.copyCharStream(reader2, writer);
         return appXml;
     }
+
+    /**
+     * Write coordinator xml
+     *
+     * @param appPath app path
+     * @param start start time
+     * @param end end time
+     * @throws IOException thrown if unable to write xml
+     * @throws UnsupportedEncodingException thrown if encoding failed
+     */
+    protected String writeCoordXml(Path appPath, Date start, Date end) throws IOException, UnsupportedEncodingException {
+        String appXml = getCoordJobXml(appPath, start, end);
+
+        FileSystem fs = getFileSystem();
+
+        Writer writer = new OutputStreamWriter(fs.create(new Path(appPath + "/coordinator.xml")));
+        byte[] bytes = appXml.getBytes("UTF-8");
+        ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+        Reader reader2 = new InputStreamReader(bais);
+        IOUtils.copyCharStream(reader2, writer);
+        return appXml;
+    }
+
 
     /**
      * Write coordinator xml
@@ -280,6 +316,37 @@ public abstract class XDataTestCase extends XFsTestCase {
     }
 
     /**
+     * Insert coord action and workflow id as external id for testing.
+     *
+     * @param jobId coord job id
+     * @param actionNum action number
+     * @param status coord action status
+     * @param resourceXmlName xml file name
+     * @param wfId wf id
+     * @param wfStatus wf status
+     * @return coord action bean
+     * @throws Exception thrown if unable to create coord action bean
+     */
+    protected CoordinatorActionBean addRecordToCoordActionTable(String jobId, int actionNum,
+            CoordinatorAction.Status status, String resourceXmlName, String wfId, String wfStatus) throws Exception {
+        CoordinatorActionBean action = createCoordAction(jobId, actionNum, status, resourceXmlName);
+        action.setExternalId(wfId);
+        action.setExternalStatus(wfStatus);
+        try {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            assertNotNull(jpaService);
+            CoordActionInsertJPAExecutor coordActionInsertExecutor = new CoordActionInsertJPAExecutor(action);
+            jpaService.execute(coordActionInsertExecutor);
+        }
+        catch (JPAExecutorException je) {
+            je.printStackTrace();
+            fail("Unable to insert the test coord action record to table");
+            throw je;
+        }
+        return action;
+    }
+
+    /**
      * Create coord action bean
      *
      * @param jobId coord job id
@@ -301,6 +368,7 @@ public abstract class XDataTestCase extends XFsTestCase {
         action.setExternalId(actionId + "_E");
         action.setJobId(jobId);
         action.setActionNumber(actionNum);
+        action.setPending(0);
         try {
             action.setNominalTime(DateUtils.parseDateUTC(actionNomialTime));
         }
@@ -388,9 +456,10 @@ public abstract class XDataTestCase extends XFsTestCase {
      * Insert sla event for testing.
      *
      * @param slaId sla id
+     * @param status sla status
      * @throws Exception thrown if unable to create sla bean
      */
-    protected void addRecordToSLAEventTable(String slaId) throws Exception {
+    protected void addRecordToSLAEventTable(String slaId, SLAEvent.Status status) throws Exception {
         SLAEventBean sla = new SLAEventBean();
         sla.setSlaId(slaId);
         sla.setAppName("app-name");
@@ -409,7 +478,7 @@ public abstract class XDataTestCase extends XFsTestCase {
         sla.setAppType(SLAEvent.SlaAppType.WORKFLOW_JOB);
         sla.setUser(getTestUser());
         sla.setGroupName(getTestGroup());
-        sla.setJobStatus(Status.CREATED);
+        sla.setJobStatus(status);
         sla.setStatusTimestamp(new Date());
 
         try {
@@ -472,6 +541,59 @@ public abstract class XDataTestCase extends XFsTestCase {
     }
 
     /**
+     * Create bundle action bean and save to db
+     *
+     * @param jobId bundle job id
+     * @param actionId bnudle action id
+     * @param pending true if action is pending
+     * @param status job status
+     * @return bundle action bean
+     * @throws Exception
+     */
+    protected BundleActionBean addRecordToBundleActionTable(String jobId, String actionId, int pending,
+            Job.Status status) throws Exception {
+        BundleActionBean action = createBundleAction(jobId, actionId, pending, status);
+
+        try {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            assertNotNull(jpaService);
+            BundleActionInsertJPAExecutor bundleActionJPAExecutor = new BundleActionInsertJPAExecutor(action);
+            jpaService.execute(bundleActionJPAExecutor);
+        }
+        catch (JPAExecutorException ex) {
+            ex.printStackTrace();
+            fail("Unable to insert the test bundle action record to table");
+            throw ex;
+        }
+
+        return action;
+    }
+
+    /**
+     * Create bundle action bean
+     *
+     * @param jobId bundle job id
+     * @param actionId bnudle action id
+     * @param pending true if action is pending
+     * @param status job status
+     * @return bundle action bean
+     * @throws Exception
+     */
+    protected BundleActionBean createBundleAction(String jobId, String actionId, int pending, Job.Status status)
+            throws Exception {
+        BundleActionBean action = new BundleActionBean();
+        action.setBundleId(jobId);
+        action.setBundleActionId(actionId);
+        action.setPending(pending);
+        action.setCoordId("1");
+        action.setCoordName("abc");
+        action.setStatus(status);
+        action.setLastModifiedTime(new Date());
+
+        return action;
+    }
+
+    /**
      * Read coord job xml from test resources
      *
      * @param appPath application path
@@ -491,6 +613,36 @@ public abstract class XDataTestCase extends XFsTestCase {
         }
         catch (IOException ioe) {
             throw new RuntimeException(XLog.format("Could not get coord-rerun-job.xml", ioe));
+        }
+    }
+
+    /**
+     * Read coord job xml from test resources
+     *
+     * @param appPath application path
+     * @param start start time
+     * @param end end time
+     * @return content of coord job xml
+     */
+    protected String getCoordJobXml(Path appPath, Date start, Date end) {
+        String startDateStr = null, endDateStr = null;
+        try {
+            startDateStr = DateUtils.formatDateUTC(start);
+            endDateStr = DateUtils.formatDateUTC(end);
+        }
+        catch (Exception ex) {
+            ex.printStackTrace();
+            fail("Could not format dates");
+        }
+        try {
+            Reader reader = IOUtils.getResourceAsReader("coord-matd-job.xml", -1);
+            String appXml = IOUtils.getReaderAsString(reader, -1);
+            appXml = appXml.replaceAll("#start", startDateStr);
+            appXml = appXml.replaceAll("#end", endDateStr);
+            return appXml;
+        }
+        catch (IOException ioe) {
+            throw new RuntimeException(XLog.format("Could not get coord-matd-job.xml", ioe));
         }
     }
 
@@ -691,10 +843,12 @@ public abstract class XDataTestCase extends XFsTestCase {
         Path bundleAppPath = new Path(getFsTestCaseDir(), "bundle");
         String bundleAppXml = getBundleXml("bundle-submit-job.xml");
 
-        bundleAppXml = bundleAppXml.replaceAll("#app_path1", coordPath1.toString() + File.separator + "coordinator.xml");
-        bundleAppXml = bundleAppXml.replaceAll("#app_path2", coordPath2.toString() + File.separator + "coordinator.xml");
-        //bundleAppXml = bundleAppXml.replaceAll("#app_path1", coordPath1.toString());
-        //bundleAppXml = bundleAppXml.replaceAll("#app_path2", coordPath2.toString());
+        bundleAppXml = bundleAppXml
+                .replaceAll("#app_path1", coordPath1.toString() + File.separator + "coordinator.xml");
+        bundleAppXml = bundleAppXml
+                .replaceAll("#app_path2", coordPath2.toString() + File.separator + "coordinator.xml");
+        // bundleAppXml = bundleAppXml.replaceAll("#app_path1", coordPath1.toString());
+        // bundleAppXml = bundleAppXml.replaceAll("#app_path2", coordPath2.toString());
 
         writeToFile(bundleAppXml, bundleAppPath, "bundle.xml");
 
@@ -714,13 +868,13 @@ public abstract class XDataTestCase extends XFsTestCase {
         bundle.setConf(XmlUtils.prettyPrint(conf).toString());
         bundle.setConsoleUrl("consoleUrl");
         bundle.setCreatedTime(new Date());
-        //TODO bundle.setStartTime(startTime);
-        //TODO bundle.setEndTime(endTime);
-        //TODO bundle.setExternalId(externalId);
+        // TODO bundle.setStartTime(startTime);
+        // TODO bundle.setEndTime(endTime);
+        // TODO bundle.setExternalId(externalId);
         bundle.setJobXml(bundleAppXml);
         bundle.setLastModifiedTime(new Date());
         bundle.setOrigJobXml(bundleAppXml);
-        bundle.resetPending();
+        bundle.setPending();
         bundle.setStatus(jobStatus);
         bundle.setUser(conf.get(OozieClient.USER_NAME));
         bundle.setGroup(conf.get(OozieClient.GROUP_NAME));
@@ -744,8 +898,10 @@ public abstract class XDataTestCase extends XFsTestCase {
         Path bundleAppPath = new Path(getFsTestCaseDir(), "bundle");
         String bundleAppXml = getBundleXml("bundle-submit-job.xml");
 
-        bundleAppXml = bundleAppXml.replaceAll("#app_path1", coordPath1.toString() + File.separator + "coordinator.xml");
-        bundleAppXml = bundleAppXml.replaceAll("#app_path2", coordPath2.toString() + File.separator + "coordinator.xml");
+        bundleAppXml = bundleAppXml
+                .replaceAll("#app_path1", coordPath1.toString() + File.separator + "coordinator.xml");
+        bundleAppXml = bundleAppXml
+                .replaceAll("#app_path2", coordPath2.toString() + File.separator + "coordinator.xml");
         writeToFile(bundleAppXml, bundleAppPath, "bundle.xml");
 
         Configuration conf = new XConfiguration();

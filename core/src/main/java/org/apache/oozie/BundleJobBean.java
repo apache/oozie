@@ -244,6 +244,7 @@ public class BundleJobBean extends JsonBundleJob implements Writable {
      */
     @Override
     public void setPending() {
+        super.setPending();
         this.pending = 1;
     }
 
@@ -254,6 +255,7 @@ public class BundleJobBean extends JsonBundleJob implements Writable {
      */
     @Override
     public void resetPending() {
+        super.resetPending();
         this.pending = 0;
     }
 
@@ -262,7 +264,6 @@ public class BundleJobBean extends JsonBundleJob implements Writable {
      *
      * @return if the action is pending.
      */
-    @Override
     public boolean isPending() {
         return pending == 1 ? true : false;
     }
