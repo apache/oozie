@@ -593,6 +593,12 @@ function coordJobDetailsPopup(response, request) {
             width: 200,
             value: jobDetails["status"]
         }, {
+            fieldLabel: 'User',
+            editable: false,
+            name: 'status',
+            width: 200,
+            value: jobDetails["user"]
+	}, {
             fieldLabel: 'Frequency',
             editable: false,
             name: 'frequency',
@@ -873,7 +879,7 @@ function bundleJobDetailsPopup(response, request) {
     var bundleJobName = jobDetails["bundleJobName"];
     var jobActionStatus = new Ext.data.JsonStore({
         data: jobDetails["bundleCoordJobs"],
-        fields: ['coordJobId', 'coordJobName', 'coordJobPath', 'frequency', 'timeUnit', 'nextMaterializedTime', 'status', 'startTime', 'endTime', 'pauseTime']
+        fields: ['coordJobId', 'coordJobName', 'coordJobPath', 'frequency', 'timeUnit', 'nextMaterializedTime', 'status', 'startTime', 'endTime', 'pauseTime','user']
     });
 
     var formFieldSet = new Ext.form.FieldSet({
@@ -967,6 +973,11 @@ function bundleJobDetailsPopup(response, request) {
             width: 80,
             sortable: true,
             dataIndex: 'status'
+        }, {
+            header: "User",
+            width: 80,
+            sortable: true,
+            dataIndex: 'user'
         }, {
             header: "Frequency",
             width: 80,
@@ -1123,7 +1134,7 @@ var coord_jobs_store = new Ext.data.JsonStore({
     totalProperty: 'total',
     autoLoad: true,
     root: 'coordinatorjobs',
-    fields: ['coordJobId', 'coordJobName', 'status', 'frequency', 'timeUnit', 'startTime', 'nextMaterializedTime'],
+    fields: ['coordJobId', 'coordJobName', 'status', 'user', 'frequency', 'timeUnit', 'startTime', 'nextMaterializedTime'],
     proxy: new Ext.data.HttpProxy({
         url: getOozieBase() + 'jobs'
     })
@@ -1225,6 +1236,15 @@ var refreshDoneJobsAction = new Ext.Action({
     }
 });
 
+var refreshCoordCustomJobsAction = new Ext.Action({
+    text: 'status=KILLED',
+    handler: function() {
+        coord_jobs_store.baseParams.filter = this.text;
+        coord_jobs_store.reload();
+    }
+});
+
+
 var refreshCoordActiveJobsAction = new Ext.Action({
     text: 'Active Jobs',
     handler: function() {
@@ -1324,6 +1344,20 @@ var changeFilterAction = new Ext.Action({
         });
     }
 });
+
+var changeCoordFilterAction = new Ext.Action({
+    text: 'Custom Filter',
+    handler: function() {
+        Ext.Msg.prompt('Filter Criteria', 'Filter text:', function(btn, text) {
+            if (btn == 'ok' && text) {
+                refreshCoordCustomJobsAction.setText(text);
+                coord_jobs_store.baseParams.filter = text;
+                coord_jobs_store.reload();
+            }
+        });
+    }
+});
+
 
 var getSupportedVersions = new Ext.Action({
     text: 'Checking server for supported versions...',
@@ -1651,7 +1685,12 @@ function initConsole() {
             header: "Status",
             width: 80,
             sortable: true,
-            dataIndex: 'status'
+            dataIndex: 'status'        
+	}, {
+            header: "User",
+            width: 80,
+            sortable: true,
+            dataIndex: 'user'
         }, {
             header: "frequency",
             width: 70,
@@ -1684,8 +1723,10 @@ function initConsole() {
             handler: function() {
                 coord_jobs_store.reload();
             }
-        }, refreshCoordAllJobsAction, refreshCoordActiveJobsAction, refreshCoordDoneJobsAction,
-            {
+        }, refreshCoordAllJobsAction, refreshCoordActiveJobsAction, refreshCoordDoneJobsAction,{
+            text: 'Custom Filter',
+            menu: [refreshCoordCustomJobsAction, changeCoordFilterAction, helpFilterAction ]
+        },  {
                 xtype: 'tbfill'
             }, checkStatus, serverVersion],
         title: 'Coordinator Jobs',
