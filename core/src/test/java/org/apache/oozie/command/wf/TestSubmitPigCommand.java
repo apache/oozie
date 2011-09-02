@@ -158,7 +158,7 @@ public class TestSubmitPigCommand extends XFsTestCase {
         Assert.assertTrue(xml.equals(reference));
     }
 
-    public void testWFXmlGenerationNegative1() throws Exception {
+    public void testWFXmlGenerationWithoutLibPath() throws Exception {
         Configuration conf = new Configuration();
 
         conf.set(XOozieClient.JT, "jobtracker");
@@ -169,12 +169,7 @@ public class TestSubmitPigCommand extends XFsTestCase {
         conf.set(XOozieClient.PIG_OPTIONS, pigArgsStr);
 
         SubmitPigCommand submitPigCmd = new SubmitPigCommand(conf, "token");
-        try {
-            submitPigCmd.getWorkflowXml(conf);
-            fail("shoud have already failed - missing libpath def");
-        }
-        catch (Exception e) {
-
-        }
+        submitPigCmd.getWorkflowXml(conf);
     }
+
 }

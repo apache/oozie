@@ -45,13 +45,14 @@ import java.util.Set;
 import java.util.HashSet;
 
 public abstract class SubmitHttpCommand extends WorkflowCommand<String> {
+    public static final String USE_SYSTEM_LIBPATH_FOR_MR_PIG_JOBS ="use.system.libpath.for.mapreduce.and.pig.jobs";
+
     protected static final Set<String> MANDATORY_OOZIE_CONFS = new HashSet<String>();
     protected static final Set<String> OPTIONAL_OOZIE_CONFS = new HashSet<String>();
 
     static {
         MANDATORY_OOZIE_CONFS.add(XOozieClient.JT);
         MANDATORY_OOZIE_CONFS.add(XOozieClient.NN);
-        MANDATORY_OOZIE_CONFS.add(OozieClient.LIBPATH);
 
         OPTIONAL_OOZIE_CONFS.add(XOozieClient.FILES);
         OPTIONAL_OOZIE_CONFS.add(XOozieClient.ARCHIVES);
@@ -82,6 +83,7 @@ public abstract class SubmitHttpCommand extends WorkflowCommand<String> {
         PropertiesUtils.createPropertySet(badDefaultProps, DISALLOWED_DEFAULT_PROPERTIES);
     }
 
+
     /**
      * Generate workflow xml from conf object
      *
@@ -100,6 +102,13 @@ public abstract class SubmitHttpCommand extends WorkflowCommand<String> {
             XLog.getLog(getClass()).debug("workflow xml created on the server side is :\n");
             XLog.getLog(getClass()).debug(wfXml);
             WorkflowApp app = wps.parseDef(wfXml);
+
+            if (conf.get(OozieClient.USE_SYSTEM_LIBPATH) == null) {
+                if (Services.get().getConf().getBoolean(USE_SYSTEM_LIBPATH_FOR_MR_PIG_JOBS, false)) {
+                    conf.setBoolean(OozieClient.USE_SYSTEM_LIBPATH, true);
+                }
+            }
+
             XConfiguration protoActionConf = wps.createProtoActionConf(conf, authToken, false);
             WorkflowLib workflowLib = Services.get().get(WorkflowStoreService.class).getWorkflowLibWithNoDB();
 

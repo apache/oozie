@@ -20,10 +20,16 @@ import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.local.LocalOozie;
 import org.apache.oozie.client.XOozieClient;
 import org.apache.oozie.test.XFsTestCase;
+import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.service.XLogService;
 import org.jdom.Element;
+import org.jdom.Namespace;
+
+import java.io.StringReader;
+import java.util.List;
+import java.util.Properties;
 
 public class TestSubmitMRCommand extends XFsTestCase {
     @Override
@@ -48,6 +54,7 @@ public class TestSubmitMRCommand extends XFsTestCase {
 
         conf.set("mapred.mapper.class", "A.Mapper");
         conf.set("mapred.reducer.class", "A.Reducer");
+        conf.set("oozie.libpath", "libpath");
 
         conf.set(XOozieClient.FILES, "/user/oozie/input1.txt,/user/oozie/input2.txt#my.txt");
         conf.set(XOozieClient.ARCHIVES, "/user/oozie/udf1.jar,/user/oozie/udf2.jar#my.jar");
@@ -55,47 +62,42 @@ public class TestSubmitMRCommand extends XFsTestCase {
         SubmitMRCommand submitMRCmd = new SubmitMRCommand(conf, "token");
         String xml = submitMRCmd.getWorkflowXml(conf);
 
-        XLog.getLog(getClass()).info("xml = " + xml);
+        Element gen = XmlUtils.parseXml(xml);
+        Namespace ns = gen.getNamespace();
+        assertEquals("hadoop1", gen.getChild("start", ns).getAttributeValue("to"));
+        assertEquals("hadoop1", gen.getChild("action", ns).getAttributeValue("name"));
+        assertEquals("fail", gen.getChild("kill", ns).getAttributeValue("name"));
+        assertEquals("end", gen.getChild("end", ns).getAttributeValue("name"));
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("<workflow-app xmlns=\"uri:oozie:workflow:0.2\" name=\"oozie-mapreduce\">");
-        sb.append("<start to=\"hadoop1\" />");
-        sb.append("<action name=\"hadoop1\">");
-        sb.append("<map-reduce>");
-        sb.append("<job-tracker>jobtracker</job-tracker>");
-        sb.append("<name-node>namenode</name-node>");
-        sb.append("<configuration>");
-        sb.append("<property>");
-        sb.append("<name>mapred.mapper.class</name>");
-        sb.append("<value>A.Mapper</value>");
-        sb.append("</property>");
-        sb.append("<property>");
-        sb.append("<name>mapred.reducer.class</name>");
-        sb.append("<value>A.Reducer</value>");
-        sb.append("</property>");
-        sb.append("</configuration>");
-        sb.append("<file>/user/oozie/input1.txt#input1.txt</file>");
-        sb.append("<file>/user/oozie/input2.txt#my.txt</file>");
-        sb.append("<archive>/user/oozie/udf1.jar#udf1.jar</archive>");
-        sb.append("<archive>/user/oozie/udf2.jar#my.jar</archive>");
-        sb.append("</map-reduce>");
-        sb.append("<ok to=\"end\" />");
-        sb.append("<error to=\"fail\" />");
-        sb.append("</action>");
-        sb.append("<kill name=\"fail\">");
-        sb.append("<message>Map/Reduce failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>");
-        sb.append("</kill>");
-        sb.append("<end name=\"end\" />");
-        sb.append("</workflow-app>");
+        assertEquals("jobtracker", gen.getChild("action", ns).getChild("map-reduce", ns).getChildText("job-tracker", ns));
+        assertEquals("namenode", gen.getChild("action", ns).getChild("map-reduce", ns).getChildText("name-node", ns));
+        Element eConf = gen.getChild("action", ns).getChild("map-reduce", ns).getChild("configuration", ns);
+        XConfiguration xConf = new XConfiguration(new StringReader(XmlUtils.prettyPrint(eConf).toString()));
+        Properties genProps = xConf.toProperties();
+        Properties expectedProps = new Properties();
+        expectedProps.setProperty("mapred.mapper.class", "A.Mapper");
+        expectedProps.setProperty("mapred.reducer.class", "A.Reducer");
+        expectedProps.setProperty("oozie.libpath", "libpath");
+        assertEquals(expectedProps, genProps);
+        assertEquals("/user/oozie/input1.txt#input1.txt",
+                     ((Element)gen.getChild("action", ns).getChild("map-reduce", ns)
+                             .getChildren("file", ns).get(0)).getText());
+        assertEquals("/user/oozie/input2.txt#my.txt",
+                     ((Element)gen.getChild("action", ns).getChild("map-reduce", ns)
+                             .getChildren("file", ns).get(1)).getText());
+        assertEquals("/user/oozie/udf1.jar#udf1.jar",
+                     ((Element)gen.getChild("action", ns).getChild("map-reduce", ns)
+                             .getChildren("archive", ns).get(0)).getText());
+        assertEquals("/user/oozie/udf2.jar#my.jar",
+                     ((Element)gen.getChild("action", ns).getChild("map-reduce", ns)
+                             .getChildren("archive", ns).get(1)).getText());
+        assertEquals("end", gen.getChild("action", ns).getChild("ok", ns).getAttributeValue("to"));
+        assertEquals("fail", gen.getChild("action", ns).getChild("error", ns).getAttributeValue("to"));
+        assertNotNull(gen.getChild("kill", ns).getChild("message", ns));        
 
-        Element root = XmlUtils.parseXml(sb.toString());
-        String reference = XmlUtils.prettyPrint(root).toString();
-
-        XLog.getLog(getClass()).info("reference xml = " + reference);
-        Assert.assertTrue(xml.equals(reference));
     }
 
-    public void testWFXmlGenerationNegative1() throws Exception {
+    public void testWFXmlGenerationWithoutLibPath() throws Exception {
         Configuration conf = new Configuration();
 
         conf.set(XOozieClient.JT, "jobtracker");
@@ -107,12 +109,6 @@ public class TestSubmitMRCommand extends XFsTestCase {
         conf.set("name_c", "value_c");
 
         SubmitMRCommand submitMRCmd = new SubmitMRCommand(conf, "token");
-        try {
-            submitMRCmd.getWorkflowXml(conf);
-            fail("shoud have already failed - missing libpath def");
-        }
-        catch (Exception e) {
-
-        }
+        submitMRCmd.getWorkflowXml(conf);
     }
 }

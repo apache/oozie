@@ -15,7 +15,8 @@
 package org.apache.oozie.command.wf;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.oozie.util.XLog;
+import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.service.Services;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
 import org.jdom.Namespace;
@@ -26,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SubmitPigCommand extends SubmitHttpCommand {
+
     public SubmitPigCommand(Configuration conf, String authToken) {
         super("submitPig", "submitPig", conf, authToken);
     }

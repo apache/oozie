@@ -1165,4 +1165,15 @@
         </description>
     </property>
 
+    <property>
+        <name>use.system.libpath.for.mapreduce.and.pig.jobs</name>
+        <value>false</value>
+        <description>
+            If set to true, submissions of MapReduce and Pig jobs will include
+            automatically the system library path, thus not requiring users to
+            specify where the Pig JAR files are. Instead, the ones from the system
+            library path are used.
+        </description>
+    </property>
+
 </configuration>

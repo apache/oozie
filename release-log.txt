@@ -1,7 +1,11 @@
 -- Oozie 2.3.0 release
 
+GH-0238 it should be possible to submit oozie pig jobs using the system library by default
 GH-0237 oozie pig jobs fail to add oozie.libpath to the DistributedCache (regression)
 GH-0236 add support for -Dname=value to oozie CLI and make -config optional
+GH-0222 Some time sensitive testcases fail when the test machine is slow
+GH-0182 WorkflowFunctionalSpec needs to fix chmod examples
+GH-0214 WF spec mentions invalid nodeStatus() EL function
 GH-0225 Remove groupId/artifactId/version parameterization from POMs
 GH-0108 Add support for Derby as Oozie DB
 GH-0227 log directory should be created if doesn't exist
