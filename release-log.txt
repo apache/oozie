@@ -1,5 +1,6 @@
 -- Oozie 2.3.0 release
 
+GH-0245 pre-populate oozie-site.xml with common props with default settings
 GH-0246 Move build to use Maven 3, fix issues in POMs
 GH-0048 Update CoordinatorFunctionalSpec with done-flag examples
 GH-0064 Create a config to turn on openjpa log
