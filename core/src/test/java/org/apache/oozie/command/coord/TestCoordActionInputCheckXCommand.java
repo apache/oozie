@@ -16,24 +16,31 @@
 package org.apache.oozie.command.coord;
 
 import java.io.IOException;
+import java.io.Reader;
+import java.util.Arrays;
 import java.util.Date;
-
+import java.util.List;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
+import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.CoordinatorJob.Execution;
 import org.apache.oozie.client.CoordinatorJob.Timeunit;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
-import org.apache.oozie.local.LocalOozie;
+import org.apache.oozie.service.CallableQueueService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.XLogService;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
+import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
+import org.apache.oozie.util.XLog;
 
 public class TestCoordActionInputCheckXCommand extends XDataTestCase {
     protected Services services;
@@ -41,17 +48,83 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        setSystemProperty(XLogService.LOG4J_FILE, "oozie-log4j.properties");
         services = new Services();
         services.init();
         cleanUpDBTables();
-        LocalOozie.start();
     }
 
     @Override
     protected void tearDown() throws Exception {
-        LocalOozie.stop();
         services.destroy();
         super.tearDown();
+    }
+
+    public class MyCoordActionInputCheckXCommand extends CoordActionInputCheckXCommand {
+        long executed = 0;
+        int wait;
+
+        public MyCoordActionInputCheckXCommand(String actionId, int wait) {
+            super(actionId);
+            this.wait = wait;
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("Type:").append(getType());
+            sb.append(",Priority:").append(getPriority());
+            return sb.toString();
+        }
+
+        @Override
+        protected Void execute() throws CommandException {
+            try {
+                Thread.sleep(wait);
+            }
+            catch (InterruptedException e) {
+            }
+            executed = System.currentTimeMillis();
+            return null;
+        }
+
+    }
+
+    public void testCoordActionInputCheckXCommandUniqueness() throws Exception {
+        Date startTime = DateUtils.parseDateUTC("2009-02-01T23:59Z");
+        Date endTime = DateUtils.parseDateUTC("2009-02-02T23:59Z");
+        CoordinatorJobBean job = addRecordToCoordJobTableForWaiting("coord-job-for-action-input-check.xml",
+                CoordinatorJob.Status.RUNNING, startTime, endTime, false, true, 3);
+
+        CoordinatorActionBean action1 = addRecordToCoordActionTableForWaiting(job.getId(), 1,
+                CoordinatorAction.Status.WAITING, "coord-action-for-action-input-check.xml");
+
+        createDir(getTestCaseDir() + "/2009/29/");
+        createDir(getTestCaseDir() + "/2009/22/");
+        createDir(getTestCaseDir() + "/2009/15/");
+        createDir(getTestCaseDir() + "/2009/08/");
+
+        final MyCoordActionInputCheckXCommand callable1 = new MyCoordActionInputCheckXCommand(action1.getId(), 100);
+        final MyCoordActionInputCheckXCommand callable2 = new MyCoordActionInputCheckXCommand(action1.getId(), 100);
+        final MyCoordActionInputCheckXCommand callable3 = new MyCoordActionInputCheckXCommand(action1.getId(), 100);
+
+        List<MyCoordActionInputCheckXCommand> callables = Arrays.asList(callable1, callable2, callable3);
+
+        CallableQueueService queueservice = services.get(CallableQueueService.class);
+
+        for (MyCoordActionInputCheckXCommand c : callables) {
+            queueservice.queue(c);
+        }
+
+        waitFor(200, new Predicate() {
+            public boolean evaluate() throws Exception {
+                return callable1.executed != 0 && callable2.executed == 0 && callable3.executed == 0;
+            }
+        });
+
+        assertTrue(callable1.executed != 0);
+        assertTrue(callable2.executed == 0);
+        assertTrue(callable3.executed == 0);
     }
 
     public void testActionInputCheck() throws Exception {
@@ -64,6 +137,63 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         createDir(getTestCaseDir() + "/2009/15/");
         new CoordActionInputCheckXCommand(job.getId() + "@1").call();
         checkCoordAction(job.getId() + "@1");
+    }
+
+    protected CoordinatorJobBean addRecordToCoordJobTableForWaiting(String testFileName, CoordinatorJob.Status status, Date start, Date end,
+            boolean pending, boolean doneMatd, int lastActionNum) throws Exception {
+
+        String testDir = getTestCaseDir();
+        CoordinatorJobBean coordJob = createCoordJob(testFileName, status, start, end, pending, doneMatd, lastActionNum);
+        String appXml = getCoordJobXmlForWaiting(testFileName, testDir);
+        coordJob.setJobXml(appXml);
+
+        try {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            assertNotNull(jpaService);
+            CoordJobInsertJPAExecutor coordInsertCmd = new CoordJobInsertJPAExecutor(coordJob);
+            jpaService.execute(coordInsertCmd);
+        }
+        catch (JPAExecutorException je) {
+            je.printStackTrace();
+            fail("Unable to insert the test coord job record to table");
+            throw je;
+        }
+
+        return coordJob;
+    }
+
+    protected String getCoordJobXmlForWaiting(String testFileName, String testDir) {
+        try {
+            Reader reader = IOUtils.getResourceAsReader(testFileName, -1);
+            String appXml = IOUtils.getReaderAsString(reader, -1);
+            appXml = appXml.replaceAll("#testDir", testDir);
+            return appXml;
+        }
+        catch (IOException ioe) {
+            throw new RuntimeException(XLog.format("Could not get "+ testFileName, ioe));
+        }
+    }
+
+    protected CoordinatorActionBean addRecordToCoordActionTableForWaiting(String jobId, int actionNum,
+            CoordinatorAction.Status status, String resourceXmlName) throws Exception {
+        CoordinatorActionBean action = createCoordAction(jobId, actionNum, status, resourceXmlName, 0);
+        String testDir = getTestCaseDir();
+        String missDeps = "file://#testDir/2009/29/_SUCCESS#file://#testDir/2009/22/_SUCCESS#file://#testDir/2009/15/_SUCCESS#file://#testDir/2009/08/_SUCCESS";
+        missDeps = missDeps.replaceAll("#testDir", testDir);
+        action.setMissingDependencies(missDeps);
+
+        try {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            assertNotNull(jpaService);
+            CoordActionInsertJPAExecutor coordActionInsertCmd = new CoordActionInsertJPAExecutor(action);
+            jpaService.execute(coordActionInsertCmd);
+        }
+        catch (JPAExecutorException je) {
+            je.printStackTrace();
+            fail("Unable to insert the test coord action record to table");
+            throw je;
+        }
+        return action;
     }
 
     private CoordinatorJobBean addRecordToCoordJobTable(String jobId, Date start, Date end) throws CommandException {

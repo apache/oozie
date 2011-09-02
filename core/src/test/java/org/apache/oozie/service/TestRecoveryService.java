@@ -378,8 +378,6 @@ public class TestRecoveryService extends XDataTestCase {
         String appXml = getCoordJobXmlForWaiting(testFileName, testDir);
         coordJob.setJobXml(appXml);
 
-        System.out.println("**** appXml = " + appXml);
-
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
             assertNotNull(jpaService);

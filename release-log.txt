@@ -1,5 +1,6 @@
 -- Oozie 3.1.0 release
 
+OOZIE-107 add test case to test uniqueness of CoordActionInputCheckXCommand
 OOZIE-100 escape characters for xml when create dag evaluator
 OOZIE-98 parametrization of 'name' attribute in workflow/coordinator/bundle
 OOZIE-106 add new queue class to iterate next callable when current callable type has reached max concorrency
