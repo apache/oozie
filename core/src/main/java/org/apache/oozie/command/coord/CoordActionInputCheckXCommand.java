@@ -67,6 +67,29 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
     @Override
     protected Void execute() throws CommandException {
         LOG.info("[" + actionId + "]::ActionInputCheck:: Action is in WAITING state.");
+
+        // this action should only get processed if current time > nominal time;
+        // otherwise, requeue this action for delay execution;
+        Date nominalTime = coordAction.getNominalTime();
+        Date currentTime = new Date();
+        if (nominalTime.compareTo(currentTime) > 0) {
+            queue(new CoordActionInputCheckXCommand(coordAction.getId()), Math.max(
+                    (nominalTime.getTime() - currentTime.getTime()), COMMAND_REQUEUE_INTERVAL));
+            // update lastModifiedTime
+            coordAction.setLastModifiedTime(new Date());
+            try {
+                jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionUpdateJPAExecutor(coordAction));
+            }
+            catch (JPAExecutorException e) {
+                throw new CommandException(e);
+            }
+            LOG.info("[" + actionId
+                    + "]::ActionInputCheck:: nominal Time is newer than current time, so requeue and wait. Current="
+                    + currentTime + ", nominal=" + nominalTime);
+            
+            return null;
+        }
+
         StringBuilder actionXml = new StringBuilder(coordAction.getActionXml());
         Instrumentation.Cron cron = new Instrumentation.Cron();
         try {
@@ -439,28 +462,6 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
      */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
-        // this action should only get processed if current time >
-        // materialization time.
-        // otherwise, requeue this action after 30 seconds
-        Date nominalTime = coordAction.getNominalTime();
-        Date currentTime = new Date();
-        if (nominalTime.compareTo(currentTime) > 0) {
-            queue(new CoordActionInputCheckXCommand(coordAction.getId()), Math.max((nominalTime.getTime() - currentTime
-                    .getTime()), COMMAND_REQUEUE_INTERVAL));
-            // update lastModifiedTime
-            coordAction.setLastModifiedTime(new Date());
-            try {
-                jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionUpdateJPAExecutor(coordAction));
-            }
-            catch (JPAExecutorException je) {
-                throw new CommandException(je);
-            }
-
-            throw new PreconditionException(ErrorCode.E1100, "[" + actionId
-                    + "]::ActionInputCheck:: nominal Time is newer than current time, so requeue and wait. Current="
-                    + currentTime + ", nominal=" + nominalTime);
-        }
-
         if (coordAction.getStatus() != CoordinatorActionBean.Status.WAITING) {
             throw new PreconditionException(ErrorCode.E1100, "[" + actionId
                     + "]::ActionInputCheck:: Ignoring action. Should be in WAITING state, but state="
