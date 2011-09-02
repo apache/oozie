@@ -51,20 +51,20 @@ public class TestCoordJobGetActionsForDatesJPAExecutor extends XDataTestCase {
         int actionNum = 1;
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false);
         addRecordToCoordActionTable(job.getId(), actionNum, CoordinatorAction.Status.FAILED, "coord-action-get.xml");
-        
+
         Path appPath = new Path(getFsTestCaseDir(), "coord");
         String actionXml = getCoordActionXml(appPath, "coord-action-get.xml");
         String actionNomialTime = getActionNominalTime(actionXml);
         Date nominalTime = DateUtils.parseDateUTC(actionNomialTime);
-        
+
         Date d1 = new Date(nominalTime.getTime() - 1000);
         Date d2 = new Date(nominalTime.getTime() + 1000);
         _testGetActionForDates(job.getId(), d1, d2, 1);
-        
+
         d1 = new Date(nominalTime.getTime() + 1000);
         d2 = new Date(nominalTime.getTime() + 2000);
         _testGetActionForDates(job.getId(), d1, d2, 0);
-        
+
         cleanUpDBTables();
         job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false);
         addRecordToCoordActionTable(job.getId(), actionNum, CoordinatorAction.Status.WAITING, "coord-action-get.xml");

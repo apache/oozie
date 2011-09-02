@@ -251,12 +251,15 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
      * @return true if all actions are eligible to rerun
      */
     private boolean checkAllActionsRunnable(List<CoordinatorActionBean> coordActions) {
+        boolean ret = false;
         for (CoordinatorActionBean coordAction : coordActions) {
+            ret = true;
             if (!coordAction.isTerminalStatus()) {
-                return false;
+                ret = false;
+                break;
             }
         }
-        return true;
+        return ret;
     }
 
     /**
