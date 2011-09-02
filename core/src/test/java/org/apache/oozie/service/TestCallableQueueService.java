@@ -181,44 +181,75 @@ public class TestCallableQueueService extends XTestCase {
         services.destroy();
     }
 
-    public void testConcurrencyLimit() throws Exception {
-        EXEC_ORDER = new AtomicLong();
-        Services services = new Services();
-        services.init();
-        final MyCallable callable1 = new MyCallable(0, 500);
-        final MyCallable callable2 = new MyCallable(0, 500);
-        final MyCallable callable3 = new MyCallable(0, 500);
-        final MyCallable callable4 = new MyCallable(0, 500);
-        final MyCallable callable5 = new MyCallable(0, 500);
+    public static class CLCallable implements XCallable<Void> {
 
-        List<MyCallable> callables = Arrays.asList(callable1, callable2, callable3, callable4, callable5);
-
-        CallableQueueService queueservice = services.get(CallableQueueService.class);
-
-        for (MyCallable c : callables) {
-            queueservice.queue(c, 10);
+        @Override
+        public String getName() {
+            return "name";
         }
 
-        waitFor(3000, new Predicate() {
+        @Override
+        public int getPriority() {
+            return 0;
+        }
+
+        @Override
+        public String getType() {
+            return "type";
+        }
+
+        @Override
+        public long getCreatedTime() {
+            return 0;
+        }
+
+        @Override
+        public Void call() throws Exception {
+            incr();
+            Thread.sleep(100);
+            decr();
+            return null;
+        }
+
+        private static int counter;
+        private static int max;
+
+        private synchronized void incr() {
+            counter++;
+            max = Math.max(max, counter);
+        }
+
+        private synchronized void decr() {
+            counter--;
+        }
+
+        public static int getConcurrency() {
+            return max;
+        }
+
+        public static void resetConcurrency() {
+            max = 0;
+        }
+    }
+
+    public void testConcurrencyLimit() throws Exception {
+        Services services = new Services();
+        services.init();
+
+        CLCallable.resetConcurrency();
+        final CallableQueueService queueservice = services.get(CallableQueueService.class);
+
+        for (int i = 0; i < 10; i++) {
+            queueservice.queue(new CLCallable(), 10);
+        }
+
+        waitFor(2000, new Predicate() {
             public boolean evaluate() throws Exception {
-                return callable1.executed != 0 && callable2.executed != 0 && callable3.executed != 0 &&
-                        callable4.executed != 0 && callable5.executed != 0;
+                return queueservice.queueSize() == 0;
             }
         });
 
-        long first = Long.MAX_VALUE;
-        for (MyCallable c : callables) {
-            assertTrue(c.executed != 0);
-            first = Math.min(first, c.executed);
-        }
-
-        int secondBatch = 0;
-        for (MyCallable c : callables) {
-            if (c.executed - first > CallableQueueService.CONCURRENCY_DELAY) {
-                secondBatch++;
-            }
-        }
-        assertEquals(2, secondBatch);
+        assertTrue(CLCallable.getConcurrency() <= 3);
 
         services.destroy();
     }
