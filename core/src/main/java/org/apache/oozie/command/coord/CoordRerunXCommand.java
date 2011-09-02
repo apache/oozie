@@ -72,13 +72,14 @@ import org.jdom.JDOMException;
  */
 public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActionInfo> {
 
+    private String jobId;
     private String rerunType;
     private String scope;
     private boolean refresh;
     private boolean noCleanup;
     private CoordinatorJobBean coordJob = null;
     private JPAService jpaService = null;
-    private CoordinatorJob.Status prevStatus = null;
+    protected boolean prevPending;
 
     /**
      * The constructor for class {@link CoordRerunXCommand}
@@ -389,7 +390,7 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
         }
         try {
             coordJob = jpaService.execute(new CoordJobGetJPAExecutor(jobId));
-            prevStatus = coordJob.getStatus();
+            prevPending = coordJob.isPending();
         }
         catch (JPAExecutorException je) {
             throw new CommandException(je);
@@ -417,6 +418,7 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
 
     @Override
     public void rerunChildren() throws CommandException {
+        boolean isError = false;
         try {
             CoordinatorActionInfo coordInfo = null;
             InstrumentUtils.incrJobCounter(getName(), 1, getInstrumentation());
@@ -428,6 +430,7 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
                 coordActions = getCoordActionsFromIds(jobId, scope);
             }
             else {
+                isError = true;
                 throw new CommandException(ErrorCode.E1018, "date or action expected.");
             }
             if (checkAllActionsRunnable(coordActions)) {
@@ -447,6 +450,7 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
                 }
             }
             else {
+                isError = true;
                 throw new CommandException(ErrorCode.E1018, "part or all actions are not eligible to rerun!");
             }
             coordInfo = new CoordinatorActionInfo(coordActions);
@@ -454,13 +458,21 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
             ret = coordInfo;
         }
         catch (XException xex) {
+            isError = true;
             throw new CommandException(xex);
         }
         catch (JDOMException jex) {
+            isError = true;
             throw new CommandException(ErrorCode.E0700, jex);
         }
         catch (Exception ex) {
+            isError = true;
             throw new CommandException(ErrorCode.E1018, ex);
+        }
+        finally{
+            if(isError){
+                transitToPrevious();
+            }
         }
     }
 
@@ -514,5 +526,15 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
     @Override
     public XLog getLog() {
         return LOG;
+    }
+
+    private final void transitToPrevious() throws CommandException {
+        coordJob.setStatus(getPrevStatus());
+        if (!prevPending) {
+            coordJob.resetPending();
+        }
+        else {
+            coordJob.setPending();
+        }
     }
 }
