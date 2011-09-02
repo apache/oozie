@@ -26,6 +26,7 @@ import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.OozieClientException;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.rest.JsonCoordinatorAction;
+import org.apache.oozie.client.rest.JsonCoordinatorJob;
 import org.apache.oozie.util.XConfiguration;
 
 /**
@@ -53,7 +54,7 @@ import org.apache.oozie.util.XConfiguration;
  */
 public class LocalOozieClientCoord extends OozieClient {
 
-    private CoordinatorEngine coordEngine;
+    private final CoordinatorEngine coordEngine;
 
     /**
      * Create a coordinator client for Oozie local use.
@@ -398,10 +399,10 @@ public class LocalOozieClientCoord extends OozieClient {
      *         retrieved.
      */
     @Override
-    public List<CoordinatorJob> getCoordJobsInfo(String filter, int start, int len) throws OozieClientException {
+    public List<JsonCoordinatorJob> getCoordJobsInfo(String filter, int start, int len) throws OozieClientException {
         try {
             CoordinatorJobInfo info = coordEngine.getCoordJobs(filter, start, len);
-            List<CoordinatorJob> jobs = new ArrayList<CoordinatorJob>();
+            List<JsonCoordinatorJob> jobs = new ArrayList<JsonCoordinatorJob>();
             List<CoordinatorJobBean> jobBeans = info.getCoordJobs();
             for (CoordinatorJobBean jobBean : jobBeans) {
                 jobs.add(jobBean);

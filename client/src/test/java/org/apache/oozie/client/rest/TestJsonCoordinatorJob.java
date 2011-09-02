@@ -143,7 +143,7 @@ public class TestJsonCoordinatorJob extends TestCase {
         array.writeJSONString(sw);
         sw.close();
         array = (JSONArray) JSONValue.parse(new StringReader(sw.toString()));
-        List<CoordinatorJob> readApplications = JsonCoordinatorJob.fromJSONArray(array);
+        List<JsonCoordinatorJob> readApplications = JsonCoordinatorJob.fromJSONArray(array);
         assertEquals(2, readApplications.size());
     }
 

@@ -29,7 +29,6 @@ import org.apache.oozie.ForTestingActionExecutor;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.command.wf.PurgeCommand;
-import org.apache.oozie.command.wf.DefinitionCommand;
 import org.apache.oozie.service.PurgeService.PurgeRunnable;
 import org.apache.oozie.store.WorkflowStore;
 import org.apache.oozie.service.Services;

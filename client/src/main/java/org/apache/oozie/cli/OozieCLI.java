@@ -53,6 +53,7 @@ import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.XOozieClient;
 import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
 import org.apache.oozie.client.rest.JsonCoordinatorAction;
+import org.apache.oozie.client.rest.JsonCoordinatorJob;
 import org.apache.oozie.client.rest.RestConstants;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
@@ -843,7 +844,7 @@ public class OozieCLI {
         }
     }
 
-    private void printCoordJobs(List<CoordinatorJob> jobs, boolean localtime, boolean verbose) throws IOException {
+    private void printCoordJobs(List<JsonCoordinatorJob> jobs, boolean localtime, boolean verbose) throws IOException {
         if (jobs != null && jobs.size() > 0) {
             if (verbose) {
                 System.out.println("Job ID" + VERBOSE_DELIMITER + "App Name" + VERBOSE_DELIMITER + "App Path"

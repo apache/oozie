@@ -62,11 +62,11 @@ public class WorkflowInfoWithActionsSubsetGetJPAExecutor implements JPAExecutor<
                 this.workflow = jpaService.execute(new WorkflowJobGetJPAExecutor(this.wfJobId));
             }
             else {
-                throw new CommandException(ErrorCode.E0610, this.wfJobId);
+                throw new JPAExecutorException(ErrorCode.E0610, this.wfJobId);
             }
         }
         catch (Exception ex) {
-            if (ex instanceof CommandException) {
+            if (ex instanceof JPAExecutorException) {
                 throw (JPAExecutorException) ex;
             }
             else {

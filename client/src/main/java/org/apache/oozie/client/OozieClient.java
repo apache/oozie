@@ -844,7 +844,7 @@ public class OozieClient {
         }
     }
 
-    private class CoordJobsStatus extends ClientCallable<List<CoordinatorJob>> {
+    private class CoordJobsStatus extends ClientCallable<List<JsonCoordinatorJob>> {
 
         CoordJobsStatus(String filter, int start, int len) {
             super("GET", RestConstants.JOBS, "", prepareParams(RestConstants.JOBS_FILTER_PARAM, filter,
@@ -853,8 +853,7 @@ public class OozieClient {
         }
 
         @Override
-        @SuppressWarnings("unchecked")
-        protected List<CoordinatorJob> call(HttpURLConnection conn) throws IOException, OozieClientException {
+        protected List<JsonCoordinatorJob> call(HttpURLConnection conn) throws IOException, OozieClientException {
             conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
             if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
                 Reader reader = new InputStreamReader(conn.getInputStream());
@@ -1120,7 +1119,7 @@ public class OozieClient {
      * @return a list with the coordinator jobs info
      * @throws OozieClientException thrown if the jobs info could not be retrieved.
      */
-    public List<CoordinatorJob> getCoordJobsInfo(String filter, int start, int len) throws OozieClientException {
+    public List<JsonCoordinatorJob> getCoordJobsInfo(String filter, int start, int len) throws OozieClientException {
         return new CoordJobsStatus(filter, start, len).call();
     }
 

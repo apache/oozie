@@ -383,9 +383,8 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
      * @param array JSON array.
      * @return the corresponding application list.
      */
-    @SuppressWarnings("unchecked")
-    public static List<CoordinatorJob> fromJSONArray(JSONArray applications) {
-        List<CoordinatorJob> list = new ArrayList<CoordinatorJob>();
+    public static List<JsonCoordinatorJob> fromJSONArray(JSONArray applications) {
+        List<JsonCoordinatorJob> list = new ArrayList<JsonCoordinatorJob>();
         for (Object obj : applications) {
             list.add(new JsonCoordinatorJob((JSONObject) obj));
         }

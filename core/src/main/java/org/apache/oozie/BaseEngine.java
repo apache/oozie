@@ -42,6 +42,7 @@ import org.apache.oozie.command.wf.StartCommand;
 import org.apache.oozie.command.wf.SubmitCommand;
 import org.apache.oozie.command.wf.SuspendCommand;
 import org.apache.oozie.service.DagXLogInfoService;
+import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.XLogService;
 import org.apache.oozie.util.ParamChecker;
@@ -49,7 +50,8 @@ import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XLogStreamer;
 
 public abstract class BaseEngine {
-
+    public static final String USE_XCOMMAND = "oozie.useXCommand";
+    
     protected String user;
     protected String authToken;
 

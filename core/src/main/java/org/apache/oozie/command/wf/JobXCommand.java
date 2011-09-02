@@ -18,6 +18,7 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowInfoWithActionsSubsetGetJPAExecutor;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
@@ -63,13 +64,11 @@ public class JobXCommand extends WorkflowXCommand<WorkflowJobBean> {
             }
             this.workflow.setConsoleUrl(getJobConsoleUrl(id));
         }
+        catch (JPAExecutorException ex) {
+            throw new CommandException(ex);
+        }
         catch (Exception ex) {
-            if (ex instanceof CommandException) {
-                throw (CommandException) ex;
-            }
-            else {
-                throw new CommandException(ErrorCode.E0603, ex);
-            }
+            throw new CommandException(ErrorCode.E0603, ex);
         }
 
         return this.workflow;
