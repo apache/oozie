@@ -160,18 +160,23 @@ public abstract class BaseJobServlet extends JsonRestServlet {
             XLog.Info.get().setParameter(XLogService.GROUP, group);
             String wfPath = conf.get(OozieClient.APP_PATH);
             String coordPath = conf.get(OozieClient.COORDINATOR_APP_PATH);
-            if (wfPath == null && coordPath == null) {
+            String bundlePath = conf.get(OozieClient.BUNDLE_APP_PATH);
+
+            if (wfPath == null && coordPath == null && bundlePath == null) {
                 String libPath = conf.get(OozieClient.LIBPATH);
                 conf.set(OozieClient.APP_PATH, libPath);
                 wfPath = libPath;
             }
-            ServletUtilities.ValidateAppPath(wfPath, coordPath);
+            ServletUtilities.ValidateAppPath(wfPath, coordPath, bundlePath);
 
             if (wfPath != null) {
                 auth.authorizeForApp(user, group, wfPath, "workflow.xml", conf);
             }
-            else {
+            else if (coordPath != null){
                 auth.authorizeForApp(user, group, coordPath, "coordinator.xml", conf);
+            }
+            else if (bundlePath != null){
+                auth.authorizeForApp(user, group, bundlePath, "bundle.xml", conf);
             }
         }
         catch (AuthorizationException ex) {
@@ -179,7 +184,7 @@ public abstract class BaseJobServlet extends JsonRestServlet {
             throw new XServletException(HttpServletResponse.SC_UNAUTHORIZED, ex);
         }
     }
-    
+
     /**
      * Return information about jobs.
      */

@@ -20,8 +20,14 @@ import org.apache.oozie.ErrorCode;
 
 public class ServletUtilities {
 
-    // accessory static method to check the app path parameter for the request
-    // used only for job-related request and only one of them should exist
+    /**
+     * accessory static method to check the app path parameter for the request
+     * used only for job-related request and only one of them should exist
+     * 
+     * @param wfPath workflow app path
+     * @param coordPath coordinator app path
+     * @throws XServletException
+     */
     protected static void ValidateAppPath(String wfPath, String coordPath) throws XServletException {
         if (wfPath != null && coordPath != null) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0301, wfPath, coordPath);
@@ -33,7 +39,42 @@ public class ServletUtilities {
         }
     }
 
-    // accessory static method to check the lib path parameter for the request
+    /**
+     * accessory static method to check the app path parameter for the request
+     * used only for job-related request and only one of them should exist
+     * bundle appPath is also checked
+     * 
+     * @param wfPath workflow app path
+     * @param coordPath coordinator app path
+     * @param bundlePath bundle app path
+     * @throws XServletException
+     */
+    protected static void ValidateAppPath(String wfPath, String coordPath, String bundlePath) throws XServletException {
+        int n = 0;
+        
+        if (wfPath != null) {
+            n ++;
+        }
+        
+        if (coordPath != null) {
+            n ++;
+        }
+        
+        if (bundlePath != null) {
+            n ++;
+        }
+        
+        if (n != 1) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302);
+        }
+    }
+
+    /**
+     * accessory static method to check the lib path parameter for the request
+     * 
+     * @param libPath lib path
+     * @throws XServletException
+     */
     protected static void ValidateLibPath(String libPath) throws XServletException {
         if (libPath == null) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302);

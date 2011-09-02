@@ -22,7 +22,9 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorEngine;
+import org.apache.oozie.BundleEngine;
 import org.apache.oozie.CoordinatorEngineException;
+import org.apache.oozie.BundleEngineException;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.CoordinatorJobInfo;
 import org.apache.oozie.DagEngine;
@@ -35,6 +37,7 @@ import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.service.CoordinatorEngineService;
 import org.apache.oozie.service.DagEngineService;
+import org.apache.oozie.service.BundleEngineService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
@@ -61,14 +64,18 @@ public class V1JobsServlet extends BaseJobsServlet {
         if (jobType == null) {
             String wfPath = conf.get(OozieClient.APP_PATH);
             String coordPath = conf.get(OozieClient.COORDINATOR_APP_PATH);
+            String bundlePath = conf.get(OozieClient.BUNDLE_APP_PATH);
 
-            ServletUtilities.ValidateAppPath(wfPath, coordPath);
+            ServletUtilities.ValidateAppPath(wfPath, coordPath, bundlePath);
 
             if (wfPath != null) {
                 json = submitWorkflowJob(request, conf);
             }
-            else {
+            else if (coordPath != null){
                 json = submitCoordinatorJob(request, conf);
+            }
+            else {
+                json = submitBundleJob(request, conf);
             }
         }
         else { // This is a http submission job
@@ -192,6 +199,43 @@ public class V1JobsServlet extends BaseJobsServlet {
             json.put(JsonTags.JOB_ID, id);
         }
         catch (CoordinatorEngineException ex) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
+        }
+
+        return json;
+    }
+
+    /**
+     * v1 service implementation to submit a bundle job
+     */
+    private JSONObject submitBundleJob(HttpServletRequest request, Configuration conf) throws XServletException {
+        JSONObject json = new JSONObject();
+        XLog.getLog(getClass()).warn("submitBundleJob " + XmlUtils.prettyPrint(conf).toString());
+        try {
+            String action = request.getParameter(RestConstants.ACTION_PARAM);
+            if (action != null && !action.equals(RestConstants.JOB_ACTION_START)
+                    && !action.equals(RestConstants.JOB_ACTION_DRYRUN)) {
+                throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0303,
+                        RestConstants.ACTION_PARAM, action);
+            }
+            boolean startJob = (action != null);
+            String user = conf.get(OozieClient.USER_NAME);
+            BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(
+                    user, getAuthToken(request));
+            String id = null;
+            boolean dryrun = false;
+            if (action != null) {
+                dryrun = (action.equals(RestConstants.JOB_ACTION_DRYRUN));
+            }
+            if (dryrun) {
+                id = bundleEngine.dryrunSubmit(conf, startJob);
+            }
+            else {
+                id = bundleEngine.submitJob(conf, startJob);
+            }
+            json.put(JsonTags.JOB_ID, id);
+        }
+        catch (BundleEngineException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
         }
 

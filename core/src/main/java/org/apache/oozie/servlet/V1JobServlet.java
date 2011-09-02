@@ -23,6 +23,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.BaseEngineException;
+import org.apache.oozie.BundleEngine;
+import org.apache.oozie.BundleEngineException;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorActionInfo;
 import org.apache.oozie.CoordinatorEngine;
@@ -34,6 +36,7 @@ import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.client.rest.JsonCoordinatorJob;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.RestConstants;
+import org.apache.oozie.service.BundleEngineService;
 import org.apache.oozie.service.CoordinatorEngineService;
 import org.apache.oozie.service.DagEngineService;
 import org.apache.oozie.service.Services;
@@ -66,6 +69,9 @@ public class V1JobServlet extends BaseJobServlet {
         if (jobId.endsWith("-W")) {
             startWorkflowJob(request, response);
         }
+        else if (jobId.endsWith("-B")) {
+            startBundleJob(request, response);
+        }
         else {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0303);
         }
@@ -89,6 +95,9 @@ public class V1JobServlet extends BaseJobServlet {
         if (jobId.endsWith("-W")) {
             resumeWorkflowJob(request, response);
         }
+        else if (jobId.endsWith("-B")) {
+            resumeBundleJob(request, response);
+        }
         else {
             resumeCoordinatorJob(request, response);
         }
@@ -111,6 +120,9 @@ public class V1JobServlet extends BaseJobServlet {
         if (jobId.endsWith("-W")) {
             suspendWorkflowJob(request, response);
         }
+        else if (jobId.endsWith("-B")) {
+            suspendBundleJob(request, response);
+        }
         else {
             suspendCoordinatorJob(request, response);
         }
@@ -132,6 +144,9 @@ public class V1JobServlet extends BaseJobServlet {
         String jobId = getResourceName(request);
         if (jobId.endsWith("-W")) {
             killWorkflowJob(request, response);
+        }
+        else if (jobId.endsWith("-B")) {
+            killBundleJob(request, response);
         }
         else {
             killCoordinatorJob(request, response);
@@ -165,6 +180,9 @@ public class V1JobServlet extends BaseJobServlet {
         if (jobId.endsWith("-W")) {
             reRunWorkflowJob(request, response, conf);
         }
+        else if (jobId.endsWith("-B")) {
+            rerunBundleJob(request, response, conf);
+        }
         else {
             json = reRunCoordinatorActions(request, response, conf);
         }
@@ -182,29 +200,27 @@ public class V1JobServlet extends BaseJobServlet {
         while (is.readLine(b, 0, 100) != -1) {
             XLog.getLog(getClass()).warn("Printing :" + new String(b));
         }
-        /*
-         * Configuration conf = new XConfiguration(request.getInputStream());
-         * String wfPath = conf.get(OozieClient.APP_PATH); String coordPath =
-         * conf.get(OozieClient.COORDINATOR_APP_PATH);
-         *
-         * ServletUtilities.ValidateAppPath(wfPath, coordPath);
-         */
+
         JsonBean jobBean = null;
         String jobId = getResourceName(request);
-        if (jobId.endsWith("-W")) {
-            jobBean = getWorkflowJob(request, response);
+        if (jobId.endsWith("-B")) {
+            jobBean = getBundleJob(request, response);
         }
         else {
-            if (jobId.contains("-W@")) {
-                jobBean = getWorkflowAction(request, response);
+            if (jobId.endsWith("-W")) {
+                jobBean = getWorkflowJob(request, response);
             }
             else {
-                if (jobId.contains("-C@")) {
-                    jobBean = getCoordinatorAction(request, response);
+                if (jobId.contains("-W@")) {
+                    jobBean = getWorkflowAction(request, response);
                 }
                 else {
-                    // jobBean = new JsonCoordinatorJob(getCoordinatorJob(request, response));
-                    jobBean = getCoordinatorJob(request, response);
+                    if (jobId.contains("-C@")) {
+                        jobBean = getCoordinatorAction(request, response);
+                    }
+                    else {
+                        jobBean = getCoordinatorJob(request, response);
+                    }
                 }
             }
         }
@@ -223,6 +239,9 @@ public class V1JobServlet extends BaseJobServlet {
         if (jobId.endsWith("-W")) {
             jobDefinition = getWorkflowJobDefinition(request, response);
         }
+        else if (jobId.endsWith("-B")) {
+            jobDefinition = getBundleJobDefinition(request, response);
+        }
         else {
             jobDefinition = getCoordinatorJobDefinition(request, response);
         }
@@ -239,19 +258,24 @@ public class V1JobServlet extends BaseJobServlet {
         if (jobId.endsWith("-W")) {
             streamWorkflowJobLog(request, response);
         }
+        else if (jobId.endsWith("-B")) {
+            streamBundleJob(request, response);
+        }
         else {
             streamCoordinatorJobLog(request, response);
         }
     }
 
     /**
-     * @param request
-     * @param response
+     * Start wf job
+     * 
+     * @param request servlet request
+     * @param response servlet response 
      * @throws XServletException
      */
     private void startWorkflowJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
         DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
-                                                                                      getAuthToken(request));
+                getAuthToken(request));
 
         String jobId = getResourceName(request);
         try {
@@ -263,13 +287,34 @@ public class V1JobServlet extends BaseJobServlet {
     }
 
     /**
-     * @param request
-     * @param response
+     * Start bundle job
+     *
+     * @param request servlet request
+     * @param response servlet response
+     * @throws XServletException
+     */
+    private void startBundleJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
+        BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request),
+                getAuthToken(request));
+        String jobId = getResourceName(request);
+        try {
+            bundleEngine.start(jobId);
+        }
+        catch (BundleEngineException ex) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
+        }
+    }
+
+    /**
+     * Resume workflow job
+     *
+     * @param request servlet request
+     * @param response servlet response
      * @throws XServletException
      */
     private void resumeWorkflowJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
         DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
-                                                                                      getAuthToken(request));
+                getAuthToken(request));
 
         String jobId = getResourceName(request);
         try {
@@ -281,8 +326,29 @@ public class V1JobServlet extends BaseJobServlet {
     }
 
     /**
-     * @param request
-     * @param response
+     * Resume bundle job
+     *
+     * @param request servlet request
+     * @param response servlet response
+     * @throws XServletException
+     */
+    private void resumeBundleJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
+        BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request),
+                getAuthToken(request));
+        String jobId = getResourceName(request);
+        try {
+            bundleEngine.resume(jobId);
+        }
+        catch (BundleEngineException ex) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
+        }
+    }
+
+    /**
+     * Resume coordinator job
+     *
+     * @param request servlet request
+     * @param response servlet response
      * @throws XServletException
      * @throws CoordinatorEngineException
      */
@@ -300,13 +366,15 @@ public class V1JobServlet extends BaseJobServlet {
     }
 
     /**
-     * @param request
-     * @param response
+     * Suspend a wf job
+     * 
+     * @param request servlet request
+     * @param response servlet response
      * @throws XServletException
      */
     private void suspendWorkflowJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
         DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
-                                                                                      getAuthToken(request));
+                getAuthToken(request));
 
         String jobId = getResourceName(request);
         try {
@@ -318,8 +386,29 @@ public class V1JobServlet extends BaseJobServlet {
     }
 
     /**
-     * @param request
-     * @param response
+     * Suspend bundle job
+     *
+     * @param request servlet request
+     * @param response servlet response
+     * @throws XServletException
+     */
+    private void suspendBundleJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
+        BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request),
+                getAuthToken(request));
+        String jobId = getResourceName(request);
+        try {
+            bundleEngine.suspend(jobId);
+        }
+        catch (BundleEngineException ex) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
+        }
+    }
+
+    /**
+     * Suspend coordinator job
+     *
+     * @param request servlet request
+     * @param response servlet response
      * @throws XServletException
      */
     private void suspendCoordinatorJob(HttpServletRequest request, HttpServletResponse response)
@@ -336,13 +425,14 @@ public class V1JobServlet extends BaseJobServlet {
     }
 
     /**
-     * @param request
-     * @param response
+     * Kill a wf job
+     * @param request servlet request
+     * @param response servlet response
      * @throws XServletException
      */
     private void killWorkflowJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
         DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
-                                                                                      getAuthToken(request));
+                getAuthToken(request));
 
         String jobId = getResourceName(request);
         try {
@@ -354,8 +444,9 @@ public class V1JobServlet extends BaseJobServlet {
     }
 
     /**
-     * @param request
-     * @param response
+     * Kill a coord job
+     * @param request servlet request
+     * @param response servlet response
      * @throws XServletException
      */
     private void killCoordinatorJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
@@ -371,10 +462,29 @@ public class V1JobServlet extends BaseJobServlet {
     }
 
     /**
+     * Kill bundle job
+     *
+     * @param request servlet request
+     * @param response servlet response
+     * @throws XServletException
+     */
+    private void killBundleJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
+        BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request),
+                getAuthToken(request));
+        String jobId = getResourceName(request);
+        try {
+            bundleEngine.kill(jobId);
+        }
+        catch (BundleEngineException ex) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
+        }
+    }
+
+    /**
      * Rerun workflow job
      *
-     * @param request
-     * @param response
+     * @param request servlet request
+     * @param response servlet response
      * @throws XServletException
      */
     private void changeCoordinatorJob(HttpServletRequest request, HttpServletResponse response)
@@ -392,15 +502,17 @@ public class V1JobServlet extends BaseJobServlet {
     }
 
     /**
-     * @param request
-     * @param response
-     * @param conf
+     * Rerun a wf job
+     * 
+     * @param request servlet request
+     * @param response servlet response
+     * @param conf configuration object
      * @throws XServletException
      */
     private void reRunWorkflowJob(HttpServletRequest request, HttpServletResponse response, Configuration conf)
             throws XServletException {
         DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
-                                                                                      getAuthToken(request));
+                getAuthToken(request));
 
         String jobId = getResourceName(request);
         try {
@@ -412,17 +524,48 @@ public class V1JobServlet extends BaseJobServlet {
     }
 
     /**
+     * Rerun bundle job
+     *
+     * @param request servlet request
+     * @param response servlet response
+     * @param conf configration object
+     * @throws XServletException
+     */
+    private void rerunBundleJob(HttpServletRequest request, HttpServletResponse response, Configuration conf)
+            throws XServletException {
+        JSONObject json = new JSONObject();
+        BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request),
+                getAuthToken(request));
+        String jobId = getResourceName(request);
+
+        String coordScope = request.getParameter(RestConstants.JOB_BUNDLE_RERUN_COORD_SCOPE_PARAM);
+        String dateScope = request.getParameter(RestConstants.JOB_BUNDLE_RERUN_DATE_SCOPE_PARAM);
+        String refresh = request.getParameter(RestConstants.JOB_COORD_RERUN_REFRESH_PARAM);
+        String noCleanup = request.getParameter(RestConstants.JOB_COORD_RERUN_NOCLEANUP_PARAM);
+
+        XLog.getLog(getClass()).info(
+                "Rerun Bundle for jobId=" + jobId + ", coordScope=" + coordScope + ", dateScope=" + dateScope + ", refresh="
+                        + refresh + ", noCleanup=" + noCleanup);
+
+        try {
+            bundleEngine.reRun(jobId, coordScope, dateScope, Boolean.valueOf(refresh), Boolean.valueOf(noCleanup));
+        }
+        catch (BaseEngineException ex) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
+        }
+    }
+
+    /**
      * Rerun coordinator actions
      *
-     * @param request
-     * @param response
-     * @param conf
+     * @param request servlet request
+     * @param response servlet response
+     * @param conf configuration object
      * @throws XServletException
      */
     @SuppressWarnings("unchecked")
     private JSONObject reRunCoordinatorActions(HttpServletRequest request, HttpServletResponse response,
-            Configuration conf)
-            throws XServletException {
+            Configuration conf) throws XServletException {
         JSONObject json = new JSONObject();
         CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(getUser(request),
                 getAuthToken(request));
@@ -454,8 +597,8 @@ public class V1JobServlet extends BaseJobServlet {
     /**
      * Get workflow job
      *
-     * @param request
-     * @param response
+     * @param request servlet request
+     * @param response servlet response
      * @return JsonBean WorkflowJobBean
      * @throws XServletException
      */
@@ -469,7 +612,7 @@ public class V1JobServlet extends BaseJobServlet {
         int len = (lenStr != null) ? Integer.parseInt(lenStr) : 0;
         len = (len < 1) ? Integer.MAX_VALUE : len;
         DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
-                                                                                      getAuthToken(request));
+                getAuthToken(request));
         try {
             jobBean = (JsonBean) dagEngine.getJob(jobId, start, len);
         }
@@ -481,15 +624,17 @@ public class V1JobServlet extends BaseJobServlet {
     }
 
     /**
-     * @param request
-     * @param response
+     * Get wf action info
+     * 
+     * @param request servlet request 
+     * @param response servlet response
      * @return JsonBean WorkflowActionBean
      * @throws XServletException
      */
     private JsonBean getWorkflowAction(HttpServletRequest request, HttpServletResponse response)
             throws XServletException {
         DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
-                                                                                      getAuthToken(request));
+                getAuthToken(request));
 
         JsonBean actionBean = null;
         String actionId = getResourceName(request);
@@ -504,17 +649,17 @@ public class V1JobServlet extends BaseJobServlet {
     }
 
     /**
-     * @param request
-     * @param response
+     * Get coord job info
+     * 
+     * @param request servlet request
+     * @param response servlet response
      * @return JsonBean CoordinatorJobBean
      * @throws XServletException
      * @throws BaseEngineException
      */
-    //private JSONObject getCoordinatorJob(HttpServletRequest request, HttpServletResponse response)
     private JsonBean getCoordinatorJob(HttpServletRequest request, HttpServletResponse response)
             throws XServletException, BaseEngineException {
         JsonBean jobBean = null;
-        // JSONObject json = new JSONObject();
         CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(
                 getUser(request), getAuthToken(request));
         String jobId = getResourceName(request);
@@ -526,22 +671,46 @@ public class V1JobServlet extends BaseJobServlet {
         len = (len < 1) ? Integer.MAX_VALUE : len;
         try {
             JsonCoordinatorJob coordJob = coordEngine.getCoordJob(jobId, start, len);
-            // coordJob.setOffset(start);
-            // coordJob.setLen(len);
             jobBean = coordJob;
-            // jobBean = (JsonBean) coordEngine.getCoordJob(jobId, start, len);
         }
         catch (CoordinatorEngineException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
         }
 
         return jobBean;
-        //return json;
     }
 
     /**
-     * @param request
-     * @param response
+     * Get bundle job info
+     *
+     * @param request servlet request
+     * @param response servlet response
+     * @return JsonBean bundle job bean
+     * @throws XServletException
+     * @throws BaseEngineException
+     */
+    private JsonBean getBundleJob(HttpServletRequest request, HttpServletResponse response) throws XServletException,
+            BaseEngineException {
+        JsonBean jobBean = null;
+        BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request),
+                getAuthToken(request));
+        String jobId = getResourceName(request);
+
+        try {
+            jobBean = (JsonBean) bundleEngine.getBundleJob(jobId);
+
+            return jobBean;
+        }
+        catch (BundleEngineException ex) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
+        }
+    }
+
+    /**
+     * Get coordinator action
+     *
+     * @param request servlet request
+     * @param response servlet response
      * @return JsonBean CoordinatorActionBean
      * @throws XServletException
      * @throws BaseEngineException
@@ -563,15 +732,17 @@ public class V1JobServlet extends BaseJobServlet {
     }
 
     /**
-     * @param request
-     * @param response
+     * Get wf job definition
+     * 
+     * @param request servlet request
+     * @param response servlet response
      * @return String wf definition
      * @throws XServletException
      */
     private String getWorkflowJobDefinition(HttpServletRequest request, HttpServletResponse response)
             throws XServletException {
         DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
-                                                                                      getAuthToken(request));
+                getAuthToken(request));
 
         String wfDefinition;
         String jobId = getResourceName(request);
@@ -585,8 +756,32 @@ public class V1JobServlet extends BaseJobServlet {
     }
 
     /**
-     * @param request
-     * @param response
+     * Get bundle job definition
+     *
+     * @param request servlet request
+     * @param response servlet response
+     * @return String bundle definition
+     * @throws XServletException
+     */
+    private String getBundleJobDefinition(HttpServletRequest request, HttpServletResponse response) throws XServletException {
+        BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request),
+                getAuthToken(request));
+        String bundleDefinition;
+        String jobId = getResourceName(request);
+        try {
+            bundleDefinition = bundleEngine.getDefinition(jobId);
+        }
+        catch (BundleEngineException ex) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
+        }
+        return bundleDefinition;
+    }
+
+    /**
+     * Get coordinator job definition
+     *
+     * @param request servlet request
+     * @param response servlet response
      * @return String coord definition
      * @throws XServletException
      */
@@ -609,16 +804,17 @@ public class V1JobServlet extends BaseJobServlet {
     }
 
     /**
-     * @param request
-     * @param response
+     * Stream wf job log
+     * 
+     * @param request servlet request
+     * @param response servlet response
      * @throws XServletException
      * @throws IOException
      */
     private void streamWorkflowJobLog(HttpServletRequest request, HttpServletResponse response)
             throws XServletException, IOException {
         DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
-                                                                                      getAuthToken(request));
-
+                getAuthToken(request));
         String jobId = getResourceName(request);
         try {
             dagEngine.streamLog(jobId, response.getWriter());
@@ -629,8 +825,30 @@ public class V1JobServlet extends BaseJobServlet {
     }
 
     /**
-     * @param request
-     * @param response
+     * Stream bundle job log
+     *
+     * @param request servlet request
+     * @param response servlet response
+     * @throws XServletException
+     */
+    private void streamBundleJob(HttpServletRequest request, HttpServletResponse response)
+            throws XServletException, IOException {
+        BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request),
+                getAuthToken(request));
+        String jobId = getResourceName(request);
+        try {
+            bundleEngine.streamLog(jobId, response.getWriter());
+        }
+        catch (BundleEngineException ex) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
+        }
+    }
+
+    /**
+     * Stream coordinator job log
+     *
+     * @param request servlet request 
+     * @param response servlet response
      * @throws XServletException
      * @throws IOException
      */
@@ -648,6 +866,5 @@ public class V1JobServlet extends BaseJobServlet {
         catch (BaseEngineException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
         }
-
     }
 }
