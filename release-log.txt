@@ -1,5 +1,6 @@
 -- Oozie 3.0.1 release
 
+OOZIE-62 client command error when bundle rerun with -action.
 GH-0566 If Java Main exit code !=0, LauncherMapper should the exit code as the error code
 OOZIE-34 LauncherMapper security manager fails when a permission with context is check
 OOZIE-XX Fix the docs for the coord:user() and dateOffset() function
