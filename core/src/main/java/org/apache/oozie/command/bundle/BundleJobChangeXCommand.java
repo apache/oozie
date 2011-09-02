@@ -161,6 +161,7 @@ public class BundleJobChangeXCommand extends XCommand<Void> {
                 }
                 else if (isChangeEndTime) {
                     bundleJob.setEndTime(newEndTime);
+                    bundleJob.setStatus(Job.Status.RUNNING);
                 }
                 for (BundleActionBean action : this.bundleActions) {
                     // queue coord change commands;

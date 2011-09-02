@@ -1,5 +1,6 @@
 -- Oozie 3.0.1 release
 
+OOZIE-86 Make bundle status RUNNING after change endtime 
 OOZIE-80 Make coordinator backward compatible for RUNNING and PREPSUSPENDED
 OOZIE-78 Resume coordinator actions should check the status is suspended
 OOZIE-58 Add date/time formatting function to coord.
