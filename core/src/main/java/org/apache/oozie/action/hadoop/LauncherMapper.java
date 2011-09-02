@@ -30,6 +30,7 @@ import java.lang.reflect.Method;
 import java.security.Permission;
 import java.text.MessageFormat;
 import java.util.Properties;
+import java.util.StringTokenizer;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -347,6 +348,14 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
                     System.out.println("=================================================================");
                     System.out.println("Workflow job id   : " + System.getProperty("oozie.job.id"));
                     System.out.println("Workflow action id: " + System.getProperty("oozie.action.id"));
+                    System.out.println();
+                    System.out.println("Classpath         :");
+                    System.out.println("------------------------");
+                    StringTokenizer st = new StringTokenizer(System.getProperty("java.class.path"), ":");
+                    while (st.hasMoreTokens()) {
+                        System.out.println("  " + st.nextToken());
+                    }
+                    System.out.println("------------------------");
                     System.out.println();
                     System.out.println("Main class        : " + mainClass);
                     System.out.println();

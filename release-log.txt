@@ -1,5 +1,6 @@
 -- Oozie 2.3.0 release
 
+GH-0150 LauncherMapper should do a friendly display of the classpath of the JVM
 GH-0149 create sharelib module with Pig/Streaming JARs
 GH-0119 support for user() EL function in coord apps
 GH-0131 add an embedded tomcat in Oozie distribution
