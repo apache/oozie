@@ -105,4 +105,13 @@ public class LogUtils {
         XLog.Info.get().setParameters(logInfo);
     }
 
+    /**
+     * Set the thread local log info with the context of the given Info object.
+     *
+     * @param logInfo log info
+     */
+    public static void setLogInfo(XLog.Info logInfo) {
+        XLog.Info.get().setParameters(logInfo);
+    }
+
 }

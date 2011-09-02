@@ -86,6 +86,8 @@ public class NotificationXCommand extends WorkflowXCommand<Void> {
 
     @Override
     protected Void execute() throws CommandException {
+        //if command is requeue, the logInfo has to set to thread local Info object again
+        LogUtils.setLogInfo(logInfo);
         if (url != null) {
             try {
                 URL url = new URL(this.url);
