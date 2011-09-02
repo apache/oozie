@@ -70,7 +70,6 @@ import org.apache.openjpa.persistence.jdbc.Index;
 public class BundleActionBean implements Writable {
 
     @Id
-    @Index
     @Column(name = "bundle_action_id")
     private String bundleActionId = null;
 

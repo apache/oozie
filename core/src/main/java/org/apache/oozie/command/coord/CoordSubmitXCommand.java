@@ -475,7 +475,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         ival = ParamChecker.checkInteger(val, "concurrency");
         coordJob.setConcurrency(ival);
 
-        val = resolveTagContents("materialization_throttling", eAppXml.getChild("controls", eAppXml.getNamespace()),
+        val = resolveTagContents("throttle", eAppXml.getChild("controls", eAppXml.getNamespace()),
                 evalNofuncs);
         if (val == null || val.isEmpty()) {
             int maxQueue = Services.get().getConf().getInt(CONF_QUEUE_SIZE, 10000);
@@ -483,7 +483,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
             int defaultThrottle = (int) (maxQueue * factor);
             val = String.valueOf(defaultThrottle);
         }
-        ival = ParamChecker.checkInteger(val, "materialization_throttling");
+        ival = ParamChecker.checkInteger(val, "throttle");
         coordJob.setMatThrottling(ival);
 
         val = resolveTagContents("execution", eAppXml.getChild("controls", eAppXml.getNamespace()), evalNofuncs);

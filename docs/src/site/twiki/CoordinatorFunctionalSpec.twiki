@@ -225,6 +225,7 @@ The =${coord:endOfDays(int n)}= EL function is identical to the =${coord:days(in
         <timeout>10</timeout>
         <concurrency>${concurrency_level}</concurrency>
         <execution>${execution_order}</execution>
+        <throttle>${materialization_throttle}</throttle>
       </controls>
 
       <datasets>
@@ -315,6 +316,7 @@ The =${coord:endOfMonths(int n)}= EL function is identical to the =${coord:month
         <timeout>10</timeout>
         <concurrency>${concurrency_level}</concurrency>
         <execution>${execution_order}</execution>
+        <throttle>${materialization_throttle}</throttle>
       </controls>
 
       <datasets>
@@ -700,6 +702,7 @@ The execution policies for the actions of a coordinator job can be defined in th
    * Timeout: A coordinator job can specify the timeout for its coordinator actions, this is, how long the coordinator action will be in *WAITING* or *READY* status before giving up on its execution.
    * Concurrency: A coordinator job can specify the concurrency for its coordinator actions, this is, how many coordinator actions are allowed to run concurrently ( *RUNNING* status) before the coordinator engine starts throttling them.
    * Execution strategy: A coordinator job can specify the execution strategy of its coordinator actions when there is backlog of coordinator actions in the coordinator engine. The different execution strategies are 'oldest first', 'newest first' and 'last one only'. A backlog normally happens because of delayed input data, concurrency control or because manual re-runs of coordinator jobs.
+   * Throttle: A coordinator job can specify the materialization or creation throttle value for its coordinator actions, this is, how many maximum coordinator actions are allowed to be in WAITING state concurrently.
 
 ---++++ 6.1.7. Data Pipeline Application
 

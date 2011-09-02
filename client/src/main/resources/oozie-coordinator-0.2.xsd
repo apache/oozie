@@ -42,7 +42,7 @@
             <xs:element name="timeout" type="xs:string" minOccurs="0" maxOccurs="1"/>
             <xs:element name="concurrency" type="xs:string" minOccurs="0" maxOccurs="1"/>
             <xs:element name="execution" type="xs:string" minOccurs="0" maxOccurs="1"/>
-            <xs:element name="materialization_throttling" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="throttle" type="xs:string" minOccurs="0" maxOccurs="1"/>
         </xs:sequence>
     </xs:complexType>
     <xs:complexType name="DATASETS">
