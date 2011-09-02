@@ -23,3 +23,5 @@ core/mem
 examples/oozietests
 mkdistro-*.out
 distro/downloads
+SecurityAuth.audit
+

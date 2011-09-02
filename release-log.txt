@@ -1,5 +1,6 @@
 -- Oozie 2.3.0 release
 
+GH-0173 Add SecurityAuth.audit file to .gitignore
 GH-0152 classpath of actions contains all JARs twice
 GH-0165 oozie-start.sh should source ${OOZIE_HOME}/conf/oozie-env.sh
 GH-0168 Being able to read Oozie configuration for an arbitrary directory
