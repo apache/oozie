@@ -125,8 +125,9 @@ public class TestBundleRerunXCommand extends XDataTestCase {
         new BundleRerunXCommand(job.getId(), "action2", null, false, true).call();
 
         job = jpaService.execute(bundleJobGetExecutor);
-        assertEquals(Job.Status.RUNNING, job.getStatus());
-        assertNull(job.getPauseTime());
+        assertEquals(Job.Status.PAUSED, job.getStatus());
+        assertNotNull(job.getPauseTime());
+        assertFalse(job.isPending());
     }
 
     /**

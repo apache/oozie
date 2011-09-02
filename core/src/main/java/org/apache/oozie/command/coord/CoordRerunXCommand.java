@@ -490,22 +490,25 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
     @Override
     public void notifyParent() throws CommandException {
         //update bundle action
-        if (coordJob.getBundleId() != null) {
-            BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, prevStatus);
+        if (getPrevStatus() != null && coordJob.getBundleId() != null) {
+            BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, getPrevStatus());
             bundleStatusUpdate.call();
         }
     }
 
     @Override
     public void updateJob() throws CommandException {
-        // rerun a paused coordinator job will keep job status at paused and pending at previous pending
-        if (prevStatus.equals(Job.Status.PAUSED)) {
-            coordJob.setStatus(Job.Status.PAUSED);
-            if (prevPending) {
-                coordJob.setPending();
-            }
-        }
         try {
+            // rerun a paused coordinator job will keep job status at paused and pending at previous pending
+            if (getPrevStatus()!= null && getPrevStatus().equals(Job.Status.PAUSED)) {
+                coordJob.setStatus(Job.Status.PAUSED);
+                if (prevPending) {
+                    coordJob.setPending();
+                } else {
+                    coordJob.resetPending();
+                }
+            }
+
             jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
         }
         catch (JPAExecutorException je) {
