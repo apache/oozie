@@ -21,6 +21,7 @@ import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
+import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.KillTransitionXCommand;
@@ -94,6 +95,12 @@ public class BundleKillXCommand extends KillTransitionXCommand {
      */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
+        if (bundleJob.getStatus() == CoordinatorJob.Status.SUCCEEDED
+                || bundleJob.getStatus() == CoordinatorJob.Status.FAILED) {
+            LOG.info("BundleKillXCommand not killed - job either finished or does not exist " + jobId + " status :"
+                    + bundleJob.getStatus());
+            throw new PreconditionException(ErrorCode.E1020, jobId);
+        }
     }
 
     /* (non-Javadoc)

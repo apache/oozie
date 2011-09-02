@@ -5,6 +5,7 @@ GH-0620 Adding Precondition for Coordinator Kill Command.
 GH-0619 Allow oozie client to print the exact URL point in debug mode.
 GH-0613 Display configuration content for bundle jobs.
 GH-0623 does oozie allow bundle rerun on a PREP bundle?
+GH-0624 SUCCEEDED bundle job should not be KILLED.
 GH-0614 Fixing CLient Proxy to work for toString calls 
 GH-0610 Fixing Bundle status service and Coordinator Action resume
 GH-0480 Support new Pig API to submit pig job
