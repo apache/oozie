@@ -1,5 +1,6 @@
 -- Oozie 3.0.0 release
 
+GH-0512 Make pauseTime only future time for coordinator jobs
 GH-0075 Provide access to date list.
 GH-0166 Modify the logic of adding .so and .so.1 files into cache.
 GH-0067 input data check should have a timeout for catch-up mode

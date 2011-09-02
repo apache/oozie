@@ -86,14 +86,7 @@ public class TestCoordChangeXCommand extends XTestCase {
             fail("Invalid date" + ex);
         }
 
-        new CoordChangeXCommand(jobId, "pausetime=2009-02-01T01:08Z").call();
-        try {
-            checkCoordJobs(jobId, null, null, DateUtils.parseDateUTC("2009-02-01T01:08Z"), true);
-        }
-        catch (Exception ex) {
-            ex.printStackTrace();
-            fail("Invalid date" + ex);
-        }
+
 
         new CoordChangeXCommand(jobId, "endtime=2011-12-01T05:00Z;pausetime=;concurrency=200").call();
         try {
@@ -193,6 +186,16 @@ public class TestCoordChangeXCommand extends XTestCase {
 
         try {
             new CoordChangeXCommand(jobId, "pausetime=null").call();
+            fail("Should not reach here.");
+        }
+        catch (CommandException ex) {
+            if (ex.getErrorCode() != ErrorCode.E1015) {
+                fail("Error code should be E1015.");
+            }
+        }
+        
+        try {
+            new CoordChangeXCommand(jobId, "pausetime=2009-02-01T01:08Z").call();
             fail("Should not reach here.");
         }
         catch (CommandException ex) {

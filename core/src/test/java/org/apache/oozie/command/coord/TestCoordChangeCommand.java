@@ -65,10 +65,10 @@ public class TestCoordChangeCommand extends XTestCase {
             fail("Invalid date" + ex);
         }
 
-        new CoordChangeCommand(jobId, "endtime=2011-12-01T05:00Z;concurrency=200;pausetime=2011-11-01T05:00Z").call();
+        new CoordChangeCommand(jobId, "endtime=2011-12-01T05:00Z;concurrency=200;pausetime=2099-11-01T05:00Z").call();
         try {
             checkCoordJobs(jobId, DateUtils.parseDateUTC("2011-12-01T05:00Z"), 200, DateUtils
-                    .parseDateUTC("2011-11-01T05:00Z"), true);
+                    .parseDateUTC("2099-11-01T05:00Z"), true);
         }
         catch (Exception ex) {
             ex.printStackTrace();
@@ -78,15 +78,6 @@ public class TestCoordChangeCommand extends XTestCase {
         new CoordChangeCommand(jobId, "endtime=2011-12-01T05:00Z;concurrency=200;pausetime=").call();
         try {
             checkCoordJobs(jobId, DateUtils.parseDateUTC("2011-12-01T05:00Z"), 200, null, true);
-        }
-        catch (Exception ex) {
-            ex.printStackTrace();
-            fail("Invalid date" + ex);
-        }
-
-        new CoordChangeCommand(jobId, "pausetime=2009-02-01T01:08Z").call();
-        try {
-            checkCoordJobs(jobId, null, null, DateUtils.parseDateUTC("2009-02-01T01:08Z"), true);
         }
         catch (Exception ex) {
             ex.printStackTrace();
@@ -191,6 +182,26 @@ public class TestCoordChangeCommand extends XTestCase {
 
         try {
             new CoordChangeCommand(jobId, "pausetime=null").call();
+            fail("Should not reach here.");
+        }
+        catch (CommandException ex) {
+            if (ex.getErrorCode() != ErrorCode.E1015) {
+                fail("Error code should be E1015.");
+            }
+        }
+        
+        try {
+            new CoordChangeCommand(jobId, "pausetime=2009-02-01T01:08Z").call();
+            fail("Should not reach here.");
+        }
+        catch (CommandException ex) {
+            if (ex.getErrorCode() != ErrorCode.E1015) {
+                fail("Error code should be E1015.");
+            }
+        }
+        
+        try {
+            new CoordChangeCommand(jobId, "pausetime").call();
             fail("Should not reach here.");
         }
         catch (CommandException ex) {
