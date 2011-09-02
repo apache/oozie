@@ -47,7 +47,7 @@ public class TestWorkflowActionsRunningGetJPAExecutor extends XDataTestCase {
         addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.OK);
         addRecordToWfActionTableWithRunningStatus(job.getId(), "2", WorkflowAction.Status.RUNNING);
         Thread.sleep(2000);
-        _testGetRunningActions(1000);
+        _testGetRunningActions(1);
     }
 
     private void _testGetRunningActions(long checkAgeSecs) throws Exception {
@@ -56,7 +56,7 @@ public class TestWorkflowActionsRunningGetJPAExecutor extends XDataTestCase {
         WorkflowActionsRunningGetJPAExecutor runningActionsGetExe = new WorkflowActionsRunningGetJPAExecutor(checkAgeSecs);
         List<WorkflowActionBean> list = jpaService.execute(runningActionsGetExe);
         assertNotNull(list);
-        assertEquals(list.size(), 1);
+        assertEquals(1, list.size());
     }
 
     protected WorkflowActionBean addRecordToWfActionTableWithRunningStatus(String wfId, String actionName, WorkflowAction.Status status) throws Exception {
