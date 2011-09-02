@@ -192,8 +192,8 @@ public abstract class XTestCase extends TestCase {
         if (System.getProperty("oozie.test.hadoop.minicluster", "true").equals("true")) {
             setUpEmbeddedHadoop();
         }
-        if (System.getProperty("hadoop20", "false").equals("false")) {
-            System.setProperty("oozie.services.ext", "org.apache.oozie.service.KerberosHadoopAccessorService");
+        if (System.getProperty("hadoop20", "false").equals("true")) {
+            System.setProperty("oozie.services.ext", "org.apache.oozie.service.HadoopAccessorService");
         }
     }
 

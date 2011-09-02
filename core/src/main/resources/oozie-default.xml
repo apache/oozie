@@ -67,7 +67,7 @@
             org.apache.oozie.service.UUIDService,
             org.apache.oozie.service.ELService,
             org.apache.oozie.service.AuthorizationService,
-            org.apache.oozie.service.HadoopAccessorService,
+            org.apache.oozie.service.KerberosHadoopAccessorService,
             org.apache.oozie.service.MemoryLocksService,
             org.apache.oozie.service.DagXLogInfoService,
             org.apache.oozie.service.SchemaService,

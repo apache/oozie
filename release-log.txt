@@ -1,5 +1,6 @@
 -- Oozie 2.3.0 release
 
+GH-0160 KerberosHadoopAccessorService should be the default
 GH-0151 examples should use a share lib
 GH-0150 LauncherMapper should do a friendly display of the classpath of the JVM
 GH-0149 create sharelib module with Pig/Streaming JARs

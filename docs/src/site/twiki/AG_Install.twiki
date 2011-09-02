@@ -138,20 +138,18 @@ Oozie can work with Hadoop 20 with Security distribution which supports Kerberos
 Oozie authentication is configured using the following configuration properties (default values shown):
 
 <verbatim>
-  oozie.services.ext=org.apache.oozie.service.HadoopAccessorService
   oozie.service.HadoopAccessorService.kerberos.enabled=false
   local.realm=LOCALHOST
   oozie.service.HadoopAccessorService.keytab.file=${user.home}/oozie.keytab
   oozie.service.HadoopAccessorService.kerberos.principal=${user.name}/localhost@{local.realm}
 </verbatim>
 
-The above default values are for a Hadoop 0.20.2 distribution without Kerberos authentication.
+The above default values are for a Hadoop 0.20 secure distribution (with support for Kerberos authentication).
 
-To use a Hadoop 20 with Security distribution (regardless of using Simple or Kerberos authentication) the following
-property must be set:
+To use a Hadoop 20 distribution pre-security (i.e. 0.20.1) the following property must be set:
 
 <verbatim>
-  oozie.services.ext=org.apache.oozie.service.KerberosHadoopAccessorService
+  oozie.services.ext=org.apache.oozie.service.HadoopAccessorService
 </verbatim>
 
 To enable Kerberos authentication, the following property must be set:
