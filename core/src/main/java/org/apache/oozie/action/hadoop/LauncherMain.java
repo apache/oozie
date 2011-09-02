@@ -24,3 +24,15 @@ public abstract class LauncherMain {
     protected abstract void run(String[] args) throws Exception;
 
 }
+
+class LauncherMainException extends Exception {
+    private int errorCode;
+    
+    public LauncherMainException(int code) {
+        errorCode = code;
+    }
+    
+    int getErrorCode() {
+        return errorCode;
+    }
+}

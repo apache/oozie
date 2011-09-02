@@ -276,9 +276,9 @@
 
             <dependency>
                 <!-- groupId to be correct by GH-0226 -->
-                <groupId>com.yahoo.hadoop</groupId>
+                <groupId>org.apache.pig</groupId>
                 <artifactId>pig</artifactId>
-                <version>0.7.0</version>
+                <version>0.8.0</version>
                 <exclusions>
                     <exclusion>
                         <!-- groupId to be correct by GH-0226 -->

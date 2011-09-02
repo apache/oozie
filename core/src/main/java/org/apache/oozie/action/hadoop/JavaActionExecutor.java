@@ -108,6 +108,7 @@ public class JavaActionExecutor extends ActionExecutor {
         classes.add(LauncherMapper.class);
         classes.add(LauncherSecurityManager.class);
         classes.add(LauncherException.class);
+        classes.add(LauncherMainException.class);
         return classes;
     }
 

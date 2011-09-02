@@ -71,6 +71,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         classes.add(LauncherMapper.class);
         classes.add(LauncherSecurityManager.class);
         classes.add(LauncherException.class);
+        classes.add(LauncherMainException.class);
         classes.add(LauncherMain.class);
         classes.add(MapReduceMain.class);
         classes.add(StreamingMain.class);

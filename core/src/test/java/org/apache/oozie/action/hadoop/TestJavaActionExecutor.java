@@ -84,6 +84,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         classes.add(LauncherMapper.class);
         classes.add(LauncherSecurityManager.class);
         classes.add(LauncherException.class);
+        classes.add(LauncherMainException.class);
         assertEquals(classes, ae.getLauncherClasses());
 
         Configuration conf = new XConfiguration();

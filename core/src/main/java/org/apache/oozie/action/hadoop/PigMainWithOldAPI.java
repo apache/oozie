@@ -15,8 +15,6 @@
 package org.apache.oozie.action.hadoop;
 
 import org.apache.pig.Main;
-import org.apache.pig.PigRunner;
-import org.apache.pig.tools.pigstats.PigStats;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobClient;
@@ -36,7 +34,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.net.URL;
 
-public class PigMain extends LauncherMain {
+public class PigMainWithOldAPI extends LauncherMain {
     private static final Set<String> DISALLOWED_PIG_OPTIONS = new HashSet<String>();
 
     static {
@@ -57,7 +55,7 @@ public class PigMain extends LauncherMain {
     }
 
     public static void main(String[] args) throws Exception {
-        run(PigMain.class, args);
+        run(PigMainWithOldAPI.class, args);
     }
 
     protected void run(String[] args) throws Exception {
@@ -203,12 +201,40 @@ public class PigMain extends LauncherMain {
         System.out.println();
         System.out.flush();
 
-        System.out.println();
-        runPigJob(new String[] { "-version" }, null, true);
+        try {
+            System.out.println();
+            runPigJob(new String[] { "-version" });
+        }
+        catch (SecurityException ex) {
+            LauncherSecurityManager.reset();
+        }
         System.out.println();
         System.out.flush();
-
-        runPigJob(arguments.toArray(new String[arguments.size()]), pigLog, false);
+        try {
+            runPigJob(arguments.toArray(new String[arguments.size()]));
+        }
+        catch (SecurityException ex) {
+            if (LauncherSecurityManager.getExitInvoked()) {
+                if (LauncherSecurityManager.getExitCode() != 0) {
+                    System.err.println();
+                    System.err.println("Pig logfile dump:");
+                    System.err.println();
+                    try {
+                        BufferedReader reader = new BufferedReader(new FileReader(pigLog));
+                        line = reader.readLine();
+                        while (line != null) {
+                            System.err.println(line);
+                            line = reader.readLine();
+                        }
+                        reader.close();
+                    }
+                    catch (FileNotFoundException e) {
+                        System.err.println("pig log file: " + pigLog + "  not found.");
+                    }
+                    throw ex;
+                }
+            }
+        }
 
         System.out.println();
         System.out.println("<<< Invocation of Pig command completed <<<");
@@ -224,73 +250,9 @@ public class PigMain extends LauncherMain {
         System.out.println();
     }
 
-    private void handleError(String pigLog) throws Exception {
-        System.err.println();
-        System.err.println("Pig logfile dump:");
-        System.err.println();
-        try {
-            BufferedReader reader = new BufferedReader(new FileReader(pigLog));
-            String line = reader.readLine();
-            while (line != null) {
-                System.err.println(line);
-                line = reader.readLine();
-            }
-            reader.close();
-        }
-        catch (FileNotFoundException e) {
-            System.err.println("pig log file: " + pigLog + "  not found.");
-        }
-    }
-
-    /**
-     * @param args pig command line arguments
-     * @param pigLog pig log file
-     * @param resetSecurityManager specify if need to reset security manager
-     * @throws Exception
-     */
-    protected void runPigJob(String[] args, String pigLog, boolean resetSecurityManager) throws Exception {
+    protected void runPigJob(String[] args) throws Exception {
         // running as from the command line
-        boolean pigRunnerExists = true;
-        Class klass;
-        try {
-            klass = Class.forName("org.apache.pig.PigRunner");
-        }
-        catch (ClassNotFoundException ex) {
-            pigRunnerExists = false;
-        }
-
-        if (pigRunnerExists) {
-            System.out.println("Run pig script using PigRunner.run() for Pig version 0.8+");
-            PigStats stats = PigRunner.run(args, null);
-            int code = stats.getReturnCode();
-            if (code != 0) {
-                if (pigLog != null) {
-                    handleError(pigLog);
-                }
-                throw new LauncherMainException(code);
-            }
-        }
-        else {
-            try {
-                System.out.println("Run pig script using Main.main() for Pig version before 0.8");
-                Main.main(args);
-            }
-            catch (SecurityException ex) {
-                if (resetSecurityManager) {
-                    LauncherSecurityManager.reset();
-                }
-                else {
-                    if (LauncherSecurityManager.getExitInvoked()) {
-                        if (LauncherSecurityManager.getExitCode() != 0) {
-                            if (pigLog != null) {
-                                handleError(pigLog);
-                            }
-                            throw ex;
-                        }
-                    }
-                }
-            }
-        }
+        Main.main(args);
     }
 
     public static void setPigScript(Configuration conf, String script, String[] params, String[] args) {

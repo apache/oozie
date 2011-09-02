@@ -390,7 +390,12 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
                         mainMethod.invoke(null, (Object) args);
                     }
                     catch (InvocationTargetException ex) {
-                        if (SecurityException.class.isInstance(ex.getCause())) {
+                        if (LauncherMainException.class.isInstance(ex.getCause())) {
+                            errorMessage = msgPrefix + "exit code [" +((LauncherMainException)ex.getCause()).getErrorCode() 
+                                + "]";
+                            errorCause = null;
+                        }
+                        else if (SecurityException.class.isInstance(ex.getCause())) {
                             if (LauncherSecurityManager.getExitInvoked()) {
                                 System.out.println("Intercepting System.exit(" + LauncherSecurityManager.getExitCode()
                                         + ")");
