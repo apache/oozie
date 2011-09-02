@@ -1,0 +1,53 @@
+-- Oozie 2.2.0 release
+
+- adding Pig version number to pig execution log in launcher log
+- simplify Oozie build
+- oozie documentation is not included in oozie.war and standalone as docs.zip
+- simplify Oozie config/logs loading
+- fixing location of RowExpander.js for web console in index.html
+- jpa configuration refactoring
+- Fix oozie UI
+- Stop checking input directories if unable to find anyone directory
+- Read default timeout from config file.
+- Change update query to only modify required fields.
+- Simplify client utility methods
+- Http Submission of single MR/PIG job without corresponding workflow.xml
+- oozie launcher failed when pig log not found.
+- client API addArchive does not link file to a directory
+- oozie.libpath needs to start with hdfs://namenode when submit pig job to certain versions of hadoop clusters
+
+-- Oozie 2.1.0 release
+
+- compositecommand uses hardcoded type, this limits concurrency by command type
+- testcases time doubled, lot of exceptions on command queue on shutdown
+- Set default coordinator action timeout to 2 hours.
+- build/assembly changes
+- oozie mistakes namenode as the jobtracker at white list validation
+- single distribution should work both with Hadoop 20 and 20S
+- use comma as separator for datasets
+- Oozie should not package the Hadoop JARs
+- Whitelist of valid Jobtracker & Namenode URIs
+- blank whitelist should allow any namenode/jobtracker
+- EL function in oozie coordinator to check data dependencies on the closest future data date
+- EL function to generate a UTC date based on another UTC date
+- instrumentation for commands in the queue.
+- Queue Refactor
+- instrumentation for commands in the queue
+- Coordinator action rerun
+- Change end_time and concurrency for a running coordinator job
+- Change pause_time for a running coordinator job
+- Annotate error message with jobID
+- Set pending in SuspendCommand and reset pending in ResumeCommand
+- Set time in super class bean
+- Remove unnecessary command and service from the code.
+- CoordRecoveryCommand update the job status unconditionally
+- Fix admin -version
+- Need to revisit prioritization of coordinator commands
+- coordinator job takes long time (>10mins) to create new actions when released from being paused
+- Set NN and JT Principal in JavaActionExecutor
+- Adding support for hadoop 0.20.200
+- Update document with two new EL functions in 2.1
+
+-- Oozie 2.0.2 release
+
+-- Oozie coordinator

@@ -1,19 +1,16 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.command.coord;
 
@@ -31,8 +28,6 @@ import org.apache.oozie.store.SLAStore;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.DateUtils;
-import org.apache.oozie.util.XmlUtils;
-import org.jdom.JDOMException;
 
 public class TestCoordActionMaterializeCommand extends XTestCase {
     private Services services;
@@ -41,6 +36,7 @@ public class TestCoordActionMaterializeCommand extends XTestCase {
         super.setUp();
         services = new Services();
         services.init();
+        cleanUpDBTables();
     }
 
     protected void tearDown() throws Exception {
@@ -49,18 +45,50 @@ public class TestCoordActionMaterializeCommand extends XTestCase {
     }
 
     public void testActionMater() throws Exception {
-        // NOTE: If this test runs multiple times with mysql DB, all the tests
-        // would fail except the first one.
-        // To make it work in mysql, you need to remove the records.
-        // It is intended to be tested against in-memory DB
         String jobId = "0000000-" + new Date().getTime() + "-testActionMater-C";
 
         Date startTime = DateUtils.parseDateUTC("2009-03-06T010:00Z");
         Date endTime = DateUtils.parseDateUTC("2009-03-11T10:00Z");
         addRecordToJobTable(jobId, startTime, endTime);
         new CoordActionMaterializeCommand(jobId, startTime, endTime).call();
-        checkCoordAction(jobId + "@1");
-        //Thread.sleep(300000);
+        CoordinatorActionBean action = checkCoordAction(jobId + "@1");
+        if (action != null) {
+            assertEquals(action.getTimeOut(), Services.get().getConf().getInt(
+                    "oozie.service.coord.catchup.default.timeout", -2));
+        }
+    }
+
+    public void testActionMaterWithPauseTime1() throws Exception {
+        String jobId = "0000000-" + new Date().getTime() + "-testActionMater-C";
+
+        Date startTime = DateUtils.parseDateUTC("2009-03-06T10:00Z");
+        Date endTime = DateUtils.parseDateUTC("2009-03-06T10:14Z");
+        Date pauseTime = DateUtils.parseDateUTC("2009-03-06T10:04Z");
+        addRecordToJobTable(jobId, startTime, endTime, pauseTime);
+        new CoordActionMaterializeCommand(jobId, startTime, endTime).call();
+        checkCoordActions(jobId, 1, null);
+    }
+
+    public void testActionMaterWithPauseTime2() throws Exception {
+        String jobId = "0000000-" + new Date().getTime() + "-testActionMater-C";
+
+        Date startTime = DateUtils.parseDateUTC("2009-03-06T10:00Z");
+        Date endTime = DateUtils.parseDateUTC("2009-03-06T10:14Z");
+        Date pauseTime = DateUtils.parseDateUTC("2009-03-06T10:08Z");
+        addRecordToJobTable(jobId, startTime, endTime, pauseTime);
+        new CoordActionMaterializeCommand(jobId, startTime, endTime).call();
+        checkCoordActions(jobId, 2, null);
+    }
+
+    public void testActionMaterWithPauseTime3() throws Exception {
+        String jobId = "0000000-" + new Date().getTime() + "-testActionMater-C";
+
+        Date startTime = DateUtils.parseDateUTC("2009-03-06T10:00Z");
+        Date endTime = DateUtils.parseDateUTC("2009-03-06T10:14Z");
+        Date pauseTime = DateUtils.parseDateUTC("2009-03-06T09:58Z");
+        addRecordToJobTable(jobId, startTime, endTime, pauseTime);
+        new CoordActionMaterializeCommand(jobId, startTime, endTime).call();
+        checkCoordActions(jobId, 0, CoordinatorJob.Status.RUNNING);
     }
 
     private void addRecordToJobTable(String jobId, Date startTime, Date endTime) throws StoreException {
@@ -167,7 +195,7 @@ public class TestCoordActionMaterializeCommand extends XTestCase {
         }
     }
 
-    private void checkCoordAction(String actionId) throws StoreException {
+    private CoordinatorActionBean checkCoordAction(String actionId) throws StoreException {
         CoordinatorStore store = new CoordinatorStore(false);
         try {
             CoordinatorActionBean action = store.getCoordinatorAction(actionId, false);
@@ -179,11 +207,96 @@ public class TestCoordActionMaterializeCommand extends XTestCase {
             if (slaEvents.size() == 0) {
                 fail("Unable to GET any record of sequence id greater than 0");
             }
+            return action;
         }
         catch (StoreException se) {
             se.printStackTrace();
             fail("Action ID " + actionId + " was not stored properly in db");
         }
+        return null;
     }
 
+    private void addRecordToJobTable(String jobId, Date startTime, Date endTime, Date pauseTime) throws StoreException {
+        CoordinatorStore store = new CoordinatorStore(false);
+        CoordinatorJobBean coordJob = new CoordinatorJobBean();
+        coordJob.setId(jobId);
+        coordJob.setAppName("testApp");
+        coordJob.setStartTime(startTime);
+        coordJob.setEndTime(endTime);
+        coordJob.setPauseTime(pauseTime);
+        coordJob.setTimeUnit(Timeunit.MINUTE);
+        coordJob.setAppPath("testAppPath");
+        coordJob.setStatus(CoordinatorJob.Status.PREMATER);
+        coordJob.setCreatedTime(new Date()); // TODO: Do we need that?
+        coordJob.setLastModifiedTime(new Date());
+        coordJob.setUser("testUser");
+        coordJob.setGroup("testGroup");
+        coordJob.setTimeZone("America/Los_Angeles");
+        String confStr = "<configuration></configuration>";
+        coordJob.setConf(confStr);
+        String appXml = "<coordinator-app xmlns='uri:oozie:coordinator:0.1' xmlns:sla='uri:oozie:sla:0.1' name='NAME' frequency=\"5\" start='2009-03-06T010:00Z' end='2009-03-06T10:14Z' timezone='America/Los_Angeles' freq_timeunit='MINUTE' end_of_duration='NONE'>";
+        appXml += "<controls>";
+        appXml += "<timeout>10</timeout>";
+        appXml += "<concurrency>2</concurrency>";
+        appXml += "<execution>LIFO</execution>";
+        appXml += "</controls>";
+        appXml += "<action>";
+        appXml += "<workflow>";
+        appXml += "<app-path>hdfs:///tmp/workflows/</app-path>";
+        appXml += "<configuration>";
+        appXml += "</configuration>";
+        appXml += "</workflow>";
+        appXml += " <sla:info>"
+                // + " <sla:client-id>axonite-blue</sla:client-id>"
+                + " <sla:app-name>test-app</sla:app-name>"
+                + " <sla:nominal-time>${coord:nominalTime()}</sla:nominal-time>"
+                + " <sla:should-start>5</sla:should-start>"
+                + " <sla:should-end>120</sla:should-end>"
+                + " <sla:notification-msg>Notifying User for ${coord:nominalTime()} nominal time </sla:notification-msg>"
+                + " <sla:alert-contact>abc@yahoo.com</sla:alert-contact>"
+                + " <sla:dev-contact>abc@yahoo.com</sla:dev-contact>"
+                + " <sla:qa-contact>abc@yahoo.com</sla:qa-contact>" + " <sla:se-contact>abc@yahoo.com</sla:se-contact>"
+                + "</sla:info>";
+        appXml += "</action>";
+        appXml += "</coordinator-app>";
+
+        coordJob.setJobXml(appXml);
+        coordJob.setLastActionNumber(0);
+        coordJob.setFrequency(5);
+        try {
+            store.beginTrx();
+            store.insertCoordinatorJob(coordJob);
+            store.commitTrx();
+        }
+        catch (StoreException se) {
+            se.printStackTrace();
+            store.rollbackTrx();
+            fail("Unable to insert the test job record to table");
+            throw se;
+        }
+        finally {
+            store.closeTrx();
+        }
+    }
+
+    private void checkCoordActions(String jobId, int number, CoordinatorJob.Status status) throws StoreException {
+        CoordinatorStore store = new CoordinatorStore(false);
+        try {
+            List<CoordinatorActionBean> actions = store.getActionsForCoordinatorJob(jobId, false);
+            if (actions.size() != number) {
+                fail("Should have " + number + " actions created for job " + jobId);
+            }
+
+            if (status != null) {
+                CoordinatorJob job = store.getCoordinatorJob(jobId, false);
+                if (job.getStatus() != status) {
+                    fail("Job status " + job.getStatus() + " should be " + status);
+                }
+            }
+        }
+        catch (StoreException se) {
+            se.printStackTrace();
+            fail("Job ID " + jobId + " was not stored properly in db");
+        }
+    }
 }

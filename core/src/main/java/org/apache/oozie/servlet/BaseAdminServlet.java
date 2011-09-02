@@ -1,25 +1,20 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.servlet;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Map;
 
 import javax.servlet.ServletException;
@@ -27,26 +22,22 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.oozie.BuildInfo;
-import org.apache.oozie.ErrorCode;
-import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.service.AuthorizationException;
 import org.apache.oozie.service.AuthorizationService;
 import org.apache.oozie.service.InstrumentationService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.servlet.JsonRestServlet.ParameterInfo;
-import org.apache.oozie.servlet.JsonRestServlet.ResourceInfo;
 import org.apache.oozie.util.Instrumentation;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 public abstract class BaseAdminServlet extends JsonRestServlet {
 
+    private static final long serialVersionUID = 1L;
     protected String modeTag;
 
-
-    public BaseAdminServlet(String instrumentationName, ResourceInfo[] RESOURCES_INFO) {
+    public BaseAdminServlet(String instrumentationName, ResourceInfo []RESOURCES_INFO ) {
         super(instrumentationName, RESOURCES_INFO);
         setAllowSafeModeChanges(true);
     }
@@ -79,10 +70,10 @@ public abstract class BaseAdminServlet extends JsonRestServlet {
         }*/
     }
 
-
     /**
      * Return safemode state, instrumentation, configuration, osEnv or javaSysProps
      */
+    @SuppressWarnings("unchecked")
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String resource = getResourceName(request);
         Instrumentation instr = Services.get().get(InstrumentationService.class).get();
@@ -93,39 +84,34 @@ public abstract class BaseAdminServlet extends JsonRestServlet {
             //json.put(JsonTags.SYSTEM_SAFE_MODE, getOozeMode());
             sendJsonResponse(response, HttpServletResponse.SC_OK, json);
         }
-        else {
-            if (resource.equals(RestConstants.ADMIN_OS_ENV_RESOURCE)) {
+        else if (resource.equals(RestConstants.ADMIN_OS_ENV_RESOURCE)) {
                 JSONObject json = new JSONObject();
                 json.putAll(instr.getOSEnv());
                 sendJsonResponse(response, HttpServletResponse.SC_OK, json);
             }
-            else {
-                if (resource.equals(RestConstants.ADMIN_JAVA_SYS_PROPS_RESOURCE)) {
-                    JSONObject json = new JSONObject();
-                    json.putAll(instr.getJavaSystemProperties());
-                    sendJsonResponse(response, HttpServletResponse.SC_OK, json);
-                }
-                else {
-                    if (resource.equals(RestConstants.ADMIN_CONFIG_RESOURCE)) {
-                        JSONObject json = new JSONObject();
-                        json.putAll(instr.getConfiguration());
-                        sendJsonResponse(response, HttpServletResponse.SC_OK, json);
-                    }
-                    else {
-                        if (resource.equals(RestConstants.ADMIN_INSTRUMENTATION_RESOURCE)) {
-                            sendJsonResponse(response, HttpServletResponse.SC_OK, instrToJson(instr));
-                        }
-                        else {
-                            if (resource.equals(RestConstants.ADMIN_BUILD_VERSION_RESOURCE)) {
-                                JSONObject json = new JSONObject();
-                                json.put(JsonTags.BUILD_VERSION, BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_VERSION));
-                                sendJsonResponse(response, HttpServletResponse.SC_OK, json);
-                            }
-                        }
-                    }
-                }
+            else if (resource.equals(RestConstants.ADMIN_JAVA_SYS_PROPS_RESOURCE)) {
+                JSONObject json = new JSONObject();
+                json.putAll(instr.getJavaSystemProperties());
+                sendJsonResponse(response, HttpServletResponse.SC_OK, json);
             }
-        }
+            else if (resource.equals(RestConstants.ADMIN_CONFIG_RESOURCE)) {
+                JSONObject json = new JSONObject();
+                json.putAll(instr.getConfiguration());
+                sendJsonResponse(response, HttpServletResponse.SC_OK, json);
+            }
+            else if (resource.equals(RestConstants.ADMIN_INSTRUMENTATION_RESOURCE)) {
+                sendJsonResponse(response, HttpServletResponse.SC_OK, instrToJson(instr));
+            }
+            else if (resource.equals(RestConstants.ADMIN_BUILD_VERSION_RESOURCE)) {
+                JSONObject json = new JSONObject();
+                json.put(JsonTags.BUILD_VERSION, BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_VERSION));
+                sendJsonResponse(response, HttpServletResponse.SC_OK, json);
+            }
+            else if (resource.equals(RestConstants.ADMIN_QUEUE_DUMP_RESOURCE)) {
+                JSONObject json = new JSONObject();
+                getQueueDump(json);
+                sendJsonResponse(response, HttpServletResponse.SC_OK, json);
+            }
     }
 
     @SuppressWarnings("unchecked")
@@ -175,7 +161,7 @@ public abstract class BaseAdminServlet extends JsonRestServlet {
     }
 
     protected abstract void populateOozieMode(JSONObject json);
-
     protected abstract void setOozieMode(HttpServletRequest request, HttpServletResponse response, String resourceName) throws XServletException;
+    protected abstract void getQueueDump(JSONObject json) throws XServletException;
 
 }

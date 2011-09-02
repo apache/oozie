@@ -1,19 +1,16 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.servlet;
 
@@ -26,18 +23,19 @@ import java.util.List;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.BaseEngineException;
 import org.apache.oozie.CoordinatorActionBean;
+import org.apache.oozie.CoordinatorActionInfo;
 import org.apache.oozie.CoordinatorEngine;
 import org.apache.oozie.CoordinatorEngineException;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.XException;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.CoordinatorJob.Execution;
 import org.apache.oozie.client.rest.JsonCoordinatorAction;
 import org.apache.oozie.client.rest.RestConstants;
-import org.apache.oozie.util.DateUtils;
-
 import org.apache.oozie.service.CoordinatorEngineService;
+import org.apache.oozie.util.DateUtils;
 
 public class MockCoordinatorEngineService extends CoordinatorEngineService {
     public static final String JOB_ID = "coord-job-C-";
@@ -127,10 +125,29 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
         }
 
         @Override
-        public void reRun(String jobId, Configuration conf) throws CoordinatorEngineException {
-            did = RestConstants.JOB_ACTION_RERUN;
+        public void change(String jobId, String changeValue) throws CoordinatorEngineException {
+            did = RestConstants.JOB_ACTION_CHANGE;
+            int idx = validateCoordinatorIdx(jobId);
+            started.set(idx, false);
+        }
+
+        @Override
+        public void reRun(String jobId, Configuration conf) throws BaseEngineException {
+            throw new BaseEngineException(new XException(ErrorCode.E0301));
+        }
+
+        @Override
+        public CoordinatorActionInfo reRun(String jobId, String rerunType, String scope, boolean refresh,
+                boolean noCleanup) throws BaseEngineException {
+            did = RestConstants.JOB_COORD_ACTION_RERUN;
             int idx = validateCoordinatorIdx(jobId);
             started.set(idx, true);
+            List<CoordinatorAction> actions = coordJobs.get(idx).getActions();
+            List<CoordinatorActionBean> actionBeans = new ArrayList<CoordinatorActionBean>();
+            for (CoordinatorAction action : actions) {
+                actionBeans.add((CoordinatorActionBean) action);
+            }
+            return new CoordinatorActionInfo(actionBeans);
         }
 
         @Override
@@ -150,7 +167,7 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
         @Override
         public String getDefinition(String jobId) throws BaseEngineException {
             did = RestConstants.JOB_SHOW_DEFINITION;
-            int idx = validateCoordinatorIdx(jobId);
+            validateCoordinatorIdx(jobId);
             return COORD_APP;
         }
 

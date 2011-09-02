@@ -1,19 +1,16 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.command.coord;
 
@@ -31,8 +28,9 @@ import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.coord.CoordELEvaluator;
 import org.apache.oozie.coord.CoordELFunctions;
-import org.apache.oozie.service.Services;
+import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
+import org.apache.oozie.service.Services;
 import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.util.DateUtils;
@@ -52,7 +50,7 @@ public class CoordActionInputCheckCommand extends CoordinatorCommand<Void> {
     private CoordinatorActionBean coordAction = null;
 
     public CoordActionInputCheckCommand(String actionId) {
-        super("coord_action_input", "coord_action_input", 0, XLog.STD);
+        super("coord_action_input", "coord_action_input", 1, XLog.STD);
         this.actionId = actionId;
     }
 
@@ -70,7 +68,7 @@ public class CoordActionInputCheckCommand extends CoordinatorCommand<Void> {
                     + currentTime + ", nominal=" + nominalTime);
             queueCallable(new CoordActionInputCheckCommand(coordAction.getId()), Math.max(
                     (nominalTime.getTime() - currentTime.getTime()), COMMAND_REQUEUE_INTERVAL));
-            //update lastModifiedTime
+            // update lastModifiedTime
             store.updateCoordinatorAction(coordAction);
             return null;
         }
@@ -84,7 +82,7 @@ public class CoordActionInputCheckCommand extends CoordinatorCommand<Void> {
                 StringBuilder existList = new StringBuilder();
                 StringBuilder nonExistList = new StringBuilder();
                 StringBuilder nonResolvedList = new StringBuilder();
-                CoordActionMaterializeCommand.getResolvedList(coordAction.getMissingDependencies(), nonExistList,
+                CoordCommandUtils.getResolvedList(coordAction.getMissingDependencies(), nonExistList,
                                                               nonResolvedList);
 
                 log.info("[" + actionId + "]::ActionInputCheck:: Missing deps:" + nonExistList.toString() + " "
@@ -94,7 +92,7 @@ public class CoordActionInputCheckCommand extends CoordinatorCommand<Void> {
                 coordAction.setLastModifiedTime(actualTime);
                 coordAction.setActionXml(actionXml.toString());
                 if (nonResolvedList.length() > 0 && status == false) {
-                    nonExistList.append(CoordActionMaterializeCommand.RESOLVED_UNRESOLVED_SEPARATOR).append(
+                    nonExistList.append(CoordCommandUtils.RESOLVED_UNRESOLVED_SEPARATOR).append(
                             nonResolvedList);
                 }
                 coordAction.setMissingDependencies(nonExistList.toString());
@@ -114,7 +112,7 @@ public class CoordActionInputCheckCommand extends CoordinatorCommand<Void> {
                         queueCallable(new CoordActionInputCheckCommand(coordAction.getId()), COMMAND_REQUEUE_INTERVAL);
                     }
                 }
-                store.updateCoordinatorAction(coordAction);
+                store.updateCoordActionMin(coordAction);
             }
             catch (Exception e) {
                 log.warn(actionId + ": Exception occurs: " + e + " STORE is active " + store.isActive(), e);
@@ -134,7 +132,7 @@ public class CoordActionInputCheckCommand extends CoordinatorCommand<Void> {
         Element eAction = XmlUtils.parseXml(actionXml.toString());
         boolean allExist = checkResolvedUris(eAction, existList, nonExistList, conf);
         if (allExist) {
-            log.info("[" + actionId + "]::ActionInputCheck:: Checking Latest");
+            log.debug("[" + actionId + "]::ActionInputCheck:: Checking Latest/future");
             allExist = checkUnresolvedInstances(eAction, conf, actualTime);
         }
         if (allExist == true) {
@@ -188,7 +186,7 @@ public class CoordActionInputCheckCommand extends CoordinatorCommand<Void> {
         boolean ret;
         Element inputList = eAction.getChild("input-events", eAction.getNamespace());
         if (inputList != null) {
-            ret = materializeUnresolvedEvent((List<Element>) inputList.getChildren("data-in", eAction.getNamespace()),
+            ret = materializeUnresolvedEvent(inputList.getChildren("data-in", eAction.getNamespace()),
                                              nominalTime, actualTime, actionConf);
             if (ret == false) {
                 resultedXml.append(strAction);
@@ -196,13 +194,15 @@ public class CoordActionInputCheckCommand extends CoordinatorCommand<Void> {
             }
         }
 
-        // Using latest() in output-event is not intuitive. We need to make
+        // Using latest() or future() in output-event is not intuitive.
+        // We need to make
         // sure, this assumption is correct.
         Element outputList = eAction.getChild("output-events", eAction.getNamespace());
         if (outputList != null) {
             for (Element dEvent : (List<Element>) outputList.getChildren("data-out", eAction.getNamespace())) {
                 if (dEvent.getChild("unresolved-instances", dEvent.getNamespace()) != null) {
-                    throw new CommandException(ErrorCode.E1006, "coord:latest()", " not permitted in output-event ");
+                    throw new CommandException(ErrorCode.E1006, "coord:latest()/future()",
+                            " not permitted in output-event ");
                 }
             }
             /*
@@ -280,21 +280,19 @@ public class CoordActionInputCheckCommand extends CoordinatorCommand<Void> {
         String[] uriList = nonExistList.toString().split(CoordELFunctions.INSTANCE_SEPARATOR);
         nonExistList.delete(0, nonExistList.length());
         boolean allExists = true;
+        String existSeparator = "", nonExistSeparator = "";
         for (int i = 0; i < uriList.length; i++) {
-            boolean exists = pathExists(uriList[i], conf);
-            log.info("[" + actionId + "]::ActionInputCheck:: File:" + uriList[i] + ", Exists? :" + exists);
-            if (exists) {
-                if (existList.length() > 0) {
-                    existList.append(CoordELFunctions.INSTANCE_SEPARATOR);
-                }
-                existList.append(uriList[i]);
+            if (allExists) {
+                allExists = pathExists(uriList[i], conf);
+                log.info("[" + actionId + "]::ActionInputCheck:: File:" + uriList[i] + ", Exists? :" + allExists);
+            }
+            if (allExists) {
+                existList.append(existSeparator).append(uriList[i]);
+                existSeparator = CoordELFunctions.INSTANCE_SEPARATOR;
             }
             else {
-                allExists = false;
-                if (nonExistList.length() > 0) {
-                    nonExistList.append(CoordELFunctions.INSTANCE_SEPARATOR);
-                }
-                nonExistList.append(uriList[i]);
+                nonExistList.append(nonExistSeparator).append(uriList[i]);
+                nonExistSeparator = CoordELFunctions.INSTANCE_SEPARATOR;
             }
         }
         return allExists;
@@ -305,16 +303,21 @@ public class CoordActionInputCheckCommand extends CoordinatorCommand<Void> {
         Path path = new Path(sPath);
         String user = ParamChecker.notEmpty(actionConf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
         String group = ParamChecker.notEmpty(actionConf.get(OozieClient.GROUP_NAME), OozieClient.GROUP_NAME);
-        return Services.get().get(HadoopAccessorService.class).
-                createFileSystem(user, group, path.toUri(), new Configuration()).exists(path);
+        try {
+            return Services.get().get(HadoopAccessorService.class).createFileSystem(user, group, path.toUri(),
+                    new Configuration()).exists(path);
+        }
+        catch (HadoopAccessorException e) {
+            throw new IOException(e);
+        }
     }
 
     /**
      * The function create a list of URIs separated by "," using the instances time stamp and URI-template
      *
      * @param event : <data-in> event
-     * @param instances : List of time stanmp seprated by ","
-     * @param unresolvedInstances : list of instance with latest function
+     * @param instances : List of time stamp seprated by ","
+     * @param unresolvedInstances : list of instance with latest/future function
      * @return : list of URIs separated by ",".
      * @throws Exception
      */
@@ -326,7 +329,8 @@ public class CoordActionInputCheckCommand extends CoordinatorCommand<Void> {
         StringBuilder uris = new StringBuilder();
 
         for (int i = 0; i < instanceList.length; i++) {
-            if (instanceList[i].indexOf("latest") >= 0) {
+            int funcType = CoordCommandUtils.getFuncType(instanceList[i]);
+            if (funcType == CoordCommandUtils.LATEST || funcType == CoordCommandUtils.FUTURE) {
                 if (unresolvedInstances.length() > 0) {
                     unresolvedInstances.append(CoordELFunctions.INSTANCE_SEPARATOR);
                 }

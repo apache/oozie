@@ -1,27 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Licensed to the Apache Software Foundation (ASF) under one
-  or more contributor license agreements.  See the NOTICE file
-  distributed with this work for additional information
-  regarding copyright ownership.  The ASF licenses this file
-  to you under the Apache License, Version 2.0 (the
-  "License"); you may not use this file except in compliance
-  with the License.  You may obtain a copy of the License at
+  Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
 
-      http://www.apache.org/licenses/LICENSE-2.0
+    http://www.apache.org/licenses/LICENSE-2.0
 
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS,
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
-  limitations under the License.
+  limitations under the License. See accompanying LICENSE file.
 -->
 <project>
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>org.apache.oozie</groupId>
+        <groupId>com.yahoo.oozie</groupId>
         <artifactId>oozie-main</artifactId>
-        <version>${oozieVersion}-${hadoopVersion}--${build}</version>
+        <version>2.2.0-SNAPSHOT</version> <!-- OOZIE_VERSION -->
     </parent>
     <artifactId>oozie-client</artifactId>
     <description>Oozie Client</description>
@@ -34,6 +31,11 @@
             <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
         </license>
     </licenses>
+
+    <organization>
+        <name>Yahoo</name>
+        <url>http://www.yahoo.com</url>
+    </organization>
 
     <dependencies>
         <dependency>
@@ -69,133 +71,17 @@
                 <filtering>true</filtering>
             </resource>
         </resources>
+        <plugins>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <descriptors>
+                        <descriptor>../src/main/assemblies/client.xml</descriptor>
+                    </descriptors>
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
-
-    <profiles>
-
-        <profile>
-            <id>jpaEnhancedOff</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-                <property>
-                    <name>oozie.build.jpa.enhanced</name>
-                    <value>false</value>
-                </property>
-            </activation>
-            <build>
-                <directory>target-no-jpa</directory>
-                <plugins>
-                    <plugin>
-                        <artifactId>maven-assembly-plugin</artifactId>
-                        <configuration>
-                            <descriptors>
-                                <descriptor>../src/main/assemblies/client.xml</descriptor>
-                            </descriptors>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
-            <id>jpaEnhancedOn</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-                <property>
-                    <name>oozie.build.jpa.enhanced</name>
-                    <value>true</value>
-                </property>
-            </activation>
-            <dependencies>
-                <dependency>
-                    <groupId>javax.persistence</groupId>
-                    <artifactId>persistence-api</artifactId>
-                    <version>1.0</version>
-                    <scope>provided</scope>
-                </dependency>
-                <dependency>
-                    <groupId>org.apache.openjpa</groupId>
-                    <artifactId>openjpa-persistence</artifactId>
-                    <version>1.2.1</version>
-                </dependency>
-                <dependency>
-                    <groupId>log4j</groupId>
-                    <artifactId>log4j</artifactId>
-                    <version>1.2.15</version>
-                    <scope>compile</scope>
-                    <exclusions>
-                        <exclusion>
-                            <groupId>com.sun.jdmk</groupId>
-                            <artifactId>jmxtools</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>com.sun.jmx</groupId>
-                            <artifactId>jmxri</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>javax.mail</groupId>
-                            <artifactId>mail</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>javax.jms</groupId>
-                            <artifactId>jmx</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>javax.jms</groupId>
-                            <artifactId>jms</artifactId>
-                        </exclusion>
-                    </exclusions>
-                </dependency>
-            </dependencies>
-            <build>
-                <plugins>
-                    <plugin>
-                        <artifactId>maven-antrun-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <phase>process-classes</phase>
-                                <configuration>
-                                    <tasks>
-                                        <path id="cp">
-                                            <path refid="maven.test.classpath"/>
-                                            <path refid="maven.compile.classpath"/>
-                                            <path refid="maven.dependency.classpath"/>
-                                        </path>
-                                        <taskdef name="openjpac" classname=
-                                                "org.apache.openjpa.ant.PCEnhancerTask">
-                                            <classpath refid="cp"/>
-                                        </taskdef>
-                                        <fileset id="enhance.path.ref" dir="target/classes">
-                                            <include name="**/JsonWorkflowJob.class"/>
-                                            <include name="**/JsonWorkflowAction.class"/>
-                                            <include name="**/JsonCoordinatorJob.class"/>
-                                            <include name="**/JsonCoordinatorAction.class"/>
-                                            <include name="**/JsonSLAEvent.class"/>
-                                        </fileset>
-                                        <openjpac>
-                                            <classpath refid="cp"/>
-                                            <fileset refid="enhance.path.ref"/>
-                                        </openjpac>
-                                    </tasks>
-                                </configuration>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <artifactId>maven-assembly-plugin</artifactId>
-                        <configuration>
-                            <descriptors>
-                                <descriptor>../src/main/assemblies/empty.xml</descriptor>
-                            </descriptors>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 
 </project>
 

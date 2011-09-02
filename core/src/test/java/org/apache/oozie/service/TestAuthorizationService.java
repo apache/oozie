@@ -1,41 +1,38 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.service;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.Writer;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.fs.permission.FsPermission;
+import org.apache.oozie.DagEngine;
+import org.apache.oozie.ErrorCode;
+import org.apache.oozie.ForTestingActionExecutor;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.test.XFsTestCase;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
-import org.apache.oozie.DagEngine;
-import org.apache.oozie.ForTestingActionExecutor;
-import org.apache.oozie.ErrorCode;
-import org.apache.oozie.service.ActionService;
-
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Reader;
-import java.io.Writer;
 
 /**
  * Tests the authorization service.
@@ -50,24 +47,21 @@ public class TestAuthorizationService extends XFsTestCase {
         setSystemProperty(SchemaService.WF_CONF_EXT_SCHEMAS, "wf-ext-schema.xsd");
 
         Reader adminListReader = IOUtils.getResourceAsReader("adminusers.txt", -1);
-        Writer adminListWriter = new FileWriter(getTestCaseDir() + "/adminusers.txt");
+        Writer adminListWriter = new FileWriter(new File(getTestCaseConfDir(), "adminusers.txt"));
         IOUtils.copyCharStream(adminListReader, adminListWriter);
-
-        Reader logPropReader = IOUtils.getResourceAsReader("oozie-log4j.properties", -1);
-        Writer logPropWriter = new FileWriter(getTestCaseDir() + "/oozie-log4j.properties");
-        IOUtils.copyCharStream(logPropReader, logPropWriter);
 
         services = new Services();
         Configuration conf = services.getConf();
         conf.set(Services.CONF_SERVICE_CLASSES,
                  conf.get(Services.CONF_SERVICE_CLASSES) + "," + AuthorizationService.class.getName());
         services.init();
-        setSystemProperty(ConfigurationService.CONFIG_PATH, getTestCaseDir());
+        setSystemProperty(ConfigurationService.getConfigurationDirectory(), getTestCaseDir());
         services.getConf().setBoolean(AuthorizationService.CONF_SECURITY_ENABLED, true);
         services.get(AuthorizationService.class).init(services);
         services.get(ActionService.class).register(ForTestingActionExecutor.class);
     }
 
+    @Override
     protected void tearDown() throws Exception {
         services.destroy();
         super.tearDown();
@@ -136,7 +130,7 @@ public class TestAuthorizationService extends XFsTestCase {
         as.authorizeForApp(getTestUser2(), getTestGroup(), appPath, jobConf);
 
         // this test fails in pre Hadoop 20S
-        if (!System.getProperty("oozie.test.hadoop.security", "pre").equals("pre")) {
+        if (System.getProperty("hadoop20", "false").toLowerCase().equals("false")) {
             try {
                 as.authorizeForApp(getTestUser3(), getTestGroup(), appPath, jobConf);
                 fail();

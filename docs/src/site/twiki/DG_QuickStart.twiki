@@ -4,76 +4,84 @@
 
 ---+!! Oozie Quick Start
 
-%TOC%
-
----++ Introduction
-
-The following instructions setup Oozie using an in-memory SQL DB (HSQLDB). To install Oozie with MySQL refer to
-[[AG_Install][Oozie Install]] documentation.
+These instructions install and run Oozie using HSQLDB as an in-memory embedded database. It assumes that
+Tomcat is running in port 8080 and that a Hadoop instance is also running in locally. For detailed install
+and configuration instructions refer to [[AG_Install][Oozie Install]].
 
 ---++ System Requirements
 
    * Unix (tested in Linux and Mac OS X)
    * Java 1.6+
-   * [[http://hadoop.apache.org][Hadoop]] (tested with 0.20.0)
-   * [[http://hadoop.apache.org/pig/releases.html][Pig 0.2.0]]
+   * Hadoop
+      * [[http://hadoop.apache.org][Apache Hadoop]] (tested with 0.20.2)
+      * [[http://developer.yahoo.com/hadoop][Yahoo! Hadoop]] (tested with 0.20.104.2)
    * [[http://tomcat.apache.org][Tomcat 6.x]] (tested with 6.0.18)
 
 The Java 1.6+ =bin= directory should be in the command path.
 
-Hadoop should be installed and running. ([[ENG_HadoopQuickInstall][Hadoop Quick Install]]).
-
 Tomcat should be installed and running.
 
----++ Get the Right Oozie Distro
+---++ Server Installation
 
-Get the Oozie distro for the corresponding version of Hadoop.
+Download the latest Oozie distribution from [[http://yahoo.github.com/oozie/downloads]].
 
-The =tar.gz= file contains the following components.
+Expand the Oozie distribution =tar.gz=.
 
-   * Oozie server WAR file (wars/oozie.war)
-   * Oozie command line tool (bin/oozie)
-   * Oozie command line tool bundle (oozie-client.tar.gz)
-   * Oozie documentation WAR file (wars/ooziedocs.war) (for local use expanded within a =docs/= directory)
-   * Oozie examples (oozie-examples.tar.gz)
+Set the =OOZIE_HOME= environment variable to the directory where the expanded Oozie distribution is located.
 
----++ Install and Start Oozie server and Oozie Console
+*NOTE:* The =OOZIE_HOME= environment variable is only required and used by the Oozie server. It is not used by the
+Oozie client.
+
+Oozie WAR is bundled without the Hadoop JAR files and without the ExtJS library. The Hadoop JARs are required to run
+Oozie. The ExtJS library is optional (only required for the Oozie web-console to work).
+
+The ExtJS library can be downloaded from [[http://www.extjs.com/learn/Ext_Version_Archives][ExtJS 2.2]] (it must be
+version 2.2). The ExtJS library is not bundled with Oozie because it uses a different license.
+
+Use the =${OOZIE_HOME}/bin/addtowar.sh= script to add the Hadoop JARs and the ExtJS library to the Oozie WAR file.
+
+Usage:
+<verbatim>
+ Usage  : addtowar.sh <OPTIONS>
+ Options: -inputwar INPUT_OOZIE_WAR
+          -outputwar OUTPUT_OOZIE_WAR
+          [-hadoop HADOOP_VERSION HADOOP_PATH]
+          [-extjs EXTJS_PATH]
+          [-jars JARS_PATH] (multiple JAR path separated by ':')
+</verbatim>
+
+The original Oozie WAR file is at =${OOZIE_HOME}/oozie.war=.
+
+After the Hadoop JARs and the ExtJS library has been added to the =oozie.war= file Oozie is ready for deployment.
 
 Stop Tomcat.
 
-If present, delete the old =oozie.war= and =ooziedocs.war= files, and =oozie= and =ooziedocs= directories from
+If present, delete any previous =oozie.war= and =ooziedocs.war= files, and =oozie= and =ooziedocs= directories from
 Tomcat's =webapps/= directory.
 
-Copy the =oozie.war= and =ooziedocs.war= files from the distro in Tomcat's =webapps/= directory.
-
-Oozie installation assumes that Tomcat is running on localhost on port 8080
-
-If Tomcat is running in a different port or Hadoop is running in another box, then the =CATALINA_OPTS= environment
-variable of the shell from where tomcat is invoked must be set to:
-
-<verbatim>
-export CATALINA_OPTS="-Doozie.base.url=http://<TOMCAT_HOST>:<TOMCAT_PORT>/oozie"
-</verbatim>
+Copy the =oozie.war= file (that contains the Hadoop JARs adn the ExtJS library) and =${OOZIE_HOME}/wars/ooziedocs.war=
+to Tomcat's =webapps/= directory.
 
 Start Tomcat.
 
-Check the Oozie log file =${CATALINA_HOME}/logs/oozie.log= to ensure Oozie started properly, there should an
-'Oozie started' log entry.
+Check the Oozie log file =${OOZIE_HOME}/logs/oozie.log= to ensure Oozie started properly.
 
-*NOTE:* If the =CATALINA_HOME= environment variable has not been set, check under the directory where Tomcat has been
-installed.
+Using the Oozie command line tool check the status of Oozie:
 
----++ Checking Oozie is Running via Oozie Console
+<verbatim>
+${OOZIE_HOME}/bin/oozie admin -oozie http://localhost:8080/oozie -status
+</verbatim>
 
-From a browser go to *http://localhost:8080/oozie*, the Oozie console should come up and Oozie should be *NORMAL*.
-
----++ Oozie Documentation
-
-From a browser go to *http://localhost:8080/ooziedocs*, the Oozie Documentation should appear.
-
----++ Running the Examples
+Using a browser go to the [[http://localhost:8080/oozie][Oozie web console]], Oozie status should be *NORMAL*.
 
 Refer to the [[DG_Examples][Running the Examples]] document for details on running the examples.
+
+---++ Oozie Command Line Installation
+
+Copy and expand the =oozie-client= TAR.GZ file bundled with the distribution. Add the =bin/= directory to the =PATH=.
+
+Refer to the [[DG_CommandLineTool][Command Line Interface Utilities]] document for a a full reference of the =oozie=
+command line tool.
 
 [[index][::Go back to Oozie Documentation Index::]]
 

@@ -2,7 +2,7 @@
 
 [[index][::Go back to Oozie Documentation Index::]]
 
----+ Oozie Overview
+---+ Oozie Workflow Overview
 
 Oozie is a server based _Workflow Engine_ specialized in running workflow jobs with actions that run Hadoop Map/Reduce
 and Pig jobs.

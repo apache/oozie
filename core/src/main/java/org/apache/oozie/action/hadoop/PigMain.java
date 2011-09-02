@@ -1,25 +1,23 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.action.hadoop;
 
 import org.apache.pig.Main;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapred.JobClient;
 
 import java.io.FileNotFoundException;
 import java.io.OutputStream;
@@ -28,13 +26,33 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Properties;
+import java.util.Set;
 import java.net.URL;
 
 public class PigMain extends LauncherMain {
+    private static final Set<String> DISALLOWED_PIG_OPTIONS = new HashSet<String>();
+
+    static {
+        DISALLOWED_PIG_OPTIONS.add("-4");
+        DISALLOWED_PIG_OPTIONS.add("-log4jconf");
+        DISALLOWED_PIG_OPTIONS.add("-e");
+        DISALLOWED_PIG_OPTIONS.add("-execute");
+        DISALLOWED_PIG_OPTIONS.add("-f");
+        DISALLOWED_PIG_OPTIONS.add("-file");
+        DISALLOWED_PIG_OPTIONS.add("-l");
+        DISALLOWED_PIG_OPTIONS.add("-logfile");
+        DISALLOWED_PIG_OPTIONS.add("-r");
+        DISALLOWED_PIG_OPTIONS.add("-dryrun");
+        DISALLOWED_PIG_OPTIONS.add("-x");
+        DISALLOWED_PIG_OPTIONS.add("-exectype");
+        DISALLOWED_PIG_OPTIONS.add("-P");
+        DISALLOWED_PIG_OPTIONS.add("-propertyFile");
+    }
 
     public static void main(String[] args) throws Exception {
         run(PigMain.class, args);
@@ -97,7 +115,7 @@ public class PigMain extends LauncherMain {
         }
 
         if (!new File(script).exists()) {
-            throw new RuntimeException("Pig script file [" + script + "] does not exist");
+            throw new RuntimeException("Error: Pig script file [" + script + "] does not exist");
         }
 
         System.out.println("Pig script [" + script + "] content: ");
@@ -166,6 +184,9 @@ public class PigMain extends LauncherMain {
 
         String[] pigArgs = MapReduceMain.getStrings(actionConf, "oozie.pig.args");
         for (String pigArg : pigArgs) {
+            if (DISALLOWED_PIG_OPTIONS.contains(pigArg)) {
+                throw new RuntimeException("Error: Pig argument " + pigArg + " is not supported");
+            }
             arguments.add(pigArg);
         }
 
@@ -180,6 +201,15 @@ public class PigMain extends LauncherMain {
         System.out.println();
         System.out.flush();
 
+        try {
+            System.out.println();
+            runPigJob(new String[] { "-version" });
+        }
+        catch (SecurityException ex) {
+            LauncherSecurityManager.reset();
+        }
+        System.out.println();
+        System.out.flush();
         try {
             runPigJob(arguments.toArray(new String[arguments.size()]));
         }
@@ -237,24 +267,30 @@ public class PigMain extends LauncherMain {
         int jobCount = 0;
         Properties props = new Properties();
         StringBuffer sb = new StringBuffer(100);
-        BufferedReader br = new BufferedReader(new FileReader(logFile));
-        String line = br.readLine();
-        String separator = "";
-        while (line != null) {
-            if (line.contains(JOB_ID_LOG_PREFIX)) {
-                int jobIdStarts = line.indexOf(JOB_ID_LOG_PREFIX) + JOB_ID_LOG_PREFIX.length();
-                String jobId = line.substring(jobIdStarts);
-                int jobIdEnds = jobId.indexOf(" ");
-                if (jobIdEnds > -1) {
-                    jobId = jobId.substring(0, jobId.indexOf(" "));
-                }
-                sb.append(separator).append(jobId);
-                separator = ",";
-            }
-            line = br.readLine();
+        if (new File(logFile).exists() == false) {
+            System.err.println("pig log file: " + logFile + "  not present. Therefore no Hadoop jobids found");
+            props.setProperty("hadoopJobs", "");
         }
-        br.close();
-        props.setProperty("hadoopJobs", sb.toString());
+        else {
+            BufferedReader br = new BufferedReader(new FileReader(logFile));
+            String line = br.readLine();
+            String separator = "";
+            while (line != null) {
+                if (line.contains(JOB_ID_LOG_PREFIX)) {
+                    int jobIdStarts = line.indexOf(JOB_ID_LOG_PREFIX) + JOB_ID_LOG_PREFIX.length();
+                    String jobId = line.substring(jobIdStarts);
+                    int jobIdEnds = jobId.indexOf(" ");
+                    if (jobIdEnds > -1) {
+                        jobId = jobId.substring(0, jobId.indexOf(" "));
+                    }
+                    sb.append(separator).append(jobId);
+                    separator = ",";
+                }
+                line = br.readLine();
+            }
+            br.close();
+            props.setProperty("hadoopJobs", sb.toString());
+        }
         return props;
     }
 

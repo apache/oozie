@@ -1,30 +1,18 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+  * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.store;
-
-import javax.persistence.*;
-
-import org.apache.openjpa.persistence.jdbc.JDBCFetchPlan;
-import org.apache.openjpa.persistence.jdbc.ResultSetType;
-import org.apache.openjpa.persistence.jdbc.FetchDirection;
-import org.apache.openjpa.persistence.jdbc.LRSSizeAlgorithm;
-import org.apache.openjpa.persistence.OpenJPAPersistence;
-import org.apache.openjpa.persistence.OpenJPAQuery;
 
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -34,20 +22,28 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
+import javax.persistence.EntityManager;
+import javax.persistence.Query;
+
+import org.apache.oozie.CoordinatorActionBean;
+import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.CoordinatorJobInfo;
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.CoordinatorJobBean;
-import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.client.CoordinatorJob.Status;
 import org.apache.oozie.client.CoordinatorJob.Timeunit;
 import org.apache.oozie.service.InstrumentationService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.store.StoreStatusFilter;
+import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.ParamChecker;
-import org.apache.oozie.workflow.WorkflowException;
-
 import org.apache.oozie.util.XLog;
+import org.apache.oozie.workflow.WorkflowException;
+import org.apache.openjpa.persistence.OpenJPAPersistence;
+import org.apache.openjpa.persistence.OpenJPAQuery;
+import org.apache.openjpa.persistence.jdbc.FetchDirection;
+import org.apache.openjpa.persistence.jdbc.JDBCFetchPlan;
+import org.apache.openjpa.persistence.jdbc.LRSSizeAlgorithm;
+import org.apache.openjpa.persistence.jdbc.ResultSetType;
 
 /**
  * DB Implementation of Coord Store
@@ -111,7 +107,7 @@ public class CoordinatorStore extends Store {
                  * fetch.setReadLockMode(LockModeType.WRITE);
                  * fetch.setLockTimeout(-1); // 1 second }
                  */
-                List<CoordinatorJobBean> cjBeans = (List<CoordinatorJobBean>) q.getResultList();
+                List<CoordinatorJobBean> cjBeans = q.getResultList();
 
                 if (cjBeans.size() > 0) {
                     return cjBeans.get(0);
@@ -138,7 +134,7 @@ public class CoordinatorStore extends Store {
             throws StoreException {
 
         ParamChecker.notNull(d, "Coord Job Materialization Date");
-        List<CoordinatorJobBean> cjBeans = (List<CoordinatorJobBean>) doOperation("getCoordinatorJobsToBeMaterialized",
+        List<CoordinatorJobBean> cjBeans = doOperation("getCoordinatorJobsToBeMaterialized",
                                                                                   new Callable<List<CoordinatorJobBean>>() {
                                                                                       public List<CoordinatorJobBean> call() throws StoreException {
 
@@ -187,7 +183,7 @@ public class CoordinatorStore extends Store {
                                                                       final int limit, final boolean locking) throws StoreException {
 
         ParamChecker.notNull(status, "Coord Job Status");
-        List<CoordinatorJobBean> cjBeans = (List<CoordinatorJobBean>) doOperation("getCoordinatorJobsOlderThanStatus",
+        List<CoordinatorJobBean> cjBeans = doOperation("getCoordinatorJobsOlderThanStatus",
                                                                                   new Callable<List<CoordinatorJobBean>>() {
                                                                                       public List<CoordinatorJobBean> call() throws StoreException {
 
@@ -247,7 +243,7 @@ public class CoordinatorStore extends Store {
                 CoordinatorActionBean action = null;
                 List<CoordinatorActionBean> actions = q.getResultList();
                 if (actions.size() > 0) {
-                    action = (CoordinatorActionBean) actions.get(0);
+                    action = actions.get(0);
                 }
                 else {
                     throw new StoreException(ErrorCode.E0605, id);
@@ -359,6 +355,28 @@ public class CoordinatorStore extends Store {
                 Query q = entityManager.createNamedQuery("UPDATE_COORD_ACTION");
                 q.setParameter("id", action.getId());
                 setActionQueryParameters(action, q);
+                q.executeUpdate();
+                return null;
+            }
+        });
+    }
+
+    /**
+     * Update the given action bean to DB.
+     *
+     * @param action Action Bean
+     * @throws StoreException if action doesn't exist
+     */
+    public void updateCoordActionMin(final CoordinatorActionBean action) throws StoreException {
+        ParamChecker.notNull(action, "CoordinatorActionBean");
+        doOperation("updateCoordinatorAction", new Callable<Void>() {
+            public Void call() throws StoreException {
+                Query q = entityManager.createNamedQuery("UPDATE_COORD_ACTION_MIN");
+                q.setParameter("id", action.getId());
+                q.setParameter("missingDependencies", action.getMissingDependencies());
+                q.setParameter("lastModifiedTime", new Date());
+                q.setParameter("status", action.getStatus().toString());
+                q.setParameter("actionXml", action.getActionXml());
                 q.executeUpdate();
                 return null;
             }
@@ -568,7 +586,7 @@ public class CoordinatorStore extends Store {
                 }
                 else {
                     StringBuilder sbTotal = new StringBuilder(sb);
-                    sb.append(" order by w.createdtime desc ");
+                    sb.append(" order by w.createdTimestamp desc ");
                     XLog.getLog(getClass()).debug("Created String is **** " + sb.toString());
                     q = entityManager.createQuery(sb.toString());
                     q.setFirstResult(start - 1);
@@ -794,7 +812,7 @@ public class CoordinatorStore extends Store {
                                                           q.setParameter("externalId", externalId);
                                                           List<CoordinatorActionBean> actionList = q.getResultList();
                                                           if (actionList.size() > 0) {
-                                                              caBean = (CoordinatorActionBean) actionList.get(0);
+                                                              caBean = actionList.get(0);
                                                           }
                                                           return caBean;
                                                       }
@@ -889,6 +907,76 @@ public class CoordinatorStore extends Store {
                                                               }
                                                           });
         return actions;
+    }
+
+    /**
+     * Get coordinator action beans for given start date and end date
+     *
+     * @param startDate
+     * @param endDate
+     * @return list of coordinator action beans
+     * @throws StoreException
+     */
+    public List<CoordinatorActionBean> getCoordActionsForDates(final String jobId, final Date startDate,
+            final Date endDate)
+            throws StoreException {
+        List<CoordinatorActionBean> actions = doOperation("getCoordActionsForDates",
+                new Callable<List<CoordinatorActionBean>>() {
+                    @SuppressWarnings("unchecked")
+                    public List<CoordinatorActionBean> call() throws StoreException {
+                        List<CoordinatorActionBean> actions;
+                        try {
+                            Query q = entityManager.createNamedQuery("GET_ACTIONS_FOR_DATES");
+                            q.setParameter("jobId", jobId);
+                            q.setParameter("startTime", new Timestamp(startDate.getTime()));
+                            q.setParameter("endTime", new Timestamp(endDate.getTime()));
+                            actions = q.getResultList();
+
+                            List<CoordinatorActionBean> actionList = new ArrayList<CoordinatorActionBean>();
+                            for (CoordinatorActionBean a : actions) {
+                                CoordinatorActionBean aa = getBeanForRunningCoordAction(a);
+                                actionList.add(aa);
+                            }
+                            return actionList;
+                        }
+                        catch (IllegalStateException e) {
+                            throw new StoreException(ErrorCode.E0601, e.getMessage(), e);
+                        }
+                    }
+                });
+        return actions;
+    }
+
+    /**
+     * Get coordinator action bean for given date
+     *
+     * @param nominalTime
+     * @return CoordinatorActionBean
+     * @throws StoreException
+     */
+    public CoordinatorActionBean getCoordActionForNominalTime(final String jobId, final Date nominalTime)
+            throws StoreException {
+        CoordinatorActionBean action = doOperation("getCoordActionForNominalTime",
+                new Callable<CoordinatorActionBean>() {
+            @SuppressWarnings("unchecked")
+            public CoordinatorActionBean call() throws StoreException {
+                List<CoordinatorActionBean> actions;
+                Query q = entityManager.createNamedQuery("GET_ACTION_FOR_NOMINALTIME");
+                q.setParameter("jobId", jobId);
+                q.setParameter("nominalTime", new Timestamp(nominalTime.getTime()));
+                actions = q.getResultList();
+
+                CoordinatorActionBean action = null;
+                if (actions.size() > 0) {
+                    action = actions.get(0);
+                }
+                else {
+                    throw new StoreException(ErrorCode.E0605, DateUtils.convertDateToString(nominalTime));
+                }
+                return getBeanForRunningCoordAction(action);
+            }
+        });
+        return action;
     }
 
     public List<String> getRecoveryActionsGroupByJobId(final long checkAgeSecs) throws StoreException {

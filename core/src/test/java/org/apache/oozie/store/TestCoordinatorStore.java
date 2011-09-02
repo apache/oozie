@@ -1,19 +1,16 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.store;
 
@@ -67,6 +64,7 @@ public class TestCoordinatorStore extends XTestCase {
             _testGetActionRunningCount(actionId);
             _testGetRecoveryActionsGroupByJobId(jobId);
             _testUpdateCoordAction(actionId);
+            _testUpdateCoordActionMin(actionId);
         }
         finally {
             // store.closeTrx();
@@ -84,6 +82,35 @@ public class TestCoordinatorStore extends XTestCase {
             store.getEntityManager().merge(action);
             action = store.getCoordinatorAction(actionId, false);
             assertEquals(newActNum, action.getActionNumber());
+            store.commitTrx();
+        }
+        catch (Exception ex) {
+            store.rollbackTrx();
+            ex.printStackTrace();
+            fail("Unable to Update a record in Coord Action. actionId =" + actionId);
+        }
+
+    }
+
+    private void _testUpdateCoordActionMin(String actionId) {
+        store.beginTrx();
+        try {
+            CoordinatorActionBean action = store.getCoordinatorAction(actionId, true);
+            action.setStatus(CoordinatorAction.Status.SUCCEEDED);
+            action.setMissingDependencies("d1,d2,d3");
+            action.setActionNumber(777);
+            Date lastModifiedTime = new Date();
+            action.setLastModifiedTime(lastModifiedTime);
+            store.updateCoordActionMin(action);
+            store.getEntityManager().flush();
+            //store.getEntityManager().merge(action);
+            action = getCoordAction(actionId);
+            assertEquals(CoordinatorAction.Status.SUCCEEDED, action.getStatus());
+            assertEquals("d1,d2,d3", action.getMissingDependencies());
+            //assertEquals(lastModifiedTime, action.getLastModifiedTime());
+            if (action.getActionNumber() == 777) {
+                fail("Action number should not be updated");
+            }
             store.commitTrx();
         }
         catch (Exception ex) {
@@ -368,6 +395,26 @@ public class TestCoordinatorStore extends XTestCase {
         coordJob.setEndTime(new Date(curr.getTime() + 86400000));
         coordJob.setStartTime(new Date(curr.getTime() - 86400000));
         return coordJob;
+    }
+
+    /**
+     * Helper methods
+     *
+     * @param jobId
+     * @throws StoreException
+     */
+    private CoordinatorActionBean getCoordAction(String actionId) throws StoreException {
+        CoordinatorStore store = new CoordinatorStore(false);
+        try {
+            CoordinatorActionBean action = store.getCoordinatorAction(actionId, false);
+            return action;
+        }
+        catch (StoreException se) {
+            fail("Job ID " + actionId + " was not stored properly in db");
+        }finally {
+            store.closeTrx();
+        }
+        return null;
     }
 
 }

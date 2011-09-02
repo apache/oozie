@@ -1,19 +1,16 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.servlet;
 
@@ -179,6 +176,67 @@ public class TestV1JobServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_BAD_REQUEST, conn.getResponseCode());
                 assertEquals(RestConstants.JOB_SHOW_INFO, MockCoordinatorEngineService.did);
+                return null;
+            }
+        });
+    }
+
+    public void testCoordChange() throws Exception {
+        runTest("/v1/job/*", V1JobServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
+            public Void call() throws Exception {
+                MockCoordinatorEngineService.reset();
+                Map<String, String> params = new HashMap<String, String>();
+                params.put(RestConstants.ACTION_PARAM, RestConstants.JOB_ACTION_CHANGE);
+                String changeValue = "endtime=2011-12-01T05:00Z";
+                params.put(RestConstants.JOB_CHANGE_VALUE, changeValue);
+                URL url = createURL(MockCoordinatorEngineService.JOB_ID + 1, params);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("PUT");
+                conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
+                conn.setDoOutput(true);
+                assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
+                assertEquals(RestConstants.JOB_ACTION_CHANGE, MockCoordinatorEngineService.did);
+
+                MockCoordinatorEngineService.reset();
+                params = new HashMap<String, String>();
+                params.put(RestConstants.ACTION_PARAM, RestConstants.JOB_ACTION_CHANGE);
+                changeValue = "concurrency=200";
+                params.put(RestConstants.JOB_CHANGE_VALUE, changeValue);
+                url = createURL(MockCoordinatorEngineService.JOB_ID + 1, params);
+                conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("PUT");
+                conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
+                conn.setDoOutput(true);
+                assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
+                assertEquals(RestConstants.JOB_ACTION_CHANGE, MockCoordinatorEngineService.did);
+
+                MockCoordinatorEngineService.reset();
+                params = new HashMap<String, String>();
+                params.put(RestConstants.ACTION_PARAM, RestConstants.JOB_ACTION_CHANGE);
+                changeValue = "endtime=2011-12-01T05:00Z;concurrency=200";
+                params.put(RestConstants.JOB_CHANGE_VALUE, changeValue);
+                url = createURL(MockCoordinatorEngineService.JOB_ID + 1, params);
+                conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("PUT");
+                conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
+                conn.setDoOutput(true);
+                assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
+                assertEquals(RestConstants.JOB_ACTION_CHANGE, MockCoordinatorEngineService.did);
+
+                MockCoordinatorEngineService.reset();
+                params = new HashMap<String, String>();
+                params.put(RestConstants.ACTION_PARAM, RestConstants.JOB_ACTION_CHANGE);
+                changeValue = "endtime=2011-12-01T05:00";
+                params.put(RestConstants.JOB_CHANGE_VALUE, changeValue);
+                url = createURL(MockCoordinatorEngineService.JOB_ID
+                        + (MockCoordinatorEngineService.coordJobs.size() + 1), params);
+                conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("PUT");
+                conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
+                conn.setDoOutput(true);
+                assertEquals(HttpServletResponse.SC_BAD_REQUEST, conn.getResponseCode());
+                assertEquals(RestConstants.JOB_ACTION_CHANGE, MockCoordinatorEngineService.did);
+
                 return null;
             }
         });

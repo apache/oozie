@@ -1,19 +1,16 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.coord;
 
@@ -108,7 +105,7 @@ public class CoordELEvaluator {
         appInst.setNominalTime(nominalTime);
         appInst.setActualTime(actualTime);// TODO:
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
-        //Configuration tmpConf = new Configuration();
+        // Configuration tmpConf = new Configuration();
         Configuration tmpConf = CoordUtils.getHadoopConf(conf);
         // TODO:Set hadoop properties
         eval.setVariable(CoordELFunctions.CONFIGURATION, tmpConf);
@@ -155,9 +152,9 @@ public class CoordELEvaluator {
         if (events != null) {
             for (Element data : (List<Element>) events.getChildren("data-in", eJob.getNamespace())) {
                 if (data.getChild("uris", data.getNamespace()) != null) {
-                    e.setVariable(".datain." + data.getAttributeValue("name"), data.getChild("uris",
-                                                                                             data.getNamespace()).getTextTrim()); // TODO: check
-                    // null
+                    String uris = data.getChild("uris", data.getNamespace()).getTextTrim();
+                    uris = uris.replaceAll(CoordELFunctions.INSTANCE_SEPARATOR, CoordELFunctions.DIR_SEPARATOR);
+                    e.setVariable(".datain." + data.getAttributeValue("name"), uris);
                 }
                 else {
                 }
@@ -172,8 +169,9 @@ public class CoordELEvaluator {
         if (events != null) {
             for (Element data : (List<Element>) events.getChildren("data-out", eJob.getNamespace())) {
                 if (data.getChild("uris", data.getNamespace()) != null) {
-                    e.setVariable(".dataout." + data.getAttributeValue("name"), data.getChild("uris",
-                                                                                              data.getNamespace()).getTextTrim());
+                    String uris = data.getChild("uris", data.getNamespace()).getTextTrim();
+                    uris = uris.replaceAll(CoordELFunctions.INSTANCE_SEPARATOR, CoordELFunctions.DIR_SEPARATOR);
+                    e.setVariable(".dataout." + data.getAttributeValue("name"), uris);
                 }
                 else {
                 }// TODO

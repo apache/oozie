@@ -14,24 +14,29 @@
    * [[http://hadoop.apache.org/core/releases.html][Hadoop 0.20.2+]]
    * [[http://hadoop.apache.org/pig/releases.html][Pig 0.7+]]
 
-The Java commands (java, javac) should be in the command path.
+JDK commands (java, javac) must be in the command path.
 
-The Maven command (mvn) should be in the command path.
+The Maven command (mvn) must be in the command path.
 
-#InitialMavenSetup
----++ Initial Maven Setup
+---++ Oozie Documentation Generation
 
 To generate the documentation, Oozie uses a patched Doxia plugin for Maven with improved twiki support.
-Run the following command to compile/install the plugin.
+
+This plugin is available from [[http://yahoo.github.com/maven/repository][Yahoo GitHub Maven repository]] and
+it is automatically downloaded by Maven when building Oozie.
+
+The source of the modified plugin is available in the Oozie GitHub repository, in the =ydoxia= branch.
+
+To build and install it locally run the following command in the =ydoxia= branch:
 
 <verbation>
-$ build-setup/setup-maven.sh
+$ mvn install
 </verbatim>
 
 #SshSetup
 ---++ Passphare-less SSH Setup
 
-*NOTE: SSH actions are deprecated in Oozie 2. If you are building Oozie 2, this section can be ignored.*
+*NOTE: SSH actions are deprecated in Oozie 2.*
 
 To run SSH Testcases and for easier Hadoop start/stop configure SSH to localhost to be passphrase-less.
 
@@ -48,158 +53,149 @@ Test that you can ssh without password:
 $ ssh localhost
 </verbatim>
 
-
 ---++ Building and Testing Oozie
 
-Due to Hadoop and Pig API changes and Hadoop RPC protocol constraints Oozie has to be built for a specific version of
-Hadoop.
+Since Oozie 2.1, the same Oozie distribution works with different versions of Hadoop.
 
-All the following options can be used in multiple combinations.
+The JARs for the specified Hadoop and Pig versions must be available in one of the Maven repositories defined in Oozie
+main 'pom.xml' file. Or they must be installed in the local Maven cache.
 
-Use the option <code>-DhadoopGroupId=org.apache.hadoop</code> (default) to build Oozie with an Apache Hadoop version.
-To build Oozie with a Yahoo Hadoop version use the <code>-DhadoopGroupId=com.yahoo.hadoop</code>.
+---+++ Examples of Compiling and Testing Oozie
 
-Use the option <code>-DhadoopVersion=0.20.2</code> (default) to build Oozie with a given Hadoop version.
-
-Use the option <code>-DpigVersion=0.7.0</code> (default) to run the testcases with a given version of Pig.
-
-Use the option <code>-Doozie.test.hadoop.security=pre</code> (default) for versions of Hadoop prior to 0.20.104.0.
-
-Use the option <code>-Doozie.test.hadoop.security=simple</code> for versions of Hadoop 0.20.104.0 or greater with Kerberos
-OFF.
-
-Use the option <code>-Doozie.test.hadoop.security=kerberos</code> for versions of Hadoop 0.20.104.0 or greater with Kerberos
-ON.
-
-Use the option <code>-Doozie.test.hadoop.minicluster=true</code> (default) to run the testcases with minicluster
-(no Hadoop cluster necessary).
-
-Use the option <code>-Doozie.test.hadoop.minicluster=false</code> to run the testcases against a Hadoop cluster.
-
-Use the option <code>-Doozie.test.job.tracker=localhost:9001</code> (default) to specify the Job Tracker of the cluster.
-
-Use the option <code>-Doozie.test.name.node=hdfs://localhost:9000</code> (default) to specify the Name Node of the cluster.
-
-The following options are available (default values shown) when testing Oozie with Hadoop post 0.20.104.0 with Kerberos authentication
-enabled:
-
-   * oozie.test.kerberos.keytab.file=${user.home}/oozie.keytab
-   * oozie.test.kerberos.realm=LOCALHOST
-   * oozie.test.kerberos.oozie.principal=${user.name}/localhost
-   * oozie.test.kerberos.jobtracker.principal=mapred/localhost
-   * oozie.test.kerberos.namenode.principal=hdfs/localhost
-
-*IMPORTANT:* Minicluster testing cannot be used with Kerberos ON.
-
-Use the Maven option <code>-Dtest=#TEST_CASE_CLASS_NAME#</code> to run a single test case.
-
-Use the Maven option <code>-DskipTests</code> to skip all testcases.
-
----+++ Building Oozie for MySQL
-
-Oozie will connect to HSQL as default. To change Oozie database setting,
-the database connection string needs to be configure in the build time.
-
-The usage is =bin/mkdistro.sh [-ddbtype] [-uusername] [-ppassword] [-lurl]=
-
-For example,
-1. Configure Oozie to local MySQL
-$ bin/mkdistro.sh -dmysql -uroot -llocalhost:3306/oozie -DskipTests
-
-2. Configure Oozie to HSQL (default)
-$ bin/mkdistro.sh -dhsql -usa -lmem/oozie -DskipTests
-
----++ Building an Oozie Distribution, Different Hadoop Versions, Different DBs
-
-The <code>bin/mkdistro.sh</code> script generates an Oozie distro.
-
-Built distros will be available in the <code>distro/target/</code> directory.
-
-All Maven options above can be used with the <code>mkdistro.sh</code> script.
-
-For example to build an Oozie distribution for a specific version of Hadoop and Pig execute the <code>mkdistro.sh</code> command
-with the following options:
+*Compiling and testing with Hadoop 0.20.2 using embedded minicluster:*
 
 <verbatim>
-$ bin/mkdistro.sh
+$ mvn clean test -Dhadoop20=true -DhadoopGroupId=org.apache.hadoop -DhadoopVersion=0.20.2
 </verbatim>
 
----+++ Examples of Building and Testing Oozie
-
-Compiling and running all testcases with minicluster with Oozie's default Hadoop and Pig versions:
+*Compiling and testing with Hadoop 0.20.2 using a Hadoop cluster:*
 
 <verbatim>
-$ bin/mkdistro.sh
+$ mvn clean test -Dhadoop20=true -DhadoopGroupId=org.apache.hadoop -DhadoopVersion=0.20.2 \
+  -Doozie.test.hadoop.minicluster=false \
+  -Doozie.test.job.tracker=localhost:9001 -Doozie.test.name.node=hdfs://localhost:9000
 </verbatim>
 
-Generating a distribution for the default Apache version of Hadoop and Pig without running the testcases.
+*Compiling and testing with Hadoop 0.20.104.2 using embedded minicluster and 'simple' authentication:*
 
 <verbatim>
-$ bin/mkdistro.sh -DskipTests
+$ mvn clean test -DhadoopGroupId=com.yahoo.hadoop -DhadoopVersion=0.20.104.2
 </verbatim>
 
-Compiling and running all testcases with minicluster with a specific version of Hadoop pre 0.20.104.0:
+*Compiling and testing with Hadoop 0.20.104.2 using a Hadoop cluster and 'simple' authentication:*
 
 <verbatim>
-$ bin/mkdistro.sh -DhadoopVersion=0.20.2
+$ mvn clean test -DhadoopGroupId=com.yahoo.hadoop -DhadoopVersion=0.20.104.2 \
+  -Doozie.test.hadoop.security=simple -Doozie.test.hadoop.minicluster=false \
+  -Doozie.test.job.tracker=localhost:9001 -Doozie.test.name.node=hdfs://localhost:9000
 </verbatim>
 
-Compiling and running one testcase with minicluster with a specific version of Hadoop pre 0.20.2 and Pig:
+*Compiling and testing with Hadoop 0.20.104.2 using a Hadoop cluster and 'kerberos' authentication:*
 
 <verbatim>
-$ bin/mkdistro.sh -Dtest=TestPigMain -DhadoopVersion=0.20.2 -DpigVersion=0.7.0
+$ mvn clean test -DhadoopGroupId=com.yahoo.hadoop -DhadoopVersion=0.20.104.2 \
+  -Doozie.test.hadoop.security=kerberos -Doozie.test.hadoop.minicluster=false \
+  -Doozie.test.job.tracker=localhost:9001 -Doozie.test.name.node=hdfs://localhost:9000
 </verbatim>
 
-Generating a distribution for the Apache security version of Hadoop without running the testcases.
+NOTE: The embedded minicluster cannot be used when testing with 'kerberos' authentication.
+
+*Compiling and testing with a custom oozie-site.xml (i.e. in order to use a different DB):*
 
 <verbatim>
-$ bin/mkdistro.sh -DskipTests -DhadoopVersion=0.20.104.0 -Doozie.test.hadoop.security=kerberos
+$ mvn clean test -Doozie.test.config.file=/home/tucu/oozie-site-mysql.xml
 </verbatim>
 
-Compiling and running all testcases with minicluster with a specific version of Hadoop post 0.20.104.0 with simple
-authentication:
+---+++ Build Options Reference
+
+*generateSite* : generates Oozie documentation, default is undefined (no documentation is generated)
+
+*mysql* : Includes MySQL JDBC driver in the distro, default is undefined, MySQL JDBC driver is not included.
+
+*oracle* : Includes Oracle JDBC driver in the distro, default is undefined, Oracle JDBC driver is not included.
+
+*skipTests* : skips the execution of all testcases, no value required, default is undefined
+
+*test*= : runs a single test case, to run a test give the test class name without package and extension, no default
+
+*hadoop20*= : indicates the build/test should not include classes for Hadoop 20S, default is 'false'
+
+*hadoopGroupId*= : indicates the Hadoop artifacts group ID to use, default value 'com.yahoo.hadoop'
+
+*hadoopVersion*= : indicates the Hadoop artifacts version to use, default value '0.20.104.2'
+
+*pigGroupId*= : indicates the Pig artifact group ID to use, default value 'com.yahoo.hadoop'
+
+*pigVersion*= : indicates the Pig artifact version to use, default value '0.7.0'
+
+*oozie.test.config.file*= : indicates a custom Oozie configuration file for running the testcases. The specified file
+must be an absolute path. For example, it can be useful to specify different database than HSQL for running the
+testcases.
+
+*oozie.test.hadoop.minicluster*= : indicates if Hadoop minicluster should be started for testcases, default value 'true'
+
+*oozie.test.job.tracker*= : indicates the URI of the JobTracker when using a Hadoop cluster for testing, default value
+'localhost:9001'
+
+*oozie.test.name.node*= : indicates the URI of the NameNode when using a Hadoop cluster for testing, default value
+'hdfs://localhost:9000'
+
+*oozie.test.hadoop.pipes*= : indicates if Hadoop pipes test case should be run or not, default value 'false'
+
+*oozie.test.hadoop.security*= : indicates the type of Hadoop authentication for testing, valid values are 'simple' or
+'kerberos, default value 'simple'
+
+*oozie.test.kerberos.keytab.file*= : indicates the location of the keytab file, default value
+'${user.home}/oozie.keytab'
+
+*oozie.test.kerberos.realm*= : indicates the Kerberos real, default value 'LOCALHOST'
+
+*oozie.test.kerberos.oozie.principal*= : indicates the Kerberos principal for oozie, default value
+'${user.name}/localhost'
+
+*oozie.test.kerberos.jobtracker.principal*= : indicates the Kerberos principal for the JobTracker, default value
+'mapred/localhost'
+
+*oozie.test.kerberos.namenode.principal*= : indicates the Kerberos principal for the NameNode, default value
+'hdfs/localhost'
+
+---+++ Oozie Version Numbers
+
+When changing the Oozie version, it must be changed through out the =pom.xml= files. Look for the comment
+<code><!-- OOZIE_VERSION --></code> in the =pom.xml= files to find all the locations to change it.
+
+---++ Building an Oozie Distribution
+
+The following Maven invocation builds an Oozie distribution:
 
 <verbatim>
-$ bin/mkdistro.sh-DhadoopVersion=0.20.104.0 -Doozie.test.hadoop.security=simple
+$ mvn clean package assembly:single
 </verbatim>
 
-Compiling and running all testcases with minicluster with a specific version of Hadoop post 0.20.104.0 with Kerberos
-authentication (it requires Hadoop 0.20.104.0 running with Kerberos ON):
+The following properties should be specified when building a release:
 
-<verbatim>
-$ bin/mkdistro.sh -DhadoopVersion=0.20.104.0 -Doozie.test.hadoop.security=kerberos -Doozie.test.hadoop.minicluster=false
-</verbatim>
+   * -DgenerateDocs : forces the generation of Oozie documentation
+   * -Dbuild.time=  : timestamps the distribution
+   * -Dvc.revision= : specifies the source control revision number of the distribution
+   * -Dvc.url=      : specifies the source control URL of the distribution
 
-The above example assumes Hadoop job tracker and namenode are running locally in ports 9001 and 9000 and the kerberos
-settings are the defaults shwon in previous section, all the <code>oozie.test.kerberos.</code> options.
+The provided <code>bin/mkdistro.sh</code> script runs the above Maven invocation setting all these properties to the
+right values.
 
----++ Oozie Version Numbers
+NOTE: Use a Hadoop Security version when creating a distribution, otherwise there will be classes missing and the
+distribution will not work with a Hadoop Security distribution.
 
-The full version number of an Oozie build is tied to the Hadoop version number it works with.
+---++ IDE Setup
 
-This serves 2 purposes:
+Eclipse and IntelliJ can use directly Oozie Maven project files.
 
-   * Identifies the version of Hadoop that an Oozie distro/instance works with.
-   * Gives different versions to Oozie JARs thus allowing them to be properly identified by build tools (Maven, Ivy).
+The only special consideration is that the following source directories from the =client= module must be added to
+the =core= module source path:
 
-The Oozie version format is <code><OOZIE_VERSION>-<HADOOP_VERSION>[--<BUILD>]</code>.
-
-The <code>OOZIE_VERSION</code> indicates the Oozie version.
-
-The <code>HADOOP_VERSION</code> indicates the Hadoop version.
-
-The <code>BUILD</code> can be be used to specify SNAPSHOT developer builds or a particular build.
-
-For example: <code>0.1-0.20.2--SNAPSHOT</code>
-
-This 3 components of the Oozie version are controlled from Oozie main POM, in the properties section and they can be
-changed as Maven options <code>-D</code> for a particular build.
-
-<verbatim>
-    <oozieVersion>2.0.0</oozieVersion>
-    <hadoopVersion>0.20.2</hadoopVersion>
-    <build>SNAPSHOT</build>
-</verbatim>
+   * =client/src/main/java= : as source directory
+   * =client/src/main/resources= : as source directory
+   * =client/src/test/java= : as test-source directory
+   * =client/src/test/resources= : as test-source directory
 
 [[index][::Go back to Oozie Documentation Index::]]
 

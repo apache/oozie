@@ -1,19 +1,16 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.coord;
 
@@ -345,6 +342,17 @@ public class TestCoordELFunctions extends XTestCase {
         appInst.setTimeZone(DateUtils.getTimeZone("America/New_York"));
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
         assertEquals("-180", CoordELFunctions.evalAndWrap(eval, expr));
+    }
+
+    public void testDateOffset() throws Exception {
+        init("coord-job-submit-data");
+        String expr = "${coord:dateOffset(\"2009-09-08T23:59Z\", 2, \"DAY\")}";
+        init("coord-action-start");
+        expr = "${coord:dateOffset(\"2009-09-08T23:59Z\", 2, \"DAY\")}";
+        assertEquals("2009-09-10T23:59Z", CoordELFunctions.evalAndWrap(eval, expr));
+
+        expr = "${coord:dateOffset(\"2009-09-08T23:59Z\", -1, \"DAY\")}";
+        assertEquals("2009-09-07T23:59Z", CoordELFunctions.evalAndWrap(eval, expr));
     }
 
     public void testCurrent() throws Exception {
@@ -688,8 +696,40 @@ public class TestCoordELFunctions extends XTestCase {
         }
         catch (Exception ex) {
         }
-
         // Add test cases with EOM and EOD option
+    }
+
+    public void testPh1Future() throws Exception {
+        init("coord-job-submit-instances");
+        String expr = "${coord:future(1, 10)}";
+        assertEquals(expr, CoordELFunctions.evalAndWrap(eval, expr));
+    }
+
+    public void testFuture() throws Exception {
+        init("coord-job-submit-instances");
+        String expr = "${coord:future(1, 20)}";
+
+        init("coord-action-start");
+        Configuration conf = new Configuration();
+        // TODO:Set hadoop properties
+        eval.setVariable(CoordELFunctions.CONFIGURATION, conf);
+        String testDir = getTestCaseDir();
+        ds.setUriTemplate("file://" + testDir + "/${YEAR}/${MONTH}/${DAY}");
+        createDir(testDir + "/2009/09/10");
+        createDir(testDir + "/2009/09/11");
+        assertEquals("2009-09-11T23:59Z", CoordELFunctions.evalAndWrap(eval, expr));
+
+        try {
+            expr = "${coord:future(-1, 3)}";
+            CoordELFunctions.evalAndWrap(eval, expr);
+            fail("Should fail for negative instance value");
+        }
+        catch (Exception ex) {
+        }
+
+        expr = "${coord:future(4, 20)}";
+        String res = "${coord:future(4, 20)}";
+        assertEquals(res, CoordELFunctions.evalAndWrap(eval, expr));
     }
 
     public void testDataIn() throws Exception {

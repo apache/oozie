@@ -1,19 +1,16 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.command;
 
@@ -22,6 +19,7 @@ import java.util.List;
 
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
+import org.apache.oozie.ErrorCode;
 import org.apache.oozie.FaultInjection;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
@@ -134,6 +132,7 @@ public abstract class Command<T, S extends Store> implements XCallable<T> {
      *
      * @return the name of the command.
      */
+    @Override
     public String getName() {
         return name;
     }
@@ -144,6 +143,7 @@ public abstract class Command<T, S extends Store> implements XCallable<T> {
      *
      * @return the callable type.
      */
+    @Override
     public String getType() {
         return type;
     }
@@ -153,6 +153,7 @@ public abstract class Command<T, S extends Store> implements XCallable<T> {
      *
      * @return the priority of the command.
      */
+    @Override
     public int getPriority() {
         return priority;
     }
@@ -162,6 +163,7 @@ public abstract class Command<T, S extends Store> implements XCallable<T> {
      *
      * @return the callable createdTime
      */
+    @Override
     public long getCreatedTime() {
         return createdTime;
     }
@@ -199,7 +201,7 @@ public abstract class Command<T, S extends Store> implements XCallable<T> {
             }
             T result = execute(store);
             /*
-             * 
+             *
              * if (store != null && log != null) { log.info(XLog.STD,
              * "connection log from store Flush Mode {0} ",
              * store.getFlushMode()); }
@@ -240,7 +242,7 @@ public abstract class Command<T, S extends Store> implements XCallable<T> {
                     store.rollbackTrx();
                 }
                 catch (RuntimeException rex) {
-                    log.error(logMask | XLog.OPS, "openjpa error, {1}, {2}", name, rex.getMessage(), rex);
+                    log.warn(logMask | XLog.OPS, "openjpa error, {0}, {1}", name, rex.getMessage(), rex);
                 }
             }
 
@@ -257,18 +259,18 @@ public abstract class Command<T, S extends Store> implements XCallable<T> {
                 throw new CommandException(ex);
             }
         }
-        catch (RuntimeException ex) {
-            log.error(logMask | XLog.OPS, "Runtime exception, {0}", ex);
+        catch (Exception ex) {
+            log.error(logMask | XLog.OPS, "Exception, {0}", ex);
             exception = true;
             if (store != null && store.isActive()) {
                 try {
                     store.rollbackTrx();
                 }
                 catch (RuntimeException rex) {
-                    log.error(logMask | XLog.OPS, "openjpa error, {1}, {2}", name, rex.getMessage(), rex);
+                    log.warn(logMask | XLog.OPS, "openjpa error, {0}, {1}", name, rex.getMessage(), rex);
                 }
             }
-            throw ex;
+            throw new CommandException(ErrorCode.E0607, ex);
         }
         catch (Error er) {
             log.error(logMask | XLog.OPS, "Error, {0}", er);
@@ -278,7 +280,7 @@ public abstract class Command<T, S extends Store> implements XCallable<T> {
                     store.rollbackTrx();
                 }
                 catch (RuntimeException rex) {
-                    log.error(logMask | XLog.OPS, "openjpa error, {1}, {2}", name, rex.getMessage(), rex);
+                    log.warn(logMask | XLog.OPS, "openjpa error, {0}, {1}", name, rex.getMessage(), rex);
                 }
             }
             throw er;
@@ -302,7 +304,7 @@ public abstract class Command<T, S extends Store> implements XCallable<T> {
                     }
                     catch (RuntimeException rex) {
                         if (exception) {
-                            log.error(logMask | XLog.OPS, "openjpa error, {1}, {2}", name, rex.getMessage(), rex);
+                            log.warn(logMask | XLog.OPS, "openjpa error, {0}, {1}", name, rex.getMessage(), rex);
                         }
                         else {
                             throw rex;
@@ -545,6 +547,19 @@ public abstract class Command<T, S extends Store> implements XCallable<T> {
      */
     protected Instrumentation getInstrumentation() {
         return instrumentation;
+    }
+
+    /**
+     * Return the identity.
+     *
+     * @return the identity.
+     */
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(getType());
+        sb.append(",").append(getPriority());
+        return sb.toString();
     }
 
     protected boolean lock(String id) throws InterruptedException {

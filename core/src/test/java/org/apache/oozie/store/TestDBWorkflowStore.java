@@ -1,19 +1,16 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.store;
 
@@ -65,7 +62,7 @@ public class TestDBWorkflowStore extends XTestCase {
 
     @Override
     protected void tearDown() throws Exception {
-        // dropSchema(dbName, conn);
+        store.closeTrx();
         services.destroy();
         super.tearDown();
     }
@@ -327,6 +324,7 @@ public class TestDBWorkflowStore extends XTestCase {
         assertEquals(a11.getId(), actionId);
         assertEquals(a11.getJobId(), wfBean1.getId());
         assertEquals(a11.getStatus(), WorkflowAction.Status.PREP);
+        store.commitTrx();
     }
 
     private void _testUpdateAction() throws StoreException {
@@ -334,6 +332,7 @@ public class TestDBWorkflowStore extends XTestCase {
         a11.setStatus(WorkflowAction.Status.OK);
         a11.setPending();
         a11.setPendingAge(new Date(System.currentTimeMillis() - 10000));
+        store.beginTrx();
         store.updateAction(a11);
         store.getEntityManager().flush();
         store.getEntityManager().merge(a11);
@@ -487,37 +486,31 @@ public class TestDBWorkflowStore extends XTestCase {
         store.commitTrx();
         store.beginTrx();
         store.purge(30);
+        store.commitTrx();
 /*
  * SqlStatement s = getCount(OozieTable.WF_JOBS); ResultSet rs =
  * s.prepareAndSetValues(conn).executeQuery(); rs.next(); assertEquals(3,
  * rs.getInt(1)); rs.close();
- * 
+ *
  * s = getCount(OozieTable.WF_ACTIONS); rs =
  * s.prepareAndSetValues(conn).executeQuery(); rs.next(); assertEquals(4,
  * rs.getInt(1)); rs.close();
- * 
+ *
  * store.purge(30); store.commit();
- * 
+ *
  * s = getCount(OozieTable.WF_JOBS); rs =
  * s.prepareAndSetValues(conn).executeQuery(); rs.next(); assertEquals(1,
  * rs.getInt(1)); rs.close();
- * 
+ *
  * WorkflowJobBean tmp = store.getWorkflow(wfBean3.getId(), false);
  * assertEquals(tmp.getId(), wfBean3.getId());
- * 
+ *
  * s = getCount(OozieTable.WF_ACTIONS); rs =
  * s.prepareAndSetValues(conn).executeQuery(); rs.next(); assertEquals(1,
  * rs.getInt(1)); rs.close();
- * 
+ *
  * WorkflowActionBean tmpa = store.getAction("31", false); assertEquals("31",
  * tmpa.getId());
  */
     }
-/*
- * private static void dropSchema(String dbName, Connection conn) { try { DBType
- * type = DBType.MySQL; if (Schema.isHsqlConnection(conn)) { type = DBType.HSQL; }
- * conn.prepareStatement( "DROP " + (type.equals(DBType.MySQL) ? "DATABASE " :
- * "SCHEMA ") + dbName + (type.equals(DBType.HSQL) ? " CASCADE" :
- * "")).execute(); } catch (SQLException e) { } }
- */
 }

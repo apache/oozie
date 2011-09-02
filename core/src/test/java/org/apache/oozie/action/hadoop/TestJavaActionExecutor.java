@@ -1,19 +1,16 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.action.hadoop;
 
@@ -146,8 +143,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
         protoConf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
         protoConf.set(OozieClient.GROUP_NAME, getTestGroup());
-        protoConf.setStrings(WorkflowAppService.APP_LIB_JAR_PATH_LIST, appJarPath.toString());
-        protoConf.setStrings(WorkflowAppService.APP_LIB_SO_PATH_LIST, appSoPath.toString());
+        protoConf.setStrings(WorkflowAppService.APP_LIB_PATH_LIST, appJarPath.toString(), appSoPath.toString());
 
         WorkflowJobBean wf = createBaseWorkflow(protoConf, "action");
         WorkflowActionBean action = (WorkflowActionBean) wf.getActions().get(0);
@@ -169,7 +165,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertEquals(getNameNodeUri(), conf.get("fs.default.name"));
 
         conf = ae.createBaseHadoopConf(context, actionXml);
-        ae.setupLauncherConf(conf, actionXml, getFsTestCaseDir());
+        ae.setupLauncherConf(conf, actionXml, getFsTestCaseDir(), context);
         assertEquals("LA", conf.get("oozie.launcher.a"));
         assertEquals("LA", conf.get("a"));
         assertNull(conf.get("b"));
@@ -185,7 +181,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertEquals("D", conf.get("oozie.launcher.d"));
 
         conf = ae.createBaseHadoopConf(context, actionXml);
-        ae.setupLauncherConf(conf, actionXml, getFsTestCaseDir());
+        ae.setupLauncherConf(conf, actionXml, getFsTestCaseDir(), context);
         ae.addToCache(conf, appPath, appJarPath.toString(), false);
         assertTrue(conf.get("mapred.job.classpath.files").contains(appJarPath.toUri().getPath()));
         ae.addToCache(conf, appPath, appSoPath.toString(), false);
@@ -203,7 +199,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertFalse(getFileSystem().exists(context.getActionDir()));
 
         conf = ae.createBaseHadoopConf(context, actionXml);
-        ae.setupLauncherConf(conf, actionXml, getFsTestCaseDir());
+        ae.setupLauncherConf(conf, actionXml, getFsTestCaseDir(), context);
         ae.setLibFilesArchives(context, actionXml, appPath, conf);
 
         assertTrue(conf.get("mapred.cache.files").contains(filePath.toUri().getPath()));
@@ -221,7 +217,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
 
         conf = ae.createLauncherConf(context, action, actionXml, actionConf);
-        ae.setupLauncherConf(conf, actionXml, getFsTestCaseDir());
+        ae.setupLauncherConf(conf, actionXml, getFsTestCaseDir(), context);
         assertEquals("MAIN-CLASS", ae.getLauncherMain(conf, actionXml));
         assertTrue(conf.get("mapred.child.java.opts").contains("JAVA-OPTS"));
         assertEquals(Arrays.asList("A1", "A2"), Arrays.asList(LauncherMapper.getMainArguments(conf)));
@@ -246,8 +242,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
         protoConf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
         protoConf.set(OozieClient.GROUP_NAME, getTestGroup());
-        protoConf.setStrings(WorkflowAppService.APP_LIB_JAR_PATH_LIST, appJarPath.toString());
-        protoConf.setStrings(WorkflowAppService.APP_LIB_SO_PATH_LIST, appSoPath.toString());
+        protoConf.setStrings(WorkflowAppService.APP_LIB_PATH_LIST, appJarPath.toString(), appSoPath.toString());
 
         WorkflowJobBean wf = createBaseWorkflow(protoConf, "action");
         WorkflowActionBean action = (WorkflowActionBean) wf.getActions().get(0);
@@ -594,11 +589,11 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         assertTrue(DistributedCache.getSymlink(jobConf));
 
-        // 1 launcher JAR, 1 wf lib JAR, 2 <file> JARs, 2 <file> files
-        assertEquals(6, DistributedCache.getFileClassPaths(jobConf).length);
+        // 1 launcher JAR, 1 wf lib JAR, 2 <file> JARs
+        assertEquals(4, DistributedCache.getFileClassPaths(jobConf).length);
 
-        // #CLASSPATH_ENTRIES# * 2 = 12, 1 wf lib sos, 4 <file> sos
-        assertEquals(17, DistributedCache.getCacheFiles(jobConf).length);
+        // #CLASSPATH_ENTRIES# * 2 = 8, 1 wf lib sos, 4 <file> sos, 2 <file> files
+        assertEquals(15, DistributedCache.getCacheFiles(jobConf).length);
 
         // 2 <archive> files
         assertEquals(2, DistributedCache.getCacheArchives(jobConf).length);

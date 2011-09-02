@@ -1,32 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Licensed to the Apache Software Foundation (ASF) under one
-  or more contributor license agreements.  See the NOTICE file
-  distributed with this work for additional information
-  regarding copyright ownership.  The ASF licenses this file
-  to you under the Apache License, Version 2.0 (the
-  "License"); you may not use this file except in compliance
-  with the License.  You may obtain a copy of the License at
+  Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
 
-      http://www.apache.org/licenses/LICENSE-2.0
+    http://www.apache.org/licenses/LICENSE-2.0
 
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS,
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
-  limitations under the License.
+  limitations under the License. See accompanying LICENSE file.
 -->
-<!DOCTYPE web-app
-        PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.2//EN"
-        "http://java.sun.com/dtd/web-app_2_3.dtd">
+<!DOCTYPE web-app PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN" "http://java.sun.com/dtd/web-app_2_3.dtd">
 
 <web-app>
     <display-name>OOZIE</display-name>
 
+    <!-- Listeners -->
     <listener>
         <listener-class>org.apache.oozie.servlet.ServicesLoader</listener-class>
     </listener>
 
+	<!-- Servlets -->
     <servlet>
         <servlet-name>versions</servlet-name>
         <display-name>WS API for Workflow Instances</display-name>
@@ -82,6 +79,7 @@
         <servlet-class>org.apache.oozie.servlet.V1JobServlet</servlet-class>
         <load-on-startup>1</load-on-startup>
     </servlet>
+
     <servlet>
         <servlet-name>sla-event</servlet-name>
         <display-name>WS API for specific SLA Events</display-name>
@@ -89,6 +87,7 @@
         <load-on-startup>1</load-on-startup>
     </servlet>
 
+	<!-- servlet-mapping -->
     <servlet-mapping>
         <servlet-name>versions</servlet-name>
         <url-pattern>/versions</url-pattern>
@@ -139,6 +138,7 @@
         <url-pattern>/v1/sla/*</url-pattern>
     </servlet-mapping>
 
+    <!-- welcome-file -->
     <welcome-file-list>
         <welcome-file>index.html</welcome-file>
     </welcome-file-list>

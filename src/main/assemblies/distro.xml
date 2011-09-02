@@ -1,19 +1,16 @@
 <!--
-  Licensed to the Apache Software Foundation (ASF) under one
-  or more contributor license agreements.  See the NOTICE file
-  distributed with this work for additional information
-  regarding copyright ownership.  The ASF licenses this file
-  to you under the Apache License, Version 2.0 (the
-  "License"); you may not use this file except in compliance
-  with the License.  You may obtain a copy of the License at
+  Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
 
-      http://www.apache.org/licenses/LICENSE-2.0
+    http://www.apache.org/licenses/LICENSE-2.0
 
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS,
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
-  limitations under the License.
+  limitations under the License. See accompanying LICENSE file.
 -->
 <assembly>
     <id>distro</id>
@@ -22,47 +19,40 @@
         <format>tar.gz</format>
     </formats>
     <includeBaseDirectory>true</includeBaseDirectory>
-    <baseDirectory>oozie-${artifact.version}</baseDirectory>
+    <baseDirectory>oozie-${project.version}</baseDirectory>
     <fileSets>
         <!-- Oozie configuration files -->
         <fileSet>
-            <directory>${basedir}/../webapp/target/classes/</directory>
+            <directory>${basedir}/../core/src/main/conf/</directory>
             <outputDirectory>/conf</outputDirectory>
             <includes>
-                <include>**/*</include>
+                <include>*</include>
             </includes>
             <fileMode>0644</fileMode>
         </fileSet>
         <!-- Distro files, readme, licenses, etc -->
         <fileSet>
-            <directory>${basedir}/target/classes/</directory>
+            <directory>${basedir}/../</directory>
             <outputDirectory>/</outputDirectory>
             <includes>
-                <include>**/*</include>
+                <include>license.txt</include>
+                <include>notice.txt</include>
+                <include>readme.txt</include>
+                <include>release-log.txt</include>
             </includes>
             <fileMode>0444</fileMode>
         </fileSet>
         <fileSet>
             <directory>${basedir}/src/main/bin</directory>
-            <outputDirectory>/</outputDirectory>
-            <includes>
+            <outputDirectory>/bin</outputDirectory>
+            <includes>          
                 <include>*</include>
             </includes>
             <fileMode>0555</fileMode>
         </fileSet>
-        <fileSet>
-            <directory>${basedir}/../</directory>
-            <outputDirectory>/</outputDirectory>
-            <includes>
-                <include>readme.txt</include>
-                <include>license.txt</include>
-                <include>notice.txt</include>
-            </includes>
-            <fileMode>0444</fileMode>
-        </fileSet>
         <!-- Client -->
         <fileSet>
-            <directory>${basedir}/../client/target-no-jpa/oozie-client-${artifact.version}-client.dir/bin</directory>
+            <directory>${basedir}/../client/target/oozie-client-${project.version}-client/oozie-client-${project.version}/bin</directory>
             <outputDirectory>/bin</outputDirectory>
             <includes>
                 <include>*</include>
@@ -70,7 +60,7 @@
             <fileMode>0555</fileMode>
         </fileSet>
         <fileSet>
-            <directory>${basedir}/../client/target-no-jpa/oozie-client-${artifact.version}-client.dir/lib</directory>
+            <directory>${basedir}/../client/target/oozie-client-${project.version}-client/oozie-client-${project.version}/lib</directory>
             <outputDirectory>/lib</outputDirectory>
             <includes>
                 <include>*</include>
@@ -79,30 +69,36 @@
         </fileSet>
     </fileSets>
     <files>
+        <!-- Oozie configuration files -->
+        <file>
+            <source>${basedir}/../core/src/main/resources/oozie-default.xml</source>
+            <outputDirectory>/conf</outputDirectory>
+            <fileMode>0444</fileMode>
+        </file>
         <!-- Oozie war -->
         <file>
             <source>${basedir}/../webapp/target/oozie-webapp-${project.version}.war</source>
-            <outputDirectory>/wars/</outputDirectory>
+            <outputDirectory>/</outputDirectory>
             <destName>oozie.war</destName>
             <fileMode>0444</fileMode>
         </file>
-        <!-- Oozie Documentation war -->
+        <!-- Oozie Documentation -->
         <file>
-            <source>${basedir}/../docs/target/oozie-docs-0-docs.zip</source>
-            <outputDirectory>/wars/</outputDirectory>
-            <destName>ooziedocs.war</destName>
+            <source>${basedir}/../docs/target/oozie-docs-${project.version}-docs.zip</source>
+            <outputDirectory>//</outputDirectory>
+            <destName>docs.zip</destName>
             <fileMode>0444</fileMode>
         </file>
         <!-- Oozie Client TAR.GZ  -->
         <file>
-            <source>${basedir}/../client/target-no-jpa/oozie-client-${artifact.version}-client.tar.gz</source>
+            <source>${basedir}/../client/target/oozie-client-${project.version}-client.tar.gz</source>
             <outputDirectory>/</outputDirectory>
-            <destName>oozie-client.tar.gz</destName>
+            <destName>oozie-client-${project.version}.tar.gz</destName>
             <fileMode>0444</fileMode>
         </file>
         <!-- Oozie examples TAR.GZ  -->
         <file>
-            <source>${basedir}/../examples/target/oozie-examples-${artifact.version}-examples.tar.gz</source>
+            <source>${basedir}/../examples/target/oozie-examples-${project.version}-examples.tar.gz</source>
             <outputDirectory>/</outputDirectory>
             <destName>oozie-examples.tar.gz</destName>
             <fileMode>0444</fileMode>

@@ -1,27 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Licensed to the Apache Software Foundation (ASF) under one
-  or more contributor license agreements.  See the NOTICE file
-  distributed with this work for additional information
-  regarding copyright ownership.  The ASF licenses this file
-  to you under the Apache License, Version 2.0 (the
-  "License"); you may not use this file except in compliance
-  with the License.  You may obtain a copy of the License at
+  Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
 
-      http://www.apache.org/licenses/LICENSE-2.0
+    http://www.apache.org/licenses/LICENSE-2.0
 
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS,
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
-  limitations under the License.
+  limitations under the License. See accompanying LICENSE file.
 -->
 <project>
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>org.apache.oozie</groupId>
+        <groupId>com.yahoo.oozie</groupId>
         <artifactId>oozie-main</artifactId>
-        <version>${oozieVersion}-${hadoopVersion}--${build}</version>
+        <version>2.2.0-SNAPSHOT</version> <!-- OOZIE_VERSION -->
     </parent>
     <artifactId>oozie-core</artifactId>
     <description>Oozie Core</description>
@@ -35,6 +32,11 @@
         </license>
     </licenses>
 
+    <organization>
+        <name>Yahoo</name>
+        <url>http://www.yahoo.com</url>
+    </organization>
+
     <dependencies>
         <dependency>
             <groupId>org.apache.openjpa</groupId>
@@ -46,6 +48,12 @@
             <groupId>org.apache.openjpa</groupId>
             <artifactId>openjpa-jdbc</artifactId>
             <version>1.2.1</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>postgresql</groupId>
+                    <artifactId>postgresql</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
@@ -61,18 +69,6 @@
         </dependency>
 
         <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-            <version>5.1.6</version>
-        </dependency>
-
-		<dependency>
-		    <groupId>com.oracle</groupId>
-		    <artifactId>ojdbc6</artifactId>
-		    <version>11.1.0.7.0</version>
-		</dependency>
-
-        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>3.8.1</version>
@@ -80,23 +76,10 @@
         </dependency>
 
         <dependency>
-            <groupId>org.apache.oozie</groupId>
-            <artifactId>oozie-client</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>commons-cli</groupId>
-                    <artifactId>commons-cli</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-        <dependency>
             <groupId>commons-cli</groupId>
             <artifactId>commons-cli</artifactId>
             <version>1.2</version>
-            <scope>test</scope>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -110,7 +93,7 @@
             <groupId>${hadoopGroupId}</groupId>
             <artifactId>hadoop-core</artifactId>
             <version>${hadoopVersion}</version>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>${hadoopGroupId}</groupId>
@@ -121,6 +104,14 @@
                 <exclusion>
                     <groupId>commons-cli</groupId>
                     <artifactId>commons-cli</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -287,6 +278,76 @@
         </testResources>
         <plugins>
             <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>add-source</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${basedir}/../client/src/main/java</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>add-resource</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>add-resource</goal>
+                        </goals>
+                        <configuration>
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}/../client/src/main/resources</directory>
+                                    <filtering>true</filtering>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>add-test-source</id>
+                        <phase>generate-test-sources</phase>
+                        <goals>
+                            <goal>add-test-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${basedir}/../client/src/test/java</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>add-test-resource</id>
+                        <phase>generate-test-resources</phase>
+                        <goals>
+                            <goal>add-test-resource</goal>
+                        </goals>
+                        <configuration>
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}/../client/src/test/resources</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>test-jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <configuration>
                     <descriptors>
@@ -311,6 +372,12 @@
                       <classpath refid="cp"/>
                   </taskdef>
                   <fileset id="enhance.path.ref" dir="../core/target/classes">
+                      <include name="**/JsonWorkflowJob.class"/>
+                      <include name="**/JsonWorkflowAction.class"/>
+                      <include name="**/JsonCoordinatorJob.class"/>
+                      <include name="**/JsonCoordinatorAction.class"/>
+                      <include name="**/JsonSLAEvent.class"/>
+
                       <include name="**/WorkflowJobBean.class"/>
                       <include name="**/WorkflowActionBean.class"/>
                       <include name="**/CoordinatorJobBean.class"/>
@@ -328,36 +395,83 @@
                </goals>
                 </execution>
             </executions>
-         </plugin>
+           </plugin>
         </plugins>
     </build>
 
     <reporting>
         <plugins>
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>findbugs-maven-plugin</artifactId>
-                <version>2.0.1</version>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <configuration>
+                    <linksource>true</linksource>
+                    <quiet>true</quiet>
+                    <verbose>false</verbose>
+                    <source>${maven.compile.source}</source>
+                    <charset>${maven.compile.encoding}</charset>
+                    <groups>
+                        <group>
+                            <title>Client API</title>
+                            <packages>
+                                org.apache.oozie.client
+                            </packages>
+                        </group>
+                        <group>
+                            <title>Action Executor API</title>
+                            <packages>
+                                org.apache.oozie.action
+                            </packages>
+                        </group>
+                        <group>
+                            <title>Local Oozie (for application development/testing)</title>
+                            <packages>
+                                org.apache.oozie.local
+                            </packages>
+                        </group>
+                    </groups>
+                </configuration>
             </plugin>
         </plugins>
     </reporting>
 
     <profiles>
         <profile>
-            <id>hadoopSecurityPre</id>
+            <id>generateDocs</id>
             <activation>
-                <activeByDefault>true</activeByDefault>
+                <activeByDefault>false</activeByDefault>
                 <property>
-                    <name>oozie.test.hadoop.security</name>
-                    <value>pre</value>
+                    <name>generateDocs</name>
                 </property>
             </activation>
             <build>
-                <resources>
-                    <resource>
-                        <directory>src/main/resources</directory>
-                    </resource>
-                </resources>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>javadoc</goal>
+                                </goals>
+                                <phase>package</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>hadoop20</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <property>
+                    <name>hadoop20</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
                 <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
@@ -368,65 +482,49 @@
                             </excludes>
                         </configuration>
                     </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <configuration>
-                            <excludes>
-                                <exclude>**/TestKerberosHadoopAccessorService.java</exclude>
-                            </excludes>
-                        </configuration>
-                    </plugin>
                 </plugins>
             </build>
         </profile>
-        <!-- Kerberos Authentication OFF -->
+
+        <!-- Include MySQL JDBC driver -->
         <profile>
-            <id>hadoopSecuritySimple</id>
+            <id>mysql</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
                 <property>
-                    <name>oozie.test.hadoop.security</name>
-                    <value>simple</value>
+                    <name>mysql</name>
                 </property>
             </activation>
-            <build>
-                <resources>
-                    <resource>
-                        <directory>src/main/resourcesS</directory>
-                    </resource>
-                </resources>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <configuration>
-                            <excludes>
-                                <exclude>**/TestKerberosHadoopAccessorService.java</exclude>
-                            </excludes>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
+            <dependencies>
+                <dependency>
+                    <groupId>mysql</groupId>
+                    <artifactId>mysql-connector-java</artifactId>
+                    <version>5.1.6</version>
+                    <scope>compile</scope>
+                </dependency>
+            </dependencies>
         </profile>
-        <!-- Kerberos Authentication OFF -->
+
+        <!-- Include Oracle JDBC driver                                         -->
+        <!-- Oracle JDBC driver is not available in any public Maven repository -->
+        <!-- It must be manually installed in the local Maven cache             -->
         <profile>
-            <id>hadoopSecurityKerberos</id>
+            <id>oracle</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
                 <property>
-                    <name>oozie.test.hadoop.security</name>
-                    <value>kerberos</value>
+                    <name>oracle</name>
                 </property>
             </activation>
-            <build>
-                <resources>
-                    <resource>
-                        <directory>src/main/resourcesS</directory>
-                    </resource>
-                </resources>
-            </build>
+            <dependencies>
+                <dependency>
+                    <groupId>com.oracle</groupId>
+                    <artifactId>ojdbc6</artifactId>
+                    <version>11.1.0.7.0</version>
+                </dependency>
+            </dependencies>
         </profile>
+
     </profiles>
 
 </project>

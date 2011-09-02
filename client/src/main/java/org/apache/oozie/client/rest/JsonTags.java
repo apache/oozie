@@ -1,19 +1,16 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.client.rest;
 
@@ -25,6 +22,8 @@ public interface JsonTags {
     public static final String OOZIE_SAFE_MODE = "safeMode"; //Applicable for V0 only
     public static final String OOZIE_SYSTEM_MODE = "systemMode";
     public static final String BUILD_VERSION = "buildVersion";
+    public static final String QUEUE_DUMP = "queueDump";
+    public static final String CALLABLE_DUMP = "callableDump";
 
     public static final String JOB_ID = "id";
 
@@ -83,6 +82,7 @@ public interface JsonTags {
     public static final String COORDINATOR_JOB_EXECUTIONPOLICY = "executionPolicy";
     public static final String COORDINATOR_JOB_START_TIME = "startTime";
     public static final String COORDINATOR_JOB_END_TIME = "endTime";
+    public static final String COORDINATOR_JOB_PAUSE_TIME = "pauseTime";
     public static final String COORDINATOR_JOB_CONSOLE_URL = "consoleUrl";
     public static final String COORDINATOR_JOB_ACTIONS = "actions";
     public static final String COORDINATOR_JOB_USER = "user";

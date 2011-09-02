@@ -1,40 +1,38 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.servlet;
 
-import org.apache.oozie.client.rest.RestConstants;
-import org.apache.oozie.service.Services;
-import org.apache.oozie.util.IOUtils;
-import org.apache.oozie.util.PropertiesUtils;
-import org.apache.oozie.util.XLog;
-import org.apache.oozie.DagEngine;
-import org.apache.oozie.DagEngineException;
-import org.apache.oozie.ErrorCode;
-import org.apache.oozie.service.DagEngineService;
-import org.apache.oozie.service.CallbackService;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Properties;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.oozie.DagEngine;
+import org.apache.oozie.DagEngineException;
+import org.apache.oozie.ErrorCode;
+import org.apache.oozie.client.rest.RestConstants;
+import org.apache.oozie.service.CallbackService;
+import org.apache.oozie.service.DagEngineService;
+import org.apache.oozie.service.Services;
+import org.apache.oozie.util.IOUtils;
+import org.apache.oozie.util.PropertiesUtils;
+import org.apache.oozie.util.XLog;
 
 public class CallbackServlet extends JsonRestServlet {
     private static final String INSTRUMENTATION_NAME = "callback";
@@ -46,10 +44,13 @@ public class CallbackServlet extends JsonRestServlet {
 
     private static int maxDataLen;
 
+    private XLog log = null;
+
     public CallbackServlet() {
         super(INSTRUMENTATION_NAME, RESOURCE_INFO);
     }
 
+    @Override
     public void init() {
         maxDataLen = Services.get().getConf().getInt(CONF_MAX_DATA_LEN, 2 * 1024);
     }
@@ -57,20 +58,35 @@ public class CallbackServlet extends JsonRestServlet {
     /**
      * GET callback
      */
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String queryString = request.getQueryString();
-        XLog.getLog(getClass()).debug("Received a CallbackServlet.doGet() with query string " + queryString);
         CallbackService callbackService = Services.get().get(CallbackService.class);
+
         if (!callbackService.isValid(queryString)) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0402, queryString);
         }
+
+        String actionId = callbackService.getActionId(queryString);
+        if (actionId == null) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0402, queryString);
+        }
+        int idx = actionId.lastIndexOf('@', actionId.length());
+        String jobId;
+        if (idx == -1) {
+            jobId = actionId;
+        }
+        else {
+            jobId = actionId.substring(0, idx);
+        }
+        setLogInfo(jobId, actionId);
+        log = XLog.getLog(getClass());
+        log.debug("Received a CallbackServlet.doGet() with query string " + queryString);
+
         DagEngine dagEngine = Services.get().get(DagEngineService.class).getSystemDagEngine();
         try {
-            XLog.getLog(getClass()).info(XLog.STD, "callback for action [{0}]",
-                                         callbackService.getActionId(queryString));
-            dagEngine.processCallback(callbackService.getActionId(queryString),
-                                      callbackService.getExternalStatus(queryString), null);
+            log.info(XLog.STD, "callback for action [{0}]", actionId);
+            dagEngine.processCallback(actionId, callbackService.getExternalStatus(queryString), null);
         }
         catch (DagEngineException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
@@ -80,27 +96,43 @@ public class CallbackServlet extends JsonRestServlet {
     /**
      * POST callback
      */
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException,
+            IOException {
         String queryString = request.getQueryString();
-        XLog.getLog(getClass()).debug("Received a CallbackServlet.doPost() with query string " + queryString);
         CallbackService callbackService = Services.get().get(CallbackService.class);
+
         if (!callbackService.isValid(queryString)) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0402, queryString);
         }
+
+        String actionId = callbackService.getActionId(queryString);
+        if (actionId == null) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0402, queryString);
+        }
+        int idx = actionId.lastIndexOf('@', actionId.length());
+        String jobId;
+        if (idx == -1) {
+            jobId = actionId;
+        }
+        else {
+            jobId = actionId.substring(0, idx);
+        }
+        setLogInfo(jobId, actionId);
+        log = XLog.getLog(getClass());
+        log.debug("Received a CallbackServlet.doPost() with query string " + queryString);
+
         validateContentType(request, RestConstants.TEXT_CONTENT_TYPE);
         try {
-            XLog.getLog(getClass()).info(XLog.STD, "callback for action [{0}]",
-                                         callbackService.getActionId(queryString));
+            log.info(XLog.STD, "callback for action [{0}]", actionId);
             String data = IOUtils.getReaderAsString(request.getReader(), maxDataLen);
             Properties props = PropertiesUtils.stringToProperties(data);
             DagEngine dagEngine = Services.get().get(DagEngineService.class).getSystemDagEngine();
-            dagEngine.processCallback(callbackService.getActionId(queryString),
-                                      callbackService.getExternalStatus(queryString), props);
+            dagEngine.processCallback(actionId, callbackService.getExternalStatus(queryString), props);
         }
         catch (IOException ex) {
             if (ex.getMessage().startsWith("stream exceeds limit")) {
-                //TODO, WE MUST SET THE ACTION TO ERROR
+                // TODO, WE MUST SET THE ACTION TO ERROR
                 throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0403, "data too long");
             }
             else {

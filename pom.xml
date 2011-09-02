@@ -1,46 +1,54 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Licensed to the Apache Software Foundation (ASF) under one
-  or more contributor license agreements.  See the NOTICE file
-  distributed with this work for additional information
-  regarding copyright ownership.  The ASF licenses this file
-  to you under the Apache License, Version 2.0 (the
-  "License"); you may not use this file except in compliance
-  with the License.  You may obtain a copy of the License at
+  Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
 
-      http://www.apache.org/licenses/LICENSE-2.0
+    http://www.apache.org/licenses/LICENSE-2.0
 
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS,
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
-  limitations under the License.
+  limitations under the License. See accompanying LICENSE file.
 -->
 <project>
     <modelVersion>4.0.0</modelVersion>
-    <groupId>org.apache.oozie</groupId>
+    <groupId>com.yahoo.oozie</groupId>
     <artifactId>oozie-main</artifactId>
-    <version>${oozieVersion}-${hadoopVersion}--${build}</version>
+    <version>2.2.0-SNAPSHOT</version> <!-- OOZIE_VERSION -->
     <description>Oozie Main</description>
     <name>Oozie Main</name>
     <packaging>pom</packaging>
 
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <organization>
+        <name>Yahoo</name>
+        <url>http://www.yahoo.com</url>
+    </organization>
+    
     <properties>
         <!-- to be able to run a single test case from the main project -->
         <failIfNoTests>false</failIfNoTests>
 
-        <!-- Oozie is tied to a Hadoop version, this allows Oozie versioning within a single Hadoop version -->
-        <oozieVersion>2.0.2.1</oozieVersion>
+        <hadoop20>false</hadoop20>
 
-        <hadoopGroupId>org.apache.hadoop</hadoopGroupId>
+        <hadoopGroupId>com.yahoo.hadoop</hadoopGroupId>
 
-        <hadoopVersion>0.20.2</hadoopVersion>
+        <hadoopVersion>0.20.104.1</hadoopVersion>
 
         <pigGroupId>com.yahoo.hadoop</pigGroupId>
 
         <pigVersion>0.7.0</pigVersion>
 
-        <build></build>
+        <oozie.test.config.file></oozie.test.config.file>
 
         <oozie.test.dir>/tmp</oozie.test.dir>
 
@@ -51,34 +59,35 @@
         <oozie.test.hadoop.minicluster>true</oozie.test.hadoop.minicluster>
         <hadoop.log.dir>/tmp</hadoop.log.dir>
 
-        <oozie.test.hadoop.security>pre</oozie.test.hadoop.security>
+        <oozie.test.hadoop.pipes>false</oozie.test.hadoop.pipes>
+
+        <oozie.test.hadoop.security>simple</oozie.test.hadoop.security>
 
         <oozie.test.kerberos.keytab.file>${user.home}/oozie.keytab</oozie.test.kerberos.keytab.file>
         <oozie.test.kerberos.realm>LOCALHOST</oozie.test.kerberos.realm>
         <oozie.test.kerberos.oozie.principal>${user.name}/localhost</oozie.test.kerberos.oozie.principal>
         <oozie.test.kerberos.jobtracker.principal>mapred/localhost</oozie.test.kerberos.jobtracker.principal>
         <oozie.test.kerberos.namenode.principal>hdfs/localhost</oozie.test.kerberos.namenode.principal>
+
+        <internal.maven.repository>file:///tmp/internalmavenrepo</internal.maven.repository>
     </properties>
-
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-        </license>
-    </licenses>
-
-    <organization>
-        <name>Apache Software Foundation</name>
-        <url>http://www.apache.org</url>
-    </organization>
 
     <modules>
         <module>client</module>
         <module>core</module>
         <module>webapp</module>
         <module>examples</module>
+        <module>docs</module>
         <module>distro</module>
     </modules>
+
+    <distributionManagement>
+        <repository>
+            <id>internal.maven.repo</id>
+            <name>Internal Repository for Integration</name>
+            <url>${internal.maven.repository}</url>
+        </repository>
+    </distributionManagement>
 
     <repositories>
         <repository>
@@ -126,80 +135,23 @@
         </repository>
     </repositories>
 
-    <reporting>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-report-plugin</artifactId>
-                <configuration>
-                    <aggregate>true</aggregate>
-                    <instrumentation>
-                      <excludes>
-                          <exclude>org.apache.oozie.example.*</exclude>
-                      </excludes>
-                    </instrumentation>
-                </configuration>
-            </plugin>
-            <plugin>
-                 <groupId>org.apache.maven.plugins</groupId>
-                 <artifactId>maven-javadoc-plugin</artifactId>
-                 <configuration>
-                     <excludePackageNames>org.apache.oozie.example</excludePackageNames>
-                     <aggregate>true</aggregate>
-                     <linksource>true</linksource>
-                     <quiet>true</quiet>
-                     <verbose>false</verbose>
-                     <source>${maven.compile.source}</source>
-                     <charset>${maven.compile.encoding}</charset>
-                     <groups>
-                         <group>
-                             <title>Client API</title>
-                             <packages>
-                                 org.apache.oozie.client
-                             </packages>
-                         </group>
-                         <group>
-                             <title>Action Executor API</title>
-                             <packages>
-                                 org.apache.oozie.action
-                             </packages>
-                         </group>
-                         <group>
-                             <title>Local Oozie (for application development/testing)</title>
-                             <packages>
-                                 org.apache.oozie.local
-                             </packages>
-                         </group>
-                     </groups>
-                 </configuration>
-             </plugin>
-             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-project-info-reports-plugin</artifactId>
-                <reportSets>
-                    <reportSet>
-                        <reports>
-                        </reports>                                                
-                    </reportSet>
-                </reportSets>
-            </plugin>
-
-
-           <plugin>
-               <groupId>org.codehaus.mojo</groupId>
-               <artifactId>findbugs-maven-plugin</artifactId>
-               <version>2.0.1</version>
-  		<configuration>
-    			<threshold>High</threshold>
-    			<effort>Default</effort>
-  		</configuration>
-          </plugin>
-
-
-
-
-        </plugins>
-    </reporting>
+    <pluginRepositories>
+      <pluginRepository>
+          <id>internal.maven.repo</id>
+          <name>Internal Repository for Integration</name>
+          <url>${internal.maven.repository}</url>
+          <snapshots>
+              <enabled>true</enabled>
+          </snapshots>
+      </pluginRepository>
+        <pluginRepository>
+            <id>yahoo.github</id>
+            <url>http://yahoo.github.com/maven/repository</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
 
     <build>
         <plugins>
@@ -216,11 +168,19 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <forkMode>once</forkMode>
-                    <argLine>-Xmx512m</argLine>
+                    <argLine>-Xmx1024m</argLine>
                     <systemProperties>
+                        <property>
+                            <name>oozie.test.config.file</name>
+                            <value>${oozie.test.config.file}</value>
+                        </property>
                         <property>
                             <name>oozie.test.dir</name>
                             <value>${oozie.test.dir}</value>
+                        </property>
+                        <property>
+                            <name>hadoop20</name>
+                            <value>${hadoop20}</value>
                         </property>
                         <property>
                             <name>hadoop.version</name>
@@ -233,10 +193,6 @@
                         <property>
                             <name>oozie.test.name.node</name>
                             <value>${oozie.test.name.node}</value>
-                        </property>
-                        <property>
-                            <name>oozie.test.kerberos</name>
-                            <value>${oozie.test.kerberos}</value>
                         </property>
                         <property>
                             <name>oozie.test.kerberos.keytab.file</name>
@@ -270,110 +226,24 @@
                             <name>oozie.test.hadoop.security</name>
                             <value>${oozie.test.hadoop.security}</value>
                         </property>
+                        <property>
+                            <name>oozie.test.hadoop.pipes</name>
+                            <value>${oozie.test.hadoop.pipes}</value>
+                        </property>
                     </systemProperties>
                 </configuration>
             </plugin>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.2-beta-3</version>
                 <configuration>
                     <descriptors>
                         <descriptor>src/main/assemblies/empty.xml</descriptor>
                     </descriptors>
                 </configuration>
             </plugin>
-            <!-- Customized Doxia Maven Plugin for twiki documentation -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-site-plugin</artifactId>
-                <version>2.0-beta-6</version>
-                <configuration>
-                    <port>8888</port>
-                    <outputEncoding>UTF-8</outputEncoding>
-                </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.apache.maven.doxia</groupId>
-                        <artifactId>doxia-module-twiki</artifactId>
-                        <version>1.0-alpha-9.2y</version>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.apache.maven.doxia</groupId>
-                        <artifactId>doxia-core</artifactId>
-                        <version>1.0-alpha-9.2y</version>
-                    </dependency>
-                </dependencies>
-            </plugin>
-            <plugin>
-              <groupId>org.codehaus.mojo</groupId>
-              <artifactId>cobertura-maven-plugin</artifactId>
-              <configuration>
-                <instrumentation>
-                  <ignores>
-                    <ignore>org.apache.oozie.action.hadoop.*Mapper*</ignore>
-                  </ignores>
-                  <excludes>
-                    <exclude>org/apache/oozie/dag/action/hadoop/*Mapper*.class</exclude>
-                  </excludes>
-                </instrumentation>
-              </configuration>
-              <executions>
-                <execution>
-                  <goals>
-                    <goal>clean</goal>
-                  </goals>
-                </execution>
-              </executions>
-            </plugin>
-            <!--
-			<plugin>
-		        <groupId>org.apache.maven.plugins</groupId>
-		        <artifactId>maven-clover-plugin</artifactId>
-		        <configuration>
-		          <licenseLocation>build-setup/clover.license</licenseLocation>
-		        </configuration>
-		        <executions>
-		          <execution>
-		            <phase>verify</phase>
-		            <goals>
-		              <goal>instrument</goal>
-		              <goal>check</goal>
-		            </goals>
-		          </execution>
-		        </executions>
-		    </plugin>
-		    -->
-	        <plugin>
-              <groupId>com.atlassian.maven.plugins</groupId>
-              <artifactId>maven-clover2-plugin</artifactId>
-              <version>3.0.1</version>
-              <configuration>
-					<licenseLocation>/home/y/conf/clover/clover.license</licenseLocation>
-              </configuration>
-            </plugin>
+            <!-- ADDITIONAL PLUGINS -->
         </plugins>
     </build>
-
-    <profiles>
-
-        <!-- MySQL DB profile -->
-        <profile>
-            <id>mysql</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-                <property>
-                    <name>mysql</name>
-                </property>
-            </activation>
-            <dependencies>
-                <dependency>
-                    <groupId>mysql</groupId>
-                    <artifactId>mysql-connector-java</artifactId>
-                    <version>5.1.6</version>
-                    <scope>compile</scope>
-                </dependency>
-            </dependencies>
-        </profile>
-
-    </profiles>
 
 </project>

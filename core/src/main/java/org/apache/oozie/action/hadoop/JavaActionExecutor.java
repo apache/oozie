@@ -1,69 +1,63 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.action.hadoop;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.net.ConnectException;
+import java.net.URI;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.AccessControlException;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.mapred.JobClient;
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
+import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.util.DiskChecker;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
-import org.apache.oozie.client.WorkflowAction;
-import org.apache.oozie.client.WorkflowJob;
-import org.apache.oozie.client.WorkflowAction.Status;
 import org.apache.oozie.client.OozieClient;
-import org.apache.oozie.service.WorkflowAppService;
-import org.apache.oozie.service.Services;
+import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
+import org.apache.oozie.service.Services;
+import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.servlet.CallbackServlet;
 import org.apache.oozie.util.IOUtils;
-import org.apache.oozie.util.XConfiguration;
-import org.apache.oozie.util.XmlUtils;
-import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.PropertiesUtils;
-import org.apache.openjpa.lib.log.Log;
+import org.apache.oozie.util.XConfiguration;
+import org.apache.oozie.util.XLog;
+import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
-import org.jdom.Namespace;
 import org.jdom.JDOMException;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.StringReader;
-import java.io.InputStream;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.FileNotFoundException;
-import java.net.URI;
-import java.net.UnknownHostException;
-import java.net.ConnectException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.ArrayList;
-import java.util.Properties;
-import java.util.logging.Logger;
+import org.jdom.Namespace;
 
 public class JavaActionExecutor extends ActionExecutor {
 
@@ -112,6 +106,7 @@ public class JavaActionExecutor extends ActionExecutor {
         return classes;
     }
 
+    @Override
     public void initActionType() {
         super.initActionType();
         maxActionOutputLen = getOozieConf().getInt(CallbackServlet.CONF_MAX_DATA_LEN, 2 * 1024);
@@ -152,6 +147,14 @@ public class JavaActionExecutor extends ActionExecutor {
         Configuration conf = new XConfiguration();
         conf.set(HADOOP_USER, context.getProtoActionConf().get(WorkflowAppService.HADOOP_USER));
         conf.set(HADOOP_UGI, context.getProtoActionConf().get(WorkflowAppService.HADOOP_UGI));
+        if (context.getProtoActionConf().get(WorkflowAppService.HADOOP_JT_KERBEROS_NAME) != null) {
+            conf.set(WorkflowAppService.HADOOP_JT_KERBEROS_NAME, context.getProtoActionConf().get(
+                    WorkflowAppService.HADOOP_JT_KERBEROS_NAME));
+        }
+        if (context.getProtoActionConf().get(WorkflowAppService.HADOOP_NN_KERBEROS_NAME) != null) {
+            conf.set(WorkflowAppService.HADOOP_NN_KERBEROS_NAME, context.getProtoActionConf().get(
+                    WorkflowAppService.HADOOP_NN_KERBEROS_NAME));
+        }
         conf.set(OozieClient.GROUP_NAME, context.getProtoActionConf().get(OozieClient.GROUP_NAME));
         Namespace ns = actionXml.getNamespace();
         String jobTracker = actionXml.getChild("job-tracker", ns).getTextTrim();
@@ -162,7 +165,7 @@ public class JavaActionExecutor extends ActionExecutor {
         return conf;
     }
 
-    Configuration setupLauncherConf(Configuration conf, Element actionXml, Path appPath) throws ActionExecutorException {
+    Configuration setupLauncherConf(Configuration conf, Element actionXml, Path appPath, Context context) throws ActionExecutorException {
         try {
             Namespace ns = actionXml.getNamespace();
             Element e = actionXml.getChild("configuration", ns);
@@ -254,7 +257,7 @@ public class JavaActionExecutor extends ActionExecutor {
             }
             else {
                 String fileName = filePath.substring(filePath.lastIndexOf("/") + 1);
-                if (fileName.endsWith(".so") || fileName.contains(".so.")) {
+                if (fileName.endsWith(".so") || fileName.contains(".so.")) {  // .so files
                     if (!fileName.endsWith(".so")) {
                         int extAt = fileName.indexOf(".so.");
                         fileName = fileName.substring(0, extAt + 3);
@@ -262,13 +265,19 @@ public class JavaActionExecutor extends ActionExecutor {
                     uri = new Path(path.toString() + "#" + fileName).toUri();
                     uri = new URI(uri.getPath());
                 }
-                else {
+                else if (fileName.endsWith(".jar")){  // .jar files
                     if (!fileName.contains("#")) {
                         path = new Path(uri.toString());
 
                         String user = conf.get("user.name");
                         String group = conf.get("group.name");
                         Services.get().get(HadoopAccessorService.class).addFileToClassPath(user, group, path, conf);
+                    }
+                }
+                else { // regular files
+                    if (!fileName.contains("#")) {
+                        uri = new Path(path.toString() + "#" + fileName).toUri();
+                        uri = new URI(uri.getPath());
                     }
                 }
                 DistributedCache.addCacheFile(uri, conf);
@@ -335,17 +344,10 @@ public class JavaActionExecutor extends ActionExecutor {
 
         addToCache(conf, appPath, getOozieLauncherJar(context), false);
 
-        String[] paths = proto.getStrings(WorkflowAppService.APP_LIB_JAR_PATH_LIST);
+        String[] paths = proto.getStrings(WorkflowAppService.APP_LIB_PATH_LIST);
         if (paths != null) {
-            for (String jarPath : paths) {
-                addToCache(conf, appPath, jarPath, false);
-            }
-        }
-
-        paths = proto.getStrings(WorkflowAppService.APP_LIB_SO_PATH_LIST);
-        if (paths != null) {
-            for (String soPath : paths) {
-                addToCache(conf, appPath, soPath, false);
+            for (String path : paths) {
+                addToCache(conf, appPath, path, false);
             }
         }
 
@@ -385,7 +387,7 @@ public class JavaActionExecutor extends ActionExecutor {
 
             // launcher job configuration
             Configuration launcherConf = createBaseHadoopConf(context, actionXml);
-            setupLauncherConf(launcherConf, actionXml, appPath);
+            setupLauncherConf(launcherConf, actionXml, appPath, context);
 
             // we are doing init+copy because if not we are getting 'hdfs'
             // scheme not known
@@ -410,7 +412,7 @@ public class JavaActionExecutor extends ActionExecutor {
             LauncherMapper.setupMaxOutputData(launcherJobConf, maxActionOutputLen);
 
             Namespace ns = actionXml.getNamespace();
-            List<Element> list = (List<Element>) actionXml.getChildren("arg", ns);
+            List<Element> list = actionXml.getChildren("arg", ns);
             String[] args = new String[list.size()];
             for (int i = 0; i < list.size(); i++) {
                 args[i] = list.get(i).getTextTrim();
@@ -509,7 +511,10 @@ public class JavaActionExecutor extends ActionExecutor {
 
                 // setting up propagation of the delegation token.
                 AuthHelper.get().set(jobClient, launcherJobConf);
-
+                log.debug(WorkflowAppService.HADOOP_JT_KERBEROS_NAME + " = "
+                        + launcherJobConf.get(WorkflowAppService.HADOOP_JT_KERBEROS_NAME));
+                log.debug(WorkflowAppService.HADOOP_NN_KERBEROS_NAME + " = "
+                        + launcherJobConf.get(WorkflowAppService.HADOOP_NN_KERBEROS_NAME));
                 runningJob = jobClient.submitJob(launcherJobConf);
                 if (runningJob == null) {
                     throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "JA017",
@@ -595,7 +600,14 @@ public class JavaActionExecutor extends ActionExecutor {
         }
     }
 
-    protected JobClient createJobClient(Context context, JobConf jobConf) throws IOException {
+    /**
+     * Create job client object
+     * @param context
+     * @param jobConf
+     * @return
+     * @throws HadoopAccessorException
+     */
+    protected JobClient createJobClient(Context context, JobConf jobConf) throws HadoopAccessorException {
         String user = context.getWorkflow().getUser();
         String group = context.getWorkflow().getGroup();
         return Services.get().get(HadoopAccessorService.class).createJobClient(user, group, jobConf);
@@ -675,7 +687,8 @@ public class JavaActionExecutor extends ActionExecutor {
                             errorReason = props.getProperty("error.reason");
                             log.warn("Launcher ERROR, reason: {0}", errorReason);
                             String exMsg = props.getProperty("exception.message");
-                            context.setErrorInfo("JA018", exMsg);
+                            String errorInfo = (exMsg != null) ? exMsg : errorReason;
+                            context.setErrorInfo("JA018", errorInfo);
                             String exStackTrace = props.getProperty("exception.stacktrace");
                             if (exMsg != null) {
                                 log.warn("Launcher exception: {0}{E}{1}", exMsg, exStackTrace);
@@ -779,6 +792,7 @@ public class JavaActionExecutor extends ActionExecutor {
         FINAL_STATUS.add(FAILED_KILLED);
     }
 
+    @Override
     public boolean isCompleted(String externalStatus) {
         return FINAL_STATUS.contains(externalStatus);
     }

@@ -1,19 +1,16 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.service;
 
@@ -29,22 +26,31 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
-import java.net.URL;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.Arrays;
 
 /**
- * Built in service that initializes the services configuration. <p/> The configuration loading sequence is identical to
- * Hadoop configuration loading sequence. <p/> First the default values are loaded from the {@link
- * #DEFAULT_CONFIG_FILE}, then the site configured values are loaded from the site configuration file. <p/> The {@link
- * #DEFAULT_CONFIG_FILE} is always loaded from the classpath root. <p/> The site configuration file and loading location
- * is determined as follow: <p/> The site configuration file name is set by the system property {@link #CONFIG_FILE}.
- * The default value is {@link #SITE_CONFIG_FILE}. <p/> The site configuration file is loaded from the directory
- * specified by the system property {@link #CONFIG_PATH}. If not set, no site configuration is loaded. <p/>
- * Configuration properties, prefixed with 'oozie.', passed as system properties overrides default and site values. <p/>
- * The configuration service logs details on how the configuration was loaded as well as what properties were overriden
+ * Built in service that initializes the services configuration.
+ * <p/>
+ * The configuration loading sequence is identical to Hadoop configuration loading sequence.
+ * <p/>
+ * Default values are loaded from the 'oozie-default.xml' file from the classpath, then site configured values
+ * are loaded from a site configuration file from the Oozie configuration directory.
+ * <p/>
+ * The Oozie configuration directory is resolved using the <code>OOZIE_HOME<code> environment variable as
+ * <code>${OOZIE_HOME}/conf</code>. If the <code>OOZIE_HOME<code> environment variable is not defined the
+ * initialization of the <code>ConfigurationService</code> fails.
+ * <p/>
+ * The site configuration is loaded from the <code>oozie-site.xml</code> file in the configuration directory.
+ * <p/>
+ * The site configuration file name to use can be changed by setting the <code>OOZIE_CONFIG_FILE</code> environment
+ * variable to an alternate file name. The alternate file must ber in the Oozie configuration directory.
+ * <p/>
+ * Configuration properties, prefixed with 'oozie.', passed as system properties overrides default and site values.
+ * <p/>
+ * The configuration service logs details on how the configuration was loaded as well as what properties were overrode
  * via system properties settings.
  */
 public class ConfigurationService implements Service, Instrumentable {
@@ -55,35 +61,25 @@ public class ConfigurationService implements Service, Instrumentable {
     public static final String CONF_IGNORE_SYS_PROPS = CONF_PREFIX + "ignore.system.properties";
 
     /**
-     * System property that indicates the path where the site configuration should be loaded from.
-     */
-    public static final String CONFIG_PATH = "oozie.config.dir";
-
-    /**
      * System property that indicates the name of the site configuration file to load.
      */
-    public static final String CONFIG_FILE = "oozie.config.file";
+    public static final String OOZIE_CONFIG_FILE_ENV = "OOZIE_CONFIG_FILE";
 
     private static final Set<String> IGNORE_SYS_PROPS = new HashSet<String>();
-    private static final String IGNORE_SYS_PROPS_PREFIX = "oozie.test.";
+    private static final String IGNORE_TEST_SYS_PROPS = "oozie.test.";
 
-    private static final String MASK_PROPS_VALUES_POSTIX = ".password";
+    private static final String PASSWORD_PROPERTY_END = ".password";
 
     static {
-        IGNORE_SYS_PROPS.add(CONFIG_FILE);
-        IGNORE_SYS_PROPS.add(CONFIG_PATH);
-        IGNORE_SYS_PROPS.add(XLogService.LOG4J_FILE);
-        IGNORE_SYS_PROPS.add(XLogService.RELOAD_INTERVAL);
+        IGNORE_SYS_PROPS.add(XLogService.LOG4J_FILE_ENV);
+        IGNORE_SYS_PROPS.add(XLogService.LOG4J_RELOAD_ENV);
         IGNORE_SYS_PROPS.add(CONF_IGNORE_SYS_PROPS);
     }
-
-    //for testing purposes
-    static boolean testingDefaultFile;
 
     public static final String DEFAULT_CONFIG_FILE = "oozie-default.xml";
     public static final String SITE_CONFIG_FILE = "oozie-site.xml";
 
-    private final XLog log = XLog.getLog(getClass());
+    private static XLog log = XLog.getLog(ConfigurationService.class);
 
     private String configDir;
     private String configFile;
@@ -91,7 +87,27 @@ public class ConfigurationService implements Service, Instrumentable {
     private LogChangesConfiguration configuration;
 
     public ConfigurationService() {
-        testingDefaultFile = false;
+        log = XLog.getLog(ConfigurationService.class);
+    }
+
+    /**
+     * Obtains the value of a system property or if not defined from an environment variable.
+     *
+     * @param envName environment variable name
+     * @param defaultValue default value if not set
+     * @return the value of the environment variable.
+     */
+    private static String getEnvValue(String envName, String defaultValue) {
+        String value = System.getProperty(envName);
+        if (value == null) {
+            value = System.getenv(envName);
+            String debugValue = (value == null) ? "variable not defined" : "value [" + value + "]";
+            log.debug("Fetching env var [{0}], {1}", envName, debugValue);
+        }
+        else {
+            log.debug("Fetching env var [{0}], Java system property overriding it, value [{1}]", envName, value);
+        }
+        return (value != null) ? value : defaultValue;
     }
 
     /**
@@ -101,9 +117,25 @@ public class ConfigurationService implements Service, Instrumentable {
      * @throws ServiceException thrown if the log service could not be initialized.
      */
     public void init(Services services) throws ServiceException {
-        configDir = System.getProperty(CONFIG_PATH);
-        configFile = System.getProperty(CONFIG_FILE, SITE_CONFIG_FILE);
+        configDir = getConfigurationDirectory();
+        configFile = getEnvValue(OOZIE_CONFIG_FILE_ENV, SITE_CONFIG_FILE);
+        if (configFile.contains("/")) {
+            throw new ServiceException(ErrorCode.E0022, configFile);
+        }
+        log.info("Oozie home [{0}]", configDir);
+        log.info("Oozie site [{0}]", configFile);
+        configFile = new File(configDir, configFile).toString();
         configuration = loadConf();
+    }
+
+    public static String getConfigurationDirectory() throws ServiceException {
+        String oozieHome = Services.getOozieHome();
+        String configDir = new File(oozieHome, "conf").toString();
+        File file = new File(oozieHome);
+        if (!file.exists()) {
+            throw new ServiceException(ErrorCode.E0024, configDir);
+        }
+        return configDir;
     }
 
     /**
@@ -134,60 +166,38 @@ public class ConfigurationService implements Service, Instrumentable {
         return configuration;
     }
 
-    private InputStream getConfFileFromClassPath(String configFile) throws IOException {
-        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        InputStream inputStream = classLoader.getResourceAsStream(configFile);
-        if (inputStream != null) {
-            URL fileLocation = classLoader.getResource(configFile);
-            log.info("Loading configuration file [{0}] from classpath [{1}]", configFile, fileLocation);
-        }
-        else {
-            log.warn("Configuration file [{0}] not available in classpath", configFile);
-        }
-        return inputStream;
+    /**
+     * Return Oozie configuration directory.
+     *
+     * @return Oozie configuration directory.
+     */
+    public String getConfDirectory() {
+        return configDir;
     }
 
-    private InputStream getConfFile(String configFile) throws ServiceException, IOException {
-        if (configDir == null) {
-            return getConfFileFromClassPath(configFile);
+    private InputStream getDefaultConfiguration() throws ServiceException, IOException {
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        InputStream inputStream = classLoader.getResourceAsStream(DEFAULT_CONFIG_FILE);
+        if (inputStream == null) {
+            throw new ServiceException(ErrorCode.E0023, DEFAULT_CONFIG_FILE);
         }
-        else {
-            if (!configDir.startsWith("/")) {
-                throw new ServiceException(ErrorCode.E0020, configDir);
-            }
-            if (configFile.contains("/")) {
-                throw new ServiceException(ErrorCode.E0022, configFile);
-            }
-            File file = new File(configDir, configFile);
-            if (file.exists()) {
-                log.info("Loading configuration file from path [{0}]", file.getAbsolutePath());
-                return new FileInputStream(file);
-            }
-            else {
-                log.info("Configuration file [{0}] not available at [{1}]", configFile, configDir);
-                return null;
-            }
-        }
+        return inputStream;
     }
 
     private LogChangesConfiguration loadConf() throws ServiceException {
         XConfiguration configuration;
         try {
-            String defaultConfig = (testingDefaultFile) ? "test-" + DEFAULT_CONFIG_FILE : DEFAULT_CONFIG_FILE;
-            InputStream inputStream = getConfFileFromClassPath(defaultConfig);
-            if (inputStream != null) {
-                configuration = new XConfiguration(inputStream);
+            InputStream inputStream = getDefaultConfiguration();
+            configuration = new XConfiguration(inputStream);
+            File file = new File(configFile);
+            if (!file.exists()) {
+                log.info("Missing site configuration file [{0}]", configFile);
             }
             else {
-                throw new ServiceException(ErrorCode.E0023, defaultConfig);
-            }
-            if (configFile != null) {
-                inputStream = getConfFile(configFile);
-                if (inputStream != null) {
-                    XConfiguration siteConfiguration = new XConfiguration(inputStream);
-                    XConfiguration.injectDefaults(configuration, siteConfiguration);
-                    configuration = siteConfiguration;
-                }
+                inputStream = new FileInputStream(configFile);
+                XConfiguration siteConfiguration = new XConfiguration(inputStream);
+                XConfiguration.injectDefaults(configuration, siteConfiguration);
+                configuration = siteConfiguration;
             }
         }
         catch (IOException ex) {
@@ -198,7 +208,7 @@ public class ConfigurationService implements Service, Instrumentable {
             try {
                 StringWriter writer = new StringWriter();
                 for (Map.Entry<String, String> entry : configuration) {
-                    boolean maskValue = entry.getKey().endsWith(MASK_PROPS_VALUES_POSTIX);
+                    boolean maskValue = entry.getKey().endsWith(PASSWORD_PROPERTY_END);
                     String value = (maskValue) ? "**MASKED**" : entry.getValue();
                     writer.write(" " + entry.getKey() + " = " + value + "\n");
                 }
@@ -218,17 +228,17 @@ public class ConfigurationService implements Service, Instrumentable {
         for (Map.Entry<String, String> entry : configuration) {
             String sysValue = System.getProperty(entry.getKey());
             if (sysValue != null && !IGNORE_SYS_PROPS.contains(entry.getKey())) {
-                log.info("SysProps configuration change, property[{0}]=[{1}]", entry.getKey(), sysValue);
+                log.info("Configuration change via System Property, [{0}]=[{1}]", entry.getKey(), sysValue);
                 configuration.set(entry.getKey(), sysValue);
             }
         }
         for (Map.Entry<Object, Object> entry : System.getProperties().entrySet()) {
             String name = (String) entry.getKey();
-            if (IGNORE_SYS_PROPS.contains(name) && !name.startsWith(IGNORE_SYS_PROPS_PREFIX)) {
+            if (IGNORE_SYS_PROPS.contains(name)) {
                 log.warn("System property [{0}] in ignore list, ignored", name);
             }
             else {
-                if (name.startsWith("oozie.")) {
+                if (name.startsWith("oozie.") && !name.startsWith(IGNORE_TEST_SYS_PROPS)) {
                     if (configuration.get(name) == null) {
                         log.warn("System property [{0}] no defined in Oozie configuration, ignored", name);
                     }
@@ -257,7 +267,7 @@ public class ConfigurationService implements Service, Instrumentable {
         public String get(String name, String defaultValue) {
             String value = get(name);
             if (value == null) {
-                boolean maskValue = name.endsWith(MASK_PROPS_VALUES_POSTIX);
+                boolean maskValue = name.endsWith(PASSWORD_PROPERTY_END);
                 value = (maskValue) ? "**MASKED**" : defaultValue;
                 log.warn(XLog.OPS, "Configuration property [{0}] not found, using default [{1}]", name, value);
             }
@@ -266,7 +276,7 @@ public class ConfigurationService implements Service, Instrumentable {
 
         public void set(String name, String value) {
             setValue(name, value);
-            boolean maskValue = name.endsWith(MASK_PROPS_VALUES_POSTIX);
+            boolean maskValue = name.endsWith(PASSWORD_PROPERTY_END);
             value = (maskValue) ? "**MASKED**" : value;
             log.info(XLog.OPS, "Programmatic configuration change, property[{0}]=[{1}]", name, value);
         }
@@ -303,11 +313,11 @@ public class ConfigurationService implements Service, Instrumentable {
      * @param conf configuration to mask.
      * @return masked configuration.
      */
-    public static Configuration maskSecretValues(Configuration conf) {
+    public static Configuration maskPasswords(Configuration conf) {
         XConfiguration maskedConf = new XConfiguration();
         for (Map.Entry<String, String> entry : conf) {
             String name = entry.getKey();
-            boolean maskValue = name.endsWith(MASK_PROPS_VALUES_POSTIX);
+            boolean maskValue = name.endsWith(PASSWORD_PROPERTY_END);
             String value = (maskValue) ? "**MASKED**" : entry.getValue();
             maskedConf.set(name, value);
         }

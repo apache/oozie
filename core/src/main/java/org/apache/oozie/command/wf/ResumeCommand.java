@@ -1,44 +1,39 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.command.wf;
 
-import org.apache.oozie.client.WorkflowJob;
+import java.util.Date;
+
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
-import org.apache.oozie.command.Command;
+import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.store.WorkflowStore;
-import org.apache.oozie.store.Store;
+import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.util.XLog;
 import org.apache.oozie.workflow.WorkflowException;
 import org.apache.oozie.workflow.WorkflowInstance;
 import org.apache.oozie.workflow.lite.LiteWorkflowInstance;
-import org.apache.oozie.util.ParamChecker;
-import org.apache.oozie.util.XLog;
-
-import java.util.Date;
 
 public class ResumeCommand extends WorkflowCommand<Void> {
 
     private String id;
 
     public ResumeCommand(String id) {
-        super("resume", "resume", 0, XLog.STD);
+        super("resume", "resume", 1, XLog.STD);
         this.id = ParamChecker.notEmpty(id, "id");
     }
 
@@ -54,7 +49,16 @@ public class ResumeCommand extends WorkflowCommand<Void> {
                 ((LiteWorkflowInstance) wfInstance).setStatus(WorkflowInstance.Status.RUNNING);
                 workflow.setWorkflowInstance(wfInstance);
                 workflow.setStatus(WorkflowJob.Status.RUNNING);
-                for (WorkflowActionBean action : store.getActionsForWorkflow(id, true)) {
+
+                for (WorkflowActionBean action : store.getActionsForWorkflow(id, false)) {
+
+                    // Set pending flag to true for the actions that are START_RETRY or
+                    // START_MANUAL or END_RETRY or END_MANUAL
+                    if (action.isRetryOrManual()) {
+                        action.setPendingOnly();
+                        store.updateAction(action);
+                    }
+
                     if (action.isPending()) {
                         if (action.getStatus() == WorkflowActionBean.Status.PREP
                                 || action.getStatus() == WorkflowActionBean.Status.START_MANUAL) {

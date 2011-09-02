@@ -1,45 +1,38 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie;
 
-import org.apache.oozie.client.CoordinatorJob;
-import org.apache.oozie.client.rest.JsonCoordinatorJob;
-
-import java.util.Date;
-
-import org.apache.oozie.util.DateUtils;
-import org.apache.oozie.util.WritableUtils;
-import org.apache.hadoop.io.Writable;
-
+import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.io.DataInput;
+import java.sql.Timestamp;
+import java.util.Date;
 
-import javax.persistence.Entity;
+import javax.persistence.Basic;
 import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Lob;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
-import javax.persistence.Basic;
-import javax.persistence.Lob;
 
+import org.apache.hadoop.io.Writable;
+import org.apache.oozie.client.CoordinatorJob;
+import org.apache.oozie.client.rest.JsonCoordinatorJob;
+import org.apache.oozie.util.DateUtils;
+import org.apache.oozie.util.WritableUtils;
 import org.apache.openjpa.persistence.jdbc.Index;
-
-import java.sql.Timestamp;
 
 @Entity
 @NamedQueries({
@@ -57,7 +50,7 @@ import java.sql.Timestamp;
 
     @NamedQuery(name = "GET_COORD_JOBS_COLUMNS", query = "select w.id, w.appName, w.status, w.user, w.group, w.startTimestamp, w.endTimestamp, w.appPath, w.concurrency, w.frequency, w.lastActionTimestamp, w.nextMaterializedTimestamp, w.createdTimestamp, w.timeUnitStr, w.timeZone, w.timeOut from CoordinatorJobBean w order by w.createdTimestamp desc"),
 
-    @NamedQuery(name = "GET_COORD_JOBS_OLDER_THAN", query = "select OBJECT(w) from CoordinatorJobBean w where w.startTimestamp <= :matTime AND (w.status = 'PREP' OR w.status = 'RUNNING') AND (w.nextMaterializedTimestamp IS NULL OR w.endTimestamp > w.nextMaterializedTimestamp) AND (w.nextMaterializedTimestamp < :matTime OR w.nextMaterializedTimestamp IS NULL) order by w.lastModifiedTimestamp"),
+    @NamedQuery(name = "GET_COORD_JOBS_OLDER_THAN", query = "select OBJECT(w) from CoordinatorJobBean w where w.startTimestamp <= :matTime AND (w.status = 'PREP' OR w.status = 'RUNNING') AND (w.nextMaterializedTimestamp < :matTime OR w.nextMaterializedTimestamp IS NULL) AND (w.nextMaterializedTimestamp IS NULL OR (w.endTimestamp > w.nextMaterializedTimestamp AND (w.pauseTimestamp IS NULL OR w.pauseTimestamp > w.nextMaterializedTimestamp))) order by w.lastModifiedTimestamp"),
 
     @NamedQuery(name = "GET_COORD_JOBS_OLDER_THAN_STATUS", query = "select OBJECT(w) from CoordinatorJobBean w where w.status = :status AND w.lastModifiedTimestamp <= :lastModTime order by w.lastModifiedTimestamp"),
 
@@ -81,6 +74,10 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
     @Basic
     @Column(name = "end_time")
     private java.sql.Timestamp endTimestamp = null;
+
+    @Basic
+    @Column(name = "pause_time")
+    private java.sql.Timestamp pauseTimestamp = null;
 
     @Basic
     @Index
@@ -109,6 +106,11 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
     @Column(name = "last_modified_time")
     private java.sql.Timestamp lastModifiedTimestamp = null;
 
+    @Basic
+    @Index
+    @Column(name = "suspended_time")
+    private java.sql.Timestamp suspendedTimestamp = null;
+
     @Column(name = "job_xml")
     @Lob
     private String jobXml = null;
@@ -126,6 +128,7 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
     }
 
     public void setStartTimestamp(java.sql.Timestamp startTimestamp) {
+        super.setStartTime(DateUtils.toDate(startTimestamp));
         this.startTimestamp = startTimestamp;
     }
 
@@ -134,6 +137,7 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
     }
 
     public void setEndTimestamp(java.sql.Timestamp endTimestamp) {
+        super.setEndTime(DateUtils.toDate(endTimestamp));
         this.endTimestamp = endTimestamp;
     }
 
@@ -142,6 +146,7 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
     }
 
     public void setNextMaterializedTimestamp(java.sql.Timestamp nextMaterializedTimestamp) {
+        super.setNextMaterializedTime(DateUtils.toDate(nextMaterializedTimestamp));
         this.nextMaterializedTimestamp = nextMaterializedTimestamp;
     }
 
@@ -151,6 +156,14 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
 
     public void setLastModifiedTimestamp(java.sql.Timestamp lastModifiedTimestamp) {
         this.lastModifiedTimestamp = lastModifiedTimestamp;
+    }
+
+    public Timestamp getSuspendedTimestamp() {
+        return suspendedTimestamp;
+    }
+
+    public void setSuspendedTimestamp(java.sql.Timestamp suspendedTimestamp) {
+        this.suspendedTimestamp = suspendedTimestamp;
     }
 
     public String getJobXml() {
@@ -188,6 +201,7 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
     }
 
     public void setLastActionTimestamp(java.sql.Timestamp lastActionTimestamp) {
+        super.setLastActionTime(DateUtils.toDate(lastActionTimestamp));
         this.lastActionTimestamp = lastActionTimestamp;
     }
 
@@ -284,6 +298,7 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
         return timeUnitStr;
     }
 
+    @Override
     public Timeunit getTimeUnit() {
         return Timeunit.valueOf(this.timeUnitStr);
     }
@@ -336,6 +351,14 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
         return DateUtils.toDate(lastModifiedTimestamp);
     }
 
+    public void setSuspendedTime(Date suspendedTime) {
+        this.suspendedTimestamp = DateUtils.convertDateToTimestamp(suspendedTime);
+    }
+
+    public Date getSuspendedTime() {
+        return DateUtils.toDate(suspendedTimestamp);
+    }
+
     @Override
     public void setStartTime(Date startTime) {
         super.setStartTime(startTime);
@@ -354,8 +377,19 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
     }
 
     @Override
+    public void setPauseTime(Date pauseTime) {
+        super.setPauseTime(pauseTime);
+        this.pauseTimestamp = DateUtils.convertDateToTimestamp(pauseTime);
+    }
+
+    @Override
     public Date getEndTime() {
-        return DateUtils.convertDateToTimestamp(endTimestamp);
+        return DateUtils.toDate(endTimestamp);
+    }
+
+    @Override
+    public Date getPauseTime() {
+        return DateUtils.toDate(pauseTimestamp);
     }
 
     public void setCreatedTime(Date createTime) {

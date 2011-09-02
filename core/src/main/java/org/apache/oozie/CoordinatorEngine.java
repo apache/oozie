@@ -1,19 +1,16 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie;
 
@@ -33,13 +30,15 @@ import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.command.CommandException;
-import org.apache.oozie.command.coord.CoordJobsCommand;
-import org.apache.oozie.command.coord.CoordKillCommand;
-import org.apache.oozie.command.coord.CoordResumeCommand;
-import org.apache.oozie.command.coord.CoordSuspendCommand;
-import org.apache.oozie.command.coord.CoordSubmitCommand;
 import org.apache.oozie.command.coord.CoordActionInfoCommand;
 import org.apache.oozie.command.coord.CoordJobCommand;
+import org.apache.oozie.command.coord.CoordJobsCommand;
+import org.apache.oozie.command.coord.CoordKillCommand;
+import org.apache.oozie.command.coord.CoordRerunCommand;
+import org.apache.oozie.command.coord.CoordChangeCommand;
+import org.apache.oozie.command.coord.CoordResumeCommand;
+import org.apache.oozie.command.coord.CoordSubmitCommand;
+import org.apache.oozie.command.coord.CoordSuspendCommand;
 import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.XLogService;
@@ -66,12 +65,22 @@ public class CoordinatorEngine extends BaseEngine {
         this.authToken = ParamChecker.notEmpty(authToken, "authToken");
     }
 
+    /*
+     * (non-Javadoc)
+     *
+     * @see org.apache.oozie.BaseEngine#getDefinition(java.lang.String)
+     */
     @Override
     public String getDefinition(String jobId) throws BaseEngineException {
         CoordinatorJobBean job = getCoordJobWithNoActionInfo(jobId);
         return job.getOrigJobXml();
     }
 
+    /**
+     * @param jobId
+     * @return CoordinatorJobBean
+     * @throws BaseEngineException
+     */
     private CoordinatorJobBean getCoordJobWithNoActionInfo(String jobId) throws BaseEngineException {
         try {
             return new CoordJobCommand(jobId, false).call();
@@ -81,6 +90,11 @@ public class CoordinatorEngine extends BaseEngine {
         }
     }
 
+    /**
+     * @param actionId
+     * @return CoordinatorActionBean
+     * @throws BaseEngineException
+     */
     public CoordinatorActionBean getCoordAction(String actionId) throws BaseEngineException {
         try {
             return new CoordActionInfoCommand(actionId).call();
@@ -90,6 +104,11 @@ public class CoordinatorEngine extends BaseEngine {
         }
     }
 
+    /*
+     * (non-Javadoc)
+     *
+     * @see org.apache.oozie.BaseEngine#getCoordJob(java.lang.String)
+     */
     @Override
     public CoordinatorJobBean getCoordJob(String jobId) throws BaseEngineException {
         try {
@@ -100,6 +119,11 @@ public class CoordinatorEngine extends BaseEngine {
         }
     }
 
+    /*
+     * (non-Javadoc)
+     *
+     * @see org.apache.oozie.BaseEngine#getCoordJob(java.lang.String, int, int)
+     */
     @Override
     public CoordinatorJobBean getCoordJob(String jobId, int start, int length) throws BaseEngineException {
         try {
@@ -110,11 +134,21 @@ public class CoordinatorEngine extends BaseEngine {
         }
     }
 
+    /*
+     * (non-Javadoc)
+     *
+     * @see org.apache.oozie.BaseEngine#getJobIdForExternalId(java.lang.String)
+     */
     @Override
     public String getJobIdForExternalId(String externalId) throws CoordinatorEngineException {
         return null;
     }
 
+    /*
+     * (non-Javadoc)
+     *
+     * @see org.apache.oozie.BaseEngine#kill(java.lang.String)
+     */
     @Override
     public void kill(String jobId) throws CoordinatorEngineException {
         try {
@@ -126,10 +160,51 @@ public class CoordinatorEngine extends BaseEngine {
         }
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.BaseEngine#change(java.lang.String, java.lang.String)
+     */
     @Override
-    public void reRun(String jobId, Configuration conf) throws CoordinatorEngineException {
+    public void change(String jobId, String changeValue) throws CoordinatorEngineException {
+        try {
+            new CoordChangeCommand(jobId, changeValue).call();
+            XLog.getLog(getClass()).info("User " + user + " changed the Coordinator job " + jobId + " to " + changeValue);
+        }
+        catch (CommandException e) {
+            throw new CoordinatorEngineException(e);
+        }
     }
 
+    @Override
+    @Deprecated
+    public void reRun(String jobId, Configuration conf) throws BaseEngineException {
+        throw new BaseEngineException(new XException(ErrorCode.E0301));
+    }
+
+    /**
+     * Rerun coordinator actions for given rerunType
+     *
+     * @param jobId
+     * @param rerunType
+     * @param scope
+     * @param refresh
+     * @param noCleanup
+     * @throws BaseEngineException
+     */
+    public CoordinatorActionInfo reRun(String jobId, String rerunType, String scope, boolean refresh, boolean noCleanup)
+            throws BaseEngineException {
+        try {
+            return new CoordRerunCommand(jobId, rerunType, scope, refresh, noCleanup).call();
+        }
+        catch (CommandException ex) {
+            throw new BaseEngineException(ex);
+        }
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see org.apache.oozie.BaseEngine#resume(java.lang.String)
+     */
     @Override
     public void resume(String jobId) throws CoordinatorEngineException {
         try {
@@ -141,10 +216,17 @@ public class CoordinatorEngine extends BaseEngine {
     }
 
     @Override
-    public void start(String jobId) throws CoordinatorEngineException {
-
+    @Deprecated
+    public void start(String jobId) throws BaseEngineException {
+        throw new BaseEngineException(new XException(ErrorCode.E0301));
     }
 
+    /*
+     * (non-Javadoc)
+     *
+     * @see org.apache.oozie.BaseEngine#streamLog(java.lang.String,
+     * java.io.Writer)
+     */
     @Override
     public void streamLog(String jobId, Writer writer) throws IOException, BaseEngineException {
         XLogStreamer.Filter filter = new XLogStreamer.Filter();
@@ -155,6 +237,13 @@ public class CoordinatorEngine extends BaseEngine {
 
     }
 
+    /*
+     * (non-Javadoc)
+     *
+     * @see
+     * org.apache.oozie.BaseEngine#submitJob(org.apache.hadoop.conf.Configuration
+     * , boolean)
+     */
     @Override
     public String submitJob(Configuration conf, boolean startJob) throws CoordinatorEngineException {
         CoordSubmitCommand submit = new CoordSubmitCommand(conf, getAuthToken());
@@ -167,6 +256,13 @@ public class CoordinatorEngine extends BaseEngine {
         }
     }
 
+    /*
+     * (non-Javadoc)
+     *
+     * @see
+     * org.apache.oozie.BaseEngine#dryrunSubmit(org.apache.hadoop.conf.Configuration
+     * , boolean)
+     */
     @Override
     public String dryrunSubmit(Configuration conf, boolean startJob) throws CoordinatorEngineException {
         CoordSubmitCommand submit = new CoordSubmitCommand(true, conf, getAuthToken());
@@ -179,6 +275,11 @@ public class CoordinatorEngine extends BaseEngine {
         }
     }
 
+    /*
+     * (non-Javadoc)
+     *
+     * @see org.apache.oozie.BaseEngine#suspend(java.lang.String)
+     */
     @Override
     public void suspend(String jobId) throws CoordinatorEngineException {
         try {
@@ -190,11 +291,21 @@ public class CoordinatorEngine extends BaseEngine {
 
     }
 
+    /*
+     * (non-Javadoc)
+     *
+     * @see org.apache.oozie.BaseEngine#getJob(java.lang.String)
+     */
     @Override
     public WorkflowJob getJob(String jobId) throws BaseEngineException {
         throw new BaseEngineException(new XException(ErrorCode.E0301));
     }
 
+    /*
+     * (non-Javadoc)
+     *
+     * @see org.apache.oozie.BaseEngine#getJob(java.lang.String, int, int)
+     */
     @Override
     public WorkflowJob getJob(String jobId, int start, int length) throws BaseEngineException {
         throw new BaseEngineException(new XException(ErrorCode.E0301));
@@ -209,6 +320,13 @@ public class CoordinatorEngine extends BaseEngine {
         FILTER_NAMES.add(OozieClient.FILTER_STATUS);
     }
 
+    /**
+     * @param filterStr
+     * @param start
+     * @param len
+     * @return CoordinatorJobInfo
+     * @throws CoordinatorEngineException
+     */
     public CoordinatorJobInfo getCoordJobs(String filterStr, int start, int len) throws CoordinatorEngineException {
         Map<String, List<String>> filter = parseFilter(filterStr);
 
@@ -220,7 +338,12 @@ public class CoordinatorEngine extends BaseEngine {
         }
     }
 
-    protected Map<String, List<String>> parseFilter(String filter) throws CoordinatorEngineException {
+    /**
+     * @param filter
+     * @return Map<String, List<String>>
+     * @throws CoordinatorEngineException
+     */
+    private Map<String, List<String>> parseFilter(String filter) throws CoordinatorEngineException {
         Map<String, List<String>> map = new HashMap<String, List<String>>();
         if (filter != null) {
             StringTokenizer st = new StringTokenizer(filter, ";");

@@ -1,19 +1,16 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.client.rest;
 
@@ -64,6 +61,9 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
 
     @Transient
     private Date endTime;
+
+    @Transient
+    private Date pauseTime;
 
     @Basic
     @Column(name = "frequency")
@@ -126,6 +126,7 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
         executionOrder = Execution.valueOf((String) json.get(JsonTags.COORDINATOR_JOB_EXECUTIONPOLICY));
         startTime = JsonUtils.parseDateRfc822((String) json.get(JsonTags.COORDINATOR_JOB_START_TIME));
         endTime = JsonUtils.parseDateRfc822((String) json.get(JsonTags.COORDINATOR_JOB_END_TIME));
+        pauseTime = JsonUtils.parseDateRfc822((String) json.get(JsonTags.COORDINATOR_JOB_PAUSE_TIME));
         frequency = (int) JsonUtils.getLongValue(json, JsonTags.COORDINATOR_JOB_FREQUENCY);
         timeUnit = Timeunit.valueOf((String) json.get(JsonTags.COORDINATOR_JOB_TIMEUNIT));
         timeZone = (String) json.get(JsonTags.COORDINATOR_JOB_TIMEZONE);
@@ -159,6 +160,7 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
         json.put(JsonTags.COORDINATOR_JOB_NEXT_MATERIALIZED_TIME, JsonUtils.formatDateRfc822(nextMaterializedTime));
         json.put(JsonTags.COORDINATOR_JOB_START_TIME, JsonUtils.formatDateRfc822(startTime));
         json.put(JsonTags.COORDINATOR_JOB_END_TIME, JsonUtils.formatDateRfc822(endTime));
+        json.put(JsonTags.COORDINATOR_JOB_PAUSE_TIME, JsonUtils.formatDateRfc822(pauseTime));
         json.put(JsonTags.COORDINATOR_JOB_USER, user);
         json.put(JsonTags.COORDINATOR_JOB_GROUP, group);
         json.put(JsonTags.COORDINATOR_JOB_CONSOLE_URL, consoleUrl);
@@ -293,6 +295,14 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
 
     public void setEndTime(Date endTime) {
         this.endTime = endTime;
+    }
+
+    public Date getPauseTime() {
+        return pauseTime;
+    }
+
+    public void setPauseTime(Date pauseTime) {
+        this.pauseTime = pauseTime;
     }
 
     public String getUser() {

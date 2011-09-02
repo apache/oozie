@@ -1,19 +1,16 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.servlet;
 
@@ -41,7 +38,6 @@ public class TestAdminServlet extends DagServletTestCase {
         new V0AdminServlet();
         new V0JobServlet();
     }
-
     private static final boolean IS_SECURITY_ENABLED = false;
 
     protected void setUp() throws Exception {
@@ -49,7 +45,7 @@ public class TestAdminServlet extends DagServletTestCase {
     }
 
     public void testStatus() throws Exception {
-        runTest("/admin/*", V0AdminServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
+        runTest("/v0/admin/*", V0AdminServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
             public Void call() throws Exception {
                 URL url = createURL(RestConstants.ADMIN_STATUS_RESOURCE, Collections.EMPTY_MAP);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -64,7 +60,7 @@ public class TestAdminServlet extends DagServletTestCase {
     }
 
     public void testOsEnv() throws Exception {
-        runTest("/admin/*", V0AdminServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
+        runTest("/v0/admin/*", V0AdminServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
             public Void call() throws Exception {
                 URL url = createURL(RestConstants.ADMIN_OS_ENV_RESOURCE, Collections.EMPTY_MAP);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -79,7 +75,7 @@ public class TestAdminServlet extends DagServletTestCase {
     }
 
     public void testJavaSysProps() throws Exception {
-        runTest("/admin/*", V0AdminServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
+        runTest("/v0/admin/*", V0AdminServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
             public Void call() throws Exception {
                 URL url = createURL(RestConstants.ADMIN_JAVA_SYS_PROPS_RESOURCE, Collections.EMPTY_MAP);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -94,7 +90,7 @@ public class TestAdminServlet extends DagServletTestCase {
     }
 
     public void testConfiguration() throws Exception {
-        runTest("/admin/*", V0AdminServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
+        runTest("/v0/admin/*", V0AdminServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
             public Void call() throws Exception {
                 URL url = createURL(RestConstants.ADMIN_CONFIG_RESOURCE, Collections.EMPTY_MAP);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -124,7 +120,7 @@ public class TestAdminServlet extends DagServletTestCase {
     }
 
     public void testSafeMode() throws Exception {
-        runTest(new String[]{"/admin/*", "/v0/job/*"}, new Class[]{V0AdminServlet.class, V0JobServlet.class},
+        runTest(new String[]{"/v0/admin/*", "/v0/job/*"}, new Class[]{V0AdminServlet.class, V0JobServlet.class},
                 IS_SECURITY_ENABLED, new Callable<Void>() {
             public Void call() throws Exception {
 
@@ -137,7 +133,7 @@ public class TestAdminServlet extends DagServletTestCase {
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
 
                 MockDagEngineService.reset();
-                url = createURL("/admin/*", RestConstants.ADMIN_STATUS_RESOURCE, Collections.EMPTY_MAP);
+                url = createURL("/v0/admin/*", RestConstants.ADMIN_STATUS_RESOURCE, Collections.EMPTY_MAP);
                 conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
@@ -150,13 +146,13 @@ public class TestAdminServlet extends DagServletTestCase {
                 MockDagEngineService.reset();
                 params = new HashMap<String, String>();
                 params.put(RestConstants.ADMIN_SAFE_MODE_PARAM, "true");
-                url = createURL("/admin/*", RestConstants.ADMIN_STATUS_RESOURCE, params);
+                url = createURL("/v0/admin/*", RestConstants.ADMIN_STATUS_RESOURCE, params);
                 conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("PUT");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
 
                 MockDagEngineService.reset();
-                url = createURL("/admin/*", RestConstants.ADMIN_STATUS_RESOURCE, Collections.EMPTY_MAP);
+                url = createURL("/v0/admin/*", RestConstants.ADMIN_STATUS_RESOURCE, Collections.EMPTY_MAP);
                 conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
@@ -176,13 +172,13 @@ public class TestAdminServlet extends DagServletTestCase {
                 MockDagEngineService.reset();
                 params = new HashMap<String, String>();
                 params.put(RestConstants.ADMIN_SAFE_MODE_PARAM, "false");
-                url = createURL("/admin/*", RestConstants.ADMIN_STATUS_RESOURCE, params);
+                url = createURL("/v0/admin/*", RestConstants.ADMIN_STATUS_RESOURCE, params);
                 conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("PUT");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
 
                 MockDagEngineService.reset();
-                url = createURL("/admin/*", RestConstants.ADMIN_STATUS_RESOURCE, Collections.EMPTY_MAP);
+                url = createURL("/v0/admin/*", RestConstants.ADMIN_STATUS_RESOURCE, Collections.EMPTY_MAP);
                 conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
@@ -205,7 +201,7 @@ public class TestAdminServlet extends DagServletTestCase {
     }
 
     public void testVersion() throws Exception {
-        runTest("/admin/*", V0AdminServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
+        runTest("/v0/admin/*", V0AdminServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
             public Void call() throws Exception {
                 URL url = createURL(RestConstants.ADMIN_BUILD_VERSION_RESOURCE, Collections.EMPTY_MAP);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();

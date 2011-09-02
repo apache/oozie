@@ -1,19 +1,16 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.test;
 
@@ -27,6 +24,7 @@ import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XConfiguration;
+import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
 
 import java.io.IOException;
@@ -65,10 +63,10 @@ public abstract class XFsTestCase extends XTestCase {
         Class hasClass;
 
         //TODO change this for a hardcoded instantiation when we only compile 20.100 onwards
-        try {
-            hasClass = Class.forName("org.apache.oozie.service.kerberos.KerberosHadoopAccessorService");
+        if (System.getProperty("hadoop20", "false").toLowerCase().equals("false")) {
+            hasClass = Class.forName("org.apache.oozie.service.KerberosHadoopAccessorService");
         }
-        catch (ClassNotFoundException ex) {
+        else {
             hasClass = HadoopAccessorService.class;
         }
 
@@ -137,9 +135,9 @@ public abstract class XFsTestCase extends XTestCase {
      * Return a JobClient to the test JobTracker.
      *
      * @return a JobClient to the test JobTracker.
-     * @throws IOException thrown if the JobClient could not be obtained.
+     * @throws HadoopAccessorException thrown if the JobClient could not be obtained.
      */
-    protected JobClient createJobClient() throws IOException {
+    protected JobClient createJobClient() throws HadoopAccessorException {
         JobConf conf = new JobConf();
         conf.set("mapred.job.tracker", getJobTrackerUri());
         conf.set("fs.default.name", getNameNodeUri());

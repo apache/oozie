@@ -1,19 +1,16 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.service;
 
@@ -35,6 +32,8 @@ import org.apache.oozie.ErrorCode;
 import java.io.FileWriter;
 import java.io.Reader;
 import java.io.Writer;
+
+import junit.framework.Assert;
 
 public class TestLiteWorkflowAppService extends XTestCase {
 
@@ -284,11 +283,14 @@ public class TestLiteWorkflowAppService extends XTestCase {
         Configuration protoConf = wps.createProtoActionConf(jobConf, "authToken");
         assertEquals(getTestUser(), protoConf.get(OozieClient.USER_NAME));
         assertEquals(getTestGroup(), protoConf.get(OozieClient.GROUP_NAME));
-        assertEquals(getTestCaseDir() + "/lib/maputil.jar", protoConf
-                .getStrings(WorkflowAppService.APP_LIB_JAR_PATH_LIST)[0]);
-        assertEquals(1, protoConf.getStrings(WorkflowAppService.APP_LIB_JAR_PATH_LIST).length);
-        assertEquals(getTestCaseDir() + "/lib/reduceutil.so", protoConf
-                .getStrings(WorkflowAppService.APP_LIB_SO_PATH_LIST)[0]);
-        assertEquals(1, protoConf.getStrings(WorkflowAppService.APP_LIB_SO_PATH_LIST).length);
+
+        assertEquals(2, protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST).length);
+        String f1 = protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST)[0];
+        String f2 = protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST)[1];
+        String ref1 = getTestCaseDir() + "/lib/reduceutil.so";
+        String ref2 = getTestCaseDir() + "/lib/maputil.jar";
+        Assert.assertTrue(f1.equals(ref1) || f1.equals(ref2));
+        Assert.assertTrue(f2.equals(ref1) || f2.equals(ref2));
+        Assert.assertTrue(!f1.equals(f2));
     }
 }

@@ -1,19 +1,16 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.command.coord;
 
@@ -60,7 +57,7 @@ public class TestCoordSubmitCommand extends XTestCase {
         Configuration conf = new XConfiguration();
         String appPath = getTestCaseDir();
         String appXml = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" start=\"2009-02-01T01:00Z\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
-                + "xmlns=\"uri:oozie:coordinator:0.1\"> <controls> <timeout>10</timeout> <concurrency>2</concurrency> "
+                + "xmlns=\"uri:oozie:coordinator:0.1\"> <controls> <concurrency>2</concurrency> "
                 + "<execution>LIFO</execution> </controls> <datasets> "
                 + "<dataset name=\"a\" frequency=\"${coord:days(7)}\" initial-instance=\"2009-02-01T01:00Z\" "
                 + "timezone=\"UTC\"> <uri-template>file:///tmp/coord/workflows/${YEAR}/${DAY}</uri-template> </dataset> "
@@ -82,7 +79,11 @@ public class TestCoordSubmitCommand extends XTestCase {
         String jobId = sc.call();
 
         assertEquals(jobId.substring(jobId.length() - 2), "-C");
-        checkCoordJobs(jobId);
+        CoordinatorJobBean job = checkCoordJobs(jobId);
+        if (job != null) {
+            assertEquals(job.getTimeout(), Services.get().getConf().getInt(
+                    "oozie.service.coord.normal.default.timeout", -2));
+        }
     }
 
     /**
@@ -360,14 +361,16 @@ public class TestCoordSubmitCommand extends XTestCase {
      * @param jobId
      * @throws StoreException
      */
-    private void checkCoordJobs(String jobId) throws StoreException {
+    private CoordinatorJobBean checkCoordJobs(String jobId) throws StoreException {
         CoordinatorStore store = new CoordinatorStore(false);
         try {
             CoordinatorJobBean job = store.getCoordinatorJob(jobId, false);
+            return job;
         }
         catch (StoreException se) {
             fail("Job ID " + jobId + " was not stored properly in db");
         }
+        return null;
     }
 
     private void writeToFile(String appXml, String appPath) throws IOException {

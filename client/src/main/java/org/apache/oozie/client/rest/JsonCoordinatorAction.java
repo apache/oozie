@@ -1,35 +1,37 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.client.rest;
 
-import java.util.List;
-
-import java.util.Date;
-
-import org.apache.oozie.client.CoordinatorAction;
-
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
-import javax.persistence.*;
+import javax.persistence.Basic;
+import javax.persistence.Column;
+import javax.persistence.DiscriminatorColumn;
+import javax.persistence.DiscriminatorType;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Lob;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+
+import org.apache.oozie.client.CoordinatorAction;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 @Entity
 @Table(name = "COORD_ACTIONS")
@@ -120,6 +122,8 @@ public class JsonCoordinatorAction implements CoordinatorAction, JsonBean {
                 .get(JsonTags.COORDINATOR_ACTION_CREATED_CONF);
         createdTime = JsonUtils.parseDateRfc822((String) jsonObject
                 .get(JsonTags.COORDINATOR_ACTION_CREATED_TIME));
+        nominalTime = JsonUtils.parseDateRfc822((String) jsonObject
+                .get(JsonTags.COORDINATOR_ACTION_NOMINAL_TIME));
         externalId = (String) jsonObject.get(JsonTags.COORDINATOR_ACTION_EXTERNALID);
         status = Status.valueOf((String) jsonObject
                 .get(JsonTags.COORDINATOR_ACTION_STATUS));
@@ -157,6 +161,8 @@ public class JsonCoordinatorAction implements CoordinatorAction, JsonBean {
         json.put(JsonTags.COORDINATOR_ACTION_CREATED_CONF, createdConf);
         json.put(JsonTags.COORDINATOR_ACTION_CREATED_TIME, JsonUtils
                 .formatDateRfc822(createdTime));
+        json.put(JsonTags.COORDINATOR_ACTION_NOMINAL_TIME, JsonUtils
+                .formatDateRfc822(nominalTime));
         json.put(JsonTags.COORDINATOR_ACTION_EXTERNALID, externalId);
         // json.put(JsonTags.COORDINATOR_ACTION_START_TIME, JsonUtils
         // .formatDateRfc822(startTime));
@@ -311,6 +317,7 @@ public class JsonCoordinatorAction implements CoordinatorAction, JsonBean {
         this.actionXml = actionXml;
     }
 
+    @Override
     public String toString() {
         return MessageFormat.format("WorkflowAction name[{0}] status[{1}]",
                                     getId(), getStatus());
@@ -370,5 +377,46 @@ public class JsonCoordinatorAction implements CoordinatorAction, JsonBean {
             list.add(new JsonCoordinatorAction((JSONObject) obj));
         }
         return list;
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see java.lang.Object#hashCode()
+     */
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((id == null) ? 0 : id.hashCode());
+        return result;
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        JsonCoordinatorAction other = (JsonCoordinatorAction) obj;
+        if (id == null) {
+            if (other.id != null) {
+                return false;
+            }
+        }
+        else if (!id.equals(other.id)) {
+            return false;
+        }
+        return true;
     }
 }

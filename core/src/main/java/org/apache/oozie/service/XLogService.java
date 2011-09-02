@@ -1,19 +1,16 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.service;
 
@@ -29,12 +26,10 @@ import org.apache.oozie.BuildInfo;
 import org.apache.oozie.ErrorCode;
 import org.apache.hadoop.conf.Configuration;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Writer;
 import java.net.URL;
 import java.util.Properties;
@@ -42,14 +37,23 @@ import java.util.Map;
 import java.util.Date;
 
 /**
- * Built in service that initializes and manages the log4j. <p/> The log4j configuration file to use is read from the
- * system property {@link #LOG4J_FILE}, if the system propery is not set the default value is {@link
- * #DEFAULT_LOG4J_PROPERTIES}. The log4j configuration file can be a Java Properties file (.properties) or an XML file
- * (.xml). <p/> If the system property {@link ConfigurationService#CONFIG_PATH} is set, the log4j configuration file is
- * read from that directory. Otherwise is read from the classpath root. <p/> The reload interval of the log4j
- * configuration is set by the system property {@link #RELOAD_INTERVAL}, the value is in seconds, the default value is
- * {@link #DEFAULT_RELOAD_INTERVAL}. <p/> The log4j configuration is reloaded only when read from a configuration
- * directory, when read from the classpath reloading is not in effect.
+ * Built-in service that initializes and manages Logging via  Log4j.
+ * <p/>
+ * Oozie Lo4gj default configuration file is <code>oozie-log4j.properties</code>.
+ * <p/>
+ * The file name can be changed by setting the Java System property <code>oozie.log4j.file</code>.
+ * <p/>
+ * The Log4j configuration files must be a properties file.
+ * <p/>
+ * The Log4j configuration file is first looked in the Oozie configuration directory see {@link ConfigurationService}.
+ * If the file is not found there, it is looked in the classpath.
+ * <p/>
+ * If the Log4j configuration file is loaded from Oozie configuration directory, automatic reloading is enabled.
+ * <p/>
+ * If the Log4j configuration file is loaded from the classpath, automatic reloading is disabled.
+ * <p/>
+ * the automatic reloading interval is defined by the Java System property <code>oozie.log4j.reload</code>.
+ * The default value is 10 seconds.
  */
 public class XLogService implements Service, Instrumentable {
     private static final String INSTRUMENTATION_GROUP = "logging";
@@ -57,29 +61,28 @@ public class XLogService implements Service, Instrumentable {
     /**
      * System property that indicates the log4j configuration file to load.
      */
-    public static final String LOG4J_FILE = "oozie.log4j.file";
+    public static final String LOG4J_FILE_ENV = "OOZIE_LOG4J_FILE";
 
     /**
      * System property that indicates the reload interval of the configuration file.
      */
-    public static final String RELOAD_INTERVAL = "oozie.log4j.reload";
+    public static final String LOG4J_RELOAD_ENV = "OOZIE_LOG4J_RELOAD";
 
     /**
-     * Default value for the log4j configuration file if {@link #LOG4J_FILE} is not set.
+     * Default value for the log4j configuration file if {@link #LOG4J_FILE_ENV} is not set.
      */
     public static final String DEFAULT_LOG4J_PROPERTIES = "oozie-log4j.properties";
 
     /**
-     * Default value for the reload interval if {@link #RELOAD_INTERVAL} is not set.
+     * Default value for the reload interval if {@link #LOG4J_RELOAD_ENV} is not set.
      */
     public static final String DEFAULT_RELOAD_INTERVAL = "10";
 
-    // for testing purposes
-    static boolean testingDefaultFile;
-
+    private XLog log;
     private long interval;
     private boolean fromClasspath;
-    private String configFile;
+    private String log4jFileName;
+    private boolean logOverWS = true;
 
     private static final String STARTUP_MESSAGE = "{E}"
             + " ******************************************************************************* {E}"
@@ -92,7 +95,21 @@ public class XLogService implements Service, Instrumentable {
     private int oozieLogRotation = -1;
 
     public XLogService() {
-        testingDefaultFile = false;
+    }
+
+    /**
+     * Obtains the value of a system property or if not defined from an environment variable.
+     *
+     * @param envName environment variable name
+     * @param defaultValue default value if not set
+     * @return the value of the environment variable.
+     */
+    private static String getEnvValue(String envName, String defaultValue) {
+        String value = System.getProperty(envName);
+        if (value == null) {
+            value = System.getenv(envName);
+        }
+        return (value != null) ? value : defaultValue;
     }
 
     /**
@@ -102,100 +119,122 @@ public class XLogService implements Service, Instrumentable {
      * @throws ServiceException thrown if the log service could not be initialized.
      */
     public void init(Services services) throws ServiceException {
+        Services.getOozieHome();
         try {
             LogManager.resetConfiguration();
-            String defaultConfig = (testingDefaultFile) ? "test-" + DEFAULT_LOG4J_PROPERTIES : DEFAULT_LOG4J_PROPERTIES;
-            String log4jPathOri = System.getProperty(LOG4J_FILE, defaultConfig);
+            log4jFileName = getEnvValue(LOG4J_FILE_ENV, DEFAULT_LOG4J_PROPERTIES);
+            if (log4jFileName.contains("/")) {
+                throw new ServiceException(ErrorCode.E0011, log4jFileName);
+            }
+            if (!log4jFileName.endsWith(".properties")) {
+                throw new ServiceException(ErrorCode.E0012, log4jFileName);
+            }
+            String configPath = ConfigurationService.getConfigurationDirectory();
+            File log4jFile = new File(configPath, log4jFileName);
+            if (log4jFile.exists()) {
+                fromClasspath = false;
+            }
+            else {
+                ClassLoader cl = Thread.currentThread().getContextClassLoader();
+                URL log4jUrl = cl.getResource(log4jFileName);
+                if (log4jUrl == null) {
+                    throw new ServiceException(ErrorCode.E0013, log4jFileName, configPath);
+                }
+                fromClasspath = true;
+            }
 
-            String configPath = System.getProperty(ConfigurationService.CONFIG_PATH);
+            if (fromClasspath) {
+                ClassLoader cl = Thread.currentThread().getContextClassLoader();
+                URL log4jUrl = cl.getResource(log4jFileName);
+                PropertyConfigurator.configure(log4jUrl);
+            }
+            else {
+                interval = Long.parseLong(getEnvValue(LOG4J_RELOAD_ENV, DEFAULT_RELOAD_INTERVAL));
+                PropertyConfigurator.configureAndWatch(log4jFile.toString(), interval * 1000);
+            }
 
-            fromClasspath = configureLog4J(configPath, log4jPathOri);
+            log = new XLog(LogFactory.getLog(getClass()));
 
-            XLog log = new XLog(LogFactory.getLog(getClass()));
-
-            String from = (fromClasspath) ? "classpath" : "path";
-            long interval = Long.parseLong(System.getProperty(RELOAD_INTERVAL, DEFAULT_RELOAD_INTERVAL));
-            String reload = (fromClasspath) ? "disabled" : Long.toString(interval) + " sec";
             log.info(XLog.OPS, STARTUP_MESSAGE, BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_VERSION),
                      BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_USER_NAME), BuildInfo.getBuildInfo()
                     .getProperty(BuildInfo.BUILD_TIME), BuildInfo.getBuildInfo().getProperty(
-                    BuildInfo.BUILD_SVN_REVISION), BuildInfo.getBuildInfo()
-                    .getProperty(BuildInfo.BUILD_SVN_URL));
+                    BuildInfo.BUILD_VC_REVISION), BuildInfo.getBuildInfo()
+                    .getProperty(BuildInfo.BUILD_VC_URL));
 
-            log.info("Log4j configuration loaded from [{0}]", from);
-            log.info("Log4j configuration file [{0}]", configFile);
+            String from = (fromClasspath) ? "CLASSPATH" : configPath;
+            String reload = (fromClasspath) ? "disabled" : Long.toString(interval) + " sec";
+            log.info("Log4j configuration file [{0}]", log4jFileName);
+            log.info("Log4j configuration file loaded from [{0}]", from);
             log.info("Log4j reload interval [{0}]", reload);
-            if (log.isDebugEnabled()) {
-                ClassLoader cl = Thread.currentThread().getContextClassLoader();
-                InputStream is = (fromClasspath) ? cl.getResourceAsStream(configFile) : new FileInputStream(configFile);
-                BufferedReader br = new BufferedReader(new InputStreamReader(is));
-                StringBuffer sb = new StringBuffer();
-                String line;
-                while ((line = br.readLine()) != null) {
-                    sb.append("   ").append(line).append('\n');
-                }
-                br.close();
-                log.trace("Log4j configuration:{E}----{E}{0}----{E}", sb);
-            }
+
+            XLog.Info.reset();
+            XLog.Info.defineParameter(USER);
+            XLog.Info.defineParameter(GROUP);
+            XLogStreamer.Filter.reset();
+            XLogStreamer.Filter.defineParameter(USER);
+            XLogStreamer.Filter.defineParameter(GROUP);
 
             // Getting configuration for oozie log via WS
             ClassLoader cl = Thread.currentThread().getContextClassLoader();
-            InputStream is = (fromClasspath) ? cl.getResourceAsStream(configFile) : new FileInputStream(configFile);
-            Properties props = new Properties();
-            props.load(is);
-            Configuration conf = new XConfiguration();
-            for (Map.Entry entry : props.entrySet()) {
-                conf.set((String) entry.getKey(), (String) entry.getValue());
-            }
-            String logFile = conf.get("log4j.appender.oozie.File");
-            if (logFile == null) {
-                log.warn("Oozie log via WS not configured properly, missing property [{0}]",
-                         "log4j.appender.oozie.File");
-            }
-            else {
-                logFile = logFile.trim();
-                int i = logFile.lastIndexOf("/");
-                if (i == -1) {
-                    log.warn("Oozie apps log via WS not configured properly, log file is not an absolute path [{0}]",
-                             logFile);
-                }
-                else {
-                    String pattern = conf.get("log4j.appender.oozie.DatePattern");
-                    if (pattern == null) {
-                        log.warn("Oozie apps log via WS not configured properly, missing property [{0}]",
-                                 "log4j.appender.oozie.DatePattern");
-                    }
-                    else {
-                        pattern = pattern.trim();
-                        if (pattern.endsWith("HH")) {
-                            oozieLogRotation = 60 * 60;
-                        }
-                        else {
-                            if (pattern.endsWith("dd")) {
-                                oozieLogRotation = 60 * 60 * 24;
-                            }
-                            else {
-                                log.warn("Oozie apps log via WS not configured properly, invalid DatePatter [{0}], "
-                                        + "it should end with 'HH' or 'dd'", pattern);
-                            }
-                        }
-                        if (oozieLogRotation > 0) {
-                            oozieLogPath = logFile.substring(0, i);
-                            oozieLogName = logFile.substring(i + 1);
-                        }
-                    }
-                }
-            }
+            InputStream is = (fromClasspath) ? cl.getResourceAsStream(log4jFileName) : new FileInputStream(log4jFile);
+            extractInfoForLogWebService(is);
         }
         catch (IOException ex) {
             throw new ServiceException(ErrorCode.E0010, ex.getMessage(), ex);
         }
-        XLog.Info.reset();
-        XLog.Info.defineParameter(USER);
-        XLog.Info.defineParameter(GROUP);
-        XLogStreamer.Filter.reset();
-        XLogStreamer.Filter.defineParameter(USER);
-        XLogStreamer.Filter.defineParameter(GROUP);
+    }
+
+    private void extractInfoForLogWebService(InputStream is) throws IOException {
+        Properties props = new Properties();
+        props.load(is);
+
+        Configuration conf = new XConfiguration();
+        for (Map.Entry entry : props.entrySet()) {
+            conf.set((String) entry.getKey(), (String) entry.getValue());
+        }
+        String logFile = conf.get("log4j.appender.oozie.File");
+        if (logFile == null) {
+            log.warn("Oozie WS log will be disabled, missing property 'log4j.appender.oozie.File' for 'oozie' appender");
+        }
+        else {
+            logFile = logFile.trim();
+            int i = logFile.lastIndexOf("/");
+            if (i == -1) {
+                log.warn("Oozie WS log will be disabled, log file is not an absolute path [{0}] for 'oozie' appender",
+                         logFile);
+                logOverWS = false;
+            }
+            else {
+                String pattern = conf.get("log4j.appender.oozie.DatePattern");
+                if (pattern == null) {
+                    log.warn("Oozie WS log will be disabled, missing property [log4j.appender.oozie.DatePattern]");
+                    logOverWS = false;
+                }
+                else {
+                    pattern = pattern.trim();
+                    if (pattern.endsWith("HH")) {
+                        oozieLogRotation = 60 * 60;
+                    }
+                    else {
+                        if (pattern.endsWith("dd")) {
+                            oozieLogRotation = 60 * 60 * 24;
+                        }
+                        else {
+                            log.warn("Oozie WS log will be disabled, DatePattern [{0}] should end with 'HH' or 'dd'",
+                                     pattern);
+                            logOverWS = false;
+                        }
+                    }
+                    if (oozieLogRotation > 0) {
+                        oozieLogPath = logFile.substring(0, i);
+                        oozieLogName = logFile.substring(i + 1);
+                    }
+                    else {
+                        logOverWS = false;
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -226,47 +265,6 @@ public class XLogService implements Service, Instrumentable {
         return XLogService.class;
     }
 
-    private boolean configureLog4J(String configPath, String log4jFile) throws IOException {
-        boolean fromClasspath;
-        if (configPath != null) {
-            interval = Long.parseLong(System.getProperty(RELOAD_INTERVAL, DEFAULT_RELOAD_INTERVAL));
-            File file = new File(configPath, log4jFile);
-            if (!file.exists()) {
-                throw new RuntimeException(XLog.format("Log4j configuration [{0}] not found in path [{1}]", log4jFile,
-                                                       configPath));
-            }
-            log4jFile = file.getAbsolutePath();
-            if (log4jFile.endsWith(".properties")) {
-                PropertyConfigurator.configureAndWatch(log4jFile, interval * 1000);
-            }
-            else {
-                throw new RuntimeException(XLog.format("Log4j configuration [{0}] must be a '.properties' file",
-                                                       log4jFile));
-            }
-            configFile = log4jFile;
-            fromClasspath = false;
-        }
-        else {
-            ClassLoader cl = Thread.currentThread().getContextClassLoader();
-            URL log4jUrl = cl.getResource(log4jFile);
-            if (log4jUrl != null) {
-                if (log4jFile.endsWith(".properties")) {
-                    PropertyConfigurator.configure(log4jUrl);
-                }
-                else {
-                    throw new RuntimeException(XLog.format("Log4j configuration [{0}] must be a '.properties' file",
-                                                           log4jFile));
-                }
-            }
-            else {
-                throw new RuntimeException(XLog.format("Log4j configuration [{0}] not found in classpath", log4jFile));
-            }
-            configFile = log4jFile;
-            fromClasspath = true;
-        }
-        return fromClasspath;
-    }
-
     /**
      * Instruments the log service. <p/> It sets instrumentation variables indicating the config file, reload interval
      * and if loaded from the classpath.
@@ -281,7 +279,7 @@ public class XLogService implements Service, Instrumentable {
         });
         instr.addVariable(INSTRUMENTATION_GROUP, "config.file", new Instrumentation.Variable<String>() {
             public String getValue() {
-                return configFile;
+                return log4jFileName;
             }
         });
         instr.addVariable(INSTRUMENTATION_GROUP, "reload.interval", new Instrumentation.Variable<Long>() {
@@ -292,6 +290,11 @@ public class XLogService implements Service, Instrumentable {
         instr.addVariable(INSTRUMENTATION_GROUP, "from.classpath", new Instrumentation.Variable<Boolean>() {
             public Boolean getValue() {
                 return fromClasspath;
+            }
+        });
+        instr.addVariable(INSTRUMENTATION_GROUP, "log.over.web-service", new Instrumentation.Variable<Boolean>() {
+            public Boolean getValue() {
+                return logOverWS;
             }
         });
     }
@@ -306,7 +309,7 @@ public class XLogService implements Service, Instrumentable {
      * @throws IOException thrown if the log cannot be streamed.
      */
     public void streamLog(XLogStreamer.Filter filter, Date startTime, Date endTime, Writer writer) throws IOException {
-        if (oozieLogPath != null) {
+        if (logOverWS) {
             new XLogStreamer(filter, writer, oozieLogPath, oozieLogName, oozieLogRotation)
                     .streamLog(startTime, endTime);
         }
@@ -314,6 +317,14 @@ public class XLogService implements Service, Instrumentable {
             writer.write("Log streaming disabled!!");
         }
 
+    }
+
+    String getLog4jProperties() {
+        return log4jFileName;
+    }
+
+    boolean getFromClasspath() {
+        return fromClasspath;
     }
 
 }

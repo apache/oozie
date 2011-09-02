@@ -1,9 +1,16 @@
-/*
- * Ext JS Library 2.2
- * Copyright(c) 2006-2008, Ext JS, LLC.
- * licensing@extjs.com
- * 
- * http://extjs.com/license
+/**
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 
 //so it works from remote browsers, "http://localhost:8080";
@@ -243,6 +250,13 @@ function jobDetailsPopup(response, request) {
             name: 'createdTime',
             width: 200,
             value: jobDetails["createdTime"]
+        }, {
+            fieldLabel: 'Nominal Time',
+            editable: false,
+            name: 'nominalTime',
+            width: 200,
+            value: jobDetails["nominalTime"]
+
         }, {
             fieldLabel: 'Start Time',
             editable: false,
@@ -650,6 +664,11 @@ function coordJobDetailsPopup(response, request) {
             width: 160,
             sortable: true,
             dataIndex: 'createdTime'
+        }, {
+            header: "Nominal Time",
+            width: 160,
+            sortable: true,
+            dataIndex: 'nominalTime'
         }, {
             header: "Last Mod Time",
             width: 170,

@@ -1,19 +1,16 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.coord;
 
@@ -30,6 +27,7 @@ import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
+import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.HadoopAccessorService;
 
@@ -42,7 +40,8 @@ public class CoordELFunctions {
     final private static String COORD_ACTION = "oozie.coord.el.app.bean";
     final public static String CONFIGURATION = "oozie.coord.el.conf";
     // INSTANCE_SEPARATOR is used to separate multiple directories into one tag.
-    final public static String INSTANCE_SEPARATOR = ",";
+    final public static String INSTANCE_SEPARATOR = "#";
+    final public static String DIR_SEPARATOR = ",";
     // TODO: in next release, support flexibility
     private static String END_OF_OPERATION_INDICATOR_FILE = "_SUCCESS";
 
@@ -156,14 +155,149 @@ public class CoordELFunctions {
     }
 
     /**
-     * Return nominal time or Action Creation Time. <p/>
-     *
+     * Returns the a date string while given a base date in 'strBaseDate',
+     * offset and unit (e.g. DAY, MONTH, HOUR, MINUTE, MONTH).
+     * 
+     * @param strBaseDate -- base date
+     * @param offset -- any number
+     * @param unit -- DAY, MONTH, HOUR, MINUTE, MONTH
+     * @return date string
+     * @throws Exception
+     */
+    public static String ph2_coord_dateOffset(String strBaseDate, int offset, String unit) throws Exception {
+        Calendar baseCalDate = DateUtils.getCalendar(strBaseDate);
+        StringBuilder buffer = new StringBuilder();
+        baseCalDate.add(TimeUnit.valueOf(unit).getCalendarUnit(), offset);
+        buffer.append(DateUtils.formatDateUTC(baseCalDate));
+        return buffer.toString();
+    }
+
+    public static String ph3_coord_dateOffset(String strBaseDate, int offset, String unit) throws Exception {
+        return ph2_coord_dateOffset(strBaseDate, offset, unit);
+    }
+
+    /**
+     * Determine the date-time in UTC of n-th future available dataset instance
+     * from nominal Time but not beyond the instance specified as 'instance.
+     * <p/>
+     * It depends on:
+     * <p/>
+     * 1. Data set frequency
+     * <p/>
+     * 2. Data set Time unit (day, month, minute)
+     * <p/>
+     * 3. Data set Time zone/DST
+     * <p/>
+     * 4. End Day/Month flag
+     * <p/>
+     * 5. Data set initial instance
+     * <p/>
+     * 6. Action Creation Time
+     * <p/>
+     * 7. Existence of dataset's directory
+     * 
+     * @param n :instance count
+     *        <p/>
+     *        domain: n >= 0, n is integer
+     * @param instance: How many future instance it should check? value should
+     *        be >=0
+     * @return date-time in UTC of the n-th instance
+     *         <p/>
+     * @throws Exception
+     */
+    public static String ph3_coord_future(int n, int instance) throws Exception {
+        ParamChecker.checkGEZero(n, "future:n");
+        ParamChecker.checkGTZero(instance, "future:instance");
+        if (isSyncDataSet()) {// For Sync Dataset
+            return coord_future_sync(n, instance);
+        }
+        else {
+            throw new UnsupportedOperationException("Asynchronous Dataset is not supported yet");
+        }
+    }
+
+    private static String coord_future_sync(int n, int instance) throws Exception {
+        ELEvaluator eval = ELEvaluator.getCurrent();
+        String retVal = "";
+        int datasetFrequency = (int) getDSFrequency();// in minutes
+        TimeUnit dsTimeUnit = getDSTimeUnit();
+        int[] instCount = new int[1];
+        Calendar nominalInstanceCal = getCurrentInstance(getActionCreationtime(), instCount);
+        if (nominalInstanceCal != null) {
+            Calendar initInstance = getInitialInstanceCal();
+            nominalInstanceCal = (Calendar) initInstance.clone();
+            nominalInstanceCal.add(dsTimeUnit.getCalendarUnit(), instCount[0] * datasetFrequency);
+
+            SyncCoordDataset ds = (SyncCoordDataset) eval.getVariable(DATASET);
+            if (ds == null) {
+                throw new RuntimeException("Associated Dataset should be defined with key " + DATASET);
+            }
+            String uriTemplate = ds.getUriTemplate();
+            Configuration conf = (Configuration) eval.getVariable(CONFIGURATION);
+            if (conf == null) {
+                throw new RuntimeException("Associated Configuration should be defined with key " + CONFIGURATION);
+            }
+            int available = 0, checkedInstance = 0;
+            boolean resolved = false;
+            String user = ParamChecker
+                    .notEmpty((String) eval.getVariable(OozieClient.USER_NAME), OozieClient.USER_NAME);
+            String group = ParamChecker.notEmpty((String) eval.getVariable(OozieClient.GROUP_NAME),
+                    OozieClient.GROUP_NAME);
+            String doneFlag = ds.getDoneFlag();
+            while (instance >= checkedInstance) {
+                ELEvaluator uriEval = getUriEvaluator(nominalInstanceCal);
+                String uriPath = uriEval.evaluate(uriTemplate, String.class);
+                String pathWithDoneFlag = uriPath;
+                if (doneFlag.length() > 0) {
+                    pathWithDoneFlag += "/" + doneFlag;
+                }
+                if (isPathAvailable(pathWithDoneFlag, user, group, conf)) {
+                    XLog.getLog(CoordELFunctions.class).debug("Found future(" + available + "): " + pathWithDoneFlag);
+                    if (available == n) {
+                        XLog.getLog(CoordELFunctions.class).debug("Found future File: " + pathWithDoneFlag);
+                        resolved = true;
+                        retVal = DateUtils.formatDateUTC(nominalInstanceCal);
+                        eval.setVariable("resolved_path", uriPath);
+                        break;
+                    }
+                    available++;
+                }
+                // nominalInstanceCal.add(dsTimeUnit.getCalendarUnit(),
+                // -datasetFrequency);
+                nominalInstanceCal = (Calendar) initInstance.clone();
+                instCount[0]++;
+                nominalInstanceCal.add(dsTimeUnit.getCalendarUnit(), instCount[0] * datasetFrequency);
+                checkedInstance++;
+                // DateUtils.moveToEnd(nominalInstanceCal, getDSEndOfFlag());
+            }
+            if (!resolved) {
+                // return unchanged future function with variable 'is_resolved'
+                // to 'false'
+                eval.setVariable("is_resolved", Boolean.FALSE);
+                retVal = "${coord:future(" + n + ", " + instance + ")}";
+            }
+            else {
+                eval.setVariable("is_resolved", Boolean.TRUE);
+            }
+        }
+        else {// No feasible nominal time
+            eval.setVariable("is_resolved", Boolean.TRUE);
+            retVal = "";
+        }
+        return retVal;
+    }
+
+    /**
+     * Return nominal time or Action Creation Time.
+     * <p/>
+     * 
      * @return coordinator action creation or materialization date time
      * @throws Exception if unable to format the Date object to String
      */
     public static String ph2_coord_nominalTime() throws Exception {
         ELEvaluator eval = ELEvaluator.getCurrent();
-        SyncCoordAction action = ParamChecker.notNull((SyncCoordAction) eval.getVariable(COORD_ACTION), "Coordinator Action");
+        SyncCoordAction action = ParamChecker.notNull((SyncCoordAction) eval.getVariable(COORD_ACTION),
+                "Coordinator Action");
         return DateUtils.formatDateUTC(action.getNominalTime());
     }
 
@@ -173,12 +307,13 @@ public class CoordELFunctions {
 
     /**
      * Return Action Id. <p/>
-     *
+     * 
      * @return coordinator action Id
      */
     public static String ph2_coord_actionId() throws Exception {
         ELEvaluator eval = ELEvaluator.getCurrent();
-        SyncCoordAction action = ParamChecker.notNull((SyncCoordAction) eval.getVariable(COORD_ACTION), "Coordinator Action");
+        SyncCoordAction action = ParamChecker.notNull((SyncCoordAction) eval.getVariable(COORD_ACTION),
+                "Coordinator Action");
         return action.getActionId();
     }
 
@@ -188,12 +323,13 @@ public class CoordELFunctions {
 
     /**
      * Return Job Name. <p/>
-     *
+     * 
      * @return coordinator name
      */
     public static String ph2_coord_name() throws Exception {
         ELEvaluator eval = ELEvaluator.getCurrent();
-        SyncCoordAction action = ParamChecker.notNull((SyncCoordAction) eval.getVariable(COORD_ACTION), "Coordinator Action");
+        SyncCoordAction action = ParamChecker.notNull((SyncCoordAction) eval.getVariable(COORD_ACTION),
+                "Coordinator Action");
         return action.getName();
     }
 
@@ -203,7 +339,7 @@ public class CoordELFunctions {
 
     /**
      * Return Action Start time. <p/>
-     *
+     * 
      * @return coordinator action start time
      * @throws Exception if unable to format the Date object to String
      */
@@ -361,7 +497,7 @@ public class CoordELFunctions {
     /**
      * Configure an evaluator with data set and application specific information. <p/> Helper method of associating
      * dataset and application object
-     *
+     * 
      * @param evaluator : to set variables
      * @param ds : Data Set object
      * @param coordAction : Application instance
@@ -374,19 +510,25 @@ public class CoordELFunctions {
     /**
      * Helper method to wrap around with "${..}". <p/>
      *
+     * 
      * @param eval :EL evaluator
      * @param expr : expression to evaluate
      * @return Resolved expression or echo back the same expression
      * @throws Exception
      */
     public static String evalAndWrap(ELEvaluator eval, String expr) throws Exception {
-        eval.setVariable(".wrap", null);
-        String result = eval.evaluate(expr, String.class);
-        if (eval.getVariable(".wrap") != null) {
-            return "${" + result + "}";
+        try {
+            eval.setVariable(".wrap", null);
+            String result = eval.evaluate(expr, String.class);
+            if (eval.getVariable(".wrap") != null) {
+                return "${" + result + "}";
+            }
+            else {
+                return result;
+            }
         }
-        else {
-            return result;
+        catch (Exception e) {
+            throw new Exception("Unable to evaluate :" + expr + ":\n", e);
         }
     }
 
@@ -400,12 +542,24 @@ public class CoordELFunctions {
         return echoUnResolved("current", n);
     }
 
+    public static String ph1_coord_dateOffset_echo(String n, String offset, String unit) {
+        return echoUnResolved("dateOffset", n + " , " + offset + " , " + unit);
+    }
+
     public static String ph1_coord_latest_echo(String n) {
         return echoUnResolved("latest", n);
     }
 
     public static String ph2_coord_latest_echo(String n) {
         return ph1_coord_latest_echo(n);
+    }
+
+    public static String ph1_coord_future_echo(String n, String instance) {
+        return echoUnResolved("future", n + ", " + instance + "");
+    }
+
+    public static String ph2_coord_future_echo(String n, String instance) {
+        return ph1_coord_future_echo(n, instance);
     }
 
     public static String ph1_coord_dataIn_echo(String n) {
@@ -433,7 +587,8 @@ public class CoordELFunctions {
     }
 
     public static String ph1_coord_nominalTime_echo_wrap() {
-        return "${coord:nominalTime()}"; // no resolution
+        // return "${coord:nominalTime()}"; // no resolution
+        return echoUnResolved("nominalTime", "");
     }
 
     public static String ph1_coord_nominalTime_echo_fixed() {
@@ -624,11 +779,11 @@ public class CoordELFunctions {
      */
 
     private static boolean isPathAvailable(String sPath, String user, String group, Configuration conf)
-            throws IOException {
-//        sPath += "/" + END_OF_OPERATION_INDICATOR_FILE;
+            throws IOException, HadoopAccessorException {
+        // sPath += "/" + END_OF_OPERATION_INDICATOR_FILE;
         Path path = new Path(sPath);
-        return Services.get().get(HadoopAccessorService.class).
-                createFileSystem(user, group, path.toUri(), new Configuration()).exists(path);
+        return Services.get().get(HadoopAccessorService.class).createFileSystem(user, group, path.toUri(),
+                    new Configuration()).exists(path);
     }
 
     /**
@@ -681,9 +836,13 @@ public class CoordELFunctions {
     }
 
     private static String echoUnResolved(String functionName, String n) {
+        return echoUnResolvedPre(functionName, n, "coord:");
+    }
+
+    private static String echoUnResolvedPre(String functionName, String n, String prefix) {
         ELEvaluator eval = ELEvaluator.getCurrent();
         eval.setVariable(".wrap", "true");
-        return "coord:" + functionName + "(" + n + ")"; // Unresolved
+        return prefix + functionName + "(" + n + ")"; // Unresolved
     }
 
     /**

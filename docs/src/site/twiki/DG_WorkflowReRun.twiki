@@ -25,19 +25,6 @@
    * Deletes the actions that are not skipped from the DB and copies data from old Workflow Instance to new one for skipped actions.
    * Action handler will skip the nodes given in the config with the same exit transition as before.
 
----++ ReRun Workflow launched via Coordinator
-
-   * Get Workflow job configs from web console (see “Job Configuration” tab).
-   * Save the configs to rerun.xml
-   * Remove oozie.coord.application.path property from the XML.
-   * Add one property to the XML (if all actions rerun):
-		<property>
-			<name>oozie.wf.rerun.skip.nodes</name>
-			<value>,</value>
-		</property>
-   * Execute Oozie rerun
-		oozie job -rerun <workflow_id> -config rerun.xml
-
 [[index][::Go back to Oozie Documentation Index::]]
 
 </noautolink>

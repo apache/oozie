@@ -1,19 +1,16 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.servlet;
 
@@ -24,22 +21,21 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.oozie.CoordinatorJobBean;
-import org.apache.oozie.CoordinatorJobInfo;
-import org.apache.oozie.ErrorCode;
-import org.apache.oozie.DagEngine;
-import org.apache.oozie.DagEngineException;
 import org.apache.oozie.CoordinatorEngine;
 import org.apache.oozie.CoordinatorEngineException;
+import org.apache.oozie.CoordinatorJobBean;
+import org.apache.oozie.CoordinatorJobInfo;
+import org.apache.oozie.DagEngine;
+import org.apache.oozie.DagEngineException;
+import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.WorkflowsInfo;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.RestConstants;
-import org.apache.oozie.service.DagEngineService;
 import org.apache.oozie.service.CoordinatorEngineService;
+import org.apache.oozie.service.DagEngineService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.json.simple.JSONObject;
@@ -55,43 +51,60 @@ public class V1JobsServlet extends BaseJobsServlet {
     /**
      * v1 service implementation to submit a job, either workflow or coordinator
      */
+    @Override
     protected JSONObject submitJob(HttpServletRequest request, Configuration conf) throws XServletException,
-            IOException {
+    IOException {
         JSONObject json = null;
-        String wfPath = conf.get(OozieClient.APP_PATH);
-        String coordPath = conf.get(OozieClient.COORDINATOR_APP_PATH);
 
-        ServletUtilities.ValidateAppPath(wfPath, coordPath);
+        String jobType = request.getParameter(RestConstants.JOBTYPE_PARAM);
 
-        if (wfPath != null) {
-            json = submitWorkflowJob(request, conf);
+        if (jobType == null) {
+            String wfPath = conf.get(OozieClient.APP_PATH);
+            String coordPath = conf.get(OozieClient.COORDINATOR_APP_PATH);
+
+            ServletUtilities.ValidateAppPath(wfPath, coordPath);
+
+            if (wfPath != null) {
+                json = submitWorkflowJob(request, conf);
+            }
+            else {
+                json = submitCoordinatorJob(request, conf);
+            }
         }
-        else {
-            json = submitCoordinatorJob(request, conf);
+        else { // This is a http submission job
+            if (jobType.equals("pig") || jobType.equals("mapreduce")) {
+                json = submitHttpJob(request, conf, jobType);
+            }
+            else {
+                throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0303,
+                      RestConstants.JOBTYPE_PARAM, jobType);
+            }
         }
         return json;
     }
 
     /**
-     * v1 service implementation to get a JSONObject representation of a job from its external ID
+     * v1 service implementation to get a JSONObject representation of a job
+     * from its external ID
      */
+    @Override
     protected JSONObject getJobIdForExternalId(HttpServletRequest request, String externalId) throws XServletException,
-            IOException {
+    IOException {
         JSONObject json = null;
         /*
          * Configuration conf = new XConfiguration(); String wfPath =
          * conf.get(OozieClient.APP_PATH); String coordPath =
          * conf.get(OozieClient.COORDINATOR_APP_PATH);
-         * 
+         *
          * ServletUtilities.ValidateAppPath(wfPath, coordPath);
          */
         String jobtype = request.getParameter(RestConstants.JOBTYPE_PARAM);
         jobtype = (jobtype != null) ? jobtype : "wf";
         if (jobtype.contains("wf")) {
-            getWorkflowJobIdForExternalId(request, externalId);
+            json = getWorkflowJobIdForExternalId(request, externalId);
         }
         else {
-            getCoordinatorJobIdForExternalId(request, externalId);
+            json = getCoordinatorJobIdForExternalId(request, externalId);
         }
         return json;
     }
@@ -100,6 +113,7 @@ public class V1JobsServlet extends BaseJobsServlet {
      * v1 service implementation to get a list of workflows, with filtering or interested windows embedded in the
      * request object
      */
+    @Override
     protected JSONObject getJobs(HttpServletRequest request) throws XServletException, IOException {
         JSONObject json = null;
         /*
@@ -131,7 +145,7 @@ public class V1JobsServlet extends BaseJobsServlet {
             String action = request.getParameter(RestConstants.ACTION_PARAM);
             if (action != null && !action.equals(RestConstants.JOB_ACTION_START)) {
                 throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0303,
-                                            RestConstants.ACTION_PARAM, action);
+                        RestConstants.ACTION_PARAM, action);
             }
             boolean startJob = (action != null);
             String user = conf.get(OozieClient.USER_NAME);
@@ -158,7 +172,7 @@ public class V1JobsServlet extends BaseJobsServlet {
             if (action != null && !action.equals(RestConstants.JOB_ACTION_START)
                     && !action.equals(RestConstants.JOB_ACTION_DRYRUN)) {
                 throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0303,
-                                            RestConstants.ACTION_PARAM, action);
+                        RestConstants.ACTION_PARAM, action);
             }
             boolean startJob = (action != null);
             String user = conf.get(OozieClient.USER_NAME);
@@ -188,11 +202,11 @@ public class V1JobsServlet extends BaseJobsServlet {
      * v1 service implementation to get a JSONObject representation of a job from its external ID
      */
     private JSONObject getWorkflowJobIdForExternalId(HttpServletRequest request, String externalId)
-            throws XServletException {
+    throws XServletException {
         JSONObject json = new JSONObject();
         try {
             DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
-                                                                                          getAuthToken(request));
+                    getAuthToken(request));
             String jobId = dagEngine.getJobIdForExternalId(externalId);
             json.put(JsonTags.JOB_ID, jobId);
         }
@@ -206,7 +220,7 @@ public class V1JobsServlet extends BaseJobsServlet {
      * v1 service implementation to get a JSONObject representation of a job from its external ID
      */
     private JSONObject getCoordinatorJobIdForExternalId(HttpServletRequest request, String externalId)
-            throws XServletException {
+    throws XServletException {
         JSONObject json = new JSONObject();
         // TODO
         return json;
@@ -227,7 +241,7 @@ public class V1JobsServlet extends BaseJobsServlet {
             int len = (lenStr != null) ? Integer.parseInt(lenStr) : 50;
             len = (len < 1) ? 50 : len;
             DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
-                                                                                          getAuthToken(request));
+                    getAuthToken(request));
             WorkflowsInfo jobs = dagEngine.getJobs(filter, start, len);
             List<WorkflowJobBean> jsonWorkflows = jobs.getWorkflows();
             json.put(JsonTags.WORKFLOWS_JOBS, WorkflowJobBean.toJSONArray(jsonWorkflows));
@@ -271,6 +285,25 @@ public class V1JobsServlet extends BaseJobsServlet {
         catch (CoordinatorEngineException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
         }
+        return json;
+    }
+
+    /**
+     * service implementation to submit a http job
+     */
+    private JSONObject submitHttpJob(HttpServletRequest request, Configuration conf, String jobType) throws XServletException {
+        JSONObject json = new JSONObject();
+
+        try {
+            String user = conf.get(OozieClient.USER_NAME);
+            DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(user, getAuthToken(request));
+            String id = dagEngine.submitHttpJob(conf, jobType);
+            json.put(JsonTags.JOB_ID, id);
+        }
+        catch (DagEngineException ex) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
+        }
+
         return json;
     }
 }

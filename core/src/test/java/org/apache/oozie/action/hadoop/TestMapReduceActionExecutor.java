@@ -1,19 +1,16 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.action.hadoop;
 
@@ -172,7 +169,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         protoConf.set(OozieClient.GROUP_NAME, getTestGroup());
         protoConf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
         injectKerberosInfo(protoConf);
-        protoConf.setStrings(WorkflowAppService.APP_LIB_JAR_PATH_LIST, appJarPath.toString());
+        protoConf.setStrings(WorkflowAppService.APP_LIB_PATH_LIST, appJarPath.toString());
 
         WorkflowJobBean wf = createBaseWorkflow(protoConf, "mr-action");
         WorkflowActionBean action = (WorkflowActionBean) wf.getActions().get(0);
@@ -332,36 +329,36 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         return conf;
     }
 
-	/* COMMENTED OUT, need recompiled version of wordcount-simple for 20.104+
     public void testPipes() throws Exception {
-        String wordCountBinary = TestPipesMain.getProgramName(this);
-        Path programPath = new Path(getFsTestCaseDir(), "wordcount-simple");
+        if (Boolean.parseBoolean(System.getProperty("oozie.test.hadoop.pipes", "false"))) {
+            String wordCountBinary = TestPipesMain.getProgramName(this);
+            Path programPath = new Path(getFsTestCaseDir(), "wordcount-simple");
 
-        FileSystem fs = getFileSystem();
+            FileSystem fs = getFileSystem();
 
-        InputStream is = IOUtils.getResourceAsStream(wordCountBinary, -1);
-        OutputStream os = fs.create(programPath);
-        IOUtils.copyStream(is, os);
+            InputStream is = IOUtils.getResourceAsStream(wordCountBinary, -1);
+            OutputStream os = fs.create(programPath);
+            IOUtils.copyStream(is, os);
 
-        Path inputDir = new Path(getFsTestCaseDir(), "input");
-        Path outputDir = new Path(getFsTestCaseDir(), "output");
+            Path inputDir = new Path(getFsTestCaseDir(), "input");
+            Path outputDir = new Path(getFsTestCaseDir(), "output");
 
-        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
-        w.write("dummy\n");
-        w.write("dummy\n");
-        w.close();
+            Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+            w.write("dummy\n");
+            w.write("dummy\n");
+            w.close();
 
-        String actionXml = "<map-reduce>" +
-                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
-                "<name-node>" + getNameNodeUri() + "</name-node>" +
-                "      <pipes>" +
-                "        <program>" + programPath + "#wordcount-simple" + "</program>" +
-                "      </pipes>" +
-                getPipesConfig(inputDir.toString(), outputDir.toString()).toXmlString(false) +
-                "<file>" + programPath + "</file>" +
-                "</map-reduce>";
-        _testSubmit("pipes", actionXml);
+            String actionXml = "<map-reduce>" +
+                    "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                    "<name-node>" + getNameNodeUri() + "</name-node>" +
+                    "      <pipes>" +
+                    "        <program>" + programPath + "#wordcount-simple" + "</program>" +
+                    "      </pipes>" +
+                    getPipesConfig(inputDir.toString(), outputDir.toString()).toXmlString(false) +
+                    "<file>" + programPath + "</file>" +
+                    "</map-reduce>";
+            _testSubmit("pipes", actionXml);
+        }
     }
-	*/
 
 }

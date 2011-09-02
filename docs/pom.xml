@@ -1,31 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Licensed to the Apache Software Foundation (ASF) under one
-  or more contributor license agreements.  See the NOTICE file
-  distributed with this work for additional information
-  regarding copyright ownership.  The ASF licenses this file
-  to you under the Apache License, Version 2.0 (the
-  "License"); you may not use this file except in compliance
-  with the License.  You may obtain a copy of the License at
+  Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
 
-      http://www.apache.org/licenses/LICENSE-2.0
+    http://www.apache.org/licenses/LICENSE-2.0
 
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS,
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
-  limitations under the License.
+  limitations under the License. See accompanying LICENSE file.
 -->
 <project>
     <modelVersion>4.0.0</modelVersion>
-    <groupId>org.apache.oozie</groupId>
+    <parent>
+        <groupId>com.yahoo.oozie</groupId>
+        <artifactId>oozie-main</artifactId>
+        <version>2.2.0-SNAPSHOT</version> <!-- OOZIE_VERSION -->
+    </parent>
     <artifactId>oozie-docs</artifactId>
-    <!-- not using parent for this module because site:site does not handle ${properties} in the pom. -->
-    <version>0</version>
     <description>Oozie Docs</description>
     <name>Oozie Docs</name>
-    <packaging>pom</packaging>
-    
+    <packaging>war</packaging>
+
     <licenses>
         <license>
             <name>The Apache Software License, Version 2.0</name>
@@ -34,24 +33,18 @@
     </licenses>
 
     <organization>
-        <name>Apache Software Foundation</name>
-        <url>http://www.apache.org</url>
+        <name>Yahoo</name>
+        <url>http://www.yahoo.com</url>
     </organization>
 
-    <reporting>
-        <plugins>
-             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-project-info-reports-plugin</artifactId>
-                <reportSets>
-                    <reportSet>
-                        <reports>
-                        </reports>
-                    </reportSet>
-                </reportSets>
-            </plugin>
-        </plugins>
-    </reporting>
+    <dependencies>
+        <dependency>
+            <groupId>com.yahoo.oozie</groupId>
+            <artifactId>oozie-core</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
 
     <build>
         <plugins>
@@ -63,38 +56,104 @@
                     </descriptors>
                 </configuration>
             </plugin>
-            <!-- Customized Doxia Maven Plugin for twiki documentation -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-site-plugin</artifactId>
-                <version>2.0-beta-6</version>
-                <configuration>
-                    <port>8888</port>
-                    <outputEncoding>UTF-8</outputEncoding>
-                </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.apache.maven.doxia</groupId>
-                        <artifactId>doxia-module-twiki</artifactId>
-                        <version>1.0-alpha-9.2y</version>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.apache.maven.doxia</groupId>
-                        <artifactId>doxia-core</artifactId>
-                        <version>1.0-alpha-9.2y</version>
-                    </dependency>
-                </dependencies>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>site</goal>
-                        </goals>
-                        <phase>package</phase>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
     </build>
+
+    <reporting>
+        <plugins>
+             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-project-info-reports-plugin</artifactId>
+                 <!-- Don't change version as doc generation may fail -->
+                <version>2.0-beta-3</version>
+                <reportSets>
+                    <reportSet>
+                        <reports>
+                        </reports>
+                    </reportSet>
+                </reportSets>
+            </plugin>
+        </plugins>
+    </reporting>
+
+    <profiles>
+        <profile>
+            <id>generateDocs</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <property>
+                    <name>generateDocs</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <!-- Customized Doxia Maven Plugin for twiki documentation -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-site-plugin</artifactId>
+                        <!-- Don't change version as doc generation may fail -->
+                        <version>2.0-beta-6</version>
+                        <configuration>
+                            <port>8888</port>
+                            <outputEncoding>UTF-8</outputEncoding>
+                        </configuration>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.apache.maven.doxia</groupId>
+                                <artifactId>doxia-module-twiki</artifactId>
+                                <version>1.0-alpha-9.2y</version>
+                            </dependency>
+                            <dependency>
+                                <groupId>org.apache.maven.doxia</groupId>
+                                <artifactId>doxia-core</artifactId>
+                                <version>1.0-alpha-9.2y</version>
+                            </dependency>
+                        </dependencies>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>site</goal>
+                                </goals>
+                                <phase>prepare-package</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-war-plugin</artifactId>
+                        <configuration>
+                            <webResources>
+                                <resource>
+                                    <directory>target/site</directory>
+                                    <targetPath>docs</targetPath>
+                                </resource>
+                                <resource>
+                                    <directory>../core/target/site</directory>
+                                    <targetPath>docs</targetPath>
+                                </resource>
+                                <resource>
+                                    <directory>..</directory>
+                                    <targetPath>docs</targetPath>
+                                    <includes>
+                                        <include>release-log.txt</include>
+                                    </includes>
+                                </resource>
+                                <resource>
+                                    <directory>../core/src/main/resources</directory>
+                                    <includes>
+                                        <include>oozie-default.xml</include>
+                                        <include>oozie-log4j.properties</include>
+                                    </includes>
+                                    <targetPath>docs</targetPath>
+                                </resource>
+                            </webResources>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
 
 </project>
 

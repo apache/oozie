@@ -1,33 +1,33 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.local;
 
+import org.apache.oozie.CoordinatorEngine;
 import org.apache.oozie.DagEngine;
 import org.apache.oozie.LocalOozieClient;
-import org.apache.oozie.servlet.CallbackServlet;
+import org.apache.oozie.LocalOozieClientCoord;
+import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.service.CallbackService;
+import org.apache.oozie.service.CoordinatorEngineService;
 import org.apache.oozie.service.DagEngineService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.XLogService;
+import org.apache.oozie.servlet.CallbackServlet;
 import org.apache.oozie.test.EmbeddedServletContainer;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
-import org.apache.oozie.client.OozieClient;
 
 /**
  * LocalOozie runs workflows in an embedded Oozie instance . <p/> LocalOozie is meant for development/debugging purposes
@@ -47,10 +47,10 @@ public class LocalOozie {
             throw new IllegalStateException("LocalOozie is already initialized");
         }
 
-        String log4jFile = System.getProperty(XLogService.LOG4J_FILE, null);
+        String log4jFile = System.getProperty(XLogService.LOG4J_FILE_ENV, null);
         String oozieLocalLog = System.getProperty("oozielocal.log", null);
         if (log4jFile == null) {
-            System.setProperty(XLogService.LOG4J_FILE, "localoozie-log4j.properties");
+            System.setProperty(XLogService.LOG4J_FILE_ENV, "localoozie-log4j.properties");
         }
         if (oozieLocalLog == null) {
             System.setProperty("oozielocal.log", "./oozielocal.log");
@@ -60,10 +60,10 @@ public class LocalOozie {
         new Services().init();
 
         if (log4jFile != null) {
-            System.setProperty(XLogService.LOG4J_FILE, log4jFile);
+            System.setProperty(XLogService.LOG4J_FILE_ENV, log4jFile);
         }
         else {
-            System.getProperties().remove(XLogService.LOG4J_FILE);
+            System.getProperties().remove(XLogService.LOG4J_FILE_ENV);
         }
         if (oozieLocalLog != null) {
             System.setProperty("oozielocal.log", oozieLocalLog);
@@ -124,11 +124,31 @@ public class LocalOozie {
     }
 
     /**
-     * Return a {@link org.apache.oozie.client.OozieClient} for LocalOozie configured for a given user. <p/> The
-     * following methods of the client are NOP in the returned instance: {@link org.apache.oozie.client.OozieClient#validateWSVersion},
-     * {@link org.apache.oozie.client.OozieClient#setHeader}, {@link org.apache.oozie.client.OozieClient#getHeader},
-     * {@link org.apache.oozie.client.OozieClient#removeHeader}, {@link org.apache.oozie.client.OozieClient#getHeaderNames}
-     * and {@link org.apache.oozie.client.OozieClient#setSafeMode}.
+     * Return a {@link org.apache.oozie.client.OozieClient} for LocalOozie.
+     * <p/>
+     * The returned instance is configured with the user name of the JVM (the
+     * value of the system property 'user.name').
+     * <p/>
+     * The following methods of the client are NOP in the returned instance:
+     * {@link org.apache.oozie.client.OozieClient#validateWSVersion},
+     * {@link org.apache.oozie.client.OozieClient#setHeader},
+     * {@link org.apache.oozie.client.OozieClient#getHeader},
+     * {@link org.apache.oozie.client.OozieClient#removeHeader},
+     * {@link org.apache.oozie.client.OozieClient#getHeaderNames} and
+     * {@link org.apache.oozie.client.OozieClient#setSafeMode}.
+     *
+     * @return a {@link org.apache.oozie.client.OozieClient} for LocalOozie.
+     */
+    public static OozieClient getCoordClient() {
+        return getClientCoord(System.getProperty("user.name"));
+    }
+
+    /**
+     * Return a {@link org.apache.oozie.client.OozieClient} for LocalOozie configured for a given user.
+     * <p/>
+     * The following methods of the client are NOP in the returned instance: {@link org.apache.oozie.client.OozieClient#validateWSVersion},
+     * {@link org.apache.oozie.client.OozieClient#setHeader}, {@link org.apache.oozie.client.OozieClient#getHeader}, {@link org.apache.oozie.client.OozieClient#removeHeader},
+     * {@link org.apache.oozie.client.OozieClient#getHeaderNames} and {@link org.apache.oozie.client.OozieClient#setSafeMode}.
      *
      * @param user user name to use in LocalOozie for running workflows.
      * @return a {@link org.apache.oozie.client.OozieClient} for LocalOozie configured for the given user.
@@ -140,6 +160,32 @@ public class LocalOozie {
         ParamChecker.notEmpty(user, "user");
         DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(user, "undef");
         return new LocalOozieClient(dagEngine);
+    }
+
+    /**
+     * Return a {@link org.apache.oozie.client.OozieClient} for LocalOozie
+     * configured for a given user.
+     * <p/>
+     * The following methods of the client are NOP in the returned instance:
+     * {@link org.apache.oozie.client.OozieClient#validateWSVersion},
+     * {@link org.apache.oozie.client.OozieClient#setHeader},
+     * {@link org.apache.oozie.client.OozieClient#getHeader},
+     * {@link org.apache.oozie.client.OozieClient#removeHeader},
+     * {@link org.apache.oozie.client.OozieClient#getHeaderNames} and
+     * {@link org.apache.oozie.client.OozieClient#setSafeMode}.
+     *
+     * @param user user name to use in LocalOozie for running coordinator.
+     * @return a {@link org.apache.oozie.client.OozieClient} for LocalOozie
+     *         configured for the given user.
+     */
+    public static OozieClient getClientCoord(String user) {
+        if (!localOozieActive) {
+            throw new IllegalStateException("LocalOozie is not initialized");
+        }
+        ParamChecker.notEmpty(user, "user");
+        CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(user,
+                "undef");
+        return new LocalOozieClientCoord(coordEngine);
     }
 
 }

@@ -1,19 +1,16 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.command.wf;
 
@@ -23,21 +20,21 @@ import java.io.Writer;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.oozie.client.WorkflowJob;
-import org.apache.oozie.client.OozieClient;
-import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.DagEngine;
 import org.apache.oozie.ForTestingActionExecutor;
+import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.service.ActionService;
 import org.apache.oozie.service.SchemaService;
+import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowStoreService;
 import org.apache.oozie.store.WorkflowStore;
-import org.apache.oozie.workflow.WorkflowInstance;
-import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
+import org.apache.oozie.workflow.WorkflowInstance;
 
 /**
  * Test cases for checking correct functionality in case of errors while executing Actions.
@@ -51,11 +48,12 @@ public class TestActionErrors extends XTestCase {
         super.setUp();
         setSystemProperty(SchemaService.WF_CONF_EXT_SCHEMAS, "wf-ext-schema.xsd");
         services = new Services();
-        cleanUpDB(services.getConf());
         services.init();
+        cleanUpDBTables();
         services.get(ActionService.class).register(ForTestingActionExecutor.class);
     }
 
+    @Override
     protected void tearDown() throws Exception {
         services.destroy();
         super.tearDown();
@@ -215,6 +213,7 @@ public class TestActionErrors extends XTestCase {
         assertEquals("TEST_ERROR", action.getErrorCode());
         assertEquals(expErrorMsg, action.getErrorMessage());
         assertEquals(expStatus1, action.getStatus());
+        assertTrue(action.getPending() == false);
 
         assertTrue(engine.getJob(jobId).getStatus() == WorkflowJob.Status.SUSPENDED);
 
@@ -247,15 +246,6 @@ public class TestActionErrors extends XTestCase {
     }
 
     /**
-     * Provides functionality to test non transient errors.
-     *
-     * @param errorType the error type. (start.non-transient, end.non-transient)
-     * @param expStatus1 expected status. (START_MANUAL, END_MANUAL)
-     * @param expErrorMsg the expected error message.
-     * @throws Exception
-     */
-
-    /**
      * Provides functionality to test transient failures.
      *
      * @param errorType the error type. (start.transient, end.transient)
@@ -264,8 +254,8 @@ public class TestActionErrors extends XTestCase {
      * @param expErrorMsg the expected error message.
      * @throws Exception
      */
-    private void _testTransient(String errorType, WorkflowActionBean.Status expStatus1, WorkflowActionBean.Status expStatus2,
-                                String expErrorMsg) throws Exception {
+    private void _testTransient(String errorType, WorkflowActionBean.Status expStatus1,
+            final WorkflowActionBean.Status expStatus2, String expErrorMsg) throws Exception {
         Reader reader = IOUtils.getResourceAsReader("wf-ext-schema-valid.xml", -1);
         Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
         IOUtils.copyCharStream(reader, writer);
@@ -273,7 +263,6 @@ public class TestActionErrors extends XTestCase {
         final int maxRetries = 2;
         final int retryInterval = 10;
 
-        final WorkflowStore store = Services.get().get(WorkflowStoreService.class).create();
         final DagEngine engine = new DagEngine("u", "a");
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, getTestCaseDir());
@@ -294,11 +283,13 @@ public class TestActionErrors extends XTestCase {
         int expectedRetryCount = 2;
 
         Thread.sleep(20000);
-
+        String aId = null;
+        final WorkflowStore store = Services.get().get(WorkflowStoreService.class).create();
+        store.beginTrx();
         while (retryCount <= maxRetries) {
             List<WorkflowActionBean> actions = store.getActionsForWorkflow(jobId, false);
-            int size = actions.size();
-            WorkflowActionBean action = actions.get(size - 1);
+            WorkflowActionBean action = actions.get(0);
+            aId = action.getId();
             assertEquals(expectedStatus, action.getStatus());
             assertEquals(expectedRetryCount, action.getRetries());
             assertEquals("TEST_ERROR", action.getErrorCode());
@@ -314,13 +305,28 @@ public class TestActionErrors extends XTestCase {
             Thread.sleep(retryInterval * 1000);
             retryCount++;
         }
+        store.commitTrx();
+        store.closeTrx();
         Thread.sleep(5000);
-        List<WorkflowActionBean> actions = store.getActionsForWorkflow(jobId, false);
-        WorkflowActionBean action = actions.get(0);
+
+        final String actionId = aId;
+
+        waitFor(5000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                return (engine.getWorkflowAction(actionId).getStatus() == expStatus2);
+            }
+        });
+
+        final WorkflowStore store2 = Services.get().get(WorkflowStoreService.class).create();
+        store2.beginTrx();
+        WorkflowActionBean action = engine.getWorkflowAction(actionId);
         assertEquals("TEST_ERROR", action.getErrorCode());
         assertEquals(expErrorMsg, action.getErrorMessage());
-
+        assertEquals(expStatus2, action.getStatus());
+        assertTrue(action.getPending() == false);
         assertEquals(WorkflowJob.Status.SUSPENDED, engine.getJob(jobId).getStatus());
+        store2.commitTrx();
+        store2.closeTrx();
     }
 
     /**
@@ -388,20 +394,27 @@ public class TestActionErrors extends XTestCase {
         final String jobId = engine.submitJob(conf, true);
 
         final WorkflowStore store = Services.get().get(WorkflowStoreService.class).create();
+        store.beginTrx();
         Thread.sleep(2000);
-/*
+
         waitFor(5000, new Predicate() {
             public boolean evaluate() throws Exception {
                 WorkflowJobBean bean = store.getWorkflow(jobId, false);
                 return (bean.getWorkflowInstance().getStatus() == WorkflowInstance.Status.FAILED);
             }
         });
-*/
-        assertEquals(WorkflowInstance.Status.FAILED, store.getWorkflow(jobId, false).getWorkflowInstance().getStatus());
+        store.commitTrx();
+        store.closeTrx();
+
+        final WorkflowStore store2 = Services.get().get(WorkflowStoreService.class).create();
+        store2.beginTrx();
+        assertEquals(WorkflowInstance.Status.FAILED, store2.getWorkflow(jobId, false).getWorkflowInstance().getStatus());
         assertEquals(WorkflowJob.Status.FAILED, engine.getJob(jobId).getStatus());
 
-        List<WorkflowActionBean> actions = store.getActionsForWorkflow(jobId, false);
+        List<WorkflowActionBean> actions = store2.getActionsForWorkflow(jobId, false);
         WorkflowActionBean action = actions.get(0);
         assertEquals(expActionErrorCode, action.getErrorCode());
+        store2.commitTrx();
+        store2.closeTrx();
     }
 }

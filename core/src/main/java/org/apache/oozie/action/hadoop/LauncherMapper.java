@@ -1,57 +1,51 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.action.hadoop;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.security.Permission;
+import java.text.MessageFormat;
+import java.util.Properties;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapred.Counters;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.Mapper;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapred.RunningJob;
-import org.apache.hadoop.mapred.FileInputFormat;
-import org.apache.hadoop.mapred.FileOutputFormat;
-import org.apache.hadoop.mapred.Counters;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.security.UserGroupInformation;
-
-import org.apache.oozie.util.XLog;
-import org.apache.oozie.service.Services;
+import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.io.InputStream;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.StringWriter;
-import java.io.PrintWriter;
-import java.io.FileReader;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.security.Permission;
-import java.util.Properties;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.text.MessageFormat;
+import org.apache.oozie.service.Services;
+import org.apache.oozie.util.XLog;
 
 public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, Runnable {
 
@@ -110,8 +104,16 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         }
     }
 
+    /**
+     * @param launcherConf
+     * @param actionDir
+     * @param recoveryId
+     * @return
+     * @throws HadoopAccessorException
+     * @throws IOException
+     */
     public static String getRecoveryId(Configuration launcherConf, Path actionDir, String recoveryId)
-            throws IOException {
+            throws HadoopAccessorException, IOException {
         String jobId = null;
         Path recoveryFile = new Path(actionDir, recoveryId);
         //FileSystem fs = FileSystem.get(launcherConf);
@@ -144,8 +146,18 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         launcherConf.setInt(CONF_OOZIE_ACTION_MAX_OUTPUT_DATA, maxOutputData);
     }
 
+    /**
+     * @param launcherConf
+     * @param jobId
+     * @param actionId
+     * @param actionDir
+     * @param recoveryId
+     * @param actionConf
+     * @throws IOException
+     * @throws HadoopAccessorException
+     */
     public static void setupLauncherInfo(JobConf launcherConf, String jobId, String actionId, Path actionDir,
-                                         String recoveryId, Configuration actionConf) throws IOException {
+            String recoveryId, Configuration actionConf) throws IOException, HadoopAccessorException {
 
         launcherConf.setMapperClass(LauncherMapper.class);
         launcherConf.setSpeculativeExecution(false);
@@ -157,9 +169,8 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         launcherConf.set(OOZIE_ACTION_DIR_PATH, actionDir.toString());
         launcherConf.set(OOZIE_ACTION_RECOVERY_ID, recoveryId);
 
-        FileSystem fs = Services.get().get(HadoopAccessorService.class).
-                createFileSystem(launcherConf.get("user.name"), launcherConf.get("group.name"), launcherConf);
-
+        FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(launcherConf.get("user.name"),
+                launcherConf.get("group.name"), launcherConf);
         fs.mkdirs(actionDir);
 
         OutputStream os = fs.create(new Path(actionDir, ACTION_CONF_XML));
@@ -206,6 +217,11 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         return output;
     }
 
+    /**
+     * @param runningJob
+     * @return
+     * @throws IOException
+     */
     public static boolean hasIdSwap(RunningJob runningJob) throws IOException {
         boolean swap = false;
         Counters counters = runningJob.getCounters();
@@ -218,7 +234,17 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         return swap;
     }
 
-    public static boolean hasIdSwap(RunningJob runningJob, String user, String group, Path actionDir) throws IOException {
+    /**
+     * @param runningJob
+     * @param user
+     * @param group
+     * @param actionDir
+     * @return
+     * @throws IOException
+     * @throws HadoopAccessorException
+     */
+    public static boolean hasIdSwap(RunningJob runningJob, String user, String group, Path actionDir)
+            throws IOException, HadoopAccessorException {
         boolean swap = false;
 
         XLog log = XLog.getLog("org.apache.oozie.action.hadoop.LauncherMapper");
@@ -345,7 +371,6 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
                     System.out.println(">>> Invoking Main class now >>>");
                     System.out.println();
                     System.out.flush();
-
 
                     try {
                         Class klass = getJobConf().getClass(CONF_OOZIE_ACTION_MAIN_CLASS, Object.class);
@@ -552,20 +577,16 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
             if (fileName.isFile()) {
                 System.out.println("File: " + fileName.getName());
             }
-            else {
-                if (fileName.isDirectory()) {
-                    System.out.println("Dir: " + fileName.getName());
-                    File subDir = new File(fileName.getName());
-                    File[] moreFiles = subDir.listFiles();
-                    for (File subFileName : moreFiles) {
-                        if (subFileName.isFile()) {
-                            System.out.println("  File: " + subFileName.getName());
-                        }
-                        else {
-                            if (subFileName.isDirectory()) {
-                                System.out.println("  Dir: " + subFileName.getName());
-                            }
-                        }
+            else if (fileName.isDirectory()) {
+                System.out.println("Dir: " + fileName.getName());
+                File subDir = new File(fileName.getName());
+                File[] moreFiles = subDir.listFiles();
+                for (File subFileName : moreFiles) {
+                    if (subFileName.isFile()) {
+                        System.out.println("  File: " + subFileName.getName());
+                    }
+                    else if (subFileName.isDirectory()) {
+                        System.out.println("  Dir: " + subFileName.getName());
                     }
                 }
             }
@@ -575,11 +596,12 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
 }
 
 class LauncherSecurityManager extends SecurityManager {
-    private static boolean exitInvoked = false;
+    private static boolean exitInvoked;
     private static int exitCode;
     private SecurityManager securityManager;
 
     public LauncherSecurityManager() {
+        reset();
         securityManager = System.getSecurityManager();
         System.setSecurityManager(this);
     }
@@ -607,6 +629,10 @@ class LauncherSecurityManager extends SecurityManager {
         return exitCode;
     }
 
+    public static void reset() {
+        exitInvoked = false;
+        exitCode = 0;
+    }
 }
 
 class LauncherException extends Exception {

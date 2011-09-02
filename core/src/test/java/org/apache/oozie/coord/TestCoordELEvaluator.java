@@ -1,19 +1,16 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.coord;
 
@@ -118,7 +115,7 @@ public class TestCoordELEvaluator extends XTestCase {
 
     public void testCreateDataEvaluator() throws Exception {
         String jobXml = "<coordinator-app name=\"mycoordinator-app\" start=\"2009-02-01T01:00GMT\" end=\"2009-02-03T23:59GMT\" frequency=\"720\" action-nominal-time='2009-09-01T00:00Z'>";
-        jobXml += "<input-events><data-in name=\"A\" dataset=\"a\"><uris>file:///tmp/coord/US/2009/1/30,file:///tmp/coord/US/2009/1/31</uris>";
+        jobXml += "<input-events><data-in name=\"A\" dataset=\"a\"><uris>file:///tmp/coord/US/2009/1/30|file:///tmp/coord/US/2009/1/31</uris>";
         jobXml += "<dataset name=\"a\" frequency=\"1440\" initial-instance=\"2009-01-01T00:00Z\">";
         jobXml += "<uri-template>file:///tmp/coord/US/${YEAR}/${MONTH}/${DAY}</uri-template></dataset></data-in></input-events>";
         jobXml += "<action><workflow><url>http://foobar.com:8080/oozie</url><app-path>hdfs://foobarfoobar.com:9000/usr/tucu/mywf</app-path>";
@@ -127,7 +124,7 @@ public class TestCoordELEvaluator extends XTestCase {
         jobXml += "<property><name>NAME</name><value>${coord:name()}</value></property>";
         jobXml += "</configuration></workflow></action></coordinator-app>";
         String reply = "<action><workflow><url>http://foobar.com:8080/oozie</url><app-path>hdfs://foobarfoobar.com:9000/usr/tucu/mywf</app-path>";
-        reply += "<configuration><property><name>inputA</name><value>file:///tmp/coord/US/2009/1/30,file:///tmp/coord/US/2009/1/31</value></property>";
+        reply += "<configuration><property><name>inputA</name><value>file:///tmp/coord/US/2009/1/30|file:///tmp/coord/US/2009/1/31</value></property>";
         reply += "<property><name>ACTIONID</name><value>00000-oozie-C@1</value></property>";
         reply += "<property><name>NAME</name><value>mycoordinator-app</value></property>";
         reply += "</configuration></workflow></action>";
@@ -145,7 +142,7 @@ public class TestCoordELEvaluator extends XTestCase {
     }
 
     public void testCreateInstancesELEvaluator() throws Exception {
-        String dataEvntXML = "<data-in name=\"A\" dataset=\"a\"><uris>file:///tmp/coord/US/2009/1/30,file:///tmp/coord/US/2009/1/31</uris>";
+        String dataEvntXML = "<data-in name=\"A\" dataset=\"a\"><uris>file:///tmp/coord/US/2009/1/30|file:///tmp/coord/US/2009/1/31</uris>";
         dataEvntXML += "<dataset name=\"a\" frequency=\"1440\" initial-instance=\"2009-01-01T00:00Z\" freq_timeunit=\"MINUTE\" timezone=\"UTC\" end_of_duration=\"NONE\">";
         dataEvntXML += "<uri-template>file:///tmp/coord/US/${YEAR}/${MONTH}/${DAY}</uri-template></dataset></data-in>";
         Element event = XmlUtils.parseXml(dataEvntXML);
@@ -172,7 +169,7 @@ public class TestCoordELEvaluator extends XTestCase {
                 getConfString()));
         Date actualTime = DateUtils.parseDateUTC("2009-09-01T01:00Z");
         Date nominalTime = DateUtils.parseDateUTC("2009-09-01T00:00Z");
-        String dataEvntXML = "<data-in name=\"A\" dataset=\"a\"><uris>file:///tmp/coord/US/2009/1/30,file:///tmp/coord/US/2009/1/31</uris>";
+        String dataEvntXML = "<data-in name=\"A\" dataset=\"a\"><uris>file:///tmp/coord/US/2009/1/30|file:///tmp/coord/US/2009/1/31</uris>";
         dataEvntXML += "<dataset name=\"a\" frequency=\"1440\" initial-instance=\"2009-01-01T00:00Z\"  freq_timeunit=\"MINUTE\" timezone=\"UTC\" end_of_duration=\"NONE\">";
         dataEvntXML += "<uri-template>file:///tmp/coord/${YEAR}/${MONTH}/${DAY}</uri-template></dataset></data-in>";
         Element dEvent = XmlUtils.parseXml(dataEvntXML);
@@ -182,8 +179,14 @@ public class TestCoordELEvaluator extends XTestCase {
         String expr = "${coord:latest(0)} ${coord:latest(-1)}";
         // Dependent on the directory structure
         // TODO: Create the directory
-        assertEquals("2009-01-02T00:00Z ${coord:latest(-1)}", eval.evaluate(
-                expr, String.class));
+        assertEquals("2009-01-02T00:00Z ${coord:latest(-1)}", eval.evaluate(expr, String.class));
+
+        // future
+        createDir("/tmp/coord/2009/09/04");
+        createDir("/tmp/coord/2009/09/05");
+        expr = "${coord:future(1, 30)}";
+        assertEquals("2009-09-05T00:00Z", eval.evaluate(expr, String.class));
+
         // System.out.println("OUTPUT :" + eval.evaluate(expr, String.class));
     }
 
@@ -207,10 +210,8 @@ public class TestCoordELEvaluator extends XTestCase {
 
     private String getConfString() {
         StringBuilder conf = new StringBuilder();
-        conf
-                .append("<configuration> <property><name>baseFsURI</name> <value>file:///tmp/coord/</value> </property>");
-        conf
-                .append("<property><name>language</name> <value>en</value> </property>");
+        conf.append("<configuration> <property><name>baseFsURI</name> <value>file:///tmp/coord/</value> </property>");
+        conf.append("<property><name>language</name> <value>en</value> </property>");
         conf
                 .append("<property> <name>country</name>  <value>US</value>  </property> "
                         + "<property> <name>market</name> <value>teens</value> </property> "

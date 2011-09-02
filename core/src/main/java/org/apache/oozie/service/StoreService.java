@@ -1,24 +1,24 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.service;
 
+import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.Properties;
 
+import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.store.StoreException;
@@ -55,20 +55,17 @@ import org.apache.oozie.client.rest.JsonSLAEvent;
 /**
  * Base service for persistency of jobs and actions.
  */
-public class StoreService implements Service, Instrumentable {
+public class StoreService implements Service {
 
     public static final String CONF_PREFIX = Service.CONF_PREFIX + "StoreService.";
-    private static final String INTSRUMENTATION_GROUP = "jdbc";
     public static final String CONF_URL = CONF_PREFIX + "jdbc.url";
     public static final String CONF_DRIVER = CONF_PREFIX + "jdbc.driver";
-    ;
     public static final String CONF_USERNAME = CONF_PREFIX + "jdbc.username";
     public static final String CONF_PASSWORD = CONF_PREFIX + "jdbc.password";
     public static final String CONF_MAX_ACTIVE_CONN = CONF_PREFIX + "pool.max.active.conn";
+    public static final String CONF_CREATE_DB_SCHEMA = CONF_PREFIX + "create.db.schema";
 
-    @SuppressWarnings("unchecked")
-    private static EntityManagerFactory factory = Persistence.createEntityManagerFactory("oozie",
-                                                                                         new java.util.HashMap());
+    private EntityManagerFactory factory;
 
     /**
      * Return instance of store.
@@ -133,13 +130,43 @@ public class StoreService implements Service, Instrumentable {
      */
     public void init(Services services) throws ServiceException {
         Configuration conf = services.getConf();
+        String url = conf.get(CONF_URL, "jdbc:hsqldb:mem:oozie;create=true");
+        String driver = conf.get(CONF_DRIVER, "org.hsqldb.jdbcDriver");
+        String user = conf.get(CONF_USERNAME, "sa");
+        String password = conf.get(CONF_PASSWORD, "").trim();
+        String maxConn = conf.get(CONF_MAX_ACTIVE_CONN, "10").trim();
+        boolean autoSchemaCreation = conf.getBoolean(CONF_CREATE_DB_SCHEMA, true);
+
+        if (!url.startsWith("jdbc:")) {
+            throw new ServiceException(ErrorCode.E0608, url, "invalid JDBC URL, must start with 'jdbc:'");
+        }
+        String dbType = url.substring("jdbc:".length());
+        if (dbType.indexOf(":") <= 0) {
+            throw new ServiceException(ErrorCode.E0608, url, "invalid JDBC URL, missing vendor 'jdbc:[VENDOR]:...'");
+        }
+        dbType = dbType.substring(0, dbType.indexOf(":"));
+
+        String persistentUnit = "oozie-" + dbType;
+
+        //Checking existince of ORM file for DB type
+        String ormFile = "META-INF/" + persistentUnit + "-orm.xml";
+        try {
+            IOUtils.getResourceAsStream(ormFile, -1);
+        }
+        catch (IOException ex) {
+            throw new ServiceException(ErrorCode.E0609, dbType, ormFile);
+        }
+
+        String connProps = "DriverClassName={0},Url={1},Username={2},Password={3},MaxActive={4}";
+        connProps = MessageFormat.format(connProps, driver, url, user, password, maxConn);
         Properties props = new Properties();
-        props.put("url", conf.get(CONF_URL, "jdbc:hsqldb:mem:testdb"));
-        props.put("driverClassName", conf.get(CONF_DRIVER, "org.hsqldb.jdbcDriver"));
-        props.put("url", conf.get(CONF_URL, "jdbc:hsqldb:mem:testdb"));
-        props.put("username", conf.get(CONF_USERNAME, "sa"));
-        props.put("password", conf.get(CONF_PASSWORD, "").trim());
-        props.put("maxActive", conf.get(CONF_MAX_ACTIVE_CONN, "10"));
+        props.setProperty("openjpa.ConnectionProperties", connProps);
+        if (autoSchemaCreation) {
+            props.setProperty("openjpa.jdbc.SynchronizeMappings", "buildSchema(ForeignKeys=true)");
+        }
+
+        factory = Persistence.createEntityManagerFactory(persistentUnit, props);
+
         EntityManager entityManager = getEntityManager();
         entityManager.find(WorkflowActionBean.class, 1);
         entityManager.find(WorkflowJobBean.class, 1);
@@ -151,14 +178,14 @@ public class StoreService implements Service, Instrumentable {
         entityManager.find(JsonCoordinatorJob.class, 1);
         entityManager.find(SLAEventBean.class, 1);
         entityManager.find(JsonSLAEvent.class, 1);
-        XLog.getLog(getClass()).info(XLog.STD, "*** StoreService *** " + "Initialized all entities!");
+
+        XLog.getLog(getClass()).info(XLog.STD, "All entities initialized");
         // need to use a pseudo no-op transaction so all entities, datasource
         // and connection pool are initialized
         // one time only
         entityManager.getTransaction().begin();
         OpenJPAEntityManagerFactorySPI spi = (OpenJPAEntityManagerFactorySPI) factory;
-        XLog.getLog(getClass()).warn("StoreService initialized *** {0}",
-                                     spi.getConfiguration().getConnectionProperties());
+        XLog.getLog(getClass()).info("JPA configuration: {0}", spi.getConfiguration().getConnectionProperties());
         entityManager.getTransaction().commit();
         entityManager.close();
     }
@@ -167,45 +194,7 @@ public class StoreService implements Service, Instrumentable {
      * Destroy the StoreService
      */
     public void destroy() {
-    }
-
-    public void instrument(Instrumentation instr) {
-        /*
-         * TO DO - sampler call never returns possibly because JPA holds a class
-         * level lock - sampler runs from BasiCInstrumentedDataSource
-         */
-        /*
-         * instrumentation = instr;
-         * instrumentation.addSampler(INTSRUMENTATION_GROUP,
-         * INSTR_ACTIVE_CONNECTIONS1_SAMPLER, 60, 1, new
-         * Instrumentation.Variable<Long>() { public Long getValue() {
-         * XLog.getLog(getClass()).warn("StoreService Instrumentation"); //
-         * InstrumentedBasicDataSource dataSource = new
-         * InstrumentedBasicDataSource(); //return (long) 100; // return
-         * dataSource.getActiveConnections(); return
-         * dataSource.getActiveConnections(); } });
-         */
-    }
-
-    /**
-     * for unit test only Return a raw direct JDBC connection. <p/> The connection is not from the connection pool. <p/>
-     * The conection is not instrumented.
-     *
-     * @return a raw Direct JDBC connection.
-     * @throws SQLException thrown if the connection could not be obtained.
-     */
-    public Connection getRawConnection() throws SQLException {
-        String driver = Services.get().getConf().get(CONF_DRIVER, "org.hsqldb.jdbcDriver");
-        String url = Services.get().getConf().get(CONF_URL, "jdbc:hsqldb:mem:testdb");
-        String user = Services.get().getConf().get(CONF_USERNAME, "sa");
-        String password = Services.get().getConf().get(CONF_PASSWORD, "").trim();
-        try {
-            Class.forName(driver);
-        }
-        catch (ClassNotFoundException ex) {
-            throw new RuntimeException(ex);
-        }
-        return DriverManager.getConnection(url, user, password);
+        factory.close();
     }
 
     /**

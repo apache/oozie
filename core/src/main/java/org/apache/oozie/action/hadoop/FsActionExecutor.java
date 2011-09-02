@@ -1,38 +1,36 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.action.hadoop;
-
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.permission.FsPermission;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.oozie.action.ActionExecutor;
-import org.apache.oozie.action.ActionExecutorException;
-import org.apache.oozie.client.WorkflowAction;
-import org.apache.oozie.util.XmlUtils;
-import org.apache.oozie.service.Services;
-import org.apache.oozie.service.HadoopAccessorService;
-import org.jdom.Element;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.permission.FsPermission;
+import org.apache.oozie.action.ActionExecutor;
+import org.apache.oozie.action.ActionExecutorException;
+import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.service.HadoopAccessorException;
+import org.apache.oozie.service.HadoopAccessorService;
+import org.apache.oozie.service.Services;
+import org.apache.oozie.util.XmlUtils;
+import org.jdom.Element;
 
 /**
  * File system action executor. <p/> This executes the file system mkdir, move and delete commands
@@ -113,11 +111,29 @@ public class FsActionExecutor extends ActionExecutor {
         }
     }
 
-    private FileSystem getFileSystemFor(Path path, Context context) throws IOException {
+    /**
+     * @param path
+     * @param context
+     * @return FileSystem
+     * @throws HadoopAccessorException
+     */
+    private FileSystem getFileSystemFor(Path path, Context context) throws HadoopAccessorException {
         String user = context.getWorkflow().getUser();
         String group = context.getWorkflow().getGroup();
-        return Services.get().get(HadoopAccessorService.class).
-                createFileSystem(user, group, path.toUri(), new Configuration());
+        return Services.get().get(HadoopAccessorService.class).createFileSystem(user, group, path.toUri(),
+                new Configuration());
+    }
+
+    /**
+     * @param path
+     * @param user
+     * @param group
+     * @return FileSystem
+     * @throws HadoopAccessorException
+     */
+    private FileSystem getFileSystemFor(Path path, String user, String group) throws HadoopAccessorException {
+        return Services.get().get(HadoopAccessorService.class).createFileSystem(user, group, path.toUri(),
+                new Configuration());
     }
 
     void mkdir(Context context, Path path) throws ActionExecutorException {
@@ -137,7 +153,14 @@ public class FsActionExecutor extends ActionExecutor {
         }
     }
 
-    void delete(Context context, Path path) throws ActionExecutorException {
+    /**
+     * Delete path
+     *
+     * @param context
+     * @param path
+     * @throws ActionExecutorException
+     */
+    public void delete(Context context, Path path) throws ActionExecutorException {
         try {
             validatePath(path, true);
             FileSystem fs = getFileSystemFor(path, context);
@@ -154,8 +177,41 @@ public class FsActionExecutor extends ActionExecutor {
         }
     }
 
+    /**
+     * Delete path
+     *
+     * @param user
+     * @param group
+     * @param path
+     * @throws ActionExecutorException
+     */
+    public void delete(String user, String group, Path path) throws ActionExecutorException {
+        try {
+            validatePath(path, true);
+            FileSystem fs = getFileSystemFor(path, user, group);
 
-    void move(Context context, Path source, Path target, boolean recovery) throws ActionExecutorException {
+            if (fs.exists(path)) {
+                if (!fs.delete(path, true)) {
+                    throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS005",
+                            "delete, path [{0}] could not delete path", path);
+                }
+            }
+        }
+        catch (Exception ex) {
+            throw convertException(ex);
+        }
+    }
+
+    /**
+     * Move source to target
+     *
+     * @param context
+     * @param source
+     * @param target
+     * @param recovery
+     * @throws ActionExecutorException
+     */
+    public void move(Context context, Path source, Path target, boolean recovery) throws ActionExecutorException {
         try {
             validatePath(source, true);
             validatePath(target, false);
@@ -278,11 +334,19 @@ public class FsActionExecutor extends ActionExecutor {
         }
     }
 
+    @Override
     public boolean isCompleted(String externalStatus) {
         return true;
     }
 
-    Path getRecoveryPath(Context context) throws IOException, URISyntaxException {
+    /**
+     * @param context
+     * @return
+     * @throws HadoopAccessorException
+     * @throws IOException
+     * @throws URISyntaxException
+     */
+    public Path getRecoveryPath(Context context) throws HadoopAccessorException, IOException, URISyntaxException {
         return new Path(context.getActionDir(), "fs-" + context.getRecoveryId());
     }
 

@@ -2,288 +2,245 @@
 
 [[index][::Go back to Oozie Documentation Index::]]
 
----+!! Oozie Install
+---+!! Oozie Installation and Configuration
 
 %TOC%
 
 ---++ System Requirements
 
-   * Unix (tested with  RHEL4, RHEL5 and Mac OS X)
-   * Java JRE 1.6+
+   * Unix (tested in Linux and Mac OS X)
+   * Java 1.6+
+   * Hadoop
+      * [[http://hadoop.apache.org][Apache Hadoop]] (tested with 0.20.2)
+      * [[http://developer.yahoo.com/hadoop][Yahoo! Hadoop]] (tested with 0.20.104.2)
    * [[http://tomcat.apache.org][Tomcat 6.x]] (tested with 6.0.18)
-   * [[http://www.mysql.com][MySQL 5.1.*]] (tested with 5.1.24.6)
 
----++ Unix Setup
+---++ Download Oozie
 
-Create a Unix user account, referred as <code><OOZIE_USER></code> in this documentation, that will be used to run
-Oozie's Tomcat.
+Download the latest Oozie distribution from [[http://yahoo.github.com/oozie/downloads]].
 
-Configure the shell of the <code><OOZIE_USER></code> account to have Java JRE 1.6+ in the =PATH=.
+Expand the Oozie distribution =tar.gz=.
 
-Test that the Java version, 1.6+, is available with the =java -version= command.
+---++ Environment Setup
 
----++ SSH Setup
+Java JRE should be in the =PATH=.
 
-*NOTE: SSH actions are deprecated in Oozie schema 0.1, and removed in Oozie schema 0.2*
+Set the =OOZIE_HOME= environment variable to the directory where the expanded Oozie distribution is located.
 
-Create SSH keys for the <code><OOZIE_USER></code> account.
+*NOTE:* The =OOZIE_HOME= environment variable is only required and used by the Oozie server. It is not used by the
+Oozie client.
 
+Add =${OOZIE_HOME}/bin= to the =PATH=.
+
+---++ Oozie WAR Setup
+
+Oozie WAR is bundled without the Hadoop JAR files and without the ExtJS library. The Hadoop JARs are required to run
+Oozie. The ExtJS library is optional (only required for the Oozie web-console to work).
+
+The ExtJS library can be downloaded from [[http://www.extjs.com/learn/Ext_Version_Archives][ExtJS 2.2]] (it must be
+version 2.2). The ExtJS library is not bundled with Oozie because it uses a different license.
+
+Use the =${OOZIE_HOME}/bin/addtowar.sh= script to add the Hadoop JARs and the ExtJS library to the Oozie WAR file.
+
+Usage:
 <verbatim>
-$ ssh-keygen -t dsa
+ Usage  : addtowar <OPTIONS>
+ Options: -inputwar INPUT_OOZIE_WAR
+          -outputwar OUTPUT_OOZIE_WAR
+          [-hadoop HADOOP_VERSION HADOOP_PATH]
+          [-extjs EXTJS_PATH]
+          [-jars JARS_PATH] (multiple JAR path separated by ':')
 </verbatim>
 
-If the SSH keys has been generated with a non-empty passphrase make sure the =ssh-agent= is always running for the
-<code><OOZIE_USER></code> account.
+The original Oozie WAR file is at =${OOZIE_HOME}/oozie.war=.
 
-The SSH public key <code><OOZIE_USER>/.ssh/id_dsa.pub</code> has to be made available to be installed in boxes that
-will execute remote SSH actions from workflow jobs in the <code>~/.ssh/authorized_keys2</code> of the remote Unix box
-that will execute the SSH command.
+After the Hadoop JARs and the ExtJS library has been added to the =oozie.war= file Oozie is ready for deployment.
 
-Test installing the SSH public key in a remote, perform a SSH login from the Oozie to the remote box using the user
-under which the SSH public keys have been installed. A password should not be asked.
+If present, delete any previous =oozie.war= and =oozie= directory from Tomcat's =webapps/= directory.
 
----++ MySQL Setup
+Copy the =oozie.war= file (the one that contains the Hadoop JARs adn the ExtJS library) to Tomcat's =webapps/=
+directory.
 
-Install MySQL and create a MySQL account, referred as <code><DB_OOZIE_USER></code>. Give permissions to create schemas
-plus all SQL permissions.
+*IMPORTANT:* Only one Oozie instance can be deployed per Tomcat instance.
 
-For example:
+---++ Database Setup
 
-<verbatim>
-$ mysql -u root
-.
-mysql> grant all privileges on oozie.* to 'oozie'@'localhost' identified by 'oozie';
-Query OK, 0 rows affected (0.03 sec)
-.
-mysql> exit
-Bye
-</verbatim>
+Oozie works with HSQL, MySQL and Oracle databases.
 
-*IMPORTANT:* If the Oozie distro does not include the MSQL JDBC driver (the Apache distro does not), the =oozie.war=
-web application must be patched with it. Otherwise, the MySQL JDBC driver will not be present and Oozie will fail to
-work.
+If using HSQL, Oozie bundles HSQL JDBC driver. HSQL is an embedded in-memory database, all data is lost when Oozie
+stops running.
 
----++ Tomcat Setup
+If using MySQL or Oracle, the corresponding JDBC driver JARs files must be in Oozie classpath (added to Oozie WAR or
+in Tomcat's =common/lib= directory). A database should be created for Oozie, Oozie creates its tables automatically.
 
-Install Tomcat and configure it to run under the <code><OOZIE_USER></code> Unix account.
-
-Tomcat must run using Java JRE 1.6+.
-
-Start Tomcat and test it is working by accessing its root page.
-
----++ Oozie Distro Setup
-
-Get the Oozie MySQL distro for the Hadoop cluster version.
-
-*IMPORTANT:* The Oozie distro being installed must be for the exact same version of Hadoop cluster that Oozie will be
-working with. This is because the Hadoop RPC protocol requires the exact same version on the client side.
-
-Expand the distro in the <code><OOZIE_USER></code>'s home directory. Soft link the expanded directory to =oozie=.
-
-Add =~/oozie/bin= to the =PATH= of the shell.
-
----++ Oozie Server and Documentation Setup
-
-If present, delete the old =oozie.war= and =ooziedocs.war= files, and =oozie= and =ooziedocs= directories from
-Tomcat's =webapps/= directory.
-
-Copy the =~/oozie/wars/oozie.war= and the =~/oozie/wars/ooziedocs.war= files to Tomcat's =webapps/= directory.
+The =bin/addtowar.sh= script has an option =-jars= that can be used to add the Oracle or MySQL JDBC driver JARs to the
+Oozie WAR file.
 
 ---++ Oozie Configuration
 
-In most cases, for a production setup Oozie configuration will read from a configuration directory instead of the
-classpath, refer to the [[AG_ConfigurationFiles][Oozie configuration files]] document for detail on how to setup Oozie
-to read its configuration from a directory.
+Oozie configuration is always read from the =${OOZIE_HOME}/conf= directory.
 
----+++ Oozie Database Configuration
+The Oozie configuration is distributed in 3 different files:
 
-Configuration file: =~/oozie/conf/oozie-site.xml=
+   * =oozie-site.xml= : Oozie server configuration
+   * =oozie-log4j.properties= : Oozie logging configuration
+   * =adminusers.txt= : Oozie admin users list
 
-Default JDBC driver class, JDBC URL, DB user name and DB user password are for HSQL.
+---+++ Oozie Configuration Properties
 
-To use MySQL set the following properties:
+All Oozie configuration properties and their default values are defined in the =oozie-default.xml= file.
+
+Oozie resolves configuration property values in the following order:
+
+   * If a Java System property is defined, it uses its value
+   * Else, if the Oozie configuration file (=oozie-site.xml=) contains the property, it uses its value
+   * Else, it uses the default value documented in the =oozie-default.xml= file
+
+The =OOZIE_CONFIG_FILE= environment variable can be set to indicate an alternate Oozie configuration file than
+the =oozie-site.xml= file. The alternate file must be in the =${OOZIE_HOME}/conf/= directory.
+
+*NOTE:* The =oozie-default.xml= file found in the =${OOZIE_HOME}/conf/= directory is not used by Oozie, it is there
+for reference purposes only.
+
+---+++ Logging Configuration
+
+By default Oozie logs to the =${OOZIE_HOME}/logs/= directory in 4 different files:
+
+   * oozie.log: web services log streaming works from this log
+   * oozie-ops.log: messages for Admin/Operations to monitor
+   * oozie-instrumentation.log: intrumentation data, every 60 seconds (configurable)
+   * oozie-audit.log: audit messages, workflow jobs changes
+
+Oozie log configuration is defined in the =oozie-log4j.properties= files.
+
+If the Oozie log configuration file changes, Oozie reloads the new settings dynamically.
+
+The =OOZIE_LOG4J_FILE= environment variable can be set to indicate an alternate Oozie logging configuration file. The
+alternate file must be in the =${OOZIE_HOME}/conf/= directory.
+
+The =OOZIE_LOG4J_RELOAD= environment variable can be set to specify the logging configuration reload interval in
+seconds. The default value is 10 seconds.
+
+---+++ Oozie Authentication Configuration
+
+Oozie can work with Hadoop 20 with Security distribution which supports Kerberos authentication.
+
+Oozie authentication is configured using the following configuration properties (default values shown):
 
 <verbatim>
-    ...
-   <property>
-        <name>oozie.service.DataSourceService.jdbc.driver</name>
-        <value>com.mysql.jdbc.Driver</value>
-        <description>
-            JDBC driver class.
-        </description>
-    </property>
-    <property>
-        <name>oozie.service.DataSourceService.jdbc.url</name>
-        <value>jdbc:mysql://localhost:3306</value>
-        <description>
-            JDBC URL.
-        </description>
-    </property>
-    <property>
-        <name>oozie.service.DataSourceService.jdbc.username</name>
-        <value>oozie</value>
-        <description>
-            DB user name.
-        </description>
-    </property>
-    <property>
-        <name>oozie.service.DataSourceService.jdbc.password</name>
-        <value>oozie</value>
-        <description>
-            DB user password.
-            IMPORTANT: if password is emtpy leave a 1 space string, the service trims the value, if empty Configuration
-                       assumes it is NULL.
-        </description>
-    </property>
-    ...
+  oozie.services.ext=org.apache.oozie.service.HadoopAccessorService
+  oozie.service.HadoopAccessorService.kerberos.enabled=false
+  oozie.service.HadoopAccessorService.keytab.file=${user.home}/oozie.keytab
+  oozie.service.HadoopAccessorService.kerberos.principal=${user.name}/localhost@LOCALHOST
 </verbatim>
 
-If for security reasons the database user password cannot be written in the configurationf file. Set the following
-configuration property to =true= (default value is =false= ):
+The above default values are for a Hadoop 0.20.2 distribution without Kerberos authentication.
+
+To use a Hadoop 20 with Security distribution (regardless of using Simple or Kerberos authentication) the following
+property must be set:
 
 <verbatim>
-    ...
-    <property>
-        <name>oozie.service.DataSourcePasswordService.password.from.console</name>
-        <value>true</value>
-        <description>
-            Indicates if the password for the datasource has to be asked interactively in the console starting the
-            servlet container at Oozie start up time.
-        </description>
-    </property>
-    ...
+  oozie.services.ext=org.apache.oozie.service.KerberosHadoopAccessorService
 </verbatim>
 
-Then, the =oozie.service.DataSourceService.jdbc.password= property in the configuration file will be ignored and the
-DB user password will be asked from the shell Oozie server (Tomcat) is started.
+To enable Kerberos authentication, the following property must be set:
+
+<verbatim>
+  oozie.service.HadoopAccessorService.kerberos.enabled=true
+</verbatim>
+
+When using Kerberos authentication, the following properties must be set to the correct values (default values shown):
+
+<verbatim>
+  oozie.service.HadoopAccessorService.keytab.file=${user.home}/oozie.keytab
+  oozie.service.HadoopAccessorService.kerberos.principal=${user.name}/localhost@LOCALHOST
+</verbatim>
+
+*IMPORTANT:* When using Oozie with a Hadoop 20 with Security distribution, the Oozie user in Hadoop must be configured
+as a proxy user.
+
+---+++ User Authorization Configuration
+
+Oozie has a basic authorization model:
+
+   * Users have read access to all jobs
+   * Users have write access to their own jobs
+   * Users have write access to jobs for groups the users belong to
+   * Users have read access to admin operations
+   * Admin users have write access to all jobs
+   * Admin users have write access to admin operations
+
+If security is disabled all users are admin users.
+
+Oozie security is set via the following configuration property (default value shown):
+
+<verbatim>
+  oozie.service.AuthorizationService.security.enabled=false
+</verbatim>
+
+If security is enabled, the admin users are read from the =${OOZIE_HOME}/conf/adminusers.txt= file:
+
+   * One user name per line
+   * Empty lines and lines starting with '#' are ignored
+
+---+++ Database Configuration
+
+The SQL database used by Oozie is configured using the following configuration properties (default values shown):
+
+<verbatim>
+  oozie.db.schema.name=oozie
+  oozie.db.schema.create=true
+  oozie.service.StoreService.jdbc.driver=org.hsqldb.jdbcDriver
+  oozie.service.StoreService.jdbc.url=jdbc:hsqldb:mem:${oozie.db.schema.name}
+  oozie.service.StoreService.jdbc.username=sa
+  oozie.service.StoreService.jdbc.password=
+  oozie.service.StoreService.pool.max.active.conn=10
+</verbatim>
+
+The default values are for HSQLDB, an embedded in-memory database bundled with Oozie.
+
+To use MySQL or Oracle the corresponding JDBC driver JAR must be in the classpath (or added to the Oozie WAR file).
+
+*NOTE:* If the =oozie.db.schema.create= property is set to =true= (default) the Oozie tables will be created
+automatically if they are not found in the database at Oozie start up time. In a production system this option should
+be set to =false= once the databaset tables have been created.
 
 ---+++ Oozie System ID Configuration
-
-Configuration file: =~/oozie/conf/oozie-site.xml=
 
 Oozie has a system ID that is is used to generate the Oozie temporary runtime directory, the workflow job IDs, and the
 workflow action IDs.
 
 Two Oozie systems running with the same ID will not have any conflict but in case of troubleshooting it will be easier
-to identify resources created/used by the different Oozie systems if they have different system IDs.
-
-The default value for the Oozie system ID is:
+to identify resources created/used by the different Oozie systems if they have different system IDs (default value
+shown):
 
 <verbatim>
-    ...
-    <property>
-        <name>oozie.system.id</name>
-        <value>oozie-${user.name}</value>
-        <description>
-            The Oozie system ID.
-        </description>
-    </property>
-    ...
+  oozie.system.id=oozie-${user.name}
 </verbatim>
 
 ---+++ Oozie URL Configuration
 
 Oozie needs to know its public base URL <code>SCHEME ://HOST:PORT/CONTEXT</code>. This base URL is used to
-create callback URLs for actions and the console URL for Oozie workflow jobs. As Oozie could be running behind a load
-balancer or dynamic DNS it is important that this property is set to the public host name and port number.
+create callback URLs for actions and the console URL for Oozie workflow jobs (default value shown):
 
 <verbatim>
-    ...
-    <property>
-        <name>oozie.base.url</name>
-        <value>http://localhost:8080/oozie</value>
-        <description>
-             Base Oozie URL.
-        </description>
-    </property>
-    ...
+  oozie.base.url=http://localhost:8080/oozie
 </verbatim>
 
----+++ Oozie Security Configuration
+---+++ Fine Tuning an Oozie Server
 
-Configuration files: =~/oozie/conf/oozie-site.xml= and =~/oozie/conf/oozie-log4j.properties=
+Refer to the [[oozie-default.xml][oozie-default.xml.txt]] for details.
 
-Oozie Security is explained in [[AG_Security][Oozie Security]].
+---++ Starting and Stopping Oozie
 
-To enable security set the following property:
+Use the standard Tomcat commands to start and stop Oozie.
 
-<verbatim>
-    ...
-    <property>
-        <name>oozie.service.AuthorizationService.security.enabled</name>
-        <value>true</value>
-        <description>
-            Specifies whether security is to be disabled while running Ooozie.
-        </description>
-    </property>
-    ...
-</verbatim>
+---++ Oozie Command Line Installation
 
-Note that by default this property is disabled.
+Copy and expand the =oozie-client= TAR.GZ file bundled with the distribution. Add the =bin/= directory to the =PATH=.
 
-Add to the =~/oozie/conf/adminusers.txt= file all the users that will have admin privileges in Oozie. One user name per
-line. Empty lines and lines starting with '#' are ignored.
-
----+++ Oozie Logging Configuration
-
-Configuration file: =~/oozie/conf/oozie-log4j.properties=
-
-Oozie logs to different log files, this is explained in [[AG_Logging][Oozie Logging]].
-
-Set the desired Logging levels to the different logger categories.
-
-*IMPORTANT:* The logger category =oozie= must use the =DailyRollingFileAppender= appender and it must be configured
-for daily or hourly (default and recommended) rolling.
-
----++ Oozie Database Creation
-
-Oozie server can be started with an option to create the Oozie database if it does not exist.
-
-This is done by starting Oozie server (Tomcat) with the Java System property <code>oozie.db.schema.create=true</code>.
-
-This property can also be set in Oozie configuration file.
-
-<verbatim>
-    ...
-    <property>
-        <name>oozie.db.schema.create</name>
-        <value>false</value>
-        <description>
-            Creates Oozie DB.
-            If set to true, it creates the DB schema if it does not exist. If the DB schema exists is a NOP.
-            If set to false, it does not create the DB schema. If the DB schema does not exist it fails start up.
-        </description>
-    </property>
-    ...
-</verbatim>
-
-However, in a production system, it is recommended to disable automatic DB creation not to miss a database lost.
-
-If automatic DB creation is disabled, the steps to create it are:
-
-<verbatim>
-$ export CATALINA_OPTS="-Doozie.config.dir=/home/<OOZIE_USER>/oozie/conf -Doozie.db.schema.create=true"
-$ catalina.sh run
-</verbatim>
-
-*IMPORTANT:* Do not start Tomcat with the =start= command. Tomcat must be started with the =run= command if the
-database password is configured to be asked on the console. After the database password is set, Tomcat will go on
-background mode itself.
-
-*IMPORTANT:* The "-Doozie.config.dir=" Java system property must be set to the Oozie configuration directory, the
- =~/oozie/conf/= directory for the <code><OOZIE_USER></code>.
-
-Check the Oozie log file =oozie.log= to ensure Oozie started successfully and the database was created.
-
-Stop Tomcat from another terminal using the command:
-
-<verbatim>
-$ catalina.sh stop
-</verbatim>
-
----++ Normal Oozie System Startup
-
-Follow the instructions at [[AG_StartStop][Oozie Start and Stop]].
+Refer to the [[DG_CommandLineTool][Command Line Interface Utilities]] document for a a full reference of the =oozie=
+command line tool.
 
 [[index][::Go back to Oozie Documentation Index::]]
 

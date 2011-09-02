@@ -1,19 +1,16 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.service;
 
@@ -25,64 +22,61 @@ import java.io.FileOutputStream;
 
 public class TestConfigurationService extends XTestCase {
 
-    public void testOriginalDefault() throws Exception {
+    private void prepareOozieConfDir(String oozieSite) throws Exception {
+        prepareOozieConfDir(oozieSite, ConfigurationService.SITE_CONFIG_FILE);
+    }
+
+    private void prepareOozieConfDir(String oozieSite, String alternateSiteFile) throws Exception {
+        if (!alternateSiteFile.equals(ConfigurationService.SITE_CONFIG_FILE)) {
+            setSystemProperty(ConfigurationService.OOZIE_CONFIG_FILE_ENV, alternateSiteFile);
+        }
+        File siteFile = new File(getTestCaseConfDir(), alternateSiteFile);
+        IOUtils.copyStream(IOUtils.getResourceAsStream(oozieSite, -1),
+                           new FileOutputStream(siteFile));
+    }
+
+    public void testValueFromDefault() throws Exception {
+        prepareOozieConfDir("oozie-site1.xml");
         ConfigurationService cl = new ConfigurationService();
         cl.init(null);
-        assertNotNull(cl.getConf().get("oozie.systemmode"));
+        assertEquals("oozie-" + System.getProperty("user.name"), cl.getConf().get("oozie.system.id"));
+        assertNull(cl.getConf().get("oozie.dummy"));
         cl.destroy();
     }
 
-    public void testDefault() throws Exception {
+    public void testMissingSite() throws Exception {
+        prepareOozieConfDir("oozie-site2.xml");
+        setSystemProperty(ConfigurationService.OOZIE_CONFIG_FILE_ENV, "oozie-site-missing.xml");
         ConfigurationService cl = new ConfigurationService();
-        ConfigurationService.testingDefaultFile = true;
         cl.init(null);
-        assertEquals("DEFAULT", cl.getConf().get("oozie.dummy"));
+        assertEquals("oozie-" + System.getProperty("user.name"), cl.getConf().get("oozie.system.id"));
+        assertNull(cl.getConf().get("oozie.dummy"));
         cl.destroy();
     }
 
-    public void testSiteFromClasspath() throws Exception {
-        setSystemProperty(ConfigurationService.CONFIG_FILE, "oozie-site1.xml");
+    public void testValueFromSite() throws Exception {
+        prepareOozieConfDir("oozie-site2.xml");
         ConfigurationService cl = new ConfigurationService();
-        ConfigurationService.testingDefaultFile = true;
         cl.init(null);
-        assertEquals("SITE1", cl.getConf().get("oozie.dummy"));
-        cl.destroy();
-    }
-
-    public void testSiteFromDir() throws Exception {
-        String dir = getTestCaseDir();
-        IOUtils.copyStream(IOUtils.getResourceAsStream("test-oozie-log4j.properties", -1),
-                           new FileOutputStream(new File(dir, "test-oozie-log4j.properties")));
-        setSystemProperty(ConfigurationService.CONFIG_FILE, "oozie-site.xml");
-        IOUtils.copyStream(IOUtils.getResourceAsStream("oozie-site2.xml", -1),
-                           new FileOutputStream(new File(dir, "oozie-site.xml")));
-        setSystemProperty(ConfigurationService.CONFIG_PATH, dir);
-        ConfigurationService cl = new ConfigurationService();
-        ConfigurationService.testingDefaultFile = true;
-        cl.init(null);
+        assertEquals("SITE1", cl.getConf().get("oozie.system.id"));
         assertEquals("SITE2", cl.getConf().get("oozie.dummy"));
         cl.destroy();
     }
 
-    public void testCustomSiteFromDir() throws Exception {
-        String dir = getTestCaseDir();
-        IOUtils.copyStream(IOUtils.getResourceAsStream("test-oozie-log4j.properties", -1),
-                           new FileOutputStream(new File(dir, "test-oozie-log4j.properties")));
-        IOUtils.copyStream(IOUtils.getResourceAsStream("oozie-site2.xml", -1),
-                           new FileOutputStream(new File(dir, "oozie-site2.xml")));
-        setSystemProperty(ConfigurationService.CONFIG_PATH, dir);
-        setSystemProperty(ConfigurationService.CONFIG_FILE, "oozie-site2.xml");
+    public void testValueFromSiteAlternate() throws Exception {
+        prepareOozieConfDir("oozie-sitealternate.xml", "oozie-alternate.xml");
         ConfigurationService cl = new ConfigurationService();
-        ConfigurationService.testingDefaultFile = true;
         cl.init(null);
-        assertEquals("SITE2", cl.getConf().get("oozie.dummy"));
+        assertEquals("ALTERNATE1", cl.getConf().get("oozie.system.id"));
+        assertEquals("ALTERNATE2", cl.getConf().get("oozie.dummy"));
         cl.destroy();
     }
+
 
     public void testSysPropOverride() throws Exception {
+        prepareOozieConfDir("oozie-site2.xml");
         setSystemProperty("oozie.dummy", "OVERRIDE");
         ConfigurationService cl = new ConfigurationService();
-        ConfigurationService.testingDefaultFile = true;
         cl.init(null);
         assertEquals("OVERRIDE", cl.getConf().get("oozie.dummy"));
         cl.destroy();

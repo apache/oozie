@@ -1,19 +1,16 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.command.coord;
 
@@ -50,7 +47,9 @@ import org.apache.oozie.coord.CoordUtils;
 import org.apache.oozie.coord.CoordinatorJobException;
 import org.apache.oozie.coord.TimeUnit;
 import org.apache.oozie.service.DagXLogInfoService;
+import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.SchemaService;
+import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.HadoopAccessorService;
@@ -91,8 +90,12 @@ public class CoordSubmitCommand extends CoordinatorCommand<String> {
 
     private static final Set<String> DISALLOWED_USER_PROPERTIES = new HashSet<String>();
     private static final Set<String> DISALLOWED_DEFAULT_PROPERTIES = new HashSet<String>();
+    /**
+     * Default timeout for normal jobs, in minutes, after which coordinator input check will timeout
+     */
+    public static final String CONF_DEFAULT_TIMEOUT_NORMAL = Service.CONF_PREFIX + "coord.normal.default.timeout";
 
-    private final XLog log = XLog.getLog(getClass());
+    private XLog log = XLog.getLog(getClass());
     private ELEvaluator evalFreq = null;
     private ELEvaluator evalNofuncs = null;
     private ELEvaluator evalData = null;
@@ -120,13 +123,13 @@ public class CoordSubmitCommand extends CoordinatorCommand<String> {
      * @param authToken : To be used for authentication
      */
     public CoordSubmitCommand(Configuration conf, String authToken) {
-        super("coord_submit", "coord_submit", 0, XLog.STD);
+        super("coord_submit", "coord_submit", 1, XLog.STD);
         this.conf = ParamChecker.notNull(conf, "conf");
         this.authToken = ParamChecker.notEmpty(authToken, "authToken");
     }
 
     public CoordSubmitCommand(boolean dryrun, Configuration conf, String authToken) {
-        super("coord_submit", "coord_submit", 0, XLog.STD, dryrun);
+        super("coord_submit", "coord_submit", 1, XLog.STD, dryrun);
         this.conf = ParamChecker.notNull(conf, "conf");
         this.authToken = ParamChecker.notEmpty(authToken, "authToken");
         this.dryrun = dryrun;
@@ -157,9 +160,9 @@ public class CoordSubmitCommand extends CoordinatorCommand<String> {
             log.debug("jobXml after all validation " + XmlUtils.prettyPrint(eJob).toString());
 
             jobId = storeToDB(eJob, store, coordJob);
-
             // log JOB info for coordinator jobs
             setLogInfo(coordJob);
+            log = XLog.getLog(getClass());
 
             if (!dryrun) {
                 // submit a command to materialize jobs for the next 1 hour (3600 secs)
@@ -277,6 +280,9 @@ public class CoordSubmitCommand extends CoordinatorCommand<String> {
         catch (IOException e) {
             throw new CommandException(ErrorCode.E0702, e.getMessage() + " : Problem reading default config "
                     + configDefault, e);
+        }
+        catch (HadoopAccessorException e) {
+            throw new CommandException(e);
         }
         log.debug("Merged CONF :" + XmlUtils.prettyPrint(conf).toString());
     }
@@ -396,8 +402,9 @@ public class CoordSubmitCommand extends CoordinatorCommand<String> {
         // controls
         val = resolveTagContents("timeout", eAppXml.getChild("controls", eAppXml.getNamespace()), evalNofuncs);
         if (val == "") {
-            val = "-1";
+            val = Services.get().getConf().get(CONF_DEFAULT_TIMEOUT_NORMAL);
         }
+
         ival = ParamChecker.checkInteger(val, "timeout");
         // ParamChecker.checkGEZero(ival, "timeout");
         coordJob.setTimeout(ival);
@@ -780,6 +787,9 @@ public class CoordSubmitCommand extends CoordinatorCommand<String> {
         catch (URISyntaxException ex) {
             log.warn("URISyException :" + ex.getMessage());
             throw new CoordinatorJobException(ErrorCode.E1002, appPath, ex.getMessage(), ex);// TODO:
+        }
+        catch (HadoopAccessorException ex) {
+            throw new CoordinatorJobException(ex);
         }
         catch (Exception ex) {
             log.warn("Exception :", ex);

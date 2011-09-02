@@ -25,7 +25,10 @@ The =oozie= CLI interacts with Oozie via its WS API.
       oozie version : show client version
 
       oozie job <OPTIONS> : job operations
+                -action <arg>       coordinator rerun on action ids (requires -rerun)
+                -change <arg>       change a coordinator job
                 -config <arg>       job configuration file '.xml' or '.properties'
+                -date <arg>         coordinator rerun on action dates (requires -rerun)
                 -definition <arg>   job definition
                 -dryrun             Supported in Oozie-2.0 or later versions ONLY - dryrun or test
                                     run a coordinator job (requires -config) - job is not queued
@@ -34,14 +37,19 @@ The =oozie= CLI interacts with Oozie via its WS API.
                 -len <arg>          number of actions (default TOTAL ACTIONS, requires -info)
                 -localtime          use local time (default GMT)
                 -log <arg>          job log
+                -nocleanup          do not clean up output-events of the coordiantor rerun actions
+                                    (requires -rerun)
                 -offset <arg>       job info offset of actions (default '1', requires -info)
                 -oozie <arg>        Oozie URL
-                -rerun <arg>        rerun a job  (requires -config)
+                -refresh            re-materialize the coordinator rerun actions (requires -rerun)
+                -rerun <arg>        rerun a job  (workflow requires -config, coordinator requires
+                                    -action or -date)
                 -resume <arg>       resume a job
                 -run                run a job    (requires -config)
                 -start <arg>        start a job
                 -submit             submit a job (requires -config)
                 -suspend <arg>      suspend a job
+                -value <arg>        new endtime/concurrency/pausetime value for changing a coordinator job
                 -verbose            verbose mode
 
       oozie jobs <OPTIONS> : jobs status
@@ -56,6 +64,7 @@ The =oozie= CLI interacts with Oozie via its WS API.
 
       oozie admin <OPTIONS> : admin operations
                   -oozie <arg>        Oozie URL
+                  -queuedump          show Oozie server queue elements
                   -status             show the current system status
                   -systemmode <arg>   Supported in Oozie-2.0 or later versions ONLY. Change oozie
                                       system mode [NORMAL|NOWEBSERVICE|SAFEMODE]
@@ -66,6 +75,11 @@ The =oozie= CLI interacts with Oozie via its WS API.
       oozie sla <OPTIONS> : sla operations (Supported in Oozie-2.0 or later)
                 -len <arg>      number of results (default '100')
                 -offset <arg>   start offset (default '0')
+                -oozie <arg>    Oozie URL
+
+      oozie pig <OPTIONS> -X <ARGS> : submit a pig job, everything after '-X' are pass-through parameters to pig
+                -config <arg>   job configuration file '.properties'
+                -file <arg>     Pig script
                 -oozie <arg>    Oozie URL
 </verbatim>
 
@@ -180,6 +194,27 @@ The =kill= option kills a workflow job in =PREP=, =SUSPENDED= or =RUNNING= statu
 
 After the command is executed the job will be in =KILLED= status.
 
+---+++ Changing endtime/concurrency/pausetime of a Coordinator Job
+
+Example:
+
+<verbatim>
+$ oozie job -oozie http://localhost:8080/oozie -change 14-20090525161321-oozie-tucu -value endtime=2011-12-01T05:00Z\;concurrency=100\;2011-10-01T05:00Z
+</verbatim>
+
+The =change= option changes a coordinator job that is not in =KILLED= status.
+
+Valid value names are:
+
+   * endtime: the end time of the coordinator job.
+   * concurrency: the concurrency of the coordinator job.
+   * pausetime: the pause time of the coordinator job.
+
+Repeated value names are not allowed. New end time must not be before job's start time and last action time.
+New concurrency value has to be a valid integer. New pause time must not be before job's start time and last action time and must be before job's end time. Also empty string "" can be used to reset pause time to none.
+
+After the command is executed the job's end time, concurrency or pause time should be changed. If an already-succeeded job changes its end time, its status will become running.
+
 ---+++ Rerunning a Workflow Job
 
 Example:
@@ -202,7 +237,24 @@ After the command is executed the job will be in =RUNNING= status.
 
 Refer to the [[DG_WorkflowReRun][Rerunning Workflow Jobs]] for details on rerun.
 
-* Coordinator is not supporting rerun in current release.
+---+++ Rerunning a Coordinator Action or Multiple Actions
+
+Example:
+
+<verbatim>
+$oozie job -rerun <coord_Job_id> [-nocleanup] [-refresh]
+[-action 1, 3-4, 7-40] (-action or -date is required to rerun.)
+[-date 2009-01-01T01:00Z::2009-05-31T23:59Z, 2009-11-10T01:00Z, 2009-12-31T22:00Z]
+(if neither -action nor -date is given, the exception will be thrown.)
+</verbatim>
+
+The =rerun= option reruns a terminated (=TIMEDOUT=, =SUCCEEDED=, =KILLED=, =FAILED=) coordiantor action when coordiator job
+is not in =FAILED= or =KILLED= state.
+
+After the command is executed the rerun coordiator action will be in =WAITING= status.
+
+Refer to the [[DG_CoordinatorRerun][Rerunning Coordinator Actions]] for details on rerun.
+
 
 ---+++ Checking the Status of a Workflow Job or Coordinator Job or Coordinator Action
 
@@ -414,6 +466,24 @@ Oozie server build version: 2.0.2.1-0.20.1.3092118008--
 
 It returns the Oozie server build version.
 
+---+++ Displaying the queue dump of the Oozie System
+
+* This feature is for administrator debugging purpose
+
+Example:
+
+<verbatim>
+$ oozie admin -oozie http://localhost:8080/oozie -queuedump
+
+[Server Queue Dump]:
+(coord_action_start,1),(coord_action_start,1),(coord_action_start,1)
+(coord_action_ready,1)
+(action.check,2)
+</verbatim>
+
+It returns the Oozie server current queued commands.
+
+
 ---++ Validate Operations
 
 ---+++ Validating a Workflow XML
@@ -461,6 +531,29 @@ The =offset= and =len= option specified the offset and number of sla events to d
 respectively.
 
 The return message is XML format that can be easily consumed by SLA users.
+
+---++ Pig Operations
+
+---+++ Submitting a pig job through HTTP
+
+Example:
+
+<verbatim>
+$ oozie pig -oozie http://localhost:8080/oozie -file pigScriptFile -config job.properties -X -param_file params
+.
+job: 14-20090525161321-oozie-tucu-W
+.
+$cat job.properties
+fs.default.name=hdfs://localhost:9000
+mapreduce.jobtracker.kerberos.principal=ccc
+dfs.namenode.kerberos.principal=ddd
+oozie.libpath=hdfs://localhost:9000/user/oozie/pig/lib/
+</verbatim>
+
+The parameters for the job must be provided in a Java Properties file (.properties). jobtracker, namenode, libpath must be
+specified in this file. pigScriptFile is a local file. All jar files (including pig jar file) and all other files needed by the pig job (e.g., parameter file in above example) need to be uploaded onto HDFS under libpath beforehand. The workflow.xml will be created in Oozie server internally. Users can get the workflow.xml from console or command line(-definition).
+
+The job will be created and run right away.
 
 [[index][::Go back to Oozie Documentation Index::]]
 

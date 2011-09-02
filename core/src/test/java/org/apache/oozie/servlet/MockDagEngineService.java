@@ -1,35 +1,18 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.servlet;
-
-import org.apache.oozie.util.XmlUtils;
-
-import org.apache.hadoop.conf.Configuration;
-import org.apache.oozie.client.WorkflowJob;
-import org.apache.oozie.client.rest.JsonWorkflowAction;
-import org.apache.oozie.client.rest.JsonWorkflowJob;
-import org.apache.oozie.client.rest.RestConstants;
-import org.apache.oozie.DagEngine;
-import org.apache.oozie.DagEngineException;
-import org.apache.oozie.WorkflowsInfo;
-import org.apache.oozie.WorkflowJobBean;
-import org.apache.oozie.ErrorCode;
-import org.apache.oozie.service.DagEngineService;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -38,8 +21,21 @@ import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.DagEngine;
+import org.apache.oozie.DagEngineException;
+import org.apache.oozie.ErrorCode;
+import org.apache.oozie.WorkflowsInfo;
+import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.client.rest.JsonWorkflowAction;
+import org.apache.oozie.client.rest.JsonWorkflowJob;
+import org.apache.oozie.client.rest.RestConstants;
+import org.apache.oozie.service.DagEngineService;
+import org.apache.oozie.util.XmlUtils;
+
 public class MockDagEngineService extends DagEngineService {
-    public static final String JOB_ID = "job-";
+    public static final String JOB_ID = "job-W-";
+    public static final String JOB_ID_END = "-W";
     public static final String ACTION_ID = "action-";
     public static final String EXT_ID = "ext-";
     public static final String WORKFLOW_APP = "<workflow-app/>";
@@ -95,6 +91,20 @@ public class MockDagEngineService extends DagEngineService {
             int idx = workflows.size();
             workflows.add(createDummyWorkflow(idx, XmlUtils.prettyPrint(conf).toString()));
             started.add(startJob);
+            return JOB_ID + idx;
+        }
+
+        @Override
+        public String submitHttpJob(Configuration conf, String jobType) throws DagEngineException {
+            if (jobType.equals("pig")) {
+                did = "submitPig";
+            }
+            else if (jobType.equals("mapreduce")) {
+                did = "submitMR";
+            }
+            int idx = workflows.size();
+            workflows.add(createDummyWorkflow(idx, XmlUtils.prettyPrint(conf).toString()));
+            started.add(true);
             return JOB_ID + idx;
         }
 
@@ -169,7 +179,7 @@ public class MockDagEngineService extends DagEngineService {
         public WorkflowsInfo getJobs(String filter, int start, int len) throws DagEngineException {
             parseFilter(filter);
             did = RestConstants.JOBS_FILTER_PARAM;
-            return new WorkflowsInfo((List<WorkflowJobBean>) (List) workflows, start, len, workflows.size());
+            return new WorkflowsInfo((List) workflows, start, len, workflows.size());
         }
 
         @Override
@@ -181,7 +191,14 @@ public class MockDagEngineService extends DagEngineService {
         private int validateWorkflowIdx(String jobId) throws DagEngineException {
             int idx = -1;
             try {
-                idx = Integer.parseInt(jobId.replace(JOB_ID, ""));
+                if (jobId.endsWith(JOB_ID_END)) {
+                    jobId = jobId.replace(JOB_ID, "");
+                    jobId = jobId.replace(JOB_ID_END, "");
+                }
+                else {
+                    jobId = jobId.replace(JOB_ID, "");
+                }
+                idx = Integer.parseInt(jobId);
             }
             catch (Exception e) {
                 throw new DagEngineException(ErrorCode.ETEST, jobId);

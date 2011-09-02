@@ -1,55 +1,48 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.command.wf;
 
 import java.util.Date;
-import java.io.StringReader;
-import java.io.IOException;
+
+import javax.servlet.jsp.el.ELException;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.oozie.client.WorkflowAction;
-import org.apache.oozie.client.WorkflowJob;
-import org.apache.oozie.client.OozieClient;
-import org.apache.oozie.client.SLAEvent.SlaAppType;
-import org.apache.oozie.client.SLAEvent.Status;
-import org.apache.oozie.WorkflowActionBean;
-import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.FaultInjection;
+import org.apache.oozie.WorkflowActionBean;
+import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.XException;
-import org.apache.oozie.command.CommandException;
-import org.apache.oozie.command.coord.CoordActionUpdateCommand;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
+import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.client.SLAEvent.SlaAppType;
+import org.apache.oozie.client.SLAEvent.Status;
+import org.apache.oozie.command.CommandException;
+import org.apache.oozie.command.coord.CoordActionUpdateCommand;
 import org.apache.oozie.service.ActionService;
+import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.store.WorkflowStore;
-import org.apache.oozie.service.Services;
-import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.util.ELEvaluationException;
-import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.Instrumentation;
+import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.util.db.SLADbOperations;
-import org.apache.oozie.util.XConfiguration;
-
-import javax.servlet.jsp.el.ELException;
 
 public class ActionStartCommand extends ActionCommand<Void> {
     public static final String EL_ERROR = "EL_ERROR";
@@ -66,6 +59,7 @@ public class ActionStartCommand extends ActionCommand<Void> {
         this.id = id;
     }
 
+    @Override
     protected Void call(WorkflowStore store) throws StoreException, CommandException {
         WorkflowJobBean workflow = store.getWorkflow(jobId, false);
         setLogInfo(workflow);
@@ -189,14 +183,14 @@ public class ActionStartCommand extends ActionCommand<Void> {
                         switch (ex.getErrorType()) {
                             case TRANSIENT:
                                 if (!handleTransient(context, executor, WorkflowAction.Status.START_RETRY)) {
-                                    handleNonTransient(context, executor, WorkflowAction.Status.START_MANUAL);
+                                    handleNonTransient(store, context, executor, WorkflowAction.Status.START_MANUAL);
                                     action.setPendingAge(new Date());
                                     action.setRetries(0);
                                     action.setStartTime(null);
                                 }
                                 break;
                             case NON_TRANSIENT:
-                                handleNonTransient(context, executor, WorkflowAction.Status.START_MANUAL);
+                                handleNonTransient(store, context, executor, WorkflowAction.Status.START_MANUAL);
                                 break;
                             case ERROR:
                                 handleError(context, executor, WorkflowAction.Status.ERROR.toString(), true,

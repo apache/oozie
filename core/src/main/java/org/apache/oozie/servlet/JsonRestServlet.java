@@ -1,19 +1,16 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.servlet;
 
@@ -63,6 +60,7 @@ public abstract class JsonRestServlet extends HttpServlet {
     protected static final String AUDIT_HTTP_STATUS_CODE = "audit.http.status.code";
 
     private XLog auditLog;
+    XLog.Info logInfo;
 
     /**
      * This bean defines a query string parameter.
@@ -151,6 +149,7 @@ public abstract class JsonRestServlet extends HttpServlet {
         this.resourcesInfo = Arrays.asList(resourcesInfo);
         auditLog = XLog.getLog("oozieaudit");
         auditLog.setMsgPrefix("");
+        logInfo = new XLog.Info(XLog.Info.get());
     }
 
     /**
@@ -521,4 +520,16 @@ public abstract class JsonRestServlet extends HttpServlet {
         return (userName != null) ? userName : UNDEF;
     }
 
+    /**
+     * Set the log info with the given information.
+     *
+     * @param jobid job ID.
+     * @param actionid action ID.
+     */
+    protected void setLogInfo(String jobid, String actionid) {
+        logInfo.setParameter(DagXLogInfoService.JOB, jobid);
+        logInfo.setParameter(DagXLogInfoService.ACTION, actionid);
+
+        XLog.Info.get().setParameters(logInfo);
+    }
 }

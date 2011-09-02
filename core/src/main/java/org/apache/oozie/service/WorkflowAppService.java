@@ -1,19 +1,16 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.service;
 
@@ -23,10 +20,13 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
 import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.client.XOozieClient;
+import org.apache.oozie.command.CommandException;
 import org.apache.oozie.workflow.WorkflowApp;
 import org.apache.oozie.workflow.WorkflowException;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
+import org.apache.oozie.util.XLog;
 import org.apache.oozie.ErrorCode;
 
 import java.io.IOException;
@@ -43,10 +43,7 @@ import java.util.Map;
  * Service that provides application workflow definition reading from the path and creation of the proto configuration.
  */
 public abstract class WorkflowAppService implements Service {
-
-    public static final String APP_LIB_JAR_PATH_LIST = "oozie.wf.application.jar.paths";
-
-    public static final String APP_LIB_SO_PATH_LIST = "oozie.wf.applcation.so.paths";
+    public static final String APP_LIB_PATH_LIST = "oozie.wf.application.lib";
 
     public static final String HADOOP_UGI = "hadoop.job.ugi";
 
@@ -107,6 +104,9 @@ public abstract class WorkflowAppService implements Service {
         catch (URISyntaxException ex) {
             throw new WorkflowException(ErrorCode.E0711, appPath, ex.getMessage(), ex);
         }
+        catch (HadoopAccessorException ex) {
+            throw new WorkflowException(ex);
+        }
         catch (Exception ex) {
             throw new WorkflowException(ErrorCode.E0710, ex.getMessage(), ex);
         }
@@ -142,10 +142,18 @@ public abstract class WorkflowAppService implements Service {
             FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, group, uri, conf);
 
             Path appPath = new Path(uri.getPath());
-            List<String> jarFilePaths = getLibPaths(fs, appPath, ".jar");
-            List<String> soFilepaths = getLibPaths(fs, appPath, ".so");
-            conf.setStrings(APP_LIB_JAR_PATH_LIST, jarFilePaths.toArray(new String[jarFilePaths.size()]));
-            conf.setStrings(APP_LIB_SO_PATH_LIST, soFilepaths.toArray(new String[soFilepaths.size()]));
+            XLog.getLog(getClass()).debug("jobConf.libPath = " + jobConf.get(XOozieClient.LIBPATH));
+            XLog.getLog(getClass()).debug("jobConf.appPath = " + appPath);
+
+            List<String> filePaths = null;
+            if (jobConf.get(XOozieClient.LIBPATH) != null) { // This is a HTTP submission job;
+                filePaths = getLibFiles(fs, appPath);
+            } else {
+                filePaths = getLibFiles(fs, new Path(appPath + "/lib"));
+            }
+
+            conf.setStrings(APP_LIB_PATH_LIST, filePaths.toArray(new String[filePaths.size()]));
+
             //Add all properties start with 'oozie.'
             for (Map.Entry<String, String> entry : jobConf) {
                 if (entry.getKey().startsWith("oozie.")) {
@@ -157,12 +165,13 @@ public abstract class WorkflowAppService implements Service {
             return conf;
         }
         catch (IOException ex) {
-            throw new WorkflowException(ErrorCode.E0712, jobConf.get(OozieClient.APP_PATH),
-                                        ex.getMessage(), ex);
+            throw new WorkflowException(ErrorCode.E0712, jobConf.get(OozieClient.APP_PATH), ex.getMessage(), ex);
         }
         catch (URISyntaxException ex) {
-            throw new WorkflowException(ErrorCode.E0711, jobConf.get(OozieClient.APP_PATH),
-                                        ex.getMessage(), ex);
+            throw new WorkflowException(ErrorCode.E0711, jobConf.get(OozieClient.APP_PATH), ex.getMessage(), ex);
+        }
+        catch (HadoopAccessorException ex) {
+            throw new WorkflowException(ex);
         }
         catch (Exception ex) {
             throw new WorkflowException(ErrorCode.E0712, jobConf.get(OozieClient.APP_PATH),
@@ -181,52 +190,40 @@ public abstract class WorkflowAppService implements Service {
     public abstract WorkflowApp parseDef(Configuration jobConf, String authToken) throws WorkflowException;
 
     /**
-     * Get library paths for a given extension.
+     * Parse workflow definition.
+     * @param wfXml workflow.
+     * @return workflow application.
+     * @throws WorkflowException thrown if the workflow application could not be parsed.
+     */
+    public abstract WorkflowApp parseDef(String wfXml) throws WorkflowException;
+
+    /**
+     * Get all library paths.
      *
      * @param fs file system object.
-     * @param appPath hdfs application path.
-     * @param extension to be listed.
+     * @param libPath hdfs library path.
      * @return list of paths.
      * @throws IOException thrown if the lib paths could not be obtained.
      */
-    private List<String> getLibPaths(FileSystem fs, Path appPath, String extension) throws IOException {
+    private List<String> getLibFiles(FileSystem fs, Path libPath) throws IOException {
         List<String> libPaths = new ArrayList<String>();
-        FileStatus[] files =
-                fs.listStatus(new Path(appPath + "/lib"), new LibPathFilter(appPath.toUri().getPath(), extension));
+        FileStatus[] files = fs.listStatus(libPath, new NoPathFilter());
+
         for (FileStatus file : files) {
             libPaths.add((String) file.getPath().toUri().getPath().trim());
         }
         return libPaths;
     }
 
-    /**
-     * Filter for listing library paths.
+    /*
+     * Filter class doing no filtering.
+     * We dont need define this class, but seems fs.listStatus() is not working properly without this.
+     * So providing this dummy no filtering Filter class.
      */
-    private class LibPathFilter implements PathFilter {
-        private String extension;
-        private String libPath;
-
-        /**
-         * Creates library paths filter.
-         *
-         * @param appPath workflow application path.
-         * @param extension file extension to be listed.
-         */
-        public LibPathFilter(String appPath, String extension) {
-            this.extension = extension;
-            this.libPath = appPath + "/lib";
-        }
-
-        /**
-         * Check the library path.
-         *
-         * @param path path to be checked
-         * @return true if path has the extension and start with application /lib directory else false
-         */
+    private class NoPathFilter implements PathFilter {
         @Override
         public boolean accept(Path path) {
-            return path.getName().trim().endsWith(extension) && path.toUri().getPath().startsWith(libPath);
+            return true;
         }
     }
-
 }

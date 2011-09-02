@@ -1,24 +1,26 @@
 <?xml version="1.0"?>
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 <!--
-  Licensed to the Apache Software Foundation (ASF) under one
-  or more contributor license agreements.  See the NOTICE file
-  distributed with this work for additional information
-  regarding copyright ownership.  The ASF licenses this file
-  to you under the Apache License, Version 2.0 (the
-  "License"); you may not use this file except in compliance
-  with the License.  You may obtain a copy of the License at
+  Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
 
-      http://www.apache.org/licenses/LICENSE-2.0
+    http://www.apache.org/licenses/LICENSE-2.0
 
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS,
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
-  limitations under the License.
+  limitations under the License. See accompanying LICENSE file.
 -->
 
 <configuration>
+
+    <!-- ************************** VERY IMPORTANT  ************************** -->
+    <!-- This file is in the Oozie configuration directory only for reference. -->
+    <!-- It is not loaded by Oozie, Oozie uses its own privatecopy.            -->
+    <!-- ************************** VERY IMPORTANT  ************************** -->
 
     <!-- Base Oozie URL: <SCHEME>://<HOST>:<PORT>/<CONTEXT> -->
 
@@ -81,11 +83,19 @@
             org.apache.oozie.service.PurgeService,
             org.apache.oozie.service.CoordinatorEngineService,
             org.apache.oozie.service.DagEngineService,
-            org.apache.oozie.service.CoordJobMatLookupTriggerService,
-            org.apache.oozie.service.CoordCheckRunningActionTriggerService
+            org.apache.oozie.service.CoordJobMatLookupTriggerService
         </value>
         <description>
             All services to be created and managed by Oozie Services singleton.
+            Class names must be separated by commas.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.services.ext</name>
+        <value> </value>
+        <description>
+            To add/replace services defined in 'oozie.services' with custom implementations.
             Class names must be separated by commas.
         </description>
     </property>
@@ -213,12 +223,6 @@
     </property>
 
     <property>
-        <name>oozie.service.CallableQueueService.delayed.queue.size</name>
-        <value>1000</value>
-        <description>Max delayed callable queue size</description>
-    </property>
-
-    <property>
         <name>oozie.service.CallableQueueService.threads</name>
         <value>10</value>
         <description>Number of threads used for executing callables</description>
@@ -263,13 +267,20 @@
         </description>
     </property>
 
-	<!-- CoordCheckRunningActionTriggerService -->
-	<property>
-		<name>oozie.service.CoordJobMatLookupTriggerService.check.interval
+    <property>
+		<name>oozie.service.coord.normal.default.timeout
 		</name>
-		<value>300</value>
-		<description> Coordinator check running action trigger command is
-			scheduled at this "interval" (in seconds).</description>
+		<value>120</value>
+		<description>Default timeout for a coordinator action input check (in minutes) for normal job.
+            -1 means infinite timeout</description>
+	</property>
+
+	<property>
+		<name>oozie.service.coord.catchup.default.timeout
+		</name>
+		<value>-1</value>
+		<description>Default timeout for a coordinator action input check (in minutes) for catchup jobs.
+            -1 means infinite timeout</description>
 	</property>
     <!-- ELService -->
     <!--  List of supported groups for ELService -->
@@ -515,7 +526,8 @@
             coord:daysInMonth=org.apache.oozie.coord.CoordELFunctions#ph1_coord_daysInMonth_echo,
             coord:tzOffset=org.apache.oozie.coord.CoordELFunctions#ph1_coord_tzOffset_echo,
             coord:current=org.apache.oozie.coord.CoordELFunctions#ph1_coord_current_echo,
-            coord:latest=org.apache.oozie.coord.CoordELFunctions#ph1_coord_latest_echo
+            coord:latest=org.apache.oozie.coord.CoordELFunctions#ph1_coord_latest_echo,
+            coord:future=org.apache.oozie.coord.CoordELFunctions#ph1_coord_future_echo
         </value>
         <description>
             EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
@@ -560,6 +572,7 @@
             coord:dataIn=org.apache.oozie.coord.CoordELFunctions#ph1_coord_dataIn_echo,
             coord:dataOut=org.apache.oozie.coord.CoordELFunctions#ph1_coord_dataOut_echo,
             coord:nominalTime=org.apache.oozie.coord.CoordELFunctions#ph1_coord_nominalTime_echo_wrap,
+            coord:dateOffset=org.apache.oozie.coord.CoordELFunctions#ph1_coord_dateOffset_echo,
             coord:actionId=org.apache.oozie.coord.CoordELFunctions#ph1_coord_actionId_echo,
             coord:name=org.apache.oozie.coord.CoordELFunctions#ph1_coord_name_echo
         </value>
@@ -650,6 +663,7 @@
             coord:tzOffset=org.apache.oozie.coord.CoordELFunctions#ph2_coord_tzOffset,
             coord:current=org.apache.oozie.coord.CoordELFunctions#ph2_coord_current,
             coord:latest=org.apache.oozie.coord.CoordELFunctions#ph2_coord_latest_echo,
+            coord:future=org.apache.oozie.coord.CoordELFunctions#ph2_coord_future_echo,
             coord:actionId=org.apache.oozie.coord.CoordELFunctions#ph2_coord_actionId,
             coord:name=org.apache.oozie.coord.CoordELFunctions#ph2_coord_name
         </value>
@@ -697,7 +711,8 @@
             coord:daysInMonth=org.apache.oozie.coord.CoordELFunctions#ph2_coord_daysInMonth,
             coord:tzOffset=org.apache.oozie.coord.CoordELFunctions#ph2_coord_tzOffset,
             coord:current=org.apache.oozie.coord.CoordELFunctions#ph2_coord_current_echo,
-            coord:latest=org.apache.oozie.coord.CoordELFunctions#ph2_coord_latest_echo
+            coord:latest=org.apache.oozie.coord.CoordELFunctions#ph2_coord_latest_echo,
+            coord:future=org.apache.oozie.coord.CoordELFunctions#ph2_coord_future_echo
         </value>
         <description>
             EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
@@ -784,9 +799,11 @@
             coord:daysInMonth=org.apache.oozie.coord.CoordELFunctions#ph3_coord_daysInMonth,
             coord:tzOffset=org.apache.oozie.coord.CoordELFunctions#ph3_coord_tzOffset,
             coord:latest=org.apache.oozie.coord.CoordELFunctions#ph3_coord_latest,
+            coord:future=org.apache.oozie.coord.CoordELFunctions#ph3_coord_future,
             coord:dataIn=org.apache.oozie.coord.CoordELFunctions#ph3_coord_dataIn,
             coord:dataOut=org.apache.oozie.coord.CoordELFunctions#ph3_coord_dataOut,
             coord:nominalTime=org.apache.oozie.coord.CoordELFunctions#ph3_coord_nominalTime,
+            coord:dateOffset=org.apache.oozie.coord.CoordELFunctions#ph3_coord_dateOffset,
             coord:actionId=org.apache.oozie.coord.CoordELFunctions#ph3_coord_actionId,
             coord:name=org.apache.oozie.coord.CoordELFunctions#ph3_coord_name
         </value>
@@ -844,8 +861,10 @@
         </description>
     </property>
 
+   <!-- StoreService -->
+
     <property>
-        <name>oozie.db.schema.create</name>
+        <name>oozie.service.StoreService.create.db.schema</name>
         <value>true</value>
         <description>
             Creates Oozie DB.
@@ -854,56 +873,6 @@
             If set to false, it does not create the DB schema. If the DB schema does not exist it fails start up.
         </description>
     </property>
-
-    <!-- DataSourceService -->
-<!-- 
-    <property>
-        <name>oozie.service.DataSourceService.jdbc.driver</name>
-        <value>org.hsqldb.jdbcDriver</value>
-        <description>
-            JDBC driver class.
-        </description>
-    </property>
-
-    <property>
-        <name>oozie.service.DataSourceService.jdbc.url</name>
-        <value>jdbc:hsqldb:mem:${oozie.db.schema.name}</value>
-        <description>
-            JDBC URL.
-        </description>
-    </property>
-
-    <property>
-        <name>oozie.service.DataSourceService.jdbc.username</name>
-        <value>sa</value>
-        <description>
-            DB user name.
-        </description>
-    </property>
-
-    <property>
-        <name>oozie.service.DataSourceService.jdbc.password</name>
-        <value> </value>
-        <description>
-            DB user password.
-
-            IMPORTANT: if password is emtpy leave a 1 space string, the service trims the value,
-                       if empty Configuration assumes it is NULL.
-
-            IMPORTANT: if the DataSourcePasswordService is active, it will reset this value with the value given in
-                       the console.
-        </description>
-    </property>
-
-    <property>
-        <name>oozie.service.DataSourceService.pool.max.active.conn</name>
-        <value>10</value>
-        <description>
-             Max number of connections.
-        </description>
-    </property>
--->
-   <!-- StoreService -->
 
     <property>
         <name>oozie.service.StoreService.jdbc.driver</name>
@@ -915,7 +884,7 @@
 
     <property>
         <name>oozie.service.StoreService.jdbc.url</name>
-        <value>jdbc:hsqldb:mem:${oozie.db.schema.name}</value>
+        <value>jdbc:hsqldb:mem:${oozie.db.schema.name};create=true</value>
         <description>
             JDBC URL.
         </description>
@@ -1151,6 +1120,22 @@
         <value>${user.name}/localhost@LOCALHOST</value>
         <description>
             Kerberos principal for Oozie service.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.HadoopAccessorService.jobTracker.whitelist</name>
+        <value> </value>
+        <description>
+            Whitelisted job tracker for Oozie service.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.HadoopAccessorService.nameNode.whitelist</name>
+        <value> </value>
+        <description>
+            Whitelisted job tracker for Oozie service.
         </description>
     </property>
 

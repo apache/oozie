@@ -1,34 +1,37 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie;
 
 import org.apache.oozie.util.XLog;
 
 public enum ErrorCode {
+    E0000(XLog.STD, "OOZIE_HOME environment variable not defined"),
     E0001(XLog.OPS, "Could not create runtime directory, {0}"),
     E0002(XLog.STD, "System is in safe mode"),
+    E0003(XLog.OPS, "Oozie home directory must be an absolute path [{0}]"),
+    E0004(XLog.OPS, "Oozie home directory does not exist [{0}]"),
 
     E0010(XLog.OPS, "Could not initialize log service, {0}"),
+    E0011(XLog.OPS, "Log4j file must be a file name [{0}]"),
+    E0012(XLog.OPS, "Log4j file must be a '.properties' file [{0}]"),
+    E0013(XLog.OPS, "Log4j file [{0}] not found in configuration dir [{1}] neither in classpath"),
 
-    E0020(XLog.OPS, "Configuration directory must be an absolute path [{0}]"),
+    E0020(XLog.OPS, "Environment variable {0} not defined"),
     E0022(XLog.OPS, "Configuration file must be a file name [{0}]"),
-    E0023(XLog.OPS, "Default configuration file not found in classpath [{0}]"),
-    E0024(XLog.OPS, "Configuration file could not be read [{0}], {1}"),
+    E0023(XLog.OPS, "Default configuration file [{0}] not found in classpath"),
+    E0024(XLog.OPS, "Oozie configuration directory does not exist [{0}]"),
     E0025(XLog.OPS, "Configuration service internal error, it should never happen, {0}"),
     E0026(XLog.OPS, "Missing required configuration property [{0}]"),
 
@@ -84,6 +87,8 @@ public enum ErrorCode {
     E0605(XLog.STD, "Action does not exist [{0}]"),
     E0606(XLog.STD, "Could not get lock [{0}]"),
     E0607(XLog.OPS, "Other error in operation [{0}], {1}"),
+    E0608(XLog.OPS, "JDBC setup error [{0}], {1}"),
+    E0609(XLog.OPS, "Missing [{0}] ORM file [{1}]"),
 
     E0700(XLog.STD, "XML error, {0}"),
     E0701(XLog.STD, "XML schema error, {0}"),
@@ -121,6 +126,10 @@ public enum ErrorCode {
     E0807(XLog.STD, "Some skip actions were not executed [{0}]"),
     E0808(XLog.STD, "Disallowed user property [{0}]"),
 
+    E0900(XLog.OPS, "Jobtracker [{0}] not allowed, not in Oozie's whitelist"),
+    E0901(XLog.OPS, "Namenode [{0}] not allowed, not in Oozie's whitelist"),
+    E0902(XLog.OPS, "Exception occured: [{0}]"),
+
     E1001(XLog.STD, "Could not read the coordinator job definition, {0}"),
     E1002(XLog.STD, "Invalid coordinator application URI [{0}], {1}"),
     E1003(XLog.STD, "Invalid coordinator application attributes [{0}], {1}"),
@@ -134,6 +143,11 @@ public enum ErrorCode {
     E1011(XLog.STD, "Cannot update coordinator job [{0}], {1}"),
     E1012(XLog.STD, "Coord Job Materialization Error: {0}"),
     E1013(XLog.STD, "Coord Job Recovery Error: {0}"),
+    E1014(XLog.STD, "Coord job change command not supported"),
+    E1015(XLog.STD, "Invalid coordinator job change value [{0}], {1}"),
+    E1016(XLog.STD, "Cannot change a killed coordinator job"),
+    E1017(XLog.STD, "Cannot change a workflow job"),
+    E1018(XLog.STD, "Coord Job Rerun Error: {0}"),
 
     ETEST(XLog.STD, "THIS SHOULD HAPPEN ONLY IN TESTING, invalid job id [{0}]"),;
 

@@ -1,21 +1,25 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.servlet;
+
+import java.io.IOException;
+import java.util.Arrays;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
@@ -24,15 +28,7 @@ import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.util.XConfiguration;
-import org.apache.oozie.util.XLog;
-import org.apache.oozie.util.XmlUtils;
 import org.json.simple.JSONObject;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.Arrays;
 
 public abstract class BaseJobsServlet extends JsonRestServlet {
 
@@ -47,7 +43,7 @@ public abstract class BaseJobsServlet extends JsonRestServlet {
                         RestConstants.JOBS_FILTER_PARAM, String.class, false,
                         Arrays.asList("GET")),
                 new JsonRestServlet.ParameterInfo(RestConstants.JOBTYPE_PARAM,
-                                                  String.class, false, Arrays.asList("GET")),
+                                                  String.class, false, Arrays.asList("GET", "POST")),
                 new JsonRestServlet.ParameterInfo(RestConstants.OFFSET_PARAM,
                                                   String.class, false, Arrays.asList("GET")),
                 new JsonRestServlet.ParameterInfo(RestConstants.LEN_PARAM,
@@ -65,16 +61,17 @@ public abstract class BaseJobsServlet extends JsonRestServlet {
     /**
      * Create a job.
      */
+    @Override
     @SuppressWarnings("unchecked")
     protected void doPost(HttpServletRequest request,
-                          HttpServletResponse response) throws ServletException, IOException {
+            HttpServletResponse response) throws ServletException, IOException {
         String authTok = getAuthToken(request);
         /*
-       * Enumeration p = request.getAttributeNames();
-       * for(;p.hasMoreElements();){ String key = (String)p.nextElement();
-       * XLog.getLog(getClass()).warn(" key "+ key + " val "+ (String)
-       * request.getAttribute(key)); }
-       */
+         * Enumeration p = request.getAttributeNames();
+         * for(;p.hasMoreElements();){ String key = (String)p.nextElement();
+         * XLog.getLog(getClass()).warn(" key "+ key + " val "+ (String)
+         * request.getAttribute(key)); }
+         */
         validateContentType(request, RestConstants.XML_CONTENT_TYPE);
 
         request.setAttribute(AUDIT_OPERATION, request
@@ -90,17 +87,17 @@ public abstract class BaseJobsServlet extends JsonRestServlet {
         JSONObject json = submitJob(request, conf);
         startCron();
         sendJsonResponse(response, HttpServletResponse.SC_CREATED, json);
-
     }
 
     /**
      * Return information about jobs.
      */
+    @Override
     @SuppressWarnings("unchecked")
     public void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+    throws ServletException, IOException {
         String externalId = request
-                .getParameter(RestConstants.JOBS_EXTERNAL_ID_PARAM);
+        .getParameter(RestConstants.JOBS_EXTERNAL_ID_PARAM);
         if (externalId != null) {
             stopCron();
             JSONObject json = getJobIdForExternalId(request, externalId);
@@ -123,12 +120,12 @@ public abstract class BaseJobsServlet extends JsonRestServlet {
      *
      * @param request
      * @param conf
-     * @return
+     * @return JSONObject of job id
      * @throws XServletException
-     * @throws IOException TODO
+     * @throws IOException
      */
     abstract JSONObject submitJob(HttpServletRequest request, Configuration conf)
-            throws XServletException, IOException;
+    throws XServletException, IOException;
 
     /**
      * abstract method to get a job from external ID
@@ -137,38 +134,38 @@ public abstract class BaseJobsServlet extends JsonRestServlet {
      * @param externalId
      * @return JSONObject for the requested job
      * @throws XServletException
-     * @throws IOException TODO
+     * @throws IOException
      */
     abstract JSONObject getJobIdForExternalId(HttpServletRequest request,
-                                              String externalId) throws XServletException, IOException;
+            String externalId) throws XServletException, IOException;
 
     /**
      * abstract method to get a list of workflow jobs
      *
      * @param request
      * @param conf
-     * @return
+     * @return JSONObject of the requested jobs
      * @throws XServletException
-     * @throws IOException TODO
+     * @throws IOException
      */
     abstract JSONObject getJobs(HttpServletRequest request)
-            throws XServletException, IOException;
+    throws XServletException, IOException;
 
     static void validateJobConfiguration(Configuration conf) throws XServletException {
         if (conf.get(OozieClient.USER_NAME) == null) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0401,
-                                        OozieClient.USER_NAME);
+                    OozieClient.USER_NAME);
         }
 
         //TODO: it should use KerberosHadoopAccessorService.KERBEROS_AUTH_ENABLED once 20.1 is not used anymore
         if (Services.get().getConf().getBoolean("oozie.service.HadoopAccessorService.kerberos.enabled", false)) {
             if (conf.get(WorkflowAppService.HADOOP_JT_KERBEROS_NAME) == null) {
                 throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0401,
-                                            WorkflowAppService.HADOOP_JT_KERBEROS_NAME);
+                        WorkflowAppService.HADOOP_JT_KERBEROS_NAME);
             }
             if (conf.get(WorkflowAppService.HADOOP_NN_KERBEROS_NAME) == null) {
                 throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0401,
-                                            WorkflowAppService.HADOOP_NN_KERBEROS_NAME);
+                        WorkflowAppService.HADOOP_NN_KERBEROS_NAME);
             }
         }
         else {

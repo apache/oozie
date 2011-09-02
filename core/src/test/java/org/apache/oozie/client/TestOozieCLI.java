@@ -1,38 +1,36 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.client;
-
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
-import org.apache.oozie.client.rest.RestConstants;
-import org.apache.oozie.servlet.DagServletTestCase;
-import org.apache.oozie.servlet.JobServlet;
-import org.apache.oozie.servlet.JobsServlet;
-import org.apache.oozie.servlet.MockDagEngineService;
-import org.apache.oozie.util.XConfiguration;
-import org.apache.oozie.servlet.V1AdminServlet;
-import org.apache.oozie.cli.OozieCLI;
 
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.io.StringReader;
 import java.util.Properties;
 import java.util.concurrent.Callable;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.oozie.cli.OozieCLI;
+import org.apache.oozie.client.rest.RestConstants;
+import org.apache.oozie.servlet.DagServletTestCase;
+import org.apache.oozie.servlet.JobServlet;
+import org.apache.oozie.servlet.JobsServlet;
+import org.apache.oozie.servlet.MockCoordinatorEngineService;
+import org.apache.oozie.servlet.MockDagEngineService;
+import org.apache.oozie.servlet.V1AdminServlet;
+import org.apache.oozie.util.XConfiguration;
 
 //hardcoding options instead using constants on purpose, to detect changes to option names if any and correct docs.
 public class TestOozieCLI extends DagServletTestCase {
@@ -48,11 +46,14 @@ public class TestOozieCLI extends DagServletTestCase {
     static final String VERSION = "/v" + OozieClient.WS_PROTOCOL_VERSION;
     static final String[] END_POINTS = {"/versions", VERSION + "/jobs", VERSION + "/job/*", VERSION + "/admin/*"};
     static final Class[] SERVLET_CLASSES =
-            {HeaderTestingVersionServlet.class, JobsServlet.class, JobServlet.class, V1AdminServlet.class};
+ { HeaderTestingVersionServlet.class, JobsServlet.class, JobServlet.class,
+            V1AdminServlet.class };
 
+    @Override
     protected void setUp() throws Exception {
         super.setUp();
         MockDagEngineService.reset();
+        MockCoordinatorEngineService.reset();
     }
 
     private String createConfigFile(String appPath) throws Exception {
@@ -232,10 +233,101 @@ public class TestOozieCLI extends DagServletTestCase {
                 getFileSystem().create(new Path(appPath, "workflow.xml")).close();
                 String oozieUrl = getContextURL();
                 String[] args = new String[]{"job", "-oozie", oozieUrl, "-config", createConfigFile(appPath.toString()),
-                        "-rerun", MockDagEngineService.JOB_ID + 1};
+                        "-rerun", MockDagEngineService.JOB_ID + "1"};
                 assertEquals(0, new OozieCLI().run(args));
                 assertEquals(RestConstants.JOB_ACTION_RERUN, MockDagEngineService.did);
                 assertTrue(MockDagEngineService.started.get(1));
+                return null;
+            }
+        });
+    }
+
+    /**
+     * Test: oozie -rerun coord_job_id -action 1
+     *
+     * @throws Exception
+     */
+    public void testCoordReRun1() throws Exception {
+        runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED, new Callable<Void>() {
+            public Void call() throws Exception {
+                Path appPath = new Path(getFsTestCaseDir(), "app");
+                getFileSystem().mkdirs(appPath);
+                getFileSystem().create(new Path(appPath, "coordinator.xml")).close();
+                String oozieUrl = getContextURL();
+                String[] args = new String[] { "job", "-oozie", oozieUrl, "-rerun",
+                        MockCoordinatorEngineService.JOB_ID + "1",
+                        "-action", "1" };
+                assertEquals(0, new OozieCLI().run(args));
+                assertEquals(RestConstants.JOB_COORD_ACTION_RERUN, MockCoordinatorEngineService.did);
+                assertTrue(MockCoordinatorEngineService.started.get(1));
+                return null;
+            }
+        });
+    }
+
+    /**
+     * Test: oozie -rerun coord_job_id -date 2009-12-15T01:00Z::2009-12-16T01:00Z
+     *
+     * @throws Exception
+     */
+    public void testCoordReRun2() throws Exception {
+        runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED, new Callable<Void>() {
+            public Void call() throws Exception {
+                Path appPath = new Path(getFsTestCaseDir(), "app");
+                getFileSystem().mkdirs(appPath);
+                getFileSystem().create(new Path(appPath, "coordinator.xml")).close();
+                String oozieUrl = getContextURL();
+                String[] args = new String[] { "job", "-oozie", oozieUrl, "-rerun",
+                        MockCoordinatorEngineService.JOB_ID + "1",
+                        "-date", "2009-12-15T01:00Z::2009-12-16T01:00Z" };
+                assertEquals(0, new OozieCLI().run(args));
+                assertEquals(RestConstants.JOB_COORD_ACTION_RERUN, MockCoordinatorEngineService.did);
+                assertTrue(MockCoordinatorEngineService.started.get(1));
+                return null;
+            }
+        });
+    }
+
+    /**
+     * Negative Test: oozie -rerun coord_job_id -date 2009-12-15T01:00Z -action 1
+     *
+     * @throws Exception
+     */
+    public void testCoordReRunNeg1() throws Exception {
+        runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED, new Callable<Void>() {
+            public Void call() throws Exception {
+                Path appPath = new Path(getFsTestCaseDir(), "app");
+                getFileSystem().mkdirs(appPath);
+                getFileSystem().create(new Path(appPath, "coordinator.xml")).close();
+                String oozieUrl = getContextURL();
+                String[] args = new String[] { "job", "-oozie", oozieUrl, "-rerun",
+                        MockCoordinatorEngineService.JOB_ID + "1",
+                        "-date", "2009-12-15T01:00Z", "-action", "1" };
+                assertEquals(-1, new OozieCLI().run(args));
+                assertNull(MockCoordinatorEngineService.did);
+                assertFalse(MockCoordinatorEngineService.started.get(1));
+                return null;
+            }
+        });
+    }
+
+    /**
+     * Negative Test: oozie -rerun coord_job_id
+     *
+     * @throws Exception
+     */
+    public void testCoordReRunNeg2() throws Exception {
+        runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED, new Callable<Void>() {
+            public Void call() throws Exception {
+                Path appPath = new Path(getFsTestCaseDir(), "app");
+                getFileSystem().mkdirs(appPath);
+                getFileSystem().create(new Path(appPath, "coordinator.xml")).close();
+                String oozieUrl = getContextURL();
+                String[] args = new String[] { "job", "-oozie", oozieUrl, "-rerun",
+                        MockCoordinatorEngineService.JOB_ID + "1" };
+                assertEquals(-1, new OozieCLI().run(args));
+                assertNull(MockCoordinatorEngineService.did);
+                assertFalse(MockCoordinatorEngineService.started.get(1));
                 return null;
             }
         });
@@ -279,6 +371,9 @@ public class TestOozieCLI extends DagServletTestCase {
                         "name=x"};
                 assertEquals(0, new OozieCLI().run(args));
                 assertEquals(RestConstants.JOBS_FILTER_PARAM, MockDagEngineService.did);
+                args = new String[]{"jobs", "-jobtype", "coord",  "-filter", "status=FAILED", "-oozie", oozieUrl};
+                assertEquals(0, new OozieCLI().run(args));
+                assertEquals(RestConstants.JOBS_FILTER_PARAM, MockDagEngineService.did);                
                 return null;
             }
         });
@@ -411,6 +506,20 @@ public class TestOozieCLI extends DagServletTestCase {
                 XConfiguration conf = new XConfiguration(new StringReader(confStr));
                 assertNotNull(conf.get(OozieClient.RERUN_SKIP_NODES));
                 assertEquals("node", conf.get(OozieClient.RERUN_SKIP_NODES));
+                return null;
+            }
+        });
+    }
+
+    public void testAdminQueueDump() throws Exception {
+        runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED, new Callable<Void>() {
+            public Void call() throws Exception {
+                HeaderTestingVersionServlet.OOZIE_HEADERS.clear();
+
+                String oozieUrl = getContextURL();
+                String[] args = new String[]{"admin", "-queuedump", "-oozie", oozieUrl};
+                assertEquals(0, new OozieCLI().run(args));
+
                 return null;
             }
         });

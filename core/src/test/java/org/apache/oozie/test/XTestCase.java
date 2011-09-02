@@ -1,71 +1,78 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.test;
 
-import junit.framework.TestCase;
-import org.apache.commons.logging.LogFactory;
-import org.apache.oozie.CoordinatorActionBean;
-import org.apache.oozie.CoordinatorJobBean;
-import org.apache.oozie.WorkflowActionBean;
-import org.apache.oozie.WorkflowJobBean;
-import org.apache.oozie.util.ParamChecker;
-import org.apache.oozie.util.XLog;
-import org.apache.oozie.util.db.Schema.Table;
-import org.apache.oozie.service.StoreService;
-import org.apache.oozie.service.DBLiteWorkflowStoreService;
-import org.apache.oozie.service.WorkflowAppService;
-import org.apache.oozie.store.CoordinatorStore;
-import org.apache.oozie.store.OozieSchema;
-import org.apache.oozie.store.StoreException;
-import org.apache.oozie.store.OozieSchema.OozieTable;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.MiniMRCluster;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.permission.FsPermission;
-import org.apache.hadoop.hdfs.MiniDFSCluster;
-
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.DriverManager;
-import java.sql.Statement;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
+import junit.framework.TestCase;
+
+import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.permission.FsPermission;
+import org.apache.hadoop.hdfs.MiniDFSCluster;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.MiniMRCluster;
+import org.apache.oozie.CoordinatorActionBean;
+import org.apache.oozie.CoordinatorJobBean;
+import org.apache.oozie.WorkflowActionBean;
+import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.service.Services;
+import org.apache.oozie.service.StoreService;
+import org.apache.oozie.service.WorkflowAppService;
+import org.apache.oozie.store.CoordinatorStore;
+import org.apache.oozie.store.StoreException;
+import org.apache.oozie.util.IOUtils;
+import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.util.XLog;
+
 /**
- * Base JUnit <code>TestCase</code> subclass used by all Oozie testcases. <p/> This class provides the following
- * functionality: <p/> <ul> <li>Creates a unique test working directory per test method.</li> <li>Resets changed system
- * properties to their original values after every test.</li> <li>WaitFor that supports a predicate,to wait for a
- * condition. It has timeout.</li> </ul> <p/> The base directory for the test working directory must be specified via
- * the system property <code>oozie.test.dir</code>, there default value is '/tmp'. <p/> From within testcases, system
- * properties must be changed using the {@link #setSystemProperty} method.
+ * Base JUnit <code>TestCase</code> subclass used by all Oozie testcases.
+ * <p/>
+ * This class provides the following functionality:
+ * <p/>
+ * <ul>
+ *   <li>Creates a unique test working directory per test method.</li>
+ *   <li>Resets changed system properties to their original values after every test.</li>
+ *   <li>WaitFor that supports a predicate,to wait for a condition. It has timeout.</li>
+ * </ul>
+ * <p/>
+ * The base directory for the test working directory must be specified via
+ * the system property <code>oozie.test.dir</code>, there default value is '/tmp'.
+ * <p/>
+ * From within testcases, system properties must be changed using the {@link #setSystemProperty} method.
  */
 public abstract class XTestCase extends TestCase {
     private Map<String, String> sysProps;
     private String testCaseDir;
+    private String testCaseConfDir;
     private String hadoopVersion;
     protected XLog log = new XLog(LogFactory.getLog(getClass()));
 
@@ -99,6 +106,7 @@ public abstract class XTestCase extends TestCase {
      *
      * @throws Exception if the test workflow working directory could not be created.
      */
+    @Override
     protected void setUp() throws Exception {
         super.setUp();
         String baseDir = System.getProperty(OOZIE_TEST_DIR, "/tmp");
@@ -117,6 +125,33 @@ public abstract class XTestCase extends TestCase {
         }
         sysProps = new HashMap<String, String>();
         testCaseDir = createTestCaseDir(this, true);
+
+        //setting up Oozie HOME and Oozie conf directory
+        setSystemProperty(Services.OOZIE_HOME_ENV, testCaseDir);
+        testCaseConfDir = createTestCaseSubDir("conf");
+
+        //setting up custom Oozie site for testing if avail
+        String customOozieSite = System.getProperty("oozie.test.config.file", "");
+        if (!customOozieSite.equals("")) {
+            if (!customOozieSite.startsWith("/")) {
+                System.err.println();
+                System.err.println(XLog.format(
+                        "Custom configuration file must be an absolute path [{0}]", customOozieSite));
+                System.err.println();
+                System.exit(-1);
+            }
+            File source = new File(customOozieSite);
+            if (!source.exists()) {
+                System.err.println();
+                System.err.println(XLog.format(
+                        "Custom configuration file for testing does no exist [{0}]", customOozieSite));
+                System.err.println();
+                System.exit(-1);
+            }
+            File target = new File(testCaseConfDir, "oozie-site.xml");
+            IOUtils.copyStream(new FileInputStream(source), new FileOutputStream(target));
+        }
+
         if (System.getProperty("oozielocal.log") == null) {
             setSystemProperty("oozielocal.log", "/tmp/oozielocal.log");
         }
@@ -126,11 +161,15 @@ public abstract class XTestCase extends TestCase {
         if (System.getProperty("oozie.test.hadoop.minicluster", "true").equals("true")) {
             setUpEmbeddedHadoop();
         }
+        if (System.getProperty("hadoop20", "false").equals("false")) {
+            System.setProperty("oozie.services.ext", "org.apache.oozie.service.KerberosHadoopAccessorService");
+        }
     }
 
     /**
      * Clean up the test case.
      */
+    @Override
     protected void tearDown() throws Exception {
         resetSystemProperties();
         sysProps = null;
@@ -146,6 +185,15 @@ public abstract class XTestCase extends TestCase {
      */
     protected String getTestCaseDir() {
         return testCaseDir;
+    }
+
+    /**
+     * Return the Oozie configuration directory for the testcase.
+     *
+     * @return the Oozie configuration directory for the testcase.
+     */
+    protected String getTestCaseConfDir() {
+        return testCaseConfDir;
     }
 
     public String getHadoopVersion() {
@@ -170,7 +218,7 @@ public abstract class XTestCase extends TestCase {
      * @return the user to use in testcases.
      */
     protected String getTestGroup() {
-        return "testg";
+      return "testg";
     }
 
     /**
@@ -189,7 +237,7 @@ public abstract class XTestCase extends TestCase {
         return dir.getAbsolutePath();
     }
 
-    private void delete(File file) throws IOException {
+    protected void delete(File file) throws IOException {
         ParamChecker.notNull(file, "file");
         if (file.getAbsolutePath().length() < 5) {
             throw new RuntimeException(XLog.format("path [{0}] is too short, not deleting", file.getAbsolutePath()));
@@ -219,6 +267,7 @@ public abstract class XTestCase extends TestCase {
      */
     private String createTestCaseDir(TestCase testCase, boolean cleanup) throws Exception {
         String testCaseDir = getTestCaseDirInternal(testCase);
+        System.out.println();
         System.out.println(XLog.format("Setting testcase work dir[{0}]", testCaseDir));
         if (cleanup) {
             delete(new File(testCaseDir));
@@ -378,20 +427,6 @@ public abstract class XTestCase extends TestCase {
         conf.setProperty(WorkflowAppService.HADOOP_NN_KERBEROS_NAME, getNamenodePrincipal());
     }
 
-    private Connection getConnection(Configuration conf) throws SQLException {
-        String driver = conf.get(StoreService.CONF_DRIVER, "org.hsqldb.jdbcDriver");
-        String url = conf.get(StoreService.CONF_URL, "jdbc:hsqldb:mem:testdb");
-        String user = conf.get(StoreService.CONF_USERNAME, "sa");
-        String password = conf.get(StoreService.CONF_PASSWORD, "").trim();
-        try {
-            Class.forName(driver);
-        }
-        catch (ClassNotFoundException ex) {
-            throw new RuntimeException(ex);
-        }
-        return DriverManager.getConnection(url, user, password);
-    }
-
     //TODO Fix this
     /**
      * Clean up database schema
@@ -400,49 +435,25 @@ public abstract class XTestCase extends TestCase {
      * @throws Exception
      */
     protected void cleanUpDB(Configuration conf) throws Exception {
-        String dbName = conf.get(DBLiteWorkflowStoreService.CONF_SCHEMA_NAME);
-        Connection conn = getConnection(conf);
-        Statement st = conn.createStatement();
-        try {
-            st.executeUpdate("DROP SCHEMA " + dbName + " CASCADE");
-        }
-        catch (SQLException ex) {
-            log.error("Failed to drop schema:" + dbName, ex);
-            try {
-                st.executeUpdate("DROP DATABASE " + dbName);
-            }
-            catch (SQLException ex1) {
-                log.error("Failed to drop database:" + dbName, ex1);
-            }
-        }
-        st.close();
-        conn.close();
+//        String dbName = conf.get(DBLiteWorkflowStoreService.CONF_SCHEMA_NAME);
+//        Connection conn = getConnection(conf);
+//        Statement st = conn.createStatement();
+//        try {
+//            st.executeUpdate("DROP SCHEMA " + dbName + " CASCADE");
+//        }
+//        catch (SQLException ex) {
+//            log.error("Failed to drop schema:" + dbName, ex);
+//            try {
+//                st.executeUpdate("DROP DATABASE " + dbName);
+//            }
+//            catch (SQLException ex1) {
+//                log.error("Failed to drop database:" + dbName, ex1);
+//            }
+//        }
+//        st.close();
+//        conn.close();
     }
 
-    /**
-     * Clean up tables
-     *
-     * @param conf
-     * @throws Exception
-     */
-    protected void dropTables(Configuration conf) throws Exception {
-        String schemaName = conf.get(DBLiteWorkflowStoreService.CONF_SCHEMA_NAME, "oozie");
-        OozieSchema.setOozieDbName(schemaName);
-        Connection conn = getConnection(conf);
-        Statement st = conn.createStatement();
-        for (Table table : OozieTable.values()) {
-            String exp = "DROP TABLE " + table.toString();
-            log.debug("Droped Table [{0}]", table);
-            try {
-                st.executeUpdate(exp);
-            }
-            catch (SQLException ex) {
-                log.error("Failed to drop table:" + table, ex);
-            }
-        }
-        st.close();
-        conn.close();
-    }
 
     /**
      * Clean up tables - COORD_JOBS, COORD_ACTIONS
@@ -484,10 +495,10 @@ public abstract class XTestCase extends TestCase {
 
         store.commitTrx();
         store.closeTrx();
-        log.info(wfjSize + " entries in WF_JOBS have removed from DB!");
-        log.info(wfaSize + " entries in WF_ACTIONS have removed from DB!");
-        log.info(cojSize + " entries in COORD_JOBS have removed from DB!");
-        log.info(coaSize + " entries in COORD_ACTIONS have removed from DB!");
+        log.info(wfjSize + " entries in WF_JOBS removed from DB!");
+        log.info(wfaSize + " entries in WF_ACTIONS removed from DB!");
+        log.info(cojSize + " entries in COORD_JOBS removed from DB!");
+        log.info(coaSize + " entries in COORD_ACTIONS removed from DB!");
     }
 
     private static MiniDFSCluster dfsCluster = null;
@@ -526,6 +537,7 @@ public abstract class XTestCase extends TestCase {
             System.setProperty(OOZIE_TEST_JOB_TRACKER, jobConf.get("mapred.job.tracker"));
             System.setProperty(OOZIE_TEST_NAME_NODE, jobConf.get("fs.default.name"));
             Runtime.getRuntime().addShutdownHook(new Thread() {
+                @Override
                 public void run() {
                     try {
                         if (mrCluster != null) {

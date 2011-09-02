@@ -1,39 +1,37 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.service;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
 import org.apache.oozie.util.Instrumentable;
 import org.apache.oozie.util.Instrumentation;
+import org.apache.oozie.util.PriorityDelayQueue;
 import org.apache.oozie.util.XCallable;
 import org.apache.oozie.util.XLog;
-import org.apache.oozie.util.ParamChecker;
-
-import java.util.concurrent.PriorityBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.HashMap;
+import org.apache.oozie.util.PriorityDelayQueue.QueueElement;
 
 
 /**
@@ -56,15 +54,12 @@ public class CallableQueueService implements Service, Instrumentable {
     private static final String INSTR_EXECUTED_COUNTER = "executed";
     private static final String INSTR_FAILED_COUNTER = "failed";
     private static final String INSTR_QUEUED_COUNTER = "queued";
-    private static final String INSTR_DELAYD_QUEUED_COUNTER = "delayed.queued";
     private static final String INSTR_QUEUE_SIZE_SAMPLER = "queue.size";
-    private static final String INSTR_DELAYED_QUEUE_SIZE_SAMPLER = "delayed.queue.size";
     private static final String INSTR_THREADS_ACTIVE_SAMPLER = "threads.active";
 
     public static final String CONF_PREFIX = Service.CONF_PREFIX + "CallableQueueService.";
 
     public static final String CONF_QUEUE_SIZE = CONF_PREFIX + "queue.size";
-    public static final String CONF_DELAYED_QUEUE_SIZE = CONF_PREFIX + "delayed.queue.size";
     public static final String CONF_THREADS = CONF_PREFIX + "threads";
     public static final String CONF_CALLABLE_CONCURRENCY = CONF_PREFIX + "callable.concurrency";
 
@@ -72,49 +67,56 @@ public class CallableQueueService implements Service, Instrumentable {
 
     public static final int SAFE_MODE_DELAY = 60000;
 
-    private Map<String, AtomicInteger> activeCallables;
+    final private Map<String, AtomicInteger> activeCallables = new HashMap<String, AtomicInteger>();
     private int maxCallableConcurrency;
 
-    private synchronized boolean callableBegin(XCallable callable) {
-        AtomicInteger counter = activeCallables.get(callable.getType());
-        if (counter == null) {
-            counter = new AtomicInteger(1);
-            activeCallables.put(callable.getType(), counter);
-            return true;
-        }
-        else {
-            return counter.incrementAndGet() <= maxCallableConcurrency;
+    private boolean callableBegin(XCallable callable) {
+        synchronized (activeCallables) {
+            AtomicInteger counter = activeCallables.get(callable.getType());
+            if (counter == null) {
+                counter = new AtomicInteger(1);
+                activeCallables.put(callable.getType(), counter);
+                return true;
+            }
+            else {
+                int i = counter.incrementAndGet();
+                return i <= maxCallableConcurrency;
+            }
         }
     }
 
-    private synchronized void callableEnd(XCallable callable) {
-        AtomicInteger counter = activeCallables.get(callable.getType());
-        if (counter == null) {
-            throw new IllegalStateException("It should not happen");
-        }
-        else {
-            counter.decrementAndGet();
+    private void callableEnd(XCallable callable) {
+        synchronized (activeCallables) {
+            AtomicInteger counter = activeCallables.get(callable.getType());
+            if (counter == null) {
+                throw new IllegalStateException("It should not happen");
+            }
+            else {
+                int i = counter.decrementAndGet();
+            }
         }
     }
 
     // Callables are wrapped with the this wrapper for execution, for logging and instrumentation.
     // The wrapper implements Runnable and Comparable to be able to work with an executor and a priority queue.
-    class CallableWrapper implements Runnable, Comparable<CallableWrapper> {
-        private XCallable<Void> callable;
+    class CallableWrapper extends PriorityDelayQueue.QueueElement<XCallable<Void>> implements Runnable {
         private Instrumentation.Cron cron;
 
-        public CallableWrapper(XCallable<Void> callable) {
-            this.callable = callable;
+        public CallableWrapper(XCallable<Void> callable, long delay) {
+            super(callable, callable.getPriority(), delay, TimeUnit.MILLISECONDS);
             cron = new Instrumentation.Cron();
             cron.start();
         }
 
         public void run() {
-            if (Services.get().getSystemMode() == SYSTEM_MODE.SAFEMODE) {
-                log.info("CallableWrapper[run] System is in SAFEMODE. Hence no callable run. But requeueing in delayQueue " + queue.size());
-                delayedQueue.put(new DelayedCallableWrapper(callable, SAFE_MODE_DELAY));
+            if(Services.get().getSystemMode() == SYSTEM_MODE.SAFEMODE) {
+                log.info("Oozie is in SAFEMODE, requeuing callable [{0}] with [{1}]ms delay",
+                         getElement().getType(), SAFE_MODE_DELAY);
+                setDelay(SAFE_MODE_DELAY, TimeUnit.MILLISECONDS);
+                queue(this, true);
                 return;
             }
+            XCallable<Void> callable = getElement();
             try {
                 if (callableBegin(callable)) {
                     cron.stop();
@@ -133,13 +135,13 @@ public class CallableQueueService implements Service, Instrumentable {
                     }
                     finally {
                         XLog.Info.get().clear();
-                        callableEnd(callable);
                     }
                 }
                 else {
-                    log.warn("max concurrency for callable type[{0}] exceeded, requeueing with [{1}]ms delay",
+                    log.warn("max concurrency for callable [{0}] exceeded, requeueing with [{1}]ms delay",
                              callable.getType(), CONCURRENCY_DELAY);
-                    queue(callable, CONCURRENCY_DELAY);
+                    setDelay(CONCURRENCY_DELAY, TimeUnit.MILLISECONDS);
+                    queue(this, true);
                     incrCounter(callable.getType() + "#exceeded.concurrency", 1);
                 }
             }
@@ -148,31 +150,29 @@ public class CallableQueueService implements Service, Instrumentable {
             }
         }
 
-        public int compareTo(CallableWrapper callableWrapper) {
-            //priority is descending order
-            int diff = callableWrapper.callable.getPriority() - callable.getPriority();
-            if (diff == 0) {
-                //createdTime is ascending order
-                Long lDiff = callable.getCreatedTime() - callableWrapper.callable.getCreatedTime();
-                diff = (lDiff < Integer.MIN_VALUE) ? Integer.MIN_VALUE : ((lDiff > Integer.MAX_VALUE) ? Integer.MAX_VALUE : lDiff.intValue());
-            }
-            return diff;
+        /**
+         * @return String the queue dump
+         */
+        @Override
+        public String toString() {
+            return "delay=" + getDelay(TimeUnit.MILLISECONDS) + ", elements=" + getElement().toString();
         }
+
     }
 
-    class CompositeCallable<Void> implements XCallable<Void> {
-        private List<XCallable<Void>> callables;
+    class CompositeCallable<T> implements XCallable<T> {
+        private List<XCallable<T>> callables;
         private String name;
         private int priority;
         private long createdTime;
 
-        public CompositeCallable(List<XCallable<Void>> callables) {
-            this.callables = new ArrayList<XCallable<Void>>(callables);
-            priority = Integer.MIN_VALUE;
+        public CompositeCallable(List<? extends XCallable<T>> callables) {
+            this.callables = new ArrayList<XCallable<T>>(callables);
+            priority = 0;
             createdTime = Long.MAX_VALUE;
             StringBuilder sb = new StringBuilder();
             String separator = "[";
-            for (XCallable callable : callables) {
+            for (XCallable<T> callable : callables) {
                 priority = Math.max(priority, callable.getPriority());
                 createdTime = Math.min(createdTime, callable.getCreatedTime());
                 sb.append(separator).append(callable.getName());
@@ -189,7 +189,7 @@ public class CallableQueueService implements Service, Instrumentable {
 
         @Override
         public String getType() {
-            return "#composite#";
+            return "#composite#" + callables.get(0).getType();
         }
 
         @Override
@@ -202,10 +202,10 @@ public class CallableQueueService implements Service, Instrumentable {
             return createdTime;
         }
 
-        public Void call() throws Exception {
+        public T call() throws Exception {
             XLog log = XLog.getLog(getClass());
 
-            for (XCallable callable : callables) {
+            for (XCallable<T> callable : callables) {
                 log.trace("executing callable [{0}]", callable.getName());
                 try {
                     callable.call();
@@ -223,29 +223,27 @@ public class CallableQueueService implements Service, Instrumentable {
             return null;
         }
 
-    }
-
-    // delayed callables are wrapped with the this wrapper for delayed queueing.
-    // The wrapper implements Comparable to be able to work with a priority queue.
-    private static class DelayedCallableWrapper implements Comparable<DelayedCallableWrapper> {
-        private Long executionTime;
-        private XCallable<Void> callable;
-
-        DelayedCallableWrapper(XCallable<Void> callable, long delay) {
-            this.callable = callable;
-            this.executionTime = System.currentTimeMillis() + delay;
-        }
-
-        public int compareTo(DelayedCallableWrapper dc) {
-            return (int) (getExecutionTime() - dc.getExecutionTime());
-        }
-
-        public long getExecutionTime() {
-            return executionTime;
-        }
-
-        public XCallable<Void> getCallable() {
-            return callable;
+        /* (non-Javadoc)
+         * @see java.lang.Object#toString()
+         */
+        @Override
+        public String toString() {
+            if (callables.size() == 0) {
+                return null;
+            }
+            StringBuilder sb = new StringBuilder();
+            int size = callables.size();
+            for (int i = 0; i < size; i++) {
+                XCallable<T> callable = callables.get(i);
+                sb.append("(");
+                sb.append(callable.toString());
+                if (i+1 == size) {
+                    sb.append(")");
+                } else {
+                    sb.append("),");
+                }
+            }
+            return sb.toString();
         }
 
     }
@@ -253,9 +251,7 @@ public class CallableQueueService implements Service, Instrumentable {
     private XLog log = XLog.getLog(getClass());
 
     private int queueSize;
-    private PriorityBlockingQueue<CallableWrapper> queue;
-    private int delayedQueueSize;
-    private PriorityBlockingQueue<DelayedCallableWrapper> delayedQueue;
+    private PriorityDelayQueue<CallableWrapper> queue;
     private AtomicLong delayQueueExecCounter = new AtomicLong(0);
     private ThreadPoolExecutor executor;
     private Instrumentation instrumentation;
@@ -290,42 +286,37 @@ public class CallableQueueService implements Service, Instrumentable {
 
         queueSize = conf.getInt(CONF_QUEUE_SIZE, 1000);
         int threads = conf.getInt(CONF_THREADS, 10);
-        delayedQueueSize = conf.getInt(CONF_DELAYED_QUEUE_SIZE, 1000);
 
-        queue = new PriorityBlockingQueue<CallableWrapper>(queueSize);
-        delayedQueue = new PriorityBlockingQueue<DelayedCallableWrapper>(delayedQueueSize);
-        executor = new ThreadPoolExecutor(threads, threads, 10, TimeUnit.SECONDS, (PriorityBlockingQueue) queue);
-
-        activeCallables = new HashMap<String, AtomicInteger>();
-        maxCallableConcurrency = conf.getInt(CONF_CALLABLE_CONCURRENCY, 3);
-
-        // every 100 milliseconds this runnable polls the delayed queue for commands ready for execution.
-        // while there are commands ready for execution they are removed from the delayed queue and added to the
-        // execution queue.
-        // if the execution queue is full, the delayed command is added back to the delay queue and the loop
-        // is interruted until the next polling time.
-        Runnable delayedQueuePoller = new Runnable() {
-            public void run() {
-                int queued = 0;
-                if (!delayedQueue.isEmpty()) {
-                    while (!delayedQueue.isEmpty() && delayedQueue.peek().getExecutionTime() < System.currentTimeMillis()) {
-                        DelayedCallableWrapper delayed = delayedQueue.poll();
-                        if (!queue(delayed.getCallable())) {
-                            delayedQueue.add(delayed);
-                            break;
-                        }
-                        queued++;
-                    }
-                }
-                if (delayQueueExecCounter.get() % 3000 == 0) {
-                    XLog.getLog(getClass()).debug(
-                            "Total Instances of delayedQueuePoller  " + delayQueueExecCounter + " has queued " + queued
-                                    + " of commands from dealy queue to regular queue");
-                }
-                delayQueueExecCounter.getAndIncrement();
+        queue = new PriorityDelayQueue<CallableWrapper>(3, 1000 * 30, TimeUnit.MILLISECONDS, queueSize) {
+            @Override
+            protected void debug(String msgTemplate, Object... msgArgs) {
+                log.trace(msgTemplate, msgArgs);
             }
         };
-        services.get(SchedulerService.class).schedule(delayedQueuePoller, 0, 100, SchedulerService.Unit.MILLISEC);
+
+        //IMPORTANT: The ThreadPoolExecutor does not always the execute commands out of the queue, there are
+        //certain conditions where commands are pushed directly to a thread.
+        //As we are using a queue with DELAYED semantics (i.e. execute the command in 5 mins) we need to make
+        //sure that the commands are always pushed to the queue.
+        //To achieve this (by looking a the ThreadPoolExecutor.execute() implementation, we are making the pool
+        //minimum size equals to the maximum size (thus threads are keep always running) and we are warming up
+        //all those threads (the for loop that runs dummy runnables).
+        executor = new ThreadPoolExecutor(threads, threads, 10, TimeUnit.SECONDS, (BlockingQueue) queue);
+
+        for (int i = 0; i < threads; i++) {
+            executor.execute(new Runnable() {
+                public void run() {
+                    try {
+                        Thread.sleep(100);
+                    }
+                    catch (InterruptedException ex) {
+                        log.warn("Could not warm up threadpool {0}", ex.getMessage(), ex);
+                    }
+                }
+            });
+        }
+
+        maxCallableConcurrency = conf.getInt(CONF_CALLABLE_CONCURRENCY, 3);
     }
 
     /**
@@ -335,7 +326,8 @@ public class CallableQueueService implements Service, Instrumentable {
     public void destroy() {
         try {
             long limit = System.currentTimeMillis() + 30 * 1000;// 30 seconds
-            executor.shutdownNow();
+            executor.shutdown();
+            queue.clear();
             while (!executor.awaitTermination(1000, TimeUnit.MILLISECONDS)) {
                 log.info("Waiting for executor to shutdown");
                 if (System.currentTimeMillis() > limit) {
@@ -360,29 +352,35 @@ public class CallableQueueService implements Service, Instrumentable {
     }
 
     /**
+     * @return int size of queue
+     */
+    public synchronized int queueSize() {
+        return queue.size();
+    }
+
+    private boolean queue(CallableWrapper wrapper, boolean ignoreQueueSize) {
+        if (!ignoreQueueSize && queue.size() >= queueSize) {
+            log.warn("queue if full, ignoring queuing for [{0}]", wrapper.getElement());
+            return false;
+        }
+        if (!executor.isShutdown()) {
+            executor.execute(wrapper);
+        }
+        else {
+            log.warn("Executor shutting down, ignoring queueing of [{0}]", wrapper.getElement());
+        }
+        return true;
+    }
+
+    /**
      * Queue a callable for asynchronous execution.
      *
      * @param callable callable to queue.
      * @return <code>true</code> if the callable was queued, <code>false</code> if the queue is full and the callable
      *         was not queued.
      */
-    public synchronized boolean queue(XCallable<Void> callable) {
-        if (Services.get().getSystemMode() == SYSTEM_MODE.SAFEMODE) {
-            log.info("[queue] System is in SAFEMODE. Hence no callable is queued. current queue size " + queue.size());
-            return false;
-        }
-
-        if (queue.size() < queueSize) {
-            incrCounter(INSTR_QUEUED_COUNTER, 1);
-            try {
-                executor.execute(new CallableWrapper(callable));
-            }
-            catch (Exception e) {
-                log.warn("Didnot able to submit to executor:", e);
-            }
-            return true;
-        }
-        return false;
+    public boolean queue(XCallable<Void> callable) {
+        return queue(callable, 0);
     }
 
     /**
@@ -395,35 +393,8 @@ public class CallableQueueService implements Service, Instrumentable {
      *         were not queued.
      */
     @SuppressWarnings("unchecked")
-    public synchronized boolean queueSerial(List<? extends XCallable<Void>> callables) {
-        if (Services.get().getSystemMode() == SYSTEM_MODE.SAFEMODE) {
-            log.info("[queueSerial] System is in SAFEMODE. Hence no callable is queued current queue size " + queue.size());
-            return false;
-        }
-        ParamChecker.notNullElements(callables, "callables");
-        if (callables.size() == 0) {
-            return true;
-        }
-        if (queue.size() < queueSize) {
-            incrCounter(INSTR_QUEUED_COUNTER, callables.size());
-            executor.execute(new CallableWrapper(new CompositeCallable(callables)));
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * @return int size of queue
-     */
-    public synchronized int queueSize() {
-        return queue.size();
-    }
-
-    /**
-     * @return int size of delayedQueue
-     */
-    public synchronized int delayedQueueSize() {
-        return delayedQueue.size();
+    public boolean queueSerial(List<? extends XCallable<Void>> callables) {
+        return queueSerial(callables, 0);
     }
 
     /**
@@ -435,17 +406,23 @@ public class CallableQueueService implements Service, Instrumentable {
      *         was not queued.
      */
     public synchronized boolean queue(XCallable<Void> callable, long delay) {
-        if (Services.get().getSystemMode() == SYSTEM_MODE.SAFEMODE) {
-            log.info("[queue(delay)] System is in SAFEMODE. Hence no callable is queued. queue size " + queue.size());
-            return false;
-        }
-
-        if (delayedQueue.size() < delayedQueueSize) {
-            incrCounter(INSTR_DELAYD_QUEUED_COUNTER, 1);
-            delayedQueue.put(new DelayedCallableWrapper(callable, delay));
+        if (callable == null) {
             return true;
         }
-        return false;
+        boolean queued = false;
+        if(Services.get().getSystemMode() == SYSTEM_MODE.SAFEMODE) {
+            log.warn("[queue] System is in SAFEMODE. Hence no callable is queued. current queue size "+ queue.size());
+        }
+        else {
+            queued = queue(new CallableWrapper(callable, delay), false);
+            if (queued) {
+                incrCounter(INSTR_QUEUED_COUNTER, 1);
+            }
+            else {
+                log.warn("Could not queue callable");
+            }
+        }
+        return queued;
     }
 
     /**
@@ -460,20 +437,21 @@ public class CallableQueueService implements Service, Instrumentable {
      */
     @SuppressWarnings("unchecked")
     public synchronized boolean queueSerial(List<? extends XCallable<Void>> callables, long delay) {
-        if (Services.get().getSystemMode() == SYSTEM_MODE.SAFEMODE) {
-            log.info("[queue(delay)] System is in SAFEMODE. Hence no callable is queued. queue size " + queue.size());
-            return false;
+        boolean queued;
+        if (callables == null || callables.size() == 0) {
+            queued = true;
         }
-        ParamChecker.notNullElements(callables, "callables");
-        if (callables.size() == 0) {
-            return true;
+        else if (callables.size() == 1) {
+            queued = queue(callables.get(0), delay);
         }
-        if (queue.size() < queueSize) {
-            incrCounter(INSTR_QUEUED_COUNTER, callables.size());
-            boolean ret = queue(new CompositeCallable(callables), delay);
-            return ret;
+        else {
+            XCallable<Void> callable = new CompositeCallable<Void>(callables);
+            queued = queue(callable, delay);
+            if (queued) {
+                incrCounter(INSTR_QUEUED_COUNTER, callables.size());
+            }
         }
-        return false;
+        return queued;
     }
 
     /**
@@ -488,16 +466,27 @@ public class CallableQueueService implements Service, Instrumentable {
                 return (long) queue.size();
             }
         });
-        instr.addSampler(INSTRUMENTATION_GROUP, INSTR_DELAYED_QUEUE_SIZE_SAMPLER, 60, 1, new Instrumentation.Variable<Long>() {
-            public Long getValue() {
-                return (long) delayedQueue.size();
-            }
-        });
         instr.addSampler(INSTRUMENTATION_GROUP, INSTR_THREADS_ACTIVE_SAMPLER, 60, 1, new Instrumentation.Variable<Long>() {
             public Long getValue() {
                 return (long) executor.getActiveCount();
             }
         });
+    }
+
+    /**
+     * Get the list of strings of queue dump
+     *
+     * @return the list of string that representing each CallableWrapper
+     */
+    public List<String> getQueueDump() {
+        List<String> list = new ArrayList<String>();
+        for (QueueElement<CallableWrapper> qe: queue) {
+            if (qe.toString() == null){
+                continue;
+            }
+            list.add(qe.toString());
+        }
+        return list;
     }
 
 }

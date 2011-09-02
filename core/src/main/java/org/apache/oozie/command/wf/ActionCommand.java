@@ -1,47 +1,18 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.command.wf;
-
-import org.apache.oozie.workflow.WorkflowInstance;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.oozie.client.WorkflowAction;
-import org.apache.oozie.client.WorkflowJob;
-import org.apache.oozie.WorkflowActionBean;
-import org.apache.oozie.DagELFunctions;
-import org.apache.oozie.WorkflowJobBean;
-import org.apache.oozie.store.WorkflowStore;
-import org.apache.oozie.store.Store;
-import org.apache.oozie.util.XLog;
-import org.apache.oozie.util.Instrumentation;
-import org.apache.oozie.util.XConfiguration;
-import org.apache.oozie.util.ELEvaluator;
-import org.apache.oozie.command.Command;
-import org.apache.oozie.command.CommandException;
-import org.apache.oozie.service.CallbackService;
-import org.apache.oozie.action.ActionExecutor;
-import org.apache.oozie.store.StoreException;
-import org.apache.oozie.workflow.WorkflowException;
-import org.apache.oozie.workflow.lite.LiteWorkflowInstance;
-import org.apache.oozie.service.ELService;
-import org.apache.oozie.service.Services;
-import org.apache.oozie.service.HadoopAccessorService;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -49,6 +20,31 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.Properties;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.oozie.DagELFunctions;
+import org.apache.oozie.WorkflowActionBean;
+import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.action.ActionExecutor;
+import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.command.CommandException;
+import org.apache.oozie.service.CallbackService;
+import org.apache.oozie.service.ELService;
+import org.apache.oozie.service.HadoopAccessorException;
+import org.apache.oozie.service.HadoopAccessorService;
+import org.apache.oozie.service.Services;
+import org.apache.oozie.store.StoreException;
+import org.apache.oozie.store.WorkflowStore;
+import org.apache.oozie.util.ELEvaluator;
+import org.apache.oozie.util.Instrumentation;
+import org.apache.oozie.util.XConfiguration;
+import org.apache.oozie.util.XLog;
+import org.apache.oozie.workflow.WorkflowException;
+import org.apache.oozie.workflow.WorkflowInstance;
+import org.apache.oozie.workflow.lite.LiteWorkflowInstance;
 
 /**
  * Base class for Action execution commands. Provides common functionality to handle different types of errors while
@@ -104,24 +100,28 @@ public abstract class ActionCommand<T> extends WorkflowCommand<Void> {
 
     /**
      * Takes care of non transient failures. The job is suspended, and the state of the action is changed to *MANUAL
+     * and set pending flag of action to false
      *
+     * @param store WorkflowStore
      * @param context the execution context.
      * @param executor the executor instance being used.
      * @param status the status to be set for the action.
      * @throws StoreException
-     * @throws org.apache.oozie.command.CommandException
+     * @throws CommandException
      */
-    protected void handleNonTransient(ActionExecutor.Context context, ActionExecutor executor, WorkflowAction.Status status)
+    protected void handleNonTransient(WorkflowStore store, ActionExecutor.Context context, ActionExecutor executor,
+            WorkflowAction.Status status)
             throws StoreException, CommandException {
-        XLog.getLog(getClass()).warn("Suspending Job");
         ActionExecutorContext aContext = (ActionExecutorContext) context;
         WorkflowActionBean action = (WorkflowActionBean) aContext.getAction();
         incrActionErrorCounter(action.getType(), "nontransient", 1);
         WorkflowJobBean workflow = (WorkflowJobBean) context.getWorkflow();
         String id = workflow.getId();
         action.setStatus(status);
+        action.resetPendingOnly();
+        XLog.getLog(getClass()).warn("Suspending Workflow Job id=" + id);
         try {
-            SuspendCommand.suspendJob(workflow, id);
+            SuspendCommand.suspendJob(store, workflow, id, action.getId());
         }
         catch (WorkflowException e) {
             throw new CommandException(e);
@@ -303,7 +303,10 @@ public abstract class ActionCommand<T> extends WorkflowCommand<Void> {
             return action.getId() + RECOVERY_ID_SEPARATOR + workflow.getRun();
         }
 
-        public Path getActionDir() throws URISyntaxException, IOException {
+        /* (non-Javadoc)
+         * @see org.apache.oozie.action.ActionExecutor.Context#getActionDir()
+         */
+        public Path getActionDir() throws HadoopAccessorException, IOException, URISyntaxException {
             String name = getWorkflow().getId() + "/" + action.getName() + "--" + action.getType();
             FileSystem fs = getAppFileSystem();
             String actionDirPath = Services.get().getSystemId() + "/" + name;
@@ -311,14 +314,17 @@ public abstract class ActionCommand<T> extends WorkflowCommand<Void> {
             return fqActionDir;
         }
 
-        public FileSystem getAppFileSystem() throws IOException, URISyntaxException {
+        /* (non-Javadoc)
+         * @see org.apache.oozie.action.ActionExecutor.Context#getAppFileSystem()
+         */
+        public FileSystem getAppFileSystem() throws HadoopAccessorException, IOException, URISyntaxException {
             WorkflowJob workflow = getWorkflow();
             XConfiguration jobConf = new XConfiguration(new StringReader(workflow.getConf()));
             Configuration fsConf = new Configuration();
             XConfiguration.copy(jobConf, fsConf);
-            return Services.get().get(HadoopAccessorService.class).
-                    createFileSystem(workflow.getUser(), workflow.getGroup(), new URI(getWorkflow().getAppPath()),
-                                     fsConf);
+            return Services.get().get(HadoopAccessorService.class).createFileSystem(workflow.getUser(),
+                    workflow.getGroup(), new URI(getWorkflow().getAppPath()), fsConf);
+
         }
 
         @Override

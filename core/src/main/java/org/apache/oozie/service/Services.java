@@ -1,19 +1,16 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.service;
 
@@ -47,9 +44,17 @@ import java.io.File;
 public class Services {
     private static final int MAX_SYSTEM_ID_LEN = 10;
 
+    /**
+     * Environment variable that indicates the location of the Oozie home directory.
+     * The Oozie home directory is used to pick up the conf/ directory from
+     */
+    public static final String OOZIE_HOME_ENV = "OOZIE_HOME";
+
     public static final String CONF_SYSTEM_ID = "oozie.system.id";
 
     public static final String CONF_SERVICE_CLASSES = "oozie.services";
+
+    public static final String CONF_SERVICE_EXT_CLASSES = "oozie.services.ext";
 
     public static final String CONF_SYSTEM_MODE = "oozie.systemmode";
 
@@ -63,12 +68,33 @@ public class Services {
     private Map<Class<? extends Service>, Service> services = new LinkedHashMap<Class<? extends Service>, Service>();
     private String systemId;
 
+    public static String getOozieHome() throws ServiceException {
+        String oozieHome = System.getProperty(OOZIE_HOME_ENV);
+        if (oozieHome == null) {
+            oozieHome = System.getenv(OOZIE_HOME_ENV);
+        }
+        if (oozieHome == null) {
+            throw new ServiceException(ErrorCode.E0000);
+        }
+        if (!oozieHome.startsWith("/")) {
+            throw new ServiceException(ErrorCode.E0003, oozieHome);
+        }
+        File file = new File(oozieHome);
+        if (!file.exists()) {
+            throw new ServiceException(ErrorCode.E0004, oozieHome);
+        }
+        // This value is used by log4j default configuration to point the logs to ${OOZIE_HOME}/logs
+        System.setProperty("oozie.home", oozieHome);
+        return oozieHome;
+    }
+
     /**
      * Create a services. <p/> The built in services are initialized.
      *
      * @throws ServiceException thrown if any of the built in services could not initialize.
      */
     public Services() throws ServiceException {
+        getOozieHome();
         if (SERVICES != null) {
             XLog log = XLog.getLog(getClass());
             log.warn(XLog.OPS, "Previous services singleton active, destroying it");
@@ -172,6 +198,12 @@ public class Services {
         try {
             Class<? extends Service>[] serviceClasses = (Class<? extends Service>[]) conf.getClasses(
                     CONF_SERVICE_CLASSES);
+            if (serviceClasses != null) {
+                for (Class<? extends Service> serviceClass : serviceClasses) {
+                    setService(serviceClass);
+                }
+            }
+            serviceClasses = (Class<? extends Service>[]) conf.getClasses(CONF_SERVICE_EXT_CLASSES);
             if (serviceClasses != null) {
                 for (Class<? extends Service> serviceClass : serviceClasses) {
                     setService(serviceClass);

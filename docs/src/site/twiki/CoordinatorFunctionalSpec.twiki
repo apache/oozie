@@ -14,6 +14,10 @@ The goal of this document is to define a coordinator engine system specialized i
 
 ---++ Changelog
 
+---+++!! 26/AUG/2010:
+
+   * Update coordinator rerun
+
 ---+++!! 09/JUN/2010:
 
    * Clean up unsupported functions
@@ -1555,13 +1559,84 @@ Then, the dataset instances for the input events for the coordinator action will
   hdfs://bar:9000/app/logs/2009/01/10
 </verbatim>
 
----++++ 6.6.6. coord:version(int n) EL Function for Asynchronous Datasets
+---++++ 6.6.6. coord:future(int n, int limit) EL Function for Synchronous Datasets
+
+=${coord:future(int n, int limit)}= represents the n<sup>th</sup> currently available future instance of a *synchronous* dataset while looking ahead for 'limit' number of instances.
+
+=${coord:future(int n, int limit)}= is  relative to the coordinator action creation (materialization) time. The coordinator action creation (materialization) time is computed based on the coordinator job start time and its frequency. The n<sup>th</sup> dataset instance is computed based on the dataset's initial-instance datetime, its frequency and the (current) coordinator action creation (materialization) time.
+
+=n= can be a zero or a positive integer. Where =0= means the immediate instance available, =1= means the second next instance available, etc.
+
+=limit= should  be a positive integer.  Where =3= means search for n<sup>th</sup> next instance and should not check beyond =3= instance.
+
+The =${coord:future(int n, int limit)}= ignores gaps in dataset instances, it just looks for the next n<sup>th</sup> instance available.
+
+*%GREEN% Example: %ENDCOLOR%*:
+
+Coordinator application definition:
+
+<verbatim>
+   <coordinator-app name="app-coord" frequency="${coord:hours(1)}"
+                    start="2009-01-01T24:00Z" end="2009-12-31T24:00Z" timezone="UTC"
+                    xmlns="uri:oozie:coordinator:0.1">
+      <datasets>
+        <dataset name="logs" frequency="${coord:hours(1)}"
+                 initial-instance="2009-01-01T01:00Z" timezone="UTC">
+          <uri-template>
+            hdfs://bar:9000/app/logs/${YEAR}/${MONTH}/${DAY}/${HOUR}
+          </uri-template>
+        </dataset>
+      </datasets>
+      <input-events>
+        <data-in name="input" dataset="logs">
+          <instance>${coord:future(0, 10)}</instance>
+          <instance>${coord:future(2, 10)}</instance>
+        </data-in>
+      </input-events>
+      <action>
+        <workflow>
+        ...
+       </workflow>
+      </action>
+   </coordinator-app>
+</verbatim>
+
+If the available dataset instances in HDFS at time of a coordinator action being executed are:
+
+<verbatim>
+  hdfs://bar:9000/app/logs/2009/02/01
+  (missing)
+  (missing)
+  (missing)
+  hdfs://bar:9000/app/logs/2009/02/04
+ (missing)
+ (missing)
+  hdfs://bar:9000/app/logs/2009/02/07
+  (missing)
+  (missing)
+  (missing)
+  hdfs://bar:9000/app/logs/2009/02/11
+  (missing)
+  (missing)
+  hdfs://bar:9000/app/logs/2009/02/14
+  (missing)
+  hdfs://bar:9000/app/logs/2009/02/16
+</verbatim>
+
+Then, the dataset instances for the input events for the coordinator action will be:
+
+<verbatim>
+  hdfs://bar:9000/app/logs/2009/02/01
+  hdfs://bar:9000/app/logs/2009/02/07
+</verbatim>
+
+---++++ 6.6.7. coord:version(int n) EL Function for Asynchronous Datasets
    * TBD
 
----++++ 6.6.7. coord:latest(int n) EL Function for Asynchronous Datasets
+---++++ 6.6.8. coord:latest(int n) EL Function for Asynchronous Datasets
    * TBD
 
----++++ 6.6.8. Dataset Instance Resolution for Instances Before the Initial Instance
+---++++ 6.6.9. Dataset Instance Resolution for Instances Before the Initial Instance
 
 When defining input events that refer to dataset instances it may be possible that the resolution of instances is out of it lower bound. This is scenario is likely to happen when the instance resolution is very close to the initial-instance. This is useful for bootstrapping the application.
 
@@ -1783,6 +1858,44 @@ The nominal times for the coordinator actions of this coordinator application ex
 </verbatim>
 
 These are the times the action where created (materialized).
+
+---+++ 6.8. Parameterization of Coordinator Application
+
+This section describes the EL functions that could be used to parameterized both data-set and coordination application action.
+
+---++++ 6.8.1. coord:dateOffset(String baseDate, int instance, String timeUnit) EL Function
+
+The =${coord:dateOffset(String baseDate, int instance, String timeUnit)}= EL function calculates date based on the following equaltion : =newDate = baseDate + instance,  * timeUnit=
+
+For example, if baseDate is '2009-01-01T00:00Z', instance is '2' and timeUnit is 'MONTH', the return date will be' 2009-03-01T00:00Z'.
+
+*%GREEN% Example: %ENDCOLOR%*:
+
+
+<verbatim>
+   <coordinator-app name="app-coord" frequency="${coord:days(1)}"
+                    start="2009-01-01T24:00Z" end="2009-12-31T24:00Z" timezone="UTC"
+                    xmlns="uri:oozie:coordinator:0.1">
+      ......
+      <action>
+        <workflow>
+          <app-path>hdfs://bar:9000/usr/tucu/logsaggretor-wf</app-path>
+          <configuration>
+            <property>
+              <name>nextInstance</name>
+              <value>${coord:dateOffset(coord:nominalTime(), 1, 'DAY'}</value>
+            </property>
+            <property>
+             <name>previousInstance</name>
+              <value>${coord:dateOffset(coord:nominalTime(), -1, 'DAY'}</value>
+            </property>
+         </configuration>
+       </workflow>
+      </action>
+   </coordinator-app>
+</verbatim>
+
+In this example, the 'nextInstance' will be '2009-01-02T24:00Z' for the first action. And the value of 'previousInstance' will be  '2008-12-31T24:00Z' for the same instance.
 
 ---++ 7. Handling Timezones and Daylight Saving Time
 
@@ -2421,6 +2534,25 @@ GET oozie/v1/job/0000005-100426151754515-oozie-jobid-W?show=log
 <verbatim>
 PUT oozie/v1/job/0000005-100426151754515-oozie-jobid-W?action=kill
 </verbatim>
+
+---++ 14. Coordinator Rerun
+---+++ Rerunning a Coordinator Action or Multiple Actions
+
+Example:
+
+<verbatim>
+$oozie job -rerun <coord_Job_id> [-nocleanup] [-refresh]
+[-action 1, 3-4, 7-40] (-action or -date is required to rerun.)
+[-date 2009-01-01T01:00Z::2009-05-31T23:59Z, 2009-11-10T01:00Z, 2009-12-31T22:00Z]
+(if neither -action nor -date is given, the exception will be thrown.)
+</verbatim>
+
+The =rerun= option reruns a terminated (=TIMEDOUT=, =SUCCEEDED=, =KILLED=, =FAILED=) coordiantor action when coordiator job
+is not in =FAILED= or =KILLED= state.
+
+After the command is executed the rerun coordiator action will be in =WAITING= status.
+
+Refer to the [[DG_CoordinatorRerun][Rerunning Coordinator Actions]] for details on rerun.
 
 
 ---++ Appendixes

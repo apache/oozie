@@ -1,19 +1,16 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie;
 
@@ -33,6 +30,9 @@ import org.apache.oozie.command.wf.KillCommand;
 import org.apache.oozie.command.wf.ReRunCommand;
 import org.apache.oozie.command.wf.ResumeCommand;
 import org.apache.oozie.command.wf.SubmitCommand;
+import org.apache.oozie.command.wf.SubmitHttpCommand;
+import org.apache.oozie.command.wf.SubmitPigCommand;
+import org.apache.oozie.command.wf.SubmitMRCommand;
 import org.apache.oozie.command.wf.StartCommand;
 import org.apache.oozie.command.wf.SuspendCommand;
 import org.apache.oozie.command.wf.DefinitionCommand;
@@ -60,7 +60,7 @@ import java.io.IOException;
  */
 public class DagEngine extends BaseEngine {
 
-    private static final int HIGH_PRIORITY = 10;
+    private static final int HIGH_PRIORITY = 2;
 
     /**
      * Create a system Dag engine, with no user and no group.
@@ -96,6 +96,37 @@ public class DagEngine extends BaseEngine {
             if (startJob) {
                 start(jobId);
             }
+            return jobId;
+        }
+        catch (CommandException ex) {
+            throw new DagEngineException(ex);
+        }
+    }
+
+    /**
+     * Submit a pig/mapreduce job through HTTP.
+     * <p/>
+     * It validates configuration properties.
+     *
+     * @param conf job configuration.
+     * @param jobType job type - can be "pig" or "mapreduce".
+     * @return the job Id.
+     * @throws DagEngineException thrown if the job could not be created.
+     */
+    public String submitHttpJob(Configuration conf, String jobType) throws DagEngineException {
+        validateSubmitConfiguration(conf);
+
+        SubmitHttpCommand submit = null;
+        if (jobType.equals("pig")) {
+            submit = new SubmitPigCommand(conf, getAuthToken());
+        }
+        else if (jobType.equals("mapreduce")) {
+            submit = new SubmitMRCommand(conf, getAuthToken());
+        }
+
+        try {
+            String jobId = submit.call();
+            start(jobId);
             return jobId;
         }
         catch (CommandException ex) {
@@ -212,6 +243,15 @@ public class DagEngine extends BaseEngine {
         catch (CommandException e) {
             throw new DagEngineException(e);
         }
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.oozie.BaseEngine#change(java.lang.String, java.lang.String)
+     */
+    @Override
+    public void change(String jobId, String changeValue) throws DagEngineException {
+        // This code should not be reached.
+        throw new DagEngineException(ErrorCode.E1017);
     }
 
     /**

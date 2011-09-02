@@ -1,56 +1,46 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.sql.Timestamp;
+import java.util.Date;
+import java.util.Properties;
+
+import javax.persistence.Basic;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Lob;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.Transient;
+
+import org.apache.hadoop.io.Writable;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.rest.JsonWorkflowAction;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.PropertiesUtils;
 import org.apache.oozie.util.WritableUtils;
-import org.apache.hadoop.io.Writable;
-
-import java.util.Date;
-import java.util.Properties;
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.DataInput;
-
-import javax.persistence.Entity;
-import javax.persistence.Column;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.Basic;
-import javax.persistence.Lob;
-
 import org.apache.openjpa.persistence.jdbc.Index;
-
-import javax.persistence.Transient;
-
-import java.sql.Timestamp;
 
 /**
  * Bean that contains all the information to start an action for a workflow node.
  */
-// Following statements(INSERT_ACTION, UPDATE_ACTION) follow the same
-// numbering for place holders and uses same function
-// getActionValueMapFromBean for setting the values. So The numbering is to
-// be maintained if any change is made.
 @Entity
 @NamedQueries({
 
@@ -72,8 +62,9 @@ import java.sql.Timestamp;
 
     @NamedQuery(name = "GET_PENDING_ACTIONS", query = "select OBJECT(a) from WorkflowActionBean a where a.pending = 1 AND a.pendingAgeTimestamp < :pendingAge AND a.status <> 'RUNNING'"),
 
-    @NamedQuery(name = "GET_RUNNING_ACTIONS", query = "select OBJECT(a) from WorkflowActionBean a where a.pending = 1 AND a.status = 'RUNNING' AND a.lastCheckTimestamp < :lastCheckTime")
-        })
+    @NamedQuery(name = "GET_RUNNING_ACTIONS", query = "select OBJECT(a) from WorkflowActionBean a where a.pending = 1 AND a.status = 'RUNNING' AND a.lastCheckTimestamp < :lastCheckTime"),
+
+    @NamedQuery(name = "GET_RETRY_MANUAL_ACTIONS", query = "select OBJECT(a) from WorkflowActionBean a where a.wfId = :wfId AND (a.status = 'START_RETRY' OR a.status = 'START_MANUAL' OR a.status = 'END_RETRY' OR a.status = 'END_MANUAL')") })
 
 public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
 
@@ -222,6 +213,18 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
     }
 
     /**
+     * Return if the action is START_RETRY or START_MANUAL or END_RETRY or
+     * END_MANUAL.
+     *
+     * @return boolean true if status is START_RETRY or START_MANUAL or END_RETRY or
+     *         END_MANUAL
+     */
+    public boolean isRetryOrManual() {
+        return (getStatus() == WorkflowAction.Status.START_RETRY || getStatus() == WorkflowAction.Status.START_MANUAL
+                || getStatus() == WorkflowAction.Status.END_RETRY || getStatus() == WorkflowAction.Status.END_MANUAL);
+    }
+
+    /**
      * Return if the action is complete.
      *
      * @return if the action is complete.
@@ -229,6 +232,13 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
     public boolean isComplete() {
         return getStatus() == WorkflowAction.Status.OK || getStatus() == WorkflowAction.Status.KILLED ||
                 getStatus() == WorkflowAction.Status.ERROR;
+    }
+
+    /**
+     * Set the action pending flag to true.
+     */
+    public void setPendingOnly() {
+        pending = 1;
     }
 
     /**
@@ -269,7 +279,7 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
     }
 
     /**
-     * Removes the pending flag from the action.
+     * Removes the pending flag and pendingAge from the action.
      */
     public void resetPending() {
         pending = 0;
@@ -277,6 +287,12 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
         pendingAgeTimestamp = null;
     }
 
+    /**
+     * Removes the pending flag from the action.
+     */
+    public void resetPendingOnly() {
+        pending = 0;
+    }
 
     /**
      * Increments the number of retries for the action.
@@ -371,6 +387,7 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
         this.slaXml = slaXml;
     }
 
+    @Override
     public void setStatus(Status val) {
         this.status = val.toString();
         super.setStatus(val);
@@ -380,6 +397,7 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
         return status;
     }
 
+    @Override
     public Status getStatus() {
         return Status.valueOf(this.status);
     }
@@ -499,19 +517,23 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
         return this.pending == 1 ? true : false;
     }
 
+    @Override
     public Date getStartTime() {
         return DateUtils.toDate(startTimestamp);
     }
 
+    @Override
     public void setStartTime(Date startTime) {
         super.setStartTime(startTime);
         this.startTimestamp = DateUtils.convertDateToTimestamp(startTime);
     }
 
+    @Override
     public Date getEndTime() {
         return DateUtils.toDate(endTimestamp);
     }
 
+    @Override
     public void setEndTime(Date endTime) {
         super.setEndTime(endTime);
         this.endTimestamp = DateUtils.convertDateToTimestamp(endTime);

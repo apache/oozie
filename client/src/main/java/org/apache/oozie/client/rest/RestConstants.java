@@ -1,19 +1,16 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.client.rest;
 
@@ -56,7 +53,12 @@ public interface RestConstants {
 
     public static final String JOB_ACTION_KILL = "kill";
 
+    public static final String JOB_ACTION_CHANGE = "change";
+    public static final String JOB_CHANGE_VALUE = "value";
+
     public static final String JOB_ACTION_RERUN = "rerun";
+
+    public static final String JOB_COORD_ACTION_RERUN = "coord-rerun";
 
     public static final String JOB_SHOW_PARAM = "show";
 
@@ -67,6 +69,18 @@ public interface RestConstants {
     public static final String JOB_SHOW_LOG = "log";
 
     public static final String JOB_SHOW_DEFINITION = "definition";
+
+    public static final String JOB_COORD_RERUN_TYPE_PARAM = "type";
+
+    public static final String JOB_COORD_RERUN_DATE = "date";
+
+    public static final String JOB_COORD_RERUN_ACTION = "action";
+
+    public static final String JOB_COORD_RERUN_SCOPE_PARAM = "scope";
+
+    public static final String JOB_COORD_RERUN_REFRESH_PARAM = "refresh";
+
+    public static final String JOB_COORD_RERUN_NOCLEANUP_PARAM = "nocleanup";
 
     public static final String JOBS_FILTER_PARAM = "filter";
 
@@ -89,6 +103,8 @@ public interface RestConstants {
     public static final String ADMIN_INSTRUMENTATION_RESOURCE = "instrumentation";
 
     public static final String ADMIN_BUILD_VERSION_RESOURCE = "build-version";
+
+    public static final String ADMIN_QUEUE_DUMP_RESOURCE = "queue-dump";
 
     public static final String OOZIE_ERROR_CODE = "oozie-error-code";
 

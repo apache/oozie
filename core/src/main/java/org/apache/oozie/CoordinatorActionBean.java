@@ -1,48 +1,42 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie;
 
-import org.apache.oozie.client.CoordinatorAction;
-import org.apache.oozie.client.rest.JsonCoordinatorAction;
-
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.Date;
 
+import javax.persistence.Basic;
+import javax.persistence.Column;
+import javax.persistence.ColumnResult;
+import javax.persistence.Entity;
+import javax.persistence.Lob;
+import javax.persistence.NamedNativeQueries;
+import javax.persistence.NamedNativeQuery;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.SqlResultSetMapping;
+
+import org.apache.hadoop.io.Writable;
+import org.apache.oozie.client.CoordinatorAction;
+import org.apache.oozie.client.rest.JsonCoordinatorAction;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.WritableUtils;
 import org.apache.openjpa.persistence.jdbc.Index;
-import org.apache.hadoop.io.Writable;
-
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.DataInput;
-
-import javax.persistence.Entity;
-import javax.persistence.Column;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.NamedNativeQuery;
-import javax.persistence.NamedNativeQueries;
-import javax.persistence.SqlResultSetMapping;
-import javax.persistence.ColumnResult;
-import javax.persistence.Basic;
-import javax.persistence.Lob;
-
-import java.sql.Timestamp;
 
 @SqlResultSetMapping(
         name = "CoordActionJobIdLmt",
@@ -53,6 +47,8 @@ import java.sql.Timestamp;
 @NamedQueries({
 
     @NamedQuery(name = "UPDATE_COORD_ACTION", query = "update CoordinatorActionBean w set w.actionNumber = :actionNumber, w.actionXml = :actionXml, w.consoleUrl = :consoleUrl, w.createdConf = :createdConf, w.errorCode = :errorCode, w.errorMessage = :errorMessage, w.externalStatus = :externalStatus, w.missingDependencies = :missingDependencies, w.runConf = :runConf, w.timeOut = :timeOut, w.trackerUri = :trackerUri, w.type = :type, w.createdTimestamp = :createdTime, w.externalId = :externalId, w.jobId = :jobId, w.lastModifiedTimestamp = :lastModifiedTime, w.nominalTimestamp = :nominalTime, w.slaXml = :slaXml, w.status = :status where w.id = :id"),
+
+    @NamedQuery(name = "UPDATE_COORD_ACTION_MIN", query = "update CoordinatorActionBean w set w.actionXml = :actionXml, w.missingDependencies = :missingDependencies, w.lastModifiedTimestamp = :lastModifiedTime, w.status = :status where w.id = :id"),
 
     @NamedQuery(name = "DELETE_COMPLETED_COORD_ACTIONS", query = "delete from CoordinatorActionBean a where a.id = :id and (a.status = 'SUCCEEDED' OR a.status = 'FAILED' OR a.status = 'KILLED')"),
 
@@ -80,6 +76,10 @@ import java.sql.Timestamp;
 
     @NamedQuery(name = "GET_WAITING_SUBMITTED_ACTIONS_OLDER_THAN", query = "select OBJECT(a) from CoordinatorActionBean a where (a.status = 'WAITING' OR a.status = 'SUBMITTED') AND a.lastModifiedTimestamp <= :lastModifiedTime"),
 
+    @NamedQuery(name = "GET_ACTIONS_FOR_DATES", query = "select OBJECT(a) from CoordinatorActionBean a where a.jobId = :jobId AND (a.status = 'TIMEDOUT' OR a.status = 'SUCCEEDED' OR a.status = 'KILLED' OR a.status = 'FAILED') AND a.nominalTimestamp >= :startTime AND a.nominalTimestamp <= :endTime"),
+
+    @NamedQuery(name = "GET_ACTION_FOR_NOMINALTIME", query = "select OBJECT(a) from CoordinatorActionBean a where a.jobId = :jobId AND a.nominalTimestamp = :nominalTime"),
+
     @NamedQuery(name = "GET_COORD_ACTIONS_COUNT", query = "select count(w) from CoordinatorActionBean w")})
 
 @NamedNativeQueries({
@@ -88,7 +88,6 @@ import java.sql.Timestamp;
         })
 public class CoordinatorActionBean extends JsonCoordinatorAction implements
         Writable {
-
     @Basic
     @Index
     @Column(name = "job_id")
@@ -112,6 +111,11 @@ public class CoordinatorActionBean extends JsonCoordinatorAction implements
     @Index
     @Column(name = "created_time")
     private java.sql.Timestamp createdTimestamp = null;
+
+    @Basic
+    @Index
+    @Column(name = "rerun_time")
+    private java.sql.Timestamp rerunTimestamp = null;
 
     @Basic
     @Index
@@ -202,6 +206,10 @@ public class CoordinatorActionBean extends JsonCoordinatorAction implements
         super.setCreatedTime(createdTime);
     }
 
+    public void setRerunTime(Date rerunTime) {
+        this.rerunTimestamp = DateUtils.convertDateToTimestamp(rerunTime);
+    }
+
     @Override
     public void setNominalTime(Date nominalTime) {
         this.nominalTimestamp = DateUtils.convertDateToTimestamp(nominalTime);
@@ -221,6 +229,14 @@ public class CoordinatorActionBean extends JsonCoordinatorAction implements
 
     public Timestamp getCreatedTimestamp() {
         return createdTimestamp;
+    }
+
+    public Date getRerunTime() {
+        return DateUtils.toDate(rerunTimestamp);
+    }
+
+    public Timestamp getRerunTimestamp() {
+        return rerunTimestamp;
     }
 
     @Override
@@ -258,6 +274,25 @@ public class CoordinatorActionBean extends JsonCoordinatorAction implements
 
     public void setSlaXml(String slaXml) {
         this.slaXml = slaXml;
+    }
+
+    /**
+     * @return true if in terminal status
+     */
+    public boolean isTerminalStatus() {
+        boolean isTerminal = true;
+        switch (getStatus()) {
+            case WAITING:
+            case READY:
+            case SUBMITTED:
+            case RUNNING:
+                isTerminal = false;
+                break;
+            default:
+                isTerminal = true;
+                break;
+        }
+        return isTerminal;
     }
 
 }

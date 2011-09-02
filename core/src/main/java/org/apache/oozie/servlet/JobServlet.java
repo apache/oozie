@@ -1,42 +1,48 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.servlet;
 
-import org.apache.oozie.service.AuthorizationException;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.oozie.client.rest.JsonWorkflowJob;
-import org.apache.oozie.client.rest.RestConstants;
-import org.apache.oozie.client.OozieClient;
-import org.apache.oozie.util.XConfiguration;
-import org.apache.oozie.util.XLog;
-import org.apache.oozie.DagEngine;
-import org.apache.oozie.DagEngineException;
-import org.apache.oozie.ErrorCode;
-import org.apache.oozie.service.DagEngineService;
-import org.apache.oozie.service.AuthorizationService;
-import org.apache.oozie.service.Services;
-import org.apache.oozie.service.XLogService;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.Arrays;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.BaseEngineException;
+import org.apache.oozie.CoordinatorActionBean;
+import org.apache.oozie.CoordinatorActionInfo;
+import org.apache.oozie.CoordinatorEngine;
+import org.apache.oozie.DagEngine;
+import org.apache.oozie.DagEngineException;
+import org.apache.oozie.ErrorCode;
+import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.client.rest.JsonTags;
+import org.apache.oozie.client.rest.JsonWorkflowJob;
+import org.apache.oozie.client.rest.RestConstants;
+import org.apache.oozie.service.AuthorizationException;
+import org.apache.oozie.service.AuthorizationService;
+import org.apache.oozie.service.CoordinatorEngineService;
+import org.apache.oozie.service.DagEngineService;
+import org.apache.oozie.service.Services;
+import org.apache.oozie.service.XLogService;
+import org.apache.oozie.util.XConfiguration;
+import org.apache.oozie.util.XLog;
+import org.json.simple.JSONObject;
 
 public class JobServlet extends JsonRestServlet {
     private static final String INSTRUMENTATION_NAME = "job";
@@ -56,6 +62,8 @@ public class JobServlet extends JsonRestServlet {
     /**
      * Perform various job related actions - start, suspend, resume, kill, etc.
      */
+    @SuppressWarnings("unchecked")
+    @Override
     protected void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String jobId = getResourceName(request);
         request.setAttribute(AUDIT_PARAM, jobId);
@@ -70,6 +78,8 @@ public class JobServlet extends JsonRestServlet {
 
         DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
                                                                                       getAuthToken(request));
+        CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(
+                getUser(request), getAuthToken(request));
         try {
             String action = request.getParameter(RestConstants.ACTION_PARAM);
             if (action.equals(RestConstants.JOB_ACTION_START)) {
@@ -78,54 +88,59 @@ public class JobServlet extends JsonRestServlet {
                 startCron();
                 response.setStatus(HttpServletResponse.SC_OK);
             }
+            else if (action.equals(RestConstants.JOB_ACTION_RESUME)) {
+                stopCron();
+                dagEngine.resume(jobId);
+                startCron();
+                response.setStatus(HttpServletResponse.SC_OK);
+            }
+            else if (action.equals(RestConstants.JOB_ACTION_SUSPEND)) {
+                stopCron();
+                dagEngine.suspend(jobId);
+                startCron();
+                response.setStatus(HttpServletResponse.SC_OK);
+            }
+            else if (action.equals(RestConstants.JOB_ACTION_KILL)) {
+                stopCron();
+                dagEngine.kill(jobId);
+                startCron();
+                response.setStatus(HttpServletResponse.SC_OK);
+            }
+            else if (action.equals(RestConstants.JOB_ACTION_RERUN)) {
+                validateContentType(request, RestConstants.XML_CONTENT_TYPE);
+                Configuration conf = new XConfiguration(request.getInputStream());
+                stopCron();
+                conf = XConfiguration.trim(conf);
+                JobsServlet.validateJobConfiguration(conf);
+                checkAuthorizationForApp(getUser(request), conf);
+                dagEngine.reRun(jobId, conf);
+                startCron();
+                response.setStatus(HttpServletResponse.SC_OK);
+            }
+            else if (action.equals(RestConstants.JOB_COORD_ACTION_RERUN)) {
+                validateContentType(request, RestConstants.XML_CONTENT_TYPE);
+                stopCron();
+                String rerunType = request.getParameter(RestConstants.JOB_COORD_RERUN_TYPE_PARAM);
+                String scope = request.getParameter(RestConstants.JOB_COORD_RERUN_SCOPE_PARAM);
+                String refresh = request.getParameter(RestConstants.JOB_COORD_RERUN_REFRESH_PARAM);
+                String noCleanup = request.getParameter(RestConstants.JOB_COORD_RERUN_NOCLEANUP_PARAM);
+                CoordinatorActionInfo coordInfo = coordEngine.reRun(jobId, rerunType, scope, Boolean.valueOf(refresh),
+                        Boolean.valueOf(noCleanup));
+                List<CoordinatorActionBean> actions = coordInfo.getCoordActions();
+                JSONObject json = new JSONObject();
+                json.put(JsonTags.COORDINATOR_ACTIONS, CoordinatorActionBean.toJSONArray(actions));
+                startCron();
+                sendJsonResponse(response, HttpServletResponse.SC_OK, json);
+            }
             else {
-                if (action.equals(RestConstants.JOB_ACTION_RESUME)) {
-                    stopCron();
-                    dagEngine.resume(jobId);
-                    startCron();
-                    response.setStatus(HttpServletResponse.SC_OK);
-                }
-                else {
-                    if (action.equals(RestConstants.JOB_ACTION_SUSPEND)) {
-                        stopCron();
-                        dagEngine.suspend(jobId);
-                        startCron();
-                        response.setStatus(HttpServletResponse.SC_OK);
-                    }
-                    else {
-                        if (action.equals(RestConstants.JOB_ACTION_KILL)) {
-                            stopCron();
-                            dagEngine.kill(jobId);
-                            startCron();
-                            response.setStatus(HttpServletResponse.SC_OK);
-                        }
-                        else {
-                            if (action.equals(RestConstants.JOB_ACTION_RERUN)) {
-                                validateContentType(request, RestConstants.XML_CONTENT_TYPE);
-                                Configuration conf = new XConfiguration(request.getInputStream());
-
-                                stopCron();
-
-                                conf = XConfiguration.trim(conf);
-
-                                JobsServlet.validateJobConfiguration(conf);
-
-                                checkAuthorizationForApp(getUser(request), conf);
-
-                                dagEngine.reRun(jobId, conf);
-                                startCron();
-                                response.setStatus(HttpServletResponse.SC_OK);
-                            }
-                            else {
-                                throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0303,
-                                                            RestConstants.ACTION_PARAM, action);
-                            }
-                        }
-                    }
-                }
+                throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0303,
+                        RestConstants.ACTION_PARAM, action);
             }
         }
         catch (DagEngineException ex) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
+        }
+        catch (BaseEngineException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
         }
     }
@@ -167,6 +182,7 @@ public class JobServlet extends JsonRestServlet {
     /**
      * Return information about jobs.
      */
+    @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String jobId = getResourceName(request);
         String show = request.getParameter(RestConstants.JOB_SHOW_PARAM);

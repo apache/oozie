@@ -1,19 +1,16 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.util;
 
@@ -187,6 +184,31 @@ public class DateUtils {
     }
 
     /**
+     * Create a Calendar instance using the specified date and Time zone
+     * @param dateString
+     * @param tz : TimeZone
+     * @return appropriate Calendar object
+     * @throws Exception
+     */
+    public static Calendar getCalendar(String dateString, TimeZone tz) throws Exception {
+        Date date = DateUtils.parseDateUTC(dateString);
+        Calendar calDate = Calendar.getInstance();
+        calDate.setTime(date);
+        calDate.setTimeZone(tz);
+        return calDate;
+    }
+
+    /**
+     * Create a Calendar instance for UTC time zone using the specified date.
+     * @param dateString
+     * @return appropriate Calendar object
+     * @throws Exception
+     */
+    public static Calendar getCalendar(String dateString) throws Exception {
+        return getCalendar(dateString, DateUtils.getTimeZone("UTC"));
+    }
+
+    /**
      * Convert java.sql.Timestamp to java.util.Date
      *
      * @param timestamp java.sql.Timestamp
@@ -211,5 +233,17 @@ public class DateUtils {
             return new Timestamp(d.getTime());
         }
         return null;
+    }
+
+    /**
+     * Return the UTC date and time in W3C format down to second
+     * (yyyy-MM-ddTHH:mm:ssZ). i.e.: 1997-07-16T19:20:30Z
+     *
+     * @return the formatted time string.
+     */
+    public static String convertDateToString(Date date) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
+        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return sdf.format(date);
     }
 }

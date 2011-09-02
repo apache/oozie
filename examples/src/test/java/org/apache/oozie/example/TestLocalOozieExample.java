@@ -1,19 +1,16 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.example;
 
@@ -21,8 +18,10 @@ import junit.framework.TestCase;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.util.IOUtils;
+import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.action.hadoop.DoAs;
@@ -103,6 +102,48 @@ public class TestLocalOozieExample extends TestCase {
         }
         oozieLocalLog = System.getProperty("oozielocal.log");
         System.setProperty("oozielocal.log", "/tmp/oozielocal.log");
+
+        String testCaseDir = getTestCaseDirInternal(this);
+        File file = new File(testCaseDir);
+        delete(file);
+        if (!file.mkdir()) {
+            throw new RuntimeException(XLog.format("could not create path [{0}]", file.getAbsolutePath()));
+        }
+        file = new File(file, "conf");
+        if (!file.mkdir()) {
+            throw new RuntimeException(XLog.format("could not create path [{0}]", file.getAbsolutePath()));
+        }
+        //setting up Oozie HOME and an empty conf directory
+        System.setProperty(Services.OOZIE_HOME_ENV, testCaseDir);
+    }
+
+    protected void delete(File file) throws IOException {
+        ParamChecker.notNull(file, "file");
+        if (file.getAbsolutePath().length() < 5) {
+            throw new RuntimeException(XLog.format("path [{0}] is too short, not deleting", file.getAbsolutePath()));
+        }
+        if (file.exists()) {
+            if (file.isDirectory()) {
+                File[] children = file.listFiles();
+                if (children != null) {
+                    for (File child : children) {
+                        delete(child);
+                    }
+                }
+            }
+            if (!file.delete()) {
+                throw new RuntimeException(XLog.format("could not delete path [{0}]", file.getAbsolutePath()));
+            }
+        }
+    }
+
+    private String getTestCaseDirInternal(TestCase testCase) {
+        ParamChecker.notNull(testCase, "testCase");
+        File dir = new File(System.getProperty("oozie.test.dir", "/tmp"));
+        dir = new File(dir, "oozietests");
+        dir = new File(dir, testCase.getClass().getName());
+        dir = new File(dir, testCase.getName());
+        return dir.getAbsolutePath();
     }
 
     protected void tearDown() throws Exception {
@@ -114,6 +155,7 @@ public class TestLocalOozieExample extends TestCase {
         else {
             System.getProperties().remove("oozielocal.log");
         }
+        System.getProperties().remove(Services.OOZIE_HOME_ENV);
         super.tearDown();
     }
 

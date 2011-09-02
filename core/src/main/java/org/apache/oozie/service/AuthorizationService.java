@@ -1,27 +1,24 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.service;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.File;
 import java.io.InputStreamReader;
 import java.util.HashSet;
 import java.util.Set;
@@ -30,13 +27,14 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.CoordinatorJobBean;
-import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.client.XOozieClient;
 import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.store.WorkflowStore;
-import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.Instrumentation;
+import org.apache.oozie.util.XLog;
 
 /**
  * The authorization service provides all authorization checks.
@@ -104,7 +102,7 @@ public class AuthorizationService implements Service {
      * @throws ServiceException if the admin user list could not be loaded.
      */
     private void loadAdminUsers() throws ServiceException {
-        String configDir = System.getProperty(ConfigurationService.CONFIG_PATH);
+        String configDir = ConfigurationService.getConfigurationDirectory();
         if (configDir != null) {
             File file = new File(configDir, ADMIN_USERS_FILE);
             if (file.exists()) {
@@ -258,6 +256,9 @@ public class AuthorizationService implements Service {
             incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
             throw new AuthorizationException(ErrorCode.E0501, ex.getMessage(), ex);
         }
+        catch (HadoopAccessorException e) {
+            throw new AuthorizationException(e);
+        }
     }
 
     /**
@@ -287,16 +288,18 @@ public class AuthorizationService implements Service {
                     incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
                     throw new AuthorizationException(ErrorCode.E0504, appPath);
                 }
-                Path wfXml = new Path(path, fileName);
-                if (!fs.exists(wfXml)) {
-                    incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
-                    throw new AuthorizationException(ErrorCode.E0505, appPath);
+                if (conf.get(XOozieClient.LIBPATH) == null) { // Only check existance of wfXml for non http submission jobs;
+                    Path wfXml = new Path(path, fileName);
+                    if (!fs.exists(wfXml)) {
+                        incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
+                        throw new AuthorizationException(ErrorCode.E0505, appPath);
+                    }
+                    if (!fs.isFile(wfXml)) {
+                        incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
+                        throw new AuthorizationException(ErrorCode.E0506, appPath);
+                    }
+                    fs.open(wfXml).close();
                 }
-                if (!fs.isFile(wfXml)) {
-                    incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
-                    throw new AuthorizationException(ErrorCode.E0506, appPath);
-                }
-                fs.open(wfXml).close();
             }
             // TODO change this when stopping support of 0.18 to the new
             // Exception
@@ -308,6 +311,9 @@ public class AuthorizationService implements Service {
         catch (IOException ex) {
             incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
             throw new AuthorizationException(ErrorCode.E0501, ex.getMessage(), ex);
+        }
+        catch (HadoopAccessorException e) {
+            throw new AuthorizationException(e);
         }
     }
 
@@ -324,7 +330,7 @@ public class AuthorizationService implements Service {
         if (securityEnabled && write && !isAdmin(user)) {
             // handle workflow jobs
             if (jobId.endsWith("-W")) {
-                WorkflowJobBean jobBean;
+                WorkflowJobBean jobBean = null;
                 WorkflowStore store = null;
                 try {
                     store = Services.get().get(WorkflowStoreService.class).create();
@@ -339,18 +345,35 @@ public class AuthorizationService implements Service {
                     }
                     throw new AuthorizationException(ex);
                 }
-                finally {
-                    if (store != null) {
+                catch (Exception ex) {
+                    incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
+                    log.error("Exception, {0}", ex.getMessage(), ex);
+                    if (store != null && store.isActive()) {
                         try {
-                            store.closeTrx();
+                            store.rollbackTrx();
                         }
                         catch (RuntimeException rex) {
-                            incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
-                            log.error("Exception while attempting to close store", rex);
+                            log.warn("openjpa error, {0}", rex.getMessage(), rex);
+                        }
+                    }
+                    throw new AuthorizationException(ErrorCode.E0501, ex);
+                }
+                finally {
+                    if (store != null) {
+                        if (!store.isActive()) {
+                            try {
+                                store.closeTrx();
+                            }
+                            catch (RuntimeException rex) {
+                                log.warn("Exception while attempting to close store", rex);
+                            }
+                        }
+                        else {
+                            log.warn("transaction is not committed or rolled back before closing entitymanager.");
                         }
                     }
                 }
-                if (!jobBean.getUser().equals(user)) {
+                if (jobBean != null && !jobBean.getUser().equals(user)) {
                     if (!isUserInGroup(user, jobBean.getGroup())) {
                         incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
                         throw new AuthorizationException(ErrorCode.E0508, user, jobId);
@@ -359,7 +382,7 @@ public class AuthorizationService implements Service {
             }
             // handle coordinator jobs
             else {
-                CoordinatorJobBean jobBean;
+                CoordinatorJobBean jobBean = null;
                 CoordinatorStore store = null;
                 try {
                     store = Services.get().get(CoordinatorStoreService.class).create();
@@ -374,18 +397,35 @@ public class AuthorizationService implements Service {
                     }
                     throw new AuthorizationException(ex);
                 }
-                finally {
-                    if (store != null) {
+                catch (Exception ex) {
+                    incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
+                    log.error("Exception, {0}", ex.getMessage(), ex);
+                    if (store != null && store.isActive()) {
                         try {
-                            store.closeTrx();
+                            store.rollbackTrx();
                         }
                         catch (RuntimeException rex) {
-                            incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
-                            log.error("Exception while attempting to close store", rex);
+                            log.warn("openjpa error, {0}", rex.getMessage(), rex);
+                        }
+                    }
+                    throw new AuthorizationException(ErrorCode.E0501, ex);
+                }
+                finally {
+                    if (store != null) {
+                        if (!store.isActive()) {
+                            try {
+                                store.closeTrx();
+                            }
+                            catch (RuntimeException rex) {
+                                log.warn("Exception while attempting to close store", rex);
+                            }
+                        }
+                        else {
+                            log.warn("transaction is not committed or rolled back before closing entitymanager.");
                         }
                     }
                 }
-                if (!jobBean.getUser().equals(user)) {
+                if (jobBean != null && !jobBean.getUser().equals(user)) {
                     if (!isUserInGroup(user, jobBean.getGroup())) {
                         incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
                         throw new AuthorizationException(ErrorCode.E0509, user, jobId);

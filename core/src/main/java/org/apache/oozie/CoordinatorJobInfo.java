@@ -1,27 +1,21 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie;
 
 import java.util.List;
 
-/**
- * @author ramach
- */
 public class CoordinatorJobInfo {
     private int start;
     private int len;
@@ -29,12 +23,12 @@ public class CoordinatorJobInfo {
     private List<CoordinatorJobBean> jobs;
 
     /**
-     * Create  a workflows info bean.
-     *
-     * @param workflows workflows being returned.
-     * @param start workflows offset.
-     * @param len number of workflows.
-     * @param total total workflows.
+     * Create a coordinator info bean.
+     * 
+     * @param coordiantor jobs being returned.
+     * @param start coordiantor jobs offset.
+     * @param len number of coordiantor jobs.
+     * @param total total coordiantor jobs.
      */
     public CoordinatorJobInfo(List<CoordinatorJobBean> jobs, int start, int len, int total) {
         this.start = start;
@@ -44,9 +38,9 @@ public class CoordinatorJobInfo {
     }
 
     /**
-     * Return the workflows being returned.
+     * Return the coordiantor jobs being returned.
      *
-     * @return the workflows being returned.
+     * @return the coordiantor jobs being returned.
      */
     public List<CoordinatorJobBean> getCoordJobs() {
         return jobs;
@@ -55,7 +49,7 @@ public class CoordinatorJobInfo {
     /**
      * Return the offset of the workflows being returned. <p/> For pagination purposes.
      *
-     * @return the offset of the workflows being returned.
+     * @return the offset of the coordiantor jobs being returned.
      */
     public int getStart() {
         return start;
@@ -64,7 +58,7 @@ public class CoordinatorJobInfo {
     /**
      * Return the number of the workflows being returned. <p/> For pagination purposes.
      *
-     * @return the number of the workflows being returned.
+     * @return the number of the coordiantor jobs being returned.
      */
     public int getLen() {
         return len;
@@ -73,7 +67,7 @@ public class CoordinatorJobInfo {
     /**
      * Return the total number of workflows. <p/> For pagination purposes.
      *
-     * @return the total number of workflows.
+     * @return the total number of coordiantor jobs.
      */
     public int getTotal() {
         return total;

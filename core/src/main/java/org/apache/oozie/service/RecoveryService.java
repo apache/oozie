@@ -1,28 +1,18 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.service;
-
-import org.apache.oozie.client.CoordinatorJob;
-import org.apache.oozie.command.coord.CoordActionInputCheckCommand;
-import org.apache.oozie.command.coord.CoordActionReadyCommand;
-import org.apache.oozie.command.coord.CoordActionStartCommand;
-import org.apache.oozie.command.coord.CoordRecoveryCommand;
-import org.apache.oozie.command.wf.SignalCommand;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -32,17 +22,18 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.WorkflowActionBean;
+import org.apache.oozie.client.CoordinatorJob;
+import org.apache.oozie.command.coord.CoordActionInputCheckCommand;
+import org.apache.oozie.command.coord.CoordActionReadyCommand;
+import org.apache.oozie.command.coord.CoordActionStartCommand;
+import org.apache.oozie.command.coord.CoordRecoveryCommand;
 import org.apache.oozie.command.wf.ActionEndCommand;
 import org.apache.oozie.command.wf.ActionStartCommand;
+import org.apache.oozie.command.wf.SignalCommand;
 import org.apache.oozie.store.CoordinatorStore;
-import org.apache.oozie.store.StoreException;
 import org.apache.oozie.store.Store;
+import org.apache.oozie.store.StoreException;
 import org.apache.oozie.store.WorkflowStore;
-import org.apache.oozie.service.CallableQueueService;
-import org.apache.oozie.service.InstrumentationService;
-import org.apache.oozie.service.SchedulerService;
-import org.apache.oozie.service.Service;
-import org.apache.oozie.service.Services;
 import org.apache.oozie.util.XCallable;
 import org.apache.oozie.util.XLog;
 
@@ -117,8 +108,8 @@ public class RecoveryService implements Service {
                 ret = Services.get().get(CallableQueueService.class).queueSerial(delayedCallables, this.delay);
                 if (ret == false) {
                     log.warn("Unable to queue the delayedCallables commands for RecoveryService. "
-                            + "Most possibly delayedQueue is full. DelayedQueue size is :"
-                            + Services.get().get(CallableQueueService.class).delayedQueueSize());
+                            + "Most possibly Callable queue is full. Queue size is :"
+                            + Services.get().get(CallableQueueService.class).queueSize());
                 }
                 delayedCallables = null;
                 this.delay = 0;
@@ -157,14 +148,30 @@ public class RecoveryService implements Service {
                 }
                 log.warn("Exception while accessing the store", ex);
             }
-            finally {
-                try {
-                    if (store != null) {
-                        store.closeTrx();
+            catch (Exception ex) {
+                log.error("Exception, {0}", ex.getMessage(), ex);
+                if (store != null && store.isActive()) {
+                    try {
+                        store.rollbackTrx();
+                    }
+                    catch (RuntimeException rex) {
+                        log.warn("openjpa error, {0}", rex.getMessage(), rex);
                     }
                 }
-                catch (RuntimeException rex) {
-                    log.warn("Exception while attempting to close store", rex);
+            }
+            finally {
+                if (store != null) {
+                    if (!store.isActive()) {
+                        try {
+                            store.closeTrx();
+                        }
+                        catch (RuntimeException rex) {
+                            log.warn("Exception while attempting to close store", rex);
+                        }
+                    }
+                    else {
+                        log.warn("transaction is not committed or rolled back before closing entitymanager.");
+                    }
                 }
             }
         }
@@ -208,14 +215,30 @@ public class RecoveryService implements Service {
                 }
                 log.warn("Exception while accessing the store", ex);
             }
-            finally {
-                try {
-                    if (store != null) {
-                        store.closeTrx();
+            catch (Exception ex) {
+                log.error("Exception, {0}", ex.getMessage(), ex);
+                if (store != null && store.isActive()) {
+                    try {
+                        store.rollbackTrx();
+                    }
+                    catch (RuntimeException rex) {
+                        log.warn("openjpa error, {0}", rex.getMessage(), rex);
                     }
                 }
-                catch (RuntimeException rex) {
-                    log.warn("Exception while attempting to close store", rex);
+            }
+            finally {
+                if (store != null) {
+                    if (!store.isActive()) {
+                        try {
+                            store.closeTrx();
+                        }
+                        catch (RuntimeException rex) {
+                            log.warn("Exception while attempting to close store", rex);
+                        }
+                    }
+                    else {
+                        log.warn("transaction is not committed or rolled back before closing entitymanager.");
+                    }
                 }
             }
         }
@@ -246,14 +269,30 @@ public class RecoveryService implements Service {
                 }
                 log.warn("Exception while accessing the store", ex);
             }
-            finally {
-                try {
-                    if (store != null) {
-                        store.closeTrx();
+            catch (Exception ex) {
+                log.error("Exception, {0}", ex.getMessage(), ex);
+                if (store != null && store.isActive()) {
+                    try {
+                        store.rollbackTrx();
+                    }
+                    catch (RuntimeException rex) {
+                        log.warn("openjpa error, {0}", rex.getMessage(), rex);
                     }
                 }
-                catch (RuntimeException rex) {
-                    log.warn("Exception while attempting to close store", rex);
+            }
+            finally {
+                if (store != null) {
+                    if (!store.isActive()) {
+                        try {
+                            store.closeTrx();
+                        }
+                        catch (RuntimeException rex) {
+                            log.warn("Exception while attempting to close store", rex);
+                        }
+                    }
+                    else {
+                        log.warn("transaction is not committed or rolled back before closing entitymanager.");
+                    }
                 }
             }
         }
@@ -321,14 +360,30 @@ public class RecoveryService implements Service {
                 }
                 log.warn("Exception while getting store to get pending actions", ex);
             }
-            finally {
-                try {
-                    if (store != null) {
-                        store.closeTrx();
+            catch (Exception ex) {
+                log.error("Exception, {0}", ex.getMessage(), ex);
+                if (store != null && store.isActive()) {
+                    try {
+                        store.rollbackTrx();
+                    }
+                    catch (RuntimeException rex) {
+                        log.warn("openjpa error, {0}", rex.getMessage(), rex);
                     }
                 }
-                catch (RuntimeException rex) {
-                    log.warn("Exception while attempting to close store", rex);
+            }
+            finally {
+                if (store != null) {
+                    if (!store.isActive()) {
+                        try {
+                            store.closeTrx();
+                        }
+                        catch (RuntimeException rex) {
+                            log.warn("Exception while attempting to close store", rex);
+                        }
+                    }
+                    else {
+                        log.warn("transaction is not committed or rolled back before closing entitymanager.");
+                    }
                 }
             }
         }
@@ -373,10 +428,9 @@ public class RecoveryService implements Service {
             if (delayedCallables.size() == Services.get().getConf().getInt(CONF_CALLABLE_BATCH_SIZE, 10)) {
                 boolean ret = Services.get().get(CallableQueueService.class).queueSerial(delayedCallables, this.delay);
                 if (ret == false) {
-                    XLog.getLog(getClass()).warn(
-                            "Unable to queue the delayedCallables commands for RecoveryService. "
-                                    + "Most possibly delayedQueue is full. DelayedQueue size is :"
-                                    + Services.get().get(CallableQueueService.class).delayedQueueSize());
+                    XLog.getLog(getClass()).warn("Unable to queue the delayedCallables commands for RecoveryService. "
+                            + "Most possibly Callable queue is full. Queue size is :"
+                            + Services.get().get(CallableQueueService.class).queueSize());
                 }
                 delayedCallables = new ArrayList<XCallable<Void>>();
                 this.delay = 0;

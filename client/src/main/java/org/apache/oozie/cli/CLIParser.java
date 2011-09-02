@@ -1,19 +1,16 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.cli;
 
@@ -37,6 +34,7 @@ public class CLIParser {
     private String cliName;
     private String[] cliHelp;
     private Map<String, Options> commands = new LinkedHashMap<String, Options>();
+    private Map<String, Boolean> commandWithArgs = new LinkedHashMap<String, Boolean>();
     private Map<String, String> commandsHelp = new LinkedHashMap<String, String>();
 
     /**
@@ -64,6 +62,7 @@ public class CLIParser {
         String helpMsg = argsHelp + ((hasArguments) ? "<ARGS> " : "") + ": " + commandHelp;
         commandsHelp.put(command, helpMsg);
         commands.put(command, commandOptions);
+        commandWithArgs.put(command, hasArguments);
     }
 
     /**
@@ -113,7 +112,8 @@ public class CLIParser {
                 GnuParser parser = new GnuParser();
                 String[] minusCommand = new String[args.length - 1];
                 System.arraycopy(args, 1, minusCommand, 0, minusCommand.length);
-                return new Command(args[0], parser.parse(commands.get(args[0]), minusCommand));
+                return new Command(args[0], parser.parse(commands.get(args[0]), minusCommand,
+                                                         commandWithArgs.get(args[0])));
             }
             else {
                 throw new ParseException(MessageFormat.format("invalid sub-command [{0}]", args[0]));

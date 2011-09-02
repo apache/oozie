@@ -1,31 +1,18 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License. See accompanying LICENSE file.
  */
 package org.apache.oozie.store;
-
-import javax.persistence.*;
-
-import org.apache.openjpa.persistence.jdbc.JDBCFetchPlan;
-import org.apache.openjpa.persistence.jdbc.ResultSetType;
-import org.apache.openjpa.persistence.jdbc.FetchDirection;
-import org.apache.openjpa.persistence.jdbc.LRSSizeAlgorithm;
-import org.apache.openjpa.persistence.OpenJPAEntityManager;
-import org.apache.openjpa.persistence.OpenJPAPersistence;
-import org.apache.openjpa.persistence.OpenJPAQuery;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -36,20 +23,30 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-import org.apache.oozie.client.OozieClient;
-import org.apache.oozie.client.WorkflowJob.Status;
-import org.apache.oozie.workflow.WorkflowException;
+import javax.persistence.EntityManager;
+import javax.persistence.Query;
+
+import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.WorkflowsInfo;
-import org.apache.oozie.ErrorCode;
+import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.client.WorkflowJob.Status;
 import org.apache.oozie.service.InstrumentationService;
 import org.apache.oozie.service.SchemaService;
-import org.apache.oozie.service.SchemaService.SchemaName;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.SchemaService.SchemaName;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
+import org.apache.oozie.workflow.WorkflowException;
+import org.apache.openjpa.persistence.OpenJPAEntityManager;
+import org.apache.openjpa.persistence.OpenJPAPersistence;
+import org.apache.openjpa.persistence.OpenJPAQuery;
+import org.apache.openjpa.persistence.jdbc.FetchDirection;
+import org.apache.openjpa.persistence.jdbc.JDBCFetchPlan;
+import org.apache.openjpa.persistence.jdbc.LRSSizeAlgorithm;
+import org.apache.openjpa.persistence.jdbc.ResultSetType;
 
 /**
  * DB Implementation of Workflow Store
@@ -249,7 +246,7 @@ public class WorkflowStore extends Store {
                 List<WorkflowActionBean> actions = q.getResultList();
                 // action = (WorkflowActionBean) q.getSingleResult();
                 if (actions.size() > 0) {
-                    action = (WorkflowActionBean) actions.get(0);
+                    action = actions.get(0);
                 }
                 else {
                     throw new StoreException(ErrorCode.E0605, id);
@@ -326,8 +323,9 @@ public class WorkflowStore extends Store {
                                                                List<WorkflowActionBean> actionList = new ArrayList<WorkflowActionBean>();
                                                                try {
                                                                    Query q = entityManager.createNamedQuery("GET_ACTIONS_FOR_WORKFLOW");
-                                                                   OpenJPAQuery oq = OpenJPAPersistence.cast(q);
+
                                                                    /*
+                                                                   * OpenJPAQuery oq = OpenJPAPersistence.cast(q);
                                                                    * if (locking) { //
                                                                    * q.setHint("openjpa.FetchPlan.ReadLockMode"
                                                                    * ,"WRITE"); FetchPlan fetch = oq.getFetchPlan();
@@ -445,6 +443,33 @@ public class WorkflowStore extends Store {
                 return actions;
             }
         });
+        return actions;
+    }
+
+    /**
+     * Load All the actions that are START_RETRY or START_MANUAL or END_RETRY or END_MANUAL.
+     * 
+     * @param wfId String
+     * @return List of action beans
+     * @throws StoreException
+     */
+    public List<WorkflowActionBean> getRetryAndManualActions(final String wfId) throws StoreException {
+        List<WorkflowActionBean> actions = doOperation("GET_RETRY_MANUAL_ACTIONS",
+                new Callable<List<WorkflowActionBean>>() {
+                    public List<WorkflowActionBean> call() throws SQLException, StoreException, WorkflowException {
+                        List<WorkflowActionBean> actionList = null;
+                        try {
+                            Query q = entityManager.createNamedQuery("GET_RETRY_MANUAL_ACTIONS");
+                            q.setParameter("wfId", wfId);
+                            actionList = q.getResultList();
+                        }
+                        catch (IllegalStateException e) {
+                            throw new StoreException(ErrorCode.E0601, e.getMessage(), e);
+                        }
+
+                        return actionList;
+                    }
+                });
         return actions;
     }
 
@@ -732,7 +757,7 @@ public class WorkflowStore extends Store {
                 }
                 else {
                     int index = w.size() - 1;
-                    id = (String) w.get(index);
+                    id = w.get(index);
                 }
                 return id;
             }
@@ -808,7 +833,7 @@ public class WorkflowStore extends Store {
         q.setParameter("id", id);
         List<WorkflowJobBean> w = q.getResultList();
         if (w.size() > 0) {
-            wfBean = (WorkflowJobBean) w.get(0);
+            wfBean = w.get(0);
         }
         return wfBean;
         // return getBeanForRunningWorkflow(wfBean);
@@ -821,7 +846,7 @@ public class WorkflowStore extends Store {
         q.setParameter("id", id);
         List<WorkflowJobBean> w = q.getResultList();
         if (w.size() > 0) {
-            wfBean = (WorkflowJobBean) w.get(0);
+            wfBean = w.get(0);
             return getBeanForRunningWorkflow(wfBean);
         }
         return null;
