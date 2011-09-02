@@ -66,7 +66,7 @@ public abstract class XCommand<T> implements XCallable<T> {
     protected boolean dryrun = false;
     protected Instrumentation instrumentation;
 
-    XLog.Info logInfo;
+    protected XLog.Info logInfo;
 
     /**
      * Create a command.
