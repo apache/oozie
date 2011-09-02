@@ -1,5 +1,7 @@
 -- Oozie 3.0.1 release
 
+OOZIE-53 User is not able to change End time on Bundles.
+OOZIE-52 Oozie allows users to Change the pause time for Succeeded Bundles.
 OOZIE-51 Add coordinator materialization flag
 OOZIE-54 Coord job in DoneWithError should not be Killed
 OOZIE-55 Coord Actions in SUSPENDED should not be rerun

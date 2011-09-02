@@ -48,11 +48,14 @@ public class BundleJobChangeXCommand extends XCommand<Void> {
     private List<BundleActionBean> bundleActions;
     private BundleJobBean bundleJob;
     private Date newPauseTime = null;
+    private Date newEndTime = null;
     boolean isChangePauseTime = false;
+    boolean isChangeEndTime = false;
 
     private static final Set<String> ALLOWED_CHANGE_OPTIONS = new HashSet<String>();
     static {
         ALLOWED_CHANGE_OPTIONS.add("pausetime");
+        ALLOWED_CHANGE_OPTIONS.add("endtime");
     }
 
     /**
@@ -71,7 +74,6 @@ public class BundleJobChangeXCommand extends XCommand<Void> {
      * Check if new pause time is future time.
      *
      * @param newPauseTime new pause time.
-     * @param newEndTime new end time, can be null meaning no change on end time.
      * @throws CommandException thrown if new pause time is not valid.
      */
     private void checkPauseTime(Date newPauseTime) throws CommandException {
@@ -79,6 +81,20 @@ public class BundleJobChangeXCommand extends XCommand<Void> {
         Date d = new Date();
         if (newPauseTime.before(d)) {
             throw new CommandException(ErrorCode.E1317, newPauseTime, "must be a non-past time");
+        }
+    }
+
+    /**
+     * Check if new pause time is future time.
+     *
+     * @param newEndTime new end time, can be null meaning no change on end time.
+     * @throws CommandException thrown if new end time is not valid.
+     */
+    private void checkEndTime(Date newEndTime) throws CommandException {
+        // New endTime has to be a non-past start time.
+        Date startTime = bundleJob.getKickoffTime();
+        if (startTime != null && newEndTime.before(startTime)) {
+            throw new CommandException(ErrorCode.E1317, newEndTime, "must be greater then kickoff time");
         }
     }
 
@@ -91,27 +107,45 @@ public class BundleJobChangeXCommand extends XCommand<Void> {
     private void validateChangeValue(String changeValue) throws CommandException {
         Map<String, String> map = JobUtils.parseChangeValue(changeValue);
 
-        if (map.size() > ALLOWED_CHANGE_OPTIONS.size() || !map.containsKey(OozieClient.CHANGE_VALUE_PAUSETIME)) {
-            throw new CommandException(ErrorCode.E1317, changeValue, "can only change pausetime");
+        if (map.size() > ALLOWED_CHANGE_OPTIONS.size() || !(map.containsKey(OozieClient.CHANGE_VALUE_PAUSETIME) || map.containsKey(OozieClient.CHANGE_VALUE_ENDTIME))) {
+            throw new CommandException(ErrorCode.E1317, changeValue, "can only change pausetime or end time");
         }
 
         if (map.containsKey(OozieClient.CHANGE_VALUE_PAUSETIME)) {
             isChangePauseTime = true;
         }
+        else if(map.containsKey(OozieClient.CHANGE_VALUE_ENDTIME)){
+            isChangeEndTime = true;
+        }
         else {
-            throw new CommandException(ErrorCode.E1317, changeValue, "should change pausetime");
+            throw new CommandException(ErrorCode.E1317, changeValue, "should change pausetime or endtime");
         }
 
-        String value = map.get(OozieClient.CHANGE_VALUE_PAUSETIME);
-        if (!value.equals(""))   {
-            try {
-                newPauseTime = DateUtils.parseDateUTC(value);
-            }
-            catch (Exception ex) {
-                throw new CommandException(ErrorCode.E1317, value, "is not a valid date");
-            }
+        if(isChangePauseTime){
+            String value = map.get(OozieClient.CHANGE_VALUE_PAUSETIME);
+            if (!value.equals(""))   {
+                try {
+                    newPauseTime = DateUtils.parseDateUTC(value);
+                }
+                catch (Exception ex) {
+                    throw new CommandException(ErrorCode.E1317, value, "is not a valid date");
+                }
 
-            checkPauseTime(newPauseTime);
+                checkPauseTime(newPauseTime);
+            }
+        }
+        else if (isChangeEndTime){
+            String value = map.get(OozieClient.CHANGE_VALUE_ENDTIME);
+            if (!value.equals(""))   {
+                try {
+                    newEndTime = DateUtils.parseDateUTC(value);
+                }
+                catch (Exception ex) {
+                    throw new CommandException(ErrorCode.E1317, value, "is not a valid date");
+                }
+
+                checkEndTime(newEndTime);
+            }
         }
     }
 
@@ -121,9 +155,13 @@ public class BundleJobChangeXCommand extends XCommand<Void> {
     @Override
     protected Void execute() throws CommandException {
         try {
-            if (isChangePauseTime) {
-                bundleJob.setPauseTime(newPauseTime);
-
+            if (isChangePauseTime || isChangeEndTime) {
+                if (isChangePauseTime) {
+                    bundleJob.setPauseTime(newPauseTime);
+                }
+                else if (isChangeEndTime) {
+                    bundleJob.setEndTime(newEndTime);
+                }
                 for (BundleActionBean action : this.bundleActions) {
                     // queue coord change commands;
                     if (action.getStatus() != Job.Status.KILLED && action.getCoordId() != null) {
@@ -165,6 +203,7 @@ public class BundleJobChangeXCommand extends XCommand<Void> {
     @Override
     protected void loadState() throws CommandException {
         try{
+            eagerLoadState();
             this.bundleActions = jpaService.execute(new BundleActionsGetJPAExecutor(jobId));
         }
         catch(Exception Ex){
@@ -211,11 +250,21 @@ public class BundleJobChangeXCommand extends XCommand<Void> {
             LOG.info("BundleChangeCommand not succeeded - " + "job " + jobId + " does not exist");
             throw new PreconditionException(ErrorCode.E1314, jobId);
         }
-        if (bundleJob.getStatus() == Job.Status.SUCCEEDED || bundleJob.getStatus() == Job.Status.FAILED
-                || bundleJob.getStatus() == Job.Status.KILLED || bundleJob == null) {
-            LOG.info("BundleChangeCommand not succeeded - " + "job " + jobId + " finished, status is " + bundleJob.getStatusStr());
-            throw new PreconditionException(ErrorCode.E1312, jobId, bundleJob.getStatus().toString());
+        if (isChangePauseTime) {
+            if (bundleJob.getStatus() == Job.Status.SUCCEEDED || bundleJob.getStatus() == Job.Status.FAILED
+                    || bundleJob.getStatus() == Job.Status.KILLED || bundleJob.getStatus() == Job.Status.DONEWITHERROR
+                    || bundleJob == null) {
+                LOG.info("BundleChangeCommand not succeeded for changing pausetime- " + "job " + jobId + " finished, status is "
+                        + bundleJob.getStatusStr());
+                throw new PreconditionException(ErrorCode.E1312, jobId, bundleJob.getStatus().toString());
+            }
+        }
+        else if(isChangeEndTime){
+            if (bundleJob.getStatus() == Job.Status.KILLED || bundleJob == null) {
+                LOG.info("BundleChangeCommand not succeeded for changing endtime- " + "job " + jobId + " finished, status is "
+                        + bundleJob.getStatusStr());
+                throw new PreconditionException(ErrorCode.E1312, jobId, bundleJob.getStatus().toString());
+            }
         }
     }
-
 }

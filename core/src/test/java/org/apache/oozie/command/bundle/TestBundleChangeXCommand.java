@@ -158,4 +158,25 @@ public class TestBundleChangeXCommand extends XDataTestCase {
             assertEquals(ErrorCode.E1317, e.getErrorCode());
         }
     }
+
+    /**
+     * Test : Change end time of a bundle
+     *
+     * @throws Exception
+     */
+    public void testBundleChange3() throws Exception {
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP, false);
+        String dateStr = "2099-01-01T01:00Z";
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+        BundleJobGetJPAExecutor bundleJobGetCmd = new BundleJobGetJPAExecutor(job.getId());
+        job = jpaService.execute(bundleJobGetCmd);
+        assertEquals(job.getEndTime(), null);
+
+        new BundleJobChangeXCommand(job.getId(), "endtime=" + dateStr).call();
+
+        job = jpaService.execute(bundleJobGetCmd);
+        assertEquals(job.getEndTime(), DateUtils.parseDateUTC(dateStr));
+    }
 }
