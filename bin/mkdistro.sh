@@ -33,8 +33,9 @@ BASEDIR=`cd ${BASEDIR}/..;pwd`
 cd ${BASEDIR}
 
 export DATETIME=`date -u "+%Y.%m.%d-%H:%M:%SGMT"`
-export VC_REV=`svn info | grep "Revision" | awk '{print $2}'`
-export VC_URL=`svn info | grep "URL" | awk '{print $2}'`
+export VC_REV=`git branch -v | awk '/^\*/ {printf("%s@%s\n", $2, $3); }'`
+# Out canonical repo is @GitHub -- hence hardcoding
+export VC_URL="git://github.com/yahoo/oozie.git"
 
 MVN_OPTS="-Dbuild.time=${DATETIME} -Dvc.revision=${VC_REV} -Dvc.url=${VC_URL} -DgenerateDocs"
 
