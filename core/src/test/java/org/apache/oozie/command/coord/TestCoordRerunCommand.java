@@ -623,6 +623,50 @@ public class TestCoordRerunCommand extends XFsTestCase {
     }
 
     /**
+     * Test : rerun <jobId> -action 1 with no output-event
+     * 
+     * @throws Exception
+     */
+    public void testCoordRerunCleanupNoOutputEvents() throws Exception {
+        final String jobId = "0000000-" + new Date().getTime() + "-testCoordRerun-C";
+        final int actionNum = 1;
+        final String actionId = jobId + "@" + actionNum;
+        CoordinatorStore store = Services.get().get(StoreService.class).getStore(CoordinatorStore.class);
+        store.beginTrx();
+        try {
+            addRecordToJobTable(jobId, store, CoordinatorJob.Status.SUCCEEDED);
+            addRecordToActionTable(jobId, actionNum, actionId, store, CoordinatorAction.Status.SUCCEEDED,
+                    "coord-rerun-action3.xml");
+            store.commitTrx();
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            fail("Could not update db.");
+        }
+        finally {
+            store.closeTrx();
+        }
+
+        final OozieClient coordClient = LocalOozie.getCoordClient();
+        coordClient.reRunCoord(jobId, RestConstants.JOB_COORD_RERUN_ACTION, Integer.toString(actionNum), false, false);
+        CoordinatorStore store2 = Services.get().get(StoreService.class).getStore(CoordinatorStore.class);
+        store2.beginTrx();
+        CoordinatorActionBean action2 = store2.getCoordinatorAction(actionId, false);
+        assertNotSame(action2.getStatus(), CoordinatorAction.Status.SUCCEEDED);
+        store2.commitTrx();
+        store2.closeTrx();
+        waitFor(120 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                CoordinatorAction bean = coordClient.getCoordActionInfo(actionId);
+                return (bean.getStatus() == CoordinatorAction.Status.WAITING || bean.getStatus() == CoordinatorAction.Status.READY);
+            }
+        });
+        CoordinatorAction bean = coordClient.getCoordActionInfo(actionId);
+        assertTrue(bean.getStatus() == CoordinatorAction.Status.WAITING
+                || bean.getStatus() == CoordinatorAction.Status.READY);
+    }
+
+ /**
      * Negative Test : rerun <jobId> -action 1 -nocleanup.
      * Coordiantor job is killed, so no actions are able to rerun.
      *

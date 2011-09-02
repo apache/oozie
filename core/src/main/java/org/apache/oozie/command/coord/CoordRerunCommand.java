@@ -282,25 +282,30 @@ public class CoordRerunCommand extends CoordinatorCommand<CoordinatorActionInfo>
     @SuppressWarnings("unchecked")
     private void cleanupOutputEvents(Element eAction, String user, String group) {
         Element outputList = eAction.getChild("output-events", eAction.getNamespace());
-        for (Element data : (List<Element>) outputList.getChildren("data-out", eAction.getNamespace())) {
-            if (data.getChild("uris", data.getNamespace()) != null) {
-                String uris = data.getChild("uris", data.getNamespace()).getTextTrim();
-                if (uris != null) {
-                    String[] uriArr = uris.split(CoordELFunctions.INSTANCE_SEPARATOR);
-                    FsActionExecutor fsAe = new FsActionExecutor();
-                    for (String uri : uriArr) {
-                        Path path = new Path(uri);
-                        try {
-                            fsAe.delete(user, group, path);
-                            log.debug("Cleanup the output dir " + path);
-                        }
-                        catch (ActionExecutorException ae) {
-                            log.warn("Failed to cleanup the output dir " + uri, ae);
+        if (outputList != null) {
+            for (Element data : (List<Element>) outputList.getChildren("data-out", eAction.getNamespace())) {
+                if (data.getChild("uris", data.getNamespace()) != null) {
+                    String uris = data.getChild("uris", data.getNamespace()).getTextTrim();
+                    if (uris != null) {
+                        String[] uriArr = uris.split(CoordELFunctions.INSTANCE_SEPARATOR);
+                        FsActionExecutor fsAe = new FsActionExecutor();
+                        for (String uri : uriArr) {
+                            Path path = new Path(uri);
+                            try {
+                                fsAe.delete(user, group, path);
+                                log.debug("Cleanup the output dir " + path);
+                            }
+                            catch (ActionExecutorException ae) {
+                                log.warn("Failed to cleanup the output dir " + uri, ae);
+                            }
                         }
                     }
-                }
 
+                }
             }
+        }
+        else {
+            log.info("No output-events defined in coordinator xml. Therefore nothing to cleanup");
         }
     }
 
