@@ -19,7 +19,6 @@ GH-0404 assembly plugin 2.2-beta-5 breaks file permissions
 GH-0442 Add Hudson CI script to master trunk
 GH-0354 change jsp-api dependency groupId to javax.servlet.jsp
 GH-0346 add support for a test.properties file to load test system properties
-GH-0141 Oozie uses excessive memory when doing purging
 GH-0341 oozie-jpa.log file is created in extra log directory
 GH-0307 check for oozie setup owner in setup/start/stop scripts should be optional
 GH-0295 subworkflow action fails if workflow URI is a directory
@@ -48,7 +47,9 @@ GH-0050 Oozie jobs configuration properties with variables should be resolved to
 
 -- Oozie 2.2.5 release
 
+GH-0372 Change logs output for missing dependencies
 GH-0066 Add Uniqueness functionality to queue
+GH-0141 Oozie uses excessive memory when doing purging
 
 -- Oozie 2.2.3 release
 

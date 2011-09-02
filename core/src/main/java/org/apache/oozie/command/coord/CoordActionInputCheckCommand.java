@@ -84,8 +84,14 @@ public class CoordActionInputCheckCommand extends CoordinatorCommand<Void> {
                 StringBuilder nonResolvedList = new StringBuilder();
                 CoordCommandUtils.getResolvedList(coordAction.getMissingDependencies(), nonExistList, nonResolvedList);
 
-                log.info("[" + actionId + "]::ActionInputCheck:: Missing deps:" + nonExistList.toString() + " "
-                        + nonResolvedList.toString());
+                String[] uriList = nonExistList.toString().split(CoordELFunctions.INSTANCE_SEPARATOR);
+                if (uriList.length > 0) {
+                    log.info("[" + actionId + "]::ActionInputCheck:: Missing deps:" + uriList[0] + ",  NonResolvedList:"
+                            + nonResolvedList.toString());
+                } else {
+                    log.info("[" + actionId + "]::ActionInputCheck:: No missing deps,  NonResolvedList:"
+                            + nonResolvedList.toString());
+                }
                 Date actualTime = new Date();
                 boolean status = checkInput(actionXml, existList, nonExistList, actionConf, actualTime);
                 coordAction.setLastModifiedTime(actualTime);
