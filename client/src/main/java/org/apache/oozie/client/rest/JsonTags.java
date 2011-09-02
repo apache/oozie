@@ -31,6 +31,7 @@ public interface JsonTags {
     public static final String WORKFLOW_APP_NAME = "appName";
     public static final String WORKFLOW_ID = "id";
     public static final String WORKFLOW_EXTERNAL_ID = "externalId";
+    public static final String WORKFLOW_PARENT_ID = "parentId";
     public static final String WORKFLOW_CONF = "conf";
     public static final String WORKFLOW_STATUS = "status";
     public static final String WORKFLOW_LAST_MOD_TIME = "lastModTime";

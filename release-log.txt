@@ -1,5 +1,6 @@
 -- Oozie 3.0.0 release
 
+GH-0461 Mapping the workflow ID to coordinator ID
 GH-0391 Add support for filters to the EmbeddedServletContainer
 GH-0404 assembly plugin 2.2-beta-5 breaks file permissions
 GH-0442 Add Hudson CI script to master trunk

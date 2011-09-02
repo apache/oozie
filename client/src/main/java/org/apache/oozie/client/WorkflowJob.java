@@ -121,6 +121,13 @@ public interface WorkflowJob {
      * @return the workflow job console URL.
      */
     String getConsoleUrl();
+    
+    /**
+     * Return the coordinator action ID.
+     *
+     * @return the coordinator action ID.
+     */
+    String getParentId();
 
     /**
      * Return the workflow nodes that already executed and are executing.

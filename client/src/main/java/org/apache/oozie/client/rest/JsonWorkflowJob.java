@@ -80,6 +80,10 @@ public class JsonWorkflowJob implements WorkflowJob, JsonBean {
     @Basic
     @Column(name = "run")
     private int run = 1;
+    
+    @Basic
+    @Column(name = "parentId")
+    private String parentId;
 
     @Transient
     private String consoleUrl;
@@ -97,6 +101,7 @@ public class JsonWorkflowJob implements WorkflowJob, JsonBean {
         appName = (String) json.get(JsonTags.WORKFLOW_APP_NAME);
         id = (String) json.get(JsonTags.WORKFLOW_ID);
         externalId = (String) json.get(JsonTags.WORKFLOW_EXTERNAL_ID);
+        parentId = (String) json.get(JsonTags.WORKFLOW_PARENT_ID);
         conf = (String) json.get(JsonTags.WORKFLOW_CONF);
         status = Status.valueOf((String) json.get(JsonTags.WORKFLOW_STATUS));
         lastModifiedTime = JsonUtils.parseDateRfc822((String) json.get(JsonTags.WORKFLOW_LAST_MOD_TIME));
@@ -117,6 +122,7 @@ public class JsonWorkflowJob implements WorkflowJob, JsonBean {
         json.put(JsonTags.WORKFLOW_APP_NAME, appName);
         json.put(JsonTags.WORKFLOW_ID, id);
         json.put(JsonTags.WORKFLOW_EXTERNAL_ID, externalId);
+        json.put(JsonTags.WORKFLOW_PARENT_ID, parentId);
         json.put(JsonTags.WORKFLOW_CONF, conf);
         json.put(JsonTags.WORKFLOW_STATUS, status.toString());
         json.put(JsonTags.WORKFLOW_LAST_MOD_TIME, JsonUtils.formatDateRfc822(lastModifiedTime));
@@ -242,6 +248,24 @@ public class JsonWorkflowJob implements WorkflowJob, JsonBean {
      */
     public String getConsoleUrl() {
         return consoleUrl;
+    }
+    
+    /**
+     * Return the corresponding Action ID, if any.
+     *
+     * @return the coordinator Action Id.
+     */
+    public String getParentId() {
+        return parentId;
+    }
+
+    /**
+     * Set coordinator action id
+     *
+     * @param parentId : coordinator action id
+     */
+    public void setParentId(String parentId) {
+        this.parentId = parentId;
     }
 
     /**

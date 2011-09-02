@@ -22,6 +22,7 @@ import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.DagEngineException;
 import org.apache.oozie.DagEngine;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.service.DagEngineService;
@@ -37,6 +38,8 @@ import org.apache.oozie.util.db.SLADbOperations;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.client.SLAEvent.Status;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobUpdateJPAExecutor;
 
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -157,7 +160,6 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
 
                 // Normalize workflow appPath here;
                 JobUtils.normalizeAppPath(conf.get(OozieClient.USER_NAME), conf.get(OozieClient.GROUP_NAME), conf);
-
                 String wfId = dagEngine.submitJob(conf, startJob);
                 coordAction.setStatus(CoordinatorAction.Status.RUNNING);
                 coordAction.setExternalId(wfId);
@@ -165,6 +167,10 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
                 //store.updateCoordinatorAction(coordAction);
                 JPAService jpaService = Services.get().get(JPAService.class);
                 if (jpaService != null) {
+                    log.debug("Updating WF record for WFID :" + wfId + " with parent id: " + actionId);
+                    WorkflowJobBean wfJob = jpaService.execute(new WorkflowJobGetJPAExecutor(wfId));
+                    wfJob.setParentId(actionId);
+                    jpaService.execute(new WorkflowJobUpdateJPAExecutor(wfJob));
                     jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionUpdateJPAExecutor(coordAction));
                 }
                 else {

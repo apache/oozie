@@ -21,12 +21,14 @@ import java.io.PrintWriter;
 import java.util.Date;
 
 import org.apache.oozie.CoordinatorActionBean;
+import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorAction.Status;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 
 public class TestCoordActionStartXCommand extends CoordXTestCase {
 
@@ -104,12 +106,13 @@ public class TestCoordActionStartXCommand extends CoordXTestCase {
         createdConf += "<value>localhost:9001</value></property>";
         createdConf += "<property> <name>nameNode</name> <value>hdfs://localhost:9000</value></property>";
         createdConf += "<property> <name>queueName</name> <value>default</value></property>";
-
+        createdConf += "<property> <name>mapreduce.jobtracker.kerberos.principal</name> <value>default</value></property>";
+        createdConf += "<property> <name>dfs.namenode.kerberos.principal</name> <value>default</value></property>";
         createdConf += "</configuration> ";
 
         action.setCreatedConf(createdConf);
         jpaService.execute(new CoordActionInsertJPAExecutor(action));
-        String content = "<workflow-app xmlns='uri:oozie:workflow:0.1'  xmlns:sla='uri:oozie:sla:0.1' name='no-op-wf'>";
+        String content = "<workflow-app xmlns='uri:oozie:workflow:0.2'  xmlns:sla='uri:oozie:sla:0.1' name='no-op-wf'>";
         content += "<start to='end' />";
         String slaXml2 = " <sla:info>"
                 // + " <sla:client-id>axonite-blue</sla:client-id>"
@@ -132,7 +135,10 @@ public class TestCoordActionStartXCommand extends CoordXTestCase {
                 fail("CoordActionStartCommand didn't work because the status for action id" + actionId + " is :"
                         + action.getStatus() + " expected to be NOT SUBMITTED (i.e. RUNNING)");
             }
-
+            if (action.getExternalId() != null) {
+                WorkflowJobBean wfJob = jpaService.execute(new WorkflowJobGetJPAExecutor(action.getExternalId()));
+                assertEquals(wfJob.getParentId(), action.getId());
+            }
         }
         catch (JPAExecutorException je) {
             fail("Action ID " + actionId + " was not stored properly in db");

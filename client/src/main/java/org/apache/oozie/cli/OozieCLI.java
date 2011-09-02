@@ -783,6 +783,7 @@ public class OozieCLI {
         System.out.println("Started       : " + maskDate(job.getStartTime(), localtime));
         System.out.println("Last Modified : " + maskDate(job.getLastModifiedTime(), localtime));
         System.out.println("Ended         : " + maskDate(job.getEndTime(), localtime));
+        System.out.println("CoordAction ID: " + maskIfNull(job.getParentId()));
 
         List<WorkflowAction> actions = job.getActions();
 

@@ -133,6 +133,7 @@ public class WorkflowJobBean extends JsonWorkflowJob implements Writable {
         WritableUtils.writeStr(dataOutput, getAppPath());
         WritableUtils.writeStr(dataOutput, getAppName());
         WritableUtils.writeStr(dataOutput, getId());
+        WritableUtils.writeStr(dataOutput, getParentId());
         WritableUtils.writeStr(dataOutput, getConf());
         WritableUtils.writeStr(dataOutput, getStatusStr());
         dataOutput.writeLong((getCreatedTime() != null) ? getCreatedTime().getTime() : -1);
@@ -157,6 +158,7 @@ public class WorkflowJobBean extends JsonWorkflowJob implements Writable {
         setAppPath(WritableUtils.readStr(dataInput));
         setAppName(WritableUtils.readStr(dataInput));
         setId(WritableUtils.readStr(dataInput));
+        setParentId(WritableUtils.readStr(dataInput));
         setConf(WritableUtils.readStr(dataInput));
         setStatus(WorkflowJob.Status.valueOf(WritableUtils.readStr(dataInput)));
         // setStatus(WritableUtils.readStr(dataInput));
