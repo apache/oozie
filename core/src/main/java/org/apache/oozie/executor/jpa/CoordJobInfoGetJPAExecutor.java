@@ -148,6 +148,9 @@ public class CoordJobInfoGetJPAExecutor implements JPAExecutor<CoordinatorJobInf
         if (arr[11] != null) {
             bean.setNextMaterializedTime((Timestamp) arr[11]);
         }
+        if (arr[12] != null) {
+            bean.setCreatedTime((Timestamp) arr[12]);
+        }
         if (arr[13] != null) {
             bean.setTimeUnit(Timeunit.valueOf((String) arr[13]));
         }

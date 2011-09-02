@@ -60,4 +60,28 @@ public class StatusUtils {
         }
         return newStatus;
     }
+
+    /**
+     * If namespace 0.1 is used and backward support is true, SUCCEEDED coord job can be killed
+     *
+     * @param coordJob the coordinator job
+     * @return true if namespace 0.1 is used and backward support is true, SUCCEEDED coord job can be killed
+     */
+    public static boolean isVersionOneSucceededCoordjobKillable(CoordinatorJobBean coordJob) {
+        boolean ret = false;
+        if (coordJob != null) {
+            Configuration conf = Services.get().getConf();
+            boolean backwardSupportForCoordStatus = conf.getBoolean(
+                    StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_COORD_STATUS, false);
+            if (backwardSupportForCoordStatus) {
+                if (coordJob.getAppNamespace() != null
+                        && coordJob.getAppNamespace().equals(SchemaService.COORDINATOR_NAMESPACE_URI_1)) {
+                    if (coordJob.getStatus() == Job.Status.SUCCEEDED) {
+                        ret = true;
+                    }
+                }
+            }
+        }
+        return ret;
+    }
 }

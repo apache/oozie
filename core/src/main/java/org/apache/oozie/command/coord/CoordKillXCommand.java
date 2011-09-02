@@ -34,6 +34,8 @@ import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.util.StatusUtils;
+
 import java.util.Date;
 import java.util.List;
 
@@ -82,6 +84,10 @@ public class CoordKillXCommand extends KillTransitionXCommand {
 
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
+        // if namespace 0.1 is used and backward support is true, SUCCEEDED coord job can be killed
+        if (StatusUtils.isVersionOneSucceededCoordjobKillable(coordJob)) {
+            return;
+        }
         if (coordJob.getStatus() == CoordinatorJob.Status.SUCCEEDED
                 || coordJob.getStatus() == CoordinatorJob.Status.FAILED
                 || coordJob.getStatus() == CoordinatorJob.Status.DONEWITHERROR) {

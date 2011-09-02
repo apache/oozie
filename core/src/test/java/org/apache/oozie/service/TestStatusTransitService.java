@@ -537,7 +537,7 @@ public class TestStatusTransitService extends XDataTestCase {
 
         job = jpaService.execute(bundleJobGetCmd);
 
-        assertEquals(Job.Status.RUNNING, job.getStatus());
+        assertTrue(job.getStatus() == Job.Status.RUNNING || job.getStatus() == Job.Status.SUCCEEDED);
 
         Thread.sleep(3000);
 
