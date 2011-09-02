@@ -32,7 +32,7 @@ import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.XLog;
 
 public class CoordActionReadyXCommand extends CoordinatorXCommand<Void> {
-    private String jobId;
+    private final String jobId;
     private final XLog log = getLog();
     private CoordinatorJobBean coordJob = null;
     private JPAService jpaService = null;
@@ -150,7 +150,7 @@ public class CoordActionReadyXCommand extends CoordinatorXCommand<Void> {
 
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
-        if (coordJob.getStatus() != Job.Status.RUNNING) {
+        if (coordJob.getStatus() != Job.Status.RUNNING && coordJob.getStatus() != Job.Status.PAUSED && coordJob.getStatus() != Job.Status.PAUSEDWITHERROR) {
             throw new PreconditionException(ErrorCode.E1100, "[" + jobId
                     + "]::CoordActionReady:: Ignoring job. Coordinator job is not in RUNNING state, but state="
                     + coordJob.getStatus());

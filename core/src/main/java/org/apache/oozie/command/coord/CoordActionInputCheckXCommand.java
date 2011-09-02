@@ -53,7 +53,7 @@ import org.jdom.Element;
 public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
 
     private final String actionId;
-    private int COMMAND_REQUEUE_INTERVAL = 60000; // 1 minute
+    private final int COMMAND_REQUEUE_INTERVAL = 60000; // 1 minute
     private CoordinatorActionBean coordAction = null;
     private CoordinatorJobBean coordJob = null;
     private JPAService jpaService = null;
@@ -471,7 +471,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                     + "]::CoordActionInputCheck:: Ignoring action. Should be in WAITING state, but state="
                     + coordAction.getStatus());
         }
-        if (coordJob.getStatus() != Job.Status.RUNNING) {
+        if (coordJob.getStatus() != Job.Status.RUNNING && coordJob.getStatus() != Job.Status.PAUSED && coordJob.getStatus() != Job.Status.PAUSEDWITHERROR) {
             throw new PreconditionException(ErrorCode.E1100, "[" + actionId
                     + "]::CoordActionInputCheck:: Ignoring action. Coordinator job is not in RUNNING state, but state="
                     + coordJob.getStatus());

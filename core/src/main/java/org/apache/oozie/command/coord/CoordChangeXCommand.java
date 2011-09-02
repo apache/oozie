@@ -11,6 +11,7 @@ import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
 import org.apache.oozie.client.CoordinatorJob;
+import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
@@ -31,6 +32,7 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
     private Date newEndTime = null;
     private Integer newConcurrency = null;
     private Date newPauseTime = null;
+    private Date oldPauseTime = null;
     private boolean resetPauseTime = false;
     private CoordinatorJobBean coordJob;
     private JPAService jpaService = null;
@@ -197,8 +199,8 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
                 coordJob.setLastActionTime(d1);
                 coordJob.setNextMaterializedTime(d1);
 
-                if (coordJob.getStatus() == CoordinatorJob.Status.SUCCEEDED) {
-                    coordJob.setStatus(CoordinatorJob.Status.RUNNING);
+                if (coordJob.getStatus() == CoordinatorJob.Status.RUNNING || coordJob.getStatus() == CoordinatorJob.Status.RUNNINGWITHERROR) {
+                    coordJob.setStatus(CoordinatorJob.Status.PAUSED);
                     coordJob.resetPending();
                 }
             }
@@ -267,6 +269,9 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
 
             if (newPauseTime != null || resetPauseTime == true) {
                 this.coordJob.setPauseTime(newPauseTime);
+                if(oldPauseTime != null && oldPauseTime.before(newPauseTime) && this.coordJob.getStatus() == Job.Status.PAUSED){
+                    this.coordJob.setStatus(Job.Status.RUNNING);
+                }
                 if (!resetPauseTime) {
                     processLookaheadActions(coordJob, newPauseTime);
                 }
@@ -305,6 +310,7 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
 
         try {
             this.coordJob = jpaService.execute(new CoordJobGetJPAExecutor(jobId));
+            oldPauseTime = this.coordJob.getPauseTime();
         }
         catch (JPAExecutorException e) {
             throw new CommandException(e);
