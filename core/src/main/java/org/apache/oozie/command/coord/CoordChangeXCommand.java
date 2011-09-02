@@ -256,7 +256,9 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
             if (newEndTime != null) {
                 coordJob.setEndTime(newEndTime);
                 if (coordJob.getStatus() == CoordinatorJob.Status.SUCCEEDED
-                        || coordJob.getStatus() == CoordinatorJob.Status.RUNNING) {
+                        || coordJob.getStatus() == CoordinatorJob.Status.RUNNING
+                        || coordJob.getStatus() == CoordinatorJob.Status.DONEWITHERROR
+                        || coordJob.getStatus() == CoordinatorJob.Status.FAILED) {
                     coordJob.setStatus(CoordinatorJob.Status.RUNNING);
                     coordJob.setPending();
                     coordJob.resetDoneMaterialization();
