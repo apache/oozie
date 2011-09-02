@@ -1,3 +1,6 @@
+-- Oozie 3.1.0 release
+OOZIE-108 Upgrade pom version to 3.1.0.
+
 -- Oozie 3.0.1 release
 
 OOZIE-93 coordinator start and end instances doesn't work with float number.
