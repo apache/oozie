@@ -48,7 +48,7 @@ public class CoordKillXCommand extends KillTransitionXCommand {
     private CoordinatorJob.Status prevStatus = null;
 
     public CoordKillXCommand(String id) {
-        super("coord_kill", "coord_kill", 1);
+        super("coord_kill", "coord_kill", 2);
         this.jobId = ParamChecker.notEmpty(id, "id");
     }
 
@@ -154,7 +154,6 @@ public class CoordKillXCommand extends KillTransitionXCommand {
     @Override
     public void updateJob() throws CommandException {
         try {
-            coordJob.setEndTime(new Date());
             jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
         }
         catch (JPAExecutorException ex) {
@@ -168,6 +167,14 @@ public class CoordKillXCommand extends KillTransitionXCommand {
     @Override
     public Job getJob() {
         return coordJob;
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.XCommand#getKey()
+     */
+    @Override
+    public String getKey(){
+        return getName() + "_" + jobId;
     }
 
 }
