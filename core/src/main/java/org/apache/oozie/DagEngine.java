@@ -323,8 +323,13 @@ public class DagEngine extends BaseEngine {
         if (conf.get(OozieClient.APP_PATH) == null) {
             throw new DagEngineException(ErrorCode.E0401, OozieClient.APP_PATH);
         }
-        if (conf.get(OozieClient.RERUN_SKIP_NODES) == null) {
-            throw new DagEngineException(ErrorCode.E0401, OozieClient.RERUN_SKIP_NODES);
+        if (conf.get(OozieClient.RERUN_SKIP_NODES) == null && conf.get(OozieClient.RERUN_FAIL_NODES) == null) {
+            throw new DagEngineException(ErrorCode.E0401, OozieClient.RERUN_SKIP_NODES + " OR "
+                    + OozieClient.RERUN_FAIL_NODES);
+        }
+        if (conf.get(OozieClient.RERUN_SKIP_NODES) != null && conf.get(OozieClient.RERUN_FAIL_NODES) != null) {
+            throw new DagEngineException(ErrorCode.E0404, OozieClient.RERUN_SKIP_NODES + " OR "
+                    + OozieClient.RERUN_FAIL_NODES);
         }
     }
 

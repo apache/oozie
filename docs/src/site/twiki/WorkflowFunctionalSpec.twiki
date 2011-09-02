@@ -15,7 +15,9 @@ Author: Alejandro Abdelnur
 %TOC%
 
 ---++ Changelog
+---+++!! 2011FEB19
 
+   * #10, Update the doc to rerun from the failed node. 
 ---+++!! 2010OCT31
 
    * #17, Added new section on Shared Libraries
@@ -1694,9 +1696,9 @@ action of a workflow job are too expensive to be re-executed.
 It is the responsibility of the user resubmitting the workflow job to do any necessary cleanup to ensure that the
 rerun will not fail due to not cleaned up data from the previous run.
 
-When starting a workflow job in recovery mode, the user must indicate what workflow nodes in the workflow should be
-skipped. The workflow nodes to skip must be specified in the =oozie.wf.rerun.skip.nodes= job configuration property,
-node names must be separated by commas. All workflow nodes indicated as skipped must have completed in the previous
+When starting a workflow job in recovery mode, the user must indicate either what workflow nodes in the workflow should be
+skipped or whether job should be restarted from the failed node. At any rerun, only one option should be selected. The workflow nodes to skip must be specified in the =oozie.wf.rerun.skip.nodes= job configuration property,
+node names must be separated by commas. On the other hand, user needs to specify =oozie.wf.rerun.failnodes= to rerun from the failed node. The value is =true= or =false=. All workflow nodes indicated as skipped must have completed in the previous
 run. If a workflow node has not completed its execution in its previous run, and during the recovery submission is 
 flagged as a node to be skipped, the recovery submission must fail.
 

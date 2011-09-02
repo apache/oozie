@@ -8,15 +8,17 @@
 ---++ Configs
 
    * oozie.wf.application.path
-   * oozie.wf.rerun.skip.nodes 
-   * Above two are mandatory configs.
+   * oozie.wf.rerun.skip.nodes
+   * oozie.wf.rerun.failnodes
+   * Only one of above two is mandatory configs. Both should be defined at the same time
    * Skip nodes are comma separated list of action names. They can be any action nodes including decision node.
+   * The valid value of  =oozie.wf.rerun.failnodes= is true or false.
 
 ---++ Pre-Conditions
 
    * Workflow with id wfId should exist.
    * Workflow with id wfId should be in SUCCEEDED/KILLED/FAILED.
-   * Nodes specified in the config oozie.wf.rerun.skip.nodes must be completed successfully.
+   * If specified , nodes in the config oozie.wf.rerun.skip.nodes must be completed successfully.
 
 ---++ ReRun
 

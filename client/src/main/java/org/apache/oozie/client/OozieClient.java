@@ -100,6 +100,8 @@ public class OozieClient {
 
     public static final String RERUN_SKIP_NODES = "oozie.wf.rerun.skip.nodes";
 
+    public static final String RERUN_FAIL_NODES = "oozie.wf.rerun.failnodes";
+
     public static final String LOG_TOKEN = "oozie.wf.log.token";
 
     public static final String ACTION_MAX_RETRIES = "oozie.wf.action.max.retries";

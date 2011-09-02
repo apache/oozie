@@ -197,11 +197,27 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
             }
 
             if (conf != null) {
-                Collection<String> skipNodes = conf.getStringCollection(OozieClient.RERUN_SKIP_NODES);
-                for (String str : skipNodes) {
-                    // trimming is required
-                    nodesToSkip.add(str.trim());
+                if (conf.getBoolean(OozieClient.RERUN_FAIL_NODES, false) == false) { //Rerun with skipNodes
+                    Collection<String> skipNodes = conf.getStringCollection(OozieClient.RERUN_SKIP_NODES);
+                    for (String str : skipNodes) {
+                        // trimming is required
+                        nodesToSkip.add(str.trim());
+                    }
+                    LOG.debug("Skipnode size :" + nodesToSkip.size());
                 }
+                else {
+                    for (WorkflowActionBean action : actions) { // Rerun from failed nodes 
+                        if (action.getStatus() == WorkflowAction.Status.OK) {
+                            nodesToSkip.add(action.getName());
+                        }
+                    }
+                    LOG.debug("Skipnode size are to rerun from FAIL nodes :" + nodesToSkip.size());
+                }
+                StringBuilder tmp = new StringBuilder();
+                for (String node : nodesToSkip) {
+                    tmp.append(node).append(",");
+                }
+                LOG.debug("SkipNode List :" + tmp);
             }
         }
         catch (Exception ex) {
