@@ -14,7 +14,9 @@
  */
 package org.apache.oozie.action;
 
+
 import java.util.List;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.Reader;
 import java.io.Writer;
@@ -58,7 +60,7 @@ public class TestActionFailover extends XFsTestCase {
 
         final OozieClient wfClient = LocalOozie.getClient();
         Properties conf = wfClient.createConfiguration();
-        conf.setProperty(OozieClient.APP_PATH, getTestCaseDir());
+        conf.setProperty(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
         conf.setProperty(OozieClient.USER_NAME, getTestUser());
         conf.setProperty(OozieClient.GROUP_NAME, getTestGroup());
         injectKerberosInfo(conf);

@@ -14,6 +14,7 @@
  */
 package org.apache.oozie.service;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
@@ -89,7 +90,7 @@ public class TestActionCheckerService extends XTestCase {
 
         final DagEngine engine = new DagEngine(getTestUser(), "a");
         Configuration conf = new XConfiguration();
-        conf.set(OozieClient.APP_PATH, getTestCaseDir());
+        conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(WorkflowAppService.HADOOP_USER, getTestUser());
         conf.set(OozieClient.GROUP_NAME, getTestGroup());
         conf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
@@ -151,7 +152,7 @@ public class TestActionCheckerService extends XTestCase {
 
         final DagEngine engine = new DagEngine("u", "a");
         Configuration conf = new XConfiguration();
-        conf.set(OozieClient.APP_PATH, getTestCaseDir());
+        conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
         conf.setStrings(WorkflowAppService.HADOOP_USER, getTestUser());
         conf.setStrings(OozieClient.GROUP_NAME, getTestGroup());
         conf.setStrings(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());

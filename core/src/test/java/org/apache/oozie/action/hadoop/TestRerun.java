@@ -86,14 +86,14 @@ public class TestRerun extends XFsTestCase {
 
         final OozieClient wfClient = LocalOozie.getClient();
         Properties conf = wfClient.createConfiguration();
-        conf.setProperty(OozieClient.APP_PATH, appPath.toString());
+        conf.setProperty(OozieClient.APP_PATH, appPath.toString() + File.separator + "workflow.xml");
         conf.setProperty("jobTracker", getJobTrackerUri());
         conf.setProperty("nameNode", getNameNodeUri());
         conf.setProperty("mrclass", MapperReducerForTest.class.getName());
         conf.setProperty("input", input.toString());
         conf.setProperty("output", output.toString());
         conf.setProperty("delPath", output.toString());
-        conf.setProperty("subWfApp", appPath.toString() + "/subwf");
+        conf.setProperty("subWfApp", appPath.toString() + "/subwf/workflow.xml");
         //conf.setProperty("user.name", getTestUser());
         injectKerberosInfo(conf);
 

@@ -51,7 +51,7 @@ public class TestCoordinatorEngine extends XTestCase {
     }
 
     public void testEngine() throws Exception {
-        String appPath = getTestCaseDir();
+        String appPath = getTestCaseDir() + File.separator + "coordinator.xml";
         String jobId = _testSubmitJob(appPath);
         _testGetJob(jobId, appPath);
         _testGetJobs(jobId);
@@ -67,7 +67,7 @@ public class TestCoordinatorEngine extends XTestCase {
      */
     public void testDoneFlag() throws Exception {
         Configuration conf = new XConfiguration();
-        String appPath = getTestCaseDir();
+        String appPath = getTestCaseDir() + File.separator + "coordinator.xml";
 
         String appXml = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" start=\"2009-02-01T01:00Z\" end=\"2009-02-01T02:00Z\" timezone=\"UTC\" "
                 + "xmlns=\"uri:oozie:coordinator:0.1\"> <controls> <timeout>10</timeout> <concurrency>2</concurrency> "
@@ -123,7 +123,7 @@ public class TestCoordinatorEngine extends XTestCase {
      */
     public void testCustomDoneFlag() throws Exception {
         Configuration conf = new XConfiguration();
-        String appPath = getTestCaseDir();
+        String appPath = getTestCaseDir() + File.separator + "coordinator.xml";
         String appXml = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" start=\"2009-02-01T01:00Z\" end=\"2009-02-01T02:00Z\" timezone=\"UTC\" "
                 + "xmlns=\"uri:oozie:coordinator:0.1\"> <controls> <timeout>10</timeout> <concurrency>2</concurrency> "
                 + "<execution>LIFO</execution> </controls> <datasets> "
@@ -179,7 +179,7 @@ public class TestCoordinatorEngine extends XTestCase {
      */
     public void testEmptyDoneFlag() throws Exception {
         Configuration conf = new XConfiguration();
-        String appPath = getTestCaseDir();
+        String appPath = getTestCaseDir() + File.separator + "coordinator.xml";
         String appXml = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" start=\"2009-02-01T01:00Z\" end=\"2009-02-01T02:00Z\" timezone=\"UTC\" "
                 + "xmlns=\"uri:oozie:coordinator:0.1\"> <controls> <timeout>10</timeout> <concurrency>2</concurrency> "
                 + "<execution>LIFO</execution> </controls> <datasets> "
@@ -235,7 +235,7 @@ public class TestCoordinatorEngine extends XTestCase {
      */
     public void testDoneFlagCreation() throws Exception {
         Configuration conf = new XConfiguration();
-        String appPath = getTestCaseDir();
+        String appPath = getTestCaseDir() + File.separator + "coordinator.xml";
         String appXml = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" start=\"2009-02-01T01:00Z\" end=\"2009-02-01T02:00Z\" timezone=\"UTC\" "
                 + "xmlns=\"uri:oozie:coordinator:0.1\"> <controls> <timeout>10</timeout> <concurrency>2</concurrency> "
                 + "<execution>LIFO</execution> </controls> <datasets> "
@@ -381,7 +381,7 @@ public class TestCoordinatorEngine extends XTestCase {
     }
 
     private void writeToFile(String appXml, String appPath) throws IOException {
-        File wf = new File(appPath + "/coordinator.xml");
+        File wf = new File(appPath);
         PrintWriter out = null;
         try {
             out = new PrintWriter(new FileWriter(wf));

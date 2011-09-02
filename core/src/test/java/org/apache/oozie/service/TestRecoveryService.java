@@ -84,7 +84,7 @@ public class TestRecoveryService extends XTestCase {
 
         final DagEngine engine = new DagEngine(getTestUser(), "a");
         Configuration conf = new XConfiguration();
-        conf.set(OozieClient.APP_PATH, getTestCaseDir());
+        conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set(OozieClient.GROUP_NAME, getTestGroup());
         injectKerberosInfo(conf);
@@ -260,7 +260,7 @@ public class TestRecoveryService extends XTestCase {
         action.setNominalTime(new Date());
         action.setLastModifiedTime(new Date());
         action.setStatus(CoordinatorAction.Status.SUBMITTED);
-        String appPath = baseDir + "/no-op";
+        String appPath = baseDir + "/no-op/workflow.xml";
         String baseURI = baseDir + "/workflows";
         String actionXml = "<coordinator-app xmlns='uri:oozie:coordinator:0.1' xmlns:sla='uri:oozie:sla:0.1' name='NAME' frequency=\"1\" start='2009-02-01T01:00Z' end='2009-02-03T23:59Z' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'  instance-number=\"1\" action-nominal-time=\"2009-02-01T01:00Z\">";
         actionXml += "<controls>";
@@ -323,7 +323,7 @@ public class TestRecoveryService extends XTestCase {
         String content = "<workflow-app xmlns='uri:oozie:workflow:0.1'  xmlns:sla='uri:oozie:sla:0.1' name='no-op-wf'>";
         content += "<start to='end' />";
         content += "<end name='end' /></workflow-app>";
-        writeToFile(content, appPath);
+        writeToFile(content, baseDir + "/no-op/");
     }
 
     private void writeToFile(String content, String appPath) throws IOException {
@@ -371,6 +371,7 @@ public class TestRecoveryService extends XTestCase {
         coordJob.setUser(getTestUser());
         coordJob.setGroup(getTestGroup());
         coordJob.setAuthToken("notoken");
+        coordJob.setTimeZone("UTC");
 
         String baseURI = baseDir + "/workflows";
         String confStr = "<configuration></configuration>";

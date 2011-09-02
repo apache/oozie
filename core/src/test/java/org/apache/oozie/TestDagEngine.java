@@ -25,6 +25,7 @@ import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.Reader;
 import java.io.Writer;
@@ -65,7 +66,7 @@ public class TestDagEngine extends XTestCase {
 
         final DagEngine engine = new DagEngine(getTestUser(), "a");
         Configuration conf = new XConfiguration();
-        conf.set(OozieClient.APP_PATH, getTestCaseDir());
+        conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set(OozieClient.GROUP_NAME, getTestGroup());
         injectKerberosInfo(conf);
@@ -105,7 +106,7 @@ public class TestDagEngine extends XTestCase {
 
         final DagEngine engine = new DagEngine(getTestUser(), "a");
         Configuration conf = new XConfiguration();
-        conf.set(OozieClient.APP_PATH, getTestCaseDir());
+        conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set(OozieClient.GROUP_NAME, getTestGroup());
         injectKerberosInfo(conf);
@@ -127,7 +128,7 @@ public class TestDagEngine extends XTestCase {
 
         final DagEngine engine = new DagEngine(getTestUser(), "a");
         Configuration conf = new XConfiguration();
-        conf.set(OozieClient.APP_PATH, getTestCaseDir());
+        conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set(OozieClient.GROUP_NAME, getTestGroup());
         injectKerberosInfo(conf);

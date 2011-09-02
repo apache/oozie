@@ -108,8 +108,7 @@ public class SubmitCommand extends WorkflowCommand<String> {
             XConfiguration protoActionConf = wps.createProtoActionConf(conf, authToken, true);
             WorkflowLib workflowLib = Services.get().get(WorkflowStoreService.class).getWorkflowLibWithNoDB();
 
-            Path configDefault = new Path(conf.get(OozieClient.APP_PATH), CONFIG_DEFAULT);
-
+            Path configDefault = new Path(new Path(conf.get(OozieClient.APP_PATH)).getParent(), CONFIG_DEFAULT);
             String user = conf.get(OozieClient.USER_NAME);
             String group = conf.get(OozieClient.GROUP_NAME);
             FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, group,

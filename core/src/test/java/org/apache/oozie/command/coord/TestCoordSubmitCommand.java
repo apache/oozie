@@ -55,7 +55,7 @@ public class TestCoordSubmitCommand extends XTestCase {
      */
     public void testBasicSubmit() throws Exception {
         Configuration conf = new XConfiguration();
-        String appPath = getTestCaseDir();
+        String appPath = getTestCaseDir() + File.separator + "coordinator.xml";
         String appXml = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" start=\"2009-02-01T01:00Z\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
                 + "xmlns=\"uri:oozie:coordinator:0.1\"> <controls> <concurrency>2</concurrency> "
                 + "<execution>LIFO</execution> </controls> <datasets> "
@@ -93,7 +93,7 @@ public class TestCoordSubmitCommand extends XTestCase {
      */
     public void testBasicSubmitWithSLA() throws Exception {
         Configuration conf = new XConfiguration();
-        String appPath = getTestCaseDir();
+        String appPath = getTestCaseDir() + File.separator + "coordinator.xml";
         String appXml = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" start=\"2009-02-01T01:00Z\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
                 + "xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='uri:oozie:coordinator:0.1' xmlns:sla='uri:oozie:sla:0.1'> <controls> <timeout>10</timeout> <concurrency>2</concurrency> "
                 + "<execution>LIFO</execution> </controls> <datasets> "
@@ -140,7 +140,7 @@ public class TestCoordSubmitCommand extends XTestCase {
      */
     public void testSubmitFixedValues() throws Exception {
         Configuration conf = new XConfiguration();
-        String appPath = getTestCaseDir();
+        String appPath = getTestCaseDir() + File.separator + "coordinator.xml";
         String appXml = "<coordinator-app name=\"NAME\" frequency=\"10\" start=\"2009-02-01T01:00Z\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
                 + "xmlns=\"uri:oozie:coordinator:0.1\"> <controls> <timeout>10</timeout> <concurrency>2</concurrency> "
                 + "<execution>LIFO</execution> </controls> <datasets> "
@@ -174,7 +174,7 @@ public class TestCoordSubmitCommand extends XTestCase {
      */
     public void testSchemaError() throws Exception {
         Configuration conf = new XConfiguration();
-        String appPath = getTestCaseDir();
+        String appPath = getTestCaseDir() + File.separator + "coordinator.xml";
         String appXml = "<coordinator-app name=\"NAME\" frequencyERROR=\"10\" start=\"2009-02-01T01:00Z\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
                 + "xmlns=\"uri:oozie:coordinator:0.1\"> <controls> <timeout>10</timeout> <concurrency>2</concurrency> "
                 + "<execution>LIFO</execution> </controls> <datasets> "
@@ -212,7 +212,7 @@ public class TestCoordSubmitCommand extends XTestCase {
      */
     public void testSubmitNoDatasets() throws Exception {
         Configuration conf = new XConfiguration();
-        String appPath = getTestCaseDir();
+        String appPath = getTestCaseDir() + File.separator + "coordinator.xml";
         String appXml = "<coordinator-app name=\"NAME\" frequency=\"10\" start=\"2009-02-01T01:00Z\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
                 + "xmlns=\"uri:oozie:coordinator:0.1\"> "
                 + "<controls> <timeout>10</timeout> <concurrency>2</concurrency> "
@@ -238,7 +238,7 @@ public class TestCoordSubmitCommand extends XTestCase {
      */
     public void testSubmitNoUsername() throws Exception {
         Configuration conf = new XConfiguration();
-        String appPath = getTestCaseDir();
+        String appPath = getTestCaseDir() + File.separator + "coordinator.xml";
         String appXml = "<coordinator-app name=\"NAME\" frequency=\"10\" start=\"2009-02-01T01:00Z\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
                 + "xmlns=\"uri:oozie:coordinator:0.1\"> "
                 + "<controls> <timeout>10</timeout> <concurrency>2</concurrency> "
@@ -268,7 +268,7 @@ public class TestCoordSubmitCommand extends XTestCase {
      */
     public void testSubmitNoControls() throws Exception {
         Configuration conf = new XConfiguration();
-        String appPath = getTestCaseDir();
+        String appPath = getTestCaseDir() + File.separator + "coordinator.xml";
         String appXml = "<coordinator-app name=\"NAME\" frequency=\"10\" start=\"2009-02-01T01:00Z\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
                 + "xmlns=\"uri:oozie:coordinator:0.1\"> "
                 + "<action> <workflow> <app-path>hdfs:///tmp/workflows/</app-path> "
@@ -293,7 +293,7 @@ public class TestCoordSubmitCommand extends XTestCase {
      */
     public void testSubmitWithDoneFlag() throws Exception {
         Configuration conf = new XConfiguration();
-        String appPath = getTestCaseDir();
+        String appPath = getTestCaseDir() + File.separator + "coordinator.xml";
         String appXml = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" start=\"2009-02-01T01:00Z\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
                 + "xmlns=\"uri:oozie:coordinator:0.1\"> <controls> <timeout>10</timeout> <concurrency>2</concurrency> "
                 + "<execution>LIFO</execution> </controls> <datasets> "
@@ -333,7 +333,7 @@ public class TestCoordSubmitCommand extends XTestCase {
      */
     public void testSubmitReservedVars() throws Exception {
         Configuration conf = new XConfiguration();
-        String appPath = getTestCaseDir();
+        String appPath = getTestCaseDir() + File.separator + "coordinator.xml";
         String appXml = "<coordinator-app name=\"NAME\" frequency=\"10\" start=\"2009-02-01T01:00Z\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
                 + "xmlns=\"uri:oozie:coordinator:0.1\"> "
                 + "<action> <workflow> <app-path>hdfs:///tmp/workflows/</app-path> "
@@ -375,7 +375,7 @@ public class TestCoordSubmitCommand extends XTestCase {
 
     private void writeToFile(String appXml, String appPath) throws IOException {
         // TODO Auto-generated method stub
-        File wf = new File(appPath + "/coordinator.xml");
+        File wf = new File(appPath);
         PrintWriter out = null;
         try {
             out = new PrintWriter(new FileWriter(wf));

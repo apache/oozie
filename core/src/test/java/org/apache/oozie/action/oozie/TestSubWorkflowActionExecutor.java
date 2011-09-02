@@ -25,6 +25,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.FileSystem;
 
+import java.io.File;
 import java.io.StringReader;
 import java.io.Writer;
 import java.io.OutputStreamWriter;
@@ -45,7 +46,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
 
         WorkflowActionBean action = (WorkflowActionBean) workflow.getActions().get(0);
         action.setConf("<sub-workflow xmlns='uri:oozie:workflow:0.1'>" +
-                "      <app-path>hdfs://foo:9000/user/bar</app-path>" +
+                "      <app-path>hdfs://foo:9000/user/bar/workflow.xml</app-path>" +
                 "      <configuration>" +
                 "        <property>" +
                 "          <name>a</name>" +
@@ -80,7 +81,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
 
         final WorkflowActionBean action = (WorkflowActionBean) workflow.getActions().get(0);
         action.setConf("<sub-workflow xmlns='uri:oozie:workflow:0.1'>" +
-                "      <app-path>" + subWorkflowAppPath + "</app-path>" +
+                "      <app-path>" + subWorkflowAppPath + File.separator + "workflow.xml" + "</app-path>" +
                 "      <configuration>" +
                 "        <property>" +
                 "          <name>a</name>" +
@@ -124,7 +125,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
 
         final WorkflowActionBean action = (WorkflowActionBean) workflow.getActions().get(0);
         action.setConf("<sub-workflow xmlns='uri:oozie:workflow:0.1'>" +
-                "      <app-path>" + subWorkflowAppPath + "</app-path>" +
+                "      <app-path>" + subWorkflowAppPath + File.separator + "workflow.xml" + "</app-path>" +
                 "      <configuration>" +
                 "        <property>" +
                 "          <name>a</name>" +
@@ -181,7 +182,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
 
         final WorkflowActionBean action = (WorkflowActionBean) workflow.getActions().get(0);
         action.setConf("<sub-workflow xmlns='uri:oozie:workflow:0.1' name='subwf'>" +
-                "      <app-path>" + subWorkflowAppPath + "</app-path>" +
+                "      <app-path>" + subWorkflowAppPath + File.separator + "workflow.xml" + "</app-path>" +
                 "      <propagate-configuration />" +
                 "      <configuration>" +
                 "        <property>" +
@@ -233,7 +234,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
 
         final WorkflowActionBean action = (WorkflowActionBean) workflow.getActions().get(0);
         action.setConf("<sub-workflow xmlns='uri:oozie:workflow:0.1' name='subwf'>" +
-                "      <app-path>" + subWorkflowAppPath + "</app-path>" +
+                "      <app-path>" + subWorkflowAppPath + File.separator + "workflow.xml" + "</app-path>" +
                 "      <configuration>" +
                 "        <property>" +
                 "          <name>a</name>" +

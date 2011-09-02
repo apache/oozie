@@ -14,6 +14,7 @@
  */
 package org.apache.oozie.service;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.Reader;
 import java.io.Writer;
@@ -74,7 +75,7 @@ public class TestPurgeService extends XTestCase {
 
         final DagEngine engine = new DagEngine("u", "a");
         Configuration conf = new XConfiguration();
-        conf.set(OozieClient.APP_PATH, getTestCaseDir());
+        conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
         conf.setStrings(OozieClient.USER_NAME, getTestUser());
         conf.setStrings(OozieClient.GROUP_NAME, getTestGroup());
         injectKerberosInfo(conf);

@@ -77,7 +77,7 @@ public class TestAuthorizationService extends XFsTestCase {
 
         final DagEngine engine = new DagEngine(getTestUser(), "a");
         Configuration jobConf = new XConfiguration();
-        jobConf.set(OozieClient.APP_PATH, getTestCaseDir());
+        jobConf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
         jobConf.set(OozieClient.USER_NAME, getTestUser());
         jobConf.set(OozieClient.GROUP_NAME, getTestGroup());
         injectKerberosInfo(jobConf);

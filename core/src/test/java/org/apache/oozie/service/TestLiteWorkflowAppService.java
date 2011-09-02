@@ -27,6 +27,7 @@ import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.ErrorCode;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.Reader;
 import java.io.Writer;
@@ -81,7 +82,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             IOUtils.copyCharStream(reader, writer);
 
             WorkflowAppService wps = services.get(WorkflowAppService.class);
-            String wfDef = wps.readDefinition("file://" + getTestCaseDir(), getTestUser(), "group",
+            String wfDef = wps.readDefinition("file://" + getTestCaseDir() + File.separator + "workflow.xml", getTestUser(), "group",
                                               "authToken");
             assertNotNull(reader.toString(), wfDef);
         }
@@ -116,7 +117,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             WorkflowAppService wps = services.get(WorkflowAppService.class);
 
             Configuration jobConf = new XConfiguration();
-            jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir());
+            jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
             jobConf.set(OozieClient.USER_NAME, getTestUser());
             jobConf.set(OozieClient.GROUP_NAME, "group");
 
@@ -156,7 +157,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             WorkflowAppService wps = services.get(WorkflowAppService.class);
 
             Configuration jobConf = new XConfiguration();
-            jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir());
+            jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
             jobConf.set(OozieClient.USER_NAME, getTestUser());
             jobConf.set(OozieClient.GROUP_NAME, "group");
 
@@ -194,7 +195,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             WorkflowAppService wps = services.get(WorkflowAppService.class);
 
             Configuration jobConf = new XConfiguration();
-            jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir());
+            jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
             jobConf.set(OozieClient.USER_NAME, getTestUser());
             jobConf.set(OozieClient.GROUP_NAME, "group");
 
@@ -223,7 +224,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             IOUtils.copyCharStream(reader, writer);
 
             Configuration jobConf = new XConfiguration();
-            jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir());
+            jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
             jobConf.set(OozieClient.USER_NAME, getTestUser());
             jobConf.set(OozieClient.GROUP_NAME, "group");
 
@@ -278,7 +279,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             writer.close();
             WorkflowAppService wps = Services.get().get(WorkflowAppService.class);
             Configuration jobConf = new XConfiguration();
-            jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir());
+            jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
             jobConf.set(OozieClient.USER_NAME, getTestUser());
             jobConf.set(OozieClient.GROUP_NAME, getTestGroup());
             injectKerberosInfo(jobConf);
@@ -321,7 +322,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             writer.close();
             WorkflowAppService wps = Services.get().get(WorkflowAppService.class);
             Configuration jobConf = new XConfiguration();
-            jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir());
+            jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + "/workflow.xml");
             jobConf.set(OozieClient.LIBPATH, "file://" + getTestCaseDir() + "/libx");
             jobConf.set(OozieClient.USER_NAME, getTestUser());
             jobConf.set(OozieClient.GROUP_NAME, getTestGroup());
@@ -379,7 +380,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             // without using system libpath
             WorkflowAppService wps = Services.get().get(WorkflowAppService.class);
             Configuration jobConf = new XConfiguration();
-            jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir());
+            jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + "/workflow.xml");
             jobConf.set(OozieClient.LIBPATH, "file://" + getTestCaseDir() + "/libx");
             jobConf.set(OozieClient.USER_NAME, getTestUser());
             jobConf.set(OozieClient.GROUP_NAME, getTestGroup());
@@ -404,7 +405,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             // using system libpath
             wps = Services.get().get(WorkflowAppService.class);
             jobConf = new XConfiguration();
-            jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir());
+            jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + "/workflow.xml");
             jobConf.set(OozieClient.LIBPATH, "file://" + getTestCaseDir() + "/libx");
             jobConf.set(OozieClient.USER_NAME, getTestUser());
             jobConf.set(OozieClient.GROUP_NAME, getTestGroup());

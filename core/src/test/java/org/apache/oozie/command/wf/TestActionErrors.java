@@ -14,6 +14,7 @@
  */
 package org.apache.oozie.command.wf;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.Reader;
 import java.io.Writer;
@@ -188,7 +189,7 @@ public class TestActionErrors extends XTestCase {
 
         final DagEngine engine = new DagEngine("u", "a");
         Configuration conf = new XConfiguration();
-        conf.set(OozieClient.APP_PATH, getTestCaseDir());
+        conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set(OozieClient.GROUP_NAME, getTestGroup());
         injectKerberosInfo(conf);
@@ -265,7 +266,7 @@ public class TestActionErrors extends XTestCase {
 
         final DagEngine engine = new DagEngine("u", "a");
         Configuration conf = new XConfiguration();
-        conf.set(OozieClient.APP_PATH, getTestCaseDir());
+        conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set(OozieClient.GROUP_NAME, getTestGroup());
         injectKerberosInfo(conf);
@@ -344,7 +345,7 @@ public class TestActionErrors extends XTestCase {
 
         final DagEngine engine = new DagEngine("u", "a");
         Configuration conf = new XConfiguration();
-        conf.set(OozieClient.APP_PATH, getTestCaseDir());
+        conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set(OozieClient.GROUP_NAME, getTestGroup());
         injectKerberosInfo(conf);
@@ -382,7 +383,7 @@ public class TestActionErrors extends XTestCase {
 
         final DagEngine engine = new DagEngine("u", "a");
         Configuration conf = new XConfiguration();
-        conf.set(OozieClient.APP_PATH, getTestCaseDir());
+        conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set(OozieClient.GROUP_NAME, getTestGroup());
         injectKerberosInfo(conf);

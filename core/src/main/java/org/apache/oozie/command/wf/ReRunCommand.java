@@ -149,8 +149,7 @@ public class ReRunCommand extends WorkflowCommand<Void> {
             XConfiguration protoActionConf = wps.createProtoActionConf(conf, authToken, true);
             WorkflowLib workflowLib = Services.get().get(WorkflowStoreService.class).getWorkflowLibWithNoDB();
 
-            Path configDefault = new Path(conf.get(OozieClient.APP_PATH), SubmitCommand.CONFIG_DEFAULT);
-
+            Path configDefault = new Path(new Path(conf.get(OozieClient.APP_PATH)).getParent(), SubmitCommand.CONFIG_DEFAULT);
             FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(wfBean.getUser(),
                                                                                              wfBean.getGroup(), configDefault.toUri(), new Configuration());
 

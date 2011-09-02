@@ -61,7 +61,7 @@ public class LocalOozieExample {
 
             // create a workflow job configuration and set the workflow application path
             Properties conf = wc.createConfiguration();
-            conf.setProperty(OozieClient.APP_PATH, appUri);
+            conf.setProperty(OozieClient.APP_PATH, appUri + File.separator + "workflow.xml");
             conf.setProperty("mapreduce.jobtracker.kerberos.principal", "mapred/localhost@LOCALHOST");
             conf.setProperty("dfs.namenode.kerberos.principal", "hdfs/localhost@LOCALHOST");
             // load additional workflow job parameters from properties file

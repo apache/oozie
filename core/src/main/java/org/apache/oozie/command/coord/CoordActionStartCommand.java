@@ -17,6 +17,7 @@ package org.apache.oozie.command.coord;
 import org.apache.hadoop.conf.Configuration;
 
 import org.apache.oozie.client.CoordinatorAction;
+import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.DagEngine;
 import org.apache.oozie.DagEngineException;
@@ -26,6 +27,7 @@ import org.apache.oozie.service.DagEngineService;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
@@ -148,6 +150,10 @@ public class CoordActionStartCommand extends CoordinatorCommand<Void> {
                 Configuration conf = new XConfiguration(new StringReader(coordAction.getRunConf()));
                 SLADbOperations.writeStausEvent(coordAction.getSlaXml(), coordAction.getId(), store, Status.STARTED,
                                                 SlaAppType.COORDINATOR_ACTION);
+
+                // Normalize workflow appPath here;
+                JobUtils.normalizeAppPath(conf.get(OozieClient.USER_NAME), conf.get(OozieClient.GROUP_NAME), conf);
+                
                 String wfId = dagEngine.submitJob(conf, startJob);
                 coordAction.setStatus(CoordinatorAction.Status.RUNNING);
                 coordAction.setExternalId(wfId);

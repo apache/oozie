@@ -15,6 +15,7 @@
 package org.apache.oozie.command.wf;
 
 import java.util.Properties;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
@@ -55,7 +56,7 @@ public class TestReRunCommand extends XFsTestCase {
 
         final OozieClient wfClient = LocalOozie.getClient();
         Properties conf = wfClient.createConfiguration();
-        conf.setProperty(OozieClient.APP_PATH, getTestCaseDir());
+        conf.setProperty(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
         conf.setProperty(OozieClient.USER_NAME, getTestUser());
         injectKerberosInfo(conf);
 
@@ -104,7 +105,7 @@ public class TestReRunCommand extends XFsTestCase {
 
         final OozieClient wfClient = LocalOozie.getClient();
         Properties conf = wfClient.createConfiguration();
-        conf.setProperty(OozieClient.APP_PATH, getTestCaseDir());
+        conf.setProperty(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
         conf.setProperty(OozieClient.USER_NAME, getTestUser());
         injectKerberosInfo(conf);
 

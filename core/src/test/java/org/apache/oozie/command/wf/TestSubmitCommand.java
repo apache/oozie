@@ -49,8 +49,8 @@ public class TestSubmitCommand extends XFsTestCase {
                 + "<end name='end' /> "
                 + "</workflow-app>";
 
-        writeToFile(appXml, appPath);
-        conf.set(OozieClient.APP_PATH, appPath);
+        writeToFile(appXml, appPath+"/workflow.xml");
+        conf.set(OozieClient.APP_PATH, appPath+"/workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set(OozieClient.GROUP_NAME, "other");
         conf.set("GB", "5");
@@ -64,10 +64,77 @@ public class TestSubmitCommand extends XFsTestCase {
 
         }
     }
+    
+    public void testAppPathIsFile1() throws Exception {
+        Configuration conf = new XConfiguration();
+        String appPath = getTestCaseDir();
+        String appXml = "<workflow-app xmlns='uri:oozie:workflow:0.1' name='map-reduce-wf'> "
+                + "<start to='end' /> "
+                + "<end name='end' /> "
+                + "</workflow-app>";
+
+        writeToFile(appXml, appPath+"/workflow.xml");
+        conf.set(OozieClient.APP_PATH, appPath+"/workflow.xml");
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        conf.set(OozieClient.GROUP_NAME, "other");
+        SubmitCommand sc = new SubmitCommand(conf, "UNIT_TESTING");
+
+        try {
+            sc.call();
+        }
+        catch (CommandException ce) {
+            fail("Should succeed");
+        }
+    }
+    
+    public void testAppPathIsFile2() throws Exception {
+        Configuration conf = new XConfiguration();
+        String appPath = getTestCaseDir();
+        String appXml = "<workflow-app xmlns='uri:oozie:workflow:0.1' name='map-reduce-wf'> "
+                + "<start to='end' /> "
+                + "<end name='end' /> "
+                + "</workflow-app>";
+
+        writeToFile(appXml, appPath+"/test.xml");
+        conf.set(OozieClient.APP_PATH, appPath+"/test.xml");
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        conf.set(OozieClient.GROUP_NAME, "other");
+        SubmitCommand sc = new SubmitCommand(conf, "UNIT_TESTING");
+
+        try {
+            sc.call();
+        }
+        catch (CommandException ce) {
+            fail("Should succeed");
+        }
+    }
+    
+    public void testAppPathIsFileNegative() throws Exception {
+        Configuration conf = new XConfiguration();
+        String appPath = getTestCaseDir();
+        String appXml = "<workflow-app xmlns='uri:oozie:workflow:0.1' name='map-reduce-wf'> "
+                + "<start to='end' /> "
+                + "<end name='end' /> "
+                + "</workflow-app>";
+
+        writeToFile(appXml, appPath+"/test.xml");
+        conf.set(OozieClient.APP_PATH, appPath+"/does_not_exist.xml");
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        conf.set(OozieClient.GROUP_NAME, "other");
+        SubmitCommand sc = new SubmitCommand(conf, "UNIT_TESTING");
+
+        try {
+            sc.call();
+            fail("should fail");
+        }
+        catch (CommandException ce) {
+
+        }
+    }
 
     private void writeToFile(String appXml, String appPath) throws IOException {
         // TODO Auto-generated method stub
-        File wf = new File(appPath + "/workflow.xml");
+        File wf = new File(appPath);
         PrintWriter out = null;
         try {
             out = new PrintWriter(new FileWriter(wf));

@@ -1,6 +1,7 @@
 -- Oozie 2.3.0 release
 
 GH-0060 actions should not be materialized after nominal time for current mode jobs 
+GH-0026 add support for multiple workflow XMLs in a single HDFS
 GH-0091 typos in workflow spec doc
 GH-0137 release-log.txt file misses 2.2.1 & 2.2.2 features/fixes
 GH-0027 support for a share lib directory in HDFS for workflow action binaries

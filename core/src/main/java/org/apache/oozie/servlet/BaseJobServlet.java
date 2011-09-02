@@ -22,15 +22,22 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.oozie.BaseEngineException;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.client.XOozieClient;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.service.AuthorizationException;
 import org.apache.oozie.service.AuthorizationService;
+import org.apache.oozie.service.HadoopAccessorException;
+import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.XLogService;
+import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
 import org.json.simple.JSONObject;
@@ -101,6 +108,7 @@ public abstract class BaseJobServlet extends JsonRestServlet {
             Configuration conf = new XConfiguration(request.getInputStream());
             stopCron();
             checkAuthorizationForApp(getUser(request), conf);
+            JobUtils.normalizeAppPath(conf.get(OozieClient.USER_NAME), conf.get(OozieClient.GROUP_NAME), conf);
             reRunJob(request, response, conf);
             startCron();
             response.setStatus(HttpServletResponse.SC_OK);
@@ -171,7 +179,7 @@ public abstract class BaseJobServlet extends JsonRestServlet {
             throw new XServletException(HttpServletResponse.SC_UNAUTHORIZED, ex);
         }
     }
-
+    
     /**
      * Return information about jobs.
      */

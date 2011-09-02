@@ -221,7 +221,7 @@ public class CoordSubmitCommand extends CoordinatorCommand<String> {
     private String readAndValidateXml() throws CoordinatorJobException {
         String appPath = ParamChecker.notEmpty(conf.get(OozieClient.COORDINATOR_APP_PATH),
                                                OozieClient.COORDINATOR_APP_PATH);// TODO: COORDINATOR_APP_PATH
-        String coordXml = readDefinition(appPath, COORDINATOR_XML_FILE);
+        String coordXml = readDefinition(appPath);
         validateXml(coordXml);
         return coordXml;
     }
@@ -693,7 +693,7 @@ public class CoordSubmitCommand extends CoordinatorCommand<String> {
             throws CoordinatorJobException {
         Element tmpDataSets = null;
         try {
-            String dsXml = readDefinition(incDSFile, "");
+            String dsXml = readDefinition(incDSFile);
             log.debug("DSFILE :" + incDSFile + "\n" + dsXml);
             tmpDataSets = XmlUtils.parseXml(dsXml);
         }
@@ -757,7 +757,7 @@ public class CoordSubmitCommand extends CoordinatorCommand<String> {
      * @return workflow definition.
      * @throws WorkflowException thrown if the definition could not be read.
      */
-    protected String readDefinition(String appPath, String fileName) throws CoordinatorJobException {// TODO:
+    protected String readDefinition(String appPath) throws CoordinatorJobException {
         String user = ParamChecker.notEmpty(conf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
         String group = ParamChecker.notEmpty(conf.get(OozieClient.GROUP_NAME), OozieClient.GROUP_NAME);
         Configuration confHadoop = CoordUtils.getHadoopConf(conf);
@@ -766,13 +766,8 @@ public class CoordSubmitCommand extends CoordinatorCommand<String> {
             log.debug("user =" + user + " group =" + group);
             FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, group, uri,
                                                                                              new Configuration());
-            Path p;
-            if (fileName == null || fileName.length() == 0) {
-                p = new Path(uri.getPath());
-            }
-            else {
-                p = new Path(uri.getPath(), fileName);
-            }
+            Path p = new Path(uri.getPath());
+
             // Reader reader = new InputStreamReader(fs.open(new Path(uri
             // .getPath(), fileName)));
             Reader reader = new InputStreamReader(fs.open(p));// TODO

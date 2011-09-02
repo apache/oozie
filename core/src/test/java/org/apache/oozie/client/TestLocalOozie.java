@@ -19,6 +19,7 @@ import org.apache.oozie.local.LocalOozie;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
+import java.io.File;
 import java.io.Writer;
 import java.io.OutputStreamWriter;
 import java.util.Properties;
@@ -84,7 +85,7 @@ public class TestLocalOozie extends XFsTestCase {
             LocalOozie.start();
             final OozieClient wc = LocalOozie.getClient();
             Properties conf = wc.createConfiguration();
-            conf.setProperty(OozieClient.APP_PATH, appPath.toString());
+            conf.setProperty(OozieClient.APP_PATH, appPath.toString() + File.separator + "workflow.xml");
             conf.setProperty(OozieClient.USER_NAME, getTestUser());
             conf.setProperty(OozieClient.GROUP_NAME, getTestGroup());
             injectKerberosInfo(conf);

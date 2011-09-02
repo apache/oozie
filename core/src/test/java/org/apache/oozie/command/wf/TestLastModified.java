@@ -22,6 +22,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob;
 
+import java.io.File;
 import java.io.Writer;
 import java.io.OutputStreamWriter;
 import java.util.Date;
@@ -91,7 +92,7 @@ public class TestLastModified extends XFsTestCase {
             LocalOozie.start();
             final OozieClient wc = LocalOozie.getClient();
             Properties conf = wc.createConfiguration();
-            conf.setProperty(OozieClient.APP_PATH, appPath.toString());
+            conf.setProperty(OozieClient.APP_PATH, appPath.toString() + File.separator + "workflow.xml");
             conf.setProperty(OozieClient.USER_NAME, getTestUser());
             conf.setProperty(OozieClient.GROUP_NAME, getTestGroup());
             injectKerberosInfo(conf);

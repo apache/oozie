@@ -53,7 +53,7 @@ public class TestFutureActionsTimeOut extends XTestCase {
     }
 
     public void testEngine() throws Exception {
-        String appPath = getTestCaseDir();
+        String appPath = getTestCaseDir() + File.separator + "coordinator.xml";
         String jobId = _testSubmitJob(appPath);
         Date createDate = new Date();
         _testTimeout(jobId, createDate);
@@ -138,7 +138,7 @@ public class TestFutureActionsTimeOut extends XTestCase {
 
     private void writeToFile(String appXml, String appPath) throws IOException {
         // TODO Auto-generated method stub
-        File wf = new File(appPath + "/coordinator.xml");
+        File wf = new File(appPath);
         PrintWriter out = null;
         try {
             out = new PrintWriter(new FileWriter(wf));
