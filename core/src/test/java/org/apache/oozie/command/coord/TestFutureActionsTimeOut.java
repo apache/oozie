@@ -41,12 +41,14 @@ import org.apache.oozie.util.XConfiguration;
 public class TestFutureActionsTimeOut extends XTestCase {
     private Services services;
 
+    @Override
     protected void setUp() throws Exception {
         super.setUp();
         services = new Services();
         services.init();
     }
 
+    @Override
     protected void tearDown() throws Exception {
         services.destroy();
         super.tearDown();
@@ -156,6 +158,12 @@ public class TestFutureActionsTimeOut extends XTestCase {
 
     }
 
+    /**
+     * The catch-up mode time up has been setup in {@link CoordActionMaterializeXCommand}
+     * @param jobId job id
+     * @param createDate create date
+     * @throws Exception thrown if failed
+     */
     private void _testTimeout(final String jobId, Date createDate) throws Exception {
         final CoordinatorEngine ce = new CoordinatorEngine(getTestUser(), "UNIT_TESTING");
 
@@ -185,7 +193,7 @@ public class TestFutureActionsTimeOut extends XTestCase {
             JsonCoordinatorAction jsonAction = (JsonCoordinatorAction) action;
 
             if (jsonAction.getNominalTime().before(createDate)) {
-                assertEquals(-1, jsonAction.getTimeOut());
+                assertEquals(10, jsonAction.getTimeOut());
             }
             else {
                 assertEquals(10, jsonAction.getTimeOut());

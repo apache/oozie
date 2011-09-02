@@ -82,8 +82,7 @@ public class CoordActionInputCheckCommand extends CoordinatorCommand<Void> {
                 StringBuilder existList = new StringBuilder();
                 StringBuilder nonExistList = new StringBuilder();
                 StringBuilder nonResolvedList = new StringBuilder();
-                CoordCommandUtils.getResolvedList(coordAction.getMissingDependencies(), nonExistList,
-                                                              nonResolvedList);
+                CoordCommandUtils.getResolvedList(coordAction.getMissingDependencies(), nonExistList, nonResolvedList);
 
                 log.info("[" + actionId + "]::ActionInputCheck:: Missing deps:" + nonExistList.toString() + " "
                         + nonResolvedList.toString());
@@ -92,8 +91,7 @@ public class CoordActionInputCheckCommand extends CoordinatorCommand<Void> {
                 coordAction.setLastModifiedTime(actualTime);
                 coordAction.setActionXml(actionXml.toString());
                 if (nonResolvedList.length() > 0 && status == false) {
-                    nonExistList.append(CoordCommandUtils.RESOLVED_UNRESOLVED_SEPARATOR).append(
-                            nonResolvedList);
+                    nonExistList.append(CoordCommandUtils.RESOLVED_UNRESOLVED_SEPARATOR).append(nonResolvedList);
                 }
                 coordAction.setMissingDependencies(nonExistList.toString());
                 if (status == true) {
@@ -102,7 +100,8 @@ public class CoordActionInputCheckCommand extends CoordinatorCommand<Void> {
                     queueCallable(new CoordActionReadyCommand(coordAction.getJobId()), 100);
                 }
                 else {
-                    long waitingTime = (actualTime.getTime() - coordAction.getNominalTime().getTime()) / (60 * 1000);
+                    long waitingTime = (actualTime.getTime() - Math.max(coordAction.getNominalTime().getTime(),
+                            coordAction.getCreatedTime().getTime())) / (60 * 1000);
                     int timeOut = coordAction.getTimeOut();
                     if ((timeOut >= 0) && (waitingTime > timeOut)) {
                         queueCallable(new CoordActionTimeOut(coordAction), 100);
@@ -128,7 +127,7 @@ public class CoordActionInputCheckCommand extends CoordinatorCommand<Void> {
     }
 
     protected boolean checkInput(StringBuilder actionXml, StringBuilder existList, StringBuilder nonExistList,
-                                 Configuration conf, Date actualTime) throws Exception {
+            Configuration conf, Date actualTime) throws Exception {
         Element eAction = XmlUtils.parseXml(actionXml.toString());
         boolean allExist = checkResolvedUris(eAction, existList, nonExistList, conf);
         if (allExist) {
@@ -154,7 +153,7 @@ public class CoordActionInputCheckCommand extends CoordinatorCommand<Void> {
     private void materializeDataProperties(Element eAction, Configuration conf) throws Exception {
         ELEvaluator eval = CoordELEvaluator.createDataEvaluator(eAction, conf, actionId);
         Element configElem = eAction.getChild("action", eAction.getNamespace()).getChild("workflow",
-                                                                                         eAction.getNamespace()).getChild("configuration", eAction.getNamespace());
+                eAction.getNamespace()).getChild("configuration", eAction.getNamespace());
         if (configElem != null) {
             for (Element propElem : (List<Element>) configElem.getChildren("property", configElem.getNamespace())) {
                 resolveTagContents("value", propElem, eval);
@@ -186,8 +185,8 @@ public class CoordActionInputCheckCommand extends CoordinatorCommand<Void> {
         boolean ret;
         Element inputList = eAction.getChild("input-events", eAction.getNamespace());
         if (inputList != null) {
-            ret = materializeUnresolvedEvent(inputList.getChildren("data-in", eAction.getNamespace()),
-                                             nominalTime, actualTime, actionConf);
+            ret = materializeUnresolvedEvent(inputList.getChildren("data-in", eAction.getNamespace()), nominalTime,
+                    actualTime, actionConf);
             if (ret == false) {
                 resultedXml.append(strAction);
                 return false;
@@ -216,7 +215,7 @@ public class CoordActionInputCheckCommand extends CoordinatorCommand<Void> {
     }
 
     private boolean materializeUnresolvedEvent(List<Element> eDataEvents, Date nominalTime, Date actualTime,
-                                               Configuration conf) throws Exception {
+            Configuration conf) throws Exception {
         for (Element dEvent : eDataEvents) {
             if (dEvent.getChild("unresolved-instances", dEvent.getNamespace()) == null) {
                 continue;
@@ -254,7 +253,7 @@ public class CoordActionInputCheckCommand extends CoordinatorCommand<Void> {
     }
 
     private boolean checkResolvedUris(Element eAction, StringBuilder existList, StringBuilder nonExistList,
-                                      Configuration conf) throws IOException {
+            Configuration conf) throws IOException {
 
         log.info("[" + actionId + "]::ActionInputCheck:: In checkResolvedUris...");
         Element inputList = eAction.getChild("input-events", eAction.getNamespace());
@@ -304,8 +303,8 @@ public class CoordActionInputCheckCommand extends CoordinatorCommand<Void> {
         String user = ParamChecker.notEmpty(actionConf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
         String group = ParamChecker.notEmpty(actionConf.get(OozieClient.GROUP_NAME), OozieClient.GROUP_NAME);
         try {
-            return Services.get().get(HadoopAccessorService.class).
-                    createFileSystem(user, group, path.toUri(), actionConf).exists(path);
+            return Services.get().get(HadoopAccessorService.class).createFileSystem(user, group, path.toUri(),
+                    actionConf).exists(path);
         }
         catch (HadoopAccessorException e) {
             throw new IOException(e);
@@ -367,8 +366,8 @@ public class CoordActionInputCheckCommand extends CoordinatorCommand<Void> {
         }
         catch (InterruptedException e) {
             queueCallable(new CoordActionInputCheckCommand(actionId), LOCK_FAILURE_REQUEUE_INTERVAL);
-            log.warn("CoordActionInputCheckCommand lock acquiring failed with exception " + e.getMessage() + " for jobId="
-                    + coordAction.getJobId() + ", actionId=" + actionId + " Requeing the same.");
+            log.warn("CoordActionInputCheckCommand lock acquiring failed with exception " + e.getMessage()
+                    + " for jobId=" + coordAction.getJobId() + ", actionId=" + actionId + " Requeing the same.");
         }
         finally {
             log.info("ENDED CoordActionInputCheckCommand for actionid=" + actionId);

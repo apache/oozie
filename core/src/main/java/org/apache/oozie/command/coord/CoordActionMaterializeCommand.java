@@ -181,16 +181,20 @@ public class CoordActionMaterializeCommand extends CoordinatorCommand<Void> {
             CoordinatorActionBean actionBean = new CoordinatorActionBean();
             lastActionNumber++;
 
-            actionBean.setTimeOut(jobBean.getTimeout());
-
+            int timeout = jobBean.getTimeout();
             log.debug(origStart.getTime() + " Materializing action for time=" + effStart.getTime()
                     + ", lastactionnumber=" + lastActionNumber);
             action = CoordCommandUtils.materializeOneInstance(jobId, dryrun, (Element) eJob.clone(),
                     effStart.getTime(), lastActionNumber, conf, actionBean);
+            int catchUpTOMultiplier = 1; // This value might be could be changed in future
             if (actionBean.getNominalTimestamp().before(jobBean.getCreatedTimestamp())) {
-                actionBean.setTimeOut(Services.get().getConf().getInt(CONF_DEFAULT_TIMEOUT_CATCHUP, -1));
+                // Catchup action
+                timeout = catchUpTOMultiplier * timeout;
+                // actionBean.setTimeOut(Services.get().getConf().getInt(CONF_DEFAULT_TIMEOUT_CATCHUP,
+                // -1));
                 log.info("Catchup timeout is :" + actionBean.getTimeOut());
             }
+            actionBean.setTimeOut(timeout);
 
             if (!dryrun) {
                 storeToDB(actionBean, action, store); // Storing to table

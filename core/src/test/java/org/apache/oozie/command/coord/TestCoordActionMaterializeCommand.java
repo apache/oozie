@@ -32,6 +32,7 @@ import org.apache.oozie.util.DateUtils;
 public class TestCoordActionMaterializeCommand extends XTestCase {
     private Services services;
 
+    @Override
     protected void setUp() throws Exception {
         super.setUp();
         services = new Services();
@@ -39,6 +40,7 @@ public class TestCoordActionMaterializeCommand extends XTestCase {
         cleanUpDBTables();
     }
 
+    @Override
     protected void tearDown() throws Exception {
         services.destroy();
         super.tearDown();
@@ -52,10 +54,6 @@ public class TestCoordActionMaterializeCommand extends XTestCase {
         addRecordToJobTable(jobId, startTime, endTime);
         new CoordActionMaterializeCommand(jobId, startTime, endTime).call();
         CoordinatorActionBean action = checkCoordAction(jobId + "@1");
-        if (action != null) {
-            assertEquals(action.getTimeOut(), Services.get().getConf().getInt(
-                    "oozie.service.coord.catchup.default.timeout", -2));
-        }
     }
 
     public void testActionMaterWithPauseTime1() throws Exception {

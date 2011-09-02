@@ -22,10 +22,13 @@ import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.DagEngine;
 import org.apache.oozie.DagEngineException;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.service.DagEngineService;
+import org.apache.oozie.service.WorkflowStoreService;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.store.CoordinatorStore;
+import org.apache.oozie.store.WorkflowStore;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.ParamChecker;
@@ -128,6 +131,7 @@ public class CoordActionStartCommand extends CoordinatorCommand<Void> {
         return runConf;
     }
 
+    @Override
     protected Void call(CoordinatorStore store) throws StoreException, CommandException {
         boolean makeFail = true;
         String errCode = "";
@@ -142,8 +146,7 @@ public class CoordActionStartCommand extends CoordinatorCommand<Void> {
             // create merged runConf to pass to WF Engine
             Configuration runConf = mergeConfig(coordAction);
             coordAction.setRunConf(XmlUtils.prettyPrint(runConf).toString());
-            // log.debug("%%% merged runconf=" +
-            // XmlUtils.prettyPrint(runConf).toString());
+            // log.debug("%%% merged runconf=" + XmlUtils.prettyPrint(runConf).toString());
             DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(user, authToken);
             try {
                 boolean startJob = true;
@@ -153,11 +156,18 @@ public class CoordActionStartCommand extends CoordinatorCommand<Void> {
 
                 // Normalize workflow appPath here;
                 JobUtils.normalizeAppPath(conf.get(OozieClient.USER_NAME), conf.get(OozieClient.GROUP_NAME), conf);
-                
+
                 String wfId = dagEngine.submitJob(conf, startJob);
                 coordAction.setStatus(CoordinatorAction.Status.RUNNING);
                 coordAction.setExternalId(wfId);
                 store.updateCoordinatorAction(coordAction);
+
+                log.debug("Updating WF record for WFID :" + wfId + " with parent id: " + actionId);
+                WorkflowStore wfStore = Services.get().get(WorkflowStoreService.class).create(store);
+                WorkflowJobBean wfJob = wfStore.getWorkflow(wfId, false);
+                wfJob.setParentId(actionId);
+                wfStore.updateWorkflow(wfJob);
+
                 makeFail = false;
             }
             catch (StoreException se) {
