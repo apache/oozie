@@ -258,10 +258,6 @@ public class JavaActionExecutor extends ActionExecutor {
             else {
                 String fileName = filePath.substring(filePath.lastIndexOf("/") + 1);
                 if (fileName.endsWith(".so") || fileName.contains(".so.")) {  // .so files
-                    if (!fileName.endsWith(".so")) {
-                        int extAt = fileName.indexOf(".so.");
-                        fileName = fileName.substring(0, extAt + 3);
-                    }
                     uri = new Path(path.toString() + "#" + fileName).toUri();
                     uri = new URI(uri.getPath());
                     DistributedCache.addCacheFile(uri, conf);

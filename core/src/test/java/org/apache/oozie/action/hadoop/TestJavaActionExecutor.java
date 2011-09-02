@@ -133,6 +133,10 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         Path appSoPath = new Path("lib/a.so");
         getFileSystem().create(new Path(appPath, appSoPath)).close();
 
+        Path appSo1Path = new Path("lib/a.so.1");
+        String expectedSo1Path = "lib/a.so.1#a.so.1";
+        getFileSystem().create(new Path(appPath, appSo1Path)).close();
+
         Path filePath = new Path("f.jar");
         getFileSystem().create(new Path(appPath, filePath)).close();
 
@@ -187,6 +191,8 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertTrue(conf.get("mapred.job.classpath.files").contains(appJarPath.toUri().getPath()));
         ae.addToCache(conf, appPath, appSoPath.toString(), false);
         assertTrue(conf.get("mapred.cache.files").contains(appSoPath.toUri().getPath()));
+        ae.addToCache(conf, appPath, appSo1Path.toString(), false);
+        assertTrue(conf.get("mapred.cache.files").contains(expectedSo1Path));
 
         assertTrue(ae.getOozieLauncherJar(context).startsWith(context.getActionDir().toString()));
         assertTrue(ae.getOozieLauncherJar(context).endsWith(ae.getLauncherJarName()));
