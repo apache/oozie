@@ -197,4 +197,6 @@ else
   print "Using   CATALINA_PID:        ${CATALINA_PID}"
 fi
 
+export CATALINA_OPTS="${CATALINA_OPTS} -Dderby.stream.error.file=${OOZIE_LOG}/derby.log"
+
 print

@@ -85,18 +85,36 @@ servlet container (if using Tomcat, copy the prepared =oozie.war= file to Tomcat
 
 *IMPORTANT:* Only one Oozie instance can be deployed per Tomcat instance.
 
----++ Database Setup
+---++ Database Configuration
 
-Oozie works with HSQL, MySQL and Oracle databases.
+Oozie works with HSQL, Derby, MySQL and Oracle databases.
 
-If using HSQL, Oozie bundles HSQL JDBC driver. HSQL is an embedded in-memory database, all data is lost when Oozie
-is restarted.
+By default, Oozie is configured to use Embedded Derby.
 
-If using MySQL or Oracle, the corresponding JDBC driver JARs files must be in Oozie classpath (added to Oozie WAR or
-in Tomcat's =common/lib= directory). A database should be created for Oozie, Oozie creates its tables automatically.
+Oozie bundles the JDBC drivers for HSQL and Embedded Derby.
 
-The =oozie-setup.sh= and the=addtowar.sh= scripts have an option =-jars= that can be used to add the Oracle or MySQL
-JDBC driver JARs to the Oozie WAR file.
+HSQL is normally used for testcases as it is an in-memory database and all data is lost everytime Oozie is stopped.
+
+If using MySQL or Oracle, the Oozie database schema must be created. By default, Oozie creates its tables automatically.
+
+The =bin/addtowar.sh= and the =oozie-setup.sh= scripts have an option =-jars= that can be used to add the Oracle or
+MySQL JDBC driver JARs to the Oozie WAR file.
+
+The SQL database used by Oozie is configured using the following configuration properties (default values shown):
+
+<verbatim>
+  oozie.db.schema.name=oozie
+  oozie.db.schema.create=true
+  oozie.service.StoreService.jdbc.driver=org.apache.derby.jdbc.EmbeddedDriver
+  oozie.service.StoreService.jdbc.url=jdbc:derby:${oozie.home.dir}/${oozie.db.schema.name}-db;create=true
+  oozie.service.StoreService.jdbc.username=sa
+  oozie.service.StoreService.jdbc.password=
+  oozie.service.StoreService.pool.max.active.conn=10
+</verbatim>
+
+*NOTE:* If the =oozie.db.schema.create= property is set to =true= (default) the Oozie tables will be created
+automatically if they are not found in the database at Oozie start up time. In a production system this option should
+be set to =false= once the databaset tables have been created.
 
 ---++ Oozie Configuration
 
@@ -136,7 +154,7 @@ Oozie logs in 4 different files:
    * oozie-instrumentation.log: intrumentation data, every 60 seconds (configurable)
    * oozie-audit.log: audit messages, workflow jobs changes
 
-The embedded Tomcat log files are also written to Oozie's =logs/= directory.
+The embedded Tomcat and embedded Derby log files are also written to Oozie's =logs/= directory.
 
 ---+++ Oozie Authentication Configuration
 
@@ -199,28 +217,6 @@ If security is enabled, the admin users are read from the =conf/adminusers.txt= 
 
    * One user name per line
    * Empty lines and lines starting with '#' are ignored
-
----+++ Database Configuration
-
-The SQL database used by Oozie is configured using the following configuration properties (default values shown):
-
-<verbatim>
-  oozie.db.schema.name=oozie
-  oozie.db.schema.create=true
-  oozie.service.StoreService.jdbc.driver=org.hsqldb.jdbcDriver
-  oozie.service.StoreService.jdbc.url=jdbc:hsqldb:mem:${oozie.db.schema.name}
-  oozie.service.StoreService.jdbc.username=sa
-  oozie.service.StoreService.jdbc.password=
-  oozie.service.StoreService.pool.max.active.conn=10
-</verbatim>
-
-The default values are for HSQLDB, an embedded in-memory database bundled with Oozie.
-
-To use MySQL or Oracle the corresponding JDBC driver JAR must be in the classpath (or added to the Oozie WAR file).
-
-*NOTE:* If the =oozie.db.schema.create= property is set to =true= (default) the Oozie tables will be created
-automatically if they are not found in the database at Oozie start up time. In a production system this option should
-be set to =false= once the databaset tables have been created.
 
 ---+++ Oozie System ID Configuration
 

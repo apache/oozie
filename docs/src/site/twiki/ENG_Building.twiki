@@ -76,6 +76,15 @@ $ mvn clean test -Dhadoop20=true -DhadoopGroupId=org.apache.hadoop -DhadoopVersi
   -Doozie.test.job.tracker=localhost:9001 -Doozie.test.name.node=hdfs://localhost:9000
 </verbatim>
 
+*Compiling and testing with Hadoop 0.20.2 using a Hadoop cluster and Derby DB:*
+
+<verbatim>
+$ mvn clean test -Dhadoop20=true -DhadoopGroupId=org.apache.hadoop -DhadoopVersion=0.20.2 \
+  -Doozie.test.hadoop.minicluster=false \
+  -Doozie.test.job.tracker=localhost:9001 -Doozie.test.name.node=hdfs://localhost:9000 \
+  -Doozie.test.db=derby -Doozie.test.forkMode=always
+</verbatim>
+
 *Compiling and testing with Hadoop 0.20.104.2 using embedded minicluster and 'simple' authentication:*
 
 <verbatim>
@@ -134,6 +143,10 @@ include Hadoop JARs. If 'compile' is used the generated oozie.war will contain H
 *oozie.test.config.file*= : indicates a custom Oozie configuration file for running the testcases. The specified file
 must be an absolute path. For example, it can be useful to specify different database than HSQL for running the
 testcases.
+
+*oozie.test.db*= : indicates the database to use for running the testcases, supported values are 'hsqldb' and 'derby',
+ default value is 'hsqldb'. IMPORTANT, when using 'derby' a Maven profile is activated to run all the testcases in
+ 'always' fork mode (otherwise Derby driver goes bonker after 50 testcases or so due to repeated initializations).
 
 *oozie.test.hadoop.minicluster*= : indicates if Hadoop minicluster should be started for testcases, default value 'true'
 

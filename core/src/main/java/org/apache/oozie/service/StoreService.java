@@ -130,8 +130,8 @@ public class StoreService implements Service {
      */
     public void init(Services services) throws ServiceException {
         Configuration conf = services.getConf();
-        String url = conf.get(CONF_URL, "jdbc:hsqldb:mem:oozie;create=true");
-        String driver = conf.get(CONF_DRIVER, "org.hsqldb.jdbcDriver");
+        String url = conf.get(CONF_URL, "jdbc:derby:${oozie.home.dir}/${oozie.db.schema.name}-db;create=true");
+        String driver = conf.get(CONF_DRIVER, "org.apache.derby.jdbc.EmbeddedDriver");
         String user = conf.get(CONF_USERNAME, "sa");
         String password = conf.get(CONF_PASSWORD, "").trim();
         String maxConn = conf.get(CONF_MAX_ACTIVE_CONN, "10").trim();

@@ -18,6 +18,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +50,7 @@ import org.apache.oozie.store.StoreException;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
+import org.apache.oozie.util.db.InstrumentedBasicDataSource;
 
 /**
  * Base JUnit <code>TestCase</code> subclass used by all Oozie testcases.
@@ -190,6 +193,17 @@ public abstract class XTestCase extends TestCase {
         }
         if (System.getProperty("hadoop20", "false").equals("true")) {
             System.setProperty("oozie.services.ext", "org.apache.oozie.service.HadoopAccessorService");
+        }
+
+        if (System.getProperty("oozie.test.db", "hsqldb").equals("hsqldb")) {
+            setSystemProperty("oozie.service.StoreService.jdbc.driver", "org.hsqldb.jdbcDriver");
+            setSystemProperty("oozie.service.StoreService.jdbc.url", "jdbc:hsqldb:mem:oozie-db;create=true");
+        }
+        if (System.getProperty("oozie.test.db", "hsqldb").equals("derby")) {
+            delete(new File(baseDir, "oozie-derby"));
+            setSystemProperty("oozie.service.StoreService.jdbc.driver", "org.apache.derby.jdbc.EmbeddedDriver");
+            setSystemProperty("oozie.service.StoreService.jdbc.url", "jdbc:derby:" + baseDir +
+                                                                     "/oozie-derby;create=true");
         }
     }
 

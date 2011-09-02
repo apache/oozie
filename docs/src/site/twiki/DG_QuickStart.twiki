@@ -4,9 +4,7 @@
 
 ---+!! Oozie Quick Start
 
-These instructions install and run Oozie using HSQLDB as an in-memory embedded database.
-
-Oozie bundles an embedded servlet container pre-configured to run on port 11000.
+These instructions install and run Oozie using an embedded Tomcat server and an embedded Derby database.
 
 For detailed install and configuration instructions refer to [[AG_Install][Oozie Install]].
 
@@ -43,9 +41,9 @@ Oozie is bundled without Hadoop JAR files and without the ExtJS library.
    * The Hadoop JARs are required to run Oozie
    * The ExtJS library is optional (only required for the Oozie web-console to work)
 
-*IMPORTANT:* all the Oozie server scripts (=oozie-setup.sh=, =oozie-start.sh=, =oozie-run.sh=
-and =oozie-stop.sh=) only run under the Oozie Unix user, if necessary use =sudo -u OOZIE_USER=
-when invoking the scripts.
+*IMPORTANT:* all Oozie server scripts (=oozie-setup.sh=, =oozie-start.sh=, =oozie-run.sh=
+and =oozie-stop.sh=) run only under the Unix user that owns the Oozie installation directory,
+if necessary use =sudo -u OOZIE_USER= when invoking the scripts.
 
 Use the =oozie-setup.sh= script to add the Hadoop JARs and the ExtJS library to Oozie.
 

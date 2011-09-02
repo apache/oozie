@@ -54,6 +54,8 @@
 
         <hadoopScope>provided</hadoopScope>
 
+        <oozie.test.forkMode>once</oozie.test.forkMode>
+        
         <oozie.test.config.file></oozie.test.config.file>
 
         <oozie.test.dir>/tmp</oozie.test.dir>
@@ -66,6 +68,8 @@
         <hadoop.log.dir>/tmp</hadoop.log.dir>
 
         <oozie.test.hadoop.pipes>false</oozie.test.hadoop.pipes>
+
+        <oozie.test.db>hsqldb</oozie.test.db>
 
         <oozie.test.user.oozie>${user.name}</oozie.test.user.oozie>
         <oozie.test.user.test>test</oozie.test.user.test>
@@ -434,6 +438,13 @@
                 <artifactId>ojdbc6</artifactId>
                 <version>${ojdbc6.version}</version>
             </dependency>
+
+            <dependency>
+                <groupId>org.apache.derby</groupId>
+                <artifactId>derby</artifactId>
+                <version>10.6.1.0</version>
+                <scope>compile</scope>
+            </dependency>
             
         </dependencies>
     </dependencyManagement>
@@ -452,7 +463,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <forkMode>once</forkMode>
+                    <forkMode>${oozie.test.forkMode}</forkMode>
                     <argLine>-Xmx1024m</argLine>
                     <systemProperties>
                         <property>
@@ -535,6 +546,10 @@
                             <name>oozie.test.hadoop.pipes</name>
                             <value>${oozie.test.hadoop.pipes}</value>
                         </property>
+                        <property>
+                            <name>oozie.test.db</name>
+                            <value>${oozie.test.db}</value>
+                        </property>
                     </systemProperties>
                 </configuration>
             </plugin>
@@ -551,4 +566,20 @@
         </plugins>
     </build>
 
+    <profiles>
+        <profile>
+            <id>derby-test</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <property>
+                    <name>oozie.test.db</name>
+                    <value>derby</value>
+                </property>
+            </activation>
+            <properties>
+                <oozie.test.forkMode>always</oozie.test.forkMode>
+            </properties>
+        </profile>
+    </profiles>
+    
 </project>

@@ -1,5 +1,6 @@
 -- Oozie 2.3.0 release
 
+GH-0108 Add support for Derby as Oozie DB
 GH-0227 log directory should be created if doesn't exist
 GH-0222 Some time sensitive testcases fail when the test machine is slow
 GH-0182 WorkflowFunctionalSpec needs to fix chmod examples

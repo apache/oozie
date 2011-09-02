@@ -102,7 +102,7 @@ public class TestCoordinatorStore extends XTestCase {
             Date lastModifiedTime = new Date();
             action.setLastModifiedTime(lastModifiedTime);
             store.updateCoordActionMin(action);
-            store.getEntityManager().flush();
+            store.commitTrx();
             //store.getEntityManager().merge(action);
             action = getCoordAction(actionId);
             assertEquals(CoordinatorAction.Status.SUCCEEDED, action.getStatus());
@@ -111,10 +111,11 @@ public class TestCoordinatorStore extends XTestCase {
             if (action.getActionNumber() == 777) {
                 fail("Action number should not be updated");
             }
-            store.commitTrx();
         }
         catch (Exception ex) {
-            store.rollbackTrx();
+            if (store.isActive()) {
+                store.rollbackTrx();
+            }
             ex.printStackTrace();
             fail("Unable to Update a record in Coord Action. actionId =" + actionId);
         }

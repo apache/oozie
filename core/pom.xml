@@ -166,6 +166,11 @@
             <artifactId>jetty</artifactId>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>org.apache.derby</groupId>
+            <artifactId>derby</artifactId>
+            <scope>compile</scope>
+        </dependency>
         
     </dependencies>
 

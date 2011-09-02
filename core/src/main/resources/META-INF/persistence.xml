@@ -157,4 +157,49 @@
         </properties>
     </persistence-unit>
 
+    <persistence-unit name="oozie-derby" transaction-type="RESOURCE_LOCAL">
+        <provider>org.apache.openjpa.persistence.PersistenceProviderImpl</provider>
+
+        <mapping-file>META-INF/oozie-derby-orm.xml</mapping-file> <!--CUSTOM-->
+
+        <class>org.apache.oozie.WorkflowActionBean</class>
+        <class>org.apache.oozie.WorkflowJobBean</class>
+        <class>org.apache.oozie.CoordinatorJobBean</class>
+        <class>org.apache.oozie.CoordinatorActionBean</class>
+        <class>org.apache.oozie.SLAEventBean</class>
+        <class>org.apache.oozie.client.rest.JsonWorkflowJob</class>
+        <class>org.apache.oozie.client.rest.JsonWorkflowAction</class>
+        <class>org.apache.oozie.client.rest.JsonCoordinatorJob</class>
+        <class>org.apache.oozie.client.rest.JsonCoordinatorAction</class>
+        <class>org.apache.oozie.client.rest.JsonSLAEvent</class>
+
+        <properties>
+            <property name="openjpa.ConnectionDriverName" value="org.apache.oozie.util.db.InstrumentedBasicDataSource"/>
+
+            <property name="openjpa.ConnectionProperties" value="**INVALID**"/> <!--Set by StoreService at init time -->
+
+            <property name="openjpa.MetaDataFactory" value="jpa(Types=org.apache.oozie.WorkflowActionBean;
+                org.apache.oozie.WorkflowJobBean;
+                org.apache.oozie.CoordinatorJobBean;
+                org.apache.oozie.CoordinatorActionBean;
+                org.apache.oozie.SLAEventBean;
+                org.apache.oozie.client.rest.JsonSLAEvent;
+                org.apache.oozie.client.rest.JsonWorkflowJob;
+                org.apache.oozie.client.rest.JsonWorkflowAction;
+                org.apache.oozie.client.rest.JsonCoordinatorJob;
+                org.apache.oozie.client.rest.JsonCoordinatorAction)"></property>
+
+            <property name="openjpa.DetachState" value="fetch-groups(DetachedStateField=true)"/>
+            <property name="openjpa.LockManager" value="pessimistic"/>
+            <property name="openjpa.ReadLockLevel" value="read"/>
+            <property name="openjpa.WriteLockLevel" value="write"/>
+            <property name="openjpa.jdbc.TransactionIsolation" value="read-committed"/> <!--CUSTOM-->
+            <property name="openjpa.jdbc.DBDictionary" value="UseGetBytesForBlobs=true"/>
+            <property name="openjpa.jdbc.DBDictionary" value="UseSetBytesForBlobs=true"/>
+            <property name="openjpa.jdbc.DBDictionary" value="BlobBufferSize=500000"/>
+            <property name="openjpa.jdbc.DBDictionary" value="batchLimit=50"/>
+            <property name="openjpa.RuntimeUnenhancedClasses" value="supported"/>
+        </properties>
+    </persistence-unit>
+
 </persistence>
