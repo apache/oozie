@@ -24,12 +24,10 @@
         <fileSet>
             <directory>${basedir}/src/main/java</directory>
             <outputDirectory>/examples/src</outputDirectory>
-            <fileMode>0644</fileMode>
         </fileSet>
         <fileSet>
             <directory>${basedir}/src/main/apps</directory>
             <outputDirectory>/examples/apps</outputDirectory>
-            <fileMode>0644</fileMode>
         </fileSet>
     </fileSets>
 
@@ -37,97 +35,78 @@
         <file>
             <source>${basedir}/src/main/data/data.txt</source>
             <outputDirectory>/examples/input-data/text</outputDirectory>
-            <fileMode>0644</fileMode>
         </file>
         <file>
             <source>${basedir}/src/main/data/log01.txt</source>
             <outputDirectory>/examples/input-data/rawLogs/2010/01/01/00/20</outputDirectory>
-            <fileMode>0644</fileMode>
         </file>
         <file>
             <source>${basedir}/src/main/data/_SUCCESS</source>
             <outputDirectory>/examples/input-data/rawLogs/2010/01/01/00/20</outputDirectory>
-            <fileMode>0644</fileMode>
         </file>
         <file>
             <source>${basedir}/src/main/data/log02.txt</source>
             <outputDirectory>/examples/input-data/rawLogs/2010/01/01/00/40</outputDirectory>
-            <fileMode>0644</fileMode>
         </file>
         <file>
             <source>${basedir}/src/main/data/_SUCCESS</source>
             <outputDirectory>/examples/input-data/rawLogs/2010/01/01/00/40</outputDirectory>
-            <fileMode>0644</fileMode>
         </file>
         <file>
             <source>${basedir}/src/main/data/log03.txt</source>
             <outputDirectory>/examples/input-data/rawLogs/2010/01/01/01/00</outputDirectory>
-            <fileMode>0644</fileMode>
         </file>
         <file>
             <source>${basedir}/src/main/data/_SUCCESS</source>
             <outputDirectory>/examples/input-data/rawLogs/2010/01/01/01/00</outputDirectory>
-            <fileMode>0644</fileMode>
         </file>
         <file>
             <source>${basedir}/src/main/data/log04.txt</source>
             <outputDirectory>/examples/input-data/rawLogs/2010/01/01/01/20</outputDirectory>
-            <fileMode>0644</fileMode>
         </file>
         <file>
             <source>${basedir}/src/main/data/_SUCCESS</source>
             <outputDirectory>/examples/input-data/rawLogs/2010/01/01/01/20</outputDirectory>
-            <fileMode>0644</fileMode>
         </file>
         <file>
             <source>${basedir}/src/main/data/log05.txt</source>
             <outputDirectory>/examples/input-data/rawLogs/2010/01/01/01/40</outputDirectory>
-            <fileMode>0644</fileMode>
         </file>
         <file>
             <source>${basedir}/src/main/data/_SUCCESS</source>
             <outputDirectory>/examples/input-data/rawLogs/2010/01/01/01/40</outputDirectory>
-            <fileMode>0644</fileMode>
         </file>
         <file>
             <source>${basedir}/src/main/data/log06.txt</source>
             <outputDirectory>/examples/input-data/rawLogs/2010/01/01/02/00</outputDirectory>
-            <fileMode>0644</fileMode>
         </file>
         <file>
             <source>${basedir}/src/main/data/_SUCCESS</source>
             <outputDirectory>/examples/input-data/rawLogs/2010/01/01/02/00</outputDirectory>
-            <fileMode>0644</fileMode>
         </file>
         <file>
             <source>${basedir}/target/${artifact.artifactId}-${artifact.version}.jar</source>
             <outputDirectory>/examples/apps/aggregator/lib</outputDirectory>
-            <fileMode>0444</fileMode>
         </file>
         <file>
             <source>${basedir}/target/${artifact.artifactId}-${artifact.version}.jar</source>
             <outputDirectory>/examples/apps/custom-main/lib</outputDirectory>
-            <fileMode>0444</fileMode>
         </file>
         <file>
             <source>${basedir}/target/${artifact.artifactId}-${artifact.version}.jar</source>
             <outputDirectory>/examples/apps/demo/lib</outputDirectory>
-            <fileMode>0444</fileMode>
         </file>
         <file>
             <source>${basedir}/target/${artifact.artifactId}-${artifact.version}.jar</source>
             <outputDirectory>/examples/apps/hadoop-el/lib</outputDirectory>
-            <fileMode>0444</fileMode>
         </file>
         <file>
             <source>${basedir}/target/${artifact.artifactId}-${artifact.version}.jar</source>
             <outputDirectory>/examples/apps/java-main/lib</outputDirectory>
-            <fileMode>0444</fileMode>
         </file>
         <file>
             <source>${basedir}/target/${artifact.artifactId}-${artifact.version}.jar</source>
             <outputDirectory>/examples/apps/map-reduce/lib</outputDirectory>
-            <fileMode>0444</fileMode>
         </file> 
     </files>
 
@@ -140,7 +119,6 @@
                 <include>jline:jline</include>
                 <include>${hadoopGroupId}:hadoop-streaming</include>
             </includes>
-            <fileMode>0444</fileMode>
         </dependencySet>
     </dependencySets>
 

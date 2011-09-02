@@ -28,7 +28,6 @@
             <includes>
                 <include>*</include>
             </includes>
-            <fileMode>0644</fileMode>
         </fileSet>
         <!-- Distro files, readme, licenses, etc -->
         <fileSet>
@@ -40,7 +39,6 @@
                 <include>readme.txt</include>
                 <include>release-log.txt</include>
             </includes>
-            <fileMode>0444</fileMode>
         </fileSet>
         <fileSet>
             <directory>${basedir}/src/main/bin</directory>
@@ -48,7 +46,7 @@
             <includes>          
                 <include>*</include>
             </includes>
-            <fileMode>0555</fileMode>
+            <fileMode>0755</fileMode>
         </fileSet>
         <!-- Client -->
         <fileSet>
@@ -57,7 +55,7 @@
             <includes>
                 <include>*</include>
             </includes>
-            <fileMode>0555</fileMode>
+            <fileMode>0755</fileMode>
         </fileSet>
         <fileSet>
             <directory>${basedir}/../client/target/oozie-client-${project.version}-client/oozie-client-${project.version}/lib</directory>
@@ -65,7 +63,6 @@
             <includes>
                 <include>*</include>
             </includes>
-            <fileMode>0444</fileMode>
         </fileSet>
         <!-- Embedded Tomcat -->
         <fileSet>
@@ -89,35 +86,30 @@
         <file>
             <source>${basedir}/../core/src/main/resources/oozie-default.xml</source>
             <outputDirectory>/conf</outputDirectory>
-            <fileMode>0444</fileMode>
         </file>
         <!-- Oozie war -->
         <file>
             <source>${basedir}/../webapp/target/oozie-webapp-${project.version}.war</source>
             <outputDirectory>/</outputDirectory>
             <destName>oozie.war</destName>
-            <fileMode>0444</fileMode>
         </file>
         <!-- Oozie Documentation -->
         <file>
             <source>${basedir}/../docs/target/oozie-docs-${project.version}-docs.zip</source>
             <outputDirectory>//</outputDirectory>
             <destName>docs.zip</destName>
-            <fileMode>0444</fileMode>
         </file>
         <!-- Oozie Client TAR.GZ  -->
         <file>
             <source>${basedir}/../client/target/oozie-client-${project.version}-client.tar.gz</source>
             <outputDirectory>/</outputDirectory>
             <destName>oozie-client-${project.version}.tar.gz</destName>
-            <fileMode>0444</fileMode>
         </file>
         <!-- Oozie examples TAR.GZ  -->
         <file>
             <source>${basedir}/../examples/target/oozie-examples-${project.version}-examples.tar.gz</source>
             <outputDirectory>/</outputDirectory>
             <destName>oozie-examples.tar.gz</destName>
-            <fileMode>0444</fileMode>
         </file>
         <!-- Oozie sharelib TAR.GZ  -->
         <file>

@@ -22,7 +22,6 @@
         <fileSet>
             <directory>${basedir}/target/${project.artifactId}-${project.version}</directory>
             <outputDirectory>/</outputDirectory>
-            <fileMode>0444</fileMode>
         </fileSet>
     </fileSets>
 </assembly>

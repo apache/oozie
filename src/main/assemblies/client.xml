@@ -24,7 +24,6 @@
         <file>
             <source>${project.build.directory}/${artifact.artifactId}-${artifact.version}.jar</source>
             <outputDirectory>oozie-client-${project.version}/lib</outputDirectory>
-            <fileMode>0644</fileMode>
         </file>
     </files>
     <fileSets>
@@ -35,7 +34,6 @@
             <includes>
                 <include>*.txt</include>
             </includes>
-            <fileMode>0444</fileMode>
         </fileSet>
 
         <fileSet>
@@ -44,7 +42,7 @@
             <includes>
                 <include>*</include>
             </includes>
-            <fileMode>0555</fileMode>
+            <fileMode>0755</fileMode>
         </fileSet>
     </fileSets>
 
@@ -53,7 +51,6 @@
             <outputDirectory>oozie-client-${project.version}/lib</outputDirectory>
             <unpack>false</unpack>
             <scope>compile</scope>
-            <fileMode>0644</fileMode>
             <excludes>
                 <exclude>javax.persistence:persistence-api</exclude>
             </excludes>
