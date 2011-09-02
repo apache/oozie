@@ -14,13 +14,6 @@
  */
 package org.apache.oozie.util;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import java.util.Date;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -28,9 +21,12 @@ import java.io.InputStream;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collections;
-
-import org.apache.oozie.util.XLog;
-import org.apache.oozie.util.XLogReader;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * XLogStreamer streams the given log file to logWriter after applying the given filter.
@@ -240,7 +236,14 @@ public class XLogStreamer {
         }
 
         public int compareTo(FileInfo fileInfo) {
-            return (int) (this.modTime - fileInfo.modTime);
+            long diff = this.modTime - fileInfo.modTime;
+            if(diff > 0) {
+                return 1;
+            } else if(diff < 0) {
+                return -1;
+            } else {
+                return 0;
+            }
         }
     }
 
