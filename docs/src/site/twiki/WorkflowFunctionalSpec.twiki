@@ -15,6 +15,9 @@ Author: Alejandro Abdelnur
 %TOC%
 
 ---++ Changelog
+---+++!! 2011AUG12
+
+   * #3.2.4 fs 'move' action characteristics updated, to allow for consistent source and target paths and existing target path only if directory
 ---+++!! 2011FEB19
 
    * #10, Update the doc to rerun from the failed node. 
@@ -980,7 +983,7 @@ Each file path must specify the file system URI, for move operations, the target
 
 IMPORTANT: All the commands within =fs= action do not happen atomically, if a =fs= action fails half way in the
 commands being executed, successfully executed commands are not rolled back. The =fs= action, before executing any
-command must check that source paths exist and target paths don't exist, thus failing before executing any command.
+command must check that source paths exist and target paths don't exist (constraint regarding target relaxed for the =move= action. See below for details), thus failing before executing any command.
 Therefore the validity of all paths specified in one =fs= action are evaluated before any of the file operation are
 executed. Thus there is less chance of an error occurring while the =fs= action executes.
 
@@ -1013,8 +1016,12 @@ deletes the directory.
 The =mkdir= command creates the specified directory, it creates all missing directories in the path. If the directory
 already exist it does a no-op.
 
-In the =move= command the =source= path must exist and the =target= path must not exist. The parent directory of the
- =target= path must exist, the =target= path must not specify the file system URI.
+In the =move= command the =source= path must exist. The following scenarios are addressed for a =move=:
+
+   * The file system URI(e.g. hdfs://{nameNode}) can be skipped in the =target= path. It is understood to be the same as that of the source. But if the target path does contain the system URI, it cannot be different than that of the source.
+   * The parent directory of the =target= path must exist
+   * For the =target= path, if it is a file, then it must not already exist. 
+   * However, if the =target= path is an already existing directory, the =move= action will place your =source= as a child of the =target= directory.
 
 The =chmod= command changes the permissions for the specified path. Permissions can be specified using the Unix Symbolic representation (e.g. -rwxrw-rw-) or an octal representation (755).
  When doing a =chmod= command on a directory, by default the command is applied to the directory and the files one level within the directory. To apply the =chmod= command to the directory, without affecting the files within it, the =dir-files= attribute must be set to =false=.
