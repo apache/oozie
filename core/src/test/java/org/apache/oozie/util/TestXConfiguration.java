@@ -111,4 +111,25 @@ public class TestXConfiguration extends XTestCase {
         assertEquals("A", conf.getRaw("b"));
     }
 
+    public void testVarResolutionAndSysProps() {
+        setSystemProperty("aa", "foo");
+        XConfiguration conf = new XConfiguration();
+        conf.set("a", "A");
+        conf.set("b", "${a}");
+        conf.set("c", "${aa}");
+        conf.set("d", "${aaa}");
+        assertEquals("A", conf.getRaw("a"));
+        assertEquals("${a}", conf.getRaw("b"));
+        assertEquals("${aa}", conf.getRaw("c"));
+        assertEquals("A", conf.get("a"));
+        assertEquals("A", conf.get("b"));
+        assertEquals("foo", conf.get("c"));
+        assertEquals("${aaa}", conf.get("d"));
+
+        conf.set("un","${user.name}");
+        assertEquals(System.getProperty("user.name"), conf.get("un"));
+        setSystemProperty("user.name", "foo");
+        assertEquals("foo", conf.get("un"));
+
+    }
 }
