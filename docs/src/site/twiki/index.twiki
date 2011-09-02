@@ -45,6 +45,7 @@ Enough reading already? Follow the steps in [[DG_QuickStart][Oozie Quick Start]]
    * [[DG_CommandLineTool][Command Line Tool]]
    * [[DG_WorkflowReRun][Workflow Re-runs Explained]]
    * [[DG_UsingHadoopKerberos][Using a Hadoop cluster with Kerberos Authentication]]
+   * [[DG_EmailActionExtension][Email Action]]
 
    * [[DG_CustomActionExecutor][Writing a Custom Action Executor]]
    * [[./client/apidocs/index.html][Oozie Client Javadocs]]

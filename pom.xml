@@ -427,6 +427,18 @@
                 <version>10.6.1.0</version>
                 <scope>compile</scope>
             </dependency>
+
+            <dependency>
+                <groupId>javax.mail</groupId>
+                <artifactId>mail</artifactId>
+                <version>1.4</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.icegreen</groupId>
+                <artifactId>greenmail</artifactId>
+                <version>1.3.1b</version>
+            </dependency>
             
         </dependencies>
     </dependencyManagement>

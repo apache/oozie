@@ -21,6 +21,20 @@
     Oozie configuration properties and their default values.
 -->
 
+<!-- Uncomment to enable additional actions (email).
+    <property>
+        <name>oozie.service.ActionService.executor.ext.classes</name>
+        <value>
+        org.apache.oozie.action.email.EmailActionExecutor
+        </value>
+    </property>
+
+    <property>
+        <name>oozie.service.SchemaService.wf.ext.schemas</name>
+        <value>email-action-0.1.xsd</value>
+    </property>
+-->
+
     <property>
         <name>oozie.system.id</name>
         <value>oozie-${user.name}</value>

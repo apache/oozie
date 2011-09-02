@@ -174,7 +174,19 @@
             <artifactId>derby</artifactId>
             <scope>compile</scope>
         </dependency>
-        
+
+        <dependency>
+            <groupId>javax.mail</groupId>
+            <artifactId>mail</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.icegreen</groupId>
+            <artifactId>greenmail</artifactId>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <build>
