@@ -207,6 +207,9 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
                             .execute(new CoordJobGetActionForNominalTimeJPAExecutor(jobId, date));
                     actionSet.add(coordAction);
                 }
+                catch (JPAExecutorException e) {
+                    throw new CommandException(e);
+                }
                 catch (Exception e) {
                     throw new CommandException(ErrorCode.E0302, e);
                 }

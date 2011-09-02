@@ -498,8 +498,8 @@ public class TestCoordRerunCommand extends XFsTestCase {
             fail("Exception expected because one action is missing from db.");
         }
         catch (OozieClientException ex) {
+            assertTrue(ex.getErrorCode() == ErrorCode.E0605.toString());
         }
-
     }
 
     /**
