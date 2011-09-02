@@ -498,6 +498,9 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
 
     @Override
     public void updateJob() throws CommandException {
+        if (prevStatus.equals(Job.Status.PAUSED)) {
+            coordJob.setPauseTime(null);
+        }
         updateCoordJobPending();
         try {
             jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
