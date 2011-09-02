@@ -346,7 +346,6 @@ public class BundleStartXCommand extends StartTransitionXCommand {
     @Override
     public void updateJob() throws CommandException {
         try {
-            bundleJob.setPending();
             jpaService.execute(new BundleJobUpdateJPAExecutor(bundleJob));
         }
         catch (JPAExecutorException je) {

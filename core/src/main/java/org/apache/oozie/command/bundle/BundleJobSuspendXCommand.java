@@ -132,7 +132,6 @@ public class BundleJobSuspendXCommand extends SuspendTransitionXCommand {
     @Override
     public void updateJob() throws CommandException {
         InstrumentUtils.incrJobCounter("bundle_suspend", 1, null);
-        bundleJob.setPending();
         bundleJob.setSuspendedTime(new Date());
         bundleJob.setLastModifiedTime(new Date());
 

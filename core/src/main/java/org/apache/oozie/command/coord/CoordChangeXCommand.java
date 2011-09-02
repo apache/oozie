@@ -200,6 +200,7 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
                 Date d1 = new Date(d.getTime() + coordJob.getFrequency() * 60 * 1000);
                 coordJob.setLastActionTime(d1);
                 coordJob.setNextMaterializedTime(d1);
+                coordJob.resetDoneMaterialization();
             }
         }
     }
@@ -255,9 +256,10 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
             if (newEndTime != null) {
                 coordJob.setEndTime(newEndTime);
                 if (coordJob.getStatus() == CoordinatorJob.Status.SUCCEEDED
-                        || (coordJob.getStatus() == CoordinatorJob.Status.RUNNING && coordJob.isPending())) {
+                        || coordJob.getStatus() == CoordinatorJob.Status.RUNNING) {
                     coordJob.setStatus(CoordinatorJob.Status.RUNNING);
-                    coordJob.resetPending();
+                    coordJob.setPending();
+                    coordJob.resetDoneMaterialization();
                 }
             }
 
@@ -290,7 +292,7 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
         }
         finally {
             LOG.info("ENDED CoordChangeXCommand for jobId=" + jobId);
-            //update bundle action
+            // update bundle action
             if (coordJob.getBundleId() != null) {
                 BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, prevStatus);
                 bundleStatusUpdate.call();

@@ -156,7 +156,7 @@ public class TestRecoveryService extends XTestCase {
     }
 
     /**
-     * Tests functionality of the Recovery Service Runnable command. </p> Insert a coordinator job with PREPMATER and
+     * Tests functionality of the Recovery Service Runnable command. </p> Insert a coordinator job with RUNNING and
      * action with SUBMITTED. Then, runs the recovery runnable and ensures the action status changes to READY.
      *
      * @throws Exception

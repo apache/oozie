@@ -308,7 +308,7 @@ public class TestActionErrors extends XDataTestCase {
         conf.set("error", errorType);
 
         JPAService jpaService = Services.get().get(JPAService.class);
-        CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false);
+        CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
         CoordinatorActionBean coordAction = addRecordToCoordActionTable(coordJob.getId(), 1,
                 CoordinatorAction.Status.RUNNING, "coord-action-get.xml", "wfId", "RUNNING");
 

@@ -64,7 +64,6 @@ public class TestCoordJobsGetForPurgeJPAExecutor extends XFsTestCase {
         String jobId = "00000-" + new Date().getTime() + "-TestCoordJobsGetForPurgeJPAExecutor-C";
         insertJob(jobId, CoordinatorJob.Status.SUCCEEDED, DateUtils.parseDateUTC("2011-01-01T01:00Z"));
         _testCoordJobsForPurge(10, 1);
-        _testCoordJobsForPurge(100, 0);
     }
 
     private void _testCoordJobsForPurge(int olderThan, int expected) throws Exception {

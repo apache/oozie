@@ -196,7 +196,7 @@ public class TestActionCheckerService extends XDataTestCase {
     public void testActionCheckerServiceCoord() throws Exception {
         final int actionNum = 1;
         final CoordinatorEngine ce = new CoordinatorEngine(getTestUser(), "UNIT_TESTING");
-        final CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false);
+        final CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
         final WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED,
                 WorkflowInstance.Status.SUCCEEDED);
         final CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), actionNum,

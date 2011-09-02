@@ -46,11 +46,11 @@ public class TestCoordJobsXCommand extends XDataTestCase {
     }
 
     public void testCoordJobsGet() throws Exception {
-        addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false);
-        addRecordToCoordJobTable(CoordinatorJob.Status.KILLED, false);
+        addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
+        addRecordToCoordJobTable(CoordinatorJob.Status.KILLED, false, false);
         _testGetJobsForStatus();
         _testGetJobsForGroup();
-        addRecordToCoordJobTable(CoordinatorJob.Status.KILLED, false);
+        addRecordToCoordJobTable(CoordinatorJob.Status.KILLED, false, false);
         _testGetJobsForAppName();
         _testGetJobInfoForUser();
         _testGetJobsForUserAndStatus();

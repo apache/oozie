@@ -111,7 +111,6 @@ public class BundleJobResumeXCommand extends ResumeTransitionXCommand {
     @Override
     public void updateJob() throws CommandException {
         InstrumentUtils.incrJobCounter("bundle_resume", 1, null);
-        bundleJob.setPending();
         bundleJob.setSuspendedTime(null);
         bundleJob.setLastModifiedTime(new Date());
         LOG.debug("Resume bundle job id = " + bundleId + ", status = " + bundleJob.getStatus() + ", pending = " + bundleJob.isPending());

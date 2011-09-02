@@ -50,7 +50,7 @@ public class TestCoordSuspendXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testCoordSuspendPostive() throws Exception {
-        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
@@ -69,7 +69,7 @@ public class TestCoordSuspendXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testCoordSuspendNegative() throws Exception {
-        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);

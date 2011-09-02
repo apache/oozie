@@ -81,11 +81,12 @@ public abstract class XDataTestCase extends XFsTestCase {
      *
      * @param status coord job status
      * @param pending true if pending is true
+     * @param doneMatd true if doneMaterialization is true
      * @return coord job bean
      * @throws Exception
      */
-    protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, boolean pending) throws Exception {
-        CoordinatorJobBean coordJob = createCoordJob(status, pending);
+    protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, boolean pending, boolean doneMatd) throws Exception {
+        CoordinatorJobBean coordJob = createCoordJob(status, pending, doneMatd);
 
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
@@ -109,13 +110,14 @@ public abstract class XDataTestCase extends XFsTestCase {
      * @param start start time
      * @param end end time
      * @param pending true if pending is true
+     * @param doneMatd true if doneMaterialization is true
      * @param lastActionNum last action number
      * @return coord job bean
      * @throws Exception
      */
     protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date start, Date end,
-            boolean pending, int lastActionNum) throws Exception {
-        CoordinatorJobBean coordJob = createCoordJob(status, start, end, pending, lastActionNum);
+            boolean pending, boolean doneMatd, int lastActionNum) throws Exception {
+        CoordinatorJobBean coordJob = createCoordJob(status, start, end, pending, doneMatd, lastActionNum);
 
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
@@ -139,12 +141,13 @@ public abstract class XDataTestCase extends XFsTestCase {
      * @param bundleId bundle id
      * @param coordId coord id and coord name
      * @param status job status
-     * @param pending true if pending
+     * @param pending true if pending is true
+     * @param doneMatd true if doneMaterialization is true
      * @return coordinator job bean
      * @throws Exception
      */
-    protected CoordinatorJobBean addRecordToCoordJobTableWithBundle(String bundleId, String coordId, CoordinatorJob.Status status, boolean pending, int lastActionNumber) throws Exception {
-        CoordinatorJobBean coordJob = createCoordJob(status, pending);
+    protected CoordinatorJobBean addRecordToCoordJobTableWithBundle(String bundleId, String coordId, CoordinatorJob.Status status, boolean pending, boolean doneMatd, int lastActionNumber) throws Exception {
+        CoordinatorJobBean coordJob = createCoordJob(status, pending, doneMatd);
         coordJob.setBundleId(bundleId);
         //coord id and coord name are the same
         coordJob.setId(coordId);
@@ -170,10 +173,11 @@ public abstract class XDataTestCase extends XFsTestCase {
      *
      * @param status coord job status
      * @param pending true if pending is true
+     * @param doneMatd true if doneMaterialization is true
      * @return coord job bean
      * @throws IOException
      */
-    protected CoordinatorJobBean createCoordJob(CoordinatorJob.Status status, boolean pending) throws Exception {
+    protected CoordinatorJobBean createCoordJob(CoordinatorJob.Status status, boolean pending, boolean doneMatd) throws Exception {
         Path appPath = new Path(getFsTestCaseDir(), "coord");
         String appXml = writeCoordXml(appPath);
 
@@ -190,6 +194,9 @@ public abstract class XDataTestCase extends XFsTestCase {
         coordJob.setAuthToken("notoken");
         if (pending) {
             coordJob.setPending();
+        }
+        if (doneMatd) {
+            coordJob.setDoneMaterialization();
         }
 
         Configuration conf = getCoordConf(appPath);
@@ -219,12 +226,13 @@ public abstract class XDataTestCase extends XFsTestCase {
      * @param start start time
      * @param end end time
      * @param pending true if pending is true
+     * @param doneMatd true if doneMaterialization is true
      * @param lastActionNum last action number
      * @return coord job bean
      * @throws IOException
      */
     protected CoordinatorJobBean createCoordJob(CoordinatorJob.Status status, Date start, Date end, boolean pending,
-            int lastActionNum) throws Exception {
+            boolean doneMatd, int lastActionNum) throws Exception {
         Path appPath = new Path(getFsTestCaseDir(), "coord");
         String appXml = writeCoordXml(appPath, start, end);
 
@@ -241,6 +249,9 @@ public abstract class XDataTestCase extends XFsTestCase {
         coordJob.setAuthToken("notoken");
         if (pending) {
             coordJob.setPending();
+        }
+        if (doneMatd) {
+            coordJob.setDoneMaterialization();
         }
         coordJob.setLastActionNumber(lastActionNum);
 

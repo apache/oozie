@@ -41,8 +41,8 @@ public class TestBundleRerunXCommand extends XDataTestCase {
         BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.SUCCEEDED, false);
         this.addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.SUCCEEDED);
         this.addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.SUCCEEDED);
-        addRecordToCoordJobTable("action1", CoordinatorJob.Status.SUCCEEDED, false);
-        addRecordToCoordJobTable("action2", CoordinatorJob.Status.SUCCEEDED, false);
+        addRecordToCoordJobTable("action1", CoordinatorJob.Status.SUCCEEDED, false, false);
+        addRecordToCoordJobTable("action2", CoordinatorJob.Status.SUCCEEDED, false, false);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
@@ -65,8 +65,8 @@ public class TestBundleRerunXCommand extends XDataTestCase {
         BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.SUCCEEDED, false);
         this.addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.SUCCEEDED);
         this.addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.SUCCEEDED);
-        addRecordToCoordJobTable("action1", CoordinatorJob.Status.SUCCEEDED, false);
-        addRecordToCoordJobTable("action2", CoordinatorJob.Status.SUCCEEDED, false);
+        addRecordToCoordJobTable("action1", CoordinatorJob.Status.SUCCEEDED, false, false);
+        addRecordToCoordJobTable("action2", CoordinatorJob.Status.SUCCEEDED, false, false);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
@@ -91,8 +91,8 @@ public class TestBundleRerunXCommand extends XDataTestCase {
         BundleJobBean job = this.addRecordToBundleJobTableWithPausedTime(Job.Status.PAUSED, false, pauseTime);
         this.addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.SUCCEEDED);
         this.addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.PAUSED);
-        addRecordToCoordJobTable("action1", CoordinatorJob.Status.SUCCEEDED, false);
-        addRecordToCoordJobTable("action2", CoordinatorJob.Status.PAUSED, false);
+        addRecordToCoordJobTable("action1", CoordinatorJob.Status.SUCCEEDED, false, false);
+        addRecordToCoordJobTable("action2", CoordinatorJob.Status.PAUSED, false, false);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
@@ -116,8 +116,8 @@ public class TestBundleRerunXCommand extends XDataTestCase {
         BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.SUSPENDED, false);
         this.addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.SUSPENDED);
         this.addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.SUSPENDED);
-        addRecordToCoordJobTable("action1", CoordinatorJob.Status.SUSPENDED, false);
-        addRecordToCoordJobTable("action2", CoordinatorJob.Status.SUSPENDED, false);
+        addRecordToCoordJobTable("action1", CoordinatorJob.Status.SUSPENDED, false, false);
+        addRecordToCoordJobTable("action2", CoordinatorJob.Status.SUSPENDED, false, false);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
@@ -148,8 +148,8 @@ public class TestBundleRerunXCommand extends XDataTestCase {
         return bundle;
     }
 
-    protected CoordinatorJobBean addRecordToCoordJobTable(String coordId, CoordinatorJob.Status status, boolean pending) throws Exception {
-        CoordinatorJobBean coordJob = createCoordJob(status, pending);
+    protected CoordinatorJobBean addRecordToCoordJobTable(String coordId, CoordinatorJob.Status status, boolean pending, boolean doneMatd) throws Exception {
+        CoordinatorJobBean coordJob = createCoordJob(status, pending, doneMatd);
         coordJob.setId(coordId);
         coordJob.setAppName(coordId);
         try {

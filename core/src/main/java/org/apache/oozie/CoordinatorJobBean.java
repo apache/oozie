@@ -135,10 +135,12 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
     @Column(name = "pending")
     private int pending = 0;
 
+    @Basic
+    @Column(name = "done_materialization")
+    private int doneMaterialization = 0;
+
     /**
      * Set pending to true
-     *
-     * @param pending set pending to true
      */
     @Override
     public void setPending() {
@@ -148,8 +150,6 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
 
     /**
      * Set pending to false
-     *
-     * @param pending set pending to false
      */
     @Override
     public void resetPending() {
@@ -164,6 +164,29 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
      */
     public boolean isPending() {
         return pending == 1 ? true : false;
+    }
+
+    /**
+     * Set doneMaterialization to true
+     */
+    public void setDoneMaterialization() {
+        this.doneMaterialization = 1;
+    }
+
+    /**
+     * Set doneMaterialization to false
+     */
+    public void resetDoneMaterialization() {
+        this.doneMaterialization = 0;
+    }
+
+    /**
+     * Return if the action is done with materialization
+     *
+     * @return if the action is done with materialization
+     */
+    public boolean isDoneMaterialization() {
+        return doneMaterialization == 1 ? true : false;
     }
 
     public java.sql.Timestamp getStartTimestamp() {

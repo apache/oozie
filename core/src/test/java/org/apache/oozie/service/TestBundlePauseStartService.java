@@ -330,7 +330,7 @@ public class TestBundlePauseStartService extends XDataTestCase {
 
     protected CoordinatorJobBean addRecordToCoordJobTable(String coordId, CoordinatorJob.Status status, boolean pending)
             throws Exception {
-        CoordinatorJobBean coordJob = createCoordJob(status, pending);
+        CoordinatorJobBean coordJob = createCoordJob(status, pending, false);
         coordJob.setId(coordId);
         coordJob.setAppName(coordId);
         try {

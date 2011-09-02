@@ -108,7 +108,6 @@ public class CoordResumeXCommand extends ResumeTransitionXCommand {
     @Override
     public void updateJob() throws CommandException {
         InstrumentUtils.incrJobCounter(getName(), 1, getInstrumentation());
-        updateCoordJobPending();
         coordJob.setSuspendedTime(null);
         coordJob.setLastModifiedTime(new Date());
         LOG.debug("Resume coordinator job id = " + jobId + ", status = " + coordJob.getStatus() + ", pending = " + coordJob.isPending());
@@ -117,17 +116,6 @@ public class CoordResumeXCommand extends ResumeTransitionXCommand {
         }
         catch (JPAExecutorException e) {
             throw new CommandException(e);
-        }
-    }
-
-    private void updateCoordJobPending() {
-        // if the job endtime == action endtime, we don't need to materialize this job anymore
-        Date endMatdTime = coordJob.getLastActionTime();
-        Date jobEndTime = coordJob.getEndTime();
-
-        if (jobEndTime.compareTo(endMatdTime) <= 0) {
-            // set pending when materialization is done
-            coordJob.setPending();
         }
     }
 

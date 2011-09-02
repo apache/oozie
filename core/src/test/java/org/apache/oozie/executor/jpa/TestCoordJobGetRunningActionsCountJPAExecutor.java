@@ -43,17 +43,17 @@ public class TestCoordJobGetRunningActionsCountJPAExecutor extends XDataTestCase
 
     public void testCoordActionGet() throws Exception {
         int actionNum = 1;
-        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
         addRecordToCoordActionTable(job.getId(), actionNum, CoordinatorAction.Status.WAITING, "coord-action-get.xml");
         _testGetRunningActionsCount(job.getId(), 0);
         
         cleanUpDBTables();
-        job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false);
+        job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
         addRecordToCoordActionTable(job.getId(), actionNum, CoordinatorAction.Status.SUBMITTED, "coord-action-get.xml");
         _testGetRunningActionsCount(job.getId(), 1);
         
         cleanUpDBTables();
-        job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false);
+        job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
         addRecordToCoordActionTable(job.getId(), actionNum, CoordinatorAction.Status.RUNNING, "coord-action-get.xml");
         _testGetRunningActionsCount(job.getId(), 1);
     }

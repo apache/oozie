@@ -49,6 +49,7 @@ public abstract class ResumeTransitionXCommand extends TransitionXCommand<Void> 
         else if (job.getStatus() == Job.Status.SUSPENDED) {
             job.setStatus(Job.Status.RUNNING);
         }
+        job.setPending();
     }
 
     /* (non-Javadoc)

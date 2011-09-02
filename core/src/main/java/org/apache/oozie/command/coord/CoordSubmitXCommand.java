@@ -237,7 +237,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
                 jobId = coordJob.getId();
                 LOG.info("[" + jobId + "]: Update status to RUNNING");
                 coordJob.setStatus(Job.Status.RUNNING);
-                coordJob.resetPending();
+                coordJob.setPending();
                 CoordActionMaterializeCommand coordActionMatCom = new CoordActionMaterializeCommand(jobId, startTime,
                         endTime);
                 Configuration jobConf = null;

@@ -170,7 +170,6 @@ public class CoordSuspendXCommand extends SuspendTransitionXCommand {
     @Override
     public void updateJob() throws CommandException {
         InstrumentUtils.incrJobCounter(getName(), 1, getInstrumentation());
-        coordJob.setPending();
         coordJob.setLastModifiedTime(new Date());
         coordJob.setSuspendedTime(new Date());
         LOG.debug("Suspend coordinator job id = " + jobId + ", status = " + coordJob.getStatus() + ", pending = " + coordJob.isPending());

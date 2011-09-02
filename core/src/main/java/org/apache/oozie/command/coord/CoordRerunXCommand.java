@@ -505,29 +505,11 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
                 coordJob.setPending();
             }
         }
-        else {
-            updateCoordJobPending();
-        }
         try {
             jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
         }
         catch (JPAExecutorException je) {
             throw new CommandException(je);
-        }
-    }
-
-    private void updateCoordJobPending() {
-        // if the job endtime == action endtime, we don't need to materialize this job anymore
-        Date endMatdTime = coordJob.getLastActionTime();
-        Date jobEndTime = coordJob.getEndTime();
-
-        if (jobEndTime == null || endMatdTime == null) {
-            return;
-        }
-
-        if (jobEndTime.compareTo(endMatdTime) <= 0) {
-            // set pending when materialization is done
-            coordJob.setPending();
         }
     }
 

@@ -677,7 +677,7 @@ public class TestCoordRerunXCommand extends XDataTestCase {
     public void testCoordRerunInPaused() throws Exception {
         Date curr = new Date();
         Date pauseTime = new Date(curr.getTime() - 1000);
-        CoordinatorJobBean job = this.addRecordToCoordJobTableWithPausedTime(Job.Status.PAUSED, false, pauseTime);
+        CoordinatorJobBean job = this.addRecordToCoordJobTableWithPausedTime(Job.Status.PAUSED, false, false, pauseTime);
         addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.SUCCEEDED, "coord-rerun-action1.xml");
 
         JPAService jpaService = Services.get().get(JPAService.class);
@@ -740,8 +740,8 @@ public class TestCoordRerunXCommand extends XDataTestCase {
     }
 
     protected CoordinatorJobBean addRecordToCoordJobTableWithPausedTime(CoordinatorJob.Status status, boolean pending,
-            Date pausedTime) throws Exception {
-        CoordinatorJobBean coordJob = createCoordJob(status, pending);
+            boolean doneMatd, Date pausedTime) throws Exception {
+        CoordinatorJobBean coordJob = createCoordJob(status, pending, doneMatd);
         coordJob.setPauseTime(pausedTime);
         try {
             JPAService jpaService = Services.get().get(JPAService.class);

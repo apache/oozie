@@ -77,7 +77,7 @@ public class TestBundleChangeXCommand extends XDataTestCase {
     public void testBundleChange2() throws Exception {
         BundleJobBean bundleJob = this.addRecordToBundleJobTable(Job.Status.RUNNING, false);
 
-        CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false);
+        CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
         coordJob.setBundleId(bundleJob.getId());
         final JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);

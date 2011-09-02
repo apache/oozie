@@ -49,7 +49,7 @@ public class TestCoordJobGetActionsForDatesJPAExecutor extends XDataTestCase {
 
     public void testCoordActionGet() throws Exception {
         int actionNum = 1;
-        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
         addRecordToCoordActionTable(job.getId(), actionNum, CoordinatorAction.Status.FAILED, "coord-action-get.xml");
 
         Path appPath = new Path(getFsTestCaseDir(), "coord");
@@ -66,7 +66,7 @@ public class TestCoordJobGetActionsForDatesJPAExecutor extends XDataTestCase {
         _testGetActionForDates(job.getId(), d1, d2, 0);
 
         cleanUpDBTables();
-        job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false);
+        job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
         addRecordToCoordActionTable(job.getId(), actionNum, CoordinatorAction.Status.WAITING, "coord-action-get.xml");
         _testGetActionForDates(job.getId(), d1, d2, 0);
     }

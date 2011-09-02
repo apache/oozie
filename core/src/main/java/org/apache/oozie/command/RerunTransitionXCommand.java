@@ -50,7 +50,7 @@ public abstract class RerunTransitionXCommand<T> extends TransitionXCommand<T> {
         }
         prevStatus = job.getStatus();
         job.setStatus(Job.Status.RUNNING);
-        job.resetPending();
+        job.setPending();
     }
 
     /**

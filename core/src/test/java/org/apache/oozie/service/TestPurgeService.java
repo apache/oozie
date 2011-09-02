@@ -156,7 +156,7 @@ public class TestPurgeService extends XDataTestCase {
      * Calls the purge service, and ensure the job does not exist in the system.
      */
     public void testPurgeServiceForCoordinator() throws Exception {
-        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
         final String jobId = job.getId();
         CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
                 "coord-action-get.xml");
@@ -292,8 +292,8 @@ public class TestPurgeService extends XDataTestCase {
     }
 
     @Override
-    protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, boolean pending) throws Exception {
-        CoordinatorJobBean coordJob = createCoordJob(status, pending);
+    protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, boolean pending, boolean doneMatd) throws Exception {
+        CoordinatorJobBean coordJob = createCoordJob(status, pending, doneMatd);
         coordJob.setLastModifiedTime(DateUtils.parseDateUTC("2009-12-18T01:00Z"));
         try {
             JPAService jpaService = Services.get().get(JPAService.class);

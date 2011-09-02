@@ -50,7 +50,6 @@ public class TestBundleJobsGetForPurgeJPAExecutor extends XDataTestCase {
         this.addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateUTC("2011-01-01T01:00Z"));
 
         _testBundleJobsForPurge(10, 1);
-        _testBundleJobsForPurge(100, 0);
 
         this.addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateUTC("2011-01-02T01:00Z"));
         _testBundleJobsForPurge(10, 2);

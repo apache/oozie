@@ -1,5 +1,6 @@
 -- Oozie 3.0.1 release
 
+OOZIE-51 Add coordinator materialization flag
 OOZIE-54 Coord job in DoneWithError should not be Killed
 OOZIE-55 Coord Actions in SUSPENDED should not be rerun
 OOZIE-56 Fix Oozie pom version

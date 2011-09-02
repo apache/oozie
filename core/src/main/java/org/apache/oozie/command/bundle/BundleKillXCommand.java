@@ -94,9 +94,10 @@ public class BundleKillXCommand extends KillTransitionXCommand {
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
         if (bundleJob.getStatus() == CoordinatorJob.Status.SUCCEEDED
-                || bundleJob.getStatus() == CoordinatorJob.Status.FAILED) {
-            LOG.info("BundleKillXCommand not killed - job either finished or does not exist " + jobId + " status :"
-                    + bundleJob.getStatus());
+                || bundleJob.getStatus() == CoordinatorJob.Status.FAILED
+                || bundleJob.getStatus() == CoordinatorJob.Status.DONEWITHERROR) {
+            LOG.info("BundleKillXCommand not killed - job either finished SUCCEEDED, FAILED or DONEWITHERROR, job id = "
+                            + jobId + ", status = " + bundleJob.getStatus());
             throw new PreconditionException(ErrorCode.E1020, jobId);
         }
     }

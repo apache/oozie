@@ -50,7 +50,7 @@ public class TestCoordPurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testSucCoordPurgeXCommand() throws Exception {
-        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
         CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
                 "coord-action-get.xml");
 
@@ -90,7 +90,7 @@ public class TestCoordPurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testFailCoordPurgeXCommand() throws Exception {
-        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.FAILED, false);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.FAILED, false, false);
         CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.FAILED,
                 "coord-action-get.xml");
 
@@ -130,7 +130,7 @@ public class TestCoordPurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testKillCoordPurgeXCommand() throws Exception {
-        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.KILLED, false);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.KILLED, false, false);
         CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.KILLED,
                 "coord-action-get.xml");
 
@@ -170,7 +170,7 @@ public class TestCoordPurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testCoordPurgeXCommandFailed() throws Exception {
-        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
         CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
                 "coord-action-get.xml");
 
@@ -203,8 +203,8 @@ public class TestCoordPurgeXCommand extends XDataTestCase {
     }
 
     @Override
-    protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, boolean pending) throws Exception {
-        CoordinatorJobBean coordJob = createCoordJob(status, pending);
+    protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, boolean pending, boolean doneMatd) throws Exception {
+        CoordinatorJobBean coordJob = createCoordJob(status, pending, doneMatd);
         coordJob.setLastModifiedTime(DateUtils.parseDateUTC("2009-12-18T01:00Z"));
         try {
             JPAService jpaService = Services.get().get(JPAService.class);

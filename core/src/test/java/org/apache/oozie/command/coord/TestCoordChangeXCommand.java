@@ -214,7 +214,7 @@ public class TestCoordChangeXCommand extends XDataTestCase {
     public void testCoordChangeEndTime() throws Exception {
         Date start = DateUtils.parseDateUTC("2011-02-01T01:00Z");
         Date end = DateUtils.parseDateUTC("2011-02-20T23:59Z");
-        final CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, start, end, true, 0);
+        final CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, start, end, true, true, 0);
 
         new CoordChangeXCommand(job.getId(), "endtime=2012-12-01T05:00Z;pausetime=2011-11-01T05:00Z").call();
         try {
@@ -230,7 +230,7 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         CoordJobGetJPAExecutor coordGetCmd = new CoordJobGetJPAExecutor(job.getId());
         CoordinatorJobBean coordJob = jpaService.execute(coordGetCmd);
         assertEquals(Job.Status.RUNNING, coordJob.getStatus());
-        assertFalse(coordJob.isPending());
+        assertFalse(coordJob.isDoneMaterialization());
     }
 
     private void addRecordToJobTable(String jobId) throws Exception {

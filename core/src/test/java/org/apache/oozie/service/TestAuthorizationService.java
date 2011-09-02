@@ -153,7 +153,7 @@ public class TestAuthorizationService extends XDataTestCase {
     }
 
     public void testAuthorizationServiceForCoord() throws Exception {
-        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, false);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, false, false);
         assertNotNull(job);
         AuthorizationService as = services.get(AuthorizationService.class);
         assertNotNull(as);

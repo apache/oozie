@@ -362,12 +362,13 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
 
         LOG.info("[" + job.getId() + "]: Update status from " + job.getStatus() + " to RUNNING");
         job.setStatus(Job.Status.RUNNING);
+        job.setPending();
 
         if (jobEndTime.compareTo(endMatdTime) <= 0) {
             LOG.info("[" + job.getId() + "]: all actions have been materialized, job status = " + job.getStatus()
                     + ", set pending to true");
-            // set pending when materialization is done
-            job.setPending();
+            // set doneMaterialization to true when materialization is done
+            job.setDoneMaterialization();
         }
 
         job.setNextMaterializedTime(endMatdTime);
