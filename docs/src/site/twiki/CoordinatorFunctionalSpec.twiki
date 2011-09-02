@@ -14,6 +14,10 @@ The goal of this document is to define a coordinator engine system specialized i
 
 ---++ Changelog
 
+---+++!! 02/DEC/2010:
+
+   * Update coordinator done-flag
+
 ---+++!! 26/AUG/2010:
 
    * Update coordinator rerun
@@ -379,6 +383,7 @@ A synchronous dataset definition contains the following information:
    * *%BLUE% uri-template:%ENDCOLOR%* The URI template that identifies the dataset and can be resolved into concrete URIs to identify a particular dataset instance. The URI template is constructed using:
       * *%BLUE% constants %ENDCOLOR%* See the allowable EL Time Constants below. Ex: ${YEAR}/${MONTH}.
       * *%BLUE% variables %ENDCOLOR%* Variables must be resolved at the time a coordinator job is submitted to the coordinator engine. They are normally provided a job parameters (configuration properties). Ex: ${market}/${language}
+   * *%BLUE% done-flag:%ENDCOLOR%* The done file for the data set. The default done file is '_SUCCESS' if done-flag is not specified. To ignore the done file, set done-flag with a space in the value.
 
 The following EL constants can be used within synchronous dataset URI templates:
 
@@ -395,6 +400,7 @@ The following EL constants can be used within synchronous dataset URI templates:
   <dataset name="[NAME]" frequency="[FREQUENCY]" 
            initial-instance="[DATETIME]" timezone="[TIMEZONE]">
     <uri-template>[URI TEMPLATE]</uri-template>
+    <done-flag>[FILE NAME]</done-flag>
   </dataset>
 </verbatim>
 
@@ -402,7 +408,7 @@ IMPORTANT: The values of the EL constants in the dataset URIs (in HDFS) are expe
 
 *%GREEN% Examples: %ENDCOLOR%*
 
-1. *A dataset produced once every day at 00:15 PST8PDT:*
+1. *A dataset produced once every day at 00:15 PST8PDT and done-flag is space:*
 
 <verbatim>
   <dataset name="logs" frequency="${coord:days(1)}"
@@ -410,10 +416,24 @@ IMPORTANT: The values of the EL constants in the dataset URIs (in HDFS) are expe
     <uri-template>
       hdfs://foo:9000/app/logs/${market}/${YEAR}${MONTH}/${DAY}/data
     </uri-template>
+    <done-flag> </done-flag>
   </dataset>
 </verbatim>
 
-2. *A dataset available available on the 10th of each month:*
+
+The dataset would resolve to the following URIs and are ready until the paths exist:
+
+<verbatim>
+  [market] will be replaced with user given property.
+  
+  hdfs://foo:9000/usr/app/[market]/2009/02/15/data
+  hdfs://foo:9000/usr/app/[market]/2009/02/16/data
+  hdfs://foo:9000/usr/app/[market]/2009/02/17/data
+  ...
+</verbatim>
+
+
+2. *A dataset available on the 10th of each month and done-flag is default '_SUCCESS':*
 
 <verbatim>
   <dataset name="stats" frequency="${coord:months(1)}"
@@ -422,7 +442,26 @@ IMPORTANT: The values of the EL constants in the dataset URIs (in HDFS) are expe
   </dataset>
 </verbatim>
 
-3. *A dataset available at the end of every quarter:*
+The dataset would resolve to the following URIs:
+
+<verbatim>
+  hdfs://foo:9000/usr/app/stats/2009/01/data
+  hdfs://foo:9000/usr/app/stats/2009/02/data
+  hdfs://foo:9000/usr/app/stats/2009/03/data
+  ...
+</verbatim>
+
+The dataset are ready until '_SUCCESS' exists in each path:
+
+<verbatim>
+  hdfs://foo:9000/usr/app/stats/2009/01/data/_SUCCESS
+  hdfs://foo:9000/usr/app/stats/2009/02/data/_SUCCESS
+  hdfs://foo:9000/usr/app/stats/2009/03/data/_SUCCESS
+  ...
+</verbatim>
+
+
+3. *A dataset available at the end of every quarter and done-flag is 'trigger.dat':*
 
 <verbatim>
   <dataset name="stats" frequency="${coord:months(3)}"
@@ -430,8 +469,28 @@ IMPORTANT: The values of the EL constants in the dataset URIs (in HDFS) are expe
     <uri-template>
       hdfs://foo:9000/usr/app/stats/${YEAR}/${MONTH}/data
     </uri-template>
+    <done-flag>trigger.dat</done-flag>
   </dataset>
 </verbatim>
+
+The dataset would resolve to the following URIs:
+
+<verbatim>
+  hdfs://foo:9000/usr/app/stats/2009/01/data
+  hdfs://foo:9000/usr/app/stats/2009/04/data
+  hdfs://foo:9000/usr/app/stats/2009/07/data
+  ...
+</verbatim>
+
+The dataset are ready until 'trigger.dat' exists in each path:
+
+<verbatim>
+  hdfs://foo:9000/usr/app/stats/2009/01/data/trigger.dat
+  hdfs://foo:9000/usr/app/stats/2009/04/data/trigger.dat
+  hdfs://foo:9000/usr/app/stats/2009/07/data/trigger.dat
+  ...
+</verbatim>
+
 
 4. *Normally the URI template of a dataset has a precision similar to the frequency:*
 
