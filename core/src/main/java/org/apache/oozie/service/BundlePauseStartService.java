@@ -95,7 +95,8 @@ public class BundlePauseStartService implements Service {
                 List<BundleJobBean> jobList = jpaService.execute(new BundleJobsGetUnpausedJPAExecutor(-1));
                 for (BundleJobBean bundleJob : jobList) {
                     if ((bundleJob.getPauseTime() != null) && !bundleJob.getPauseTime().after(d)) {
-                        (new BundlePauseXCommand(bundleJob)).call();
+                        new BundlePauseXCommand(bundleJob).call();
+                        LOG.debug("Calling BundlePauseXCommand for bundle job = " + bundleJob.getId());
                     }
                 }
 
@@ -103,7 +104,8 @@ public class BundlePauseStartService implements Service {
                 jobList = jpaService.execute(new BundleJobsGetPausedJPAExecutor(-1));
                 for (BundleJobBean bundleJob : jobList) {
                     if ((bundleJob.getPauseTime() == null || bundleJob.getPauseTime().after(d))) {
-                        (new BundleUnpauseXCommand(bundleJob)).call();
+                        new BundleUnpauseXCommand(bundleJob).call();
+                        LOG.debug("Calling BundleUnpauseXCommand for bundle job = " + bundleJob.getId());
                     }
                 }
 
@@ -111,7 +113,8 @@ public class BundlePauseStartService implements Service {
                 jobList = jpaService.execute(new BundleJobsGetNeedStartJPAExecutor(d));
                 for (BundleJobBean bundleJob : jobList) {
                     bundleJob.setKickoffTime(d);
-                    (new BundleStartXCommand(bundleJob.getId())).call();
+                    new BundleStartXCommand(bundleJob.getId()).call();
+                    LOG.debug("Calling BundleStartXCommand for bundle job = " + bundleJob.getId());
                 }
             }
             catch (Exception ex) {
@@ -126,7 +129,8 @@ public class BundlePauseStartService implements Service {
                 List<CoordinatorJobBean> jobList = jpaService.execute(new CoordJobsGetUnpausedJPAExecutor(-1));
                 for (CoordinatorJobBean coordJob : jobList) {
                     if ((coordJob.getPauseTime() != null) && !coordJob.getPauseTime().after(d)) {
-                        (new CoordPauseXCommand(coordJob)).call();
+                        new CoordPauseXCommand(coordJob).call();
+                        LOG.debug("Calling CoordPauseXCommand for coordinator job = " + coordJob.getId());
                     }
                 }
 
@@ -134,7 +138,8 @@ public class BundlePauseStartService implements Service {
                 jobList = jpaService.execute(new CoordJobsGetPausedJPAExecutor(-1));
                 for (CoordinatorJobBean coordJob : jobList) {
                     if ((coordJob.getPauseTime() == null || coordJob.getPauseTime().after(d))) {
-                        (new CoordUnpauseXCommand(coordJob)).call();
+                        new CoordUnpauseXCommand(coordJob).call();
+                        LOG.debug("Calling CoordUnpauseXCommand for coordinator job = " + coordJob.getId());
                     }
                 }
             }

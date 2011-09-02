@@ -76,10 +76,14 @@ public abstract class UnpauseTransitionXCommand extends TransitionXCommand<Void>
      */
     @Override
     protected Void execute() throws CommandException {
-        transitToNext();
-        updateJob();
-        unpauseChildren();
-        notifyParent();
+        try {
+            transitToNext();
+            updateJob();
+            unpauseChildren();
+        }
+        finally {
+            notifyParent();
+        }
         return null;
     }
 }

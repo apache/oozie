@@ -15,10 +15,12 @@
 package org.apache.oozie.command.coord;
 
 import org.apache.oozie.CoordinatorJobBean;
+import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PauseTransitionXCommand;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.executor.jpa.CoordJobUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
@@ -26,8 +28,9 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.util.LogUtils;
 
 public class CoordPauseXCommand extends PauseTransitionXCommand {
-    private final CoordinatorJobBean coordJob;
     private final JPAService jpaService = Services.get().get(JPAService.class);
+    private final CoordinatorJobBean coordJob;
+    private CoordinatorJob.Status prevStatus = null;
 
     public CoordPauseXCommand(CoordinatorJobBean coordJob) {
         super("coord_pause", "coord_pause", 1);
@@ -55,6 +58,7 @@ public class CoordPauseXCommand extends PauseTransitionXCommand {
      */
     @Override
     public void loadState() throws CommandException {
+        prevStatus = coordJob.getStatus();
         LogUtils.setLogInfo(coordJob, logInfo);
     }
 
@@ -69,7 +73,12 @@ public class CoordPauseXCommand extends PauseTransitionXCommand {
      * @see org.apache.oozie.command.TransitionXCommand#notifyParent()
      */
     @Override
-    public void notifyParent() {
+    public void notifyParent() throws CommandException {
+        // update bundle action
+        if (coordJob.getBundleId() != null) {
+            BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, prevStatus);
+            bundleStatusUpdate.call();
+        }
     }
 
     /* (non-Javadoc)

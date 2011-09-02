@@ -175,9 +175,11 @@ public class RecoveryService implements Service {
                                 List<Element> coordElems = bAppXml.getChildren("coordinator", bAppXml.getNamespace());
                                 for (Element coordElem : coordElems) {
                                     Attribute name = coordElem.getAttribute("name");
-                                    Configuration coordConf = mergeConfig(coordElem,bundleJob);
-                                    coordConf.set(OozieClient.BUNDLE_ID, baction.getBundleId());
-                                    queueCallable(new CoordSubmitXCommand(coordConf, bundleJob.getAuthToken(), bundleJob.getId(), name.getValue()));
+                                    if (name.getValue().equals(baction.getCoordName())) {
+                                        Configuration coordConf = mergeConfig(coordElem,bundleJob);
+                                        coordConf.set(OozieClient.BUNDLE_ID, baction.getBundleId());
+                                        queueCallable(new CoordSubmitXCommand(coordConf, bundleJob.getAuthToken(), bundleJob.getId(), name.getValue()));
+                                    }
                                 }
                             }
                         }

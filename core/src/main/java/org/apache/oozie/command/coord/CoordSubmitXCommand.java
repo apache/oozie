@@ -943,8 +943,8 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
     @Override
     public void notifyParent() throws CommandException {
         // update bundle action
-        if (this.bundleId != null) {
-            LOG.debug("Updating bundle record: " + bundleId + " for coord id: " + coordJob.getId());
+        if (coordJob.getBundleId() != null) {
+            LOG.debug("Updating bundle record: " + coordJob.getBundleId() + " for coord id: " + coordJob.getId());
             BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, prevStatus);
             bundleStatusUpdate.call();
         }
