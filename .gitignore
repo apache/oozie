@@ -21,4 +21,4 @@ mem
 core/build
 core/mem
 examples/oozietests
-
+mkdistro-*.out
