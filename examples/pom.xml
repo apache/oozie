@@ -18,7 +18,7 @@
     <parent>
         <groupId>com.yahoo.oozie</groupId> <!-- OOZIE_GROUP_ID -->
         <artifactId>oozie-main</artifactId>
-        <version>2.2.0-SNAPSHOT</version> <!-- OOZIE_VERSION -->
+        <version>2.3.0-SNAPSHOT</version> <!-- OOZIE_VERSION -->
     </parent>
     <artifactId>oozie-examples</artifactId>
     <description>Oozie Examples</description>
