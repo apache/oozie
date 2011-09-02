@@ -1,5 +1,6 @@
 -- Oozie 3.0.1 release
 
+OOZIE-96 add coordinator 0.2 schema to coord spec twiki
 OOZIE-95 rerun SUCCEEDED coord job should not change status
 OOZIE-94 check action-actual-time if is null
 OOZIE-92 add updated sql scripts for 3.0.1
