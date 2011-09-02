@@ -1,5 +1,6 @@
 -- Oozie 3.0.0 release
 
+OOZIE-20 examples job properties have hardcoded values, and use non-default Hadoop ports
 GH-0674 Fixing Bundle status after rerun. 
 GH-0676 Coord jobs are getting in to Pause status 5 mins earlier
 GH-0510 credentialsConf should be initialized without loading defaults

@@ -19,7 +19,7 @@
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
             <prepare>
-                <delete path="${nameNode}/user/${wf:user()}/examples/output-data/streaming"/>
+                <delete path="${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/streaming"/>
             </prepare>
             <streaming>
                 <mapper>/bin/cat</mapper>
@@ -32,11 +32,11 @@
                 </property>
                 <property>
                     <name>mapred.input.dir</name>
-                    <value>/user/${wf:user()}/examples/input-data/text</value>
+                    <value>/user/${wf:user()}/${examplesRoot}/input-data/text</value>
                 </property>
                 <property>
                     <name>mapred.output.dir</name>
-                    <value>/user/${wf:user()}/examples/output-data/streaming</value>
+                    <value>/user/${wf:user()}/${examplesRoot}/output-data/streaming</value>
                 </property>
             </configuration>
         </map-reduce>

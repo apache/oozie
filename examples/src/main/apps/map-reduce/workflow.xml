@@ -19,7 +19,7 @@
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
             <prepare>
-                <delete path="${nameNode}/user/${wf:user()}/examples/output-data/${outputDir}"/>
+                <delete path="${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/${outputDir}"/>
             </prepare>
             <configuration>
                 <property>
@@ -40,11 +40,11 @@
                 </property>
                 <property>
                     <name>mapred.input.dir</name>
-                    <value>/user/${wf:user()}/examples/input-data/text</value>
+                    <value>/user/${wf:user()}/${examplesRoot}/input-data/text</value>
                 </property>
                 <property>
                     <name>mapred.output.dir</name>
-                    <value>/user/${wf:user()}/examples/output-data/${outputDir}</value>
+                    <value>/user/${wf:user()}/${examplesRoot}/output-data/${outputDir}</value>
                 </property>
             </configuration>
         </map-reduce>

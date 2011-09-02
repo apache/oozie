@@ -16,7 +16,7 @@
     <start to="subworkflow-node"/>
     <action name="subworkflow-node">
         <sub-workflow>
-            <app-path>${nameNode}/user/${wf:user()}/examples/apps/map-reduce</app-path>
+            <app-path>${nameNode}/user/${wf:user()}/${examplesRoot}/apps/map-reduce</app-path>
             <configuration>
                 <property>
                     <name>jobTracker</name>
@@ -29,6 +29,10 @@
                 <property>
                     <name>queueName</name>
                     <value>${queueName}</value>
+                </property>
+                <property>
+                    <name>examplesRoot</name>
+                    <value>${examplesRoot}</value>
                 </property>
                 <property>
                     <name>outputDir</name>
