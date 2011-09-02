@@ -250,43 +250,6 @@
         </plugins>
     </build>
 
-    <reporting>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.7</version>
-                <configuration>
-                    <linksource>true</linksource>
-                    <quiet>true</quiet>
-                    <verbose>false</verbose>
-                    <source>${maven.compile.source}</source>
-                    <charset>${maven.compile.encoding}</charset>
-                    <groups>
-                        <group>
-                            <title>Client API</title>
-                            <packages>
-                                org.apache.oozie.client
-                            </packages>
-                        </group>
-                        <group>
-                            <title>Action Executor API</title>
-                            <packages>
-                                org.apache.oozie.action
-                            </packages>
-                        </group>
-                        <group>
-                            <title>Local Oozie (for application development/testing)</title>
-                            <packages>
-                                org.apache.oozie.local
-                            </packages>
-                        </group>
-                    </groups>
-                </configuration>
-            </plugin>
-        </plugins>
-    </reporting>
-
     <profiles>
         <profile>
             <id>generateDocs</id>
@@ -301,6 +264,27 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
+                        <configuration>
+		                    <linksource>true</linksource>
+		                    <quiet>true</quiet>
+		                    <verbose>false</verbose>
+		                    <source>${maven.compile.source}</source>
+		                    <charset>${maven.compile.encoding}</charset>
+		                    <groups>
+		                        <group>
+		                            <title>Action Executor API</title>
+		                            <packages>
+		                                org.apache.oozie.action
+		                            </packages>
+		                        </group>
+		                        <group>
+		                            <title>Local Oozie (for application development/testing)</title>
+		                            <packages>
+		                                org.apache.oozie.local
+		                            </packages>
+		                        </group>
+		                    </groups>
+		                </configuration>
                         <executions>
                             <execution>
                                 <goals>

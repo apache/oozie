@@ -126,8 +126,12 @@
                                     <targetPath>docs</targetPath>
                                 </resource>
                                 <resource>
+                                    <directory>../client/target/site</directory>
+                                    <targetPath>docs/client</targetPath>
+                                </resource>
+                                <resource>
                                     <directory>../core/target/site</directory>
-                                    <targetPath>docs</targetPath>
+                                    <targetPath>docs/core</targetPath>
                                 </resource>
                                 <resource>
                                     <directory>..</directory>

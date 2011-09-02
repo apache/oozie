@@ -75,5 +75,48 @@
         </plugins>
     </build>
 
+    <profiles>
+	     <profile>
+	         <id>generateDocs</id>
+	         <activation>
+	             <activeByDefault>false</activeByDefault>
+	             <property>
+	                 <name>generateDocs</name>
+	             </property>
+	         </activation>
+	         <build>
+	             <plugins>
+	                 <plugin>
+	                     <groupId>org.apache.maven.plugins</groupId>
+	                     <artifactId>maven-javadoc-plugin</artifactId>
+	                     <configuration>
+	                         <linksource>true</linksource>
+			                 <quiet>true</quiet>
+			                 <verbose>false</verbose>
+			                 <source>${maven.compile.source}</source>
+			                 <charset>${maven.compile.encoding}</charset>
+			                 <groups>
+			                     <group>
+			                         <title>Client API</title>
+			                         <packages>
+			                             org.apache.oozie.client
+			                         </packages>
+			                     </group>
+			                 </groups>
+	                     </configuration>
+		                 <executions>
+	                         <execution>
+	                             <goals>
+	                                 <goal>javadoc</goal>
+	                             </goals>
+	                             <phase>package</phase>
+	                         </execution>
+		                 </executions>
+	                 </plugin>
+	             </plugins>
+	         </build>
+	     </profile>
+    </profiles>
+    
 </project>
 
