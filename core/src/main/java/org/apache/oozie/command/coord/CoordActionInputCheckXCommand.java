@@ -43,6 +43,7 @@ import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.util.StatusUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
@@ -469,10 +470,18 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                     + "]::CoordActionInputCheck:: Ignoring action. Should be in WAITING state, but state="
                     + coordAction.getStatus());
         }
-        if (coordJob.getStatus() != Job.Status.RUNNING && coordJob.getStatus() != Job.Status.SUCCEEDED &&coordJob.getStatus() != Job.Status.PAUSED && coordJob.getStatus() != Job.Status.PAUSEDWITHERROR) {
-            throw new PreconditionException(ErrorCode.E1100, "[" + actionId
-                    + "]::CoordActionInputCheck:: Ignoring action. Coordinator job is not in RUNNING/PAUSED/PAUSEDWITHERROR state, but state="
-                    + coordJob.getStatus());
+
+        // if eligible to do action input check when running with backward support is true
+        if (StatusUtils.getStatusForCoordActionInputCheck(coordJob)) {
+            return;
+        }
+
+        if (coordJob.getStatus() != Job.Status.RUNNING && coordJob.getStatus() != Job.Status.PAUSED
+                && coordJob.getStatus() != Job.Status.PAUSEDWITHERROR) {
+            throw new PreconditionException(
+                    ErrorCode.E1100, "["+ actionId + "]::CoordActionInputCheck:: Ignoring action." +
+                    		" Coordinator job is not in RUNNING/PAUSED/PAUSEDWITHERROR state, but state="
+                            + coordJob.getStatus());
         }
     }
 

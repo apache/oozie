@@ -775,7 +775,7 @@ public class TestCoordRerunXCommand extends XDataTestCase {
      *
      * @throws Exception
      */
-    public void testCoordRerunForBackwardSupport() throws Exception {
+    public void testCoordRerunForBackwardSupport1() throws Exception {
         Services.get().destroy();
         setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_COORD_STATUS, "true");
         new Services().init();
@@ -805,6 +805,54 @@ public class TestCoordRerunXCommand extends XDataTestCase {
         CoordJobGetJPAExecutor coordJobGetCmd = new CoordJobGetJPAExecutor(coordJob.getId());
         coordJob = jpaService.execute(coordJobGetCmd);
         assertEquals(CoordinatorJob.Status.SUCCEEDED, coordJob.getStatus());
+
+        CoordActionGetJPAExecutor coordActionGetCmd = new CoordActionGetJPAExecutor(action1.getId());
+        action1 = jpaService.execute(coordActionGetCmd);
+        assertNotSame(action1.getStatus(), CoordinatorAction.Status.FAILED);
+
+        coordActionGetCmd = new CoordActionGetJPAExecutor(action2.getId());
+        action2 = jpaService.execute(coordActionGetCmd);
+        assertNotSame(action2.getStatus(), CoordinatorAction.Status.SUCCEEDED);
+    }
+
+    /**
+     * Tests functionality of the coord rerun for backward support is true. </p> Insert a coordinator job with SUSPENDED
+     * and coordinator actions with pending false, but one of action is FAILED.
+     * Set oozie.service.StatusTransitService.backward.support.for.coord.status=true
+     * and use uri:oozie:coordinator:0.1 namespace, then, rerun the coord job for action 1 and action 2.
+     *
+     * @throws Exception
+     */
+    public void testCoordRerunForBackwardSupport2() throws Exception {
+        Services.get().destroy();
+        setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_COORD_STATUS, "true");
+        new Services().init();
+
+        Date start = DateUtils.parseDateUTC("2009-02-01T01:00Z");
+        Date end = DateUtils.parseDateUTC("2009-02-02T23:59Z");
+        CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUSPENDED, start, end, false,
+                true, 3);
+
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+        coordJob.setAppNamespace(SchemaService.COORDINATOR_NAMESPACE_URI_1);
+        jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
+
+        CoordinatorActionBean action1 = addRecordToCoordActionTable(coordJob.getId(), 1,
+                CoordinatorAction.Status.FAILED, "coord-rerun-action1.xml", 0);
+        CoordinatorActionBean action2 = addRecordToCoordActionTable(coordJob.getId(), 2,
+                CoordinatorAction.Status.SUCCEEDED, "coord-rerun-action1.xml", 0);
+        CoordinatorActionBean action3 = addRecordToCoordActionTable(coordJob.getId(), 3,
+                CoordinatorAction.Status.SUCCEEDED, "coord-rerun-action1.xml", 0);
+
+        String rerunScope = Integer.toString(1) + "-" + Integer.toString(2);
+
+        final OozieClient coordClient = LocalOozie.getCoordClient();
+        coordClient.reRunCoord(coordJob.getId(), RestConstants.JOB_COORD_RERUN_ACTION, rerunScope, false, true);
+
+        CoordJobGetJPAExecutor coordJobGetCmd = new CoordJobGetJPAExecutor(coordJob.getId());
+        coordJob = jpaService.execute(coordJobGetCmd);
+        assertEquals(CoordinatorJob.Status.SUSPENDED, coordJob.getStatus());
 
         CoordActionGetJPAExecutor coordActionGetCmd = new CoordActionGetJPAExecutor(action1.getId());
         action1 = jpaService.execute(coordActionGetCmd);

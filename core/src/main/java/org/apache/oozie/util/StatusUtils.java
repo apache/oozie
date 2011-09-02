@@ -62,6 +62,65 @@ public class StatusUtils {
     }
 
     /**
+     * This function changes back the status for coordinator rerun if the job was SUCCEEDED or SUSPENDED when rerun
+     * with backward support is true.
+     *
+     * @param coordJob This will be the coordinator job bean for which we need to get the status based on version
+     * @param prevStatus coordinator job previous status
+     * @return Job.Status This would be the new status based on the app version.
+     */
+    public static Job.Status getStatusForCoordRerun(CoordinatorJobBean coordJob, Job.Status prevStatus) {
+        Job.Status newStatus = null;
+        if (coordJob != null) {
+            newStatus = coordJob.getStatus();
+            Configuration conf = Services.get().getConf();
+            boolean backwardSupportForCoordStatus = conf.getBoolean(
+                    StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_COORD_STATUS, false);
+            if (backwardSupportForCoordStatus) {
+                if (coordJob.getAppNamespace() != null
+                        && coordJob.getAppNamespace().equals(SchemaService.COORDINATOR_NAMESPACE_URI_1)) {
+
+                    if (coordJob.getStatus() == Job.Status.RUNNING && prevStatus == Job.Status.SUSPENDED) {
+                        newStatus = Job.Status.SUSPENDED;
+                    }
+                    else if (coordJob.getStatus() == Job.Status.RUNNING && coordJob.isDoneMaterialization()) {
+                        newStatus = Job.Status.SUCCEEDED;
+                    }
+                }
+            }
+        }
+        return newStatus;
+    }
+
+    /**
+     * This function check if eligible to do action input check  when running with backward support is true.
+     *
+     * @param coordJob This will be the coordinator job bean for which we need to get the status based on version
+     * @return true if eligible to do action input check
+     */
+    public static boolean getStatusForCoordActionInputCheck(CoordinatorJobBean coordJob) {
+        boolean ret = false;
+        if (coordJob != null) {
+            Configuration conf = Services.get().getConf();
+            boolean backwardSupportForCoordStatus = conf.getBoolean(
+                    StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_COORD_STATUS, false);
+            if (backwardSupportForCoordStatus) {
+                if (coordJob.getAppNamespace() != null
+                        && coordJob.getAppNamespace().equals(SchemaService.COORDINATOR_NAMESPACE_URI_1)) {
+
+                    if (coordJob.getStatus() == Job.Status.SUCCEEDED) {
+                        ret = true;
+                    }
+                    else if (coordJob.getStatus() == Job.Status.SUSPENDED) {
+                        ret = true;
+                    }
+                }
+            }
+        }
+        return ret;
+    }
+
+    /**
      * If namespace 0.1 is used and backward support is true, SUCCEEDED coord job can be killed
      *
      * @param coordJob the coordinator job

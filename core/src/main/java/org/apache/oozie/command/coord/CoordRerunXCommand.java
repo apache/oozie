@@ -409,9 +409,16 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
     protected void verifyPrecondition() throws CommandException, PreconditionException {
         if (coordJob.getStatus() == CoordinatorJob.Status.KILLED
                 || coordJob.getStatus() == CoordinatorJob.Status.FAILED) {
-            LOG.info("CoordRerunCommand is not able to run, job status=" + coordJob.getStatus() + ", jobid=" + jobId);
+            LOG.info("CoordRerunXCommand is not able to run, job status=" + coordJob.getStatus() + ", jobid=" + jobId);
             throw new CommandException(ErrorCode.E1018,
                     "coordinator job is killed or failed so all actions are not eligible to rerun!");
+        }
+
+        // no actioins have been created for PREP job
+        if (coordJob.getStatus() == CoordinatorJob.Status.PREP) {
+            LOG.info("CoordRerunXCommand is not able to run, job status=" + coordJob.getStatus() + ", jobid=" + jobId);
+            throw new CommandException(ErrorCode.E1018,
+                    "coordinator job is PREP so no actions are materialized to rerun!");
         }
     }
 
@@ -530,7 +537,7 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
     public final void transitToNext() {
         prevStatus = coordJob.getStatus();
         coordJob.setStatus(Job.Status.RUNNING);
-        coordJob.setStatus(StatusUtils.getStatus(coordJob));
+        coordJob.setStatus(StatusUtils.getStatusForCoordRerun(coordJob, prevStatus));
         coordJob.setPending();
     }
 
