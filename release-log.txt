@@ -1,5 +1,6 @@
 -- Oozie 3.0.1 release
 
+OOZIE-45 coord job set to DONEWITHERROR when coord actions are TIMEOUT
 OOZIE-44 fix the spaces issues in db updatescripts
 OOZIE-43 should reset pending when pausetime changes and materialized actions are removed
 OOZIE-37 Fixing pause service for exceptions. 

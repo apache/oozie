@@ -270,6 +270,31 @@ public class TestStatusTransitService extends XDataTestCase {
         assertFalse(job.isPending());
     }
 
+    /**
+     * Tests functionality of the StatusTransitService Runnable command. </p> Insert a coordinator job with RUNNING and
+     * pending true and coordinator actions with TIMEDOUT state. Then, runs the StatusTransitService runnable
+     * and ensures the job state changes to DONEWITHERROR.
+     *
+     * @throws Exception
+     */
+    public void testCoordStatusTransitServiceForTimeout() throws Exception {
+        Date start = DateUtils.parseDateUTC("2009-02-01T01:00Z");
+        Date end = DateUtils.parseDateUTC("2009-02-02T23:59Z");
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, start, end, true, true, 3);
+        addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.TIMEDOUT, "coord-action-get.xml");
+        addRecordToCoordActionTable(job.getId(), 2, CoordinatorAction.Status.TIMEDOUT, "coord-action-get.xml");
+        addRecordToCoordActionTable(job.getId(), 3, CoordinatorAction.Status.TIMEDOUT, "coord-action-get.xml");
+
+        Runnable runnable = new StatusTransitRunnable();
+        runnable.run();
+        Thread.sleep(1000);
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        CoordJobGetJPAExecutor coordGetCmd = new CoordJobGetJPAExecutor(job.getId());
+        CoordinatorJobBean coordJob = jpaService.execute(coordGetCmd);
+        assertEquals(CoordinatorJob.Status.DONEWITHERROR, coordJob.getStatus());
+    }
+
     @Override
     protected CoordinatorActionBean addRecordToCoordActionTable(String jobId, int actionNum,
             CoordinatorAction.Status status, String resourceXmlName) throws Exception {
