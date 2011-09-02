@@ -488,7 +488,7 @@ public class CoordinatorStore extends Store {
         q.setParameter("status", aBean.getStatus().toString());
     }
 
-    
+
     /**
      * Purge the coordinators completed older than given days.
      *
@@ -504,7 +504,7 @@ public class CoordinatorStore extends Store {
                 jobQ.setParameter("lastModTime", lastModTm);
                 jobQ.setMaxResults(limit);
                 List<CoordinatorJobBean> coordJobs = jobQ.getResultList();
-                
+
                 int actionDeleted = 0;
                 if (coordJobs.size() != 0) {
                     for (CoordinatorJobBean coord : coordJobs) {
@@ -515,7 +515,7 @@ public class CoordinatorStore extends Store {
                         actionDeleted += g.executeUpdate();
                     }
                 }
-                
+
                 XLog.getLog(getClass()).debug("ENDED Coord Purge deleted jobs :" + coordJobs.size() + " and actions " + actionDeleted);
                 return null;
             }
@@ -860,7 +860,7 @@ public class CoordinatorStore extends Store {
                                                               public List<CoordinatorActionBean> call() throws StoreException {
                                                                   List<CoordinatorActionBean> actions;
                                                                   try {
-                                                                      Query q = entityManager.createNamedQuery("GET_WAITING_SUBMITTED_ACTIONS_OLDER_THAN");
+                                                                      Query q = entityManager.createNamedQuery("GET_COORD_ACTIONS_FOR_RECOVERY_OLDER_THAN");
                                                                       Timestamp ts = new Timestamp(System.currentTimeMillis() - checkAgeSecs * 1000);
                                                                       q.setParameter("lastModifiedTime", ts);
                                                                       /*

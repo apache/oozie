@@ -136,6 +136,39 @@ public abstract class XDataTestCase extends XFsTestCase {
     }
 
     /**
+     * Insert coord job for testing.
+     *
+     * @param testFileName test file name
+     * @param status coord job status
+     * @param start start time
+     * @param end end time
+     * @param pending true if pending is true
+     * @param doneMatd true if doneMaterialization is true
+     * @param lastActionNum last action number
+     * @return coord job bean
+     * @throws Exception
+     */
+    protected CoordinatorJobBean addRecordToCoordJobTable(String testFileName, CoordinatorJob.Status status, Date start, Date end,
+            boolean pending, boolean doneMatd, int lastActionNum) throws Exception {
+        CoordinatorJobBean coordJob = createCoordJob(testFileName, status, start, end, pending, doneMatd, lastActionNum);
+
+        try {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            assertNotNull(jpaService);
+            CoordJobInsertJPAExecutor coordInsertCmd = new CoordJobInsertJPAExecutor(coordJob);
+            jpaService.execute(coordInsertCmd);
+        }
+        catch (JPAExecutorException je) {
+            je.printStackTrace();
+            fail("Unable to insert the test coord job record to table");
+            throw je;
+        }
+
+        return coordJob;
+
+    }
+
+    /**
      * Add coordinator job bean with bundle id info.
      *
      * @param bundleId bundle id
@@ -275,6 +308,63 @@ public abstract class XDataTestCase extends XFsTestCase {
     }
 
     /**
+     * Create coord job bean
+     *
+     * @param testFileName test file name
+     * @param status coord job status
+     * @param start start time
+     * @param end end time
+     * @param pending true if pending is true
+     * @param doneMatd true if doneMaterialization is true
+     * @param lastActionNum last action number
+     * @return coord job bean
+     * @throws IOException
+     */
+    protected CoordinatorJobBean createCoordJob(String testFileName, CoordinatorJob.Status status, Date start, Date end, boolean pending,
+            boolean doneMatd, int lastActionNum) throws Exception {
+        Path appPath = new Path(getFsTestCaseDir(), "coord");
+        String appXml = writeCoordXml(appPath, testFileName);
+
+        CoordinatorJobBean coordJob = new CoordinatorJobBean();
+        coordJob.setId(Services.get().get(UUIDService.class).generateId(ApplicationType.COORDINATOR));
+        coordJob.setAppName("COORD-TEST");
+        coordJob.setAppPath(appPath.toString());
+        coordJob.setStatus(status);
+        coordJob.setTimeZone("America/Los_Angeles");
+        coordJob.setCreatedTime(new Date());
+        coordJob.setLastModifiedTime(new Date());
+        coordJob.setUser(getTestUser());
+        coordJob.setGroup(getTestGroup());
+        coordJob.setAuthToken("notoken");
+        if (pending) {
+            coordJob.setPending();
+        }
+        if (doneMatd) {
+            coordJob.setDoneMaterialization();
+        }
+        coordJob.setLastActionNumber(lastActionNum);
+
+        Configuration conf = getCoordConf(appPath);
+        coordJob.setConf(XmlUtils.prettyPrint(conf).toString());
+        coordJob.setJobXml(appXml);
+        coordJob.setFrequency(1);
+        coordJob.setTimeUnit(Timeunit.DAY);
+        coordJob.setExecution(Execution.FIFO);
+        coordJob.setConcurrency(1);
+        coordJob.setMatThrottling(1);
+        try {
+            coordJob.setStartTime(start);
+            coordJob.setEndTime(end);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            fail("Could not set Date/time");
+        }
+        return coordJob;
+    }
+
+
+    /**
      * Write coordinator xml
      *
      * @param appPath app path
@@ -338,12 +428,13 @@ public abstract class XDataTestCase extends XFsTestCase {
      * @param actionNum action number
      * @param status coord action status
      * @param resourceXmlName xml file name
+     * @param pending pending counter
      * @return coord action bean
      * @throws Exception thrown if unable to create coord action bean
      */
     protected CoordinatorActionBean addRecordToCoordActionTable(String jobId, int actionNum,
-            CoordinatorAction.Status status, String resourceXmlName) throws Exception {
-        CoordinatorActionBean action = createCoordAction(jobId, actionNum, status, resourceXmlName);
+            CoordinatorAction.Status status, String resourceXmlName, int pending) throws Exception {
+        CoordinatorActionBean action = createCoordAction(jobId, actionNum, status, resourceXmlName, pending);
 
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
@@ -368,12 +459,13 @@ public abstract class XDataTestCase extends XFsTestCase {
      * @param resourceXmlName xml file name
      * @param wfId wf id
      * @param wfStatus wf status
+     * @param pending pending counter
      * @return coord action bean
      * @throws Exception thrown if unable to create coord action bean
      */
     protected CoordinatorActionBean addRecordToCoordActionTable(String jobId, int actionNum,
-            CoordinatorAction.Status status, String resourceXmlName, String wfId, String wfStatus) throws Exception {
-        CoordinatorActionBean action = createCoordAction(jobId, actionNum, status, resourceXmlName);
+            CoordinatorAction.Status status, String resourceXmlName, String wfId, String wfStatus, int pending) throws Exception {
+        CoordinatorActionBean action = createCoordAction(jobId, actionNum, status, resourceXmlName, pending);
         action.setExternalId(wfId);
         action.setExternalStatus(wfStatus);
         try {
@@ -397,11 +489,12 @@ public abstract class XDataTestCase extends XFsTestCase {
      * @param actionNum action number
      * @param status coord action status
      * @param resourceXmlName xml file name
+     * @param pending pending counter
      * @return coord action bean
      * @throws Exception thrown if unable to create coord action bean
      */
     protected CoordinatorActionBean createCoordAction(String jobId, int actionNum, CoordinatorAction.Status status,
-            String resourceXmlName) throws Exception {
+            String resourceXmlName, int pending) throws Exception {
         String actionId = Services.get().get(UUIDService.class).generateChildId(jobId, actionNum + "");
         Path appPath = new Path(getFsTestCaseDir(), "coord");
         String actionXml = getCoordActionXml(appPath, resourceXmlName);
@@ -412,7 +505,7 @@ public abstract class XDataTestCase extends XFsTestCase {
         action.setExternalId(actionId + "_E");
         action.setJobId(jobId);
         action.setActionNumber(actionNum);
-        action.setPending(0);
+        action.setPending(pending);
         try {
             action.setNominalTime(DateUtils.parseDateUTC(actionNomialTime));
         }
@@ -427,6 +520,7 @@ public abstract class XDataTestCase extends XFsTestCase {
 
         Configuration conf = getCoordConf(appPath);
         action.setCreatedConf(XmlUtils.prettyPrint(conf).toString());
+        action.setRunConf(XmlUtils.prettyPrint(conf).toString());
         return action;
     }
 

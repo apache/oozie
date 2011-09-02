@@ -44,11 +44,11 @@ public class TestCoordActionsPendingFalseStatusCountGetJPAExecutor extends XData
     public void testCoordActionPendingFalseStatusCountGet() throws Exception {
         int actionNum = 1;
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
-        addRecordToCoordActionTable(job.getId(), actionNum++, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml");
+        addRecordToCoordActionTable(job.getId(), actionNum++, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
         _testPendingFalseStatusCount(job.getId(), 1);
-        addRecordToCoordActionTable(job.getId(), actionNum++, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml");
+        addRecordToCoordActionTable(job.getId(), actionNum++, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
 
-        addRecordToCoordActionTable(job.getId(), actionNum, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml");
+        addRecordToCoordActionTable(job.getId(), actionNum, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
         _testPendingFalseStatusCount(job.getId(), 3);
     }
 

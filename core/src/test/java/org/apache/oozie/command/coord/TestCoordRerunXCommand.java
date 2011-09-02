@@ -702,7 +702,7 @@ public class TestCoordRerunXCommand extends XDataTestCase {
         Date curr = new Date();
         Date pauseTime = new Date(curr.getTime() - 1000);
         CoordinatorJobBean job = this.addRecordToCoordJobTableWithPausedTime(Job.Status.PAUSED, false, false, pauseTime);
-        addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.SUCCEEDED, "coord-rerun-action1.xml");
+        addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.SUCCEEDED, "coord-rerun-action1.xml", 0);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);

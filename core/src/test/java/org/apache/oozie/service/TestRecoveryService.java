@@ -23,29 +23,37 @@ import java.io.StringReader;
 import java.io.Writer;
 import java.util.Date;
 import java.util.List;
-
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorEngine;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.DagEngine;
 import org.apache.oozie.ForTestingActionExecutor;
 import org.apache.oozie.WorkflowActionBean;
+import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.CoordinatorJob.Execution;
+import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 import org.apache.oozie.service.RecoveryService.RecoveryRunnable;
 import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.store.WorkflowStore;
-import org.apache.oozie.test.XTestCase;
+import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
+import org.apache.oozie.util.XLog;
+import org.apache.oozie.workflow.WorkflowInstance;
 
-public class TestRecoveryService extends XTestCase {
+public class TestRecoveryService extends XDataTestCase {
     private Services services;
 
     @Override
@@ -73,7 +81,7 @@ public class TestRecoveryService extends XTestCase {
      *
      * @throws Exception
      */
-    public void testActionRecoveryService() throws Exception {
+    public void testWorkflowActionRecoveryService() throws Exception {
         Reader reader = IOUtils.getResourceAsReader("wf-ext-schema-valid.xml", -1);
         Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
         createTestCaseSubDir("lib");
@@ -157,11 +165,11 @@ public class TestRecoveryService extends XTestCase {
 
     /**
      * Tests functionality of the Recovery Service Runnable command. </p> Insert a coordinator job with RUNNING and
-     * action with SUBMITTED. Then, runs the recovery runnable and ensures the action status changes to READY.
+     * action with SUBMITTED. Then, runs the recovery runnable and ensures the action status changes to RUNNING.
      *
      * @throws Exception
      */
-    public void testCoordActionRecoveryService() throws Exception {
+    public void testCoordActionRecoveryServiceForSubmitted() throws Exception {
         final String jobId = "0000000-" + new Date().getTime() + "-testCoordRecoveryService-C";
         final int actionNum = 1;
         final String actionId = jobId + "@" + actionNum;
@@ -204,6 +212,235 @@ public class TestRecoveryService extends XTestCase {
         }
         store2.commitTrx();
         store2.closeTrx();
+    }
+
+    /**
+     * Tests functionality of the Recovery Service Runnable command. </p> Insert a coordinator job with RUNNING and
+     * action with WAITING. Then, runs the recovery runnable and ensures the action status changes to READY.
+     *
+     * @throws Exception
+     */
+    public void testCoordActionRecoveryServiceForWaiting() throws Exception {
+
+        Date startTime = DateUtils.parseDateUTC("2009-02-01T23:59Z");
+        Date endTime = DateUtils.parseDateUTC("2009-02-02T23:59Z");
+        CoordinatorJobBean job = addRecordToCoordJobTableForWaiting("coord-job-for-action-input-check.xml",
+                CoordinatorJob.Status.RUNNING, startTime, endTime, false, true, 0);
+
+        CoordinatorActionBean action = addRecordToCoordActionTableForWaiting(job.getId(), 1,
+                CoordinatorAction.Status.WAITING, "coord-action-for-action-input-check.xml");
+
+        createDir(getTestCaseDir() + "/2009/29/");
+        createDir(getTestCaseDir() + "/2009/22/");
+        createDir(getTestCaseDir() + "/2009/15/");
+        createDir(getTestCaseDir() + "/2009/08/");
+
+        Thread.sleep(3000);
+
+        Runnable recoveryRunnable = new RecoveryRunnable(0, 1, 1);
+        recoveryRunnable.run();
+
+        final String actionId = action.getId();
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+
+        waitFor(10000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                CoordActionGetJPAExecutor coordGetCmd = new CoordActionGetJPAExecutor(actionId);
+                CoordinatorActionBean newAction = jpaService.execute(coordGetCmd);
+                return (newAction.getStatus() != CoordinatorAction.Status.WAITING);
+            }
+        });
+
+        CoordActionGetJPAExecutor coordGetCmd = new CoordActionGetJPAExecutor(actionId);
+        action = jpaService.execute(coordGetCmd);
+        if (action.getStatus() == CoordinatorAction.Status.WAITING) {
+            fail("recovery waiting coord action failed, action is WAITING");
+        }
+    }
+
+    /**
+     * Tests functionality of the Recovery Service Runnable command. </p> Insert a coordinator job with SUSPENDED and
+     * action with SUSPENDED and workflow with RUNNING. Then, runs the recovery runnable and ensures the workflow status changes to SUSPENDED.
+     *
+     * @throws Exception
+     */
+    public void testCoordActionRecoveryServiceForSuspended() throws Exception {
+
+        Date start = DateUtils.parseDateUTC("2009-02-01T01:00Z");
+        Date end = DateUtils.parseDateUTC("2009-02-02T23:59Z");
+        CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUSPENDED, start, end, false, false, 1);
+        WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
+        final String wfJobId = wfJob.getId();
+        addRecordToCoordActionTable(coordJob.getId(), 1,
+                CoordinatorAction.Status.SUSPENDED, "coord-action-get.xml", wfJobId, "RUNNING", 1);
+
+        Thread.sleep(3000);
+
+        Runnable recoveryRunnable = new RecoveryRunnable(0, 1, 1);
+        recoveryRunnable.run();
+
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+
+        waitFor(10000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                WorkflowJobGetJPAExecutor wfGetCmd = new WorkflowJobGetJPAExecutor(wfJobId);
+                WorkflowJobBean ret = jpaService.execute(wfGetCmd);
+                return (ret.getStatus() == WorkflowJob.Status.SUSPENDED);
+            }
+        });
+
+        WorkflowJobGetJPAExecutor wfGetCmd = new WorkflowJobGetJPAExecutor(wfJobId);
+        WorkflowJobBean ret = jpaService.execute(wfGetCmd);
+        assertEquals(WorkflowJob.Status.SUSPENDED, ret.getStatus());
+    }
+
+    /**
+     * Tests functionality of the Recovery Service Runnable command. </p> Insert a coordinator job with KILLED and
+     * action with KILLED and workflow with RUNNING. Then, runs the recovery runnable and ensures the workflow status changes to KILLED.
+     *
+     * @throws Exception
+     */
+    public void testCoordActionRecoveryServiceForKilled() throws Exception {
+
+        Date start = DateUtils.parseDateUTC("2009-02-01T01:00Z");
+        Date end = DateUtils.parseDateUTC("2009-02-02T23:59Z");
+        CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.KILLED, start, end, false, false, 1);
+        WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
+        final String wfJobId = wfJob.getId();
+        addRecordToCoordActionTable(coordJob.getId(), 1,
+                CoordinatorAction.Status.KILLED, "coord-action-get.xml", wfJobId, "RUNNING", 1);
+
+        Thread.sleep(3000);
+
+        Runnable recoveryRunnable = new RecoveryRunnable(0, 1, 1);
+        recoveryRunnable.run();
+
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+
+        waitFor(10000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                WorkflowJobGetJPAExecutor wfGetCmd = new WorkflowJobGetJPAExecutor(wfJobId);
+                WorkflowJobBean ret = jpaService.execute(wfGetCmd);
+                return (ret.getStatus() == WorkflowJob.Status.KILLED);
+            }
+        });
+
+        WorkflowJobGetJPAExecutor wfGetCmd = new WorkflowJobGetJPAExecutor(wfJobId);
+        WorkflowJobBean ret = jpaService.execute(wfGetCmd);
+        assertEquals(WorkflowJob.Status.KILLED, ret.getStatus());
+    }
+
+    /**
+     * Tests functionality of the Recovery Service Runnable command. </p> Insert a coordinator job with RUNNING and
+     * action with RUNNING and workflow with SUSPENDED. Then, runs the recovery runnable and ensures the workflow status changes to RUNNING.
+     *
+     * @throws Exception
+     */
+    public void testCoordActionRecoveryServiceForResume() throws Exception {
+
+        Date start = DateUtils.parseDateUTC("2009-02-01T01:00Z");
+        Date end = DateUtils.parseDateUTC("2009-02-02T23:59Z");
+        CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, start, end, false, false, 1);
+        WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUSPENDED, WorkflowInstance.Status.SUSPENDED);
+        final String wfJobId = wfJob.getId();
+        addRecordToCoordActionTable(coordJob.getId(), 1,
+                CoordinatorAction.Status.RUNNING, "coord-action-get.xml", wfJobId, "SUSPENDED", 1);
+
+        Thread.sleep(3000);
+
+        Runnable recoveryRunnable = new RecoveryRunnable(0, 1, 1);
+        recoveryRunnable.run();
+
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+
+        waitFor(10000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                WorkflowJobGetJPAExecutor wfGetCmd = new WorkflowJobGetJPAExecutor(wfJobId);
+                WorkflowJobBean ret = jpaService.execute(wfGetCmd);
+                return (ret.getStatus() == WorkflowJob.Status.RUNNING);
+            }
+        });
+
+        WorkflowJobGetJPAExecutor wfGetCmd = new WorkflowJobGetJPAExecutor(wfJobId);
+        WorkflowJobBean ret = jpaService.execute(wfGetCmd);
+        assertEquals(WorkflowJob.Status.RUNNING, ret.getStatus());
+    }
+
+    protected CoordinatorJobBean addRecordToCoordJobTableForWaiting(String testFileName, CoordinatorJob.Status status, Date start, Date end,
+            boolean pending, boolean doneMatd, int lastActionNum) throws Exception {
+
+        String testDir = getTestCaseDir();
+        CoordinatorJobBean coordJob = createCoordJob(testFileName, status, start, end, pending, doneMatd, lastActionNum);
+        String appXml = getCoordJobXmlForWaiting(testFileName, testDir);
+        coordJob.setJobXml(appXml);
+
+        System.out.println("**** appXml = " + appXml);
+
+        try {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            assertNotNull(jpaService);
+            CoordJobInsertJPAExecutor coordInsertCmd = new CoordJobInsertJPAExecutor(coordJob);
+            jpaService.execute(coordInsertCmd);
+        }
+        catch (JPAExecutorException je) {
+            je.printStackTrace();
+            fail("Unable to insert the test coord job record to table");
+            throw je;
+        }
+
+        return coordJob;
+    }
+
+    protected CoordinatorActionBean addRecordToCoordActionTableForWaiting(String jobId, int actionNum,
+            CoordinatorAction.Status status, String resourceXmlName) throws Exception {
+        CoordinatorActionBean action = createCoordAction(jobId, actionNum, status, resourceXmlName, 0);
+        String testDir = getTestCaseDir();
+        String missDeps = "file://#testDir/2009/29/_SUCCESS#file://#testDir/2009/22/_SUCCESS#file://#testDir/2009/15/_SUCCESS#file://#testDir/2009/08/_SUCCESS";
+        missDeps = missDeps.replaceAll("#testDir", testDir);
+        action.setMissingDependencies(missDeps);
+
+        try {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            assertNotNull(jpaService);
+            CoordActionInsertJPAExecutor coordActionInsertCmd = new CoordActionInsertJPAExecutor(action);
+            jpaService.execute(coordActionInsertCmd);
+        }
+        catch (JPAExecutorException je) {
+            je.printStackTrace();
+            fail("Unable to insert the test coord action record to table");
+            throw je;
+        }
+        return action;
+    }
+
+    @Override
+    protected String getCoordActionXml(Path appPath, String resourceXmlName) {
+        try {
+            Reader reader = IOUtils.getResourceAsReader(resourceXmlName, -1);
+            String appXml = IOUtils.getReaderAsString(reader, -1);
+            String testDir = getTestCaseDir();
+            appXml = appXml.replaceAll("#testDir", testDir);
+            return appXml;
+        }
+        catch (IOException ioe) {
+            throw new RuntimeException(XLog.format("Could not get "+ resourceXmlName, ioe));
+        }
+    }
+
+    protected String getCoordJobXmlForWaiting(String testFileName, String testDir) {
+        try {
+            Reader reader = IOUtils.getResourceAsReader(testFileName, -1);
+            String appXml = IOUtils.getReaderAsString(reader, -1);
+            appXml = appXml.replaceAll("#testDir", testDir);
+            return appXml;
+        }
+        catch (IOException ioe) {
+            throw new RuntimeException(XLog.format("Could not get "+ testFileName, ioe));
+        }
     }
 
     private void addRecordToActionTable(String jobId, int actionNum, String actionId, CoordinatorStore store, String baseDir) throws StoreException, IOException {

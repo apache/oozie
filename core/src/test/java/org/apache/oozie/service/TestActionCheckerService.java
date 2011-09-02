@@ -200,7 +200,7 @@ public class TestActionCheckerService extends XDataTestCase {
         final WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED,
                 WorkflowInstance.Status.SUCCEEDED);
         final CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), actionNum,
-                CoordinatorAction.Status.RUNNING, "coord-action-get.xml", wfJob.getId(), "RUNNING");
+                CoordinatorAction.Status.RUNNING, "coord-action-get.xml", wfJob.getId(), "RUNNING", 0);
 
         Thread.sleep(3000);
         Runnable actionCheckRunnable = new ActionCheckRunnable(1);

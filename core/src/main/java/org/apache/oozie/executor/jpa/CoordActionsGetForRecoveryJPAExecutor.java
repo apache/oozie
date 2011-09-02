@@ -15,6 +15,7 @@
 package org.apache.oozie.executor.jpa;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.EntityManager;
@@ -24,11 +25,11 @@ import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.util.ParamChecker;
 
-public class CoordActionGetWaitingOlderJPAExecutor implements JPAExecutor<List<CoordinatorActionBean>> {
+public class CoordActionsGetForRecoveryJPAExecutor implements JPAExecutor<List<CoordinatorActionBean>> {
 
     private long checkAgeSecs = 0;
 
-    public CoordActionGetWaitingOlderJPAExecutor(final long checkAgeSecs) {
+    public CoordActionsGetForRecoveryJPAExecutor(final long checkAgeSecs) {
         ParamChecker.notNull(checkAgeSecs, "checkAgeSecs");
         this.checkAgeSecs = checkAgeSecs;
     }
@@ -38,7 +39,7 @@ public class CoordActionGetWaitingOlderJPAExecutor implements JPAExecutor<List<C
      */
     @Override
     public String getName() {
-        return "CoordActionGetWaitingOlderJPAExecutor";
+        return "CoordActionsGetForRecoveryJPAExecutor";
     }
 
     /* (non-Javadoc)
@@ -46,13 +47,25 @@ public class CoordActionGetWaitingOlderJPAExecutor implements JPAExecutor<List<C
      */
     @Override
     public List<CoordinatorActionBean> execute(EntityManager em) throws JPAExecutorException {
+        List<CoordinatorActionBean> allActions = new ArrayList<CoordinatorActionBean>();
         List<CoordinatorActionBean> actions;
         try {
-            Query q = em.createNamedQuery("GET_WAITING_SUBMITTED_ACTIONS_OLDER_THAN");
+            Query q = em.createNamedQuery("GET_COORD_ACTIONS_FOR_RECOVERY_OLDER_THAN");
             Timestamp ts = new Timestamp(System.currentTimeMillis() - this.checkAgeSecs * 1000);
             q.setParameter("lastModifiedTime", ts);
             actions = q.getResultList();
-            return actions;
+            for (CoordinatorActionBean action : actions) {
+                allActions.add(action);
+            }
+
+            q = em.createNamedQuery("GET_COORD_ACTIONS_WAITING_SUBMITTED_OLDER_THAN");
+            q.setParameter("lastModifiedTime", ts);
+            actions = q.getResultList();
+            for (CoordinatorActionBean action : actions) {
+                allActions.add(action);
+            }
+            
+            return allActions;
         }
         catch (IllegalStateException e) {
             throw new JPAExecutorException(ErrorCode.E0601, e.getMessage(), e);

@@ -159,7 +159,7 @@ public class TestPurgeService extends XDataTestCase {
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
         final String jobId = job.getId();
         CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
-                "coord-action-get.xml");
+                "coord-action-get.xml", 0);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);

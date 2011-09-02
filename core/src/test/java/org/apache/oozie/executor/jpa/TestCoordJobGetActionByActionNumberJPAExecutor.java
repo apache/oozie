@@ -1,7 +1,5 @@
 package org.apache.oozie.executor.jpa;
 
-import java.util.List;
-
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.client.CoordinatorAction;
@@ -34,7 +32,7 @@ public class TestCoordJobGetActionByActionNumberJPAExecutor extends XDataTestCas
         int actionNum = 1;
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
         CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), actionNum,
-                CoordinatorAction.Status.WAITING, "coord-action-get.xml");
+                CoordinatorAction.Status.WAITING, "coord-action-get.xml", 0);
         _testCoordActionsGetByActionNumber(job, action);
     }
 

@@ -52,7 +52,7 @@ public class TestCoordPurgeXCommand extends XDataTestCase {
     public void testSucCoordPurgeXCommand() throws Exception {
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
         CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
-                "coord-action-get.xml");
+                "coord-action-get.xml", 0);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
@@ -92,7 +92,7 @@ public class TestCoordPurgeXCommand extends XDataTestCase {
     public void testFailCoordPurgeXCommand() throws Exception {
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.FAILED, false, false);
         CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.FAILED,
-                "coord-action-get.xml");
+                "coord-action-get.xml", 0);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
@@ -132,7 +132,7 @@ public class TestCoordPurgeXCommand extends XDataTestCase {
     public void testKillCoordPurgeXCommand() throws Exception {
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.KILLED, false, false);
         CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.KILLED,
-                "coord-action-get.xml");
+                "coord-action-get.xml", 0);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
@@ -172,7 +172,7 @@ public class TestCoordPurgeXCommand extends XDataTestCase {
     public void testCoordPurgeXCommandFailed() throws Exception {
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
         CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
-                "coord-action-get.xml");
+                "coord-action-get.xml", 0);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);

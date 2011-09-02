@@ -473,7 +473,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
         }
         if (coordJob.getStatus() != Job.Status.RUNNING && coordJob.getStatus() != Job.Status.PAUSED && coordJob.getStatus() != Job.Status.PAUSEDWITHERROR) {
             throw new PreconditionException(ErrorCode.E1100, "[" + actionId
-                    + "]::CoordActionInputCheck:: Ignoring action. Coordinator job is not in RUNNING state, but state="
+                    + "]::CoordActionInputCheck:: Ignoring action. Coordinator job is not in RUNNING/PAUSED/PAUSEDWITHERROR state, but state="
                     + coordJob.getStatus());
         }
     }

@@ -44,11 +44,14 @@ import org.apache.oozie.command.wf.ActionEndCommand;
 import org.apache.oozie.command.wf.ActionEndXCommand;
 import org.apache.oozie.command.wf.ActionStartCommand;
 import org.apache.oozie.command.wf.ActionStartXCommand;
+import org.apache.oozie.command.wf.KillXCommand;
+import org.apache.oozie.command.wf.ResumeXCommand;
 import org.apache.oozie.command.wf.SignalCommand;
 import org.apache.oozie.command.wf.SignalXCommand;
+import org.apache.oozie.command.wf.SuspendXCommand;
 import org.apache.oozie.executor.jpa.BundleActionsGetWaitingOlderJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordActionGetWaitingOlderJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionsGetForRecoveryJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionsGetReadyGroupbyJobIDJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
@@ -214,7 +217,7 @@ public class RecoveryService implements Service {
             XLog log = XLog.getLog(getClass());
 
             try {
-                List<CoordinatorActionBean> cactions = jpaService.execute(new CoordActionGetWaitingOlderJPAExecutor(coordOlderThan));
+                List<CoordinatorActionBean> cactions = jpaService.execute(new CoordActionsGetForRecoveryJPAExecutor(coordOlderThan));
                 msg.append(", COORD_ACTIONS : " + cactions.size());
                 for (CoordinatorActionBean caction : cactions) {
                     Services.get().get(InstrumentationService.class).get().incr(INSTRUMENTATION_GROUP,
@@ -226,21 +229,37 @@ public class RecoveryService implements Service {
                             queueCallable(new CoordActionInputCheckCommand(caction.getId()));
                         }
 
-                        log.info("Recover a WAITTING coord action :" + caction.getId());
+                        log.info("Recover a WAITTING coord action and resubmit CoordActionInputCheckXCommand :" + caction.getId());
                     }
-                    else {
-                        if (caction.getStatus() == CoordinatorActionBean.Status.SUBMITTED) {
-                            CoordinatorJobBean coordJob = jpaService.execute(new CoordJobGetJPAExecutor(caction.getJobId()));
+                    else if (caction.getStatus() == CoordinatorActionBean.Status.SUBMITTED) {
+                        CoordinatorJobBean coordJob = jpaService.execute(new CoordJobGetJPAExecutor(caction.getJobId()));
 
-                            if (useXCommand) {
-                                queueCallable(new CoordActionStartXCommand(caction.getId(), coordJob.getUser(), coordJob
-                                        .getAuthToken()));
-                            } else {
-                                queueCallable(new CoordActionStartCommand(caction.getId(), coordJob.getUser(), coordJob
-                                        .getAuthToken()));
-                            }
+                        if (useXCommand) {
+                            queueCallable(new CoordActionStartXCommand(caction.getId(), coordJob.getUser(), coordJob
+                                    .getAuthToken()));
+                        } else {
+                            queueCallable(new CoordActionStartCommand(caction.getId(), coordJob.getUser(), coordJob
+                                    .getAuthToken()));
+                        }
 
-                            log.info("Recover a SUBMITTED coord action :" + caction.getId());
+                        log.info("Recover a SUBMITTED coord action and resubmit CoordActionStartCommand :" + caction.getId());
+                    }
+                    else if (caction.getStatus() == CoordinatorActionBean.Status.SUSPENDED) {
+                        if (caction.getExternalId() != null) {
+                            queueCallable(new SuspendXCommand(caction.getExternalId()));
+                            log.debug("Recover a SUSPENDED coord action and resubmit SuspendXCommand :" + caction.getId());
+                        }
+                    }
+                    else if (caction.getStatus() == CoordinatorActionBean.Status.KILLED) {
+                        if (caction.getExternalId() != null) {
+                            queueCallable(new KillXCommand(caction.getExternalId()));
+                            log.debug("Recover a KILLED coord action and resubmit KillXCommand :" + caction.getId());
+                        }
+                    }
+                    else if (caction.getStatus() == CoordinatorActionBean.Status.RUNNING) {
+                        if (caction.getExternalId() != null) {
+                            queueCallable(new ResumeXCommand(caction.getExternalId()));
+                            log.debug("Recover a RUNNING coord action and resubmit ResumeXCommand :" + caction.getId());
                         }
                     }
                 }
