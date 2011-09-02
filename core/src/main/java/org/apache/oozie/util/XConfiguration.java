@@ -132,17 +132,29 @@ public class XConfiguration extends Configuration {
     }
 
     /**
-     * Returns a new Configuration with all values trimmed.
+     * Returns a new XConfiguration with all values trimmed.
      *
-     * @param conf the configuraton to trim.
-     * @return a new Configuration with all values trimmed.
+     * @return a new XConfiguration with all values trimmed.
      */
-    public static Configuration trim(Configuration conf) {
+    public XConfiguration trim() {
         XConfiguration trimmed = new XConfiguration();
-        for (Map.Entry<String, String> entry : conf) {
+        for (Map.Entry<String, String> entry : this) {
             trimmed.set(entry.getKey(), entry.getValue().trim());
         }
         return trimmed;
+    }
+
+    /**
+     * Returns a new XConfiguration instance with all inline values resolved.
+     *
+     * @return a new XConfiguration instance with all inline values resolved.
+     */
+    public XConfiguration resolve() {
+        XConfiguration resolved = new XConfiguration();
+        for (Map.Entry<String, String> entry : this) {
+            resolved.set(entry.getKey(), get(entry.getKey()));
+        }
+        return resolved;
     }
 
     // Canibalized from Hadoop <code>Configuration.loadResource()</code>.
@@ -251,4 +263,5 @@ public class XConfiguration extends Configuration {
         }
         return xml;
     }
+
 }

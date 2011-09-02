@@ -108,9 +108,10 @@ public class JobServlet extends JsonRestServlet {
             }
             else if (action.equals(RestConstants.JOB_ACTION_RERUN)) {
                 validateContentType(request, RestConstants.XML_CONTENT_TYPE);
-                Configuration conf = new XConfiguration(request.getInputStream());
+                XConfiguration conf = new XConfiguration(request.getInputStream());
                 stopCron();
-                conf = XConfiguration.trim(conf);
+                conf = conf.trim();
+                conf = conf.resolve();
                 JobsServlet.validateJobConfiguration(conf);
                 checkAuthorizationForApp(getUser(request), conf);
                 dagEngine.reRun(jobId, conf);

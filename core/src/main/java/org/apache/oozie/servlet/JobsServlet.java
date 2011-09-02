@@ -67,11 +67,12 @@ public class JobsServlet extends JsonRestServlet {
 
         request.setAttribute(AUDIT_OPERATION, request.getParameter(RestConstants.ACTION_PARAM));
 
-        Configuration conf = new XConfiguration(request.getInputStream());
+        XConfiguration conf = new XConfiguration(request.getInputStream());
 
         stopCron();
 
-        conf = XConfiguration.trim(conf);
+        conf = conf.trim();
+        conf = conf.resolve();
 
         validateJobConfiguration(conf);
 

@@ -92,12 +92,23 @@ public class TestXConfiguration extends XTestCase {
     }
 
     public void testTrim() {
-        Configuration conf = new XConfiguration();
+        XConfiguration conf = new XConfiguration();
         conf.set("a", " A ");
         conf.set("b", "B");
-        conf = XConfiguration.trim(conf);
+        conf = conf.trim();
         assertEquals("A", conf.get("a"));
         assertEquals("B", conf.get("b"));
+    }
+
+    public void testResolve() {
+        XConfiguration conf = new XConfiguration();
+        conf.set("a", "A");
+        conf.set("b", "${a}");
+        assertEquals("A", conf.getRaw("a"));
+        assertEquals("${a}", conf.getRaw("b"));
+        conf = conf.resolve();
+        assertEquals("A", conf.getRaw("a"));
+        assertEquals("A", conf.getRaw("b"));
     }
 
 }

@@ -77,10 +77,13 @@ public abstract class BaseJobsServlet extends JsonRestServlet {
         request.setAttribute(AUDIT_OPERATION, request
                 .getParameter(RestConstants.ACTION_PARAM));
 
-        Configuration conf = new XConfiguration(request.getInputStream());
+        XConfiguration conf = new XConfiguration(request.getInputStream());
 
         stopCron();
-        conf = XConfiguration.trim(conf);
+
+        conf = conf.trim();        
+        conf = conf.resolve();
+
         validateJobConfiguration(conf);
         BaseJobServlet.checkAuthorizationForApp(getUser(request), conf);
 
@@ -143,7 +146,6 @@ public abstract class BaseJobsServlet extends JsonRestServlet {
      * abstract method to get a list of workflow jobs
      *
      * @param request
-     * @param conf
      * @return JSONObject of the requested jobs
      * @throws XServletException
      * @throws IOException
