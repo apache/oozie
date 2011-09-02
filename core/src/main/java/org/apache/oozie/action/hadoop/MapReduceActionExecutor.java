@@ -41,6 +41,7 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
         super("map-reduce");
     }
 
+    @Override
     protected List<Class> getLauncherClasses() {
         List<Class> classes = super.getLauncherClasses();
         classes.add(LauncherMain.class);
@@ -50,6 +51,7 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
         return classes;
     }
 
+    @Override
     protected String getLauncherMain(Configuration launcherConf, Element actionXml) {
         String mainClass;
         Namespace ns = actionXml.getNamespace();
@@ -74,6 +76,7 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
         return conf;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     Configuration setupActionConf(Configuration actionConf, Context context, Element actionXml, Path appPath)
             throws ActionExecutorException {
@@ -104,7 +107,7 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
                 String partitioner = pipesXml.getChildTextTrim("partitioner", ns);
                 String writer = pipesXml.getChildTextTrim("writer", ns);
                 String program = pipesXml.getChildTextTrim("program", ns);
-                PipesMain.setPipes(actionConf, map, reduce, inputFormat, partitioner, writer, program);
+                PipesMain.setPipes(actionConf, map, reduce, inputFormat, partitioner, writer, program, appPath);
             }
         }
         actionConf = super.setupActionConf(actionConf, context, actionXml, appPath);

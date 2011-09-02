@@ -133,7 +133,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         assertEquals("IF", conf.get("oozie.pipes.inputformat"));
         assertEquals("P", conf.get("oozie.pipes.partitioner"));
         assertEquals("W", conf.get("oozie.pipes.writer"));
-        assertEquals("PP", conf.get("oozie.pipes.program"));
+        assertEquals(getFsTestCaseDir()+"/PP", conf.get("oozie.pipes.program"));
     }
 
     protected Context createContext(String name, String actionXml) throws Exception {

@@ -151,7 +151,7 @@ public class TestMapReduceActionError extends ActionExecutorTestCase {
         assertEquals("IF", conf.get("oozie.pipes.inputformat"));
         assertEquals("P", conf.get("oozie.pipes.partitioner"));
         assertEquals("W", conf.get("oozie.pipes.writer"));
-        assertEquals("PP", conf.get("oozie.pipes.program"));
+        assertEquals(getFsTestCaseDir()+"/PP", conf.get("oozie.pipes.program"));
     }
 
     private Context createContext(String actionXml) throws Exception {

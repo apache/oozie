@@ -19,6 +19,7 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.mapred.pipes.Submitter;
 import org.apache.hadoop.filecache.DistributedCache;
+import org.apache.hadoop.fs.Path;
 
 public class PipesMain extends MapReduceMain {
 
@@ -26,6 +27,7 @@ public class PipesMain extends MapReduceMain {
         run(PipesMain.class, args);
     }
 
+    @Override
     protected RunningJob submitJob(Configuration actionConf) throws Exception {
         JobConf jobConf = new JobConf();
 
@@ -72,7 +74,7 @@ public class PipesMain extends MapReduceMain {
     }
 
     public static void setPipes(Configuration conf, String map, String reduce, String inputFormat, String partitioner,
-                                String writer, String program) {
+                                String writer, String program, Path appPath) {
         if (map != null) {
             conf.set("oozie.pipes.map", map);
         }
@@ -89,7 +91,13 @@ public class PipesMain extends MapReduceMain {
             conf.set("oozie.pipes.writer", writer);
         }
         if (program != null) {
+            Path path = null;
+            if (!program.startsWith("/")) {
+                path = new Path(appPath, program);
+                program = path.toString();
+            }
             conf.set("oozie.pipes.program", program);
+
         }
     }
 
