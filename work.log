@@ -1,6 +1,7 @@
 ###This file contains details release-log inteneded for internal developers.
 -- Oozie 3.0.0 release
 
+OOZIE-49 Update README file for version 3.0.0
 OOZIE-41 Update POM version for release 3.0.0.
 OOZIE-42 Adding web services documentation.
 OOZIE-38 add bundle example to oozie-examples.
