@@ -146,6 +146,30 @@ testcases.
 *oozie.test.kerberos.namenode.principal*= : indicates the Kerberos principal for the NameNode, default value
 'hdfs/localhost'
 
+*oozie.test.user.oozie*= : specifies the user ID used to start Oozie server in testcases, default value
+is =${user.name}=.
+
+*oozie.test.user.test*= : specifies primary user ID used as the user submitting jobs to Oozie Server in testcases,
+default value is =test=.
+
+*oozie.test.user.test2*= : specifies secondary user ID used as the user submitting jobs to Oozie Server in testcases,
+default value is =test2=.
+
+*oozie.test.user.test3*= : specifies secondary user ID used as the user submitting jobs to Oozie Server in testcases,
+default value is =test2=.
+
+*oozie.test.group*= : specifies group ID used as group when submitting jobs to Oozie Server in testcases,
+default value is =test2=.
+
+NOTE: The users/group specified in *oozie.test.user.test2*, *oozie.test.user.test3*= and *oozie.test.user.group*=
+are used for the authorization testcases only.
+
+*oozie.test.dir*= : specifies the directory where the =oozietests= directory will be created, default value is =/tmp=.
+The =oozietests= directory is used by testcases when they need a local filesystem directory.
+
+*hadoop.log.dir*= : specifies the directory where Hadoop minicluster will write its logs during testcases, default
+value is =/tmp=.
+
 ---++ Building an Oozie Distribution
 
 An Oozie distribution bundles an embedded Tomcat server. The Oozie distro module downloads Tomcat TAR.GZ from Apache
