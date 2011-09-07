@@ -22,11 +22,11 @@ Oozie Mailing List
 *----------------------+-----------------------+----------------------------------------------------------------------+
 |<<Audience>>          | <<How To Subscribe>>                                          |  <<Archive>>                 |    
 *----------------------+-----------------------+----------------------------------------------------------------------+
-|Oozie Users           | {{{mailto:oozie-users-subscribe@incubator.apache.org}Subscribe to Oozie-users}}       |      | 
+|Oozie Users           | {{{mailto:oozie-users-subscribe@incubator.apache.org}Subscribe to Oozie-users}}       |{{{http://mail-archives.apache.org/mod_mbox/incubator-oozie-users/}Oozie-users Archive}}      | 
 *----------------------+-----------------------+----------------------------------------------------------------------+
-|Oozie Developers      | {{{mailto:oozie-dev-subscribe@incubator.apache.org}Subscribe to Oozie-dev}}            |     |
+|Oozie Developers      | {{{mailto:oozie-dev-subscribe@incubator.apache.org}Subscribe to Oozie-dev}}            | {{{http://mail-archives.apache.org/mod_mbox/incubator-oozie-dev/}Oozie-dev Archive}}     |
 *----------------------+-----------------------+----------------------------------------------------------------------+
-|Oozie Committers      |{{{mailto:oozie-committer-subscribe@incubator.apache.org}Subscribe to Oozie-committer}} |     |
+|Oozie Commits      |{{{mailto:oozie-commits-subscribe@incubator.apache.org}Subscribe to Oozie-commit}} |    {{{http://mail-archives.apache.org/mod_mbox/incubator-oozie-commits/}Oozie-commits Archive}}  |
 *----------------------+-----------------------+----------------------------------------------------------------------+
  
 The old mailing list archive could be found at: {{{http://tech.groups.yahoo.com/group/Oozie-users/}Oozie Yahoo Group}}
