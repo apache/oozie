@@ -42,6 +42,7 @@
 
 	<menu name="Getting Started">
             <item name="Quick start" href="quick-start.html" />
+	    <item name="Mailing List" href="mailing_list.html" />
 	    <item name="Downloads" href="downloads.html" />
             <item name="Documentation" href="documentation.html" />
 	</menu>
