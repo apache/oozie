@@ -4,17 +4,13 @@ the Apache License, Version 2.0,
 in this case for the Oozie, Workflow Engine for Hadoop project
 =======================================================================
 
-   This product includes software developed by
-   Yahoo! Inc. (www.yahoo.com)
-   Copyright (c) 2010 Yahoo! Inc.  All rights reserved.
-
-
-This product includes software developed by Yahoo! Inc.,
-powering the largest Hadoop clusters in the Universe!
-(http://developer.yahoo.com/hadoop).
+Copyright 2011 The Apache Software Foundation
 
 This product includes software developed by The Apache Software
 Foundation (http://www.apache.org/).
+
+This product includes org.json (http://www.json.org/java/index.html),
+Copyright (c) 2002 JSON.org
 
 Detailed License information for all components can be found in the
 documentation in the ooziedocs.war at index.html##LicenseInfo
