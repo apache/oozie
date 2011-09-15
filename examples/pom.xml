@@ -99,6 +99,20 @@
                     </descriptors>
                 </configuration>
             </plugin>
+            <plugin>
+                 <groupId>org.apache.rat</groupId>
+                 <artifactId>apache-rat-plugin</artifactId>
+                 <configuration>
+                    <excludes>
+                           <exclude>SecurityAuth.audit</exclude>
+                           <exclude>src/test/resources/PigMain.txt</exclude>
+                           <exclude>src/test/resources/test-ioutils.txt</exclude>
+                           <exclude>.gitignore</exclude>
+                           <exclude>src/main/data/*</exclude>
+                           <exclude>src/main/resources/.gitignore</exclude>
+                       </excludes>
+                   </configuration>
+                </plugin>
         </plugins>
     </build>
 

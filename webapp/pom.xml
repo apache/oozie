@@ -123,6 +123,15 @@
                     </descriptors>
                 </configuration>
             </plugin>
+            <plugin>
+                 <groupId>org.apache.rat</groupId>
+                 <artifactId>apache-rat-plugin</artifactId>
+                 <configuration>
+                     <excludes>
+                        <exclude>src/main/resources/.gitignore</exclude>
+                     </excludes>
+                  </configuration>
+            </plugin>
         </plugins>
     </build>
 
