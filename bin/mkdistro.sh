@@ -17,6 +17,33 @@
 # limitations under the License.
 #
 
+#Utility method
+function setRevUrl() {
+   #Checking svn first
+   if which svn >/dev/null; then
+      if [ -d ".svn" ]; then
+         export VC_REV=`svn info | grep "Revision" | awk '{print $2}'`
+         export VC_URL=`svn info | grep "URL" | awk '{print $2}'`
+      fi
+   fi
+
+   #Checking for git if SVN is not there
+   if [ "${VC_REV}" == "" ]; then
+      if which git  >/dev/null; then
+          if [ -d ".git" ]; then
+             export VC_REV=`git branch -v | awk '/^\*/ {printf("%s@%s\n", $2, $3); }'`
+	     export VC_URL=`git remote -v | grep origin | grep fetch | awk '{print $2}'`
+         fi
+      fi
+   fi
+
+   #If nothing found
+   if [ "${VC_REV}" == "" ]; then
+       export VC_REV="unavailable"
+       export VC_URL="unavailable"
+   fi
+}
+
 # resolve links - $0 may be a softlink
 PRG="${0}"
 
@@ -36,9 +63,7 @@ BASEDIR=`cd ${BASEDIR}/..;pwd`
 cd ${BASEDIR}
 
 export DATETIME=`date -u "+%Y.%m.%d-%H:%M:%SGMT"`
-export VC_REV=`git branch -v | awk '/^\*/ {printf("%s@%s\n", $2, $3); }'`
-# Out canonical repo is @GitHub -- hence hardcoding
-export VC_URL="git://github.com/yahoo/oozie.git"
+setRevUrl
 
 MVN_OPTS="-Dbuild.time=${DATETIME} -Dvc.revision=${VC_REV} -Dvc.url=${VC_URL} -DgenerateDocs"
 
