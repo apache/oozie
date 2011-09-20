@@ -45,6 +45,7 @@
 	    <item name="Mailing List" href="mailing_list.html" />
 	    <item name="Downloads" href="downloads.html" />
             <item name="Documentation" href="documentation.html" />
+            <item name="How to Release" href="howtorelease.html" />
 	</menu>
     </body>
 

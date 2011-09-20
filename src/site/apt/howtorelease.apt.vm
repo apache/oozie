@@ -1,0 +1,271 @@
+~~ Licensed under the Apache License, Version 2.0 (the "License");
+~~ you may not use this file except in compliance with the License.
+~~ You may obtain a copy of the License at
+~~
+~~   http://www.apache.org/licenses/LICENSE-2.0
+~~
+~~ Unless required by applicable law or agreed to in writing, software
+~~ distributed under the License is distributed on an "AS IS" BASIS,
+~~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+~~ See the License for the specific language governing permissions and
+~~ limitations under the License. See accompanying LICENSE file.
+
+
+  ---
+ How to Release
+  ---
+
+How to Release
+
+    This page is to document the release procedure for Oozie. Oozie is currently a Apache incubator project. Its release process is <<<work in progress>>>. 
+
+
+* Preparation
+
+   [[1]]  Define issue management process like assigning/removing issues from the release.
+
+   [[1]]  TBD.
+[]
+
+* Creating Release Branch
+
+    A new release branch is created only  for  for major (X.0.0) and minor(X.Y.0) releases but not for patches (X.Y.Z). Patch is an update to an existing branch created for X.Y.0. Although the patch release could be tagged.
+
+   [[1]]  Send email to oozie-dev@incubator.apache.org to notify that 	
+
+      [[A]] A new branch is about to be created based from the trunk. 
+
+      [[A]] Request to hold off any commits until further email.
+
+   [[1]]  Update and committ the pom.xml of different sub-projects (such as core, client, webapp etc.) of Oozie with appropriate version (i.e. x.y.0)
+
+   [[1]]  Create a branch for the release:
+
+-----------------------------------------------------------------------------
+svn copy https://svn.apache.org/repos/asf/incubator/oozie/trunk  \
+https://svn.apache.org/repos/asf/incubator/oozie/branches/branch-X.Y -m "Branching for X.Y releases"
+-----------------------------------------------------------------------------
+[]
+* Updating Release Branch
+
+    These steps are required for all the releases (such as major, minor, and patches).
+
+   [[1]]  Check out the branch with:
+
+-----------------------------------------------------------------------------
+    svn co https://svn.apache.org/repos/asf/incubator/oozie/branches/branch-X.Y
+-----------------------------------------------------------------------------
+
+   [[1]]  Create <rat> report to verify all files have apache license aggreement. The generated report will be used later. TBD: How to combine rat report generated for each sub-projects?
+
+-----------------------------------------------------------------------------
+   mvn apache-rat:check
+-----------------------------------------------------------------------------
+
+   [[1]]  Tag the release candidate, where R is the iteration number for this release candidate, starting with 0:
+
+-----------------------------------------------------------------------------
+        svn copy https://svn.apache.org/repos/asf/incubator/oozie/branches/branch-X.Y \
+        https://svn.apache.org/repos/asf/incubator/oozie/tags/release-X.Y.Z-rcR -m "Oozie X.Y.Z-rcR release."
+-----------------------------------------------------------------------------
+[]
+
+* Building
+
+   [[1]]  Build with all unit tests:
+
+-----------------------------------------------------------------------------
+        umask 0022
+        mvn clean package assembly:single
+	OR
+        bin/mkdistro.sh
+-----------------------------------------------------------------------------
+
+   [[1]]  Generate the MD5 checksum of the release file:
+
+-----------------------------------------------------------------------------
+        cd distro/target
+        md5sum Oozie-X.Y.Z-incubating.tar.gz > Oozie-X.Y.Z-incubating.tar.gz.md5
+-----------------------------------------------------------------------------
+
+   [[1]] If you do not have a gpg key pair, do the following steps:
+
+      [[A]] Generating key pair using the following command. You can simply accept all default settings and give your name, email and Passphase.
+
+-----------------------------------------------------------------------------
+           gpg --gen-key
+-----------------------------------------------------------------------------
+
+      [[A]] Export the public key.
+
+-----------------------------------------------------------------------------
+                gpg --armor --output pubkey.txt --export 'Your Name'
+-----------------------------------------------------------------------------
+
+      [[A]] Open pubkey.txt, copy the full text and append it to the following files by pasting, then commit these changes:
+
+-----------------------------------------------------------------------------
+                https://svn.apache.org/repos/asf/incubator/oozie/branches/branch-X.Y.Z/KEYS
+                https://svn.apache.org/repos/asf/incubator/oozie/trunk/KEYS
+-----------------------------------------------------------------------------
+
+      [[A]] Upload updated KEYS to Apache.
+
+-----------------------------------------------------------------------------
+                scp KEYS people.apache.org:/www/www.apache.org/dist/incubator/oozie/KEYS
+-----------------------------------------------------------------------------
+
+      [[A]] Export your private key, keep it with you.
+
+-----------------------------------------------------------------------------
+                gpg --export-secret-key -a "Your Name" > private.key
+-----------------------------------------------------------------------------
+
+   [[1]] Sign the release (see Step-By-Step Guide to Mirroring Releases for more information).
+
+-----------------------------------------------------------------------------
+        gpg --armor --output oozie-X.Y.Z-incubating.tar.gz.asc --detach-sig oozie-X.Y.Z-incubating.tar.gz
+-----------------------------------------------------------------------------
+
+   [[1]] Verify gpg signature.
+
+-----------------------------------------------------------------------------
+        gpg --import KEYS  (if necessarily)
+        gpg --verify oozie-X.Y.Z-incubating.tar.gz.asc oozie-X.Y.Z-incubating.tar.gz
+-----------------------------------------------------------------------------
+
+   [[1]] Copy release files to a public place (usually into public_html in your home directory):
+
+-----------------------------------------------------------------------------
+        ssh people.apache.org mkdir public_html/oozie-X.Y.Z-incubating-candidate-0
+        scp -p oozie-X.Y.Z-incubating.tar.gz* people.apache.org:public_html/oozie-X.Y.Z-incubating-candidate-0
+        cd ..
+        scp release_log.txt people.apache.org:public_html/oozie-X.Y.Z-incubating-candidate-0
+        scp rat_report people.apache.org:public_html/oozie-X.Y.Z-incubating-candidate-0
+    NOTE: The rat_report is the report generated in the Updating Release Branch section above.
+-----------------------------------------------------------------------------
+
+   [[1]] Call a release vote for the Podling PMC (PPMC). This vote must receive a minimum of 3 PPMC members +1s, and more +1s than -1s. The email should be sent to oozie-user@incubator.apache.org. The mail should:
+
+      [[A]] Have a subject line "[VOTE] Release Oozie X.Y.Z-incubating (candidate a)" where X.Y.Z is the version number and a is the candidate number for this release.
+
+      [[A]] State what are new in this release.
+
+      [[A]] Tell where the keys used to sign the release can be found.
+
+      [[A]] State where the release, md5 signature, gpg signature, and rat report can be found.
+
+      [[A]] Request that users and developers download it, test it, and vote.
+
+      [[A]] State when the vote closes. The vote must remain open for at least 72 hours. It can be longer at your discretion (e.g. around major holidays).\
+        Here is a sample email:
+
+-----------------------------------------------------------------------------
+            Subject: [VOTE] Release Oozie X.Y.Z-incubating (candidate 0)
+
+            Hi,
+
+            I have created a candidate build for Oozie X.Y.Z-incubating. This is the first release of Oozie from Apache Incuabtion.
+
+            Keys used to sign the release are available at http://svn.apache.org/viewvc/incubator/oozie/trunk/KEYS?view=markup.
+
+            Please download, test, and try it out:
+
+            http://people.apache.org/~you/oozie-X.Y.Z-incubating-candidate-0
+
+            The release, md5 signature, gpg signature, and rat report can all be found at the above address.
+
+            Should we release this? Vote closes on <DATE>.
+
+            Me
+-----------------------------------------------------------------------------
+
+   [[1]] If the PPMC approves the release, call an Incubator PMC (IPMC) vote. This vote must receive a minimum of 3 IPMC member +1s, and more +1s than -1s. The email sent should look similar to PPMC.
+
+[]
+* Publish
+
+    If both votes pass, the release needs to be published.
+
+   [[1]] Tag the release:
+
+-----------------------------------------------------------------------------
+        svn move https://svn.apache.org/repos/asf/incubator-oozie/tags/release-X.Y.Z-rcR \
+        https://svn.apache.org/repos/asf/incubator-oozie/tags/release-X.Y.Z -m "Oozie X.Y.Z release."
+-----------------------------------------------------------------------------
+
+   [[1]] Copy the release files to the distribution directory and make them writable by the oozie group.
+
+-----------------------------------------------------------------------------
+        ssh people.apache.org
+        cp -pr public_html/oozie-X.Y.Z-incubating-candidate-0 /www/www.apache.org/dist/incubator/oozie/oozie-X.Y.Z-incubating
+        cd /www/www.apache.org/dist/incubator/oozie
+        chgrp -R incubator oozie-X.Y.Z-incubating
+        chmod -R g+w oozie-X.Y.Z-incubating
+-----------------------------------------------------------------------------
+
+   [[1]] Wait 24 hours for release to propagate to mirrors.
+
+   [[1]] Edit the website. Details: TBD
+
+-----------------------------------------------------------------------------
+        svn co https://svn.apache.org/repos/asf/incubator/oozie/site
+-----------------------------------------------------------------------------
+
+   [[1]] Wait until you see your changes reflected on the Apache web site.
+
+   [[1]] Send announcements to the user and developer lists as well as (announce@haoop.apache.org) once the site changes are visible.
+
+-----------------------------------------------------------------------------
+        The Oozie team is happy to announce the release of Oozie X.Y.Z. 
+
+        Apache Oozie provides a workflow management and scheduling for Hadoop jobs.
+        More details about Oozie can be found at http://incubator.apache.org/oozie.
+
+        The highlights of this release are ... The details of the release can be found at http://incubator.apache.org/oozie/releases.html.
+-----------------------------------------------------------------------------
+ []
+   [[1]] In JIRA, mark the release as released.
+
+      [[A]] Goto JIRA and click on Administration tab.
+
+      [[A]] Select the Oozie project.
+
+      [[A]] Select Manage versions.
+
+      [[A]] Select Release for the version you have released.
+
+      [[A]] If a description has not yet been added for the version you are releasing, select Edit Details and give a brief description of the release.
+
+      [[A]] If the next version does not exist (that is, if you are releasing version X.Y, if version X.Y+1 does not yet exist) create it using the Add Version box at the top of the page.
+ 
+   [[1]] In JIRA, mark the issues resolved in this release as closed.
+
+      [[A]] Goto JIRA and click on the "Search for Issues" on "Issues" menu.
+
+      [[A]] In the left hand Edit section, set Project to Oozie.
+
+      [[A]] In Status select "Resolved"
+
+      [[A]] In Resolutions select "Fixed"
+
+      [[A]] Click "Search" button
+
+      [[A]] In the next screen, further select fix For select the version you are releasing.
+
+      [[A]] Click on the "Search" button
+
+      [[A]] Select "Tools->Bulk change all XX issues" (near the top right)
+
+      [[A]] Select all the issues and click on "Next"
+
+      [[A]] Select "Transition Issues" radio button and click on "Next"
+
+      [[A]] Select "Close Issue" radio button and click on "Next"
+
+      [[A]] Uncheck the box near the bottom at says "Send mail for this update" lest you spam every Oozie developer with a message for every bug resolved in this release. Click "Next".
+
+      [[A]] Click "Confirm". Don't worry if it gives you a HTTP 500 error, it still does the transitions.
+ []
+
+
