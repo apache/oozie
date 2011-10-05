@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,6 @@ package org.apache.oozie.action.hadoop;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.filecache.DistributedCache;
-import org.apache.oozie.test.XFsTestCase;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.ClassUtils;
 import org.apache.oozie.util.IOUtils;
@@ -36,31 +35,26 @@ import java.io.Writer;
 import java.io.FileWriter;
 import java.io.FileReader;
 import java.util.Properties;
-import java.util.concurrent.Callable;
 import java.net.URL;
 
 import jline.ConsoleReaderInputStream;
 
-public class TestPigMain extends MainTestCase {
+public class TestPigMain extends PigTestCase {
     private SecurityManager SECURITY_MANAGER;
 
+    @Override
     protected void setUp() throws Exception {
         super.setUp();
         SECURITY_MANAGER = System.getSecurityManager();
     }
 
+    @Override
     protected void tearDown() throws Exception {
         System.setSecurityManager(SECURITY_MANAGER);
         super.tearDown();
     }
 
-    private static final String PIG_SCRIPT =
-            "set job.name 'test'\n" +
-                    "set debug on\n" +
-                    "A = load '$IN' using PigStorage(':');\n" +
-                    "B = foreach A generate $0 as id;\n" +
-                    "store B into '$OUT' USING PigStorage();\n";
-
+    @Override
     public Void call() throws Exception {
         FileSystem fs = getFileSystem();
 
@@ -76,7 +70,7 @@ public class TestPigMain extends MainTestCase {
 
         Path script = new Path(getTestCaseDir(), "script.pig");
         Writer w = new FileWriter(script.toString());
-        w.write(PIG_SCRIPT);
+        w.write(pigScript);
         w.close();
 
         Path inputDir = new Path(getFsTestCaseDir(), "input");
@@ -101,8 +95,8 @@ public class TestPigMain extends MainTestCase {
         DistributedCache.addFileToClassPath(new Path(pigJar.toUri().getPath()), getFileSystem().getConf());
         DistributedCache.addFileToClassPath(new Path(jlineJar.toUri().getPath()), getFileSystem().getConf());
 
-        PigMain.setPigScript(jobConf, script.toString(), new String[]{"IN=" + inputDir.toUri().getPath(),
-                "OUT=" + outputDir.toUri().getPath()}, new String[]{"-v"});
+        PigMain.setPigScript(jobConf, script.toString(), new String[] { "IN=" + inputDir.toUri().getPath(),
+                "OUT=" + outputDir.toUri().getPath() }, new String[] { "-v" });
 
         File actionXml = new File(getTestCaseDir(), "action.xml");
         os = new FileOutputStream(actionXml);
@@ -114,7 +108,6 @@ public class TestPigMain extends MainTestCase {
         setSystemProperty("oozie.launcher.job.id", "" + System.currentTimeMillis());
         setSystemProperty("oozie.action.conf.xml", actionXml.getAbsolutePath());
         setSystemProperty("oozie.action.output.properties", outputDataFile.getAbsolutePath());
-
 
         URL url = Thread.currentThread().getContextClassLoader().getResource("PigMain.txt");
         File classPathDir = new File(url.getPath()).getParentFile();

@@ -1,3 +1,6 @@
+-- Oozie 3.1.1 release
+OOZIE-564 Embedded pig within python fails when run using oozie
+
 -- Oozie 3.1.0 release
 OOZIE-37 Documentation related modifications for "log -action" option
 OOZIE-35 add auto-rerun for error codes JA008 and JA009 in action executor

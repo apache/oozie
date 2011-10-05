@@ -72,6 +72,24 @@
             <artifactId>jline</artifactId>
             <scope>compile</scope>
         </dependency>
+
+		<dependency>
+			<groupId>org.python</groupId>
+			<artifactId>jython</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.antlr</groupId>
+			<artifactId>antlr-runtime</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<scope>runtime</scope>
+		</dependency>
     </dependencies>
 
     <build>
