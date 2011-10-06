@@ -56,6 +56,8 @@
         <test.exclude.pattern>_</test.exclude.pattern>
 
         <oozie.data.dir>${project.build.directory}/test-data</oozie.data.dir>
+
+        <maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
     </properties>
 
     <modules>
