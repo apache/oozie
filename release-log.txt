@@ -1,4 +1,5 @@
 -- Oozie 3.1.1 release
+OOZIE-573 error message about misconfig in starting time of coordinator and initial-instance of dataset
 OOZIE-571 Oozie validate command doesnt work for schema 0.2
 OOZIE-570 Oozie bundle is running but not materializing new actions
 OOZIE-25 Removing confusing exception trace during wf suspend/kill/resume
