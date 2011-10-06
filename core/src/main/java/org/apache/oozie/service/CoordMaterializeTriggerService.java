@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,11 +51,16 @@ public class CoordMaterializeTriggerService implements Service {
      * The number of callables to be queued in a batch.
      */
     public static final String CONF_CALLABLE_BATCH_SIZE = CONF_PREFIX + "callable.batch.size";
+    /**
+     * The number of coordinator jobs to be picked for materialization at a given time.
+     */
+    public static final String CONF_MATERIALIZATION_SYSTEM_LIMIT = CONF_PREFIX + "materialization.system.limit";
 
     private static final String INSTRUMENTATION_GROUP = "coord_job_mat";
     private static final String INSTR_MAT_JOBS_COUNTER = "jobs";
     private static final int CONF_LOOKUP_INTERVAL_DEFAULT = 300;
     private static final int CONF_MATERIALIZATION_WINDOW_DEFAULT = 3600;
+    private static final int CONF_MATERIALIZATION_SYSTEM_LIMIT_DEFAULT = 50;
 
     /**
      * This runnable class will run in every "interval" to queue CoordMaterializeTransitionXCommand.
@@ -109,26 +114,29 @@ public class CoordMaterializeTriggerService implements Service {
                 // get current date
                 Date currDate = new Date(new Date().getTime() + CONF_LOOKUP_INTERVAL_DEFAULT * 1000);
                 // get list of all jobs that have actions that should be materialized.
-                CoordJobsToBeMaterializedJPAExecutor cmatcmd = new CoordJobsToBeMaterializedJPAExecutor(currDate, 50);
+                int materializationLimit = Services.get().getConf()
+                        .getInt(CONF_MATERIALIZATION_SYSTEM_LIMIT, CONF_MATERIALIZATION_SYSTEM_LIMIT_DEFAULT);
+                CoordJobsToBeMaterializedJPAExecutor cmatcmd = new CoordJobsToBeMaterializedJPAExecutor(currDate,
+                        materializationLimit);
                 List<CoordinatorJobBean> materializeJobs = jpaService.execute(cmatcmd);
                 LOG.debug("CoordMaterializeTriggerService - Curr Date= " + currDate + ", Num jobs to materialize = "
                         + materializeJobs.size());
                 for (CoordinatorJobBean coordJob : materializeJobs) {
-                    Services.get().get(InstrumentationService.class).get().incr(INSTRUMENTATION_GROUP,
-                            INSTR_MAT_JOBS_COUNTER, 1);
+                    Services.get().get(InstrumentationService.class).get()
+                            .incr(INSTRUMENTATION_GROUP, INSTR_MAT_JOBS_COUNTER, 1);
                     int numWaitingActions = jpaService
                             .execute(new CoordActionsActiveCountJPAExecutor(coordJob.getId()));
-                    LOG.debug("Job :" + coordJob.getId() + "  numWaitingActions : " + numWaitingActions + " MatThrottle : "
-                            + coordJob.getMatThrottling());
+                    LOG.debug("Job :" + coordJob.getId() + "  numWaitingActions : " + numWaitingActions
+                            + " MatThrottle : " + coordJob.getMatThrottling());
+                    // update lastModifiedTime so next time others might have higher chance to get pick up
+                    coordJob.setLastModifiedTime(new Date());
+                    jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
                     if (numWaitingActions >= coordJob.getMatThrottling()) {
                         LOG.debug("Materialization skipped for JobID [" + coordJob.getId() + " already waiting "
                                 + numWaitingActions + " actions. MatThrottle is : " + coordJob.getMatThrottling());
                         continue;
                     }
                     queueCallable(new CoordMaterializeTransitionXCommand(coordJob.getId(), materializationWindow));
-                    //update lastModifiedTime so next time others might have higher chance to get pick up
-                    coordJob.setLastModifiedTime(new Date());
-                    jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
 
                 }
 
