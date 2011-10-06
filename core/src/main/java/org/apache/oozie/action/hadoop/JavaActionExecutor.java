@@ -867,6 +867,9 @@ public class JavaActionExecutor extends ActionExecutor {
                             if (errorCode.equals("0")) {
                                 errorCode = "JA018";
                             }
+                            if (errorCode.equals("-1")) {
+                                errorCode = "JA019";
+                            }
                             errorReason = props.getProperty("error.reason");
                             log.warn("Launcher ERROR, reason: {0}", errorReason);
                             String exMsg = props.getProperty("exception.message");
