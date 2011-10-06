@@ -548,15 +548,16 @@ The dataset resolves to the following URIs with fixed values for the finer preci
 ---+++ 5.3. Dataset Definitions
 
 Dataset definitions are grouped in XML files.
+*IMPORTANT:* Please note that if an XML namespace version is specified for the coordinator-app element in the coordinator.xml file, no namespace needs to be defined separately for the datasets element (even if the dataset is defined in a separate file). Specifying it at multiple places might result in xml errors while submitting the coordinator job.
 
 *%PURPLE% Syntax: %ENDCOLOR%*
 
 <verbatim>
  <!-- Synchronous datasets -->
-<datasets xmlns="uri:oozie:coordinator:0.1">
+<datasets>
   <include>[SHARED_DATASETS]</include>
   ...
-  <dataset name="[NAME]" frequency="[FREQUENCY]" 
+  <dataset name="[NAME]" frequency="[FREQUENCY]"
            initial-instance="[DATETIME]" timezone="[TIMEZONE]">
     <uri-template>[URI TEMPLATE]</uri-template>
   </dataset>
@@ -567,7 +568,7 @@ Dataset definitions are grouped in XML files.
 *%GREEN% Example: %ENDCOLOR%*
 
 <verbatim>
-<datasets xmlns="uri:oozie:coordinator:0.1">
+<datasets>
 .
   <include>hdfs://foo:9000/app/dataset-definitions/globallogs.xml</include>
 .
@@ -1208,7 +1209,7 @@ The datetime returned by =${coord:current(int n)}= returns the exact datetime fo
 Datasets Definition:
 
 <verbatim>
-<datasets xmlns="uri:oozie:coordinator:0.1">
+<datasets>
 .
   <dataset name="logs" frequency="${coord:days(1)}"
            initial-instance="2009-01-01T24:00Z" timezone="UTC">
@@ -1236,7 +1237,7 @@ Note, in the example above, how the datetimes resolved for the 2 datasets differ
 Datasets Definition file 'datasets.xml':
 
 <verbatim>
-<datasets xmlns="uri:oozie:coordinator:0.1">
+<datasets>
 
   <dataset name="logs" frequency="${coord:hours(1)}"
            initial-instance="2009-01-01T01:00Z" timezone="UTC">
@@ -1307,7 +1308,7 @@ In this case, the dataset instances are used in a sliding window fashion.
 Datasets Definition file 'datasets.xml':
 
 <verbatim>
-<datasets xmlns="uri:oozie:coordinator:0.1">
+<datasets>
 .
   <dataset name="logs" frequency="${coord:hours(1)}"
            initial-instance="2009-01-01T01:00Z" timezone="UTC">
@@ -1837,7 +1838,7 @@ The =${coord:dataOut(String name)}= is commonly used to pass the URIs of a datas
 Datasets Definition file 'datasets.xml'
 
 <verbatim>
-<datasets xmlns="uri:oozie:coordinator:0.1">
+<datasets>
 .
   <dataset name="hourlyLogs" frequency="${coord:hours(1)}"
            initial-instance="2009-01-01T01:00Z" timezone="UTC">
