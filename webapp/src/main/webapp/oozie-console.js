@@ -1243,7 +1243,7 @@ var coord_jobs_store = new Ext.data.JsonStore({
     totalProperty: 'total',
     autoLoad: true,
     root: 'coordinatorjobs',
-    fields: ['coordJobId', 'coordJobName', 'status', 'user', 'group', 'frequency', 'timeUnit', 'startTime', 'nextMaterializedTime'],
+    fields: ['coordJobId', 'coordJobName', 'status', 'user', 'group', 'frequency', 'timeUnit', {name: 'startTime', sortType: Ext.data.SortTypes.asDate}, {name: 'nextMaterializedTime', sortType: Ext.data.SortTypes.asDate}],
     proxy: new Ext.data.HttpProxy({
         url: getOozieBase() + 'jobs'
     })
@@ -1261,7 +1261,7 @@ var jobs_store = new Ext.data.JsonStore({
     totalProperty: 'total',
     autoLoad: true,
     root: 'workflows',
-    fields: ['appPath', 'appName', 'id', 'conf', 'status', 'createdTime', 'startTime', 'lastModTime', 'endTime', 'user', 'group', 'run', 'actions'],
+    fields: ['appPath', 'appName', 'id', 'conf', 'status', {name: 'createdTime', sortType: Ext.data.SortTypes.asDate}, {name: 'startTime', sortType: Ext.data.SortTypes.asDate}, {name: 'lastModTime', sortType: Ext.data.SortTypes.asDate}, {name: 'endTime', sortType: Ext.data.SortTypes.asDate}, 'user', 'group', 'run', 'actions'],
     proxy: new Ext.data.HttpProxy({
         url: getOozieBase() + 'jobs'
     })
@@ -1281,7 +1281,7 @@ var bundle_jobs_store = new Ext.data.JsonStore({
     totalProperty: 'total',
     autoLoad: true,
     root: 'bundlejobs',
-    fields: ['bundleJobId', 'bundleJobName', 'bundleJobPath', 'conf', 'status', 'kickoffTime', 'startTime', 'endTime', 'pauseTime', 'createdTime', 'user', 'group', 'bundleCoordJobs'],
+    fields: ['bundleJobId', 'bundleJobName', 'bundleJobPath', 'conf', 'status', {name: 'kickoffTime', sortType: Ext.data.SortTypes.asDate}, {name: 'startTime', sortType: Ext.data.SortTypes.asDate}, {name: 'endTime', sortType: Ext.data.SortTypes.asDate}, {name: 'pauseTime', sortType: Ext.data.SortTypes.asDate}, {name: 'createdTime', sortType: Ext.data.SortTypes.asDate}, 'user', 'group', 'bundleCoordJobs'],
     proxy: new Ext.data.HttpProxy({
         url: getOozieBase() + 'jobs'
     })
