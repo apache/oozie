@@ -74,6 +74,7 @@ public class WorkflowsJobGetJPAExecutor implements JPAExecutor<WorkflowsInfo> {
         boolean isAppName = false;
         boolean isUser = false;
         boolean isEnabled = false;
+        boolean isId = false;
         int index = 0;
         for (Map.Entry<String, List<String>> entry : filter.entrySet()) {
             String colName = null;
@@ -204,6 +205,37 @@ public class WorkflowsJobGetJPAExecutor implements JPAExecutor<WorkflowsInfo> {
                                 orArray.add(colName);
                                 colArray.add(colVar);
                             }
+                        }
+                    }
+                    if (entry.getKey().equals(OozieClient.FILTER_ID)) {
+                        List<String> values = filter.get(OozieClient.FILTER_ID);
+                        colName = "id";
+                        for (int i = 0; i < values.size(); i++) {
+                            colVar = "id";
+                            colVar = colVar + index;
+                            if (!isEnabled && !isId) {
+                                sb.append(seletStr).append(" where w.id IN (:id" + index);
+                                isId = true;
+                                isEnabled = true;
+                            }
+                            else {
+                                if (isEnabled && !isId) {
+                                    sb.append(" and w.id IN (:id" + index);
+                                    isId = true;
+                                }
+                                else {
+                                    if (isId) {
+                                        sb.append(", :id" + index);
+                                    }
+                                }
+                            }
+                            if (i == values.size() - 1) {
+                                sb.append(")");
+                            }
+                            index++;
+                            valArray.add(values.get(i));
+                            orArray.add(colName);
+                            colArray.add(colVar);
                         }
                     }
                 }
