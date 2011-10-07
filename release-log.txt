@@ -1,4 +1,5 @@
 -- Oozie 3.1.1 release
+OOZIE-41 Usability improvement (Additional options) for coordinator job analysis on Web Console
 OOZIE-568 distcp action return error code -1
 OOZIE-573 error message about misconfig in starting time of coordinator and initial-instance of dataset
 OOZIE-571 Oozie validate command doesnt work for schema 0.2
