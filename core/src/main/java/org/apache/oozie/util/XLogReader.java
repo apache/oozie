@@ -78,4 +78,8 @@ public class XLogReader {
         }
         logWriter.flush();
     }
+
+    public void close() throws IOException {
+        logReader.close();
+    }
 }

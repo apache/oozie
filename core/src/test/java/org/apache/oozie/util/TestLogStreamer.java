@@ -18,14 +18,17 @@
 package org.apache.oozie.util;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.zip.GZIPOutputStream;
 
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.XLogStreamer;
-
 
 public class TestLogStreamer extends XTestCase {
     public void testStreamLog() throws IOException {
@@ -41,60 +44,95 @@ public class TestLogStreamer extends XTestCase {
         xf.setParameter("JOB", "14-200904160239--example-forkjoinwf");
         xf.setLogLevel("DEBUG|INFO");
 
-        FileWriter fw1 = new FileWriter(getTestCaseDir() + "/test.log");
+        FileWriter fw1 = new FileWriter(getTestCaseDir() + "/oozie.log");
         StringBuilder sb1 = new StringBuilder();
-        sb1.append("2009-06-24 02:43:13,958 DEBUG _L1_:323 - USER[oozie] GROUP[-] TOKEN[-] APP[example-forkjoinwf] JOB[14-200904160239--example-forkjoinwf] ACTION[-] End workflow state change");
-        sb1.append("\n2009-06-24 02:43:13,961  INFO _L2_:317 - USER[-] GROUP[-] TOKEN[-] APP[example-forkjoinwf] JOB[14-200904160239--example-forkjoinwf] ACTION[-] [org.apache.oozie.core.command.WorkflowRunnerCallable] released lock");
+        sb1.append("2009-06-24 02:43:13,958 DEBUG _L1_:323 - USER[oozie] GROUP[-] TOKEN[-] APP[example-forkjoinwf] "
+                + "JOB[14-200904160239--example-forkjoinwf] ACTION[-] End workflow state change");
+        sb1.append("\n2009-06-24 02:43:13,961 INFO _L2_:317 - USER[-] GROUP[-] TOKEN[-] " + "APP[example-forkjoinwf] "
+                + "JOB[14-200904160239--example-forkjoinwf] ACTION[-] "
+                + "[org.apache.oozie.core.command.WorkflowRunnerCallable] " + "released lock");
         fw1.write(sb1.toString());
         fw1.close();
-        File f1 = new File(getTestCaseDir() + "/test.log");
+        File f1 = new File(getTestCaseDir() + "/oozie.log");
         f1.setLastModified(currTime - 9000);
 
-        FileWriter fw2 = new FileWriter(getTestCaseDir() + "/test.log.1");
+        FileWriter fw2 = new FileWriter(getTestCaseDir() + "/oozie.log.1");
         StringBuilder sb2 = new StringBuilder();
-        sb2.append("\n2009-06-24 02:43:13,986  WARN _L3_:539 - USER[-] GROUP[-] TOKEN[-] APP[example-forkjoinwf] JOB[14-200904160239--example-forkjoinwf] ACTION[-] Use GenericOptionsParser for parsing the arguments. \n_L3A_Applications should implement Tool for the same. \n_L3B_Multi line test");
-        sb2.append("\n2009-06-24 02:43:14,431  INFO _L4_:661 - USER[-] GROUP[-] TOKEN[-] APP[example-forkjoinwf] JOB[14-200904160239--example-forkjoinwf] ACTION[-] No job jar file set.  User classes may not be found. See JobConf(Class) or JobConf#setJar(String).");
+        sb2.append("\n2009-06-24 02:43:13,986 WARN _L3_:539 - USER[-] GROUP[-] TOKEN[-] APP[example-forkjoinwf] "
+                + "JOB[14-200904160239--example-forkjoinwf] ACTION[-] Use GenericOptionsParser for parsing " + "the "
+                + "arguments. " + "\n" + "_L3A_Applications "
+                + "should implement Tool for the same. \n_L3B_Multi line test");
+        sb2.append("\n2009-06-24 02:43:14,431 INFO _L4_:661 - USER[-] GROUP[-] TOKEN[-] APP[example-forkjoinwf] "
+                + "JOB[14-200904160239--example-forkjoinwf] ACTION[-] No job jar file set. User classes "
+                + "may not be found. " + "See JobConf(Class) or JobConf#setJar(String).");
         fw2.write(sb2.toString());
         fw2.close();
-        File f2 = new File(getTestCaseDir() + "/test.log.1");
+        File f2 = new File(getTestCaseDir() + "/oozie.log.1");
         f2.setLastModified(currTime - 8000);
 
-        FileWriter fw3 = new FileWriter(getTestCaseDir() + "/test.log.2");
+        FileWriter fw3 = new FileWriter(getTestCaseDir() + "/oozie.log.2");
         StringBuilder sb3 = new StringBuilder();
-        sb3.append("\n2009-06-24 02:43:14,505  INFO _L5_:317 - USER[oozie] GROUP[oozie] TOKEN[-] APP[-] JOB[-] ACTION[-]  Released Lock");
-        sb3.append("\n2009-06-24 02:43:19,344 DEBUG _L6_:323 - USER[oozie] GROUP[oozie] TOKEN[MYtoken] APP[-] JOB[-] ACTION[-] Number of pending signals to check [0]");
-        sb3.append("\n2009-06-24 02:43:29,151 DEBUG _L7_:323 - USER[-] GROUP[-] TOKEN[-] APP[-] JOB[14-200904160239--example-forkjoinwf] ACTION[-] Number of pending actions [0] ");
+        sb3.append("\n2009-06-24 02:43:14,505 INFO _L5_:317 - USER[oozie] GROUP[oozie] TOKEN[-] APP[-] JOB[-] "
+                + "ACTION[-] Released Lock");
+        sb3.append("\n2009-06-24 02:43:19,344 DEBUG _L6_:323 - USER[oozie] GROUP[oozie] TOKEN[MYtoken] APP[-] JOB[-] "
+                + "ACTION[-] Number of pending signals to check [0]");
+        sb3.append("\n2009-06-24 02:43:29,151 DEBUG _L7_:323 - USER[-] GROUP[-] TOKEN[-] APP[-] "
+                + "JOB[14-200904160239--example-forkjoinwf] ACTION[-] Number of pending actions [0] ");
         fw3.write(sb3.toString());
         fw3.close();
-        File f3 = new File(getTestCaseDir() + "/test.log.2");
+        File f3 = new File(getTestCaseDir() + "/oozie.log.2");
         f3.setLastModified(currTime);
 
         FileWriter fwerr = new FileWriter(getTestCaseDir() + "/testerr.log");
         StringBuilder sberr = new StringBuilder();
-        sberr.append("2009-06-24 02:43:13,958 WARN _L1_:323 - USER[oozie] GROUP[-] TOKEN[-] APP[example-forkjoinwf] JOB[14-200904160239--example-forkjoinwf] ACTION[-] End workflow state change");
-        sberr.append("\n2009-06-24 02:43:13,961  INFO _L2_:317 - USER[-] GROUP[-] TOKEN[-] APP[example-forkjoinwf] JOB[14-200904160239--example-forkjoinwf] ACTION[-] [org.apache.oozie.core.command.WorkflowRunnerCallable] released lock");
+        sberr.append("2009-06-24 02:43:13,958 WARN _L1_:323 - USER[oozie] GROUP[-] TOKEN[-] APP[example-forkjoinwf] "
+                + "JOB[14-200904160239--example-forkjoinwf] ACTION[-] End workflow state change");
+        sberr.append("\n2009-06-24 02:43:13,961 INFO _L2_:317 - USER[-] GROUP[-] TOKEN[-] APP[example-forkjoinwf] "
+                + "JOB[14-200904160239--example-forkjoinwf] ACTION[-] "
+                + "[org.apache.oozie.core.command.WorkflowRunnerCallable] " + "released lock");
         fwerr.write(sberr.toString());
         fwerr.close();
         File ferr = new File(getTestCaseDir() + "/testerr.log");
         ferr.setLastModified(currTime - 8000);
 
+        Calendar cal = new GregorianCalendar();
+        String outFilename = "oozie.log." + cal.get(Calendar.YEAR) + "-" + (cal.get(Calendar.MONTH) + 1) + "-"
+                + cal.get(Calendar.DATE) + "-" + cal.get(Calendar.HOUR_OF_DAY) + ".gz";
+        File f = new File(getTestCaseDir() + "/" + outFilename);
+        GZIPOutputStream gzout = new GZIPOutputStream(new FileOutputStream(f));
+        StringBuilder sb = new StringBuilder();
+        sb.append("\n2009-06-24 02:43:13,958 DEBUG _L8_:323 - USER[oozie] GROUP[-] TOKEN[-] APP[example-"
+                + "forkjoinwf] " + "JOB[14-200904160239--example-forkjoinwf] ACTION[-] End workflow state change");
+        sb.append("\n2009-06-24 02:43:13,961 INFO _L9_:317 - USER[-] GROUP[-] TOKEN[-] APP[example-forkjoinwf] "
+                + "JOB[14-200904160239--example-forkjoinwf] ACTION[-] [org.apache.oozie.core."
+                + "command.WorkflowRunnerCallable] " + "released lock");
+        String strg = sb.toString();
+        byte[] buf = strg.getBytes();
+        gzout.write(buf, 0, buf.length);
+        gzout.finish();
+        gzout.close();
+
         StringWriter sw = new StringWriter();
-        XLogStreamer str = new XLogStreamer(xf, sw, getTestCaseDir(), "test.log", 1);
+        XLogStreamer str = new XLogStreamer(xf, sw, getTestCaseDir(), "oozie.log", 1);
         str.streamLog(new Date(currTime - 10000), new Date(currTime - 5000));
         String[] out = sw.toString().split("\n");
-        assertEquals(3, out.length);
-        assertEquals(true, out[0].contains("_L1_"));
-        assertEquals(true, out[1].contains("_L2_"));
-        assertEquals(true, out[2].contains("_L4_"));
+        assertEquals(5, out.length);
+        assertEquals(true, out[0].contains("_L8_"));
+        assertEquals(true, out[1].contains("_L9_"));
+        assertEquals(true, out[2].contains("_L1_"));
+        assertEquals(true, out[3].contains("_L2_"));
+        assertEquals(true, out[4].contains("_L4_"));
 
         StringWriter sw1 = new StringWriter();
-        XLogStreamer str1 = new XLogStreamer(xf, sw1, getTestCaseDir(), "test.log", 1);
+        XLogStreamer str1 = new XLogStreamer(xf, sw1, getTestCaseDir(), "oozie.log", 1);
         str1.streamLog(null, null);
         out = sw1.toString().split("\n");
-        assertEquals(4, out.length);
-        assertEquals(true, out[0].contains("_L1_"));
-        assertEquals(true, out[1].contains("_L2_"));
-        assertEquals(true, out[2].contains("_L4_"));
-        assertEquals(true, out[3].contains("_L7_"));
+        assertEquals(6, out.length);
+        assertEquals(true, out[0].contains("_L8_"));
+        assertEquals(true, out[1].contains("_L9_"));
+        assertEquals(true, out[2].contains("_L1_"));
+        assertEquals(true, out[3].contains("_L2_"));
+        assertEquals(true, out[4].contains("_L4_"));
+        assertEquals(true, out[5].contains("_L7_"));
     }
 }
