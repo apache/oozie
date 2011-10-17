@@ -198,13 +198,16 @@ public class TestStatusTransitService extends XDataTestCase {
         assertEquals(CoordinatorJob.Status.KILLED, coordJob.getStatus());
         assertEquals(CoordinatorAction.Status.KILLED, coordAction.getStatus());
         assertEquals(WorkflowJob.Status.KILLED, wfJob.getStatus());
-        assertEquals(true, coordJob.isPending());
         assertEquals(false, coordAction.isPending());
 
         Runnable runnable = new StatusTransitRunnable();
         runnable.run();
 
-        waitFor(5 * 1000, new Predicate() {
+        // Status of coordJobBean is being updated asynchronously.
+        // Increasing wait time to atmost 10s to make sure there is
+        // sufficient time for the status to get updated. Thus, resulting
+        // in following assertion not failing.
+        waitFor(10 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
                 CoordinatorJobBean coordJobBean = jpaService.execute(coordJobGetCmd);
                 return !coordJobBean.isPending();

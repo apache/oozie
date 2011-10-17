@@ -1,4 +1,5 @@
 -- Oozie 3.1.1 release
+OOZIE-581 Fix unit test failure in TestStatusTransitService.java.
 OOZIE-579 POM file changes for oozie version 3.1.2
 OOZIE-26 Ability to get the log content from Archived file(.gz format)
 OOZIE-554 New filters for all kinds of jobs
