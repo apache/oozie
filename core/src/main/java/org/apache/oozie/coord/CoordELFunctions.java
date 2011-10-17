@@ -710,6 +710,8 @@ public class CoordELFunctions {
         int[] instCount = new int[1];// used as pass by ref
         Calendar nominalInstanceCal = getCurrentInstance(getActionCreationtime(), instCount);
         if (nominalInstanceCal == null) {
+            XLog.getLog(CoordELFunctions.class)
+                    .warn("If the initial instance of the dataset is later than the nominal time, an empty string is returned. This means that no data is available at the current-instance specified by the user and the user could try modifying his initial-instance to an earlier time.");
             return "";
         }
         nominalInstanceCal = getInitialInstanceCal();
@@ -718,7 +720,7 @@ public class CoordELFunctions {
 
         if (nominalInstanceCal.getTime().compareTo(getInitialInstance()) < 0) {
             XLog.getLog(CoordELFunctions.class)
-                    .warn("If the initial instance of the dataset is greater than the current-instance specified eg: coord:current(-4), an empty string is returned. This means that no data is available at the current-instance specified by the user and the user could try modifying his initial-instance to an earlier time.");
+                    .warn("If the initial instance of the dataset is later than the current-instance specified, such as coord:current({0}) in this case, an empty string is returned. This means that no data is available at the current-instance specified by the user and the user could try modifying his initial-instance to an earlier time.", n);
             return "";
         }
         String str = DateUtils.formatDateUTC(nominalInstanceCal);
