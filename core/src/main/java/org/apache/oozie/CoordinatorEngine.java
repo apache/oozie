@@ -373,7 +373,13 @@ public class CoordinatorEngine extends BaseEngine {
             // if coordinator action logs are to be retrieved based on date range
             // this block gets the corresponding list of coordinator actions to be used by the log filter
             if (logRetrievalType.equalsIgnoreCase(RestConstants.JOB_LOG_DATE)) {
-                List<CoordinatorActionBean> actionsList = CoordActionsInDateRange.getCoordActionsFromDates(jobId, logRetrievalScope);
+                List<CoordinatorActionBean> actionsList = null;
+                try {
+                    actionsList = CoordActionsInDateRange.getCoordActionsFromDates(jobId, logRetrievalScope);
+                }
+                catch (XException xe) {
+                    throw new CommandException(ErrorCode.E0302, "Error in date range for coordinator actions", xe);
+                }
                 StringBuilder commaSeparatedActions = new StringBuilder("");
                 boolean commaRequired = false;
                 for (CoordinatorActionBean coordAction : actionsList) {

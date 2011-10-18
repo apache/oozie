@@ -62,6 +62,7 @@ public enum ErrorCode {
     E0305(XLog.STD, "Missing parameter [{0}]"),
     E0306(XLog.STD, "Invalid parameter"),
     E0307(XLog.STD, "Runtime error [{0}]"),
+    E0308(XLog.STD, "Could not parse date range parameter [{0}]"),
 
 
     E0400(XLog.STD, "User mismatch, request user [{0}] configuration user [{1}]"),
