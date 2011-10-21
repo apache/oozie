@@ -358,17 +358,20 @@ public class CoordinatorEngine extends BaseEngine {
                 }
 
                 Iterator<String> actionsIterator = actions.iterator();
-                StringBuilder commaSeparatedActions = new StringBuilder("");
-                int commaRequired = 0;
-
+                StringBuilder orSeparatedActions = new StringBuilder("");
+                boolean orRequired = false;
                 while (actionsIterator.hasNext()) {
-                    if (commaRequired == 1) {
-                        commaSeparatedActions.append(",");
+                    if (orRequired) {
+                        orSeparatedActions.append("|");
                     }
-                    commaSeparatedActions.append(actionsIterator.next().toString());
-                    commaRequired = 1;
+                    orSeparatedActions.append(actionsIterator.next().toString());
+                    orRequired = true;
                 }
-                filter.setParameter(DagXLogInfoService.ACTION, commaSeparatedActions.toString());
+                if (actions.size() > 1 && orRequired) {
+                    orSeparatedActions.insert(0, "(");
+                    orSeparatedActions.append(")");
+                }
+                filter.setParameter(DagXLogInfoService.ACTION, orSeparatedActions.toString());
             }
             // if coordinator action logs are to be retrieved based on date range
             // this block gets the corresponding list of coordinator actions to be used by the log filter
@@ -380,24 +383,24 @@ public class CoordinatorEngine extends BaseEngine {
                 catch (XException xe) {
                     throw new CommandException(ErrorCode.E0302, "Error in date range for coordinator actions", xe);
                 }
-                StringBuilder commaSeparatedActions = new StringBuilder("");
-                boolean commaRequired = false;
+                StringBuilder orSeparatedActions = new StringBuilder("");
+                boolean orRequired = false;
                 for (CoordinatorActionBean coordAction : actionsList) {
-                    if (commaRequired) {
-                        commaSeparatedActions.append(",");
+                    if (orRequired) {
+                        orSeparatedActions.append("|");
                     }
-                    commaSeparatedActions.append(coordAction.getId());
-                    commaRequired = true;
+                    orSeparatedActions.append(coordAction.getId());
+                    orRequired = true;
                 }
-                filter.setParameter(DagXLogInfoService.ACTION, commaSeparatedActions.toString());
+                if (actionsList.size() > 1 && orRequired) {
+                    orSeparatedActions.insert(0, "(");
+                    orSeparatedActions.append(")");
+                }
+                filter.setParameter(DagXLogInfoService.ACTION, orSeparatedActions.toString());
             }
-            CoordinatorJobBean job = getCoordJobWithNoActionInfo(jobId);
-            Services.get().get(XLogService.class).streamLog(filter, job.getCreatedTime(), new Date(), writer);
         }
-        else {
-            CoordinatorJobBean job = getCoordJobWithNoActionInfo(jobId);
-            Services.get().get(XLogService.class).streamLog(filter, job.getCreatedTime(), new Date(), writer);
-        }
+        CoordinatorJobBean job = getCoordJobWithNoActionInfo(jobId);
+        Services.get().get(XLogService.class).streamLog(filter, job.getCreatedTime(), new Date(), writer);
     }
 
     /*
