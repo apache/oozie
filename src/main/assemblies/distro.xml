@@ -90,6 +90,16 @@
             <source>${basedir}/../core/src/main/resources/oozie-default.xml</source>
             <outputDirectory>/conf</outputDirectory>
         </file>
+        <!-- Oozie core jar -->
+        <file>
+            <source>${basedir}/../core/target/oozie-core-${project.version}.jar</source>
+            <outputDirectory>/oozie-core</outputDirectory>
+        </file>
+        <!-- Oozie core test jar -->
+        <file>
+            <source>${basedir}/../core/target/oozie-core-${project.version}-tests.jar</source>
+            <outputDirectory>/oozie-core</outputDirectory>
+        </file>
         <!-- Oozie war -->
         <file>
             <source>${basedir}/../webapp/target/oozie-webapp-${project.version}.war</source>

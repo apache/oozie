@@ -80,4 +80,8 @@ Oozie uses a modified version of the Apache Doxia core and twiki plugins to gene
    * [[ENG_Building][Building Oozie]]
    * [[./dependencies.html][Dependencies Report]]
 
+---++ MiniOozie Documentation
+
+   * [[ENG_MiniOozie][Testing User Oozie Applications Using MiniOozie]]
+
 </noautolink>
