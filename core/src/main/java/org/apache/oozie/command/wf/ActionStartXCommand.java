@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,6 @@ package org.apache.oozie.command.wf;
 import java.util.Date;
 
 import javax.servlet.jsp.el.ELException;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.FaultInjection;
@@ -157,10 +156,8 @@ public class ActionStartXCommand extends ActionXCommand<Void> {
                 String tmpActionConf = XmlUtils.removeComments(wfAction.getConf());
                 String actionConf = context.getELEvaluator().evaluate(tmpActionConf, String.class);
                 wfAction.setConf(actionConf);
-
                 LOG.debug("Start, name [{0}] type [{1}] configuration{E}{E}{2}{E}", wfAction.getName(), wfAction
                         .getType(), actionConf);
-
             }
             catch (ELEvaluationException ex) {
                 throw new ActionExecutorException(ActionExecutorException.ErrorType.TRANSIENT, EL_EVAL_ERROR, ex

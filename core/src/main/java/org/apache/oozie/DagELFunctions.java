@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import org.apache.oozie.util.PropertiesUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XmlUtils;
-
+import org.jdom.JDOMException;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Properties;
@@ -54,11 +54,19 @@ public class DagELFunctions {
     public static void configureEvaluator(ELEvaluator evaluator, WorkflowJobBean workflow, WorkflowActionBean action) {
         evaluator.setVariable(WORKFLOW, workflow);
         evaluator.setVariable(ACTION, action);
+
         for (Map.Entry<String, String> entry : workflow.getWorkflowInstance().getConf()) {
             if (ParamChecker.isValidIdentifier(entry.getKey())) {
                 String value = entry.getValue().trim();
-                // escape the characters for xml
-                value = XmlUtils.escapeCharsForXML(value);
+                try {
+                    String valueElem = "<value>"+value+"</value>";
+                    XmlUtils.parseXml(valueElem);
+                }
+                catch (JDOMException ex) {
+                    // If happens, try escaping the characters for XML. The escaping may or
+                    // may not solve the problem since the JDOMException could be for a range of issues.
+                    value = XmlUtils.escapeCharsForXML(value);
+                }
                 evaluator.setVariable(entry.getKey().trim(), value);
             }
         }
