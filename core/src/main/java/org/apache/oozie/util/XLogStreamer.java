@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -335,8 +335,13 @@ public class XLogStreamer {
         long logFileStartTime = calendarEntry.getTimeInMillis();
         long milliSecondsPerHour = 3600000;
         long logFileEndTime = logFileStartTime + milliSecondsPerHour;
+        /*  To check whether the log content is there in the initial or later part of the log file or
+            the log content is contained entirely within this log file or
+            the entire log file contains the event log where the event spans across hours
+        */
         if ((startTime >= logFileStartTime && startTime <= logFileEndTime)
-                || (endTime >= logFileStartTime && endTime <= logFileEndTime)) {
+                || (endTime >= logFileStartTime && endTime <= logFileEndTime)
+                || (startTime <= logFileStartTime && endTime >= logFileEndTime)) {
             returnVal = logFileStartTime;
         }
         return returnVal;
