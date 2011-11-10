@@ -1,6 +1,9 @@
--- Oozie 3.1.2 release
+-- Oozie 3.2.0 release
 
 OOZIE-590 Log Retrieval from multiple .gz archive files
+
+-- Oozie 3.1.2 release
+
 OOZIE-38 LocalOozie example and improvement
 OOZIE-580 use xml element to handle string escape when configure evaluator
 OOZIE-585 Coordinator job fail to retrieve log with date range and action range.
