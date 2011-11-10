@@ -1,6 +1,7 @@
 -- Oozie 3.2.0 release
 
 OOZIE-590 Log Retrieval from multiple .gz archive files
+OOZIE-587 Out of memory issues due to current query design
 
 -- Oozie 3.1.2 release
 
