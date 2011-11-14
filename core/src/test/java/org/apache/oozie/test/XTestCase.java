@@ -48,6 +48,7 @@ import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.store.CoordinatorStore;
@@ -79,21 +80,29 @@ public abstract class XTestCase extends TestCase {
     private String hadoopVersion;
     protected XLog log = new XLog(LogFactory.getLog(getClass()));
 
+    private static File OOZIE_SRC_DIR = null;
     private static final String OOZIE_TEST_PROPERTIES = "oozie.test.properties";
 
     public static float WAITFOR_RATIO = Float.parseFloat(System.getProperty("oozie.test.waitfor.ratio", "1"));
 
     static {
         try {
-            // by default uses 'test.properties'
-            String testPropsFile = System.getProperty(OOZIE_TEST_PROPERTIES, "test.properties");
-            File file = new File(testPropsFile);
-            // the testPropsFile is looked at 'oozie-main' project level
-            // this trick here is to work both with Maven (runs the testcases from module directory)
-            // and IDEs (run testcases from 'oozie-main' project directory).
-            if (!file.exists()) {
-                file = new File(file.getAbsoluteFile().getParentFile().getParentFile(), testPropsFile);
+            OOZIE_SRC_DIR = new File("core").getAbsoluteFile();
+            if (!OOZIE_SRC_DIR.exists()) {
+                OOZIE_SRC_DIR = OOZIE_SRC_DIR.getParentFile().getParentFile();
+                OOZIE_SRC_DIR = new File(OOZIE_SRC_DIR, "core");
             }
+            if (!OOZIE_SRC_DIR.exists()) {
+                System.err.println();
+                System.err.println("Could not determine project root directory");
+                System.err.println();
+                System.exit(-1);
+            }
+            OOZIE_SRC_DIR = OOZIE_SRC_DIR.getParentFile();
+
+            String testPropsFile = System.getProperty(OOZIE_TEST_PROPERTIES, "test.properties");
+           File file = (testPropsFile.startsWith("/"))
+                        ? new File(testPropsFile) : new File(OOZIE_SRC_DIR, testPropsFile);
             if (file.exists()) {
                 System.out.println();
                 System.out.println("*********************************************************************************");
@@ -193,8 +202,7 @@ public abstract class XTestCase extends TestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        String baseDir = System.getProperty(OOZIE_TEST_DIR, "/tmp");
-        hadoopVersion = System.getProperty(HADOOP_VERSION, "0.20.0");
+        String baseDir = System.getProperty(OOZIE_TEST_DIR, new File("target/test-data").getAbsolutePath());
         String msg = null;
         if (!baseDir.startsWith("/")) {
             msg = XLog.format("System property [{0}]=[{1}] must be set to an absolute path", OOZIE_TEST_DIR, baseDir);
@@ -205,8 +213,18 @@ public abstract class XTestCase extends TestCase {
             }
         }
         if (msg != null) {
-            throw new Error(msg);
+            System.err.println();
+            System.err.println(msg);
+            System.exit(-1);
         }
+        File f = new File(baseDir);
+        f.mkdirs();
+        if (!f.exists() || !f.isDirectory()) {
+            System.err.println();
+            System.err.println(XLog.format("Could not create test dir [{0}]",  baseDir));
+            System.exit(-1);
+        }
+        hadoopVersion = System.getProperty(HADOOP_VERSION, "0.20.0");
         sysProps = new HashMap<String, String>();
         testCaseDir = createTestCaseDir(this, true);
 
@@ -215,27 +233,23 @@ public abstract class XTestCase extends TestCase {
         Services.setOozieHome();
         testCaseConfDir = createTestCaseSubDir("conf");
 
-        //setting up custom Oozie site for testing if avail
-        String customOozieSite = System.getProperty("oozie.test.config.file", "");
-        if (!customOozieSite.equals("")) {
-            if (!customOozieSite.startsWith("/")) {
-                System.err.println();
-                System.err.println(XLog.format(
-                        "Custom configuration file must be an absolute path [{0}]", customOozieSite));
-                System.err.println();
-                System.exit(-1);
-            }
-            File source = new File(customOozieSite);
-            if (!source.exists()) {
-                System.err.println();
-                System.err.println(XLog.format(
-                        "Custom configuration file for testing does no exist [{0}]", customOozieSite));
-                System.err.println();
-                System.exit(-1);
-            }
-            File target = new File(testCaseConfDir, "oozie-site.xml");
-            IOUtils.copyStream(new FileInputStream(source), new FileOutputStream(target));
+        // load test Oozie site
+        String oozieTestDB = System.getProperty("oozie.test.db", "hsqldb");
+        String defaultOozieSize =
+            new File(OOZIE_SRC_DIR, "core/src/test/resources/" + oozieTestDB + "-oozie-site.xml").getAbsolutePath();
+        String customOozieSite = System.getProperty("oozie.test.config.file", defaultOozieSize);
+        File source = (customOozieSite.startsWith("/"))
+                      ? new File(customOozieSite) : new File(OOZIE_SRC_DIR, customOozieSite);
+        source = source.getAbsoluteFile();
+        if (!source.exists()) {
+            System.err.println();
+            System.err.println(XLog.format("Custom configuration file for testing does no exist [{0}]", 
+                                           source.getAbsolutePath()));
+            System.err.println();
+            System.exit(-1);
         }
+        File target = new File(testCaseConfDir, "oozie-site.xml");
+        IOUtils.copyStream(new FileInputStream(source), new FileOutputStream(target));
 
         if (System.getProperty("oozielocal.log") == null) {
             setSystemProperty("oozielocal.log", "/tmp/oozielocal.log");
@@ -250,16 +264,10 @@ public abstract class XTestCase extends TestCase {
             System.setProperty("oozie.services.ext", "org.apache.oozie.service.HadoopAccessorService");
         }
 
-        if (System.getProperty("oozie.test.db", "hsqldb").equals("hsqldb")) {
-            setSystemProperty("oozie.service.JPAService.jdbc.driver", "org.hsqldb.jdbcDriver");
-            setSystemProperty("oozie.service.JPAService.jdbc.url", "jdbc:hsqldb:mem:oozie-db;create=true");
+        if (System.getProperty("oozie.test.db.host") == null) {
+           System.setProperty("oozie.test.db.host", "localhost");
         }
-        if (System.getProperty("oozie.test.db", "hsqldb").equals("derby")) {
-            delete(new File(baseDir, "oozie-derby"));
-            setSystemProperty("oozie.service.JPAService.jdbc.driver", "org.apache.derby.jdbc.EmbeddedDriver");
-            setSystemProperty("oozie.service.JPAService.jdbc.url", "jdbc:derby:" + baseDir +
-                                                                     "/oozie-derby;create=true");
-        }
+        setSystemProperty(ConfigurationService.OOZIE_DATA_DIR, testCaseDir);
     }
 
     /**
@@ -353,8 +361,8 @@ public abstract class XTestCase extends TestCase {
      */
     private String getTestCaseDirInternal(TestCase testCase) {
         ParamChecker.notNull(testCase, "testCase");
-        File dir = new File(System.getProperty(OOZIE_TEST_DIR, "/tmp"));
-        dir = new File(dir, "oozietests");
+        File dir = new File(System.getProperty(OOZIE_TEST_DIR, "target/test-data"));
+        dir = new File(dir, "oozietests").getAbsoluteFile();
         dir = new File(dir, testCase.getClass().getName());
         dir = new File(dir, testCase.getName());
         return dir.getAbsolutePath();

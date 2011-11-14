@@ -19,22 +19,26 @@
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 <configuration>
     <property>
-        <name>oozie.service.DataSourceService.jdbc.driver</name>
+      <name>oozie.service.JPAService.jdbc.driver</name>
         <value>com.mysql.jdbc.Driver</value>
         <description>JDBC driver class.</description>
     </property>
     <property>
-        <name>oozie.service.DataSourceService.jdbc.url</name>
-        <value>jdbc:mysql://localhost:3306</value>
+        <name>oozie.test.db.port</name>
+        <value>3306</value>
+    </property>
+    <property>
+      <name>oozie.service.JPAService.jdbc.url</name>
+        <value>jdbc:mysql://${oozie.test.db.host}:${oozie.test.db.port}/oozie</value>
         <description>JDBC URL.</description>
     </property>
     <property>
-        <name>oozie.service.DataSourceService.jdbc.username</name>
+        <name>oozie.service.JPAService.jdbc.username</name>
         <value>oozie</value>
         <description>DB user name.</description>
     </property>
     <property>
-        <name>oozie.service.DataSourceService.jdbc.password</name>
+        <name>oozie.service.JPAService.jdbc.password</name>
         <value>oozie</value>
         <description>
             DB user password. IMPORTANT: if password is emtpy leave a 1 space string, the service trims the

@@ -86,11 +86,21 @@ $ mvn clean test -Doozie.test.hadoop.minicluster=false -Doozie.test.hadoop.secur
 
 NOTE: The embedded minicluster cannot be used when testing with 'kerberos' authentication.
 
-*Using a custom Oozie configuration for testcases (for example, to use a MySQL DB):*
+*Using a custom Oozie configuration for testcases:*
 
 <verbatim>
-$ mvn clean test -Dmysql -Doozie.test.config.file=/home/tucu/oozie-site-mysql.xml
+$ mvn clean test -Doozie.test.config.file=/home/tucu/custom-oozie-sitel.xml
 </verbatim>
+
+*Running the testcases with different databases:*
+
+<verbatim>
+$ mvn clean test -Doozie.test.db=[hsqldb*|derby|mysql|postgres|oracle]
+</verbatim>
+
+Using =mysql= and =oracle= enables profiles that will include their JARs files in the build. If using
+ =oracle=, the Oracle JDBC JAR file must be manually installed in the local Maven cache (the JAR is
+not available in public Maven repos).
 
 ---+++ Build Options Reference
 
@@ -105,19 +115,15 @@ undefined (Hadoop JARs are not included).
 
 *generateSite* (*): generates Oozie documentation, default is undefined (no documentation is generated)
 
-*mysql* (*): Includes MySQL JDBC driver in the distro, default is undefined, MySQL JDBC driver is not included.
-
-*oracle* (*): Includes Oracle JDBC driver in the distro, default is undefined, Oracle JDBC driver is not included.
-
 *skipTests* (*): skips the execution of all testcases, no value required, default is undefined
 
 *test*= (*): runs a single test case, to run a test give the test class name without package and extension, no default
 
 *hadoop20*= (*) : indicates the build/test should not include classes for Hadoop 20S, default is 'false'
 
-*oozie.test.db*= (*): indicates the database to use for running the testcases, supported values are 'hsqldb', 'derby' and 'other';
-default value is 'hsqldb'. IMPORTANT, when using 'derby' a Maven profile is activated to run all the testcases in
-'always' fork mode (otherwise Derby driver goes bonker after 50 testcases or so due to repeated initializations). Use 'other' when using MySQL, Oracle or PostgreSQL databases, if using 'other' a '-Doozie.test.config.file=' must be used with the correct JDBC information must be provided (the core/src/test/resources/ directory has samples for the different databases).
+*oozie.test.db*= (*): indicates the database to use for running the testcases, supported values are 'hsqldb', 'derby',
+ 'mysql', 'postgres' and 'oracle'; default value is 'hsqldb'. For each database there is
+ =core/src/test/resources/DATABASE-oozie-site.xml= file preconfigured.
 
 *oozie.test.properties* (*): indicates the file to load the test properties from, by default is =test.properties=.
 Having this option allows having different test properties sets, for example: minicluster, simple & kerberos.
