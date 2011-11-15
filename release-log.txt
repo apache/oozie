@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-602 Update the Hadoop version to be an Apache Hadoop version.
 OOZIE-557 Simplify/normalize testing configuration when using different databases.
 OOZIE-590 Log Retrieval from multiple .gz archive files
 OOZIE-587 Out of memory issues due to current query design
