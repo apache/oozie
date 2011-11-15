@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -199,19 +199,7 @@ public class Services {
         log.trace("Initializing");
         SERVICES = this;
         try {
-            Class<? extends Service>[] serviceClasses = (Class<? extends Service>[]) conf.getClasses(
-                    CONF_SERVICE_CLASSES);
-            if (serviceClasses != null) {
-                for (Class<? extends Service> serviceClass : serviceClasses) {
-                    setService(serviceClass);
-                }
-            }
-            serviceClasses = (Class<? extends Service>[]) conf.getClasses(CONF_SERVICE_EXT_CLASSES);
-            if (serviceClasses != null) {
-                for (Class<? extends Service> serviceClass : serviceClasses) {
-                    setService(serviceClass);
-                }
-            }
+            loadServices();
         }
         catch (RuntimeException ex) {
             XLog.getLog(getClass()).fatal(ex.getMessage(), ex);
@@ -232,6 +220,66 @@ public class Services {
         log.info("Initialized");
         log.info("Running with JARs for Hadoop version [{0}]", VersionInfo.getVersion());
         log.info("Oozie System ID [{0}] started!", getSystemId());
+    }
+
+    /**
+     * Loads the specified services.
+     *
+     * @param classes services classes to load.
+     * @param list    list of loaded service in order of appearance in the
+     *                configuration.
+     * @throws ServiceException thrown if a service class could not be loaded.
+     */
+    private void loadServices(Class[] classes, List<Service> list) throws ServiceException {
+        XLog log = new XLog(LogFactory.getLog(getClass()));
+        for (Class klass : classes) {
+            try {
+                Service service = (Service) klass.newInstance();
+                log.debug("Loading service [{}] implementation [{}]", service.getInterface(),
+                        service.getClass());
+                if (!service.getInterface().isInstance(service)) {
+                    throw new ServiceException(ErrorCode.E0101, klass, service.getInterface().getName());
+                }
+                list.add(service);
+            } catch (ServiceException ex) {
+                throw ex;
+            } catch (Exception ex) {
+                throw new ServiceException(ErrorCode.E0102, klass, ex.getMessage(), ex);
+            }
+        }
+    }
+
+    /**
+     * Loads services defined in <code>services</code> and
+     * <code>services.ext</code> and de-dups them.
+     *
+     * @return List of final services to initialize.
+     * @throws ServiceException throw if the services could not be loaded.
+     */
+    private void loadServices() throws ServiceException {
+        XLog log = new XLog(LogFactory.getLog(getClass()));
+        try {
+            Map<Class, Service> map = new LinkedHashMap<Class, Service>();
+            Class[] classes = conf.getClasses(CONF_SERVICE_CLASSES);
+            Class[] classesExt = conf.getClasses(CONF_SERVICE_EXT_CLASSES);
+            List<Service> list = new ArrayList<Service>();
+            loadServices(classes, list);
+            loadServices(classesExt, list);
+
+            //removing duplicate services, strategy: last one wins
+            for (Service service : list) {
+                if (map.containsKey(service.getInterface())) {
+                    log.debug("Replacing service [{}] implementation [{}]", service.getInterface(),
+                            service.getClass());
+                }
+                map.put(service.getInterface(), service);
+            }
+            for (Map.Entry<Class, Service> entry : map.entrySet()) {
+                setService(entry.getValue().getClass());
+            }
+        } catch (RuntimeException ex) {
+            throw new ServiceException(ErrorCode.E0103, ex.getMessage(), ex);
+        }
     }
 
     /**

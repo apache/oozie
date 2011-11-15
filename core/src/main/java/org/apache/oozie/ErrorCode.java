@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,6 +39,9 @@ public enum ErrorCode {
     E0026(XLog.OPS, "Missing required configuration property [{0}]"),
 
     E0100(XLog.OPS, "Could not initialize service [{0}], {1}"),
+    E0101(XLog.OPS, "Service [{0}] does not implement declared interface [{1}]"),
+    E0102(XLog.OPS, "Could not instanciate service class [{0}], {1}"),
+    E0103(XLog.OPS, "Could not load service classes, {0}"),
     E0110(XLog.OPS, "Could not parse or validate EL definition [{0}], {1}"),
     E0111(XLog.OPS, "class#method not found [{0}#{1}]"),
     E0112(XLog.OPS, "class#method does not have PUBLIC or STATIC modifier [{0}#{1}]"),
