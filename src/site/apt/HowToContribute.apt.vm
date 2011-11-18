@@ -1,0 +1,124 @@
+~~ Licensed under the Apache License, Version 2.0 (the "License");
+~~ you may not use this file except in compliance with the License.
+~~ You may obtain a copy of the License at
+~~
+~~   http://www.apache.org/licenses/LICENSE-2.0
+~~
+~~ Unless required by applicable law or agreed to in writing, software
+~~ distributed under the License is distributed on an "AS IS" BASIS,
+~~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+~~ See the License for the specific language governing permissions and
+~~ limitations under the License. See accompanying LICENSE file.
+
+  ---
+  Apache Oozie How to Contribute
+  ---
+  ---
+  ${maven.build.timestamp}
+
+Apache Oozie(TM) How to Contribute
+
+* Requirements
+
+  Oozie is a Java project and it requires:
+
+    * Unix environment.
+
+    * JDK 1.6.
+
+    * Maven 3.0.
+
+    * (Optional) An IDE (ie. Eclipse, IntelliJ, Netbeans can be easily used with the IDEs Maven support).
+
+    * To be online for the first build to download required plugins and dependencies.
+
+* Getting the Source
+
+  Get Oozie's source code from one of the {{{./VersionControl}Apache Version Control Systems}}.
+
+* Development, in Which Branch?
+
+  Most of the development is done on "trunk" and then backported (if required) to release branches.
+
+  Development can be done directly in a release branch only if the change is not meaningful on "trunk".
+
+  Oozie committers can create release and development branches. A development branch is commonly used
+  to work on a complex issue(s) that requires several JIRAs and eventually it will be merged back into
+  "trunk".
+
+* Making Changes to Oozie
+
+  First create an issue in {{{./IssueTracking.html}Oozie Issue Tracking System}} describing the bug,
+  improvement, new feature, task; and discuss if appropiate. It is important that the subject of
+  the issue to be descriptive of the issue, and consize, as it will be used for the CHANGES log.
+  All discussions should be done in the Issue Tracking System to make easier for developers to
+  follow or come back in the future.
+
+  Oozie development follows a Review Then Commit model.
+
+  Work on the issue in your local development environment and when you think it is ready for review
+  or integration submit the patch for a code review request using
+  {{{reviews.apache.org}Apache Code Review System}}.
+
+  Refine the patch based on the review discussions.
+
+  <<Important facts about the Code Review system>>:
+
+    * The Code Review system is integrated with the Issue Tracking system (all review discussions
+    are logged in the Issue tracking system). For this you must enter the issue ID in the review
+    request.
+
+    * The Code Review system is shared with other Apache projects, you must enter <<oozie>> as the
+    group for the review request.
+
+    * The Code Review system only accept patches generated with <<svn diff>> syntax
+    (<<git diff --no-prefix>> syntax is not accepted. If you work using Apache Git repository,
+    you'll have to apply the patch to an SVN checkout and then generate the SVN patch from there).
+
+  Once your patch has been +1ed by Oozie committers (according to the project bylaws) the patch
+  can be committed to the Version Control system. If you are a committer, you can commit it
+  yourself. If you are not a committer, one of the committers that +1ed the patch will commit it
+  on your behalf.
+
+  The corresponding issue in the Issue Tracking and in the Code Review systems must be closed as
+  'fixed'by the committer once the patch has been committed to all relevant branches.
+
+* Patches General Guidelines
+
+** Coding Conventions
+
+  Oozie uses {{{http://java.sun.com/docs/codeconv/CodeConventions.pdf}Java standard coding conventions}}
+  with the following changes:
+
+    * Indentation is 4 spaces instead of 2 spaces.
+
+    * Maximum line lenght is 132 characters instead of 80 characters.
+
+    * No <<@author>> tags.
+
+  In addition:
+
+    * All files must include the Apache License header unless the file type does not support comments.
+
+    * All public classes/methods should have Javadocs. The code should have inline comments when
+    appropriate to clarify things.
+
+    * No stale/commented-out code.
+
+    * Remove all trailing spaces.
+
+    * Don't reformat code that is not part of the patch.
+
+** Test Cases
+
+  All patches should include test cases whenever possible. Test cases should have as much coverage
+  as possible (within reasonable boundaries).
+
+** Documentation
+
+  If the patch is adding/modifying functionality that is user facing, it must include documentation.
+
+** Changes Log File
+
+  The Changes Log file must be edited by the committer committing the patch (the patch must not
+  include changes to the Changes Log file). This is to avoid unnecessary conflicts.

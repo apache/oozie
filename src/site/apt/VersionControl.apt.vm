@@ -1,0 +1,42 @@
+~~ Licensed under the Apache License, Version 2.0 (the "License");
+~~ you may not use this file except in compliance with the License.
+~~ You may obtain a copy of the License at
+~~
+~~   http://www.apache.org/licenses/LICENSE-2.0
+~~
+~~ Unless required by applicable law or agreed to in writing, software
+~~ distributed under the License is distributed on an "AS IS" BASIS,
+~~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+~~ See the License for the specific language governing permissions and
+~~ limitations under the License. See accompanying LICENSE file.
+
+  ---
+  Apache Oozie Version Control System
+  ---
+  ${maven.build.timestamp}
+
+Apache Oozie(TM) Version Control System
+
+* Overview
+
+  The Apache oozie source code resides in the Apache Subversion (SVN) repository and it is mirrored in GitHub.
+
+* Web Access (read-only)
+
+  The source code can be browsed via the Web at {{http://svn.apache.org/viewcvs.cgi/incubator/oozie}}.
+  No SVN client software is required.
+
+  The GitHub URL for web access is {{https://github.com/apache/oozie}}.
+  No Git client software is required.
+
+* Anonymous Access (read-only)
+
+  The SVN URL for anonymous users is {{http://svn.apache.org/repos/asf/incubator/oozie}}.
+  Instructions for anonymous SVN access are {{{http://www.apache.org/dev/version-control.html#anon-svn}here}}.
+
+  The GitHub URL for annonymous users is {{https://github.com/apache/oozie.git}}.
+
+* Committer Access (read-write)
+
+  The SVN URL for committers is {{https://svn.apache.org/repos/asf/incubator/oozie}}.
+  Instructions for committer SVN access are {{{http://www.apache.org/dev/version-control.html#https-svn}here}}.

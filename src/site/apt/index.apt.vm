@@ -11,41 +11,28 @@
 ~~ limitations under the License. See accompanying LICENSE file.
 
   ---
-  Apache Oozie, Workflow Scheduler for Hadoop ${project.version}
+  Apache Oozie Workflow Scheduler for Hadoop
   ---
   ${maven.build.timestamp}
 
-Apache Oozie, Workflow Scheduler for Hadoop ${project.version}
+Apache Oozie(TM) Workflow Scheduler for Hadoop
 
 * Overview
 
-  Oozie is an open-source workflow/coordination service to manage data processing jobs for Apache Hadoop™. It is an extensible, scalable and data-aware service to orchestrate dependencies between jobs running on Hadoop (including HDFS, Pig and MapReduce). Oozie is a lot of things, but being:
+  Oozie is a workflow/coordination system to manage Apache Hadoop(TM) jobs.
 
-    * A workflow solution for off Hadoop processing
+  Oozie Workflow jobs are Directed Acyclical Graphs (DAGs) of actions.
 
-    * Another query processing API, a la Cascading
+  Oozie Coordinator jobs are recurrent Oozie Workflow jobs triggered by time (frequency) and data availabilty.
 
-     is not one of them.
+  Oozie is integrated with the rest of the Hadoop stack supporting several types of Hadoop jobs out of the box
+  (Java map-reduce, Streaming map-reduce, Pig, Distcp, etc.)
 
+  Oozie is a scalable, reliable and extensible system.
 
-*Oozie Benefits
+  Developers interested in getting more involved with Oozie may join the {{{./MailingLists.html}mailing lists}},
+  {{{./IssueTracking.html}report bugs}}, retrieve code from the {{{./VersionControl}version control system}},
+  and make {{{./HowToContribute.html}contributions}}.
 
-    Complex workflow action dependencies: Oozie workflow comprises of actions and dependencies among them. Users create Directed Acyclical Graphs (DAG) to model their workflow. Oozie at runtime manages the dependencies and execute the actions when the dependencies identified in the DAG are satisfied.
-    Reduces Time-To-Market (TTM): The DAG specification enables users to specify the workflow. Users save the time to build and maintain custom solutions for dependency and workflow management.
-
-    Frequency execution: Oozie workflow specification supports both data and time triggers. Users can specify execution frequency and can wait for data arrival to trigger an action in the workflow.
-
-    Native Hadoop stack integration: Oozie supports all types of Hadoop jobs and is integrated with the Hadoop stack. Yahoo! distribution of Oozie is validated against the Hadoop stack.
-
-    Oozie was designed for Yahoo!\’s complex workflows and data pipelines at global scale. It is integrated with the Yahoo! Distribution of Hadoop with security and is a primary mechanism to manage a variety of complex data analysis workloads across Yahoo!.
-
-
-* License
-
-  Oozie is distributed under {{{http://www.apache.org/licenses/}Apache License 2.0}}.
-
-* Source Repository
-
-  {{http://svn.apache.org/repos/asf/incubator/oozie/}}
 
 

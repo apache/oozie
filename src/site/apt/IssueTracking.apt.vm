@@ -11,11 +11,15 @@
 ~~ limitations under the License. See accompanying LICENSE file.
 
   ---
-  Apache Oozie Downloads
-  ---
+  Apache Oozie Issue Tracking System
   ---
   ${maven.build.timestamp}
 
-Apache Oozie(TM) Downloads
+Apache Oozie(TM) Issue Tracking System
 
-  TBD
+  Apache Oozie tracks both bugs and enhancement requests {{{http://issues.apache.org/jira/browse/OOZIE}here}} using
+  Apache JIRA. We welcome input, however, <<before filing a request>>, please make sure you do the following:
+
+  * Search the JIRA database.
+
+  * Check the oozie-users {{{./MailingLists.html}mailing list}}, both by searching the archives and by asking questions.

@@ -23,30 +23,36 @@
     <skin>
         <groupId>org.apache.maven.skins</groupId>
         <artifactId>maven-stylus-skin</artifactId>
-        <version>1.1</version>
+        <version>1.3</version>
     </skin>
 
     <body>
         <links>
-            <item name="OTHER RELEASES" href="../index.html"/>
             <item name="ASF" href="http://www.apache.org/"/>
         </links>
-	<breadcrumbs>
-		<item name="Apache Oozie" href="index.html"/>
-	</breadcrumbs>
+        <breadcrumbs>
+            <item name="Apache Oozie" href="index.html"/>
+        </breadcrumbs>
 
-	<menu name="Apache Oozie">
-		<item name="Home" href="index.html" />
-		<item name="Who we are" href="who_we_are.html" />
-	</menu>
+        <menu name="Project">
+            <item name="Home" href="./index.html"/>
+            <item name="Downloads" href="./Downloads.html"/>
+            <item name="Credits" href="./Credits.html"/>
+            <item name="Mailing Lists" href="./MailingLists.html"/>
+            <item name="Issue Tracking" href="./IssueTracking.html"/>
+            <item name="IRC Channel" href="./IRCChannel.html"/>
+        </menu>
 
-	<menu name="Getting Started">
-            <item name="Quick start" href="quick-start.html" />
-	    <item name="Mailing List" href="mailing_list.html" />
-	    <item name="Downloads" href="downloads.html" />
-            <item name="Documentation" href="documentation.html" />
-            <item name="How to Release" href="howtorelease.html" />
-	</menu>
+        <menu name="Developers">
+            <item name="Version Control" href="./VersionControl.html"/>
+            <item name="How To Contribute" href="./HowToContribute.html"/>
+            <item name="How to Release" href="HowToRelease.html"/>
+        </menu>
+
+        <menu name="Documentation">
+            <item name="Quick start" href="./QuickStart.html"/>
+        </menu>
+
     </body>
 
 </project>

@@ -11,11 +11,13 @@
 ~~ limitations under the License. See accompanying LICENSE file.
 
   ---
-  Apache Oozie Downloads
-  ---
+  Apache Oozie IRC Channel
   ---
   ${maven.build.timestamp}
 
-Apache Oozie(TM) Downloads
+Apache Oozie(TM) IRC Channel
 
-  TBD
+  There is an IRC channel dedicated to avro at <<irc.freenode.org>>. The name of the channel is <<#oozie>>.
+
+  The IRC channel can be used for online discussion about Oozie related stuff, but developers should be careful
+  to transfer all the official decisions or useful discussions to {{{./IssueTracking.html}Issue Tracking system}}.
