@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-601 Oozie's POMs should use org.apache.oozie as group. (tucu)
 OOZIE-480 In Oozie-site.xml, if we specify oozie.services.ext property is not overriding the services.
 OOZIE-602 Update the Hadoop version to be an Apache Hadoop version.
 OOZIE-557 Simplify/normalize testing configuration when using different databases.
