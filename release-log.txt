@@ -1,12 +1,13 @@
 -- Oozie 3.2.0 release
 
+OOZIE-607 Pig POM brings in several unneeded dependencies. (tucu)
 OOZIE-601 Oozie's POMs should use org.apache.oozie as group. (tucu)
-OOZIE-480 In Oozie-site.xml, if we specify oozie.services.ext property is not overriding the services.
-OOZIE-602 Update the Hadoop version to be an Apache Hadoop version.
-OOZIE-557 Simplify/normalize testing configuration when using different databases.
-OOZIE-590 Log Retrieval from multiple .gz archive files
-OOZIE-587 Out of memory issues due to current query design
-OOZIE-600 Bump-up the version to 3.2.0-SNAPSHOT
+OOZIE-480 In Oozie-site.xml, if we specify oozie.services.ext property is not overriding the services. (tucu)
+OOZIE-602 Update the Hadoop version to be an Apache Hadoop version. (tucu)
+OOZIE-557 Simplify/normalize testing configuration when using different databases. (tucu via mohammad)
+OOZIE-590 Log Retrieval from multiple .gz archive files. (kiran via angeloh)
+OOZIE-587 Out of memory issues due to current query design. (virag via angeloh)
+OOZIE-600 Bump-up the version to 3.2.0-SNAPSHOT. (mohammad via angeloh)
 
 -- Oozie 3.1.2 release
 
