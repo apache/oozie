@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-609 OOZIE-609 Oozie services fail to start with log enabled. (tucu)
 OOZIE-607 Pig POM brings in several unneeded dependencies. (tucu)
 OOZIE-601 Oozie's POMs should use org.apache.oozie as group. (tucu)
 OOZIE-480 In Oozie-site.xml, if we specify oozie.services.ext property is not overriding the services. (tucu)

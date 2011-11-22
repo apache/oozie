@@ -235,7 +235,7 @@ public class Services {
         for (Class klass : classes) {
             try {
                 Service service = (Service) klass.newInstance();
-                log.debug("Loading service [{}] implementation [{}]", service.getInterface(),
+                log.debug("Loading service [{0}] implementation [{1}]", service.getInterface(),
                         service.getClass());
                 if (!service.getInterface().isInstance(service)) {
                     throw new ServiceException(ErrorCode.E0101, klass, service.getInterface().getName());
@@ -269,7 +269,7 @@ public class Services {
             //removing duplicate services, strategy: last one wins
             for (Service service : list) {
                 if (map.containsKey(service.getInterface())) {
-                    log.debug("Replacing service [{}] implementation [{}]", service.getInterface(),
+                    log.debug("Replacing service [{0}] implementation [{1}]", service.getInterface(),
                             service.getClass());
                 }
                 map.put(service.getInterface(), service);
