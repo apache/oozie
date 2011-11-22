@@ -30,8 +30,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-streaming</artifactId>
+            <groupId>org.apache.pig</groupId>
+            <artifactId>pig</artifactId>
             <scope>compile</scope>
             <exclusions>
                 <exclusion>
@@ -39,11 +39,6 @@
                     <artifactId>hadoop-core</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.pig</groupId>
-            <artifactId>pig</artifactId>
-            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>jline</groupId>
@@ -89,6 +84,47 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>mr1</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+                <property>
+                    <name>!mr2</name>
+                </property>
+            </activation>
+            <dependencies>
+
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-streaming</artifactId>
+                    <scope>compile</scope>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>org.apache.hadoop</groupId>
+                            <artifactId>hadoop-core</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>mr2</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <property>
+                    <name>mr2</name>
+                </property>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-streaming</artifactId>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
 
 </project>
 
