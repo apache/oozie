@@ -250,7 +250,7 @@ public class DateUtils {
 
     /**
      * Return the UTC date and time in W3C format down to second
-     * (yyyy-MM-ddTHH:mm:ssZ). i.e.: 1997-07-16T19:20:30Z
+     * (yyyy-MM-ddTHH:mmZ). i.e.: 1997-07-16T19:20:30Z
      *
      * @return the formatted time string.
      */
@@ -259,4 +259,18 @@ public class DateUtils {
         sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
         return sdf.format(date);
     }
+
+    /**
+     * Return the UTC date and time in W3C format down to second
+     * (yyyy-MM-ddTHH:mmZ). i.e.: 1997-07-16T19:20Z The input date is a
+     * long (Unix Time Stamp)
+     *
+     * @return the formatted time string.
+     */
+    public static String convertDateToString(long timeStamp) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
+        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return sdf.format(new Date(timeStamp));
+    }
+
 }
