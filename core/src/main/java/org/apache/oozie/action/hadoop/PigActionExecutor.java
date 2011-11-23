@@ -129,4 +129,15 @@ public class PigActionExecutor extends JavaActionExecutor {
         return true;
     }
 
+    /**
+     * Return the sharelib postfix for the action.
+     *
+     * @param context executor context.
+     * @param actionXml the action XML.
+     * @return the action sharelib post fix, this implementation returns <code>pig</code>.
+     */
+    protected String getShareLibPostFix(Context context, Element actionXml) {
+        return "pig";
+    }
+
 }

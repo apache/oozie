@@ -25,6 +25,8 @@ copied.
 
 ---+++ Running the Examples
 
+For the Streaming and Pig example, the [[DG_QuickStart#OozieShareLib][Oozie Share Library]] must be installed in HDFS.
+
 Add Oozie =bin/= to the environment PATH.
 
 The examples assume the JobTracker is =localhost:9001= and the NameNode is =hdfs://localhost:9000=. If the actual
@@ -80,17 +82,6 @@ variable to the Oozie URL in the shell environment. For example:
 $ export OOZIE_URL="http://localhost:8080/oozie"
 $
 $ oozie job -info 14-20090525161321-oozie-tucu
-</verbatim>
-
----++ Examples Share Lib
-
-The streaming, pig, demo and custom-main examples pick up the streaming and pig JARs from an example share lib
-bundled with the examples =examples/apps/examples-lib/= .
-
-The setting for the share lib is done in the job properties using the =oozie.libpath= property.
-
-<verbatim>
-oozie.libpath=/user/${user.name}/examples/apps/examples-lib
 </verbatim>
 
 ---++ Java API Example

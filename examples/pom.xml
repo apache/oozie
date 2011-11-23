@@ -63,7 +63,13 @@
 
         <dependency>
             <groupId>org.apache.oozie</groupId>
-            <artifactId>oozie-sharelib</artifactId>
+            <artifactId>oozie-sharelib-pig</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.oozie</groupId>
+            <artifactId>oozie-sharelib-streaming</artifactId>
             <scope>compile</scope>
         </dependency>
 

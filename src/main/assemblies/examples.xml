@@ -113,16 +113,4 @@
         </file> 
     </files>
 
-    <dependencySets>
-        <dependencySet>
-            <outputDirectory>/examples/apps/examples-lib</outputDirectory>
-            <unpack>false</unpack>
-            <excludes>
-                <exclude>${project.groupId}:oozie-examples</exclude>
-                <exclude>${project.groupId}:oozie-sharelib</exclude>
-            </excludes>
-            <useTransitiveDependencies/>
-        </dependencySet>
-    </dependencySets>
-
 </assembly>

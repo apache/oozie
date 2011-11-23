@@ -85,12 +85,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.apache.oozie</groupId>
-            <artifactId>oozie-sharelib</artifactId>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
            <groupId>org.slf4j</groupId>
            <artifactId>slf4j-log4j12</artifactId>
            <scope>test</scope>
@@ -139,24 +133,6 @@
             <scope>compile</scope>
         </dependency>
 
-		<dependency>
-			<groupId>org.python</groupId>
-			<artifactId>jython</artifactId>
-			<scope>test</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>org.antlr</groupId>
-			<artifactId>antlr-runtime</artifactId>
-			<scope>test</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>com.google.guava</groupId>
-			<artifactId>guava</artifactId>
-			<scope>test</scope>
-		</dependency>
-
         <!--
         Oozie web-app module must exclude it.
          -->
@@ -199,6 +175,18 @@
             <groupId>postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.oozie</groupId>
+            <artifactId>oozie-sharelib-pig</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.oozie</groupId>
+            <artifactId>oozie-sharelib-streaming</artifactId>
+            <scope>provided</scope>
         </dependency>
 
     </dependencies>

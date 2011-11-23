@@ -189,11 +189,6 @@ public abstract class WorkflowAppService implements Service {
                 }
             }
 
-            if (systemLibPath != null && jobConf.getBoolean(OozieClient.USE_SYSTEM_LIBPATH, false)) {
-                List<String> libFilePaths = getLibFiles(fs, systemLibPath);
-                filePaths.addAll(libFilePaths);
-            }
-
             conf.setStrings(APP_LIB_PATH_LIST, filePaths.toArray(new String[filePaths.size()]));
 
             //Add all properties start with 'oozie.'
@@ -277,5 +272,14 @@ public abstract class WorkflowAppService implements Service {
         public boolean accept(Path path) {
             return true;
         }
+    }
+
+    /**
+     * Returns Oozie system libpath.
+     *
+     * @return Oozie system libpath (sharelib) in HDFS if present, otherwise it returns <code>NULL</code>.
+     */
+    public Path getSystemLibPath() {
+        return systemLibPath;
     }
 }

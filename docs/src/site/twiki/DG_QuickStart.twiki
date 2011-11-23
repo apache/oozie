@@ -85,6 +85,7 @@ command line tool.
 NOTE: The Oozie server installation includes the Oozie client. The Oozie client should be installed in remote machines
 only.
 
+#OozieShareLib
 ---++ Oozie Share Lib Installation
 
 Expand the =oozie-sharelib= TAR.GZ file bundled with the distribution.

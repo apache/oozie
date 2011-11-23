@@ -18,6 +18,7 @@
 package org.apache.oozie.action.hadoop;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -38,6 +39,7 @@ import java.util.Map.Entry;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.AccessControlException;
@@ -348,13 +350,49 @@ public class JavaActionExecutor extends ActionExecutor {
         }
     }
 
+    protected void addActionShareLib(Context context, Element actionXml, Path appPath, Configuration conf)
+            throws ActionExecutorException {
+        String actionShareLibPostfix = getShareLibPostFix(context, actionXml);
+        if (actionShareLibPostfix != null) {
+            try {
+                Path systemLibPath = Services.get().get(WorkflowAppService.class).getSystemLibPath();
+                if (systemLibPath != null) {
+                    Path actionLibPath = new Path(systemLibPath, actionShareLibPostfix);
+                    XConfiguration wfJobConf = new XConfiguration(new StringReader(context.getWorkflow().getConf()));
+                    if (wfJobConf.getBoolean(OozieClient.USE_SYSTEM_LIBPATH, false)) {
+                        String user = conf.get("user.name");
+                        String group = conf.get("group.name");
+                        FileSystem fs =
+                            Services.get().get(HadoopAccessorService.class).createFileSystem(user, group, conf);
+                        if (fs.exists(actionLibPath)) {
+                            FileStatus[] files = fs.listStatus(actionLibPath);
+                            for (FileStatus file : files) {
+                                addToCache(conf, appPath, file.getPath().toUri().getPath(), false);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (HadoopAccessorException ex){
+                throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED,
+                                                  ex.getErrorCode().toString(), ex.getMessage());
+            }
+            catch (IOException ex){
+                throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED,
+                                                  "It should never happen", ex.getMessage());
+            }
+        }
+    }
+
     @SuppressWarnings("unchecked")
     void setLibFilesArchives(Context context, Element actionXml, Path appPath, Configuration conf)
             throws ActionExecutorException {
         Configuration proto = context.getProtoActionConf();
 
+        // launcher JAR
         addToCache(conf, appPath, getOozieLauncherJar(context), false);
 
+        // Workflow lib/
         String[] paths = proto.getStrings(WorkflowAppService.APP_LIB_PATH_LIST);
         if (paths != null) {
             for (String path : paths) {
@@ -362,6 +400,7 @@ public class JavaActionExecutor extends ActionExecutor {
             }
         }
 
+        // files and archives defined in the action
         for (Element eProp : (List<Element>) actionXml.getChildren()) {
             if (eProp.getName().equals("file")) {
                 String path = eProp.getTextTrim();
@@ -374,6 +413,9 @@ public class JavaActionExecutor extends ActionExecutor {
                 }
             }
         }
+
+        // Oozie sharelib (for the action)
+        addActionShareLib(context, actionXml, appPath, conf);
     }
 
     protected String getLauncherMain(Configuration launcherConf, Element actionXml) {
@@ -981,6 +1023,24 @@ public class JavaActionExecutor extends ActionExecutor {
     @Override
     public boolean isCompleted(String externalStatus) {
         return FINAL_STATUS.contains(externalStatus);
+    }
+
+    /**
+     * Return the sharelib postfix for the action.
+     * <p/>
+     * If <code>NULL</code> or emtpy, it means that the action does not use the action
+     * sharelib.
+     * <p/>
+     * If a non-empty string, i.e. <code>foo</code>, it means the action uses the
+     * action sharelib subdirectory <code>foo</code> and all JARs in the <code>foo</code>
+     * directory will be in the action classpath.
+     *
+     * @param context executor context.
+     * @param actionXml the action XML.
+     * @return the action sharelib post fix, this implementation returns <code>NULL</code>.
+     */
+    protected String getShareLibPostFix(Context context, Element actionXml) {
+        return null;
     }
 
 }

@@ -32,6 +32,7 @@ import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jdom.Namespace;
 import org.json.simple.JSONObject;
 
@@ -193,6 +194,19 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
             groups.put(gName, group);
         }
         return groups;
+    }
+
+    /**
+     * Return the sharelib postfix for the action.
+     *
+     * @param context executor context.
+     * @param actionXml the action XML.
+     * @return the action sharelib post fix, this implementation returns <code>NULL</code>
+     * or <code>streaming</code> if the mapreduce action is streaming.
+     */
+    protected String getShareLibPostFix(Context context, Element actionXml) {
+        Namespace ns = actionXml.getNamespace();
+        return (actionXml.getChild("streaming", ns) != null) ? "mapreduce-streaming" : null;
     }
 
 }

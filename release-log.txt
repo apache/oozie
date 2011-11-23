@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-610 Oozie system share lib should have jars per action type. (tucu)
 OOZIE-565 Make Oozie compile against Hadoop 0.23. (tucu)
 OOZIE-609 Oozie services fail to start with log enabled. (tucu)
 OOZIE-607 Pig POM brings in several unneeded dependencies. (tucu)
