@@ -247,5 +247,71 @@
         </description>
     </property>
 
+    <property>
+        <name>oozie.authentication.type</name>
+        <value>simple</value>
+        <description>
+            Defines authentication used for Oozie HTTP endpoint.
+            Supported values are: simple | kerberos | #AUTHENTICATION_HANDLER_CLASSNAME#
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.authentication.token.validity</name>
+        <value>36000</value>
+        <description>
+            Indicates how long (in seconds) an authentication token is valid before it has
+            to be renewed.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.authentication.signature.secret</name>
+        <value>oozie</value>
+        <description>
+            The signature secret for signing the authentication tokens.
+            If not set a random secret is generated at startup time.
+            In order to authentiation to work correctly across multiple hosts
+            the secret must be the same across al the hosts.
+        </description>
+    </property>
+
+    <property>
+      <name>oozie.authentication.cookie.domain</name>
+      <value></value>
+      <description>
+        The domain to use for the HTTP cookie that stores the authentication token.
+        In order to authentiation to work correctly across multiple hosts
+        the domain must be correctly set.
+      </description>
+    </property>
+
+    <property>
+        <name>oozie.authentication.simple.anonymous.allowed</name>
+        <value>true</value>
+        <description>
+            Indicates if anonymous requests are allowed.
+            This setting is meaningful only when using 'simple' authentication.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.authentication.kerberos.principal</name>
+        <value>HTTP/localhost@${local.realm}</value>
+        <description>
+            Indicates the Kerberos principal to be used for HTTP endpoint.
+            The principal MUST start with 'HTTP/' as per Kerberos HTTP SPNEGO specification.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.authentication.kerberos.keytab</name>
+        <value>${oozie.service.HadoopAccessorService.keytab.file}</value>
+        <description>
+            Location of the keytab file with the credentials for the principal.
+            Referring to the same keytab file Oozie uses for its Kerberos credentials for Hadoop.
+        </description>
+    </property>
+
 </configuration>
 

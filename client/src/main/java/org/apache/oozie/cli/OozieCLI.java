@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,6 +48,7 @@ import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.oozie.BuildInfo;
+import org.apache.oozie.client.AuthOozieClient;
 import org.apache.oozie.client.BundleJob;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
@@ -145,6 +146,9 @@ public class OozieCLI {
      * @param args options and arguments for the Oozie CLI.
      */
     public static void main(String[] args) {
+        if (!System.getProperties().contains(AuthOozieClient.USE_AUTH_TOKEN_CACHE_SYS_PROP)) {
+            System.setProperty(AuthOozieClient.USE_AUTH_TOKEN_CACHE_SYS_PROP, "true");
+        }
         System.exit(new OozieCLI().run(args));
     }
 
@@ -493,7 +497,7 @@ public class OozieCLI {
         return changeValue;
     }
 
-    private void addHeader(OozieClient wc) {
+    protected void addHeader(OozieClient wc) {
         for (Map.Entry entry : System.getProperties().entrySet()) {
             String key = (String) entry.getKey();
             if (key.startsWith(WS_HEADER_PREFIX)) {
@@ -513,10 +517,7 @@ public class OozieCLI {
      * @throws OozieCLIException thrown if the OozieClient could not be configured.
      */
     protected OozieClient createOozieClient(CommandLine commandLine) throws OozieCLIException {
-        OozieClient wc = new OozieClient(getOozieUrl(commandLine));
-        addHeader(wc);
-        setDebugMode(wc);
-        return wc;
+        return createXOozieClient(commandLine);
     }
 
     /**
@@ -529,7 +530,7 @@ public class OozieCLI {
      * @throws OozieCLIException thrown if the XOozieClient could not be configured.
      */
     protected XOozieClient createXOozieClient(CommandLine commandLine) throws OozieCLIException {
-        XOozieClient wc = new XOozieClient(getOozieUrl(commandLine));
+        XOozieClient wc = new AuthOozieClient(getOozieUrl(commandLine));
         addHeader(wc);
         setDebugMode(wc);
         return wc;

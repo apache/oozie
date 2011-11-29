@@ -21,9 +21,9 @@ usage:
       custom headers for Oozie web services can be specified using '-Dheader:NAME=VALUE'
 
       oozie help : display usage
-
+.
       oozie version : show client version
-
+.
       oozie job <OPTIONS> : job operations
                 -action <arg>         coordinator rerun on action ids (requires -rerun); coordinator log retrieval on action ids (requires -log)
                 -change <arg>         change a coordinator/bundle job
@@ -52,7 +52,7 @@ usage:
                 -value <arg>          new endtime/concurrency/pausetime value for changing a
                                       coordinator job; new pausetime value for changing a bundle job
                 -verbose              verbose mode
-
+.
       oozie jobs <OPTIONS> : jobs status
                  -filter <arg>    user=<U>;name=<N>;group=<G>;status=<S>;...
                  -jobtype <arg>   job type ('Supported in Oozie-2.0 or later versions ONLY -
@@ -62,7 +62,7 @@ usage:
                  -offset <arg>    jobs offset (default '1')
                  -oozie <arg>     Oozie URL
                  -verbose         verbose mode
-
+.
       oozie admin <OPTIONS> : admin operations
                   -oozie <arg>        Oozie URL
                   -queuedump          show Oozie server queue elements
@@ -70,14 +70,14 @@ usage:
                   -systemmode <arg>   Supported in Oozie-2.0 or later versions ONLY. Change oozie
                                       system mode [NORMAL|NOWEBSERVICE|SAFEMODE]
                   -version            show Oozie server build version
-
+.
       oozie validate <ARGS> : validate a workflow XML file
-
+.
       oozie sla <OPTIONS> : sla operations (Supported in Oozie-2.0 or later)
                 -len <arg>      number of results (default '100')
                 -offset <arg>   start offset (default '0')
                 -oozie <arg>    Oozie URL
-
+.
       oozie pig <OPTIONS> -X <ARGS> : submit a pig job, everything after '-X' are pass-through parameters to pig
                 -config <arg>         job configuration file '.properties'
                 -D <property=value>   set/override value for given property
@@ -86,6 +86,28 @@ usage:
 </verbatim>
 
 ---++ Common CLI Options
+
+---+++ Authentication
+
+The =oozie= CLI automatically perform authentication if the Oozie server requests it. By default it supports both
+pseudo/simple authentication and Kerberos HTTP SPNEGO authentication.
+
+For pseudo/simple authentication the =oozie= CLI uses the user name of the current OS user.
+
+For Kerberos HTTP SPNEGO authentication the =oozie= CLI uses the default principal for the OS Kerberos cache
+(normally the principal that did =kinit=).
+
+Oozie uses Apache Hadoop-Auth (Java HTTP SPENGO) library for authentication.
+This library can be extended to support other authentication mechanisms.
+
+Once authentication is performed successfully the received authentication token is cached in the user home directory
+in the =.oozie-auth-token= file with owner-only permissions. Subsequent requests reuse the cached token while valid.
+
+The use of the cache file can be disabled by invoking the =oozie= CLI with the =-Doozie.auth.token.cache=false=
+option.
+
+To use an custom authentication mechanism, a Hadoop-Auth =Authenticator= implementation must be specified with the
+ =-Dauthenticator.class= = =CLASS= option.
 
 ---+++ Oozie URL
 
@@ -244,7 +266,7 @@ Valid value names are:
 
 Repeated value names are not allowed. An empty string "" can be used to reset pause time to none.
 
-After the command is executed the job's pause time should be changed. 
+After the command is executed the job's pause time should be changed.
 
 ---+++ Rerunning a Workflow Job
 
@@ -496,7 +518,7 @@ Job ID                                   Bundle Name    Status    Kickoff       
 ------------------------------------------------------------------------------------------------------------------------------------
 0000001-110322105610515-oozie-chao-B     BUNDLE-TEST    RUNNING   2012-01-15 00:24    2011-03-22 18:06    joe        users
 ------------------------------------------------------------------------------------------------------------------------------------
-0000000-110322105610515-oozie-chao-B     BUNDLE-TEST    DONEWITHERROR2012-01-15 00:24    2011-03-22 17:58    joe        users       
+0000000-110322105610515-oozie-chao-B     BUNDLE-TEST    DONEWITHERROR2012-01-15 00:24    2011-03-22 17:58    joe        users
 ------------------------------------------------------------------------------------------------------------------------------------
 </verbatim>
 

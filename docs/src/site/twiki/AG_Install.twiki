@@ -184,11 +184,65 @@ Oozie logs in 4 different files:
 
 The embedded Tomcat and embedded Derby log files are also written to Oozie's =logs/= directory.
 
----+++ Oozie Authentication Configuration
+---+++ Oozie User Authentication Configuration
+
+Oozie supports Kerberos HTTP SPNEGO authentication, pseudo/simple authentication and anonymous access
+for client connections.
+
+Anonymous access (*default*) does not require the user to authenticate and the user ID is obtained from
+the job properties on job submission operations, other operations are anonymous.
+
+Pseudo/simple authentication requires the user to specify the user name on the request, this is done by
+the PseudoAuthenticator class by injecting the =user.name= parameter in the query string of all requests.
+The =user.name= parameter value is taken from the client process Java System property =user.name=.
+
+Kerberos HTTP SPNEGO authentication requires the user to perform a Kerberos HTTP SPNEGO authentication sequence.
+
+If Pseudo/simple or Kerberos HTTP SPNEGO authentication mechanisms are used, Oozie will return the user an
+authentication token HTTP Cookie that can be used in later requests as identy proof.
+
+Oozie uses Apache Hadoop-Auth (Java HTTP SPENGO) library for authentication.
+This library can be extended to support other authentication mechanisms.
+
+Oozie user authentication is configured using the following configuration properties (default values shown):
+
+<verbatim>
+  oozie.authentication.type=simple
+  oozie.authentication.token.validity=36000
+  oozie.authentication.signature.secret=
+  oozie.authentication.cookie.domain=
+  oozie.authentication.simple.anonymous.allowed=true
+  oozie.authentication.kerberos.principal=HTTP/localhost@${local.realm}
+  oozie.authentication.kerberos.keytab=${oozie.service.HadoopAccessorService.keytab.file}
+</verbatim>
+
+The =type= defines authentication used for Oozie HTTP endpoint, the supported values are:
+simple | kerberos | #AUTHENTICATION_HANDLER_CLASSNAME#.
+
+The =token.validity= indicates how long (in seconds) an authentication token is valid before it has
+to be renewed.
+
+The =signature.secret= is the signature secret for signing the authentication tokens. If not set a random
+secret is generated at startup time.
+
+The =oozie.authentication.cookie.domain= The domain to use for the HTTP cookie that stores the
+authentication token. In order to authentiation to work correctly across all Hadoop nodes web-consoles
+the domain must be correctly set.
+
+The =simple.anonymous.allowed= indicates if anonymous requests are allowed. This setting is meaningful
+only when using 'simple' authentication.
+
+The =kerberos.principal= indicates the Kerberos principal to be used for HTTP endpoint.
+The principal MUST start with 'HTTP/' as per Kerberos HTTP SPNEGO specification.
+
+The =kerberos.keytab= indicates the location of the keytab file with the credentials for the principal.
+It should be the same keytab file Oozie uses for its Kerberos credentials for Hadoop.
+
+---+++ Oozie Hadoop Authentication Configuration
 
 Oozie can work with Hadoop 20 with Security distribution which supports Kerberos authentication.
 
-Oozie authentication is configured using the following configuration properties (default values shown):
+Oozie Hadoop authentication is configured using the following configuration properties (default values shown):
 
 <verbatim>
   oozie.service.HadoopAccessorService.kerberos.enabled=false
