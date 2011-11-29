@@ -136,7 +136,7 @@ public class FsActionExecutor extends ActionExecutor {
         String user = context.getWorkflow().getUser();
         String group = context.getWorkflow().getGroup();
         return Services.get().get(HadoopAccessorService.class).createFileSystem(user, group, path.toUri(),
-                new Configuration());
+                context.getProtoActionConf());
     }
 
     /**

@@ -40,7 +40,7 @@ public class LiteWorkflowAppService extends WorkflowAppService {
         String appPath = ParamChecker.notEmpty(jobConf.get(OozieClient.APP_PATH), OozieClient.APP_PATH);
         String user = ParamChecker.notEmpty(jobConf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
         String group = ParamChecker.notEmpty(jobConf.get(OozieClient.GROUP_NAME), OozieClient.GROUP_NAME);
-        String workflowXml = readDefinition(appPath, user, group, authToken);
+        String workflowXml = readDefinition(appPath, user, group, authToken, jobConf);
         return parseDef(workflowXml);
     }
 

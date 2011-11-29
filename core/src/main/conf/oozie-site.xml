@@ -18,24 +18,27 @@
 -->
 <configuration>
 
-<!--
-    Refer to the oozie-default.xml file for the complete list of
-    Oozie configuration properties and their default values.
--->
+    <!--
+        Refer to the oozie-default.xml file for the complete list of
+        Oozie configuration properties and their default values.
+    -->
 
-<!-- Uncomment to enable additional actions (email).
+    <!-- Uncomment the following  properties to enable Email & Hive actions
+
     <property>
         <name>oozie.service.ActionService.executor.ext.classes</name>
         <value>
-        org.apache.oozie.action.email.EmailActionExecutor
+            org.apache.oozie.action.email.EmailActionExecutor,
+            org.apache.oozie.action.hadoop.HiveActionExecutor
         </value>
     </property>
 
     <property>
         <name>oozie.service.SchemaService.wf.ext.schemas</name>
-        <value>email-action-0.1.xsd</value>
+        <value>email-action-0.1.xsd,hive-action-0.2.xsd</value>
     </property>
--->
+
+    -->
 
     <property>
         <name>oozie.system.id</name>

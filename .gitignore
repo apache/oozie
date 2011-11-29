@@ -16,12 +16,11 @@ target
 
 # Oozie build
 core/pig*
-build
-mem
+core/hive-*
 core/build
 core/mem
 examples/oozietests
 mkdistro-*.out
 distro/downloads
 SecurityAuth.audit
-
+build

@@ -115,7 +115,8 @@ public class SubmitCommand extends WorkflowCommand<String> {
             String user = conf.get(OozieClient.USER_NAME);
             String group = conf.get(OozieClient.GROUP_NAME);
             FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, group,
-                                                                                             configDefault.toUri(), new Configuration());
+                                                                                             configDefault.toUri(),
+                                                                                             conf);
 
             if (fs.exists(configDefault)) {
                 try {

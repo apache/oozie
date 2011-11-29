@@ -55,7 +55,7 @@ public class TestLocalOozieExample extends XTestCase {
         conf.set("fs.default.name", getNameNodeUri());
         injectKerberosInfo(conf);
 
-// TODO restore this when getting rid of DoAs trick
+        // TODO restore this when getting rid of DoAs trick
 
 //        if (System.getProperty("oozie.test.kerberos", "off").equals("on")) {
 //            Configuration c = new Configuration();

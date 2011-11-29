@@ -190,6 +190,15 @@ value is =/tmp=.
 
 *test.exclude.pattern*= : specifies one or more patterns for testcases to exclude, for example =**/Test*Command.java=.
 
+---+++ Testing Hive Action
+
+Because of depedencies incompatibilities between Hive 0.9.0 and Pig 0.9.0 to run Hive testcases a special profile
+must be used together with the name of the Hive testcases.
+
+<verbatim>
+$ mvn -DtestHive -Dtest=TestHiveActionExecutor,TestHiveMain
+</verbatim>
+
 ---++ Building an Oozie Distribution
 
 An Oozie distribution bundles an embedded Tomcat server. The Oozie distro module downloads Tomcat TAR.GZ from Apache

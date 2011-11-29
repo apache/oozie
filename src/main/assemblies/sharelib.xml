@@ -39,6 +39,10 @@
             <directory>${basedir}/streaming/target/partial-sharelib</directory>
             <outputDirectory>/</outputDirectory>
         </fileSet>
+        <fileSet>
+            <directory>${basedir}/hive/target/partial-sharelib</directory>
+            <outputDirectory>/</outputDirectory>
+        </fileSet>
     </fileSets>
 
 </assembly>

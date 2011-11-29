@@ -56,6 +56,7 @@
         <test.exclude.pattern>_</test.exclude.pattern>
 
         <oozie.test.dir>${project.build.directory}/test-data</oozie.test.dir>
+        <oozie.test.forkMode>once</oozie.test.forkMode>
 
         <maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
 
@@ -116,6 +117,22 @@
                 <enabled>true</enabled>
             </snapshots>
         </repository>
+        <repository>
+            <id>apache.snapshots.repo</id>
+            <url>https://repository.apache.org/content/groups/snapshots</url>
+            <name>Apache Snapshots Repository</name>
+             <snapshots>
+                 <enabled>true</enabled>
+             </snapshots>
+         </repository>
+    <repository>
+      <id>datanucleus</id>
+      <url>http://www.datanucleus.org/downloads/maven2</url>
+      <name>Datanucleus</name>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
     </repositories>
 
     <pluginRepositories>
@@ -177,6 +194,11 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.oozie</groupId>
+                <artifactId>oozie-sharelib-hive</artifactId>
+                <version>3.2.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.oozie</groupId>
                 <artifactId>oozie-docs</artifactId>
                 <version>3.2.0-SNAPSHOT</version>
                 <type>war</type>
@@ -224,6 +246,12 @@
                         <artifactId>junit</artifactId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>commons-lang</groupId>
+                <artifactId>commons-lang</artifactId>
+                <version>2.4</version>
             </dependency>
 
             <dependency>
@@ -322,6 +350,35 @@
                     <exclusion>
                         <groupId>junit</groupId>
                         <artifactId>junit</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.thrift</groupId>
+                <artifactId>thrift</artifactId>
+                <version>0.5.0-cdh</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.hive</groupId>
+                <artifactId>hive-cli</artifactId>
+                <version>0.9.0-SNAPSHOT</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>hadoop</groupId>
+                        <artifactId>core</artifactId>
+                    </exclusion>
+		</exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.hive</groupId>
+                <artifactId>hive-contrib</artifactId>
+                <version>0.9.0-SNAPSHOT</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>hadoop</groupId>
+                        <artifactId>core</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
@@ -619,16 +676,22 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <forkMode>${oozie.test.forkMode}</forkMode>
-                    <argLine>-Xmx1024m</argLine>
-                    <systemPropertiesVariables>
+                    <argLine>-Xmx1024m -da</argLine>
+                    <systemPropertyVariables>
                         <hadoop.log.dir>/tmp</hadoop.log.dir>
-                        <oozie.test.data.dir>${oozie.test.data.dir}</oozie.test.data.dir>
                         <oozie.test.db.host>${oozie.test.db.host}</oozie.test.db.host>
                         <oozie.test.config.file>${oozie.test.config.file}</oozie.test.config.file>
-                    </systemPropertiesVariables>
+                        <oozie.data.dir>${oozie.data.dir}</oozie.data.dir>
+                    </systemPropertyVariables>
+                    <environmentVariables>
+                      <HADOOP_HOME>dummy</HADOOP_HOME>
+                    </environmentVariables>
                     <excludes>
                         <exclude>**/${test.exclude}.java</exclude>
                         <exclude>${test.exclude.pattern}</exclude>
+
+                        <!-- See 'testHive' profile in core/pom.xml -->
+                        <exclude>**/TestHive*.java</exclude>
                     </excludes>
                 </configuration>
             </plugin>

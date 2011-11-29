@@ -31,6 +31,7 @@
     <modules>
         <module>streaming</module>
         <module>pig</module>
+        <module>hive</module>
     </modules>
 
     <build>

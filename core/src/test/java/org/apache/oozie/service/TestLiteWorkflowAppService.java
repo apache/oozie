@@ -84,9 +84,11 @@ public class TestLiteWorkflowAppService extends XTestCase {
             Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
             IOUtils.copyCharStream(reader, writer);
 
+            Configuration conf = new XConfiguration();
+            injectKerberosInfo(conf);
             WorkflowAppService wps = services.get(WorkflowAppService.class);
-            String wfDef = wps.readDefinition("file://" + getTestCaseDir() + File.separator + "workflow.xml", getTestUser(), "group",
-                                              "authToken");
+            String wfDef = wps.readDefinition("file://" + getTestCaseDir() + File.separator + "workflow.xml",
+                                              getTestUser(), "group", "authToken", conf);
             assertNotNull(reader.toString(), wfDef);
         }
         finally {
@@ -203,6 +205,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
             jobConf.set(OozieClient.USER_NAME, getTestUser());
             jobConf.set(OozieClient.GROUP_NAME, "group");
+            injectKerberosInfo(jobConf);
 
             try {
                 LiteWorkflowApp app = (LiteWorkflowApp) wps.parseDef(jobConf, "authToken");

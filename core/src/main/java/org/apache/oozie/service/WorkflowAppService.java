@@ -98,7 +98,7 @@ public abstract class WorkflowAppService implements Service {
      * @return workflow definition.
      * @throws WorkflowException thrown if the definition could not be read.
      */
-    protected String readDefinition(String appPath, String user, String group, String autToken)
+    protected String readDefinition(String appPath, String user, String group, String autToken, Configuration conf)
             throws WorkflowException {
         try {
             URI uri = new URI(appPath);
