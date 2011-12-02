@@ -132,6 +132,9 @@ public class MapReduceMain extends LauncherMain {
         String[] values = new String[conf.getInt(key + ".size", 0)];
         for (int i = 0; i < values.length; i++) {
             values[i] = conf.get(key + "." + i);
+            if (values[i] == null) {
+                values[i] = "";
+            }
         }
         return values;
     }

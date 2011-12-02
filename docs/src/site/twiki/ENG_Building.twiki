@@ -199,6 +199,21 @@ must be used together with the name of the Hive testcases.
 $ mvn -DtestHive -Dtest=TestHiveActionExecutor,TestHiveMain
 </verbatim>
 
+---+++ Testing Sqoop Action
+
+Apache Sqoop 1.5.0 requires functionality only available in Hadoop 0.21 and onwards. Currently, the only
+stable version of Hadoop implementing those API (SQOOP-384) that is being published by to public Maven
+repositories are Hadoop CDH versions. This profile activates the use of that Hadoop version for testing
+purposes. *This is a temporary fix*.
+
+<verbatim>
+$ mvn -DtestSqoop -Dtest=TestSqoopActionExecutor
+</verbatim>
+
+<verbatim>
+$ mvn -DtestHive -Dtest=TestHiveActionExecutor,TestHiveMain
+</verbatim>
+
 ---++ Building an Oozie Distribution
 
 An Oozie distribution bundles an embedded Tomcat server. The Oozie distro module downloads Tomcat TAR.GZ from Apache

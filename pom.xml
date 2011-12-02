@@ -199,6 +199,11 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.oozie</groupId>
+                <artifactId>oozie-sharelib-sqoop</artifactId>
+                <version>3.2.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.oozie</groupId>
                 <artifactId>oozie-docs</artifactId>
                 <version>3.2.0-SNAPSHOT</version>
                 <type>war</type>
@@ -385,8 +390,13 @@
 
             <dependency>
                 <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>1.5.8</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-log4j12</artifactId>
-                <version>1.4.3</version>
+                <version>1.5.8</version>
             </dependency>
 
             <dependency>
@@ -538,6 +548,18 @@
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
                 <version>r09</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.sqoop</groupId>
+                <artifactId>sqoop</artifactId>
+                <version>1.5.0-incubating-SNAPSHOT</version>
+            </dependency>
+
+            <dependency>
+              <groupId>commons-io</groupId>
+              <artifactId>commons-io</artifactId>
+              <version>1.4</version>
             </dependency>
 
             <dependency>
@@ -696,8 +718,11 @@
                         <exclude>**/${test.exclude}.java</exclude>
                         <exclude>${test.exclude.pattern}</exclude>
 
-                        <!-- See 'testHive' profile in core/pom.xml -->
+                        <!-- See 'testHive' profile in core/pom.xml and the Building doc-->
                         <exclude>**/TestHive*.java</exclude>
+
+                        <!-- See 'testSqoop' profile in core/pom.xml and the Building doc-->
+                        <exclude>**/TestSqoop*.java</exclude>
                     </excludes>
                 </configuration>
             </plugin>

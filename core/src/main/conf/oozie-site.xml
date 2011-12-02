@@ -29,13 +29,14 @@
         <name>oozie.service.ActionService.executor.ext.classes</name>
         <value>
             org.apache.oozie.action.email.EmailActionExecutor,
-            org.apache.oozie.action.hadoop.HiveActionExecutor
+            org.apache.oozie.action.hadoop.HiveActionExecutor,
+            org.apache.oozie.action.hadoop.SqoopActionExecutor
         </value>
     </property>
 
     <property>
         <name>oozie.service.SchemaService.wf.ext.schemas</name>
-        <value>email-action-0.1.xsd,hive-action-0.2.xsd</value>
+        <value>email-action-0.1.xsd,hive-action-0.2.xsd,sqoop-action-0.2.xsd</value>
     </property>
 
     -->
@@ -83,7 +84,7 @@
 
     <property>
         <name>oozie.service.CallableQueueService.queue.size</name>
-        <value>1000</value>
+        <value>10000</value>
         <description>Max callable queue size</description>
     </property>
 

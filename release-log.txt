@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-156. Add support for a SQOOP action. (tucu)
 OOZIE-77. Oozie should support Kerberos authentication on its HTTP REST API. (tucu)
 OOZIE-622. Remove system sharelib tests from TestLiteWorkflowAppService. (tucu)
 OOZIE-68 Add Hive action. (tucu)
