@@ -321,7 +321,15 @@
 		<description>Default maximum timeout for a coordinator action input check (in minutes). 86400= 60days
         </description>
 	</property>
-	
+
+	<property>
+		<name>oozie.service.coord.input.check.requeue.interval
+		</name>
+		<value>60000</value>
+		<description>Command re-queue interval for coordinator data input check (in millisecond).
+        </description>
+	</property>
+
 	<property>
 		<name>oozie.service.coord.default.concurrency
 		</name>

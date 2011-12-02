@@ -141,8 +141,36 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         checkCoordAction(job.getId() + "@1");
     }
 
-    protected CoordinatorJobBean addRecordToCoordJobTableForWaiting(String testFileName, CoordinatorJob.Status status, Date start, Date end,
-            boolean pending, boolean doneMatd, int lastActionNum) throws Exception {
+    /**
+     * This test case verifies if getCoordInputCheckRequeueInterval picks up the
+     * overridden value. In reality, the value could be overridden in
+     * oozie-site.xml.
+     *
+     * @throws Exception
+     */
+    public void testRequeueInterval() throws Exception {
+        /*
+         * Create a dummy Coordinator Job to pass to
+         * CoordActionInputCheckXCommand constructor.
+         */
+        String jobId = "0000000-" + new Date().getTime() + "-TestCoordActionInputCheckXCommand-C";
+        Date startTime = DateUtils.parseDateUTC("2009-02-01T23:59Z");
+        Date endTime = DateUtils.parseDateUTC("2009-02-02T23:59Z");
+        CoordinatorJobBean job = addRecordToCoordJobTable(jobId, startTime, endTime);
+        /* Override the property value for testing purpose only. */
+        long testedValue = 12000;
+        Services.get().getConf().setLong(CoordActionInputCheckXCommand.CONF_COORD_INPUT_CHECK_REQUEUE_INTERVAL,
+                testedValue);
+
+        CoordActionInputCheckXCommand caicc = new CoordActionInputCheckXCommand(job.getId() + "@1");
+
+        long effectiveValue = caicc.getCoordInputCheckRequeueInterval();
+        // Verify if two values are same.
+        assertEquals(testedValue, effectiveValue);
+    }
+
+    protected CoordinatorJobBean addRecordToCoordJobTableForWaiting(String testFileName, CoordinatorJob.Status status,
+            Date start, Date end, boolean pending, boolean doneMatd, int lastActionNum) throws Exception {
 
         String testDir = getTestCaseDir();
         CoordinatorJobBean coordJob = createCoordJob(testFileName, status, start, end, pending, doneMatd, lastActionNum);
@@ -172,7 +200,7 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
             return appXml;
         }
         catch (IOException ioe) {
-            throw new RuntimeException(XLog.format("Could not get "+ testFileName, ioe));
+            throw new RuntimeException(XLog.format("Could not get " + testFileName, ioe));
         }
     }
 

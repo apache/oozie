@@ -40,6 +40,7 @@ import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.JPAService;
+import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ELEvaluator;
@@ -57,7 +58,17 @@ import org.jdom.Element;
 public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
 
     private final String actionId;
-    private final int COMMAND_REQUEUE_INTERVAL = 60000; // 1 minute
+    /**
+     * Property name of command re-queue interval for coordinator action input check in
+     * milliseconds.
+     */
+    public static final String CONF_COORD_INPUT_CHECK_REQUEUE_INTERVAL = Service.CONF_PREFIX
+            + "coord.input.check.requeue.interval";
+    /**
+     * Default re-queue interval in ms. It is applied when no value defined in
+     * the oozie configuration.
+     */
+    private final int DEFAULT_COMMAND_REQUEUE_INTERVAL = 60000; // 1 minute
     private CoordinatorActionBean coordAction = null;
     private CoordinatorJobBean coordJob = null;
     private JPAService jpaService = null;
@@ -79,8 +90,8 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
         Date nominalTime = coordAction.getNominalTime();
         Date currentTime = new Date();
         if (nominalTime.compareTo(currentTime) > 0) {
-            queue(new CoordActionInputCheckXCommand(coordAction.getId()), Math.max(
-                    (nominalTime.getTime() - currentTime.getTime()), COMMAND_REQUEUE_INTERVAL));
+            queue(new CoordActionInputCheckXCommand(coordAction.getId()), Math.max((nominalTime.getTime() - currentTime
+                    .getTime()), getCoordInputCheckRequeueInterval()));
             // update lastModifiedTime
             coordAction.setLastModifiedTime(new Date());
             try {
@@ -129,7 +140,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                     queue(new CoordActionTimeOutXCommand(coordAction), 100);
                 }
                 else {
-                    queue(new CoordActionInputCheckXCommand(coordAction.getId()), COMMAND_REQUEUE_INTERVAL);
+                    queue(new CoordActionInputCheckXCommand(coordAction.getId()), getCoordInputCheckRequeueInterval());
                 }
             }
             coordAction.setLastModifiedTime(new Date());
@@ -141,6 +152,20 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
         cron.stop();
 
         return null;
+    }
+
+    /**
+     * This function reads the value of re-queue interval for coordinator input
+     * check command from the Oozie configuration provided by Configuration
+     * Service. If nothing defined in the configuration, it uses the code
+     * specified default value.
+     *
+     * @return re-queue interval in ms
+     */
+    public long getCoordInputCheckRequeueInterval() {
+        long requeueInterval = Services.get().getConf().getLong(CONF_COORD_INPUT_CHECK_REQUEUE_INTERVAL,
+                DEFAULT_COMMAND_REQUEUE_INTERVAL);
+        return requeueInterval;
     }
 
     /**
