@@ -12,10 +12,13 @@ The goal of this document is to define a coordinator engine system specialized i
 
 ---++ Changelog
 
+---+++!! 23/NOV/2011:
+
+   * Update execution order typo 
+
 ---+++!! 05/MAY/2011:
 
    * Update coordinator schema 0.2
-
 
 ---+++!! 09/MAR/2011:
 
@@ -755,7 +758,7 @@ A synchronous coordinator definition is a is defined by a name, start time and e
       * *%BLUE% execution: %ENDCOLOR%* Specifies the execution order if multiple instances of the coordinator job have satisfied their execution criteria. Valid values are: 
          * =FIFO= (oldest first) *default*.
          * =LIFO= (newest first).
-         * =ONLYLAST= (discards all older materializations).
+         * =LAST_ONLY= (discards all older materializations).
    * *%BLUE% datasets: %ENDCOLOR%* The datasets coordinator application uses.
    * *%BLUE% input-events: %ENDCOLOR%* The coordinator job input events. 
       * *%BLUE% data-in: %ENDCOLOR%* It defines one job input condition that resolves to one or more instances of a dataset. 
