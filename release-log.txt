@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-620 POMs clean/tune up before 3.2 release. (tucu)
 OOZIE-613 Update documentation for execution order.(Mohammad)
 OOZIE-589 Make the command requeue interval configurable.(Mohammad)
 OOZIE-156. Add support for a SQOOP action. (tucu)

@@ -16,29 +16,20 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.apache.oozie</groupId>
         <artifactId>oozie-main</artifactId>
         <version>3.2.0-SNAPSHOT</version>
     </parent>
+    <groupId>org.apache.oozie</groupId>
     <artifactId>oozie-client</artifactId>
-    <description>Oozie Client</description>
-    <name>Oozie Client</name>
+    <version>3.2.0-SNAPSHOT</version>
+    <description>Apache Oozie Client</description>
+    <name>Apache Oozie Client</name>
     <packaging>jar</packaging>
-
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-        </license>
-    </licenses>
-
-    <organization>
-        <name>Yahoo</name>
-        <url>http://www.yahoo.com</url>
-    </organization>
 
     <dependencies>
         <dependency>
@@ -91,46 +82,46 @@
     </build>
 
     <profiles>
-	     <profile>
-	         <id>generateDocs</id>
-	         <activation>
-	             <activeByDefault>false</activeByDefault>
-	             <property>
-	                 <name>generateDocs</name>
-	             </property>
-	         </activation>
-	         <build>
-	             <plugins>
-	                 <plugin>
-	                     <groupId>org.apache.maven.plugins</groupId>
-	                     <artifactId>maven-javadoc-plugin</artifactId>
-	                     <configuration>
-	                         <linksource>true</linksource>
-			                 <quiet>true</quiet>
-			                 <verbose>false</verbose>
-			                 <source>${maven.compile.source}</source>
-			                 <charset>${maven.compile.encoding}</charset>
-			                 <groups>
-			                     <group>
-			                         <title>Client API</title>
-			                         <packages>
-			                             org.apache.oozie.client
-			                         </packages>
-			                     </group>
-			                 </groups>
-	                     </configuration>
-		                 <executions>
-	                         <execution>
-	                             <goals>
-	                                 <goal>javadoc</goal>
-	                             </goals>
-	                             <phase>package</phase>
-	                         </execution>
-		                 </executions>
-	                 </plugin>
-	             </plugins>
-	         </build>
-	     </profile>
+        <profile>
+            <id>generateDocs</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <property>
+                    <name>generateDocs</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <configuration>
+                            <linksource>true</linksource>
+                            <quiet>true</quiet>
+                            <verbose>false</verbose>
+                            <source>${maven.compile.source}</source>
+                            <charset>${maven.compile.encoding}</charset>
+                            <groups>
+                                <group>
+                                    <title>Client API</title>
+                                    <packages>
+                                        org.apache.oozie.client
+                                    </packages>
+                                </group>
+                            </groups>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>javadoc</goal>
+                                </goals>
+                                <phase>package</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 
 </project>

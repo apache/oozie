@@ -16,29 +16,20 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.apache.oozie</groupId>
         <artifactId>oozie-main</artifactId>
         <version>3.2.0-SNAPSHOT</version>
     </parent>
+    <groupId>org.apache.oozie</groupId>
     <artifactId>oozie-webapp</artifactId>
-    <description>Oozie WebApp</description>
-    <name>Oozie WebApp</name>
+    <version>3.2.0-SNAPSHOT</version>
+    <description>Apache Oozie WebApp</description>
+    <name>Apache Oozie WebApp</name>
     <packaging>war</packaging>
-
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-        </license>
-    </licenses>
-
-    <organization>
-        <name>Yahoo</name>
-        <url>http://www.yahoo.com</url>
-    </organization>
 
     <properties>
         <hadoop.jars.scope>provided</hadoop.jars.scope>
@@ -112,6 +103,13 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <configuration>
                     <descriptors>
@@ -120,13 +118,13 @@
                 </configuration>
             </plugin>
             <plugin>
-                 <groupId>org.apache.rat</groupId>
-                 <artifactId>apache-rat-plugin</artifactId>
-                 <configuration>
-                     <excludes>
+                <groupId>org.apache.rat</groupId>
+                <artifactId>apache-rat-plugin</artifactId>
+                <configuration>
+                    <excludes>
                         <exclude>src/main/resources/.gitignore</exclude>
-                     </excludes>
-                  </configuration>
+                    </excludes>
+                </configuration>
             </plugin>
         </plugins>
     </build>
