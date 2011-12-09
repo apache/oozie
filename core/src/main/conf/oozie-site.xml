@@ -30,13 +30,14 @@
         <value>
             org.apache.oozie.action.email.EmailActionExecutor,
             org.apache.oozie.action.hadoop.HiveActionExecutor,
+            org.apache.oozie.action.hadoop.ShellActionExecutor,
             org.apache.oozie.action.hadoop.SqoopActionExecutor
         </value>
     </property>
 
     <property>
         <name>oozie.service.SchemaService.wf.ext.schemas</name>
-        <value>email-action-0.1.xsd,hive-action-0.2.xsd,sqoop-action-0.2.xsd</value>
+        <value>shell-action-0.1.xsd,email-action-0.1.xsd,hive-action-0.2.xsd,sqoop-action-0.2.xsd</value>
     </property>
 
     -->

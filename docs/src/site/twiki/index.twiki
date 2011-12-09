@@ -53,6 +53,7 @@ Enough reading already? Follow the steps in [[DG_QuickStart][Oozie Quick Start]]
 ---+++ Action Extensions
 
    * [[DG_EmailActionExtension][Email Action]]
+   * [[DG_ShellActionExtension][Shell Action]]
    * [[DG_HiveActionExtension][Hive Action]]
    * [[DG_SqoopActionExtension][Sqoop Action]]
    * [[DG_CustomActionExecutor][Writing a Custom Action Executor]]

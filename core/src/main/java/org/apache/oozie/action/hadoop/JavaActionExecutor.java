@@ -86,7 +86,7 @@ public class JavaActionExecutor extends ActionExecutor {
     private static final String FAILED = "FAILED";
     private static final String FAILED_KILLED = "FAILED/KILLED";
     private static final String RUNNING = "RUNNING";
-    private XLog log = XLog.getLog(getClass());
+    protected XLog log = XLog.getLog(getClass());
 
     static {
         DISALLOWED_PROPERTIES.add(HADOOP_USER);
