@@ -40,6 +40,7 @@ import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.UUIDService.ApplicationType;
 import org.apache.oozie.test.XFsTestCase;
 import org.apache.oozie.util.ELEvaluator;
+import org.apache.oozie.util.PropertiesUtils;
 import org.apache.oozie.util.XConfiguration;
 
 public class TestSshActionExecutor extends XFsTestCase {
@@ -147,7 +148,10 @@ public class TestSshActionExecutor extends XFsTestCase {
         fs.delete(path, true);
     }
 
-/*
+    protected String getActionXMLSchema() {
+        return "uri:oozie-workflow:0.1";
+    }
+
     public void testJobStart() throws ActionExecutorException {
         String baseDir = getTestCaseDir();
         Path appPath = new Path(getNameNodeUri(), baseDir);
@@ -168,7 +172,7 @@ public class TestSshActionExecutor extends XFsTestCase {
 
         final WorkflowActionBean action = new WorkflowActionBean();
         action.setId("actionId");
-        action.setConf("<ssh xmlns='uri:oozie-workflow:0.1'>" +
+        action.setConf("<ssh xmlns='" + getActionXMLSchema() + "'>" +
                        "<host>localhost</host>" +
                        "<command>echo</command>" +
                        "<capture-output/>" +
@@ -189,9 +193,7 @@ public class TestSshActionExecutor extends XFsTestCase {
         assertEquals(Status.OK, action.getStatus());
         assertEquals("something", PropertiesUtils.stringToProperties(action.getData()).getProperty("prop1"));
     }
-*/
 
-/*
     public void testJobRecover() throws ActionExecutorException, InterruptedException {
         String baseDir = getTestCaseDir();
         Path appPath = new Path(getNameNodeUri(), baseDir);
@@ -212,7 +214,7 @@ public class TestSshActionExecutor extends XFsTestCase {
 
         final WorkflowActionBean action = new WorkflowActionBean();
         action.setId("actionId");
-        action.setConf("<ssh xmlns='uri:oozie-workflow:0.1'>" +
+        action.setConf("<ssh xmlns='" + getActionXMLSchema() + "'>" +
                        "<host>localhost</host>" +
                        "<command>echo</command>" +
                        "<capture-output/>" +
@@ -226,7 +228,7 @@ public class TestSshActionExecutor extends XFsTestCase {
         Thread.sleep(200);
         final WorkflowActionBean action1 = new WorkflowActionBean();
         action1.setId("actionId");
-        action1.setConf("<ssh xmlns='uri:oozie-workflow:0.1'>" +
+        action1.setConf("<ssh xmlns='" + getActionXMLSchema() + "'>" +
                        "<host>localhost</host>" +
                        "<command>echo</command>" +
                        "<capture-output/>" +
@@ -249,7 +251,7 @@ public class TestSshActionExecutor extends XFsTestCase {
         assertEquals(Status.OK, action1.getStatus());
         assertEquals("something", PropertiesUtils.stringToProperties(action1.getData()).getProperty("prop1"));
     }
-*/
+
 
     // TODO Move this test case over to a new class. Conflict between this one
     // and testConnectionErrors. The property to replace the ssh user cannot be
@@ -275,7 +277,7 @@ public class TestSshActionExecutor extends XFsTestCase {
 //
 //        final WorkflowActionBean action = new WorkflowActionBean();
 //        action.setId("actionId_" + System.currentTimeMillis());
-//        action.setConf("<ssh xmlns='uri:oozie-workflow:0.1'>" +
+//        action.setConf("<ssh xmlns='" + getActionXMLSchema() + "'>" +
 //                       "<host>invalid@localhost</host>" +
 //                       "<command>echo</command>" +
 //                       "<capture-output/>" +
@@ -315,7 +317,7 @@ public class TestSshActionExecutor extends XFsTestCase {
 
         final WorkflowActionBean action = new WorkflowActionBean();
         action.setId("actionId");
-        action.setConf("<ssh xmlns='uri:oozie-workflow:0.1'>" +
+        action.setConf("<ssh xmlns='" + getActionXMLSchema() + "'>" +
                 "<host>blabla</host>" +
                 "<command>echo</command>" +
                 "<args>\"prop1=something\"</args>" +
@@ -332,7 +334,7 @@ public class TestSshActionExecutor extends XFsTestCase {
             assertEquals("COULD_NOT_RESOLVE_HOST", ex.getErrorCode());
             assertEquals(ActionExecutorException.ErrorType.TRANSIENT, ex.getErrorType());
         }
-        action.setConf("<ssh xmlns='uri:oozie-workflow:0.1'>" +
+        action.setConf("<ssh xmlns='" + getActionXMLSchema() + "'>" +
                 "<host>11.11.11.11</host>" +
                 "<command>echo</command>" +
                 "<args>\"prop1=something\"</args>" +
@@ -346,7 +348,7 @@ public class TestSshActionExecutor extends XFsTestCase {
             assertEquals("COULD_NOT_CONNECT", ex.getErrorCode());
             assertEquals(ActionExecutorException.ErrorType.TRANSIENT, ex.getErrorType());
         }
-        action.setConf("<ssh xmlns='uri:oozie-workflow:0.1'>" +
+        action.setConf("<ssh xmlns='" + getActionXMLSchema() + "'>" +
                 "<host>y@localhost</host>" +
                 "<command>echo</command>" +
                 "<args>\"prop1=something\"</args>" +

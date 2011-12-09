@@ -707,6 +707,11 @@
                         <exclude>**/${test.exclude}.java</exclude>
                         <exclude>${test.exclude.pattern}</exclude>
 
+                        <!-- Explictly use -Dtest=TestSshActionExecutor,TestSshActionExecutorExtension
+                             to test the SSH action
+                        -->
+                        <exclude>**/TestSsh*.java</exclude>
+
                         <!-- See 'testHive' profile in core/pom.xml and the Building doc-->
                         <exclude>**/TestHive*.java</exclude>
 
