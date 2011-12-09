@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-625 Oozie server not starting due to missing sl4j library for Authenticationfilter. (tucu)
 OOZIE-617 Add back Ssh action as extension. (tucu)
 OOZIE-578 Support shell action in Oozie WF (Mohammad)
 OOZIE-620 POMs clean/tune up before 3.2 release. (tucu)
