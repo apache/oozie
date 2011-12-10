@@ -18,7 +18,6 @@
 package org.apache.oozie.action.hadoop;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -77,6 +76,7 @@ public class JavaActionExecutor extends ActionExecutor {
     private static final String HADOOP_UGI = "hadoop.job.ugi";
     private static final String HADOOP_JOB_TRACKER = "mapred.job.tracker";
     private static final String HADOOP_NAME_NODE = "fs.default.name";
+    public static final String OOZIE_COMMON_LIBDIR = "oozie";
     public static final int MAX_EXTERNAL_STATS_SIZE_DEFAULT = Integer.MAX_VALUE;
     private static final Set<String> DISALLOWED_PROPERTIES = new HashSet<String>();
     public final static String MAX_EXTERNAL_STATS_SIZE = "oozie.external.stats.max.size";
@@ -366,36 +366,32 @@ public class JavaActionExecutor extends ActionExecutor {
         }
     }
 
-    protected void addActionShareLib(Context context, Element actionXml, Path appPath, Configuration conf)
-            throws ActionExecutorException {
-        String actionShareLibPostfix = getShareLibPostFix(context, actionXml);
+    protected void addShareLib(Path appPath, Configuration conf, String actionShareLibPostfix)
+    throws ActionExecutorException {
         if (actionShareLibPostfix != null) {
             try {
                 Path systemLibPath = Services.get().get(WorkflowAppService.class).getSystemLibPath();
                 if (systemLibPath != null) {
                     Path actionLibPath = new Path(systemLibPath, actionShareLibPostfix);
-                    XConfiguration wfJobConf = new XConfiguration(new StringReader(context.getWorkflow().getConf()));
-                    if (wfJobConf.getBoolean(OozieClient.USE_SYSTEM_LIBPATH, false)) {
-                        String user = conf.get("user.name");
-                        String group = conf.get("group.name");
-                        FileSystem fs =
-                            Services.get().get(HadoopAccessorService.class).createFileSystem(user, group, conf);
-                        if (fs.exists(actionLibPath)) {
-                            FileStatus[] files = fs.listStatus(actionLibPath);
-                            for (FileStatus file : files) {
-                                addToCache(conf, appPath, file.getPath().toUri().getPath(), false);
-                            }
+                    String user = conf.get("user.name");
+                    String group = conf.get("group.name");
+                    FileSystem fs =
+                        Services.get().get(HadoopAccessorService.class).createFileSystem(user, group, conf);
+                    if (fs.exists(actionLibPath)) {
+                        FileStatus[] files = fs.listStatus(actionLibPath);
+                        for (FileStatus file : files) {
+                            addToCache(conf, appPath, file.getPath().toUri().getPath(), false);
                         }
                     }
                 }
             }
             catch (HadoopAccessorException ex){
                 throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED,
-                                                  ex.getErrorCode().toString(), ex.getMessage());
+                        ex.getErrorCode().toString(), ex.getMessage());
             }
             catch (IOException ex){
                 throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED,
-                                                  "It should never happen", ex.getMessage());
+                        "It should never happen", ex.getMessage());
             }
         }
     }
@@ -430,9 +426,34 @@ public class JavaActionExecutor extends ActionExecutor {
             }
         }
 
-        // Oozie sharelib (for the action)
-        addActionShareLib(context, actionXml, appPath, conf);
+        addAllShareLibs(appPath, conf, context, actionXml);
 	}
+
+    // Adds action specific share libs and common share libs
+    private void addAllShareLibs(Path appPath, Configuration conf, Context context, Element actionXml)
+            throws ActionExecutorException {
+        // Add action specific share libs
+        addActionShareLib(appPath, conf, context, actionXml);
+        // Add common sharelibs for Oozie
+        addShareLib(appPath, conf, JavaActionExecutor.OOZIE_COMMON_LIBDIR);
+    }
+
+    private void addActionShareLib(Path appPath, Configuration conf, Context context, Element actionXml) throws ActionExecutorException {
+        XConfiguration wfJobConf = null;
+        try {
+            wfJobConf = new XConfiguration(new StringReader(context.getWorkflow().getConf()));
+        }
+        catch (IOException ioe) {
+            throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "It should never happen",
+                    ioe.getMessage());
+        }
+        // Action sharelibs are only added if user has specified to use system libpath
+        if (wfJobConf.getBoolean(OozieClient.USE_SYSTEM_LIBPATH, false)) {
+            // add action specific sharelibs
+            addShareLib(appPath, conf, getShareLibPostFix(context, actionXml));
+        }
+    }
+
 
     protected String getLauncherMain(Configuration launcherConf, Element actionXml) {
         Namespace ns = actionXml.getNamespace();
