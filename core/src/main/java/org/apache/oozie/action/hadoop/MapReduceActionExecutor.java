@@ -17,7 +17,10 @@
  */
 package org.apache.oozie.action.hadoop;
 
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -32,12 +35,13 @@ import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jdom.Namespace;
 import org.json.simple.JSONObject;
+import org.mortbay.util.ajax.JSON;
 
 public class MapReduceActionExecutor extends JavaActionExecutor {
 
+    public static final String OOZIE_ACTION_EXTERNAL_STATS_WRITE = "oozie.action.external.stats.write";
     public static final String HADOOP_COUNTERS = "hadoop.counters";
     private XLog log = XLog.getLog(getClass());
 
@@ -142,15 +146,26 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
                     throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "MR001",
                                                       "ID swap should have happened in launcher job [{0}]", action.getExternalId());
                 }
+
                 Counters counters = runningJob.getCounters();
                 if (counters != null) {
-                    JSONObject json = counterstoJson(counters);
-                    context.setVar(HADOOP_COUNTERS, json.toJSONString());
+                    ActionStats stats = new MRStats(counters);
+                    String statsJsonString = stats.toJSON();
+                    context.setVar(HADOOP_COUNTERS, statsJsonString);
+
+                    // If action stats write property is set to false by user or
+                    // size of stats is greater than the maximum allowed size,
+                    // do not store the action stats
+                    if (Boolean.parseBoolean(evaluateConfigurationProperty(actionXml,
+                            OOZIE_ACTION_EXTERNAL_STATS_WRITE, "false"))
+                            && (statsJsonString.getBytes().length <= getMaxExternalStatsSize())) {
+                        context.setExecutionStats(statsJsonString);
+                        log.debug(
+                                "Printing stats for Map-Reduce action as a JSON string : [{0}]" + statsJsonString);
+                    }
                 }
                 else {
-
                     context.setVar(HADOOP_COUNTERS, "");
-
                     XLog.getLog(getClass()).warn("Could not find Hadoop Counters for: [{0}]", action.getExternalId());
                 }
             }
@@ -173,6 +188,23 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
                     }
                 }
             }
+        }
+    }
+
+    // Return the value of the specified configuration property
+    private String evaluateConfigurationProperty(Element actionConf, String key, String defaultValue) throws ActionExecutorException {
+        try {
+            if (actionConf != null) {
+                Namespace ns = actionConf.getNamespace();
+                Element e = actionConf.getChild("configuration", ns);
+                String strConf = XmlUtils.prettyPrint(e).toString();
+                XConfiguration inlineConf = new XConfiguration(new StringReader(strConf));
+                return inlineConf.get(key, defaultValue);
+            }
+            return "";
+        }
+        catch (IOException ex) {
+            throw convertException(ex);
         }
     }
 

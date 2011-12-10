@@ -921,6 +921,8 @@ public class WorkflowStore extends Store {
             action.setConf(a.getConf());
             action.setConsoleUrl(a.getConsoleUrl());
             action.setData(a.getData());
+            action.setStats(a.getStats());
+            action.setExternalChildIDs(a.getExternalChildIDs());
             action.setErrorInfo(a.getErrorCode(), a.getErrorMessage());
             action.setExternalId(a.getExternalId());
             action.setExternalStatus(a.getExternalStatus());
@@ -975,6 +977,8 @@ public class WorkflowStore extends Store {
         q.setParameter("conf", aBean.getConf());
         q.setParameter("consoleUrl", aBean.getConsoleUrl());
         q.setParameter("data", aBean.getData());
+        q.setParameter("stats", aBean.getStats());
+        q.setParameter("externalChildIDs", aBean.getExternalChildIDs());
         q.setParameter("errorCode", aBean.getErrorCode());
         q.setParameter("errorMessage", aBean.getErrorMessage());
         q.setParameter("externalId", aBean.getExternalId());

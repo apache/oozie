@@ -47,7 +47,7 @@ import org.apache.openjpa.persistence.jdbc.Index;
 @Entity
 @NamedQueries({
 
-    @NamedQuery(name = "UPDATE_ACTION", query = "update WorkflowActionBean a set a.conf = :conf, a.consoleUrl = :consoleUrl, a.data = :data, a.errorCode = :errorCode, a.errorMessage = :errorMessage, a.externalId = :externalId, a.externalStatus = :externalStatus, a.name = :name, a.cred = :cred , a.retries = :retries, a.trackerUri = :trackerUri, a.transition = :transition, a.type = :type, a.endTimestamp = :endTime, a.executionPath = :executionPath, a.lastCheckTimestamp = :lastCheckTime, a.logToken = :logToken, a.pending = :pending, a.pendingAgeTimestamp = :pendingAge, a.signalValue = :signalValue, a.slaXml = :slaXml, a.startTimestamp = :startTime, a.status = :status, a.wfId=:wfId where a.id = :id"),
+    @NamedQuery(name = "UPDATE_ACTION", query = "update WorkflowActionBean a set a.conf = :conf, a.consoleUrl = :consoleUrl, a.data = :data, a.stats = :stats, a.externalChildIDs = :externalChildIDs, a.errorCode = :errorCode, a.errorMessage = :errorMessage, a.externalId = :externalId, a.externalStatus = :externalStatus, a.name = :name, a.cred = :cred , a.retries = :retries, a.trackerUri = :trackerUri, a.transition = :transition, a.type = :type, a.endTimestamp = :endTime, a.executionPath = :executionPath, a.lastCheckTimestamp = :lastCheckTime, a.logToken = :logToken, a.pending = :pending, a.pendingAgeTimestamp = :pendingAge, a.signalValue = :signalValue, a.slaXml = :slaXml, a.startTimestamp = :startTime, a.status = :status, a.wfId=:wfId where a.id = :id"),
 
     @NamedQuery(name = "DELETE_ACTION", query = "delete from WorkflowActionBean a where a.id = :id"),
 
@@ -149,6 +149,8 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
         dataOutput.writeLong((getLastCheckTime() != null) ? getLastCheckTime().getTime() : -1);
         WritableUtils.writeStr(dataOutput, getTransition());
         WritableUtils.writeStr(dataOutput, getData());
+        WritableUtils.writeStr(dataOutput, getStats());
+        WritableUtils.writeStr(dataOutput, getExternalChildIDs());
         WritableUtils.writeStr(dataOutput, getExternalId());
         WritableUtils.writeStr(dataOutput, getExternalStatus());
         WritableUtils.writeStr(dataOutput, getTrackerUri());
@@ -194,6 +196,8 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
         }
         setTransition(WritableUtils.readStr(dataInput));
         setData(WritableUtils.readStr(dataInput));
+        setStats(WritableUtils.readStr(dataInput));
+        setExternalChildIDs(WritableUtils.readStr(dataInput));
         setExternalId(WritableUtils.readStr(dataInput));
         setExternalStatus(WritableUtils.readStr(dataInput));
         setTrackerUri(WritableUtils.readStr(dataInput));
@@ -350,6 +354,42 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
         if (actionData != null) {
             setData(PropertiesUtils.propertiesToString(actionData));
         }
+    }
+
+    /**
+     * Return the action statistics info.
+     *
+     * @return Json representation of the stats.
+     */
+    public String getExecutionStats() {
+        return getStats();
+    }
+
+    /**
+     * Set the action statistics info for the workflow action.
+     *
+     * @param Json representation of the stats.
+     */
+    public void setExecutionStats(String jsonStats) {
+        setStats(jsonStats);
+    }
+
+    /**
+     * Return the external child IDs.
+     *
+     * @return externalChildIDs as a string.
+     */
+    public String getExternalChildIDs() {
+        return super.getExternalChildIDs();
+    }
+
+    /**
+     * Set the external child IDs for the workflow action.
+     *
+     * @param externalChildIDs as a string.
+     */
+    public void setExternalChildIDs(String externalChildIDs) {
+        super.setExternalChildIDs(externalChildIDs);
     }
 
     /**

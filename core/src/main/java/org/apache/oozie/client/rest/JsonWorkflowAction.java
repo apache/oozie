@@ -88,6 +88,14 @@ public class JsonWorkflowAction implements WorkflowAction, JsonBean {
     @Lob
     private String data = null;
 
+    @Column(name = "stats")
+    @Lob
+    private String stats = null;
+
+    @Column(name = "external_child_ids")
+    @Lob
+    private String externalChildIDs = null;
+
     @Basic
     @Column(name = "external_id")
     private String externalId = null;
@@ -129,6 +137,8 @@ public class JsonWorkflowAction implements WorkflowAction, JsonBean {
         json.put(JsonTags.WORKFLOW_ACTION_END_TIME, JsonUtils.formatDateRfc822(endTime));
         json.put(JsonTags.WORKFLOW_ACTION_TRANSITION, transition);
         json.put(JsonTags.WORKFLOW_ACTION_DATA, data);
+        json.put(JsonTags.WORKFLOW_ACTION_STATS, stats);
+        json.put(JsonTags.WORKFLOW_ACTION_EXTERNAL_CHILD_IDS, externalChildIDs);
         json.put(JsonTags.WORKFLOW_ACTION_EXTERNAL_ID, externalId);
         json.put(JsonTags.WORKFLOW_ACTION_EXTERNAL_STATUS, externalStatus);
         json.put(JsonTags.WORKFLOW_ACTION_TRACKER_URI, trackerUri);
@@ -253,6 +263,22 @@ public class JsonWorkflowAction implements WorkflowAction, JsonBean {
 
     public void setData(String data) {
         this.data = data;
+    }
+
+    public String getStats() {
+        return stats;
+    }
+
+    public void setStats(String stats) {
+        this.stats = stats;
+    }
+
+    public String getExternalChildIDs() {
+        return externalChildIDs;
+    }
+
+    public void setExternalChildIDs(String externalChildIDs) {
+        this.externalChildIDs = externalChildIDs;
     }
 
     public String getExternalId() {

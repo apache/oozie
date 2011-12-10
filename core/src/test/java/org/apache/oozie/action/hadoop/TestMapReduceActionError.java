@@ -72,12 +72,13 @@ public class TestMapReduceActionError extends ActionExecutorTestCase {
         classes.add(LauncherSecurityManager.class);
         classes.add(LauncherException.class);
         classes.add(LauncherMainException.class);
+        classes.add(ActionStats.class);
+        classes.add(ActionType.class);
         classes.add(LauncherMain.class);
         classes.add(MapReduceMain.class);
         classes.add(StreamingMain.class);
         classes.add(PipesMain.class);
         assertEquals(classes, ae.getLauncherClasses());
-
 
         Element actionXml = XmlUtils.parseXml("<map-reduce>" +
                 "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +

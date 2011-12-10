@@ -75,6 +75,8 @@ public class JsonToBean {
         WF_ACTION.put("getEndTime", new Property(JsonTags.WORKFLOW_ACTION_END_TIME, Date.class));
         WF_ACTION.put("getTransition", new Property(JsonTags.WORKFLOW_ACTION_TRANSITION, String.class));
         WF_ACTION.put("getData", new Property(JsonTags.WORKFLOW_ACTION_DATA, String.class));
+        WF_ACTION.put("getStats", new Property(JsonTags.WORKFLOW_ACTION_STATS, String.class));
+        WF_ACTION.put("getExternalChildIDs", new Property(JsonTags.WORKFLOW_ACTION_EXTERNAL_CHILD_IDS, String.class));
         WF_ACTION.put("getExternalId", new Property(JsonTags.WORKFLOW_ACTION_EXTERNAL_ID, String.class));
         WF_ACTION.put("getExternalStatus", new Property(JsonTags.WORKFLOW_ACTION_EXTERNAL_STATUS, String.class));
         WF_ACTION.put("getTrackerUri", new Property(JsonTags.WORKFLOW_ACTION_TRACKER_URI, String.class));

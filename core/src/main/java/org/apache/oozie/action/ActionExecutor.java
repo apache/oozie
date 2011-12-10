@@ -134,6 +134,22 @@ public abstract class ActionExecutor {
         void setExecutionData(String externalStatus, Properties actionData);
 
         /**
+         * Set execution statistics information for a particular action. The action status is set to {@link
+         * org.apache.oozie.client.WorkflowAction.Status#DONE}
+         *
+         * @param jsonStats the JSON string representation of the stats.
+         */
+        void setExecutionStats(String jsonStats);
+
+        /**
+         * Set external child IDs for a particular action (Eg: pig). The action status is set to {@link
+         * org.apache.oozie.client.WorkflowAction.Status#DONE}
+         *
+         * @param externalChildIDs the external child IDs as a comma-delimited string.
+         */
+        void setExternalChildIDs(String externalChildIDs);
+
+        /**
          * Set the action end completion information for a completed action.
          *
          * @param status the action end status, it can be {@link org.apache.oozie.client.WorkflowAction.Status#OK} or

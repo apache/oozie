@@ -37,6 +37,8 @@ public class TestJsonWorkflowAction extends TestCase {
         action.setEndTime(JsonUtils.parseDateRfc822(END_TIME));
         action.setTransition("e");
         action.setData("ee");
+        action.setStats("stats");
+        action.setExternalChildIDs("extChIDs");
         action.setExternalId("f");
         action.setExternalStatus("g");
         action.setTrackerUri("h");
@@ -57,6 +59,8 @@ public class TestJsonWorkflowAction extends TestCase {
         Assert.assertEquals(JsonUtils.parseDateRfc822(END_TIME), action.getEndTime());
         Assert.assertEquals("e", action.getTransition());
         Assert.assertEquals("ee", action.getData());
+        Assert.assertEquals("stats", action.getStats());
+        Assert.assertEquals("extChIDs", action.getExternalChildIDs());
         Assert.assertEquals("f", action.getExternalId());
         Assert.assertEquals("g", action.getExternalStatus());
         Assert.assertEquals("h", action.getTrackerUri());

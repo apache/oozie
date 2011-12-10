@@ -141,6 +141,20 @@ public interface WorkflowAction {
     String getData();
 
     /**
+     * Return the action statistics.
+     *
+     * @return the action statistics.
+     */
+    String getStats();
+
+    /**
+     * Return the external child IDs of the action.
+     *
+     * @return the external child IDs of the action.
+     */
+    String getExternalChildIDs();
+
+    /**
      * Return the external ID of the action.
      *
      * @return the external ID of the action.

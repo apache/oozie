@@ -65,6 +65,8 @@ public interface JsonTags {
     public static final String WORKFLOW_ACTION_STATUS = "status";
     public static final String WORKFLOW_ACTION_TRANSITION = "transition";
     public static final String WORKFLOW_ACTION_DATA = "data";
+    public static final String WORKFLOW_ACTION_STATS = "stats";
+    public static final String WORKFLOW_ACTION_EXTERNAL_CHILD_IDS = "externalChildIDs";
     public static final String WORKFLOW_ACTION_EXTERNAL_ID = "externalId";
     public static final String WORKFLOW_ACTION_EXTERNAL_STATUS = "externalStatus";
     public static final String WORKFLOW_ACTION_TRACKER_URI = "trackerUri";

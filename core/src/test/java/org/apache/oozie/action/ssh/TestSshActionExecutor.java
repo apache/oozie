@@ -102,6 +102,16 @@ public class TestSshActionExecutor extends XFsTestCase {
         }
 
         @Override
+        public void setExecutionStats(String jsonStats){
+            action.setExecutionStats(jsonStats);
+        }
+
+        @Override
+        public void setExternalChildIDs(String externalChildIDs){
+            action.setExternalChildIDs(externalChildIDs);
+        }
+
+        @Override
         public void setStartData(String externalId, String trackerUri, String consoleUrl) {
             action.setStartData(externalId, trackerUri, consoleUrl);
         }

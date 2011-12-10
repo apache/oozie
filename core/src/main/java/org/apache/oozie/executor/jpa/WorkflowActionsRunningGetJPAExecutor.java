@@ -83,6 +83,8 @@ public class WorkflowActionsRunningGetJPAExecutor implements JPAExecutor<List<Wo
             action.setConf(bean.getConf());
             action.setConsoleUrl(bean.getConsoleUrl());
             action.setData(bean.getData());
+            action.setStats(bean.getStats());
+            action.setExternalChildIDs(bean.getExternalChildIDs());
             action.setErrorInfo(bean.getErrorCode(), bean.getErrorMessage());
             action.setExternalId(bean.getExternalId());
             action.setExternalStatus(bean.getExternalStatus());

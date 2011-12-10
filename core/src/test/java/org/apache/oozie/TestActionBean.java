@@ -56,6 +56,11 @@ public class TestActionBean extends XTestCase {
         assertEquals("externalId", action.getExternalId());
         assertEquals("trackerUri", action.getTrackerUri());
         assertEquals("consoleUrl", action.getConsoleUrl());
+
+        action.setStats("jsonStats");
+        action.setExternalChildIDs("job1,job2");
+        assertEquals("jsonStats", action.getStats());
+        assertEquals("job1,job2", action.getExternalChildIDs());
     }
 
     public void testEmptyWriteRead() throws Exception {

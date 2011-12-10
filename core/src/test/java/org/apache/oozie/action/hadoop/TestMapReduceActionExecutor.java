@@ -75,6 +75,8 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         classes.add(LauncherSecurityManager.class);
         classes.add(LauncherException.class);
         classes.add(LauncherMainException.class);
+        classes.add(ActionStats.class);
+        classes.add(ActionType.class);
         classes.add(LauncherMain.class);
         classes.add(MapReduceMain.class);
         classes.add(StreamingMain.class);
@@ -261,9 +263,13 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         ae.end(context, context.getAction());
         assertEquals(WorkflowAction.Status.OK, context.getAction().getStatus());
 
+        //hadoop.counters will always be set in case of MR action.
         assertNotNull(context.getVar("hadoop.counters"));
         String counters = context.getVar("hadoop.counters");
         assertTrue(counters.contains("Task$Counter"));
+
+        //External Child IDs will always be null in case of MR action.
+        assertNull(context.getExternalChildIDs());
     }
 
     private void _testSubmitWithCredentials(String name, String actionXml) throws Exception {
@@ -401,6 +407,15 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         return conf;
     }
 
+    private XConfiguration getOozieActionExternalStatsWriteProperty(String inputDir, String outputDir,
+            String oozieProperty) {
+        XConfiguration conf = new XConfiguration();
+        conf.set("mapred.input.dir", inputDir);
+        conf.set("mapred.output.dir", outputDir);
+        conf.set("oozie.action.external.stats.write", oozieProperty);
+        return conf;
+    }
+
     public void testPipes() throws Exception {
         if (Boolean.parseBoolean(System.getProperty("oozie.test.hadoop.pipes", "false"))) {
             String wordCountBinary = TestPipesMain.getProgramName(this);
@@ -429,4 +444,155 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         }
     }
 
+    // Test to assert that executionStats is set when user has specified stats
+    // write property as true.
+    public void testSetExecutionStats_when_user_has_specified_stats_write_TRUE() throws Exception {
+        FileSystem fs = getFileSystem();
+
+        Path inputDir = new Path(getFsTestCaseDir(), "input");
+        Path outputDir = new Path(getFsTestCaseDir(), "output");
+
+        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+        w.write("dummy\n");
+        w.write("dummy\n");
+        w.close();
+
+        // set user stats write property as true explicitly in the
+        // configuration.
+        String actionXml = "<map-reduce>"
+                + "<job-tracker>"
+                + getJobTrackerUri()
+                + "</job-tracker>"
+                + "<name-node>"
+                + getNameNodeUri()
+                + "</name-node>"
+                + getOozieActionExternalStatsWriteProperty(inputDir.toString(), outputDir.toString(), "true")
+                        .toXmlString(false) + "</map-reduce>";
+
+        Context context = createContext("map-reduce", actionXml);
+        final RunningJob launcherJob = submitAction(context);
+        String launcherId = context.getAction().getExternalId();
+        waitFor(120 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                return launcherJob.isComplete();
+            }
+        });
+        assertTrue(launcherJob.isSuccessful());
+
+        assertTrue(LauncherMapper.hasIdSwap(launcherJob));
+
+        MapReduceActionExecutor ae = new MapReduceActionExecutor();
+        ae.check(context, context.getAction());
+        assertFalse(launcherId.equals(context.getAction().getExternalId()));
+
+        Configuration conf = ae.createBaseHadoopConf(context, XmlUtils.parseXml(actionXml));
+        String user = conf.get("user.name");
+        String group = conf.get("group.name");
+        JobClient jobClient = Services.get().get(HadoopAccessorService.class)
+                .createJobClient(user, group, new JobConf(conf));
+        final RunningJob mrJob = jobClient.getJob(JobID.forName(context.getAction().getExternalId()));
+
+        waitFor(120 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                return mrJob.isComplete();
+            }
+        });
+        assertTrue(mrJob.isSuccessful());
+        ae.check(context, context.getAction());
+
+        assertEquals("SUCCEEDED", context.getAction().getExternalStatus());
+        assertNull(context.getAction().getData());
+
+        ae.end(context, context.getAction());
+        assertEquals(WorkflowAction.Status.OK, context.getAction().getStatus());
+
+        // Assert for stats info stored in the context.
+        assertNotNull(context.getExecutionStats());
+        assertTrue(context.getExecutionStats().contains("ACTION_TYPE"));
+        assertTrue(context.getExecutionStats().contains("JobInProgress$Counter"));
+        assertTrue(context.getExecutionStats().contains("FileSystemCounters"));
+        assertTrue(context.getExecutionStats().contains("Task$Counter"));
+
+        // External Child IDs will always be null in case of MR action.
+        assertNull(context.getExternalChildIDs());
+
+        // hadoop.counters will always be set in case of MR action.
+        assertNotNull(context.getVar("hadoop.counters"));
+        String counters = context.getVar("hadoop.counters");
+        assertTrue(counters.contains("Task$Counter"));
+    }
+
+    // Test to assert that executionStats is not set when user has specified
+    // stats write property as false.
+    public void testSetExecutionStats_when_user_has_specified_stats_write_FALSE() throws Exception {
+        FileSystem fs = getFileSystem();
+
+        Path inputDir = new Path(getFsTestCaseDir(), "input");
+        Path outputDir = new Path(getFsTestCaseDir(), "output");
+
+        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+        w.write("dummy\n");
+        w.write("dummy\n");
+        w.close();
+
+        // set user stats write property as false explicitly in the
+        // configuration.
+        String actionXml = "<map-reduce>"
+                + "<job-tracker>"
+                + getJobTrackerUri()
+                + "</job-tracker>"
+                + "<name-node>"
+                + getNameNodeUri()
+                + "</name-node>"
+                + getOozieActionExternalStatsWriteProperty(inputDir.toString(), outputDir.toString(), "false")
+                        .toXmlString(false) + "</map-reduce>";
+
+        Context context = createContext("map-reduce", actionXml);
+        final RunningJob launcherJob = submitAction(context);
+        String launcherId = context.getAction().getExternalId();
+        waitFor(120 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                return launcherJob.isComplete();
+            }
+        });
+        assertTrue(launcherJob.isSuccessful());
+
+        assertTrue(LauncherMapper.hasIdSwap(launcherJob));
+
+        MapReduceActionExecutor ae = new MapReduceActionExecutor();
+        ae.check(context, context.getAction());
+        assertFalse(launcherId.equals(context.getAction().getExternalId()));
+
+        Configuration conf = ae.createBaseHadoopConf(context, XmlUtils.parseXml(actionXml));
+        String user = conf.get("user.name");
+        String group = conf.get("group.name");
+        JobClient jobClient = Services.get().get(HadoopAccessorService.class)
+                .createJobClient(user, group, new JobConf(conf));
+        final RunningJob mrJob = jobClient.getJob(JobID.forName(context.getAction().getExternalId()));
+
+        waitFor(120 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                return mrJob.isComplete();
+            }
+        });
+        assertTrue(mrJob.isSuccessful());
+        ae.check(context, context.getAction());
+
+        assertEquals("SUCCEEDED", context.getAction().getExternalStatus());
+        assertNull(context.getAction().getData());
+
+        ae.end(context, context.getAction());
+        assertEquals(WorkflowAction.Status.OK, context.getAction().getStatus());
+
+        // Assert for stats info stored in the context.
+        assertNull(context.getExecutionStats());
+
+        // External Child IDs will always be null in case of MR action.
+        assertNull(context.getExternalChildIDs());
+
+        // hadoop.counters will always be set in case of MR action.
+        assertNotNull(context.getVar("hadoop.counters"));
+        String counters = context.getVar("hadoop.counters");
+        assertTrue(counters.contains("Task$Counter"));
+    }
 }

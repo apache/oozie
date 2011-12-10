@@ -18,6 +18,7 @@
 package org.apache.oozie;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.action.hadoop.MapReduceActionExecutor;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.service.CallbackService;
 import org.apache.oozie.workflow.WorkflowInstance;
@@ -38,6 +39,7 @@ import java.util.Map;
  */
 public class DagELFunctions {
 
+    public static final String HADOOP_JOBS_PREFIX = "hadoopJobs:";
     private static final String WORKFLOW = "oozie.el.workflow.bean";
     private static final String ACTION = "oozie.el.action.bean";
     private static final String ACTION_PROTO_CONF = "oozie.el.action.proto.conf";
@@ -110,6 +112,14 @@ public class DagELFunctions {
         if (action.getData() != null) {
             workflowInstance
                     .setVar(action.getName() + WorkflowInstance.NODE_VAR_SEPARATOR + ACTION_DATA, action.getData());
+        }
+        if (action.getExternalChildIDs() != null) {
+            workflowInstance.setVar(action.getName() + WorkflowInstance.NODE_VAR_SEPARATOR + ACTION_DATA,
+                    HADOOP_JOBS_PREFIX + action.getExternalChildIDs());
+        }
+        if (action.getStats() != null) {
+            workflowInstance.setVar(action.getName() + WorkflowInstance.NODE_VAR_SEPARATOR + MapReduceActionExecutor.HADOOP_COUNTERS,
+                    action.getStats());
         }
         if (action.getErrorCode() != null) {
             workflowInstance.setVar(action.getName() + WorkflowInstance.NODE_VAR_SEPARATOR + ACTION_ERROR_CODE,

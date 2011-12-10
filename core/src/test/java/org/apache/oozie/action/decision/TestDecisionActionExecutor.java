@@ -82,6 +82,14 @@ public class TestDecisionActionExecutor extends XFsTestCase {
             executed = true;
         }
 
+        public void setExecutionStats(String jsonStats) {
+            action.setExecutionStats(jsonStats);
+        }
+
+        public void setExternalChildIDs(String externalChildIDs) {
+            action.setExternalChildIDs(externalChildIDs);
+        }
+
         public void setEndData(WorkflowAction.Status status, String signalValue) {
             action.setEndData(status, signalValue);
             ended = true;

@@ -686,8 +686,8 @@ public class OozieCLI {
                             .contains(LOCAL_TIME_OPTION));
                 }
                 else if (commandLine.getOptionValue(INFO_OPTION).contains("-W@")) {
-                    printWorkflowAction(wc.getWorkflowActionInfo(commandLine.getOptionValue(INFO_OPTION)), options
-                            .contains(LOCAL_TIME_OPTION));
+                    printWorkflowAction(wc.getWorkflowActionInfo(commandLine.getOptionValue(INFO_OPTION)),
+                            options.contains(LOCAL_TIME_OPTION), options.contains(VERBOSE_OPTION));
                 }
                 else {
                     String s = commandLine.getOptionValue(OFFSET_OPTION);
@@ -866,23 +866,28 @@ public class OozieCLI {
         }
     }
 
-    private void printWorkflowAction(WorkflowAction action, boolean contains) {
+    private void printWorkflowAction(WorkflowAction action, boolean contains, boolean verbose) {
         System.out.println("ID : " + maskIfNull(action.getId()));
 
         System.out.println(RULER);
 
-        System.out.println("Console URL     : " + maskIfNull(action.getConsoleUrl()));
-        System.out.println("Error Code      : " + maskIfNull(action.getErrorCode()));
-        System.out.println("Error Message   : " + maskIfNull(action.getErrorMessage()));
-        System.out.println("External ID     : " + maskIfNull(action.getExternalId()));
-        System.out.println("External Status : " + maskIfNull(action.getExternalStatus()));
-        System.out.println("Name            : " + maskIfNull(action.getName()));
-        System.out.println("Retries         : " + action.getRetries());
-        System.out.println("Tracker URI     : " + maskIfNull(action.getTrackerUri()));
-        System.out.println("Type            : " + maskIfNull(action.getType()));
-        System.out.println("Started         : " + maskDate(action.getStartTime(), contains));
-        System.out.println("Status          : " + action.getStatus());
-        System.out.println("Ended           : " + maskDate(action.getEndTime(), contains));
+        System.out.println("Console URL       : " + maskIfNull(action.getConsoleUrl()));
+        System.out.println("Error Code        : " + maskIfNull(action.getErrorCode()));
+        System.out.println("Error Message     : " + maskIfNull(action.getErrorMessage()));
+        System.out.println("External ID       : " + maskIfNull(action.getExternalId()));
+        System.out.println("External Status   : " + maskIfNull(action.getExternalStatus()));
+        System.out.println("Name              : " + maskIfNull(action.getName()));
+        System.out.println("Retries           : " + action.getRetries());
+        System.out.println("Tracker URI       : " + maskIfNull(action.getTrackerUri()));
+        System.out.println("Type              : " + maskIfNull(action.getType()));
+        System.out.println("Started           : " + maskDate(action.getStartTime(), contains));
+        System.out.println("Status            : " + action.getStatus());
+        System.out.println("Ended             : " + maskDate(action.getEndTime(), contains));
+
+        if (verbose) {
+            System.out.println("External Stats    : " + action.getStats());
+            System.out.println("External ChildIDs : " + action.getExternalChildIDs());
+        }
 
         System.out.println(RULER);
     }

@@ -78,6 +78,8 @@ public class WorkflowActionsGetForJobJPAExecutor implements JPAExecutor<List<Wor
             action.setConf(a.getConf());
             action.setConsoleUrl(a.getConsoleUrl());
             action.setData(a.getData());
+            action.setStats(a.getStats());
+            action.setExternalChildIDs(a.getExternalChildIDs());
             action.setErrorInfo(a.getErrorCode(), a.getErrorMessage());
             action.setExternalId(a.getExternalId());
             action.setExternalStatus(a.getExternalStatus());

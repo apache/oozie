@@ -305,6 +305,16 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<Void> {
             executed = true;
         }
 
+        public void setExecutionStats(String jsonStats) {
+            action.setExecutionStats(jsonStats);
+            executed = true;
+        }
+
+        public void setExternalChildIDs(String externalChildIDs) {
+            action.setExternalChildIDs(externalChildIDs);
+            executed = true;
+        }
+
         public void setEndData(WorkflowAction.Status status, String signalValue) {
             action.setEndData(status, signalValue);
             ended = true;

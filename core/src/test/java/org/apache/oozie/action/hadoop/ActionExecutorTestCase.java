@@ -134,6 +134,22 @@ public abstract class ActionExecutorTestCase extends XFsTestCase {
             executed = true;
         }
 
+        public String getExecutionStats() {
+            return action.getExecutionStats();
+        }
+
+        public void setExecutionStats(String jsonStats) {
+            action.setExecutionStats(jsonStats);
+        }
+
+        public String getExternalChildIDs() {
+            return action.getExternalChildIDs();
+        }
+
+        public void setExternalChildIDs(String externalChildIDs) {
+            action.setExternalChildIDs(externalChildIDs);
+        }
+
         public void setEndData(WorkflowAction.Status status, String signalValue) {
             action.setEndData(status, signalValue);
             ended = true;
