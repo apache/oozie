@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -101,6 +102,10 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
 
     public static final String CONFIG_DEFAULT = "coord-config-default.xml";
     public static final String COORDINATOR_XML_FILE = "coordinator.xml";
+    public final String COORD_INPUT_EVENTS ="input-events";
+    public final String COORD_OUTPUT_EVENTS = "output-events";
+    public final String COORD_INPUT_EVENTS_DATA_IN ="data-in";
+    public final String COORD_OUTPUT_EVENTS_DATA_OUT = "data-out";
 
     private static final Set<String> DISALLOWED_USER_PROPERTIES = new HashSet<String>();
     private static final Set<String> DISALLOWED_DEFAULT_PROPERTIES = new HashSet<String>();
@@ -211,6 +216,12 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
             appXml = XmlUtils.removeComments(appXml);
             initEvaluators();
             Element eJob = basicResolveAndIncludeDS(appXml, conf, coordJob);
+
+            // checking if the coordinator application data input/output events
+            // specify multiple data instance values in erroneous manner
+            checkMultipleTimeInstances(eJob, COORD_INPUT_EVENTS, COORD_INPUT_EVENTS_DATA_IN);
+            checkMultipleTimeInstances(eJob, COORD_OUTPUT_EVENTS, COORD_OUTPUT_EVENTS_DATA_OUT);
+
             LOG.debug("jobXml after all validation " + XmlUtils.prettyPrint(eJob).toString());
 
             jobId = storeToDB(eJob, coordJob);
@@ -277,6 +288,43 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
 
         LOG.info("ENDED Coordinator Submit jobId=" + jobId);
         return jobId;
+    }
+
+    /*
+     * Check against multiple data instance values inside a single <instance> tag
+     * If found, the job is not submitted and user is informed to correct the error, instead of defaulting to the first instance value in the list
+     */
+    private void checkMultipleTimeInstances(Element eCoordJob, String eventType, String dataType) throws CoordinatorJobException {
+        Element eventsSpec, dataSpec, instance;
+        List<Element> instanceSpecList;
+        Namespace ns = eCoordJob.getNamespace();
+        String instanceValue;
+        eventsSpec = eCoordJob.getChild(eventType, ns);
+        if (eventsSpec != null) {
+            dataSpec = eventsSpec.getChild(dataType, ns);
+            if (dataSpec != null) {
+                // In case of input-events, there can be multiple child <instance> datasets. Iterating to ensure none of them have errors
+                instanceSpecList = dataSpec.getChildren("instance", ns);
+                Iterator instanceIter = instanceSpecList.iterator();
+                while(instanceIter.hasNext()) {
+                    instance = ((Element) instanceIter.next());
+                    if(instance.getContentSize() == 0) { //empty string or whitespace
+                        throw new CoordinatorJobException(ErrorCode.E1021, "<instance> tag within " + eventType + " is empty!");
+                    }
+                    instanceValue = instance.getContent(0).toString();
+                    if (instanceValue.contains(",")) { // reaching this block implies instance is not empty i.e. length > 0
+                        String correctAction = null;
+                        if(dataType.equals(COORD_INPUT_EVENTS_DATA_IN)) {
+                            correctAction = "Coordinator app definition should have separate <instance> tag per data-in instance";
+                        } else if(dataType.equals(COORD_OUTPUT_EVENTS_DATA_OUT)) {
+                            correctAction = "Coordinator app definition can have only one <instance> tag per data-out instance";
+                        }
+                        throw new CoordinatorJobException(ErrorCode.E1021, eventType + " instance '" + instanceValue
+                                + "' contains more than one date instance. Coordinator job NOT SUBMITTED. " + correctAction);
+                    }
+                }
+            }
+        }
     }
 
     /**

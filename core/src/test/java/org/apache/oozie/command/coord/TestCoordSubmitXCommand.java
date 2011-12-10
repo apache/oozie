@@ -21,6 +21,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.Reader;
+import java.io.Writer;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorJobBean;
@@ -33,6 +35,7 @@ import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
+import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
 
 public class TestCoordSubmitXCommand extends XDataTestCase {
@@ -88,6 +91,128 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         if (job != null) {
             assertEquals(job.getTimeout(), Services.get().getConf().getInt(
                     "oozie.service.coord.normal.default.timeout", -2));
+        }
+    }
+
+    /**
+     * Testing for when user tries to submit a coordinator application having data-in events
+     * that erroneously specify multiple input data instances inside a single <instance> tag.
+     * Job gives submission error and indicates appropriate correction
+     * Testing both negative(error) and well as positive(success) cases
+     */
+    public void testBasicSubmitWithMultipleInstancesInputEvent() throws Exception {
+        Configuration conf = new XConfiguration();
+        String appPath = getTestCaseDir() + File.separator + "coordinator.xml";
+
+        // CASE 1: Failure case i.e. multiple data-in instances
+        Reader reader = IOUtils.getResourceAsReader("coord-multiple-input-instance1.xml", -1);
+        Writer writer = new FileWriter(appPath);
+        IOUtils.copyCharStream(reader, writer);
+        conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        conf.set(OozieClient.GROUP_NAME, "other");
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+
+        try {
+            sc.call();
+            fail("Expected to catch errors due to incorrectly specified input data set instances");
+        }
+        catch (CommandException e) {
+            assertEquals(sc.getJob().getStatus(), Job.Status.FAILED);
+            assertEquals(e.getErrorCode(), ErrorCode.E1021);
+            assertTrue(e.getMessage().contains(sc.COORD_INPUT_EVENTS) && e.getMessage().contains("per data-in instance"));
+        }
+
+        // CASE 2: Multiple data-in instances specified as separate <instance> tags, but one or more tags are empty. Check works for whitespace in the tags too
+        reader = IOUtils.getResourceAsReader("coord-multiple-input-instance2.xml", -1);
+        writer = new FileWriter(appPath);
+        IOUtils.copyCharStream(reader, writer);
+        sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+
+        try {
+            sc.call();
+            fail("Expected to catch errors due to incorrectly specified input data set instances");
+        }
+        catch (CommandException e) {
+            assertEquals(sc.getJob().getStatus(), Job.Status.FAILED);
+            assertEquals(e.getErrorCode(), ErrorCode.E1021);
+            assertTrue(e.getMessage().contains(sc.COORD_INPUT_EVENTS) && e.getMessage().contains("is empty"));
+        }
+
+        // CASE 3: Success case i.e. Multiple data-in instances specified correctly as separate <instance> tags
+        reader = IOUtils.getResourceAsReader("coord-multiple-input-instance3.xml", -1);
+        writer = new FileWriter(appPath);
+        IOUtils.copyCharStream(reader, writer);
+        sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+
+        try {
+            sc.call();
+        }
+        catch (CommandException e) {
+            fail("Unexpected failure: " + e);
+        }
+    }
+
+    /**
+     * Testing for when user tries to submit a coordinator application having data-out events
+     * that erroneously specify multiple output data instances inside a single <instance> tag.
+     * Job gives submission error and indicates appropriate correction
+     * Testing negative(error) cases. Positive(success) case is covered in another test case "testBasicSubmit".
+     */
+    public void testBasicSubmitWithMultipleInstancesOutputEvent() throws Exception {
+        Configuration conf = new XConfiguration();
+        String appPath = getTestCaseDir() + File.separator + "coordinator.xml";
+
+        // CASE 1: Failure case i.e. multiple data-out instances
+        Reader reader = IOUtils.getResourceAsReader("coord-multiple-output-instance1.xml", -1);
+        Writer writer = new FileWriter(appPath);
+        IOUtils.copyCharStream(reader, writer);
+
+        conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        conf.set(OozieClient.GROUP_NAME, "other");
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+
+        try {
+            sc.call();
+            fail("Expected to catch errors due to incorrectly specified output data set instances");
+        }
+        catch (CommandException e) {
+            assertEquals(sc.getJob().getStatus(), Job.Status.FAILED);
+            assertEquals(e.getErrorCode(), ErrorCode.E1021);
+            assertTrue(e.getMessage().contains(sc.COORD_OUTPUT_EVENTS) && e.getMessage().contains("per data-out instance"));
+        }
+
+        // CASE 2: Data-out instance tag is empty. Check works for whitespace in the tag too
+        reader = IOUtils.getResourceAsReader("coord-multiple-output-instance2.xml", -1);
+        writer = new FileWriter(appPath);
+        IOUtils.copyCharStream(reader, writer);
+        sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+
+        try {
+            sc.call();
+            fail("Expected to catch errors due to incorrectly specified output data set instances");
+        }
+        catch (CommandException e) {
+            assertEquals(sc.getJob().getStatus(), Job.Status.FAILED);
+            assertEquals(e.getErrorCode(), ErrorCode.E1021);
+            assertTrue(e.getMessage().contains(sc.COORD_OUTPUT_EVENTS) && e.getMessage().contains("is empty"));
+        }
+
+        // CASE 3: Multiple <instance> tags within data-out should fail coordinator schema validation - different error than above is expected
+        reader = IOUtils.getResourceAsReader("coord-multiple-output-instance3.xml", -1);
+        writer = new FileWriter(appPath);
+        IOUtils.copyCharStream(reader, writer);
+        sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+
+        try {
+            sc.call();
+            fail("Expected to catch errors due to incorrectly specified output data set instances");
+        }
+        catch (CommandException e) {
+            assertEquals(sc.getJob().getStatus(), Job.Status.FAILED);
+            assertEquals(e.getErrorCode(), ErrorCode.E0701);
+            assertTrue(e.getMessage().contains("No child element is expected at this point"));
         }
     }
 
