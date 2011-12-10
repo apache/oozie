@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,10 +58,12 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
     private static final String CONF_OOZIE_ACTION_MAIN_ARG_COUNT = "oozie.action.main.arg.count";
     private static final String CONF_OOZIE_ACTION_MAIN_ARG_PREFIX = "oozie.action.main.arg.";
     private static final String CONF_OOZIE_ACTION_MAX_OUTPUT_DATA = "oozie.action.max.output.data";
+    private static final String CONF_OOZIE_EXTERNAL_STATS_MAX_SIZE = "oozie.external.stats.max.size";
 
     private static final String COUNTER_GROUP = "oozie.launcher";
     private static final String COUNTER_DO_ID_SWAP = "oozie.do.id.swap";
     private static final String COUNTER_OUTPUT_DATA = "oozie.output.data";
+    private static final String COUNTER_STATS_DATA = "oozie.stats.data";
     private static final String COUNTER_LAUNCHER_ERROR = "oozie.launcher.error";
 
     private static final String OOZIE_JOB_ID = "oozie.job.id";
@@ -70,8 +72,14 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
     private static final String OOZIE_ACTION_DIR_PATH = "oozie.action.dir.path";
     private static final String OOZIE_ACTION_RECOVERY_ID = "oozie.action.recovery.id";
 
+    public static final String ACTION_PREFIX = "oozie.action.";
+    public static final String EXTERNAL_CHILD_IDS = ACTION_PREFIX + "externalChildIDs.properties";
+    public static final String EXTERNAL_ACTION_STATS = ACTION_PREFIX + "stats.properties";
+
     static final String ACTION_CONF_XML = "action.xml";
     private static final String ACTION_OUTPUT_PROPS = "output.properties";
+    private static final String ACTION_STATS_PROPS = "stats.properties";
+    private static final String ACTION_EXTERNAL_CHILD_IDS_PROPS = "externalChildIds.properties";
     private static final String ACTION_NEW_ID_PROPS = "newId.properties";
     private static final String ACTION_ERROR_PROPS = "error.properties";
 
@@ -151,6 +159,16 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
     }
 
     /**
+     * Set the maximum value of stats data
+     *
+     * @param launcherConf the oozie launcher configuration
+     * @param maxStatsData the maximum allowed size of stats data
+     */
+    public static void setupMaxExternalStatsSize(Configuration launcherConf, int maxStatsData){
+        launcherConf.setInt(CONF_OOZIE_EXTERNAL_STATS_MAX_SIZE, maxStatsData);
+    }
+
+    /**
      * @param launcherConf
      * @param jobId
      * @param actionId
@@ -225,6 +243,25 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
     }
 
     /**
+     * Check whether runningJob has stats data or not
+     *
+     * @param runningJob the runningJob
+     * @return returns whether the running Job has stats data or not
+     * @throws IOException
+     */
+    public static boolean hasStatsData(RunningJob runningJob) throws IOException{
+        boolean output = false;
+        Counters counters = runningJob.getCounters();
+        if (counters != null) {
+            Counters.Group group = counters.getGroup(COUNTER_GROUP);
+            if (group != null) {
+                output = group.getCounter(COUNTER_STATS_DATA) == 1;
+            }
+        }
+        return output;
+    }
+
+    /**
      * @param runningJob
      * @return
      * @throws IOException
@@ -289,6 +326,26 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         return new Path(actionDir, ACTION_OUTPUT_PROPS);
     }
 
+    /**
+     * Get the location of stats file
+     *
+     * @param actionDir the action directory
+     * @return the hdfs location of the file
+     */
+    public static Path getActionStatsDataPath(Path actionDir){
+        return new Path(actionDir, ACTION_STATS_PROPS);
+    }
+
+    /**
+     * Get the location of external Child IDs file
+     *
+     * @param actionDir the action directory
+     * @return the hdfs location of the file
+     */
+    public static Path getExternalChildIDsDataPath(Path actionDir){
+        return new Path(actionDir, ACTION_EXTERNAL_CHILD_IDS_PROPS);
+    }
+
     public static Path getErrorPath(Path actionDir) {
         return new Path(actionDir, ACTION_ERROR_PROPS);
     }
@@ -306,6 +363,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
     public LauncherMapper() {
     }
 
+    @Override
     public void configure(JobConf jobConf) {
         System.out.println();
         System.out.println("Oozie Launcher starts");
@@ -321,6 +379,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         }
     }
 
+    @Override
     public void map(K1 key, V1 value, OutputCollector<K2, V2> collector, Reporter reporter) throws IOException {
         try {
             if (configFailure) {
@@ -395,7 +454,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
                     }
                     catch (InvocationTargetException ex) {
                         if (LauncherMainException.class.isInstance(ex.getCause())) {
-                            errorMessage = msgPrefix + "exit code [" +((LauncherMainException)ex.getCause()).getErrorCode() 
+                            errorMessage = msgPrefix + "exit code [" +((LauncherMainException)ex.getCause()).getErrorCode()
                                 + "]";
                             errorCause = null;
                         }
@@ -425,8 +484,9 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
                     }
                     if (errorMessage == null) {
                         File outputData = new File(System.getProperty("oozie.action.output.properties"));
+                        FileSystem fs = FileSystem.get(getJobConf());
                         if (outputData.exists()) {
-                            FileSystem fs = FileSystem.get(getJobConf());
+
                             fs.copyFromLocalFile(new Path(outputData.toString()), new Path(actionDir,
                                                                                            ACTION_OUTPUT_PROPS));
                             reporter.incrCounter(COUNTER_GROUP, COUNTER_OUTPUT_DATA, 1);
@@ -447,6 +507,8 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
                             System.out.println("=======================");
                             System.out.println();
                         }
+                        handleActionStatsData(fs, reporter);
+                        handleExternalChildIDs(fs, reporter);
                         File newId = new File(System.getProperty("oozie.action.newId.properties"));
                         if (newId.exists()) {
                             Properties props = new Properties();
@@ -454,7 +516,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
                             if (props.getProperty("id") == null) {
                                 throw new IllegalStateException("ID swap file does not have [id] property");
                             }
-                            FileSystem fs = FileSystem.get(getJobConf());
+                            fs = FileSystem.get(getJobConf());
                             fs.copyFromLocalFile(new Path(newId.toString()), new Path(actionDir, ACTION_NEW_ID_PROPS));
                             reporter.incrCounter(COUNTER_GROUP, COUNTER_DO_ID_SWAP, 1);
 
@@ -498,6 +560,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         }
     }
 
+    @Override
     public void close() throws IOException {
         System.out.println();
         System.out.println("Oozie Launcher ends");
@@ -506,6 +569,35 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
 
     protected JobConf getJobConf() {
         return jobConf;
+    }
+
+    private void handleActionStatsData(FileSystem fs, Reporter reporter) throws IOException, LauncherException{
+        File actionStatsData = new File(System.getProperty(EXTERNAL_ACTION_STATS));
+        // If stats are stored by the action, then stats file should exist
+        if (actionStatsData.exists()) {
+            int statsMaxOutputData = getJobConf().getInt(CONF_OOZIE_EXTERNAL_STATS_MAX_SIZE,
+                    Integer.MAX_VALUE);
+            reporter.incrCounter(COUNTER_GROUP, COUNTER_STATS_DATA, 1);
+            // fail the launcher if size of stats is greater than the maximum allowed size
+            if (actionStatsData.length() > statsMaxOutputData) {
+                String msg = MessageFormat.format("Output stats size [{0}] exceeds maximum [{1}]",
+                        actionStatsData.length(), statsMaxOutputData);
+                failLauncher(0, msg, null);
+            }
+            // copy the stats file to hdfs path which can be accessed by Oozie server
+            fs.copyFromLocalFile(new Path(actionStatsData.toString()), new Path(actionDir,
+                    ACTION_STATS_PROPS));
+        }
+    }
+
+    private void handleExternalChildIDs(FileSystem fs, Reporter reporter) throws IOException {
+        File externalChildIDs = new File(System.getProperty(EXTERNAL_CHILD_IDS));
+        // if external ChildIDs are stored by the action, then the file should exist
+        if (externalChildIDs.exists()) {
+            // copy the externalChildIDs file to hdfs path which can be accessed by Oozie server
+            fs.copyFromLocalFile(new Path(externalChildIDs.toString()), new Path(actionDir,
+                    ACTION_EXTERNAL_CHILD_IDS_PROPS));
+        }
     }
 
     private void setupMainConfiguration() throws IOException {
@@ -518,6 +610,8 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         System.setProperty("oozie.action.id", getJobConf().get(OOZIE_ACTION_ID));
         System.setProperty("oozie.action.conf.xml", new File(ACTION_CONF_XML).getAbsolutePath());
         System.setProperty("oozie.action.output.properties", new File(ACTION_OUTPUT_PROPS).getAbsolutePath());
+        System.setProperty(EXTERNAL_ACTION_STATS, new File(ACTION_STATS_PROPS).getAbsolutePath());
+        System.setProperty(EXTERNAL_CHILD_IDS, new File(ACTION_EXTERNAL_CHILD_IDS_PROPS).getAbsolutePath());
         System.setProperty("oozie.action.newId.properties", new File(ACTION_NEW_ID_PROPS).getAbsolutePath());
     }
 
@@ -544,6 +638,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         this.reporter = reporter;
     }
 
+    @Override
     public void run() {
         System.out.println("Heart beat");
         reporter.progress();

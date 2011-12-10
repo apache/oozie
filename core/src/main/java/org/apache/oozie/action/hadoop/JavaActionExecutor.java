@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,6 +27,7 @@ import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.net.ConnectException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -76,10 +77,11 @@ public class JavaActionExecutor extends ActionExecutor {
     private static final String HADOOP_UGI = "hadoop.job.ugi";
     private static final String HADOOP_JOB_TRACKER = "mapred.job.tracker";
     private static final String HADOOP_NAME_NODE = "fs.default.name";
-
+    public static final int MAX_EXTERNAL_STATS_SIZE_DEFAULT = Integer.MAX_VALUE;
     private static final Set<String> DISALLOWED_PROPERTIES = new HashSet<String>();
-
+    public final static String MAX_EXTERNAL_STATS_SIZE = "oozie.external.stats.max.size";
     private static int maxActionOutputLen;
+    private static int maxExternalStatsSize;
 
     private static final String SUCCEEDED = "SUCCEEDED";
     private static final String KILLED = "KILLED";
@@ -115,6 +117,8 @@ public class JavaActionExecutor extends ActionExecutor {
         classes.add(LauncherSecurityManager.class);
         classes.add(LauncherException.class);
         classes.add(LauncherMainException.class);
+        classes.add(ActionStats.class);
+        classes.add(ActionType.class);
         return classes;
     }
 
@@ -122,6 +126,9 @@ public class JavaActionExecutor extends ActionExecutor {
     public void initActionType() {
         super.initActionType();
         maxActionOutputLen = getOozieConf().getInt(CallbackServlet.CONF_MAX_DATA_LEN, 2 * 1024);
+        //Get the limit for the maximum allowed size of action stats
+        maxExternalStatsSize = getOozieConf().getInt(JavaActionExecutor.MAX_EXTERNAL_STATS_SIZE, MAX_EXTERNAL_STATS_SIZE_DEFAULT);
+        maxExternalStatsSize = (maxExternalStatsSize == -1) ? Integer.MAX_VALUE : maxExternalStatsSize;
         try {
             List<Class> classes = getLauncherClasses();
             Class[] launcherClasses = classes.toArray(new Class[classes.size()]);
@@ -144,6 +151,15 @@ public class JavaActionExecutor extends ActionExecutor {
         catch (IOException ex) {
             throw new RuntimeException(ex);
         }
+    }
+
+    /**
+     * Get the maximum allowed size of stats
+     *
+     * @return maximum size of stats
+     */
+    public static int getMaxExternalStatsSize() {
+        return maxExternalStatsSize;
     }
 
     void checkForDisallowedProps(Configuration conf, String confName) throws ActionExecutorException {
@@ -416,7 +432,7 @@ public class JavaActionExecutor extends ActionExecutor {
 
         // Oozie sharelib (for the action)
         addActionShareLib(context, actionXml, appPath, conf);
-    }
+	}
 
     protected String getLauncherMain(Configuration launcherConf, Element actionXml) {
         Namespace ns = actionXml.getNamespace();
@@ -471,6 +487,7 @@ public class JavaActionExecutor extends ActionExecutor {
             LauncherMapper.setupMainClass(launcherJobConf, getLauncherMain(launcherConf, actionXml));
 
             LauncherMapper.setupMaxOutputData(launcherJobConf, maxActionOutputLen);
+            LauncherMapper.setupMaxExternalStatsSize(launcherJobConf, maxExternalStatsSize);
 
             Namespace ns = actionXml.getNamespace();
             List<Element> list = actionXml.getChildren("arg", ns);
@@ -882,18 +899,7 @@ public class JavaActionExecutor extends ActionExecutor {
                     XLog.getLog(getClass()).info(XLog.STD, "action completed, external ID [{0}]",
                             action.getExternalId());
                     if (runningJob.isSuccessful() && LauncherMapper.isMainSuccessful(runningJob)) {
-                        Properties props = null;
-                        if (getCaptureOutput(action)) {
-                            props = new Properties();
-                            if (LauncherMapper.hasOutputData(runningJob)) {
-                                Path actionOutput = LauncherMapper.getOutputDataPath(context.getActionDir());
-                                InputStream is = actionFs.open(actionOutput);
-                                BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-                                props = PropertiesUtils.readProperties(reader, maxActionOutputLen);
-                                reader.close();
-                            }
-                        }
-                        context.setExecutionData(SUCCEEDED, props);
+                        getActionData(actionFs, runningJob, action, context);
                         XLog.getLog(getClass()).info(XLog.STD, "action produced output");
                     }
                     else {
@@ -962,6 +968,32 @@ public class JavaActionExecutor extends ActionExecutor {
                 }
             }
         }
+    }
+
+    /**
+     * Get the output data of an action. Subclasses should override this method
+     * to get action specific output data.
+     *
+     * @param actionFs the FileSystem object
+     * @param runningJob the runningJob
+     * @param action the Workflow action
+     * @param context executor context
+     *
+     */
+    protected void getActionData(FileSystem actionFs, RunningJob runningJob, WorkflowAction action, Context context)
+            throws HadoopAccessorException, JDOMException, IOException, URISyntaxException {
+        Properties props = null;
+        if (getCaptureOutput(action)) {
+            props = new Properties();
+            if (LauncherMapper.hasOutputData(runningJob)) {
+                Path actionOutput = LauncherMapper.getOutputDataPath(context.getActionDir());
+                InputStream is = actionFs.open(actionOutput);
+                BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+                props = PropertiesUtils.readProperties(reader, maxActionOutputLen);
+                reader.close();
+            }
+        }
+        context.setExecutionData(SUCCEEDED, props);
     }
 
     protected boolean getCaptureOutput(WorkflowAction action) throws JDOMException {

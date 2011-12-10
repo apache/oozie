@@ -24,6 +24,7 @@ import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.ClassUtils;
 import org.apache.oozie.util.IOUtils;
 import org.apache.pig.Main;
+import org.json.simple.JSONValue;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -34,6 +35,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.io.FileWriter;
 import java.io.FileReader;
+import java.util.Map;
 import java.util.Properties;
 import java.net.URL;
 
@@ -90,6 +92,10 @@ public class TestPigMain extends PigTestCase {
         jobConf.setInt("mapred.reduce.max.attempts", 1);
         jobConf.set("mapred.job.tracker", getJobTrackerUri());
         jobConf.set("fs.default.name", getNameNodeUri());
+
+        // option to specify whether stats should be stored or not
+        jobConf.set("oozie.action.external.stats.write", Boolean.toString(writeStats));
+
         injectKerberosInfo(jobConf);
 
         DistributedCache.addFileToClassPath(new Path(pigJar.toUri().getPath()), getFileSystem().getConf());
@@ -103,11 +109,15 @@ public class TestPigMain extends PigTestCase {
         jobConf.writeXml(os);
         os.close();
 
-        File outputDataFile = new File(getTestCaseDir(), "outputdata.properties");
+        File statsDataFile = new File(getTestCaseDir(), "statsdata.properties");
+
+        File hadoopIdsFile = new File(getTestCaseDir(), "hadoopIds.properties");
 
         setSystemProperty("oozie.launcher.job.id", "" + System.currentTimeMillis());
         setSystemProperty("oozie.action.conf.xml", actionXml.getAbsolutePath());
-        setSystemProperty("oozie.action.output.properties", outputDataFile.getAbsolutePath());
+        setSystemProperty("oozie.action.stats.properties", statsDataFile.getAbsolutePath());
+        setSystemProperty("oozie.action.externalChildIDs.properties", hadoopIdsFile.getAbsolutePath());
+
 
         URL url = Thread.currentThread().getContextClassLoader().getResource("PigMain.txt");
         File classPathDir = new File(url.getPath()).getParentFile();
@@ -141,12 +151,21 @@ public class TestPigMain extends PigTestCase {
             System.setProperty("user.name", user);
         }
 
-        assertTrue(outputDataFile.exists());
-        props = new Properties();
-        props.load(new FileReader(outputDataFile));
-        assertTrue(props.containsKey("hadoopJobs"));
-        assertNotSame("", props.getProperty("hadoopJobs"));
-
+        // Stats should be stored only if option to write stats is set to true
+        if (writeStats) {
+            assertTrue(statsDataFile.exists());
+            String stats = IOUtils.getReaderAsString(new FileReader(statsDataFile), -1);
+            // check for some of the expected key values in the stats
+            Map m = (Map) JSONValue.parse(stats);
+            // check for expected 1st level JSON keys
+            assertTrue(m.containsKey("PIG_VERSION"));
+        } else {
+            assertFalse(statsDataFile.exists());
+        }
+        // HadoopIds should always be stored
+        assertTrue(hadoopIdsFile.exists());
+        String externalChildIds = IOUtils.getReaderAsString(new FileReader(hadoopIdsFile), -1);
+        assertTrue(externalChildIds.contains("job_"));
         return null;
     }
 

@@ -19,11 +19,14 @@ package org.apache.oozie.action.hadoop;
 
 import org.apache.pig.Main;
 import org.apache.pig.PigRunner;
+import org.apache.pig.tools.pigstats.JobStats;
 import org.apache.pig.tools.pigstats.PigStats;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 
+import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.OutputStream;
 import java.io.FileOutputStream;
 import java.io.BufferedReader;
@@ -41,6 +44,11 @@ import java.net.URL;
 
 public class PigMain extends LauncherMain {
     private static final Set<String> DISALLOWED_PIG_OPTIONS = new HashSet<String>();
+    public static final String ACTION_PREFIX = "oozie.action.";
+    public static final String EXTERNAL_CHILD_IDS = ACTION_PREFIX + "externalChildIDs.properties";
+    public static final String EXTERNAL_ACTION_STATS = ACTION_PREFIX + "stats.properties";
+    public static final String EXTERNAL_STATS_WRITE = ACTION_PREFIX + "external.stats.write";
+    public static final int STRING_BUFFER_SIZE = 100;
 
     static {
         DISALLOWED_PIG_OPTIONS.add("-4");
@@ -202,25 +210,28 @@ public class PigMain extends LauncherMain {
         System.out.flush();
 
         System.out.println();
-        runPigJob(new String[] { "-version" }, null, true);
+        runPigJob(new String[] { "-version" }, null, true, false);
         System.out.println();
         System.out.flush();
-
-        runPigJob(arguments.toArray(new String[arguments.size()]), pigLog, false);
+        boolean hasStats = Boolean.parseBoolean(actionConf.get(EXTERNAL_STATS_WRITE));
+        runPigJob(arguments.toArray(new String[arguments.size()]), pigLog, false, hasStats);
 
         System.out.println();
         System.out.println("<<< Invocation of Pig command completed <<<");
         System.out.println();
 
-        // harvesting and recording Hadoop Job IDs
-        Properties jobIds = getHadoopJobIds(logFile);
-        File file = new File(System.getProperty("oozie.action.output.properties"));
-        os = new FileOutputStream(file);
-        jobIds.store(os, "");
-        os.close();
-        System.out.println(" Hadoop Job IDs executed by Pig: " + jobIds.getProperty("hadoopJobs"));
-        System.out.println();
+        // For embedded python or for version of pig lower than 0.8, pig stats are not supported.
+        // So retrieving hadoop Ids here
+        File file = new File(System.getProperty(EXTERNAL_CHILD_IDS));
+        if (!file.exists()) {
+            String jobIds = getHadoopJobIds(logFile);
+            writeExternalData(jobIds, file);
+            System.out.println(" Hadoop Job IDs executed by Pig: " + jobIds);
+            System.out.println();
+        }
     }
+
+
 
     private void handleError(String pigLog) throws Exception {
         System.err.println();
@@ -247,9 +258,10 @@ public class PigMain extends LauncherMain {
      * @param args pig command line arguments
      * @param pigLog pig log file
      * @param resetSecurityManager specify if need to reset security manager
+     * @param retrieveStats specify if stats are to be retrieved
      * @throws Exception
      */
-    protected void runPigJob(String[] args, String pigLog, boolean resetSecurityManager) throws Exception {
+    protected void runPigJob(String[] args, String pigLog, boolean resetSecurityManager, boolean retrieveStats) throws Exception {
         // running as from the command line
         boolean pigRunnerExists = true;
         Class klass;
@@ -270,6 +282,34 @@ public class PigMain extends LauncherMain {
                     handleError(pigLog);
                 }
                 throw new LauncherMainException(PigRunner.ReturnCode.FAILURE);
+            }
+            else {
+                // If pig command is ran with just the "version" option, then
+                // return
+                if (resetSecurityManager) {
+                    return;
+                }
+                String jobIds = getHadoopJobIds(stats);
+                if (jobIds != null) {
+                    System.out.println(" Hadoop Job IDs executed by Pig: " + jobIds);
+                    File f = new File(System.getProperty(EXTERNAL_CHILD_IDS));
+                    writeExternalData(jobIds, f);
+                }
+                // Retrieve stats only if user has specified in workflow
+                // configuration
+                if (retrieveStats) {
+                    ActionStats pigStats;
+                    String JSONString;
+                    try {
+                        pigStats = new OoziePigStats(stats);
+                        JSONString = pigStats.toJSON();
+                    } catch (UnsupportedOperationException uoe) {
+                        throw new UnsupportedOperationException(
+                                "Pig stats are not supported for this type of operation", uoe);
+                    }
+                    File f = new File(System.getProperty(EXTERNAL_ACTION_STATS));
+                    writeExternalData(JSONString, f);
+                }
             }
         }
         else {
@@ -295,6 +335,20 @@ public class PigMain extends LauncherMain {
         }
     }
 
+    // write external data(stats, hadoopIds) to the file which will be read by the LauncherMapper
+    private static void writeExternalData(String data, File f) throws IOException {
+        BufferedWriter out = null;
+        try {
+            out = new BufferedWriter(new FileWriter(f));
+            out.write(data);
+        }
+        finally {
+            if (out != null) {
+                out.close();
+            }
+        }
+    }
+
     public static void setPigScript(Configuration conf, String script, String[] params, String[] args) {
         conf.set("oozie.pig.script", script);
         MapReduceMain.setStrings(conf, "oozie.pig.params", params);
@@ -303,35 +357,67 @@ public class PigMain extends LauncherMain {
 
     private static final String JOB_ID_LOG_PREFIX = "HadoopJobId: ";
 
-    protected Properties getHadoopJobIds(String logFile) throws IOException {
-        int jobCount = 0;
-        Properties props = new Properties();
-        StringBuffer sb = new StringBuffer(100);
+    /**
+     * Get Hadoop Ids by parsing the log file
+     *
+     * @param logFile the pig log file
+     * @return comma-separated String
+     */
+    protected String getHadoopJobIds(String logFile) throws IOException {
+        StringBuilder sb = new StringBuilder(STRING_BUFFER_SIZE);
         if (new File(logFile).exists() == false) {
             System.err.println("pig log file: " + logFile + "  not present. Therefore no Hadoop jobids found");
-            props.setProperty("hadoopJobs", "");
+            return sb.toString();
         }
-        else {
-            BufferedReader br = new BufferedReader(new FileReader(logFile));
-            String line = br.readLine();
-            String separator = "";
-            while (line != null) {
-                if (line.contains(JOB_ID_LOG_PREFIX)) {
-                    int jobIdStarts = line.indexOf(JOB_ID_LOG_PREFIX) + JOB_ID_LOG_PREFIX.length();
-                    String jobId = line.substring(jobIdStarts);
-                    int jobIdEnds = jobId.indexOf(" ");
-                    if (jobIdEnds > -1) {
-                        jobId = jobId.substring(0, jobId.indexOf(" "));
-                    }
-                    sb.append(separator).append(jobId);
-                    separator = ",";
+        BufferedReader br = new BufferedReader(new FileReader(logFile));
+        String line = br.readLine();
+        String separator = ",";
+        while (line != null) {
+            if (line.contains(JOB_ID_LOG_PREFIX)) {
+                int jobIdStarts = line.indexOf(JOB_ID_LOG_PREFIX) + JOB_ID_LOG_PREFIX.length();
+                String jobId = line.substring(jobIdStarts);
+                int jobIdEnds = jobId.indexOf(" ");
+                if (jobIdEnds > -1) {
+                    jobId = jobId.substring(0, jobId.indexOf(" "));
                 }
-                line = br.readLine();
+                if (sb.length() > 0) {
+                    sb.append(separator);
+                }
+                sb.append(jobId);
             }
-            br.close();
-            props.setProperty("hadoopJobs", sb.toString());
+            line = br.readLine();
         }
-        return props;
+        br.close();
+        return sb.toString();
+    }
+
+
+    /**
+     * Get Hadoop Ids through PigStats API
+     *
+     * @param pigStats stats object obtained through PigStats API
+     * @return comma-separated String
+     */
+    protected String getHadoopJobIds(PigStats pigStats) {
+        StringBuilder sb = new StringBuilder(STRING_BUFFER_SIZE);
+        String separator = ",";
+        // Collect Hadoop Ids through JobGraph API of Pig and store them as
+        // comma separated string
+        try {
+            PigStats.JobGraph jobGraph = pigStats.getJobGraph();
+            for (JobStats jobStats : jobGraph) {
+                String hadoopJobId = jobStats.getJobId();
+                if (sb.length() > 0) {
+                    sb.append(separator);
+                }
+                sb.append(hadoopJobId);
+            }
+        }
+        // Return null if Pig API's are not supported
+        catch (UnsupportedOperationException uoe) {
+            return null;
+        }
+        return sb.toString();
     }
 
 }

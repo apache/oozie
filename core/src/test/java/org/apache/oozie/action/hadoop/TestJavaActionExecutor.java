@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -89,6 +89,8 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         classes.add(LauncherSecurityManager.class);
         classes.add(LauncherException.class);
         classes.add(LauncherMainException.class);
+        classes.add(ActionStats.class);
+        classes.add(ActionType.class);
         assertEquals(classes, ae.getLauncherClasses());
 
         Configuration conf = new XConfiguration();
@@ -349,6 +351,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         Context context = createContext(actionXml);
         final RunningJob runningJob = submitAction(context);
         waitFor(60 * 1000, new Predicate() {
+            @Override
             public boolean evaluate() throws Exception {
                 return runningJob.isComplete();
             }
@@ -374,6 +377,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         Context context = createContext(actionXml);
         final RunningJob runningJob = submitAction(context);
         waitFor(60 * 1000, new Predicate() {
+            @Override
             public boolean evaluate() throws Exception {
                 return runningJob.isComplete();
             }
@@ -404,6 +408,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         Context context = createContext(actionXml);
         final RunningJob runningJob = submitAction(context);
         waitFor(60 * 1000, new Predicate() {
+            @Override
             public boolean evaluate() throws Exception {
                 return runningJob.isComplete();
             }
@@ -440,6 +445,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         ActionExecutor ae = new JavaActionExecutor();
         assertFalse(ae.isCompleted(context.getAction().getExternalStatus()));
         waitFor(60 * 1000, new Predicate() {
+            @Override
             public boolean evaluate() throws Exception {
                 return runningJob.isComplete();
             }
@@ -464,6 +470,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         Context context = createContext(actionXml);
         final RunningJob runningJob = submitAction(context);
         waitFor(60 * 1000, new Predicate() {
+            @Override
             public boolean evaluate() throws Exception {
                 return runningJob.isComplete();
             }
@@ -490,6 +497,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         Context context = createContext(actionXml);
         final RunningJob runningJob = submitAction(context);
         waitFor(60 * 1000, new Predicate() {
+            @Override
             public boolean evaluate() throws Exception {
                 return runningJob.isComplete();
             }
@@ -518,6 +526,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         Context context = createContext(actionXml);
         final RunningJob runningJob = submitAction(context);
         waitFor(60 * 1000, new Predicate() {
+            @Override
             public boolean evaluate() throws Exception {
                 return runningJob.isComplete();
             }
@@ -550,6 +559,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertTrue(ae.isCompleted(context.getAction().getExternalStatus()));
 
         waitFor(60 * 1000, new Predicate() {
+            @Override
             public boolean evaluate() throws Exception {
                 return runningJob.isComplete();
             }
@@ -569,6 +579,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         String launcherId = context.getAction().getExternalId();
 
         waitFor(60 * 1000, new Predicate() {
+            @Override
             public boolean evaluate() throws Exception {
                 JavaActionExecutor ae = new JavaActionExecutor();
                 Configuration conf = ae.createBaseHadoopConf(context, XmlUtils.parseXml(actionXml));
@@ -582,6 +593,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertEquals(launcherId, context.getAction().getExternalId());
 
         waitFor(60 * 1000, new Predicate() {
+            @Override
             public boolean evaluate() throws Exception {
                 return runningJob2.isComplete();
             }
@@ -683,6 +695,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         Context context = createContext(actionXml);
         final RunningJob runningJob = submitAction(context);
         waitFor(60 * 1000, new Predicate() {
+            @Override
             public boolean evaluate() throws Exception {
                 return runningJob.isComplete();
             }

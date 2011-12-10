@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,8 +37,10 @@ import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.ClassUtils;
 import org.apache.pig.Main;
 import org.jdom.Element;
+import org.json.simple.JSONValue;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.io.InputStream;
 import java.io.FileInputStream;
@@ -47,11 +49,28 @@ import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import jline.ConsoleReaderInputStream;
 
 public class TestPigActionExecutor extends ActionExecutorTestCase {
+
+    private static final String PIG_SCRIPT = "set job.name 'test'\n" + "set debug on\n" +
+            "A = load '$IN' using PigStorage(':');\n" +
+            "B = foreach A generate $0 as id;\n" +
+            "store B into '$OUT' USING PigStorage();\n";
+
+    private static final String ERROR_PIG_SCRIPT = "set job.name 'test'\n" + "set debug on\n" +
+            "A = load '$IN' using PigStorage(':');\n" +
+            "ERROR @#$@#$;\n";
+
+    private static final String UDF_PIG_SCRIPT = "register udf.jar\n" +
+            "set job.name 'test'\n" + "set debug on\n" +
+            "A = load '$IN' using PigStorage(':');\n" +
+            "B = foreach A generate" +
+            "       org.apache.oozie.action.hadoop.UDFTester($0) as id;\n" +
+            "store B into '$OUT' USING PigStorage();\n";
 
     @Override
     protected void setSystemProps() {
@@ -77,11 +96,13 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         classes.add(LauncherSecurityManager.class);
         classes.add(LauncherException.class);
         classes.add(LauncherMainException.class);
+        classes.add(ActionStats.class);
+        classes.add(ActionType.class);
         classes.add(LauncherMain.class);
         classes.add(MapReduceMain.class);
         classes.add(PigMain.class);
+        classes.add(OoziePigStats.class);
         assertEquals(classes, ae.getLauncherClasses());
-
 
         Element actionXml = XmlUtils.parseXml("<pig>" +
                 "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
@@ -125,7 +146,6 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         is = new FileInputStream(ClassUtils.findContainingJar(ConsoleReaderInputStream.class));
         os = fs.create(new Path(getAppPath(), jLineJar));
         IOUtils.copyStream(is, os);
-
 
         XConfiguration protoConf = new XConfiguration();
         protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
@@ -179,18 +199,13 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         Context context = createContext(actionXml);
         final RunningJob launcherJob = submitAction(context);
         String launcherId = context.getAction().getExternalId();
-        waitFor(180 * 1000, new Predicate() {
-            public boolean evaluate() throws Exception {
-                return launcherJob.isComplete();
-            }
-        });
-        Thread.sleep(2000);
+        evaluateLauncherJob(launcherJob);
         assertTrue(launcherJob.isSuccessful());
 
         Thread.sleep(2000);
         assertFalse(LauncherMapper.hasIdSwap(launcherJob));
         if (checkForSuccess) {
-            assertTrue(LauncherMapper.hasOutputData(launcherJob));
+            assertTrue(LauncherMapper.hasStatsData(launcherJob));
         }
 
         PigActionExecutor ae = new PigActionExecutor();
@@ -199,11 +214,8 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         assertTrue(launcherId.equals(context.getAction().getExternalId()));
         if (checkForSuccess) {
             assertEquals("SUCCEEDED", context.getAction().getExternalStatus());
-            assertNotNull(context.getAction().getData());
-            Properties outputData = new Properties();
-            outputData.load(new StringReader(context.getAction().getData()));
-            assertTrue(outputData.containsKey("hadoopJobs"));
-            assertNotSame("", outputData.getProperty("hadoopJobs"));
+            assertNull(context.getAction().getData());
+
         }
         else {
             assertEquals("FAILED/KILLED", context.getAction().getExternalStatus());
@@ -217,54 +229,148 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         }
     }
 
-    private static final String PIG_SCRIPT = "set job.name 'test'\n" + "set debug on\n" +
-            "A = load '$IN' using PigStorage(':');\n" +
-            "B = foreach A generate $0 as id;\n" +
-            "store B into '$OUT' USING PigStorage();\n";
+    /*
+     * Test the stats retrieved from a Pig job
+     */
+    public void testExecutionStats() throws Exception {
+        // Set the action xml with the option for retrieving stats to true
+        String actionXml = setPigActionXml(PIG_SCRIPT, true);
+        Context context = createContext(actionXml);
+        final RunningJob launcherJob = submitAction(context);
+        evaluateLauncherJob(launcherJob);
+        assertTrue(launcherJob.isSuccessful());
+        assertTrue(LauncherMapper.hasStatsData(launcherJob));
 
-    protected XConfiguration getPigConfig() {
+        PigActionExecutor ae = new PigActionExecutor();
+        WorkflowAction wfAction = context.getAction();
+        ae.check(context, wfAction);
+        ae.end(context, wfAction);
+
+        assertEquals("SUCCEEDED", wfAction.getExternalStatus());
+        String stats = wfAction.getStats();
+        assertNotNull(stats);
+        // check for some of the expected key values in the stats
+        Map m = (Map)JSONValue.parse(stats);
+        // check for expected 1st level JSON keys
+        assertTrue(m.containsKey("PIG_VERSION"));
+
+        String expectedChildIDs = wfAction.getExternalChildIDs();
+        String[] childIDs = expectedChildIDs.split(",");
+        assertTrue(m.containsKey(childIDs[0]));
+
+        Map q = (Map)m.get(childIDs[0]);
+        // check for expected 2nd level JSON keys
+        assertTrue(q.containsKey("HADOOP_COUNTERS"));
+    }
+
+
+    /*
+     * Test the Hadoop IDs obtained from the Pig job
+     */
+    public void testExternalChildIds() throws Exception {
+        // Set the action xml with the option for retrieving stats to false
+        String actionXml = setPigActionXml(PIG_SCRIPT, false);
+        Context context = createContext(actionXml);
+        final RunningJob launcherJob = submitAction(context);
+        evaluateLauncherJob(launcherJob);
+        assertTrue(launcherJob.isSuccessful());
+
+        PigActionExecutor ae = new PigActionExecutor();
+        WorkflowAction wfAction = context.getAction();
+        ae.check(context, wfAction);
+        ae.end(context, wfAction);
+
+        assertEquals("SUCCEEDED", wfAction.getExternalStatus());
+        String externalIds = wfAction.getExternalChildIDs();
+        assertNotNull(externalIds);
+        assertNotSame("", externalIds);
+        // check for the expected prefix of hadoop jobIDs
+        assertTrue(externalIds.contains("job_"));
+
+    }
+
+    /*
+     * Test the stats after setting the maximum allowed size of stats to a small
+     * value
+     */
+    public void testExecutionStatsWithMaxStatsSizeLimit() throws Exception {
+        // Set a very small value for max size of stats
+        setSystemProperty(JavaActionExecutor.MAX_EXTERNAL_STATS_SIZE, new String("1"));
+        new Services().init();
+        // Set the action xml with the option for retrieving stats to true
+        String actionXml = setPigActionXml(PIG_SCRIPT, true);
+        Context context = createContext(actionXml);
+        final RunningJob launcherJob = submitAction(context);
+        evaluateLauncherJob(launcherJob);
+        assertTrue(launcherJob.isSuccessful());
+
+        PigActionExecutor ae = new PigActionExecutor();
+        WorkflowAction wfAction = context.getAction();
+        ae.check(context, wfAction);
+        ae.end(context, wfAction);
+
+        // action should fail as the size of pig stats will always be greater
+        // than 1 byte
+        assertEquals("FAILED/KILLED", wfAction.getExternalStatus());
+        assertNull(wfAction.getStats());
+    }
+
+    /*
+     * Test the stats with retrieve stats option set to false
+     */
+    public void testExecutionStatsWithRetrieveStatsFalse() throws Exception {
+        // Set the action xml with the option for retrieving stats to false
+        String actionXml = setPigActionXml(PIG_SCRIPT, false);
+        Context context = createContext(actionXml);
+        final RunningJob launcherJob = submitAction(context);
+        evaluateLauncherJob(launcherJob);
+        assertTrue(launcherJob.isSuccessful());
+        assertFalse(LauncherMapper.hasStatsData(launcherJob));
+
+        PigActionExecutor ae = new PigActionExecutor();
+        WorkflowAction wfAction = context.getAction();
+        ae.check(context, wfAction);
+        ae.end(context, wfAction);
+
+        assertEquals("SUCCEEDED", wfAction.getExternalStatus());
+        assertNotNull(wfAction.getExternalChildIDs());
+    }
+
+    private void evaluateLauncherJob(final RunningJob launcherJob) throws Exception{
+        waitFor(180 * 1000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                return launcherJob.isComplete();
+            }
+        });
+        Thread.sleep(2000);
+    }
+
+    protected XConfiguration setPigConfig(boolean writeStats) {
         XConfiguration conf = new XConfiguration();
         conf.set("oozie.pig.log.level", "INFO");
+        conf.set(PigMain.EXTERNAL_STATS_WRITE, String.valueOf(writeStats));
         return conf;
     }
 
     public void testPig() throws Exception {
-        FileSystem fs = getFileSystem();
-
-        Path script = new Path(getAppPath(), "script.pig");
-        Writer w = new OutputStreamWriter(fs.create(script));
-        w.write(PIG_SCRIPT);
-        w.close();
-
-        Path inputDir = new Path(getFsTestCaseDir(), "input");
-        Path outputDir = new Path(getFsTestCaseDir(), "output");
-
-        w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
-        w.write("dummy\n");
-        w.write("dummy\n");
-        w.close();
-
-        String actionXml = "<pig>" +
-                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
-                "<name-node>" + getNameNodeUri() + "</name-node>" +
-                getPigConfig().toXmlString(false) +
-                "<script>" + script.getName() + "</script>" +
-                "<param>IN=" + inputDir.toUri().getPath() + "</param>" +
-                "<param>OUT=" + outputDir.toUri().getPath() + "</param>" +
-                "</pig>";
+        // Set the action xml with the option for retrieving stats to true
+        String actionXml = setPigActionXml(PIG_SCRIPT, true);
         _testSubmit(actionXml, true);
     }
 
-    private static final String ERROR_PIG_SCRIPT = "set job.name 'test'\n" + "set debug on\n" +
-            "A = load '$IN' using PigStorage(':');\n" +
-            "ERROR @#$@#$;\n";
-
     public void testPigError() throws Exception {
+        // Set the action xml with the option for retrieving stats to true
+        String actionXml = setPigActionXml(ERROR_PIG_SCRIPT, true);
+        _testSubmit(actionXml, false);
+    }
+
+    private String setPigActionXml(String pigScript, boolean writeStats) throws IOException{
         FileSystem fs = getFileSystem();
 
         Path script = new Path(getAppPath(), "script.pig");
         Writer w = new OutputStreamWriter(fs.create(script));
-        w.write(ERROR_PIG_SCRIPT);
+        w.write(pigScript);
         w.close();
 
         Path inputDir = new Path(getFsTestCaseDir(), "input");
@@ -278,20 +384,14 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         String actionXml = "<pig>" +
                 "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
-                getPigConfig().toXmlString(false) +
+                setPigConfig(writeStats).toXmlString(false) +
                 "<script>" + script.getName() + "</script>" +
                 "<param>IN=" + inputDir.toUri().getPath() + "</param>" +
                 "<param>OUT=" + outputDir.toUri().getPath() + "</param>" +
                 "</pig>";
-        _testSubmit(actionXml, false);
-    }
 
-    private static final String UDF_PIG_SCRIPT = "register udf.jar\n" +
-            "set job.name 'test'\n" + "set debug on\n" +
-            "A = load '$IN' using PigStorage(':');\n" +
-            "B = foreach A generate" +
-            "       org.apache.oozie.action.hadoop.UDFTester($0) as id;\n" +
-            "store B into '$OUT' USING PigStorage();\n";
+        return actionXml;
+    }
 
     public void testUdfPig() throws Exception {
         FileSystem fs = getFileSystem();
@@ -301,7 +401,6 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         InputStream is = new FileInputStream(jarFile);
         OutputStream os = getFileSystem().create(udfJar);
         IOUtils.copyStream(is, os);
-
 
         Path script = new Path(getAppPath(), "script.pig");
         Writer w = new OutputStreamWriter(fs.create(script));
@@ -319,7 +418,7 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         String actionXml = "<pig>" +
                 "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
-                getPigConfig().toXmlString(false) +
+                setPigConfig(true).toXmlString(false) +
                 "<script>" + script.getName() + "</script>" +
                 "<param>IN=" + inputDir.toUri().getPath() + "</param>" +
                 "<param>OUT=" + outputDir.toUri().getPath() + "</param>" +

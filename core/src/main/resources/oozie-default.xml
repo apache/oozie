@@ -1099,6 +1099,16 @@
         </description>
     </property>
 
+    <!-- External stats-->
+
+    <property>
+        <name>oozie.external.stats.max.size</name>
+        <value>-1</value>
+        <description>
+            Max size in bytes for action stats. -1 means infinite value.
+        </description>
+    </property>
+
     <!-- JobCommand -->
 
     <property>

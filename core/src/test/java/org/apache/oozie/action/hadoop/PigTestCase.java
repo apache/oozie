@@ -35,14 +35,18 @@ import com.google.common.primitives.Booleans;
 
 public abstract class PigTestCase extends XFsTestCase implements Callable<Void> {
     protected static String pigScript;
+    protected static boolean writeStats;
     private static String commonPigScript = "set job.name 'test'\n" +
              "set debug on\n" +
              "A = load '$IN' using PigStorage(':');\n" +
              "B = foreach A generate $0 as id;\n" +
              "store B into '$OUT' USING PigStorage();";
 
+
+
     public void testPigScript() throws Exception {
         pigScript = commonPigScript;
+        writeStats = true;
         DoAs.call(getTestUser(), this);
 
     }
@@ -78,6 +82,8 @@ public abstract class PigTestCase extends XFsTestCase implements Callable<Void> 
                 + "\noutput = " + "'"+outputDir.toUri().getPath()+"'"
                 + "\nQ = P.bind({'IN':input, 'OUT':output})"
                 + "\nQ.runSingle()";
+
+        writeStats = false;
         DoAs.call(getTestUser(), this);
     }
 
