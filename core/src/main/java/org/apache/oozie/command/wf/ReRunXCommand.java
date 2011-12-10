@@ -69,7 +69,7 @@ import org.apache.oozie.workflow.lite.NodeHandler;
  */
 public class ReRunXCommand extends WorkflowXCommand<Void> {
     private final String jobId;
-    private final Configuration conf;
+    private Configuration conf;
     private final String authToken;
     private final Set<String> nodesToSkip = new HashSet<String>();
     public static final String TO_SKIP = "TO_SKIP";
@@ -137,6 +137,11 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
             }
 
             PropertiesUtils.checkDisallowedProperties(conf, DISALLOWED_USER_PROPERTIES);
+
+            // Resolving all variables in the job properties. This ensures the Hadoop Configuration semantics are preserved.
+            // The Configuration.get function within XConfiguration.resolve() works recursively to get the final value corresponding to a key in the map
+            // Resetting the conf to contain all the resolved values is necessary to ensure propagation of Oozie properties to Hadoop calls downstream
+            conf = ((XConfiguration) conf).resolve();
 
             try {
                 newWfInstance = workflowLib.createInstance(app, conf, jobId);

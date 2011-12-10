@@ -19,6 +19,7 @@ package org.apache.oozie.command.wf;
 
 import java.util.Properties;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
@@ -98,6 +99,50 @@ public class TestReRunXCommand extends XFsTestCase {
                 return wfClient.getJobInfo(jobId1).getStatus() == WorkflowJob.Status.SUCCEEDED;
             }
         });
+        assertEquals(WorkflowJob.Status.SUCCEEDED, wfClient.getJobInfo(jobId1).getStatus());
+    }
+
+    /*
+     * Test to ensure parameterized configuration variables get resolved in workflow rerun
+     */
+    public void testRerunVariableSub() throws IOException, OozieClientException {
+        Reader reader = IOUtils.getResourceAsReader("rerun-varsub-wf.xml", -1);
+        Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
+        IOUtils.copyCharStream(reader, writer);
+
+        Path path = getFsTestCaseDir();
+
+        final OozieClient wfClient = LocalOozie.getClient();
+        Properties conf = wfClient.createConfiguration();
+        conf.setProperty(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
+        conf.setProperty(OozieClient.USER_NAME, getTestUser());
+        injectKerberosInfo(conf);
+
+        conf.setProperty("nnbase", path.toString());
+        conf.setProperty("base", conf.getProperty("nnbase"));
+        // setting the variables "srcDir" and "dstDir", used as a file paths in the workflow, to parameterized expressions to test resolution.
+        conf.setProperty("srcDir", "${base}/p1");
+        conf.setProperty("dstDir", "${base}/p2");
+
+        final String jobId1 = wfClient.submit(conf);
+        wfClient.start(jobId1);
+
+        wfClient.kill(jobId1);
+
+        assertEquals(WorkflowJob.Status.KILLED, wfClient.getJobInfo(jobId1).getStatus());
+
+        // Skip executed nodes
+        getFileSystem().delete(new Path(path, "p2"), true);
+        conf.setProperty(OozieClient.RERUN_FAIL_NODES, "false");
+
+        wfClient.reRun(jobId1, conf);
+        waitFor(15 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                return wfClient.getJobInfo(jobId1).getStatus() == WorkflowJob.Status.SUCCEEDED;
+            }
+        });
+
+        // workflow success reflects that rerun configuration contained correctly resolved variable values.
         assertEquals(WorkflowJob.Status.SUCCEEDED, wfClient.getJobInfo(jobId1).getStatus());
     }
 
