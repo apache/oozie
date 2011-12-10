@@ -193,6 +193,11 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.oozie</groupId>
+                <artifactId>oozie-sharelib-oozie</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.oozie</groupId>
                 <artifactId>oozie-docs</artifactId>
                 <version>${project.version}</version>
                 <type>war</type>

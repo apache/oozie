@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-633 Create sharelib directory for oozie.(Mohammad)
 OOZIE-625 Oozie server not starting due to missing sl4j library for Authenticationfilter. (tucu)
 OOZIE-617 Add back Ssh action as extension. (tucu)
 OOZIE-578 Support shell action in Oozie WF (Mohammad)

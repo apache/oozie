@@ -47,6 +47,10 @@
             <directory>${basedir}/sqoop/target/partial-sharelib</directory>
             <outputDirectory>/</outputDirectory>
         </fileSet>
+         <fileSet>
+            <directory>${basedir}/oozie/target/partial-sharelib</directory>
+            <outputDirectory>/</outputDirectory>
+        </fileSet>
     </fileSets>
 
 </assembly>

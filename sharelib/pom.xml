@@ -36,6 +36,7 @@
         <module>pig</module>
         <module>hive</module>
         <module>sqoop</module>
+        <module>oozie</module>
     </modules>
 
     <build>
