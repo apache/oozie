@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-627 Handle GZ log retrieval failures gracefully.(Kiran via Mohammad)
 OOZIE-8   Variable not getting replaced with value in workflow rerun.(Mona via Mohammad)
 OOZIE-15  Coordinator input/output event instance should limit 1 instance. (Mona via Mohammad)
 OOZIE-633 Create sharelib directory for oozie.(Mohammad)

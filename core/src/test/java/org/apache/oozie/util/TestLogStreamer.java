@@ -44,6 +44,8 @@ public class TestLogStreamer extends XTestCase {
         xf.setParameter("JOB", "14-200904160239--example-forkjoinwf");
         xf.setLogLevel("DEBUG|INFO");
 
+        // This file will be included in the list of files for log retrieval, provided the modification time lies
+        // between the start and end times of the job
         FileWriter fw1 = new FileWriter(getTestCaseDir() + "/oozie.log");
         StringBuilder sb1 = new StringBuilder();
         sb1.append("2009-06-24 02:43:13,958 DEBUG _L1_:323 - USER[oozie] GROUP[-] TOKEN[-] APP[example-forkjoinwf] "
@@ -56,6 +58,8 @@ public class TestLogStreamer extends XTestCase {
         File f1 = new File(getTestCaseDir() + "/oozie.log");
         f1.setLastModified(currTime - 9000);
 
+        // This file will be included in the list of files for log retrieval, provided the modification time lies
+        // between the start and end times of the job
         FileWriter fw2 = new FileWriter(getTestCaseDir() + "/oozie.log.1");
         StringBuilder sb2 = new StringBuilder();
         sb2.append("\n2009-06-24 02:43:13,986 WARN _L3_:539 - USER[-] GROUP[-] TOKEN[-] APP[example-forkjoinwf] "
@@ -70,6 +74,8 @@ public class TestLogStreamer extends XTestCase {
         File f2 = new File(getTestCaseDir() + "/oozie.log.1");
         f2.setLastModified(currTime - 8000);
 
+        // This file will be included in the list of files for log retrieval, provided, the modification time lies
+        // between the start and end times of the job
         FileWriter fw3 = new FileWriter(getTestCaseDir() + "/oozie.log.2");
         StringBuilder sb3 = new StringBuilder();
         sb3.append("\n2009-06-24 02:43:14,505 INFO _L5_:317 - USER[oozie] GROUP[oozie] TOKEN[-] APP[-] JOB[-] "
@@ -83,6 +89,9 @@ public class TestLogStreamer extends XTestCase {
         File f3 = new File(getTestCaseDir() + "/oozie.log.2");
         f3.setLastModified(currTime);
 
+        // This file will not be included in the list of files for log retrieval, since the file name neither is equal
+        // to nor does begin with the log file pattern specified in log4j properties file. The default value is
+        // "oozie.log"
         FileWriter fwerr = new FileWriter(getTestCaseDir() + "/testerr.log");
         StringBuilder sberr = new StringBuilder();
         sberr.append("2009-06-24 02:43:13,958 WARN _L1_:323 - USER[oozie] GROUP[-] TOKEN[-] APP[example-forkjoinwf] "
@@ -95,6 +104,9 @@ public class TestLogStreamer extends XTestCase {
         File ferr = new File(getTestCaseDir() + "/testerr.log");
         ferr.setLastModified(currTime - 8000);
 
+        // This GZip file would be included in list of files for log retrieval, provided, there is an overlap between
+        // the two time windows i) time duration during which the GZipped log file is modified ii) time window between
+        // start and end times of the job
         Calendar cal = new GregorianCalendar();
         String outFilename = "oozie.log." + cal.get(Calendar.YEAR) + "-" + (cal.get(Calendar.MONTH) + 1) + "-"
                 + cal.get(Calendar.DATE) + "-" + cal.get(Calendar.HOUR_OF_DAY) + ".gz";
@@ -112,27 +124,76 @@ public class TestLogStreamer extends XTestCase {
         gzout.finish();
         gzout.close();
 
+        // oozie.log.gz GZip file would always be included in list of files for log retrieval
+        outFilename = "oozie.log.gz";
+        f = new File(getTestCaseDir() + "/" + outFilename);
+        gzout = new GZIPOutputStream(new FileOutputStream(f));
+        // Generate and write log content to the GZip file
+        sb = new StringBuilder();
+        sb.append("\n2009-06-24 02:43:13,958 DEBUG _L10_:323 - USER[oozie] GROUP[-] TOKEN[-] APP[example-"
+                + "forkjoinwf] " + "JOB[14-200904160239--example-forkjoinwf] ACTION[-] End workflow state change");
+        sb.append("\n2009-06-24 02:43:13,961 INFO _L11_:317 - USER[-] GROUP[-] TOKEN[-] APP[example-forkjoinwf] "
+                + "JOB[14-200904160239--example-forkjoinwf] ACTION[-] [org.apache.oozie.core."
+                + "command.WorkflowRunnerCallable] " + "released lock");
+        strg = sb.toString();
+        buf = strg.getBytes();
+        gzout.write(buf, 0, buf.length);
+        gzout.finish();
+        gzout.close();
+
+        // Test to check if an invalid GZip file(file name not in the expected format oozie.log-YYYY-MM-DD-HH.gz) is
+        // excluded from log retrieval
+        outFilename = "oozie.log-2011-12-03-15.bz2.gz";
+        f = new File(getTestCaseDir() + "/" + outFilename);
+        gzout = new GZIPOutputStream(new FileOutputStream(f));
+        // Generate and write log content to the GZip file
+        sb = new StringBuilder();
+        sb.append("\n2009-06-24 02:43:13,958 DEBUG _L12_:323 - USER[oozie] GROUP[-] TOKEN[-] APP[example-"
+                + "forkjoinwf] " + "JOB[14-200904160239--example-forkjoinwf] ACTION[-] End workflow state change");
+        sb.append("\n2009-06-24 02:43:13,961 INFO _L13_:317 - USER[-] GROUP[-] TOKEN[-] APP[example-forkjoinwf] "
+                + "JOB[14-200904160239--example-forkjoinwf] ACTION[-] [org.apache.oozie.core."
+                + "command.WorkflowRunnerCallable] " + "released lock");
+        strg = sb.toString();
+        buf = strg.getBytes();
+        gzout.write(buf, 0, buf.length);
+        gzout.finish();
+        gzout.close();
+
+        // Test for the log retrieval of the job that began 10 seconds before and ended 5 seconds before current time
+        // respectively
         StringWriter sw = new StringWriter();
         XLogStreamer str = new XLogStreamer(xf, sw, getTestCaseDir(), "oozie.log", 1);
         str.streamLog(new Date(currTime - 10000), new Date(currTime - 5000));
         String[] out = sw.toString().split("\n");
-        assertEquals(5, out.length);
-        assertEquals(true, out[0].contains("_L8_"));
-        assertEquals(true, out[1].contains("_L9_"));
-        assertEquals(true, out[2].contains("_L1_"));
-        assertEquals(true, out[3].contains("_L2_"));
-        assertEquals(true, out[4].contains("_L4_"));
+        // Check if the retrieved log content is of length seven lines after filtering based on time window, file name
+        // pattern and parameters like JobId, Username etc. and/or based on log level like INFO, DEBUG, etc.
+        assertEquals(7, out.length);
+        // Check if the lines of the log contain the expected strings
+        assertEquals(true, out[0].contains("_L10_"));
+        assertEquals(true, out[1].contains("_L11_"));
+        assertEquals(true, out[2].contains("_L8_"));
+        assertEquals(true, out[3].contains("_L9_"));
+        assertEquals(true, out[4].contains("_L1_"));
+        assertEquals(true, out[5].contains("_L2_"));
+        assertEquals(true, out[6].contains("_L4_"));
 
+        // Test to check if the null values for startTime and endTime are translated to 0 and current time respectively
+        // and corresponding log content is retrieved properly
         StringWriter sw1 = new StringWriter();
         XLogStreamer str1 = new XLogStreamer(xf, sw1, getTestCaseDir(), "oozie.log", 1);
         str1.streamLog(null, null);
         out = sw1.toString().split("\n");
-        assertEquals(6, out.length);
-        assertEquals(true, out[0].contains("_L8_"));
-        assertEquals(true, out[1].contains("_L9_"));
-        assertEquals(true, out[2].contains("_L1_"));
-        assertEquals(true, out[3].contains("_L2_"));
-        assertEquals(true, out[4].contains("_L4_"));
-        assertEquals(true, out[5].contains("_L7_"));
+        // Check if the retrieved log content is of length eight lines after filtering based on time window, file name
+        // pattern and parameters like JobId, Username etc. and/or based on log level like INFO, DEBUG, etc.
+        assertEquals(8, out.length);
+        // Check if the lines of the log contain the expected strings
+        assertEquals(true, out[0].contains("_L10"));
+        assertEquals(true, out[1].contains("_L11_"));
+        assertEquals(true, out[2].contains("_L8_"));
+        assertEquals(true, out[3].contains("_L9_"));
+        assertEquals(true, out[4].contains("_L1_"));
+        assertEquals(true, out[5].contains("_L2_"));
+        assertEquals(true, out[6].contains("_L4_"));
+        assertEquals(true, out[7].contains("_L7_"));
     }
 }
