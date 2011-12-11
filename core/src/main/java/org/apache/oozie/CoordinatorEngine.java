@@ -505,6 +505,7 @@ public class CoordinatorEngine extends BaseEngine {
         FILTER_NAMES.add(OozieClient.FILTER_STATUS);
         FILTER_NAMES.add(OozieClient.FILTER_ID);
         FILTER_NAMES.add(OozieClient.FILTER_FREQUENCY);
+        FILTER_NAMES.add(OozieClient.FILTER_UNIT);
     }
 
     /**
@@ -537,6 +538,10 @@ public class CoordinatorEngine extends BaseEngine {
      */
     private Map<String, List<String>> parseFilter(String filter) throws CoordinatorEngineException {
         Map<String, List<String>> map = new HashMap<String, List<String>>();
+        boolean isTimeUnitSpecified = false;
+        String timeUnit = "MINUTE";
+        boolean isFrequencySpecified = false;
+        String frequency = "";
         if (filter != null) {
             StringTokenizer st = new StringTokenizer(filter, ";");
             while (st.hasMoreTokens()) {
@@ -547,9 +552,31 @@ public class CoordinatorEngine extends BaseEngine {
                         throw new CoordinatorEngineException(ErrorCode.E0420, filter,
                                 "elements must be name=value pairs");
                     }
-                    if (!FILTER_NAMES.contains(pair[0])) {
+                    if (!FILTER_NAMES.contains(pair[0].toLowerCase())) {
                         throw new CoordinatorEngineException(ErrorCode.E0420, filter, XLog.format("invalid name [{0}]",
                                 pair[0]));
+                    }
+                    if (pair[0].equalsIgnoreCase("frequency")) {
+                        isFrequencySpecified = true;
+                        try {
+                            frequency = (int) Float.parseFloat(pair[1]) + "";
+                            continue;
+                        }
+                        catch (NumberFormatException NANException) {
+                            throw new CoordinatorEngineException(ErrorCode.E0420, filter, XLog.format(
+                                    "invalid value [{0}] for frequency. A numerical value is expected", pair[1]));
+                        }
+                    }
+                    if (pair[0].equalsIgnoreCase("unit")) {
+                        isTimeUnitSpecified = true;
+                        timeUnit = pair[1];
+                        if (!timeUnit.equalsIgnoreCase("months") && !timeUnit.equalsIgnoreCase("days")
+                                && !timeUnit.equalsIgnoreCase("hours") && !timeUnit.equalsIgnoreCase("minutes")) {
+                            throw new CoordinatorEngineException(ErrorCode.E0420, filter, XLog.format(
+                                    "invalid value [{0}] for time unit. "
+                                            + "Valid value is one of months, days, hours or minutes", pair[1]));
+                        }
+                        continue;
                     }
                     if (pair[0].equals("status")) {
                         try {
@@ -566,10 +593,37 @@ public class CoordinatorEngine extends BaseEngine {
                         map.put(pair[0], list);
                     }
                     list.add(pair[1]);
-                }
-                else {
+                } else {
                     throw new CoordinatorEngineException(ErrorCode.E0420, filter, "elements must be name=value pairs");
                 }
+            }
+            // Unit is specified and frequency is not specified
+            if (!isFrequencySpecified && isTimeUnitSpecified) {
+                throw new CoordinatorEngineException(ErrorCode.E0420, filter, "time unit should be added only when "
+                        + "frequency is specified. Either specify frequency also or else remove the time unit");
+            } else if (isFrequencySpecified) {
+                // Frequency value is specified
+                if (isTimeUnitSpecified) {
+                    if (timeUnit.equalsIgnoreCase("months")) {
+                        timeUnit = "MONTH";
+                    } else if (timeUnit.equalsIgnoreCase("days")) {
+                        timeUnit = "DAY";
+                    } else if (timeUnit.equalsIgnoreCase("hours")) {
+                        // When job details are persisted to database, frequency in hours are converted to minutes.
+                        // This conversion is to conform with that.
+                        frequency = Integer.parseInt(frequency) * 60 + "";
+                        timeUnit = "MINUTE";
+                    } else if (timeUnit.equalsIgnoreCase("minutes")) {
+                        timeUnit = "MINUTE";
+                    }
+                }
+                // Adding the frequency and time unit filters to the filter map
+                List<String> list = new ArrayList<String>();
+                list.add(timeUnit);
+                map.put("unit", list);
+                list = new ArrayList<String>();
+                list.add(frequency);
+                map.put("frequency", list);
             }
         }
         return map;

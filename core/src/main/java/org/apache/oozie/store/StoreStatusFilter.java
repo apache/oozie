@@ -44,6 +44,7 @@ public class StoreStatusFilter {
         boolean isEnabled = false;
         boolean isFrequency = false;
         boolean isId = false;
+        boolean isUnit = false;
 
         int index = 0;
 
@@ -234,6 +235,40 @@ public class StoreStatusFilter {
                                     sb.append(")");
                                 }
                                 index++;
+                                valArray.add(values.get(i));
+                                orArray.add(colName);
+                                colArray.add(colVar);
+                            }
+                        }
+                        // Filter map has time unit filter specified
+                        else if (entry.getKey().equals(OozieClient.FILTER_UNIT)) {
+                            List<String> values = filter.get(OozieClient.FILTER_UNIT);
+                            colName = "timeUnitStr";
+                            for (int i = 0; i < values.size(); ++i) {
+                                colVar = colName + index;
+                                // This unit filter value is the first condition to be added to the where clause of
+                                // query
+                                if (!isEnabled && !isUnit) {
+                                    sb.append(seletStr).append(" where w.timeUnitStr IN (:timeUnitStr" + index);
+                                    isUnit = true;
+                                    isEnabled = true;
+                                } else {
+                                    // Unit filter is neither the first nor the last condition to be added to the where
+                                    // clause of query
+                                    if (isEnabled && !isUnit) {
+                                        sb.append(" and w.timeUnitStr IN (:timeUnitStr" + index);
+                                        isUnit = true;
+                                    } else {
+                                        if (isUnit) {
+                                            sb.append(", :timeUnitStr" + index);
+                                        }
+                                    }
+                                }
+                                // This unit filter value is the last condition to be added to the where clause of query
+                                if (i == values.size() - 1) {
+                                    sb.append(")");
+                                }
+                                ++index;
                                 valArray.add(values.get(i));
                                 orArray.add(colName);
                                 colArray.add(colVar);

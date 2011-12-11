@@ -61,6 +61,7 @@ public class TestCoordJobInfoGetJPAExecutor extends XDataTestCase {
         _testGetJobInfoForUserAndStatus();
         _testGetJobInfoForFrequency();
         _testGetJobInfoForId(coordinatorJob1.getId());
+        _testGetJobInfoForFrequencyAndUnit();
     }
 
     private void _testGetJobInfoForStatus() throws Exception {
@@ -165,4 +166,51 @@ public class TestCoordJobInfoGetJPAExecutor extends XDataTestCase {
         assertEquals(ret.getCoordJobs().size(), 1);
     }
 
+    /**
+     * Test to verify various combinations of frequency and time unit filters for jobs
+     *
+     * @throws Exception
+     */
+    private void _testGetJobInfoForFrequencyAndUnit() throws Exception {
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+
+        // Test specifying frequency value as 1 minute
+        Map<String, List<String>> filter = new HashMap<String, List<String>>();
+        List<String> unitList = new ArrayList<String>();
+        List<String> frequencyList = new ArrayList<String>();
+        unitList.add("MINUTE");
+        filter.put(OozieClient.FILTER_UNIT, unitList);
+        frequencyList = new ArrayList<String>();
+        frequencyList.add("1");
+        filter.put(OozieClient.FILTER_FREQUENCY, frequencyList);
+        CoordJobInfoGetJPAExecutor coordInfoGetCmd = new CoordJobInfoGetJPAExecutor(filter, 1, 20);
+        CoordinatorJobInfo ret = jpaService.execute(coordInfoGetCmd);
+        assertNotNull(ret);
+        assertEquals(ret.getCoordJobs().size(), 0);
+        frequencyList.remove(0);
+        unitList.remove(0);
+
+        // Test specifying frequency value as 3 days
+        unitList.add("DAY");
+        filter.put(OozieClient.FILTER_UNIT, unitList);
+        frequencyList.add("3");
+        filter.put(OozieClient.FILTER_FREQUENCY, frequencyList);
+        coordInfoGetCmd = new CoordJobInfoGetJPAExecutor(filter, 1, 20);
+        ret = jpaService.execute(coordInfoGetCmd);
+        assertNotNull(ret);
+        assertEquals(ret.getCoordJobs().size(), 0);
+        frequencyList.remove(0);
+        unitList.remove(0);
+
+        // Test specifying frequency value as 1 day
+        unitList.add("DAY");
+        filter.put(OozieClient.FILTER_UNIT, unitList);
+        frequencyList.add("1");
+        filter.put(OozieClient.FILTER_FREQUENCY, frequencyList);
+        coordInfoGetCmd = new CoordJobInfoGetJPAExecutor(filter, 1, 20);
+        ret = jpaService.execute(coordInfoGetCmd);
+        assertNotNull(ret);
+        assertEquals(ret.getCoordJobs().size(), 3);
+    }
 }

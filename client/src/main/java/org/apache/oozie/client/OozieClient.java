@@ -120,6 +120,8 @@ public class OozieClient {
     public static final String FILTER_FREQUENCY = "frequency";
 
     public static final String FILTER_ID = "id";
+    
+    public static final String FILTER_UNIT = "unit";
 
     public static final String CHANGE_VALUE_ENDTIME = "endtime";
 

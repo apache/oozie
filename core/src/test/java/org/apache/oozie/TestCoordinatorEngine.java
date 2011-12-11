@@ -167,7 +167,6 @@ public class TestCoordinatorEngine extends XTestCase {
             }
         });
 
-
         List<CoordinatorAction> actions = ce.getCoordJob(jobId).getActions();
         assertTrue(actions.size() > 0);
         CoordinatorAction action = actions.get(0);
@@ -175,7 +174,6 @@ public class TestCoordinatorEngine extends XTestCase {
         System.out.println("..Missing deps=" + missingDeps);
         assertEquals("file://" + getTestCaseDir() + "/workflows/2009/02/01/consume_me", missingDeps);
     }
-
 
     /**
      * Test Missing Dependencies with Empty Done Flag in Schema
@@ -224,7 +222,6 @@ public class TestCoordinatorEngine extends XTestCase {
             }
         });
 
-
         List<CoordinatorAction> actions = ce.getCoordJob(jobId).getActions();
         assertTrue(actions.size() > 0);
         CoordinatorAction action = actions.get(0);
@@ -232,7 +229,6 @@ public class TestCoordinatorEngine extends XTestCase {
         System.out.println("..Missing deps=" + missingDeps);
         assertEquals("file://" + getTestCaseDir() + "/workflows/2009/02/01", missingDeps);
     }
-
 
     /**
      * Test Missing Dependencies with Done Flag in Schema
@@ -329,7 +325,7 @@ public class TestCoordinatorEngine extends XTestCase {
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set(OozieClient.GROUP_NAME, "other");
         injectKerberosInfo(conf);
-        
+
         final CoordinatorEngine ce = new CoordinatorEngine(getTestUser(), "UNIT_TESTING");
         final String jobId = ce.submitJob(conf, true);
         waitFor(5000, new Predicate() {
@@ -355,14 +351,46 @@ public class TestCoordinatorEngine extends XTestCase {
         assertEquals(job.getAppPath(), appPath);
     }
 
+    /**
+     * Test to validate frequency and time unit filters for jobs
+     *
+     * @throws Exception
+     */
     public void _testGetJobs(String jobId) throws Exception {
         CoordinatorEngine ce = new CoordinatorEngine(getTestUser(), "UNIT_TESTING");
-        CoordinatorJobInfo jobInfo = ce.getCoordJobs("", 1, 10); // TODO: use
-        // valid
-        // filter
+        // Test with no job filter specified
+        CoordinatorJobInfo jobInfo = ce.getCoordJobs("", 1, 10);
         assertEquals(1, jobInfo.getCoordJobs().size());
         CoordinatorJob job = jobInfo.getCoordJobs().get(0);
         assertEquals(jobId, job.getId());
+
+        // Test specifying the value for unit but leaving out the value for frequency
+        try {
+            jobInfo = ce.getCoordJobs("unit=minutes", 1, 10);
+        }
+        catch (CoordinatorEngineException ex) {
+            assertEquals("E0420: Invalid jobs filter [unit=minutes], time unit should be added only when "
+                    + "frequency is specified. Either specify frequency also or else remove the time unit", ex
+                    .getMessage());
+        }
+
+        // Test for invalid frequency value(Non-numeric value)
+        try {
+            jobInfo = ce.getCoordJobs("frequency=ghj;unit=minutes", 1, 10);
+        }
+        catch (CoordinatorEngineException ex) {
+            assertEquals("E0420: Invalid jobs filter [frequency=ghj;unit=minutes], "
+                    + "invalid value [ghj] for frequency. A numerical value is expected", ex.getMessage());
+        }
+
+        // Test for invalid unit value(Other than months, days, minutes or hours)
+        try {
+            jobInfo = ce.getCoordJobs("frequency=60;unit=min", 1, 10);
+        }
+        catch (CoordinatorEngineException ex) {
+            assertEquals("E0420: Invalid jobs filter [frequency=60;unit=min], invalid value [min] for time unit. "
+                    + "Valid value is one of months, days, hours or minutes", ex.getMessage());
+        }
     }
 
     private void _testGetDefinition(String jobId) throws Exception {
