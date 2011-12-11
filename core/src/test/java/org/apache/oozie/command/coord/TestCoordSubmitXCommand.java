@@ -613,6 +613,33 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         }
     }
 
+    /**
+     * Checking that any dataset initial-instance is not set to a date earlier than the server default Jan 01, 1970 00:00Z UTC
+     * @throws Exception
+     */
+    public void testSubmitDatasetInitialInstance() throws Exception {
+        Configuration conf = new XConfiguration();
+        String appPath = getTestCaseDir() + File.separator + "coordinator.xml";
+        Reader reader = IOUtils.getResourceAsReader("coord-dataset-initial-instance.xml", -1);
+        Writer writer = new FileWriter(appPath);
+        IOUtils.copyCharStream(reader, writer);
+
+        conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        conf.set(OozieClient.GROUP_NAME, "other");
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+        try {
+            sc.call();
+            fail("Expected to catch errors due to invalid dataset initial instance");
+        }
+        catch(CommandException cx) {
+            assertEquals(sc.getJob().getStatus(), Job.Status.FAILED);
+            assertEquals(cx.getErrorCode(), ErrorCode.E1021);
+            if(!(cx.getMessage().contains("earlier than the default initial instance"))) {
+                fail("Unexpected failure - " + cx.getMessage());
+            }
+        }
+    }
 
     private void _testConfigDefaults(boolean withDefaults) throws Exception {
         Configuration conf = new XConfiguration();

@@ -24,6 +24,8 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -32,6 +34,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.TreeSet;
 
 import javax.xml.transform.stream.StreamSource;
@@ -763,6 +766,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
                     .toString() : ((TimeUnit) evalFreq.getVariable("endOfDuration")).toString());
             val = resolveAttribute("initial-instance", dsElem, evalNofuncs);
             ParamChecker.checkUTC(val, "initial-instance");
+            checkInitialInstance(val);
             val = resolveAttribute("timezone", dsElem, evalNofuncs);
             ParamChecker.checkTimeZone(val, "timezone");
             resolveTagContents("uri-template", dsElem, evalNofuncs);
@@ -1004,6 +1008,26 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
             }
         }
         return jobId;
+    }
+
+    /*
+     * this method checks if the initial-instance specified for a particular
+       is not a date earlier than the oozie server default Jan 01, 1970 00:00Z UTC
+     */
+    private void checkInitialInstance(String val) throws CoordinatorJobException, IllegalArgumentException {
+        Date initialInstance, givenInstance;
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
+        df.setTimeZone(TimeZone.getTimeZone("UTC"));
+        try {
+            initialInstance = DateUtils.parseDateUTC("1970-01-01T00:00Z");
+            givenInstance = DateUtils.parseDateUTC(val);
+        }
+        catch (Exception e) {
+            throw new IllegalArgumentException("Unable to parse dataset initial-instance string '" + val + "' to Date object. ",e);
+        }
+        if(givenInstance.compareTo(initialInstance) < 0) {
+            throw new CoordinatorJobException(ErrorCode.E1021, "Dataset initial-instance " + df.format(givenInstance) + " is earlier than the default initial instance " + df.format(initialInstance));
+        }
     }
 
     /* (non-Javadoc)
