@@ -87,24 +87,13 @@ public class ShellMain extends LauncherMain {
         System.out.println();
         System.out.flush();
 
+        boolean captureOutput = actionConf.getBoolean(CONF_OOZIE_SHELL_CAPTURE_OUTPUT, false);
+
         // Execute the Command
         Process p = builder.start();
-        // Write the command's stdout and stderr output
-        BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        BufferedReader error = new BufferedReader(new InputStreamReader(p.getErrorStream()));
 
-        Thread[] thrArray = null;
-        try {
-            thrArray = handleShellOutput(actionConf, input, error);
-        }
-        finally {
-            if (input != null) {
-                input.close();
-            }
-            if (error != null) {
-                error.close();
-            }
-        }
+        Thread[] thrArray = handleShellOutput(p, captureOutput);
+
         int exitValue = p.waitFor();
         // Wait for both the thread to exit
         if (thrArray != null) {
@@ -155,28 +144,26 @@ public class ShellMain extends LauncherMain {
      * Print the output written by the Shell execution in its stdout/stderr.
      * Also write the stdout output to a file for capturing.
      *
-     * @param actionConf
-     * @param input
-     * @param error
+     * @param p process
+     * @param captureOutput indicates if STDOUT should be captured or not.
      * @return Array of threads (one for stdout and another one for stderr
      *         processing
-     * @throws IOException
+     * @throws IOException thrown if an IO error occurrs.
      */
-    protected Thread[] handleShellOutput(Configuration actionConf, BufferedReader input, BufferedReader error)
+    protected Thread[] handleShellOutput(Process p, boolean captureOutput)
             throws IOException {
-        OutputWriteThread thrStdout = null;
-        OutputWriteThread thrStderr = null;
+        BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
+        BufferedReader error = new BufferedReader(new InputStreamReader(p.getErrorStream()));
 
-        thrStdout = new OutputWriteThread(input, true, actionConf.getBoolean(CONF_OOZIE_SHELL_CAPTURE_OUTPUT, false));
+        OutputWriteThread thrStdout = new OutputWriteThread(input, true, captureOutput);
         thrStdout.setDaemon(true);
         thrStdout.start();
 
-        thrStderr = new OutputWriteThread(error, false, false);
+        OutputWriteThread thrStderr = new OutputWriteThread(error, false, false);
         thrStderr.setDaemon(true);
         thrStderr.start();
 
-        Thread[] thrArray = { thrStdout, thrStderr };
-        return thrArray;
+        return new Thread[]{ thrStdout, thrStderr };
     }
 
     /**
@@ -221,6 +208,12 @@ public class ShellMain extends LauncherMain {
                 e.printStackTrace();
                 throw new RuntimeException("Stdout/Stderr read/write error :" + e);
             }finally {
+                try {
+                    reader.close();
+                }
+                catch (IOException ex) {
+                    //NOP ignoring error on close of STDOUT/STDERR
+                }
                 if (os != null) {
                     try {
                         os.close();
