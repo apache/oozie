@@ -13,10 +13,9 @@
   ---
   Apache Oozie Downloads
   ---
-  ---
   ${maven.build.timestamp}
 
 Apache Oozie(TM) Downloads
 
-There is no Oozie release in Apache yet. The Oozie-dev team are working to release one very soon.
-In the mean time, the user is advised to check the released pacakges in github site at : {{{http://github.com/yahoo/oozie/downloads}Github Downloads}}
+  There is no Oozie release in Apache yet. The Oozie-dev team are working to release one very soon.
+  In the mean time, the user is advised to check the released pacakges in github site at : {{{http://github.com/yahoo/oozie/downloads}Github Downloads}}
