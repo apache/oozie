@@ -93,6 +93,8 @@ public interface RestConstants {
 
     public static final String JOB_LOG_ACTION = "action";
 
+    public static final String JOB_LOG_DATE = "date";
+
     public static final String JOB_LOG_SCOPE_PARAM = "scope";
 
     public static final String JOB_LOG_TYPE_PARAM = "type";

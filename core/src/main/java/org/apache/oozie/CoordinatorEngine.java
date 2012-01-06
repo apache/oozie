@@ -36,6 +36,7 @@ import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.coord.CoordActionInfoCommand;
 import org.apache.oozie.command.coord.CoordActionInfoXCommand;
+import org.apache.oozie.util.CoordActionsInDateRange;
 import org.apache.oozie.command.coord.CoordChangeCommand;
 import org.apache.oozie.command.coord.CoordChangeXCommand;
 import org.apache.oozie.command.coord.CoordJobCommand;
@@ -315,6 +316,7 @@ public class CoordinatorEngine extends BaseEngine {
         XLogStreamer.Filter filter = new XLogStreamer.Filter();
         filter.setParameter(DagXLogInfoService.JOB, jobId);
         if (logRetrievalScope != null && logRetrievalType != null) {
+            // if coordinator action logs are to be retrieved based on action id range
             if (logRetrievalType.equals(RestConstants.JOB_LOG_ACTION)) {
                 Set<String> actions = new HashSet<String>();
                 String[] list = logRetrievalScope.split(",");
@@ -365,6 +367,21 @@ public class CoordinatorEngine extends BaseEngine {
                     }
                     commaSeparatedActions.append(actionsIterator.next().toString());
                     commaRequired = 1;
+                }
+                filter.setParameter(DagXLogInfoService.ACTION, commaSeparatedActions.toString());
+            }
+            // if coordinator action logs are to be retrieved based on date range
+            // this block gets the corresponding list of coordinator actions to be used by the log filter
+            if (logRetrievalType.equalsIgnoreCase(RestConstants.JOB_LOG_DATE)) {
+                List<CoordinatorActionBean> actionsList = CoordActionsInDateRange.getCoordActionsFromDates(jobId, logRetrievalScope);
+                StringBuilder commaSeparatedActions = new StringBuilder("");
+                boolean commaRequired = false;
+                for (CoordinatorActionBean coordAction : actionsList) {
+                    if (commaRequired) {
+                        commaSeparatedActions.append(",");
+                    }
+                    commaSeparatedActions.append(coordAction.getId());
+                    commaRequired = true;
                 }
                 filter.setParameter(DagXLogInfoService.ACTION, commaSeparatedActions.toString());
             }
