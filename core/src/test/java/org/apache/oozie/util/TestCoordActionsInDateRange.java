@@ -67,13 +67,13 @@ public class TestCoordActionsInDateRange extends XDataTestCase {
             long noOfMillisecondsinOneHour = 3600000;
 
             // Testing for the number of coordinator actions in a date range that spans from half an hour prior to the nominal time to 1 hour after the nominal time
-            String date1 = DateUtils.formatDateUTC(new Date(nominalTimeMilliseconds - noOfMillisecondsinOneHour / 2));
+            String date1 = DateUtils.formatDateUTC(new Date(nominalTimeMilliseconds - (noOfMillisecondsinOneHour / 2)));
             String date2 = DateUtils.formatDateUTC(new Date(nominalTimeMilliseconds + noOfMillisecondsinOneHour));
             int noOfActions = CoordActionsInDateRange.getCoordActionsFromDates(job.getId().toString(), date1 + "::" + date2).size();
             assertEquals(1, noOfActions);
 
             // Testing for the number of coordinator actions in a date range that spans from half an hour after the nominal time to 1 hour after the nominal time
-            date1 = DateUtils.formatDateUTC(new Date(nominalTimeMilliseconds + noOfMillisecondsinOneHour / 2));
+            date1 = DateUtils.formatDateUTC(new Date(nominalTimeMilliseconds + (noOfMillisecondsinOneHour / 2)));
             noOfActions = CoordActionsInDateRange.getCoordActionsFromDates(job.getId().toString(), date1 + "::" + date2).size();
             assertEquals(0, noOfActions);
         }

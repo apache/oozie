@@ -52,7 +52,7 @@ public class CoordActionsInDateRange {
      *
      * Internally involves a database operation by invoking method 'getActionIdsFromDateRange'.
      */
-    public static List<CoordinatorActionBean> getCoordActionsFromDates(String jobId, String scope) throws XException,Exception {
+    public static List<CoordinatorActionBean> getCoordActionsFromDates(String jobId, String scope) throws XException {
         ParamChecker.notEmpty(jobId, "jobId");
         ParamChecker.notEmpty(scope, "scope");
         Set<CoordinatorActionBean> actionSet = new HashSet<CoordinatorActionBean>();
@@ -63,20 +63,25 @@ public class CoordActionsInDateRange {
             if (s.contains("::")) {
                 String[] dateRange = s.split("::");
                 if (dateRange.length != 2) {
-                    throw new XException(ErrorCode.E0302, "Error in parsing date's range '" + s + "'. Date value expected on both sides of the scope resolution operator '::' to signify start and end of range");
+                    throw new XException(ErrorCode.E0308, "'" + s + "'. Date value expected on both sides of the scope resolution operator '::' to signify start and end of range");
                 }
                 Date start;
                 Date end;
+                try {
                 start = DateUtils.parseDateUTC(dateRange[0].trim());
                 end = DateUtils.parseDateUTC(dateRange[1].trim());
+                }
+                catch (Exception dx) {
+                    throw new XException(ErrorCode.E0308, "Error in parsing start or end date");
+                }
                 if (start.after(end)) {
-                    throw new XException(ErrorCode.E0302, "Error in parsing date's range '" + s + "'. Start date '" + start + "' is older than end date: '" + end + "'");
+                    throw new XException(ErrorCode.E0308, "'" + s + "'. Start date '" + start + "' is older than end date: '" + end + "'");
                 }
                 List<CoordinatorActionBean> listOfActions = getActionIdsFromDateRange(jobId, start, end);
                 actionSet.addAll(listOfActions);
             }
             else {
-                throw new XException(ErrorCode.E0302, "Error in parsing date's range '" + s + "'. Separator '::' is missing for start and end dates of range");
+                throw new XException(ErrorCode.E0308, "'" + s + "'. Separator '::' is missing for start and end dates of range");
             }
         }
         List<CoordinatorActionBean> coordActions = new ArrayList<CoordinatorActionBean>();
