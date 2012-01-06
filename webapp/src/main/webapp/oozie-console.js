@@ -556,7 +556,7 @@ function jobDetailsPopup(response, request) {
 
 function coordJobDetailsPopup(response, request) {
 
-	var jobDefinitionArea = new Ext.form.TextArea({
+    var jobDefinitionArea = new Ext.form.TextArea({
         fieldLabel: 'Definition',
         editable: false,
         name: 'definition',
@@ -565,6 +565,74 @@ function coordJobDetailsPopup(response, request) {
         autoScroll: true,
         emptyText: "Loading..."
     });
+    var jobLogArea = new Ext.form.TextArea({
+        fieldLabel: 'Logs',
+        editable: false,
+	id: 'jobLogAreaId',
+        name: 'logs',
+        width: 1010,
+        height: 400,
+        autoScroll: true,
+        emptyText: "Loading..."
+    });
+    var getLogButton = new Ext.Button({
+	    text: 'Retrieve log',
+	    handler: function() {
+                    fetchLogs(coordJobId, actionsTextBox.getValue());
+	    }
+    });
+    var actionsTextBox = new Ext.form.TextField({
+             fieldLabel: 'ActionsList',
+             name: 'ActionsList',
+             value: 'Enter the action list here'
+         });
+    function fetchDefinition(coordJobId) {
+        Ext.Ajax.request({
+            url: getOozieBase() + 'job/' + coordJobId + "?show=definition",
+            success: function(response, request) {
+                jobDefinitionArea.setRawValue(response.responseText);
+            }
+        });
+    }
+    function fetchLogs(coordJobId, actionsList) {
+	if(actionsList=='') {
+	    Ext.Ajax.request({
+            url: getOozieBase() + 'job/' + coordJobId + "?show=log",
+	        success: function(response, request) {
+		    processAndDisplayLog(response.responseText);
+                }
+            });
+	}
+	else {
+            Ext.Ajax.request({
+                url: getOozieBase() + 'job/' + coordJobId + "?show=log&type=action&scope="+actionsList,
+                success: function(response, request) {
+		    processAndDisplayLog(response.responseText);
+                },
+		failure: function() {
+                    Ext.MessageBox.show({
+                        title: 'Format Error',
+                        msg: 'Action List format is wrong. Format should be similar to 1,3-4,7-40',
+                        buttons: Ext.MessageBox.OK,
+                        icon: Ext.MessageBox.ERROR
+                    });
+		}
+            });
+	}
+    }
+    function processAndDisplayLog(response)
+    {
+	var responseLength = response.length;
+	var twentyFiveMB = 25*1024*1024;
+	if(responseLength > twentyFiveMB) {
+	    response = response.substring(responseLength-twentyFiveMB,responseLength)
+	    response = response.substring(response.indexOf("\n")+1,responseLength);
+	    jobLogArea.setRawValue(response);
+	}
+	else {
+	    jobLogArea.setRawValue(response);
+	}
+    }
     var jobDetails = eval("(" + response.responseText + ")");
     var coordJobId = jobDetails["coordJobId"];
     var appName = jobDetails["coordJobName"];
@@ -849,21 +917,42 @@ function coordJobDetailsPopup(response, request) {
         items: [ {
             title: 'Coord Job Info',
             items: fs
+        },{
+	   title: 'Coord Job Definition',
+            items: jobDefinitionArea
+	},{
+            title: 'Coord Job Configuration',
+            items: new Ext.form.TextArea({
+            fieldLabel: 'Configuration',
+            editable: false,
+            name: 'config',
+                width: 1010,
+                height: 430,
+                autoScroll: true,
+                value: jobDetails["conf"]
+            })
+	},{
+           title: 'Coord Job Log',
+	   items: [jobLogArea, actionsTextBox, getLogButton],
+           tbar: [ {
+                text: "&nbsp;&nbsp;&nbsp;",
+                icon: 'ext-2.2/resources/images/default/grid/refresh.gif',
+                 }],
+	   }]
+});
 
-        }]
-    });
     jobDetailsTab.addListener("tabchange", function(panel, selectedTab) {
         if (selectedTab.title == "Coord Job Info") {
             coord_jobs_grid.setVisible(true);
             return;
         }
-        if (selectedTab.title == 'Job Log') {
-            fetchLogs(workflowId);
+        if (selectedTab.title == 'Coord Job Log') {
+	    actionsTextBox.setValue('Enter the action list here');
         }
-        else if (selectedTab.title == 'Job Definition') {
-            fetchDefinition(workflowId);
+        else if (selectedTab.title == 'Coord Job Definition') {
+            fetchDefinition(coordJobId);
         }
-        jobs_grid.setVisible(false);
+        coord_jobs_grid.setVisible(false);
     });
 
     var win = new Ext.Window({
@@ -1732,7 +1821,7 @@ function initConsole() {
             sortable: true,
             dataIndex: 'startTime'
         }, {
-            header: "Next Materrializtion",
+            header: "Next Materialization",
             width: 170,
             sortable: true,
             dataIndex: 'nextMaterializedTime'
@@ -1748,10 +1837,14 @@ function initConsole() {
             handler: function() {
                 coord_jobs_store.reload();
             }
-        }, refreshCoordAllJobsAction, refreshCoordActiveJobsAction, refreshCoordDoneJobsAction,{
+        }, refreshCoordAllJobsAction, refreshCoordActiveJobsAction, refreshCoordDoneJobsAction,
+
+{
             text: 'Custom Filter',
             menu: [refreshCoordCustomJobsAction, changeCoordFilterAction, helpFilterAction ]
-        },  {
+        },
+
+            {
                 xtype: 'tbfill'
             }, checkStatus, serverVersion],
         title: 'Coordinator Jobs',
