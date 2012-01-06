@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.yahoo.oozie</groupId>
     <artifactId>oozie-main</artifactId>
-    <version>3.1.0</version>
+    <version>3.1.2</version>
     <description>Oozie Main</description>
     <name>Oozie Main</name>
     <packaging>pom</packaging>
@@ -134,42 +134,42 @@
             <dependency>
                 <groupId>com.yahoo.oozie</groupId>
                 <artifactId>oozie-client</artifactId>
-                <version>3.1.0</version>
+                <version>3.1.2</version>
             </dependency>
             <dependency>
                 <groupId>com.yahoo.oozie</groupId>
                 <artifactId>oozie-core</artifactId>
-                <version>3.1.0</version>
+                <version>3.1.2</version>
             </dependency>
             <dependency>
                 <groupId>com.yahoo.oozie</groupId>
                 <artifactId>oozie-core</artifactId>
                 <classifier>tests</classifier>
-                <version>3.1.0</version>
+                <version>3.1.2</version>
             </dependency>
             <dependency>
                 <groupId>com.yahoo.oozie</groupId>
                 <artifactId>oozie-examples</artifactId>
-                <version>3.1.0</version>
+                <version>3.1.2</version>
             </dependency>
             <dependency>
                 <groupId>com.yahoo.oozie</groupId>
                 <artifactId>oozie-sharelib</artifactId>
-                <version>3.1.0</version>
+                <version>3.1.2</version>
             </dependency>
             <dependency>
                 <groupId>com.yahoo.oozie</groupId>
                 <artifactId>oozie-docs</artifactId>
-                <version>3.1.0</version>
+                <version>3.1.2</version>
                 <type>war</type>
             </dependency>
             <dependency>
                 <groupId>com.yahoo.oozie</groupId>
                 <artifactId>oozie-webapp</artifactId>
-                <version>3.1.0</version>
+                <version>3.1.2</version>
                 <type>war</type>
             </dependency>
-            
+
             <!-- client -->
             <dependency>
                 <groupId>com.googlecode.json-simple</groupId>
