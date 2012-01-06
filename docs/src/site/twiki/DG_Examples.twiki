@@ -38,6 +38,8 @@ The inputs for all examples are in the =examples/input-data/= directory.
 
 The examples create output under the =examples/output-data/${EXAMPLE_NAME}= directory.
 
+*Note*: The =job.properties= file needs to be a local file during submissions, and not a HDFS path.
+
 *How to run an example application:*
 
 <verbatim>
