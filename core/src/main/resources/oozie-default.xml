@@ -1369,6 +1369,7 @@
             JA009,
             JA017,
             JA018,
+            JA019,
             FS009,
             FS008
         </value>
@@ -1376,6 +1377,7 @@
             Automatic retry interval for workflow action is handled for these specified error code:
             FS009, FS008 is file exists error when using chmod in fs action.
             JA018 is output directory exists error in workflow map-reduce action.
+            JA019 is error while executing distcp action.
             JA017 is job not exists error in action executor.
             JA008 is FileNotFoundException in action executor.
             JA009 is IOException in action executor.
