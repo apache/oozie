@@ -285,7 +285,7 @@
                 <!-- groupId to be correct by GH-0226 -->
                 <groupId>org.apache.pig</groupId>
                 <artifactId>pig</artifactId>
-                <version>0.8.0</version>
+                <version>0.9.0</version>
                 <exclusions>
                     <exclusion>
                         <!-- groupId to be correct by GH-0226 -->
@@ -450,6 +450,24 @@
                 <artifactId>postgresql</artifactId>
                 <version>9.0-801.jdbc4</version>
             </dependency>
+
+			<dependency>
+				<groupId>org.python</groupId>
+				<artifactId>jython</artifactId>
+				<version>2.5.0</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.antlr</groupId>
+				<artifactId>antlr-runtime</artifactId>
+				<version>3.4</version>
+			</dependency>
+
+			<dependency>
+				<groupId>com.google.guava</groupId>
+				<artifactId>guava</artifactId>
+				<version>r09</version>
+			</dependency>
 
         </dependencies>
     </dependencyManagement>

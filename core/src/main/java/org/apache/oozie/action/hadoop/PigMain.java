@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,6 @@ import org.apache.pig.PigRunner;
 import org.apache.pig.tools.pigstats.PigStats;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapred.JobClient;
 
 import java.io.FileNotFoundException;
 import java.io.OutputStream;
@@ -64,6 +63,7 @@ public class PigMain extends LauncherMain {
         run(PigMain.class, args);
     }
 
+    @Override
     protected void run(String[] args) throws Exception {
         System.out.println();
         System.out.println("Oozie Pig action configuration");
@@ -88,7 +88,7 @@ public class PigMain extends LauncherMain {
             pigProperties.setProperty(entry.getKey(), entry.getValue());
         }
 
-        //propagate delegation related props from launcher job to Pig job
+        // propagate delegation related props from launcher job to Pig job
         if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
             pigProperties.setProperty("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
             System.out.println("------------------------");
@@ -241,6 +241,9 @@ public class PigMain extends LauncherMain {
     }
 
     /**
+     * Runs the pig script using PigRunner API if version 0.8 or above. Embedded
+     * pig within python is also supported.
+     *
      * @param args pig command line arguments
      * @param pigLog pig log file
      * @param resetSecurityManager specify if need to reset security manager
@@ -260,12 +263,13 @@ public class PigMain extends LauncherMain {
         if (pigRunnerExists) {
             System.out.println("Run pig script using PigRunner.run() for Pig version 0.8+");
             PigStats stats = PigRunner.run(args, null);
-            int code = stats.getReturnCode();
-            if (code != 0) {
+            // isSuccessful is the API from 0.9 supported by both PigStats and
+            // EmbeddedPigStats
+            if (!stats.isSuccessful()) {
                 if (pigLog != null) {
                     handleError(pigLog);
                 }
-                throw new LauncherMainException(code);
+                throw new LauncherMainException(PigRunner.ReturnCode.FAILURE);
             }
         }
         else {
