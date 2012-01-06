@@ -587,9 +587,17 @@ public class TestLiteWorkflowAppService extends XTestCase {
             String ref1 = "parentdependency1.jar";
             String ref2 = getTestCaseDir() + "/lib/childdependency1.jar";
             String ref3 = getTestCaseDir() + "/lib/childdependency2.so";
-            Assert.assertTrue(f1.equals(ref1));
-            Assert.assertTrue(f2.equals(ref2));
-            Assert.assertTrue(f3.equals(ref3));
+            List<String> expected = new ArrayList<String>();
+            expected.add(ref1);
+            expected.add(ref2);
+            expected.add(ref3);
+            List<String> found = new ArrayList<String>();
+            found.add(f1);
+            found.add(f2);
+            found.add(f3);
+            Collections.sort(found);
+            Collections.sort(expected);
+            assertEquals(expected, found);
         }
         finally {
             services.destroy();
@@ -629,8 +637,15 @@ public class TestLiteWorkflowAppService extends XTestCase {
             String f2 = protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST)[1];
             String ref1 = getTestCaseDir() + "/lib/childdependency1.jar";
             String ref2 = getTestCaseDir() + "/lib/childdependency2.so";
-            Assert.assertTrue(f1.equals(ref1));
-            Assert.assertTrue(f2.equals(ref2));
+            List<String> expected = new ArrayList<String>();
+            expected.add(ref1);
+            expected.add(ref2);
+            List<String> found = new ArrayList<String>();
+            found.add(f1);
+            found.add(f2);
+            Collections.sort(found);
+            Collections.sort(expected);
+            assertEquals(expected, found);
         }
         finally {
             services.destroy();
