@@ -299,6 +299,14 @@
     </property>
 
     <property>
+        <name>oozie.service.CoordMaterializeTriggerService.materialization.system.limit</name>
+        <value>50</value>
+        <description>
+            This value determines the number of coordinator jobs to be materialized at a given time.
+        </description>
+    </property>
+
+    <property>
 		<name>oozie.service.coord.normal.default.timeout
 		</name>
 		<value>10080</value>
