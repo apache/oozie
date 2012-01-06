@@ -35,12 +35,15 @@ public class StoreStatusFilter {
 
     public static final String bundleCountStr = "Select count(w) from BundleJobBean w";
 
-    public static void filter(Map<String, List<String>> filter, List<String> orArray, List<String> colArray, List<String> valArray, StringBuilder sb, String seletStr, String countStr) {
+    public static void filter(Map<String, List<String>> filter, List<String> orArray, List<String> colArray,
+            List<String> valArray, StringBuilder sb, String seletStr, String countStr) {
         boolean isStatus = false;
         boolean isGroup = false;
         boolean isAppName = false;
         boolean isUser = false;
         boolean isEnabled = false;
+        boolean isFrequency = false;
+        boolean isId = false;
 
         int index = 0;
 
@@ -162,6 +165,68 @@ public class StoreStatusFilter {
                                     else {
                                         if (isUser) {
                                             sb.append(", :user" + index);
+                                        }
+                                    }
+                                }
+                                if (i == values.size() - 1) {
+                                    sb.append(")");
+                                }
+                                index++;
+                                valArray.add(values.get(i));
+                                orArray.add(colName);
+                                colArray.add(colVar);
+                            }
+                        }
+                        else if (entry.getKey().equals(OozieClient.FILTER_FREQUENCY)) {
+                            List<String> values = filter.get(OozieClient.FILTER_FREQUENCY);
+                            colName = "frequency";
+                            for (int i = 0; i < values.size(); i++) {
+                                colVar = "frequency";
+                                colVar = colVar + index;
+                                if (!isEnabled && !isFrequency) {
+                                    sb.append(seletStr).append(" where w.frequency IN (:frequency" + index);
+                                    isFrequency = true;
+                                    isEnabled = true;
+                                }
+                                else {
+                                    if (isEnabled && !isFrequency) {
+                                        sb.append(" and w.frequency IN (:frequency" + index);
+                                        isFrequency = true;
+                                    }
+                                    else {
+                                        if (isFrequency) {
+                                            sb.append(", :frequency" + index);
+                                        }
+                                    }
+                                }
+                                if (i == values.size() - 1) {
+                                    sb.append(")");
+                                }
+                                index++;
+                                valArray.add(values.get(i));
+                                orArray.add(colName);
+                                colArray.add(colVar);
+                            }
+                        }
+                        else if (entry.getKey().equals(OozieClient.FILTER_ID)) {
+                            List<String> values = filter.get(OozieClient.FILTER_ID);
+                            colName = "id";
+                            for (int i = 0; i < values.size(); i++) {
+                                colVar = "id";
+                                colVar = colVar + index;
+                                if (!isEnabled && !isId) {
+                                    sb.append(seletStr).append(" where w.id IN (:id" + index);
+                                    isId = true;
+                                    isEnabled = true;
+                                }
+                                else {
+                                    if (isEnabled && !isId) {
+                                        sb.append(" and w.id IN (:id" + index);
+                                        isId = true;
+                                    }
+                                    else {
+                                        if (isId) {
+                                            sb.append(", :id" + index);
                                         }
                                     }
                                 }

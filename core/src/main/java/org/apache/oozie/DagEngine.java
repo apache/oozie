@@ -457,6 +457,7 @@ public class DagEngine extends BaseEngine {
         FILTER_NAMES.add(OozieClient.FILTER_NAME);
         FILTER_NAMES.add(OozieClient.FILTER_GROUP);
         FILTER_NAMES.add(OozieClient.FILTER_STATUS);
+        FILTER_NAMES.add(OozieClient.FILTER_ID);
     }
 
     /**

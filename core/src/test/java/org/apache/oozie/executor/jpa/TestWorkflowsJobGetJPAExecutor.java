@@ -17,12 +17,14 @@
  */
 package org.apache.oozie.executor.jpa;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.WorkflowsInfo;
+import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
@@ -47,9 +49,10 @@ public class TestWorkflowsJobGetJPAExecutor extends XDataTestCase {
     }
 
     public void testWfJobsGet() throws Exception {
-        addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
+        WorkflowJobBean workflowJob = addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
         addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
         _testGetWFInfos();
+        _testGetWFInfoForId(workflowJob.getId());
         System.out.println("testWfJobsGet Successful");
     }
 
@@ -69,5 +72,18 @@ public class TestWorkflowsJobGetJPAExecutor extends XDataTestCase {
         wfInfo = jpaService.execute(wfGetCmd);
         wfBeans = wfInfo.getWorkflows();
         assertEquals(2, wfBeans.size());
+    }
+
+    private void _testGetWFInfoForId(String jobId) throws Exception {
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+        Map<String, List<String>> filter = new HashMap<String, List<String>>();
+        List<String> jobIdList = new ArrayList<String>();
+        jobIdList.add(jobId);
+        filter.put(OozieClient.FILTER_ID, jobIdList);
+        WorkflowsJobGetJPAExecutor wfGetCmd = new WorkflowsJobGetJPAExecutor(filter, 1, 1);
+        WorkflowsInfo wfInfo = jpaService.execute(wfGetCmd);
+        assertNotNull(wfInfo);
+        assertEquals(wfInfo.getWorkflows().size(), 1);
     }
 }

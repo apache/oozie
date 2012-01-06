@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.BundleJobInfo;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
@@ -47,7 +48,7 @@ public class TestBundleJobInfoGetJPAExecutor extends XDataTestCase {
     }
 
     public void testBundleJobInfoGet() throws Exception {
-        addRecordToBundleJobTable(Job.Status.PREP, false);
+        BundleJobBean bundleJob1 = addRecordToBundleJobTable(Job.Status.PREP, false);
         addRecordToBundleJobTable(Job.Status.RUNNING, false);
         _testGetJobInfoForStatus();
         _testGetJobInfoForGroup();
@@ -56,6 +57,7 @@ public class TestBundleJobInfoGetJPAExecutor extends XDataTestCase {
         _testGetJobInfoForAppName();
         _testGetJobInfoForUser();
         _testGetJobInfoForUserAndStatus();
+        _testGetJobInfoForId(bundleJob1.getId());
     }
 
     private void _testGetJobInfoForStatus() throws Exception {
@@ -130,6 +132,20 @@ public class TestBundleJobInfoGetJPAExecutor extends XDataTestCase {
         BundleJobInfo ret = jpaService.execute(bundleInfoGetCmd);
         assertNotNull(ret);
         assertEquals(1, ret.getBundleJobs().size());
+    }
+
+    private void _testGetJobInfoForId(String jobId) throws Exception {
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+        Map<String, List<String>> filter = new HashMap<String, List<String>>();
+        List<String> jobIdList = new ArrayList<String>();
+        jobIdList.add(jobId);
+        filter.put(OozieClient.FILTER_ID, jobIdList);
+
+        BundleJobInfoGetJPAExecutor bundleInfoGetCmd = new BundleJobInfoGetJPAExecutor(filter, 1, 20);
+        BundleJobInfo ret = jpaService.execute(bundleInfoGetCmd);
+        assertNotNull(ret);
+        assertEquals(ret.getBundleJobs().size(), 1);
     }
 
 }
