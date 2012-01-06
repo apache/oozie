@@ -717,6 +717,8 @@ public class CoordELFunctions {
         nominalInstanceCal.add(dsTimeUnit.getCalendarUnit(), datasetFrequency * absInstanceCount);
 
         if (nominalInstanceCal.getTime().compareTo(getInitialInstance()) < 0) {
+            XLog.getLog(CoordELFunctions.class)
+                    .warn("If the initial instance of the dataset is greater than the current-instance specified eg: coord:current(-4), an empty string is returned. This means that no data is available at the current-instance specified by the user and the user could try modifying his initial-instance to an earlier time.");
             return "";
         }
         String str = DateUtils.formatDateUTC(nominalInstanceCal);
