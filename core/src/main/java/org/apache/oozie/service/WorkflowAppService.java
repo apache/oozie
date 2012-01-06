@@ -201,6 +201,11 @@ public abstract class WorkflowAppService implements Service {
                 if (entry.getKey().startsWith("oozie.")) {
                     String name = entry.getKey();
                     String value = entry.getValue();
+                    // Append application lib jars of both parent and child in
+                    // subworkflow to APP_LIB_PATH_LIST
+                    if ((conf.get(name) != null) && name.equals(APP_LIB_PATH_LIST)) {
+                        value = value + "," + conf.get(name);
+                    }
                     conf.set(name, value);
                 }
             }

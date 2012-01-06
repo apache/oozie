@@ -551,4 +551,89 @@ public class TestLiteWorkflowAppService extends XTestCase {
         }
     }
 
+    public void testCreateprotoConfWithSubWorkflow_Case1_ParentWorkflowContainingLibs() throws Exception {
+        // When parent workflow has an non-empty lib directory,
+        // APP_LIB_PATH_LIST should contain libraries from both parent and
+        // subworkflow (child)
+        Services services = new Services();
+        try {
+            services.init();
+            Reader reader = IOUtils.getResourceAsReader("wf-schema-valid.xml", -1);
+            Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
+            IOUtils.copyCharStream(reader, writer);
+
+            createTestCaseSubDir("lib");
+            writer = new FileWriter(getTestCaseDir() + "/lib/childdependency1.jar");
+            writer.write("bla bla");
+            writer.close();
+            writer = new FileWriter(getTestCaseDir() + "/lib/childdependency2.so");
+            writer.write("bla bla");
+            writer.close();
+            WorkflowAppService wps = Services.get().get(WorkflowAppService.class);
+            Configuration jobConf = new XConfiguration();
+            jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
+            jobConf.set(OozieClient.USER_NAME, getTestUser());
+            jobConf.set(OozieClient.GROUP_NAME, getTestGroup());
+            jobConf.set(WorkflowAppService.APP_LIB_PATH_LIST, "parentdependency1.jar");
+            injectKerberosInfo(jobConf);
+            Configuration protoConf = wps.createProtoActionConf(jobConf, "authToken", true);
+            assertEquals(getTestUser(), protoConf.get(OozieClient.USER_NAME));
+            assertEquals(getTestGroup(), protoConf.get(OozieClient.GROUP_NAME));
+
+            assertEquals(3, protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST).length);
+            String f1 = protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST)[0];
+            String f2 = protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST)[1];
+            String f3 = protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST)[2];
+            String ref1 = "parentdependency1.jar";
+            String ref2 = getTestCaseDir() + "/lib/childdependency1.jar";
+            String ref3 = getTestCaseDir() + "/lib/childdependency2.so";
+            Assert.assertTrue(f1.equals(ref1));
+            Assert.assertTrue(f2.equals(ref2));
+            Assert.assertTrue(f3.equals(ref3));
+        }
+        finally {
+            services.destroy();
+        }
+    }
+
+    public void testCreateprotoConfWithSubWorkflow_Case2_ParentWorkflowWithoutLibs() throws Exception {
+        // When parent workflow has an empty (or missing) lib directory,
+        // APP_LIB_PATH_LIST should contain libraries from only the subworkflow
+        // (child)
+        Services services = new Services();
+        try {
+            services.init();
+            Reader reader = IOUtils.getResourceAsReader("wf-schema-valid.xml", -1);
+            Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
+            IOUtils.copyCharStream(reader, writer);
+
+            createTestCaseSubDir("lib");
+            writer = new FileWriter(getTestCaseDir() + "/lib/childdependency1.jar");
+            writer.write("bla bla");
+            writer.close();
+            writer = new FileWriter(getTestCaseDir() + "/lib/childdependency2.so");
+            writer.write("bla bla");
+            writer.close();
+            WorkflowAppService wps = Services.get().get(WorkflowAppService.class);
+            Configuration jobConf = new XConfiguration();
+            jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
+            jobConf.set(OozieClient.USER_NAME, getTestUser());
+            jobConf.set(OozieClient.GROUP_NAME, getTestGroup());
+            injectKerberosInfo(jobConf);
+            Configuration protoConf = wps.createProtoActionConf(jobConf, "authToken", true);
+            assertEquals(getTestUser(), protoConf.get(OozieClient.USER_NAME));
+            assertEquals(getTestGroup(), protoConf.get(OozieClient.GROUP_NAME));
+
+            assertEquals(2, protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST).length);
+            String f1 = protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST)[0];
+            String f2 = protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST)[1];
+            String ref1 = getTestCaseDir() + "/lib/childdependency1.jar";
+            String ref2 = getTestCaseDir() + "/lib/childdependency2.so";
+            Assert.assertTrue(f1.equals(ref1));
+            Assert.assertTrue(f2.equals(ref2));
+        }
+        finally {
+            services.destroy();
+        }
+    }
 }
