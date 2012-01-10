@@ -43,6 +43,10 @@
             <scope>compile</scope>
             <exclusions>
                 <exclusion>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-core</artifactId>
+                </exclusion>
+                <exclusion>
                     <groupId>org.apache.hive</groupId>
                     <artifactId>hive-hwi</artifactId>
                 </exclusion>
@@ -87,7 +91,13 @@
         <dependency>
             <groupId>org.apache.hive</groupId>
             <artifactId>hive-contrib</artifactId>
-            <scope>runtime</scope>
+            <scope>compile</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-core</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.antlr</groupId>
