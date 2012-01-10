@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-639 Hive sharelib POM must exclude hadoop-core. (tucu)
 OOZIE-635 ShellMain closes the STD/ERR stream while shell is processing. (tucu)
 OOZIE-629 Oozie server to prevent usage of dataset initial-instance earlier than the system-defined default value.(Mona via Mohammad)
 OOZIE-621 Option to add timeunit for frequency for coordinator jobs filtering.(Kiran via Mohammad)
