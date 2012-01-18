@@ -57,7 +57,7 @@ public class SLAEventsXCommand extends XCommand<List<SLAEventBean>> {
      * @see org.apache.oozie.command.XCommand#getEntityKey()
      */
     @Override
-    protected String getEntityKey() {
+    public String getEntityKey() {
         return Long.toString(seqId);
     }
 

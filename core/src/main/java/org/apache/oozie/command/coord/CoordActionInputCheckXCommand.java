@@ -72,10 +72,12 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
     private CoordinatorActionBean coordAction = null;
     private CoordinatorJobBean coordJob = null;
     private JPAService jpaService = null;
+    private String jobId = null;
 
-    public CoordActionInputCheckXCommand(String actionId) {
+    public CoordActionInputCheckXCommand(String actionId, String jobId) {
         super("coord_action_input", "coord_action_input", 1);
         this.actionId = ParamChecker.notEmpty(actionId, "actionId");
+        this.jobId = jobId;
     }
 
     /* (non-Javadoc)
@@ -90,7 +92,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
         Date nominalTime = coordAction.getNominalTime();
         Date currentTime = new Date();
         if (nominalTime.compareTo(currentTime) > 0) {
-            queue(new CoordActionInputCheckXCommand(coordAction.getId()), Math.max((nominalTime.getTime() - currentTime
+            queue(new CoordActionInputCheckXCommand(coordAction.getId(), coordAction.getJobId()), Math.max((nominalTime.getTime() - currentTime
                     .getTime()), getCoordInputCheckRequeueInterval()));
             // update lastModifiedTime
             coordAction.setLastModifiedTime(new Date());
@@ -140,7 +142,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                     queue(new CoordActionTimeOutXCommand(coordAction), 100);
                 }
                 else {
-                    queue(new CoordActionInputCheckXCommand(coordAction.getId()), getCoordInputCheckRequeueInterval());
+                    queue(new CoordActionInputCheckXCommand(coordAction.getId(), coordAction.getJobId()), getCoordInputCheckRequeueInterval());
                 }
             }
             coordAction.setLastModifiedTime(new Date());
@@ -457,8 +459,8 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
      * @see org.apache.oozie.command.XCommand#getEntityKey()
      */
     @Override
-    protected String getEntityKey() {
-        return coordAction.getJobId();
+    public String getEntityKey() {
+        return this.jobId;
     }
 
     /* (non-Javadoc)

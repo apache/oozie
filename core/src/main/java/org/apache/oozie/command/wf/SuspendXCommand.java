@@ -166,7 +166,7 @@ public class SuspendXCommand extends WorkflowXCommand<Void> {
      * @see org.apache.oozie.command.XCommand#getEntityKey()
      */
     @Override
-    protected String getEntityKey() {
+    public String getEntityKey() {
         return this.wfid;
     }
 

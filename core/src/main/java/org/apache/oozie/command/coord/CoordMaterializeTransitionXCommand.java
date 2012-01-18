@@ -108,8 +108,8 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
      * @see org.apache.oozie.command.XCommand#getEntityKey()
      */
     @Override
-    protected String getEntityKey() {
-        return jobId;
+    public String getEntityKey() {
+        return this.jobId;
     }
 
     @Override
@@ -349,7 +349,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
 
         // TODO: time 100s should be configurable
         queue(new CoordActionNotificationXCommand(actionBean), 100);
-        queue(new CoordActionInputCheckXCommand(actionBean.getId()), 100);
+        queue(new CoordActionInputCheckXCommand(actionBean.getId(), actionBean.getJobId()), 100);
     }
 
     private void writeActionRegistration(String actionXml, CoordinatorActionBean actionBean) throws Exception {

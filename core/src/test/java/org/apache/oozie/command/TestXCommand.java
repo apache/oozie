@@ -75,7 +75,7 @@ public class TestXCommand extends XTestCase {
         }
 
         @Override
-        protected String getEntityKey() {
+        public String getEntityKey() {
             return "key";
         }
 

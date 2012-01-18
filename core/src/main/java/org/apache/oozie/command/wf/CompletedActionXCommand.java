@@ -104,11 +104,11 @@ public class CompletedActionXCommand extends WorkflowXCommand<Void> {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.apache.oozie.command.XCommand#getEntityKey()
      */
     @Override
-    protected String getEntityKey() {
+    public String getEntityKey() {
         return null;
     }
 

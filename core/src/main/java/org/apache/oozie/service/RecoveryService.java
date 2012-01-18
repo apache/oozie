@@ -227,7 +227,7 @@ public class RecoveryService implements Service {
                                                                                 INSTR_RECOVERED_COORD_ACTIONS_COUNTER, 1);
                     if (caction.getStatus() == CoordinatorActionBean.Status.WAITING) {
                         if (useXCommand) {
-                            queueCallable(new CoordActionInputCheckXCommand(caction.getId()));
+                            queueCallable(new CoordActionInputCheckXCommand(caction.getId(), caction.getJobId()));
                         } else {
                             queueCallable(new CoordActionInputCheckCommand(caction.getId()));
                         }
@@ -238,8 +238,7 @@ public class RecoveryService implements Service {
                         CoordinatorJobBean coordJob = jpaService.execute(new CoordJobGetJPAExecutor(caction.getJobId()));
 
                         if (useXCommand) {
-                            queueCallable(new CoordActionStartXCommand(caction.getId(), coordJob.getUser(), coordJob
-                                    .getAuthToken()));
+                            queueCallable(new CoordActionStartXCommand(caction.getId(), coordJob.getUser(), coordJob.getAuthToken(), caction.getJobId()));
                         } else {
                             queueCallable(new CoordActionStartCommand(caction.getId(), coordJob.getUser(), coordJob
                                     .getAuthToken()));

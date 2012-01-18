@@ -62,4 +62,23 @@ public interface XCallable<T> extends Callable<T> {
      */
     public String getKey();
 
+    /**
+     * Return the lock key of the callable
+     *
+     * @return the callable Lock key
+     */
+    public String getEntityKey();
+
+    /**
+     * set the mode of execution for the callable. True if in interrupt, false
+     * if not
+     */
+    public void setInterruptMode(boolean mode);
+
+    /**
+     * @return the mode of execution. true if it is executed as an Interrupt,
+     *         false otherwise
+     */
+    public boolean getInterruptMode();
+
 }

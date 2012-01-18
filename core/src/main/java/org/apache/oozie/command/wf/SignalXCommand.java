@@ -86,7 +86,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
     }
 
     @Override
-    protected String getEntityKey() {
+    public String getEntityKey() {
         return this.jobId;
     }
 

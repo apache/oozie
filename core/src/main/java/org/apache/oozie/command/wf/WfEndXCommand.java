@@ -87,7 +87,7 @@ public class WfEndXCommand extends WorkflowXCommand<Void> {
     }
 
     @Override
-    protected String getEntityKey() {
+    public String getEntityKey() {
         return job.getId();
     }
 

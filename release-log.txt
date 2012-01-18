@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-591: Oozie continues to materialize new actions after end date modification (Mohamed Battisha vis Angelo)
 OOZIE-639 Hive sharelib POM must exclude hadoop-core. (tucu)
 OOZIE-635 ShellMain closes the STD/ERR stream while shell is processing. (tucu)
 OOZIE-629 Oozie server to prevent usage of dataset initial-instance earlier than the system-defined default value.(Mona via Mohammad)

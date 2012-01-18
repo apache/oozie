@@ -75,7 +75,7 @@ public class NotificationXCommand extends WorkflowXCommand<Void> {
     }
 
     @Override
-    protected String getEntityKey() {
+    public String getEntityKey() {
         return url;
     }
 

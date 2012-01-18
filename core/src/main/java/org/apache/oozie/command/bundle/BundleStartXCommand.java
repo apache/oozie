@@ -86,7 +86,7 @@ public class BundleStartXCommand extends StartTransitionXCommand {
      * @see org.apache.oozie.command.XCommand#getEntityKey()
      */
     @Override
-    protected String getEntityKey() {
+    public String getEntityKey() {
         return jobId;
     }
 

@@ -120,7 +120,7 @@ public class ResumeXCommand extends WorkflowXCommand<Void> {
     }
 
     @Override
-    protected String getEntityKey() {
+    public String getEntityKey() {
         return id;
     }
 

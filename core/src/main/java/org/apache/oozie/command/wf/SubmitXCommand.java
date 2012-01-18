@@ -265,7 +265,7 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
     }
 
     @Override
-    protected String getEntityKey() {
+    public String getEntityKey() {
         return null;
     }
 

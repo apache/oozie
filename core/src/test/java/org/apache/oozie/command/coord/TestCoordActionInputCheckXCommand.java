@@ -66,8 +66,8 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         long executed = 0;
         int wait;
 
-        public MyCoordActionInputCheckXCommand(String actionId, int wait) {
-            super(actionId);
+        public MyCoordActionInputCheckXCommand(String actionId, int wait, String entityKey) {
+            super(actionId, entityKey);
             this.wait = wait;
         }
 
@@ -106,9 +106,9 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         createDir(getTestCaseDir() + "/2009/15/");
         createDir(getTestCaseDir() + "/2009/08/");
 
-        final MyCoordActionInputCheckXCommand callable1 = new MyCoordActionInputCheckXCommand(action1.getId(), 100);
-        final MyCoordActionInputCheckXCommand callable2 = new MyCoordActionInputCheckXCommand(action1.getId(), 100);
-        final MyCoordActionInputCheckXCommand callable3 = new MyCoordActionInputCheckXCommand(action1.getId(), 100);
+        final MyCoordActionInputCheckXCommand callable1 = new MyCoordActionInputCheckXCommand(action1.getId(), 100, "1");
+        final MyCoordActionInputCheckXCommand callable2 = new MyCoordActionInputCheckXCommand(action1.getId(), 100, "2");
+        final MyCoordActionInputCheckXCommand callable3 = new MyCoordActionInputCheckXCommand(action1.getId(), 100, "3");
 
         List<MyCoordActionInputCheckXCommand> callables = Arrays.asList(callable1, callable2, callable3);
 
@@ -137,7 +137,7 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
         createDir(getTestCaseDir() + "/2009/29/");
         createDir(getTestCaseDir() + "/2009/15/");
-        new CoordActionInputCheckXCommand(job.getId() + "@1").call();
+        new CoordActionInputCheckXCommand(job.getId() + "@1", job.getId()).call();
         checkCoordAction(job.getId() + "@1");
     }
 
@@ -162,7 +162,7 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         Services.get().getConf().setLong(CoordActionInputCheckXCommand.CONF_COORD_INPUT_CHECK_REQUEUE_INTERVAL,
                 testedValue);
 
-        CoordActionInputCheckXCommand caicc = new CoordActionInputCheckXCommand(job.getId() + "@1");
+        CoordActionInputCheckXCommand caicc = new CoordActionInputCheckXCommand(job.getId() + "@1", job.getId());
 
         long effectiveValue = caicc.getCoordInputCheckRequeueInterval();
         // Verify if two values are same.

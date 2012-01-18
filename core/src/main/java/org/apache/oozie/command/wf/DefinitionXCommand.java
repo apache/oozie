@@ -43,7 +43,7 @@ public class DefinitionXCommand extends WorkflowXCommand<String> {
     }
 
     @Override
-    protected String getEntityKey() {
+    public String getEntityKey() {
         return this.jobId;
     }
 

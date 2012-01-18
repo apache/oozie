@@ -374,7 +374,7 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
      * @see org.apache.oozie.command.XCommand#getEntityKey()
      */
     @Override
-    protected String getEntityKey() {
+    public String getEntityKey() {
         return jobId;
     }
 
@@ -460,7 +460,7 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
                     updateAction(coordJob, coordAction, actionXml);
 
                     queue(new CoordActionNotificationXCommand(coordAction), 100);
-                    queue(new CoordActionInputCheckXCommand(coordAction.getId()), 100);
+                    queue(new CoordActionInputCheckXCommand(coordAction.getId(), coordAction.getJobId()), 100);
                 }
             }
             else {

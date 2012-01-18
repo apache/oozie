@@ -78,7 +78,7 @@ public class ActionStartXCommand extends ActionXCommand<Void> {
     }
 
     @Override
-    protected String getEntityKey() {
+    public String getEntityKey() {
         return this.jobId;
     }
 

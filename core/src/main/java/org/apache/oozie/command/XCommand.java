@@ -68,6 +68,7 @@ public abstract class XCommand<T> implements XCallable<T> {
     private long createdTime;
     private MemoryLocks.LockToken lock;
     private boolean used = false;
+    private boolean inInterrupt = false;
 
     private Map<Long, List<XCommand<?>>> commandQueue;
     protected boolean dryrun = false;
@@ -241,14 +242,15 @@ public abstract class XCommand<T> implements XCallable<T> {
             eagerVerifyPrecondition();
             try {
                 T ret = null;
-                if (isLockRequired()) {
+                if (isLockRequired() && !this.inInterrupt) {
                     Instrumentation.Cron acquireLockCron = new Instrumentation.Cron();
                     acquireLockCron.start();
                     acquireLock();
                     acquireLockCron.stop();
                     instrumentation.addCron(INSTRUMENTATION_GROUP, getName() + ".acquireLock", acquireLockCron);
                 }
-                if (!isLockRequired() || (isLockRequired() && lock != null)) {
+                if (!isLockRequired() || (isLockRequired() && lock != null) || this.inInterrupt) {
+                    this.executeInterrupts();
                     LOG.debug("Load state for [{0}]", getEntityKey());
                     loadState();
                     LOG = XLog.resetPrefix(LOG);
@@ -307,6 +309,40 @@ public abstract class XCommand<T> implements XCallable<T> {
     }
 
     /**
+     * Check for the existence of interrupts for the same lock key
+     * Execute them if exist.
+     *
+     */
+    protected void executeInterrupts()
+    {
+        if(!this.inInterrupt && (this.getEntityKey() != null)) {
+            CallableQueueService callableQueueService = Services.get().get(CallableQueueService.class);
+            // getting all the list of interrupts to be executed
+            List <XCallable<?>> callables = callableQueueService.checkInterrupts(this.getEntityKey());
+
+            if (callables != null) {
+                // executing the list of interrupts in the given order of insertion in the list
+                for (XCallable<?> callable : callables) {
+                    LOG.trace("executing callable [{0}]", callable.getName());
+                    try {
+                        // executing the callable in interrupt mode
+                        callable.setInterruptMode(true);
+                        callable.call();
+                        LOG.trace("executed callable [{0}]", callable.getName());
+                    }
+                    catch (Exception ex) {
+                     LOG.warn("exception callable [{0}], {1}", callable.getName(), ex.getMessage(), ex);
+                    }
+                    finally {
+                        // reseting the interrupt mode to false after the command is executed
+                        callable.setInterruptMode(false);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * Return the time out when acquiring a lock.
      * <p/>
      * The value is loaded from the Oozie configuration, the property {link #DEFAULT_LOCK_TIMEOUT}.
@@ -334,7 +370,7 @@ public abstract class XCommand<T> implements XCallable<T> {
      *
      * @return the entity key for the command.
      */
-    protected abstract String getEntityKey();
+    public abstract String getEntityKey();
 
     /**
      * Indicate if the the command requires to requeue itself if the lock is not acquired.
@@ -437,6 +473,22 @@ public abstract class XCommand<T> implements XCallable<T> {
     @Override
     public String getKey(){
         return this.key;
+    }
+
+    /**
+     * set the mode of execution for the callable. True if in interrupt, false
+     * if not
+     */
+    public void setInterruptMode(boolean mode) {
+        this.inInterrupt = mode;
+    }
+
+    /**
+     * @return the mode of execution. true if it is executed as an Interrupt,
+     *         false otherwise
+     */
+    public boolean getInterruptMode() {
+        return this.inInterrupt;
     }
 
     /**

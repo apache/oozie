@@ -61,7 +61,7 @@ public class CoordKillXCommand extends KillTransitionXCommand {
     }
 
     @Override
-    protected String getEntityKey() {
+    public String getEntityKey() {
         return this.jobId;
     }
 

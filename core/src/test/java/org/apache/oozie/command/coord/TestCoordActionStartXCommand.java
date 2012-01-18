@@ -77,7 +77,7 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
     public void testActionStartCommand() throws IOException, JPAExecutorException, CommandException {
         String actionId = new Date().getTime() + "-COORD-ActionStartCommand-C@1";
         addRecordToActionTable(actionId, 1);
-        new CoordActionStartXCommand(actionId, "me", "mytoken").call();
+        new CoordActionStartXCommand(actionId, "me", "mytoken", "myjob").call();
         checkCoordAction(actionId);
     }
 
@@ -97,7 +97,7 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
                 CoordinatorAction.Status.SUBMITTED, "coord-action-start-escape-strings.xml", 0);
 
         String actionId = action.getId();
-        new CoordActionStartXCommand(actionId, getTestUser(), "undef").call();
+        new CoordActionStartXCommand(actionId, getTestUser(), "undef","myjob").call();
 
         final JPAService jpaService = Services.get().get(JPAService.class);
         action = jpaService.execute(new CoordActionGetJPAExecutor(actionId));

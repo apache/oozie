@@ -67,7 +67,7 @@ public class ActionKillXCommand extends ActionXCommand<Void> {
     }
 
     @Override
-    protected String getEntityKey() {
+    public String getEntityKey() {
         return this.jobId;
     }
 

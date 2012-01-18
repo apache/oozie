@@ -68,7 +68,7 @@ public class PurgeXCommand extends WorkflowXCommand<Void> {
     }
 
     @Override
-    protected String getEntityKey() {
+    public String getEntityKey() {
         return null;
     }
 

@@ -157,7 +157,7 @@ public class SubmitMRXCommand extends SubmitHttpXCommand {
     }
 
     @Override
-    protected String getEntityKey() {
+    public String getEntityKey() {
         return null;
     }
 

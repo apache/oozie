@@ -59,7 +59,7 @@ public class WorkflowActionInfoXCommand extends WorkflowXCommand<WorkflowActionB
      * @see org.apache.oozie.command.XCommand#getEntityKey()
      */
     @Override
-    protected String getEntityKey() {
+    public String getEntityKey() {
         return null;
     }
 

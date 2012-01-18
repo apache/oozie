@@ -64,7 +64,7 @@ public class BundleJobsXCommand extends XCommand<BundleJobInfo> {
      * @see org.apache.oozie.command.XCommand#getEntityKey()
      */
     @Override
-    protected String getEntityKey() {
+    public String getEntityKey() {
         return null;
     }
 

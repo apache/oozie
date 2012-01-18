@@ -603,4 +603,32 @@ public abstract class Command<T, S extends Store> implements XCallable<T> {
         return this.key;
     }
 
+    /**
+     * Get command lock key returning the key as an entity key, [not used] Just
+     * to be able to implement XCallable [to be deprecated]
+     *
+     * @return key
+     */
+    @Override
+    public String getEntityKey() {
+        return this.key;
+    }
+
+    /**
+     * set the mode of execution for the callable. True if in interrupt, false
+     * if not [to be deprecated]
+     */
+    public void setInterruptMode(boolean mode) {
+    }
+
+    /**
+     * [to be deprecated]
+     *
+     * @return the mode of execution. true if it is executed as an Interrupt,
+     *         false otherwise
+     */
+    public boolean getInterruptMode() {
+        return false;
+    }
+
 }

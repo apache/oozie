@@ -88,7 +88,7 @@ public class CoordJobXCommand extends CoordinatorXCommand<CoordinatorJobBean> {
      * @see org.apache.oozie.command.XCommand#getEntityKey()
      */
     @Override
-    protected String getEntityKey() {
+    public String getEntityKey() {
         return this.id;
     }
 

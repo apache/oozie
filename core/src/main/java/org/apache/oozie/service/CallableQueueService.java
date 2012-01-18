@@ -18,6 +18,7 @@
 package org.apache.oozie.service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -31,7 +32,6 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
@@ -79,6 +79,8 @@ public class CallableQueueService implements Service, Instrumentable {
     public static final String CONF_THREADS = CONF_PREFIX + "threads";
     public static final String CONF_CALLABLE_CONCURRENCY = CONF_PREFIX + "callable.concurrency";
     public static final String CONF_CALLABLE_NEXT_ELIGIBLE = CONF_PREFIX + "callable.next.eligible";
+    public static final String CONF_CALLABLE_INTERRUPT_TYPES = CONF_PREFIX + "InterruptTypes";
+    public static final String CONF_CALLABLE_INTERRUPT_MAP_MAX_SIZE = CONF_PREFIX + "InterruptMapMaxSize";
 
     public static final int CONCURRENCY_DELAY = 500;
 
@@ -87,6 +89,12 @@ public class CallableQueueService implements Service, Instrumentable {
     private final Map<String, AtomicInteger> activeCallables = new HashMap<String, AtomicInteger>();
 
     private final Map<String, Date> uniqueCallables = new ConcurrentHashMap<String, Date>();
+
+    private final ConcurrentHashMap<String, List<XCallable<?>>> interruptCommandsMap = new ConcurrentHashMap<String, List<XCallable<?>>>();
+
+    private final HashSet<String> interruptTypes = new HashSet<String>();
+
+    private int interruptMapMaxSize;
 
     private int maxCallableConcurrency;
 
@@ -241,7 +249,6 @@ public class CallableQueueService implements Service, Instrumentable {
                 uniqueCallables.remove(callable.getKey());
             }
         }
-
     }
 
     class CompositeCallable implements XCallable<Void> {
@@ -282,6 +289,11 @@ public class CallableQueueService implements Service, Instrumentable {
         }
 
         @Override
+        public String getEntityKey() {
+            return "#composite#" + callables.get(0).getEntityKey();
+        }
+
+        @Override
         public int getPriority() {
             return priority;
         }
@@ -289,6 +301,19 @@ public class CallableQueueService implements Service, Instrumentable {
         @Override
         public long getCreatedTime() {
             return createdTime;
+        }
+
+        @Override
+        public void setInterruptMode(boolean mode) {
+        }
+
+        @Override
+        public boolean getInterruptMode() {
+            return false;
+        }
+
+        public List<XCallable<?>> getCallables() {
+            return this.callables;
         }
 
         public Void call() throws Exception {
@@ -379,14 +404,12 @@ public class CallableQueueService implements Service, Instrumentable {
                 uniqueCallables.remove(callable.getKey());
             }
         }
-
     }
 
     private XLog log = XLog.getLog(getClass());
 
     private int queueSize;
     private PriorityDelayQueue<CallableWrapper> queue;
-    private AtomicLong delayQueueExecCounter = new AtomicLong(0);
     private ThreadPoolExecutor executor;
     private Instrumentation instrumentation;
 
@@ -414,13 +437,17 @@ public class CallableQueueService implements Service, Instrumentable {
      * @param services services instance.
      */
     @Override
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public void init(Services services) {
         Configuration conf = services.getConf();
 
         queueSize = conf.getInt(CONF_QUEUE_SIZE, 10000);
         int threads = conf.getInt(CONF_THREADS, 10);
         boolean callableNextEligible = conf.getBoolean(CONF_CALLABLE_NEXT_ELIGIBLE, true);
+
+        for (String type : conf.getStringCollection(CONF_CALLABLE_INTERRUPT_TYPES)) {
+            interruptTypes.add(type);
+        }
 
         if (!callableNextEligible) {
             queue = new PriorityDelayQueue<CallableWrapper>(3, 1000 * 30, TimeUnit.MILLISECONDS, queueSize) {
@@ -431,11 +458,12 @@ public class CallableQueueService implements Service, Instrumentable {
             };
         }
         else {
-            // If the head of this queue has already reached max concurrency, continuously find next one
-            // which has not yet reach max concurrency.Overrided method 'eligibleToPoll' to check if the
+            // If the head of this queue has already reached max concurrency,
+            // continuously find next one
+            // which has not yet reach max concurrency.Overrided method
+            // 'eligibleToPoll' to check if the
             // element of this queue has reached the maximum concurrency.
-            queue = new PollablePriorityDelayQueue<CallableWrapper>(3, 1000 * 30, TimeUnit.MILLISECONDS,
-                    queueSize) {
+            queue = new PollablePriorityDelayQueue<CallableWrapper>(3, 1000 * 30, TimeUnit.MILLISECONDS, queueSize) {
                 @Override
                 protected void debug(String msgTemplate, Object... msgArgs) {
                     log.trace(msgTemplate, msgArgs);
@@ -454,6 +482,8 @@ public class CallableQueueService implements Service, Instrumentable {
 
             };
         }
+
+        interruptMapMaxSize = conf.getInt(CONF_CALLABLE_INTERRUPT_MAP_MAX_SIZE, 100);
 
         // IMPORTANT: The ThreadPoolExecutor does not always the execute
         // commands out of the queue, there are
@@ -568,7 +598,6 @@ public class CallableQueueService implements Service, Instrumentable {
      * @return <code>true</code> if the callables were queued, <code>false</code> if the queue is full and the callables
      *         were not queued.
      */
-    @SuppressWarnings("unchecked")
     public boolean queueSerial(List<? extends XCallable<?>> callables) {
         return queueSerial(callables, 0);
     }
@@ -578,8 +607,8 @@ public class CallableQueueService implements Service, Instrumentable {
      *
      * @param callable callable to queue for delayed execution
      * @param delay time, in milliseconds, that the callable should be delayed.
-     * @return <code>true</code> if the callable was queued, <code>false</code> if the queue is full and the callable
-     *         was not queued.
+     * @return <code>true</code> if the callable was queued, <code>false</code>
+     *         if the queue is full and the callable was not queued.
      */
     public synchronized boolean queue(XCallable<?> callable, long delay) {
         if (callable == null) {
@@ -590,6 +619,7 @@ public class CallableQueueService implements Service, Instrumentable {
             log.warn("[queue] System is in SAFEMODE. Hence no callable is queued. current queue size " + queue.size());
         }
         else {
+            checkInterruptTypes(callable);
             queued = queue(new CallableWrapper(callable, delay), false);
             if (queued) {
                 incrCounter(INSTR_QUEUED_COUNTER, 1);
@@ -613,7 +643,6 @@ public class CallableQueueService implements Service, Instrumentable {
      * @return <code>true</code> if the callables were queued, <code>false</code> if the queue is full and the callables
      *         were not queued.
      */
-    @SuppressWarnings("unchecked")
     public synchronized boolean queueSerial(List<? extends XCallable<?>> callables, long delay) {
         boolean queued;
         if (callables == null || callables.size() == 0) {
@@ -650,6 +679,62 @@ public class CallableQueueService implements Service, Instrumentable {
                         return (long) executor.getActiveCount();
                     }
                 });
+    }
+
+    /**
+     * check the interrupt map for the existence of an interrupt commands if
+     * exist a List of Interrupt Callable for the same lock key will bereturned,
+     * otherwise it will return null
+     */
+    public List<XCallable<?>> checkInterrupts(String lockKey) {
+
+        if (lockKey != null) {
+            return interruptCommandsMap.remove(lockKey);
+        }
+        return null;
+    }
+
+    /**
+     * check if the callable is of an interrupt type and insert it into the map
+     * accordingly
+     *
+     * @param callable
+     */
+    public void checkInterruptTypes(XCallable<?> callable) {
+        if ((callable instanceof CompositeCallable) && (((CompositeCallable) callable).getCallables() != null)) {
+            for (XCallable<?> singleCallable : ((CompositeCallable) callable).getCallables()) {
+                if (interruptTypes.contains(singleCallable.getType())) {
+                    insertCallableIntoInterruptMap(singleCallable);
+                }
+            }
+        }
+        else if (interruptTypes.contains(callable.getType())) {
+            insertCallableIntoInterruptMap(callable);
+        }
+    }
+
+    /**
+     * insert a new callable in the Interrupt Command Map add a new element to
+     * the list or create a new list accordingly
+     *
+     * @param callable
+     */
+    public void insertCallableIntoInterruptMap(XCallable<?> callable) {
+        if (interruptCommandsMap.size() < interruptMapMaxSize) {
+            List<XCallable<?>> newList = Collections.synchronizedList(new ArrayList<XCallable<?>>());
+            List<XCallable<?>> interruptList = interruptCommandsMap.putIfAbsent(callable.getEntityKey(), newList);
+            if (interruptList == null) {
+                interruptList = newList;
+            }
+            interruptList.add(callable);
+            log.trace("Inserting an interrupt element [{1}] to the interrupt map", interruptCommandsMap.size(),
+                    callable.toString());
+        }
+        else {
+            log.warn(
+                    "The interrupt map reached max size of [{0}], an interrupt element [{1}] will not added to the map [{1}]",
+                    interruptCommandsMap.size(), callable.toString());
+        }
     }
 
     /**

@@ -162,7 +162,7 @@ public class SubmitPigXCommand extends SubmitHttpXCommand {
     }
 
     @Override
-    protected String getEntityKey() {
+    public String getEntityKey() {
         return null;
     }
 

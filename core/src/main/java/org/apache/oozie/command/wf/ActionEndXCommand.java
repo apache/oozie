@@ -72,7 +72,7 @@ public class ActionEndXCommand extends ActionXCommand<Void> {
     }
 
     @Override
-    protected String getEntityKey() {
+    public String getEntityKey() {
         return this.jobId;
     }
 

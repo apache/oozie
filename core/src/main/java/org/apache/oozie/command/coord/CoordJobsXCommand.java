@@ -56,7 +56,7 @@ public class CoordJobsXCommand extends CoordinatorXCommand<CoordinatorJobInfo> {
      * @see org.apache.oozie.command.XCommand#getEntityKey()
      */
     @Override
-    protected String getEntityKey() {
+    public String getEntityKey() {
         return null;
     }
 

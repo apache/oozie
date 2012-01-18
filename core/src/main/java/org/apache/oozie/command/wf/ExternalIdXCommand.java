@@ -40,7 +40,7 @@ public class ExternalIdXCommand extends WorkflowXCommand<String> {
     }
 
     @Override
-    protected String getEntityKey() {
+    public String getEntityKey() {
         return this.externalId;
     }
 

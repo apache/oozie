@@ -55,7 +55,7 @@ public class BundleKillXCommand extends KillTransitionXCommand {
      * @see org.apache.oozie.command.XCommand#getEntityKey()
      */
     @Override
-    protected String getEntityKey() {
+    public String getEntityKey() {
         return jobId;
     }
 

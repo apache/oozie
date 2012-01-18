@@ -67,7 +67,7 @@ public class KillXCommand extends WorkflowXCommand<Void> {
     }
 
     @Override
-    protected String getEntityKey() {
+    public String getEntityKey() {
         return this.wfId;
     }
 

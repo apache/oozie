@@ -64,13 +64,15 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
     private String authToken = null;
     private CoordinatorActionBean coordAction = null;
     private JPAService jpaService = null;
+    private String jobId = null;
 
-    public CoordActionStartXCommand(String id, String user, String token) {
+    public CoordActionStartXCommand(String id, String user, String token, String jobId) {
         //super("coord_action_start", "coord_action_start", 1, XLog.OPS);
         super("coord_action_start", "coord_action_start", 1);
         this.actionId = ParamChecker.notEmpty(id, "id");
         this.user = ParamChecker.notEmpty(user, "user");
         this.authToken = ParamChecker.notEmpty(token, "token");
+        this.jobId = jobId;
     }
 
     /**
@@ -235,8 +237,8 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
     }
 
     @Override
-    protected String getEntityKey() {
-        return coordAction.getJobId();
+    public String getEntityKey() {
+        return this.jobId;
     }
 
     @Override

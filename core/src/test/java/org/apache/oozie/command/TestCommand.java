@@ -73,6 +73,15 @@ public class TestCommand extends XTestCase {
             return sb.toString();
         }
 
+        @Override
+        public void setInterruptMode(boolean mode) {
+        }
+
+        @Override
+        public boolean getInterruptMode() {
+            return false;
+        }
+
         public Void call() throws Exception {
             EXECUTED.add(name);
             return null;
@@ -81,6 +90,11 @@ public class TestCommand extends XTestCase {
         @Override
         public String getKey() {
             return this.key;
+        }
+
+        @Override
+        public String getEntityKey() {
+            return null;
         }
 
     }

@@ -41,7 +41,7 @@ public class BundlePauseXCommand extends PauseTransitionXCommand {
      * @see org.apache.oozie.command.XCommand#getEntityKey()
      */
     @Override
-    protected String getEntityKey() {
+    public String getEntityKey() {
         return bundleJob.getId();
     }
 
