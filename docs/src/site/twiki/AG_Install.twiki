@@ -276,6 +276,26 @@ When using Kerberos authentication, the following properties must be set to the 
 *IMPORTANT:* When using Oozie with a Hadoop 20 with Security distribution, the Oozie user in Hadoop must be configured
 as a proxy user.
 
+---+++ User ProxyUser Configuration
+
+Oozie supports impersonation or proxyuser functionality (identical to Hadoop proxyuser capabilities and conceptually similar to Unix 'sudo').
+
+Proxyuser enables other systems that are Oozie clients to submit jobs on behalf of other users.
+
+Because proxyuser is a powerful capability, Oozie provides the following restriction capabilities
+(similar to Hadoop):
+
+   * Proxyuser is an explicit configuration on per proxyuser user basis.
+   * A proxyuser user can be restricted to impersonate other users from a set of hosts.
+   * A proxyser user can be restricted to impersonate users belonging to a set of groups.
+
+There are 2 configuration properties needed to set up a proxyuser:
+
+   * oozie.service.ProxyUserService.proxyuser.#USER#.hosts: hosts from where the user #USER# can impersonate other users.
+   * oozie.service.ProxyUserService.proxyuser.#USER#.groups: groups the users being impersonated by user #USER# must belong to.
+
+Both properties support the '*' wildcard as value. Although this is recommended only for testing/development.
+
 ---+++ User Authorization Configuration
 
 Oozie has a basic authorization model:

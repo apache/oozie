@@ -88,6 +88,9 @@ public enum ErrorCode {
     E0509(XLog.OPS, "User [{0}] not authorized for Coord job [{1}]"),
     E0510(XLog.OPS, "Unable to get Credential [{0}]"),
 
+    E0550(XLog.OPS, "Could not normalize host name [{0}], {1}"),
+    E0551(XLog.OPS, "Missing [{0}] property"),
+
     E0600(XLog.OPS, "Could not get connection, {0}"),
     E0601(XLog.OPS, "Could not close connection, {0}"),
     E0602(XLog.OPS, "Could not commit connection, {0}"),
@@ -207,6 +210,8 @@ public enum ErrorCode {
     E1317(XLog.STD, "Invalid bundle job change value {0}, {1}"),
     E1318(XLog.STD, "No coord jobs for the bundle=[{0}], fail the bundle"),
     E1319(XLog.STD, "Invalid bundle coord job namespace, [{0}]"),
+
+    E1400(XLog.STD, "doAs (proxyuser) failure"),
 
     ETEST(XLog.STD, "THIS SHOULD HAPPEN ONLY IN TESTING, invalid job id [{0}]"),;
 

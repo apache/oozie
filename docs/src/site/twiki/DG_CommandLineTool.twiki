@@ -31,6 +31,7 @@ usage:
                 -D <property=value>   set/override value for given property
                 -date <arg>           coordinator/bundle rerun on action dates (requires -rerun)
                 -definition <arg>     job definition
+                -doas <arg>           doAs user, impersonates as the specified user
                 -dryrun               Supported in Oozie-2.0 or later versions ONLY - dryrun or test
                                       run a coordinator job, job is not queued
                 -info <arg>           info of a job
@@ -54,6 +55,7 @@ usage:
                 -verbose              verbose mode
 .
       oozie jobs <OPTIONS> : jobs status
+                 -doas <arg>           doAs user, impersonates as the specified user.
                  -filter <arg>    user=<U>;name=<N>;group=<G>;status=<S>;...
                  -jobtype <arg>   job type ('Supported in Oozie-2.0 or later versions ONLY -
                                   coordinator' or 'wf' (default))
@@ -64,6 +66,7 @@ usage:
                  -verbose         verbose mode
 .
       oozie admin <OPTIONS> : admin operations
+                -doas <arg>           doAs user, impersonates as the specified user.
                   -oozie <arg>        Oozie URL
                   -queuedump          show Oozie server queue elements
                   -status             show the current system status
@@ -79,6 +82,7 @@ usage:
                 -oozie <arg>    Oozie URL
 .
       oozie pig <OPTIONS> -X <ARGS> : submit a pig job, everything after '-X' are pass-through parameters to pig
+                -doas <arg>           doAs user, impersonates as the specified user.
                 -config <arg>         job configuration file '.properties'
                 -D <property=value>   set/override value for given property
                 -file <arg>           Pig script
@@ -108,6 +112,12 @@ option.
 
 To use an custom authentication mechanism, a Hadoop-Auth =Authenticator= implementation must be specified with the
  =-Dauthenticator.class= = =CLASS= option.
+
+---+++ Impersonation, doAs
+
+The <code>-doas</code> option allows the current user to impersonate other users when interacting with the Oozie
+system. The current user must be configured as a proxyuser in the Oozie system. The proxyuser configuration may
+restrict from which hosts a user may impersonate users, as well as users of which groups can be impersonated.
 
 ---+++ Oozie URL
 

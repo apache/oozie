@@ -19,6 +19,7 @@ package org.apache.oozie.servlet;
 
 import org.apache.oozie.service.AuthorizationService;
 
+import org.apache.oozie.service.ProxyUserService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.ForTestAuthorizationService;
 import org.apache.oozie.service.ForTestWorkflowStoreService;
@@ -70,6 +71,11 @@ public abstract class DagServletTestCase extends XFsTestCase {
         Services services = new Services();
         this.servletPath = servletPath[0];
         try {
+            String proxyUser = getTestUser();
+            services.getConf().set(ProxyUserService.CONF_PREFIX + proxyUser +
+                                   ProxyUserService.HOSTS, "*");
+            services.getConf().set(ProxyUserService.CONF_PREFIX + proxyUser +
+                                   ProxyUserService.GROUPS, "*");
             services.init();
             services.getConf().setBoolean(AuthorizationService.CONF_SECURITY_ENABLED, securityEnabled);
             Services.get().setService(ForTestAuthorizationService.class);
@@ -80,6 +86,7 @@ public abstract class DagServletTestCase extends XFsTestCase {
             for (int i = 0; i < servletPath.length; i++) {
                 container.addServletEndpoint(servletPath[i], servletClass[i]);
             }
+            container.addFilter("*", HostnameFilter.class);
             container.addFilter("*", AuthFilter.class);
             setSystemProperty("user.name", getTestUser());
             container.start();

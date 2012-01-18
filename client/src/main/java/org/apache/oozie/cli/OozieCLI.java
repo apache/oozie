@@ -31,6 +31,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TimeZone;
+import java.util.concurrent.Callable;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
@@ -102,6 +103,8 @@ public class OozieCLI {
     public static final String ACTION_OPTION = "action";
     public static final String DEFINITION_OPTION = "definition";
     public static final String CONFIG_CONTENT_OPTION = "configcontent";
+
+    public static final String DO_AS_OPTION = "doas";
 
     public static final String LEN_OPTION = "len";
     public static final String FILTER_OPTION = "filter";
@@ -175,8 +178,10 @@ public class OozieCLI {
         Option status = new Option(STATUS_OPTION, false, "show the current system status");
         Option version = new Option(VERSION_OPTION, false, "show Oozie server build version");
         Option queuedump = new Option(QUEUE_DUMP_OPTION, false, "show Oozie server queue elements");
+        Option doAs = new Option(DO_AS_OPTION, true, "doAs user, impersonates as the specified user");
         Options adminOptions = new Options();
         adminOptions.addOption(oozie);
+        adminOptions.addOption(doAs);
         OptionGroup group = new OptionGroup();
         group.addOption(system_mode);
         group.addOption(status);
@@ -222,6 +227,8 @@ public class OozieCLI {
         Option property = OptionBuilder.withArgName("property=value").hasArgs(2).withValueSeparator().withDescription(
                 "set/override value for given property").create("D");
 
+        Option doAs = new Option(DO_AS_OPTION, true, "doAs user, impersonates as the specified user");
+
         OptionGroup actions = new OptionGroup();
         actions.addOption(submit);
         actions.addOption(start);
@@ -239,6 +246,7 @@ public class OozieCLI {
         actions.setRequired(true);
         Options jobOptions = new Options();
         jobOptions.addOption(oozie);
+        jobOptions.addOption(doAs);
         jobOptions.addOption(config);
         jobOptions.addOption(property);
         jobOptions.addOption(changeValue);
@@ -264,10 +272,12 @@ public class OozieCLI {
         Option filter = new Option(FILTER_OPTION, true, "user=<U>;name=<N>;group=<G>;status=<S>;...");
         Option localtime = new Option(LOCAL_TIME_OPTION, false, "use local time (default GMT)");
         Option verbose = new Option(VERBOSE_OPTION, false, "verbose mode");
+        Option doAs = new Option(DO_AS_OPTION, true, "doAs user, impersonates as the specified user");
         start.setType(Integer.class);
         len.setType(Integer.class);
         Options jobsOptions = new Options();
         jobsOptions.addOption(oozie);
+        jobsOptions.addOption(doAs);
         jobsOptions.addOption(localtime);
         jobsOptions.addOption(start);
         jobsOptions.addOption(len);
@@ -297,8 +307,10 @@ public class OozieCLI {
         Option pigFile = new Option(PIGFILE_OPTION, true, "Pig script");
         Option property = OptionBuilder.withArgName("property=value").hasArgs(2).withValueSeparator().withDescription(
                 "set/override value for given property").create("D");
+        Option doAs = new Option(DO_AS_OPTION, true, "doAs user, impersonates as the specified user");
         Options pigOptions = new Options();
         pigOptions.addOption(oozie);
+        pigOptions.addOption(doAs);
         pigOptions.addOption(config);
         pigOptions.addOption(property);
         pigOptions.addOption(pigFile);
@@ -321,7 +333,7 @@ public class OozieCLI {
         }
         used = true;
 
-        CLIParser parser = new CLIParser(OOZIE_OPTION, getCLIHelp());
+        final CLIParser parser = new CLIParser(OOZIE_OPTION, getCLIHelp());
         parser.addCommand(HELP_CMD, "", "display usage", new Options(), false);
         parser.addCommand(VERSION_CMD, "", "show client version", new Options(), false);
         parser.addCommand(JOB_CMD, "", "job operations", createJobOptions(), false);
@@ -333,30 +345,21 @@ public class OozieCLI {
                 createPigOptions(), true);
 
         try {
-            CLIParser.Command command = parser.parse(args);
-            if (command.getName().equals(HELP_CMD)) {
-                parser.showHelp();
+            final CLIParser.Command command = parser.parse(args);
+
+            String doAsUser = command.getCommandLine().getOptionValue(DO_AS_OPTION);
+
+            if (doAsUser != null) {
+                OozieClient.doAs(doAsUser, new Callable<Void>() {
+                    @Override
+                    public Void call() throws Exception {
+                        processCommand(parser, command);
+                        return null;
+                    }
+                });
             }
-            else if (command.getName().equals(JOB_CMD)) {
-                jobCommand(command.getCommandLine());
-            }
-            else if (command.getName().equals(JOBS_CMD)) {
-                jobsCommand(command.getCommandLine());
-            }
-            else if (command.getName().equals(ADMIN_CMD)) {
-                adminCommand(command.getCommandLine());
-            }
-            else if (command.getName().equals(VERSION_CMD)) {
-                versionCommand();
-            }
-            else if (command.getName().equals(VALIDATE_CMD)) {
-                validateCommand(command.getCommandLine());
-            }
-            else if (command.getName().equals(SLA_CMD)) {
-                slaCommand(command.getCommandLine());
-            }
-            else if (command.getName().equals(PIG_CMD)) {
-                pigCommand(command.getCommandLine());
+            else {
+                processCommand(parser, command);
             }
 
             return 0;
@@ -378,6 +381,32 @@ public class OozieCLI {
         }
     }
 
+    private void processCommand(CLIParser parser, CLIParser.Command command) throws Exception {
+        if (command.getName().equals(HELP_CMD)) {
+            parser.showHelp();
+        }
+        else if (command.getName().equals(JOB_CMD)) {
+            jobCommand(command.getCommandLine());
+        }
+        else if (command.getName().equals(JOBS_CMD)) {
+            jobsCommand(command.getCommandLine());
+        }
+        else if (command.getName().equals(ADMIN_CMD)) {
+            adminCommand(command.getCommandLine());
+        }
+        else if (command.getName().equals(VERSION_CMD)) {
+            versionCommand();
+        }
+        else if (command.getName().equals(VALIDATE_CMD)) {
+            validateCommand(command.getCommandLine());
+        }
+        else if (command.getName().equals(SLA_CMD)) {
+            slaCommand(command.getCommandLine());
+        }
+        else if (command.getName().equals(PIG_CMD)) {
+            pigCommand(command.getCommandLine());
+        }
+    }
     protected String getOozieUrl(CommandLine commandLine) {
         String url = commandLine.getOptionValue(OOZIE_OPTION);
         if (url == null) {
@@ -453,9 +482,8 @@ public class OozieCLI {
         }
     }
 
-    private Properties getConfiguration(CommandLine commandLine) throws IOException {
-        Properties conf = new Properties();
-        conf.setProperty("user.name", System.getProperty("user.name"));
+    private Properties getConfiguration(OozieClient wc, CommandLine commandLine) throws IOException {
+        Properties conf = wc.createConfiguration();
         String configFile = commandLine.getOptionValue(CONFIG_OPTION);
         if (configFile == null) {
             throw new IOException("configuration file not specified");
@@ -563,13 +591,13 @@ public class OozieCLI {
 
         try {
             if (options.contains(SUBMIT_OPTION)) {
-                System.out.println(JOB_ID_PREFIX + wc.submit(getConfiguration(commandLine)));
+                System.out.println(JOB_ID_PREFIX + wc.submit(getConfiguration(wc, commandLine)));
             }
             else if (options.contains(START_OPTION)) {
                 wc.start(commandLine.getOptionValue(START_OPTION));
             }
             else if (options.contains(DRYRUN_OPTION)) {
-                String[] dryrunStr = wc.dryrun(getConfiguration(commandLine)).split("action for new instance");
+                String[] dryrunStr = wc.dryrun(getConfiguration(wc, commandLine)).split("action for new instance");
                 int arraysize = dryrunStr.length;
                 System.out.println("***coordJob after parsing: ***");
                 System.out.println(dryrunStr[0]);
@@ -597,11 +625,11 @@ public class OozieCLI {
                 wc.change(commandLine.getOptionValue(CHANGE_OPTION), getChangeValue(commandLine));
             }
             else if (options.contains(RUN_OPTION)) {
-                System.out.println(JOB_ID_PREFIX + wc.run(getConfiguration(commandLine)));
+                System.out.println(JOB_ID_PREFIX + wc.run(getConfiguration(wc, commandLine)));
             }
             else if (options.contains(RERUN_OPTION)) {
                 if (commandLine.getOptionValue(RERUN_OPTION).contains("-W")) {
-                    wc.reRun(commandLine.getOptionValue(RERUN_OPTION), getConfiguration(commandLine));
+                    wc.reRun(commandLine.getOptionValue(RERUN_OPTION), getConfiguration(wc, commandLine));
                 }
                 else if (commandLine.getOptionValue(RERUN_OPTION).contains("-B")) {
                     String bundleJobId = commandLine.getOptionValue(RERUN_OPTION);
@@ -1291,11 +1319,11 @@ public class OozieCLI {
             throw new OozieCLIException("Need to specify -config <configfile>");
         }
 
-        Properties conf = getConfiguration(commandLine);
-        String script = commandLine.getOptionValue(PIGFILE_OPTION);
 
         try {
             XOozieClient wc = createXOozieClient(commandLine);
+            Properties conf = getConfiguration(wc, commandLine);
+            String script = commandLine.getOptionValue(PIGFILE_OPTION);
             System.out.println(JOB_ID_PREFIX + wc.submitPig(conf, script, pigArgs.toArray(new String[pigArgs.size()])));
         }
         catch (OozieClientException ex) {

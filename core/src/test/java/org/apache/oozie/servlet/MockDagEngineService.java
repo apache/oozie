@@ -50,6 +50,7 @@ public class MockDagEngineService extends DagEngineService {
 
     public static Configuration submittedConf;
     public static String did = null;
+    public static String user = null;
     public static Properties properties;
     public static List<WorkflowJob> workflows;
     public static List<Boolean> started;
@@ -60,6 +61,7 @@ public class MockDagEngineService extends DagEngineService {
     }
 
     public static void reset() {
+        user = null;
         did = null;
         properties = null;
         workflows = new ArrayList<WorkflowJob>();
@@ -96,6 +98,7 @@ public class MockDagEngineService extends DagEngineService {
             int idx = workflows.size();
             workflows.add(createDummyWorkflow(idx, XmlUtils.prettyPrint(conf).toString()));
             started.add(startJob);
+            MockDagEngineService.user = getUser();
             return JOB_ID + idx;
         }
 

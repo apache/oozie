@@ -62,7 +62,6 @@ public class TestOozieCLI extends DagServletTestCase {
     private String createConfigFile(String appPath) throws Exception {
         String path = getTestCaseDir() + "/" + getName() + ".xml";
         Configuration conf = new Configuration(false);
-        conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set(OozieClient.GROUP_NAME, getTestGroup());
         conf.set(OozieClient.APP_PATH, appPath);
         conf.set(OozieClient.RERUN_SKIP_NODES, "node");
@@ -140,6 +139,25 @@ public class TestOozieCLI extends DagServletTestCase {
                 catch (Exception e) {
                     //job was not submitted, so its fine
                 }
+                return null;
+            }
+        });
+    }
+
+    public void testSubmitDoAs() throws Exception {
+        runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED, new Callable<Void>() {
+            public Void call() throws Exception {
+                String oozieUrl = getContextURL();
+
+                Path appPath = new Path(getFsTestCaseDir(), "app");
+                getFileSystem().mkdirs(appPath);
+                getFileSystem().create(new Path(appPath, "workflow.xml")).close();
+
+                String[] args = new String[]{"job", "-submit", "-oozie", oozieUrl, "-config",
+                    createConfigFile(appPath.toString()), "-doas", getTestUser2() };
+                assertEquals(0, new OozieCLI().run(args));
+                assertEquals("submit", MockDagEngineService.did);
+                assertEquals(getTestUser2(), MockDagEngineService.user);
                 return null;
             }
         });

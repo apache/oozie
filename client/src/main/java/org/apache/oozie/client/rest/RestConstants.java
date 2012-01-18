@@ -134,4 +134,6 @@ public interface RestConstants {
     public static final String MAX_EVENTS = "max-events";
 
     public static final String SLA = "sla";
+
+    public static final String DO_AS_PARAM = "doAs";
 }

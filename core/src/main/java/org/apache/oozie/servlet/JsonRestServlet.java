@@ -22,6 +22,7 @@ import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.oozie.service.InstrumentationService;
+import org.apache.oozie.service.ProxyUserService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.XLogService;
 import org.apache.oozie.util.Instrumentation;
@@ -37,6 +38,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.security.AccessControlException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -278,7 +280,6 @@ public abstract class JsonRestServlet extends HttpServlet {
             validateRestUrl(request.getMethod(), getResourceName(request), request.getParameterMap());
             XLog.Info.get().clear();
             String user = getUser(request);
-            XLog.Info.get().setParameter(XLogService.USER, user);
             TOTAL_REQUESTS_SAMPLER_COUNTER.incrementAndGet();
             samplerCounter.incrementAndGet();
             super.service(request, response);
@@ -292,6 +293,13 @@ public abstract class JsonRestServlet extends HttpServlet {
             request.setAttribute(AUDIT_HTTP_STATUS_CODE, ex.getHttpStatusCode());
             incrCounter(INSTR_TOTAL_FAILED_REQUESTS_COUNTER, 1);
             sendErrorResponse(response, ex.getHttpStatusCode(), ex.getErrorCode().toString(), ex.getMessage());
+        }
+        catch (AccessControlException ex) {
+            XLog log = XLog.getLog(getClass());
+            log.error("URL[{0} {1}] error, {2}", request.getMethod(), getRequestUrl(request), ex.getMessage(), ex);
+            incrCounter(INSTR_TOTAL_FAILED_REQUESTS_COUNTER, 1);
+            sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, ErrorCode.E1400.toString(),
+                              ex.getMessage());
         }
         catch (RuntimeException ex) {
             XLog log = XLog.getLog(getClass());
@@ -520,6 +528,26 @@ public abstract class JsonRestServlet extends HttpServlet {
      */
     protected String getUser(HttpServletRequest request) {
         String userName = (String) request.getAttribute(USER_NAME);
+
+        String doAsUserName = request.getParameter(RestConstants.DO_AS_PARAM);
+        if (doAsUserName != null && !doAsUserName.equals(userName)) {
+            ProxyUserService proxyUser = Services.get().get(ProxyUserService.class);
+            try {
+                proxyUser.validate(userName, HostnameFilter.get(), doAsUserName);
+            }
+            catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+            auditLog.info("Proxy user [{0}] DoAs user [{1}] Request [{2}]", userName, doAsUserName,
+                          getRequestUrl(request));
+
+            XLog.Info.get().setParameter(XLogService.USER, userName + " doAs " + doAsUserName);
+
+            userName = doAsUserName;
+        }
+        else {
+            XLog.Info.get().setParameter(XLogService.USER, userName);
+        }
         return (userName != null) ? userName : UNDEF;
     }
 

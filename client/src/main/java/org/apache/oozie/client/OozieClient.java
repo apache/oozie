@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -147,6 +148,32 @@ public class OozieClient {
     private boolean validatedVersion = false;
     private final Map<String, String> headers = new HashMap<String, String>();
 
+    private static ThreadLocal<String> USER_NAME_TL = new ThreadLocal<String>();
+
+    /**
+     * Allows to impersonate other users in the Oozie server. The current user
+     * must be configured as a proxyuser in Oozie.
+     * <p/>
+     * IMPORTANT: impersonation happens only with Oozie client requests done within
+     * doAs() calls.
+     *
+     * @param userName user to impersonate.
+     * @param callable callable with {@link OozieClient} calls impersonating the specified user.
+     * @return any response returned by the {@link Callable#call()} method.
+     * @throws Exception thrown by the {@link Callable#call()} method.
+     */
+    public static <T> T doAs(String userName, Callable<T> callable) throws Exception {
+        notEmpty(userName, "userName");
+        notNull(callable, "callable");
+        try {
+            USER_NAME_TL.set(userName);
+            return callable.call();
+        }
+        finally {
+            USER_NAME_TL.remove();
+        }
+    }
+
     protected OozieClient() {
     }
 
@@ -255,7 +282,11 @@ public class OozieClient {
      */
     public Properties createConfiguration() {
         Properties conf = new Properties();
-        conf.setProperty(USER_NAME, System.getProperty("user.name"));
+        String userName = USER_NAME_TL.get();
+        if (userName == null) {
+            userName = System.getProperty("user.name");
+        }
+        conf.setProperty(USER_NAME, userName);
         return conf;
     }
 
@@ -413,9 +444,13 @@ public class OozieClient {
     }
 
     static Map<String, String> prepareParams(String... params) {
-        Map<String, String> map = new HashMap<String, String>();
+        Map<String, String> map = new LinkedHashMap<String, String>();
         for (int i = 0; i < params.length; i = i + 2) {
             map.put(params[i], params[i + 1]);
+        }
+        String doAsUserName = USER_NAME_TL.get();
+        if (doAsUserName != null) {
+            map.put(RestConstants.DO_AS_PARAM, doAsUserName);
         }
         return map;
     }
