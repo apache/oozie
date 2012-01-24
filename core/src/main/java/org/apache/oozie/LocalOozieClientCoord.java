@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,6 +30,9 @@ import org.apache.oozie.client.OozieClientException;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.rest.JsonCoordinatorAction;
 import org.apache.oozie.client.rest.JsonCoordinatorJob;
+import org.apache.oozie.client.rest.RestConstants;
+import org.apache.oozie.command.CommandException;
+import org.apache.oozie.command.coord.CoordRerunXCommand;
 import org.apache.oozie.util.XConfiguration;
 
 /**
@@ -252,14 +255,27 @@ public class LocalOozieClientCoord extends OozieClient {
     public List<CoordinatorAction> reRunCoord(String jobId, String rerunType, String scope, boolean refresh,
             boolean noCleanup) throws OozieClientException {
         try {
+            if (!(rerunType.equals(RestConstants.JOB_COORD_RERUN_DATE) || rerunType
+                    .equals(RestConstants.JOB_COORD_RERUN_ACTION))) {
+                throw new CommandException(ErrorCode.E1018, "date or action expected.");
+            }
             CoordinatorActionInfo coordInfo = coordEngine.reRun(jobId, rerunType, scope, Boolean.valueOf(refresh),
                     Boolean.valueOf(noCleanup));
-            List<CoordinatorActionBean> actionBeans = coordInfo.getCoordActions();
+            List<CoordinatorActionBean> actionBeans;
+            if (coordInfo != null) {
+                actionBeans = coordInfo.getCoordActions();
+            }
+            else {
+                actionBeans = CoordRerunXCommand.getCoordActions(rerunType, jobId, scope);
+            }
             List<CoordinatorAction> actions = new ArrayList<CoordinatorAction>();
             for (CoordinatorActionBean actionBean : actionBeans) {
                 actions.add(actionBean);
             }
             return actions;
+        }
+        catch(CommandException ce){
+            throw new OozieClientException(ce.getErrorCode().toString(), ce);
         }
         catch (BaseEngineException ex) {
             throw new OozieClientException(ex.getErrorCode().toString(), ex);
@@ -354,7 +370,7 @@ public class LocalOozieClientCoord extends OozieClient {
 
     /**
      * Get the info of a coordinator action.
-     * 
+     *
      * @param actionId Id.
      * @return the coordinator action info.
      * @throws OozieClientException thrown if the job info could not be

@@ -491,9 +491,11 @@ Valid filter names are:
    * user: the user that submitted the job.
    * group: the group for the job.
    * status: the status of the job.
+   * frequency: the frequency of the Coordinator job.
+   * unit: the time unit. It can take one of the following four values: months, days, hours or minutes. Time unit should be added only when frequency is specified.
 
 The query will do an AND among all the filter names. The query will do an OR among all the filter values for the same
-name. Multiple values must be specified as different  name value pairs.
+name. Multiple values must be specified as different name value pairs.
 
 ---+++ Checking the Status of multiple Coordinator Jobs
 

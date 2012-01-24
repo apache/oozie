@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,6 +44,7 @@ import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.RerunTransitionXCommand;
 import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.coord.CoordELFunctions;
+import org.apache.oozie.coord.CoordUtils;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetActionForNominalTimeJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetActionsForDatesJPAExecutor;
@@ -103,158 +104,13 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
     }
 
     /**
-     * Get the list of actions for given id ranges
-     *
-     * @param jobId coordinator job id
-     * @param scope the id range to rerun separated by ","
-     * @return the list of all actions to rerun
-     * @throws CommandException thrown if failed to get coordinator actions by given id range
-     */
-    private List<CoordinatorActionBean> getCoordActionsFromIds(String jobId, String scope) throws CommandException {
-        ParamChecker.notEmpty(jobId, "jobId");
-        ParamChecker.notEmpty(scope, "scope");
-
-        Set<String> actions = new HashSet<String>();
-        String[] list = scope.split(",");
-        for (String s : list) {
-            s = s.trim();
-            if (s.contains("-")) {
-                String[] range = s.split("-");
-                if (range.length != 2) {
-                    throw new CommandException(ErrorCode.E0302, "format is wrong for action's range '" + s + "'");
-                }
-                int start;
-                int end;
-                try {
-                    start = Integer.parseInt(range[0].trim());
-                    end = Integer.parseInt(range[1].trim());
-                    if (start > end) {
-                        throw new CommandException(ErrorCode.E0302, "format is wrong for action's range '" + s + "'");
-                    }
-                }
-                catch (NumberFormatException ne) {
-                    throw new CommandException(ErrorCode.E0302, ne);
-                }
-                for (int i = start; i <= end; i++) {
-                    actions.add(jobId + "@" + i);
-                }
-            }
-            else {
-                try {
-                    Integer.parseInt(s);
-                }
-                catch (NumberFormatException ne) {
-                    throw new CommandException(ErrorCode.E0302, "format is wrong for action id'" + s
-                            + "'. Integer only.");
-                }
-                actions.add(jobId + "@" + s);
-            }
-        }
-
-        List<CoordinatorActionBean> coordActions = new ArrayList<CoordinatorActionBean>();
-        for (String id : actions) {
-            CoordinatorActionBean coordAction;
-            try {
-                coordAction = jpaService.execute(new CoordActionGetJPAExecutor(id));
-            }
-            catch (JPAExecutorException je) {
-                throw new CommandException(je);
-            }
-            coordActions.add(coordAction);
-            LOG.debug("Rerun coordinator for actionId='" + id + "'");
-        }
-        return coordActions;
-    }
-
-    /**
-     * Get the list of actions for given date ranges
-     *
-     * @param jobId coordinator job id
-     * @param scope the date range to rerun separated by ","
-     * @return the list of dates to rerun
-     * @throws CommandException thrown if failed to get coordinator actions by given date range
-     */
-    private List<CoordinatorActionBean> getCoordActionsFromDates(String jobId, String scope) throws CommandException {
-        ParamChecker.notEmpty(jobId, "jobId");
-        ParamChecker.notEmpty(scope, "scope");
-
-        Set<CoordinatorActionBean> actionSet = new HashSet<CoordinatorActionBean>();
-        String[] list = scope.split(",");
-        for (String s : list) {
-            s = s.trim();
-            if (s.contains("::")) {
-                String[] dateRange = s.split("::");
-                if (dateRange.length != 2) {
-                    throw new CommandException(ErrorCode.E0302, "format is wrong for date's range '" + s + "'");
-                }
-                Date start;
-                Date end;
-                try {
-                    start = DateUtils.parseDateUTC(dateRange[0].trim());
-                    end = DateUtils.parseDateUTC(dateRange[1].trim());
-                    if (start.after(end)) {
-                        throw new CommandException(ErrorCode.E0302, "start date is older than end date: '" + s + "'");
-                    }
-                }
-                catch (Exception e) {
-                    throw new CommandException(ErrorCode.E0302, e);
-                }
-
-                List<CoordinatorActionBean> listOfActions = getActionIdsFromDateRange(jobId, start, end);
-                actionSet.addAll(listOfActions);
-            }
-            else {
-                try {
-                    Date date = DateUtils.parseDateUTC(s.trim());
-                    CoordinatorActionBean coordAction = jpaService
-                            .execute(new CoordJobGetActionForNominalTimeJPAExecutor(jobId, date));
-                    actionSet.add(coordAction);
-                }
-                catch (JPAExecutorException e) {
-                    throw new CommandException(e);
-                }
-                catch (Exception e) {
-                    throw new CommandException(ErrorCode.E0302, e);
-                }
-            }
-        }
-
-        List<CoordinatorActionBean> coordActions = new ArrayList<CoordinatorActionBean>();
-        for (CoordinatorActionBean coordAction : actionSet) {
-            coordActions.add(coordAction);
-            LOG.debug("Rerun coordinator for actionId='" + coordAction.getId() + "'");
-        }
-        return coordActions;
-    }
-
-    /**
-     * Get coordinator action ids between given start and end time
-     *
-     * @param jobId coordinator job id
-     * @param start start time
-     * @param end end time
-     * @return a list of coordinator actions belong to the range of start and end time
-     * @throws CommandException thrown if failed to get coordinator actions
-     */
-    private List<CoordinatorActionBean> getActionIdsFromDateRange(String jobId, Date start, Date end)
-            throws CommandException {
-        List<CoordinatorActionBean> list;
-        try {
-            list = jpaService.execute(new CoordJobGetActionsForDatesJPAExecutor(jobId, start, end));
-        }
-        catch (JPAExecutorException je) {
-            throw new CommandException(je);
-        }
-        return list;
-    }
-
-    /**
      * Check if all given actions are eligible to rerun.
      *
      * @param actions list of CoordinatorActionBean
      * @return true if all actions are eligible to rerun
      */
-    private boolean checkAllActionsRunnable(List<CoordinatorActionBean> coordActions) {
+    private static boolean checkAllActionsRunnable(List<CoordinatorActionBean> coordActions) {
+        ParamChecker.notNull(coordActions, "Coord actions to be rerun");
         boolean ret = false;
         for (CoordinatorActionBean coordAction : coordActions) {
             ret = true;
@@ -264,6 +120,25 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
             }
         }
         return ret;
+    }
+
+    /**
+     * Get the list of actions for a given coordinator job
+     * @param rerunType the rerun type (date, action)
+     * @param jobId the coordinator job id
+     * @param scope the date scope or action id scope
+     * @return the list of Coordinator actions
+     * @throws CommandException
+     */
+    public static List<CoordinatorActionBean> getCoordActions(String rerunType, String jobId, String scope) throws CommandException{
+        List<CoordinatorActionBean> coordActions = null;
+        if (rerunType.equals(RestConstants.JOB_COORD_RERUN_DATE)) {
+            coordActions = CoordUtils.getCoordActionsFromDates(jobId, scope);
+        }
+        else if (rerunType.equals(RestConstants.JOB_COORD_RERUN_ACTION)) {
+            coordActions = CoordUtils.getCoordActionsFromIds(jobId, scope);
+        }
+        return coordActions;
     }
 
     /**
@@ -436,17 +311,7 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
         try {
             CoordinatorActionInfo coordInfo = null;
             InstrumentUtils.incrJobCounter(getName(), 1, getInstrumentation());
-            List<CoordinatorActionBean> coordActions;
-            if (rerunType.equals(RestConstants.JOB_COORD_RERUN_DATE)) {
-                coordActions = getCoordActionsFromDates(jobId, scope);
-            }
-            else if (rerunType.equals(RestConstants.JOB_COORD_RERUN_ACTION)) {
-                coordActions = getCoordActionsFromIds(jobId, scope);
-            }
-            else {
-                isError = true;
-                throw new CommandException(ErrorCode.E1018, "date or action expected.");
-            }
+            List<CoordinatorActionBean> coordActions = getCoordActions(rerunType, jobId, scope);
             if (checkAllActionsRunnable(coordActions)) {
                 for (CoordinatorActionBean coordAction : coordActions) {
                     String actionXml = coordAction.getActionXml();

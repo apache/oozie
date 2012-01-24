@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,6 +33,8 @@ import org.apache.oozie.CoordinatorActionInfo;
 import org.apache.oozie.CoordinatorEngine;
 import org.apache.oozie.CoordinatorEngineException;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.command.coord.CoordRerunXCommand;
+import org.apache.oozie.coord.CoordUtils;
 import org.apache.oozie.DagEngine;
 import org.apache.oozie.DagEngineException;
 import org.apache.oozie.ErrorCode;
@@ -614,17 +616,32 @@ public class V1JobServlet extends BaseJobServlet {
                         + refresh + ", noCleanup=" + noCleanup);
 
         try {
+            if (!(rerunType.equals(RestConstants.JOB_COORD_RERUN_DATE) || rerunType
+                    .equals(RestConstants.JOB_COORD_RERUN_ACTION))) {
+                throw new CommandException(ErrorCode.E1018, "date or action expected.");
+            }
             CoordinatorActionInfo coordInfo = coordEngine.reRun(jobId, rerunType, scope, Boolean.valueOf(refresh),
                     Boolean.valueOf(noCleanup));
-            List<CoordinatorActionBean> actions = coordInfo.getCoordActions();
-            json.put(JsonTags.COORDINATOR_ACTIONS, CoordinatorActionBean.toJSONArray(actions));
+            List<CoordinatorActionBean> coordActions;
+            if (coordInfo != null) {
+                coordActions = coordInfo.getCoordActions();
+            }
+            else {
+                coordActions = CoordRerunXCommand.getCoordActions(rerunType, jobId, scope);
+            }
+            json.put(JsonTags.COORDINATOR_ACTIONS, CoordinatorActionBean.toJSONArray(coordActions));
         }
         catch (BaseEngineException ex) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
+        }
+        catch (CommandException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
         }
 
         return json;
     }
+
+
 
     /**
      * Get workflow job

@@ -43,7 +43,7 @@ $oozie job -rerun <coord_Job_id> [-nocleanup] [-refresh]
    * Rerun for job, user should use job's start date and end date in -date.
    * If the user specifies a date range (say Jan 1 to May 1), the actions that will be re-run are the existing actions
      within that range.  If the existing actions are action #5....#40, which map to Jan 15 to Feb 15, then only those actions will run.
-   * When rerun succeeds, the rerun action_id and nominal_time will be return.
+   * The rerun action_id and nominal_time of the actions which are eligible to rerun will be returned.
 
 [[index][::Go back to Oozie Documentation Index::]]
 

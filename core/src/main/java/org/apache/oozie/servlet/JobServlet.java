@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,6 +37,8 @@ import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.JsonWorkflowJob;
 import org.apache.oozie.client.rest.RestConstants;
+import org.apache.oozie.command.CommandException;
+import org.apache.oozie.command.coord.CoordRerunXCommand;
 import org.apache.oozie.service.AuthorizationException;
 import org.apache.oozie.service.AuthorizationService;
 import org.apache.oozie.service.CoordinatorEngineService;
@@ -128,9 +130,19 @@ public class JobServlet extends JsonRestServlet {
                 String scope = request.getParameter(RestConstants.JOB_COORD_RERUN_SCOPE_PARAM);
                 String refresh = request.getParameter(RestConstants.JOB_COORD_RERUN_REFRESH_PARAM);
                 String noCleanup = request.getParameter(RestConstants.JOB_COORD_RERUN_NOCLEANUP_PARAM);
+                if (!(rerunType.equals(RestConstants.JOB_COORD_RERUN_DATE) || rerunType
+                        .equals(RestConstants.JOB_COORD_RERUN_ACTION))) {
+                    throw new CommandException(ErrorCode.E1018, "date or action expected.");
+                }
                 CoordinatorActionInfo coordInfo = coordEngine.reRun(jobId, rerunType, scope, Boolean.valueOf(refresh),
                         Boolean.valueOf(noCleanup));
-                List<CoordinatorActionBean> actions = coordInfo.getCoordActions();
+                List<CoordinatorActionBean> actions;
+                if (coordInfo != null) {
+                    actions = coordInfo.getCoordActions();
+                }
+                else {
+                    actions = CoordRerunXCommand.getCoordActions(rerunType, jobId, scope);
+                }
                 JSONObject json = new JSONObject();
                 json.put(JsonTags.COORDINATOR_ACTIONS, CoordinatorActionBean.toJSONArray(actions));
                 startCron();
@@ -140,6 +152,9 @@ public class JobServlet extends JsonRestServlet {
                 throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0303,
                         RestConstants.ACTION_PARAM, action);
             }
+        }
+        catch (CommandException ex) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
         }
         catch (DagEngineException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
