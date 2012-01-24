@@ -2024,7 +2024,7 @@ This section describes the EL functions that could be used to parameterized both
 
 The =${coord:dateOffset(String baseDate, int instance, String timeUnit)}= EL function calculates date based on the following equaltion : =newDate = baseDate + instance,  * timeUnit=
 
-For example, if baseDate is '2009-01-01T00:00Z', instance is '2' and timeUnit is 'MONTH', the return date will be' 2009-03-01T00:00Z'.
+For example, if baseDate is '2009-01-01T00:00Z', instance is '2' and timeUnit is 'MONTH', the return date will be '2009-03-01T00:00Z'. If baseDate is '2009-01-01T00:00Z', instance is '1' and timeUnit is 'YEAR', the return date will be '2010-01-01T00:00Z'.
 
 *%GREEN% Example: %ENDCOLOR%*:
 

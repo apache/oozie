@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-642: Year support in dateOffset() El function.(Virag via Mohammad)
 OOZIE-652 Add proxyuser capabilities to Oozie HTTP API. (tucu)
 OOZIE-591: Oozie continues to materialize new actions after end date modification (Mohamed Battisha vis Angelo)
 OOZIE-639 Hive sharelib POM must exclude hadoop-core. (tucu)
