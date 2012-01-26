@@ -17,7 +17,9 @@
 
 Apache Oozie(TM) IRC Channel
 
-  There is an IRC channel dedicated to avro at <<irc.freenode.org>>. The name of the channel is <<#oozie>>.
+  There is an IRC channel dedicated to oozie at <<irc.freenode.org>>. The name of the channel is <<#oozie>>.
+
+  If you are new to IRC, you can use a {{{http://webchat.freenode.net/?channels=#oozie}web-based client}} to connect.
 
   The IRC channel can be used for online discussion about Oozie related stuff, but developers should be careful
   to transfer all the official decisions or useful discussions to {{{./IssueTracking.html}Issue Tracking system}}.
