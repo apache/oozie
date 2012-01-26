@@ -17,35 +17,54 @@
 
 Apache Oozie(TM) How to Release
 
-    This page is to document the release procedure for Oozie. Oozie is currently a Apache incubator project. Its release process is <<<work in progress>>>.
+    This page is to document the release procedure for Oozie. Oozie is currently a Apache incubator project.
+    Its release process is still <<<work in progress>>>.
 
 
 * Preparation
 
-   [[1]]  Define issue management process like assigning/removing issues from the release.
+   [[1]] A committer proposes a release and a release manager is chosen by the committers (normally the
+   committer proposing the release would be the release manager).
 
-   [[1]]  TBD.
+   [[1]] Agree on the initial scope for the release and update JIRAs accordingly.
+
 []
 
-* Creating Release Branch
+* Create the Release Branch
 
-    A new release branch is created only  for  for major (X.0.0) and minor(X.Y.0) releases but not for patches (X.Y.Z). Patch is an update to an existing branch created for X.Y.0. Although the patch release could be tagged.
+   A new release branch is created only for for major (X.0.0) and minor (X.Y.0) releases but not for patches (X.Y.Z).
+   A patch is an update to an existing branch created for X.Y.0. A patch release must be tagged.
 
-   [[1]]  Send email to oozie-dev@incubator.apache.org to notify that
+   [[1]] Send email to oozie-dev@incubator.apache.org to notify that
 
-      [[A]] A new branch is about to be created based from the trunk.
+      [[A]] A new branch is about to be created from trunk, from a major branch or from a minor branch.
 
-      [[A]] Request to hold off any commits until further email.
+      [[A]] Request to hold off any commits from the corresponding branch until further email.
 
-   [[1]]  Update and committ the pom.xml of different sub-projects (such as core, client, webapp etc.) of Oozie with appropriate version (i.e. x.y.0)
+   [[1]] Create a branch for the release.
 
-   [[1]]  Create a branch for the release:
+   For example:
 
 -----------------------------------------------------------------------------
 svn copy https://svn.apache.org/repos/asf/incubator/oozie/trunk  \
 https://svn.apache.org/repos/asf/incubator/oozie/branches/branch-X.Y -m "Branching for X.Y releases"
 -----------------------------------------------------------------------------
+
+   [[1]] Update the original branch ticking the corresponding major or minor version in all POMs
+   (use the Maven versions plugin).
+
+   [[1]] Send email to  oozie-dev@incubator.apache.org to notify that the release branch has been created and that
+   commits can resume.
+
 []
+
+* Work on the Release Branch
+
+  [[1]] Work on existing JIRAs and new ones until the release manager feels that the branch is ready for a release.
+
+  [[2]] As a general rule, JIRAs must be committed first to trunk and the backported to the branch. Only for cases
+  where the JIRAs does not apply to trunk the JIRA should be only committed to the branch.
+
 * Updating Release Branch
 
     These steps are required for all the releases (such as major, minor, and patches).
@@ -56,7 +75,8 @@ https://svn.apache.org/repos/asf/incubator/oozie/branches/branch-X.Y -m "Branchi
     svn co https://svn.apache.org/repos/asf/incubator/oozie/branches/branch-X.Y
 -----------------------------------------------------------------------------
 
-   [[1]]  Create <rat> report to verify all files have apache license aggreement. The generated report will be used later. TBD: How to combine rat report generated for each sub-projects?
+   [[1]]  Create <rat> report to verify all files have the corresponding Apache License header.
+   The generated report will be used later. (TBD: How to combine rat report generated for each sub-projects?)
 
 -----------------------------------------------------------------------------
    mvn apache-rat:check
@@ -72,16 +92,13 @@ https://svn.apache.org/repos/asf/incubator/oozie/branches/branch-X.Y -m "Branchi
 
 * Building
 
-   [[1]]  Build with all unit tests:
+   [[1]]  Build running all test cases.
 
 -----------------------------------------------------------------------------
-        umask 0022
-        mvn clean package assembly:single
-	OR
         bin/mkdistro.sh
 -----------------------------------------------------------------------------
 
-   [[1]]  Generate the MD5 checksum of the release file:
+   [[1]]  Generate the MD5 checksum of the release file.
 
 -----------------------------------------------------------------------------
         cd distro/target
@@ -90,7 +107,8 @@ https://svn.apache.org/repos/asf/incubator/oozie/branches/branch-X.Y -m "Branchi
 
    [[1]] If you do not have a gpg key pair, do the following steps:
 
-      [[A]] Generating key pair using the following command. You can simply accept all default settings and give your name, email and Passphase.
+      [[A]] Generating key pair using the following command. You can simply accept all default settings and give
+      your name, email and Passphase.
 
 -----------------------------------------------------------------------------
            gpg --gen-key
@@ -102,7 +120,8 @@ https://svn.apache.org/repos/asf/incubator/oozie/branches/branch-X.Y -m "Branchi
                 gpg --armor --output pubkey.txt --export 'Your Name'
 -----------------------------------------------------------------------------
 
-      [[A]] Open pubkey.txt, copy the full text and append it to the following files by pasting, then commit these changes:
+      [[A]] Open pubkey.txt, copy the full text and append it to the following files by pasting, then commit these
+      changes:
 
 -----------------------------------------------------------------------------
                 https://svn.apache.org/repos/asf/incubator/oozie/branches/branch-X.Y.Z/KEYS
@@ -142,8 +161,9 @@ https://svn.apache.org/repos/asf/incubator/oozie/branches/branch-X.Y -m "Branchi
         cd ..
         scp release_log.txt people.apache.org:public_html/oozie-X.Y.Z-incubating-candidate-0
         scp rat_report people.apache.org:public_html/oozie-X.Y.Z-incubating-candidate-0
-    NOTE: The rat_report is the report generated in the Updating Release Branch section above.
 -----------------------------------------------------------------------------
+
+    NOTE: The rat_report is the report generated in the Updating Release Branch section above.
 
    [[1]] Call a release vote for the Podling PMC (PPMC). This vote must receive a minimum of 3 PPMC members +1s, and more +1s than -1s. The email should be sent to oozie-user@incubator.apache.org. The mail should:
 
