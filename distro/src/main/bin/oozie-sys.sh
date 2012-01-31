@@ -174,6 +174,13 @@ else
   print "Using   OOZIE_HTTP_PORT:     ${OOZIE_HTTP_PORT}"
 fi
 
+if [ "${OOZIE_ADMIN_PORT}" = "" ]; then
+  export OOZIE_ADMIN_PORT=`expr $OOZIE_HTTP_PORT +  1`
+  print "Setting OOZIE_ADMIN_PORT:     ${OOZIE_ADMIN_PORT}"
+else
+  print "Using   OOZIE_ADMIN_PORT:     ${OOZIE_ADMIN_PORT}"
+fi
+
 if [ "${OOZIE_BASE_URL}" = "" ]; then
   export OOZIE_BASE_URL="http://${OOZIE_HTTP_HOSTNAME}:${OOZIE_HTTP_PORT}/oozie"
   print "Setting OOZIE_BASE_URL:      ${OOZIE_BASE_URL}"

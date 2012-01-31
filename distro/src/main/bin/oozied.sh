@@ -62,6 +62,7 @@ setup_catalina_opts() {
   catalina_opts="${catalina_opts} -Doozie.log4j.reload=${OOZIE_LOG4J_RELOAD}";
 
   catalina_opts="${catalina_opts} -Doozie.http.hostname=${OOZIE_HTTP_HOSTNAME}";
+  catalina_opts="${catalina_opts} -Doozie.admin.port=${OOZIE_ADMIN_PORT}";
   catalina_opts="${catalina_opts} -Doozie.http.port=${OOZIE_HTTP_PORT}";
   catalina_opts="${catalina_opts} -Doozie.base.url=${OOZIE_BASE_URL}";
 
@@ -88,6 +89,11 @@ case $actionCmd in
     $CATALINA $actionCmd "$@"
     ;;
   (stop)
+    setup_catalina_opts
+
+    # A bug in catalina.sh script does not use CATALINA_OPTS for stopping the server
+    export JAVA_OPTS=${CATALINA_OPTS}
+
     $CATALINA $actionCmd "$@"
     ;;
 esac
