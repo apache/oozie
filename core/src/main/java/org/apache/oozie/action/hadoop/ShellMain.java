@@ -193,10 +193,12 @@ public class ShellMain extends LauncherMain {
                 }
                 while ((line = reader.readLine()) != null) {
                     if (isStdout) { // For stdout
-                        System.out.println(line); // 1. Writing to LM STDOUT
+                        // 1. Writing to LM STDOUT
+                        System.out.println("Stdoutput " + line);
                         // 2. Writing for capture output
                         if (os != null) {
                             os.write(line);
+                            os.newLine();
                         }
                     }
                     else {

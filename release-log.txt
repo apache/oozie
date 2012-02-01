@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-665 Shell action doesn't capture multiple key-value pairs.(Mohammad)
 OOZIE-666 Oozie's Tomcat admin port is hardcoded. (tucu)
 OOZIE-662 Unit test failing: TestHostnameFilter. (tucu)
 OOZIE-651: Coordinator rerun fails due to NPE in some cases.(Virag via Mohammad)
