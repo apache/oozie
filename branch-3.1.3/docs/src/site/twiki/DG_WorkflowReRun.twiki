@@ -1,0 +1,34 @@
+<noautolink>
+
+[[index][::Go back to Oozie Documentation Index::]]
+
+---+!! Workflow ReRrun
+
+%TOC%
+---++ Configs
+
+   * oozie.wf.application.path
+    * Only one of following two configurations is mandatory. Both should not be defined at the same time
+      * oozie.wf.rerun.skip.nodes
+      * oozie.wf.rerun.failnodes
+   * Skip nodes are comma separated list of action names. They can be any action nodes including decision node.
+   * The valid value of  =oozie.wf.rerun.failnodes= is true or false.
+   * If secured hadoop version is used, the following two properties needs to be specified as well
+      * mapreduce.jobtracker.kerberos.principal
+      * dfs.namenode.kerberos.principal.
+---++ Pre-Conditions
+
+   * Workflow with id wfId should exist.
+   * Workflow with id wfId should be in SUCCEEDED/KILLED/FAILED.
+   * If specified , nodes in the config oozie.wf.rerun.skip.nodes must be completed successfully.
+
+---++ ReRun
+
+   * Reloads the configs.
+   * Creates a new Workflow Instance with the same wfId.
+   * Deletes the actions that are not skipped from the DB and copies data from old Workflow Instance to new one for skipped actions.
+   * Action handler will skip the nodes given in the config with the same exit transition as before.
+
+[[index][::Go back to Oozie Documentation Index::]]
+
+</noautolink>

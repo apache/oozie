@@ -1,0 +1,103 @@
+<noautolink>
+
+[[index][::Go back to Oozie Documentation Index::]]
+
+-----
+
+---+!! Oozie Email Action Extension
+
+%TOC%
+
+#EmailAction
+---++++ 3.2.4 Email action
+
+The =email= action allows sending emails in Oozie from a workflow application. An email action must provide =to=
+addresses, =cc= addresses (optional), a =subject= and a =body=. Multiple reciepents of an email can be provided
+as comma separated addresses.
+
+The email action is executed synchronously, and the workflow job will wait until the specified
+emails are sent before continuing to the next action.
+
+All values specified in the =email= action can be parameterized (templatized) using EL expressions.
+
+*Syntax:*
+
+<verbatim>
+<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.1">
+    ...
+    <action name="[NODE-NAME]">
+        <email xmlns="uri:oozie:email-action:0.1">
+            <to>[COMMA-SEPARATED-TO-ADDRESSES]</to>
+            <cc>[COMMA-SEPARATED-CC-ADDRESSES]</cc> <!-- cc is optional -->
+            <subject>[SUBJECT]</subject>
+            <body>[BODY]</body>
+        </email>
+        <ok to="[NODE-NAME]"/>
+        <error to="[NODE-NAME]"/>
+    </action>
+    ...
+</workflow-app>
+</verbatim>
+
+The =to= and =cc= commands are used to specify reciepents who should get the mail. Multiple email reciepents can be provided
+using comma-separated values. Providing a =to= command is necessary, while the =cc= may optionally be used along.
+
+The =subject= and =body= commands are used to specify the plain-text subject and body of the mail.
+
+*Configuration*
+
+The =email= action requires some SMTP server configuration to be present (in oozie-site.xml). The following are the values
+it looks for:
+
+=oozie.email.smtp.host= - The host where the email action may find the SMTP server (localhost by default).
+=oozie.email.smtp.port= - The port to connect to for the SMTP server (25 by default).
+=oozie.email.from.address= - The from address to be used for mailing all emails (oozie@localhost by default).
+=oozie.email.smtp.auth= - Boolean property that toggles if authentication is to be done or not. (false by default).
+=oozie.email.smtp.username= - If authentication is enabled, the username to login as (empty by default).
+=oozie.email.smtp.password= - If authentication is enabled, the username's password (empty by default).
+
+*Example:*
+
+<verbatim>
+<workflow-app name="sample-wf" xmlns="uri:oozie:workflow:0.1">
+    ...
+    <action name="an-email">
+        <email xmlns="uri:oozie:email-action:0.1">
+            <to>bob@initech.com,the.other.bob@initech.com</to>
+            <cc>will@initech.com</cc>
+            <subject>Email notifications for ${wf:id()}</subject>
+            <body>The wf ${wf:id()} successfully completed.</body>
+        </email>
+        <ok to="myotherjob"/>
+        <error to="errorcleanup"/>
+    </action>
+    ...
+</workflow-app>
+</verbatim>
+
+In the above example, an email is sent to 'bob', 'the.other.bob' and 'will' (cc)
+with the subject and body both containing the workflow ID after substitution.
+
+---+++ AE.A Appendix A, Email XML-Schema
+
+<verbatim>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:hive="uri:oozie:email-action:0.1" elementFormDefault="qualified"
+           targetNamespace="uri:oozie:email-action:0.1">
+.
+    <xs:element name="email" type="email:ACTION"/>
+.
+    <xs:complexType name="ACTION">
+        <xs:sequence>
+            <xs:element name="to" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="cc" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="subject" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="body" type="xs:string" minOccurs="1" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:schema>
+</verbatim>
+
+[[index][::Go back to Oozie Documentation Index::]]
+
+</noautolink>

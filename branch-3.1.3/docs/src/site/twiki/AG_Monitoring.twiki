@@ -1,0 +1,156 @@
+<noautolink>
+
+[[index][::Go back to Oozie Documentation Index::]]
+
+---+!! Oozie Monitoring
+
+%TOC%
+
+---++ Oozie Instrumentation
+
+Oozie code is instrumented in several places to collect runtime metrics. The instrumentation data can be used to
+determine the health of the system, performance of the system, and to tune the system.
+
+The instrumentation is accessible via the Admin web-services API and is also written on regular intervals to an
+instrumentation log.
+
+Instrumentation data includes variables, samplers, timers and counters.
+
+---+++ Variables
+
+   * oozie
+      * version: Oozie build version.
+
+   * configuration
+      * config.dir: directory from where the configuration files are loaded. If null, all configuration files are loaded from the classpath. [[AG_Configuration][Configuration Files]].
+      * config.file: the Oozie custom configuration for the instance.
+
+   * jvm
+      * free.memory
+      * max.memory
+      * total.memory
+
+   * locks
+      * locks: Locks are used by Oozie to synchronize access to workflow and action entries when the database being used does not support 'select for update' queries. (MySQL supports 'select for update').
+
+   * logging
+      * config.file: Log4j '.properties' configuration file.
+      * from.classpath: whether the config file has been read from the claspath or from the config directory.
+      * reload.interval: interval at which the config file will be realoded. 0 if the config file will never be reloaded, when loaded from the classpath is never reloaded.
+
+---+++ Samplers - Poll data at a fixed interval (default 1 sec) and report an average utlization over a longer period of time (default 60 seconds).
+
+Poll for data over fixed interval and generate an average over the time interval. Unless specified, all samplers in
+Oozie work on a 1 minute interval.
+
+   * callablequeue
+      * delayed.queue.size: The size of the delayed command queue.
+      * queue.size: The size of the command queue.
+      * threads.active: The number of threads processing callables.
+
+   * jdbc:
+      * connections.active: Active Connections over the past minute.
+
+   * webservices: Requests to the Oozie HTTP endpoints over the last minute.
+      * admin
+      * callback
+      * job
+      * jobs
+      * requests
+      * version
+
+---+++ Counters - Maintain statistics about the number of times an event has occured, for the running Oozie instance. The values are reset if the Oozie instance is restarted.
+
+   * action.executors - Counters related to actions.
+      * [action_type]#action.[operation_performed] (start, end, check, kill)
+      * [action_type]#ex.[exception_type] (transient, non-transient, error, failed)
+      * e.g.  <verbatim>
+            ssh#action.end: 306
+            ssh#action.start: 316 </verbatim>
+
+   * callablequeue - count of events in various execution queues.
+      * delayed.queued: Number of commands queued with a delay.
+      * executed: Number of executions from the queue.
+      * failed: Number of queue attempts which failed.
+      * queued: Number of queued commands.
+
+   * commands: Execution Counts for various commands. This data is generated for all commands.
+      * action.end
+      * action.notification
+      * action.start
+      * callback
+      * job.info
+      * job.notification
+      * purge
+      * signal
+      * start
+      * submit
+
+   * jobs: Job Statistics
+      * start: Number of started jobs.
+      * submit: Number of submitted jobs.
+      * succeeded: Number of jobs which succeeded.
+      * kill: Number of killed jobs.
+
+   * authorization
+      * failed: Number of failed authorization attempts.
+
+   * webservices: Number of request to various web services along with the request type.
+      * failed: total number of failed requests.
+      * requests: total number of requests.
+      * admin
+      * admin-GET
+      * callback
+      * callback-GET
+      * jobs
+      * jobs-GET
+      * jobs-POST
+      * version
+      * version-GET
+
+---+++ Timers - Maintain information about the time spent in various operations.
+
+   * action.executors - Counters related to actions.
+      * [action_type]#action.[operation_performed] (start, end, check, kill)
+
+   * callablequeue
+      * time.in.queue: Time a callable spent in the queue before being processed.
+
+   * commands: Generated for all Commands.
+      * action.end
+      * action.notification
+      * action.start
+      * callback
+      * job.info
+      * job.notification
+      * purge
+      * signal
+      * start
+      * submit
+
+   * db - Timers related to various database operations.
+      * create-workflow
+      * load-action
+      * load-pending-actions
+      * load-running-actions
+      * load-workflow
+      * load-workflows
+      * purge-old-workflows
+      * save-action
+      * update-action
+      * update-workflow
+
+   * webservices
+      * admin
+      * admin-GET
+      * callback
+      * callback-GET
+      * jobs
+      * jobs-GET
+      * jobs-POST
+      * version
+      * version-GET
+
+[[index][::Go back to Oozie Documentation Index::]]
+
+</noautolink>

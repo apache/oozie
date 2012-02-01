@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+  
+       http://www.apache.org/licenses/LICENSE-2.0
+  
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:coordinator="uri:oozie:coordinator:0.2"
+           elementFormDefault="qualified" targetNamespace="uri:oozie:coordinator:0.2">
+
+    <xs:element name="coordinator-app" type="coordinator:COORDINATOR-APP"/>
+    <xs:element name="datasets" type="coordinator:DATASETS"/>
+    <xs:simpleType name="IDENTIFIER">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="([a-zA-Z]([\-_a-zA-Z0-9])*){1,39})"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:complexType name="COORDINATOR-APP">
+        <xs:sequence>
+            <xs:element name="controls" type="coordinator:CONTROLS" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="datasets" type="coordinator:DATASETS" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="input-events" type="coordinator:INPUTEVENTS" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="output-events" type="coordinator:OUTPUTEVENTS" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="action" type="coordinator:ACTION" minOccurs="1" maxOccurs="1"/>
+        </xs:sequence>
+        <xs:attribute name="name" type="coordinator:IDENTIFIER" use="required"/>
+        <xs:attribute name="frequency" type="xs:string" use="required"/>
+        <xs:attribute name="start" type="xs:string" use="required"/>
+        <xs:attribute name="end" type="xs:string" use="required"/>
+        <xs:attribute name="timezone" type="xs:string" use="required"/>
+    </xs:complexType>
+    <xs:complexType name="CONTROLS">
+        <xs:sequence minOccurs="0" maxOccurs="1">
+            <xs:element name="timeout" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="concurrency" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="execution" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="throttle" type="xs:string" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="DATASETS">
+        <xs:sequence minOccurs="0" maxOccurs="1">
+            <xs:element name="include" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:choice minOccurs="0" maxOccurs="unbounded">
+                <xs:element name="dataset" type="coordinator:SYNCDATASET" minOccurs="0" maxOccurs="1"/>
+                <xs:element name="async-dataset" type="coordinator:ASYNCDATASET" minOccurs="0" maxOccurs="1"/>
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="SYNCDATASET">
+        <xs:sequence>
+            <xs:element name="uri-template" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="done-flag" type="xs:string" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+        <xs:attribute name="name" type="coordinator:IDENTIFIER" use="required"/>
+        <xs:attribute name="frequency" type="xs:string" use="required"/>
+        <xs:attribute name="initial-instance" type="xs:string" use="required"/>
+        <xs:attribute name="timezone" type="xs:string" use="required"/>
+    </xs:complexType>
+    <xs:complexType name="ASYNCDATASET">
+        <xs:sequence>
+            <xs:element name="uri-template" type="xs:string" minOccurs="1" maxOccurs="1"/>
+        </xs:sequence>
+        <xs:attribute name="name" type="coordinator:IDENTIFIER" use="required"/>
+        <xs:attribute name="sequence-type" type="xs:string" use="required"/>
+        <xs:attribute name="initial-version" type="xs:string" use="required"/>
+    </xs:complexType>
+    <xs:complexType name="INPUTEVENTS">
+        <xs:sequence minOccurs="1" maxOccurs="1">
+            <xs:element name="data-in" type="coordinator:DATAIN" minOccurs="1" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="DATAIN">
+        <xs:choice minOccurs="1" maxOccurs="1">
+            <xs:element name="instance" type="xs:string" minOccurs="1" maxOccurs="unbounded"/>
+            <xs:sequence minOccurs="1" maxOccurs="1">
+                <xs:element name="start-instance" type="xs:string" minOccurs="1" maxOccurs="1"/>
+                <xs:element name="end-instance" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            </xs:sequence>
+        </xs:choice>
+        <xs:attribute name="name" type="coordinator:IDENTIFIER" use="required"/>
+        <xs:attribute name="dataset" type="coordinator:IDENTIFIER" use="required"/>
+    </xs:complexType>
+    <xs:complexType name="OUTPUTEVENTS">
+        <xs:sequence minOccurs="1" maxOccurs="1">
+            <xs:element name="data-out" type="coordinator:DATAOUT" minOccurs="1" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="DATAOUT">
+        <xs:sequence minOccurs="1" maxOccurs="1">
+            <xs:element name="instance" type="xs:string" minOccurs="1" maxOccurs="1"/>
+        </xs:sequence>
+        <xs:attribute name="name" type="coordinator:IDENTIFIER" use="required"/>
+        <xs:attribute name="dataset" type="coordinator:IDENTIFIER" use="required"/>
+    </xs:complexType>
+    <xs:complexType name="ACTION">
+        <xs:sequence minOccurs="1" maxOccurs="1">
+            <xs:element name="workflow" type="coordinator:WORKFLOW" minOccurs="1" maxOccurs="1"/>
+            <xs:any namespace="uri:oozie:sla:0.1" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="WORKFLOW">
+        <xs:sequence>
+            <xs:element name="app-path" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="configuration" type="coordinator:CONFIGURATION" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="FLAG"/>
+    <xs:complexType name="CONFIGURATION">
+        <xs:sequence>
+            <xs:element name="property" minOccurs="1" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="name" minOccurs="1" maxOccurs="1" type="xs:string"/>
+                        <xs:element name="value" minOccurs="1" maxOccurs="1" type="xs:string"/>
+                        <xs:element name="description" minOccurs="0" maxOccurs="1" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+</xs:schema>

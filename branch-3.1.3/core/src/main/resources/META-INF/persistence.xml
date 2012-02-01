@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+  
+       http://www.apache.org/licenses/LICENSE-2.0
+  
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<persistence xmlns="http://java.sun.com/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             version="1.0">
+
+    <persistence-unit name="oozie-hsqldb" transaction-type="RESOURCE_LOCAL">
+        <provider>org.apache.openjpa.persistence.PersistenceProviderImpl</provider>
+
+        <mapping-file>META-INF/oozie-hsqldb-orm.xml</mapping-file> <!--CUSTOM-->
+
+        <class>org.apache.oozie.WorkflowActionBean</class>
+        <class>org.apache.oozie.WorkflowJobBean</class>
+        <class>org.apache.oozie.CoordinatorJobBean</class>
+        <class>org.apache.oozie.CoordinatorActionBean</class>
+        <class>org.apache.oozie.SLAEventBean</class>
+        <class>org.apache.oozie.BundleJobBean</class>
+		<class>org.apache.oozie.BundleActionBean</class>
+		<class>org.apache.oozie.client.rest.JsonWorkflowJob</class>
+        <class>org.apache.oozie.client.rest.JsonWorkflowAction</class>
+        <class>org.apache.oozie.client.rest.JsonCoordinatorJob</class>
+        <class>org.apache.oozie.client.rest.JsonCoordinatorAction</class>
+        <class>org.apache.oozie.client.rest.JsonSLAEvent</class>
+        <class>org.apache.oozie.client.rest.JsonBundleJob</class>
+        <class>org.apache.oozie.util.db.ValidateConnectionBean</class>
+
+        <properties>
+            <property name="openjpa.ConnectionDriverName" value="org.apache.oozie.util.db.InstrumentedBasicDataSource"/>
+
+            <property name="openjpa.ConnectionProperties" value="**INVALID**"/> <!--Set by StoreService at init time -->
+
+            <property name="openjpa.MetaDataFactory"
+                      value="jpa(Types=org.apache.oozie.WorkflowActionBean;
+                             org.apache.oozie.WorkflowJobBean;
+                             org.apache.oozie.CoordinatorJobBean;
+                             org.apache.oozie.CoordinatorActionBean;
+                             org.apache.oozie.SLAEventBean;
+                             org.apache.oozie.BundleJobBean;
+                             org.apache.oozie.BundleActionBean;
+                             org.apache.oozie.client.rest.JsonSLAEvent;
+                             org.apache.oozie.client.rest.JsonWorkflowJob;
+                             org.apache.oozie.client.rest.JsonWorkflowAction;
+                             org.apache.oozie.client.rest.JsonCoordinatorJob;
+                             org.apache.oozie.client.rest.JsonCoordinatorAction;
+                             org.apache.oozie.client.rest.JsonBundleJob;
+                             org.apache.oozie.util.db.ValidateConnectionBean)"></property>
+
+            <property name="openjpa.DetachState" value="fetch-groups(DetachedStateField=true)"/>
+            <property name="openjpa.LockManager" value="pessimistic"/>
+            <property name="openjpa.ReadLockLevel" value="read"/>
+            <property name="openjpa.WriteLockLevel" value="write"/>
+            <property name="openjpa.jdbc.TransactionIsolation" value="read-committed"/> <!--CUSTOM-->
+            <property name="openjpa.jdbc.DBDictionary" value="UseGetBytesForBlobs=true"/>
+            <property name="openjpa.jdbc.DBDictionary" value="UseSetBytesForBlobs=true"/>
+            <property name="openjpa.jdbc.DBDictionary" value="BlobBufferSize=500000"/>
+            <property name="openjpa.jdbc.DBDictionary" value="batchLimit=50"/>
+            <property name="openjpa.RuntimeUnenhancedClasses" value="supported"/>
+            <property name="openjpa.Log" value="log4j"/>
+        </properties>
+    </persistence-unit>
+
+    <persistence-unit name="oozie-mysql" transaction-type="RESOURCE_LOCAL">
+        <provider>org.apache.openjpa.persistence.PersistenceProviderImpl</provider>
+
+        <mapping-file>META-INF/oozie-mysql-orm.xml</mapping-file> <!--CUSTOM-->
+
+        <class>org.apache.oozie.WorkflowActionBean</class>
+        <class>org.apache.oozie.WorkflowJobBean</class>
+        <class>org.apache.oozie.CoordinatorJobBean</class>
+        <class>org.apache.oozie.CoordinatorActionBean</class>
+        <class>org.apache.oozie.SLAEventBean</class>
+        <class>org.apache.oozie.BundleJobBean</class>
+		<class>org.apache.oozie.BundleActionBean</class>
+		<class>org.apache.oozie.client.rest.JsonWorkflowJob</class>
+        <class>org.apache.oozie.client.rest.JsonWorkflowAction</class>
+        <class>org.apache.oozie.client.rest.JsonCoordinatorJob</class>
+        <class>org.apache.oozie.client.rest.JsonCoordinatorAction</class>
+        <class>org.apache.oozie.client.rest.JsonSLAEvent</class>
+        <class>org.apache.oozie.client.rest.JsonBundleJob</class>
+        <class>org.apache.oozie.util.db.ValidateConnectionBean</class>
+
+        <properties>
+            <property name="openjpa.ConnectionDriverName" value="org.apache.oozie.util.db.InstrumentedBasicDataSource"/>
+
+            <property name="openjpa.ConnectionProperties" value="**INVALID**"/> <!--Set by StoreService at init time -->
+
+            <property name="openjpa.MetaDataFactory"
+                      value="jpa(Types=org.apache.oozie.WorkflowActionBean;
+                             org.apache.oozie.WorkflowJobBean;
+                             org.apache.oozie.CoordinatorJobBean;
+                             org.apache.oozie.CoordinatorActionBean;
+                             org.apache.oozie.SLAEventBean;
+                             org.apache.oozie.BundleJobBean;
+                             org.apache.oozie.BundleActionBean;
+                             org.apache.oozie.client.rest.JsonSLAEvent;
+                             org.apache.oozie.client.rest.JsonWorkflowJob;
+                             org.apache.oozie.client.rest.JsonWorkflowAction;
+                             org.apache.oozie.client.rest.JsonCoordinatorJob;
+                             org.apache.oozie.client.rest.JsonCoordinatorAction;
+                             org.apache.oozie.client.rest.JsonBundleJob;
+                             org.apache.oozie.util.db.ValidateConnectionBean)"></property>
+                             
+            <property name="openjpa.DetachState" value="fetch-groups(DetachedStateField=true)"/>
+            <property name="openjpa.LockManager" value="pessimistic"/>
+            <property name="openjpa.ReadLockLevel" value="read"/>
+            <property name="openjpa.WriteLockLevel" value="write"/>
+            <property name="openjpa.jdbc.TransactionIsolation" value="repeatable-read"/> <!--CUSTOM-->
+            <property name="openjpa.jdbc.DBDictionary" value="UseGetBytesForBlobs=true"/>
+            <property name="openjpa.jdbc.DBDictionary" value="UseSetBytesForBlobs=true"/>
+            <property name="openjpa.jdbc.DBDictionary" value="BlobBufferSize=500000"/>
+            <property name="openjpa.jdbc.DBDictionary" value="batchLimit=50"/>
+            <property name="openjpa.RuntimeUnenhancedClasses" value="supported"/>
+            <property name="openjpa.Log" value="log4j"/>
+        </properties>
+    </persistence-unit>
+
+    <persistence-unit name="oozie-oracle" transaction-type="RESOURCE_LOCAL">
+        <provider>org.apache.openjpa.persistence.PersistenceProviderImpl</provider>
+
+        <mapping-file>META-INF/oozie-oracle-orm.xml</mapping-file> <!--CUSTOM-->
+
+        <class>org.apache.oozie.WorkflowActionBean</class>
+        <class>org.apache.oozie.WorkflowJobBean</class>
+        <class>org.apache.oozie.CoordinatorJobBean</class>
+        <class>org.apache.oozie.CoordinatorActionBean</class>
+        <class>org.apache.oozie.SLAEventBean</class>
+        <class>org.apache.oozie.BundleJobBean</class>
+		<class>org.apache.oozie.BundleActionBean</class>
+		<class>org.apache.oozie.client.rest.JsonWorkflowJob</class>
+        <class>org.apache.oozie.client.rest.JsonWorkflowAction</class>
+        <class>org.apache.oozie.client.rest.JsonCoordinatorJob</class>
+        <class>org.apache.oozie.client.rest.JsonCoordinatorAction</class>
+        <class>org.apache.oozie.client.rest.JsonSLAEvent</class>
+        <class>org.apache.oozie.client.rest.JsonBundleJob</class>
+        <class>org.apache.oozie.util.db.ValidateConnectionBean</class>
+
+        <properties>
+            <property name="openjpa.ConnectionDriverName" value="org.apache.oozie.util.db.InstrumentedBasicDataSource"/>
+
+            <property name="openjpa.ConnectionProperties" value="**INVALID**"/> <!--Set by StoreService at init time -->
+
+            <property name="openjpa.MetaDataFactory"
+                      value="jpa(Types=org.apache.oozie.WorkflowActionBean;
+                             org.apache.oozie.WorkflowJobBean;
+                             org.apache.oozie.CoordinatorJobBean;
+                             org.apache.oozie.CoordinatorActionBean;
+                             org.apache.oozie.SLAEventBean;
+                             org.apache.oozie.BundleJobBean;
+                             org.apache.oozie.BundleActionBean;
+                             org.apache.oozie.client.rest.JsonSLAEvent;
+                             org.apache.oozie.client.rest.JsonWorkflowJob;
+                             org.apache.oozie.client.rest.JsonWorkflowAction;
+                             org.apache.oozie.client.rest.JsonCoordinatorJob;
+                             org.apache.oozie.client.rest.JsonCoordinatorAction;
+                             org.apache.oozie.client.rest.JsonBundleJob;
+                             org.apache.oozie.util.db.ValidateConnectionBean)"></property>
+
+            <property name="openjpa.DetachState" value="fetch-groups(DetachedStateField=true)"/>
+            <property name="openjpa.LockManager" value="pessimistic"/>
+            <property name="openjpa.ReadLockLevel" value="read"/>
+            <property name="openjpa.WriteLockLevel" value="write"/>
+            <property name="openjpa.jdbc.TransactionIsolation" value="read-committed"/> <!--CUSTOM-->
+            <property name="openjpa.jdbc.DBDictionary" value="UseGetBytesForBlobs=true"/>
+            <property name="openjpa.jdbc.DBDictionary" value="UseSetBytesForBlobs=true"/>
+            <property name="openjpa.jdbc.DBDictionary" value="BlobBufferSize=500000"/>
+            <property name="openjpa.jdbc.DBDictionary" value="batchLimit=50"/>
+            <property name="openjpa.RuntimeUnenhancedClasses" value="supported"/>
+            <property name="openjpa.Log" value="log4j"/>
+        </properties>
+    </persistence-unit>
+
+    <persistence-unit name="oozie-derby" transaction-type="RESOURCE_LOCAL">
+        <provider>org.apache.openjpa.persistence.PersistenceProviderImpl</provider>
+
+        <mapping-file>META-INF/oozie-derby-orm.xml</mapping-file> <!--CUSTOM-->
+
+        <class>org.apache.oozie.WorkflowActionBean</class>
+        <class>org.apache.oozie.WorkflowJobBean</class>
+        <class>org.apache.oozie.CoordinatorJobBean</class>
+        <class>org.apache.oozie.CoordinatorActionBean</class>
+        <class>org.apache.oozie.SLAEventBean</class>
+        <class>org.apache.oozie.BundleJobBean</class>
+		<class>org.apache.oozie.BundleActionBean</class>
+        <class>org.apache.oozie.client.rest.JsonWorkflowJob</class>
+        <class>org.apache.oozie.client.rest.JsonWorkflowAction</class>
+        <class>org.apache.oozie.client.rest.JsonCoordinatorJob</class>
+        <class>org.apache.oozie.client.rest.JsonCoordinatorAction</class>
+        <class>org.apache.oozie.client.rest.JsonSLAEvent</class>
+        <class>org.apache.oozie.client.rest.JsonBundleJob</class>
+        <class>org.apache.oozie.util.db.ValidateConnectionBean</class>
+
+        <properties>
+            <property name="openjpa.ConnectionDriverName" value="org.apache.oozie.util.db.InstrumentedBasicDataSource"/>
+
+            <property name="openjpa.ConnectionProperties" value="**INVALID**"/> <!--Set by StoreService at init time -->
+
+            <property name="openjpa.MetaDataFactory" 
+                      value="jpa(Types=org.apache.oozie.WorkflowActionBean;
+                org.apache.oozie.WorkflowJobBean;
+                org.apache.oozie.CoordinatorJobBean;
+                org.apache.oozie.CoordinatorActionBean;
+                org.apache.oozie.SLAEventBean;
+                org.apache.oozie.BundleJobBean;
+                org.apache.oozie.BundleActionBean;
+                org.apache.oozie.client.rest.JsonSLAEvent;
+                org.apache.oozie.client.rest.JsonWorkflowJob;
+                org.apache.oozie.client.rest.JsonWorkflowAction;
+                org.apache.oozie.client.rest.JsonCoordinatorJob;
+                org.apache.oozie.client.rest.JsonCoordinatorAction;
+                org.apache.oozie.client.rest.JsonBundleJob;
+                org.apache.oozie.util.db.ValidateConnectionBean)"></property>
+
+            <property name="openjpa.DetachState" value="fetch-groups(DetachedStateField=true)"/>
+            <property name="openjpa.LockManager" value="pessimistic"/>
+            <property name="openjpa.ReadLockLevel" value="read"/>
+            <property name="openjpa.WriteLockLevel" value="write"/>
+            <property name="openjpa.jdbc.TransactionIsolation" value="read-committed"/> <!--CUSTOM-->
+            <property name="openjpa.jdbc.DBDictionary" value="UseGetBytesForBlobs=true"/>
+            <property name="openjpa.jdbc.DBDictionary" value="UseSetBytesForBlobs=true"/>
+            <property name="openjpa.jdbc.DBDictionary" value="BlobBufferSize=500000"/>
+            <property name="openjpa.jdbc.DBDictionary" value="batchLimit=50"/>
+            <property name="openjpa.jdbc.DBDictionary" value="TimestampTypeName=TIMESTAMP"/>
+            <property name="openjpa.RuntimeUnenhancedClasses" value="supported"/>
+            <property name="openjpa.Log" value="log4j"/>
+        </properties>
+    </persistence-unit>
+
+    <persistence-unit name="oozie-postgresql" transaction-type="RESOURCE_LOCAL">
+        <provider>org.apache.openjpa.persistence.PersistenceProviderImpl</provider>
+
+        <mapping-file>META-INF/oozie-postgresql-orm.xml</mapping-file> <!--CUSTOM-->
+
+        <class>org.apache.oozie.WorkflowActionBean</class>
+        <class>org.apache.oozie.WorkflowJobBean</class>
+        <class>org.apache.oozie.CoordinatorJobBean</class>
+        <class>org.apache.oozie.CoordinatorActionBean</class>
+        <class>org.apache.oozie.SLAEventBean</class>
+        <class>org.apache.oozie.BundleJobBean</class>
+        <class>org.apache.oozie.BundleActionBean</class>
+        <class>org.apache.oozie.client.rest.JsonWorkflowJob</class>
+        <class>org.apache.oozie.client.rest.JsonWorkflowAction</class>
+        <class>org.apache.oozie.client.rest.JsonCoordinatorJob</class>
+        <class>org.apache.oozie.client.rest.JsonCoordinatorAction</class>
+        <class>org.apache.oozie.client.rest.JsonSLAEvent</class>
+        <class>org.apache.oozie.client.rest.JsonBundleJob</class>
+        <class>org.apache.oozie.util.db.ValidateConnectionBean</class>
+
+        <properties>
+            <property name="openjpa.ConnectionDriverName" value="org.apache.oozie.util.db.InstrumentedBasicDataSource"/>
+
+            <property name="openjpa.ConnectionProperties" value="**INVALID**"/> <!--Set by StoreService at init time -->
+
+            <property name="openjpa.MetaDataFactory"
+                      value="jpa(Types=org.apache.oozie.WorkflowActionBean;
+                org.apache.oozie.WorkflowJobBean;
+                org.apache.oozie.CoordinatorJobBean;
+                org.apache.oozie.CoordinatorActionBean;
+                org.apache.oozie.SLAEventBean;
+                org.apache.oozie.BundleJobBean;
+                org.apache.oozie.BundleActionBean;
+                org.apache.oozie.client.rest.JsonSLAEvent;
+                org.apache.oozie.client.rest.JsonWorkflowJob;
+                org.apache.oozie.client.rest.JsonWorkflowAction;
+                org.apache.oozie.client.rest.JsonCoordinatorJob;
+                org.apache.oozie.client.rest.JsonCoordinatorAction;
+                org.apache.oozie.client.rest.JsonBundleJob;
+                org.apache.oozie.util.db.ValidateConnectionBean)"></property>
+
+            <property name="openjpa.DetachState" value="fetch-groups(DetachedStateField=true)"/>
+            <property name="openjpa.LockManager" value="pessimistic"/>
+            <property name="openjpa.ReadLockLevel" value="read"/>
+            <property name="openjpa.WriteLockLevel" value="write"/>
+            <property name="openjpa.jdbc.TransactionIsolation" value="read-committed"/> <!--CUSTOM-->
+            <property name="openjpa.jdbc.DBDictionary" value="UseGetBytesForBlobs=true"/>
+            <property name="openjpa.jdbc.DBDictionary" value="UseSetBytesForBlobs=true"/>
+            <property name="openjpa.jdbc.DBDictionary" value="BlobBufferSize=500000"/>
+            <property name="openjpa.jdbc.DBDictionary" value="batchLimit=50"/>
+            <property name="openjpa.RuntimeUnenhancedClasses" value="supported"/>
+            <property name="openjpa.Log" value="log4j"/>
+        </properties>
+    </persistence-unit>
+
+</persistence>

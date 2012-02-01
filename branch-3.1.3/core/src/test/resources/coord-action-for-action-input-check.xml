@@ -1,0 +1,56 @@
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+  
+       http://www.apache.org/licenses/LICENSE-2.0
+  
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<coordinator-app xmlns="uri:oozie:coordinator:0.2" name="NAME" frequency="1" timezone="UTC" freq_timeunit="DAY" end_of_duration="NONE" instance-number="1" action-nominal-time="2009-02-01T23:59Z" action-actual-time="2010-10-01T00:00Z">
+  <controls>
+    <timeout>10</timeout>
+    <concurrency>2</concurrency>
+    <execution>LIFO</execution>
+  </controls>
+  <input-events>
+    <data-in name="A" dataset="a">
+      <dataset name="a" frequency="7" initial-instance="2009-01-01T01:00Z" timezone="UTC" freq_timeunit="DAY" end_of_duration="NONE">
+        <uri-template>file://#testDir/${YEAR}/${DAY}</uri-template>
+      </dataset>
+      <uris>file://#testDir/2009/29#file://#testDir/2009/22#file://#testDir/2009/15#file://#testDir/2009/08</uris>
+    </data-in>
+  </input-events>
+  <output-events>
+    <data-out name="LOCAL_A" dataset="local_a">
+      <dataset name="local_a" frequency="7" initial-instance="2009-01-01T01:00Z" timezone="UTC" freq_timeunit="DAY" end_of_duration="NONE">
+        <uri-template>file://#testDir/${YEAR}/${DAY}</uri-template>
+      </dataset>
+      <uris>file://#testDir/2009/29</uris>
+      <start-instance>${coord:current(-3)}</start-instance>
+    </data-out>
+  </output-events>
+  <action>
+    <workflow>
+      <app-path>hdfs:///tmp/workflows/</app-path>
+      <configuration>
+        <property>
+          <name>inputA</name>
+          <value>${coord:dataIn('A')}</value>
+        </property>
+        <property>
+          <name>inputB</name>
+          <value>${coord:dataOut('LOCAL_A')}</value>
+        </property>
+      </configuration>
+    </workflow>
+  </action>
+</coordinator-app>

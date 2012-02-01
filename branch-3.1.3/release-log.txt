@@ -1,0 +1,193 @@
+-- Oozie 3.1.2 release
+
+OOZIE-38 LocalOozie example and improvement
+OOZIE-580 use xml element to handle string escape when configure evaluator
+OOZIE-585 Coordinator job fail to retrieve log with date range and action range.
+OOZIE-553 Ability to view log for coordinator actions that ran in a date range.
+OOZIE-581 Fix unit test failure in TestStatusTransitService.java.
+OOZIE-579 POM file changes for oozie version 3.1.2.
+OOZIE-26 Ability to get the log content from Archived file(.gz format)
+OOZIE-554 New filters for all kinds of jobs
+OOZIE-556 Sort on Web Console for non-string data type
+OOZIE-41 Usability improvement (Additional options) for coordinator job analysis on Web Console
+OOZIE-568 distcp action return error code -1
+OOZIE-573 error message about misconfig in starting time of coordinator and initial-instance of dataset
+OOZIE-571 Oozie validate command doesnt work for schema 0.2
+OOZIE-570 Oozie bundle is running but not materializing new actions
+OOZIE-25 Removing confusing exception trace during wf suspend/kill/resume
+OOZIE-567 Is sub-workflow lib directory not used? Libraries of both parent and child workflows need to be added to classpath
+OOZIE-564 Embedded pig within python fails when run using oozie
+OOZIE-569 Update documentation on external dataset definition
+OOZIE-572 Space missing between id and status for action id >= 1000
+
+-- Oozie 3.1.0 release
+OOZIE-37 Documentation related modifications for "log -action" option
+OOZIE-35 add auto-rerun for error codes JA008 and JA009 in action executor
+OOZIE-21 Fixed bug forked subwf not returning status to the parent wf job
+OOZIE-28 update coordinator name to coord job at loadstate of coord-submit to avoid exception of bundle-status-update
+OOZIE-22 (Apache) Add support PostgreSQL
+OOZIE-10 add user-retry in workflow action
+OOZIE-540 CoordKillXCommand command uniqueness and increase priority
+OOZIE-552 support multiple shared lib path in oozie
+OOZIE-18 Option to view Workflow job details from Coordinator job detail popup
+OOZIE-17 Group column for coordinator jobs in Oozie Web Console
+OOZIE-11  Adding Distcp Action.
+OOZIE-6 Custom filters option and User information column added to Coordinator jobs section of Oozie Web Console
+OOZIE-5 Log retrieval for a Coordinator job with large number or actions
+OOZIE-7 Ability to view the log information corresponding to particular coordinator actions
+OOZIE-541: Update documentation for job-type in WS API
+OOZIE-498: Add an email action to Oozie
+OOZIE-518: merge changes for OOZIE-101 to ActionEndXCommand
+OOZIE-529: workflow kill node message is not resolved and set it to action error message
+OOZIE-528: adjust configuration for DBCP data source
+OOZIE-522: migrate jpa service changes to master branch from integration branch
+OOZIE-520: upgrade openjpa jar to 2.1.0
+OOZIE-527: add coordinator 0.3 schema for app name parametrization
+OOZIE-518: ${wf:lastErrorNode()} is not set when an action ends in error
+OOZIE-516 action errorMessage is not being set
+OOZIE-524 add test case to test uniqueness of CoordActionInputCheckXCommand
+OOZIE-517 escape characters for xml when create dag evaluator
+OOZIE-515 parametrization of 'name' attribute in workflow/coordinator/bundle
+OOZIE-523 add new queue class to iterate next callable when current callable type has reached max concorrency
+OOZIE-525 Upgrade pom version to 3.1.0.
+OOZIE-550 Fs 'move' action made consistent and able to have existing target dir
+OOZIE-417 oozie-stop.sh is oblivious to 'catalina.sh stop' failing
+
+
+-- Oozie 3.0.2 release
+
+OOZIE-118 fix pipes program accept relative path
+OOZIE-120 coordinator resolve config default variable
+OOZIE-119 relative path in coord dataset include should throw exception if given
+OOZIE-115 oozie should check if app path is directory and read the app xml under it
+
+-- Oozie 3.0.1 release
+
+OOZIE-93 coordinator start and end instances doesn't work with float number.
+OOZIE-80 Make coordinator backward compatible
+OOZIE-58 Add date/time formatting function to coord.
+OOZIE-75 fix coord el function actualTime()
+OOZIE-73 increase executionPath of wf_actions to 1k.
+GH-0566 If Java Main exit code !=0, LauncherMapper should the exit code as the error code
+OOZIE-34 LauncherMapper security manager fails when a permission with context is check
+
+-- Oozie 3.0.0 release
+
+GH-0069 Create a coordinator bundle.
+GH-0070 Start a coordinator bundle.
+GH-0071 Pause a coordinator bundle.
+GH-0073 Suspend a coordinator bundle.
+GH-0072 Resume a coordinator bundle.
+GH-0065 Kill a coordinator bundle.
+GH-0074 Variable definition at coordinator bundle level.
+GH-0098 XCommand Code refactoring. 
+GH-0099 JPA command refactor.
+GH-0077 Reprocessing of coordinator jobs.
+GH-0078 Option to rerun from failed node. 
+GH-0075 Provide access to date list.
+GH-0077 Reprocess a complete coordinator bundle.
+GH-0110 Redesign Coordinator Job's status.
+GH-0111 Enforce precondition checking when executing coordinator commands.
+GH-0066 Oozie should not queue the same command more than once.
+GH-0067 Input data check should have a timeout for catch-up mode too.
+GH-0084 Reduce Oozie DB issues related to update SQL commands and excessive logging.
+GH-0079 Oozie command line documentation for Ops.
+GH-0086 Clean up temporary files in the user HDFS directory upon completion.
+GH-0141 Oozie uses excessive memory when doing purging.
+GH-0166 Modify the logic of adding .so and .so.1 files into cache.
+GH-0362 getting the job configuration through oozie command line.
+GH-0361 Throttle coordinator action/workflow creation per coordinator job .
+GH-0480 Support new Pig API to submit pig job
+GH-0461 Mapping the workflow ID to coordinator ID
+GH-0588 Adding Bundle to recovery service.
+OOZIE-23 Update oozie examples with new namespace version for workflow and coordinator.
+
+-- Oozie 2.3.0 release
+
+GH-0236 add support for -Dname=value to oozie CLI and make -config optional
+GH-0108 Add support for Derby as Oozie DB
+GH-0189 make ENV setting flexible to allow Unix standard layout for conf/logs/data/tmp
+GH-0149 create sharelib module with Pig/Streaming JARs
+GH-0119 support for user() EL function in coord apps
+GH-0131 add an embedded tomcat in Oozie distribution
+GH-0026 add support for multiple workflow XMLs in a single directory
+GH-0027 support for a share lib directory in HDFS for workflow action binaries
+GH-0106 support for a system share lib directory in HDFS for workflow action binaries
+GH-0034 update/simplify examples
+GH-0050 Oozie jobs configuration properties with variables should be resolved to concrete values.
+
+-- Oozie 2.2.5 release
+
+GH-0372 Change logs output for missing dependencies
+GH-0332 Adding Credentials Module
+GH-0066 Add Uniqueness functionality to queue
+GH-0141 Oozie uses excessive memory when doing purging
+
+-- Oozie 2.2.3 release
+
+GH-0055 Oozie should not materialize a coordinator job right after its submission if the job will only run in far future
+GH-0046 Add support the coordiator job submitted to run in far future
+
+-- Oozie 2.2.2 release
+
+GH-0040 coordinator rerun doesn't consider empty output-event
+GH-0041 update ojdbc version
+GH-0001 references SVN in bin/mkdistro.sh
+
+-- Oozie 2.2.1 release
+
+GH-0010 POM cleanup, remove unneeded repositories, remove/exclude commons-cli 2.0
+
+-- Oozie 2.2.0 release
+
+- adding Pig version number to pig execution log in launcher log
+- simplify Oozie build
+- oozie documentation is not included in oozie.war and standalone as docs.zip
+- simplify Oozie config/logs loading
+- fixing location of RowExpander.js for web console in index.html
+- jpa configuration refactoring
+- Fix oozie UI
+- Stop checking input directories if unable to find anyone directory
+- Read default timeout from config file.
+- Change update query to only modify required fields.
+- Simplify client utility methods
+- Http Submission of single MR/PIG job without corresponding workflow.xml
+- oozie launcher failed when pig log not found.
+- client API addArchive does not link file to a directory
+- oozie.libpath needs to start with hdfs://namenode when submit pig job to certain versions of hadoop clusters
+
+-- Oozie 2.1.0 release
+
+- compositecommand uses hardcoded type, this limits concurrency by command type
+- testcases time doubled, lot of exceptions on command queue on shutdown
+- Set default coordinator action timeout to 2 hours.
+- build/assembly changes
+- oozie mistakes namenode as the jobtracker at white list validation
+- single distribution should work both with Hadoop 20 and 20S
+- use comma as separator for datasets
+- Oozie should not package the Hadoop JARs
+- Whitelist of valid Jobtracker & Namenode URIs
+- blank whitelist should allow any namenode/jobtracker
+- EL function in oozie coordinator to check data dependencies on the closest future data date
+- EL function to generate a UTC date based on another UTC date
+- instrumentation for commands in the queue.
+- Queue Refactor
+- instrumentation for commands in the queue
+- Coordinator action rerun
+- Change end_time and concurrency for a running coordinator job
+- Change pause_time for a running coordinator job
+- Annotate error message with jobID
+- Set pending in SuspendCommand and reset pending in ResumeCommand
+- Set time in super class bean
+- Remove unnecessary command and service from the code.
+- CoordRecoveryCommand update the job status unconditionally
+- Fix admin -version
+- Need to revisit prioritization of coordinator commands
+- coordinator job takes long time (>10mins) to create new actions when released from being paused
+- Set NN and JT Principal in JavaActionExecutor
+- Adding support for hadoop 0.20.200
+- Update document with two new EL functions in 2.1
+
+-- Oozie 2.0.2 release
+
+-- Oozie coordinator

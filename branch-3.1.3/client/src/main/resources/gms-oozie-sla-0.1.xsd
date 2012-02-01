@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+  
+       http://www.apache.org/licenses/LICENSE-2.0
+  
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:sla="uri:oozie:sla:0.1" elementFormDefault="qualified"
+           targetNamespace="uri:oozie:sla:0.1">
+
+    <xs:element name="info" type="sla:SLA-INFO"/>
+
+    <xs:complexType name="SLA-INFO">
+        <xs:sequence>
+            <xs:element name="app-name" type="xs:string" minOccurs="1"
+                        maxOccurs="1"/>
+
+            <xs:element name="nominal-time" type="xs:string"
+                        minOccurs="1" maxOccurs="1"/>
+            <xs:element name="should-start" type="xs:string"
+                        minOccurs="1" maxOccurs="1"/>
+            <xs:element name="should-end" type="xs:string" minOccurs="1"
+                        maxOccurs="1"/>
+
+            <xs:element name="parent-client-id" type="xs:string"
+                        minOccurs="0" maxOccurs="1"/>
+            <xs:element name="parent-sla-id" type="xs:string"
+                        minOccurs="0" maxOccurs="1"/>
+
+            <xs:element name="notification-msg" type="xs:string"
+                        minOccurs="0" maxOccurs="1"/>
+            <xs:element name="alert-contact" type="xs:string"
+                        minOccurs="1" maxOccurs="1"/>
+            <xs:element name="dev-contact" type="xs:string" minOccurs="1"
+                        maxOccurs="1"/>
+            <xs:element name="qa-contact" type="xs:string" minOccurs="1"
+                        maxOccurs="1"/>
+            <xs:element name="se-contact" type="xs:string" minOccurs="1"
+                        maxOccurs="1"/>
+            <xs:element name="alert-frequency" type="sla:alert-frequencyType"
+                        minOccurs="0" maxOccurs="1"/>
+            <xs:element name="alert-percentage" type="sla:alert-percentageType"
+                        minOccurs="0" maxOccurs="1"/>
+
+            <xs:element name="upstream-apps" type="xs:string"
+                        minOccurs="0" maxOccurs="1"/>
+
+        </xs:sequence>
+    </xs:complexType>
+    <xs:simpleType name="alert-percentageType">
+        <xs:restriction base="xs:integer">
+            <xs:minInclusive value="0"/>
+            <xs:maxInclusive value="100"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="alert-frequencyType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="NONE"></xs:enumeration>
+            <xs:enumeration value="LAST_HOUR"></xs:enumeration>
+            <xs:enumeration value="LAST_DAY"></xs:enumeration>
+            <xs:enumeration value="LAST_MONTH"></xs:enumeration>
+        </xs:restriction>
+    </xs:simpleType>
+
+</xs:schema>

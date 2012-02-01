@@ -1,0 +1,63 @@
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+  
+       http://www.apache.org/licenses/LICENSE-2.0
+  
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<coordinator-app xmlns="uri:oozie:coordinator:0.2" name="COORD-TEST" frequency="1" timezone="UTC" freq_timeunit="DAY" end_of_duration="NONE" instance-number="2" action-nominal-time="2009-12-16T01:00Z" action-actual-time="2010-10-01T00:00Z">
+  <controls>
+    <timeout>10</timeout>
+    <concurrency>1</concurrency>
+    <execution>FIFO</execution>
+  </controls>
+  <input-events>
+    <data-in name="din" dataset="din">
+      <uris>#inputDir</uris>
+      <dataset name="din" frequency="1" initial-instance="2009-12-01T01:00Z" timezone="UTC" freq_timeunit="DAY" end_of_duration="NONE">
+        <uri-template>#inputTemplate</uri-template>
+      </dataset>
+    </data-in>
+  </input-events>
+  <output-events>
+    <data-out name="dout" dataset="dout">
+      <uris>#outputDir</uris>
+      <dataset name="dout" frequency="1380" initial-instance="2009-12-01T01:00Z" timezone="UTC" freq_timeunit="MINUTE" end_of_duration="NONE">
+        <uri-template>#outputTemplate</uri-template>
+      </dataset>
+    </data-out>
+  </output-events>
+  <action>
+    <workflow>
+      <app-path>${wfAppPath}</app-path>
+      <configuration>
+        <property>
+          <name>jobTracker</name>
+          <value>localhost:9001</value>
+        </property>
+        <property>
+          <name>nameNode</name>
+          <value>hdfs://localhost:9000</value>
+        </property>
+        <property>
+          <name>inputDir</name>
+          <value>#inputDir</value>
+        </property>
+        <property>
+          <name>outputDir</name>
+          <value>#outputDir</value>
+        </property>
+      </configuration>
+    </workflow>
+  </action>
+</coordinator-app>

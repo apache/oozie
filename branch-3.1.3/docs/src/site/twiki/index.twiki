@@ -1,0 +1,87 @@
+<noautolink>
+
+---+!! Oozie, Yahoo! Workflow Engine for Hadoop
+
+Oozie v3 is a server based _Bundle Engine_ that provides a higher-level oozie abstraction that will batch a set of coordinator applications. The user will be able to start/stop/suspend/resume/rerun a set coordinator jobs in the bundle level resulting a better and easy operational control.
+
+Oozie v2 is a server based _Coordinator Engine_ specialized in running workflows based on time and data triggers.
+It can continuously run workflows based on time (e.g. run it every hour), and data availability 
+(e.g. wait for my input data to exist before running my workflow). 
+
+Oozie v1 is a server based _Workflow Engine_ specialized in running workflow jobs with actions that 
+execute Hadoop Map/Reduce and Pig jobs.
+
+%TOC%
+
+---++ Distribution Contents
+
+Oozie distribution consists of a single 'tar.gz' file containing:
+
+   * Readme, license, notice & [[./release-log.txt][Release log]] files.
+   * Oozie server: =oozie-server= directory.
+   * Scripts: =bin/= directory, client and server scripts.
+   * Binaries: =lib/= directory, client JAR files.
+   * Configuration: =conf/= server configuration directory.
+   * Archives:
+      * =oozie-client-*.tar.gz=: Client tools.
+      * =oozie.war=: Oozie WAR file.
+      * =docs.zip=: Documentation.
+      * =oozie-examples-*.tar.gz=: Examples.
+      * =oozie-sharelib-*.tar.gz=: Share libraries (with Streaming, Pig JARs).
+
+---++ Quick Start
+
+Enough reading already? Follow the steps in [[DG_QuickStart][Oozie Quick Start]] to get Oozie up and running.
+
+---++ Developer Documentation
+
+   * [[DG_Overview][Overview]]
+   * [[DG_QuickStart][Oozie Quick Start]]
+   * [[DG_Examples][Running the Examples]]
+   * [[WorkflowFunctionalSpec][Workflow Functional Specification]]
+   * [[CoordinatorFunctionalSpec][Coordinator Functional Specification]]
+   * [[BundleFunctionalSpec][Bundle Functional Specification]]
+   * [[http://java.sun.com/j2ee/1.4/docs/tutorial/doc/JSPIntro7.html#wp77280][EL Expression Language Quick Reference]]
+   * [[DG_CommandLineTool][Command Line Tool]]
+   * [[DG_WorkflowReRun][Workflow Re-runs Explained]]
+   * [[DG_UsingHadoopKerberos][Using a Hadoop cluster with Kerberos Authentication]]
+   * [[DG_EmailActionExtension][Email Action]]
+
+   * [[DG_CustomActionExecutor][Writing a Custom Action Executor]]
+   * [[./client/apidocs/index.html][Oozie Client Javadocs]]
+   * [[./core/apidocs/index.html][Oozie Core Javadocs]]
+   * [[WebServicesAPI][Oozie Web Services API]]
+
+---++ Administrator Documentation
+
+   * [[AG_Install][Oozie Install]]
+   * [[AG_Monitoring][Oozie Monitoring]]
+   * [[DG_CommandLineTool][Command Line Tool]]
+
+#LicenseInfo
+---++ Licensing Information
+
+Oozie is distributed under [[http://www.apache.org/licenses/LICENSE-2.0][Apache License 2.0]].
+
+For details on the license of the dependent components, refer to the
+[[./dependencies.html#Licenses][Dependencies Report, Licenses section]].
+
+Oozie bundles an embedded Apache Tomcat 6.x.
+
+Some of the components in the dependencies report don't mention their license in the published POM. They are:
+
+   * JDOM: [[http://www.jdom.org/docs/faq.html#a0030][JDOM License]] (Apache style).
+   * Oro: [[http://www.apache.org/licenses/LICENSE-2.0][Apache License 2.0]].
+
+Oozie uses a modified version of the Apache Doxia core and twiki plugins to generate Oozie documentation.
+
+---++ Engineering Documentation
+
+   * [[ENG_Building][Building Oozie]]
+   * [[./dependencies.html][Dependencies Report]]
+
+---++ MiniOozie Documentation
+
+   * [[ENG_MiniOozie][Testing User Oozie Applications Using MiniOozie]]
+
+</noautolink>
