@@ -1,3 +1,6 @@
+-- Oozie 3.1.3 release
+No new feature was added. Created to sync up with the pre-Apache release.
+
 -- Oozie 3.1.2 release
 
 OOZIE-38 LocalOozie example and improvement
