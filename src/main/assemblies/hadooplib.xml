@@ -16,7 +16,7 @@
   limitations under the License.
 -->
 <assembly>
-    <id>sharelib</id>
+    <id>hadooplib</id>
     <formats>
         <format>dir</format>
     </formats>
@@ -25,10 +25,11 @@
     <dependencySets>
         <dependencySet>
             <useProjectArtifact>false</useProjectArtifact>
-            <outputDirectory>/share/lib/${sharelib.action.postfix}</outputDirectory>
-            <unpack>false</unpack>
-            <useTransitiveDependencies>${sharelib.use.transitive.dependencies}</useTransitiveDependencies>
+            <useTransitiveDependencies>true</useTransitiveDependencies>
             <useTransitiveFiltering>true</useTransitiveFiltering>
+            <unpack>false</unpack>
+            <scope>compile</scope>
+            <outputDirectory>hadooplib-${project.version}</outputDirectory>
         </dependencySet>
     </dependencySets>
 

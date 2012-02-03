@@ -33,6 +33,7 @@
     <packaging>jar</packaging>
 
     <properties>
+        <sharelib.use.transitive.dependencies>false</sharelib.use.transitive.dependencies>
         <sharelib.action.postfix>mapreduce-streaming</sharelib.action.postfix>
     </properties>
 
@@ -41,12 +42,6 @@
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-streaming</artifactId>
             <scope>compile</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.hadoop</groupId>
-                    <artifactId>hadoop-core</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
     </dependencies>
 
@@ -58,13 +53,6 @@
             </resource>
         </resources>
         <plugins>
-            <!--<plugin>-->
-                <!--<groupId>org.apache.maven.plugins</groupId>-->
-                <!--<artifactId>maven-deploy-plugin</artifactId>-->
-                <!--<configuration>-->
-                    <!--<skip>true</skip>-->
-                <!--</configuration>-->
-            <!--</plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>

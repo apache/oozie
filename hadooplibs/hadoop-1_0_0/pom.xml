@@ -23,18 +23,20 @@
         <groupId>org.apache.oozie</groupId>
         <artifactId>oozie-main</artifactId>
         <version>3.2.0-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
     <groupId>org.apache.oozie</groupId>
-    <artifactId>oozie-webapp</artifactId>
-    <version>3.2.0-SNAPSHOT</version>
-    <description>Apache Oozie WebApp</description>
-    <name>Apache Oozie WebApp</name>
-    <packaging>war</packaging>
+    <artifactId>oozie-hadoop</artifactId>
+    <version>1.0.0</version>
+    <description>Apache Oozie Hadoop ${project.version}</description>
+    <name>Apache Oozie Hadoop ${project.version}</name>
+    <packaging>jar</packaging>
 
     <dependencies>
         <dependency>
-            <groupId>org.apache.oozie</groupId>
-            <artifactId>oozie-core</artifactId>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-core</artifactId>
+            <version>${project.version}</version>
             <scope>compile</scope>
             <exclusions>
                 <exclusion>
@@ -62,10 +64,6 @@
                     <artifactId>jsp-api</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>commons-logging</groupId>
-                    <artifactId>commons-logging-api</artifactId>
-                </exclusion>
-                <exclusion>
                     <groupId>jetty</groupId>
                     <artifactId>org.mortbay.jetty</artifactId>
                 </exclusion>
@@ -79,19 +77,29 @@
                 </exclusion>
                 <exclusion>
                     <groupId>org.mortbay.jetty</groupId>
+                    <artifactId>jsp-2.1</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.mortbay.jetty</groupId>
                     <artifactId>jsp-api-2.1</artifactId>
                 </exclusion>
                 <exclusion>
                     <groupId>org.mortbay.jetty</groupId>
                     <artifactId>servlet-api-2.5</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>net.sf.kosmosfs</groupId>
+                    <artifactId>kfs</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>net.java.dev.jets3t</groupId>
+                    <artifactId>jets3t</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.eclipse.jdt</groupId>
+                    <artifactId>core</artifactId>
+                </exclusion>
             </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.oozie</groupId>
-            <artifactId>oozie-docs</artifactId>
-            <type>war</type>
-            <scope>compile</scope>
         </dependency>
     </dependencies>
 
@@ -99,74 +107,17 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-deploy-plugin</artifactId>
-                <configuration>
-                    <skip>true</skip>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <configuration>
                     <descriptors>
-                        <descriptor>../src/main/assemblies/empty.xml</descriptor>
+                        <descriptor>../../src/main/assemblies/hadooplib.xml</descriptor>
                     </descriptors>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.rat</groupId>
-                <artifactId>apache-rat-plugin</artifactId>
-                <configuration>
-                    <excludes>
-                        <exclude>src/main/resources/.gitignore</exclude>
-                    </excludes>
+                    <finalName>hadooplibs</finalName>
+                    <appendAssemblyId>false</appendAssemblyId>
                 </configuration>
             </plugin>
         </plugins>
     </build>
-
-    <profiles>
-        <profile>
-            <id>generateDocs</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-                <property>
-                    <name>generateDocs</name>
-                </property>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-project-info-reports-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <configuration>
-                                    <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
-                                </configuration>
-                                <goals>
-                                    <goal>dependencies</goal>
-                                </goals>
-                                <phase>prepare-package</phase>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-war-plugin</artifactId>
-                        <configuration>
-                            <webResources>
-                                <resource>
-                                    <directory>target/site</directory>
-                                    <targetPath>docs</targetPath>
-                                </resource>
-                            </webResources>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 
 </project>
 

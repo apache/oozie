@@ -34,6 +34,8 @@ Default value =10=
 
 *OOZIE_HTTP_PORT* : The port Oozie server runs. Default value =11000=.
 
+*OOZIE_ADMIN_PORT* : The admin port Oozie server runs. Default value =11001=.
+
 *OOZIE_HTTP_HOSTNAME* : The host name Oozie server runs on. Default value is the output of the
 command =hostname -f=.
 

@@ -660,7 +660,7 @@ public abstract class XTestCase extends TestCase {
             conf.set("dfs.block.access.token.enable", "false");
             conf.set("dfs.permissions", "true");
             conf.set("hadoop.security.authentication", "simple");
-            conf.set("hadoop.proxyuser." + oozieUser + ".hosts", "localhost");
+            conf.set("hadoop.proxyuser." + oozieUser + ".hosts", "*,127.0.0.1");
             conf.set("hadoop.proxyuser." + oozieUser + ".groups", getTestGroup());
             conf.set("mapred.tasktracker.map.tasks.maximum", "4");
             conf.set("mapred.tasktracker.reduce.tasks.maximum", "4");

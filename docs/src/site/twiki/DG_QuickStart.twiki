@@ -13,8 +13,7 @@ For detailed install and configuration instructions refer to [[AG_Install][Oozie
    * Unix (tested in Linux and Mac OS X)
    * Java 1.6+
    * Hadoop
-      * [[http://hadoop.apache.org][Apache Hadoop]] (tested with 0.20.2)
-      * [[http://developer.yahoo.com/hadoop][Yahoo! Hadoop]] (tested with 0.20.104.2)
+      * [[http://hadoop.apache.org][Apache Hadoop]] (tested with 1.0.0 & 0.23.1)
    * ExtJS library (optional, to enable Oozie webconsole)
       * [[http://extjs.com/deploy/ext-2.2.zip][ExtJS 2.2]]
 
@@ -36,19 +35,26 @@ Expand the Oozie distribution =tar.gz=.
 
 Expand the Hadoop distribution =tar.gz= (as the Oozie Unix user).
 
-Oozie is bundled without Hadoop JAR files and without the ExtJS library.
+Expand the Oozie hadooplibs =tar.gz= in the same location Oozie distribution =tar.gz= was expanded. A
+*hadooplibs/* directory will be created containing the Hadoop JARs for the versions of Hadoop that
+the Oozie distribution supports.
 
-   * The Hadoop JARs are required to run Oozie
-   * The ExtJS library is optional (only required for the Oozie web-console to work)
+The ExtJS library is optional (only required for the Oozie web-console to work)
 
 *IMPORTANT:* all Oozie server scripts (=oozie-setup.sh=, =oozie-start.sh=, =oozie-run.sh=
 and =oozie-stop.sh=) run only under the Unix user that owns the Oozie installation directory,
 if necessary use =sudo -u OOZIE_USER= when invoking the scripts.
 
-Use the =oozie-setup.sh= script to add the Hadoop JARs and the ExtJS library to Oozie.
+Create a *libext/* directory in the directory where Oozie was expanded.
+
+If using a version of Hadoop bundled in Oozie *hadooplibs/*, copy the corresponding Hadoop JARs from *hadooplibs/* to the *libext/* directory. If using a different version of Hadoop, copy the required Hadoop JARs from such version in the *libext/* directory.
+
+If using the ExtJS library copy the ZIP file to the *libext/* directory.
+
+Run the =oozie-setup.sh= script to configure Oozie with all the components added to the *libext/* directory.
 
 <verbatim>
-$ bin/oozie-setup.sh -hadoop 0.20.200 ${HADOOP_HOME} -extjs /tmp/ext-2.2.zip
+$ bin/oozie-setup.sh
 </verbatim>
 
 To start Oozie as a daemon process run:

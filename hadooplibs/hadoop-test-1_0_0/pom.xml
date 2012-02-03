@@ -23,57 +23,46 @@
         <groupId>org.apache.oozie</groupId>
         <artifactId>oozie-main</artifactId>
         <version>3.2.0-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
     <groupId>org.apache.oozie</groupId>
-    <artifactId>oozie-sharelib</artifactId>
-    <version>3.2.0-SNAPSHOT</version>
-    <description>Apache Oozie Share Lib</description>
-    <name>Apache Oozie Share Lib</name>
-    <packaging>pom</packaging>
+    <artifactId>oozie-hadoop-test</artifactId>
+    <version>1.0.0</version>
+    <description>Apache Oozie Hadoop ${project.version} Test</description>
+    <name>Apache Oozie Hadoop ${project.version} Test</name>
+    <packaging>jar</packaging>
 
-    <modules>
-        <module>streaming</module>
-        <module>pig</module>
-        <module>hive</module>
-        <module>sqoop</module>
-        <module>oozie</module>
-    </modules>
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-core</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-test</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-server</artifactId>
+            <version>1.0</version>
+            <scope>compile</scope>
+        </dependency>
+
+    </dependencies>
 
     <build>
-        <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-                <filtering>true</filtering>
-            </resource>
-        </resources>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>resources</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <configuration>
-                    <appendAssemblyId>false</appendAssemblyId>
                     <descriptors>
-                        <descriptor>../src/main/assemblies/sharelib.xml</descriptor>
+                        <descriptor>../../src/main/assemblies/empty.xml</descriptor>
                     </descriptors>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-deploy-plugin</artifactId>
-                <configuration>
-                    <skip>true</skip>
                 </configuration>
             </plugin>
         </plugins>
