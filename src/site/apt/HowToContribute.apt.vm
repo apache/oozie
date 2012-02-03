@@ -58,7 +58,7 @@ Apache Oozie(TM) How to Contribute
 
   Work on the issue in your local development environment and when you think it is ready for review
   or integration submit the patch for a code review request using
-  {{{reviews.apache.org}Apache Code Review System}}.
+  {{{http://reviews.apache.org}Apache Code Review System}}.
 
   Refine the patch based on the review discussions.
 
@@ -69,23 +69,23 @@ Apache Oozie(TM) How to Contribute
     request.
 
     * The Code Review system is shared with other Apache projects, you must enter <<oozie>> as the
-    group for the review request.
+	    group for the review request.
 
-    * The Code Review system only accept patches generated with <<svn diff>> syntax
-    (<<git diff --no-prefix>> syntax is not accepted. If you work using Apache Git repository,
-    you'll have to apply the patch to an SVN checkout and then generate the SVN patch from there).
+	    * The Code Review system only accept patches generated with <<svn diff>> syntax
+	    (<<git diff --no-prefix>> syntax is not accepted. If you work using Apache Git repository,
+	    you'll have to apply the patch to an SVN checkout and then generate the SVN patch from there).
 
-  Once your patch has been +1ed by Oozie committers (according to the project bylaws) the patch
-  can be committed to the Version Control system. If you are a committer, you can commit it
-  yourself. If you are not a committer, one of the committers that +1ed the patch will commit it
-  on your behalf.
+	  Once your patch has been +1ed by Oozie committers (according to the project bylaws) the patch
+	  can be committed to the Version Control system. If you are a committer, you can commit it
+	  yourself. If you are not a committer, one of the committers that +1ed the patch will commit it
+	  on your behalf.
 
-  The corresponding issue in the Issue Tracking and in the Code Review systems must be closed as
-  'fixed'by the committer once the patch has been committed to all relevant branches.
+	  The corresponding issue in the Issue Tracking and in the Code Review systems must be closed as
+	  'fixed'by the committer once the patch has been committed to all relevant branches.
 
-* Patches General Guidelines
+	* Patches General Guidelines
 
-** Coding Conventions
+	** Coding Conventions
 
   Oozie uses {{{http://java.sun.com/docs/codeconv/CodeConventions.pdf}Java standard coding conventions}}
   with the following changes:
