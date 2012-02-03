@@ -1513,5 +1513,13 @@
             Referring to the same keytab file Oozie uses for its Kerberos credentials for Hadoop.
         </description>
     </property>
+	<!-- Coordinator Actions default length -->
+	<property>
+		<name>oozie.coord.actions.default.length</name>
+		<value>1000</value>
+		<description>
+			Default number of coordinator actions to be retrieved by the info command
+		</description>
+	</property>
 
 </configuration>

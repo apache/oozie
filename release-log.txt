@@ -1,6 +1,7 @@
 -- Oozie 3.2.0 release
 
-OOZIE-668 Adding license header into minitest/pom.xml.
+OOZIE-673: Offset and len option not working as expected.(Virag)
+OOZIE-668 Adding license header into minitest/pom.xml.(Mohammad)
 OOZIE-665 Shell action doesn't capture multiple key-value pairs.(Mohammad)
 OOZIE-666 Oozie's Tomcat admin port is hardcoded. (tucu)
 OOZIE-662 Unit test failing: TestHostnameFilter. (tucu)

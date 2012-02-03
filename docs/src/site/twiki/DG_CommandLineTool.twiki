@@ -360,8 +360,9 @@ hadoop1                 map-reduce  OK         end         job_200904281535_0254
 </verbatim>
 
 The =info= option can display information about a workflow job or coordinator job or coordinator action.
+The =info= option for a Coordinator job will retrieve the Coordinator actions ordered by nominal time. However, the =info= command may timeout if the number of Coordinator actions are very high. In that case, =info= should be used with =offset= and =len= option.
 
-The =offset= and =len= option specified the offset and number of actions to display, if checking a workflow job or coordinator job.
+The =offset= and =len= option specifies the offset and number of actions to display, if checking a workflow job or coordinator job.
 
 The =localtime= option displays times in local time, if not specified times are displayed in GMT.
 

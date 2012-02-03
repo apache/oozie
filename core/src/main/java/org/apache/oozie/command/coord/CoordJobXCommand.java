@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,6 +26,7 @@ import org.apache.oozie.XException;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.executor.jpa.CoordActionsSubsetGetForJobJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobGetActionsSubsetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
@@ -118,7 +119,7 @@ public class CoordJobXCommand extends CoordinatorXCommand<CoordinatorJobBean> {
                 coordJob = jpaService.execute(new CoordJobGetJPAExecutor(id));
                 if (getActionInfo) {
                     List<CoordinatorActionBean> coordActions = jpaService
-                            .execute(new CoordActionsSubsetGetForJobJPAExecutor(id, start, len));
+                            .execute(new CoordJobGetActionsSubsetJPAExecutor(id, start, len));
                     coordJob.setActions(coordActions);
                 }
             }

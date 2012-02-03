@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -62,6 +62,27 @@ public class TestCoordJobGetActionsSubsetJPAExecutor extends XDataTestCase {
         List<CoordinatorActionBean> actions = jpaService.execute(actionGetCmd);
         assertEquals(actions.size(), 1);
         assertEquals(actions.get(0).getId(), actionId);
+    }
+
+    // Check the ordering of actions by nominal time
+    public void testCoordActionOrderBy() throws Exception {
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
+        // Add Coordinator action with nominal time: 2009-12-15T01:00Z
+        CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 0);
+        // Add Coordinator action with nominal time: 2009-02-01T23:59Z
+        CoordinatorActionBean action1 = addRecordToCoordActionTable(job.getId(), 2, CoordinatorAction.Status.WAITING, "coord-action-for-action-input-check.xml", 0);
+        // test for the expected action number
+        _testGetActionsSubsetOrderBy(job.getId(), 2, 1, 2);
+    }
+
+   private void _testGetActionsSubsetOrderBy(String jobId, int actionNum, int start, int len) throws Exception {
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+        CoordJobGetActionsSubsetJPAExecutor actionGetCmd = new CoordJobGetActionsSubsetJPAExecutor(jobId, start, len);
+        List<CoordinatorActionBean> actions = jpaService.execute(actionGetCmd);
+        assertEquals(actions.size(), 2);
+        // As actions are sorted by nominal time, the first action should be with action number 2
+        assertEquals(actions.get(0).getActionNumber(), actionNum);
     }
 
 }

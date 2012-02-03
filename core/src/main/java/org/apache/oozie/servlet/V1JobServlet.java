@@ -53,6 +53,7 @@ import org.json.simple.JSONObject;
 public class V1JobServlet extends BaseJobServlet {
 
     private static final String INSTRUMENTATION_NAME = "v1job";
+    public static final String COORD_ACTIONS_DEFAULT_LENGTH = "oozie.coord.actions.default.length";
 
     public V1JobServlet() {
         super(INSTRUMENTATION_NAME);
@@ -716,9 +717,11 @@ public class V1JobServlet extends BaseJobServlet {
         String lenStr = request.getParameter(RestConstants.LEN_PARAM);
         int start = (startStr != null) ? Integer.parseInt(startStr) : 1;
         start = (start < 1) ? 1 : start;
+        // Get default number of coordinator actions to be retrieved
+        int defaultLen = Services.get().getConf().getInt(COORD_ACTIONS_DEFAULT_LENGTH, 1000);
         int len = (lenStr != null) ? Integer.parseInt(lenStr) : 0;
-        len = (len < 1) ? Integer.MAX_VALUE : len;
-        try {
+        len = (len < 1) ? defaultLen : len;
+    try {
             JsonCoordinatorJob coordJob = coordEngine.getCoordJob(jobId, start, len);
             jobBean = coordJob;
         }
