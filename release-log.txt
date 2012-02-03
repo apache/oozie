@@ -1,4 +1,5 @@
 -- Oozie 3.1.3 release
+OOZIE-678 Update NOTICE.txt to reflect the workcount binaries into oozie src(Mohammad)
 No new feature was added. Created to sync up with the pre-Apache release.
 
 -- Oozie 3.1.2 release
