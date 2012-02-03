@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-678 Update NOTICE.txt to reflect the workcount binaries into oozie src(Mohammad)
 OOZIE-667 Change the way Oozie brings in Hadoop JARs into the build (tucu)
 OOZIE-673: Offset and len option not working as expected.(Virag via Mohammad)
 OOZIE-668 Adding license header into minitest/pom.xml.(Mohammad)
