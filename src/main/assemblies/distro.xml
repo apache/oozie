@@ -109,7 +109,7 @@
         <!-- Oozie Documentation -->
         <file>
             <source>${basedir}/../docs/target/oozie-docs-${project.version}-docs.zip</source>
-            <outputDirectory>//</outputDirectory>
+            <outputDirectory>/</outputDirectory>
             <destName>docs.zip</destName>
         </file>
         <!-- Oozie Client TAR.GZ  -->
