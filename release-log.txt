@@ -45,6 +45,7 @@ OOZIE-600 Bump-up the version to 3.2.0-SNAPSHOT. (mohammad via angeloh)
 
 -- Oozie 3.1.2 release
 
+OOZIE-680 oozie's assembly creates an extra level of empty subdirectory for docs. (rvs via tucu)
 OOZIE-589 Make the command requeue interval configurable.
 OOZIE-38 LocalOozie example and improvement
 OOZIE-580 use xml element to handle string escape when configure evaluator
