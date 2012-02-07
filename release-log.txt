@@ -43,10 +43,13 @@ OOZIE-590 Log Retrieval from multiple .gz archive files. (kiran via angeloh)
 OOZIE-587 Out of memory issues due to current query design. (virag via angeloh)
 OOZIE-600 Bump-up the version to 3.2.0-SNAPSHOT. (mohammad via angeloh)
 
+-- Oozie 3.1.3 release
+
+OOZIE-681 Update the contents of readme.txt.(Mohammad)
+OOZIE-680 oozie's assembly creates an extra level of empty subdirectory for docs. (rvs via tucu)
+
 -- Oozie 3.1.2 release
 
-OOZIE-680 oozie's assembly creates an extra level of empty subdirectory for docs. (rvs via tucu)
-OOZIE-589 Make the command requeue interval configurable.
 OOZIE-38 LocalOozie example and improvement
 OOZIE-580 use xml element to handle string escape when configure evaluator
 OOZIE-585 Coordinator job fail to retrieve log with date range and action range.
