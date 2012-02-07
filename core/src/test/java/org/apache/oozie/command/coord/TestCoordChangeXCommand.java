@@ -58,7 +58,7 @@ public class TestCoordChangeXCommand extends XDataTestCase {
     public void testCoordChangeXCommand() throws StoreException, CommandException {
         System.out.println("Running Test");
         String jobId = "0000000-" + new Date().getTime() + "-testCoordChangeXCommand-C";
-        // CoordinatorStore store = Services.get().get(StoreService.class).getStore(CoordinatorStore.class);
+
         try {
             addRecordToJobTable(jobId);
         }
@@ -66,37 +66,41 @@ public class TestCoordChangeXCommand extends XDataTestCase {
             ex.printStackTrace();
             fail("Exception thrown " + ex);
         }
-        new CoordChangeXCommand(jobId, "endtime=2011-12-01T05:00Z;concurrency=200").call();
+
+        String pauseTime = DateUtils.convertDateToString(new Date().getTime() + 10 * 60 * 1000);
+        String endTime = DateUtils.convertDateToString(new Date().getTime() + 20 * 60 * 1000);
+
+        new CoordChangeXCommand(jobId, "endtime=" + endTime + ";concurrency=200").call();
         try {
-            checkCoordJobs(jobId, DateUtils.parseDateUTC("2011-12-01T05:00Z"), 200, null, false);
+            checkCoordJobs(jobId, DateUtils.parseDateUTC(endTime), 200, null, false);
         }
         catch (Exception ex) {
             ex.printStackTrace();
             fail("Invalid date" + ex);
         }
 
-        new CoordChangeXCommand(jobId, "endtime=2011-12-01T05:00Z;concurrency=200;pausetime=2011-11-01T05:00Z").call();
+        String changeValue = "endtime=" + endTime + ";concurrency=200;pausetime=" + pauseTime;
+        new CoordChangeXCommand(jobId, changeValue).call();
         try {
-            checkCoordJobs(jobId, DateUtils.parseDateUTC("2011-12-01T05:00Z"), 200, DateUtils
-                    .parseDateUTC("2011-11-01T05:00Z"), true);
+            checkCoordJobs(jobId, DateUtils.parseDateUTC(endTime), 200, DateUtils.parseDateUTC(pauseTime), true);
         }
         catch (Exception ex) {
             ex.printStackTrace();
             fail("Invalid date" + ex);
         }
 
-        new CoordChangeXCommand(jobId, "endtime=2011-12-01T05:00Z;concurrency=200;pausetime=").call();
+        new CoordChangeXCommand(jobId, "endtime=" + endTime + ";concurrency=200;pausetime=").call();
         try {
-            checkCoordJobs(jobId, DateUtils.parseDateUTC("2011-12-01T05:00Z"), 200, null, true);
+            checkCoordJobs(jobId, DateUtils.parseDateUTC(endTime), 200, null, true);
         }
         catch (Exception ex) {
             ex.printStackTrace();
             fail("Invalid date" + ex);
         }
 
-        new CoordChangeXCommand(jobId, "endtime=2011-12-01T05:00Z;pausetime=;concurrency=200").call();
+        new CoordChangeXCommand(jobId, "endtime=" + endTime + ";pausetime=;concurrency=200").call();
         try {
-            checkCoordJobs(jobId, DateUtils.parseDateUTC("2011-12-01T05:00Z"), 200, null, true);
+            checkCoordJobs(jobId, DateUtils.parseDateUTC(endTime), 200, null, true);
         }
         catch (Exception ex) {
             ex.printStackTrace();
@@ -212,19 +216,25 @@ public class TestCoordChangeXCommand extends XDataTestCase {
     }
 
     /**
-     * test end time change : pending should mark false if job is running with pending true
-     *
+     * test end time change : pending should mark false if job is running with
+     * pending true
+     * 
      * @throws Exception
      */
     public void testCoordChangeEndTime() throws Exception {
-        Date start = DateUtils.parseDateUTC("2011-02-01T01:00Z");
-        Date end = DateUtils.parseDateUTC("2011-02-20T23:59Z");
-        final CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, start, end, true, true, 0);
+        Date startTime = new Date();
+        Date endTime = new Date(startTime.getTime() + (20 * 60 * 1000));
 
-        new CoordChangeXCommand(job.getId(), "endtime=2012-12-01T05:00Z;pausetime=2011-11-01T05:00Z").call();
+        final CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime,
+                true, true, 0);
+
+        String pauseTime = DateUtils.convertDateToString(startTime.getTime() + 10 * 60 * 1000);
+        String newEndTime = DateUtils.convertDateToString(startTime.getTime() + 40 * 60 * 1000);
+
+        new CoordChangeXCommand(job.getId(), "endtime=" + newEndTime + ";pausetime=" + pauseTime).call();
         try {
-            checkCoordJobs(job.getId(), DateUtils.parseDateUTC("2012-12-01T05:00Z"), null, DateUtils
-                    .parseDateUTC("2011-11-01T05:00Z"), true);
+            checkCoordJobs(job.getId(), DateUtils.parseDateUTC(newEndTime), null, DateUtils.parseDateUTC(pauseTime),
+                    true);
         }
         catch (Exception ex) {
             ex.printStackTrace();
@@ -239,16 +249,16 @@ public class TestCoordChangeXCommand extends XDataTestCase {
     }
 
     /**
-     * test pause time change : pending should mark false if job is running with pending true.
-     * two actions should be removed for pause time changes.
-     *
+     * test pause time change : pending should mark false if job is running with
+     * pending true. two actions should be removed for pause time changes.
+     * 
      * @throws Exception
      */
     public void testCoordChangePauseTime() throws Exception {
         Date start = new Date();
         Date end = new Date(start.getTime() + (20 * 60 * 1000));
         Date pauseTime = new Date(start.getTime() + (10 * 60 * 1000));
-        String pauseTimeChangeStr = "pausetime="+ DateUtils.convertDateToString(pauseTime);
+        String pauseTimeChangeStr = "pausetime=" + DateUtils.convertDateToString(pauseTime);
         final CoordinatorJobBean job = addRecordToCoordJobTableForPauseTimeTest(CoordinatorJob.Status.RUNNING, start,
                 end, end, true, false, 4);
         addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
@@ -264,7 +274,8 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         assertEquals(Job.Status.RUNNING, coordJob.getStatus());
         assertEquals(2, coordJob.getLastActionNumber());
 
-        CoordinatorActionBean actionBean = jpaService.execute(new CoordJobGetActionByActionNumberJPAExecutor(job.getId(), 3));
+        CoordinatorActionBean actionBean = jpaService.execute(new CoordJobGetActionByActionNumberJPAExecutor(job
+                .getId(), 3));
         assertNull(actionBean);
 
         actionBean = jpaService.execute(new CoordJobGetActionByActionNumberJPAExecutor(job.getId(), 4));
@@ -409,12 +420,14 @@ public class TestCoordChangeXCommand extends XDataTestCase {
                 Date d = job.getPauseTime();
                 if (pauseTime == null) {
                     if (d != null) {
-                        fail("Pausetime is not updated properly job_pause_time=" + d + ", expected_pause_time=" + pauseTime);
+                        fail("Pausetime is not updated properly job_pause_time=" + d + ", expected_pause_time="
+                                + pauseTime);
                     }
                 }
                 else {
                     if (d.compareTo(pauseTime) != 0) {
-                        fail("Pausetime is not updated properly job_pause_time=" + d + ", expected_pause_time=" + pauseTime);
+                        fail("Pausetime is not updated properly job_pause_time=" + d + ", expected_pause_time="
+                                + pauseTime);
                     }
                 }
             }
