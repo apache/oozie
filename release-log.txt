@@ -1,4 +1,7 @@
 -- Oozie 3.1.3 release
+
+OOZIE-683 Add DISCLAIMER file in the root.(Mohammad)
+OOZIE 682 Update version 3.1.3 to 3.1.3-incubating in all pom.xml(Mohammad).
 OOZIE-681 Update readme.txt contents.(Mohammad)
 OOZIE-680 oozie's assembly creates an extra level of empty subdirectory for docs. (rvs via tucu)
 OOZIE-608 testCoordChangeEndTime and testCoordChangeXCommand are failing(Mohamed).
