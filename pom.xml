@@ -48,6 +48,49 @@
                     <generateReports>false</generateReports>
                 </configuration>
             </plugin>
+            <plugin>
+		<groupId>org.apache.maven.plugins</groupId>
+		<artifactId>maven-site-plugin</artifactId>
+		<version>2.0.1</version>
+		<configuration>
+			<outputDirectory>${project.build.directory}/pre-site</outputDirectory>
+		</configuration>
+		</plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.6</version>
+                <executions>
+                <execution>
+                    <id>site</id>
+                    <phase>site</phase>
+                    <goals>
+                    <goal>run</goal>
+                </goals>
+                <configuration>
+                <target>
+				<copy todir="${project.build.directory}/site">
+					<fileset dir="${project.build.directory}/pre-site">
+						<exclude name="**/*.html"/>
+					</fileset>
+				</copy>
+				<copy todir="${project.build.directory}/site">
+					<fileset dir="${project.build.directory}/pre-site">
+						<include name="**/*.html"/>
+					</fileset>
+				<filterchain>
+					<tokenfilter>
+					<replaceregex pattern="\$\.\{" replace="${"
+		flags="g"/>
+					</tokenfilter>
+				</filterchain>
+				</copy>
+			</target>
+			</configuration>
+		</execution>
+	       </executions>
+	   </plugin>
+
         </plugins>
     </build>
 </project>

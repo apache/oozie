@@ -51,6 +51,9 @@
 
         <menu name="Documentation">
             <item name="Quick start" href="./QuickStart.html"/>
+	    <item name="Overview" href="./overview.html"/>
+	    <item name="MapReduce Cookbook" href="./map-reduce-cookbook.html"/>
+	    <item name="Pig Cookbook" href="./pig-cookbook.html"/>
         </menu>
 
     </body>
