@@ -22,6 +22,8 @@ import java.util.Date;
 
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
+import org.apache.oozie.ErrorCode;
+import org.apache.oozie.XException;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.command.CommandException;
@@ -66,9 +68,45 @@ public class TestCoordActionsInDateRange extends XDataTestCase {
             long nominalTimeMilliseconds = nominalTime.getTime();
             long noOfMillisecondsinOneHour = 3600000;
 
-            // Testing for the number of coordinator actions in a date range that spans from half an hour prior to the nominal time to 1 hour after the nominal time
             String date1 = DateUtils.formatDateUTC(new Date(nominalTimeMilliseconds - (noOfMillisecondsinOneHour / 2)));
             String date2 = DateUtils.formatDateUTC(new Date(nominalTimeMilliseconds + noOfMillisecondsinOneHour));
+
+            // Test a bad date format.
+            try {
+              String badDate = "bad" + date1;
+              CoordActionsInDateRange.getCoordActionsFromDates(
+                  job.getId().toString(),
+                  badDate + "::" + date2);
+              fail("Accepted badly formatted date: " + badDate);
+            } catch (XException e) {
+              // Pass
+              assertEquals(ErrorCode.E0308, e.getErrorCode());
+            }
+
+            // Test a bad scope.
+            try {
+              String badScope = date1 + "0xbad5c09e" + date2;
+              CoordActionsInDateRange.getCoordActionsFromDates(
+                  job.getId().toString(),
+                  badScope);
+              fail("Accepted bad range scope: " + badScope);
+            } catch (XException e) {
+              // Pass
+              assertEquals(ErrorCode.E0308, e.getErrorCode());
+            }
+
+            // Test inverted start and end dates.
+            try {
+              CoordActionsInDateRange.getCoordActionsFromDates(
+                  job.getId().toString(),
+                  date2 + "::" + date1);
+              fail("Accepted inverted dates: [Start::End] = " + date2 + "::" + date1);
+            } catch (XException e) {
+              // Pass
+              assertEquals(ErrorCode.E0308, e.getErrorCode());
+            }
+
+            // Testing for the number of coordinator actions in a date range that spans from half an hour prior to the nominal time to 1 hour after the nominal time
             int noOfActions = CoordActionsInDateRange.getCoordActionsFromDates(job.getId().toString(), date1 + "::" + date2).size();
             assertEquals(1, noOfActions);
 
