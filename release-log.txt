@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-499 Broken link in maven docs to config files (harsh via tucu)
 OOZIE-636 Validate fork-join (virag via tucu)
 OOZIE-685 Update License file with 3rd party license information. (Mohammad)
 OOZIE-678 Update NOTICE.txt to reflect the workcount binaries into oozie src(Mohammad)

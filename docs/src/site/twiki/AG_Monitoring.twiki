@@ -22,7 +22,7 @@ Instrumentation data includes variables, samplers, timers and counters.
       * version: Oozie build version.
 
    * configuration
-      * config.dir: directory from where the configuration files are loaded. If null, all configuration files are loaded from the classpath. [[AG_Configuration][Configuration Files]].
+      * config.dir: directory from where the configuration files are loaded. If null, all configuration files are loaded from the classpath. [[AG_Install#Oozie_Configuration][Configuration files are described here]].
       * config.file: the Oozie custom configuration for the instance.
 
    * jvm
