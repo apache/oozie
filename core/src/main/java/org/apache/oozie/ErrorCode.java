@@ -133,6 +133,11 @@ public enum ErrorCode {
     E0727(XLog.STD, "Workflow Job can not be suspended as its not in running state, {0}, Status: {1}"),
     E0728(XLog.STD, "Coordinator Job can not be suspended as job finished or failed or killed, id : {0}, status : {1}"),
     E0729(XLog.OPS, "Kill node message [{0}]"),
+    E0730(XLog.STD, "Fork/Join not in pair"),
+    E0731(XLog.STD, "Fork node [{0}] cannot have less than two paths"),
+    E0732(XLog.STD, "Fork [{0}]/Join [{1}] not in pair"),
+    E0733(XLog.STD, "Fork [{0}] without a join"),
+    E0734(XLog.STD, "Invalid transition from node [{0}] to node [{1}] while using fork/join"),
 
     E0800(XLog.STD, "Action it is not running its in [{1}] state, action [{0}]"),
     E0801(XLog.STD, "Workflow already running, workflow [{0}]"),

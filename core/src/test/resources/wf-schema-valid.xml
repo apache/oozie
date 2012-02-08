@@ -21,7 +21,7 @@
         <switch>
             <case to="b">true</case>
             <case to="c">false</case>
-            <default to="d"/>
+            <default to="c"/>
         </switch>
     </decision>
     <kill name="b">
@@ -59,7 +59,7 @@
             <file>/tmp</file>
             <archive>/tmp</archive>
         </map-reduce>
-        <ok to="e"/>
+        <ok to="f"/>
         <error to="b"/>
     </action>
 
@@ -86,11 +86,11 @@
             <file>/tmp</file>
             <file>/tmp</file>
         </pig>
-        <ok to="z"/>
+        <ok to="f"/>
         <error to="b"/>
     </action>
 
-    <join name="f" to="g"/>
+    <join name="f" to="z"/>
 
     <end name="z"/>
 </workflow-app>

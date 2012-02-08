@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,21 +17,34 @@
  */
 package org.apache.oozie.workflow.lite;
 
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
+
 import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.ActionService;
 import org.apache.oozie.workflow.WorkflowException;
+import org.apache.oozie.workflow.lite.TestLiteWorkflowLib.TestActionNodeHandler;
+import org.apache.oozie.workflow.lite.TestLiteWorkflowLib.TestDecisionNodeHandler;
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.ErrorCode;
 
 public class TestLiteWorkflowAppParser extends XTestCase {
+    public static String dummyConf = "<java></java>";
 
+    @Override
     protected void setUp() throws Exception {
         super.setUp();
         new Services().init();
     }
 
+    @Override
     protected void tearDown() throws Exception {
         Services.get().destroy();
         super.tearDown();
@@ -87,6 +100,299 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         catch (Exception ex) {
             fail();
         }
+    }
+
+    /*
+     * 1->ok->2
+     * 2->ok->end
+     */
+   public void testWfNoForkJoin() throws WorkflowException  {
+        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+                LiteWorkflowStoreService.LiteDecisionHandler.class,
+                LiteWorkflowStoreService.LiteActionHandler.class);
+
+        LiteWorkflowApp def = new LiteWorkflowApp("name", "def", new StartNodeDef("one"))
+            .addNode(new ActionNodeDef("one", dummyConf, TestActionNodeHandler.class, "two", "three"))
+            .addNode(new ActionNodeDef("two", dummyConf, TestActionNodeHandler.class, "end", "end"))
+            .addNode(new ActionNodeDef("three", dummyConf, TestActionNodeHandler.class, "end", "end"))
+            .addNode(new EndNodeDef( "end"));
+
+        try {
+            invokeForkJoin(parser, def);
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
+
+    /*
+    f->(2,3)
+    (2,3)->j
+    */
+    public void testSimpleForkJoin() throws WorkflowException {
+        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+                LiteWorkflowStoreService.LiteDecisionHandler.class,
+                LiteWorkflowStoreService.LiteActionHandler.class);
+
+        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>", new StartNodeDef("one"))
+        .addNode(new ActionNodeDef("one", dummyConf, TestActionNodeHandler.class, "f", "end"))
+        .addNode(new ForkNodeDef("f", Arrays.asList(new String[]{"two", "three"})))
+        .addNode(new ActionNodeDef("two", dummyConf,  TestActionNodeHandler.class, "j", "end"))
+        .addNode(new ActionNodeDef("three", dummyConf, TestActionNodeHandler.class, "j", "end"))
+        .addNode(new JoinNodeDef("j", "four"))
+        .addNode(new ActionNodeDef("four", dummyConf, TestActionNodeHandler.class, "end", "end"))
+        .addNode(new EndNodeDef("end"));
+
+        try {
+            invokeForkJoin(parser, def);
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
+
+    /*
+     f->(2,3)
+     2->f2
+     3->j
+     f2->(4,5,6)
+     (4,5,6)->j2
+     j2->7
+     7->j
+    */
+    public void testNestedForkJoin() throws WorkflowException{
+        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+                LiteWorkflowStoreService.LiteDecisionHandler.class,
+                LiteWorkflowStoreService.LiteActionHandler.class);
+
+        LiteWorkflowApp def = new LiteWorkflowApp("testWf", "<worklfow-app/>", new StartNodeDef("one"))
+        .addNode(new ActionNodeDef("one", dummyConf, TestActionNodeHandler.class, "f","end"))
+        .addNode(new ForkNodeDef("f", Arrays.asList(new String[]{"two", "three"})))
+        .addNode(new ActionNodeDef("two", dummyConf, TestActionNodeHandler.class, "f2","end"))
+        .addNode(new ActionNodeDef("three", dummyConf, TestActionNodeHandler.class, "j","end"))
+        .addNode(new ForkNodeDef("f2", Arrays.asList(new String[]{"four", "five", "six"})))
+        .addNode(new ActionNodeDef("four", dummyConf, TestActionNodeHandler.class, "j2","end"))
+        .addNode(new ActionNodeDef("five", dummyConf, TestActionNodeHandler.class, "j2","end"))
+        .addNode(new ActionNodeDef("six", dummyConf, TestActionNodeHandler.class,"j2", "end"))
+        .addNode(new JoinNodeDef("j2", "seven"))
+        .addNode(new ActionNodeDef("seven", dummyConf, TestActionNodeHandler.class, "j","end"))
+        .addNode(new JoinNodeDef("j", "end"))
+        .addNode(new EndNodeDef("end"));
+
+        try {
+            invokeForkJoin(parser, def);
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
+
+    /*
+      f->(2,3)
+      2->j
+      3->end
+    */
+    public void testForkJoinFailure() throws WorkflowException{
+        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+                LiteWorkflowStoreService.LiteDecisionHandler.class,
+                LiteWorkflowStoreService.LiteActionHandler.class);
+
+        LiteWorkflowApp def = new LiteWorkflowApp("testWf", "<worklfow-app/>", new StartNodeDef("one"))
+        .addNode(new ActionNodeDef("one", dummyConf, TestActionNodeHandler.class, "f","end"))
+        .addNode(new ForkNodeDef("f", Arrays.asList(new String[]{"two", "three"})))
+        .addNode(new ActionNodeDef("two", dummyConf, TestActionNodeHandler.class, "j","end"))
+        .addNode(new ActionNodeDef("three", dummyConf, TestActionNodeHandler.class, "end","end"))
+        .addNode(new JoinNodeDef("j", "end"))
+        .addNode(new EndNodeDef("end"));
+
+        try {
+            invokeForkJoin(parser, def);
+            fail();
+        } catch (Exception ex) {
+            WorkflowException we = (WorkflowException) ex.getCause();
+            assertEquals(ErrorCode.E0730, we.getErrorCode());
+        }
+    }
+
+    /*
+     f->(2,3,4)
+     2->j
+     3->j
+     4->f2
+     f2->(5,6)
+     5-j2
+     6-j2
+     j-j2
+     j2-end
+    */
+    public void testNestedForkJoinFailure() throws WorkflowException {
+        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+                LiteWorkflowStoreService.LiteDecisionHandler.class,
+                LiteWorkflowStoreService.LiteActionHandler.class);
+
+        LiteWorkflowApp def = new LiteWorkflowApp("testWf", "<worklfow-app/>", new StartNodeDef("one"))
+            .addNode(new ActionNodeDef("one", dummyConf, TestActionNodeHandler.class, "f","end"))
+            .addNode(new ForkNodeDef("f", Arrays.asList(new String[]{"four", "three", "two"})))
+            .addNode(new ActionNodeDef("two", dummyConf, TestActionNodeHandler.class, "j","end"))
+            .addNode(new ActionNodeDef("three", dummyConf, TestActionNodeHandler.class, "j","end"))
+            .addNode(new ActionNodeDef("four", dummyConf, TestActionNodeHandler.class, "f2","end"))
+            .addNode(new ForkNodeDef("f2", Arrays.asList(new String[]{"five", "six"})))
+            .addNode(new ActionNodeDef("five", dummyConf, TestActionNodeHandler.class, "j2","end"))
+            .addNode(new ActionNodeDef("six", dummyConf, TestActionNodeHandler.class, "j2","end"))
+            .addNode(new JoinNodeDef("j", "j2"))
+            .addNode(new JoinNodeDef("j2", "end"))
+            .addNode(new EndNodeDef("end"));
+
+        try {
+            invokeForkJoin(parser, def);
+            fail();
+        } catch (Exception ex) {
+            WorkflowException we = (WorkflowException) ex.getCause();
+            assertEquals(ErrorCode.E0730, we.getErrorCode());
+        }
+    }
+
+    /*
+     f->(2,3)
+     2->ok->3
+     2->fail->j
+     3->ok->j
+     3->fail->end
+    */
+    public void testTransitionFailure() throws WorkflowException{
+        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+                LiteWorkflowStoreService.LiteDecisionHandler.class,
+                LiteWorkflowStoreService.LiteActionHandler.class);
+
+        LiteWorkflowApp def = new LiteWorkflowApp("name", "def", new StartNodeDef("one"))
+        .addNode(new ActionNodeDef("one", dummyConf, TestActionNodeHandler.class, "f","end"))
+        .addNode(new ForkNodeDef("f", Arrays.asList(new String[]{"two","three"})))
+        .addNode(new ActionNodeDef("two", dummyConf, TestActionNodeHandler.class, "three", "j"))
+        .addNode(new ActionNodeDef("three", dummyConf, TestActionNodeHandler.class, "j", "end"))
+        .addNode(new JoinNodeDef("j", "end"))
+        .addNode(new EndNodeDef("end"));
+
+        try {
+            invokeForkJoin(parser, def);
+            fail();
+        } catch (Exception ex) {
+            WorkflowException we = (WorkflowException) ex.getCause();
+            assertEquals(ErrorCode.E0734, we.getErrorCode());
+            // Make sure the message contains the nodes involved in the invalid transition
+            assertTrue(we.getMessage().contains("two"));
+            assertTrue(we.getMessage().contains("three"));
+        }
+
+    }
+
+    /*
+    f->(2,3)
+    2->decision node->{4,5,4}
+    4->j
+    5->j
+    3->j
+    */
+    public void testDecisionForkJoin() throws WorkflowException{
+        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+                LiteWorkflowStoreService.LiteDecisionHandler.class,
+                LiteWorkflowStoreService.LiteActionHandler.class);
+        LiteWorkflowApp def = new LiteWorkflowApp("name", "def", new StartNodeDef("one"))
+        .addNode(new ActionNodeDef("one", dummyConf, TestActionNodeHandler.class, "f","end"))
+        .addNode(new ForkNodeDef("f", Arrays.asList(new String[]{"two","three"})))
+        .addNode(new DecisionNodeDef("two", dummyConf, TestDecisionNodeHandler.class, Arrays.asList(new String[]{"four","five","four"})))
+        .addNode(new ActionNodeDef("four", dummyConf, TestActionNodeHandler.class, "j", "end"))
+        .addNode(new ActionNodeDef("five", dummyConf, TestActionNodeHandler.class, "j", "end"))
+        .addNode(new ActionNodeDef("three", dummyConf, TestActionNodeHandler.class, "j", "end"))
+        .addNode(new JoinNodeDef("j", "end"))
+        .addNode(new EndNodeDef("end"));
+
+        try {
+            invokeForkJoin(parser, def);
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
+
+    /*
+     *f->(2,3)
+     *2->decision node->{3,4}
+     *3->end
+     *4->end
+     */
+    public void testDecisionForkJoinFailure() throws WorkflowException{
+        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+                LiteWorkflowStoreService.LiteDecisionHandler.class,
+                LiteWorkflowStoreService.LiteActionHandler.class);
+        LiteWorkflowApp def = new LiteWorkflowApp("name", "def", new StartNodeDef("one"))
+        .addNode(new ActionNodeDef("one", dummyConf, TestActionNodeHandler.class, "f","end"))
+        .addNode(new ForkNodeDef("f", Arrays.asList(new String[]{"two","three"})))
+        .addNode(new DecisionNodeDef("two", dummyConf, TestDecisionNodeHandler.class, Arrays.asList(new String[]{"four","three"})))
+        .addNode(new ActionNodeDef("three", dummyConf, TestActionNodeHandler.class, "j", "end"))
+        .addNode(new ActionNodeDef("four", dummyConf, TestActionNodeHandler.class, "j", "end"))
+        .addNode(new JoinNodeDef("j", "end"))
+        .addNode(new EndNodeDef("end"));
+
+        try {
+            invokeForkJoin(parser, def);
+            fail();
+        } catch (Exception ex) {
+            WorkflowException we = (WorkflowException) ex.getCause();
+            assertEquals(ErrorCode.E0734, we.getErrorCode());
+            // Make sure the message contains the nodes involved in the invalid transition
+            assertTrue(we.getMessage().contains("two"));
+            assertTrue(we.getMessage().contains("three"));
+        }
+    }
+
+    /*
+     * 1->decision node->{f1, f2}
+     * f1->(2,3)
+     * f2->(4,5)
+     * (2,3)->j1
+     * (4,5)->j2
+     * j1->end
+     * j2->end
+     */
+    public void testDecisionMultipleForks() throws WorkflowException{
+        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+                LiteWorkflowStoreService.LiteDecisionHandler.class,
+                LiteWorkflowStoreService.LiteActionHandler.class);
+        LiteWorkflowApp def = new LiteWorkflowApp("name", "def", new StartNodeDef("one"))
+        .addNode(new DecisionNodeDef("one", dummyConf, TestDecisionNodeHandler.class, Arrays.asList(new String[]{"f1","f2"})))
+        .addNode(new ForkNodeDef("f1", Arrays.asList(new String[]{"two","three"})))
+        .addNode(new ForkNodeDef("f2", Arrays.asList(new String[]{"four","five"})))
+        .addNode(new ActionNodeDef("two", dummyConf, TestActionNodeHandler.class, "j1", "end"))
+        .addNode(new ActionNodeDef("three", dummyConf, TestActionNodeHandler.class, "j1", "end"))
+        .addNode(new ActionNodeDef("four", dummyConf, TestActionNodeHandler.class, "j2", "end"))
+        .addNode(new ActionNodeDef("five", dummyConf, TestActionNodeHandler.class, "j2", "end"))
+        .addNode(new JoinNodeDef("j1", "end"))
+        .addNode(new JoinNodeDef("j2", "end"))
+        .addNode(new EndNodeDef("end"));
+
+        try {
+            invokeForkJoin(parser, def);
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
+
+    // Invoke private validateForkJoin method using Reflection API
+    private void invokeForkJoin(LiteWorkflowAppParser parser, LiteWorkflowApp def) throws Exception {
+        Class<? extends LiteWorkflowAppParser> c = parser.getClass();
+        Class d = Class.forName("org.apache.oozie.workflow.lite.LiteWorkflowAppParser$VisitStatus");
+        Field f = d.getField("VISITING");
+        Map traversed = new HashMap();
+        traversed.put(def.getNode(StartNodeDef.START).getName(), f);
+        Method validate = c.getDeclaredMethod("validate", LiteWorkflowApp.class, NodeDef.class, Map.class);
+        validate.setAccessible(true);
+        // invoke validate method to populate the fork and join list
+        validate.invoke(parser, def, def.getNode(StartNodeDef.START), traversed);
+        Method validateForkJoin = c.getDeclaredMethod("validateForkJoin", LiteWorkflowApp.class);
+        validateForkJoin.setAccessible(true);
+        // invoke validateForkJoin
+        validateForkJoin.invoke(parser, def);
     }
 
 }

@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,8 +38,11 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.Stack;
 
 /**
  * Class to parse and validate workflow xml
@@ -74,6 +77,7 @@ public class LiteWorkflowAppParser {
     private static final String DECISION_DEFAULT_E = "default";
 
     private static final String KILL_MESSAGE_E = "message";
+    public static final String VALIDATE_FORK_JOIN = "oozie.validate.ForkJoin";
 
     private Schema schema;
     private Class<? extends DecisionNodeHandler> decisionHandlerClass;
@@ -83,8 +87,8 @@ public class LiteWorkflowAppParser {
         VISITING, VISITED
     }
 
-    ;
-
+    private List<String> forkList = new ArrayList<String>();
+    private List<String> joinList = new ArrayList<String>();
 
     public LiteWorkflowAppParser(Schema schema, Class<? extends DecisionNodeHandler> decisionHandlerClass,
                                  Class<? extends ActionNodeHandler> actionHandlerClass) throws WorkflowException {
@@ -116,6 +120,10 @@ public class LiteWorkflowAppParser {
             Map<String, VisitStatus> traversed = new HashMap<String, VisitStatus>();
             traversed.put(app.getNode(StartNodeDef.START).getName(), VisitStatus.VISITING);
             validate(app, app.getNode(StartNodeDef.START), traversed);
+            //Validate whether fork/join are in pair or not
+            if (Services.get().getConf().getBoolean(VALIDATE_FORK_JOIN, true)) {
+                validateForkJoin(app);
+            }
             return app;
         }
         catch (JDOMException ex) {
@@ -126,6 +134,90 @@ public class LiteWorkflowAppParser {
         }
         catch (IOException ex) {
             throw new WorkflowException(ErrorCode.E0702, ex.getMessage(), ex);
+        }
+    }
+
+    /**
+     * Validate whether fork/join are in pair or not
+     * @param app LiteWorkflowApp
+     * @throws WorkflowException
+     */
+    private void validateForkJoin(LiteWorkflowApp app) throws WorkflowException {
+        // Make sure the number of forks and joins in wf are equal
+        if (forkList.size() != joinList.size()) {
+            throw new WorkflowException(ErrorCode.E0730);
+        }
+
+        while(!forkList.isEmpty()){
+            // Make sure each of the fork node has a corresponding join; start with the root fork Node first
+            validateFork(app.getNode(forkList.remove(0)), app);
+        }
+
+    }
+
+    /*
+     * Test whether the fork node has a corresponding join
+     * @param node - the fork node
+     * @param app - the WorkflowApp
+     * @return
+     * @throws WorkflowException
+     */
+    private NodeDef validateFork(NodeDef forkNode, LiteWorkflowApp app) throws WorkflowException {
+        List<String> transitions = new ArrayList<String>(forkNode.getTransitions());
+        String joinNode = null;
+        for (int i = 0; i < transitions.size(); i++) {
+            NodeDef node = app.getNode(transitions.get(i));
+            if (node instanceof DecisionNodeDef) {
+                Set<String> decisionSet = new HashSet<String>(node.getTransitions());
+                for (String ds : decisionSet) {
+                    if (transitions.contains(ds)) {
+                        throw new WorkflowException(ErrorCode.E0734, node.getName(), ds);
+                    } else {
+                        transitions.add(ds);
+                    }
+                }
+            } else if (node instanceof ActionNodeDef) {
+                // Get only the "ok-to" transition of node
+                String okToTransition = node.getTransitions().get(0);
+                // Make sure the transition is valid
+                validateTransition(transitions, app, okToTransition, node);
+                transitions.add(okToTransition);
+            } else if (node instanceof ForkNodeDef) {
+                forkList.remove(node.getName());
+                // Make a recursive call to resolve this fork node
+                NodeDef joinNd = validateFork(node, app);
+                String okToTransition = joinNd.getTransitions().get(0);
+                // Make sure the transition is valid
+                validateTransition(transitions, app, okToTransition, node);
+                transitions.add(okToTransition);
+            } else if (node instanceof JoinNodeDef) {
+                // If joinNode encountered for the first time, remove it from the joinList and remember it
+                String currentJoin = node.getName();
+                if (joinList.contains(currentJoin)) {
+                    joinList.remove(currentJoin);
+                    joinNode = currentJoin;
+                } else {
+                    // Make sure this join is the same as the join seen from the first time
+                    if (joinNode == null) {
+                        throw new WorkflowException(ErrorCode.E0733, forkNode);
+                    }
+                    if (!joinNode.equals(currentJoin)) {
+                        throw new WorkflowException(ErrorCode.E0732, forkNode, joinNode);
+                    }
+                }
+            } else {
+                throw new WorkflowException(ErrorCode.E0730);
+            }
+        }
+        return app.getNode(joinNode);
+
+    }
+
+    private void validateTransition(List<String> transitions, LiteWorkflowApp app, String okToTransition, NodeDef node)
+            throws WorkflowException {
+        // Make sure the transition node is either a join node or is not already visited
+        if (transitions.contains(okToTransition) && !(app.getNode(okToTransition) instanceof JoinNodeDef)) {
+            throw new WorkflowException(ErrorCode.E0734, node.getName(), okToTransition);
         }
     }
 
@@ -201,11 +293,11 @@ public class LiteWorkflowAppParser {
                                                 }
                                             }
                                         }
-                                        
+
                                         String credStr = eNode.getAttributeValue(CRED_A);
                                         String userRetryMaxStr = eNode.getAttributeValue(USER_RETRY_MAX_A);
                                         String userRetryIntervalStr = eNode.getAttributeValue(USER_RETRY_INTERVAL_A);
-                                        
+
                                         String actionConf = XmlUtils.prettyPrint(eActionConf).toString();
                                         def.addNode(new ActionNodeDef(eNode.getAttributeValue(NAME_A), actionConf, actionHandlerClass,
                                                                       transitions[0], transitions[1], credStr,
@@ -257,6 +349,14 @@ public class LiteWorkflowAppParser {
             catch (JDOMException ex) {
                 throw new RuntimeException("It should never happen, " + ex.getMessage(), ex);
             }
+        }
+
+        if(node instanceof ForkNodeDef){
+            forkList.add(node.getName());
+        }
+
+        if(node instanceof JoinNodeDef){
+            joinList.add(node.getName());
         }
 
         if (node instanceof EndNodeDef) {

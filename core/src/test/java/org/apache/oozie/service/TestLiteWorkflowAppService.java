@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -244,21 +244,21 @@ public class TestLiteWorkflowAppService extends XTestCase {
             assertEquals("a", app.getNode("::start::").getTransitions().get(0));
             assertEquals("b", app.getNode("a").getTransitions().get(0));
             assertEquals("c", app.getNode("a").getTransitions().get(1));
-            assertEquals("d", app.getNode("a").getTransitions().get(2));
+            assertEquals("c", app.getNode("a").getTransitions().get(2));
             assertTrue(app.getNode("b").getConf().contains("kill"));
             assertEquals("d", app.getNode("c").getTransitions().get(0));
             assertEquals("e", app.getNode("c").getTransitions().get(1));
             assertEquals(2, app.getNode("c").getTransitions().size());
 
-            assertEquals("e", app.getNode("d").getTransitions().get(0));
+            assertEquals("f", app.getNode("d").getTransitions().get(0));
             assertEquals("b", app.getNode("d").getTransitions().get(1));
             assertTrue(app.getNode("d").getConf().startsWith("<map-reduce"));
 
-            assertEquals("z", app.getNode("e").getTransitions().get(0));
+            assertEquals("f", app.getNode("e").getTransitions().get(0));
             assertEquals("b", app.getNode("e").getTransitions().get(1));
             assertTrue(app.getNode("e").getConf().startsWith("<pig"));
 
-            assertEquals("g", app.getNode("f").getTransitions().get(0));
+            assertEquals("z", app.getNode("f").getTransitions().get(0));
 
             assertNotNull(app.getNode("z"));
         }
@@ -357,7 +357,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             services.destroy();
         }
     }
-    
+
     public void testCreateprotoConfWithMulipleLibPath() throws Exception {
         Services services = new Services();
         try {
@@ -376,7 +376,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             createTestCaseSubDir("libx");
             writer = new FileWriter(getTestCaseDir() + "/libx/maputil_x.jar");
             writer.write("bla bla");
-            writer.close();            
+            writer.close();
             createTestCaseSubDir("liby");
             writer = new FileWriter(getTestCaseDir() + "/liby/maputil_y1.jar");
             writer.write("bla bla");
