@@ -38,13 +38,6 @@
 			</snapshots>
 		</repository>
 		<repository>
-			<id>yahoo.github</id>
-			<url>http://yahoo.github.com/maven/repository</url>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
-		</repository>
-		<repository>
 			<id>m2apache.snapshots</id>
 			<url>http://people.apache.org/repo/m2-snapshot-repository</url>
 			<releases>
@@ -77,17 +70,23 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>com.yahoo.hadoop</groupId>
+			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-core</artifactId>
 			<version>0.20.104.2</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>com.yahoo.hadoop</groupId>
+			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-test</artifactId>
 			<version>0.20.104.2</version>
 			<scope>test</scope>
 		</dependency>
+                <dependency>
+                    <groupId>com.sun.jersey</groupId>
+                    <artifactId>jersey-server</artifactId>
+                    <scope>test</scope>
+                </dependency>
+
 		<dependency>
 			<groupId>org.codehaus.jackson</groupId>
 			<artifactId>jackson-mapper-asl</artifactId>

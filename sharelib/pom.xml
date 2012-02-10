@@ -28,41 +28,25 @@
     <name>Oozie Share Lib</name>
     <packaging>jar</packaging>
 
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-        </license>
-    </licenses>
-
-    <organization>
-        <name>Yahoo</name>
-        <url>http://www.yahoo.com</url>
-    </organization>
-
     <dependencies>
         <dependency>
-            <!-- groupId to be correct by GH-0226 -->
-            <groupId>com.yahoo.hadoop</groupId>
+            <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-streaming</artifactId>
             <scope>compile</scope>
             <exclusions>
                 <exclusion>
-                    <!-- groupId to be correct by GH-0226 -->
-                    <groupId>com.yahoo.hadoop</groupId>
+                    <groupId>org.apache.hadoop</groupId>
                     <artifactId>hadoop-core</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
         <dependency>
-            <!-- groupId to be correct by GH-0226 -->
             <groupId>org.apache.pig</groupId>
             <artifactId>pig</artifactId>
             <scope>compile</scope>
             <exclusions>
                 <exclusion>
-                    <!-- groupId to be correct by GH-0226 -->
-                    <groupId>com.yahoo.hadoop</groupId>
+                    <groupId>org.apache.hadoop</groupId>
                     <artifactId>hadoop-core</artifactId>
                 </exclusion>
             </exclusions>

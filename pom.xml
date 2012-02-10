@@ -33,8 +33,8 @@
     </licenses>
 
     <organization>
-        <name>Yahoo</name>
-        <url>http://www.yahoo.com</url>
+        <name>Apache Software Foundation</name>
+        <url>http://www.apache.org</url>
     </organization>
 
     <scm>
@@ -58,6 +58,8 @@
         <oozie.data.dir>${project.build.directory}/test-data</oozie.data.dir>
 
         <maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
+
+        <hadoop.version>1.0.0</hadoop.version>
     </properties>
 
     <modules>
@@ -99,13 +101,6 @@
             <url>http://repository.codehaus.org/</url>
             <snapshots>
                 <enabled>false</enabled>
-            </snapshots>
-        </repository>
-        <repository>
-            <id>yahoo.github</id>
-            <url>http://yahoo.github.com/maven/repository</url>
-            <snapshots>
-                <enabled>true</enabled>
             </snapshots>
         </repository>
     </repositories>
@@ -233,10 +228,9 @@
             </dependency>
             
             <dependency>
-                <!-- groupId to be correct by GH-0226 -->
-                <groupId>com.yahoo.hadoop</groupId>
+                <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-core</artifactId>
-                <version>0.20.104.2</version>
+                <version>${hadoop.version}</version>
                 <exclusions>
                     <exclusion>
                         <groupId>org.apache.commons</groupId>
@@ -246,10 +240,9 @@
             </dependency>
 
             <dependency>
-                <!-- groupId to be correct by GH-0226 -->
-                <groupId>com.yahoo.hadoop</groupId>
+                <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-test</artifactId>
-                <version>0.20.104.2</version>
+                <version>${hadoop.version}</version>
                 <exclusions>
                     <exclusion>
                         <groupId>org.apache.commons</groupId>
@@ -271,10 +264,15 @@
             </dependency>
 
             <dependency>
-                <!-- groupId to be correct by GH-0226 -->
-                <groupId>com.yahoo.hadoop</groupId>
+                <groupId>com.sun.jersey</groupId>
+                <artifactId>jersey-server</artifactId>
+                <version>1.0</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-streaming</artifactId>
-                <version>0.20.104.2</version>
+                <version>${hadoop.version}</version>
                 <exclusions>
                     <exclusion>
                         <groupId>org.apache.commons</groupId>
@@ -284,17 +282,10 @@
             </dependency>
 
             <dependency>
-                <!-- groupId to be correct by GH-0226 -->
                 <groupId>org.apache.pig</groupId>
                 <artifactId>pig</artifactId>
                 <version>0.9.0</version>
                 <exclusions>
-                    <exclusion>
-                        <!-- groupId to be correct by GH-0226 -->
-                        <groupId>com.yahoo.hadoop</groupId>
-                        <artifactId>hadoop-core</artifactId>
-                    </exclusion>
-                    <!-- this exclusion to be removed by GH-0226 -->
                     <exclusion>
                         <groupId>org.apache.hadoop</groupId>
                         <artifactId>hadoop-core</artifactId>

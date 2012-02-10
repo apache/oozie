@@ -28,18 +28,6 @@
     <name>Oozie WebApp</name>
     <packaging>war</packaging>
 
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-        </license>
-    </licenses>
-
-    <organization>
-        <name>Yahoo</name>
-        <url>http://www.yahoo.com</url>
-    </organization>
-
     <dependencies>
         <dependency>
             <groupId>org.apache.oozie</groupId>
@@ -146,7 +134,7 @@
             </activation>
             <dependencies>
                 <dependency>
-                    <groupId>com.yahoo.hadoop</groupId>
+                    <groupId>org.apache.hadoop</groupId>
                     <artifactId>hadoop-core</artifactId>
                     <scope>compile</scope>
                     <exclusions>
