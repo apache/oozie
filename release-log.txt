@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-689 XTestCase proxyuser settings fails with Hadoop 1.0.0/0.23.1 (tucu)
 OOZIE-582 Adding new test cases for the feature - viewing log for coordinator actions in a given date range (harsh via tucu)
 OOZIE-499 Broken link in maven docs to config files (harsh via tucu)
 OOZIE-636 Validate fork-join (virag via tucu)

@@ -22,6 +22,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -660,7 +661,17 @@ public abstract class XTestCase extends TestCase {
             conf.set("dfs.block.access.token.enable", "false");
             conf.set("dfs.permissions", "true");
             conf.set("hadoop.security.authentication", "simple");
-            conf.set("hadoop.proxyuser." + oozieUser + ".hosts", "*,127.0.0.1");
+
+            //Doing this because Hadoop 1.x does not support '*' and
+            //Hadoop 0.23.x does not process wildcard if the value is
+            // '*,127.0.0.1'
+            StringBuilder sb = new StringBuilder();
+            sb.append("127.0.0.1,localhost");
+            for (InetAddress i : InetAddress.getAllByName(InetAddress.getLocalHost().getHostName())) {
+                sb.append(",").append(i.getCanonicalHostName());
+            }
+            conf.set("hadoop.proxyuser." + oozieUser + ".hosts", sb.toString());
+
             conf.set("hadoop.proxyuser." + oozieUser + ".groups", getTestGroup());
             conf.set("mapred.tasktracker.map.tasks.maximum", "4");
             conf.set("mapred.tasktracker.reduce.tasks.maximum", "4");
