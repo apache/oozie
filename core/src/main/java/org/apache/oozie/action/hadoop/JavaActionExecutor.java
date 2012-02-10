@@ -217,6 +217,7 @@ public class JavaActionExecutor extends ActionExecutor {
                 checkForDisallowedProps(launcherConf, "inline launcher configuration");
                 XConfiguration.copy(launcherConf, conf);
             }
+            conf.set("mapreduce.framework.name", "yarn");
             return conf;
         }
         catch (IOException ex) {
@@ -263,6 +264,7 @@ public class JavaActionExecutor extends ActionExecutor {
                 checkForDisallowedProps(inlineConf, "inline configuration");
                 XConfiguration.copy(inlineConf, actionConf);
             }
+            actionConf.set("mapreduce.framework.name", "yarn");
             return actionConf;
         }
         catch (IOException ex) {

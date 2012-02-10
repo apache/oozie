@@ -215,7 +215,9 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         conf.set("user.name", context.getProtoActionConf().get("user.name"));
         conf.set("group.name", getTestGroup());
         injectKerberosInfo(conf);
-        JobConf jobConf = new JobConf(conf);
+        conf.set("mapreduce.framework.name", "yarn");
+        JobConf jobConf = new JobConf();
+        XConfiguration.copy(conf, jobConf);
         String user = jobConf.get("user.name");
         String group = jobConf.get("group.name");
         JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, group, jobConf);
@@ -229,7 +231,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         Context context = createContext(name, actionXml);
         final RunningJob launcherJob = submitAction(context);
         String launcherId = context.getAction().getExternalId();
-        waitFor(120 * 1000, new Predicate() {
+        waitFor(120 * 2000, new Predicate() {
             public boolean evaluate() throws Exception {
                 return launcherJob.isComplete();
             }
@@ -245,8 +247,10 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         Configuration conf = ae.createBaseHadoopConf(context, XmlUtils.parseXml(actionXml));
         String user = conf.get("user.name");
         String group = conf.get("group.name");
+        JobConf jobConf = new JobConf();
+        XConfiguration.copy(conf, jobConf);
         JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, group,
-                new JobConf(conf));
+                jobConf);
         final RunningJob mrJob = jobClient.getJob(JobID.forName(context.getAction().getExternalId()));
 
         waitFor(120 * 1000, new Predicate() {
@@ -266,7 +270,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         //hadoop.counters will always be set in case of MR action.
         assertNotNull(context.getVar("hadoop.counters"));
         String counters = context.getVar("hadoop.counters");
-        assertTrue(counters.contains("Task$Counter"));
+        assertTrue(counters.contains("Counter"));
 
         //External Child IDs will always be null in case of MR action.
         assertNull(context.getExternalChildIDs());
@@ -293,8 +297,10 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         Configuration conf = ae.createBaseHadoopConf(context, XmlUtils.parseXml(actionXml));
         String user = conf.get("user.name");
         String group = conf.get("group.name");
+        JobConf jobConf = new JobConf();
+        XConfiguration.copy(conf, jobConf);
         JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, group,
-                new JobConf(conf));
+                jobConf);
         final RunningJob mrJob = jobClient.getJob(JobID.forName(context.getAction().getExternalId()));
 
         waitFor(120 * 1000, new Predicate() {
@@ -488,8 +494,10 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         Configuration conf = ae.createBaseHadoopConf(context, XmlUtils.parseXml(actionXml));
         String user = conf.get("user.name");
         String group = conf.get("group.name");
+        JobConf jobConf = new JobConf();
+        XConfiguration.copy(conf, jobConf);
         JobClient jobClient = Services.get().get(HadoopAccessorService.class)
-                .createJobClient(user, group, new JobConf(conf));
+                .createJobClient(user, group, jobConf);
         final RunningJob mrJob = jobClient.getJob(JobID.forName(context.getAction().getExternalId()));
 
         waitFor(120 * 1000, new Predicate() {
@@ -509,9 +517,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         // Assert for stats info stored in the context.
         assertNotNull(context.getExecutionStats());
         assertTrue(context.getExecutionStats().contains("ACTION_TYPE"));
-        assertTrue(context.getExecutionStats().contains("JobInProgress$Counter"));
-        assertTrue(context.getExecutionStats().contains("FileSystemCounters"));
-        assertTrue(context.getExecutionStats().contains("Task$Counter"));
+        assertTrue(context.getExecutionStats().contains("Counter"));
 
         // External Child IDs will always be null in case of MR action.
         assertNull(context.getExternalChildIDs());
@@ -519,7 +525,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         // hadoop.counters will always be set in case of MR action.
         assertNotNull(context.getVar("hadoop.counters"));
         String counters = context.getVar("hadoop.counters");
-        assertTrue(counters.contains("Task$Counter"));
+        assertTrue(counters.contains("Counter"));
     }
 
     // Test to assert that executionStats is not set when user has specified
@@ -550,7 +556,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         Context context = createContext("map-reduce", actionXml);
         final RunningJob launcherJob = submitAction(context);
         String launcherId = context.getAction().getExternalId();
-        waitFor(120 * 1000, new Predicate() {
+        waitFor(120 * 2000, new Predicate() {
             public boolean evaluate() throws Exception {
                 return launcherJob.isComplete();
             }
@@ -566,8 +572,10 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         Configuration conf = ae.createBaseHadoopConf(context, XmlUtils.parseXml(actionXml));
         String user = conf.get("user.name");
         String group = conf.get("group.name");
+        JobConf jobConf = new JobConf();
+        XConfiguration.copy(conf, jobConf);
         JobClient jobClient = Services.get().get(HadoopAccessorService.class)
-                .createJobClient(user, group, new JobConf(conf));
+                .createJobClient(user, group, jobConf);
         final RunningJob mrJob = jobClient.getJob(JobID.forName(context.getAction().getExternalId()));
 
         waitFor(120 * 1000, new Predicate() {
@@ -593,6 +601,6 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         // hadoop.counters will always be set in case of MR action.
         assertNotNull(context.getVar("hadoop.counters"));
         String counters = context.getVar("hadoop.counters");
-        assertTrue(counters.contains("Task$Counter"));
+        assertTrue(counters.contains("Counter"));
     }
 }

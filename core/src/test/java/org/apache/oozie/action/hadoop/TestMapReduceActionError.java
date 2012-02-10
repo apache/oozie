@@ -205,7 +205,9 @@ public class TestMapReduceActionError extends ActionExecutorTestCase {
         conf.set("user.name", context.getProtoActionConf().get("user.name"));
         conf.set("group.name", getTestGroup());
         injectKerberosInfo(conf);
-        JobConf jobConf = new JobConf(conf);
+        conf.set("mapreduce.framework.name", "yarn");
+        JobConf jobConf = new JobConf();
+        XConfiguration.copy(conf, jobConf);
         String user = jobConf.get("user.name");
         String group = jobConf.get("group.name");
         JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, group, jobConf);
@@ -231,8 +233,9 @@ public class TestMapReduceActionError extends ActionExecutorTestCase {
         Configuration conf = ae.createBaseHadoopConf(context, XmlUtils.parseXml(actionXml));
         String user = conf.get("user.name");
         String group = conf.get("group.name");
-        JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, group,
-                                                                                              new JobConf(conf));
+        JobConf jobConf = new JobConf();
+        XConfiguration.copy(conf, jobConf);
+        JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, group, jobConf);
         final RunningJob mrJob = jobClient.getJob(JobID.forName(context.getAction().getExternalId()));
 
         waitFor(60 * 1000, new Predicate() {

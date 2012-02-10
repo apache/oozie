@@ -44,6 +44,9 @@ public class TestMapReduceMain extends MainTestCase {
         Path outputDir = new Path(getFsTestCaseDir(), "output");
 
         XConfiguration jobConf = new XConfiguration();
+
+        jobConf.set("mapreduce.framework.name", "yarn");
+
         jobConf.setInt("mapred.map.tasks", 1);
         jobConf.setInt("mapred.map.max.attempts", 1);
         jobConf.setInt("mapred.reduce.max.attempts", 1);

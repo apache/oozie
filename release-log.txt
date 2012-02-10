@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-691 Fix testcases using launcher using Hadoop 0.23.x (tucu)
 OOZIE-690 use hadoop-client/hadoop-minicluster artifacts for Hadoop 0.23.1 & trunk (tucu)
 OOZIE-689 XTestCase proxyuser settings fails with Hadoop 1.0.0/0.23.1 (tucu)
 OOZIE-582 Adding new test cases for the feature - viewing log for coordinator actions in a given date range (harsh via tucu)
