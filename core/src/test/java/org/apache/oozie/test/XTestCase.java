@@ -42,6 +42,7 @@ import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.MiniMRCluster;
+import org.apache.hadoop.security.authorize.ProxyUsers;
 import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.CoordinatorActionBean;
@@ -690,6 +691,7 @@ public abstract class XTestCase extends TestCase {
             JobConf jobConf = mrCluster.createJobConf();
             System.setProperty(OOZIE_TEST_JOB_TRACKER, jobConf.get("mapred.job.tracker"));
             System.setProperty(OOZIE_TEST_NAME_NODE, jobConf.get("fs.default.name"));
+            ProxyUsers.refreshSuperUserGroupsConfiguration(conf);
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 @Override
                 public void run() {
