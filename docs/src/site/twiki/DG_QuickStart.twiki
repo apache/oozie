@@ -13,8 +13,7 @@ For detailed install and configuration instructions refer to [[AG_Install][Oozie
    * Unix (tested in Linux and Mac OS X)
    * Java 1.6+
    * Hadoop
-      * [[http://hadoop.apache.org][Apache Hadoop]] (tested with 0.20.2)
-      * [[http://developer.yahoo.com/hadoop][Yahoo! Hadoop]] (tested with 0.20.104.2)
+      * [[http://hadoop.apache.org][Apache Hadoop]] (tested with 0.20.205. But compatible with Hadoop 0.20.x and 1.0.0)
    * ExtJS library (optional, to enable Oozie webconsole)
       * [[http://extjs.com/deploy/ext-2.2.zip][ExtJS 2.2]]
 

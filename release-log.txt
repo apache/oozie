@@ -1,5 +1,6 @@
 -- Oozie 3.1.3 release
 
+OOZIE-694 Update the Install and Quick start guide with appropriate hadoop versions for branch-3.1 (Mohammad)
 OOZIE-602 Update the Hadoop version to be an Apache Hadoop version (tucu)
 OOZIE-689 XTestCase proxyuser settings fails with Hadoop 1.0.0/0.23.1 (tucu)
 OOZIE-601 Oozie's POMs should use org.apache.oozie as group (tucu)
