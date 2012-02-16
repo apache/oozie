@@ -72,6 +72,12 @@
         the hadoop-auth artifact. After we phase-out pre 0.23 we can get rid of this property.
         -->
         <hadoop.auth.version>0.23.1-SNAPSHOT</hadoop.auth.version>
+
+         <!-- Sharelib component versions -->
+         <hive.version>0.9.0-SNAPSHOT</hive.version>
+         <pig.version>0.9.0</pig.version>
+         <sqoop.version>1.5.0-incubating-SNAPSHOT</sqoop.version>
+         <streaming.version>${hadoop.version}</streaming.version>
     </properties>
 
     <modules>
@@ -307,13 +313,13 @@
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-streaming</artifactId>
-                <version>${hadoop.version}</version>
+                <version>${streaming.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.apache.pig</groupId>
                 <artifactId>pig</artifactId>
-                <version>0.9.0</version>
+                <version>${pig.version}</version>
                 <exclusions>
                     <exclusion>
                         <groupId>org.apache.hadoop</groupId>
@@ -395,7 +401,7 @@
             <dependency>
                 <groupId>org.apache.hive</groupId>
                 <artifactId>hive-cli</artifactId>
-                <version>0.9.0-SNAPSHOT</version>
+                <version>${hive.version}</version>
                 <exclusions>
                     <exclusion>
                         <groupId>hadoop</groupId>
@@ -580,7 +586,7 @@
             <dependency>
                 <groupId>org.apache.sqoop</groupId>
                 <artifactId>sqoop</artifactId>
-                <version>1.5.0-incubating-SNAPSHOT</version>
+                <version>${sqoop.version}</version>
             </dependency>
 
             <dependency>
