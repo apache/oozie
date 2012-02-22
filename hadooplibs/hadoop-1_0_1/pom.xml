@@ -26,16 +26,16 @@
         <relativePath>../../pom.xml</relativePath>
     </parent>
     <groupId>org.apache.oozie</groupId>
-    <artifactId>oozie-hadoop-test</artifactId>
-    <version>0.23.1</version>
-    <description>Apache Oozie Hadoop ${project.version} Test</description>
-    <name>Apache Oozie Hadoop ${project.version} Test</name>
+    <artifactId>oozie-hadoop</artifactId>
+    <version>1.0.1</version>
+    <description>Apache Oozie Hadoop ${project.version}</description>
+    <name>Apache Oozie Hadoop ${project.version}</name>
     <packaging>jar</packaging>
 
     <dependencies>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-minicluster</artifactId>
+            <artifactId>hadoop-client</artifactId>
             <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>
@@ -48,8 +48,10 @@
                 <artifactId>maven-assembly-plugin</artifactId>
                 <configuration>
                     <descriptors>
-                        <descriptor>../../src/main/assemblies/empty.xml</descriptor>
+                        <descriptor>../../src/main/assemblies/hadooplib.xml</descriptor>
                     </descriptors>
+                    <finalName>hadooplibs</finalName>
+                    <appendAssemblyId>false</appendAssemblyId>
                 </configuration>
             </plugin>
         </plugins>

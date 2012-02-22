@@ -65,13 +65,13 @@
 
         <sharelib.use.transitive.dependencies>true</sharelib.use.transitive.dependencies>
 
-        <hadoop.version>1.0.0</hadoop.version>
+        <hadoop.version>1.0.1</hadoop.version>
 
         <!--
         This is required while we support a a pre 0.23 version of Hadoop which does not have
         the hadoop-auth artifact. After we phase-out pre 0.23 we can get rid of this property.
         -->
-        <hadoop.auth.version>0.23.1-SNAPSHOT</hadoop.auth.version>
+        <hadoop.auth.version>0.23.1</hadoop.auth.version>
 
          <!-- Sharelib component versions -->
          <hive.version>0.9.0-SNAPSHOT</hive.version>

@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-700 update hadooplibs versions (tucu)
 OOZIE-698 Make sharelib components version dependency configurable (tucu)
 OOZIE-696 scope of oozie-hadoop-test artifact is wrong (tucu)
 OOZIE-691 Fix testcases using launcher using Hadoop 0.23.x (tucu)

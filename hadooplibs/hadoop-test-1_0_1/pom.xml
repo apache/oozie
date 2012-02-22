@@ -27,7 +27,7 @@
     </parent>
     <groupId>org.apache.oozie</groupId>
     <artifactId>oozie-hadoop-test</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <description>Apache Oozie Hadoop ${project.version} Test</description>
     <name>Apache Oozie Hadoop ${project.version} Test</name>
     <packaging>jar</packaging>
@@ -35,23 +35,10 @@
     <dependencies>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-core</artifactId>
+            <artifactId>hadoop-minicluster</artifactId>
             <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-test</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.sun.jersey</groupId>
-            <artifactId>jersey-server</artifactId>
-            <version>1.0</version>
-            <scope>compile</scope>
-        </dependency>
-
     </dependencies>
 
     <build>

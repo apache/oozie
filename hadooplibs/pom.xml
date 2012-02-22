@@ -32,10 +32,12 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>hadoop-1_0_0</module>
-        <module>hadoop-test-1_0_0</module>
+        <module>hadoop-1_0_1</module>
+        <module>hadoop-test-1_0_1</module>
         <module>hadoop-0_23_1</module>
         <module>hadoop-test-0_23_1</module>
+        <module>hadoop-0_23_2</module>
+        <module>hadoop-test-0_23_2</module>
         <module>hadoop-0_24_0</module>
         <module>hadoop-test-0_24_0</module>
     </modules>
