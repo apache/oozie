@@ -747,6 +747,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <forkMode>${oozie.test.forkMode}</forkMode>
+                    <forkedProcessTimeoutInSeconds>3600</forkedProcessTimeoutInSeconds>
                     <argLine>-Xmx1024m -da</argLine>
                     <systemPropertyVariables>
                         <hadoop.log.dir>/tmp</hadoop.log.dir>

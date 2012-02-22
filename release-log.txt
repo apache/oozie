@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-710 add a timeout to the surefire configuration (tucu)
 OOZIE-704 Sharelib action JARs for testcases should be collected leveraging Maven dependency information (tucu)
 OOZIE-703 Improve/Consolidate Hadoop job ID log harvesting logic (tucu)
 OOZIE-702 XTestCase minicluster fails with Hadoop 1.x (tucu)
