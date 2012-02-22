@@ -682,12 +682,17 @@ public abstract class XTestCase extends TestCase {
             UserGroupInformation.createUserForTesting(getTestUser2(), userGroups);
             UserGroupInformation.createUserForTesting(getTestUser3(), new String[] { "users" } );
 
+            conf.set("hadoop.tmp.dir", "/tmp/minicluster");
+
             dfsCluster = new MiniDFSCluster(conf, dataNodes, true, null);
             FileSystem fileSystem = dfsCluster.getFileSystem();
             fileSystem.mkdirs(new Path("/tmp"));
+            fileSystem.mkdirs(new Path("/tmp/minicluster/mapred"));
             fileSystem.mkdirs(new Path("/user"));
             fileSystem.mkdirs(new Path("/hadoop/mapred/system"));
             fileSystem.setPermission(new Path("/tmp"), FsPermission.valueOf("-rwxrwxrwx"));
+            fileSystem.setPermission(new Path("/tmp/minicluster"), FsPermission.valueOf("-rwxrwxrwx"));
+            fileSystem.setPermission(new Path("/tmp/minicluster/mapred"), FsPermission.valueOf("-rwxrwxrwx"));
             fileSystem.setPermission(new Path("/user"), FsPermission.valueOf("-rwxrwxrwx"));
             fileSystem.setPermission(new Path("/hadoop/mapred/system"), FsPermission.valueOf("-rwx------"));
             String nnURI = fileSystem.getUri().toString();
