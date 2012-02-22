@@ -41,6 +41,7 @@ import java.util.ArrayList;
 import java.util.Properties;
 import java.util.Set;
 import java.net.URL;
+import java.util.regex.Pattern;
 
 public class PigMain extends LauncherMain {
     private static final Set<String> DISALLOWED_PIG_OPTIONS = new HashSet<String>();
@@ -49,6 +50,10 @@ public class PigMain extends LauncherMain {
     public static final String EXTERNAL_ACTION_STATS = ACTION_PREFIX + "stats.properties";
     public static final String EXTERNAL_STATS_WRITE = ACTION_PREFIX + "external.stats.write";
     public static final int STRING_BUFFER_SIZE = 100;
+
+    private static final Pattern[] PIG_JOB_IDS_PATTERNS = {
+      Pattern.compile("HadoopJobId: (job_\\S*)")
+    };
 
     static {
         DISALLOWED_PIG_OPTIONS.add("-4");
@@ -224,9 +229,9 @@ public class PigMain extends LauncherMain {
         // So retrieving hadoop Ids here
         File file = new File(System.getProperty(EXTERNAL_CHILD_IDS));
         if (!file.exists()) {
-            String jobIds = getHadoopJobIds(logFile);
-            writeExternalData(jobIds, file);
-            System.out.println(" Hadoop Job IDs executed by Pig: " + jobIds);
+            Properties props = getHadoopJobIds(logFile, PIG_JOB_IDS_PATTERNS);
+            writeExternalData(props.getProperty(HADOOP_JOBS), file);
+            System.out.println(" Hadoop Job IDs executed by Pig: " + props.getProperty(HADOOP_JOBS));
             System.out.println();
         }
     }
@@ -354,43 +359,6 @@ public class PigMain extends LauncherMain {
         MapReduceMain.setStrings(conf, "oozie.pig.params", params);
         MapReduceMain.setStrings(conf, "oozie.pig.args", args);
     }
-
-    private static final String JOB_ID_LOG_PREFIX = "HadoopJobId: ";
-
-    /**
-     * Get Hadoop Ids by parsing the log file
-     *
-     * @param logFile the pig log file
-     * @return comma-separated String
-     */
-    protected String getHadoopJobIds(String logFile) throws IOException {
-        StringBuilder sb = new StringBuilder(STRING_BUFFER_SIZE);
-        if (new File(logFile).exists() == false) {
-            System.err.println("pig log file: " + logFile + "  not present. Therefore no Hadoop jobids found");
-            return sb.toString();
-        }
-        BufferedReader br = new BufferedReader(new FileReader(logFile));
-        String line = br.readLine();
-        String separator = ",";
-        while (line != null) {
-            if (line.contains(JOB_ID_LOG_PREFIX)) {
-                int jobIdStarts = line.indexOf(JOB_ID_LOG_PREFIX) + JOB_ID_LOG_PREFIX.length();
-                String jobId = line.substring(jobIdStarts);
-                int jobIdEnds = jobId.indexOf(" ");
-                if (jobIdEnds > -1) {
-                    jobId = jobId.substring(0, jobId.indexOf(" "));
-                }
-                if (sb.length() > 0) {
-                    sb.append(separator);
-                }
-                sb.append(jobId);
-            }
-            line = br.readLine();
-        }
-        br.close();
-        return sb.toString();
-    }
-
 
     /**
      * Get Hadoop Ids through PigStats API

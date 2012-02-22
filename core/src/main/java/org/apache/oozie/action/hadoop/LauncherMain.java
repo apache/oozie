@@ -17,16 +17,52 @@
  */
 package org.apache.oozie.action.hadoop;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public abstract class LauncherMain {
+
+    public static final String HADOOP_JOBS = "hadoopJobs";
 
     protected static void run(Class<? extends LauncherMain> klass, String[] args) throws Exception {
         LauncherMain main = klass.newInstance();
         main.run(args);
+    }
+
+    public static Properties getHadoopJobIds(String logFile, Pattern[] patterns) throws IOException {
+        Properties props = new Properties();
+        StringBuffer sb = new StringBuffer(100);
+        if (!new File(logFile).exists()) {
+            System.err.println("Log file: " + logFile + "  not present. Therefore no Hadoop jobids found");
+            props.setProperty(HADOOP_JOBS, "");
+        }
+        else {
+            BufferedReader br = new BufferedReader(new FileReader(logFile));
+            String line = br.readLine();
+            String separator = "";
+            while (line != null) {
+                for (Pattern pattern : patterns) {
+                    Matcher matcher = pattern.matcher(line);
+                    if (matcher.find()) {
+                        String jobId = matcher.group(1);
+                        sb.append(separator).append(jobId);
+                        separator = ",";
+                    }
+                }
+                line = br.readLine();
+            }
+            br.close();
+            props.setProperty(HADOOP_JOBS, sb.toString());
+        }
+        return props;
     }
 
     protected abstract void run(String[] args) throws Exception;

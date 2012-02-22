@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.regex.Pattern;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -39,6 +40,10 @@ import org.apache.hadoop.hive.cli.CliDriver;
 
 public class HiveMain extends LauncherMain {
     public static final String USER_HIVE_DEFAULT_FILE = "oozie-user-hive-default.xml";
+
+    private static final Pattern[] HIVE_JOB_IDS_PATTERNS = {
+      Pattern.compile("Ended Job = (job_\\S*)")
+    };
 
     public static final String HIVE_L4J_PROPS = "hive-log4j.properties";
     public static final String HIVE_EXEC_L4J_PROPS = "hive-exec-log4j.properties";
@@ -288,12 +293,12 @@ public class HiveMain extends LauncherMain {
         System.out.println("\n<<< Invocation of Hive command completed <<<\n");
 
         // harvesting and recording Hadoop Job IDs
-        Properties jobIds = getHadoopJobIds(logFile, JOB_ID_LOG_PREFIX);
+        Properties jobIds = getHadoopJobIds(logFile, HIVE_JOB_IDS_PATTERNS);
         File file = new File(System.getProperty("oozie.action.output.properties"));
         OutputStream os = new FileOutputStream(file);
         jobIds.store(os, "");
         os.close();
-        System.out.println(" Hadoop Job IDs executed by Hive: " + jobIds.getProperty("hadoopJobs"));
+        System.out.println(" Hadoop Job IDs executed by Hive: " + jobIds.getProperty(HADOOP_JOBS));
         System.out.println();
     }
 
@@ -345,39 +350,6 @@ public class HiveMain extends LauncherMain {
             expr = expr.replace(var, value);
         }
         return expr;
-    }
-
-    //TODO: Hive should provide a programmatic way of spitting out Hadoop jobs
-    private static final String JOB_ID_LOG_PREFIX = "Ended Job = ";
-
-    public static Properties getHadoopJobIds(String logFile, String prefix) throws IOException {
-        Properties props = new Properties();
-        StringBuffer sb = new StringBuffer(100);
-        if (!new File(logFile).exists()) {
-            System.err.println("hive log file: " + logFile + "  not present. Therefore no Hadoop jobids found");
-            props.setProperty("hadoopJobs", "");
-        }
-        else {
-            BufferedReader br = new BufferedReader(new FileReader(logFile));
-            String line = br.readLine();
-            String separator = "";
-            while (line != null) {
-                if (line.contains(prefix)) {
-                    int jobIdStarts = line.indexOf(prefix) + prefix.length();
-                    String jobId = line.substring(jobIdStarts).trim();
-
-                    //Doing this because Hive now does things like ConditionalTask which are not Hadoop jobs.
-                    if (jobId.startsWith("job_")) {
-                        sb.append(separator).append(jobId);
-                        separator = ",";
-                    }
-                }
-                line = br.readLine();
-            }
-            br.close();
-            props.setProperty("hadoopJobs", sb.toString());
-        }
-        return props;
     }
 
 }

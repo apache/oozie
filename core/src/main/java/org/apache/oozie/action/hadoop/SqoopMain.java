@@ -24,6 +24,7 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Pattern;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -36,7 +37,10 @@ public class SqoopMain extends LauncherMain {
 
     public static final String SQOOP_SITE_CONF = "sqoop-site.xml";
 
-    private static final String JOB_ID_LOG_PREFIX = "Job complete: ";
+    private static final Pattern[] SQOOP_JOB_IDS_PATTERNS = {
+      Pattern.compile("Job complete: (job_\\S*)"), Pattern.compile("Job (job_\\S*) completed successfully")
+    };
+
     private static final String SQOOP_LOG4J_PROPS = "sqoop-log4j.properties";
 
     public static void main(String[] args) throws Exception {
@@ -126,6 +130,7 @@ public class SqoopMain extends LauncherMain {
         hadoopProps.setProperty("log4j.appender.jobid.layout", "org.apache.log4j.PatternLayout");
         hadoopProps.setProperty("log4j.appender.jobid.layout.ConversionPattern", "%-4r [%t] %-5p %c %x - %m%n");
         hadoopProps.setProperty("log4j.logger.org.apache.hadoop.mapred", "INFO, jobid");
+        hadoopProps.setProperty("log4j.logger.org.apache.hadoop.mapreduce.Job", "INFO, jobid");
 
         String localProps = new File(SQOOP_LOG4J_PROPS).getAbsolutePath();
         OutputStream os1 = new FileOutputStream(localProps);
@@ -181,7 +186,8 @@ public class SqoopMain extends LauncherMain {
         System.out.println();
 
         // harvesting and recording Hadoop Job IDs
-        Properties jobIds = HiveMain.getHadoopJobIds(logFile, JOB_ID_LOG_PREFIX);
+        Properties jobIds = getHadoopJobIds(logFile, SQOOP_JOB_IDS_PATTERNS);
+
         File file = new File(System.getProperty("oozie.action.output.properties"));
         OutputStream os = new FileOutputStream(file);
         try {
@@ -190,7 +196,7 @@ public class SqoopMain extends LauncherMain {
         finally {
             os.close();
         }
-        System.out.println(" Hadoop Job IDs executed by Sqoop: " + jobIds.getProperty("hadoopJobs"));
+        System.out.println(" Hadoop Job IDs executed by Sqoop: " + jobIds.getProperty(HADOOP_JOBS));
         System.out.println();
     }
 

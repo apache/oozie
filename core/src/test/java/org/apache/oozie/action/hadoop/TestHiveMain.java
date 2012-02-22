@@ -214,8 +214,8 @@ public class TestHiveMain extends MainTestCase {
 //TODO: I cannot figure out why when log file is not created in this testcase, it works when running in Launcher
 //            Properties props = new Properties();
 //            props.load(new FileReader(outputDataFile));
-//            assertTrue(props.containsKey("hadoopJobs"));
-//            assertTrue(props.getProperty("hadoopJobs").trim().length() > 0);
+//            assertTrue(props.containsKey(LauncherMain.HADOOP_JOBS));
+//            assertTrue(props.getProperty(LauncherMain.HADOOP_JOBS).trim().length() > 0);
         }
         return null;
     }

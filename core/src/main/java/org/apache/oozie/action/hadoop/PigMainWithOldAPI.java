@@ -249,7 +249,7 @@ public class PigMainWithOldAPI extends LauncherMain {
         os = new FileOutputStream(file);
         jobIds.store(os, "");
         os.close();
-        System.out.println(" Hadoop Job IDs executed by Pig: " + jobIds.getProperty("hadoopJobs"));
+        System.out.println(" Hadoop Job IDs executed by Pig: " + jobIds.getProperty(HADOOP_JOBS));
         System.out.println();
     }
 
@@ -272,7 +272,7 @@ public class PigMainWithOldAPI extends LauncherMain {
         StringBuffer sb = new StringBuffer(100);
         if (new File(logFile).exists() == false) {
             System.err.println("pig log file: " + logFile + "  not present. Therefore no Hadoop jobids found");
-            props.setProperty("hadoopJobs", "");
+            props.setProperty(HADOOP_JOBS, "");
         }
         else {
             BufferedReader br = new BufferedReader(new FileReader(logFile));
@@ -292,7 +292,7 @@ public class PigMainWithOldAPI extends LauncherMain {
                 line = br.readLine();
             }
             br.close();
-            props.setProperty("hadoopJobs", sb.toString());
+            props.setProperty(HADOOP_JOBS, sb.toString());
         }
         return props;
     }

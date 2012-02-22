@@ -195,8 +195,8 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
         assertNotNull(context.getAction().getData());
         Properties outputData = new Properties();
         outputData.load(new StringReader(context.getAction().getData()));
-        assertTrue(outputData.containsKey("hadoopJobs"));
-        assertTrue(outputData.getProperty("hadoopJobs").trim().length() > 0);
+        assertTrue(outputData.containsKey(LauncherMain.HADOOP_JOBS));
+        assertTrue(outputData.getProperty(LauncherMain.HADOOP_JOBS).trim().length() > 0);
     }
 
     public void testSqoopActionFreeFormQuery() throws Exception {
@@ -244,8 +244,8 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
         assertNotNull(context.getAction().getData());
         Properties outputData = new Properties();
         outputData.load(new StringReader(context.getAction().getData()));
-        assertTrue(outputData.containsKey("hadoopJobs"));
-        assertTrue(outputData.getProperty("hadoopJobs").trim().length() > 0);
+        assertTrue(outputData.containsKey(LauncherMain.HADOOP_JOBS));
+        assertTrue(outputData.getProperty(LauncherMain.HADOOP_JOBS).trim().length() > 0);
     }
 
 

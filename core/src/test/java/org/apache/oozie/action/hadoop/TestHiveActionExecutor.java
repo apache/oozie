@@ -198,9 +198,9 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
         assertNotNull(context.getAction().getData());
         Properties outputData = new Properties();
         outputData.load(new StringReader(context.getAction().getData()));
-        assertTrue(outputData.containsKey("hadoopJobs"));
+        assertTrue(outputData.containsKey(LauncherMain.HADOOP_JOBS));
         //while this works in a real cluster, it does not with miniMR
-        //assertTrue(outputData.getProperty("hadoopJobs").trim().length() > 0);
+        //assertTrue(outputData.getProperty(LauncherMain.HADOOP_JOBS).trim().length() > 0);
 
         assertTrue(fs.exists(outputDir));
         assertTrue(fs.isDirectory(outputDir));
