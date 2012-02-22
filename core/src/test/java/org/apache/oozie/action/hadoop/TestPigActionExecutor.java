@@ -34,8 +34,6 @@ import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.util.IOUtils;
-import org.apache.oozie.util.ClassUtils;
-import org.apache.pig.Main;
 import org.jdom.Element;
 import org.json.simple.JSONValue;
 
@@ -50,9 +48,6 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
-
-import jline.ConsoleReaderInputStream;
 
 public class TestPigActionExecutor extends ActionExecutorTestCase {
 
@@ -137,22 +132,13 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
 
         FileSystem fs = getFileSystem();
 
-        Path pigJar = new Path(getAppPath(), "lib/pig.jar");
-        InputStream is = new FileInputStream(ClassUtils.findContainingJar(Main.class));
-        OutputStream os = fs.create(new Path(getAppPath(), pigJar));
-        IOUtils.copyStream(is, os);
-
-        Path jLineJar = new Path(getAppPath(), "lib/jline.jar");
-        is = new FileInputStream(ClassUtils.findContainingJar(ConsoleReaderInputStream.class));
-        os = fs.create(new Path(getAppPath(), jLineJar));
-        IOUtils.copyStream(is, os);
-
         XConfiguration protoConf = new XConfiguration();
         protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
         protoConf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
         protoConf.set(OozieClient.GROUP_NAME, getTestGroup());
         injectKerberosInfo(protoConf);
-        protoConf.setStrings(WorkflowAppService.APP_LIB_PATH_LIST, pigJar.toString(), jLineJar.toString());
+
+        SharelibUtils.addToDistributedCache("pig", fs, getFsTestCaseDir(), protoConf);
 
         WorkflowJobBean wf = createBaseWorkflow(protoConf, "pig-action");
         WorkflowActionBean action = (WorkflowActionBean) wf.getActions().get(0);
@@ -182,10 +168,12 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
                 new XConfiguration(new StringReader(XmlUtils.prettyPrint(e.getChild("configuration")).toString()));
         conf.set("mapred.job.tracker", e.getChildTextTrim("job-tracker"));
         conf.set("fs.default.name", e.getChildTextTrim("name-node"));
+        conf.set("mapreduce.framework.name", "yarn");
         conf.set("user.name", context.getProtoActionConf().get("user.name"));
         conf.set("group.name", getTestGroup());
         injectKerberosInfo(conf);
-        JobConf jobConf = new JobConf(conf);
+        JobConf jobConf = new JobConf();
+        XConfiguration.copy(conf, jobConf);
         String user = jobConf.get("user.name");
         String group = jobConf.get("group.name");
         JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, group, jobConf);

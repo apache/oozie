@@ -19,17 +19,12 @@ package org.apache.oozie.action.hadoop;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.oozie.util.XConfiguration;
-import org.apache.oozie.util.ClassUtils;
 import org.apache.oozie.util.IOUtils;
-import org.apache.pig.Main;
 import org.json.simple.JSONValue;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -38,8 +33,6 @@ import java.io.FileReader;
 import java.util.Map;
 import java.util.Properties;
 import java.net.URL;
-
-import jline.ConsoleReaderInputStream;
 
 public class TestPigMain extends PigTestCase {
     private SecurityManager SECURITY_MANAGER;
@@ -59,16 +52,6 @@ public class TestPigMain extends PigTestCase {
     @Override
     public Void call() throws Exception {
         FileSystem fs = getFileSystem();
-
-        Path pigJar = new Path(getFsTestCaseDir(), "pig.jar");
-        InputStream is = new FileInputStream(ClassUtils.findContainingJar(Main.class));
-        OutputStream os = fs.create(pigJar);
-        IOUtils.copyStream(is, os);
-
-        Path jlineJar = new Path(getFsTestCaseDir(), "jline.jar");
-        is = new FileInputStream(ClassUtils.findContainingJar(ConsoleReaderInputStream.class));
-        os = fs.create(jlineJar);
-        IOUtils.copyStream(is, os);
 
         Path script = new Path(getTestCaseDir(), "script.pig");
         Writer w = new FileWriter(script.toString());
@@ -93,19 +76,20 @@ public class TestPigMain extends PigTestCase {
         jobConf.set("mapred.job.tracker", getJobTrackerUri());
         jobConf.set("fs.default.name", getNameNodeUri());
 
+        jobConf.set("mapreduce.framework.name", "yarn");
+
         // option to specify whether stats should be stored or not
         jobConf.set("oozie.action.external.stats.write", Boolean.toString(writeStats));
 
         injectKerberosInfo(jobConf);
 
-        DistributedCache.addFileToClassPath(new Path(pigJar.toUri().getPath()), getFileSystem().getConf());
-        DistributedCache.addFileToClassPath(new Path(jlineJar.toUri().getPath()), getFileSystem().getConf());
+        SharelibUtils.addToDistributedCache("pig", fs, getFsTestCaseDir(), jobConf);
 
         PigMain.setPigScript(jobConf, script.toString(), new String[] { "IN=" + inputDir.toUri().getPath(),
                 "OUT=" + outputDir.toUri().getPath() }, new String[] { "-v" });
 
         File actionXml = new File(getTestCaseDir(), "action.xml");
-        os = new FileOutputStream(actionXml);
+        OutputStream os = new FileOutputStream(actionXml);
         jobConf.writeXml(os);
         os.close();
 

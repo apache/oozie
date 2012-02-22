@@ -25,29 +25,11 @@ import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.io.Writer;
 import java.text.MessageFormat;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-
-import javax.jdo.Query;
-
-
-import org.antlr.runtime.ANTLRFileStream;
-import org.apache.commons.collections.Bag;
-import org.apache.commons.lang.text.StrMatcher;
-import org.apache.derby.iapi.services.io.DerbyIOException;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hive.cli.CliSessionState;
-import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.contrib.serde2.RegexSerDe;
-import org.apache.hadoop.hive.metastore.HiveMetaStore;
-import org.apache.hadoop.hive.ql.exec.ExecDriver;
-import org.apache.hadoop.hive.serde2.SerDe;
-import org.apache.hadoop.hive.service.HiveServer;
-import org.apache.hadoop.hive.shims.Hadoop20Shims;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
@@ -63,15 +45,8 @@ import org.apache.oozie.util.ClassUtils;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
-import org.apache.thrift.TBase;
-import org.datanucleus.FetchGroup;
-import org.datanucleus.store.rdbms.RDBMSStoreManager;
 import org.jdom.Element;
 import org.jdom.Namespace;
-import org.json.JSONML;
-import org.objectweb.asm.ByteVector;
-
-import com.facebook.fb303.FacebookBase;
 
 public class TestHiveActionExecutor extends ActionExecutorTestCase {
 
@@ -133,11 +108,11 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
         "<configuration>" +
         "<property>" +
         "<name>javax.jdo.option.ConnectionURL</name>" +
-        "<value>jdbc:hsqldb:mem:hive-main;create=true</value>" +
+        "<value>jdbc:derby:db;create=true</value>" +
         "</property>" +
         "<property>" +
         "<name>javax.jdo.option.ConnectionDriverName</name>" +
-        "<value>org.hsqldb.jdbcDriver</value>" +
+        "<value>org.apache.derby.jdbc.EmbeddedDriver</value>" +
         "</property>" +
         "<property>" +
         "<name>javax.jdo.option.ConnectionUserName</name>" +
@@ -146,6 +121,10 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
         "<property>" +
         "<name>javax.jdo.option.ConnectionPassword</name>" +
         "<value> </value>" +
+        "</property>" +
+        "<property>" +
+        "<name>oozie.hive.log.level</name>" +
+        "<value>DEBUG</value>" +
         "</property>" +
         "<property>" +
         "<name>oozie.hive.defaults</name>" +
@@ -229,7 +208,8 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
         conf.set("user.name", context.getProtoActionConf().get("user.name"));
         conf.set("group.name", getTestGroup());
         injectKerberosInfo(conf);
-        JobConf jobConf = new JobConf(conf);
+        JobConf jobConf = new JobConf();
+        XConfiguration.copy(conf, jobConf);
         String user = jobConf.get("user.name");
         String group = jobConf.get("group.name");
         JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, group, jobConf);
@@ -252,38 +232,14 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
     }
 
     private Context createContext(String actionXml) throws Exception {
-        List<String> jars = new ArrayList<String>();
         HiveActionExecutor ae = new HiveActionExecutor();
-
-        jars.add(copyJar("lib/libfb303-x.jar", FacebookBase.class));
-        jars.add(copyJar("lib/libthrift-x.jar", TBase.class));
-        jars.add(copyJar("lib/libjson-x.jar", JSONML.class));
-        jars.add(copyJar("lib/jdo2-api-x.jar", Query.class));
-        jars.add(copyJar("lib/antlr-runtime-x.jar", ANTLRFileStream.class));
-        jars.add(copyJar("lib/asm-x.jar", ByteVector.class));
-        jars.add(copyJar("lib/commons-collection-x.jar", Bag.class));
-        jars.add(copyJar("lib/commons-lang-x.jar", StrMatcher.class));
-        jars.add(copyJar("lib/datanucleus-core-x.jar", FetchGroup.class));
-        jars.add(copyJar("lib/datanucleus-rdbms-x.jar", RDBMSStoreManager.class));
-        jars.add(copyJar("lib/jdo-x.jar", javax.jdo.metadata.TypeMetadata.class));
-        jars.add(copyJar("lib/derby.jar", DerbyIOException.class));
-        jars.add(copyJar("lib/jline.jar", jline.FileNameCompletor.class));
-        jars.add(copyJar("lib/hive-cli-x.jar", CliSessionState.class));
-        jars.add(copyJar("lib/hive-common-x.jar", HiveConf.class));
-        jars.add(copyJar("lib/hive-exec-x.jar", ExecDriver.class));
-        jars.add(copyJar("lib/hive-metastore-x.jar", HiveMetaStore.class));
-        jars.add(copyJar("lib/hive-serde-x.jar", SerDe.class));
-        jars.add(copyJar("lib/hive-service-x.jar", HiveServer.class));
-        jars.add(copyJar("lib/hive-shims-x.jar", Hadoop20Shims.class));
-        jars.add(copyJar("lib/hive-contrib-x.jar", RegexSerDe.class));
 
         XConfiguration protoConf = new XConfiguration();
         protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
         protoConf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
         protoConf.set(OozieClient.GROUP_NAME, getTestGroup());
         injectKerberosInfo(protoConf);
-        protoConf.setStrings(WorkflowAppService.APP_LIB_PATH_LIST,
-                                    jars.toArray(new String[jars.size()]));
+        SharelibUtils.addToDistributedCache("hive", getFileSystem(), getFsTestCaseDir(), protoConf);
 
         WorkflowJobBean wf = createBaseWorkflow(protoConf, "hive-action");
         WorkflowActionBean action = (WorkflowActionBean) wf.getActions().get(0);

@@ -19,11 +19,7 @@ package org.apache.oozie.action.hadoop;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.streaming.StreamJob;
-import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.oozie.util.XConfiguration;
-import org.apache.oozie.util.ClassUtils;
-import org.apache.oozie.util.IOUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -38,11 +34,6 @@ public class TestStreamingMain extends MainTestCase {
 
     public Void call() throws Exception {
         FileSystem fs = getFileSystem();
-
-        Path streamingJar = new Path(getFsTestCaseDir(), "hadoop-streaming.jar");
-        InputStream is = new FileInputStream(ClassUtils.findContainingJar(StreamJob.class));
-        OutputStream os = fs.create(streamingJar);
-        IOUtils.copyStream(is, os);
 
         Path inputDir = new Path(getFsTestCaseDir(), "input");
         fs.mkdirs(inputDir);
@@ -64,7 +55,7 @@ public class TestStreamingMain extends MainTestCase {
         jobConf.set("user.name", getTestUser());
         jobConf.set("hadoop.job.ugi", getTestUser() + "," + getTestGroup());
 
-        DistributedCache.addFileToClassPath(new Path(streamingJar.toUri().getPath()), fs.getConf());
+        SharelibUtils.addToDistributedCache("streaming", fs, getFsTestCaseDir(), jobConf);
 
         StreamingMain.setStreaming(jobConf, "cat", "wc", null, null, null);
 
@@ -72,7 +63,7 @@ public class TestStreamingMain extends MainTestCase {
         jobConf.set("mapred.output.dir", outputDir.toString());
 
         File actionXml = new File(getTestCaseDir(), "action.xml");
-        os = new FileOutputStream(actionXml);
+        OutputStream os = new FileOutputStream(actionXml);
         jobConf.writeXml(os);
         os.close();
 
@@ -85,7 +76,7 @@ public class TestStreamingMain extends MainTestCase {
 
         assertTrue(newIdProperties.exists());
 
-        is = new FileInputStream(newIdProperties);
+        InputStream is = new FileInputStream(newIdProperties);
         Properties props = new Properties();
         props.load(is);
         is.close();

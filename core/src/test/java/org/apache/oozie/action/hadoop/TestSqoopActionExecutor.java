@@ -32,11 +32,9 @@ import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowAppService;
-import org.apache.oozie.util.ClassUtils;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
-import org.apache.sqoop.Sqoop;
 import org.jdom.Element;
 import org.jdom.Namespace;
 
@@ -270,9 +268,11 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
         conf.set("mapred.job.tracker", e.getChildTextTrim("job-tracker", ns));
         conf.set("fs.default.name", e.getChildTextTrim("name-node", ns));
         conf.set("user.name", context.getProtoActionConf().get("user.name"));
+        conf.set("mapreduce.framework.name", "yarn");
         conf.set("group.name", getTestGroup());
         injectKerberosInfo(conf);
-        JobConf jobConf = new JobConf(conf);
+        JobConf jobConf = new JobConf();
+        XConfiguration.copy(conf, jobConf);
         String user = jobConf.get("user.name");
         String group = jobConf.get("group.name");
         JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, group, jobConf);
@@ -281,24 +281,8 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
         return runningJob;
     }
 
-    private String copyJar(String targetFile, Class<?> anyContainedClass)
-            throws Exception {
-        String file = ClassUtils.findContainingJar(anyContainedClass);
-        Path targetPath = new Path(getAppPath(), targetFile);
-        FileSystem fs = getFileSystem();
-        InputStream is = new FileInputStream(file);
-        OutputStream os = fs.create(new Path(getAppPath(), targetPath));
-        IOUtils.copyStream(is, os);
-        return targetPath.toString();
-    }
-
     private Context createContext(String actionXml) throws Exception {
-        List<String> jars = new ArrayList<String>();
         SqoopActionExecutor ae = new SqoopActionExecutor();
-
-        jars.add(copyJar("lib/commons-io-x.jar", org.apache.commons.io.IOUtils.class));
-        jars.add(copyJar("lib/hsqldb-x.jar", org.hsqldb.jdbcDriver.class));
-        jars.add(copyJar("lib/sqoop-x.jar", Sqoop.class));
 
         XConfiguration protoConf = new XConfiguration();
         protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
@@ -306,10 +290,10 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
         protoConf.set(OozieClient.GROUP_NAME, getTestGroup());
         injectKerberosInfo(protoConf);
 
-        //Making DB file to show up in the DistributeCache
-        jars.addAll(copyDbToHdfs());
+        FileSystem fs = getFileSystem();
+        SharelibUtils.addToDistributedCache("sqoop", fs, getFsTestCaseDir(), protoConf);
 
-        protoConf.setStrings(WorkflowAppService.APP_LIB_PATH_LIST, jars.toArray(new String[jars.size()]));
+        protoConf.setStrings(WorkflowAppService.APP_LIB_PATH_LIST, copyDbToHdfs());
 
         WorkflowJobBean wf = createBaseWorkflow(protoConf, "sqoop-action");
         WorkflowActionBean action = (WorkflowActionBean) wf.getActions().get(0);
@@ -319,7 +303,7 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
         return new Context(wf, action);
     }
 
-    private List<String> copyDbToHdfs() throws Exception {
+    private String[] copyDbToHdfs() throws Exception {
         List<String> files = new ArrayList<String>();
         String[] exts = {".script", ".properties"};
         for (String ext : exts) {
@@ -332,6 +316,6 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
             IOUtils.copyStream(is, os);
             files.add(targetPath.toString() + "#" + name);
         }
-        return files;
+        return files.toArray(new String[files.size()]);
     }
 }
