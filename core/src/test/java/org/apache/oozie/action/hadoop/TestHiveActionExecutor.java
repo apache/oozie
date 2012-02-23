@@ -108,7 +108,7 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
         "<configuration>" +
         "<property>" +
         "<name>javax.jdo.option.ConnectionURL</name>" +
-        "<value>jdbc:derby:db;create=true</value>" +
+        "<value>jdbc:derby:" + getTestCaseDir() + "/db;create=true</value>" +
         "</property>" +
         "<property>" +
         "<name>javax.jdo.option.ConnectionDriverName</name>" +
