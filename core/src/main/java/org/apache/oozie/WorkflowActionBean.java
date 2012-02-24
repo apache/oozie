@@ -337,7 +337,9 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
         setTrackerUri(ParamChecker.notEmpty(trackerUri, "trackerUri"));
         setConsoleUrl(ParamChecker.notEmpty(consoleUrl, "consoleUrl"));
         Date now = new Date();
-        setStartTime(now);
+        if (this.startTimestamp == null) {
+            setStartTime(now);
+        }
         setLastCheckTime(now);
         setStatus(Status.RUNNING);
     }

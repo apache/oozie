@@ -190,6 +190,7 @@ public class ActionStartXCommand extends ActionXCommand<Void> {
 
             Instrumentation.Cron cron = new Instrumentation.Cron();
             cron.start();
+            context.setStartTime();
             executor.start(context, wfAction);
             cron.stop();
             FaultInjection.activate("org.apache.oozie.command.SkipCommitFaultInjection");

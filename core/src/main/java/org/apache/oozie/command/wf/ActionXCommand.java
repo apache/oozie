@@ -300,6 +300,11 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<Void> {
             started = true;
         }
 
+        public void setStartTime() {
+            Date now = new Date();
+            action.setStartTime(now);
+        }
+
         public void setExecutionData(String externalStatus, Properties actionData) {
             action.setExecutionData(externalStatus, actionData);
             executed = true;
