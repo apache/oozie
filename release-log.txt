@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+Oozie-626 Roll the oozie log file in GZ format (Kiran Nagasubramanian via Angelo)
 OOZIE-693 Fork-join validation doesn't check for the 'error to' transition of nodes (Virag Kothari via Angelo)
 OOZIE-616 Moving action prepare FS execution to LauncherMapper ( Kiran Nagasubramanian via Angelo)
 OOZIE-687 The start time of the action is set after the job is already submitted to hadoop (Mohamed Battisha vis Angelo)
