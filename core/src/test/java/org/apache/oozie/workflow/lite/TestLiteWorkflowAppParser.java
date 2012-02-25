@@ -121,7 +121,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
             invokeForkJoin(parser, def);
         } catch (Exception e) {
             e.printStackTrace();
-            fail();
+            fail("Unexpected Exception");
         }
     }
 
@@ -147,7 +147,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
             invokeForkJoin(parser, def);
         } catch (Exception e) {
             e.printStackTrace();
-            fail();
+            fail("Unexpected Exception");
         }
     }
 
@@ -183,7 +183,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
             invokeForkJoin(parser, def);
         } catch (Exception e) {
             e.printStackTrace();
-            fail();
+            fail("Unexpected Exception");
         }
     }
 
@@ -207,7 +207,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
 
         try {
             invokeForkJoin(parser, def);
-            fail();
+            fail("Expected to catch an exception but did not encounter any");
         } catch (Exception ex) {
             WorkflowException we = (WorkflowException) ex.getCause();
             assertEquals(ErrorCode.E0730, we.getErrorCode());
@@ -245,7 +245,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
 
         try {
             invokeForkJoin(parser, def);
-            fail();
+            fail("Expected to catch an exception but did not encounter any");
         } catch (Exception ex) {
             WorkflowException we = (WorkflowException) ex.getCause();
             assertEquals(ErrorCode.E0730, we.getErrorCode());
@@ -259,7 +259,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
      3->ok->j
      3->fail->end
     */
-    public void testTransitionFailure() throws WorkflowException{
+    public void testTransitionFailure1() throws WorkflowException{
         LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
                 LiteWorkflowStoreService.LiteDecisionHandler.class,
                 LiteWorkflowStoreService.LiteActionHandler.class);
@@ -274,7 +274,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
 
         try {
             invokeForkJoin(parser, def);
-            fail();
+            fail("Expected to catch an exception but did not encounter any");
         } catch (Exception ex) {
             WorkflowException we = (WorkflowException) ex.getCause();
             assertEquals(ErrorCode.E0734, we.getErrorCode());
@@ -284,6 +284,108 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         }
 
     }
+
+    /*
+    f->(2,3)
+    2->fail->3
+    2->ok->j
+    3->ok->j
+    3->fail->end
+   */
+   public void testTransitionFailure2() throws WorkflowException{
+       LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+               LiteWorkflowStoreService.LiteDecisionHandler.class,
+               LiteWorkflowStoreService.LiteActionHandler.class);
+
+       LiteWorkflowApp def = new LiteWorkflowApp("name", "def", new StartNodeDef("one"))
+       .addNode(new ActionNodeDef("one", dummyConf, TestActionNodeHandler.class, "f","end"))
+       .addNode(new ForkNodeDef("f", Arrays.asList(new String[]{"two","three"})))
+       .addNode(new ActionNodeDef("two", dummyConf, TestActionNodeHandler.class, "j", "three"))
+       .addNode(new ActionNodeDef("three", dummyConf, TestActionNodeHandler.class, "j", "end"))
+       .addNode(new JoinNodeDef("j", "end"))
+       .addNode(new EndNodeDef("end"));
+
+       try {
+           invokeForkJoin(parser, def);
+           fail("Expected to catch an exception but did not encounter any");
+       } catch (Exception ex) {
+           WorkflowException we = (WorkflowException) ex.getCause();
+           assertEquals(ErrorCode.E0734, we.getErrorCode());
+           // Make sure the message contains the nodes involved in the invalid transition
+           assertTrue(we.getMessage().contains("two"));
+           assertTrue(we.getMessage().contains("three"));
+       }
+
+   }
+
+   /*
+   f->(2,3)
+   2->ok->j
+   3->ok->4
+   2->fail->4
+   4->ok->j
+  */
+   public void testTransitionFailure3() throws WorkflowException{
+       LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+               LiteWorkflowStoreService.LiteDecisionHandler.class,
+               LiteWorkflowStoreService.LiteActionHandler.class);
+
+       LiteWorkflowApp def = new LiteWorkflowApp("name", "def", new StartNodeDef("one"))
+       .addNode(new ActionNodeDef("one", dummyConf, TestActionNodeHandler.class, "f","end"))
+       .addNode(new ForkNodeDef("f", Arrays.asList(new String[]{"two","three"})))
+       .addNode(new ActionNodeDef("two", dummyConf, TestActionNodeHandler.class, "j", "four"))
+       .addNode(new ActionNodeDef("three", dummyConf, TestActionNodeHandler.class, "four", "end"))
+       .addNode(new ActionNodeDef("four", dummyConf, TestActionNodeHandler.class, "j", "end"))
+       .addNode(new JoinNodeDef("j", "end"))
+       .addNode(new EndNodeDef("end"));
+
+       try {
+           invokeForkJoin(parser, def);
+           fail("Expected to catch an exception but did not encounter any");
+       } catch (Exception ex) {
+           WorkflowException we = (WorkflowException) ex.getCause();
+           assertEquals(ErrorCode.E0735, we.getErrorCode());
+           // Make sure the message contains the node involved in the invalid transition
+           assertTrue(we.getMessage().contains("four"));
+       }
+   }
+
+   /*
+    * f->(2,3)
+    * 2->ok->j
+    * 3->ok->j
+    * j->end
+    * 2->error->f1
+    * 3->error->f1
+    * f1->(4,5)
+    * (4,5)->j1
+    * j1->end
+    */
+   public void testErrorTransitionForkJoin() throws WorkflowException {
+       LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+               LiteWorkflowStoreService.LiteDecisionHandler.class,
+               LiteWorkflowStoreService.LiteActionHandler.class);
+
+       LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>", new StartNodeDef("one"))
+       .addNode(new ActionNodeDef("one", dummyConf, TestActionNodeHandler.class, "f", "end"))
+       .addNode(new ForkNodeDef("f", Arrays.asList(new String[]{"two", "three"})))
+       .addNode(new ActionNodeDef("two", dummyConf,  TestActionNodeHandler.class, "j", "f1"))
+       .addNode(new ActionNodeDef("three", dummyConf, TestActionNodeHandler.class, "j", "f1"))
+       .addNode(new ForkNodeDef("f1", Arrays.asList(new String[]{"four", "five"})))
+       .addNode(new ActionNodeDef("four", dummyConf,  TestActionNodeHandler.class, "j1", "end"))
+       .addNode(new ActionNodeDef("five", dummyConf, TestActionNodeHandler.class, "j1", "end"))
+       .addNode(new JoinNodeDef("j", "six"))
+       .addNode(new JoinNodeDef("j1", "six"))
+       .addNode(new ActionNodeDef("six", dummyConf, TestActionNodeHandler.class, "end", "end"))
+       .addNode(new EndNodeDef("end"));
+
+       try {
+           invokeForkJoin(parser, def);
+       } catch (Exception e) {
+           e.printStackTrace();
+           fail("Unexpected Exception");
+       }
+   }
 
     /*
     f->(2,3)
@@ -310,7 +412,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
             invokeForkJoin(parser, def);
         } catch (Exception e) {
             e.printStackTrace();
-            fail();
+            fail("Unexpected Exception");
         }
     }
 
@@ -335,7 +437,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
 
         try {
             invokeForkJoin(parser, def);
-            fail();
+            fail("Expected to catch an exception but did not encounter any");
         } catch (Exception ex) {
             WorkflowException we = (WorkflowException) ex.getCause();
             assertEquals(ErrorCode.E0734, we.getErrorCode());
@@ -374,14 +476,14 @@ public class TestLiteWorkflowAppParser extends XTestCase {
             invokeForkJoin(parser, def);
         } catch (Exception e) {
             e.printStackTrace();
-            fail();
+            fail("Unexpected Exception");
         }
     }
 
     // Invoke private validateForkJoin method using Reflection API
     private void invokeForkJoin(LiteWorkflowAppParser parser, LiteWorkflowApp def) throws Exception {
         Class<? extends LiteWorkflowAppParser> c = parser.getClass();
-        Class d = Class.forName("org.apache.oozie.workflow.lite.LiteWorkflowAppParser$VisitStatus");
+        Class<?> d = Class.forName("org.apache.oozie.workflow.lite.LiteWorkflowAppParser$VisitStatus");
         Field f = d.getField("VISITING");
         Map traversed = new HashMap();
         traversed.put(def.getNode(StartNodeDef.START).getName(), f);

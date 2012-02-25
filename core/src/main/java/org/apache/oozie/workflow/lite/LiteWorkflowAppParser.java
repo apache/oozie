@@ -164,6 +164,8 @@ public class LiteWorkflowAppParser {
      */
     private NodeDef validateFork(NodeDef forkNode, LiteWorkflowApp app) throws WorkflowException {
         List<String> transitions = new ArrayList<String>(forkNode.getTransitions());
+        // list for keeping track of "error-to" transitions of Action Node
+        List<String> errorToTransitions = new ArrayList<String>();
         String joinNode = null;
         for (int i = 0; i < transitions.size(); i++) {
             NodeDef node = app.getNode(transitions.get(i));
@@ -177,19 +179,23 @@ public class LiteWorkflowAppParser {
                     }
                 }
             } else if (node instanceof ActionNodeDef) {
-                // Get only the "ok-to" transition of node
-                String okToTransition = node.getTransitions().get(0);
                 // Make sure the transition is valid
-                validateTransition(transitions, app, okToTransition, node);
-                transitions.add(okToTransition);
+                validateTransition(errorToTransitions, transitions, app, node);
+                // Add the "ok-to" transition of node
+                transitions.add(node.getTransitions().get(0));
+                String errorTo = node.getTransitions().get(1);
+                // Add the "error-to" transition if the transition is a Action Node
+                if (app.getNode(errorTo) instanceof ActionNodeDef) {
+                    errorToTransitions.add(errorTo);
+                }
             } else if (node instanceof ForkNodeDef) {
                 forkList.remove(node.getName());
                 // Make a recursive call to resolve this fork node
                 NodeDef joinNd = validateFork(node, app);
-                String okToTransition = joinNd.getTransitions().get(0);
                 // Make sure the transition is valid
-                validateTransition(transitions, app, okToTransition, node);
-                transitions.add(okToTransition);
+                validateTransition(errorToTransitions, transitions, app, node);
+                // Add the "ok-to" transition of node
+                transitions.add(joinNd.getTransitions().get(0));
             } else if (node instanceof JoinNodeDef) {
                 // If joinNode encountered for the first time, remove it from the joinList and remember it
                 String currentJoin = node.getName();
@@ -213,12 +219,19 @@ public class LiteWorkflowAppParser {
 
     }
 
-    private void validateTransition(List<String> transitions, LiteWorkflowApp app, String okToTransition, NodeDef node)
+    private void validateTransition(List<String> errorToTransitions, List<String> transitions, LiteWorkflowApp app, NodeDef node)
             throws WorkflowException {
-        // Make sure the transition node is either a join node or is not already visited
-        if (transitions.contains(okToTransition) && !(app.getNode(okToTransition) instanceof JoinNodeDef)) {
-            throw new WorkflowException(ErrorCode.E0734, node.getName(), okToTransition);
+        for (String transition : node.getTransitions()) {
+            // Make sure the transition node is either a join node or is not already visited
+            if (transitions.contains(transition) && !(app.getNode(transition) instanceof JoinNodeDef)) {
+                throw new WorkflowException(ErrorCode.E0734, node.getName(), transition);
+            }
+            // Make sure the transition node is not the same as an already visited 'error-to' transition
+            if (errorToTransitions.contains(transition)) {
+                throw new WorkflowException(ErrorCode.E0735, node.getName(), transition);
+            }
         }
+
     }
 
     /**

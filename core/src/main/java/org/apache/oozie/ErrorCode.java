@@ -138,6 +138,7 @@ public enum ErrorCode {
     E0732(XLog.STD, "Fork [{0}]/Join [{1}] not in pair"),
     E0733(XLog.STD, "Fork [{0}] without a join"),
     E0734(XLog.STD, "Invalid transition from node [{0}] to node [{1}] while using fork/join"),
+    E0735(XLog.STD, "There was an invalid \"error to\" transition to node [{1}] while using fork/join"),
 
     E0800(XLog.STD, "Action it is not running its in [{1}] state, action [{0}]"),
     E0801(XLog.STD, "Workflow already running, workflow [{0}]"),
