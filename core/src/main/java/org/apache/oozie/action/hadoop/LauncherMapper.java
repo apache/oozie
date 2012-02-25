@@ -77,6 +77,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
     public static final String EXTERNAL_ACTION_STATS = ACTION_PREFIX + "stats.properties";
 
     static final String ACTION_CONF_XML = "action.xml";
+    public static final String ACTION_PREPARE_XML = "oozie.action.prepare.xml";
     private static final String ACTION_OUTPUT_PROPS = "output.properties";
     private static final String ACTION_STATS_PROPS = "stats.properties";
     private static final String ACTION_EXTERNAL_CHILD_IDS_PROPS = "externalChildIds.properties";
@@ -179,7 +180,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
      * @throws HadoopAccessorException
      */
     public static void setupLauncherInfo(JobConf launcherConf, String jobId, String actionId, Path actionDir,
-            String recoveryId, Configuration actionConf) throws IOException, HadoopAccessorException {
+            String recoveryId, Configuration actionConf, String prepareXML) throws IOException, HadoopAccessorException {
 
         launcherConf.setMapperClass(LauncherMapper.class);
         launcherConf.setSpeculativeExecution(false);
@@ -190,6 +191,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         launcherConf.set(OOZIE_ACTION_ID, actionId);
         launcherConf.set(OOZIE_ACTION_DIR_PATH, actionDir.toString());
         launcherConf.set(OOZIE_ACTION_RECOVERY_ID, recoveryId);
+        launcherConf.set(ACTION_PREPARE_XML, prepareXML);
 
         actionConf.set(OOZIE_JOB_ID, jobId);
         actionConf.set(OOZIE_ACTION_ID, actionId);
@@ -359,7 +361,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
     private ScheduledThreadPoolExecutor timer;
 
     private boolean configFailure = false;
-
+    private LauncherException configureFailureEx;
     public LauncherMapper() {
     }
 
@@ -375,6 +377,8 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
             setRecoveryId(jobConf, actionDir, recoveryId);
         }
         catch (LauncherException ex) {
+            System.out.println("Launcher config error "+ex.getMessage());
+            configureFailureEx = ex;
             configFailure = true;
         }
     }
@@ -383,7 +387,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
     public void map(K1 key, V1 value, OutputCollector<K2, V2> collector, Reporter reporter) throws IOException {
         try {
             if (configFailure) {
-                throw new LauncherException();
+                throw configureFailureEx;
             }
             else {
                 String mainClass = getJobConf().get(CONF_OOZIE_ACTION_MAIN_CLASS);
@@ -404,6 +408,15 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
                     setupHeartBeater(reporter);
 
                     setupMainConfiguration();
+
+                    try {
+                        System.out.println("Starting the execution of prepare actions");
+                        executePrepare();
+                        System.out.println("Completed the execution of prepare actions successfully");
+                    } catch (Exception ex) {
+                        System.out.println("Prepare execution in the Launcher Mapper has failed");
+                        throw new LauncherException(ex.getMessage(), ex);
+                    }
 
                     String[] args = getMainArguments(getJobConf());
 
@@ -615,6 +628,18 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         System.setProperty("oozie.action.newId.properties", new File(ACTION_NEW_ID_PROPS).getAbsolutePath());
     }
 
+    // Method to execute the prepare actions
+    private void executePrepare() throws IOException, LauncherException {
+        String prepareXML = getJobConf().get(ACTION_PREPARE_XML);
+        if (prepareXML != null) {
+             if (!prepareXML.equals("")) {
+                 PrepareActionsDriver.doOperations(prepareXML);
+             } else {
+                 System.out.println("There are no prepare actions to execute.");
+             }
+        }
+    }
+
     public static String[] getMainArguments(Configuration conf) {
         String[] args = new String[conf.getInt(CONF_OOZIE_ACTION_MAIN_ARG_COUNT, 0)];
         for (int i = 0; i < args.length; i++) {
@@ -673,7 +698,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
                 ex.printStackTrace(System.out);
                 ex.printStackTrace(System.err);
             }
-            throw new LauncherException();
+            throw new LauncherException(reason, ex);
         }
         catch (IOException rex) {
             throw new RuntimeException("Error while failing launcher, " + rex.getMessage(), rex);
@@ -761,4 +786,12 @@ class LauncherSecurityManager extends SecurityManager {
 }
 
 class LauncherException extends Exception {
+
+    LauncherException(String message) {
+        super(message);
+    }
+
+    LauncherException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

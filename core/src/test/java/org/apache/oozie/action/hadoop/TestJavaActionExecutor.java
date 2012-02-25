@@ -79,16 +79,15 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
     public void testSetupMethods() throws Exception {
         JavaActionExecutor ae = new JavaActionExecutor();
-
         assertEquals("java", ae.getType());
-
         assertEquals("java-launcher.jar", ae.getLauncherJarName());
-
         List<Class> classes = new ArrayList<Class>();
         classes.add(LauncherMapper.class);
         classes.add(LauncherSecurityManager.class);
         classes.add(LauncherException.class);
         classes.add(LauncherMainException.class);
+        classes.add(FileSystemActions.class);
+        classes.add(PrepareActionsDriver.class);
         classes.add(ActionStats.class);
         classes.add(ActionType.class);
         assertEquals(classes, ae.getLauncherClasses());

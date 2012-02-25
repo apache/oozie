@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-616 Moving action prepare FS execution to LauncherMapper ( Kiran Nagasubramanian via Angelo)
 OOZIE-687 The start time of the action is set after the job is already submitted to hadoop (Mohamed Battisha vis Angelo)
 OOZIE-712 Hive testcases fail with 0.23 (tucu)
 OOZIE-710 add a timeout to the surefire configuration (tucu)

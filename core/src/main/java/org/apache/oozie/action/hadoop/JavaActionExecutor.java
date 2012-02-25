@@ -117,6 +117,8 @@ public class JavaActionExecutor extends ActionExecutor {
         classes.add(LauncherSecurityManager.class);
         classes.add(LauncherException.class);
         classes.add(LauncherMainException.class);
+        classes.add(FileSystemActions.class);
+        classes.add(PrepareActionsDriver.class);
         classes.add(ActionStats.class);
         classes.add(ActionType.class);
         return classes;
@@ -505,14 +507,23 @@ public class JavaActionExecutor extends ActionExecutor {
             Path actionDir = context.getActionDir();
             String recoveryId = context.getRecoveryId();
 
-            LauncherMapper.setupLauncherInfo(launcherJobConf, jobId, actionId, actionDir, recoveryId, actionConf);
+            // Getting the prepare XML from the action XML
+            Namespace ns = actionXml.getNamespace();
+            Element prepareElement = actionXml.getChild("prepare", ns);
+            String prepareXML = "";
+            if (prepareElement != null) {
+                if (prepareElement.getChildren().size() > 0) {
+                    prepareXML = XmlUtils.prettyPrint(prepareElement).toString().trim();
+                }
+            }
+            LauncherMapper.setupLauncherInfo(launcherJobConf, jobId, actionId, actionDir, recoveryId, actionConf,
+                    prepareXML);
 
             LauncherMapper.setupMainClass(launcherJobConf, getLauncherMain(launcherConf, actionXml));
 
             LauncherMapper.setupMaxOutputData(launcherJobConf, maxActionOutputLen);
             LauncherMapper.setupMaxExternalStatsSize(launcherJobConf, maxExternalStatsSize);
 
-            Namespace ns = actionXml.getNamespace();
             List<Element> list = actionXml.getChildren("arg", ns);
             String[] args = new String[list.size()];
             for (int i = 0; i < list.size(); i++) {
@@ -634,7 +645,6 @@ public class JavaActionExecutor extends ActionExecutor {
                 }
             }
             else {
-                prepare(context, actionXml);
                 XLog.getLog(getClass()).debug("Submitting the job through Job Client for action " + action.getId());
 
                 // setting up propagation of the delegation token.
@@ -807,17 +817,6 @@ public class JavaActionExecutor extends ActionExecutor {
             log.warn("credentials is null for the action");
         }
         return credProp;
-    }
-
-    void prepare(Context context, Element actionXml) throws ActionExecutorException {
-        Namespace ns = actionXml.getNamespace();
-        Element prepare = actionXml.getChild("prepare", ns);
-        if (prepare != null) {
-            XLog.getLog(getClass()).debug("Preparing the action with FileSystem operation");
-            FsActionExecutor fsAe = new FsActionExecutor();
-            fsAe.doOperations(context, prepare);
-            XLog.getLog(getClass()).debug("FS Operation is completed");
-        }
     }
 
     @Override
