@@ -35,14 +35,17 @@ public class CoordJobGetActionsSubsetJPAExecutor implements JPAExecutor<List<Coo
     private String coordJobId = null;
     private int start = 1;
     private int len = 50;
+    private List<String> filterList;
 
     public CoordJobGetActionsSubsetJPAExecutor(String coordJobId) {
         ParamChecker.notNull(coordJobId, "coordJobId");
         this.coordJobId = coordJobId;
     }
 
-    public CoordJobGetActionsSubsetJPAExecutor(String coordJobId, int start, int len) {
+    public CoordJobGetActionsSubsetJPAExecutor(String coordJobId, List<String> filterList, int start, int len) {
         this(coordJobId);
+        ParamChecker.notNull(filterList, "filterList");
+        this.filterList = filterList;
         this.start = start;
         this.len = len;
     }
@@ -59,10 +62,22 @@ public class CoordJobGetActionsSubsetJPAExecutor implements JPAExecutor<List<Coo
         List<CoordinatorActionBean> actionList = new ArrayList<CoordinatorActionBean>();
         try {
             Query q = em.createNamedQuery("GET_ACTIONS_FOR_COORD_JOB_ORDER_BY_NOMINAL_TIME");
+            if (!filterList.isEmpty()) {
+                // Add the filter clause
+                String query = q.toString();
+                StringBuilder sbTotal = new StringBuilder(query);
+                int offset = query.lastIndexOf("order");
+                // Get the 'where' clause for status filters
+                StringBuilder statusClause = getStatusClause(filterList);
+                // Insert 'where' before 'order by'
+                sbTotal.insert(offset, statusClause);
+                q = em.createQuery(sbTotal.toString());
+            }
             q.setParameter("jobId", coordJobId);
             q.setFirstResult(start - 1);
             q.setMaxResults(len);
             actions = q.getResultList();
+
             for (CoordinatorActionBean a : actions) {
                 CoordinatorActionBean aa = getBeanForRunningCoordAction(a);
                 actionList.add(aa);
@@ -72,6 +87,23 @@ public class CoordJobGetActionsSubsetJPAExecutor implements JPAExecutor<List<Coo
             throw new JPAExecutorException(ErrorCode.E0603, e);
         }
         return actionList;
+    }
+
+    // Form the where clause to filter by status values
+    private StringBuilder getStatusClause(List<String> filterList) {
+        StringBuilder sb = new StringBuilder();
+        boolean isStatus = false;
+        for (String statusVal : filterList) {
+            if (!isStatus) {
+                sb.append(" and a.status IN (\'" + statusVal + "\'");
+                isStatus = true;
+            }
+            else {
+                sb.append(",\'" + statusVal + "\'");
+            }
+        }
+        sb.append(") ");
+        return sb;
     }
 
     private CoordinatorActionBean getBeanForRunningCoordAction(CoordinatorActionBean a) {

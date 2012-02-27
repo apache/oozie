@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -118,7 +118,7 @@ public class BundleEngine extends BaseEngine {
      * @see org.apache.oozie.BaseEngine#getCoordJob(java.lang.String, int, int)
      */
     @Override
-    public CoordinatorJob getCoordJob(String jobId, int start, int length) throws BundleEngineException {
+    public CoordinatorJob getCoordJob(String jobId, String filter, int start, int length) throws BundleEngineException {
         throw new BundleEngineException(new XException(ErrorCode.E0301));
     }
 
@@ -294,17 +294,17 @@ public class BundleEngine extends BaseEngine {
     /**
      * Get bundle jobs
      *
-     * @param filterStr the filter string
+     * @param filter the filter string
      * @param start start location for paging
      * @param len total length to get
      * @return bundle job info
      * @throws BundleEngineException thrown if failed to get bundle job info
      */
-    public BundleJobInfo getBundleJobs(String filterStr, int start, int len) throws BundleEngineException {
-        Map<String, List<String>> filter = parseFilter(filterStr);
+    public BundleJobInfo getBundleJobs(String filter, int start, int len) throws BundleEngineException {
+        Map<String, List<String>> filterList = parseFilter(filter);
 
         try {
-            return new BundleJobsXCommand(filter, start, len).call();
+            return new BundleJobsXCommand(filterList, start, len).call();
         }
         catch (CommandException ex) {
             throw new BundleEngineException(ex);

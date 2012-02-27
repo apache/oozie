@@ -17,6 +17,7 @@
  */
 package org.apache.oozie.command.coord;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.oozie.CoordinatorActionBean;
@@ -40,6 +41,7 @@ public class CoordJobXCommand extends CoordinatorXCommand<CoordinatorJobBean> {
     private final boolean getActionInfo;
     private int start = 1;
     private int len = Integer.MAX_VALUE;
+    private List<String> filterList;
 
     /**
      * Constructor for loading a coordinator job information
@@ -47,7 +49,7 @@ public class CoordJobXCommand extends CoordinatorXCommand<CoordinatorJobBean> {
      * @param id coord jobId
      */
     public CoordJobXCommand(String id) {
-        this(id, 1, Integer.MAX_VALUE);
+        this(id, Collections.<String>emptyList(), 1, Integer.MAX_VALUE);
     }
 
     /**
@@ -57,10 +59,11 @@ public class CoordJobXCommand extends CoordinatorXCommand<CoordinatorJobBean> {
      * @param start starting index in the list of actions belonging to the job
      * @param length number of actions to be returned
      */
-    public CoordJobXCommand(String id, int start, int length) {
+    public CoordJobXCommand(String id, List<String> filterList, int start, int length) {
         super("job.info", "job.info", 1);
         this.id = ParamChecker.notEmpty(id, "id");
         this.getActionInfo = true;
+        this.filterList = filterList;
         this.start = start;
         this.len = length;
     }
@@ -119,7 +122,7 @@ public class CoordJobXCommand extends CoordinatorXCommand<CoordinatorJobBean> {
                 coordJob = jpaService.execute(new CoordJobGetJPAExecutor(id));
                 if (getActionInfo) {
                     List<CoordinatorActionBean> coordActions = jpaService
-                            .execute(new CoordJobGetActionsSubsetJPAExecutor(id, start, len));
+                            .execute(new CoordJobGetActionsSubsetJPAExecutor(id, filterList, start, len));
                     coordJob.setActions(coordActions);
                 }
             }

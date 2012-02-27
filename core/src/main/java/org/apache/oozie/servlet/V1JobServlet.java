@@ -715,14 +715,15 @@ public class V1JobServlet extends BaseJobServlet {
         String jobId = getResourceName(request);
         String startStr = request.getParameter(RestConstants.OFFSET_PARAM);
         String lenStr = request.getParameter(RestConstants.LEN_PARAM);
+        String filter = request.getParameter(RestConstants.JOB_FILTER_PARAM);
         int start = (startStr != null) ? Integer.parseInt(startStr) : 1;
         start = (start < 1) ? 1 : start;
         // Get default number of coordinator actions to be retrieved
         int defaultLen = Services.get().getConf().getInt(COORD_ACTIONS_DEFAULT_LENGTH, 1000);
         int len = (lenStr != null) ? Integer.parseInt(lenStr) : 0;
         len = (len < 1) ? defaultLen : len;
-    try {
-            JsonCoordinatorJob coordJob = coordEngine.getCoordJob(jobId, start, len);
+        try {
+            JsonCoordinatorJob coordJob = coordEngine.getCoordJob(jobId, filter, start, len);
             jobBean = coordJob;
         }
         catch (CoordinatorEngineException ex) {

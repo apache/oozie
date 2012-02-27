@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob;
@@ -161,13 +162,14 @@ public class CoordinatorEngine extends BaseEngine {
     /*
      * (non-Javadoc)
      *
-     * @see org.apache.oozie.BaseEngine#getCoordJob(java.lang.String, int, int)
+     * @see org.apache.oozie.BaseEngine#getCoordJob(java.lang.String, java.lang.String, int, int)
      */
     @Override
-    public CoordinatorJobBean getCoordJob(String jobId, int start, int length) throws BaseEngineException {
+    public CoordinatorJobBean getCoordJob(String jobId, String filter, int start, int length) throws BaseEngineException {
+        List<String> filterList = parseStatusFilter(filter);
         try {
             if (useXCommand) {
-                return new CoordJobXCommand(jobId, start, length).call();
+                return new CoordJobXCommand(jobId, filterList, start, length).call();
             }
             else {
                 return new CoordJobCommand(jobId, start, length).call();
@@ -509,26 +511,69 @@ public class CoordinatorEngine extends BaseEngine {
     }
 
     /**
-     * @param filterStr
+     * @param filter
      * @param start
      * @param len
      * @return CoordinatorJobInfo
      * @throws CoordinatorEngineException
      */
-    public CoordinatorJobInfo getCoordJobs(String filterStr, int start, int len) throws CoordinatorEngineException {
-        Map<String, List<String>> filter = parseFilter(filterStr);
+    public CoordinatorJobInfo getCoordJobs(String filter, int start, int len) throws CoordinatorEngineException {
+        Map<String, List<String>> filterList = parseFilter(filter);
 
         try {
             if (useXCommand) {
-                return new CoordJobsXCommand(filter, start, len).call();
+                return new CoordJobsXCommand(filterList, start, len).call();
             }
             else {
-                return new CoordJobsCommand(filter, start, len).call();
+                return new CoordJobsCommand(filterList, start, len).call();
             }
         }
         catch (CommandException ex) {
             throw new CoordinatorEngineException(ex);
         }
+    }
+
+
+    // Parses the filter string (e.g status=RUNNING;status=WAITING) and returns a list of status values
+    private List<String> parseStatusFilter(String filter) throws CoordinatorEngineException {
+        List<String> filterList = new ArrayList<String>();
+        if (filter != null) {
+            //split name;value pairs
+            StringTokenizer st = new StringTokenizer(filter, ";");
+            while (st.hasMoreTokens()) {
+                String token = st.nextToken();
+                if (token.contains("=")) {
+                    String[] pair = token.split("=");
+                    if (pair.length != 2) {
+                        throw new CoordinatorEngineException(ErrorCode.E0421, token,
+                                "elements must be name=value pairs");
+                    }
+                    if (pair[0].equalsIgnoreCase("status")) {
+                        String statusValue = pair[1];
+                        try {
+                            CoordinatorAction.Status.valueOf(statusValue);
+                        } catch (IllegalArgumentException ex) {
+                            StringBuilder validStatusList = new StringBuilder();
+                            for (CoordinatorAction.Status status: CoordinatorAction.Status.values()){
+                                validStatusList.append(status.toString()+" ");
+                            }
+                            // Check for incorrect status value
+                            throw new CoordinatorEngineException(ErrorCode.E0421, filter, XLog.format(
+                                    "invalid status value [{0}]." + " Valid status values are: [{1}]", statusValue, validStatusList));
+                        }
+                        filterList.add(statusValue);
+                    } else {
+                        // Check for incorrect filter option
+                        throw new CoordinatorEngineException(ErrorCode.E0421, filter, XLog.format(
+                                "invalid filter [{0}]." + " The only valid filter is \"status\"", pair[0]));
+                    }
+                } else {
+                    throw new CoordinatorEngineException(ErrorCode.E0421, token,
+                             "elements must be name=value pairs");
+                }
+            }
+        }
+        return filterList;
     }
 
     /**

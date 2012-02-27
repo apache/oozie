@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -451,7 +451,69 @@ public class TestCoordinatorEngine extends XTestCase {
 
     private void _testSubsetActions(final String jobId) throws Exception {
         CoordinatorEngine ce = new CoordinatorEngine(getTestUser(), "UNIT_TESTING");
-        CoordinatorJob job = ce.getCoordJob(jobId, 1, 2);
+        // Check for WAITING filter
+        CoordinatorJob job = ce.getCoordJob(jobId, "status=WAITING", 1, 2);
+        // As both actions are waiting, expected result size is 2
         assertEquals(job.getActions().size(), 2);
+
+        job = ce.getCoordJob(jobId, "status=RUNNING", 1, 2);
+        assertEquals(job.getActions().size(), 0);
+
+        //Check for actions WAITING OR RUNNING
+        job = ce.getCoordJob(jobId, "status=RUNNING;status=WAITING", 1, 2);
+        assertEquals(job.getActions().size(), 2);
+
+        //Check without filters
+        job = ce.getCoordJob(jobId, null, 1, 2);
+        assertEquals(job.getActions().size(), 2);
+
+        //Check for empty filter list
+        job = ce.getCoordJob(jobId, "", 1, 2);
+        assertEquals(job.getActions().size(), 2);
+
+        //Check for missing "="
+        try {
+            job = ce.getCoordJob(jobId, "statusRUNNING", 1, 2);
+        }
+        catch (CoordinatorEngineException ex) {
+            assertEquals(ErrorCode.E0421, ex.getErrorCode());
+            assertEquals("E0421: Invalid job filter [statusRUNNING], elements must be name=value pairs", ex.getMessage());
+        }
+
+        //Check for missing value after "="
+        try {
+            job = ce.getCoordJob(jobId, "status=", 1, 2);
+        }
+        catch (CoordinatorEngineException ex) {
+            assertEquals(ErrorCode.E0421, ex.getErrorCode());
+            assertEquals("E0421: Invalid job filter [status=], elements must be name=value pairs", ex.getMessage());
+        }
+
+        // Check for invalid status value
+        try {
+            job = ce.getCoordJob(jobId, "status=blahblah", 1, 2);
+        }
+        catch (CoordinatorEngineException ex) {
+            assertEquals(ErrorCode.E0421, ex.getErrorCode());
+            assertEquals("E0421: Invalid job filter [status=blahblah], invalid status value [blahblah]. Valid status values are: [WAITING READY SUBMITTED RUNNING SUSPENDED TIMEDOUT SUCCEEDED KILLED FAILED DISCARDED ]", ex.getMessage());
+        }
+
+        // Check for empty status value
+        try {
+            job = ce.getCoordJob(jobId, "status=\"\"", 1, 2);
+        }
+        catch (CoordinatorEngineException ex) {
+            assertEquals(ErrorCode.E0421, ex.getErrorCode());
+            assertEquals("E0421: Invalid job filter [status=\"\"], invalid status value [\"\"]. Valid status values are: [WAITING READY SUBMITTED RUNNING SUSPENDED TIMEDOUT SUCCEEDED KILLED FAILED DISCARDED ]", ex.getMessage());
+        }
+
+        // Check for invalid filter option
+        try {
+            job = ce.getCoordJob(jobId, "blahblah=blahblah", 1, 2);
+        }
+        catch (CoordinatorEngineException ex) {
+            assertEquals(ErrorCode.E0421, ex.getErrorCode());
+            assertEquals("E0421: Invalid job filter [blahblah=blahblah], invalid filter [blahblah]. The only valid filter is \"status\"", ex.getMessage());
+        }
     }
 }

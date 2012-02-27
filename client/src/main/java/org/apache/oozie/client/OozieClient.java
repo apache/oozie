@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -121,7 +121,7 @@ public class OozieClient {
     public static final String FILTER_FREQUENCY = "frequency";
 
     public static final String FILTER_ID = "id";
-    
+
     public static final String FILTER_UNIT = "unit";
 
     public static final String CHANGE_VALUE_ENDTIME = "endtime";
@@ -878,9 +878,9 @@ public class OozieClient {
 
     private class CoordJobInfo extends ClientCallable<CoordinatorJob> {
 
-        CoordJobInfo(String jobId, int start, int len) {
+        CoordJobInfo(String jobId, String filter, int start, int len) {
             super("GET", RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.JOB_SHOW_PARAM,
-                    RestConstants.JOB_SHOW_INFO, RestConstants.OFFSET_PARAM, Integer.toString(start),
+                    RestConstants.JOB_SHOW_INFO, RestConstants.JOB_FILTER_PARAM, filter, RestConstants.OFFSET_PARAM, Integer.toString(start),
                     RestConstants.LEN_PARAM, Integer.toString(len)));
         }
 
@@ -958,20 +958,21 @@ public class OozieClient {
      * @throws OozieClientException thrown if the job info could not be retrieved.
      */
     public CoordinatorJob getCoordJobInfo(String jobId) throws OozieClientException {
-        return new CoordJobInfo(jobId, 0, 0).call();
+        return new CoordJobInfo(jobId, null, 0, 0).call();
     }
 
     /**
      * Get the info of a coordinator job and subset actions.
      *
      * @param jobId job Id.
+     * @param filter filter the status filter
      * @param start starting index in the list of actions belonging to the job
      * @param len number of actions to be returned
      * @return the job info.
      * @throws OozieClientException thrown if the job info could not be retrieved.
      */
-    public CoordinatorJob getCoordJobInfo(String jobId, int start, int len) throws OozieClientException {
-        return new CoordJobInfo(jobId, start, len).call();
+    public CoordinatorJob getCoordJobInfo(String jobId, String filter, int start, int len) throws OozieClientException {
+        return new CoordJobInfo(jobId, filter, start, len).call();
     }
 
     /**

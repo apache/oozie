@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,6 +43,8 @@ public interface RestConstants {
     public static final String OFFSET_PARAM = "offset";
 
     public static final String LEN_PARAM = "len";
+
+    public static final String JOB_FILTER_PARAM = "filter";
 
     public static final String JOB_RESOURCE = "/job";
 

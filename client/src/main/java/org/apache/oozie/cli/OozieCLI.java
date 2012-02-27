@@ -210,6 +210,8 @@ public class OozieCLI {
         Option info = new Option(INFO_OPTION, true, "info of a job");
         Option offset = new Option(OFFSET_OPTION, true, "job info offset of actions (default '1', requires -info)");
         Option len = new Option(LEN_OPTION, true, "number of actions (default TOTAL ACTIONS, requires -info)");
+        Option filter = new Option(FILTER_OPTION, true,
+                "status=<S1>[;status=<S2>]* (All Coordinator actions satisfying any one of the status filters will be retreived. Currently, only supported for Coordinator job)");
         Option localtime = new Option(LOCAL_TIME_OPTION, false, "use local time (default GMT)");
         Option log = new Option(LOG_OPTION, true, "job log");
         Option definition = new Option(DEFINITION_OPTION, true, "job definition");
@@ -254,6 +256,7 @@ public class OozieCLI {
         jobOptions.addOption(verbose);
         jobOptions.addOption(offset);
         jobOptions.addOption(len);
+        jobOptions.addOption(filter);
         jobOptions.addOption(action);
         jobOptions.addOption(date);
         jobOptions.addOption(rerun_coord);
@@ -707,7 +710,8 @@ public class OozieCLI {
                     int start = Integer.parseInt((s != null) ? s : "0");
                     s = commandLine.getOptionValue(LEN_OPTION);
                     int len = Integer.parseInt((s != null) ? s : "0");
-                    printCoordJob(wc.getCoordJobInfo(commandLine.getOptionValue(INFO_OPTION), start, len), options
+                    String filter = commandLine.getOptionValue(FILTER_OPTION);
+                    printCoordJob(wc.getCoordJobInfo(commandLine.getOptionValue(INFO_OPTION), filter, start, len), options
                             .contains(LOCAL_TIME_OPTION), options.contains(VERBOSE_OPTION));
                 }
                 else if (commandLine.getOptionValue(INFO_OPTION).contains("-C@")) {

@@ -75,6 +75,7 @@ public enum ErrorCode {
     E0404(XLog.STD, "Only one of the properties are allowed [{0}]"),
 
     E0420(XLog.STD, "Invalid jobs filter [{0}], {1}"),
+    E0421(XLog.STD, "Invalid job filter [{0}], {1}"),
 
     E0500(XLog.OPS, "Not authorized, {0}"),
     E0501(XLog.OPS, "Could not perform authorization operation, {0}"),

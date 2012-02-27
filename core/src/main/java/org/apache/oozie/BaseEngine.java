@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -171,12 +171,13 @@ public abstract class BaseEngine {
      * Return the info about a coord job with actions subset.
      *
      * @param jobId job Id.
+     * @param filter the status filter
      * @param start starting from this index in the list of actions belonging to the job
      * @param length number of actions to be returned
      * @return the coord job info.
      * @throws BaseEngineException thrown if the job info could not be obtained.
      */
-    public abstract CoordinatorJob getCoordJob(String jobId, int start, int length) throws BaseEngineException;
+    public abstract CoordinatorJob getCoordJob(String jobId, String filter, int start, int length) throws BaseEngineException;
 
     /**
      * Return the a job definition.

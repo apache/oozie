@@ -17,6 +17,8 @@
  */
 package org.apache.oozie.executor.jpa;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.oozie.CoordinatorActionBean;
@@ -58,7 +60,7 @@ public class TestCoordJobGetActionsSubsetJPAExecutor extends XDataTestCase {
     private void _testGetActionsSubset(String jobId, String actionId, int start, int len) throws Exception {
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
-        CoordJobGetActionsSubsetJPAExecutor actionGetCmd = new CoordJobGetActionsSubsetJPAExecutor(jobId, start, len);
+        CoordJobGetActionsSubsetJPAExecutor actionGetCmd = new CoordJobGetActionsSubsetJPAExecutor(jobId, Collections.<String>emptyList(), start, len);
         List<CoordinatorActionBean> actions = jpaService.execute(actionGetCmd);
         assertEquals(actions.size(), 1);
         assertEquals(actions.get(0).getId(), actionId);
@@ -78,11 +80,40 @@ public class TestCoordJobGetActionsSubsetJPAExecutor extends XDataTestCase {
    private void _testGetActionsSubsetOrderBy(String jobId, int actionNum, int start, int len) throws Exception {
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
-        CoordJobGetActionsSubsetJPAExecutor actionGetCmd = new CoordJobGetActionsSubsetJPAExecutor(jobId, start, len);
+        CoordJobGetActionsSubsetJPAExecutor actionGetCmd = new CoordJobGetActionsSubsetJPAExecutor(jobId, Collections.<String>emptyList(), start, len);
         List<CoordinatorActionBean> actions = jpaService.execute(actionGetCmd);
         assertEquals(actions.size(), 2);
         // As actions are sorted by nominal time, the first action should be with action number 2
         assertEquals(actions.get(0).getActionNumber(), actionNum);
+    }
+
+    // Check status filters for Coordinator actions
+    public void testCoordActionFilter() throws Exception{
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
+        // Add Coordinator action with nominal time: 2009-12-15T01:00Z
+        addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.RUNNING,
+                "coord-action-get.xml", 0);
+        // Add Coordinator action with nominal time: 2009-02-01T23:59Z
+        addRecordToCoordActionTable(job.getId(), 2, CoordinatorAction.Status.WAITING,
+                "coord-action-get.xml", 0);
+        // Create lists for status filter
+        List<String> filterList = new ArrayList<String>();
+        filterList.add("RUNNING");
+        filterList.add("KILLED");
+        _testGetActionsSubsetFilter(job.getId(), 1, filterList, 1, 2);
+    }
+
+    // Check whether actions are retrieved based on the filter values for status
+    private void _testGetActionsSubsetFilter(String jobId, int actionNum, List<String> filterList, int start, int len)
+            throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+        CoordJobGetActionsSubsetJPAExecutor actionGetCmd = new CoordJobGetActionsSubsetJPAExecutor(jobId, filterList,
+                start, len);
+        List<CoordinatorActionBean> actions = jpaService.execute(actionGetCmd);
+        // As actions are filtered by RUNNING status, only 1 action should be returned
+        assertEquals(actions.size(), 1);
+        assertEquals(actions.get(0).getActionNumber(), 1);
     }
 
 }
