@@ -81,7 +81,8 @@ public class TestV1JobsServlet extends DagServletTestCase {
                 jobConf.writeXml(conn.getOutputStream());
                 assertEquals(HttpServletResponse.SC_CREATED, conn.getResponseCode());
                 JSONObject obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
-                assertEquals(MockDagEngineService.JOB_ID + wfCount, obj.get(JsonTags.JOB_ID));
+                assertEquals(MockDagEngineService.JOB_ID + wfCount + MockDagEngineService.JOB_ID_END,
+                             obj.get(JsonTags.JOB_ID));
                 assertFalse(MockDagEngineService.started.get(wfCount));
                 wfCount++;
 
@@ -99,7 +100,8 @@ public class TestV1JobsServlet extends DagServletTestCase {
                 jobConf.writeXml(conn.getOutputStream());
                 assertEquals(HttpServletResponse.SC_CREATED, conn.getResponseCode());
                 obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
-                assertEquals(MockDagEngineService.JOB_ID + wfCount, obj.get(JsonTags.JOB_ID));
+                assertEquals(MockDagEngineService.JOB_ID + wfCount + MockDagEngineService.JOB_ID_END,
+                             obj.get(JsonTags.JOB_ID));
                 assertTrue(MockDagEngineService.started.get(wfCount));
                 Services services = Services.get();
                 DagEngine de = services.get(DagEngineService.class).getDagEngine(getTestUser(), "undef");
@@ -128,7 +130,8 @@ public class TestV1JobsServlet extends DagServletTestCase {
                 JSONArray array = (JSONArray) json.get(JsonTags.WORKFLOWS_JOBS);
                 assertEquals(MockDagEngineService.INIT_WF_COUNT, array.size());
                 for (int i = 0; i < MockDagEngineService.INIT_WF_COUNT; i++) {
-                    assertEquals(MockDagEngineService.JOB_ID + i, ((JSONObject) array.get(i)).get(JsonTags.WORKFLOW_ID));
+                    assertEquals(MockDagEngineService.JOB_ID + i + MockDagEngineService.JOB_ID_END,
+                                 ((JSONObject) array.get(i)).get(JsonTags.WORKFLOW_ID));
                     assertNotNull(((JSONObject) array.get(i)).get(JsonTags.WORKFLOW_APP_PATH));
                 }
 
@@ -146,7 +149,8 @@ public class TestV1JobsServlet extends DagServletTestCase {
 
                 assertEquals(MockDagEngineService.INIT_WF_COUNT, array.size());
                 for (int i = 0; i < MockDagEngineService.INIT_WF_COUNT; i++) {
-                    assertEquals(MockDagEngineService.JOB_ID + i, ((JSONObject) array.get(i)).get(JsonTags.WORKFLOW_ID));
+                    assertEquals(MockDagEngineService.JOB_ID + i + MockDagEngineService.JOB_ID_END,
+                                 ((JSONObject) array.get(i)).get(JsonTags.WORKFLOW_ID));
                     assertNotNull(((JSONObject) array.get(i)).get(JsonTags.WORKFLOW_APP_PATH));
                 }
 

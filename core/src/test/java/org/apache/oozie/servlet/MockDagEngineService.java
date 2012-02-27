@@ -37,7 +37,7 @@ import org.apache.oozie.service.DagEngineService;
 import org.apache.oozie.util.XmlUtils;
 
 public class MockDagEngineService extends DagEngineService {
-    public static final String JOB_ID = "job-W-";
+    public static final String JOB_ID = "job-";
     public static final String JOB_ID_END = "-W";
     public static final String ACTION_ID = "action-";
     public static final String EXT_ID = "ext-";
@@ -96,10 +96,11 @@ public class MockDagEngineService extends DagEngineService {
             did = "submit";
             submittedConf = conf;
             int idx = workflows.size();
-            workflows.add(createDummyWorkflow(idx, XmlUtils.prettyPrint(conf).toString()));
+            WorkflowJob job = createDummyWorkflow(idx, XmlUtils.prettyPrint(conf).toString());
+            workflows.add(job);
             started.add(startJob);
             MockDagEngineService.user = getUser();
-            return JOB_ID + idx;
+            return job.getId();
         }
 
         @Override
@@ -111,9 +112,10 @@ public class MockDagEngineService extends DagEngineService {
                 did = "submitMR";
             }
             int idx = workflows.size();
-            workflows.add(createDummyWorkflow(idx, XmlUtils.prettyPrint(conf).toString()));
+            WorkflowJob job = createDummyWorkflow(idx, XmlUtils.prettyPrint(conf).toString());
+            workflows.add(job);
             started.add(true);
-            return JOB_ID + idx;
+            return job.getId();
         }
 
         @Override
@@ -166,6 +168,11 @@ public class MockDagEngineService extends DagEngineService {
             did = RestConstants.JOB_SHOW_INFO;
             int idx = validateWorkflowIdx(jobId);
             return workflows.get(idx);
+        }
+
+        @Override
+        public WorkflowJob getJob(String jobId, int start, int length) throws DagEngineException {
+            return getJob(jobId);
         }
 
         @Override
@@ -222,7 +229,7 @@ public class MockDagEngineService extends DagEngineService {
 
     private static WorkflowJob createDummyWorkflow(int idx) {
         JsonWorkflowJob workflow = new JsonWorkflowJob();
-        workflow.setId(JOB_ID + idx);
+        workflow.setId(JOB_ID + idx + JOB_ID_END);
         workflow.setAppPath("hdfs://blah/blah/" + idx + "-blah");
         workflow.setStatus((idx % 2) == 0 ? WorkflowJob.Status.RUNNING : WorkflowJob.Status.SUCCEEDED);
         workflow.setRun(idx);
@@ -245,7 +252,7 @@ public class MockDagEngineService extends DagEngineService {
 
     private static WorkflowJob createDummyWorkflow(int idx, String conf) {
         JsonWorkflowJob workflow = new JsonWorkflowJob();
-        workflow.setId(JOB_ID + idx);
+        workflow.setId(JOB_ID + idx + JOB_ID_END);
         workflow.setAppPath("hdfs://blah/blah/" + idx + "-blah");
         workflow.setStatus((idx % 2) == 0 ? WorkflowJob.Status.RUNNING : WorkflowJob.Status.SUCCEEDED);
         workflow.setRun(idx);

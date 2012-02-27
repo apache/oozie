@@ -66,7 +66,8 @@ public class TestWorkflowXClient extends DagServletTestCase {
                 BufferedWriter writer = new BufferedWriter(new FileWriter(pigScriptFile));
                 writer.write("a = load 'input.txt';\n dump a;");
                 writer.close();
-                assertEquals(MockDagEngineService.JOB_ID + wfCount, wc.submitPig(conf, pigScriptFile, null));
+                assertEquals(MockDagEngineService.JOB_ID + wfCount + MockDagEngineService.JOB_ID_END,
+                             wc.submitPig(conf, pigScriptFile, null));
 
                 assertTrue(MockDagEngineService.started.get(wfCount));
                 return null;
@@ -88,7 +89,8 @@ public class TestWorkflowXClient extends DagServletTestCase {
                 conf.setProperty(XOozieClient.NN, "hdfs://localhost:9000");
 
                 injectKerberosInfo(conf);
-                assertEquals(MockDagEngineService.JOB_ID + wfCount, wc.submitMapReduce(conf));
+                assertEquals(MockDagEngineService.JOB_ID + wfCount + MockDagEngineService.JOB_ID_END,
+                             wc.submitMapReduce(conf));
 
                 assertTrue(MockDagEngineService.started.get(wfCount));
                 return null;

@@ -73,7 +73,8 @@ public class TestV0JobServlet extends DagServletTestCase {
                 MockDagEngineService.reset();
                 params = new HashMap<String, String>();
                 params.put(RestConstants.ACTION_PARAM, action);
-                url = createURL(MockDagEngineService.JOB_ID + (MockDagEngineService.workflows.size() + 1), params);
+                url = createURL(MockDagEngineService.JOB_ID + (MockDagEngineService.workflows.size() + 1) +
+                                MockDagEngineService.JOB_ID_END, params);
                 conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("PUT");
                 conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
@@ -136,7 +137,7 @@ public class TestV0JobServlet extends DagServletTestCase {
                 MockDagEngineService.reset();
                 Map<String, String> params = new HashMap<String, String>();
                 params.put(RestConstants.JOB_SHOW_PARAM, show);
-                URL url = createURL(MockDagEngineService.JOB_ID + 1, params);
+                URL url = createURL(MockDagEngineService.JOB_ID + 1 + MockDagEngineService.JOB_ID_END, params);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
@@ -148,7 +149,8 @@ public class TestV0JobServlet extends DagServletTestCase {
                 MockDagEngineService.reset();
                 params = new HashMap<String, String>();
                 params.put(RestConstants.JOB_SHOW_PARAM, show);
-                url = createURL(MockDagEngineService.JOB_ID + (MockDagEngineService.workflows.size() + 1), params);
+                url = createURL(MockDagEngineService.JOB_ID + (MockDagEngineService.workflows.size() + 1) +
+                                MockDagEngineService.JOB_ID_END, params);
                 conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_BAD_REQUEST, conn.getResponseCode());
@@ -174,19 +176,21 @@ public class TestV0JobServlet extends DagServletTestCase {
                 MockDagEngineService.reset();
                 Map<String, String> params = new HashMap<String, String>();
                 params.put(RestConstants.JOB_SHOW_PARAM, RestConstants.JOB_SHOW_INFO);
-                URL url = createURL(MockDagEngineService.JOB_ID + 1, params);
+                URL url = createURL(MockDagEngineService.JOB_ID + 1 + MockDagEngineService.JOB_ID_END, params);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
                 JSONObject obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
-                assertEquals(MockDagEngineService.JOB_ID + 1, obj.get(JsonTags.WORKFLOW_ID));
+                assertEquals(MockDagEngineService.JOB_ID + 1 + MockDagEngineService.JOB_ID_END,
+                             obj.get(JsonTags.WORKFLOW_ID));
                 assertEquals(RestConstants.JOB_SHOW_INFO, MockDagEngineService.did);
 
                 MockDagEngineService.reset();
                 params = new HashMap<String, String>();
                 params.put(RestConstants.JOB_SHOW_PARAM, RestConstants.JOB_SHOW_INFO);
-                url = createURL(MockDagEngineService.JOB_ID + (MockDagEngineService.workflows.size() + 1), params);
+                url = createURL(MockDagEngineService.JOB_ID + (MockDagEngineService.workflows.size() + 1) +
+                                MockDagEngineService.JOB_ID_END, params);
                 conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_BAD_REQUEST, conn.getResponseCode());
