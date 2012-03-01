@@ -47,7 +47,9 @@ if necessary use =sudo -u OOZIE_USER= when invoking the scripts.
 
 Create a *libext/* directory in the directory where Oozie was expanded.
 
-If using a version of Hadoop bundled in Oozie *hadooplibs/*, copy the corresponding Hadoop JARs from *hadooplibs/* to the *libext/* directory. If using a different version of Hadoop, copy the required Hadoop JARs from such version in the *libext/* directory.
+If using a version of Hadoop bundled in Oozie *hadooplibs/*, copy the corresponding Hadoop JARs
+from *hadooplibs/* to the *libext/* directory. If using a different version of Hadoop, copy the
+required Hadoop JARs from such version in the *libext/* directory.
 
 If using the ExtJS library copy the ZIP file to the *libext/* directory.
 
@@ -57,7 +59,29 @@ Run the =oozie-setup.sh= script to configure Oozie with all the components added
 $ bin/oozie-setup.sh
 </verbatim>
 
-To start Oozie as a daemon process run:
+Create the Oozie DB using the 'ooziedb.sh' command line tool:
+
+<verbatim>
+$ bin/ooziedb.sh create -sqlfile oozie.sql -run
+
+Validate DB Connection.
+DONE
+Check DB schema does not exist
+DONE
+Check OOZIE_SYS table does not exist
+DONE
+Create SQL schema
+DONE
+DONE
+Create OOZIE_SYS table
+DONE
+
+Oozie DB has been created for Oozie version '3.2.0'
+
+$
+</verbatim>
+
+Start Oozie as a daemon process run:
 
 <verbatim>
 $ bin/oozie-start.sh

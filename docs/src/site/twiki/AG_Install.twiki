@@ -99,7 +99,7 @@ servlet container (if using Tomcat, copy the prepared =oozie.war= file to Tomcat
 
 ---++ Database Configuration
 
-Oozie works with HSQL, Derby, MySQL, Oracle and PostgreSQL databases.
+Oozie works with HSQL, Derby, MySQL, Oracle or PostgreSQL databases.
 
 By default, Oozie is configured to use Embedded Derby.
 
@@ -107,17 +107,17 @@ Oozie bundles the JDBC drivers for HSQL, Embedded Derby and PostgreSQL.
 
 HSQL is normally used for testcases as it is an in-memory database and all data is lost everytime Oozie is stopped.
 
-If using MySQL, Oracle or PostgreSQL, the Oozie database schema must be created. By default, Oozie creates its
-tables automatically.
+If using Derby, MySQL, Oracle or PostgreSQL, the Oozie database schema must be created using the =ooziedb.sh= command
+line tool.
 
-The =bin/addtowar.sh= and the =oozie-setup.sh= scripts have an option =-jars= that can be used to add the Oracle or
-MySQL JDBC driver JARs to the Oozie WAR file.
+If using MySQL or Oracle, the corresponding JDBC driver JAR file mut be copied to Oozie's =libext/= directory and
+it must be added to Oozie WAR file using the =bin/addtowar.sh= or the =oozie-setup.sh= scripts using the =-jars= option.
 
 The SQL database used by Oozie is configured using the following configuration properties (default values shown):
 
 <verbatim>
   oozie.db.schema.name=oozie
-  oozie.service.JPAService.create.db.schema=true
+  oozie.service.JPAService.create.db.schema=false
   oozie.service.JPAService.validate.db.connection=false
   oozie.service.JPAService.jdbc.driver=org.apache.derby.jdbc.EmbeddedDriver
   oozie.service.JPAService.jdbc.url=jdbc:derby:${oozie.data.dir}/${oozie.db.schema.name}-db;create=true
@@ -126,7 +126,40 @@ The SQL database used by Oozie is configured using the following configuration p
   oozie.service.JPAService.pool.max.active.conn=10
 </verbatim>
 
-If using HSQL, these following configuration properties have to be in oozie-site.xml:
+*NOTE:* If the =oozie.db.schema.create= property is set to =true= (default value is =false=) the Oozie tables
+will be created automatically without having to use the =ooziedb= command line tool. Setting this property to
+ =true= it is recommended only for development.
+
+*NOTE:* If the =oozie.db.schema.create= property is set to true, the =oozie.service.JPAService.validate.db.connection=
+property value is ignored and Oozie handles it as set to =false=.
+
+Once =oozie-site.xml= has been configured with the database configuration execute the =ooziedb.sh= command line tool to
+create the database:
+
+<verbatim>
+$ bin/ooziedb.sh create -sqlfile oozie.sql -run
+
+Validate DB Connection.
+DONE
+Check DB schema does not exist
+DONE
+Check OOZIE_SYS table does not exist
+DONE
+Create SQL schema
+DONE
+DONE
+Create OOZIE_SYS table
+DONE
+
+Oozie DB has been created for Oozie version '3.2.0'
+
+$
+</verbatim>
+
+If the '-run' option is not specified, only the SQL file with the command that would be executed will be created.
+
+If using HSQL there is no need to use the =ooziedb= command line tool as HSQL is an im-memory database. Use the
+following configuration properties in the oozie-site.xml:
 
 <verbatim>
   oozie.db.schema.name=oozie
@@ -138,13 +171,6 @@ If using HSQL, these following configuration properties have to be in oozie-site
   oozie.service.JPAService.jdbc.password=
   oozie.service.JPAService.pool.max.active.conn=10
 </verbatim>
-
-*NOTE:* If the =oozie.db.schema.create= property is set to =true= (default) the Oozie tables will be created
-automatically if they are not found in the database at Oozie start up time. In a production system this option should
-be set to =false= once the databaset tables have been created.
-
-*NOTE:* If the =oozie.db.schema.create= property is set to true, the =oozie.service.JPAService.validate.db.connection=
-property value is ignored and Oozie handles it as set to =false=.
 
 ---++ Oozie Configuration
 

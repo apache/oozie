@@ -90,6 +90,7 @@
         <module>examples</module>
         <module>docs</module>
         <module>sharelib</module>
+        <module>tools</module>
         <module>distro</module>
     </modules>
 

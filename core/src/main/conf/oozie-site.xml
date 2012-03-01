@@ -124,8 +124,8 @@
     </property>
 
     <property>
-        <name>oozie.service.StoreService.create.db.schema</name>
-        <value>true</value>
+        <name>oozie.service.JPAService.create.db.schema</name>
+        <value>false</value>
         <description>
             Creates Oozie DB.
 
@@ -135,7 +135,7 @@
     </property>
 
     <property>
-        <name>oozie.service.StoreService.jdbc.driver</name>
+        <name>oozie.service.JPAService.jdbc.driver</name>
         <value>org.apache.derby.jdbc.EmbeddedDriver</value>
         <description>
             JDBC driver class.
@@ -143,7 +143,7 @@
     </property>
 
     <property>
-        <name>oozie.service.StoreService.jdbc.url</name>
+        <name>oozie.service.JPAService.jdbc.url</name>
         <value>jdbc:derby:${oozie.data.dir}/${oozie.db.schema.name}-db;create=true</value>
         <description>
             JDBC URL.
@@ -151,7 +151,7 @@
     </property>
 
     <property>
-        <name>oozie.service.StoreService.jdbc.username</name>
+        <name>oozie.service.JPAService.jdbc.username</name>
         <value>sa</value>
         <description>
             DB user name.
@@ -159,21 +159,18 @@
     </property>
 
     <property>
-        <name>oozie.service.StoreService.jdbc.password</name>
+        <name>oozie.service.JPAService.jdbc.password</name>
         <value> </value>
         <description>
             DB user password.
 
             IMPORTANT: if password is emtpy leave a 1 space string, the service trims the value,
                        if empty Configuration assumes it is NULL.
-
-            IMPORTANT: if the StoreServicePasswordService is active, it will reset this value with the value given in
-                       the console.
         </description>
     </property>
 
     <property>
-        <name>oozie.service.StoreService.pool.max.active.conn</name>
+        <name>oozie.service.JPAService.pool.max.active.conn</name>
         <value>10</value>
         <description>
              Max number of connections.

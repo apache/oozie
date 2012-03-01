@@ -67,6 +67,22 @@
                 <include>*</include>
             </includes>
         </fileSet>
+        <!-- Tools -->
+        <fileSet>
+            <directory>${basedir}/../tools/target/oozie-tools-${project.version}-tools/oozie-tools-${project.version}/bin</directory>
+            <outputDirectory>/bin</outputDirectory>
+            <includes>
+                <include>*</include>
+            </includes>
+            <fileMode>0755</fileMode>
+        </fileSet>
+        <fileSet>
+            <directory>${basedir}/../tools/target/oozie-tools-${project.version}-tools/oozie-tools-${project.version}/libtools</directory>
+            <outputDirectory>/libtools</outputDirectory>
+            <includes>
+                <include>*</include>
+            </includes>
+        </fileSet>
         <!-- Embedded Tomcat -->
         <fileSet>
             <directory>${basedir}/target/tomcat/oozie-server</directory>

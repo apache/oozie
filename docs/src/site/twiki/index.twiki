@@ -64,6 +64,7 @@ Enough reading already? Follow the steps in [[DG_QuickStart][Oozie Quick Start]]
    * [[AG_Install][Oozie Install]]
    * [[AG_Monitoring][Oozie Monitoring]]
    * [[DG_CommandLineTool][Command Line Tool]]
+   * [[AG_OozieUpgrade][Oozie Upgrade]]
 
 #LicenseInfo
 ---++ Licensing Information
