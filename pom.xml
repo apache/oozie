@@ -756,7 +756,7 @@
                 <configuration>
                     <forkMode>${oozie.test.forkMode}</forkMode>
                     <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
-                    <argLine>-Xmx1024m -da</argLine>
+                    <argLine>-Xmx1024m -da -XX:MaxPermSize=512m</argLine>
                     <systemPropertyVariables>
                         <hadoop.log.dir>/tmp</hadoop.log.dir>
                         <oozie.test.db.host>${oozie.test.db.host}</oozie.test.db.host>
