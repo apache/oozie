@@ -28,7 +28,6 @@
             <useTransitiveDependencies>true</useTransitiveDependencies>
             <useTransitiveFiltering>true</useTransitiveFiltering>
             <unpack>false</unpack>
-            <scope>compile</scope>
             <outputDirectory>hadooplib-${project.version}</outputDirectory>
         </dependencySet>
     </dependencySets>
