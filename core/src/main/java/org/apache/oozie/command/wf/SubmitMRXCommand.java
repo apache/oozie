@@ -42,6 +42,9 @@ public class SubmitMRXCommand extends SubmitHttpXCommand {
         SKIPPED_CONFS.add(WorkflowAppService.HADOOP_UGI);
         SKIPPED_CONFS.add(XOozieClient.JT);
         SKIPPED_CONFS.add(XOozieClient.NN);
+        // a brillant mind made a change in Configuration that 'fs.default.name' key gets converted to 'fs.defaultFS'
+        // in Hadoop 0.23, we need skip that one too, keeping the old one because of Hadoop 1
+        SKIPPED_CONFS.add("fs.defaultFS");
         SKIPPED_CONFS.add(WorkflowAppService.HADOOP_JT_KERBEROS_NAME);
         SKIPPED_CONFS.add(WorkflowAppService.HADOOP_NN_KERBEROS_NAME);
     }
