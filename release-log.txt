@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-727 make test timeout value configurable via -D (tucu)
 Oozie-677 Add Filter API for status on coordinator actions (Virag Kothari via Angelo)
 OOZIE-721 remove obsolete/not-used JobServlet and JobsServlet code (tucu)
 OOZIE-626 Roll the oozie log file in GZ format (Kiran Nagasubramanian via Angelo)
