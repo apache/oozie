@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-724 TestClassUtils fails as looks for hadoop-core (tucu)
 OOZIE-725 Increase JVM MaxPermSize value for the testcases (tucu)
 OOZIE-727 make test timeout value configurable via -D (tucu)
 OOZIE-677 Add Filter API for status on coordinator actions (Virag Kothari via Angelo)
