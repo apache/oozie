@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-715 Fix TestLocalOozieExample (angeloh via tucu)
 OOZIE-701 Oozie notification URLs don't get replaced with the taken transition (tucu)
 OOZIE-724 TestClassUtils fails as looks for hadoop-core (tucu)
 OOZIE-725 Increase JVM MaxPermSize value for the testcases (tucu)
