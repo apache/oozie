@@ -24,12 +24,18 @@ import org.apache.oozie.service.ActionService;
 import org.apache.oozie.service.SchemaService;
 import org.apache.oozie.service.WorkflowStoreService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.test.EmbeddedServletContainer;
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
 
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
 import java.io.StringReader;
@@ -38,10 +44,36 @@ import java.io.FileOutputStream;
 import java.util.List;
 
 public class TestDagEngine extends XTestCase {
+    private EmbeddedServletContainer container;
     private Services services;
 
+    public static class CallbackServlet extends HttpServlet {
+        public static volatile String JOB_ID = null;
+        public static String NODE_NAME = null;
+        public static String STATUS = null;
+
+        public static void reset() {
+            JOB_ID = null;
+            NODE_NAME = null;
+            STATUS = null;
+        }
+
+        @Override
+        protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+            JOB_ID = req.getParameter("jobId");
+            NODE_NAME = req.getParameter("nodeName");
+            STATUS = req.getParameter("status");
+            resp.setStatus(HttpServletResponse.SC_OK);
+        }
+
+    }
     protected void setUp() throws Exception {
         super.setUp();
+        CallbackServlet.reset();
+        container = new EmbeddedServletContainer("oozie");
+        container.addServletEndpoint("/callback", CallbackServlet.class);
+        container.start();
+
         setSystemProperty(SchemaService.WF_CONF_EXT_SCHEMAS, "wf-ext-schema.xsd");
         services = new Services();
         cleanUpDB(services.getConf());
@@ -51,6 +83,7 @@ public class TestDagEngine extends XTestCase {
 
     protected void tearDown() throws Exception {
         services.destroy();
+        container.stop();
         super.tearDown();
     }
 
@@ -74,6 +107,8 @@ public class TestDagEngine extends XTestCase {
         conf.set(OozieClient.GROUP_NAME, getTestGroup());
         injectKerberosInfo(conf);
         conf.set(OozieClient.LOG_TOKEN, "t");
+        conf.set(OozieClient.ACTION_NOTIFICATION_URL, container.getServletURL("/callback") +
+                                                      "?jobId=$jobId&status=$status&nodeName=$nodeName");
         conf.set("signal-value", "OK");
         conf.set("external-status", "ok");
         conf.set("error", "end.error");
@@ -100,6 +135,14 @@ public class TestDagEngine extends XTestCase {
             }
         });
         assertEquals(WorkflowJob.Status.KILLED, engine.getJob(jobId1).getStatus());
+        waitFor(5000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                return CallbackServlet.JOB_ID != null;
+            }
+        });
+        assertEquals(wf.getId(), CallbackServlet.JOB_ID);
+        assertEquals("a", CallbackServlet.NODE_NAME);
+        assertEquals("T:kill", CallbackServlet.STATUS);
     }
 
     public void testJobDefinition() throws Exception {

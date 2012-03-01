@@ -132,7 +132,6 @@ public class ActionEndCommand extends ActionCommand<Void> {
                         }
                         SLADbOperations.writeStausEvent(action.getSlaXml(), action.getId(), store, slaStatus,
                                                         SlaAppType.WORKFLOW_ACTION);
-                        queueCallable(new NotificationCommand(workflow, action));
                         XLog.getLog(getClass()).debug(
                                 "Queuing commands for action=" + id + ", status=" + action.getStatus()
                                         + ", Set pending=" + action.getPending());

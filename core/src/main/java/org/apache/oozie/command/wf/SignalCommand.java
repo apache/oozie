@@ -125,6 +125,7 @@ public class SignalCommand extends WorkflowCommand<Void> {
                         action.resetPending();
                         if (!skipAction) {
                             action.setTransition(workflowInstance.getTransition(action.getName()));
+                            queueCallable(new NotificationCommand(workflow, action));
                         }
                         store.updateAction(action);
                     }
@@ -142,6 +143,7 @@ public class SignalCommand extends WorkflowCommand<Void> {
                             WorkflowActionBean actionToFail = store.getAction(actionToFailId, false);
                             actionToFail.resetPending();
                             actionToFail.setStatus(WorkflowActionBean.Status.FAILED);
+                            queueCallable(new NotificationCommand(workflow, actionToFail));
                             SLADbOperations.writeStausEvent(action.getSlaXml(), action.getId(), store, Status.FAILED,
                                                             SlaAppType.WORKFLOW_ACTION);
                             store.updateAction(actionToFail);

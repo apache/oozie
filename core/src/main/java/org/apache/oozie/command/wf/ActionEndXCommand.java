@@ -193,7 +193,6 @@ public class ActionEndXCommand extends ActionXCommand<Void> {
             }
             if (!shouldHandleUserRetry || !handleUserRetry(wfAction)) {
                 SLADbXOperations.writeStausEvent(wfAction.getSlaXml(), wfAction.getId(), slaStatus, SlaAppType.WORKFLOW_ACTION);
-                queue(new NotificationXCommand(wfJob, wfAction));
                 LOG.debug(
                         "Queuing commands for action=" + actionId + ", status=" + wfAction.getStatus()
                         + ", Set pending=" + wfAction.getPending());

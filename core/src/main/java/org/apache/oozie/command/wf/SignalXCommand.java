@@ -168,6 +168,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
             wfAction.resetPending();
             if (!skipAction) {
                 wfAction.setTransition(workflowInstance.getTransition(wfAction.getName()));
+                queue(new NotificationXCommand(wfJob, wfAction));
             }
             try {
                 jpaService.execute(new WorkflowActionUpdateJPAExecutor(wfAction));
@@ -195,6 +196,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                             actionToFailId));
                     actionToFail.resetPending();
                     actionToFail.setStatus(WorkflowActionBean.Status.FAILED);
+                    queue(new NotificationXCommand(wfJob, actionToFail));
                     SLADbXOperations.writeStausEvent(wfAction.getSlaXml(), wfAction.getId(), Status.FAILED,
                             SlaAppType.WORKFLOW_ACTION);
                     jpaService.execute(new WorkflowActionUpdateJPAExecutor(actionToFail));
