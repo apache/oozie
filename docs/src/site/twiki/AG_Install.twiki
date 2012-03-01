@@ -304,7 +304,7 @@ Oozie has a basic authorization model:
 
    * Users have read access to all jobs
    * Users have write access to their own jobs
-   * Users have write access to jobs for groups the users belong to
+   * Users have write access to jobs based on an Access Control List (list of users and groups)
    * Users have read access to admin operations
    * Admin users have write access to all jobs
    * Admin users have write access to admin operations
@@ -321,6 +321,13 @@ If security is enabled, the admin users are read from the =conf/adminusers.txt= 
 
    * One user name per line
    * Empty lines and lines starting with '#' are ignored
+
+NOTE: the old ACL model where a group was provided is still supported if the  following property is set
+in =oozie-stei.xml=:
+
+<verbatim>
+  oozie.service.AuthorizationService.default.group.as.acl=true
+</verbatim>
 
 ---+++ Oozie System ID Configuration
 

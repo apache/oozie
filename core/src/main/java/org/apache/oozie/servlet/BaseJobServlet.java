@@ -20,6 +20,7 @@ package org.apache.oozie.servlet;
 import java.io.IOException;
 import java.util.Arrays;
 
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -40,6 +41,7 @@ import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.XLogService;
+import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
@@ -156,7 +158,7 @@ public abstract class BaseJobServlet extends JsonRestServlet {
      */
     static void checkAuthorizationForApp(String requestUser, Configuration conf) throws XServletException {
         String user = conf.get(OozieClient.USER_NAME);
-        String group = conf.get(OozieClient.GROUP_NAME);
+        String acl = ConfigUtils.getWithDeprecatedCheck(conf, OozieClient.GROUP_NAME, OozieClient.JOB_ACL, null);
         try {
             if (user == null) {
                 throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0401, OozieClient.USER_NAME);
@@ -165,14 +167,12 @@ public abstract class BaseJobServlet extends JsonRestServlet {
                 throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0400, requestUser, user);
             }
             AuthorizationService auth = Services.get().get(AuthorizationService.class);
-            if (group == null) {
-                group = auth.getDefaultGroup(user);
-                conf.set(OozieClient.GROUP_NAME, group);
+
+            if (acl == null && auth.useDefaultGroupAsAcl()) {
+                acl = auth.getDefaultGroup(user);
+                conf.set(OozieClient.GROUP_NAME, acl);
             }
-            else {
-                auth.authorizeForGroup(user, group);
-            }
-            XLog.Info.get().setParameter(XLogService.GROUP, group);
+            XLog.Info.get().setParameter(XLogService.GROUP, acl);
             String wfPath = conf.get(OozieClient.APP_PATH);
             String coordPath = conf.get(OozieClient.COORDINATOR_APP_PATH);
             String bundlePath = conf.get(OozieClient.BUNDLE_APP_PATH);
@@ -185,13 +185,13 @@ public abstract class BaseJobServlet extends JsonRestServlet {
             ServletUtilities.ValidateAppPath(wfPath, coordPath, bundlePath);
 
             if (wfPath != null) {
-                auth.authorizeForApp(user, group, wfPath, "workflow.xml", conf);
+                auth.authorizeForApp(user, acl, wfPath, "workflow.xml", conf);
             }
             else if (coordPath != null){
-                auth.authorizeForApp(user, group, coordPath, "coordinator.xml", conf);
+                auth.authorizeForApp(user, acl, coordPath, "coordinator.xml", conf);
             }
             else if (bundlePath != null){
-                auth.authorizeForApp(user, group, bundlePath, "bundle.xml", conf);
+                auth.authorizeForApp(user, acl, bundlePath, "bundle.xml", conf);
             }
         }
         catch (AuthorizationException ex) {

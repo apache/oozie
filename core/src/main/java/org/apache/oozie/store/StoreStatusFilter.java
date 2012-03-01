@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.util.XLog;
 
 public class StoreStatusFilter {
     public static final String coordSeletStr = "Select w.id, w.appName, w.status, w.user, w.group, w.startTimestamp, w.endTimestamp, w.appPath, w.concurrency, w.frequency, w.lastActionTimestamp, w.nextMaterializedTimestamp, w.createdTimestamp, w.timeUnitStr, w.timeZone, w.timeOut from CoordinatorJobBean w";
@@ -38,7 +39,6 @@ public class StoreStatusFilter {
     public static void filter(Map<String, List<String>> filter, List<String> orArray, List<String> colArray,
             List<String> valArray, StringBuilder sb, String seletStr, String countStr) {
         boolean isStatus = false;
-        boolean isGroup = false;
         boolean isAppName = false;
         boolean isUser = false;
         boolean isEnabled = false;
@@ -52,35 +52,7 @@ public class StoreStatusFilter {
             String colName = null;
             String colVar = null;
             if (entry.getKey().equals(OozieClient.FILTER_GROUP)) {
-                List<String> values = filter.get(OozieClient.FILTER_GROUP);
-                colName = "group";
-                for (int i = 0; i < values.size(); i++) {
-                    colVar = "group";
-                    colVar = colVar + index;
-                    if (!isEnabled && !isGroup) {
-                        sb.append(seletStr).append(" where w.group IN (:group" + index);
-                        isGroup = true;
-                        isEnabled = true;
-                    }
-                    else {
-                        if (isEnabled && !isGroup) {
-                            sb.append(" and w.group IN (:group" + index);
-                            isGroup = true;
-                        }
-                        else {
-                            if (isGroup) {
-                                sb.append(", :group" + index);
-                            }
-                        }
-                    }
-                    if (i == values.size() - 1) {
-                        sb.append(")");
-                    }
-                    index++;
-                    valArray.add(values.get(i));
-                    orArray.add(colName);
-                    colArray.add(colVar);
-                }
+                XLog.getLog(StoreStatusFilter.class).warn("Filter by 'group' is not supported anymore");
             }
             else {
                 if (entry.getKey().equals(OozieClient.FILTER_STATUS)) {

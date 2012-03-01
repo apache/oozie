@@ -61,6 +61,7 @@ import org.apache.oozie.service.SchemaService.SchemaName;
 import org.apache.oozie.service.UUIDService.ApplicationType;
 import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.store.StoreException;
+import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.IOUtils;
@@ -813,7 +814,8 @@ public class CoordSubmitCommand extends CoordinatorCommand<String> {
         coordJob.setStatus(CoordinatorJob.Status.PREP);
         coordJob.setCreatedTime(new Date()); // TODO: Do we need that?
         coordJob.setUser(conf.get(OozieClient.USER_NAME));
-        coordJob.setGroup(conf.get(OozieClient.GROUP_NAME));
+        String group = ConfigUtils.getWithDeprecatedCheck(conf, OozieClient.JOB_ACL, OozieClient.GROUP_NAME, null);
+        coordJob.setGroup(group);
         coordJob.setConf(XmlUtils.prettyPrint(conf).toString());
         coordJob.setJobXml(XmlUtils.prettyPrint(eJob).toString());
         coordJob.setLastActionNumber(0);

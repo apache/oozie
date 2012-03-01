@@ -82,7 +82,10 @@ public class OozieClient {
 
     public static final String USER_NAME = "user.name";
 
+    @Deprecated
     public static final String GROUP_NAME = "group.name";
+
+    public static final String JOB_ACL = "oozie.job.acl";
 
     public static final String APP_PATH = "oozie.wf.application.path";
 

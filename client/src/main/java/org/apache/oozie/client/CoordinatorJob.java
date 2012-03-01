@@ -153,10 +153,20 @@ public interface CoordinatorJob extends Job {
 
     /**
      * Return the application group.
+     * <p/>
+     * Use the {@link #getAcl()} method instead.
      *
      * @return the application group.
      */
+    @Deprecated
     String getGroup();
+
+    /**
+     * Return the workflow job group.
+     *
+     * @return the workflow job group.
+     */
+    String getAcl();
 
     /**
      * Return the BundleId.

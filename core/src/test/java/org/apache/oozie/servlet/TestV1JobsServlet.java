@@ -107,7 +107,6 @@ public class TestV1JobsServlet extends DagServletTestCase {
                 DagEngine de = services.get(DagEngineService.class).getDagEngine(getTestUser(), "undef");
                 StringReader sr = new StringReader(de.getJob(MockDagEngineService.JOB_ID + wfCount).getConf());
                 Configuration conf1 = new XConfiguration(sr);
-                assertEquals(AuthorizationService.DEFAULT_GROUP, conf1.get(OozieClient.GROUP_NAME));
                 return null;
             }
         });

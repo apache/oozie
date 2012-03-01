@@ -119,7 +119,6 @@ public class KerberosHadoopAccessorService extends HadoopAccessorService {
      */
     public JobClient createJobClient(String user, String group, final JobConf conf) throws HadoopAccessorException {
         ParamChecker.notEmpty(user, "user");
-        ParamChecker.notEmpty(group, "group");
         validateJobTracker(conf.get("mapred.job.tracker"));
         try {
             UserGroupInformation ugi = getUGI(user);
@@ -151,7 +150,6 @@ public class KerberosHadoopAccessorService extends HadoopAccessorService {
     public FileSystem createFileSystem(String user, String group, final Configuration conf)
             throws HadoopAccessorException {
         ParamChecker.notEmpty(user, "user");
-        ParamChecker.notEmpty(group, "group");
         try {
             validateNameNode(new URI(conf.get("fs.default.name")).getAuthority());
             UserGroupInformation ugi = getUGI(user);
@@ -185,7 +183,6 @@ public class KerberosHadoopAccessorService extends HadoopAccessorService {
     public FileSystem createFileSystem(String user, String group, final URI uri, final Configuration conf)
             throws HadoopAccessorException {
         ParamChecker.notEmpty(user, "user");
-        ParamChecker.notEmpty(group, "group");
         validateNameNode(uri.getAuthority());
         try {
             UserGroupInformation ugi = getUGI(user);
@@ -213,7 +210,6 @@ public class KerberosHadoopAccessorService extends HadoopAccessorService {
     public void addFileToClassPath(String user, String group, final Path file, final Configuration conf)
             throws IOException {
         ParamChecker.notEmpty(user, "user");
-        ParamChecker.notEmpty(group, "group");
         try {
             UserGroupInformation ugi = getUGI(user);
             ugi.doAs(new PrivilegedExceptionAction<Void>() {

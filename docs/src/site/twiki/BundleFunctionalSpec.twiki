@@ -159,11 +159,13 @@ A bundle definition is defined in XML by a name, controls and one or more coordi
 
 When submitting a bundle job, the configuration must contain a =user.name= property. If security is enabled, Oozie must ensure that the value of the =user.name= property in the configuration match the user credentials present in the protocol (web services) request.
 
-When submitting a bundle job, the configuration may contain a =group.name= property. If security is enabled, Oozie must ensure that the user of the request belongs to the specified group.
+When submitting a bundle job, the configuration may contain the =oozie.job.acl= property (the =group.name= property
+has been deprecated). If authorization is enabled, this property is treated as as the ACL for the job, it can contain
+user and group IDs separated by commas.
 
-The specified user and group names are assigned to the created bundle job.
+The specified user and ACL are assigned to the created bundle job.
 
-Oozie must propagate the specified user and group to the system executing its children (coordinator jobs).
+Oozie must propagate the specified user and ACL to the system executing its children jobs (coordinator jobs).
 
 ---++ 6. Bundle Application Deployment
 
@@ -179,7 +181,8 @@ When a bundle job is submitted to Oozie, the submitter must specified all the re
 
 The bundle application definition HDFS path must be specified in the 'oozie.bundle.application.path' job property.
 
-All the bundle job properties, the HDFS path for the bundle application, the 'user.name' and 'group.name' must be submitted to the Oozie using an XML configuration file (Hadoop XML configuration file).
+All the bundle job properties, the HDFS path for the bundle application, the 'user.name' and 'oozie.job.acl' must be
+submitted to the Oozie using an XML configuration file (Hadoop XML configuration file).
 
 *%GREEN% Example: %ENDCOLOR%*:
 
@@ -282,4 +285,3 @@ Refer to the [[DG_CoordinatorRerun][Rerunning Coordinator Actions]] for details 
 [[index][::Go back to Oozie Documentation Index::]]
 
 </noautolink>
-   

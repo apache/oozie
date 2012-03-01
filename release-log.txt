@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-228 For authorization we should use the ACL model (tucu)
 OOZIE-715 Fix TestLocalOozieExample (angeloh via tucu)
 OOZIE-701 Oozie notification URLs don't get replaced with the taken transition (tucu)
 OOZIE-724 TestClassUtils fails as looks for hadoop-core (tucu)

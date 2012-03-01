@@ -38,6 +38,7 @@ import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
+import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.XLog;
 
@@ -54,20 +55,26 @@ public class AuthorizationService implements Service {
     public static final String CONF_SECURITY_ENABLED = CONF_PREFIX + "security.enabled";
 
     /**
+     * Configuration parameter to enable or disable Oozie admin role.
+     */
+    public static final String CONF_AUTHORIZATION_ENABLED = CONF_PREFIX + "authorization.enabled";
+
+    /**
+     * Configuration parameter to enable old behavior default group as ACL.
+     */
+    public static final String CONF_DEFAULT_GROUP_AS_ACL = CONF_PREFIX + "default.group.as.acl";
+
+    /**
      * File that contains list of admin users for Oozie.
      */
     public static final String ADMIN_USERS_FILE = "adminusers.txt";
-
-    /**
-     * Default group returned by getDefaultGroup().
-     */
-    public static final String DEFAULT_GROUP = "users";
 
     protected static final String INSTRUMENTATION_GROUP = "authorization";
     protected static final String INSTR_FAILED_AUTH_COUNTER = "authorization.failed";
 
     private Set<String> adminUsers;
-    private boolean securityEnabled;
+    private boolean authorizationEnabled;
+    private boolean useDefaultGroupAsAcl;
 
     private final XLog log = XLog.getLog(getClass());
     private Instrumentation instrumentation;
@@ -81,15 +88,19 @@ public class AuthorizationService implements Service {
      */
     public void init(Services services) throws ServiceException {
         adminUsers = new HashSet<String>();
-        securityEnabled = services.getConf().getBoolean(CONF_SECURITY_ENABLED, false);
+        authorizationEnabled = ConfigUtils.getWithDeprecatedCheck(services.getConf(), CONF_AUTHORIZATION_ENABLED,
+                                                             CONF_SECURITY_ENABLED, false);
         instrumentation = Services.get().get(InstrumentationService.class).get();
-        if (securityEnabled) {
+        if (authorizationEnabled) {
             log.info("Oozie running with security enabled");
             loadAdminUsers();
         }
         else {
             log.warn("Oozie running with security disabled");
         }
+
+        useDefaultGroupAsAcl = Services.get().getConf().getBoolean(CONF_DEFAULT_GROUP_AS_ACL, false);
+
     }
 
     /**
@@ -97,8 +108,22 @@ public class AuthorizationService implements Service {
      *
      * @return if security is enabled or not.
      */
+    @Deprecated
     public boolean isSecurityEnabled() {
-        return securityEnabled;
+        return authorizationEnabled;
+    }
+
+    public boolean useDefaultGroupAsAcl() {
+        return useDefaultGroupAsAcl;
+    }
+
+    /**
+     * Return if security is enabled or not.
+     *
+     * @return if security is enabled or not.
+     */
+    public boolean isAuthorizationEnabled() {
+        return isSecurityEnabled();
     }
 
     /**
@@ -156,7 +181,7 @@ public class AuthorizationService implements Service {
     }
 
     /**
-     * Check if the user belongs to the group or not. <p/> This implementation returns always <code>true</code>.
+     * Check if the user belongs to the group or not.
      *
      * @param user user name.
      * @param group group name.
@@ -164,7 +189,13 @@ public class AuthorizationService implements Service {
      * @throws AuthorizationException thrown if the authorization query can not be performed.
      */
     protected boolean isUserInGroup(String user, String group) throws AuthorizationException {
-        return true;
+        GroupsService groupsService = Services.get().get(GroupsService.class);
+        try {
+            return groupsService.getGroups(user).contains(group);
+        }
+        catch (IOException ex) {
+            throw new AuthorizationException(ErrorCode.E0501, ex.getMessage(), ex);
+        }
     }
 
     /**
@@ -177,7 +208,7 @@ public class AuthorizationService implements Service {
      * can not be performed.
      */
     public void authorizeForGroup(String user, String group) throws AuthorizationException {
-        if (securityEnabled && !isUserInGroup(user, group)) {
+        if (authorizationEnabled && !isUserInGroup(user, group)) {
             throw new AuthorizationException(ErrorCode.E0502, user, group);
         }
     }
@@ -190,7 +221,12 @@ public class AuthorizationService implements Service {
      * @throws AuthorizationException thrown if the default group con not be retrieved.
      */
     public String getDefaultGroup(String user) throws AuthorizationException {
-        return DEFAULT_GROUP;
+        try {
+            return Services.get().get(GroupsService.class).getGroups(user).get(0);
+        }
+        catch (IOException ex) {
+            throw new AuthorizationException(ErrorCode.E0501, ex.getMessage(), ex);
+        }
     }
 
     /**
@@ -212,7 +248,7 @@ public class AuthorizationService implements Service {
      * @throws AuthorizationException thrown if user does not have admin priviledges.
      */
     public void authorizeForAdmin(String user, boolean write) throws AuthorizationException {
-        if (securityEnabled && write && !isAdmin(user)) {
+        if (authorizationEnabled && write && !isAdmin(user)) {
             incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
             throw new AuthorizationException(ErrorCode.E0503, user);
         }
@@ -324,6 +360,19 @@ public class AuthorizationService implements Service {
         }
     }
 
+    private boolean isUserInAcl(String user, String aclStr) throws IOException {
+        boolean userInAcl = false;
+        if (aclStr.trim().length() > 0) {
+            GroupsService groupsService = Services.get().get(GroupsService.class);
+            String[] acl = aclStr.split(",");
+            for (int i = 0; !userInAcl && i < acl.length; i++) {
+                String aclItem = acl[i].trim();
+                userInAcl = aclItem.equals(user) || groupsService.getGroups(user).equals(aclItem);
+            }
+        }
+        return userInAcl;
+    }
+
     /**
      * Check if the user+group is authorized to operate on the specified job. <p/> Checks if the user is a super-user or
      * the one who started the job. <p/> Read operations are allowed to all users.
@@ -334,72 +383,77 @@ public class AuthorizationService implements Service {
      * @throws AuthorizationException thrown if the user is not authorized for the job.
      */
     public void authorizeForJob(String user, String jobId, boolean write) throws AuthorizationException {
-        if (securityEnabled && write && !isAdmin(user)) {
-            // handle workflow jobs
-            if (jobId.endsWith("-W")) {
-                WorkflowJobBean jobBean = null;
-                JPAService jpaService = Services.get().get(JPAService.class);
-                if (jpaService != null) {
-                    try {
-                        jobBean = jpaService.execute(new WorkflowJobGetJPAExecutor(jobId));
+        if (authorizationEnabled && write && !isAdmin(user)) {
+            try {
+                // handle workflow jobs
+                if (jobId.endsWith("-W")) {
+                    WorkflowJobBean jobBean = null;
+                    JPAService jpaService = Services.get().get(JPAService.class);
+                    if (jpaService != null) {
+                        try {
+                            jobBean = jpaService.execute(new WorkflowJobGetJPAExecutor(jobId));
+                        }
+                        catch (JPAExecutorException je) {
+                            throw new AuthorizationException(je);
+                        }
                     }
-                    catch (JPAExecutorException je) {
-                        throw new AuthorizationException(je);
+                    else {
+                        throw new AuthorizationException(ErrorCode.E0610);
+                    }
+                    if (jobBean != null && !jobBean.getUser().equals(user)) {
+                        if (!isUserInAcl(user, jobBean.getGroup())) {
+                            incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
+                            throw new AuthorizationException(ErrorCode.E0508, user, jobId);
+                        }
                     }
                 }
+                // handle bundle jobs
+                else if (jobId.endsWith("-B")){
+                    BundleJobBean jobBean = null;
+                    JPAService jpaService = Services.get().get(JPAService.class);
+                    if (jpaService != null) {
+                        try {
+                            jobBean = jpaService.execute(new BundleJobGetJPAExecutor(jobId));
+                        }
+                        catch (JPAExecutorException je) {
+                            throw new AuthorizationException(je);
+                        }
+                    }
+                    else {
+                        throw new AuthorizationException(ErrorCode.E0610);
+                    }
+                    if (jobBean != null && !jobBean.getUser().equals(user)) {
+                        if (!isUserInAcl(user, jobBean.getGroup())) {
+                            incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
+                            throw new AuthorizationException(ErrorCode.E0509, user, jobId);
+                        }
+                    }
+                }
+                // handle coordinator jobs
                 else {
-                    throw new AuthorizationException(ErrorCode.E0610);
-                }
-                if (jobBean != null && !jobBean.getUser().equals(user)) {
-                    if (!isUserInGroup(user, jobBean.getGroup())) {
-                        incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
-                        throw new AuthorizationException(ErrorCode.E0508, user, jobId);
+                    CoordinatorJobBean jobBean = null;
+                    JPAService jpaService = Services.get().get(JPAService.class);
+                    if (jpaService != null) {
+                        try {
+                            jobBean = jpaService.execute(new CoordJobGetJPAExecutor(jobId));
+                        }
+                        catch (JPAExecutorException je) {
+                            throw new AuthorizationException(je);
+                        }
+                    }
+                    else {
+                        throw new AuthorizationException(ErrorCode.E0610);
+                    }
+                    if (jobBean != null && !jobBean.getUser().equals(user)) {
+                        if (!isUserInAcl(user, jobBean.getGroup())) {
+                            incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
+                            throw new AuthorizationException(ErrorCode.E0509, user, jobId);
+                        }
                     }
                 }
             }
-            // handle bundle jobs
-            else if (jobId.endsWith("-B")){
-                BundleJobBean jobBean = null;
-                JPAService jpaService = Services.get().get(JPAService.class);
-                if (jpaService != null) {
-                    try {
-                        jobBean = jpaService.execute(new BundleJobGetJPAExecutor(jobId));
-                    }
-                    catch (JPAExecutorException je) {
-                        throw new AuthorizationException(je);
-                    }
-                }
-                else {
-                    throw new AuthorizationException(ErrorCode.E0610);
-                }
-                if (jobBean != null && !jobBean.getUser().equals(user)) {
-                    if (!isUserInGroup(user, jobBean.getGroup())) {
-                        incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
-                        throw new AuthorizationException(ErrorCode.E0509, user, jobId);
-                    }
-                }
-            }
-            // handle coordinator jobs
-            else {
-                CoordinatorJobBean jobBean = null;
-                JPAService jpaService = Services.get().get(JPAService.class);
-                if (jpaService != null) {
-                    try {
-                        jobBean = jpaService.execute(new CoordJobGetJPAExecutor(jobId));
-                    }
-                    catch (JPAExecutorException je) {
-                        throw new AuthorizationException(je);
-                    }
-                }
-                else {
-                    throw new AuthorizationException(ErrorCode.E0610);
-                }
-                if (jobBean != null && !jobBean.getUser().equals(user)) {
-                    if (!isUserInGroup(user, jobBean.getGroup())) {
-                        incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
-                        throw new AuthorizationException(ErrorCode.E0509, user, jobId);
-                    }
-                }
+            catch (IOException ex) {
+                throw new AuthorizationException(ErrorCode.E0501, ex.getMessage(), ex);
             }
         }
     }

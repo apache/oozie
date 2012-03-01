@@ -106,10 +106,20 @@ public interface WorkflowJob {
 
     /**
      * Return the workflow job group.
+     * <p/>
+     * Use the {@link #getAcl()} method instead.
      *
      * @return the workflow job group.
      */
+    @Deprecated
     String getGroup();
+
+    /**
+     * Return the workflow job group.
+     *
+     * @return the workflow job group.
+     */
+    String getAcl();
 
     /**
      * Return the workflow job run number. <p/> Except for reruns, this property is always 1.

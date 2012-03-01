@@ -69,6 +69,7 @@ import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.service.SchemaService.SchemaName;
 import org.apache.oozie.service.UUIDService.ApplicationType;
+import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.IOUtils;
@@ -992,7 +993,8 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         coordJob.setAppPath(conf.get(OozieClient.COORDINATOR_APP_PATH));
         coordJob.setCreatedTime(new Date());
         coordJob.setUser(conf.get(OozieClient.USER_NAME));
-        coordJob.setGroup(conf.get(OozieClient.GROUP_NAME));
+        String group = ConfigUtils.getWithDeprecatedCheck(conf, OozieClient.JOB_ACL, OozieClient.GROUP_NAME, null);
+        coordJob.setGroup(group);
         coordJob.setConf(XmlUtils.prettyPrint(conf).toString());
         coordJob.setJobXml(XmlUtils.prettyPrint(eJob).toString());
         coordJob.setLastActionNumber(0);

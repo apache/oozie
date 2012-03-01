@@ -2266,11 +2266,13 @@ The Coordinator engine should provide tools to help developers convert and compu
 
 When submitting a coordinator job, the configuration must contain a =user.name= property. If security is enabled, Oozie must ensure that the value of the =user.name= property in the configuration match the user credentials present in the protocol (web services) request.
 
-When submitting a coordinator job, the configuration may contain a =group.name= property. If security is enabled, Oozie must ensure that the user of the request belongs to the specified group.
+When submitting a coordinator job, the configuration may contain the =oozie.job.acl= property (the =group.name= property
+has been deprecated). If authorization is enabled, this property is treated as as the ACL for the job, it can contain
+user and group IDs separated by commas.
 
-The specified user and group names are assigned to the created coordinator job.
+The specified user and ACL are assigned to the created coordinator job.
 
-Oozie must propagate the specified user and group to the system executing the actions (workflow jobs).
+Oozie must propagate the specified user and ACL to the system executing the actions (workflow jobs).
 
 ---++ 10. Coordinator Application Deployment
 
@@ -2316,7 +2318,8 @@ When a coordinator job is submitted to Oozie Coordinator, the submitter must spe
 
 The coordinator application definition HDFS path must be specified in the 'oozie.coord.application.path' job property.
 
-All the coordinator job properties, the HDFS path for the coordinator application, the 'user.name' and 'group.name' must be submitted to the Oozie coordinator engine using an XML configuration file (Hadoop XML configuration file).
+All the coordinator job properties, the HDFS path for the coordinator application, the 'user.name' and 'oozie.job.acl'
+must be submitted to the Oozie coordinator engine using an XML configuration file (Hadoop XML configuration file).
 
 *%GREEN% Example: %ENDCOLOR%*:
 

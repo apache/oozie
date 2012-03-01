@@ -154,6 +154,7 @@ public class JsonBundleJob implements BundleJob, JsonBean {
         json.put(JsonTags.BUNDLE_JOB_CREATED_TIME, JsonUtils.formatDateRfc822(getCreatedTime()));
         json.put(JsonTags.BUNDLE_JOB_USER, getUser());
         json.put(JsonTags.BUNDLE_JOB_GROUP, getGroup());
+        json.put(JsonTags.BUNDLE_JOB_ACL, getAcl());
         json.put(JsonTags.BUNDLE_JOB_CONSOLE_URL, getConsoleUrl());
         json.put(JsonTags.BUNDLE_COORDINATOR_JOBS, JsonCoordinatorJob.toJSONArray(coordJobs));
         json.put(JsonTags.TO_STRING, toString());
@@ -214,8 +215,14 @@ public class JsonBundleJob implements BundleJob, JsonBean {
      * @see org.apache.oozie.client.Job#getGroup()
      */
     @Override
+    @Deprecated
     public String getGroup() {
         return group;
+    }
+
+    @Override
+    public String getAcl() {
+        return getGroup();
     }
 
     /* (non-Javadoc)

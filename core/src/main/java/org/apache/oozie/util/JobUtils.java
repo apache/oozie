@@ -51,10 +51,6 @@ public class JobUtils {
             throw new IllegalArgumentException("user cannot be null");
         }
 
-        if (group == null) {
-            throw new IllegalArgumentException("group cannot be null");
-        }
-
         if (conf.get(XOozieClient.IS_PROXY_SUBMISSION) != null) { // do nothing for proxy submission job;
             return;
         }

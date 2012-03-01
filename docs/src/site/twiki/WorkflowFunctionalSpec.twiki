@@ -1473,7 +1473,7 @@ It returns the user name that started the current workflow job.
 
 *String wf:group()*
 
-It returns the group name for the current workflow job.
+It returns the group/ACL for the current workflow job.
 
 *String wf:callback(String stateVar)*
 
@@ -1615,12 +1615,13 @@ When submitting a workflow job, the configuration must contain a =user.name= pro
 must ensure that the value of the =user.name= property in the configuration match the user credentials present in the
 protocol (web services) request.
 
-When submitting a workflow job, the configuration may contain a =group.name= property. If security is enabled, Oozie
-must ensure that the user of the request belongs to the specified group.
+When submitting a workflow job, the configuration may contain the =oozie.job.acl= property (the =group.name= property
+has been deprecated). If authorization is enabled, this property is treated as as the ACL for the job, it can contain
+user and group IDs separated by commas.
 
-The specified user and group names are assigned to the created job.
+The specified user and ACL are assigned to the created job.
 
-Oozie must propagate the specified user and group to the system executing the actions.
+Oozie must propagate the specified user and ACL to the system executing the actions.
 
 It is not allowed for map-reduce, pig and fs actions to override user/group information.
 
@@ -2184,6 +2185,7 @@ Content-Type: application/json;charset=UTF-8
       appPath: "hdfs://user/tucu/indexer-wf",
       user: "tucu",
       group: "other",
+      acl: "other",
       status: "RUNNING",
       conf: "<configuration> ... </configuration>",
       createdTime: "Thu, 01 Jan 2009 00:00:00 GMT",
@@ -2205,7 +2207,7 @@ Valid filter names are:
 
    * name: the workflow application name from the workflow definition
    * user: the user that submitted the job
-   * group: the group for the job
+   * group: DEPRECATED, it does a NOP
    * status: the status of the job
 
 The query will do an AND among all the filter names.

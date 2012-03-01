@@ -50,6 +50,7 @@ import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.service.WorkflowStoreService;
+import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.InstrumentUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
@@ -180,7 +181,8 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
             wfBean.setConf(XmlUtils.prettyPrint(conf).toString());
             wfBean.setLogToken(conf.get(OozieClient.LOG_TOKEN, ""));
             wfBean.setUser(conf.get(OozieClient.USER_NAME));
-            wfBean.setGroup(conf.get(OozieClient.GROUP_NAME));
+            String group = ConfigUtils.getWithDeprecatedCheck(conf, OozieClient.JOB_ACL, OozieClient.GROUP_NAME, null);
+            wfBean.setGroup(group);
             wfBean.setExternalId(conf.get(OozieClient.EXTERNAL_ID));
             wfBean.setEndTime(null);
             wfBean.setRun(wfBean.getRun() + 1);

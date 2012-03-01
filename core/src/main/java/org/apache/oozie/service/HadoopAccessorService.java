@@ -178,11 +178,9 @@ public class HadoopAccessorService implements Service {
     @SuppressWarnings("unchecked")
     private <C extends Configuration> C createConfiguration(String user, String group, C conf) {
         ParamChecker.notEmpty(user, "user");
-        ParamChecker.notEmpty(group, "group");
         C fsConf = (C) ((conf instanceof JobConf) ? new JobConf() : new Configuration());
         XConfiguration.copy(conf, fsConf);
         fsConf.set("user.name", user);
-        fsConf.set("hadoop.job.ugi", user + "," + group);
         return fsConf;
     }
 

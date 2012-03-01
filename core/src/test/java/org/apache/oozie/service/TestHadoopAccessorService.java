@@ -63,13 +63,6 @@ public class TestHadoopAccessorService extends XTestCase {
         catch (IllegalArgumentException ex) {
         }
 
-        try {
-            has.createJobClient(user, null, conf);
-            fail();
-        }
-        catch (IllegalArgumentException ex) {
-        }
-
         user = getTestUser();
         JobClient jc = has.createJobClient(user, group, conf);
         assertNotNull(jc);

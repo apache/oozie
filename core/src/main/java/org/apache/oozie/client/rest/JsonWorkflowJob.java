@@ -114,6 +114,7 @@ public class JsonWorkflowJob implements WorkflowJob, JsonBean {
         json.put(JsonTags.WORKFLOW_END_TIME, JsonUtils.formatDateRfc822(getEndTime()));
         json.put(JsonTags.WORKFLOW_USER, getUser());
         json.put(JsonTags.WORKFLOW_GROUP, getGroup());
+        json.put(JsonTags.WORKFLOW_ACL, getAcl());
         json.put(JsonTags.WORKFLOW_RUN, (long) getRun());
         json.put(JsonTags.WORKFLOW_CONSOLE_URL, getConsoleUrl());
         json.put(JsonTags.WORKFLOW_ACTIONS, JsonWorkflowAction.toJSONArray(actions));
@@ -211,6 +212,11 @@ public class JsonWorkflowJob implements WorkflowJob, JsonBean {
 
     public String getGroup() {
         return group;
+    }
+
+    @Override
+    public String getAcl() {
+        return getGroup();
     }
 
     public void setGroup(String group) {

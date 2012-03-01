@@ -77,7 +77,15 @@ public interface Job {
      *
      * @return the JOB group.
      */
+    @Deprecated
     String getGroup();
+
+    /**
+     * Return the workflow job group.
+     *
+     * @return the workflow job group.
+     */
+    String getAcl();
 
     /**
      * Return the JOB console URL.

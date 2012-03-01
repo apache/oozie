@@ -556,7 +556,7 @@ public class JavaActionExecutor extends ActionExecutor {
 
             // setting the group owning the Oozie job to allow anybody in that
             // group to kill the jobs.
-            launcherJobConf.set("mapreduce.job.acl-modify-job", context.getWorkflow().getGroup());
+            launcherJobConf.set("mapreduce.job.acl-modify-job", context.getWorkflow().getAcl());
 
             return launcherJobConf;
         }

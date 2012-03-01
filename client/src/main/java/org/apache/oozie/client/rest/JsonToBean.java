@@ -96,6 +96,7 @@ public class JsonToBean {
         WF_JOB.put("getEndTime", new Property(JsonTags.WORKFLOW_END_TIME, Date.class));
         WF_JOB.put("getUser", new Property(JsonTags.WORKFLOW_USER, String.class));
         WF_JOB.put("getGroup", new Property(JsonTags.WORKFLOW_GROUP, String.class));
+        WF_JOB.put("getAcl", new Property(JsonTags.WORKFLOW_ACL, String.class));
         WF_JOB.put("getRun", new Property(JsonTags.WORKFLOW_RUN, Integer.TYPE));
         WF_JOB.put("getConsoleUrl", new Property(JsonTags.WORKFLOW_CONSOLE_URL, String.class));
         WF_JOB.put("getActions", new Property(JsonTags.WORKFLOW_ACTIONS, WorkflowAction.class, true));
@@ -141,6 +142,7 @@ public class JsonToBean {
         COORD_JOB.put("getEndTime", new Property(JsonTags.COORDINATOR_JOB_END_TIME, Date.class));
         COORD_JOB.put("getUser", new Property(JsonTags.COORDINATOR_JOB_USER, String.class));
         COORD_JOB.put("getGroup", new Property(JsonTags.COORDINATOR_JOB_GROUP, String.class));
+        COORD_JOB.put("getAcl", new Property(JsonTags.COORDINATOR_JOB_ACL, String.class));
         COORD_JOB.put("getConsoleUrl", new Property(JsonTags.COORDINATOR_JOB_CONSOLE_URL, String.class));
         COORD_JOB.put("getActions", new Property(JsonTags.COORDINATOR_ACTIONS, CoordinatorAction.class, true));
         COORD_JOB.put("toString", new Property(JsonTags.TO_STRING, String.class));

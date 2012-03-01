@@ -22,6 +22,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -49,11 +52,28 @@ import org.apache.oozie.workflow.WorkflowInstance;
  */
 public class TestAuthorizationService extends XDataTestCase {
 
+    public static class DummyGroupsService extends GroupsService  {
+        @Override
+        public void init(Services services) {
+        }
+
+        @Override
+        public List<String> getGroups(String user) throws IOException {
+            if (getTestUser().equals(user)) {
+                return Arrays.asList("users", getTestGroup());
+            }
+            else {
+                return Arrays.asList("users");
+            }
+        }
+
+        @Override
+        public void destroy() {
+        }
+    }
     private Services services;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    private void init(boolean useDefaultGroup) throws Exception {
         setSystemProperty(SchemaService.WF_CONF_EXT_SCHEMAS, "wf-ext-schema.xsd");
 
         Reader adminListReader = IOUtils.getResourceAsReader("adminusers.txt", -1);
@@ -63,7 +83,9 @@ public class TestAuthorizationService extends XDataTestCase {
         services = new Services();
         Configuration conf = services.getConf();
         conf.set(Services.CONF_SERVICE_CLASSES,
-                 conf.get(Services.CONF_SERVICE_CLASSES) + "," + AuthorizationService.class.getName());
+                 conf.get(Services.CONF_SERVICE_CLASSES) + "," + AuthorizationService.class.getName() +
+                 "," + DummyGroupsService.class.getName());
+        conf.set(AuthorizationService.CONF_DEFAULT_GROUP_AS_ACL, Boolean.toString(useDefaultGroup));
         services.init();
         services.getConf().setBoolean(AuthorizationService.CONF_SECURITY_ENABLED, true);
         services.get(AuthorizationService.class).init(services);
@@ -80,7 +102,16 @@ public class TestAuthorizationService extends XDataTestCase {
     /**
      * Tests the Authorization Service API.
      */
-    public void testAuthorizationService() throws Exception {
+    public void testAuthorizationServiceUseDefaultGroup() throws Exception {
+        _testAuthorizationService(true);
+    }
+
+    public void testAuthorizationServiceUseACLs() throws Exception {
+        _testAuthorizationService(false);
+    }
+
+    private void _testAuthorizationService(boolean useDefaultGroup) throws Exception {
+        init(useDefaultGroup);
         Reader reader = IOUtils.getResourceAsReader("wf-ext-schema-valid.xml", -1);
         Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
         IOUtils.copyCharStream(reader, writer);
@@ -89,7 +120,12 @@ public class TestAuthorizationService extends XDataTestCase {
         Configuration jobConf = new XConfiguration();
         jobConf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
         jobConf.set(OozieClient.USER_NAME, getTestUser());
-        jobConf.set(OozieClient.GROUP_NAME, getTestGroup());
+        if (useDefaultGroup) {
+            jobConf.set(OozieClient.GROUP_NAME, getTestGroup());
+        }
+        else {
+            jobConf.set(OozieClient.GROUP_NAME, getTestGroup() + ",foo");
+        }
         injectKerberosInfo(jobConf);
         jobConf.set(OozieClient.LOG_TOKEN, "t");
 
@@ -151,11 +187,19 @@ public class TestAuthorizationService extends XDataTestCase {
 
         as.authorizeForJob(getTestUser(), jobId, false);
         as.authorizeForJob(getTestUser(), jobId, true);
-        //Because of group support and all users belong to same group
-        as.authorizeForJob("blah", jobId, true);
+        if (!useDefaultGroup) {
+            as.authorizeForJob("foo", jobId, true);
+        }
+        try {
+            as.authorizeForJob("bar", jobId, true);
+            fail();
+        }
+        catch (AuthorizationException ex) {
+        }
     }
 
     public void testAuthorizationServiceForCoord() throws Exception {
+        init(false);
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, false, false);
         assertNotNull(job);
         AuthorizationService as = services.get(AuthorizationService.class);
@@ -165,6 +209,7 @@ public class TestAuthorizationService extends XDataTestCase {
     }
 
     public void testAuthorizationServiceForBundle() throws Exception {
+        init(false);
         BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP, false);
         assertNotNull(job);
         AuthorizationService as = services.get(AuthorizationService.class);
@@ -174,12 +219,14 @@ public class TestAuthorizationService extends XDataTestCase {
     }
 
     public void testDefaultGroup() throws Exception {
+        init(false);
         AuthorizationService as = services.get(AuthorizationService.class);
         assertNotNull(as);
         assertNotNull(as.getDefaultGroup(getTestUser()));
     }
 
     public void testErrors() throws Exception {
+        init(false);
         services.setService(ForTestAuthorizationService.class);
         AuthorizationService as = services.get(AuthorizationService.class);
 

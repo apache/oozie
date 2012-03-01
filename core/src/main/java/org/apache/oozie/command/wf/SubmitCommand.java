@@ -28,6 +28,7 @@ import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.DagXLogInfoService;
+import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
@@ -113,7 +114,7 @@ public class SubmitCommand extends WorkflowCommand<String> {
 
             Path configDefault = new Path(new Path(conf.get(OozieClient.APP_PATH)).getParent(), CONFIG_DEFAULT);
             String user = conf.get(OozieClient.USER_NAME);
-            String group = conf.get(OozieClient.GROUP_NAME);
+            String group = ConfigUtils.getWithDeprecatedCheck(conf, OozieClient.JOB_ACL, OozieClient.GROUP_NAME, null);
             FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, group,
                                                                                              configDefault.toUri(),
                                                                                              conf);

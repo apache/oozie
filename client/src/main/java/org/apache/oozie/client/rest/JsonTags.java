@@ -44,7 +44,9 @@ public interface JsonTags {
     public static final String WORKFLOW_START_TIME = "startTime";
     public static final String WORKFLOW_END_TIME = "endTime";
     public static final String WORKFLOW_USER = "user";
+    @Deprecated
     public static final String WORKFLOW_GROUP = "group";
+    public static final String WORKFLOW_ACL = "acl";
     public static final String WORKFLOW_RUN = "run";
     public static final String WORKFLOW_CONSOLE_URL = "consoleUrl";
     public static final String WORKFLOW_ACTIONS = "actions";
@@ -96,7 +98,9 @@ public interface JsonTags {
     public static final String COORDINATOR_JOB_CONSOLE_URL = "consoleUrl";
     public static final String COORDINATOR_JOB_ACTIONS = "actions";
     public static final String COORDINATOR_JOB_USER = "user";
+    @Deprecated
     public static final String COORDINATOR_JOB_GROUP = "group";
+    public static final String COORDINATOR_JOB_ACL = "acl";
     public static final String COORDINATOR_JOB_EXTERNAL_ID = "coordExternalId";
 
     public static final String COORDINATOR_ACTION_ID = "id";
@@ -134,7 +138,9 @@ public interface JsonTags {
     public static final String BUNDLE_JOB_CREATED_TIME = "createdTime";
     public static final String BUNDLE_JOB_CONSOLE_URL = "consoleUrl";
     public static final String BUNDLE_JOB_USER = "user";
+    @Deprecated
     public static final String BUNDLE_JOB_GROUP = "group";
+    public static final String BUNDLE_JOB_ACL = "acl";
     public static final String BUNDLE_JOB_EXTERNAL_ID = "bundleExternalId";
     public static final String BUNDLE_COORDINATOR_JOBS = "bundleCoordJobs";
 

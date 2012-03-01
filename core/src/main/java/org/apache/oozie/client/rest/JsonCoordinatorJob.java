@@ -157,6 +157,7 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
         json.put(JsonTags.COORDINATOR_JOB_PAUSE_TIME, JsonUtils.formatDateRfc822(getPauseTime()));
         json.put(JsonTags.COORDINATOR_JOB_USER, getUser());
         json.put(JsonTags.COORDINATOR_JOB_GROUP, getGroup());
+        json.put(JsonTags.COORDINATOR_JOB_ACL, getAcl());
         json.put(JsonTags.COORDINATOR_JOB_CONSOLE_URL, getConsoleUrl());
         json.put(JsonTags.COORDINATOR_JOB_MAT_THROTTLING, getMatThrottling());
         json.put(JsonTags.COORDINATOR_ACTIONS, JsonCoordinatorAction.toJSONArray(actions));
@@ -319,6 +320,11 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
 
     public String getGroup() {
         return group;
+    }
+
+    @Override
+    public String getAcl() {
+        return getGroup();
     }
 
     public void setGroup(String group) {
