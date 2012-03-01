@@ -50,6 +50,7 @@
         </menu>
 
         <menu name="Documentation">
+            <item name="3.1.3" href="./docs/3.1.3/docs/index.html"/>
             <item name="Quick start" href="./QuickStart.html"/>
 	    <item name="Overview" href="./overview.html"/>
 	    <item name="MapReduce Cookbook" href="./map-reduce-cookbook.html"/>
