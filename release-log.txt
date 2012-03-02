@@ -1,3 +1,7 @@
+-- Oozie 3.1.4 release
+
+OOZIE-733 Script to inject the JARs required by Oozie to run with Hadoop 23 (Mona via Mohammad)
+
 -- Oozie 3.1.3 release
 
 OOZIE-694 Update the Install and Quick start guide with appropriate hadoop versions for branch-3.1 (Mohammad)
