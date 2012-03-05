@@ -28,7 +28,11 @@ public class TestHadoopAccessorService extends XTestCase {
 
     protected void setUp() throws Exception {
         super.setUp();
-        setSystemProperty(Services.CONF_SERVICE_EXT_CLASSES, HadoopAccessorService.class.getName());
+        if (System.getProperty("oozie.test.hadoop.security", "simple").equals("kerberos")) {
+            setSystemProperty("oozie.service.HadoopAccessorService.kerberos.enabled", "true");
+            setSystemProperty("oozie.service.HadoopAccessorService.keytab.file", getKeytabFile());
+            setSystemProperty("oozie.service.HadoopAccessorService.kerberos.principal", getOoziePrincipal());
+        }
         Services services = new Services();
         services.init();
     }
@@ -43,7 +47,6 @@ public class TestHadoopAccessorService extends XTestCase {
         HadoopAccessorService has = services.get(HadoopAccessorService.class);
         assertNotNull(has);
     }
-
     public void testAccessor() throws Exception {
         Services services = Services.get();
         HadoopAccessorService has = services.get(HadoopAccessorService.class);
@@ -53,25 +56,41 @@ public class TestHadoopAccessorService extends XTestCase {
         injectKerberosInfo(conf);
         URI uri = new URI(getNameNodeUri());
 
-        String user = getTestUser() + "-invalid";
+        //valid user
+        String user = getTestUser();
         String group = getTestGroup();
 
-        try {
-            has.createJobClient(null, group, conf);
-            fail();
-        }
-        catch (IllegalArgumentException ex) {
-        }
-
-        user = getTestUser();
         JobClient jc = has.createJobClient(user, group, conf);
         assertNotNull(jc);
-
         FileSystem fs = has.createFileSystem(user, group, conf);
         assertNotNull(fs);
-
         fs = has.createFileSystem(user, group, uri, conf);
         assertNotNull(fs);
+
+        //invalid user
+
+        user = "invalid";
+
+        try {
+            has.createJobClient(user, group, conf);
+            fail();
+        }
+        catch (Throwable ex) {
+        }
+
+        try {
+            has.createFileSystem(user, group, conf);
+            fail();
+        }
+        catch (Throwable ex) {
+        }
+
+        try {
+            has.createFileSystem(user, group, uri, conf);
+            fail();
+        }
+        catch (Throwable ex) {
+        }
     }
 
 }

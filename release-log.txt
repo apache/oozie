@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-734 Simplify Kerberos/HadoopAccessorService code and remove Kerberos/DoAs code (tucu)
 OOZIE-631 Oozie DB create/upgrade tool (tucu)
 OOZIE-729 SubmitMRCommand & SubmitMRXCommant testcases fail with Hadoop 0.23 (tucu)
 OOZIE-726 Removing switch from default runtime scope to compile scope for hadooplib.xml assembly due to it pulling in JDK tools.jar with compile scope. (abayer via tucu)

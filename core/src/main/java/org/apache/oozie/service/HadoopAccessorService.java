@@ -17,13 +17,16 @@
  */
 package org.apache.oozie.service;
 
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapreduce.security.token.delegation.DelegationTokenIdentifier;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.filecache.DistributedCache;
+import org.apache.hadoop.security.token.Token;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
@@ -35,6 +38,8 @@ import java.net.URISyntaxException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * The HadoopAccessorService returns HadoopAccessor instances configured to work on behalf of a user-group. <p/> The
@@ -47,12 +52,22 @@ public class HadoopAccessorService implements Service {
     public static final String CONF_PREFIX = Service.CONF_PREFIX + "HadoopAccessorService.";
     public static final String JOB_TRACKER_WHITELIST = CONF_PREFIX + "jobTracker.whitelist";
     public static final String NAME_NODE_WHITELIST = CONF_PREFIX + "nameNode.whitelist";
+    public static final String KERBEROS_AUTH_ENABLED = CONF_PREFIX + "kerberos.enabled";
+    public static final String KERBEROS_KEYTAB = CONF_PREFIX + "keytab.file";
+    public static final String KERBEROS_PRINCIPAL = CONF_PREFIX + "kerberos.principal";
 
     private Set<String> jobTrackerWhitelist = new HashSet<String>();
     private Set<String> nameNodeWhitelist = new HashSet<String>();
 
+    private ConcurrentMap<String, UserGroupInformation> userUgiMap;
+    private String localRealm;
+
     public void init(Services services) throws ServiceException {
-        for (String name : services.getConf().getStringCollection(JOB_TRACKER_WHITELIST)) {
+        init(services.getConf());
+    }
+
+    public void init(Configuration conf) throws ServiceException {
+        for (String name : conf.getStringCollection(JOB_TRACKER_WHITELIST)) {
             String tmp = name.toLowerCase().trim();
             if (tmp.length() == 0) {
                 continue;
@@ -60,9 +75,9 @@ public class HadoopAccessorService implements Service {
             jobTrackerWhitelist.add(tmp);
         }
         XLog.getLog(getClass()).info(
-                "JOB_TRACKER_WHITELIST :" + services.getConf().getStringCollection(JOB_TRACKER_WHITELIST)
+                "JOB_TRACKER_WHITELIST :" + conf.getStringCollection(JOB_TRACKER_WHITELIST)
                         + ", Total entries :" + jobTrackerWhitelist.size());
-        for (String name : services.getConf().getStringCollection(NAME_NODE_WHITELIST)) {
+        for (String name : conf.getStringCollection(NAME_NODE_WHITELIST)) {
             String tmp = name.toLowerCase().trim();
             if (tmp.length() == 0) {
                 continue;
@@ -70,12 +85,48 @@ public class HadoopAccessorService implements Service {
             nameNodeWhitelist.add(tmp);
         }
         XLog.getLog(getClass()).info(
-                "NAME_NODE_WHITELIST :" + services.getConf().getStringCollection(NAME_NODE_WHITELIST)
+                "NAME_NODE_WHITELIST :" + conf.getStringCollection(NAME_NODE_WHITELIST)
                         + ", Total entries :" + nameNodeWhitelist.size());
-        init(services.getConf());
+
+        boolean kerberosAuthOn = conf.getBoolean(KERBEROS_AUTH_ENABLED, true);
+        XLog.getLog(getClass()).info("Oozie Kerberos Authentication [{0}]", (kerberosAuthOn) ? "enabled" : "disabled");
+        if (kerberosAuthOn) {
+            kerberosInit(conf);
+        }
+        else {
+            Configuration ugiConf = new Configuration();
+            ugiConf.set("hadoop.security.authentication", "simple");
+            UserGroupInformation.setConfiguration(ugiConf);
+        }
+        localRealm = conf.get("local.realm");
+
+        userUgiMap = new ConcurrentHashMap<String, UserGroupInformation>();
     }
 
-    public void init(Configuration serviceConf) throws ServiceException {
+    private void kerberosInit(Configuration serviceConf) throws ServiceException {
+            try {
+                String keytabFile = serviceConf.get(KERBEROS_KEYTAB,
+                                                    System.getProperty("user.home") + "/oozie.keytab").trim();
+                if (keytabFile.length() == 0) {
+                    throw new ServiceException(ErrorCode.E0026, KERBEROS_KEYTAB);
+                }
+                String principal = serviceConf.get(KERBEROS_PRINCIPAL, "oozie/localhost@LOCALHOST");
+                if (principal.length() == 0) {
+                    throw new ServiceException(ErrorCode.E0026, KERBEROS_PRINCIPAL);
+                }
+                Configuration conf = new Configuration();
+                conf.set("hadoop.security.authentication", "kerberos");
+                UserGroupInformation.setConfiguration(conf);
+                UserGroupInformation.loginUserFromKeytab(principal, keytabFile);
+                XLog.getLog(getClass()).info("Got Kerberos ticket, keytab [{0}], Oozie principal principal [{1}]",
+                                             keytabFile, principal);
+            }
+            catch (ServiceException ex) {
+                throw ex;
+            }
+            catch (Exception ex) {
+                throw new ServiceException(ErrorCode.E0100, getClass().getName(), ex.getMessage(), ex);
+            }
     }
 
     public void destroy() {
@@ -83,6 +134,16 @@ public class HadoopAccessorService implements Service {
 
     public Class<? extends Service> getInterface() {
         return HadoopAccessorService.class;
+    }
+
+    private UserGroupInformation getUGI(String user) throws IOException {
+        UserGroupInformation ugi = userUgiMap.get(user);
+        if (ugi == null) {
+            // taking care of a race condition, the latest UGI will be discarded
+            ugi = UserGroupInformation.createProxyUser(user, UserGroupInformation.getLoginUser());
+            userUgiMap.putIfAbsent(user, ugi);
+        }
+        return ugi;
     }
 
     /**
@@ -93,58 +154,92 @@ public class HadoopAccessorService implements Service {
      * @return JobClient created with the provided user/group.
      * @throws HadoopAccessorException if the client could not be created.
      */
-    public JobClient createJobClient(String user, String group, JobConf conf) throws HadoopAccessorException {
+    public JobClient createJobClient(String user, String group, final JobConf conf) throws HadoopAccessorException {
+        ParamChecker.notEmpty(user, "user");
         validateJobTracker(conf.get("mapred.job.tracker"));
-        conf = createConfiguration(user, group, conf);
         try {
-            return new JobClient(conf);
+            UserGroupInformation ugi = getUGI(user);
+            JobClient jobClient = ugi.doAs(new PrivilegedExceptionAction<JobClient>() {
+                public JobClient run() throws Exception {
+                    conf.set("mapreduce.framework.name", "yarn");
+                    return new JobClient(conf);
+                }
+            });
+            Token<DelegationTokenIdentifier> mrdt = jobClient.getDelegationToken(new Text("mr token"));
+            conf.getCredentials().addToken(new Text("mr token"), mrdt);
+            return jobClient;
         }
-        catch (IOException e) {
-            throw new HadoopAccessorException(ErrorCode.E0902, e);
+        catch (InterruptedException ex) {
+            throw new HadoopAccessorException(ErrorCode.E0902, ex);
+        }
+        catch (IOException ex) {
+            throw new HadoopAccessorException(ErrorCode.E0902, ex);
         }
     }
 
     /**
      * Return a FileSystem created with the provided user/group.
-     * 
-     * @param conf Configuration with all necessary information to create the
-     *        FileSystem.
+     *
+     * @param conf Configuration with all necessary information to create the FileSystem.
      * @return FileSystem created with the provided user/group.
      * @throws HadoopAccessorException if the filesystem could not be created.
      */
-    public FileSystem createFileSystem(String user, String group, Configuration conf) throws HadoopAccessorException {
+    public FileSystem createFileSystem(String user, String group, final Configuration conf)
+            throws HadoopAccessorException {
+        ParamChecker.notEmpty(user, "user");
         try {
             validateNameNode(new URI(conf.get("fs.default.name")).getAuthority());
-            conf = createConfiguration(user, group, conf);
-            return FileSystem.get(conf);
+            UserGroupInformation ugi = getUGI(user);
+            return ugi.doAs(new PrivilegedExceptionAction<FileSystem>() {
+                public FileSystem run() throws Exception {
+                    Configuration defaultConf = new Configuration();
+                    XConfiguration.copy(conf, defaultConf);
+                    return FileSystem.get(defaultConf);
+                }
+            });
         }
-        catch (IOException e) {
-            throw new HadoopAccessorException(ErrorCode.E0902, e);
+        catch (InterruptedException ex) {
+            throw new HadoopAccessorException(ErrorCode.E0902, ex);
         }
-        catch (URISyntaxException e) {
-            throw new HadoopAccessorException(ErrorCode.E0902, e);
+        catch (IOException ex) {
+            throw new HadoopAccessorException(ErrorCode.E0902, ex);
+        }
+        catch (URISyntaxException ex) {
+            throw new HadoopAccessorException(ErrorCode.E0902, ex);
         }
     }
 
     /**
-     * Return a FileSystem created with the provided user/group for the
-     * specified URI.
-     * 
+     * Return a FileSystem created with the provided user/group for the specified URI.
+     *
      * @param uri file system URI.
-     * @param conf Configuration with all necessary information to create the
-     *        FileSystem.
+     * @param conf Configuration with all necessary information to create the FileSystem.
      * @return FileSystem created with the provided user/group.
      * @throws HadoopAccessorException if the filesystem could not be created.
      */
-    public FileSystem createFileSystem(String user, String group, URI uri, Configuration conf)
+    public FileSystem createFileSystem(String user, String group, final URI uri, final Configuration conf)
             throws HadoopAccessorException {
+        ParamChecker.notEmpty(user, "user");
         validateNameNode(uri.getAuthority());
-        conf = createConfiguration(user, group, conf);
         try {
-            return FileSystem.get(uri, conf);
+            UserGroupInformation ugi = getUGI(user);
+            return ugi.doAs(new PrivilegedExceptionAction<FileSystem>() {
+                public FileSystem run() throws Exception {
+                    Configuration defaultConf = new Configuration();
+
+                    defaultConf.set(WorkflowAppService.HADOOP_JT_KERBEROS_NAME, "mapred/_HOST@" + localRealm);
+                    defaultConf.set(WorkflowAppService.HADOOP_NN_KERBEROS_NAME, "hdfs/_HOST@" + localRealm);
+
+                    XConfiguration.copy(conf, defaultConf);
+                    return FileSystem.get(uri, defaultConf);
+                }
+            });
         }
-        catch (IOException e) {
-            throw new HadoopAccessorException(ErrorCode.E0902, e);
+        catch (InterruptedException ex) {
+            throw new HadoopAccessorException(ErrorCode.E0902, ex);
+        }
+        catch (IOException ex) {
+            throw new HadoopAccessorException(ErrorCode.E0902, ex);
         }
     }
 
@@ -175,23 +270,28 @@ public class HadoopAccessorService implements Service {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private <C extends Configuration> C createConfiguration(String user, String group, C conf) {
-        ParamChecker.notEmpty(user, "user");
-        C fsConf = (C) ((conf instanceof JobConf) ? new JobConf() : new Configuration());
-        XConfiguration.copy(conf, fsConf);
-        fsConf.set("user.name", user);
-        return fsConf;
-    }
-
-    /**
-     * Add a file to the ClassPath via the DistributedCache.
-     */
     public void addFileToClassPath(String user, String group, final Path file, final Configuration conf)
             throws IOException {
-        Configuration defaultConf = createConfiguration(user, group, conf);
-        DistributedCache.addFileToClassPath(file, defaultConf);
-        DistributedCache.addFileToClassPath(file, conf);
+        ParamChecker.notEmpty(user, "user");
+        try {
+            UserGroupInformation ugi = getUGI(user);
+            ugi.doAs(new PrivilegedExceptionAction<Void>() {
+                public Void run() throws Exception {
+                    Configuration defaultConf = new Configuration();
+                    XConfiguration.copy(conf, defaultConf);
+                    //Doing this NOP add first to have the FS created and cached
+                    DistributedCache.addFileToClassPath(file, defaultConf);
+
+                    DistributedCache.addFileToClassPath(file, conf);
+                    return null;
+                }
+            });
+
+        }
+        catch (InterruptedException ex) {
+            throw new IOException(ex);
+        }
+
     }
 
 }

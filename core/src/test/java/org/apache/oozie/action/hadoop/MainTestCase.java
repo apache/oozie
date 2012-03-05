@@ -17,15 +17,26 @@
  */
 package org.apache.oozie.action.hadoop;
 
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.oozie.test.XFsTestCase;
 
+import java.security.PrivilegedExceptionAction;
 import java.util.concurrent.Callable;
 
 public abstract class MainTestCase extends XFsTestCase implements Callable<Void> {
 
-    //TODO remove this trick when we compile 20.100 onwards
+    public static void execute(String user, final Callable<Void> callable) throws Exception {
+        UserGroupInformation ugi = UserGroupInformation.createProxyUser(user, UserGroupInformation.getLoginUser());
+        ugi.doAs(new PrivilegedExceptionAction<Void>() {
+            public Void run() throws Exception {
+                callable.call();
+                return null;
+            }
+        });
+    }
+
     public void testMain() throws Exception {
-        DoAs.call(getTestUser(), this);
+        execute(getTestUser(), this);
     }
 
 }

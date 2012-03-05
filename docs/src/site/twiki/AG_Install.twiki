@@ -268,7 +268,7 @@ It should be the same keytab file Oozie uses for its Kerberos credentials for Ha
 
 ---+++ Oozie Hadoop Authentication Configuration
 
-Oozie can work with Hadoop 20 with Security distribution which supports Kerberos authentication.
+Oozie works with Hadoop versions which support Kerberos authentication.
 
 Oozie Hadoop authentication is configured using the following configuration properties (default values shown):
 
@@ -280,12 +280,6 @@ Oozie Hadoop authentication is configured using the following configuration prop
 </verbatim>
 
 The above default values are for a Hadoop 0.20 secure distribution (with support for Kerberos authentication).
-
-To use a Hadoop 20 distribution pre-security (i.e. 0.20.1) the following property must be set:
-
-<verbatim>
-  oozie.services.ext=org.apache.oozie.service.HadoopAccessorService
-</verbatim>
 
 To enable Kerberos authentication, the following property must be set:
 
@@ -306,7 +300,8 @@ as a proxy user.
 
 ---+++ User ProxyUser Configuration
 
-Oozie supports impersonation or proxyuser functionality (identical to Hadoop proxyuser capabilities and conceptually similar to Unix 'sudo').
+Oozie supports impersonation or proxyuser functionality (identical to Hadoop proxyuser capabilities and conceptually
+similar to Unix 'sudo').
 
 Proxyuser enables other systems that are Oozie clients to submit jobs on behalf of other users.
 

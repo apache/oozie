@@ -26,7 +26,6 @@ import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.oozie.util.XLog;
-import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
 
@@ -64,17 +63,8 @@ public abstract class XFsTestCase extends XTestCase {
         conf.set("local.realm", getRealm());
         injectKerberosInfo(conf);
 
-        Class hasClass;
 
-        //TODO change this for a hardcoded instantiation when we only compile 20.100 onwards
-        if (System.getProperty("hadoop20", "false").toLowerCase().equals("false")) {
-            hasClass = Class.forName("org.apache.oozie.service.KerberosHadoopAccessorService");
-        }
-        else {
-            hasClass = HadoopAccessorService.class;
-        }
-
-        has = (HadoopAccessorService) hasClass.newInstance();
+        has = new HadoopAccessorService();
         has.init(conf);
         fileSystem = has.createFileSystem(getTestUser(), getTestGroup(), new URI(getNameNodeUri()), conf);
         Path path = new Path(fileSystem.getWorkingDirectory(), getTestCaseDir().substring(1));

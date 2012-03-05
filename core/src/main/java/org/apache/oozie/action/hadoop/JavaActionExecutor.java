@@ -43,10 +43,12 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.AccessControlException;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
+import org.apache.hadoop.mapreduce.security.token.delegation.DelegationTokenIdentifier;
 import org.apache.hadoop.util.DiskChecker;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
@@ -648,7 +650,9 @@ public class JavaActionExecutor extends ActionExecutor {
                 XLog.getLog(getClass()).debug("Submitting the job through Job Client for action " + action.getId());
 
                 // setting up propagation of the delegation token.
-                AuthHelper.get().set(jobClient, launcherJobConf);
+                Token<DelegationTokenIdentifier> mrdt = jobClient.getDelegationToken(new Text("mr token"));
+                launcherJobConf.getCredentials().addToken(new Text("mr token"), mrdt);
+
                 log.debug(WorkflowAppService.HADOOP_JT_KERBEROS_NAME + " = "
                         + launcherJobConf.get(WorkflowAppService.HADOOP_JT_KERBEROS_NAME));
                 log.debug(WorkflowAppService.HADOOP_NN_KERBEROS_NAME + " = "

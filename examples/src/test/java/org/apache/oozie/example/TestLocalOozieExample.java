@@ -18,25 +18,17 @@
 package org.apache.oozie.example;
 
 import junit.framework.TestCase;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.oozie.DagEngine;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.test.XFsTestCase;
-import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
-import org.apache.oozie.util.XConfiguration;
-import org.apache.oozie.action.hadoop.DoAs;
-import org.apache.oozie.client.OozieClient;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.concurrent.Callable;
 
 public class TestLocalOozieExample extends XFsTestCase {
     private String oozieLocalLog;

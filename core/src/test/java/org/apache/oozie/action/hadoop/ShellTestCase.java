@@ -39,7 +39,7 @@ public abstract class ShellTestCase extends XFsTestCase implements Callable<Void
         scriptContent = SUCCESS_SHELL_SCRIPT_CONTENT;
         scriptName = "script.sh";
         expectedSuccess = true;
-        DoAs.call(getTestUser(), this);
+        MainTestCase.execute(getTestUser(), this);
     }
 
     /**
@@ -51,6 +51,6 @@ public abstract class ShellTestCase extends XFsTestCase implements Callable<Void
         scriptContent = FAIL_SHELLSCRIPT_CONTENT;
         scriptName = "script.sh";
         expectedSuccess = false;
-        DoAs.call(getTestUser(), this);
+        MainTestCase.execute(getTestUser(), this);
     }
 }

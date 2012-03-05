@@ -47,8 +47,7 @@ public abstract class PigTestCase extends XFsTestCase implements Callable<Void> 
     public void testPigScript() throws Exception {
         pigScript = commonPigScript;
         writeStats = true;
-        DoAs.call(getTestUser(), this);
-
+        MainTestCase.execute(getTestUser(), this);
     }
 
     // testing embedded Pig feature of Pig 0.9
@@ -84,7 +83,7 @@ public abstract class PigTestCase extends XFsTestCase implements Callable<Void> 
                 + "\nQ.runSingle()";
 
         writeStats = false;
-        DoAs.call(getTestUser(), this);
+        MainTestCase.execute(getTestUser(), this);
     }
 
 }

@@ -119,8 +119,6 @@ undefined (Hadoop JARs are not included).
 
 *test*= (*): runs a single test case, to run a test give the test class name without package and extension, no default
 
-*hadoop20*= (*) : indicates the build/test should not include classes for Hadoop 20S, default is 'false'
-
 *oozie.test.db*= (*): indicates the database to use for running the testcases, supported values are 'hsqldb', 'derby',
  'mysql', 'postgres' and 'oracle'; default value is 'hsqldb'. For each database there is
  =core/src/test/resources/DATABASE-oozie-site.xml= file preconfigured.
