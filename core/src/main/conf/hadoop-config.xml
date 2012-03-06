@@ -21,7 +21,12 @@
 
     <property>
         <name>mapreduce.jobtracker.kerberos.principal</name>
-        <value>map/_HOST@${localRealm}</value>
+        <value>mapred/_HOST@${localRealm}</value>
+    </property>
+
+    <property>
+      <name>yarn.resourcemanager.principal</name>
+      <value>yarn/_HOST@${localRealm}</value>
     </property>
 
     <property>

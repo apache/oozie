@@ -226,6 +226,16 @@
     </property>
 
     <property>
+        <name>oozie.service.HadoopAccessorService.hadoop.configurations</name>
+        <value>*=hadoop-config.xml</value>
+        <description>
+            Comma separated AUTHORITY=CONFIG_FILE, where AUTHORITY is the HOST:PORT of
+            the Hadoop service (JobTracker, HDFS). The wildcard '*' configuration is
+            used when there is no exact match for an authority.
+        </description>
+    </property>
+
+    <property>
         <name>oozie.service.WorkflowAppService.system.libpath</name>
         <value>/user/${user.name}/share/lib</value>
         <description>
