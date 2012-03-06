@@ -31,11 +31,16 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
+import org.apache.oozie.workflow.WorkflowApp;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.PrivilegedExceptionAction;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
@@ -52,20 +57,22 @@ public class HadoopAccessorService implements Service {
     public static final String CONF_PREFIX = Service.CONF_PREFIX + "HadoopAccessorService.";
     public static final String JOB_TRACKER_WHITELIST = CONF_PREFIX + "jobTracker.whitelist";
     public static final String NAME_NODE_WHITELIST = CONF_PREFIX + "nameNode.whitelist";
+    public static final String HADOOP_CONFS = CONF_PREFIX + "hadoop.configurations";
     public static final String KERBEROS_AUTH_ENABLED = CONF_PREFIX + "kerberos.enabled";
     public static final String KERBEROS_KEYTAB = CONF_PREFIX + "keytab.file";
     public static final String KERBEROS_PRINCIPAL = CONF_PREFIX + "kerberos.principal";
 
     private Set<String> jobTrackerWhitelist = new HashSet<String>();
     private Set<String> nameNodeWhitelist = new HashSet<String>();
+    private Map<String, Configuration> hadoopConfigs = new HashMap<String, Configuration>();
 
     private ConcurrentMap<String, UserGroupInformation> userUgiMap;
-    private String localRealm;
 
     public void init(Services services) throws ServiceException {
         init(services.getConf());
     }
 
+    //for testing purposes, see XFsTestCase
     public void init(Configuration conf) throws ServiceException {
         for (String name : conf.getStringCollection(JOB_TRACKER_WHITELIST)) {
             String tmp = name.toLowerCase().trim();
@@ -98,9 +105,10 @@ public class HadoopAccessorService implements Service {
             ugiConf.set("hadoop.security.authentication", "simple");
             UserGroupInformation.setConfiguration(ugiConf);
         }
-        localRealm = conf.get("local.realm");
 
         userUgiMap = new ConcurrentHashMap<String, UserGroupInformation>();
+
+        loadHadoopConfigs(conf);
     }
 
     private void kerberosInit(Configuration serviceConf) throws ServiceException {
@@ -129,6 +137,35 @@ public class HadoopAccessorService implements Service {
             }
     }
 
+    private void loadHadoopConfigs(Configuration serviceConf) throws ServiceException {
+        try {
+            File configDir = new File(ConfigurationService.getConfigurationDirectory());
+            String[] confDefs = serviceConf.getStrings(HADOOP_CONFS, "*=hadoop-config.xml");
+            if (confDefs.length != 1 && confDefs[0].trim().length() > 0) {
+                for (String confDef : confDefs) {
+                    String[] parts = confDef.split("=");
+                    String hostPort = parts[0];
+                    String confFile = parts[1];
+                    File configFile = new File(configDir, confFile);
+                    if (configFile.exists()) {
+                        Configuration conf = new XConfiguration(new FileInputStream(configFile));
+                        hadoopConfigs.put(hostPort.toLowerCase(), conf);
+                    }
+                    else {
+                        throw new ServiceException(ErrorCode.E0100, getClass().getName(),
+                                                   "could not find hadoop configuration file: " + confFile);
+                    }
+                }
+            }
+        }
+        catch (ServiceException ex) {
+            throw ex;
+        }
+        catch (Exception ex) {
+            throw new ServiceException(ErrorCode.E0100, getClass().getName(), ex.getMessage(), ex);
+        }
+    }
+
     public void destroy() {
     }
 
@@ -146,6 +183,17 @@ public class HadoopAccessorService implements Service {
         return ugi;
     }
 
+    public Configuration getConfiguration(String hostPort) {
+        Configuration conf = hadoopConfigs.get(hostPort.toLowerCase());
+        if (conf == null) {
+            conf = hadoopConfigs.get("*");
+            if (conf == null) {
+                conf = new XConfiguration();
+            }
+        }
+        return conf;
+    }
+
     /**
      * Return a JobClient created with the provided user/group.
      * 
@@ -156,12 +204,13 @@ public class HadoopAccessorService implements Service {
      */
     public JobClient createJobClient(String user, String group, final JobConf conf) throws HadoopAccessorException {
         ParamChecker.notEmpty(user, "user");
-        validateJobTracker(conf.get("mapred.job.tracker"));
+        String jobTracker = conf.get("mapred.job.tracker");
+        validateJobTracker(jobTracker);
+        XConfiguration.injectDefaults(getConfiguration(jobTracker), conf);
         try {
             UserGroupInformation ugi = getUGI(user);
             JobClient jobClient = ugi.doAs(new PrivilegedExceptionAction<JobClient>() {
                 public JobClient run() throws Exception {
-                    conf.set("mapreduce.framework.name", "yarn");
                     return new JobClient(conf);
                 }
             });
@@ -186,23 +235,8 @@ public class HadoopAccessorService implements Service {
      */
     public FileSystem createFileSystem(String user, String group, final Configuration conf)
             throws HadoopAccessorException {
-        ParamChecker.notEmpty(user, "user");
         try {
-            validateNameNode(new URI(conf.get("fs.default.name")).getAuthority());
-            UserGroupInformation ugi = getUGI(user);
-            return ugi.doAs(new PrivilegedExceptionAction<FileSystem>() {
-                public FileSystem run() throws Exception {
-                    Configuration defaultConf = new Configuration();
-                    XConfiguration.copy(conf, defaultConf);
-                    return FileSystem.get(defaultConf);
-                }
-            });
-        }
-        catch (InterruptedException ex) {
-            throw new HadoopAccessorException(ErrorCode.E0902, ex);
-        }
-        catch (IOException ex) {
-            throw new HadoopAccessorException(ErrorCode.E0902, ex);
+            return createFileSystem(user, group,new URI(conf.get("fs.default.name")), conf);
         }
         catch (URISyntaxException ex) {
             throw new HadoopAccessorException(ErrorCode.E0902, ex);
@@ -220,16 +254,29 @@ public class HadoopAccessorService implements Service {
     public FileSystem createFileSystem(String user, String group, final URI uri, final Configuration conf)
             throws HadoopAccessorException {
         ParamChecker.notEmpty(user, "user");
-        validateNameNode(uri.getAuthority());
+        String nameNode = uri.getAuthority();
+        if (nameNode == null) {
+            nameNode = conf.get("fs.default.name");
+            if (nameNode != null) {
+                try {
+                    nameNode = new URI(nameNode).getAuthority();
+                }
+                catch (URISyntaxException ex) {
+                    throw new HadoopAccessorException(ErrorCode.E0902, ex);
+                }
+            }
+        }
+        validateNameNode(nameNode);
+
+        //it is null in the case of localFileSystem (in many testcases)
+        if (nameNode != null) {
+            XConfiguration.injectDefaults(getConfiguration(nameNode), conf);
+        }
         try {
             UserGroupInformation ugi = getUGI(user);
             return ugi.doAs(new PrivilegedExceptionAction<FileSystem>() {
                 public FileSystem run() throws Exception {
                     Configuration defaultConf = new Configuration();
-
-                    defaultConf.set(WorkflowAppService.HADOOP_JT_KERBEROS_NAME, "mapred/_HOST@" + localRealm);
-                    defaultConf.set(WorkflowAppService.HADOOP_NN_KERBEROS_NAME, "hdfs/_HOST@" + localRealm);
-
                     XConfiguration.copy(conf, defaultConf);
                     return FileSystem.get(uri, defaultConf);
                 }

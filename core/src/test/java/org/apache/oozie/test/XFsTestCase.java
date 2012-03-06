@@ -25,6 +25,7 @@ import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
@@ -55,7 +56,7 @@ public abstract class XFsTestCase extends XTestCase {
      */
     protected void setUp() throws Exception {
         super.setUp();
-        Configuration conf = new Configuration();
+        Configuration conf = new XConfiguration();
         conf.setBoolean("oozie.service.HadoopAccessorService.kerberos.enabled",
                         System.getProperty("oozie.test.hadoop.security", "simple").equals("kerberos"));
         conf.set("oozie.service.HadoopAccessorService.keytab.file", getKeytabFile());
@@ -63,9 +64,11 @@ public abstract class XFsTestCase extends XTestCase {
         conf.set("local.realm", getRealm());
         injectKerberosInfo(conf);
 
+        conf.set("oozie.service.HadoopAccessorService.hadoop.configurations", "*=hadoop-config.xml");
 
         has = new HadoopAccessorService();
         has.init(conf);
+
         fileSystem = has.createFileSystem(getTestUser(), getTestGroup(), new URI(getNameNodeUri()), conf);
         Path path = new Path(fileSystem.getWorkingDirectory(), getTestCaseDir().substring(1));
         fsTestDir = fileSystem.makeQualified(path);

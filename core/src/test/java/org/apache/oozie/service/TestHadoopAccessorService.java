@@ -21,13 +21,23 @@ import org.apache.oozie.test.XTestCase;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.oozie.util.IOUtils;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 
 public class TestHadoopAccessorService extends XTestCase {
 
     protected void setUp() throws Exception {
         super.setUp();
+        InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("test-hadoop-config.xml");
+        OutputStream os = new FileOutputStream(new File(getTestCaseConfDir(), "test-hadoop-config.xml"));
+        IOUtils.copyStream(is, os);
+        setSystemProperty("oozie.service.HadoopAccessorService.hadoop.configurations",
+                          "*=hadoop-config.xml,test=test-hadoop-config.xml");
         if (System.getProperty("oozie.test.hadoop.security", "simple").equals("kerberos")) {
             setSystemProperty("oozie.service.HadoopAccessorService.kerberos.enabled", "true");
             setSystemProperty("oozie.service.HadoopAccessorService.keytab.file", getKeytabFile());
@@ -46,6 +56,9 @@ public class TestHadoopAccessorService extends XTestCase {
         Services services = Services.get();
         HadoopAccessorService has = services.get(HadoopAccessorService.class);
         assertNotNull(has);
+        assertNotNull(has.getConfiguration("*"));
+        assertNotNull(has.getConfiguration("test"));
+        assertEquals("bar", has.getConfiguration("test").get("foo"));
     }
     public void testAccessor() throws Exception {
         Services services = Services.get();

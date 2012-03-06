@@ -253,6 +253,10 @@ public abstract class XTestCase extends TestCase {
         File target = new File(testCaseConfDir, "oozie-site.xml");
         IOUtils.copyStream(new FileInputStream(source), new FileOutputStream(target));
 
+        source = new File(OOZIE_SRC_DIR, "core/src/test/resources/hadoop-config.xml");
+        target = new File(testCaseConfDir, "hadoop-config.xml");
+        IOUtils.copyStream(new FileInputStream(source), new FileOutputStream(target));
+
         if (System.getProperty("oozielocal.log") == null) {
             setSystemProperty("oozielocal.log", "/tmp/oozielocal.log");
         }
@@ -261,9 +265,6 @@ public abstract class XTestCase extends TestCase {
         }
         if (System.getProperty("oozie.test.hadoop.minicluster", "true").equals("true")) {
             setUpEmbeddedHadoop();
-        }
-        if (System.getProperty("hadoop20", "false").equals("true")) {
-            System.setProperty("oozie.services.ext", "org.apache.oozie.service.HadoopAccessorService");
         }
 
         if (System.getProperty("oozie.test.db.host") == null) {
