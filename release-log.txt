@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-737 ooziedb tool does not register SLAEventBean resulting in an incorrect DB creation (tucu)
 OOZIE-736 Add support for configurations per JT/NN (tucu)
 OOZIE-734 Simplify Kerberos/HadoopAccessorService code and remove Kerberos/DoAs code (tucu)
 OOZIE-631 Oozie DB create/upgrade tool (tucu)

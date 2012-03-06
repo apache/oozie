@@ -522,6 +522,7 @@ public class OozieDBCLI {
         args.add("org.apache.oozie.client.rest.JsonCoordinatorAction");
         args.add("org.apache.oozie.CoordinatorActionBean");
         args.add("org.apache.oozie.client.rest.JsonSLAEvent");
+        args.add("org.apache.oozie.SLAEventBean");
         args.add("org.apache.oozie.client.rest.JsonBundleJob");
         args.add("org.apache.oozie.BundleJobBean");
         args.add("org.apache.oozie.BundleActionBean");
