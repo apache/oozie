@@ -116,7 +116,7 @@ public class TestCallableQueueService extends XTestCase {
         }
 
         @Override
-        public boolean getInterruptMode() {
+        public boolean inInterruptMode() {
             return false;
         }
     }
@@ -322,7 +322,7 @@ public class TestCallableQueueService extends XTestCase {
         }
 
         @Override
-        public boolean getInterruptMode() {
+        public boolean inInterruptMode() {
             return false;
         }
 

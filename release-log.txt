@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-684 CoordChangeXCommand already used is thrown while executing interrupt commands (Mohamed via Mohammad)
 OOZIE-723 Getting rid of the unused Commands classes (mohamed via tucu)
 OOZIE-719 Missing java docs for several methods on ActionXCommand.java (Mohamed via Mohammad)
 OOZIE-738 HadoopAccessorService configs typo/missed value (tucu)

@@ -308,7 +308,7 @@ public class CallableQueueService implements Service, Instrumentable {
         }
 
         @Override
-        public boolean getInterruptMode() {
+        public boolean inInterruptMode() {
             return false;
         }
 

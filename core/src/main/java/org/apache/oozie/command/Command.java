@@ -627,7 +627,7 @@ public abstract class Command<T, S extends Store> implements XCallable<T> {
      * @return the mode of execution. true if it is executed as an Interrupt,
      *         false otherwise
      */
-    public boolean getInterruptMode() {
+    public boolean inInterruptMode() {
         return false;
     }
 

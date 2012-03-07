@@ -79,6 +79,6 @@ public interface XCallable<T> extends Callable<T> {
      * @return the mode of execution. true if it is executed as an Interrupt,
      *         false otherwise
      */
-    public boolean getInterruptMode();
+    public boolean inInterruptMode();
 
 }

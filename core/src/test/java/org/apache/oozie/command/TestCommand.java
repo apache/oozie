@@ -78,7 +78,7 @@ public class TestCommand extends XTestCase {
         }
 
         @Override
-        public boolean getInterruptMode() {
+        public boolean inInterruptMode() {
             return false;
         }
 
