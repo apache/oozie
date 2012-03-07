@@ -222,14 +222,25 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<Void> {
         return false;
     }
 
+	/*
+	 * In case of action error increment the error count for instrumentation
+	 */
     private void incrActionErrorCounter(String type, String error, int count) {
         getInstrumentation().incr(INSTRUMENTATION_GROUP, type + "#ex." + error, count);
     }
 
+	/**
+	 * Increment the action counter in the instrumentation log. indicating how
+	 * many times the action was executed since the start Oozie server
+	 */
     protected void incrActionCounter(String type, int count) {
         getInstrumentation().incr(INSTRUMENTATION_GROUP, type + "#" + getName(), count);
     }
 
+	/**
+	 * Adding a cron for the instrumentation time for the given Instrumentation
+	 * group
+	 */
     protected void addActionCron(String type, Instrumentation.Cron cron) {
         getInstrumentation().addCron(INSTRUMENTATION_GROUP, type + "#" + getName(), cron);
     }
@@ -248,6 +259,10 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<Void> {
         private boolean ended;
         private boolean executed;
 
+		/**
+		 * Constructing the ActionExecutorContext, setting the private members
+		 * and constructing the proto configuration
+		 */
         public ActionExecutorContext(WorkflowJobBean workflow, WorkflowActionBean action, boolean isRetry, boolean isUserRetry) {
             this.workflow = workflow;
             this.action = action;
@@ -261,28 +276,53 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<Void> {
             }
         }
 
+        /*
+         * (non-Javadoc)
+         * @see org.apache.oozie.action.ActionExecutor.Context#getCallbackUrl(java.lang.String)
+         */
         public String getCallbackUrl(String externalStatusVar) {
             return Services.get().get(CallbackService.class).createCallBackUrl(action.getId(), externalStatusVar);
         }
 
+        /*
+         * (non-Javadoc)
+         * @see org.apache.oozie.action.ActionExecutor.Context#getProtoActionConf()
+         */
         public Configuration getProtoActionConf() {
             return protoConf;
         }
 
+        /*
+         * (non-Javadoc)
+         * @see org.apache.oozie.action.ActionExecutor.Context#getWorkflow()
+         */
         public WorkflowJob getWorkflow() {
             return workflow;
         }
 
+        /**
+         * Returns the workflow action of the given action context
+         *
+         * @return the workflow action of the given action context
+         */
         public WorkflowAction getAction() {
             return action;
         }
 
+        /*
+         * (non-Javadoc)
+         * @see org.apache.oozie.action.ActionExecutor.Context#getELEvaluator()
+         */
         public ELEvaluator getELEvaluator() {
             ELEvaluator evaluator = Services.get().get(ELService.class).createEvaluator("workflow");
             DagELFunctions.configureEvaluator(evaluator, workflow, action);
             return evaluator;
         }
 
+        /*
+         * (non-Javadoc)
+         * @see org.apache.oozie.action.ActionExecutor.Context#setVar(java.lang.String, java.lang.String)
+         */
         public void setVar(String name, String value) {
             name = action.getName() + WorkflowInstance.NODE_VAR_SEPARATOR + name;
             WorkflowInstance wfInstance = workflow.getWorkflowInstance();
@@ -290,45 +330,81 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<Void> {
             workflow.setWorkflowInstance(wfInstance);
         }
 
+        /*
+         * (non-Javadoc)
+         * @see org.apache.oozie.action.ActionExecutor.Context#getVar(java.lang.String)
+         */
         public String getVar(String name) {
             name = action.getName() + WorkflowInstance.NODE_VAR_SEPARATOR + name;
             return workflow.getWorkflowInstance().getVar(name);
         }
 
+        /*
+         * (non-Javadoc)
+         * @see org.apache.oozie.action.ActionExecutor.Context#setStartData(java.lang.String, java.lang.String, java.lang.String)
+         */
         public void setStartData(String externalId, String trackerUri, String consoleUrl) {
             action.setStartData(externalId, trackerUri, consoleUrl);
             started = true;
         }
 
+        /**
+         * Setting the start time of the action
+         */
         public void setStartTime() {
             Date now = new Date();
             action.setStartTime(now);
         }
 
+        /*
+         * (non-Javadoc)
+         * @see org.apache.oozie.action.ActionExecutor.Context#setExecutionData(java.lang.String, java.util.Properties)
+         */
         public void setExecutionData(String externalStatus, Properties actionData) {
             action.setExecutionData(externalStatus, actionData);
             executed = true;
         }
 
+        /*
+         * (non-Javadoc)
+         * @see org.apache.oozie.action.ActionExecutor.Context#setExecutionStats(java.lang.String)
+         */
         public void setExecutionStats(String jsonStats) {
             action.setExecutionStats(jsonStats);
             executed = true;
         }
 
+        /*
+         * (non-Javadoc)
+         * @see org.apache.oozie.action.ActionExecutor.Context#setExternalChildIDs(java.lang.String)
+         */
         public void setExternalChildIDs(String externalChildIDs) {
             action.setExternalChildIDs(externalChildIDs);
             executed = true;
         }
 
+        /*
+         * (non-Javadoc)
+         * @see org.apache.oozie.action.ActionExecutor.Context#setEndData(org.apache.oozie.client.WorkflowAction.Status, java.lang.String)
+         */
         public void setEndData(WorkflowAction.Status status, String signalValue) {
             action.setEndData(status, signalValue);
             ended = true;
         }
 
+        /*
+         * (non-Javadoc)
+         * @see org.apache.oozie.action.ActionExecutor.Context#isRetry()
+         */
         public boolean isRetry() {
             return isRetry;
         }
 
+        /**
+         * Return if the executor invocation is a user retry or not.
+         *
+         * @return if the executor invocation is a user retry or not.
+         */
         public boolean isUserRetry() {
             return isUserRetry;
         }

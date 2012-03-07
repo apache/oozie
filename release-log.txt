@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-719 Missing java docs for several methods on ActionXCommand.java (Mohamed via Mohammad)
 OOZIE-738 HadoopAccessorService configs typo/missed value (tucu)
 OOZIE-737 ooziedb tool does not register SLAEventBean resulting in an incorrect DB creation (tucu)
 OOZIE-736 Add support for configurations per JT/NN (tucu)
