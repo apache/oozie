@@ -1,5 +1,6 @@
 -- Oozie 3.1.4 release
 
+OOZIE-688: POM file changes for oozie version 3.1.4 having Hadoop 23 support(Mona via Mohammad)
 OOZIE-733 Script to inject the JARs required by Oozie to run with Hadoop 23 (Mona via Mohammad)
 
 -- Oozie 3.1.3 release
