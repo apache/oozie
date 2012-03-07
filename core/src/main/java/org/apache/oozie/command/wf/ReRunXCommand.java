@@ -126,9 +126,9 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
             // app path could be a directory
             Path path = new Path(uri.getPath());
             if (!fs.isFile(path)) {
-                configDefault = new Path(path, SubmitCommand.CONFIG_DEFAULT);
+                configDefault = new Path(path, SubmitXCommand.CONFIG_DEFAULT);
             } else {
-                configDefault = new Path(path.getParent(), SubmitCommand.CONFIG_DEFAULT);
+                configDefault = new Path(path.getParent(), SubmitXCommand.CONFIG_DEFAULT);
             }
 
             if (fs.exists(configDefault)) {

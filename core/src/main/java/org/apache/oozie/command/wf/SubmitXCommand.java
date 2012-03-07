@@ -110,9 +110,9 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
             // app path could be a directory
             Path path = new Path(uri.getPath());
             if (!fs.isFile(path)) {
-                configDefault = new Path(path, SubmitCommand.CONFIG_DEFAULT);
+                configDefault = new Path(path, CONFIG_DEFAULT);
             } else {
-                configDefault = new Path(path.getParent(), SubmitCommand.CONFIG_DEFAULT);
+                configDefault = new Path(path.getParent(), CONFIG_DEFAULT);
             }
 
             if (fs.exists(configDefault)) {

@@ -31,7 +31,7 @@ import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.FaultInjection;
-import org.apache.oozie.command.wf.ActionStartCommand;
+import org.apache.oozie.command.wf.ActionStartXCommand;
 import org.apache.oozie.command.SkipCommitFaultInjection;
 import org.apache.oozie.service.WorkflowStoreService;
 import org.apache.oozie.store.WorkflowStore;
@@ -44,7 +44,7 @@ public class TestActionFailover extends XFsTestCase {
 
     @Override
     protected void setUp() throws Exception {
-        Class c = ActionStartCommand.class;
+        Class c = ActionStartXCommand.class;
         super.setUp();
         LocalOozie.start();
     }
@@ -104,7 +104,7 @@ public class TestActionFailover extends XFsTestCase {
         setSystemProperty(FaultInjection.FAULT_INJECTION, "false");
         setSystemProperty(SkipCommitFaultInjection.ACTION_FAILOVER_FAULT_INJECTION, "false");
 
-        ActionStartCommand actionStartCommand = new ActionStartCommand(action.getId(), action.getType());
+        ActionStartXCommand actionStartCommand = new ActionStartXCommand(action.getId(), action.getType());
         actionStartCommand.call();
 
         store = Services.get().get(WorkflowStoreService.class).create();

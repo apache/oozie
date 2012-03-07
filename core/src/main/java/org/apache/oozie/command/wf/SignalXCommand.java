@@ -154,7 +154,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
         }
         else {
             String skipVar = workflowInstance.getVar(wfAction.getName() + WorkflowInstance.NODE_VAR_SEPARATOR
-                    + ReRunCommand.TO_SKIP);
+                    + ReRunXCommand.TO_SKIP);
             if (skipVar != null) {
                 skipAction = skipVar.equals("true");
             }
@@ -264,7 +264,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
         else {
             for (WorkflowActionBean newAction : WorkflowStoreService.getStartedActions(workflowInstance)) {
                 String skipVar = workflowInstance.getVar(newAction.getName() + WorkflowInstance.NODE_VAR_SEPARATOR
-                        + ReRunCommand.TO_SKIP);
+                        + ReRunXCommand.TO_SKIP);
                 boolean skipNewAction = false;
                 if (skipVar != null) {
                     skipNewAction = skipVar.equals("true");
@@ -346,8 +346,8 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
     private String resolveSla(Element eSla, Configuration conf) throws CommandException {
         String slaXml = null;
         try {
-            ELEvaluator evalSla = SubmitCommand.createELEvaluatorForGroup(conf, "wf-sla-submit");
-            slaXml = SubmitCommand.resolveSla(eSla, evalSla);
+            ELEvaluator evalSla = SubmitXCommand.createELEvaluatorForGroup(conf, "wf-sla-submit");
+            slaXml = SubmitXCommand.resolveSla(eSla, evalSla);
         }
         catch (Exception e) {
             throw new CommandException(ErrorCode.E1004, e.getMessage(), e);

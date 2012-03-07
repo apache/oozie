@@ -27,15 +27,11 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.OozieClient;
-import org.apache.oozie.client.Job.Status;
-import org.apache.oozie.client.rest.JsonCoordinatorAction;
-import org.apache.oozie.command.coord.CoordSubmitCommand;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.StoreService;
 import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.test.XTestCase;
-import org.apache.oozie.test.XTestCase.Predicate;
 import org.apache.oozie.util.XConfiguration;
 
 public class TestCoordinatorEngine extends XTestCase {
@@ -409,7 +405,7 @@ public class TestCoordinatorEngine extends XTestCase {
     private void checkCoordJob(String jobId) throws StoreException {
         CoordinatorStore store = Services.get().get(StoreService.class).getStore(CoordinatorStore.class);
         try {
-            CoordinatorJobBean job = store.getCoordinatorJob(jobId, false);
+            store.getCoordinatorJob(jobId, false);
         }
         catch (StoreException se) {
             se.printStackTrace();

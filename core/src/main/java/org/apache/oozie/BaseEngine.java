@@ -19,38 +19,10 @@ package org.apache.oozie;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.StringTokenizer;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.CoordinatorJob;
-import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob;
-import org.apache.oozie.command.CommandException;
-import org.apache.oozie.command.wf.CompletedActionCommand;
-import org.apache.oozie.command.wf.DefinitionCommand;
-import org.apache.oozie.command.wf.ExternalIdCommand;
-import org.apache.oozie.command.wf.JobCommand;
-import org.apache.oozie.command.wf.JobsCommand;
-import org.apache.oozie.command.wf.KillCommand;
-import org.apache.oozie.command.wf.ReRunCommand;
-import org.apache.oozie.command.wf.ResumeCommand;
-import org.apache.oozie.command.wf.StartCommand;
-import org.apache.oozie.command.wf.SubmitCommand;
-import org.apache.oozie.command.wf.SuspendCommand;
-import org.apache.oozie.service.DagXLogInfoService;
-import org.apache.oozie.service.Service;
-import org.apache.oozie.service.Services;
-import org.apache.oozie.service.XLogService;
-import org.apache.oozie.util.ParamChecker;
-import org.apache.oozie.util.XLog;
-import org.apache.oozie.util.XLogStreamer;
 
 public abstract class BaseEngine {
     public static final String USE_XCOMMAND = "oozie.useXCommand";

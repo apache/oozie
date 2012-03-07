@@ -437,7 +437,7 @@ public class CoordCommandUtils {
         }
         else {
             String action = XmlUtils.prettyPrint(eAction).toString();
-            CoordActionInputCheckCommand coordActionInput = new CoordActionInputCheckCommand(actionBean.getId());
+            CoordActionInputCheckXCommand coordActionInput = new CoordActionInputCheckXCommand(actionBean.getId(), actionBean.getJobId());
             StringBuilder actionXml = new StringBuilder(action);
             StringBuilder existList = new StringBuilder();
             StringBuilder nonExistList = new StringBuilder();

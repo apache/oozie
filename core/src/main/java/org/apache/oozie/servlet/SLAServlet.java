@@ -27,18 +27,12 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.SLAEventBean;
-import org.apache.oozie.XException;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.command.CommandException;
-import org.apache.oozie.command.coord.SLAEventsCommand;
-import org.apache.oozie.service.SLAStoreService;
-import org.apache.oozie.service.Services;
-import org.apache.oozie.store.SLAStore;
-import org.apache.oozie.store.StoreException;
+import org.apache.oozie.command.coord.SLAEventsXCommand;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 
 public class SLAServlet extends JsonRestServlet {
     private static final String INSTRUMENTATION_NAME = "sla";
@@ -62,7 +56,6 @@ public class SLAServlet extends JsonRestServlet {
     /**
      * Return information about SLA Events.
      */
-    @SuppressWarnings("unchecked")
     public void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
@@ -81,7 +74,7 @@ public class SLAServlet extends JsonRestServlet {
             if (gtSequenceNum != null) {
                 long seqId = Long.parseLong(gtSequenceNum);
                 stopCron();
-                SLAEventsCommand seCommand = new SLAEventsCommand(seqId, maxNoEvents);
+                SLAEventsXCommand seCommand = new SLAEventsXCommand(seqId, maxNoEvents);
                 List<SLAEventBean> slaEvntList = seCommand.call();
                 long lastSeqId = seCommand.getLastSeqId();
 

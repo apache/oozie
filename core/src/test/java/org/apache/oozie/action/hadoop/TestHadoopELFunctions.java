@@ -20,7 +20,7 @@ package org.apache.oozie.action.hadoop;
 import org.apache.oozie.DagELFunctions;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
-import org.apache.oozie.command.wf.ActionCommand;
+import org.apache.oozie.command.wf.ActionXCommand;
 import org.apache.oozie.service.ELService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
@@ -58,7 +58,7 @@ public class TestHadoopELFunctions extends ActionExecutorTestCase {
         final WorkflowActionBean action = new WorkflowActionBean();
         action.setName("H");
 
-        ActionCommand.ActionExecutorContext context = new ActionCommand.ActionExecutorContext(workflow, action, false);
+        ActionXCommand.ActionExecutorContext context = new ActionXCommand.ActionExecutorContext(workflow, action, false, false);
         context.setVar(MapReduceActionExecutor.HADOOP_COUNTERS, counters);
 
         ELEvaluator eval = Services.get().get(ELService.class).createEvaluator("workflow");
@@ -102,7 +102,7 @@ public class TestHadoopELFunctions extends ActionExecutorTestCase {
         final WorkflowActionBean action = new WorkflowActionBean();
         action.setName("H");
 
-        ActionCommand.ActionExecutorContext context = new ActionCommand.ActionExecutorContext(workflow, action, false);
+        ActionXCommand.ActionExecutorContext context = new ActionXCommand.ActionExecutorContext(workflow, action, false, false);
         context.setVar(MapReduceActionExecutor.HADOOP_COUNTERS, pigStats);
 
         ELEvaluator eval = Services.get().get(ELService.class).createEvaluator("workflow");

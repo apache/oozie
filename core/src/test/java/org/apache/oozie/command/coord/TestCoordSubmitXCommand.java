@@ -409,7 +409,6 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set(OozieClient.GROUP_NAME, "other");
         CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
-        String jobId = null;
         try {
             sc.call();
             fail("Exception expected if schema has errors!");
@@ -465,7 +464,6 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         // conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set(OozieClient.GROUP_NAME, "other");
         CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
-        String jobId = null;
         try {
             sc.call();
             fail("Exception expected if user.name is not set!");
@@ -669,7 +667,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         if (withDefaults) {
             String defaults = "<configuration><property><name>startTime</name>" +
                               "<value>2009-02-01T01:00Z</value></property></configuration>";
-            writeToFile(defaults, getTestCaseDir() + File.separator + CoordSubmitCommand.CONFIG_DEFAULT);
+            writeToFile(defaults, getTestCaseDir() + File.separator + CoordSubmitXCommand.CONFIG_DEFAULT);
             String jobId = sc.call();
             assertEquals(jobId.substring(jobId.length() - 2), "-C");
         }

@@ -25,36 +25,20 @@ import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
-import org.apache.oozie.command.XCommand;
-import org.apache.oozie.command.wf.CompletedActionCommand;
 import org.apache.oozie.command.wf.CompletedActionXCommand;
-import org.apache.oozie.command.wf.DefinitionCommand;
 import org.apache.oozie.command.wf.DefinitionXCommand;
-import org.apache.oozie.command.wf.ExternalIdCommand;
 import org.apache.oozie.command.wf.ExternalIdXCommand;
-import org.apache.oozie.command.wf.JobCommand;
 import org.apache.oozie.command.wf.JobXCommand;
-import org.apache.oozie.command.wf.JobsCommand;
 import org.apache.oozie.command.wf.JobsXCommand;
-import org.apache.oozie.command.wf.KillCommand;
 import org.apache.oozie.command.wf.KillXCommand;
-import org.apache.oozie.command.wf.ReRunCommand;
 import org.apache.oozie.command.wf.ReRunXCommand;
-import org.apache.oozie.command.wf.ResumeCommand;
 import org.apache.oozie.command.wf.ResumeXCommand;
-import org.apache.oozie.command.wf.StartCommand;
 import org.apache.oozie.command.wf.StartXCommand;
-import org.apache.oozie.command.wf.SubmitCommand;
-import org.apache.oozie.command.wf.SubmitHttpCommand;
 import org.apache.oozie.command.wf.SubmitHttpXCommand;
-import org.apache.oozie.command.wf.SubmitMRCommand;
 import org.apache.oozie.command.wf.SubmitMRXCommand;
-import org.apache.oozie.command.wf.SubmitPigCommand;
 import org.apache.oozie.command.wf.SubmitPigXCommand;
 import org.apache.oozie.command.wf.SubmitXCommand;
-import org.apache.oozie.command.wf.SuspendCommand;
 import org.apache.oozie.command.wf.SuspendXCommand;
-import org.apache.oozie.command.wf.WorkflowActionInfoCommand;
 import org.apache.oozie.command.wf.WorkflowActionInfoXCommand;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.CallableQueueService;
@@ -80,7 +64,6 @@ import java.io.IOException;
 public class DagEngine extends BaseEngine {
 
     private static final int HIGH_PRIORITY = 2;
-    private boolean useXCommand = true;
     private static XLog LOG = XLog.getLog(DagEngine.class);
 
     /**
@@ -88,7 +71,6 @@ public class DagEngine extends BaseEngine {
      */
     public DagEngine() {
         if (Services.get().getConf().getBoolean(USE_XCOMMAND, true) == false) {
-            useXCommand = false;
             LOG.debug("Oozie DagEngine is not using XCommands.");
         }
         else {
@@ -122,19 +104,13 @@ public class DagEngine extends BaseEngine {
         validateSubmitConfiguration(conf);
 
         try {
-            String jobId;
-            if (useXCommand) {
-                SubmitXCommand submit = new SubmitXCommand(conf, getAuthToken());
-                jobId = submit.call();
-            }
-            else {
-                SubmitCommand submit = new SubmitCommand(conf, getAuthToken());
-                jobId = submit.call();
-            }
-            if (startJob) {
-                start(jobId);
-            }
-            return jobId;
+			String jobId;
+			SubmitXCommand submit = new SubmitXCommand(conf, getAuthToken());
+			jobId = submit.call();
+			if (startJob) {
+				start(jobId);
+			}
+			return jobId;
         }
         catch (CommandException ex) {
             throw new DagEngineException(ex);
@@ -156,28 +132,15 @@ public class DagEngine extends BaseEngine {
 
         try {
             String jobId;
-            if (useXCommand) {
-                SubmitHttpXCommand submit = null;
-                if (jobType.equals("pig")) {
-                    submit = new SubmitPigXCommand(conf, getAuthToken());
-                }
-                else if (jobType.equals("mapreduce")) {
-                    submit = new SubmitMRXCommand(conf, getAuthToken());
-                }
-
-                jobId = submit.call();
+            SubmitHttpXCommand submit = null;
+            if (jobType.equals("pig")) {
+                submit = new SubmitPigXCommand(conf, getAuthToken());
             }
-            else {
-                SubmitHttpCommand submit = null;
-                if (jobType.equals("pig")) {
-                    submit = new SubmitPigCommand(conf, getAuthToken());
-                }
-                else if (jobType.equals("mapreduce")) {
-                    submit = new SubmitMRCommand(conf, getAuthToken());
-                }
-
-                jobId = submit.call();
+            else if (jobType.equals("mapreduce")) {
+                submit = new SubmitMRXCommand(conf, getAuthToken());
             }
+
+            jobId = submit.call();
             start(jobId);
             return jobId;
         }
@@ -204,12 +167,7 @@ public class DagEngine extends BaseEngine {
         // loss of command if the queue is full or the queue is lost in case of
         // failure.
         try {
-            if (useXCommand) {
                 new StartXCommand(jobId).call();
-            }
-            else {
-                new StartCommand(jobId).call();
-            }
         }
         catch (CommandException e) {
             throw new DagEngineException(e);
@@ -228,12 +186,7 @@ public class DagEngine extends BaseEngine {
         // loss of command if the queue is full or the queue is lost in case of
         // failure.
         try {
-            if (useXCommand) {
                 new ResumeXCommand(jobId).call();
-            }
-            else {
-                new ResumeCommand(jobId).call();
-            }
         }
         catch (CommandException e) {
             throw new DagEngineException(e);
@@ -252,12 +205,7 @@ public class DagEngine extends BaseEngine {
         // loss of command if the queue is full or the queue is lost in case of
         // failure.
         try {
-            if (useXCommand) {
-                new SuspendXCommand(jobId).call();
-            }
-            else {
-                new SuspendCommand(jobId).call();
-            }
+			new SuspendXCommand(jobId).call();
         }
         catch (CommandException e) {
             throw new DagEngineException(e);
@@ -276,13 +224,8 @@ public class DagEngine extends BaseEngine {
         // loss of command if the queue is full or the queue is lost in case of
         // failure.
         try {
-            if (useXCommand) {
-                new KillXCommand(jobId).call();
-            }
-            else {
-                new KillCommand(jobId).call();
-            }
-            LOG.info("User " + user + " killed the WF job " + jobId);
+			new KillXCommand(jobId).call();
+			LOG.info("User " + user + " killed the WF job " + jobId);
         }
         catch (CommandException e) {
             throw new DagEngineException(e);
@@ -309,13 +252,7 @@ public class DagEngine extends BaseEngine {
     public void reRun(String jobId, Configuration conf) throws DagEngineException {
         try {
             validateReRunConfiguration(conf);
-
-            if (useXCommand) {
-                new ReRunXCommand(jobId, conf, getAuthToken()).call();
-            }
-            else {
-                new ReRunCommand(jobId, conf, getAuthToken()).call();
-            }
+			new ReRunXCommand(jobId, conf, getAuthToken()).call();
             start(jobId);
         }
         catch (CommandException ex) {
@@ -351,12 +288,8 @@ public class DagEngine extends BaseEngine {
         XLog.Info.get().clearParameter(XLogService.USER);
         XCallable<Void> command = null;
 
-        if (useXCommand) {
-            command = new CompletedActionXCommand(actionId, externalStatus, actionData, HIGH_PRIORITY);
-        }
-        else {
-            command = new CompletedActionCommand(actionId, externalStatus, actionData, HIGH_PRIORITY);
-        }
+		command = new CompletedActionXCommand(actionId, externalStatus,
+				actionData, HIGH_PRIORITY);
         if (!Services.get().get(CallableQueueService.class).queue(command)) {
             LOG.warn(XLog.OPS, "queue is full or system is in SAFEMODE, ignoring callback");
         }
@@ -372,12 +305,7 @@ public class DagEngine extends BaseEngine {
     @Override
     public WorkflowJob getJob(String jobId) throws DagEngineException {
         try {
-            if (useXCommand) {
                 return new JobXCommand(jobId).call();
-            }
-            else {
-                return new JobCommand(jobId).call();
-            }
         }
         catch (CommandException ex) {
             throw new DagEngineException(ex);
@@ -396,12 +324,7 @@ public class DagEngine extends BaseEngine {
     @Override
     public WorkflowJob getJob(String jobId, int start, int length) throws DagEngineException {
         try {
-            if (useXCommand) {
-                return new JobXCommand(jobId, start, length).call();
-            }
-            else {
-                return new JobCommand(jobId, start, length).call();
-            }
+			return new JobXCommand(jobId, start, length).call();
         }
         catch (CommandException ex) {
             throw new DagEngineException(ex);
@@ -418,12 +341,7 @@ public class DagEngine extends BaseEngine {
     @Override
     public String getDefinition(String jobId) throws DagEngineException {
         try {
-            if (useXCommand) {
-                return new DefinitionXCommand(jobId).call();
-            }
-            else {
-                return new DefinitionCommand(jobId).call();
-            }
+			return new DefinitionXCommand(jobId).call();
         }
         catch (CommandException ex) {
             throw new DagEngineException(ex);
@@ -518,12 +436,7 @@ public class DagEngine extends BaseEngine {
     public WorkflowsInfo getJobs(String filter, int start, int len) throws DagEngineException {
         Map<String, List<String>> filterList = parseFilter(filter);
         try {
-            if (useXCommand) {
-                return new JobsXCommand(filterList, start, len).call();
-            }
-            else {
-                return new JobsCommand(filterList, start, len).call();
-            }
+			return new JobsXCommand(filterList, start, len).call();
         }
         catch (CommandException dce) {
             throw new DagEngineException(dce);
@@ -540,12 +453,7 @@ public class DagEngine extends BaseEngine {
     @Override
     public String getJobIdForExternalId(String externalId) throws DagEngineException {
         try {
-            if (useXCommand) {
-                return new ExternalIdXCommand(externalId).call();
-            }
-            else {
-                return new ExternalIdCommand(externalId).call();
-            }
+			return new ExternalIdXCommand(externalId).call();
         }
         catch (CommandException dce) {
             throw new DagEngineException(dce);
@@ -564,12 +472,7 @@ public class DagEngine extends BaseEngine {
 
     public WorkflowActionBean getWorkflowAction(String actionId) throws BaseEngineException {
         try {
-            if (useXCommand) {
-                return new WorkflowActionInfoXCommand(actionId).call();
-            }
-            else {
-                return new WorkflowActionInfoCommand(actionId).call();
-            }
+			return new WorkflowActionInfoXCommand(actionId).call();
         }
         catch (CommandException ex) {
             throw new BaseEngineException(ex);

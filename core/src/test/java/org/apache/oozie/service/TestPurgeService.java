@@ -40,7 +40,7 @@ import org.apache.oozie.DagEngineException;
 import org.apache.oozie.ForTestingActionExecutor;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.command.wf.PurgeCommand;
+import org.apache.oozie.command.wf.PurgeXCommand;
 import org.apache.oozie.executor.jpa.BundleActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobInsertJPAExecutor;
@@ -111,7 +111,7 @@ public class TestPurgeService extends XDataTestCase {
             }
         });
         assertEquals(WorkflowJob.Status.SUCCEEDED, engine.getJob(jobId).getStatus());
-        new PurgeCommand(1, 10000).call();
+        new PurgeXCommand(1, 10000).call();
         Thread.sleep(1000);
 
         JPAService jpaService = Services.get().get(JPAService.class);

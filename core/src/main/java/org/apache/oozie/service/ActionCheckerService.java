@@ -25,9 +25,7 @@ import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.command.CommandException;
-import org.apache.oozie.command.coord.CoordActionCheckCommand;
 import org.apache.oozie.command.coord.CoordActionCheckXCommand;
-import org.apache.oozie.command.wf.ActionCheckCommand;
 import org.apache.oozie.command.wf.ActionCheckXCommand;
 import org.apache.oozie.executor.jpa.CoordActionsRunningGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
@@ -62,7 +60,6 @@ public class ActionCheckerService implements Service {
     protected static final String INSTR_CHECK_ACTIONS_COUNTER = "checks_wf_actions";
     protected static final String INSTR_CHECK_COORD_ACTIONS_COUNTER = "checks_coord_actions";
 
-    private static boolean useXCommand = true;
 
     /**
      * {@link ActionCheckRunnable} is the runnable which is scheduled to run and
@@ -129,12 +126,7 @@ public class ActionCheckerService implements Service {
             for (WorkflowActionBean action : actions) {
                 Services.get().get(InstrumentationService.class).get().incr(INSTRUMENTATION_GROUP,
                         INSTR_CHECK_ACTIONS_COUNTER, 1);
-                if (useXCommand) {
                     queueCallable(new ActionCheckXCommand(action.getId()));
-                }
-                else {
-                    queueCallable(new ActionCheckCommand(action.getId()));
-                }
             }
 
         }
@@ -168,12 +160,7 @@ public class ActionCheckerService implements Service {
             for (CoordinatorActionBean caction : cactions) {
                 Services.get().get(InstrumentationService.class).get().incr(INSTRUMENTATION_GROUP,
                         INSTR_CHECK_COORD_ACTIONS_COUNTER, 1);
-                if (useXCommand) {
                     queueCallable(new CoordActionCheckXCommand(caction.getId(), actionCheckDelay));
-                }
-                else {
-                    queueCallable(new CoordActionCheckCommand(caction.getId(), actionCheckDelay));
-                }
             }
 
         }
@@ -214,11 +201,6 @@ public class ActionCheckerService implements Service {
         Runnable actionCheckRunnable = new ActionCheckRunnable(conf.getInt(CONF_ACTION_CHECK_DELAY, 600));
         services.get(SchedulerService.class).schedule(actionCheckRunnable, 10,
                 conf.getInt(CONF_ACTION_CHECK_INTERVAL, 60), SchedulerService.Unit.SEC);
-
-        if (Services.get().getConf().getBoolean(USE_XCOMMAND, true) == false) {
-            useXCommand = false;
-        }
-
     }
 
     /**

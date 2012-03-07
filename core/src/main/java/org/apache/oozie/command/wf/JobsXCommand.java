@@ -64,7 +64,7 @@ public class JobsXCommand extends WorkflowXCommand<WorkflowsInfo> {
                 throw new CommandException(ErrorCode.E0610);
             }
             for (WorkflowJobBean workflow : this.workflows.getWorkflows()) {
-                workflow.setConsoleUrl(JobCommand.getJobConsoleUrl(workflow.getId()));
+                workflow.setConsoleUrl(JobXCommand.getJobConsoleUrl(workflow.getId()));
             }
             return this.workflows;
         }

@@ -226,7 +226,7 @@ public class TestActionErrors extends XDataTestCase {
      * @throws Exception
      */
     public void testExecutionDataNotSet() throws Exception {
-        _testDataNotSet("avoid-set-execution-data", ActionStartCommand.START_DATA_MISSING);
+        _testDataNotSet("avoid-set-execution-data", ActionStartXCommand.START_DATA_MISSING);
     }
 
     /**
@@ -236,7 +236,7 @@ public class TestActionErrors extends XDataTestCase {
      * @throws Exception
      */
     public void testEndDataNotSet() throws Exception {
-        _testDataNotSet("avoid-set-end-data", ActionEndCommand.END_DATA_MISSING);
+        _testDataNotSet("avoid-set-end-data", ActionEndXCommand.END_DATA_MISSING);
     }
 
     /**
