@@ -27,6 +27,7 @@ import org.apache.oozie.cli.CLIParser;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.sql.Connection;
@@ -98,17 +99,30 @@ public class OozieDBCLI {
                 showVersion();
             }
             else {
-                if (!command.getCommandLine().hasOption(SQL_FILE_OPT)) {
-                    throw new Exception("'-sqlfile <FILE>' option must be specified");
+                if (!command.getCommandLine().hasOption(SQL_FILE_OPT) &&
+                    !command.getCommandLine().hasOption(RUN_OPT)) {
+                    throw new Exception("'-sqlfile <FILE>' or '-run' options must be specified");
                 }
+                CommandLine commandLine = command.getCommandLine();
+                String sqlFile = (commandLine.hasOption(SQL_FILE_OPT))
+                                 ? commandLine.getOptionValue(SQL_FILE_OPT)
+                                 : File.createTempFile("ooziedb-", ".sql").getAbsolutePath();
+                boolean run = commandLine.hasOption(RUN_OPT);
                 if (command.getName().equals(CREATE_CMD)) {
-                    createDB(command.getCommandLine());
+                    createDB(sqlFile, run);
                 }
                 if (command.getName().equals(UPGRADE_CMD)) {
-                    upgradeDB(command.getCommandLine());
+                    upgradeDB(sqlFile, run);
                 }
                 if (command.getName().equals(POST_UPGRADE_CMD)) {
-                    postUpgradeDB(command.getCommandLine());
+                    postUpgradeDB(sqlFile, run);
+                }
+                System.out.println();
+                System.out.println("The SQL commands have been written to: " + sqlFile);
+                if (!run) {
+                    System.out.println();
+                    System.out.println("WARN: The SQL commands have NOT been executed, you must use the '-run' option");
+                    System.out.println();
                 }
             }
             return 0;
@@ -149,12 +163,10 @@ public class OozieDBCLI {
         return jdbcConf;
     }
 
-    private void createDB(CommandLine commandLine) throws Exception {
+    private void createDB(String sqlFile, boolean run) throws Exception {
         validateConnection();
         validateDBSchema(false);
         verifyOozieSysTable(false);
-        String sqlFile = (commandLine.hasOption(SQL_FILE_OPT)) ? commandLine.getOptionValue(SQL_FILE_OPT) : null;
-        boolean run = commandLine.hasOption(RUN_OPT);
         createUpgradeDB(sqlFile, run, true);
         createOozieSysTable(sqlFile, run);
         System.out.println();
@@ -162,61 +174,45 @@ public class OozieDBCLI {
             System.out.println("Oozie DB has been created for Oozie version '" +
                                BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_VERSION) + "'");
         }
-        else {
-            System.out.println("The SQL commands have NOT been executed, you must use the '-run' option");
-        }
         System.out.println();
     }
 
-    private void upgradeDB(CommandLine commandLine) throws Exception {
+    private void upgradeDB(String sqlFile, boolean run) throws Exception {
         // placeholder for later versions, to handle upgrades based on the OOZIE_SYS table.
-        upgradeDBTo32(commandLine);
+        upgradeDBTo32(sqlFile,  run);
     }
 
-    private void upgradeDBTo32(CommandLine commandLine) throws Exception {
+    private void upgradeDBTo32(String sqlFile, boolean run) throws Exception {
         validateConnection();
         validateDBSchema(true);
         verifyOozieSysTable(false);
         verifyDBState();
-        String sqlFile = (commandLine.hasOption(SQL_FILE_OPT)) ? commandLine.getOptionValue(SQL_FILE_OPT) : null;
-        boolean run = commandLine.hasOption(RUN_OPT);
         createUpgradeDB(sqlFile, run, false);
         createOozieSysTable(sqlFile, run);
         postUpgradeTasks(sqlFile, run, false);
-        manualStepsNotice();
+        ddlTweaks(sqlFile, run);
         if (run) {
             System.out.println();
             System.out.println("Oozie DB has been upgraded to Oozie version '" +
                                BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_VERSION) + "'");
         }
-        else {
-            System.out.println();
-            System.out.println("The SQL commands have NOT been executed, you must use the '-run' option");
-        }
         System.out.println();
     }
 
-    private void postUpgradeDB(CommandLine commandLine) throws Exception {
-        postUpgradeDBTo32(commandLine);
+    private void postUpgradeDB(String sqlFile, boolean run) throws Exception {
+        postUpgradeDBTo32(sqlFile, run);
     }
 
-    private void postUpgradeDBTo32(CommandLine commandLine) throws Exception {
+    private void postUpgradeDBTo32(String sqlFile, boolean run) throws Exception {
         validateConnection();
         validateDBSchema(true);
         verifyOozieSysTable(true);
         verifyOozieDBVersion();
         verifyDBState();
-        String sqlFile = (commandLine.hasOption(SQL_FILE_OPT)) ? commandLine.getOptionValue(SQL_FILE_OPT) : null;
-        boolean run = commandLine.hasOption(RUN_OPT);
         postUpgradeTasks(sqlFile, run, true);
-        manualStepsNotice();
         if (run) {
             System.out.println();
             System.out.println("Post ugprade updates have been executed");
-        }
-        else {
-            System.out.println();
-            System.out.println("Post ugprade updates have NOT been executed, you must use the '-run' option");
         }
         System.out.println();
     }
@@ -243,10 +239,17 @@ public class OozieDBCLI {
         "select A.id from COORD_ACTIONS A, WF_JOBS B where A.external_id = B.id " +
         "and B.status = 'SUSPENDED' and A.status = 'RUNNING' )";
 
+    private String getDBVendor() throws Exception {
+        String url = getJdbcConf().get("url");
+        String vendor = url.substring("jdbc:".length());
+        vendor = vendor.substring(0, vendor.indexOf(":"));
+        return vendor;
+    }
+
     private void postUpgradeTasks(String sqlFile, boolean run, boolean force) throws Exception {
         PrintWriter writer = new PrintWriter(new FileWriter(sqlFile, true));
         writer.println();
-        boolean skipUpdates = getJdbcConf().get("url").contains("mysql");
+        boolean skipUpdates = getDBVendor().equals("mysql");
         Connection conn = (run) ? createConnection() : null;
         try {
             System.out.println("Post-upgrade COORD_JOBS new columns default values");
@@ -298,13 +301,44 @@ public class OozieDBCLI {
         }
     }
 
-    private void manualStepsNotice() {
-        System.out.println();
-        System.out.println("IMPORTANT: the following manual changes must be done in the Oozie DB");
-        System.out.println();
-        System.out.println(
-            "  The 'execution_path' column in the 'WF_ACTIONS' table has to be modified to be a VARCHAR2(1024)");
-        System.out.println();
+    private void ddlTweaks(String sqlFile, boolean run) throws Exception {
+        PrintWriter writer = new PrintWriter(new FileWriter(sqlFile, true));
+        writer.println();
+        String dbVendor = getDBVendor();
+        String ddlQuery = null;
+        if (dbVendor.equals("derby")) {
+            ddlQuery = "ALTER TABLE WF_ACTIONS ALTER COLUMN execution_path SET DATA TYPE VARCHAR(1024)";
+        }
+        else
+        if (dbVendor.equals("oracle")) {
+            ddlQuery = "ALTER TABLE WF_ACTIONS MODIFY (execution_path VARCHAR2(1024))";
+        }
+        else
+        if (dbVendor.equals("mysql")) {
+            ddlQuery = "ALTER TABLE WF_ACTIONS MODIFY execution_path VARCHAR(1024)";
+        }
+        else
+        if (dbVendor.equals("postgresql")) {
+            ddlQuery = "ALTER TABLE WF_ACTIONS ALTER COLUMN execution_path TYPE VARCHAR(1024)";
+        }
+        Connection conn = (run) ? createConnection() : null;
+        try {
+            System.out.println("Table 'WF_ACTIONS' column 'execution_path', length changed to 1024");
+            writer.println(ddlQuery + ";");
+            if (run) {
+                conn.setAutoCommit(true);
+                Statement st = conn.createStatement();
+                st.executeUpdate(ddlQuery);
+                st.close();
+            }
+            System.out.println("DONE");
+            writer.close();
+        }
+        finally {
+            if (run) {
+                conn.close();
+            }
+        }
     }
 
     private Connection createConnection() throws Exception {

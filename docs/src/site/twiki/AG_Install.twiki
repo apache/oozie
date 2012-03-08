@@ -153,10 +153,16 @@ DONE
 
 Oozie DB has been created for Oozie version '3.2.0'
 
+The SQL commands have been written to: oozie.sql
+
 $
 </verbatim>
 
-If the '-run' option is not specified, only the SQL file with the command that would be executed will be created.
+NOTE: If using MySQL or Oracle, copy the corresponding JDBC driver JAR file to the =libext/= directory before running
+the =ooziedb.sh= command line tool.
+
+NOTE: If instead using the '-run' option, the '-sqlfile <FILE>' option is used, then all the
+database changes will be written to the specified file and the database won't be modified.
 
 If using HSQL there is no need to use the =ooziedb= command line tool as HSQL is an im-memory database. Use the
 following configuration properties in the oozie-site.xml:
