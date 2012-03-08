@@ -18,11 +18,11 @@
 package org.apache.oozie.util;
 
 import org.apache.oozie.test.XTestCase;
-import org.apache.hadoop.io.Writable;
+import org.json.simple.JSONArray;
 
 public class TestClassUtils extends XTestCase {
 
     public void testContainingJar() {
-        assertTrue(ClassUtils.findContainingJar(Writable.class).contains("hadoop-core"));
+        assertTrue(ClassUtils.findContainingJar(JSONArray.class).contains("json-simple"));
     }
 }

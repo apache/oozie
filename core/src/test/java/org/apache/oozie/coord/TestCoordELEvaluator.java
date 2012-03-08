@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.Date;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.DateUtils;
@@ -174,6 +175,7 @@ public class TestCoordELEvaluator extends XTestCase {
         dataEvntXML += "<uri-template>file:///tmp/coord/${YEAR}/${MONTH}/${DAY}</uri-template></dataset></data-in>";
         Element dEvent = XmlUtils.parseXml(dataEvntXML);
         ELEvaluator eval = CoordELEvaluator.createLazyEvaluator(actualTime, nominalTime, dEvent, conf);
+        eval.setVariable(OozieClient.USER_NAME, conf.get(OozieClient.USER_NAME));
         createDir("/tmp/coord/2009/01/02");
         String expr = "${coord:latest(0)} ${coord:latest(-1)}";
         // Dependent on the directory structure

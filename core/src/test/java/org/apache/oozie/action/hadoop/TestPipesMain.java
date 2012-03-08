@@ -37,17 +37,8 @@ import java.net.URI;
 public class TestPipesMain extends MainTestCase {
 
     public static String getProgramName(XTestCase tc) {
-        String hadoopVersion = tc.getHadoopVersion();
 
-        String hadoopSuffix = null;
         String osSuffix = null;
-
-        if (hadoopVersion.startsWith("0.20")) {
-            hadoopSuffix = "h20";
-        }
-        else {
-            fail();
-        }
 
         if (System.getProperty("os.name").startsWith("Mac") && System.getProperty("os.arch").equals("x86_64")) {
             osSuffix = "Mac_OS_X-x86_64-64";
@@ -62,7 +53,7 @@ public class TestPipesMain extends MainTestCase {
             fail();
         }
 
-        return "wordcount-simple" + "_" + osSuffix + "_" + hadoopSuffix;
+        return "wordcount-simple" + "_" + osSuffix + "_h20";
     }
 
     public Void call() throws Exception {
@@ -95,6 +86,7 @@ public class TestPipesMain extends MainTestCase {
 
         jobConf.set("mapred.job.tracker", getJobTrackerUri());
         jobConf.set("fs.default.name", getNameNodeUri());
+        jobConf.set("mapreduce.framework.name", "yarn");
 
         jobConf.set("mapred.input.dir", inputDir.toString());
         jobConf.set("mapred.output.dir", outputDir.toString());

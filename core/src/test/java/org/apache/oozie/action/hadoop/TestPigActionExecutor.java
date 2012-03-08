@@ -164,8 +164,10 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         conf.set("fs.default.name", e.getChildTextTrim("name-node"));
         conf.set("user.name", context.getProtoActionConf().get("user.name"));
         conf.set("group.name", getTestGroup());
+        conf.set("mapreduce.framework.name","yarn");
         injectKerberosInfo(conf);
-        JobConf jobConf = new JobConf(conf);
+        JobConf jobConf = new JobConf();
+        XConfiguration.copy(conf, jobConf);
         String user = jobConf.get("user.name");
         String group = jobConf.get("group.name");
         JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, group, jobConf);

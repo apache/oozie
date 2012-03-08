@@ -31,10 +31,6 @@ import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.service.HadoopAccessorService;
-import org.apache.oozie.service.HadoopAccessorException;
-import org.apache.oozie.service.Service;
-import org.apache.oozie.service.ServiceException;
 
 import java.io.IOException;
 import java.net.URI;
@@ -129,6 +125,7 @@ public class KerberosHadoopAccessorService extends HadoopAccessorService {
             UserGroupInformation ugi = getUGI(user);
             JobClient jobClient = ugi.doAs(new PrivilegedExceptionAction<JobClient>() {
                 public JobClient run() throws Exception {
+                    conf.set("mapreduce.framework.name", "yarn");
                     return new JobClient(conf);
                 }
             });

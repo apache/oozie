@@ -52,11 +52,12 @@ public class TestMapReduceMain extends MainTestCase {
         jobConf.set("fs.default.name", getNameNodeUri());
         jobConf.set("mapred.input.dir", inputDir.toString());
         jobConf.set("mapred.output.dir", outputDir.toString());
+        jobConf.set("mapreduce.framework.name", "yarn");
 
         jobConf.set("user.name", getTestUser());
         jobConf.set("hadoop.job.ugi", getTestUser() + "," + getTestGroup());
         injectKerberosInfo(jobConf);
-        
+
         File actionXml = new File(getTestCaseDir(), "action.xml");
         OutputStream os = new FileOutputStream(actionXml);
         jobConf.writeXml(os);
