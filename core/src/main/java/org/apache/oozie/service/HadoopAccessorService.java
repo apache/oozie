@@ -141,8 +141,8 @@ public class HadoopAccessorService implements Service {
         try {
             File configDir = new File(ConfigurationService.getConfigurationDirectory());
             String[] confDefs = serviceConf.getStrings(HADOOP_CONFS, "*=hadoop-config.xml");
-            if (confDefs.length != 1 && confDefs[0].trim().length() > 0) {
-                for (String confDef : confDefs) {
+            for (String confDef : confDefs) {
+                if (confDef.trim().length() > 0) {
                     String[] parts = confDef.split("=");
                     String hostPort = parts[0];
                     String confFile = parts[1];
