@@ -1354,11 +1354,14 @@
 
     <property>
         <name>oozie.service.HadoopAccessorService.hadoop.configurations</name>
-        <value>*=hadoop-config.xml</value>
+        <value>*=hadoop-conf</value>
         <description>
-            Comma separated AUTHORITY=CONFIG_FILE, where AUTHORITY is the HOST:PORT of
+            Comma separated AUTHORITY=HADOOP_CONF_DIR, where AUTHORITY is the HOST:PORT of
             the Hadoop service (JobTracker, HDFS). The wildcard '*' configuration is
-            used when there is no exact match for an authority.
+            used when there is no exact match for an authority. The HADOOP_CONF_DIR contains
+            the relevant Hadoop *-site.xml files. If the path is relative is looked within
+            the Oozie configuration directory; though the path can be absolute (i.e. to point
+            to Hadoop client conf/ directories in the local filesystem.
         </description>
     </property>
 

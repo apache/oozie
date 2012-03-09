@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-747 HadoopAccessorService hadoop-configs should be loaded from Hadoop -site.xml files (tucu)
 OOZIE-746 JobConf/Configuration creation is inconsistent and makes things fail in odd ways (tucu)
 OOZIE-744 HadoopAccessorService hadoop-configs loading logic is not 100% correct (tucu)
 OOZIE-743 HadoopAccessorService hadoop configurations should not use VARs from properties defined oozie-site.xml (tucu)

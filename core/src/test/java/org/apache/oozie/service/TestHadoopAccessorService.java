@@ -33,11 +33,12 @@ public class TestHadoopAccessorService extends XTestCase {
 
     protected void setUp() throws Exception {
         super.setUp();
+        new File(getTestCaseConfDir(), "hadoop-confx").mkdir();
         InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("test-hadoop-config.xml");
-        OutputStream os = new FileOutputStream(new File(getTestCaseConfDir(), "test-hadoop-config.xml"));
+        OutputStream os = new FileOutputStream(new File(getTestCaseConfDir() + "/hadoop-confx", "core-site.xml"));
         IOUtils.copyStream(is, os);
         setSystemProperty("oozie.service.HadoopAccessorService.hadoop.configurations",
-                          "*=hadoop-config.xml,test=test-hadoop-config.xml");
+                          "*=hadoop-conf,test=hadoop-confx");
         if (System.getProperty("oozie.test.hadoop.security", "simple").equals("kerberos")) {
             setSystemProperty("oozie.service.HadoopAccessorService.kerberos.enabled", "true");
             setSystemProperty("oozie.service.HadoopAccessorService.keytab.file", getKeytabFile());

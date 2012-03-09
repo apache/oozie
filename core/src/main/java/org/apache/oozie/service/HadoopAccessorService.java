@@ -35,6 +35,7 @@ import org.apache.oozie.util.XLog;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.PrivilegedExceptionAction;
@@ -138,23 +139,51 @@ public class HadoopAccessorService implements Service {
             }
     }
 
+    private static final String[] HADOOP_CONF_FILES =
+        {"core-site.xml", "hdfs-site.xml", "mapred-site.xml", "yarn-site.xml", "hadoop-site.xml"};
+
+
+    private Configuration loadHadoopConf(File dir) throws IOException {
+        Configuration hadoopConf = new XConfiguration();
+        for (String file : HADOOP_CONF_FILES) {
+            File f = new File(dir, file);
+            if (f.exists()) {
+                InputStream is = new FileInputStream(f);
+                Configuration conf = new XConfiguration(is);
+                is.close();
+                XConfiguration.copy(conf, hadoopConf);
+            }
+        }
+        return hadoopConf;
+    }
+
     private void loadHadoopConfigs(Configuration serviceConf) throws ServiceException {
         try {
             File configDir = new File(ConfigurationService.getConfigurationDirectory());
-            String[] confDefs = serviceConf.getStrings(HADOOP_CONFS, "*=hadoop-config.xml");
+            String[] confDefs = serviceConf.getStrings(HADOOP_CONFS, "*=hadoop-conf");
             for (String confDef : confDefs) {
                 if (confDef.trim().length() > 0) {
                     String[] parts = confDef.split("=");
-                    String hostPort = parts[0];
-                    String confFile = parts[1];
-                    File configFile = new File(configDir, confFile);
-                    if (configFile.exists()) {
-                        Configuration conf = new XConfiguration(new FileInputStream(configFile));
-                        hadoopConfigs.put(hostPort.toLowerCase(), conf);
+                    if (parts.length == 2) {
+                        String hostPort = parts[0];
+                        String confDir = parts[1];
+                        File dir = new File(confDir);
+                        if (!dir.isAbsolute()) {
+                            dir = new File(configDir, confDir);
+                        }
+                        if (dir.exists()) {
+                            Configuration conf = loadHadoopConf(dir);
+                            hadoopConfigs.put(hostPort.toLowerCase(), conf);
+                        }
+                        else {
+                            throw new ServiceException(ErrorCode.E0100, getClass().getName(),
+                                                       "could not find hadoop configuration directory: " +
+                                                       dir.getAbsolutePath());
+                        }
                     }
                     else {
                         throw new ServiceException(ErrorCode.E0100, getClass().getName(),
-                                                   "could not find hadoop configuration file: " + confFile);
+                                                   "Incorrect hadoop configuration definition: " + confDef);
                     }
                 }
             }

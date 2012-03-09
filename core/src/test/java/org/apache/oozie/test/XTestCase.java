@@ -253,8 +253,10 @@ public abstract class XTestCase extends TestCase {
         File target = new File(testCaseConfDir, "oozie-site.xml");
         IOUtils.copyStream(new FileInputStream(source), new FileOutputStream(target));
 
+        File hadoopConfDir = new File(testCaseConfDir, "hadoop-conf");
+        hadoopConfDir.mkdir();
         source = new File(OOZIE_SRC_DIR, "core/src/test/resources/hadoop-config.xml");
-        target = new File(testCaseConfDir, "hadoop-config.xml");
+        target = new File(hadoopConfDir, "hadoop-site.xml");
         IOUtils.copyStream(new FileInputStream(source), new FileOutputStream(target));
 
         if (System.getProperty("oozielocal.log") == null) {

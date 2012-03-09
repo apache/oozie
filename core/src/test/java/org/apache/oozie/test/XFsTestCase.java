@@ -64,7 +64,7 @@ public abstract class XFsTestCase extends XTestCase {
         conf.set("local.realm", getRealm());
         injectKerberosInfo(conf);
 
-        conf.set("oozie.service.HadoopAccessorService.hadoop.configurations", "*=hadoop-config.xml");
+        conf.set("oozie.service.HadoopAccessorService.hadoop.configurations", "*=hadoop-conf");
 
         has = new HadoopAccessorService();
         has.init(conf);

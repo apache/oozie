@@ -34,34 +34,32 @@ If the value is empty any HOST:PORT is accepted. Emtpy is the default value.
 
 ---++ Hadoop Default Configuration Values
 
-Oozie supports Hadoop configuration equivalent to the Hadoop =*-sitel.xml= files.
-
-Instead supporting multiple files (core, hdfs, yarn, mapred), Oozie support a single file per Hadoop service
-(JobTracker, HDFS).
+Oozie supports Hadoop configuration equivalent to the Hadoop =*-site.xml= files.
 
 The configuration property in the =oozie-site.xml= is =oozie.service.HadoopAccessorService.hadoop.configurations=
-and its value must follow the pattern =[<AUTHORITY>=<CONFIG_FILE>,]*=. Where =<AUTHORITY>= is the =HOST:PORT= of
-the Hadoop service (JobTracker, HDFS). The =<CONFIG_FILE>= is the Hadoop configuration file to load for the
-specified Hadoop service. This configuration file is looked in the Oozie configuration directory.
+and its value must follow the pattern =[<AUTHORITY>=<HADOOP_CONF_DIR>,]*=. Where =<AUTHORITY>= is the =HOST:PORT= of
+the Hadoop service (JobTracker, HDFS). The =<HADOO_CONF_DIR>= is a Hadoop configuration directory. If the specified
+ directory is a relative path, it will be looked under the Oozie configuration directory. And absolute path can
+ also be specified. Oozie will load the Hadoop =*-site.xml= files in the following order: core-site.xml, hdfs-site.xml,
+ mapred-site.xml, yarn-site.xml, hadoop-site.xml.
 
 In addition to explicit authorities, a '*' wildcard is supported. The configuration file associated with the wildcard
 will be used as default if there is no configuration for the requested Hadoop service.
 
-For example, the configuration in the =oozie-site.xml= would lookl like:
+For example, the configuration in the =oozie-site.xml= would look like:
 
 <verbatim>
 ...
     <property>
         <name>oozie.service.HadoopAccessorService.hadoop.configurations</name>
-        <value>*=hadoop-config.xml,jt-bar:8021=bar.xml,nn-bar:8020=bar.xml</value>
+        <value>*=hadoop-conf,jt-bar:8021=bar-cluster,nn-bar:8020=bar-cluster</value>
     </property>
 ...
 </verbatim>
 
 The Hadoop configuration files use the Hadoop configuration syntax.
 
-By default Oozie defines =*=hadoop-config.xml= and the default values of the =hadoop-config.xml= file are:
-
+By default Oozie defines =*=hadoop-conf= and the default values of the =hadoop-site.xml= file are:
 
 <verbatim>
 <configuration>
