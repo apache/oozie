@@ -24,7 +24,7 @@ import java.net.URISyntaxException;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.oozie.DagELFunctions;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.service.HadoopAccessorException;
@@ -40,8 +40,9 @@ public class FsELFunctions {
         WorkflowJob workflow = DagELFunctions.getWorkflow();
         String user = workflow.getUser();
         String group = workflow.getGroup();
-        return Services.get().get(HadoopAccessorService.class).
-                createFileSystem(user, group, uri, DagELFunctions.getProtoActionConf());
+        HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
+        JobConf conf = has.createJobConf(uri.getAuthority());
+        return has.createFileSystem(user, group, uri, conf);
     }
 
     /**

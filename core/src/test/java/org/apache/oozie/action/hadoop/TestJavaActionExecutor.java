@@ -22,6 +22,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringReader;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -331,7 +332,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertNotNull(jobTracker);
         assertNotNull(consoleUrl);
 
-        JobConf jobConf = new JobConf();
+        JobConf jobConf = Services.get().get(HadoopAccessorService.class).createJobConf(jobTracker);
         jobConf.set("mapred.job.tracker", jobTracker);
         injectKerberosInfo(jobConf);
         JobClient jobClient =
@@ -764,8 +765,9 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
     private WorkflowJobBean addRecordToWfJobTable(String wfId, String wfxml) throws Exception {
         WorkflowApp app = new LiteWorkflowApp("testApp", wfxml, new StartNodeDef("start"))
                 .addNode(new EndNodeDef("end"));
-        Configuration conf = new Configuration();
-        conf.set(OozieClient.APP_PATH, "testPath");
+        Configuration conf = Services.get().get(HadoopAccessorService.class).
+            createJobConf(new URI(getNameNodeUri()).getAuthority());
+        conf.set(OozieClient.APP_PATH, getNameNodeUri() + "/testPath");
         conf.set(OozieClient.LOG_TOKEN, "testToken");
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set(OozieClient.GROUP_NAME, getTestGroup());

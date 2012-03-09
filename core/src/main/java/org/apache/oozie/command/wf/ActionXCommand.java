@@ -461,11 +461,10 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<Void> {
          */
         public FileSystem getAppFileSystem() throws HadoopAccessorException, IOException, URISyntaxException {
             WorkflowJob workflow = getWorkflow();
-            XConfiguration jobConf = new XConfiguration(new StringReader(workflow.getConf()));
-            Configuration fsConf = new Configuration();
-            XConfiguration.copy(jobConf, fsConf);
-            return Services.get().get(HadoopAccessorService.class).createFileSystem(workflow.getUser(),
-                    workflow.getGroup(), new URI(getWorkflow().getAppPath()), fsConf);
+            URI uri = new URI(getWorkflow().getAppPath());
+            HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
+            Configuration fsConf = has.createJobConf(uri.getAuthority());
+            return has.createFileSystem(workflow.getUser(), workflow.getGroup(), uri, fsConf);
 
         }
 

@@ -130,9 +130,7 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
         try {
             if (action.getStatus() == WorkflowAction.Status.OK) {
                 Element actionXml = XmlUtils.parseXml(action.getConf());
-                Configuration conf = createBaseHadoopConf(context, actionXml);
-                JobConf jobConf = new JobConf();
-                XConfiguration.copy(conf, jobConf);
+                JobConf jobConf = createBaseHadoopConf(context, actionXml);
                 jobClient = createJobClient(context, jobConf);
                 RunningJob runningJob = jobClient.getJob(JobID.forName(action.getExternalId()));
                 if (runningJob == null) {

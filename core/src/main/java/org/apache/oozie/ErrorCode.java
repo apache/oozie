@@ -166,8 +166,7 @@ public enum ErrorCode {
     E0900(XLog.OPS, "Jobtracker [{0}] not allowed, not in Oozie's whitelist"),
     E0901(XLog.OPS, "Namenode [{0}] not allowed, not in Oozie's whitelist"),
     E0902(XLog.OPS, "Exception occured: [{0}]"),
-    E0903(XLog.OPS, "Configuration does not have Jobtracker Kerberos name or rule"),
-    E0904(XLog.OPS, "Configuration does not have Namenode Kerberos name or rule"),
+    E0903(XLog.OPS, "Invalid JobConf, it has not been created by HadoopAccessorService"),
 
     E1001(XLog.STD, "Could not read the coordinator job definition, {0}"),
     E1002(XLog.STD, "Invalid coordinator application URI [{0}], {1}"),

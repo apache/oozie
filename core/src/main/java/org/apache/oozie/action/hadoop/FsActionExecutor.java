@@ -21,17 +21,18 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
 
@@ -135,8 +136,10 @@ public class FsActionExecutor extends ActionExecutor {
     private FileSystem getFileSystemFor(Path path, Context context) throws HadoopAccessorException {
         String user = context.getWorkflow().getUser();
         String group = context.getWorkflow().getGroup();
-        return Services.get().get(HadoopAccessorService.class).createFileSystem(user, group, path.toUri(),
-                context.getProtoActionConf());
+        HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
+        JobConf conf = has.createJobConf(path.toUri().getAuthority());
+        XConfiguration.copy(context.getProtoActionConf(), conf);
+        return has.createFileSystem(user, group, path.toUri(), conf);
     }
 
     /**
@@ -147,8 +150,9 @@ public class FsActionExecutor extends ActionExecutor {
      * @throws HadoopAccessorException
      */
     private FileSystem getFileSystemFor(Path path, String user, String group) throws HadoopAccessorException {
-        return Services.get().get(HadoopAccessorService.class).createFileSystem(user, group, path.toUri(),
-                new Configuration());
+        HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
+        JobConf jobConf = has.createJobConf(path.toUri().getAuthority());
+        return has.createFileSystem(user, group, path.toUri(), jobConf);
     }
 
     void mkdir(Context context, Path path) throws ActionExecutorException {

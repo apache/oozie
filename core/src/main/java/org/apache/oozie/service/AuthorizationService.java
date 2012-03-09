@@ -23,6 +23,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.URI;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -266,8 +267,10 @@ public class AuthorizationService implements Service {
     public void authorizeForApp(String user, String group, String appPath, Configuration jobConf)
             throws AuthorizationException {
         try {
-            FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, group,
-                                                                                             new Path(appPath).toUri(), jobConf);
+            HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
+            URI uri = new Path(appPath).toUri();
+            Configuration fsConf = has.createJobConf(uri.getAuthority());
+            FileSystem fs = has.createFileSystem(user, group, uri, fsConf);
 
             Path path = new Path(appPath);
             try {
@@ -316,13 +319,11 @@ public class AuthorizationService implements Service {
     public void authorizeForApp(String user, String group, String appPath, String fileName, Configuration conf)
             throws AuthorizationException {
         try {
-            //Configuration conf = new Configuration();
-            //conf.set("user.name", user);
-            // TODO Temporary fix till
-            // https://issues.apache.org/jira/browse/HADOOP-4875 is resolved.
-            //conf.set("hadoop.job.ugi", user + "," + group);
-            FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, group,
-                                                                                             new Path(appPath).toUri(), conf);
+            HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
+            URI uri = new Path(appPath).toUri();
+            Configuration fsConf = has.createJobConf(uri.getAuthority());
+            FileSystem fs = has.createFileSystem(user, group, uri, fsConf);
+
             Path path = new Path(appPath);
             try {
                 if (!fs.exists(path)) {

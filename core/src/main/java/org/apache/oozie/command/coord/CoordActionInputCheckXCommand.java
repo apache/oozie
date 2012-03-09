@@ -411,8 +411,9 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
         String user = ParamChecker.notEmpty(actionConf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
         String group = ParamChecker.notEmpty(actionConf.get(OozieClient.GROUP_NAME), OozieClient.GROUP_NAME);
         try {
-            return Services.get().get(HadoopAccessorService.class).createFileSystem(user, group, path.toUri(),
-                    new Configuration()).exists(path);
+            HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
+            Configuration fsConf = has.createJobConf(path.toUri().getAuthority());
+            return has.createFileSystem(user, group, path.toUri(), fsConf).exists(path);
         }
         catch (HadoopAccessorException e) {
             throw new IOException(e);

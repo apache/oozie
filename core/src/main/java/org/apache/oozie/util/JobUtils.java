@@ -18,6 +18,7 @@
 package org.apache.oozie.util;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -62,7 +63,10 @@ public class JobUtils {
 
         FileSystem fs = null;
         try {
-            fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, group, new Path(appPathStr).toUri(), conf);
+            URI uri = new Path(appPathStr).toUri();
+            HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
+            Configuration fsConf = has.createJobConf(uri.getAuthority());
+            fs = has.createFileSystem(user, group, uri, fsConf);
         }
         catch (HadoopAccessorException ex) {
             throw new IOException(ex.getMessage());

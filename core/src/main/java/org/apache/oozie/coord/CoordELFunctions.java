@@ -818,8 +818,9 @@ public class CoordELFunctions {
             throws IOException, HadoopAccessorException {
         // sPath += "/" + END_OF_OPERATION_INDICATOR_FILE;
         Path path = new Path(sPath);
-        return Services.get().get(HadoopAccessorService.class).
-                createFileSystem(user, group, path.toUri(), conf).exists(path);
+        HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
+        Configuration fsConf = has.createJobConf(path.toUri().getAuthority());
+        return has.createFileSystem(user, group, path.toUri(), fsConf).exists(path);
     }
 
     /**

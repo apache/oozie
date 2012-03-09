@@ -68,8 +68,9 @@ public abstract class XFsTestCase extends XTestCase {
 
         has = new HadoopAccessorService();
         has.init(conf);
-
-        fileSystem = has.createFileSystem(getTestUser(), getTestGroup(), new URI(getNameNodeUri()), conf);
+        JobConf jobConf = has.createJobConf(getNameNodeUri());
+        XConfiguration.copy(conf, jobConf);
+        fileSystem = has.createFileSystem(getTestUser(), getTestGroup(), new URI(getNameNodeUri()), jobConf);
         Path path = new Path(fileSystem.getWorkingDirectory(), getTestCaseDir().substring(1));
         fsTestDir = fileSystem.makeQualified(path);
         System.out.println(XLog.format("Setting FS testcase work dir[{0}]", fsTestDir));
@@ -135,7 +136,7 @@ public abstract class XFsTestCase extends XTestCase {
      * @throws HadoopAccessorException thrown if the JobClient could not be obtained.
      */
     protected JobClient createJobClient() throws HadoopAccessorException {
-        JobConf conf = new JobConf();
+        JobConf conf = has.createJobConf(getJobTrackerUri());
         conf.set("mapred.job.tracker", getJobTrackerUri());
         conf.set("fs.default.name", getNameNodeUri());
         injectKerberosInfo(conf);

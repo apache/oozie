@@ -407,8 +407,9 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
             Path coordAppPath = new Path(coordAppPathStr);
             String user = ParamChecker.notEmpty(conf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
             String group = ParamChecker.notEmpty(conf.get(OozieClient.GROUP_NAME), OozieClient.GROUP_NAME);
-            FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, group,
-                    coordAppPath.toUri(), new Configuration());
+            HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
+            Configuration fsConf = has.createJobConf(coordAppPath.toUri().getAuthority());
+            FileSystem fs = has.createFileSystem(user, group, coordAppPath.toUri(), fsConf);
 
             // app path could be a directory
             if (!fs.isFile(coordAppPath)) {
@@ -939,8 +940,9 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         try {
             URI uri = new URI(appPath);
             LOG.debug("user =" + user + " group =" + group);
-            FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, group, uri,
-                    new Configuration());
+            HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
+            Configuration fsConf = has.createJobConf(uri.getAuthority());
+            FileSystem fs = has.createFileSystem(user, group, uri, fsConf);
             Path appDefPath = null;
 
             // app path could be a directory

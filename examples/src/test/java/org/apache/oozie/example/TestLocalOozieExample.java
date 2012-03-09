@@ -69,7 +69,7 @@ public class TestLocalOozieExample extends XFsTestCase {
             throw new RuntimeException(XLog.format("could not create path [{0}]", file.getAbsolutePath()));
         }
         //setting up Oozie HOME and an empty conf directory
-        System.setProperty(Services.OOZIE_HOME_DIR, testCaseDir);
+        //System.setProperty(Services.OOZIE_HOME_DIR, testCaseDir);
     }
 
     @Override

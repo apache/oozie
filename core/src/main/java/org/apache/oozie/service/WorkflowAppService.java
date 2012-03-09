@@ -22,6 +22,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.workflow.WorkflowApp;
 import org.apache.oozie.workflow.WorkflowException;
@@ -102,8 +103,9 @@ public abstract class WorkflowAppService implements Service {
             throws WorkflowException {
         try {
             URI uri = new URI(appPath);
-            FileSystem fs = Services.get().get(HadoopAccessorService.class).
-                    createFileSystem(user, group, uri, new Configuration());
+            HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
+            JobConf jobConf = has.createJobConf(uri.getAuthority());
+            FileSystem fs = has.createFileSystem(user, group, uri, jobConf);
 
             // app path could be a directory
             Path path = new Path(uri.getPath());
@@ -143,8 +145,12 @@ public abstract class WorkflowAppService implements Service {
      */
     public XConfiguration createProtoActionConf(Configuration jobConf, String authToken, boolean isWorkflowJob)
             throws WorkflowException {
-        XConfiguration conf = new XConfiguration();
         try {
+            HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
+            URI uri = new URI(jobConf.get(OozieClient.APP_PATH));
+
+            Configuration conf = has.createJobConf(uri.getAuthority());
+
             String user = jobConf.get(OozieClient.USER_NAME);
             String group = jobConf.get(OozieClient.GROUP_NAME);
             String hadoopUgi = user + "," + group;
@@ -156,9 +162,8 @@ public abstract class WorkflowAppService implements Service {
             conf.set(HADOOP_JT_KERBEROS_NAME, jobConf.get(HADOOP_JT_KERBEROS_NAME));
             conf.set(HADOOP_NN_KERBEROS_NAME, jobConf.get(HADOOP_NN_KERBEROS_NAME));
 
-            URI uri = new URI(jobConf.get(OozieClient.APP_PATH));
 
-            FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, group, uri, conf);
+            FileSystem fs = has.createFileSystem(user, group, uri, conf);
 
             Path appPath = new Path(uri.getPath());
             XLog.getLog(getClass()).debug("jobConf.libPath = " + jobConf.get(OozieClient.LIBPATH));
@@ -204,7 +209,9 @@ public abstract class WorkflowAppService implements Service {
                     conf.set(name, value);
                 }
             }
-            return conf;
+            XConfiguration retConf = new XConfiguration();
+            XConfiguration.copy(conf, retConf);
+            return retConf;
         }
         catch (IOException ex) {
             throw new WorkflowException(ErrorCode.E0712, jobConf.get(OozieClient.APP_PATH), ex.getMessage(), ex);

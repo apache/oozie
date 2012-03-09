@@ -79,11 +79,10 @@ public class WfEndXCommand extends WorkflowXCommand<Void> {
 
     protected FileSystem getAppFileSystem(WorkflowJob workflow) throws HadoopAccessorException, IOException,
             URISyntaxException {
-        XConfiguration jobConf = new XConfiguration(new StringReader(workflow.getConf()));
-        Configuration fsConf = new Configuration();
-        XConfiguration.copy(jobConf, fsConf);
-        return Services.get().get(HadoopAccessorService.class).createFileSystem(workflow.getUser(),
-                workflow.getGroup(), new URI(workflow.getAppPath()), fsConf);
+        URI uri = new URI(workflow.getAppPath());
+        HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
+        Configuration fsConf = has.createJobConf(uri.getAuthority());
+        return has.createFileSystem(workflow.getUser(), workflow.getGroup(), uri, fsConf);
     }
 
     @Override

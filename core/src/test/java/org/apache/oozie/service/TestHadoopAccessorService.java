@@ -56,14 +56,14 @@ public class TestHadoopAccessorService extends XTestCase {
         Services services = Services.get();
         HadoopAccessorService has = services.get(HadoopAccessorService.class);
         assertNotNull(has);
-        assertNotNull(has.getConfiguration("*"));
-        assertNotNull(has.getConfiguration("test"));
-        assertEquals("bar", has.getConfiguration("test").get("foo"));
+        assertNotNull(has.createJobConf("*"));
+        assertNotNull(has.createJobConf("test"));
+        assertEquals("bar", has.createJobConf("test").get("foo"));
     }
     public void testAccessor() throws Exception {
         Services services = Services.get();
         HadoopAccessorService has = services.get(HadoopAccessorService.class);
-        JobConf conf = new JobConf();
+        JobConf conf = has.createJobConf(getJobTrackerUri());
         conf.set("mapred.job.tracker", getJobTrackerUri());
         conf.set("fs.default.name", getNameNodeUri());
         injectKerberosInfo(conf);

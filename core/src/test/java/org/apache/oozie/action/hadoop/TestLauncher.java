@@ -27,11 +27,13 @@ import org.apache.hadoop.mapred.RunningJob;
 import org.apache.oozie.test.XFsTestCase;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
+import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.Services;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 
 public class TestLauncher extends XFsTestCase {
 
@@ -59,7 +61,8 @@ public class TestLauncher extends XFsTestCase {
         Path launcherJar = new Path(actionDir, "launcher.jar");
         fs.copyFromLocalFile(new Path(jar.toString()), launcherJar);
 
-        JobConf jobConf = new JobConf();
+        JobConf jobConf = Services.get().get(HadoopAccessorService.class).
+            createJobConf(new URI(getNameNodeUri()).getAuthority());
 //        jobConf.setJar(jar.getAbsolutePath());
         jobConf.set("user.name", getTestUser());
         jobConf.set("group.name", getTestGroup());
@@ -222,11 +225,12 @@ public class TestLauncher extends XFsTestCase {
 
     // Test to ensure that the property value "oozie.action.prepare.xml" in the configuration of the job is an empty
     // string when there is no prepare block in workflow XML or there is one with no prepare actions in it
-    public void testSetupLauncherInfoWithEmptyPrepareXML() throws HadoopAccessorException, IOException {
+    public void testSetupLauncherInfoWithEmptyPrepareXML() throws Exception {
         Path actionDir = getFsTestCaseDir();
 
         // Setting up the job configuration
-        JobConf jobConf = new JobConf();
+        JobConf jobConf = Services.get().get(HadoopAccessorService.class).
+            createJobConf(new URI(getNameNodeUri()).getAuthority());
         jobConf.set("user.name", getTestUser());
         jobConf.set("group.name", getTestGroup());
         jobConf.set("fs.default.name", getNameNodeUri());
@@ -241,13 +245,14 @@ public class TestLauncher extends XFsTestCase {
 
     // Test to ensure that the property value "oozie.action.prepare.xml" in the configuration of the job is properly set
     // when there is prepare block in workflow XML
-    public void testSetupLauncherInfoWithNonEmptyPrepareXML() throws HadoopAccessorException, IOException {
+    public void testSetupLauncherInfoWithNonEmptyPrepareXML() throws Exception {
         Path actionDir = getFsTestCaseDir();
         FileSystem fs = getFileSystem();
         Path newDir = new Path(actionDir, "newDir");
 
         // Setting up the job configuration
-        JobConf jobConf = new JobConf();
+        JobConf jobConf = Services.get().get(HadoopAccessorService.class).
+            createJobConf(new URI(getNameNodeUri()).getAuthority());
         jobConf.set("user.name", getTestUser());
         jobConf.set("group.name", getTestGroup());
         jobConf.set("fs.default.name", getNameNodeUri());

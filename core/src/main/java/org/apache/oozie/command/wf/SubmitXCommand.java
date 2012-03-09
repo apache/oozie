@@ -103,8 +103,9 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
             String user = conf.get(OozieClient.USER_NAME);
             String group = ConfigUtils.getWithDeprecatedCheck(conf, OozieClient.JOB_ACL, OozieClient.GROUP_NAME, null);
             URI uri = new URI(conf.get(OozieClient.APP_PATH));
-            FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user,
-                    group, uri, new Configuration());
+            HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
+            Configuration fsConf = has.createJobConf(uri.getAuthority());
+            FileSystem fs = has.createFileSystem(user, group, uri, fsConf);
 
             Path configDefault = null;
             // app path could be a directory

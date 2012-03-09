@@ -31,7 +31,6 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
-import org.apache.oozie.workflow.WorkflowApp;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -61,6 +60,8 @@ public class HadoopAccessorService implements Service {
     public static final String KERBEROS_AUTH_ENABLED = CONF_PREFIX + "kerberos.enabled";
     public static final String KERBEROS_KEYTAB = CONF_PREFIX + "keytab.file";
     public static final String KERBEROS_PRINCIPAL = CONF_PREFIX + "kerberos.principal";
+
+    private static final String OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED = "oozie.HadoopAccessorService.created";
 
     private Set<String> jobTrackerWhitelist = new HashSet<String>();
     private Set<String> nameNodeWhitelist = new HashSet<String>();
@@ -183,8 +184,16 @@ public class HadoopAccessorService implements Service {
         return ugi;
     }
 
-    public Configuration getConfiguration(String hostPort) {
-        Configuration conf = hadoopConfigs.get(hostPort.toLowerCase());
+    public JobConf createJobConf(String hostPort) {
+        JobConf jobConf = new JobConf();
+        XConfiguration.copy(getConfiguration(hostPort), jobConf);
+        jobConf.setBoolean(OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED, true);
+        return jobConf;
+    }
+
+    private Configuration getConfiguration(String hostPort) {
+        hostPort = (hostPort != null) ? hostPort.toLowerCase() : null;
+        Configuration conf = hadoopConfigs.get(hostPort);
         if (conf == null) {
             conf = hadoopConfigs.get("*");
             if (conf == null) {
@@ -204,9 +213,11 @@ public class HadoopAccessorService implements Service {
      */
     public JobClient createJobClient(String user, String group, final JobConf conf) throws HadoopAccessorException {
         ParamChecker.notEmpty(user, "user");
+        if (!conf.getBoolean(OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED, false)) {
+            throw new HadoopAccessorException(ErrorCode.E0903);
+        }
         String jobTracker = conf.get("mapred.job.tracker");
         validateJobTracker(jobTracker);
-        XConfiguration.injectDefaults(getConfiguration(jobTracker), conf);
         try {
             UserGroupInformation ugi = getUGI(user);
             JobClient jobClient = ugi.doAs(new PrivilegedExceptionAction<JobClient>() {
@@ -254,6 +265,9 @@ public class HadoopAccessorService implements Service {
     public FileSystem createFileSystem(String user, String group, final URI uri, final Configuration conf)
             throws HadoopAccessorException {
         ParamChecker.notEmpty(user, "user");
+        if (!conf.getBoolean(OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED, false)) {
+            throw new HadoopAccessorException(ErrorCode.E0903);
+        }
         String nameNode = uri.getAuthority();
         if (nameNode == null) {
             nameNode = conf.get("fs.default.name");
@@ -268,17 +282,11 @@ public class HadoopAccessorService implements Service {
         }
         validateNameNode(nameNode);
 
-        //it is null in the case of localFileSystem (in many testcases)
-        if (nameNode != null) {
-            XConfiguration.injectDefaults(getConfiguration(nameNode), conf);
-        }
         try {
             UserGroupInformation ugi = getUGI(user);
             return ugi.doAs(new PrivilegedExceptionAction<FileSystem>() {
                 public FileSystem run() throws Exception {
-                    Configuration defaultConf = new Configuration();
-                    XConfiguration.copy(conf, defaultConf);
-                    return FileSystem.get(uri, defaultConf);
+                    return FileSystem.get(uri, conf);
                 }
             });
         }

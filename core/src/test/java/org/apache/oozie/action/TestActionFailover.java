@@ -18,6 +18,7 @@
 package org.apache.oozie.action;
 
 
+import java.io.OutputStreamWriter;
 import java.util.List;
 import java.io.File;
 import java.io.FileWriter;
@@ -39,6 +40,7 @@ import org.apache.oozie.local.LocalOozie;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XFsTestCase;
 import org.apache.oozie.util.IOUtils;
+import org.mortbay.io.WriterOutputStream;
 
 public class TestActionFailover extends XFsTestCase {
 
@@ -57,13 +59,14 @@ public class TestActionFailover extends XFsTestCase {
     }
 
     public void testFsFailover() throws Exception {
+        Path wf = new Path(getFsTestCaseDir(), "workflow.xml");
         Reader reader = IOUtils.getResourceAsReader("failover-fs-wf.xml", -1);
-        Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
+        Writer writer = new OutputStreamWriter(getFileSystem().create(wf));
         IOUtils.copyCharStream(reader, writer);
 
         final OozieClient wfClient = LocalOozie.getClient();
         Properties conf = wfClient.createConfiguration();
-        conf.setProperty(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
+        conf.setProperty(OozieClient.APP_PATH, wf.toString());
         conf.setProperty(OozieClient.USER_NAME, getTestUser());
         conf.setProperty(OozieClient.GROUP_NAME, getTestGroup());
         injectKerberosInfo(conf);

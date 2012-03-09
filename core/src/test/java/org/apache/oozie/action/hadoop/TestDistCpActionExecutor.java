@@ -107,7 +107,7 @@ public class TestDistCpActionExecutor extends ActionExecutorTestCase{
         assertNotNull(jobTracker);
         assertNotNull(consoleUrl);
 
-        JobConf jobConf = new JobConf();
+        JobConf jobConf = Services.get().get(HadoopAccessorService.class).createJobConf(jobTracker);
         jobConf.set("mapred.job.tracker", jobTracker);
         injectKerberosInfo(jobConf);
         JobClient jobClient =

@@ -212,11 +212,10 @@ public class TestRecoveryService extends XDataTestCase {
 
         ActionExecutorContext context = new ActionXCommand.ActionExecutorContext(job, action, false, false);
         MapReduceActionExecutor actionExecutor = new MapReduceActionExecutor();
-        Configuration conf = actionExecutor.createBaseHadoopConf(context, XmlUtils.parseXml(action.getConf()));
+        JobConf conf = actionExecutor.createBaseHadoopConf(context, XmlUtils.parseXml(action.getConf()));
         String user = conf.get("user.name");
         String group = conf.get("group.name");
-        JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, group,
-                new JobConf(conf));
+        JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, group, conf);
 
         String launcherId = action.getExternalId();
 

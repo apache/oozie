@@ -289,7 +289,7 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         conf.set("user.name", context.getProtoActionConf().get("user.name"));
         conf.set("group.name", getTestGroup());
         injectKerberosInfo(conf);
-        JobConf jobConf = new JobConf();
+        JobConf jobConf = Services.get().get(HadoopAccessorService.class).createJobConf(jobTracker);
         XConfiguration.copy(conf, jobConf);
         String user = jobConf.get("user.name");
         String group = jobConf.get("group.name");
