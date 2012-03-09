@@ -149,4 +149,11 @@ public interface WorkflowJob {
      */
     List<WorkflowAction> getActions();
 
+    /**
+     * Returns the external id for the workflow
+     *
+     * @return external id for the workflow
+     */
+    String getExternalId();
+
 }

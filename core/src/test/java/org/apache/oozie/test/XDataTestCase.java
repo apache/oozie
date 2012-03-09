@@ -916,6 +916,7 @@ public abstract class XDataTestCase extends XFsTestCase {
         ((LiteWorkflowInstance) wfInstance).setStatus(instanceStatus);
         WorkflowJobBean workflow = new WorkflowJobBean();
         workflow.setId(Services.get().get(UUIDService.class).generateId(ApplicationType.WORKFLOW));
+        workflow.setExternalId("extid");
         workflow.setAppName(app.getName());
         workflow.setAppPath(conf.get(OozieClient.APP_PATH));
         workflow.setConf(XmlUtils.prettyPrint(conf).toString());

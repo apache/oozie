@@ -40,7 +40,7 @@ import org.apache.openjpa.persistence.jdbc.ResultSetType;
 public class WorkflowsJobGetJPAExecutor implements JPAExecutor<WorkflowsInfo> {
 
     private static final String seletStr = "Select w.id, w.appName, w.status, w.run, w.user, w.group, w.createdTimestamp, "
-        + "w.startTimestamp, w.lastModifiedTimestamp, w.endTimestamp from WorkflowJobBean w";
+        + "w.startTimestamp, w.lastModifiedTimestamp, w.endTimestamp, w.externalId from WorkflowJobBean w";
     private static final String countStr = "Select count(w) from WorkflowJobBean w";
 
     private final Map<String, List<String>> filter;
@@ -296,6 +296,9 @@ public class WorkflowsJobGetJPAExecutor implements JPAExecutor<WorkflowsInfo> {
         }
         if (arr[9] != null) {
             wfBean.setEndTime((Timestamp) arr[9]);
+        }
+        if (arr[10] != null) {
+            wfBean.setExternalId((String) arr[10]);
         }
         return wfBean;
     }

@@ -44,16 +44,17 @@ public class TestWorkflowJobGetJPAExecutor extends XDataTestCase {
 
     public void testWfJobGet() throws Exception {
         WorkflowJobBean job = addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
-        _testGetJob(job.getId());
+        _testGetJob(job.getId(), job.getExternalId());
     }
 
-    private void _testGetJob(String jobId) throws Exception {
+    private void _testGetJob(String jobId, String extId) throws Exception {
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
         WorkflowJobGetJPAExecutor wfGetCmd = new WorkflowJobGetJPAExecutor(jobId);
         WorkflowJobBean ret = jpaService.execute(wfGetCmd);
         assertNotNull(ret);
         assertEquals(ret.getId(), jobId);
+        assertEquals(extId, ret.getExternalId());
     }
 
 }

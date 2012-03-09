@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-742 getJobInfo for workflows should return workflow external id (Shwetha via Mohammad)
 OOZIE-750 enhance ooziedb tool not to require manual upgrade steps and not to require the -sqlfile option (tucu)
 OOZIE-684 CoordChangeXCommand already used is thrown while executing interrupt commands (Mohamed via Mohammad)
 OOZIE-723 Getting rid of the unused Commands classes (mohamed via tucu)

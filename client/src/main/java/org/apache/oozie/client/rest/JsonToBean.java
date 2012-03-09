@@ -85,6 +85,7 @@ public class JsonToBean {
         WF_ACTION.put("getErrorMessage", new Property(JsonTags.WORKFLOW_ACTION_ERROR_MESSAGE, String.class));
         WF_ACTION.put("toString", new Property(JsonTags.TO_STRING, String.class));
 
+        WF_JOB.put("getExternalId", new Property(JsonTags.WORKFLOW_EXTERNAL_ID, String.class));
         WF_JOB.put("getAppPath", new Property(JsonTags.WORKFLOW_APP_PATH, String.class));
         WF_JOB.put("getAppName", new Property(JsonTags.WORKFLOW_APP_NAME, String.class));
         WF_JOB.put("getId", new Property(JsonTags.WORKFLOW_ID, String.class));
