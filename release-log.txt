@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-753 default hadoop config file does not endup in the distro and hadoop config doc typo (tucu)
 OOZIE-747 HadoopAccessorService hadoop-configs should be loaded from Hadoop -site.xml files (tucu)
 OOZIE-746 JobConf/Configuration creation is inconsistent and makes things fail in odd ways (tucu)
 OOZIE-744 HadoopAccessorService hadoop-configs loading logic is not 100% correct (tucu)

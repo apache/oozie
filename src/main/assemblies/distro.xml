@@ -29,7 +29,7 @@
             <directory>${basedir}/../core/src/main/conf/</directory>
             <outputDirectory>/conf</outputDirectory>
             <includes>
-                <include>*</include>
+                <include>**</include>
             </includes>
         </fileSet>
         <!-- Distro files, readme, licenses, etc -->
