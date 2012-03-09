@@ -1,5 +1,6 @@
 -- Oozie 3.1.4 release
 
+OOZIE-740 oozie-site.xml should exclude StoreService entries as it is replaced by JPAService.(Mona via Mohammad)
 OOZIE-714, 716 and 3.1 Backport of OOZIE-691 - Fix testcases to be compatible with Hadoop 0.23(Mona via Mohammad)
 OOZIE-688: POM file changes for oozie version 3.1.4 having Hadoop 23 support(Mona via Mohammad)
 OOZIE-733 Script to inject the JARs required by Oozie to run with Hadoop 23 (Mona via Mohammad)

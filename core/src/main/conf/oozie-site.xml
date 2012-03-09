@@ -119,63 +119,6 @@
     </property>
 
     <property>
-        <name>oozie.service.StoreService.create.db.schema</name>
-        <value>true</value>
-        <description>
-            Creates Oozie DB.
-
-            If set to true, it creates the DB schema if it does not exist. If the DB schema exists is a NOP.
-            If set to false, it does not create the DB schema. If the DB schema does not exist it fails start up.
-        </description>
-    </property>
-
-    <property>
-        <name>oozie.service.StoreService.jdbc.driver</name>
-        <value>org.apache.derby.jdbc.EmbeddedDriver</value>
-        <description>
-            JDBC driver class.
-        </description>
-    </property>
-
-    <property>
-        <name>oozie.service.StoreService.jdbc.url</name>
-        <value>jdbc:derby:${oozie.data.dir}/${oozie.db.schema.name}-db;create=true</value>
-        <description>
-            JDBC URL.
-        </description>
-    </property>
-
-    <property>
-        <name>oozie.service.StoreService.jdbc.username</name>
-        <value>sa</value>
-        <description>
-            DB user name.
-        </description>
-    </property>
-
-    <property>
-        <name>oozie.service.StoreService.jdbc.password</name>
-        <value> </value>
-        <description>
-            DB user password.
-
-            IMPORTANT: if password is emtpy leave a 1 space string, the service trims the value,
-                       if empty Configuration assumes it is NULL.
-
-            IMPORTANT: if the StoreServicePasswordService is active, it will reset this value with the value given in
-                       the console.
-        </description>
-    </property>
-
-    <property>
-        <name>oozie.service.StoreService.pool.max.active.conn</name>
-        <value>10</value>
-        <description>
-             Max number of connections.
-        </description>
-    </property>
-
-    <property>
         <name>oozie.service.HadoopAccessorService.kerberos.enabled</name>
         <value>false</value>
         <description>
