@@ -255,7 +255,6 @@ public class TestActionStartXCommand extends XDataTestCase {
         conf.set(OozieClient.APP_PATH, appUri.toString());
         conf.set(OozieClient.LOG_TOKEN, "testToken");
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set(OozieClient.GROUP_NAME, getTestGroup());
         injectKerberosInfo(conf);
         WorkflowJobBean wfBean = createWorkflow(app, conf, "auth", jobStatus, instanceStatus);
 
@@ -432,7 +431,6 @@ public class TestActionStartXCommand extends XDataTestCase {
         conf.set(OozieClient.APP_PATH, appUri.toString());
         conf.set(OozieClient.LOG_TOKEN, "testToken");
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set(OozieClient.GROUP_NAME, getTestGroup());
         // The properties should not be escaped here. It will be escaped when set to configuration.
         conf.set("testAmpSign", "http://test.apache.com/a-webservices?urlSigner=signUrl&namespace=nova.proxy");
         conf.set("testCDATA",

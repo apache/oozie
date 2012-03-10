@@ -53,7 +53,6 @@ public class TestSubmitXCommand extends XDataTestCase {
         writeToFile(appXml, appPath + "/workflow.xml");
         conf.set(OozieClient.APP_PATH, appPath + "/workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set(OozieClient.GROUP_NAME, "other");
         conf.set("GB", "5");
         SubmitXCommand sc = new SubmitXCommand(conf, "UNIT_TESTING");
 
@@ -75,7 +74,6 @@ public class TestSubmitXCommand extends XDataTestCase {
         writeToFile(appXml, appPath + "/workflow.xml");
         conf.set(OozieClient.APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set(OozieClient.GROUP_NAME, "other");
         injectKerberosInfo(conf);
         SubmitXCommand sc = new SubmitXCommand(conf, "UNIT_TESTING");
 
@@ -96,7 +94,6 @@ public class TestSubmitXCommand extends XDataTestCase {
         writeToFile(appXml, appPath + "/workflow.xml");
         conf.set(OozieClient.APP_PATH, appPath + "/workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set(OozieClient.GROUP_NAME, "other");
         injectKerberosInfo(conf);
         SubmitXCommand sc = new SubmitXCommand(conf, "UNIT_TESTING");
 
@@ -117,7 +114,6 @@ public class TestSubmitXCommand extends XDataTestCase {
         writeToFile(appXml, appPath + "/test.xml");
         conf.set(OozieClient.APP_PATH, appPath + "/test.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set(OozieClient.GROUP_NAME, "other");
         injectKerberosInfo(conf);
         SubmitXCommand sc = new SubmitXCommand(conf, "UNIT_TESTING");
 
@@ -138,7 +134,6 @@ public class TestSubmitXCommand extends XDataTestCase {
         writeToFile(appXml, appPath + "/test.xml");
         conf.set(OozieClient.APP_PATH, appPath + "/does_not_exist.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set(OozieClient.GROUP_NAME, "other");
         SubmitXCommand sc = new SubmitXCommand(conf, "UNIT_TESTING");
 
         try {

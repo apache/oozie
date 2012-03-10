@@ -87,7 +87,6 @@ public class TestActionCheckerService extends XDataTestCase {
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(WorkflowAppService.HADOOP_USER, getTestUser());
-        conf.set(OozieClient.GROUP_NAME, getTestGroup());
         conf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
         injectKerberosInfo(conf);
         conf.set(OozieClient.LOG_TOKEN, "t");

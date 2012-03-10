@@ -124,7 +124,6 @@ public class TestLiteWorkflowAppService extends XTestCase {
             Configuration jobConf = new XConfiguration();
             jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
             jobConf.set(OozieClient.USER_NAME, getTestUser());
-            jobConf.set(OozieClient.GROUP_NAME, "group");
             injectKerberosInfo(jobConf);
 
             WorkflowApp app = wps.parseDef(jobConf, "authToken");
@@ -165,7 +164,6 @@ public class TestLiteWorkflowAppService extends XTestCase {
             Configuration jobConf = new XConfiguration();
             jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
             jobConf.set(OozieClient.USER_NAME, getTestUser());
-            jobConf.set(OozieClient.GROUP_NAME, "group");
             injectKerberosInfo(jobConf);
 
             LiteWorkflowApp app = (LiteWorkflowApp) wps.parseDef(jobConf, "authToken");
@@ -204,7 +202,6 @@ public class TestLiteWorkflowAppService extends XTestCase {
             Configuration jobConf = new XConfiguration();
             jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
             jobConf.set(OozieClient.USER_NAME, getTestUser());
-            jobConf.set(OozieClient.GROUP_NAME, "group");
             injectKerberosInfo(jobConf);
 
             try {
@@ -234,7 +231,6 @@ public class TestLiteWorkflowAppService extends XTestCase {
             Configuration jobConf = new XConfiguration();
             jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
             jobConf.set(OozieClient.USER_NAME, getTestUser());
-            jobConf.set(OozieClient.GROUP_NAME, "group");
             injectKerberosInfo(jobConf);
 
             LiteWorkflowApp app = (LiteWorkflowApp) wps.parseDef(jobConf, "authToken");
@@ -290,11 +286,9 @@ public class TestLiteWorkflowAppService extends XTestCase {
             Configuration jobConf = new XConfiguration();
             jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
             jobConf.set(OozieClient.USER_NAME, getTestUser());
-            jobConf.set(OozieClient.GROUP_NAME, getTestGroup());
             injectKerberosInfo(jobConf);
             Configuration protoConf = wps.createProtoActionConf(jobConf, "authToken", true);
             assertEquals(getTestUser(), protoConf.get(OozieClient.USER_NAME));
-            assertEquals(getTestGroup(), protoConf.get(OozieClient.GROUP_NAME));
 
             assertEquals(2, protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST).length);
             String f1 = protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST)[0];
@@ -334,11 +328,9 @@ public class TestLiteWorkflowAppService extends XTestCase {
             jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + "/workflow.xml");
             jobConf.set(OozieClient.LIBPATH, "file://" + getTestCaseDir() + "/libx");
             jobConf.set(OozieClient.USER_NAME, getTestUser());
-            jobConf.set(OozieClient.GROUP_NAME, getTestGroup());
             injectKerberosInfo(jobConf);
             Configuration protoConf = wps.createProtoActionConf(jobConf, "authToken", true);
             assertEquals(getTestUser(), protoConf.get(OozieClient.USER_NAME));
-            assertEquals(getTestGroup(), protoConf.get(OozieClient.GROUP_NAME));
 
             assertEquals(3, protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST).length);
             List<String> found = new ArrayList<String>();
@@ -395,11 +387,9 @@ public class TestLiteWorkflowAppService extends XTestCase {
             jobConf.setStrings(OozieClient.LIBPATH, "file://" + getTestCaseDir() + "/libx",
                     "file://" + getTestCaseDir() + "/liby", "file://" + getTestCaseDir() + "/libz");
             jobConf.set(OozieClient.USER_NAME, getTestUser());
-            jobConf.set(OozieClient.GROUP_NAME, getTestGroup());
             injectKerberosInfo(jobConf);
             Configuration protoConf = wps.createProtoActionConf(jobConf, "authToken", true);
             assertEquals(getTestUser(), protoConf.get(OozieClient.USER_NAME));
-            assertEquals(getTestGroup(), protoConf.get(OozieClient.GROUP_NAME));
 
             assertEquals(6, protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST).length);
             List<String> found = new ArrayList<String>();
@@ -447,12 +437,10 @@ public class TestLiteWorkflowAppService extends XTestCase {
             Configuration jobConf = new XConfiguration();
             jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
             jobConf.set(OozieClient.USER_NAME, getTestUser());
-            jobConf.set(OozieClient.GROUP_NAME, getTestGroup());
             jobConf.set(WorkflowAppService.APP_LIB_PATH_LIST, "parentdependency1.jar");
             injectKerberosInfo(jobConf);
             Configuration protoConf = wps.createProtoActionConf(jobConf, "authToken", true);
             assertEquals(getTestUser(), protoConf.get(OozieClient.USER_NAME));
-            assertEquals(getTestGroup(), protoConf.get(OozieClient.GROUP_NAME));
 
             assertEquals(3, protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST).length);
             String f1 = protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST)[0];
@@ -500,11 +488,9 @@ public class TestLiteWorkflowAppService extends XTestCase {
             Configuration jobConf = new XConfiguration();
             jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
             jobConf.set(OozieClient.USER_NAME, getTestUser());
-            jobConf.set(OozieClient.GROUP_NAME, getTestGroup());
             injectKerberosInfo(jobConf);
             Configuration protoConf = wps.createProtoActionConf(jobConf, "authToken", true);
             assertEquals(getTestUser(), protoConf.get(OozieClient.USER_NAME));
-            assertEquals(getTestGroup(), protoConf.get(OozieClient.GROUP_NAME));
 
             assertEquals(2, protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST).length);
             String f1 = protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST)[0];

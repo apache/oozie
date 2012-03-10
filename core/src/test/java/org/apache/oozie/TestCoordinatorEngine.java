@@ -84,7 +84,6 @@ public class TestCoordinatorEngine extends XTestCase {
         writeToFile(appXml, appPath);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set(OozieClient.GROUP_NAME, "other");
         injectKerberosInfo(conf);
 
         final CoordinatorEngine ce = new CoordinatorEngine(getTestUser(), "UNIT_TESTING");
@@ -139,7 +138,6 @@ public class TestCoordinatorEngine extends XTestCase {
         writeToFile(appXml, appPath);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set(OozieClient.GROUP_NAME, "other");
         injectKerberosInfo(conf);
 
         final CoordinatorEngine ce = new CoordinatorEngine(getTestUser(), "UNIT_TESTING");
@@ -194,7 +192,6 @@ public class TestCoordinatorEngine extends XTestCase {
         writeToFile(appXml, appPath);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set(OozieClient.GROUP_NAME, "other");
         injectKerberosInfo(conf);
 
         final CoordinatorEngine ce = new CoordinatorEngine(getTestUser(), "UNIT_TESTING");
@@ -249,7 +246,6 @@ public class TestCoordinatorEngine extends XTestCase {
         writeToFile(appXml, appPath);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set(OozieClient.GROUP_NAME, "other");
         injectKerberosInfo(conf);
 
         final CoordinatorEngine ce = new CoordinatorEngine(getTestUser(), "UNIT_TESTING");
@@ -319,7 +315,6 @@ public class TestCoordinatorEngine extends XTestCase {
         writeToFile(appXml, appPath);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set(OozieClient.GROUP_NAME, "other");
         injectKerberosInfo(conf);
 
         final CoordinatorEngine ce = new CoordinatorEngine(getTestUser(), "UNIT_TESTING");

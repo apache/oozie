@@ -545,7 +545,6 @@ public abstract class XDataTestCase extends XFsTestCase {
         conf.set(OozieClient.APP_PATH, appUri.toString());
         conf.set(OozieClient.LOG_TOKEN, "testToken");
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set(OozieClient.GROUP_NAME, getTestGroup());
         injectKerberosInfo(conf);
         WorkflowJobBean wfBean = createWorkflow(app, conf, "auth", jobStatus, instanceStatus);
 
@@ -856,7 +855,6 @@ public abstract class XDataTestCase extends XFsTestCase {
         Configuration jobConf = new XConfiguration();
         jobConf.set(OozieClient.COORDINATOR_APP_PATH, appPath.toString());
         jobConf.set(OozieClient.USER_NAME, getTestUser());
-        jobConf.set(OozieClient.GROUP_NAME, getTestGroup());
         jobConf.set("jobTracker", getJobTrackerUri());
         jobConf.set("nameNode", getNameNodeUri());
         jobConf.set("wfAppPath", wfAppPath.toString());
@@ -1006,7 +1004,6 @@ public abstract class XDataTestCase extends XFsTestCase {
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.BUNDLE_APP_PATH, bundleAppPath.toString());
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set(OozieClient.GROUP_NAME, getTestGroup());
         conf.set("jobTracker", getJobTrackerUri());
         conf.set("nameNode", getNameNodeUri());
         injectKerberosInfo(conf);
@@ -1062,7 +1059,6 @@ public abstract class XDataTestCase extends XFsTestCase {
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.BUNDLE_APP_PATH, bundleAppPath.toString());
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set(OozieClient.GROUP_NAME, getTestGroup());
         conf.set("jobTracker", getJobTrackerUri());
         conf.set("nameNode", getNameNodeUri());
         injectKerberosInfo(conf);

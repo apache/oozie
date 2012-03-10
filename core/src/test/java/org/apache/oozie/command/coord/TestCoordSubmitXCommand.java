@@ -82,7 +82,6 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         writeToFile(appXml, appPath);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set(OozieClient.GROUP_NAME, "other");
         CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
         String jobId = sc.call();
 
@@ -110,7 +109,6 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         IOUtils.copyCharStream(reader, writer);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set(OozieClient.GROUP_NAME, "other");
         CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
 
         try {
@@ -170,7 +168,6 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
 
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set(OozieClient.GROUP_NAME, "other");
         CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
 
         try {
@@ -242,7 +239,6 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         writeToFile(appXml, appPath);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set(OozieClient.GROUP_NAME, "other");
 
         this.addRecordToBundleActionTable("OOZIE-B", "COORD-NAME", 0, Job.Status.PREP);
 
@@ -286,7 +282,6 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         writeToFile(appXml, appPath);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set(OozieClient.GROUP_NAME, "other");
 
         this.addRecordToBundleActionTable("OOZIE-B", "COORD-NAME", 0, Job.Status.PREP);
 
@@ -339,7 +334,6 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         writeToFile(appXml, appPath);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set(OozieClient.GROUP_NAME, "other");
         CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
         String jobId = sc.call();
 
@@ -373,7 +367,6 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         writeToFile(appXml, appPath);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set(OozieClient.GROUP_NAME, "other");
         CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
         String jobId = sc.call();
 
@@ -407,7 +400,6 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         writeToFile(appXml, appPath);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set(OozieClient.GROUP_NAME, "other");
         CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
         try {
             sc.call();
@@ -436,7 +428,6 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         writeToFile(appXml, appPath);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set(OozieClient.GROUP_NAME, "other");
         CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
         String jobId = sc.call();
 
@@ -462,7 +453,6 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         writeToFile(appXml, appPath);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         // conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set(OozieClient.GROUP_NAME, "other");
         CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
         try {
             sc.call();
@@ -489,7 +479,6 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         writeToFile(appXml, appPath);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set(OozieClient.GROUP_NAME, "other");
         CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
         String jobId = sc.call();
 
@@ -529,7 +518,6 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         writeToFile(appXml, appPath);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set(OozieClient.GROUP_NAME, "other");
         conf.set("MY_DONE_FLAG", "complete");
         CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
         String jobId = sc.call();
@@ -569,7 +557,6 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         writeToFile(appXml, appPath);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set(OozieClient.GROUP_NAME, "other");
         conf.set("MY_DONE_FLAG", "complete");
         conf.set("NAME", "test_app_name");
         CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
@@ -598,7 +585,6 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         writeToFile(appXml, appPath);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set(OozieClient.GROUP_NAME, "other");
         conf.set("MINUTES", "1");
         CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
 
@@ -624,7 +610,6 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
 
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set(OozieClient.GROUP_NAME, "other");
         CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
         try {
             sc.call();
@@ -660,7 +645,6 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         writeToFile(appXml, appPath);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set(OozieClient.GROUP_NAME, "other");
         injectKerberosInfo(conf);
         CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
 

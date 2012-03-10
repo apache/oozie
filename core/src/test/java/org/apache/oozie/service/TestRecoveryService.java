@@ -111,7 +111,6 @@ public class TestRecoveryService extends XDataTestCase {
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set(OozieClient.GROUP_NAME, getTestGroup());
         injectKerberosInfo(conf);
         conf.set(OozieClient.LOG_TOKEN, "t");
 

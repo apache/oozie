@@ -363,7 +363,7 @@ public class AuthorizationService implements Service {
 
     private boolean isUserInAcl(String user, String aclStr) throws IOException {
         boolean userInAcl = false;
-        if (aclStr.trim().length() > 0) {
+        if (aclStr != null && aclStr.trim().length() > 0) {
             GroupsService groupsService = Services.get().get(GroupsService.class);
             String[] acl = aclStr.split(",");
             for (int i = 0; !userInAcl && i < acl.length; i++) {

@@ -79,7 +79,6 @@ public class TestDistCpActionExecutor extends ActionExecutorTestCase{
         XConfiguration protoConf = new XConfiguration();
         protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
         protoConf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
-        protoConf.set(OozieClient.GROUP_NAME, getTestGroup());
         protoConf.setStrings(WorkflowAppService.APP_LIB_PATH_LIST, appJarPath.toString(), appSoPath.toString());
         injectKerberosInfo(protoConf);
 

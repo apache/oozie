@@ -69,7 +69,6 @@ public class TestV1JobsServlet extends DagServletTestCase {
                 int wfCount = MockDagEngineService.workflows.size();
                 Configuration jobConf = new XConfiguration();
                 jobConf.set(OozieClient.USER_NAME, getTestUser());
-                jobConf.set(OozieClient.GROUP_NAME, getTestGroup());
                 jobConf.set(OozieClient.APP_PATH, appPath);
                 injectKerberosInfo(jobConf);
                 Map<String, String> params = new HashMap<String, String>();

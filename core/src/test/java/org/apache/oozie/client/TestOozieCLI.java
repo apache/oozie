@@ -62,7 +62,6 @@ public class TestOozieCLI extends DagServletTestCase {
     private String createConfigFile(String appPath) throws Exception {
         String path = getTestCaseDir() + "/" + getName() + ".xml";
         Configuration conf = new Configuration(false);
-        conf.set(OozieClient.GROUP_NAME, getTestGroup());
         conf.set(OozieClient.APP_PATH, appPath);
         conf.set(OozieClient.RERUN_SKIP_NODES, "node");
         injectKerberosInfo(conf);

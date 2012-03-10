@@ -207,7 +207,6 @@ public abstract class ActionExecutorTestCase extends XFsTestCase {
         XConfiguration protoConf = new XConfiguration();
         protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
         protoConf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
-        protoConf.set(OozieClient.GROUP_NAME, getTestGroup());
         injectKerberosInfo(protoConf);
         return protoConf;
     }
@@ -232,7 +231,6 @@ public abstract class ActionExecutorTestCase extends XFsTestCase {
                 .addNode(new EndNodeDef("end"));
         XConfiguration wfConf = new XConfiguration();
         wfConf.set(OozieClient.USER_NAME, getTestUser());
-        wfConf.set(OozieClient.GROUP_NAME, getTestGroup());
         wfConf.set(OozieClient.APP_PATH, appUri.toString());
         injectKerberosInfo(wfConf);
 
@@ -266,7 +264,6 @@ public abstract class ActionExecutorTestCase extends XFsTestCase {
                 "end"));
         XConfiguration wfConf = new XConfiguration();
         wfConf.set(OozieClient.USER_NAME, getTestUser());
-        wfConf.set(OozieClient.GROUP_NAME, getTestGroup());
         wfConf.set(OozieClient.APP_PATH, appUri.toString());
         injectKerberosInfo(wfConf);
 

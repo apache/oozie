@@ -112,7 +112,6 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         XConfiguration protoConf = new XConfiguration();
         protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
         protoConf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
-        protoConf.set(OozieClient.GROUP_NAME, getTestGroup());
         injectKerberosInfo(protoConf);
 
         WorkflowJobBean wf = createBaseWorkflow(protoConf, "pig-action");
@@ -137,7 +136,6 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         XConfiguration protoConf = new XConfiguration();
         protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
         protoConf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
-        protoConf.set(OozieClient.GROUP_NAME, getTestGroup());
         injectKerberosInfo(protoConf);
 
         SharelibUtils.addToDistributedCache("pig", fs, getFsTestCaseDir(), protoConf);

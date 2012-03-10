@@ -50,7 +50,6 @@ public class TestDagELFunctions extends XTestCase {
         XConfiguration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, "appPath");
         conf.set(OozieClient.USER_NAME, "user");
-        conf.set(OozieClient.GROUP_NAME, "group");
         conf.set("a", "A");
         LiteWorkflowApp def =
                 new LiteWorkflowApp("name", "<workflow-app/>", new StartNodeDef("end")).addNode(new EndNodeDef("end"));

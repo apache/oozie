@@ -94,7 +94,6 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         XConfiguration protoConf = new XConfiguration();
         protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
         protoConf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
-        protoConf.set(OozieClient.GROUP_NAME, getTestGroup());
         injectKerberosInfo(protoConf);
 
         WorkflowJobBean wf = createBaseWorkflow(protoConf, "mr-action");
@@ -154,7 +153,6 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
 
         XConfiguration protoConf = new XConfiguration();
         protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
-        protoConf.set(OozieClient.GROUP_NAME, getTestGroup());
         protoConf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
         injectKerberosInfo(protoConf);
         protoConf.setStrings(WorkflowAppService.APP_LIB_PATH_LIST, appJarPath.toString());
@@ -179,7 +177,6 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
 
         XConfiguration protoConf = new XConfiguration();
         protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
-        protoConf.set(OozieClient.GROUP_NAME, getTestGroup());
         protoConf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
         protoConf.setStrings(WorkflowAppService.APP_LIB_PATH_LIST, appJarPath.toString());
         injectKerberosInfo(protoConf);

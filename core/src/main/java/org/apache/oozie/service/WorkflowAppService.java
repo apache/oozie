@@ -156,7 +156,6 @@ public abstract class WorkflowAppService implements Service {
             String hadoopUgi = user + "," + group;
 
             conf.set(OozieClient.USER_NAME, user);
-            conf.set(OozieClient.GROUP_NAME, group);
             conf.set(HADOOP_UGI, hadoopUgi);
 
             conf.set(HADOOP_JT_KERBEROS_NAME, jobConf.get(HADOOP_JT_KERBEROS_NAME));

@@ -93,7 +93,6 @@ public class TestMapReduceActionError extends ActionExecutorTestCase {
 
         XConfiguration protoConf = new XConfiguration();
         protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
-        protoConf.set(OozieClient.GROUP_NAME, getTestGroup());
         injectKerberosInfo(protoConf);
         protoConf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
 
@@ -171,7 +170,6 @@ public class TestMapReduceActionError extends ActionExecutorTestCase {
 
         XConfiguration protoConf = new XConfiguration();
         protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
-        protoConf.set(OozieClient.GROUP_NAME, getTestGroup());
         injectKerberosInfo(protoConf);
         protoConf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
         protoConf.setStrings(WorkflowAppService.APP_LIB_PATH_LIST, appJarPath.toString());

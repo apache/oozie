@@ -237,7 +237,6 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
         XConfiguration protoConf = new XConfiguration();
         protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
         protoConf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
-        protoConf.set(OozieClient.GROUP_NAME, getTestGroup());
         injectKerberosInfo(protoConf);
         SharelibUtils.addToDistributedCache("hive", getFileSystem(), getFsTestCaseDir(), protoConf);
 

@@ -104,7 +104,6 @@ public class TestDagEngine extends XTestCase {
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set(OozieClient.GROUP_NAME, getTestGroup());
         injectKerberosInfo(conf);
         conf.set(OozieClient.LOG_TOKEN, "t");
         conf.set(OozieClient.ACTION_NOTIFICATION_URL, container.getServletURL("/callback") +
@@ -154,7 +153,6 @@ public class TestDagEngine extends XTestCase {
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set(OozieClient.GROUP_NAME, getTestGroup());
         injectKerberosInfo(conf);
         conf.set(OozieClient.LOG_TOKEN, "t");
         conf.set("signal-value", "OK");
@@ -176,7 +174,6 @@ public class TestDagEngine extends XTestCase {
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set(OozieClient.GROUP_NAME, getTestGroup());
         injectKerberosInfo(conf);
         conf.set(OozieClient.LOG_TOKEN, "t");
         conf.set("signal-value", "OK");

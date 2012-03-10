@@ -58,9 +58,8 @@ public class CoordUtils {
         Configuration conf = new Configuration();
         ParamChecker.notNull(jobConf, "Configuration to be used for hadoop setup ");
         String user = ParamChecker.notEmpty(jobConf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
-        String group = ParamChecker.notEmpty(jobConf.get(OozieClient.GROUP_NAME), OozieClient.GROUP_NAME);
         conf.set(HADOOP_USER, user);
-        conf.set(HADOOP_UGI, user + "," + group);
+        conf.set(HADOOP_UGI, user + "," + null);
         return conf;
     }
 

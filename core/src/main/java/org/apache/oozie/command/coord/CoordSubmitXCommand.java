@@ -406,10 +406,9 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
             String coordAppPathStr = conf.get(OozieClient.COORDINATOR_APP_PATH);
             Path coordAppPath = new Path(coordAppPathStr);
             String user = ParamChecker.notEmpty(conf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
-            String group = ParamChecker.notEmpty(conf.get(OozieClient.GROUP_NAME), OozieClient.GROUP_NAME);
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
             Configuration fsConf = has.createJobConf(coordAppPath.toUri().getAuthority());
-            FileSystem fs = has.createFileSystem(user, group, coordAppPath.toUri(), fsConf);
+            FileSystem fs = has.createFileSystem(user, null, coordAppPath.toUri(), fsConf);
 
             // app path could be a directory
             if (!fs.isFile(coordAppPath)) {
@@ -935,14 +934,13 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
      */
     protected String readDefinition(String appPath) throws CoordinatorJobException {
         String user = ParamChecker.notEmpty(conf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
-        String group = ParamChecker.notEmpty(conf.get(OozieClient.GROUP_NAME), OozieClient.GROUP_NAME);
         // Configuration confHadoop = CoordUtils.getHadoopConf(conf);
         try {
             URI uri = new URI(appPath);
-            LOG.debug("user =" + user + " group =" + group);
+            LOG.debug("user =" + user);
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
             Configuration fsConf = has.createJobConf(uri.getAuthority());
-            FileSystem fs = has.createFileSystem(user, group, uri, fsConf);
+            FileSystem fs = has.createFileSystem(user, null, uri, fsConf);
             Path appDefPath = null;
 
             // app path could be a directory

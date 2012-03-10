@@ -253,7 +253,6 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
 
         XConfiguration jobConf = new XConfiguration();
         jobConf.set(OozieClient.USER_NAME, getTestUser());
-        jobConf.set(OozieClient.GROUP_NAME, getTestGroup());
         injectKerberosInfo(jobConf);
         String confStr = jobConf.toXmlString(false);
         coordJob.setConf(confStr);

@@ -71,7 +71,6 @@ public class TestWorkflowIdGetForExternalIdJPAExecutor extends XDataTestCase {
         conf.set(OozieClient.APP_PATH, "testPath");
         conf.set(OozieClient.LOG_TOKEN, "testToken");
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set(OozieClient.GROUP_NAME, getTestGroup());
         injectKerberosInfo(conf);
         WorkflowJobBean wfBean = createWorkflow(app, conf, "auth", jobStatus, instanceStatus);
         wfBean.setExternalId("external-id");

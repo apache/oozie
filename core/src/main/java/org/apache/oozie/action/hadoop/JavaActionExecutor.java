@@ -190,7 +190,6 @@ public class JavaActionExecutor extends ActionExecutor {
             conf.set(WorkflowAppService.HADOOP_NN_KERBEROS_NAME, context.getProtoActionConf().get(
                     WorkflowAppService.HADOOP_NN_KERBEROS_NAME));
         }
-        conf.set(OozieClient.GROUP_NAME, context.getProtoActionConf().get(OozieClient.GROUP_NAME));
         conf.set(HADOOP_JOB_TRACKER, jobTracker);
         conf.set(HADOOP_NAME_NODE, nameNode);
         conf.set("mapreduce.fileoutputcommitter.marksuccessfuljobs", "true");
@@ -548,9 +547,11 @@ public class JavaActionExecutor extends ActionExecutor {
             // to disable cancelation of delegation token on launcher job end
             launcherJobConf.setBoolean("mapreduce.job.complete.cancel.delegation.tokens", false);
 
-            // setting the group owning the Oozie job to allow anybody in that
-            // group to kill the jobs.
-            launcherJobConf.set("mapreduce.job.acl-modify-job", context.getWorkflow().getAcl());
+            if (context.getWorkflow().getAcl() != null) {
+                // setting the group owning the Oozie job to allow anybody in that
+                // group to kill the jobs.
+                launcherJobConf.set("mapreduce.job.acl-modify-job", context.getWorkflow().getAcl());
+            }
 
             return launcherJobConf;
         }
@@ -598,9 +599,11 @@ public class JavaActionExecutor extends ActionExecutor {
             actionConf.set("mapred.job.name", jobName);
             injectActionCallback(context, actionConf);
 
-            // setting the group owning the Oozie job to allow anybody in that
-            // group to kill the jobs.
-            actionConf.set("mapreduce.job.acl-modify-job", context.getWorkflow().getGroup());
+            if (context.getWorkflow().getAcl() != null) {
+                // setting the group owning the Oozie job to allow anybody in that
+                // group to kill the jobs.
+                actionConf.set("mapreduce.job.acl-modify-job", context.getWorkflow().getAcl());
+            }
 
             // Setting the credential properties in launcher conf
             HashMap<String, CredentialsProperties> credentialsProperties = setCredentialPropertyToActionConf(context,

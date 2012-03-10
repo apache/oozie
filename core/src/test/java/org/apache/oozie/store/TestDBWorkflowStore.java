@@ -126,7 +126,6 @@ public class TestDBWorkflowStore extends XTestCase {
         conf1.set(OozieClient.APP_PATH, "testPath");
         conf1.set(OozieClient.LOG_TOKEN, "testToken");
         conf1.set(OozieClient.USER_NAME, "testUser1");
-        conf1.set(OozieClient.GROUP_NAME, "testGroup1");
         conf1.set(WorkflowAppService.HADOOP_JT_KERBEROS_NAME, "JT");
         conf1.set(WorkflowAppService.HADOOP_NN_KERBEROS_NAME, "NN");
         wfBean1 = createWorkflow(app, conf1, "auth");
@@ -135,7 +134,6 @@ public class TestDBWorkflowStore extends XTestCase {
         conf2.set(OozieClient.APP_PATH, "testPath");
         conf2.set(OozieClient.LOG_TOKEN, "testToken");
         conf2.set(OozieClient.USER_NAME, "testUser2");
-        conf2.set(OozieClient.GROUP_NAME, "testGroup2");
         conf2.set(WorkflowAppService.HADOOP_JT_KERBEROS_NAME, "JT");
         conf2.set(WorkflowAppService.HADOOP_NN_KERBEROS_NAME, "NN");
         wfBean2 = createWorkflow(app, conf2, "auth");
@@ -468,7 +466,6 @@ public class TestDBWorkflowStore extends XTestCase {
         conf2.set(OozieClient.APP_PATH, "testPath");
         conf2.set(OozieClient.LOG_TOKEN, "testToken");
         conf2.set(OozieClient.USER_NAME, "testUser2");
-        conf2.set(OozieClient.GROUP_NAME, "testGroup2");
         conf2.set(WorkflowAppService.HADOOP_JT_KERBEROS_NAME, "JT");
         conf2.set(WorkflowAppService.HADOOP_NN_KERBEROS_NAME, "NN");
         WorkflowJobBean wfBean3 = createWorkflow(app, conf2, "auth");
