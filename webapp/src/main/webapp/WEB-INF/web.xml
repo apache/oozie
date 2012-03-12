@@ -108,12 +108,7 @@
 
     <servlet-mapping>
         <servlet-name>callback</servlet-name>
-        <url-pattern>/v0/callback/*</url-pattern>
-    </servlet-mapping>
-
-    <servlet-mapping>
-        <servlet-name>callback</servlet-name>
-        <url-pattern>/v1/callback/*</url-pattern>
+        <url-pattern>/callback/*</url-pattern>
     </servlet-mapping>
 
     <servlet-mapping>
@@ -168,32 +163,12 @@
 
     <filter-mapping>
         <filter-name>authenticationfilter</filter-name>
-        <url-pattern>/v0/admin/*</url-pattern>
+        <url-pattern>/v0/*</url-pattern>
     </filter-mapping>
 
     <filter-mapping>
         <filter-name>authenticationfilter</filter-name>
-        <url-pattern>/v1/admin/*</url-pattern>
-    </filter-mapping>
-
-    <filter-mapping>
-        <filter-name>authenticationfilter</filter-name>
-        <url-pattern>/v0/jobs</url-pattern>
-    </filter-mapping>
-
-    <filter-mapping>
-        <filter-name>authenticationfilter</filter-name>
-        <url-pattern>/v1/jobs</url-pattern>
-    </filter-mapping>
-
-    <filter-mapping>
-        <filter-name>authenticationfilter</filter-name>
-        <url-pattern>/v0/job/*</url-pattern>
-    </filter-mapping>
-
-    <filter-mapping>
-        <filter-name>authenticationfilter</filter-name>
-        <url-pattern>/v1/job/*</url-pattern>
+        <url-pattern>/v1/*</url-pattern>
     </filter-mapping>
 
     <filter-mapping>

@@ -1120,7 +1120,7 @@
 
     <property>
         <name>oozie.service.CallbackService.base.url</name>
-        <value>${oozie.base.url}/v0/callback</value>
+        <value>${oozie.base.url}/callback</value>
         <description>
              Base callback URL used by ActionExecutors.
         </description>
