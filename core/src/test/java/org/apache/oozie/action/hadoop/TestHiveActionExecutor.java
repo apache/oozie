@@ -206,7 +206,7 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
         conf.set("fs.default.name", e.getChildTextTrim("name-node", ns));
         conf.set("user.name", context.getProtoActionConf().get("user.name"));
         conf.set("group.name", getTestGroup());
-        injectKerberosInfo(conf);
+
         JobConf jobConf = Services.get().get(HadoopAccessorService.class).createJobConf(jobTracker);
         XConfiguration.copy(conf, jobConf);
         String user = jobConf.get("user.name");
@@ -235,8 +235,7 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
 
         XConfiguration protoConf = new XConfiguration();
         protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
-        protoConf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
-        injectKerberosInfo(protoConf);
+
         SharelibUtils.addToDistributedCache("hive", getFileSystem(), getFsTestCaseDir(), protoConf);
 
         WorkflowJobBean wf = createBaseWorkflow(protoConf, "hive-action");

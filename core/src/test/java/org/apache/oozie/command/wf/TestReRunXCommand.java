@@ -62,7 +62,7 @@ public class TestReRunXCommand extends XFsTestCase {
         Properties conf = wfClient.createConfiguration();
         conf.setProperty(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
         conf.setProperty(OozieClient.USER_NAME, getTestUser());
-        injectKerberosInfo(conf);
+
 
         conf.setProperty("nnbase", path.toString());
         conf.setProperty("base", path.toUri().getPath());
@@ -116,7 +116,7 @@ public class TestReRunXCommand extends XFsTestCase {
         Properties conf = wfClient.createConfiguration();
         conf.setProperty(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
         conf.setProperty(OozieClient.USER_NAME, getTestUser());
-        injectKerberosInfo(conf);
+
 
         conf.setProperty("nnbase", path.toString());
         conf.setProperty("base", conf.getProperty("nnbase"));
@@ -159,7 +159,7 @@ public class TestReRunXCommand extends XFsTestCase {
         Properties conf = wfClient.createConfiguration();
         conf.setProperty(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
         conf.setProperty(OozieClient.USER_NAME, getTestUser());
-        injectKerberosInfo(conf);
+
 
         conf.setProperty("nnbase", path.toString());
         conf.setProperty("base", path.toUri().getPath());
@@ -195,7 +195,7 @@ public class TestReRunXCommand extends XFsTestCase {
         Properties conf = wfClient.createConfiguration();
         conf.setProperty(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
         conf.setProperty(OozieClient.USER_NAME, getTestUser());
-        injectKerberosInfo(conf);
+
 
         conf.setProperty("inPath", getFsTestCaseDir().toString());
         conf.setProperty("checkDir", getFsTestCaseDir().toString() + "/check");

@@ -30,7 +30,6 @@ import org.apache.oozie.command.CommandException;
 
 public class PropertiesUtils {
 
-    public static final String HADOOP_UGI = "hadoop.job.ugi";
     public static final String HADOOP_USER = "user.name";
     public static final String YEAR = "YEAR";
     public static final String MONTH = "MONTH";

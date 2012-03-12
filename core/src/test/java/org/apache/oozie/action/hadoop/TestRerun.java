@@ -98,7 +98,7 @@ public class TestRerun extends XFsTestCase {
         conf.setProperty("delPath", output.toString());
         conf.setProperty("subWfApp", appPath.toString() + "/subwf/workflow.xml");
         //conf.setProperty("user.name", getTestUser());
-        injectKerberosInfo(conf);
+
 
         //first run
         final String jobId1 = wfClient.submit(conf);

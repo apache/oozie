@@ -166,7 +166,7 @@ public class TestCoordELEvaluator extends XTestCase {
         // XConfiguration(IOUtils.getResourceAsReader("org/apache/oozie/coord/conf.xml",
         // -1));
         Configuration conf = new XConfiguration(new StringReader(getConfString()));
-        injectKerberosInfo(conf);
+
         Date actualTime = DateUtils.parseDateUTC("2009-09-01T01:00Z");
         Date nominalTime = DateUtils.parseDateUTC("2009-09-01T00:00Z");
         String dataEvntXML = "<data-in name=\"A\" dataset=\"a\"><uris>file:///tmp/coord/US/2009/1/30|file:///tmp/coord/US/2009/1/31</uris>";

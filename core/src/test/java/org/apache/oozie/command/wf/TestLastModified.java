@@ -98,7 +98,7 @@ public class TestLastModified extends XFsTestCase {
             conf.setProperty(OozieClient.APP_PATH, appPath.toString() + File.separator + "workflow.xml");
             conf.setProperty(OozieClient.USER_NAME, getTestUser());
             conf.setProperty(OozieClient.GROUP_NAME, getTestGroup());
-            injectKerberosInfo(conf);
+
 
             final String jobId = wc.submit(conf);
             assertNotNull(jobId);

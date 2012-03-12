@@ -74,7 +74,7 @@ public class TestSubmitXCommand extends XDataTestCase {
         writeToFile(appXml, appPath + "/workflow.xml");
         conf.set(OozieClient.APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
-        injectKerberosInfo(conf);
+
         SubmitXCommand sc = new SubmitXCommand(conf, "UNIT_TESTING");
 
         try {
@@ -94,7 +94,7 @@ public class TestSubmitXCommand extends XDataTestCase {
         writeToFile(appXml, appPath + "/workflow.xml");
         conf.set(OozieClient.APP_PATH, appPath + "/workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
-        injectKerberosInfo(conf);
+
         SubmitXCommand sc = new SubmitXCommand(conf, "UNIT_TESTING");
 
         try {
@@ -114,7 +114,7 @@ public class TestSubmitXCommand extends XDataTestCase {
         writeToFile(appXml, appPath + "/test.xml");
         conf.set(OozieClient.APP_PATH, appPath + "/test.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
-        injectKerberosInfo(conf);
+
         SubmitXCommand sc = new SubmitXCommand(conf, "UNIT_TESTING");
 
         try {

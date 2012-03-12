@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-755 remove hadoop.job.ugi and kerberos principal hardcoded injections (tucu)
 OOZIE-754 remove use of group from HadoopAccessor (tucu)
 OOZIE-752 if group.name/oozie.job.acl is not defined in job.properties job submission fails (tucu)
 OOZIE-753 default hadoop config file does not endup in the distro and hadoop config doc typo (tucu)

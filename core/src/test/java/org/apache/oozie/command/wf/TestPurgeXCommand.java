@@ -242,7 +242,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         conf.set(OozieClient.APP_PATH, appUri.toString());
         conf.set(OozieClient.LOG_TOKEN, "testToken");
         conf.set(OozieClient.USER_NAME, getTestUser());
-        injectKerberosInfo(conf);
+
         WorkflowJobBean wfBean = createWorkflow(app, conf, "auth", jobStatus, instanceStatus);
         wfBean.setStartTime(DateUtils.parseDateUTC("2015-12-18T01:00Z"));
         wfBean.setEndTime(DateUtils.parseDateUTC("2015-12-18T03:00Z"));

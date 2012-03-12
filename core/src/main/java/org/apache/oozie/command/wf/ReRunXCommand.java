@@ -88,8 +88,7 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
                 PropertiesUtils.REDUCE_OUT, PropertiesUtils.GROUPS };
         PropertiesUtils.createPropertySet(badUserProps, DISALLOWED_USER_PROPERTIES);
 
-        String[] badDefaultProps = { PropertiesUtils.HADOOP_USER, PropertiesUtils.HADOOP_UGI,
-                WorkflowAppService.HADOOP_JT_KERBEROS_NAME, WorkflowAppService.HADOOP_NN_KERBEROS_NAME };
+        String[] badDefaultProps = { PropertiesUtils.HADOOP_USER};
         PropertiesUtils.createPropertySet(badUserProps, DISALLOWED_DEFAULT_PROPERTIES);
         PropertiesUtils.createPropertySet(badDefaultProps, DISALLOWED_DEFAULT_PROPERTIES);
     }

@@ -549,25 +549,6 @@ public abstract class XTestCase extends TestCase {
                                   getOozieUser() + "/localhost") + "@" + getRealm();
     }
 
-    public String getJobTrackerPrincipal() {
-        return System.getProperty("oozie.test.kerberos.jobtracker.principal", "mapred/_HOST") + "@" + getRealm();
-    }
-
-    public String getNamenodePrincipal() {
-        return System.getProperty("oozie.test.kerberos.namenode.principal", "hdfs/_HOST") + "@" + getRealm();
-    }
-
-    public <C extends Configuration> C injectKerberosInfo(C conf) {
-        conf.set(WorkflowAppService.HADOOP_JT_KERBEROS_NAME, getJobTrackerPrincipal());
-        conf.set(WorkflowAppService.HADOOP_NN_KERBEROS_NAME, getNamenodePrincipal());
-        return conf;
-    }
-
-    public void injectKerberosInfo(Properties conf) {
-        conf.setProperty(WorkflowAppService.HADOOP_JT_KERBEROS_NAME, getJobTrackerPrincipal());
-        conf.setProperty(WorkflowAppService.HADOOP_NN_KERBEROS_NAME, getNamenodePrincipal());
-    }
-
     //TODO Fix this
     /**
      * Clean up database schema

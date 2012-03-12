@@ -77,9 +77,8 @@ public class TestDistCpActionExecutor extends ActionExecutorTestCase{
 
         XConfiguration protoConf = new XConfiguration();
         protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
-        protoConf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
         protoConf.setStrings(WorkflowAppService.APP_LIB_PATH_LIST, appJarPath.toString(), appSoPath.toString());
-        injectKerberosInfo(protoConf);
+
 
         WorkflowJobBean wf = createBaseWorkflow(protoConf, "action");
         WorkflowActionBean action = (WorkflowActionBean) wf.getActions().get(0);
@@ -107,7 +106,7 @@ public class TestDistCpActionExecutor extends ActionExecutorTestCase{
 
         JobConf jobConf = Services.get().get(HadoopAccessorService.class).createJobConf(jobTracker);
         jobConf.set("mapred.job.tracker", jobTracker);
-        injectKerberosInfo(jobConf);
+
         JobClient jobClient =
             Services.get().get(HadoopAccessorService.class).createJobClient(getTestUser(), jobConf);
         final RunningJob runningJob = jobClient.getJob(JobID.forName(jobId));

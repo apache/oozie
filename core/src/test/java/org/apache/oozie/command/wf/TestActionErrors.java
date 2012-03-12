@@ -253,7 +253,7 @@ public class TestActionErrors extends XDataTestCase {
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
-        injectKerberosInfo(conf);
+
         conf.set(OozieClient.LOG_TOKEN, "t");
         conf.set("error", "end.error");
         conf.set("external-status", "FAILED/KILLED");
@@ -301,7 +301,7 @@ public class TestActionErrors extends XDataTestCase {
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
-        injectKerberosInfo(conf);
+
         conf.set(OozieClient.LOG_TOKEN, "t");
         conf.set("signal-value", "OK");
         conf.set("external-status", "ok");
@@ -372,7 +372,7 @@ public class TestActionErrors extends XDataTestCase {
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
-        injectKerberosInfo(conf);
+
         conf.set(OozieClient.LOG_TOKEN, "t");
         conf.set("signal-value", "OK");
         conf.set("external-status", "ok");
@@ -436,7 +436,7 @@ public class TestActionErrors extends XDataTestCase {
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
-        injectKerberosInfo(conf);
+
         conf.set(OozieClient.LOG_TOKEN, "t");
         conf.set("signal-value", "OK");
         conf.set("external-status", "ok");
@@ -514,7 +514,7 @@ public class TestActionErrors extends XDataTestCase {
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
-        injectKerberosInfo(conf);
+
         conf.set(OozieClient.LOG_TOKEN, "t");
         conf.set("error", errorType);
         conf.set("external-status", externalStatus);
@@ -552,7 +552,7 @@ public class TestActionErrors extends XDataTestCase {
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
-        injectKerberosInfo(conf);
+
         conf.set(OozieClient.LOG_TOKEN, "t");
         conf.set("error", errorType);
         conf.set("external-status", externalStatus);
@@ -593,7 +593,7 @@ public class TestActionErrors extends XDataTestCase {
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
-        injectKerberosInfo(conf);
+
         conf.set(OozieClient.LOG_TOKEN, "t");
         conf.set("external-status", "ok");
         conf.set("signal-value", "based_on_action_status");

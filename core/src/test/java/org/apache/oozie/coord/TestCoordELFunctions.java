@@ -680,7 +680,7 @@ public class TestCoordELFunctions extends XTestCase {
         init("coord-action-start");
         String expr = "${coord:latest(0)}";
         Configuration conf = new Configuration();
-        injectKerberosInfo(conf);
+
         // TODO:Set hadoop properties
         eval.setVariable(CoordELFunctions.CONFIGURATION, conf);
         String testDir = getTestCaseDir();
@@ -745,7 +745,7 @@ public class TestCoordELFunctions extends XTestCase {
 
         init("coord-action-start");
         Configuration conf = new Configuration();
-        injectKerberosInfo(conf);
+
         // TODO:Set hadoop properties
         eval.setVariable(CoordELFunctions.CONFIGURATION, conf);
         String testDir = getTestCaseDir();

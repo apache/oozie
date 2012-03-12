@@ -169,7 +169,7 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
         jobConf.setProperty("mrclass", MapperReducerForTest.class.getName());
         jobConf.setProperty("delPath", wfAppPath.toString() + "/output");
         jobConf.setProperty("subWfApp", wfAppPath.toString() + "/subwf/workflow.xml");
-        injectKerberosInfo(jobConf);
+
 
         return new XConfiguration(jobConf);
     }

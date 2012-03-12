@@ -117,7 +117,7 @@ public class TestV0JobServlet extends DagServletTestCase {
         getFileSystem().mkdirs(appPath);
         getFileSystem().create(new Path(appPath, "workflow.xml")).close();
         conf.set(OozieClient.APP_PATH, appPath.toString());
-        injectKerberosInfo(conf);
+
         _testAction(RestConstants.JOB_ACTION_RERUN, conf);
     }
 

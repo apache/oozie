@@ -160,15 +160,5 @@ public abstract class BaseJobsServlet extends JsonRestServlet {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0401,
                     OozieClient.USER_NAME);
         }
-
-        String localRealm = Services.get().getConf().get("local.realm");
-
-        //if the job properties don't define JT/NN Kerberos principals, add default value
-        if (conf.get(WorkflowAppService.HADOOP_JT_KERBEROS_NAME) == null) {
-            conf.set(WorkflowAppService.HADOOP_JT_KERBEROS_NAME, "mapred/_HOST@" + localRealm);
-        }
-        if (conf.get(WorkflowAppService.HADOOP_NN_KERBEROS_NAME) == null) {
-            conf.set(WorkflowAppService.HADOOP_NN_KERBEROS_NAME, "hdfs/_HOST@" + localRealm);
-        }
     }
 }

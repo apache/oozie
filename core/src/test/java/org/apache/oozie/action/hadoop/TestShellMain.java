@@ -49,7 +49,7 @@ public class TestShellMain extends ShellTestCase {
         jobConf.setInt("mapred.reduce.max.attempts", 1);
         jobConf.set("mapred.job.tracker", getJobTrackerUri());
         jobConf.set("fs.default.name", getNameNodeUri());
-        injectKerberosInfo(jobConf);
+
 
         jobConf.set(ShellMain.CONF_OOZIE_SHELL_EXEC, "sh");
         MapReduceMain.setStrings(jobConf, ShellMain.CONF_OOZIE_SHELL_ARGS, new String[] { "-c",

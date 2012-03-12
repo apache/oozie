@@ -51,7 +51,7 @@ public class TestStreamingMain extends MainTestCase {
         jobConf.set("mapred.job.tracker", getJobTrackerUri());
         jobConf.set("fs.default.name", getNameNodeUri());
         jobConf.set("mapreduce.framework.name", "yarn");
-        injectKerberosInfo(jobConf);
+
         jobConf.set("user.name", getTestUser());
         jobConf.set("hadoop.job.ugi", getTestUser() + "," + getTestGroup());
 

@@ -48,8 +48,7 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
 
         XConfiguration protoConf = new XConfiguration();
         protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
-        protoConf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
-        injectKerberosInfo(protoConf);
+
         
         WorkflowJobBean wf = createBaseWorkflow(protoConf, "fs-action");
         WorkflowActionBean action = (WorkflowActionBean) wf.getActions().get(0);

@@ -67,7 +67,7 @@ public class TestHadoopAccessorService extends XTestCase {
         JobConf conf = has.createJobConf(getJobTrackerUri());
         conf.set("mapred.job.tracker", getJobTrackerUri());
         conf.set("fs.default.name", getNameNodeUri());
-        injectKerberosInfo(conf);
+
         URI uri = new URI(getNameNodeUri());
 
         //valid user

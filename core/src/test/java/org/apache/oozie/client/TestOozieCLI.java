@@ -64,7 +64,7 @@ public class TestOozieCLI extends DagServletTestCase {
         Configuration conf = new Configuration(false);
         conf.set(OozieClient.APP_PATH, appPath);
         conf.set(OozieClient.RERUN_SKIP_NODES, "node");
-        injectKerberosInfo(conf);
+
         OutputStream os = new FileOutputStream(path);
         conf.writeXml(os);
         os.close();
@@ -79,7 +79,7 @@ public class TestOozieCLI extends DagServletTestCase {
         props.setProperty(OozieClient.APP_PATH, appPath);
         props.setProperty(OozieClient.RERUN_SKIP_NODES, "node");
         props.setProperty("a", "A");
-        injectKerberosInfo(props);
+
         OutputStream os = new FileOutputStream(path);
         props.store(os, "");
         os.close();
@@ -91,7 +91,7 @@ public class TestOozieCLI extends DagServletTestCase {
         Properties props = new Properties();
         props.setProperty(OozieClient.USER_NAME, getTestUser());
         props.setProperty(OozieClient.GROUP_NAME, getTestGroup());
-        injectKerberosInfo(props);
+
         props.setProperty(OozieClient.APP_PATH, appPath);
         //add spaces to string
         props.setProperty(OozieClient.RERUN_SKIP_NODES + " ", " node ");

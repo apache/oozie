@@ -110,8 +110,7 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
 
         XConfiguration protoConf = new XConfiguration();
         protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
-        protoConf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
-        injectKerberosInfo(protoConf);
+
 
         WorkflowJobBean wf = createBaseWorkflow(protoConf, "pig-action");
         WorkflowActionBean action = (WorkflowActionBean) wf.getActions().get(0);
@@ -134,8 +133,7 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
 
         XConfiguration protoConf = new XConfiguration();
         protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
-        protoConf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
-        injectKerberosInfo(protoConf);
+
 
         SharelibUtils.addToDistributedCache("pig", fs, getFsTestCaseDir(), protoConf);
 
@@ -170,7 +168,7 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         conf.set("mapreduce.framework.name", "yarn");
         conf.set("user.name", context.getProtoActionConf().get("user.name"));
         conf.set("group.name", getTestGroup());
-        injectKerberosInfo(conf);
+
         JobConf jobConf = Services.get().get(HadoopAccessorService.class).createJobConf(jobTracker);
         XConfiguration.copy(conf, jobConf);
         String user = jobConf.get("user.name");

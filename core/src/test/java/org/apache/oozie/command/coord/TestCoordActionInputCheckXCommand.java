@@ -253,7 +253,7 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
 
         XConfiguration jobConf = new XConfiguration();
         jobConf.set(OozieClient.USER_NAME, getTestUser());
-        injectKerberosInfo(jobConf);
+
         String confStr = jobConf.toXmlString(false);
         coordJob.setConf(confStr);
         String appXml = "<coordinator-app xmlns='uri:oozie:coordinator:0.2' name='NAME' frequency=\"1\" start='2009-02-01T01:00Z' end='2009-02-03T23:59Z' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";

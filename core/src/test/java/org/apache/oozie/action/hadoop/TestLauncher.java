@@ -65,7 +65,6 @@ public class TestLauncher extends XFsTestCase {
             createJobConf(new URI(getNameNodeUri()).getAuthority());
 //        jobConf.setJar(jar.getAbsolutePath());
         jobConf.set("user.name", getTestUser());
-        jobConf.set("group.name", getTestGroup());
         jobConf.setInt("mapred.map.tasks", 1);
         jobConf.setInt("mapred.map.max.attempts", 1);
         jobConf.setInt("mapred.reduce.max.attempts", 1);
@@ -73,7 +72,7 @@ public class TestLauncher extends XFsTestCase {
         jobConf.set("mapreduce.framework.name", "yarn");
         jobConf.set("mapred.job.tracker", getJobTrackerUri());
         jobConf.set("fs.default.name", getNameNodeUri());
-        injectKerberosInfo(jobConf);
+
 
         LauncherMapper lm = new LauncherMapper();
         lm.setupMainClass(jobConf, LauncherMainTester.class.getName());
@@ -232,9 +231,7 @@ public class TestLauncher extends XFsTestCase {
         JobConf jobConf = Services.get().get(HadoopAccessorService.class).
             createJobConf(new URI(getNameNodeUri()).getAuthority());
         jobConf.set("user.name", getTestUser());
-        jobConf.set("group.name", getTestGroup());
         jobConf.set("fs.default.name", getNameNodeUri());
-        injectKerberosInfo(jobConf);
 
         LauncherMapper lm = new LauncherMapper();
         Configuration actionConf = new XConfiguration();
@@ -254,9 +251,7 @@ public class TestLauncher extends XFsTestCase {
         JobConf jobConf = Services.get().get(HadoopAccessorService.class).
             createJobConf(new URI(getNameNodeUri()).getAuthority());
         jobConf.set("user.name", getTestUser());
-        jobConf.set("group.name", getTestGroup());
         jobConf.set("fs.default.name", getNameNodeUri());
-        injectKerberosInfo(jobConf);
 
         LauncherMapper lm = new LauncherMapper();
         Configuration actionConf = new XConfiguration();

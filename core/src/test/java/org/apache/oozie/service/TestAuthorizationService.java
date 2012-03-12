@@ -126,7 +126,7 @@ public class TestAuthorizationService extends XDataTestCase {
         else {
             jobConf.set(OozieClient.GROUP_NAME, getTestGroup() + ",foo");
         }
-        injectKerberosInfo(jobConf);
+
         jobConf.set(OozieClient.LOG_TOKEN, "t");
 
         jobConf.set("external-status", "ok");
@@ -233,7 +233,7 @@ public class TestAuthorizationService extends XDataTestCase {
         AuthorizationService as = services.get(AuthorizationService.class);
 
         Configuration conf = new Configuration();
-        injectKerberosInfo(conf);
+
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
         URI uri = getFileSystem().getUri();
         Configuration fsConf = has.createJobConf(uri.getAuthority());

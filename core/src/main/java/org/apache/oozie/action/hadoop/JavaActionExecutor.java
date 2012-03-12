@@ -75,7 +75,6 @@ import org.apache.hadoop.security.token.TokenIdentifier;
 public class JavaActionExecutor extends ActionExecutor {
 
     private static final String HADOOP_USER = "user.name";
-    private static final String HADOOP_UGI = "hadoop.job.ugi";
     private static final String HADOOP_JOB_TRACKER = "mapred.job.tracker";
     private static final String HADOOP_NAME_NODE = "fs.default.name";
     public static final String OOZIE_COMMON_LIBDIR = "oozie";
@@ -94,11 +93,8 @@ public class JavaActionExecutor extends ActionExecutor {
 
     static {
         DISALLOWED_PROPERTIES.add(HADOOP_USER);
-        DISALLOWED_PROPERTIES.add(HADOOP_UGI);
         DISALLOWED_PROPERTIES.add(HADOOP_JOB_TRACKER);
         DISALLOWED_PROPERTIES.add(HADOOP_NAME_NODE);
-        DISALLOWED_PROPERTIES.add(WorkflowAppService.HADOOP_JT_KERBEROS_NAME);
-        DISALLOWED_PROPERTIES.add(WorkflowAppService.HADOOP_NN_KERBEROS_NAME);
     }
 
     public JavaActionExecutor() {
@@ -181,15 +177,6 @@ public class JavaActionExecutor extends ActionExecutor {
         String nameNode = actionXml.getChild("name-node", ns).getTextTrim();
         JobConf conf = Services.get().get(HadoopAccessorService.class).createJobConf(jobTracker);
         conf.set(HADOOP_USER, context.getProtoActionConf().get(WorkflowAppService.HADOOP_USER));
-        conf.set(HADOOP_UGI, context.getProtoActionConf().get(WorkflowAppService.HADOOP_UGI));
-        if (context.getProtoActionConf().get(WorkflowAppService.HADOOP_JT_KERBEROS_NAME) != null) {
-            conf.set(WorkflowAppService.HADOOP_JT_KERBEROS_NAME, context.getProtoActionConf().get(
-                    WorkflowAppService.HADOOP_JT_KERBEROS_NAME));
-        }
-        if (context.getProtoActionConf().get(WorkflowAppService.HADOOP_NN_KERBEROS_NAME) != null) {
-            conf.set(WorkflowAppService.HADOOP_NN_KERBEROS_NAME, context.getProtoActionConf().get(
-                    WorkflowAppService.HADOOP_NN_KERBEROS_NAME));
-        }
         conf.set(HADOOP_JOB_TRACKER, jobTracker);
         conf.set(HADOOP_NAME_NODE, nameNode);
         conf.set("mapreduce.fileoutputcommitter.marksuccessfuljobs", "true");
@@ -647,11 +634,6 @@ public class JavaActionExecutor extends ActionExecutor {
                 // setting up propagation of the delegation token.
                 Token<DelegationTokenIdentifier> mrdt = jobClient.getDelegationToken(new Text("mr token"));
                 launcherJobConf.getCredentials().addToken(new Text("mr token"), mrdt);
-
-                log.debug(WorkflowAppService.HADOOP_JT_KERBEROS_NAME + " = "
-                        + launcherJobConf.get(WorkflowAppService.HADOOP_JT_KERBEROS_NAME));
-                log.debug(WorkflowAppService.HADOOP_NN_KERBEROS_NAME + " = "
-                        + launcherJobConf.get(WorkflowAppService.HADOOP_NN_KERBEROS_NAME));
 
                 // insert credentials tokens to launcher job conf if needed
                 if (needInjectCredentials()) {

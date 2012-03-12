@@ -104,7 +104,7 @@ public class TestDagEngine extends XTestCase {
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
-        injectKerberosInfo(conf);
+
         conf.set(OozieClient.LOG_TOKEN, "t");
         conf.set(OozieClient.ACTION_NOTIFICATION_URL, container.getServletURL("/callback") +
                                                       "?jobId=$jobId&status=$status&nodeName=$nodeName");
@@ -153,7 +153,7 @@ public class TestDagEngine extends XTestCase {
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
-        injectKerberosInfo(conf);
+
         conf.set(OozieClient.LOG_TOKEN, "t");
         conf.set("signal-value", "OK");
         conf.set("external-status", "ok");
@@ -174,7 +174,7 @@ public class TestDagEngine extends XTestCase {
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
-        injectKerberosInfo(conf);
+
         conf.set(OozieClient.LOG_TOKEN, "t");
         conf.set("signal-value", "OK");
         conf.set("external-status", "ok");

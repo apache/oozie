@@ -60,7 +60,7 @@ public class TestWorkflowXClient extends DagServletTestCase {
                 conf.setProperty(XOozieClient.JT, "localhost:9001");
                 conf.setProperty(XOozieClient.NN, "hdfs://localhost:9000");
 
-                injectKerberosInfo(conf);
+
 
                 String pigScriptFile = getTestCaseDir() + "/test";
                 BufferedWriter writer = new BufferedWriter(new FileWriter(pigScriptFile));
@@ -88,7 +88,7 @@ public class TestWorkflowXClient extends DagServletTestCase {
                 conf.setProperty(XOozieClient.JT, "localhost:9001");
                 conf.setProperty(XOozieClient.NN, "hdfs://localhost:9000");
 
-                injectKerberosInfo(conf);
+
                 assertEquals(MockDagEngineService.JOB_ID + wfCount + MockDagEngineService.JOB_ID_END,
                              wc.submitMapReduce(conf));
 

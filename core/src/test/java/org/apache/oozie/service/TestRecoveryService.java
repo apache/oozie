@@ -109,7 +109,7 @@ public class TestRecoveryService extends XDataTestCase {
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
-        injectKerberosInfo(conf);
+
         conf.set(OozieClient.LOG_TOKEN, "t");
 
         conf.set("external-status", "ok");
@@ -569,7 +569,7 @@ public class TestRecoveryService extends XDataTestCase {
         createdConf += "</configuration> ";
 
         XConfiguration conf = new XConfiguration(new StringReader(createdConf));
-        injectKerberosInfo(conf);
+
         createdConf = conf.toXmlString(false);
 
         action.setCreatedConf(createdConf);

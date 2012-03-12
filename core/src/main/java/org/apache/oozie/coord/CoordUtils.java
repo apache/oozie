@@ -41,8 +41,6 @@ import org.apache.oozie.util.ParamChecker;
 import org.jdom.Element;
 
 public class CoordUtils {
-    public static final String HADOOP_UGI = "hadoop.job.ugi";
-
     public static final String HADOOP_USER = "user.name";
 
     public static String getDoneFlag(Element doneFlagElement) {
@@ -59,7 +57,6 @@ public class CoordUtils {
         ParamChecker.notNull(jobConf, "Configuration to be used for hadoop setup ");
         String user = ParamChecker.notEmpty(jobConf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
         conf.set(HADOOP_USER, user);
-        conf.set(HADOOP_UGI, user + "," + null);
         return conf;
     }
 

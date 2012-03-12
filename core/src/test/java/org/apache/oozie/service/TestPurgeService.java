@@ -98,7 +98,7 @@ public class TestPurgeService extends XDataTestCase {
         conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
         conf.setStrings(OozieClient.USER_NAME, getTestUser());
         conf.setStrings(OozieClient.GROUP_NAME, getTestGroup());
-        injectKerberosInfo(conf);
+
         conf.set(OozieClient.LOG_TOKEN, "t");
 
         conf.set("external-status", "ok");

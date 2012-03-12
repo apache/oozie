@@ -69,7 +69,7 @@ public class TestActionFailover extends XFsTestCase {
         conf.setProperty(OozieClient.APP_PATH, wf.toString());
         conf.setProperty(OozieClient.USER_NAME, getTestUser());
         conf.setProperty(OozieClient.GROUP_NAME, getTestGroup());
-        injectKerberosInfo(conf);
+
         final Path source = new Path(getFsTestCaseDir(), "fsfailover-source");
         getFileSystem().mkdirs(source);
         final Path target = new Path(getFsTestCaseDir().toString(), "fsfailover-target");

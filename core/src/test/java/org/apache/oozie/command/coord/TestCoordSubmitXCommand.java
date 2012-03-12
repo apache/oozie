@@ -645,7 +645,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         writeToFile(appXml, appPath);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
-        injectKerberosInfo(conf);
+
         CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
 
         if (withDefaults) {

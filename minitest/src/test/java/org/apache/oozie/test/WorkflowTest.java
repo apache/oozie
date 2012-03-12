@@ -69,7 +69,7 @@ public class WorkflowTest extends MiniOozieTestCase {
         conf.setProperty(OozieClient.APP_PATH, appPath.toString() + File.separator + "workflow.xml");
         conf.setProperty(OozieClient.USER_NAME, getTestUser());
         conf.setProperty(OozieClient.GROUP_NAME, getTestGroup());
-        injectKerberosInfo(conf);
+
 
         final String jobId = wc.submit(conf);
         assertNotNull(jobId);
@@ -116,7 +116,7 @@ public class WorkflowTest extends MiniOozieTestCase {
         conf.setProperty("nnbase", path.toString());
         conf.setProperty("base", path.toUri().getPath());
 
-        injectKerberosInfo(conf);
+
 
         final String jobId = wc.submit(conf);
         assertNotNull(jobId);

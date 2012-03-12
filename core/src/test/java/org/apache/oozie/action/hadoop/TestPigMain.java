@@ -81,7 +81,7 @@ public class TestPigMain extends PigTestCase {
         // option to specify whether stats should be stored or not
         jobConf.set("oozie.action.external.stats.write", Boolean.toString(writeStats));
 
-        injectKerberosInfo(jobConf);
+
 
         SharelibUtils.addToDistributedCache("pig", fs, getFsTestCaseDir(), jobConf);
 

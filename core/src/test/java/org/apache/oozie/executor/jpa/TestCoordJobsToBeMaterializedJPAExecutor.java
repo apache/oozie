@@ -172,7 +172,7 @@ public class TestCoordJobsToBeMaterializedJPAExecutor extends XFsTestCase {
         conf.setProperty("wfAppPath", wfAppPath.toString());
         conf.remove("user.name");
         conf.setProperty("user.name", getTestUser());
-        injectKerberosInfo(conf);
+
         return conf;
     }
 }

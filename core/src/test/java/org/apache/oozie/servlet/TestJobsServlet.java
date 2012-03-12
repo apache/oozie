@@ -72,7 +72,7 @@ public class TestJobsServlet extends DagServletTestCase {
                 Configuration jobConf = new XConfiguration();
                 jobConf.set(OozieClient.USER_NAME, getTestUser());
                 jobConf.set(OozieClient.APP_PATH, appPath);
-                injectKerberosInfo(jobConf);
+
                 Map<String, String> params = new HashMap<String, String>();
                 URL url = createURL("", params);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -90,7 +90,7 @@ public class TestJobsServlet extends DagServletTestCase {
                 jobConf = new XConfiguration();
                 jobConf.set(OozieClient.USER_NAME, getTestUser());
                 jobConf.set(OozieClient.APP_PATH, appPath);
-                injectKerberosInfo(jobConf);
+
                 params = new HashMap<String, String>();
                 params.put(RestConstants.ACTION_PARAM, RestConstants.JOB_ACTION_START);
                 url = createURL("", params);

@@ -92,8 +92,7 @@ public class TestMapReduceActionError extends ActionExecutorTestCase {
 
         XConfiguration protoConf = new XConfiguration();
         protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
-        injectKerberosInfo(protoConf);
-        protoConf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
+
 
         WorkflowJobBean wf = createBaseWorkflow(protoConf, "mr-action");
         WorkflowActionBean action = (WorkflowActionBean) wf.getActions().get(0);
@@ -169,8 +168,7 @@ public class TestMapReduceActionError extends ActionExecutorTestCase {
 
         XConfiguration protoConf = new XConfiguration();
         protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
-        injectKerberosInfo(protoConf);
-        protoConf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
+
         protoConf.setStrings(WorkflowAppService.APP_LIB_PATH_LIST, appJarPath.toString());
 
         WorkflowJobBean wf = createBaseWorkflow(protoConf, "mr-action");
@@ -203,7 +201,7 @@ public class TestMapReduceActionError extends ActionExecutorTestCase {
         conf.set("fs.default.name", e.getChildTextTrim("name-node"));
         conf.set("user.name", context.getProtoActionConf().get("user.name"));
         conf.set("group.name", getTestGroup());
-        injectKerberosInfo(conf);
+
         conf.set("mapreduce.framework.name", "yarn");
         JobConf jobConf = Services.get().get(HadoopAccessorService.class).createJobConf(jobTracker);
         XConfiguration.copy(conf, jobConf);

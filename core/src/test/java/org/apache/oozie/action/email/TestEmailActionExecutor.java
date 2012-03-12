@@ -62,8 +62,7 @@ public class TestEmailActionExecutor extends ActionExecutorTestCase {
 
         XConfiguration protoConf = new XConfiguration();
         protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
-        protoConf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
-        injectKerberosInfo(protoConf);
+
 
         WorkflowJobBean wf = createBaseWorkflow(protoConf, "email-action");
         WorkflowActionBean action = (WorkflowActionBean) wf.getActions().get(0);

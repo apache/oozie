@@ -269,7 +269,7 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
         conf.set("user.name", context.getProtoActionConf().get("user.name"));
         conf.set("mapreduce.framework.name", "yarn");
         conf.set("group.name", getTestGroup());
-        injectKerberosInfo(conf);
+
         JobConf jobConf = Services.get().get(HadoopAccessorService.class).createJobConf(jobTracker);
         XConfiguration.copy(conf, jobConf);
         String user = jobConf.get("user.name");
@@ -285,8 +285,7 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
 
         XConfiguration protoConf = new XConfiguration();
         protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
-        protoConf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
-        injectKerberosInfo(protoConf);
+
 
         FileSystem fs = getFileSystem();
         SharelibUtils.addToDistributedCache("sqoop", fs, getFsTestCaseDir(), protoConf);

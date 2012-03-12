@@ -85,7 +85,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             IOUtils.copyCharStream(reader, writer);
 
             Configuration conf = new XConfiguration();
-            injectKerberosInfo(conf);
+
             WorkflowAppService wps = services.get(WorkflowAppService.class);
             String wfDef = wps.readDefinition("file://" + getTestCaseDir() + File.separator + "workflow.xml",
                                               getTestUser(), "authToken", conf);
@@ -124,7 +124,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             Configuration jobConf = new XConfiguration();
             jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
             jobConf.set(OozieClient.USER_NAME, getTestUser());
-            injectKerberosInfo(jobConf);
+
 
             WorkflowApp app = wps.parseDef(jobConf, "authToken");
             assertNotNull(app);
@@ -164,7 +164,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             Configuration jobConf = new XConfiguration();
             jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
             jobConf.set(OozieClient.USER_NAME, getTestUser());
-            injectKerberosInfo(jobConf);
+
 
             LiteWorkflowApp app = (LiteWorkflowApp) wps.parseDef(jobConf, "authToken");
             assertNotNull(app);
@@ -202,7 +202,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             Configuration jobConf = new XConfiguration();
             jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
             jobConf.set(OozieClient.USER_NAME, getTestUser());
-            injectKerberosInfo(jobConf);
+
 
             try {
                 LiteWorkflowApp app = (LiteWorkflowApp) wps.parseDef(jobConf, "authToken");
@@ -231,7 +231,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             Configuration jobConf = new XConfiguration();
             jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
             jobConf.set(OozieClient.USER_NAME, getTestUser());
-            injectKerberosInfo(jobConf);
+
 
             LiteWorkflowApp app = (LiteWorkflowApp) wps.parseDef(jobConf, "authToken");
             assertNotNull(app);
@@ -286,7 +286,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             Configuration jobConf = new XConfiguration();
             jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
             jobConf.set(OozieClient.USER_NAME, getTestUser());
-            injectKerberosInfo(jobConf);
+
             Configuration protoConf = wps.createProtoActionConf(jobConf, "authToken", true);
             assertEquals(getTestUser(), protoConf.get(OozieClient.USER_NAME));
 
@@ -328,7 +328,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + "/workflow.xml");
             jobConf.set(OozieClient.LIBPATH, "file://" + getTestCaseDir() + "/libx");
             jobConf.set(OozieClient.USER_NAME, getTestUser());
-            injectKerberosInfo(jobConf);
+
             Configuration protoConf = wps.createProtoActionConf(jobConf, "authToken", true);
             assertEquals(getTestUser(), protoConf.get(OozieClient.USER_NAME));
 
@@ -387,7 +387,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             jobConf.setStrings(OozieClient.LIBPATH, "file://" + getTestCaseDir() + "/libx",
                     "file://" + getTestCaseDir() + "/liby", "file://" + getTestCaseDir() + "/libz");
             jobConf.set(OozieClient.USER_NAME, getTestUser());
-            injectKerberosInfo(jobConf);
+
             Configuration protoConf = wps.createProtoActionConf(jobConf, "authToken", true);
             assertEquals(getTestUser(), protoConf.get(OozieClient.USER_NAME));
 
@@ -438,7 +438,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
             jobConf.set(OozieClient.USER_NAME, getTestUser());
             jobConf.set(WorkflowAppService.APP_LIB_PATH_LIST, "parentdependency1.jar");
-            injectKerberosInfo(jobConf);
+
             Configuration protoConf = wps.createProtoActionConf(jobConf, "authToken", true);
             assertEquals(getTestUser(), protoConf.get(OozieClient.USER_NAME));
 
@@ -488,7 +488,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             Configuration jobConf = new XConfiguration();
             jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
             jobConf.set(OozieClient.USER_NAME, getTestUser());
-            injectKerberosInfo(jobConf);
+
             Configuration protoConf = wps.createProtoActionConf(jobConf, "authToken", true);
             assertEquals(getTestUser(), protoConf.get(OozieClient.USER_NAME));
 

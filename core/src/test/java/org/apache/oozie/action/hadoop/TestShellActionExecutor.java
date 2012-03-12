@@ -97,8 +97,7 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
 
         XConfiguration protoConf = new XConfiguration();
         protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
-        protoConf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
-        injectKerberosInfo(protoConf);
+
 
         WorkflowJobBean wf = createBaseWorkflow(protoConf, "pig-action");
         WorkflowActionBean action = (WorkflowActionBean) wf.getActions().get(0);
@@ -243,9 +242,8 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
 
         XConfiguration protoConf = new XConfiguration();
         protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
-        protoConf.set(WorkflowAppService.HADOOP_UGI, getTestUser() + "," + getTestGroup());
         // Make sure Kerbores prinicpal is in the conf
-        injectKerberosInfo(protoConf);
+
 
         WorkflowJobBean wf = createBaseWorkflow(protoConf, "shell-action");
         WorkflowActionBean action = (WorkflowActionBean) wf.getActions().get(0);
@@ -285,7 +283,7 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         conf.set("fs.default.name", e.getChildTextTrim("name-node"));
         conf.set("user.name", context.getProtoActionConf().get("user.name"));
         conf.set("group.name", getTestGroup());
-        injectKerberosInfo(conf);
+
         JobConf jobConf = Services.get().get(HadoopAccessorService.class).createJobConf(jobTracker);
         XConfiguration.copy(conf, jobConf);
         String user = jobConf.get("user.name");

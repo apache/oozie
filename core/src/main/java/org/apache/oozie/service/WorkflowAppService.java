@@ -52,13 +52,7 @@ public abstract class WorkflowAppService implements Service {
 
     public static final String APP_LIB_PATH_LIST = "oozie.wf.application.lib";
 
-    public static final String HADOOP_UGI = "hadoop.job.ugi";
-
     public static final String HADOOP_USER = "user.name";
-
-    public static final String HADOOP_JT_KERBEROS_NAME = "mapreduce.jobtracker.kerberos.principal";
-
-    public static final String HADOOP_NN_KERBEROS_NAME = "dfs.namenode.kerberos.principal";
 
     private Path systemLibPath;
 
@@ -152,15 +146,7 @@ public abstract class WorkflowAppService implements Service {
             Configuration conf = has.createJobConf(uri.getAuthority());
 
             String user = jobConf.get(OozieClient.USER_NAME);
-            String group = jobConf.get(OozieClient.GROUP_NAME);
-            String hadoopUgi = user + "," + group;
-
             conf.set(OozieClient.USER_NAME, user);
-            conf.set(HADOOP_UGI, hadoopUgi);
-
-            conf.set(HADOOP_JT_KERBEROS_NAME, jobConf.get(HADOOP_JT_KERBEROS_NAME));
-            conf.set(HADOOP_NN_KERBEROS_NAME, jobConf.get(HADOOP_NN_KERBEROS_NAME));
-
 
             FileSystem fs = has.createFileSystem(user, uri, conf);
 

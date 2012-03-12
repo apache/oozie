@@ -1038,7 +1038,7 @@ public class TestCoordRerunXCommand extends XDataTestCase {
         conf.setProperty("wfAppPath", wfAppPath.toString());
         conf.remove("user.name");
         conf.setProperty("user.name", getTestUser());
-        injectKerberosInfo(conf);
+
 
         String content = "<workflow-app xmlns='uri:oozie:workflow:0.1'  xmlns:sla='uri:oozie:sla:0.1' name='no-op-wf'>";
         content += "<start to='end' />";

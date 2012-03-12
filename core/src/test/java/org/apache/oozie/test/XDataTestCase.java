@@ -545,7 +545,7 @@ public abstract class XDataTestCase extends XFsTestCase {
         conf.set(OozieClient.APP_PATH, appUri.toString());
         conf.set(OozieClient.LOG_TOKEN, "testToken");
         conf.set(OozieClient.USER_NAME, getTestUser());
-        injectKerberosInfo(conf);
+
         WorkflowJobBean wfBean = createWorkflow(app, conf, "auth", jobStatus, instanceStatus);
 
         try {
@@ -858,7 +858,7 @@ public abstract class XDataTestCase extends XFsTestCase {
         jobConf.set("jobTracker", getJobTrackerUri());
         jobConf.set("nameNode", getNameNodeUri());
         jobConf.set("wfAppPath", wfAppPath.toString());
-        injectKerberosInfo(jobConf);
+
 
         String content = "<workflow-app xmlns='uri:oozie:workflow:0.1'  xmlns:sla='uri:oozie:sla:0.1' name='no-op-wf'>";
         content += "<start to='end' />";
@@ -1006,7 +1006,7 @@ public abstract class XDataTestCase extends XFsTestCase {
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set("jobTracker", getJobTrackerUri());
         conf.set("nameNode", getNameNodeUri());
-        injectKerberosInfo(conf);
+
 
         BundleJobBean bundle = new BundleJobBean();
         bundle.setId(Services.get().get(UUIDService.class).generateId(ApplicationType.BUNDLE));
@@ -1061,7 +1061,7 @@ public abstract class XDataTestCase extends XFsTestCase {
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set("jobTracker", getJobTrackerUri());
         conf.set("nameNode", getNameNodeUri());
-        injectKerberosInfo(conf);
+
 
         BundleJobBean bundle = new BundleJobBean();
         bundle.setId(Services.get().get(UUIDService.class).generateId(ApplicationType.BUNDLE));

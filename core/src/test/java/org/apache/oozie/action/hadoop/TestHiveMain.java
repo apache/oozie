@@ -95,7 +95,7 @@ public class TestHiveMain extends MainTestCase {
             jobConf.set("javax.jdo.option.ConnectionDriverName", "org.apache.derby.jdbc.EmbeddedDriver");
             jobConf.set("javax.jdo.option.ConnectionUserName", "sa");
             jobConf.set("javax.jdo.option.ConnectionPassword", " ");
-            injectKerberosInfo(jobConf);
+
             SharelibUtils.addToDistributedCache("hive", fs, getFsTestCaseDir(), jobConf);
 
             HiveMain.setHiveScript(jobConf, script.toString(), new String[]{"IN=" + inputDir.toUri().getPath(),
