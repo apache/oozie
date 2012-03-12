@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -138,7 +137,7 @@ public class TestAuthorizationService extends XDataTestCase {
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
         URI uri = getFileSystem().getUri();
         Configuration fsConf = has.createJobConf(uri.getAuthority());
-        FileSystem fileSystem = has.createFileSystem(getTestUser(), getTestGroup(), uri, fsConf);
+        FileSystem fileSystem = has.createFileSystem(getTestUser(), uri, fsConf);
 
         Path path = new Path(fileSystem.getWorkingDirectory(), getTestCaseDir().substring(1));
         Path fsTestDir = fileSystem.makeQualified(path);
@@ -238,7 +237,7 @@ public class TestAuthorizationService extends XDataTestCase {
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
         URI uri = getFileSystem().getUri();
         Configuration fsConf = has.createJobConf(uri.getAuthority());
-        FileSystem fileSystem = has.createFileSystem(getTestUser(), getTestGroup(), uri, fsConf);
+        FileSystem fileSystem = has.createFileSystem(getTestUser(), uri, fsConf);
         
         try {
             as.authorizeForGroup(getTestUser3(), getTestGroup());

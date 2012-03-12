@@ -22,7 +22,6 @@ import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.workflow.WorkflowApp;
 import org.apache.oozie.workflow.WorkflowException;
 import org.apache.oozie.workflow.WorkflowLib;
-import org.apache.oozie.service.Services;
 import org.apache.oozie.util.ParamChecker;
 
 /**
@@ -39,7 +38,7 @@ public class LiteWorkflowAppService extends WorkflowAppService {
     public WorkflowApp parseDef(Configuration jobConf, String authToken) throws WorkflowException {
         String appPath = ParamChecker.notEmpty(jobConf.get(OozieClient.APP_PATH), OozieClient.APP_PATH);
         String user = ParamChecker.notEmpty(jobConf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
-        String workflowXml = readDefinition(appPath, user, null, authToken, jobConf);
+        String workflowXml = readDefinition(appPath, user, authToken, jobConf);
         return parseDef(workflowXml);
     }
 

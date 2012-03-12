@@ -270,7 +270,7 @@ public class AuthorizationService implements Service {
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
             URI uri = new Path(appPath).toUri();
             Configuration fsConf = has.createJobConf(uri.getAuthority());
-            FileSystem fs = has.createFileSystem(user, group, uri, fsConf);
+            FileSystem fs = has.createFileSystem(user, uri, fsConf);
 
             Path path = new Path(appPath);
             try {
@@ -322,7 +322,7 @@ public class AuthorizationService implements Service {
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
             URI uri = new Path(appPath).toUri();
             Configuration fsConf = has.createJobConf(uri.getAuthority());
-            FileSystem fs = has.createFileSystem(user, group, uri, fsConf);
+            FileSystem fs = has.createFileSystem(user, uri, fsConf);
 
             Path path = new Path(appPath);
             try {

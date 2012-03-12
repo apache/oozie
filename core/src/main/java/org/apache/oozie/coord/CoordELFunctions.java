@@ -820,7 +820,7 @@ public class CoordELFunctions {
         Path path = new Path(sPath);
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
         Configuration fsConf = has.createJobConf(path.toUri().getAuthority());
-        return has.createFileSystem(user, group, path.toUri(), fsConf).exists(path);
+        return has.createFileSystem(user, path.toUri(), fsConf).exists(path);
     }
 
     /**

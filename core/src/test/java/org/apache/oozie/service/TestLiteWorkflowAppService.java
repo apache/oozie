@@ -88,7 +88,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             injectKerberosInfo(conf);
             WorkflowAppService wps = services.get(WorkflowAppService.class);
             String wfDef = wps.readDefinition("file://" + getTestCaseDir() + File.separator + "workflow.xml",
-                                              getTestUser(), "group", "authToken", conf);
+                                              getTestUser(), "authToken", conf);
             assertNotNull(reader.toString(), wfDef);
         }
         finally {

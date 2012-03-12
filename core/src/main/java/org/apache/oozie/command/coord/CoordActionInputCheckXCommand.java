@@ -412,7 +412,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
         try {
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
             Configuration fsConf = has.createJobConf(path.toUri().getAuthority());
-            return has.createFileSystem(user, null, path.toUri(), fsConf).exists(path);
+            return has.createFileSystem(user, path.toUri(), fsConf).exists(path);
         }
         catch (HadoopAccessorException e) {
             throw new IOException(e);

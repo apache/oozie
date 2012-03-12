@@ -121,7 +121,7 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
             URI uri = new URI(conf.get(OozieClient.APP_PATH));
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
             Configuration fsConf = has.createJobConf(uri.getAuthority());
-            FileSystem fs = has.createFileSystem(wfBean.getUser(), wfBean.getGroup(), uri, fsConf);
+            FileSystem fs = has.createFileSystem(wfBean.getUser(), uri, fsConf);
 
             Path configDefault = null;
             // app path could be a directory

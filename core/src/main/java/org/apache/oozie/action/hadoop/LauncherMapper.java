@@ -132,7 +132,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         //FileSystem fs = FileSystem.get(launcherConf);
         FileSystem fs = Services.get().get(HadoopAccessorService.class)
                 .createFileSystem(launcherConf.get("user.name"),
-                                  launcherConf.get("group.name"), launcherConf);
+                                  launcherConf);
 
         if (fs.exists(recoveryFile)) {
             InputStream is = fs.open(recoveryFile);
@@ -197,7 +197,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         actionConf.set(OOZIE_ACTION_ID, actionId);
 
         FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(launcherConf.get("user.name"),
-                launcherConf.get("group.name"), launcherConf);
+                                                                                         launcherConf);
         fs.mkdirs(actionDir);
 
         OutputStream os = fs.create(new Path(actionDir, ACTION_CONF_XML));
@@ -310,7 +310,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
             Path p = getIdSwapPath(actionDir);
             // log.debug("Checking for newId file in: [{0}]", p);
 
-            FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, group, p.toUri(),
+            FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, p.toUri(),
                                                                                              new Configuration());
             if (fs.exists(p)) {
                 log.debug("Hadoop Counters is null, but found newID file.");

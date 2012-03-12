@@ -42,7 +42,7 @@ public class FsELFunctions {
         String group = workflow.getGroup();
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
         JobConf conf = has.createJobConf(uri.getAuthority());
-        return has.createFileSystem(user, group, uri, conf);
+        return has.createFileSystem(user, uri, conf);
     }
 
     /**

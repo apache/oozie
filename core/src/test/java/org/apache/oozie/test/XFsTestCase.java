@@ -70,7 +70,7 @@ public abstract class XFsTestCase extends XTestCase {
         has.init(conf);
         JobConf jobConf = has.createJobConf(getNameNodeUri());
         XConfiguration.copy(conf, jobConf);
-        fileSystem = has.createFileSystem(getTestUser(), getTestGroup(), new URI(getNameNodeUri()), jobConf);
+        fileSystem = has.createFileSystem(getTestUser(), new URI(getNameNodeUri()), jobConf);
         Path path = new Path(fileSystem.getWorkingDirectory(), getTestCaseDir().substring(1));
         fsTestDir = fileSystem.makeQualified(path);
         System.out.println(XLog.format("Setting FS testcase work dir[{0}]", fsTestDir));
@@ -140,7 +140,7 @@ public abstract class XFsTestCase extends XTestCase {
         conf.set("mapred.job.tracker", getJobTrackerUri());
         conf.set("fs.default.name", getNameNodeUri());
         injectKerberosInfo(conf);
-        return has.createJobClient(getTestUser(), getTestGroup(), conf);
+        return has.createJobClient(getTestUser(), conf);
     }
 
 }

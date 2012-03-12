@@ -300,7 +300,7 @@ public class JavaActionExecutor extends ActionExecutor {
 
                         String user = conf.get("user.name");
                         String group = conf.get("group.name");
-                        Services.get().get(HadoopAccessorService.class).addFileToClassPath(user, group, path, conf);
+                        Services.get().get(HadoopAccessorService.class).addFileToClassPath(user, path, conf);
                     }
                     else {
                         DistributedCache.addCacheFile(uri, conf);
@@ -379,7 +379,7 @@ public class JavaActionExecutor extends ActionExecutor {
                     String user = conf.get("user.name");
                     String group = conf.get("group.name");
                     FileSystem fs =
-                        Services.get().get(HadoopAccessorService.class).createFileSystem(user, group, conf);
+                        Services.get().get(HadoopAccessorService.class).createFileSystem(user, conf);
                     if (fs.exists(actionLibPath)) {
                         FileStatus[] files = fs.listStatus(actionLibPath);
                         for (FileStatus file : files) {
@@ -869,7 +869,7 @@ public class JavaActionExecutor extends ActionExecutor {
     protected JobClient createJobClient(Context context, JobConf jobConf) throws HadoopAccessorException {
         String user = context.getWorkflow().getUser();
         String group = context.getWorkflow().getGroup();
-        return Services.get().get(HadoopAccessorService.class).createJobClient(user, group, jobConf);
+        return Services.get().get(HadoopAccessorService.class).createJobClient(user, jobConf);
     }
 
     @Override

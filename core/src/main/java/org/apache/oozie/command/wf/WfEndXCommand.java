@@ -18,7 +18,6 @@
 package org.apache.oozie.command.wf;
 
 import java.io.IOException;
-import java.io.StringReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -32,7 +31,6 @@ import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.util.XConfiguration;
 
 /**
  * This Command is expected to be called when a Workflow moves to any terminal
@@ -82,7 +80,7 @@ public class WfEndXCommand extends WorkflowXCommand<Void> {
         URI uri = new URI(workflow.getAppPath());
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
         Configuration fsConf = has.createJobConf(uri.getAuthority());
-        return has.createFileSystem(workflow.getUser(), workflow.getGroup(), uri, fsConf);
+        return has.createFileSystem(workflow.getUser(), uri, fsConf);
     }
 
     @Override

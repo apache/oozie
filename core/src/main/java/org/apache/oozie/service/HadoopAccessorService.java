@@ -234,13 +234,14 @@ public class HadoopAccessorService implements Service {
 
     /**
      * Return a JobClient created with the provided user/group.
-     * 
+     *
+     *
      * @param conf JobConf with all necessary information to create the
      *        JobClient.
      * @return JobClient created with the provided user/group.
      * @throws HadoopAccessorException if the client could not be created.
      */
-    public JobClient createJobClient(String user, String group, final JobConf conf) throws HadoopAccessorException {
+    public JobClient createJobClient(String user, final JobConf conf) throws HadoopAccessorException {
         ParamChecker.notEmpty(user, "user");
         if (!conf.getBoolean(OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED, false)) {
             throw new HadoopAccessorException(ErrorCode.E0903);
@@ -269,14 +270,15 @@ public class HadoopAccessorService implements Service {
     /**
      * Return a FileSystem created with the provided user/group.
      *
+     *
      * @param conf Configuration with all necessary information to create the FileSystem.
      * @return FileSystem created with the provided user/group.
      * @throws HadoopAccessorException if the filesystem could not be created.
      */
-    public FileSystem createFileSystem(String user, String group, final Configuration conf)
+    public FileSystem createFileSystem(String user, final Configuration conf)
             throws HadoopAccessorException {
         try {
-            return createFileSystem(user, group,new URI(conf.get("fs.default.name")), conf);
+            return createFileSystem(user, new URI(conf.get("fs.default.name")), conf);
         }
         catch (URISyntaxException ex) {
             throw new HadoopAccessorException(ErrorCode.E0902, ex);
@@ -286,12 +288,13 @@ public class HadoopAccessorService implements Service {
     /**
      * Return a FileSystem created with the provided user/group for the specified URI.
      *
+     *
      * @param uri file system URI.
      * @param conf Configuration with all necessary information to create the FileSystem.
      * @return FileSystem created with the provided user/group.
      * @throws HadoopAccessorException if the filesystem could not be created.
      */
-    public FileSystem createFileSystem(String user, String group, final URI uri, final Configuration conf)
+    public FileSystem createFileSystem(String user, final URI uri, final Configuration conf)
             throws HadoopAccessorException {
         ParamChecker.notEmpty(user, "user");
         if (!conf.getBoolean(OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED, false)) {
@@ -354,7 +357,7 @@ public class HadoopAccessorService implements Service {
         }
     }
 
-    public void addFileToClassPath(String user, String group, final Path file, final Configuration conf)
+    public void addFileToClassPath(String user, final Path file, final Configuration conf)
             throws IOException {
         ParamChecker.notEmpty(user, "user");
         try {

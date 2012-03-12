@@ -92,20 +92,20 @@ public abstract class WorkflowAppService implements Service {
     /**
      * Read workflow definition.
      *
+     *
      * @param appPath application path.
      * @param user user name.
-     * @param group group name.
      * @param autToken authentication token.
      * @return workflow definition.
      * @throws WorkflowException thrown if the definition could not be read.
      */
-    protected String readDefinition(String appPath, String user, String group, String autToken, Configuration conf)
+    protected String readDefinition(String appPath, String user, String autToken, Configuration conf)
             throws WorkflowException {
         try {
             URI uri = new URI(appPath);
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
             JobConf jobConf = has.createJobConf(uri.getAuthority());
-            FileSystem fs = has.createFileSystem(user, group, uri, jobConf);
+            FileSystem fs = has.createFileSystem(user, uri, jobConf);
 
             // app path could be a directory
             Path path = new Path(uri.getPath());
@@ -162,7 +162,7 @@ public abstract class WorkflowAppService implements Service {
             conf.set(HADOOP_NN_KERBEROS_NAME, jobConf.get(HADOOP_NN_KERBEROS_NAME));
 
 
-            FileSystem fs = has.createFileSystem(user, group, uri, conf);
+            FileSystem fs = has.createFileSystem(user, uri, conf);
 
             Path appPath = new Path(uri.getPath());
             XLog.getLog(getClass()).debug("jobConf.libPath = " + jobConf.get(OozieClient.LIBPATH));

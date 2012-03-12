@@ -334,7 +334,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         jobConf.set("mapred.job.tracker", jobTracker);
         injectKerberosInfo(jobConf);
         JobClient jobClient =
-            Services.get().get(HadoopAccessorService.class).createJobClient(getTestUser(), getTestGroup(), jobConf);
+            Services.get().get(HadoopAccessorService.class).createJobClient(getTestUser(), jobConf);
         final RunningJob runningJob = jobClient.getJob(JobID.forName(jobId));
         assertNotNull(runningJob);
         return runningJob;

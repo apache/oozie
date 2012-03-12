@@ -74,11 +74,11 @@ public class TestHadoopAccessorService extends XTestCase {
         String user = getTestUser();
         String group = getTestGroup();
 
-        JobClient jc = has.createJobClient(user, group, conf);
+        JobClient jc = has.createJobClient(user, conf);
         assertNotNull(jc);
-        FileSystem fs = has.createFileSystem(user, group, conf);
+        FileSystem fs = has.createFileSystem(user, conf);
         assertNotNull(fs);
-        fs = has.createFileSystem(user, group, uri, conf);
+        fs = has.createFileSystem(user, uri, conf);
         assertNotNull(fs);
 
         //invalid user
@@ -86,21 +86,21 @@ public class TestHadoopAccessorService extends XTestCase {
         user = "invalid";
 
         try {
-            has.createJobClient(user, group, conf);
+            has.createJobClient(user, conf);
             fail();
         }
         catch (Throwable ex) {
         }
 
         try {
-            has.createFileSystem(user, group, conf);
+            has.createFileSystem(user, conf);
             fail();
         }
         catch (Throwable ex) {
         }
 
         try {
-            has.createFileSystem(user, group, uri, conf);
+            has.createFileSystem(user, uri, conf);
             fail();
         }
         catch (Throwable ex) {

@@ -135,11 +135,10 @@ public class FsActionExecutor extends ActionExecutor {
      */
     private FileSystem getFileSystemFor(Path path, Context context) throws HadoopAccessorException {
         String user = context.getWorkflow().getUser();
-        String group = context.getWorkflow().getGroup();
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
         JobConf conf = has.createJobConf(path.toUri().getAuthority());
         XConfiguration.copy(context.getProtoActionConf(), conf);
-        return has.createFileSystem(user, group, path.toUri(), conf);
+        return has.createFileSystem(user, path.toUri(), conf);
     }
 
     /**
@@ -149,10 +148,10 @@ public class FsActionExecutor extends ActionExecutor {
      * @return FileSystem
      * @throws HadoopAccessorException
      */
-    private FileSystem getFileSystemFor(Path path, String user, String group) throws HadoopAccessorException {
+    private FileSystem getFileSystemFor(Path path, String user) throws HadoopAccessorException {
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
         JobConf jobConf = has.createJobConf(path.toUri().getAuthority());
-        return has.createFileSystem(user, group, path.toUri(), jobConf);
+        return has.createFileSystem(user, path.toUri(), jobConf);
     }
 
     void mkdir(Context context, Path path) throws ActionExecutorException {
@@ -207,7 +206,7 @@ public class FsActionExecutor extends ActionExecutor {
     public void delete(String user, String group, Path path) throws ActionExecutorException {
         try {
             validatePath(path, true);
-            FileSystem fs = getFileSystemFor(path, user, group);
+            FileSystem fs = getFileSystemFor(path, user);
 
             if (fs.exists(path)) {
                 if (!fs.delete(path, true)) {

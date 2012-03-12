@@ -66,7 +66,7 @@ public class JobUtils {
             URI uri = new Path(appPathStr).toUri();
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
             Configuration fsConf = has.createJobConf(uri.getAuthority());
-            fs = has.createFileSystem(user, group, uri, fsConf);
+            fs = has.createFileSystem(user, uri, fsConf);
         }
         catch (HadoopAccessorException ex) {
             throw new IOException(ex.getMessage());
