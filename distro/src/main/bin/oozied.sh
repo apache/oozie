@@ -43,7 +43,7 @@ BASEDIR=`cd ${BASEDIR}/..;pwd`
 
 source ${BASEDIR}/bin/oozie-sys.sh
 
-CATALINA=${BASEDIR}/oozie-server/bin/catalina.sh
+CATALINA=${OOZIE_CATALINA_HOME:-${BASEDIR}/oozie-server}/bin/catalina.sh
 
 setup_catalina_opts() {
   # The Java System property 'oozie.http.port' it is not used by Oozie,
