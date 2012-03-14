@@ -112,12 +112,14 @@ public class EmailActionExecutor extends ActionExecutor {
 
     protected void email(Context context, String[] to, String[] cc, String subject, String body) throws ActionExecutorException {
         // Get mailing server details.
-        String smtpHost = getOozieConf().get("oozie.email.smtp.host");
+        String smtpHost = getOozieConf().get("oozie.email.smtp.host",
+            "localhost");
         String smtpPort = getOozieConf().get("oozie.email.smtp.port", "25");
         Boolean smtpAuth = getOozieConf().getBoolean("oozie.email.smtp.auth", false);
         String smtpUser = getOozieConf().get("oozie.email.smtp.username", "");
         String smtpPassword = getOozieConf().get("oozie.email.smtp.password", "");
-        String fromAddr = getOozieConf().get("oozie.email.from.address");
+        String fromAddr = getOozieConf().get("oozie.email.from.address",
+            "oozie@localhost");
 
         Properties properties = new Properties();
         properties.setProperty("mail.smtp.host", smtpHost);

@@ -52,8 +52,11 @@ public class TestEmailActionExecutor extends ActionExecutorTestCase {
         EmailActionExecutor ae = new EmailActionExecutor();
 
         Services.get().getConf().setInt("oozie.email.smtp.port", server.getSmtp().getPort());
-        Services.get().getConf().set("oozie.email.smtp.host", "localhost");
-        Services.get().getConf().set("oozie.email.from.address", "test@oozie.com");
+        // Use default host 'localhost'. Hence, do not set the smtp host.
+        // Services.get().getConf().set("oozie.email.smtp.host", "localhost");
+        // Use default from address, 'oozie@localhost'.
+        // Hence, do not set the from address conf.
+        // Services.get().getConf().set("oozie.email.from.address", "oozie@localhost");
 
         // Disable auth tests by default.
         Services.get().getConf().setBoolean("oozie.email.smtp.auth", false);
@@ -77,7 +80,7 @@ public class TestEmailActionExecutor extends ActionExecutorTestCase {
 
         // Override and enable auth.
         Services.get().getConf().setBoolean("oozie.email.smtp.auth", true);
-        Services.get().getConf().set("oozie.email.smtp.username", "test@oozie.com");
+        Services.get().getConf().set("oozie.email.smtp.username", "oozie@localhost");
         Services.get().getConf().set("oozie.email.smtp.password", "oozie");
         return ctx;
     }

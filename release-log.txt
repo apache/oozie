@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-759. Fix config defaults in EmailActionExecutor (harsh via tucu)
 OOZIE-675 checkMultipleTimeInstances doesn't work for EL extensions. EX: ${coord:formatTime(coord:current(0),'yyyy-MM-dd')} (sriksun via tucu)
 OOZIE-749 oozie tests doesn't delete the files in tmp directories (virag via tucu)
 OOZIE-761 Fixes in CoordELFunctions and testcases for Hadoop 0.23 (tucu)
