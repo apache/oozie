@@ -245,7 +245,7 @@ public abstract class XTestCase extends TestCase {
         source = source.getAbsoluteFile();
         if (!source.exists()) {
             System.err.println();
-            System.err.println(XLog.format("Custom configuration file for testing does no exist [{0}]", 
+            System.err.println(XLog.format("Custom configuration file for testing does no exist [{0}]",
                                            source.getAbsolutePath()));
             System.err.println();
             System.exit(-1);
@@ -266,7 +266,7 @@ public abstract class XTestCase extends TestCase {
             System.setProperty("oozie.service.HadoopAccessorService.kerberos.enabled", "true");
         }
         if (System.getProperty("oozie.test.hadoop.minicluster", "true").equals("true")) {
-            setUpEmbeddedHadoop();
+            setUpEmbeddedHadoop(getTestCaseDir());
         }
 
         if (System.getProperty("oozie.test.db.host") == null) {
@@ -633,11 +633,11 @@ public abstract class XTestCase extends TestCase {
     private static MiniDFSCluster dfsCluster = null;
     private static MiniMRCluster mrCluster = null;
 
-    private static void setUpEmbeddedHadoop() throws Exception {
+    private void setUpEmbeddedHadoop(String testCaseDir) throws Exception {
         if (dfsCluster == null && mrCluster == null) {
-            if (System.getProperty("hadoop.log.dir") == null) {
-                System.setProperty("hadoop.log.dir", "/tmp");
-            }
+			if (System.getProperty("hadoop.log.dir") == null) {
+				System.setProperty("hadoop.log.dir", testCaseDir);
+			}
             int taskTrackers = 2;
             int dataNodes = 2;
             String oozieUser = getOozieUser();
@@ -665,18 +665,17 @@ public abstract class XTestCase extends TestCase {
             UserGroupInformation.createUserForTesting(getTestUser(), userGroups);
             UserGroupInformation.createUserForTesting(getTestUser2(), userGroups);
             UserGroupInformation.createUserForTesting(getTestUser3(), new String[] { "users" } );
-
-            conf.set("hadoop.tmp.dir", "/tmp/minicluster");
+            conf.set("hadoop.tmp.dir", "target/test-data"+"/minicluster");
 
             dfsCluster = new MiniDFSCluster(conf, dataNodes, true, null);
             FileSystem fileSystem = dfsCluster.getFileSystem();
-            fileSystem.mkdirs(new Path("/tmp"));
-            fileSystem.mkdirs(new Path("/tmp/minicluster/mapred"));
+            fileSystem.mkdirs(new Path("target/test-data"));
+            fileSystem.mkdirs(new Path("target/test-data"+"/minicluster/mapred"));
             fileSystem.mkdirs(new Path("/user"));
             fileSystem.mkdirs(new Path("/hadoop/mapred/system"));
-            fileSystem.setPermission(new Path("/tmp"), FsPermission.valueOf("-rwxrwxrwx"));
-            fileSystem.setPermission(new Path("/tmp/minicluster"), FsPermission.valueOf("-rwxrwxrwx"));
-            fileSystem.setPermission(new Path("/tmp/minicluster/mapred"), FsPermission.valueOf("-rwxrwxrwx"));
+            fileSystem.setPermission(new Path("target/test-data"), FsPermission.valueOf("-rwxrwxrwx"));
+            fileSystem.setPermission(new Path("target/test-data"+"/minicluster"), FsPermission.valueOf("-rwxrwxrwx"));
+            fileSystem.setPermission(new Path("target/test-data"+"/minicluster/mapred"), FsPermission.valueOf("-rwxrwxrwx"));
             fileSystem.setPermission(new Path("/user"), FsPermission.valueOf("-rwxrwxrwx"));
             fileSystem.setPermission(new Path("/hadoop/mapred/system"), FsPermission.valueOf("-rwx------"));
             String nnURI = fileSystem.getUri().toString();

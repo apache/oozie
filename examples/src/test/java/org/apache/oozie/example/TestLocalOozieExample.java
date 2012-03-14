@@ -32,44 +32,12 @@ import java.io.IOException;
 
 public class TestLocalOozieExample extends XFsTestCase {
     private String oozieLocalLog;
-    private String testDir;
-    private FileSystem fileSystem;
-    private Path fsTestDir;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        File dir = new File(System.getProperty("oozie.test.dir", "/tmp"));
-        dir = new File(dir, "oozietests");
-        dir = new File(dir, getClass().getName());
-        dir = new File(dir, getName());
-        dir.mkdirs();
-        testDir = dir.getAbsolutePath();
-
-        fileSystem = getFileSystem();
-
-        Path path = new Path(fileSystem.getWorkingDirectory(), "oozietests/" + getClass().getName() + "/" + getName());
-        fsTestDir = fileSystem.makeQualified(path);
-        System.out.println(XLog.format("Setting FS testcase work dir[{0}]", fsTestDir));
-        fileSystem.delete(fsTestDir, true);
-        if (!fileSystem.mkdirs(path)) {
-            throw new IOException(XLog.format("Could not create FS testcase dir [{0}]", fsTestDir));
-        }
         oozieLocalLog = System.getProperty("oozielocal.log");
-        System.setProperty("oozielocal.log", "/tmp/oozielocal.log");
-
-        String testCaseDir = getTestCaseDirInternal(this);
-        File file = new File(testCaseDir);
-        delete(file);
-        if (!file.mkdir()) {
-            throw new RuntimeException(XLog.format("could not create path [{0}]", file.getAbsolutePath()));
-        }
-        file = new File(file, "conf");
-        if (!file.mkdir()) {
-            throw new RuntimeException(XLog.format("could not create path [{0}]", file.getAbsolutePath()));
-        }
-        //setting up Oozie HOME and an empty conf directory
-        //System.setProperty(Services.OOZIE_HOME_DIR, testCaseDir);
+        System.setProperty("oozielocal.log", getTestCaseDir()+"/oozielocal.log");
     }
 
     @Override
@@ -93,19 +61,8 @@ public class TestLocalOozieExample extends XFsTestCase {
         }
     }
 
-    private String getTestCaseDirInternal(TestCase testCase) {
-        ParamChecker.notNull(testCase, "testCase");
-        File dir = new File(System.getProperty("oozie.test.dir", "/tmp"));
-        dir = new File(dir, "oozietests");
-        dir = new File(dir, testCase.getClass().getName());
-        dir = new File(dir, testCase.getName());
-        return dir.getAbsolutePath();
-    }
-
     @Override
     protected void tearDown() throws Exception {
-        fileSystem = null;
-        fsTestDir = null;
         if (oozieLocalLog != null) {
             System.setProperty("oozielocal.log", oozieLocalLog);
         }
@@ -117,20 +74,20 @@ public class TestLocalOozieExample extends XFsTestCase {
     }
 
     public void testLocalOozieExampleEnd() throws IOException {
-        Path app = new Path(fsTestDir, "app");
-        File props = new File(testDir, "job.properties");
+        Path app = new Path(getFsTestCaseDir(), "app");
+        File props = new File(getTestCaseDir(), "job.properties");
         IOUtils.copyStream(IOUtils.getResourceAsStream("localoozieexample-wf.xml", -1),
-                           fileSystem.create(new Path(app, "workflow.xml")));
+                           getFileSystem().create(new Path(app, "workflow.xml")));
         IOUtils.copyStream(IOUtils.getResourceAsStream("localoozieexample-end.properties", -1),
                            new FileOutputStream(props));
         assertEquals(0, LocalOozieExample.execute(app.toString(), props.toString()));
     }
 
     public void testLocalOozieExampleKill() throws IOException {
-        Path app = new Path(fsTestDir, "app");
-        File props = new File(testDir, "job.properties");
+        Path app = new Path(getFsTestCaseDir(), "app");
+        File props = new File(getTestCaseDir(), "job.properties");
         IOUtils.copyStream(IOUtils.getResourceAsStream("localoozieexample-wf.xml", -1),
-                           fileSystem.create(new Path(app, "workflow.xml")));
+                           getFileSystem().create(new Path(app, "workflow.xml")));
         IOUtils.copyStream(IOUtils.getResourceAsStream("localoozieexample-kill.properties", -1),
                            new FileOutputStream(props));
         assertEquals(-1, LocalOozieExample.execute(app.toString(), props.toString()));

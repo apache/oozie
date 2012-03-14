@@ -1071,24 +1071,6 @@ public class TestCoordRerunXCommand extends XDataTestCase {
     }
 
     @Override
-    protected String getTestCaseDir() {
-        String testCaseDir = "/tmp/TestCoordRerunXCommand/";
-        System.out.println(XLog.format("Setting testcase work dir[{0}]", testCaseDir));
-        try {
-            delete(new File(testCaseDir));
-        }
-        catch (IOException ioe) {
-            ioe.printStackTrace();
-            throw new RuntimeException(XLog.format("Could not delete testcase dir[{0}]", testCaseDir));
-        }
-        File dir = new File(testCaseDir);
-        if (!dir.mkdirs()) {
-            throw new RuntimeException(XLog.format("Could not create testcase dir[{0}]", testCaseDir));
-        }
-        return testCaseDir;
-    }
-
-    @Override
     protected String getCoordJobXml(Path appPath) {
         String inputTemplate = appPath + "/coord-input/${YEAR}/${MONTH}/${DAY}/${HOUR}/${MINUTE}";
         inputTemplate = Matcher.quoteReplacement(inputTemplate);

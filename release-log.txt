@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-749 oozie tests doesn't delete the files in tmp directories (virag via tucu)
 OOZIE-761 Fixes in CoordELFunctions and testcases for Hadoop 0.23 (tucu)
 OOZIE-760 oozied.sh needs to be able to pick up CATALINA_HOME (rvs via tucu)
 OOZIE-757 hive-contrib version should use ${hive.version} (abayer via tucu)

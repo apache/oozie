@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -176,24 +176,25 @@ public class TestCoordELEvaluator extends XTestCase {
         // Configuration conf = new
         // XConfiguration(IOUtils.getResourceAsReader("org/apache/oozie/coord/conf.xml",
         // -1));
-        Configuration conf = new XConfiguration(new StringReader(getConfString()));
+    	String testCaseDir = getTestCaseDir();
+    	Configuration conf = new XConfiguration(new StringReader(getConfString()));
 
         Date actualTime = DateUtils.parseDateUTC("2009-09-01T01:00Z");
         Date nominalTime = DateUtils.parseDateUTC("2009-09-01T00:00Z");
-        String dataEvntXML = "<data-in name=\"A\" dataset=\"a\"><uris>file:///tmp/coord/US/2009/1/30|file:///tmp/coord/US/2009/1/31</uris>";
+        String dataEvntXML = "<data-in name=\"A\" dataset=\"a\"><uris>file:///"+testCaseDir+"/US/2009/1/30|file:///tmp/coord/US/2009/1/31</uris>";
         dataEvntXML += "<dataset name=\"a\" frequency=\"1440\" initial-instance=\"2009-01-01T00:00Z\"  freq_timeunit=\"MINUTE\" timezone=\"UTC\" end_of_duration=\"NONE\">";
-        dataEvntXML += "<uri-template>file:///tmp/coord/${YEAR}/${MONTH}/${DAY}</uri-template></dataset></data-in>";
+        dataEvntXML += "<uri-template>file:///"+testCaseDir+"/${YEAR}/${MONTH}/${DAY}</uri-template></dataset></data-in>";
         Element dEvent = XmlUtils.parseXml(dataEvntXML);
         ELEvaluator eval = CoordELEvaluator.createLazyEvaluator(actualTime, nominalTime, dEvent, conf);
-        createDir("/tmp/coord/2009/01/02");
+        createDir(testCaseDir+"/2009/01/02");
         String expr = "${coord:latest(0)} ${coord:latest(-1)}";
         // Dependent on the directory structure
         // TODO: Create the directory
         assertEquals("2009-01-02T00:00Z ${coord:latest(-1)}", eval.evaluate(expr, String.class));
 
         // future
-        createDir("/tmp/coord/2009/09/04");
-        createDir("/tmp/coord/2009/09/05");
+        createDir(testCaseDir+"/2009/09/04");
+        createDir(testCaseDir+"/2009/09/05");
         expr = "${coord:future(1, 30)}";
         assertEquals("2009-09-05T00:00Z", eval.evaluate(expr, String.class));
 

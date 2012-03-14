@@ -628,8 +628,8 @@
 
     <build>
         <pluginManagement>
-            <plugins>
-                <plugin>
+            	<plugins>
+	            <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-enforcer-plugin</artifactId>
                     <version>1.0</version>
@@ -710,7 +710,7 @@
         </pluginManagement>
 
         <plugins>
-            <plugin>
+			<plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
                 <inherited>false</inherited>
@@ -767,7 +767,6 @@
                     <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
                     <argLine>-Xmx1024m -da -XX:MaxPermSize=512m</argLine>
                     <systemPropertyVariables>
-                        <hadoop.log.dir>/tmp</hadoop.log.dir>
                         <oozie.test.db.host>${oozie.test.db.host}</oozie.test.db.host>
                         <oozie.test.config.file>${oozie.test.config.file}</oozie.test.config.file>
                         <oozie.data.dir>${oozie.data.dir}</oozie.data.dir>
