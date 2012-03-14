@@ -373,6 +373,33 @@ The filter option syntax is: <code>[status=VALUE][;status=VALUE]*</code>.
 Multiple values must be specified as different name value pairs. When multiple filters are specified, all Coordinator actions that satisfy any one of the filters will be retrieved. (The query will do an OR among all the filter values for the status)
 Currently, the filter option can be used only with an =info= option on Coordinator job.
 
+An example below shows how the =verbose= option can be used to gather action statistics information for a job:
+
+<verbatim>
+$ oozie job -oozie http://localhost:8080/oozie -info 0000001-111219170928042-oozie-para-W@mr-node -verbose
+ID : 0000001-111219170928042-oozie-para-W@mr-node
+------------------------------------------------------------------------------------------------------------------------------------
+Console URL       : http://localhost:50030/jobdetails.jsp?jobid=job_201112191708_0006
+Error Code        : -
+Error Message     : -
+External ID       : job_201112191708_0006
+External Status   : SUCCEEDED
+Name              : mr-node
+Retries           : 0
+Tracker URI       : localhost:9001
+Type              : map-reduce
+Started           : 2011-12-20 01:12
+Status            : OK
+Ended             : 2011-12-20 01:12
+External Stats    : {"org.apache.hadoop.mapred.JobInProgress$Counter":{"TOTAL_LAUNCHED_REDUCES":1,"TOTAL_LAUNCHED_MAPS":1,"DATA_LOCAL_MAPS":1},"ACTION_TYPE":"MAP_REDUCE","FileSystemCounters":{"FILE_BYTES_READ":1746,"HDFS_BYTES_READ":1409,"FILE_BYTES_WRITTEN":3524,"HDFS_BYTES_WRITTEN":1547},"org.apache.hadoop.mapred.Task$Counter":{"REDUCE_INPUT_GROUPS":33,"COMBINE_OUTPUT_RECORDS":0,"MAP_INPUT_RECORDS":33,"REDUCE_SHUFFLE_BYTES":0,"REDUCE_OUTPUT_RECORDS":33,"SPILLED_RECORDS":66,"MAP_OUTPUT_BYTES":1674,"MAP_INPUT_BYTES":1409,"MAP_OUTPUT_RECORDS":33,"COMBINE_INPUT_RECORDS":0,"REDUCE_INPUT_RECORDS":33}}
+External ChildIDs : null
+------------------------------------------------------------------------------------------------------------------------------------
+</verbatim>
+
+The two fields External Stats and External ChildIDs display the action statistics information (that includes counter information in case of MR action and PigStats information in case of a pig action) and child ids of the given job.
+
+Note that the user can turn on/off External Stats by specifying the property _oozie.action.external.stats.write_ as _true_ or _false_ in workflow.xml. By default, it is set to false (not to collect External Stats). External ChildIDs will always be stored.
+
 ---+++ Checking the xml definition of a Workflow, Coordinator or Bundle Job
 
 Example:

@@ -655,6 +655,8 @@ The =configuration= element, if present, contains JobConf properties for the Had
 Properties specified in the =configuration= element override properties specified in the file specified in the
  =job-xml= element.
 
+External Stats can be turned on/off by specifying the property _oozie.action.external.stats.write_ as _true_ or _false_ in the configuration element of workflow.xml. The default value for this property is _false_.
+
 The =file= element, if present, must specify the target sybolic link for binaries by separating the original file and target with a # (file#target-sym-link). This is not required for libraries.
 
 The =mapper= and =reducer= process for streaming jobs, should specify the executable command with URL encoding. e.g. '%' should be replaced by '%25'.
@@ -684,6 +686,10 @@ The =mapper= and =reducer= process for streaming jobs, should specify the execut
                 <property>
                     <name>mapred.reduce.tasks</name>
                     <value>${firstJobReducers}</value>
+                </property>
+                <property>
+                    <name>oozie.action.external.stats.write</name>
+                    <value>true</value>
                 </property>
             </configuration>
         </map-reduce>
@@ -893,6 +899,8 @@ The =configuration= element, if present, contains JobConf properties for the und
 Properties specified in the =configuration= element override properties specified in the file specified in the
  =job-xml= element.
 
+External Stats can be turned on/off by specifying the property _oozie.action.external.stats.write_ as _true_ or _false_ in the configuration element of workflow.xml. The default value for this property is _false_.
+
 The inline and job-xml configuration properties are passed to the Hadoop jobs submitted by Pig runtime.
 
 The =script= element contains the pig script to execute. The pig script can be templatized with variables of the
@@ -925,6 +933,10 @@ All the above elements can be parameterized (templatized) using EL expressions.
             <configuration>
                 <property>
                     <name>mapred.compress.map.output</name>
+                    <value>true</value>
+                </property>
+                <property>
+                    <name>oozie.action.external.stats.write</name>
                     <value>true</value>
                 </property>
             </configuration>
@@ -1550,7 +1562,273 @@ The outer Map key is a counter group name. The inner Map value is a Map of count
 
 The Hadoop EL constants defined in the previous section provide access to the Hadoop built in record counters.
 
----++++ 4.2.6 HDFS EL Functions
+This function can also be used to access specific action statistics information. Examples of action stats and their usage through EL Functions (referenced in workflow xml) are given below.
+
+*Example of MR action stats:*
+<verbatim>
+{
+    "ACTION_TYPE": "MAP_REDUCE",
+    "org.apache.hadoop.mapred.JobInProgress$Counter": {
+        "TOTAL_LAUNCHED_REDUCES": 1,
+        "TOTAL_LAUNCHED_MAPS": 1,
+        "DATA_LOCAL_MAPS": 1
+    },
+    "FileSystemCounters": {
+        "FILE_BYTES_READ": 1746,
+        "HDFS_BYTES_READ": 1409,
+        "FILE_BYTES_WRITTEN": 3524,
+        "HDFS_BYTES_WRITTEN": 1547
+    },
+    "org.apache.hadoop.mapred.Task$Counter": {
+        "REDUCE_INPUT_GROUPS": 33,
+        "COMBINE_OUTPUT_RECORDS": 0,
+        "MAP_INPUT_RECORDS": 33,
+        "REDUCE_SHUFFLE_BYTES": 0,
+        "REDUCE_OUTPUT_RECORDS": 33,
+        "SPILLED_RECORDS": 66,
+        "MAP_OUTPUT_BYTES": 1674,
+        "MAP_INPUT_BYTES": 1409,
+        "MAP_OUTPUT_RECORDS": 33,
+        "COMBINE_INPUT_RECORDS": 0,
+        "REDUCE_INPUT_RECORDS": 33
+    }
+}
+</verbatim>
+
+Below is the workflow that describes how to access specific information using hadoop:counters() EL function from the MR stats.
+*Workflow xml:*
+<verbatim>
+<workflow-app xmlns="uri:oozie:workflow:0.2" name="map-reduce-wf">
+    <start to="mr-node"/>
+    <action name="mr-node">
+        <map-reduce>
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+            <prepare>
+                <delete path="${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/${outputDir}"/>
+            </prepare>
+            <configuration>
+                <property>
+                    <name>mapred.job.queue.name</name>
+                    <value>${queueName}</value>
+                </property>
+                <property>
+                    <name>mapred.mapper.class</name>
+                    <value>org.apache.oozie.example.SampleMapper</value>
+                </property>
+                <property>
+                    <name>mapred.reducer.class</name>
+                    <value>org.apache.oozie.example.SampleReducer</value>
+                </property>
+                <property>
+                    <name>mapred.map.tasks</name>
+                    <value>1</value>
+                </property>
+                <property>
+                    <name>mapred.input.dir</name>
+                    <value>/user/${wf:user()}/${examplesRoot}/input-data/text</value>
+                </property>
+                <property>
+                    <name>mapred.output.dir</name>
+                    <value>/user/${wf:user()}/${examplesRoot}/output-data/${outputDir}</value>
+                </property>
+				<property>
+					<name>oozie.action.external.stats.write</name>
+					<value>true</value>
+				</property>
+            </configuration>
+        </map-reduce>
+        <ok to="java1"/>
+        <error to="fail"/>
+    </action>
+    <action name="java1">
+        <java>
+	    <job-tracker>${jobTracker}</job-tracker>
+	    <name-node>${nameNode}</name-node>
+	    <configuration>
+	       <property>
+		    <name>mapred.job.queue.name</name>
+		    <value>${queueName}</value>
+		</property>
+	    </configuration>
+	    <main-class>MyTest</main-class>
+	    <arg>  ${hadoop:counters("mr-node")["FileSystemCounters"]["FILE_BYTES_READ"]}</arg>
+        <capture-output/>
+        </java>
+        <ok to="end" />
+        <error to="fail" />
+    </action>
+    <kill name="fail">
+        <message>Map/Reduce failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>
+    </kill>
+    <end name="end"/>
+</workflow-app>
+</verbatim>
+
+
+*Example of Pig action stats:*
+<verbatim>
+{
+    "ACTION_TYPE": "PIG",
+    "JOB_GRAPH": "job_201112191708_0008",
+    "PIG_VERSION": "0.9.0",
+    "FEATURES": "UNKNOWN",
+    "ERROR_MESSAGE": null,
+    "NUMBER_JOBS": "1",
+    "RECORD_WRITTEN": "33",
+    "BYTES_WRITTEN": "1410",
+    "HADOOP_VERSION": "0.20.2",
+    "SCRIPT_ID": "bbe016e9-f678-43c3-96fc-f24359957582",
+    "PROACTIVE_SPILL_COUNT_RECORDS": "0",
+    "PROACTIVE_SPILL_COUNT_OBJECTS": "0",
+    "RETURN_CODE": "0",
+    "ERROR_CODE": "-1",
+    "SMM_SPILL_COUNT": "0",
+    "DURATION": "36850",
+    "job_201112191708_0008": {
+        "MAP_INPUT_RECORDS": "33",
+        "MIN_REDUCE_TIME": "0",
+        "MULTI_STORE_COUNTERS": {},
+        "MAX_REDUCE_TIME": "0",
+        "NUMBER_REDUCES": "0",
+        "ERROR_MESSAGE": null,
+        "RECORD_WRITTEN": "33",
+        "HDFS_BYTES_WRITTEN": "1410",
+        "JOB_ID": "job_201112191708_0008",
+        "REDUCE_INPUT_RECORDS": "0",
+        "AVG_REDUCE_TIME": "0",
+        "MAX_MAP_TIME": "9169",
+        "BYTES_WRITTEN": "1410",
+        "Alias": "A,B",
+        "REDUCE_OUTPUT_RECORDS": "0",
+        "SMMS_SPILL_COUNT": "0",
+        "PROACTIVE_SPILL_COUNT_RECS": "0",
+        "PROACTIVE_SPILL_COUNT_OBJECTS": "0",
+        "HADOOP_COUNTERS": null,
+        "MIN_MAP_TIME": "9169",
+        "MAP_OUTPUT_RECORDS": "33",
+        "AVG_MAP_TIME": "9169",
+        "FEATURE": "MAP_ONLY",
+        "NUMBER_MAPS": "1"
+    }
+}
+</verbatim>
+
+Below is the workflow that describes how to access specific information using hadoop:counters() EL function from the Pig stats.
+*Workflow xml:*
+<verbatim>
+<workflow-app xmlns="uri:oozie:workflow:0.2" name="pig-wf">
+    <start to="pig-node"/>
+    <action name="pig-node">
+        <pig>
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+            <prepare>
+                <delete path="${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/pig"/>
+            </prepare>
+            <configuration>
+                <property>
+                    <name>mapred.job.queue.name</name>
+                    <value>${queueName}</value>
+                </property>
+                <property>
+                    <name>mapred.compress.map.output</name>
+                    <value>true</value>
+                </property>
+				<property>
+					<name>oozie.action.external.stats.write</name>
+					<value>true</value>
+				</property>
+            </configuration>
+            <script>id.pig</script>
+            <param>INPUT=/user/${wf:user()}/${examplesRoot}/input-data/text</param>
+            <param>OUTPUT=/user/${wf:user()}/${examplesRoot}/output-data/pig</param>
+        </pig>
+        <ok to="java1"/>
+        <error to="fail"/>
+    </action>
+    <action name="java1">
+        <java>
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+            <configuration>
+               <property>
+                    <name>mapred.job.queue.name</name>
+                    <value>${queueName}</value>
+                </property>
+            </configuration>
+            <main-class>MyTest</main-class>
+            <arg>  ${hadoop:counters("pig-node")["JOB_GRAPH"]}</arg>
+            <capture-output/>
+        </java>
+        <ok to="end" />
+        <error to="fail" />
+    </action>
+    <kill name="fail">
+        <message>Pig failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>
+    </kill>
+    <end name="end"/>
+</workflow-app>
+</verbatim>
+
+---++++ 4.2.6 Hadoop Jobs EL Function
+
+The function _wf:actionData()_ can be used to access Hadoop ID's for actions such as Pig, by specifying the key as _hadoopJobs_.
+An example is shown below.
+
+<verbatim>
+<workflow-app xmlns="uri:oozie:workflow:0.2" name="pig-wf">
+    <start to="pig-node"/>
+    <action name="pig-node">
+        <pig>
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+            <prepare>
+                <delete path="${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/pig"/>
+            </prepare>
+            <configuration>
+                <property>
+                    <name>mapred.job.queue.name</name>
+                    <value>${queueName}</value>
+                </property>
+                <property>
+                    <name>mapred.compress.map.output</name>
+                    <value>true</value>
+                </property>
+            </configuration>
+            <script>id.pig</script>
+            <param>INPUT=/user/${wf:user()}/${examplesRoot}/input-data/text</param>
+            <param>OUTPUT=/user/${wf:user()}/${examplesRoot}/output-data/pig</param>
+        </pig>
+        <ok to="java1"/>
+        <error to="fail"/>
+    </action>
+    <action name="java1">
+        <java>
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+            <configuration>
+               <property>
+                    <name>mapred.job.queue.name</name>
+                    <value>${queueName}</value>
+                </property>
+            </configuration>
+            <main-class>MyTest</main-class>
+            <arg> ${wf:actionData("pig-node")["hadoopJobs"]}</arg>
+            <capture-output/>
+        </java>
+        <ok to="end" />
+        <error to="fail" />
+    </action>
+    <kill name="fail">
+        <message>Pig failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>
+    </kill>
+    <end name="end"/>
+</workflow-app>
+</verbatim>
+</verbatim>
+
+---++++ 4.2.7 HDFS EL Functions
 
 For all the functions in this section the path must include the FS URI. For example =hdfs://foo:9000/user/tucu=.
 
