@@ -149,13 +149,26 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         catch (CommandException e) {
             fail("Unexpected failure: " + e);
         }
+
+        // CASE 4: Success case i.e. Single instances for input and single instance for output, but both with ","
+        reader = IOUtils.getResourceAsReader("coord-multiple-input-instance4.xml", -1);
+        writer = new FileWriter(appPath);
+        IOUtils.copyCharStream(reader, writer);
+        sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+
+        try {
+            sc.call();
+        }
+        catch (CommandException e) {
+            fail("Unexpected failure: " + e);
+        }
     }
 
     /**
      * Testing for when user tries to submit a coordinator application having data-out events
      * that erroneously specify multiple output data instances inside a single <instance> tag.
      * Job gives submission error and indicates appropriate correction
-     * Testing negative(error) cases. Positive(success) case is covered in another test case "testBasicSubmit".
+     * Testing negative(error) cases as well as Positive(success) cases.
      */
     public void testBasicSubmitWithMultipleInstancesOutputEvent() throws Exception {
         Configuration conf = new XConfiguration();
@@ -210,6 +223,19 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
             assertEquals(sc.getJob().getStatus(), Job.Status.FAILED);
             assertEquals(e.getErrorCode(), ErrorCode.E0701);
             assertTrue(e.getMessage().contains("No child element is expected at this point"));
+        }
+
+        // CASE 4: Success case, where only one instance is configured, but expression has a ","
+        reader = IOUtils.getResourceAsReader("coord-multiple-output-instance4.xml", -1);
+        writer = new FileWriter(appPath);
+        IOUtils.copyCharStream(reader, writer);
+        sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+
+        try {
+            sc.call();
+        }
+        catch (CommandException e) {
+            fail("Not expected to fail here");
         }
     }
 

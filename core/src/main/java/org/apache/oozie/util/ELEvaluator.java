@@ -18,6 +18,7 @@
 package org.apache.oozie.util;
 
 import org.apache.commons.el.ExpressionEvaluatorImpl;
+import org.apache.commons.el.ExpressionString;
 
 import javax.servlet.jsp.el.ELException;
 import javax.servlet.jsp.el.ExpressionEvaluator;
@@ -138,7 +139,7 @@ public class ELEvaluator {
 
     private Context context;
 
-    private ExpressionEvaluator evaluator = new ExpressionEvaluatorImpl();
+    private ExpressionEvaluatorImpl evaluator = new ExpressionEvaluatorImpl();
 
     /**
      * Creates an ELEvaluator with no functions and no variables defined.
@@ -214,4 +215,41 @@ public class ELEvaluator {
         }
     }
 
+    /**
+     * Check if the input expression contains sequence statically. for example
+     * identify if "," is present outside of a function invocation in the given
+     * expression. Ex "${func('abc')},${func('def'}",
+     *
+     * @param expr - Expression string
+     * @param sequence - char sequence to check in the input expression
+     * @return true if present
+     * @throws Exception Exception thrown if an EL function failed due to a
+     *         transient error or EL expression could not be parsed
+     */
+    public boolean checkForExistence(String expr, String sequence)
+            throws Exception {
+        try {
+            Object exprString = evaluator.parseExpressionString(expr);
+            if (exprString instanceof ExpressionString) {
+                for (Object element : ((ExpressionString)exprString).getElements()) {
+                    if (element instanceof String &&
+                            element.toString().contains(sequence)) {
+                        return true;
+                    }
+                }
+            } else if (exprString instanceof String) {
+                if (((String)exprString).contains(sequence)) {
+                    return true;
+                }
+            }
+            return false;
+        } catch (ELException ex) {
+            if (ex.getRootCause() instanceof Exception) {
+                throw (Exception) ex.getRootCause();
+            }
+            else {
+                throw ex;
+            }
+        }
+    }
 }

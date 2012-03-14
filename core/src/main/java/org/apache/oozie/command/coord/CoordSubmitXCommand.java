@@ -139,6 +139,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
     private ELEvaluator evalNofuncs = null;
     private ELEvaluator evalData = null;
     private ELEvaluator evalInst = null;
+    private ELEvaluator evalAction = null;
     private ELEvaluator evalSla = null;
 
     static {
@@ -315,19 +316,42 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
                         throw new CoordinatorJobException(ErrorCode.E1021, "<instance> tag within " + eventType + " is empty!");
                     }
                     instanceValue = instance.getContent(0).toString();
-                    if (instanceValue.contains(",")) { // reaching this block implies instance is not empty i.e. length > 0
-                        String correctAction = null;
-                        if(dataType.equals(COORD_INPUT_EVENTS_DATA_IN)) {
-                            correctAction = "Coordinator app definition should have separate <instance> tag per data-in instance";
-                        } else if(dataType.equals(COORD_OUTPUT_EVENTS_DATA_OUT)) {
-                            correctAction = "Coordinator app definition can have only one <instance> tag per data-out instance";
-                        }
-                        throw new CoordinatorJobException(ErrorCode.E1021, eventType + " instance '" + instanceValue
-                                + "' contains more than one date instance. Coordinator job NOT SUBMITTED. " + correctAction);
+                    boolean isInvalid = false;
+                    try {
+                        isInvalid = evalAction.checkForExistence(instanceValue, ",");
+                    } catch (Exception e) {
+                        handleELParseException(eventType, dataType, instanceValue);
+                    }
+                    if (isInvalid) { // reaching this block implies instance is not empty i.e. length > 0
+                        handleExpresionWithMultipleInstances(eventType, dataType, instanceValue);
                     }
                 }
             }
         }
+    }
+
+    private void handleELParseException(String eventType, String dataType, String instanceValue)
+            throws CoordinatorJobException {
+        String correctAction = null;
+        if(dataType.equals(COORD_INPUT_EVENTS_DATA_IN)) {
+            correctAction = "Coordinator app definition should have valid <instance> tag for data-in";
+        } else if(dataType.equals(COORD_OUTPUT_EVENTS_DATA_OUT)) {
+            correctAction = "Coordinator app definition should have valid <instance> tag for data-out";
+        }
+        throw new CoordinatorJobException(ErrorCode.E1021, eventType + " instance '" + instanceValue
+                + "' is not valid. Coordinator job NOT SUBMITTED. " + correctAction);
+    }
+
+    private void handleExpresionWithMultipleInstances(String eventType, String dataType, String instanceValue)
+            throws CoordinatorJobException {
+        String correctAction = null;
+        if(dataType.equals(COORD_INPUT_EVENTS_DATA_IN)) {
+            correctAction = "Coordinator app definition should have separate <instance> tag per data-in instance";
+        } else if(dataType.equals(COORD_OUTPUT_EVENTS_DATA_OUT)) {
+            correctAction = "Coordinator app definition can have only one <instance> tag per data-out instance";
+        }
+        throw new CoordinatorJobException(ErrorCode.E1021, eventType + " instance '" + instanceValue
+                + "' contains more than one date instance. Coordinator job NOT SUBMITTED. " + correctAction);
     }
 
     /**
@@ -514,6 +538,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         evalNofuncs = CoordELEvaluator.createELEvaluatorForGroup(conf, "coord-job-submit-nofuncs");
         evalInst = CoordELEvaluator.createELEvaluatorForGroup(conf, "coord-job-submit-instances");
         evalSla = CoordELEvaluator.createELEvaluatorForGroup(conf, "coord-sla-submit");
+        evalAction = CoordELEvaluator.createELEvaluatorForGroup(conf, "coord-action-start");
     }
 
     /**

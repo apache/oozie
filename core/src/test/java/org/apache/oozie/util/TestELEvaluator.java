@@ -39,6 +39,10 @@ public class TestELEvaluator extends XTestCase {
         return "c";
     }
 
+    public static String functionD(String in1, String in2) {
+        return in1 + "::" + in2;
+    }
+
     public static String functionError() throws ELEvaluationException {
         throw new ELEvaluationException("m", null);
     }
@@ -46,6 +50,7 @@ public class TestELEvaluator extends XTestCase {
     private static Method functionA;
     private static Method functionB;
     private static Method functionC;
+    private static Method functionD;
     private static Method functionError;
 
     static {
@@ -53,6 +58,8 @@ public class TestELEvaluator extends XTestCase {
             functionA = TestELEvaluator.class.getMethod("functionA");
             functionB = TestELEvaluator.class.getMethod("functionB");
             functionC = TestELEvaluator.class.getDeclaredMethod("functionC");
+            functionD = TestELEvaluator.class.getDeclaredMethod("functionD",
+                    String.class, String.class);
             functionError = TestELEvaluator.class.getDeclaredMethod("functionError");
         }
         catch (Exception ex) {
@@ -165,6 +172,30 @@ public class TestELEvaluator extends XTestCase {
         catch (ELException ex) {
             fail();
         }
+    }
+
+    public void testCheckForExistence() throws Exception {
+        ELEvaluator.Context support = new ELEvaluator.Context();
+        support.setVariable("a", "A");
+        support.addFunction("a", "a", functionA);
+        support.addFunction("a", "d", functionD);
+        ELEvaluator evaluator = new ELEvaluator(support);
+        assertNull(ELEvaluator.getCurrent());
+        assertEquals("a", evaluator.evaluate("${a:a()}", String.class));
+        assertEquals("a,a", evaluator.evaluate("${a:a()},${a:a()}", String.class));
+        try {
+            evaluator.evaluate("${a:a(), a:a()}", String.class);
+            fail("Evaluated bad expression");
+        } catch (ELException ignore) { }
+        assertTrue(evaluator.checkForExistence("${a:a()}${a:a()}!", "!"));
+        assertTrue(evaluator.checkForExistence("${a:a()},${a:a()}", ","));
+        assertFalse(evaluator.checkForExistence("${a:d('foo', 'bar')}", ","));
+        try {
+            evaluator.checkForExistence("${a:a(), a:a()}", ",");
+            fail("Parsed bad expression");
+        } catch (ELException ignore) { }
+
+        assertNull(ELEvaluator.getCurrent());
     }
 
 }
