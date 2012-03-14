@@ -125,7 +125,14 @@ public class JavaActionExecutor extends ActionExecutor {
     @Override
     public void initActionType() {
         super.initActionType();
-        maxActionOutputLen = getOozieConf().getInt(CallbackServlet.CONF_MAX_DATA_LEN, 2 * 1024);
+        maxActionOutputLen = getOozieConf()
+          .getInt(LauncherMapper.CONF_OOZIE_ACTION_MAX_OUTPUT_DATA,
+          // TODO: Remove the below config get in a subsequent release..
+          // This other irrelevant property is only used to
+          // preserve backwards compatibility cause of a typo.
+          // See OOZIE-4.
+          getOozieConf().getInt(CallbackServlet.CONF_MAX_DATA_LEN,
+            2 * 1024));
         //Get the limit for the maximum allowed size of action stats
         maxExternalStatsSize = getOozieConf().getInt(JavaActionExecutor.MAX_EXTERNAL_STATS_SIZE, MAX_EXTERNAL_STATS_SIZE_DEFAULT);
         maxExternalStatsSize = (maxExternalStatsSize == -1) ? Integer.MAX_VALUE : maxExternalStatsSize;
