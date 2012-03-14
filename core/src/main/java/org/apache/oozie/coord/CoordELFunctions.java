@@ -244,8 +244,6 @@ public class CoordELFunctions {
             boolean resolved = false;
             String user = ParamChecker
                     .notEmpty((String) eval.getVariable(OozieClient.USER_NAME), OozieClient.USER_NAME);
-            String group = ParamChecker.notEmpty((String) eval.getVariable(OozieClient.GROUP_NAME),
-                    OozieClient.GROUP_NAME);
             String doneFlag = ds.getDoneFlag();
             while (instance >= checkedInstance) {
                 ELEvaluator uriEval = getUriEvaluator(nominalInstanceCal);
@@ -254,7 +252,7 @@ public class CoordELFunctions {
                 if (doneFlag.length() > 0) {
                     pathWithDoneFlag += "/" + doneFlag;
                 }
-                if (isPathAvailable(pathWithDoneFlag, user, group, conf)) {
+                if (isPathAvailable(pathWithDoneFlag, user, null, conf)) {
                     XLog.getLog(CoordELFunctions.class).debug("Found future(" + available + "): " + pathWithDoneFlag);
                     if (available == n) {
                         XLog.getLog(CoordELFunctions.class).debug("Found future File: " + pathWithDoneFlag);
@@ -758,8 +756,6 @@ public class CoordELFunctions {
             boolean resolved = false;
             String user = ParamChecker
                     .notEmpty((String) eval.getVariable(OozieClient.USER_NAME), OozieClient.USER_NAME);
-            String group = ParamChecker.notEmpty((String) eval.getVariable(OozieClient.GROUP_NAME),
-                                                 OozieClient.GROUP_NAME);
             String doneFlag = ds.getDoneFlag();
             while (nominalInstanceCal.compareTo(initInstance) >= 0) {
                 ELEvaluator uriEval = getUriEvaluator(nominalInstanceCal);
@@ -768,7 +764,7 @@ public class CoordELFunctions {
                 if (doneFlag.length() > 0) {
                     pathWithDoneFlag += "/" + doneFlag;
                 }
-                if (isPathAvailable(pathWithDoneFlag, user, group, conf)) {
+                if (isPathAvailable(pathWithDoneFlag, user, null, conf)) {
                     XLog.getLog(CoordELFunctions.class).debug("Found latest(" + available + "): " + pathWithDoneFlag);
                     if (available == offset) {
                         XLog.getLog(CoordELFunctions.class).debug("Found Latest File: " + pathWithDoneFlag);

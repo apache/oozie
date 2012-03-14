@@ -33,8 +33,19 @@ import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
 
 public class TestCoordELEvaluator extends XTestCase {
-    public void testSetup() throws Exception {
+
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
         new Services().init();
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        if (Services.get() != null) {
+            Services.get().destroy();
+        }
+        super.tearDown();
     }
 
     public void testCreateFreqELValuator() throws Exception {
@@ -219,7 +230,6 @@ public class TestCoordELEvaluator extends XTestCase {
                         + "<property> <name>end</name> <value>2009-02-03T23:59Z</value> </property> "
                         + "<property> <name>timezone</name> <value>UTC</value> </property> "
                         + "<property> <name>user.name</name> <value>test_user</value> </property> "
-                        + "<property> <name>group.name</name> <value>test_group</value> </property> "
                         + "<property> <name>timeout</name>  <value>180</value>  </property> "
                         + "<property> <name>concurrency_level</name> <value>1</value> </property> "
                         + "<property> <name>execution_order</name> <value>LIFO</value> </property>"

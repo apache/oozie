@@ -21,11 +21,17 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.local.LocalOozie;
 import org.apache.oozie.client.XOozieClient;
+import org.apache.oozie.service.Services;
+import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.test.XFsTestCase;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.service.XLogService;
 import org.jdom.Element;
+import org.jdom.Namespace;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class TestSubmitMRXCommand extends XFsTestCase {
     @Override
@@ -59,42 +65,32 @@ public class TestSubmitMRXCommand extends XFsTestCase {
 
         XLog.getLog(getClass()).info("xml = " + xml);
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("<workflow-app xmlns=\"uri:oozie:workflow:0.2\" name=\"oozie-mapreduce\">");
-        sb.append("<start to=\"hadoop1\" />");
-        sb.append("<action name=\"hadoop1\">");
-        sb.append("<map-reduce>");
-        sb.append("<job-tracker>jobtracker</job-tracker>");
-        sb.append("<name-node>namenode</name-node>");
-        sb.append("<configuration>");
-        sb.append("<property>");
-        sb.append("<name>mapred.mapper.class</name>");
-        sb.append("<value>A.Mapper</value>");
-        sb.append("</property>");
-        sb.append("<property>");
-        sb.append("<name>mapred.reducer.class</name>");
-        sb.append("<value>A.Reducer</value>");
-        sb.append("</property>");
-        sb.append("</configuration>");
-        sb.append("<file>/user/oozie/input1.txt#input1.txt</file>");
-        sb.append("<file>/user/oozie/input2.txt#my.txt</file>");
-        sb.append("<archive>/user/oozie/udf1.jar#udf1.jar</archive>");
-        sb.append("<archive>/user/oozie/udf2.jar#my.jar</archive>");
-        sb.append("</map-reduce>");
-        sb.append("<ok to=\"end\" />");
-        sb.append("<error to=\"fail\" />");
-        sb.append("</action>");
-        sb.append("<kill name=\"fail\">");
-        sb.append("<message>Map/Reduce failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>");
-        sb.append("</kill>");
-        sb.append("<end name=\"end\" />");
-        sb.append("</workflow-app>");
+        //verifying is a valid WF
+        WorkflowAppService wps = Services.get().get(WorkflowAppService.class);
+        wps.parseDef(xml);
 
-        Element root = XmlUtils.parseXml(sb.toString());
-        String reference = XmlUtils.prettyPrint(root).toString();
+        Element wfE = XmlUtils.parseXml(xml);
+        Namespace ns = wfE.getNamespace();
+        Element actionE = wfE.getChild("action", ns).getChild("map-reduce", ns);
+        Element confE = actionE.getChild("configuration", ns);
+        Map<String, String> props = new HashMap<String, String>();
+        for (Object prop : confE.getChildren("property", ns)) {
+            Element propE = (Element) prop;
+            String name = propE.getChild("name", ns).getTextTrim();
+            String value = propE.getChild("value", ns).getTextTrim();
+            props.put(name, value);
+        }
+        Map<String, String> expected = new HashMap<String, String>();
+        expected.put("mapred.mapper.class", "A.Mapper");
+        expected.put("mapred.reducer.class", "A.Reducer");
+        for (Map.Entry<String, String> entry : expected.entrySet()) {
+            assertEquals(entry.getValue(), expected.get(entry.getKey()));
+        }
+        assertEquals("/user/oozie/input1.txt#input1.txt", ((Element)actionE.getChildren("file", ns).get(0)).getTextTrim());
+        assertEquals("/user/oozie/input2.txt#my.txt", ((Element)actionE.getChildren("file", ns).get(1)).getTextTrim());
+        assertEquals("/user/oozie/udf1.jar#udf1.jar", ((Element)actionE.getChildren("archive", ns).get(0)).getTextTrim());
+        assertEquals("/user/oozie/udf2.jar#my.jar", ((Element)actionE.getChildren("archive", ns).get(1)).getTextTrim());
 
-        XLog.getLog(getClass()).info("reference xml = " + reference);
-        assertTrue(xml.equals(reference));
     }
 
     public void testWFXmlGenerationNegative1() throws Exception {

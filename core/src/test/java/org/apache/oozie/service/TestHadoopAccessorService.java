@@ -38,7 +38,7 @@ public class TestHadoopAccessorService extends XTestCase {
         OutputStream os = new FileOutputStream(new File(getTestCaseConfDir() + "/hadoop-confx", "core-site.xml"));
         IOUtils.copyStream(is, os);
         setSystemProperty("oozie.service.HadoopAccessorService.hadoop.configurations",
-                          "*=hadoop-conf,test=hadoop-confx");
+                          "*=hadoop-conf,jt=hadoop-confx");
         if (System.getProperty("oozie.test.hadoop.security", "simple").equals("kerberos")) {
             setSystemProperty("oozie.service.HadoopAccessorService.kerberos.enabled", "true");
             setSystemProperty("oozie.service.HadoopAccessorService.keytab.file", getKeytabFile());
@@ -58,8 +58,8 @@ public class TestHadoopAccessorService extends XTestCase {
         HadoopAccessorService has = services.get(HadoopAccessorService.class);
         assertNotNull(has);
         assertNotNull(has.createJobConf("*"));
-        assertNotNull(has.createJobConf("test"));
-        assertEquals("bar", has.createJobConf("test").get("foo"));
+        assertNotNull(has.createJobConf("jt"));
+        assertEquals("bar", has.createJobConf("jt").get("foo"));
     }
     public void testAccessor() throws Exception {
         Services services = Services.get();
