@@ -68,7 +68,7 @@
         <sharelib.use.transitive.dependencies>true</sharelib.use.transitive.dependencies>
 
         <hadoop.version>1.0.1</hadoop.version>
-
+        <clover.license>/home/jenkins/tools/clover/latest/lib/clover.license</clover.license>
         <!--
         This is required while we support a a pre 0.23 version of Hadoop which does not have
         the hadoop-auth artifact. After we phase-out pre 0.23 we can get rid of this property.
@@ -710,7 +710,25 @@
         </pluginManagement>
 
         <plugins>
-			<plugin>
+            <plugin>
+                <groupId>com.atlassian.maven.plugins</groupId>
+                <artifactId>maven-clover2-plugin</artifactId>
+                <configuration>
+                    <licenseLocation>${clover.license}</licenseLocation>
+                    <generateXml>true</generateXml>
+                    <generateHtml>true</generateHtml>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>findbugs-maven-plugin</artifactId>
+                <configuration>
+                    <xmlOutput>true</xmlOutput>
+                    <findbugsXmlOutput>true</findbugsXmlOutput>
+                    <findbugsXmlWithMessages>true</findbugsXmlWithMessages>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
                 <inherited>false</inherited>
