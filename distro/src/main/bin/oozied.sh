@@ -86,26 +86,13 @@ case $actionCmd in
   (start|run)
     setup_catalina_opts
     setup_oozie 
-    $CATALINA $actionCmd "$@"
     ;;
   (stop)
     setup_catalina_opts
 
     # A bug in catalina.sh script does not use CATALINA_OPTS for stopping the server
     export JAVA_OPTS=${CATALINA_OPTS}
-
-    $CATALINA $actionCmd "$@"
     ;;
 esac
 
-if [ "$?" = "0" ]; then
-  echo
-  echo "Oozie $actionCmd succeeded"
-  echo
-  exit 0
-else
-  echo
-  echo "ERROR: Oozie $actionCmd aborted"
-  echo
-  exit 1
-fi
+exec $CATALINA $actionCmd "$@"

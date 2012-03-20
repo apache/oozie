@@ -1,6 +1,7 @@
 -- Oozie 3.2.0 release
 
-OOZIE-767: TestCoordRerun and Testrerun shoudl be deleted.(virag via Mohammad)
+OOZIE-771 oozied.sh should exec catalina.sh instead of forking it off (rvs via tucu)
+OOZIE-767 TestCoordRerun and Testrerun shoudl be deleted.(virag via Mohammad)
 OOZIE-768 latest Hadoop 0.23.3 minicluster is not creating /tmp in HDFS (tucu)
 OOZIE-763 Add findbugs and clover plugin for CI (virag via tucu)
 OOZIE-646 Doc changes: Drilldown and PigStats (params via tucu)
