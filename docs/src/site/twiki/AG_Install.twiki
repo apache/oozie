@@ -56,7 +56,8 @@ Usage  : oozie-setup.sh <OPTIONS>"
          [-hadoop HADOOP_VERSION HADOOP_PATH] (Hadoop version [0.20.1|0.20.2|0.20.104|0.20.200]"
                                                and Hadoop install dir)"
          [-jars JARS_PATH] (multiple JAR path separated by ':')"
-         (without options does default setup, without the Oozie webconsole)"
+         (without options does default setup, without the Oozie webconsole.
+         Use Hadoop version 0.20.200 for any variants of 0.20.20x and 1.0.0)"
 </verbatim>
 
 If a directory =libext/= is present in Oozie installation directory, the =oozie-setup.sh= script
