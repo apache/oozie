@@ -23,8 +23,6 @@
         Oozie configuration properties and their default values.
     -->
 
-    <!-- Uncomment the following  properties to enable Email & Hive actions
-
     <property>
         <name>oozie.service.ActionService.executor.ext.classes</name>
         <value>
@@ -39,8 +37,6 @@
         <name>oozie.service.SchemaService.wf.ext.schemas</name>
         <value>shell-action-0.1.xsd,email-action-0.1.xsd,hive-action-0.2.xsd,sqoop-action-0.2.xsd,ssh-action-0.1.xsd</value>
     </property>
-
-    -->
 
     <property>
         <name>oozie.system.id</name>
