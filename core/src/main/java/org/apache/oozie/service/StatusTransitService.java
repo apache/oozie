@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,8 +41,9 @@ import org.apache.oozie.executor.jpa.BundleJobUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobsGetPendingJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobsGetRunningJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionsGetByLastModifiedTimeJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordJobGetActionsJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobGetActionsStatusByPendingFalseJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobGetPendingActionsCountJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobsGetPendingJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
@@ -84,6 +85,7 @@ public class StatusTransitService implements Service {
             }
         }
 
+        @Override
         public void run() {
             try {
                 Date curDate = new Date(); // records the start time of this service run;
@@ -251,51 +253,49 @@ public class StatusTransitService implements Service {
                         String jobId = coordJob.getId();
                         Job.Status[] coordStatus = new Job.Status[1];
                         coordStatus[0] = coordJob.getStatus();
-                        List<CoordinatorActionBean> coordActions = jpaService
-                                .execute(new CoordJobGetActionsJPAExecutor(jobId));
-                        HashMap<CoordinatorAction.Status, Integer> coordActionStatus = new HashMap<CoordinatorAction.Status, Integer>();
-                        boolean foundPending = false;
-                        for (CoordinatorActionBean cAction : coordActions) {
-                            if (!cAction.isPending()) {
-                                int counter = 0;
-                                if (coordActionStatus.containsKey(cAction.getStatus())) {
-                                    counter = coordActionStatus.get(cAction.getStatus()) + 1;
-                                }
-                                else {
-                                    ++counter;
-                                }
-                                coordActionStatus.put(cAction.getStatus(), counter);
-                            }
-                            else {
-                                foundPending = true;
-                                break;
-                            }
-                        }
-
-                        if (foundPending) {
+                        //Get count of Coordinator actions with pending true
+                        int count = jpaService.execute(new CoordJobGetPendingActionsCountJPAExecutor(jobId));
+                        if (count > 0) {
                             continue;
                         }
+                        // Code below this is executed only when none of the Coordinator actions are pending
+                        // Get status of Coordinator actions with pending false
+                        List<CoordinatorAction.Status> coordActionStatusList = jpaService
+                                .execute(new CoordJobGetActionsStatusByPendingFalseJPAExecutor(jobId));
+                        HashMap<CoordinatorAction.Status, Integer> coordActionStatus = new HashMap<CoordinatorAction.Status, Integer>();
 
+                        for (CoordinatorAction.Status status : coordActionStatusList) {
+                            int counter = 0;
+                            if (coordActionStatus.containsKey(status)) {
+                                counter = coordActionStatus.get(status) + 1;
+                            }
+                            else {
+                                ++counter;
+                            }
+                            coordActionStatus.put(status, counter);
+                        }
+
+                        int nonPendingCoordActionsCount = coordActionStatusList.size();
                         if (coordJob.isDoneMaterialization()
-                                && checkCoordTerminalStatus(coordActionStatus, coordActions, coordStatus)) {
+                                && checkCoordTerminalStatus(coordActionStatus, nonPendingCoordActionsCount, coordStatus)) {
                             LOG.info("Set coordinator job [" + jobId + "] status to '" + coordStatus[0].toString()
                                     + "' from '" + coordJob.getStatus() + "'");
-                            updateCoordJob(coordActionStatus, coordActions, coordJob, coordStatus[0]);
+                            updateCoordJob(coordActionStatus, nonPendingCoordActionsCount, coordJob, coordStatus[0]);
                         }
                         else if (coordJob.isDoneMaterialization()
-                                && checkCoordSuspendStatus(coordActionStatus, coordActions, coordStatus)) {
+                                && checkCoordSuspendStatus(coordActionStatus, nonPendingCoordActionsCount, coordStatus)) {
                             LOG.info("Set coordinator job [" + jobId + "] status to " + coordStatus[0].toString()
                                     + "' from '" + coordJob.getStatus() + "'");
-                            updateCoordJob(coordActionStatus, coordActions, coordJob, coordStatus[0]);
+                            updateCoordJob(coordActionStatus, nonPendingCoordActionsCount, coordJob, coordStatus[0]);
                         }
-                        else if (checkCoordRunningStatus(coordActionStatus, coordActions, coordStatus)) {
+                        else if (checkCoordRunningStatus(coordActionStatus, nonPendingCoordActionsCount, coordStatus)) {
                             LOG.info("Set coordinator job [" + jobId + "] status to " + coordStatus[0].toString()
                                     + "' from '" + coordJob.getStatus() + "'");
-                            updateCoordJob(coordActionStatus, coordActions, coordJob, coordStatus[0]);
+                            updateCoordJob(coordActionStatus, nonPendingCoordActionsCount, coordJob, coordStatus[0]);
                         }
                         // checking pending flag for job when user killed or suspended the job
                         else {
-                            checkCoordPending(coordActionStatus, coordActions, coordJob, true);
+                            checkCoordPending(coordActionStatus, nonPendingCoordActionsCount, coordJob, true);
                         }
                     }
                     catch (Exception ex) {
@@ -353,7 +353,7 @@ public class StatusTransitService implements Service {
         }
 
         private boolean checkCoordTerminalStatus(HashMap<CoordinatorAction.Status, Integer> coordActionStatus,
-                List<CoordinatorActionBean> coordActions, Job.Status[] coordStatus) {
+                int coordActionsCount, Job.Status[] coordStatus) {
             boolean ret = false;
             int totalValuesSucceed = 0;
             if (coordActionStatus.containsKey(CoordinatorAction.Status.SUCCEEDED)) {
@@ -373,18 +373,18 @@ public class StatusTransitService implements Service {
                 totalValuesTimeOut = coordActionStatus.get(CoordinatorAction.Status.TIMEDOUT);
             }
 
-            if (coordActions.size() == (totalValuesSucceed + totalValuesFailed + totalValuesKilled + totalValuesTimeOut)) {
+            if (coordActionsCount == (totalValuesSucceed + totalValuesFailed + totalValuesKilled + totalValuesTimeOut)) {
                 // If all the coordinator actions are succeeded then coordinator job should be succeeded.
-                if (coordActions.size() == totalValuesSucceed) {
+                if (coordActionsCount == totalValuesSucceed) {
                     coordStatus[0] = Job.Status.SUCCEEDED;
                     ret = true;
                 }
-                else if (coordActions.size() == totalValuesKilled) {
+                else if (coordActionsCount == totalValuesKilled) {
                     // If all the coordinator actions are KILLED then coordinator job should be KILLED.
                     coordStatus[0] = Job.Status.KILLED;
                     ret = true;
                 }
-                else if (coordActions.size() == totalValuesFailed) {
+                else if (coordActionsCount == totalValuesFailed) {
                     // If all the coordinator actions are FAILED then coordinator job should be FAILED.
                     coordStatus[0] = Job.Status.FAILED;
                     ret = true;
@@ -451,10 +451,10 @@ public class StatusTransitService implements Service {
         }
 
         private boolean checkCoordSuspendStatus(HashMap<CoordinatorAction.Status, Integer> coordActionStatus,
-                List<CoordinatorActionBean> coordActions, Job.Status[] coordStatus) {
+                int coordActionsCount, Job.Status[] coordStatus) {
             boolean ret = false;
             if (coordActionStatus.containsKey(CoordinatorAction.Status.SUSPENDED)) {
-                if (coordActions.size() == coordActionStatus.get(CoordinatorAction.Status.SUSPENDED)) {
+                if (coordActionsCount == coordActionStatus.get(CoordinatorAction.Status.SUSPENDED)) {
                     coordStatus[0] = Job.Status.SUSPENDED;
                     ret = true;
                 }
@@ -463,11 +463,11 @@ public class StatusTransitService implements Service {
         }
 
         private boolean checkCoordRunningStatus(HashMap<CoordinatorAction.Status, Integer> coordActionStatus,
-                List<CoordinatorActionBean> coordActions, Job.Status[] coordStatus) {
+                int coordActionsCount, Job.Status[] coordStatus) {
             boolean ret = false;
             if (coordActionStatus.containsKey(CoordinatorAction.Status.RUNNING)) {
                 // If all the bundle actions are succeeded then bundle job should be succeeded.
-                if (coordActions.size() == coordActionStatus.get(CoordinatorAction.Status.RUNNING)) {
+                if (coordActionsCount == coordActionStatus.get(CoordinatorAction.Status.RUNNING)) {
                     coordStatus[0] = Job.Status.RUNNING;
                     ret = true;
                 }
@@ -543,7 +543,7 @@ public class StatusTransitService implements Service {
         }
 
         private void updateCoordJob(HashMap<CoordinatorAction.Status, Integer> coordActionStatus,
-                List<CoordinatorActionBean> coordActions, CoordinatorJobBean coordJob, Job.Status coordStatus)
+                int coordActionsCount, CoordinatorJobBean coordJob, Job.Status coordStatus)
                 throws JPAExecutorException, CommandException {
             Job.Status prevStatus = coordJob.getStatus();
             // Update the Coord Job
@@ -556,7 +556,7 @@ public class StatusTransitService implements Service {
                 }
             }
 
-            checkCoordPending(coordActionStatus, coordActions, coordJob, false);
+            checkCoordPending(coordActionStatus, coordActionsCount, coordJob, false);
             coordJob.setStatus(coordStatus);
             coordJob.setStatus(StatusUtils.getStatus(coordJob));
             coordJob.setLastModifiedTime(new Date());
@@ -571,7 +571,7 @@ public class StatusTransitService implements Service {
         }
 
         private void checkCoordPending(HashMap<CoordinatorAction.Status, Integer> coordActionStatus,
-                List<CoordinatorActionBean> coordActions, CoordinatorJobBean coordJob, boolean saveToDB) throws JPAExecutorException {
+                int coordActionsCount, CoordinatorJobBean coordJob, boolean saveToDB) throws JPAExecutorException {
             boolean pendingCoordJob = coordJob.isPending();
             // Checking the coordinator pending should be updated or not
             int totalNonPendingActions = 0;
@@ -579,7 +579,7 @@ public class StatusTransitService implements Service {
                 totalNonPendingActions += coordActionStatus.get(js);
             }
 
-            if (totalNonPendingActions == coordActions.size()) {
+            if (totalNonPendingActions == coordActionsCount) {
                 pendingCoordJob = false;
             }
 
@@ -613,7 +613,8 @@ public class StatusTransitService implements Service {
             else {
                 LOG.info("Running coordinator status service from last instance time =  "
                         + DateUtils.convertDateToString(lastInstanceStartTime));
-                // this is not the first instance, we should only check jobs that have actions been
+                // this is not the first instance, we should only check jobs
+                // that have actions been
                 // updated >= start time of last service run;
                 List<CoordinatorActionBean> actionList = jpaService
                         .execute(new CoordActionsGetByLastModifiedTimeJPAExecutor(lastInstanceStartTime));
@@ -664,3 +665,4 @@ public class StatusTransitService implements Service {
         return StatusTransitService.class;
     }
 }
+

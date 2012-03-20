@@ -93,6 +93,7 @@ public class CoordActionGetJPAExecutor implements JPAExecutor<CoordinatorActionB
             action.setNominalTime(a.getNominalTime());
             action.setSlaXml(a.getSlaXml());
             action.setStatus(a.getStatus());
+            action.setPending(a.getPending());
             return action;
         }
         return null;

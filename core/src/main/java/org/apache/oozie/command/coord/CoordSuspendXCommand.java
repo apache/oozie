@@ -31,8 +31,8 @@ import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.SuspendTransitionXCommand;
 import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.command.wf.SuspendXCommand;
-import org.apache.oozie.executor.jpa.CoordActionUpdateJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordJobGetActionsJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionUpdateStatusJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobGetActionsRunningJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
@@ -118,22 +118,25 @@ public class CoordSuspendXCommand extends SuspendTransitionXCommand {
     @Override
     public void suspendChildren() throws CommandException {
         try {
-            List<CoordinatorActionBean> actionList = jpaService.execute(new CoordJobGetActionsJPAExecutor(jobId));
+            //Get all running actions of a job to suspend them
+            List<CoordinatorActionBean> actionList = jpaService
+                    .execute(new CoordJobGetActionsRunningJPAExecutor(jobId));
             for (CoordinatorActionBean action : actionList) {
-                if (action.getStatus() == CoordinatorActionBean.Status.RUNNING) {
-                    // queue a SuspendXCommand
-                    if (action.getExternalId() != null) {
-                        queue(new SuspendXCommand(action.getExternalId()));
-                        updateCoordAction(action);
-                        LOG.debug("Suspend coord action = [{0}], new status = [{1}], pending = [{2}] and queue SuspendXCommand for [{3}]",
-                                        action.getId(), action.getStatus(), action.getPending(), action.getExternalId());
-                    } else {
-                        updateCoordAction(action);
-                        LOG.debug("Suspend coord action = [{0}], new status = [{1}], pending = [{2}] and external id is null",
-                                action.getId(), action.getStatus(), action.getPending());
-                    }
-
+                // queue a SuspendXCommand
+                if (action.getExternalId() != null) {
+                    queue(new SuspendXCommand(action.getExternalId()));
+                    updateCoordAction(action);
+                    LOG.debug(
+                            "Suspend coord action = [{0}], new status = [{1}], pending = [{2}] and queue SuspendXCommand for [{3}]",
+                            action.getId(), action.getStatus(), action.getPending(), action.getExternalId());
                 }
+                else {
+                    updateCoordAction(action);
+                    LOG.debug(
+                            "Suspend coord action = [{0}], new status = [{1}], pending = [{2}] and external id is null",
+                            action.getId(), action.getStatus(), action.getPending());
+                }
+
             }
             LOG.debug("Suspended coordinator actions for the coordinator=[{0}]", jobId);
         }
@@ -145,7 +148,8 @@ public class CoordSuspendXCommand extends SuspendTransitionXCommand {
             if (exceptionOccured) {
                 coordJob.setStatus(CoordinatorJob.Status.FAILED);
                 coordJob.resetPending();
-                LOG.debug("Exception happened, fail coordinator job id = " + jobId + ", status = " + coordJob.getStatus());
+                LOG.debug("Exception happened, fail coordinator job id = " + jobId + ", status = "
+                        + coordJob.getStatus());
                 try {
                     jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
                 }
@@ -190,7 +194,7 @@ public class CoordSuspendXCommand extends SuspendTransitionXCommand {
         action.incrementAndGetPending();
         action.setLastModifiedTime(new Date());
         try {
-            jpaService.execute(new CoordActionUpdateJPAExecutor(action));
+            jpaService.execute(new CoordActionUpdateStatusJPAExecutor(action));
         }
         catch (JPAExecutorException e) {
             throw new CommandException(e);

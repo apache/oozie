@@ -31,8 +31,8 @@ import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.ResumeTransitionXCommand;
 import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.command.wf.ResumeXCommand;
-import org.apache.oozie.executor.jpa.CoordActionUpdateJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordJobGetActionsJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionUpdateStatusJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobGetActionsSuspendedJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
@@ -113,7 +113,8 @@ public class CoordResumeXCommand extends ResumeTransitionXCommand {
         InstrumentUtils.incrJobCounter(getName(), 1, getInstrumentation());
         coordJob.setSuspendedTime(null);
         coordJob.setLastModifiedTime(new Date());
-        LOG.debug("Resume coordinator job id = " + jobId + ", status = " + coordJob.getStatus() + ", pending = " + coordJob.isPending());
+        LOG.debug("Resume coordinator job id = " + jobId + ", status = " + coordJob.getStatus() + ", pending = "
+                + coordJob.isPending());
         try {
             jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
         }
@@ -128,23 +129,27 @@ public class CoordResumeXCommand extends ResumeTransitionXCommand {
     @Override
     public void resumeChildren() throws CommandException {
         try {
-            List<CoordinatorActionBean> actionList = jpaService.execute(new CoordJobGetActionsJPAExecutor(jobId));
+            // Get all suspended actions to resume them
+            List<CoordinatorActionBean> actionList = jpaService.execute(new CoordJobGetActionsSuspendedJPAExecutor(
+                    jobId));
 
             for (CoordinatorActionBean action : actionList) {
-                if(action.getStatus() == CoordinatorActionBean.Status.SUSPENDED){
+                if (action.getExternalId() != null) {
                     // queue a ResumeXCommand
-                    if (action.getExternalId() != null) {
-                        queue(new ResumeXCommand(action.getExternalId()));
-                        updateCoordAction(action);
-                        LOG.debug("Resume coord action = [{0}], new status = [{1}], pending = [{2}] and queue ResumeXCommand for [{3}]",
-                                action.getId(), action.getStatus(), action.getPending(), action.getExternalId());
-                    }else {
-                        updateCoordAction(action);
-                        LOG.debug("Resume coord action = [{0}], new status = [{1}], pending = [{2}] and external id is null",
-                                action.getId(), action.getStatus(), action.getPending());
-                    }
+                    queue(new ResumeXCommand(action.getExternalId()));
+                    updateCoordAction(action);
+                    LOG.debug(
+                            "Resume coord action = [{0}], new status = [{1}], pending = [{2}] and queue ResumeXCommand for [{3}]",
+                            action.getId(), action.getStatus(), action.getPending(), action.getExternalId());
+                }
+                else {
+                    updateCoordAction(action);
+                    LOG.debug(
+                            "Resume coord action = [{0}], new status = [{1}], pending = [{2}] and external id is null",
+                            action.getId(), action.getStatus(), action.getPending());
                 }
             }
+
         }
         catch (XException ex) {
             exceptionOccured = true;
@@ -154,8 +159,8 @@ public class CoordResumeXCommand extends ResumeTransitionXCommand {
             if (exceptionOccured) {
                 coordJob.setStatus(CoordinatorJob.Status.FAILED);
                 coordJob.resetPending();
-                LOG.warn("Resume children failed so fail coordinator, coordinator job id = " + jobId
-                        + ", status = " + coordJob.getStatus());
+                LOG.warn("Resume children failed so fail coordinator, coordinator job id = " + jobId + ", status = "
+                        + coordJob.getStatus());
                 try {
                     jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
                 }
@@ -183,7 +188,7 @@ public class CoordResumeXCommand extends ResumeTransitionXCommand {
         action.incrementAndGetPending();
         action.setLastModifiedTime(new Date());
         try {
-            jpaService.execute(new CoordActionUpdateJPAExecutor(action));
+            jpaService.execute(new CoordActionUpdateStatusJPAExecutor(action));
         }
         catch (JPAExecutorException e) {
             throw new CommandException(e);

@@ -28,8 +28,8 @@ import org.apache.oozie.command.wf.KillXCommand;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.KillTransitionXCommand;
 import org.apache.oozie.command.PreconditionException;
-import org.apache.oozie.executor.jpa.CoordActionUpdateJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordJobGetActionsJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionUpdateStatusJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobGetActionsNotCompletedJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
@@ -72,7 +72,8 @@ public class CoordKillXCommand extends KillTransitionXCommand {
 
             if (jpaService != null) {
                 this.coordJob = jpaService.execute(new CoordJobGetJPAExecutor(jobId));
-                this.actionList = jpaService.execute(new CoordJobGetActionsJPAExecutor(jobId));
+                //Get actions which are not succeeded, failed, timed out or killed
+                this.actionList = jpaService.execute(new CoordJobGetActionsNotCompletedJPAExecutor(jobId));
                 prevStatus = coordJob.getStatus();
                 LogUtils.setLogInfo(coordJob, logInfo);
             }
@@ -105,7 +106,7 @@ public class CoordKillXCommand extends KillTransitionXCommand {
         action.incrementAndGetPending();
         action.setLastModifiedTime(new Date());
         try {
-            jpaService.execute(new CoordActionUpdateJPAExecutor(action));
+            jpaService.execute(new CoordActionUpdateStatusJPAExecutor(action));
         }
         catch (JPAExecutorException e) {
             throw new CommandException(e);
@@ -117,25 +118,22 @@ public class CoordKillXCommand extends KillTransitionXCommand {
         try {
             if (actionList != null) {
                 for (CoordinatorActionBean action : actionList) {
-                    if (action.getStatus() != CoordinatorActionBean.Status.FAILED
-                            && action.getStatus() != CoordinatorActionBean.Status.TIMEDOUT
-                            && action.getStatus() != CoordinatorActionBean.Status.SUCCEEDED
-                            && action.getStatus() != CoordinatorActionBean.Status.KILLED) {
-                        // queue a WorkflowKillXCommand to delete the workflow job and actions
-                        if (action.getExternalId() != null) {
-                            queue(new KillXCommand(action.getExternalId()));
-                            updateCoordAction(action);
-                            LOG.debug("Killed coord action = [{0}], new status = [{1}], pending = [{2}] and queue KillXCommand for [{3}]",
-                                            action.getId(), action.getStatus(), action.getPending(), action.getExternalId());
-                        }
-                        else {
-                            updateCoordAction(action);
-                            LOG.debug("Killed coord action = [{0}], current status = [{1}], pending = [{2}]", action.getId(), action
-                                    .getStatus(), action.getPending());
-                        }
+                    // queue a WorkflowKillXCommand to delete the workflow job and actions
+                    if (action.getExternalId() != null) {
+                        queue(new KillXCommand(action.getExternalId()));
+                        updateCoordAction(action);
+                        LOG.debug(
+                                "Killed coord action = [{0}], new status = [{1}], pending = [{2}] and queue KillXCommand for [{3}]",
+                                action.getId(), action.getStatus(), action.getPending(), action.getExternalId());
+                    }
+                    else {
+                        updateCoordAction(action);
+                        LOG.debug("Killed coord action = [{0}], current status = [{1}], pending = [{2}]",
+                                action.getId(), action.getStatus(), action.getPending());
                     }
                 }
             }
+
             jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
 
             LOG.debug("Killed coord actions for the coordinator=[{0}]", jobId);
