@@ -33,7 +33,6 @@
     <packaging>jar</packaging>
 
     <properties>
-        <sharelib.use.transitive.dependencies>false</sharelib.use.transitive.dependencies>
         <sharelib.action.postfix>mapreduce-streaming</sharelib.action.postfix>
     </properties>
 

@@ -27,8 +27,9 @@
             <useProjectArtifact>false</useProjectArtifact>
             <outputDirectory>/share/lib/${sharelib.action.postfix}</outputDirectory>
             <unpack>false</unpack>
-            <useTransitiveDependencies>${sharelib.use.transitive.dependencies}</useTransitiveDependencies>
+            <useTransitiveDependencies>true</useTransitiveDependencies>
             <useTransitiveFiltering>true</useTransitiveFiltering>
+            <scope>runtime</scope>
         </dependencySet>
     </dependencySets>
 

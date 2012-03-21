@@ -65,8 +65,6 @@
         </oozie.test.default.config.file>
         <oozie.test.config.file>${oozie.test.default.config.file}</oozie.test.config.file>
 
-        <sharelib.use.transitive.dependencies>true</sharelib.use.transitive.dependencies>
-
         <hadoop.version>1.0.1</hadoop.version>
         <clover.license>/home/jenkins/tools/clover/latest/lib/clover.license</clover.license>
         <!--
