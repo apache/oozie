@@ -30,6 +30,7 @@ import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.oozie.util.ConfigUtils;
+import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
@@ -165,7 +166,9 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
             workflow.setWorkflowInstance(wfInstance);
             workflow.setExternalId(conf.get(OozieClient.EXTERNAL_ID));
 
-            //setLogInfo(workflow);
+            LogUtils.setLogInfo(workflow, logInfo);
+            LOG = XLog.resetPrefix(LOG);
+            LOG.debug("Workflow record created, Status [{1}]", workflow.getStatus());
             Element wfElem = XmlUtils.parseXml(app.getDefinition());
             ELEvaluator evalSla = createELEvaluatorForGroup(conf, "wf-sla-submit");
             String jobSlaXml = verifySlaElements(wfElem, evalSla);

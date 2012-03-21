@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-758 Oozie logs should record job-id for when job is submitted (Mona via Mohammad)
 OOZIE-772 enable Hive and Email actions by default (rvs via tucu)
 OOZIE-771 oozied.sh should exec catalina.sh instead of forking it off (rvs via tucu)
 OOZIE-767 TestCoordRerun and Testrerun shoudl be deleted.(virag via Mohammad)
