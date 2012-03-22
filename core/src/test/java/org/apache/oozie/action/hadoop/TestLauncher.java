@@ -48,7 +48,7 @@ public class TestLauncher extends XFsTestCase {
     private RunningJob _test(String... arg) throws Exception {
         Path actionDir = getFsTestCaseDir();
 
-        File jar = IOUtils.createJar(new File(getTestCaseDir()), "launcher.jar", LauncherMapper.class, LauncherMainException.class,
+        File jar = IOUtils.createJar(new File(getTestCaseDir()), "launcher.jar", LauncherMapper.class,
                                      LauncherSecurityManager.class, LauncherException.class, LauncherMainTester.class);
 
         FileSystem fs = getFileSystem();
@@ -65,7 +65,6 @@ public class TestLauncher extends XFsTestCase {
 
         jobConf.set("mapred.job.tracker", getJobTrackerUri());
         jobConf.set("fs.default.name", getNameNodeUri());
-        jobConf.set("mapreduce.framework.name", "yarn");
         injectKerberosInfo(jobConf);
 
         LauncherMapper lm = new LauncherMapper();

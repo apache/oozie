@@ -31,8 +31,6 @@ import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
-import org.apache.oozie.service.HadoopAccessorService;
-import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
@@ -110,7 +108,7 @@ public class TestDistCpActionExecutor extends ActionExecutorTestCase{
         JobConf jobConf = new JobConf();
         jobConf.set("mapred.job.tracker", jobTracker);
         injectKerberosInfo(jobConf);
-        JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(getTestUser(), getTestGroup(), jobConf);
+        JobClient jobClient = new JobClient(jobConf);
         final RunningJob runningJob = jobClient.getJob(JobID.forName(jobId));
         assertNotNull(runningJob);
         return runningJob;

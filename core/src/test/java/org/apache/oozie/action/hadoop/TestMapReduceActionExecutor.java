@@ -212,10 +212,8 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         conf.set("fs.default.name", e.getChildTextTrim("name-node"));
         conf.set("user.name", context.getProtoActionConf().get("user.name"));
         conf.set("group.name", getTestGroup());
-        conf.set("mapreduce.framework.name", "yarn");
         injectKerberosInfo(conf);
-        JobConf jobConf = new JobConf();
-        XConfiguration.copy(conf, jobConf);
+        JobConf jobConf = new JobConf(conf);
         String user = jobConf.get("user.name");
         String group = jobConf.get("group.name");
         JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, group, jobConf);
@@ -245,10 +243,8 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         Configuration conf = ae.createBaseHadoopConf(context, XmlUtils.parseXml(actionXml));
         String user = conf.get("user.name");
         String group = conf.get("group.name");
-        JobConf jobConf = new JobConf();
-        XConfiguration.copy(conf, jobConf);
         JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, group,
-                        jobConf);
+                new JobConf(conf));
         final RunningJob mrJob = jobClient.getJob(JobID.forName(context.getAction().getExternalId()));
 
         waitFor(120 * 1000, new Predicate() {
@@ -267,7 +263,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
 
         assertNotNull(context.getVar("hadoop.counters"));
         String counters = context.getVar("hadoop.counters");
-        assertTrue(counters.contains("Counter"));
+        assertTrue(counters.contains("Task$Counter"));
     }
 
     private void _testSubmitWithCredentials(String name, String actionXml) throws Exception {
@@ -291,10 +287,8 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         Configuration conf = ae.createBaseHadoopConf(context, XmlUtils.parseXml(actionXml));
         String user = conf.get("user.name");
         String group = conf.get("group.name");
-        JobConf jobConf = new JobConf();
-        XConfiguration.copy(conf, jobConf);
         JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, group,
-                        jobConf);
+                new JobConf(conf));
         final RunningJob mrJob = jobClient.getJob(JobID.forName(context.getAction().getExternalId()));
 
         waitFor(120 * 1000, new Predicate() {

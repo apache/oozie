@@ -42,8 +42,6 @@ public class SubmitMRXCommand extends SubmitHttpXCommand {
         SKIPPED_CONFS.add(WorkflowAppService.HADOOP_UGI);
         SKIPPED_CONFS.add(XOozieClient.JT);
         SKIPPED_CONFS.add(XOozieClient.NN);
-        SKIPPED_CONFS.add("fs.defaultFS");
-        SKIPPED_CONFS.add("mapreduce.jobtracker.address");
         SKIPPED_CONFS.add(WorkflowAppService.HADOOP_JT_KERBEROS_NAME);
         SKIPPED_CONFS.add(WorkflowAppService.HADOOP_NN_KERBEROS_NAME);
     }

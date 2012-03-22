@@ -90,7 +90,6 @@ public class TestPigMain extends PigTestCase {
         jobConf.setInt("mapred.reduce.max.attempts", 1);
         jobConf.set("mapred.job.tracker", getJobTrackerUri());
         jobConf.set("fs.default.name", getNameNodeUri());
-        jobConf.set("mapreduce.framework.name","yarn");
         injectKerberosInfo(jobConf);
 
         DistributedCache.addFileToClassPath(new Path(pigJar.toUri().getPath()), getFileSystem().getConf());

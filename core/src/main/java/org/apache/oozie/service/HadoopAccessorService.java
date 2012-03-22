@@ -97,7 +97,6 @@ public class HadoopAccessorService implements Service {
         validateJobTracker(conf.get("mapred.job.tracker"));
         conf = createConfiguration(user, group, conf);
         try {
-            conf.set("mapreduce.framework.name", "yarn");
             return new JobClient(conf);
         }
         catch (IOException e) {

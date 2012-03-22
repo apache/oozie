@@ -47,7 +47,6 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.Instrumentation;
-import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.workflow.WorkflowInstance;
 
@@ -203,10 +202,7 @@ public class TestActionCheckXCommand extends XDataTestCase {
         Configuration conf = actionExecutor.createBaseHadoopConf(context, XmlUtils.parseXml(action.getConf()));
         String user = conf.get("user.name");
         String group = conf.get("group.name");
-        conf.set("mapreduce.framework.name", "yarn");
-        JobConf jobConf = new JobConf();
-        XConfiguration.copy(conf, jobConf);
-        JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, group, jobConf);
+        JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, group, new JobConf(conf));
 
         String launcherId = action.getExternalId();
 
