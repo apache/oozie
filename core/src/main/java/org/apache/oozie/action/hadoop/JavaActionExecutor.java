@@ -76,6 +76,8 @@ public class JavaActionExecutor extends ActionExecutor {
 
     private static final String HADOOP_USER = "user.name";
     private static final String HADOOP_JOB_TRACKER = "mapred.job.tracker";
+    private static final String HADOOP_JOB_TRACKER_2 = "mapreduce.jobtracker.address";
+    private static final String HADOOP_YARN_RM = "yarn.resourcemanager.address";
     private static final String HADOOP_NAME_NODE = "fs.default.name";
     public static final String OOZIE_COMMON_LIBDIR = "oozie";
     public static final int MAX_EXTERNAL_STATS_SIZE_DEFAULT = Integer.MAX_VALUE;
@@ -95,6 +97,8 @@ public class JavaActionExecutor extends ActionExecutor {
         DISALLOWED_PROPERTIES.add(HADOOP_USER);
         DISALLOWED_PROPERTIES.add(HADOOP_JOB_TRACKER);
         DISALLOWED_PROPERTIES.add(HADOOP_NAME_NODE);
+        DISALLOWED_PROPERTIES.add(HADOOP_JOB_TRACKER_2);
+        DISALLOWED_PROPERTIES.add(HADOOP_YARN_RM);
     }
 
     public JavaActionExecutor() {
@@ -185,6 +189,8 @@ public class JavaActionExecutor extends ActionExecutor {
         JobConf conf = Services.get().get(HadoopAccessorService.class).createJobConf(jobTracker);
         conf.set(HADOOP_USER, context.getProtoActionConf().get(WorkflowAppService.HADOOP_USER));
         conf.set(HADOOP_JOB_TRACKER, jobTracker);
+        conf.set(HADOOP_JOB_TRACKER_2, jobTracker);
+        conf.set(HADOOP_YARN_RM, jobTracker);
         conf.set(HADOOP_NAME_NODE, nameNode);
         conf.set("mapreduce.fileoutputcommitter.marksuccessfuljobs", "true");
         return conf;
