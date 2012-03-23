@@ -39,7 +39,7 @@
   </output-events>
   <action>
     <workflow>
-      <app-path>${wfAppPath}</app-path>
+      <app-path>${coord:conf('wfAppPath')}</app-path>
       <configuration>
         <property>
           <name>jobTracker</name>

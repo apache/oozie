@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-774 Implement a coord:conf EL function to access configuration properties from Oozie coordinator XML files (Maxime via Mohammad)
 OOZIE-777 Hadoop 0.23 removed org.apache.hadoop.mapred.Task$Counter group name breaking EL counters() (tucu)
 OOZIE-776 custom-main example job.properties is missing the activation of sharelib (tucu)
 OOZIE-775 sharelibs assembly does not include deps with compile scope (tucu)

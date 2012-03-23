@@ -1049,6 +1049,17 @@ public class CoordELFunctions {
     }
 
     /**
+     * Return a job configuration property for the coordinator.
+     *
+     * @param property property name.
+     * @return the value of the property, <code>null</code> if the property is undefined.
+     */
+    public static String coord_conf(String property) {
+        ELEvaluator eval = ELEvaluator.getCurrent();
+        return (String) eval.getVariable(property);
+    }
+
+    /**
      * Return the user that submitted the coordinator job.
      *
      * @return the user that submitted the coordinator job.

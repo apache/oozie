@@ -815,6 +815,13 @@ public class TestCoordELFunctions extends XTestCase {
         assertEquals("mycoordinator-app", CoordELFunctions.evalAndWrap(eval, expr));
     }
 
+    public void testConf() throws Exception {
+        init("coord-job-submit-freq");
+        eval.setVariable("my.test.variable", "test");
+        String expr = "${coord:conf('my.test.variable')}";
+        assertEquals("test", CoordELFunctions.evalAndWrap(eval, expr));
+    }
+
     public void testUser() throws Exception {
         init("coord-job-submit-freq");
         String expr = "${coord:user()}";
