@@ -32,6 +32,7 @@ public class TestJsonToBean extends TestCase {
     static String CREATED_TIME = "Thu, 01 Jan 2009 00:00:00 GMT";
     static String START_TIME = "Thu, 01 Jan 2009 00:00:00 GMT";
     static String END_TIME = "Fri, 02 Jan 2009 00:00:00 GMT";
+    static String PAUSE_TIME = "Fri, 02 Jan 2009 00:00:00 GMT";
     static String NOMINAL_TIME = "Fri, 02 Jan 2009 01:00:00 GMT";
     static String LAST_MODIFIED = "Fri, 02 Jan 2009 02:00:00 GMT";
     static String LAST_ACTION = "Fri, 02 Jan 2009 03:00:00 GMT";
@@ -250,6 +251,7 @@ public class TestJsonToBean extends TestCase {
         json.put(JsonTags.COORDINATOR_JOB_LAST_ACTION_TIME, LAST_ACTION);
         json.put(JsonTags.COORDINATOR_JOB_NEXT_MATERIALIZED_TIME, NEXT_MATERIALIZED);
         json.put(JsonTags.COORDINATOR_JOB_START_TIME, START_TIME);
+        json.put(JsonTags.COORDINATOR_JOB_PAUSE_TIME, PAUSE_TIME);
         json.put(JsonTags.COORDINATOR_JOB_END_TIME, END_TIME);
         json.put(JsonTags.COORDINATOR_JOB_USER, "f");
         json.put(JsonTags.COORDINATOR_JOB_GROUP, "g");
@@ -289,6 +291,7 @@ public class TestJsonToBean extends TestCase {
         assertEquals(JsonUtils.parseDateRfc822(NEXT_MATERIALIZED), job.getNextMaterializedTime());
         assertEquals(JsonUtils.parseDateRfc822(START_TIME), job.getStartTime());
         assertEquals(JsonUtils.parseDateRfc822(END_TIME), job.getEndTime());
+        assertEquals(JsonUtils.parseDateRfc822(PAUSE_TIME), job.getPauseTime());
         assertEquals("f", job.getUser());
         assertEquals("g", job.getGroup());
         assertEquals("h", job.getConsoleUrl());
