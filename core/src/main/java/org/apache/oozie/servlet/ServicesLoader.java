@@ -17,7 +17,6 @@
  */
 package org.apache.oozie.servlet;
 
-import org.apache.oozie.service.ServiceException;
 import org.apache.oozie.service.Services;
 
 import javax.servlet.ServletContextListener;
@@ -39,8 +38,18 @@ public class ServicesLoader implements ServletContextListener {
             services = new Services();
             services.init();
         }
-        catch (ServiceException ex) {
-            throw new RuntimeException(ex);
+        catch (Throwable ex) {
+            System.out.println();
+            System.out.println("ERROR: Oozie could not be started");
+            System.out.println();
+            System.out.println("REASON: " + ex.toString());
+            System.out.println();
+            System.out.println("Stacktrace:");
+            System.out.println("-----------------------------------------------------------------");
+            ex.printStackTrace(System.out);
+            System.out.println("-----------------------------------------------------------------");
+            System.out.println();
+            System.exit(1);
         }
     }
 

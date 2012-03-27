@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-786 tomcat should stop if oozie does not start correctly (tucu)
 OOZIE-779 Oozie cannot submit jobs to hadoop 0.23 if running in non-default host:port (tucu)
 OOZIE-774 Implement a coord:conf EL function to access configuration properties from Oozie coordinator XML files (Maxime via Mohammad)
 OOZIE-777 Hadoop 0.23 removed org.apache.hadoop.mapred.Task$Counter group name breaking EL counters() (tucu)
