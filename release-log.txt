@@ -1,6 +1,7 @@
 -- Oozie 3.2.0 release
 
-OOZIE-781: Xerces validator used by Java gets stuck during pattern matching (Virag via Mohammad)
+OOZIE-789 a few testcases using waitFor are timing out with YARN MiniCluster (tucu)
+OOZIE-781 Xerces validator used by Java gets stuck during pattern matching (Virag via Mohammad)
 OOZIE-788 JavaActionExecutor should not set yarn.resourcemanager.address (tucu)
 OOZIE-785 No JsonToBean mapping for coord pausetime(shwetha via Mohammad)
 OOZIE-786 tomcat should stop if oozie does not start correctly (tucu)

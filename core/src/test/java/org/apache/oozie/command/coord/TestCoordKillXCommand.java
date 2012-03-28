@@ -246,7 +246,7 @@ public class TestCoordKillXCommand extends XDataTestCase {
             queueservice.queue(c);
         }
 
-        waitFor(500, new Predicate() {
+        waitFor(1000, new Predicate() {
             public boolean evaluate() throws Exception {
                 return callable1.executed != 0 && callable2.executed == 0 && callable3.executed == 0;
             }

@@ -218,7 +218,7 @@ public class TestRecoveryService extends XDataTestCase {
 
         final RunningJob launcherJob = jobClient.getJob(JobID.forName(launcherId));
 
-        waitFor(120 * 1000, new Predicate() {
+        waitFor(240 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
                 return launcherJob.isComplete();
             }

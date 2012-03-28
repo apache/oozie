@@ -228,7 +228,7 @@ public class TestActionStartXCommand extends XDataTestCase {
         final RunningJob launcherJob = jobClient.getJob(JobID.forName(launcherId));
 
         // time out after 120 seconds unless launcher job succeeds
-        waitFor(120 * 1000, new Predicate() {
+        waitFor(240 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
                 return launcherJob.isComplete();
             }
