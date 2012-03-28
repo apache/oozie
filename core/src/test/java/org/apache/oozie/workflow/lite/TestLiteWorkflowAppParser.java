@@ -18,16 +18,22 @@
 package org.apache.oozie.workflow.lite;
 
 
+import java.io.StringReader;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
+
 
 
 import org.apache.oozie.service.LiteWorkflowStoreService;
+import org.apache.oozie.service.SchemaService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.ActionService;
+import org.apache.oozie.service.SchemaService.SchemaName;
+import org.apache.oozie.service.TestSchemaService;
 import org.apache.oozie.workflow.WorkflowException;
 import org.apache.oozie.workflow.lite.TestLiteWorkflowLib.TestActionNodeHandler;
 import org.apache.oozie.workflow.lite.TestLiteWorkflowLib.TestDecisionNodeHandler;
@@ -99,6 +105,37 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         }
         catch (Exception ex) {
             fail();
+        }
+    }
+
+    // Test for validation of workflow definition against pattern defined in schema to complete within 3 seconds
+    public void testWfValidationFailure() throws Exception {
+        SchemaService wss = Services.get().get(SchemaService.class);
+        final LiteWorkflowAppParser parser = new LiteWorkflowAppParser(wss.getSchema(SchemaName.WORKFLOW),
+                LiteWorkflowStoreService.LiteDecisionHandler.class, LiteWorkflowStoreService.LiteActionHandler.class);
+
+        Thread testThread = new Thread() {
+            public void run() {
+                try {
+                    // Validate against wf def
+                    parser.validateAndParse(new StringReader(TestSchemaService.APP_NEG_TEST));
+                    fail("Expected to catch WorkflowException but didn't encounter any");
+                } catch (WorkflowException we) {
+                    assertEquals(ErrorCode.E0701, we.getErrorCode());
+                    assertTrue(we.getCause().toString().contains("SAXParseException"));
+                } catch (Exception e) {
+                    fail("Expected to catch WorkflowException but an unexpected error happened");
+                }
+
+            }
+        };
+        testThread.start();
+        Thread.sleep(3000);
+        // Timeout if validation takes more than 3 seconds
+        testThread.interrupt();
+
+        if (testThread.isInterrupted()) {
+            throw new TimeoutException("the pattern validation took too long to complete");
         }
     }
 
