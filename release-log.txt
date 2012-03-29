@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-793 remove HiveMain check for HADOOP_HOME (tucu)
 OOZIE-792 add default action configs per cluster (tucu)
 OOZIE-624 client side improvement of authentication for user defined options
 OOZIE-789 a few testcases using waitFor are timing out with YARN MiniCluster (tucu)

@@ -164,9 +164,6 @@ public class HiveMain extends LauncherMain {
     }
 
     protected void run(String[] args) throws Exception {
-        if (System.getenv("HADOOP_HOME") == null) {
-            throw new RuntimeException("'HADOOP_HOME' environment variable undefined, Hive cannot run");
-        }
         System.out.println();
         System.out.println("Oozie Hive action configuration");
         System.out.println("=================================================================");
