@@ -1545,6 +1545,16 @@
             Referring to the same keytab file Oozie uses for its Kerberos credentials for Hadoop.
         </description>
     </property>
+
+    <property>
+        <name>oozie.authentication.kerberos.name.rules</name>
+        <value>DEFAULT</value>
+        <description>
+            The kerberos names rules is to resolve kerberos principal names, refer to Hadoop's
+            KerberosName for more details.
+        </description>
+    </property>
+
 	<!-- Coordinator Actions default length -->
 	<property>
 		<name>oozie.coord.actions.default.length</name>

@@ -1181,7 +1181,6 @@ public class OozieClient {
      *
      * @param start starting offset
      * @param len number of results
-     * @return
      * @throws OozieClientException
      */
     public void getSlaInfo(int start, int len) throws OozieClientException {

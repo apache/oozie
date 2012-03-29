@@ -1,0 +1,145 @@
+<noautolink>
+
+[[index][::Go back to Oozie Documentation Index::]]
+
+---+!! Creating Custom Authentication
+
+%TOC%
+
+---++ Hadoop-Auth Authentication Interfaces and classes
+
+1. =org.apache.hadoop.security.authentication.client.Authenticator:= Interface for client authentication mechanisms.
+
+The following authenticators are provided in hadoop-auth:
+
+   * KerberosAuthenticator   : the authenticator implements the Kerberos SPNEGO authentication sequence.
+   * PseudoAuthenticator     : the authenticator implementation provides an authentication equivalent to Hadoop's Simple authentication, it trusts the value of the 'user.name' Java System property.
+
+2. =org.apache.hadoop.security.authentication.server.AuthenticationHandler:= Interface for server authentication mechanisms.
+
+   * KerberosAuthenticationHandler   : the authenticator handler implements the Kerberos SPNEGO authentication mechanism for HTTP.
+   * PseudoAuthenticationHandler     : the authenticator handler provides a pseudo authentication mechanism that accepts the user name specified as a query string parameter.
+
+3. =org.apache.hadoop.security.authentication.server.AuthenticationFilter:= A servlet filter enables protecting web application resources with different authentication mechanisms provided by AuthenticationHandler. To enable the filter, web application resources file (ex. web.xml) needs to include the a filter class derived from =AuthenticationFilter=.
+
+---++ Provide Custom Client Authenticator
+
+In client side, a custom authentication requires a extended =Authenticator= to retrieve authentication token or certificate and set it to 'token' instance in method 'authenticate()'.
+
+The following methods should be overriden by derived Authenticator.
+<verbatim>
+
+   public void authenticate(URL url, AuthenticatedURL.Token token)
+			throws IOException, AuthenticationException {
+
+		TheAuthenticatorConf conf = TheAuthenticatorConf();
+
+		HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+		conn.setRequestMethod("OPTIONS");
+
+		//Depending on actual authenticationovide Custom Authentication to Oozie Server
+
+Eclipse and IntelliJ can use directly MiniOozie Maven project files. MiniOozie project can be imported to
+Eclipse and IntelliJ as independent project.
+
+overriden methods
+<verbatim>
+		 mechanism, retrieve the cert string or token.
+		String encodedStr = URLEncoder.encode(aCertString, "UTF-8");
+		// set to cookie with a key that can be recognized later in the server side.
+		conn.addRequestProperty("Cookie", "NEWAUTH=" + encodedStr);
+
+		// extract token from connection and set to token
+		AuthenticatedURL.extractToken(conn, token);
+
+	}
+</verbatim>
+
+The following shows an example of a singleton class which can be used at a class of Authenticator to set and get configuration which is required for authentication purpose.
+
+<verbatim>
+	public static class TheAuthenticatorConf {
+		private static final TheAuthenticatorConf instance = new TheAuthenticatorConf();
+		private final Map<String, String> map = new HashMap<String, String>();
+
+		private TheAuthenticatorConf() {
+		}
+
+		public static TheAuthenticatorConf getInstance() {
+			return instance;
+		}
+
+		public void put(String key, String value) {
+			map.put(key, value);
+		}
+
+		public String get(String key) {
+			return map.get(key);
+		}
+
+		public void clear() {
+			map.clear();
+		}
+	}
+</verbatim>
+
+---++ Provide Custom Authentication to Oozie Client
+
+Apache Oozie contains a default class =org.apache.oozie.client.AuthOozieClient= to support Kerberos HTTP SPNEGO authentication, pseudo/simple authentication and anonymous access for client connections.
+
+To provide other authentication mechanisms, a Oozie client should extend from =AuthOozieClient= and provide the following methods should be overriden by derived classes to provide custom authentication:
+
+   * getAuthenticator()   : return corresponding Authenticator based on value specified by user at =auth= command option.
+   * createConnection()   : create a singleton class at Authenticator to allow client set and get key-value configuration for authentication.
+
+---++ Provide Custom Server AuthenticationHandler
+
+In server side, a custom authentication requires a extended AuthenticationHandler to retrieve authentication token or certificate from http request and verify it. After successful verification, an =AuthenticationToken= is created with user name and current authentication type. With this token, this request can be proceeded for response.
+
+The following methods should be overriden by derived AuthenticationHandler.
+<verbatim>
+
+    public AuthenticationToken authenticate(HttpServletRequest request, HttpServletResponse response)
+            throws IOException, AuthenticationException {
+
+		// the certificate or token can be retrieved from request and verified.
+
+		// use the information from the legal certificate or token to create AuthenticationToken
+        AuthenticationToken token = new AuthenticationToken(userName, principal, type);
+
+        return token;
+    }
+</verbatim>
+
+---++ Provide Custom Authentication to Oozie Server
+
+To accept custom authentication in Oozie server, a filter extends from AuthenticationFilter must be provided. This filter delegates to the configured authentication handler for authentication and once it obtains an =AuthenticationToken= from it, sets a signed HTTP cookie with the token. If HTTP cookie is provided with different key name, its cookie value can be retrieved by overriding =getToken()= method. Please note, only when =getToken()= return NULL, a custom authentication can be invoked and processed in =AuthenticationFilter.doFilter()=.
+
+The following method explains how to read it and return NULL token.
+<verbatim>
+protected AuthenticationToken getToken(HttpServletRequest request) throws IOException, AuthenticationException {
+        String tokenStr = null;
+        Cookie[] cookies = request.getCookies();
+
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (cookie.getName().equals(AuthenticatedURL.AUTH_COOKIE)) {
+                    tokenStr = cookie.getValue();
+                    LOG.info("Got 'hadoop.auth' cookie from request = " + tokenStr);
+                    if (tokenStr != null && !tokenStr.trim().isEmpty()) {
+                        AuthenticationToken retToken = super.getToken(request);
+                        return retToken;
+                    }
+                } else if (cookie.getName().equals("NEWAUTH")) {
+                    tokenStr = cookie.getValue();
+                    // DO NOT return the token string so request can authenticated.
+                }
+            }
+        }
+        return null;
+      }
+</verbatim>
+
+[[index][::Go back to Oozie Documentation Index::]]
+
+</noautolink>

@@ -92,4 +92,8 @@ Oozie uses a modified version of the Apache Doxia core and twiki plugins to gene
 
    * [[ENG_MiniOozie][Testing User Oozie Applications Using MiniOozie]]
 
+---++ Oozie User Authentication Documentation
+
+   * [[ENG_Custom_Authentication][Create Custom Oozie Authentication]]
+
 </noautolink>

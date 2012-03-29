@@ -26,6 +26,7 @@ usage:
 .
       oozie job <OPTIONS> : job operations
                 -action <arg>         coordinator rerun on action ids (requires -rerun); coordinator log retrieval on action ids (requires -log)
+                -auth <arg>           select authentication type [SIMPLE|KERBEROS]
                 -change <arg>         change a coordinator/bundle job
                 -config <arg>         job configuration file '.xml' or '.properties'
                 -D <property=value>   set/override value for given property
@@ -55,6 +56,7 @@ usage:
                 -verbose              verbose mode
 .
       oozie jobs <OPTIONS> : jobs status
+                 -auth <arg>           select authentication type [SIMPLE|KERBEROS]
                  -doas <arg>           doAs user, impersonates as the specified user.
                  -filter <arg>    user=<U>;name=<N>;group=<G>;status=<S>;...
                  -jobtype <arg>   job type ('Supported in Oozie-2.0 or later versions ONLY -
@@ -66,7 +68,8 @@ usage:
                  -verbose         verbose mode
 .
       oozie admin <OPTIONS> : admin operations
-                -doas <arg>           doAs user, impersonates as the specified user.
+                  -auth <arg>           select authentication type [SIMPLE|KERBEROS]
+                  -doas <arg>           doAs user, impersonates as the specified user.
                   -oozie <arg>        Oozie URL
                   -queuedump          show Oozie server queue elements
                   -status             show the current system status
@@ -77,11 +80,13 @@ usage:
       oozie validate <ARGS> : validate a workflow XML file
 .
       oozie sla <OPTIONS> : sla operations (Supported in Oozie-2.0 or later)
-                -len <arg>      number of results (default '100')
-                -offset <arg>   start offset (default '0')
-                -oozie <arg>    Oozie URL
+                -auth <arg>           select authentication type [SIMPLE|KERBEROS]
+                -len <arg>            number of results (default '100')
+                -offset <arg>         start offset (default '0')
+                -oozie <arg>          Oozie URL
 .
       oozie pig <OPTIONS> -X <ARGS> : submit a pig job, everything after '-X' are pass-through parameters to pig
+                -auth <arg>           select authentication type [SIMPLE|KERBEROS]
                 -doas <arg>           doAs user, impersonates as the specified user.
                 -config <arg>         job configuration file '.properties'
                 -D <property=value>   set/override value for given property
@@ -95,6 +100,9 @@ usage:
 
 The =oozie= CLI automatically perform authentication if the Oozie server requests it. By default it supports both
 pseudo/simple authentication and Kerberos HTTP SPNEGO authentication.
+
+To perform a specific authentication, the =auth= option with authentication type requests Oozie client to run the
+specified authentication mechanism only. Oozie client provides two types =simple= and =kerberos= which supports =pseudo/simple= and =Kerberos=.
 
 For pseudo/simple authentication the =oozie= CLI uses the user name of the current OS user.
 

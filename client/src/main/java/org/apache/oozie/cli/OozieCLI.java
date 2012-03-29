@@ -119,6 +119,8 @@ public class OozieCLI {
     public static final String RERUN_REFRESH_OPTION = "refresh";
     public static final String RERUN_NOCLEANUP_OPTION = "nocleanup";
 
+    public static final String AUTH_OPTION = "auth";
+
     public static final String VERBOSE_OPTION = "verbose";
     public static final String VERBOSE_DELIMITER = "\t";
 
@@ -171,6 +173,20 @@ public class OozieCLI {
         return OOZIE_HELP;
     }
 
+    /**
+     * Add authentication specific options to oozie cli
+     *
+     * @param options the collection of options to add auth options
+     */
+    protected void addAuthOptions(Options options) {
+        Option auth = new Option(AUTH_OPTION, true, "select authentication type [SIMPLE|KERBEROS]");
+        options.addOption(auth);
+    }
+
+    /**
+     * Create option for command line option 'admin'
+     * @return admin options
+     */
     protected Options createAdminOptions() {
         Option oozie = new Option(OOZIE_OPTION, true, "Oozie URL");
         Option system_mode = new Option(SYSTEM_MODE_OPTION, true,
@@ -188,9 +204,14 @@ public class OozieCLI {
         group.addOption(version);
         group.addOption(queuedump);
         adminOptions.addOptionGroup(group);
+        addAuthOptions(adminOptions);
         return adminOptions;
     }
 
+    /**
+     * Create option for command line option 'job'
+     * @return job options
+     */
     protected Options createJobOptions() {
         Option oozie = new Option(OOZIE_OPTION, true, "Oozie URL");
         Option config = new Option(CONFIG_OPTION, true, "job configuration file '.xml' or '.properties'");
@@ -263,9 +284,14 @@ public class OozieCLI {
         jobOptions.addOption(rerun_refresh);
         jobOptions.addOption(rerun_nocleanup);
         jobOptions.addOptionGroup(actions);
+        addAuthOptions(jobOptions);
         return jobOptions;
     }
 
+    /**
+     * Create option for command line option 'jobs'
+     * @return jobs options
+     */
     protected Options createJobsOptions() {
         Option oozie = new Option(OOZIE_OPTION, true, "Oozie URL");
         Option start = new Option(OFFSET_OPTION, true, "jobs offset (default '1')");
@@ -289,9 +315,14 @@ public class OozieCLI {
         jobsOptions.addOption(filter);
         jobsOptions.addOption(jobtype);
         jobsOptions.addOption(verbose);
+        addAuthOptions(jobsOptions);
         return jobsOptions;
     }
 
+    /**
+     * Create option for command line option 'sla'
+     * @return sla options
+     */
     protected Options createSlaOptions() {
         Option oozie = new Option(OOZIE_OPTION, true, "Oozie URL");
         Option start = new Option(OFFSET_OPTION, true, "start offset (default '0')");
@@ -302,9 +333,15 @@ public class OozieCLI {
         slaOptions.addOption(start);
         slaOptions.addOption(len);
         slaOptions.addOption(oozie);
+        addAuthOptions(slaOptions);
         return slaOptions;
     }
 
+    /**
+     * Create option for command line option 'pig'
+     * @return pig options
+     */
+    @SuppressWarnings("static-access")
     protected Options createPigOptions() {
         Option oozie = new Option(OOZIE_OPTION, true, "Oozie URL");
         Option config = new Option(CONFIG_OPTION, true, "job configuration file '.properties'");
@@ -318,6 +355,7 @@ public class OozieCLI {
         pigOptions.addOption(config);
         pigOptions.addOption(property);
         pigOptions.addOption(pigFile);
+        addAuthOptions(pigOptions);
         return pigOptions;
     }
 
@@ -540,6 +578,17 @@ public class OozieCLI {
     }
 
     /**
+     * Get auth option from command line
+     *
+     * @param commandLine the command line object
+     * @return auth option
+     */
+    protected String getAuthOption(CommandLine commandLine) {
+        String authOpt = commandLine.getOptionValue(AUTH_OPTION);
+        return authOpt;
+    }
+
+    /**
      * Create a OozieClient.
      * <p/>
      * It injects any '-Dheader:' as header to the the {@link org.apache.oozie.client.OozieClient}.
@@ -562,7 +611,7 @@ public class OozieCLI {
      * @throws OozieCLIException thrown if the XOozieClient could not be configured.
      */
     protected XOozieClient createXOozieClient(CommandLine commandLine) throws OozieCLIException {
-        XOozieClient wc = new AuthOozieClient(getOozieUrl(commandLine));
+        XOozieClient wc = new AuthOozieClient(getOozieUrl(commandLine), getAuthOption(commandLine));
         addHeader(wc);
         setDebugMode(wc);
         return wc;

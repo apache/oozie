@@ -17,11 +17,6 @@
  */
 package org.apache.oozie.client;
 
-import org.apache.hadoop.security.authentication.client.AuthenticatedURL;
-import org.apache.hadoop.security.authentication.client.AuthenticationException;
-import org.apache.hadoop.security.authentication.client.Authenticator;
-import org.apache.hadoop.security.authentication.client.KerberosAuthenticator;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -30,6 +25,14 @@ import java.io.IOException;
 import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.hadoop.security.authentication.client.AuthenticatedURL;
+import org.apache.hadoop.security.authentication.client.AuthenticationException;
+import org.apache.hadoop.security.authentication.client.Authenticator;
+import org.apache.hadoop.security.authentication.client.KerberosAuthenticator;
+import org.apache.hadoop.security.authentication.client.PseudoAuthenticator;
 
 /**
  * This subclass of {@link XOozieClient} supports Kerberos HTTP SPNEGO and simple authentication.
@@ -54,13 +57,30 @@ public class AuthOozieClient extends XOozieClient {
      */
     public static final File AUTH_TOKEN_CACHE_FILE = new File(System.getProperty("user.home"), ".oozie-auth-token");
 
+    public static enum AuthType {
+        KERBEROS, SIMPLE
+    }
+
+    private String authOption = null;
+
     /**
      * Create an instance of the AuthOozieClient.
      *
      * @param oozieUrl the Oozie URL
      */
     public AuthOozieClient(String oozieUrl) {
+        this(oozieUrl, null);
+    }
+
+    /**
+     * Create an instance of the AuthOozieClient.
+     *
+     * @param oozieUrl the Oozie URL
+     * @param authOption the auth option
+     */
+    public AuthOozieClient(String oozieUrl, String authOption) {
         super(oozieUrl);
+        this.authOption = authOption;
     }
 
     /**
@@ -117,8 +137,8 @@ public class AuthOozieClient extends XOozieClient {
             writeAuthToken(currentToken);
         }
         HttpURLConnection conn = super.createConnection(url, method);
-
         AuthenticatedURL.injectToken(conn, currentToken);
+
         return conn;
     }
 
@@ -148,7 +168,7 @@ public class AuthOozieClient extends XOozieClient {
     }
 
     /**
-     * Write the current authenthication token to the user home directory.
+     * Write the current authentication token to the user home directory.authOption
      * <p/>
      * The file is written with user only read/write permissions.
      * <p/>
@@ -166,7 +186,7 @@ public class AuthOozieClient extends XOozieClient {
             AUTH_TOKEN_CACHE_FILE.setReadable(true, true);
             AUTH_TOKEN_CACHE_FILE.setWritable(true, true);
         }
-        catch (Exception ex) {
+        catch (IOException ioe) {
             // if case of any error we just delete the cache, if user-only
             // write permissions are not properly set a security exception
             // is thrown and the file will be deleted.
@@ -177,20 +197,54 @@ public class AuthOozieClient extends XOozieClient {
     /**
      * Return the Hadoop-auth Authenticator to use.
      * <p/>
-     * It looks for value of the {@link #AUTHENTICATOR_CLASS_SYS_PROP} Java system property, if not set it uses
+     * It first looks for value of command line option 'auth', if not set it continues to check
+     * {@link #AUTHENTICATOR_CLASS_SYS_PROP} Java system property for Authenticator.
+     * <p/>
+     * It the value of the {@link #AUTHENTICATOR_CLASS_SYS_PROP} is not set it uses
      * Hadoop-auth <code>KerberosAuthenticator</code> which supports both Kerberos HTTP SPNEGO and Pseudo/simple
      * authentication.
      *
      * @return the Authenticator to use, <code>NULL</code> if none.
      *
-     * @throws OozieClientException thrown if the authenticator could not be instatiated.
+     * @throws OozieClientException thrown if the authenticator could not be instantiated.
      */
     protected Authenticator getAuthenticator() throws OozieClientException {
+        if (authOption != null) {
+            try {
+                Class<? extends Authenticator> authClass = getAuthenticators().get(authOption.toUpperCase());
+                if (authClass == null) {
+                    throw new OozieClientException(OozieClientException.AUTHENTICATION,
+                            "Authenticator class not found [" + authClass + "]");
+                }
+                return authClass.newInstance();
+            }
+            catch (IllegalArgumentException iae) {
+                throw new OozieClientException(OozieClientException.AUTHENTICATION, "Invalid options provided for auth: " + authOption
+                        + ", (" + AuthType.KERBEROS + " or " + AuthType.SIMPLE + " expected.)");
+            }
+            catch (InstantiationException ex) {
+                throw new OozieClientException(OozieClientException.AUTHENTICATION,
+                        "Could not instantiate Authenticator for option [" + authOption + "], " +
+                        ex.getMessage(), ex);
+            }
+            catch (IllegalAccessException ex) {
+                throw new OozieClientException(OozieClientException.AUTHENTICATION,
+                        "Could not instantiate Authenticator for option [" + authOption + "], " +
+                        ex.getMessage(), ex);
+            }
+
+        }
+
         String className = System.getProperty(AUTHENTICATOR_CLASS_SYS_PROP, KerberosAuthenticator.class.getName());
         if (className != null) {
             try {
                 ClassLoader cl = Thread.currentThread().getContextClassLoader();
-                Class klass = (cl != null) ? cl.loadClass(className) : getClass().getClassLoader().loadClass(className);
+                Class<? extends Object> klass = (cl != null) ? cl.loadClass(className) :
+                    getClass().getClassLoader().loadClass(className);
+                if (klass == null) {
+                    throw new OozieClientException(OozieClientException.AUTHENTICATION,
+                            "Authenticator class not found [" + className + "]");
+                }
                 return (Authenticator) klass.newInstance();
             }
             catch (Exception ex) {
@@ -203,6 +257,33 @@ public class AuthOozieClient extends XOozieClient {
             throw new OozieClientException(OozieClientException.AUTHENTICATION,
                                            "Authenticator class not found [" + className + "]");
         }
+    }
+
+    /**
+     * Get the map for classes of Authenticator.
+     * Default values are:
+     * null -> KerberosAuthenticator
+     * SIMPLE -> PseudoAuthenticator
+     * KERBEROS -> KerberosAuthenticator
+     *
+     * @return the map for classes of Authenticator
+     * @throws OozieClientException
+     */
+    protected Map<String, Class<? extends Authenticator>> getAuthenticators() {
+        Map<String, Class<? extends Authenticator>> authClasses = new HashMap<String, Class<? extends Authenticator>>();
+        authClasses.put(AuthType.KERBEROS.toString(), KerberosAuthenticator.class);
+        authClasses.put(AuthType.SIMPLE.toString(), PseudoAuthenticator.class);
+        authClasses.put(null, KerberosAuthenticator.class);
+        return authClasses;
+    }
+
+    /**
+     * Get authOption
+     *
+     * @return the authOption
+     */
+    public String getAuthOption() {
+        return authOption;
     }
 
 }

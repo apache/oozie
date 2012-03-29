@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,7 +47,7 @@ public class XOozieClient extends OozieClient {
     public static final String FILES = "oozie.files";
 
     public static final String ARCHIVES = "oozie.archives";
-    
+
     public static final String IS_PROXY_SUBMISSION = "oozie.proxysubmission";
 
     protected XOozieClient() {
@@ -115,7 +115,7 @@ public class XOozieClient extends OozieClient {
             String newLibPath = NN + libPath;
             conf.setProperty(LIBPATH, newLibPath);
         }
-        
+
         conf.setProperty(IS_PROXY_SUBMISSION, "true");
     }
 
@@ -188,7 +188,7 @@ public class XOozieClient extends OozieClient {
      * set LIBPATH for HTTP submission job.
      *
      * @param conf Configuration object.
-     * @param path lib HDFS path.
+     * @param pathStr lib HDFS path.
      */
     public void setLib(Properties conf, String pathStr) {
         conf.setProperty(LIBPATH, pathStr);

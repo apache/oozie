@@ -321,6 +321,15 @@
         </description>
     </property>
 
+    <property>
+        <name>oozie.authentication.kerberos.name.rules</name>
+        <value>DEFAULT</value>
+        <description>
+            The kerberos names rules is to resolve kerberos principal names, refer to Hadoop's
+            KerberosName for more details.
+        </description>
+    </property>
+
     <!-- Proxyuser Configuration -->
 
     <!--
