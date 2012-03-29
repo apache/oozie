@@ -370,9 +370,9 @@
 	<property>
 		<name>oozie.service.coord.default.concurrency
 		</name>
-		<value>-1</value>
-		<description>Default concurrency for a coordinator job to determine how many maximum action should 
-		be executed at the same time.</description>
+		<value>1</value>
+		<description>Default concurrency for a coordinator job to determine how many maximum action should
+		be executed at the same time. -1 means infinite concurrency.</description>
 	</property>
 
     <property>

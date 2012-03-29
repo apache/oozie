@@ -609,7 +609,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
 
         val = resolveTagContents("concurrency", eAppXml.getChild("controls", eAppXml.getNamespace()), evalNofuncs);
         if (val == null || val.isEmpty()) {
-            val = Services.get().getConf().get(CONF_DEFAULT_CONCURRENCY, "-1");
+            val = Services.get().getConf().get(CONF_DEFAULT_CONCURRENCY, "1");
         }
         ival = ParamChecker.checkInteger(val, "concurrency");
         coordJob.setConcurrency(ival);
