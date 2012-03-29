@@ -193,6 +193,20 @@ public class JavaActionExecutor extends ActionExecutor {
         return conf;
     }
 
+    private void injectLauncherProperties(Configuration srcConf, Configuration launcherConf) {
+        for (Map.Entry<String, String> entry : srcConf) {
+            if (entry.getKey().startsWith("oozie.launcher.")) {
+                String name = entry.getKey().substring("oozie.launcher.".length());
+                String value = entry.getValue();
+                // setting original KEY
+                launcherConf.set(entry.getKey(), value);
+                // setting un-prefixed key (to allow Hadoop job config
+                // for the launcher job
+                launcherConf.set(name, value);
+            }
+        }
+    }
+
     Configuration setupLauncherConf(Configuration conf, Element actionXml, Path appPath, Context context)
             throws ActionExecutorException {
         try {
@@ -203,18 +217,11 @@ public class JavaActionExecutor extends ActionExecutor {
                 XConfiguration inlineConf = new XConfiguration(new StringReader(strConf));
 
                 XConfiguration launcherConf = new XConfiguration();
-                for (Map.Entry<String, String> entry : inlineConf) {
-                    if (entry.getKey().startsWith("oozie.launcher.")) {
-                        String name = entry.getKey().substring("oozie.launcher.".length());
-                        String value = entry.getValue();
-                        // setting original KEY
-                        launcherConf.set(entry.getKey(), value);
-                        // setting un-prefixed key (to allow Hadoop job config
-                        // for the launcher job
-                        launcherConf.set(name, value);
-                    }
-                }
-                checkForDisallowedProps(launcherConf, "inline launcher configuration");
+                HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
+                XConfiguration actionDefaultConf = has.createActionDefaultConf(conf.get(HADOOP_JOB_TRACKER), getType());
+                injectLauncherProperties(actionDefaultConf, launcherConf);
+                injectLauncherProperties(inlineConf, launcherConf);
+                checkForDisallowedProps(launcherConf, "launcher configuration");
                 XConfiguration.copy(launcherConf, conf);
             }
             return conf;
@@ -246,6 +253,9 @@ public class JavaActionExecutor extends ActionExecutor {
     Configuration setupActionConf(Configuration actionConf, Context context, Element actionXml, Path appPath)
             throws ActionExecutorException {
         try {
+            HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
+            XConfiguration actionDefaults = has.createActionDefaultConf(actionConf.get(HADOOP_JOB_TRACKER), getType());
+            XConfiguration.injectDefaults(actionDefaults, actionConf);
             Namespace ns = actionXml.getNamespace();
             Element e = actionXml.getChild("job-xml", ns);
             if (e != null) {

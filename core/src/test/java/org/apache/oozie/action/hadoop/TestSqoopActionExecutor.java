@@ -95,7 +95,7 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
             "<arg>I</arg>" +
             "</sqoop>";
 
-    protected void setSystemProps() {
+    protected void setSystemProps() throws Exception {
         super.setSystemProps();
         setSystemProperty("oozie.service.ActionService.executor.ext.classes", SqoopActionExecutor.class.getName());
     }

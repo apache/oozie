@@ -50,7 +50,7 @@ import java.util.List;
 public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
 
     @Override
-    protected void setSystemProps() {
+    protected void setSystemProps() throws Exception {
         super.setSystemProps();
         setSystemProperty("oozie.service.ActionService.executor.classes", MapReduceActionExecutor.class.getName());
         setSystemProperty("oozie.credentials.credentialclasses", "cred=org.apache.oozie.action.hadoop.CredentialForTest");

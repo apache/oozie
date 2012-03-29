@@ -58,6 +58,7 @@ public class HadoopAccessorService implements Service {
     public static final String JOB_TRACKER_WHITELIST = CONF_PREFIX + "jobTracker.whitelist";
     public static final String NAME_NODE_WHITELIST = CONF_PREFIX + "nameNode.whitelist";
     public static final String HADOOP_CONFS = CONF_PREFIX + "hadoop.configurations";
+    public static final String ACTION_CONFS = CONF_PREFIX + "action.configurations";
     public static final String KERBEROS_AUTH_ENABLED = CONF_PREFIX + "kerberos.enabled";
     public static final String KERBEROS_KEYTAB = CONF_PREFIX + "keytab.file";
     public static final String KERBEROS_PRINCIPAL = CONF_PREFIX + "kerberos.principal";
@@ -67,6 +68,8 @@ public class HadoopAccessorService implements Service {
     private Set<String> jobTrackerWhitelist = new HashSet<String>();
     private Set<String> nameNodeWhitelist = new HashSet<String>();
     private Map<String, Configuration> hadoopConfigs = new HashMap<String, Configuration>();
+    private Map<String, File> actionConfigDirs = new HashMap<String, File>();
+    private Map<String, Map<String, XConfiguration>> actionConfigs = new HashMap<String, Map<String, XConfiguration>>();
 
     private ConcurrentMap<String, UserGroupInformation> userUgiMap;
 
@@ -111,6 +114,7 @@ public class HadoopAccessorService implements Service {
         userUgiMap = new ConcurrentHashMap<String, UserGroupInformation>();
 
         loadHadoopConfigs(conf);
+        preLoadActionConfigs(conf);
     }
 
     private void kerberosInit(Configuration serviceConf) throws ServiceException {
@@ -157,35 +161,57 @@ public class HadoopAccessorService implements Service {
         return hadoopConf;
     }
 
-    private void loadHadoopConfigs(Configuration serviceConf) throws ServiceException {
-        try {
-            File configDir = new File(ConfigurationService.getConfigurationDirectory());
-            String[] confDefs = serviceConf.getStrings(HADOOP_CONFS, "*=hadoop-conf");
-            for (String confDef : confDefs) {
-                if (confDef.trim().length() > 0) {
-                    String[] parts = confDef.split("=");
-                    if (parts.length == 2) {
-                        String hostPort = parts[0];
-                        String confDir = parts[1];
-                        File dir = new File(confDir);
-                        if (!dir.isAbsolute()) {
-                            dir = new File(configDir, confDir);
-                        }
-                        if (dir.exists()) {
-                            Configuration conf = loadHadoopConf(dir);
-                            hadoopConfigs.put(hostPort.toLowerCase(), conf);
-                        }
-                        else {
-                            throw new ServiceException(ErrorCode.E0100, getClass().getName(),
-                                                       "could not find hadoop configuration directory: " +
-                                                       dir.getAbsolutePath());
-                        }
+    private Map<String, File> parseConfigDirs(String[] confDefs, String type) throws ServiceException, IOException {
+        Map<String, File> map = new HashMap<String, File>();
+        File configDir = new File(ConfigurationService.getConfigurationDirectory());
+        for (String confDef : confDefs) {
+            if (confDef.trim().length() > 0) {
+                String[] parts = confDef.split("=");
+                if (parts.length == 2) {
+                    String hostPort = parts[0];
+                    String confDir = parts[1];
+                    File dir = new File(confDir);
+                    if (!dir.isAbsolute()) {
+                        dir = new File(configDir, confDir);
+                    }
+                    if (dir.exists()) {
+                        map.put(hostPort.toLowerCase(), dir);
                     }
                     else {
                         throw new ServiceException(ErrorCode.E0100, getClass().getName(),
-                                                   "Incorrect hadoop configuration definition: " + confDef);
+                                                   "could not find " + type + " configuration directory: " +
+                                                   dir.getAbsolutePath());
                     }
                 }
+                else {
+                    throw new ServiceException(ErrorCode.E0100, getClass().getName(),
+                                               "Incorrect " + type + " configuration definition: " + confDef);
+                }
+            }
+        }
+        return map;
+    }
+
+    private void loadHadoopConfigs(Configuration serviceConf) throws ServiceException {
+        try {
+            Map<String, File> map = parseConfigDirs(serviceConf.getStrings(HADOOP_CONFS, "*=hadoop-conf"), "hadoop");
+            for (Map.Entry<String, File> entry : map.entrySet()) {
+                hadoopConfigs.put(entry.getKey(), loadHadoopConf(entry.getValue()));
+            }
+        }
+        catch (ServiceException ex) {
+            throw ex;
+        }
+        catch (Exception ex) {
+            throw new ServiceException(ErrorCode.E0100, getClass().getName(), ex.getMessage(), ex);
+        }
+    }
+
+    private void preLoadActionConfigs(Configuration serviceConf) throws ServiceException {
+        try {
+            actionConfigDirs = parseConfigDirs(serviceConf.getStrings(ACTION_CONFS, "*=hadoop-conf"), "action");
+            for (String hostport : actionConfigDirs.keySet()) {
+                actionConfigs.put(hostport, new ConcurrentHashMap<String, XConfiguration>());
             }
         }
         catch (ServiceException ex) {
@@ -213,11 +239,67 @@ public class HadoopAccessorService implements Service {
         return ugi;
     }
 
+    /**
+     * Creates a JobConf using the site configuration for the specified hostname:port.
+     * <p/>
+     * If the specified hostname:port is not defined it falls back to the '*' site
+     * configuration if available. If the '*' site configuration is not available,
+     * the JobConf has all Hadoop defaults.
+     *
+     * @param hostPort hostname:port to lookup Hadoop site configuration.
+     * @return a JobConf with the corresponding site configuration for hostPort.
+     */
     public JobConf createJobConf(String hostPort) {
         JobConf jobConf = new JobConf();
         XConfiguration.copy(getConfiguration(hostPort), jobConf);
         jobConf.setBoolean(OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED, true);
         return jobConf;
+    }
+
+    private XConfiguration loadActionConf(String hostPort, String action) {
+        File dir = actionConfigDirs.get(hostPort);
+        XConfiguration actionConf = new XConfiguration();
+        if (dir != null) {
+            File actionConfFile = new File(dir, action + ".xml");
+            if (actionConfFile.exists()) {
+                try {
+                    actionConf = new XConfiguration(new FileInputStream(actionConfFile));
+                }
+                catch (IOException ex) {
+                    XLog.getLog(getClass()).warn("Could not read file [{0}] for action [{1}] configuration for hostPort [{2}]",
+                                                 actionConfFile.getAbsolutePath(), action, hostPort);
+                }
+            }
+        }
+        return actionConf;
+    }
+
+    /**
+     * Returns a Configuration containing any defaults for an action for a particular cluster.
+     * <p/>
+     * This configuration is used as default for the action configuration and enables cluster
+     * level default values per action.
+     *
+     * @param hostPort hostname"port to lookup the action default confiugration.
+     * @param action action name.
+     * @return the default configuration for the action for the specified cluster.
+     */
+    public XConfiguration createActionDefaultConf(String hostPort, String action) {
+        hostPort = (hostPort != null) ? hostPort.toLowerCase() : null;
+        Map<String, XConfiguration> hostPortActionConfigs = actionConfigs.get(hostPort);
+        if (hostPortActionConfigs == null) {
+            hostPortActionConfigs = actionConfigs.get("*");
+            hostPort = "*";
+        }
+        XConfiguration actionConf = hostPortActionConfigs.get(action);
+        if (actionConf == null) {
+            // doing lazy loading as we don't know upfront all actions, no need to synchronize
+            // as it is a read operation an in case of a race condition loading and inserting
+            // into the Map is idempotent and the action-config Map is a ConcurrentHashMap
+            actionConf = loadActionConf(hostPort, action);
+            hostPortActionConfigs.put(action, actionConf);
+        }
+        return new XConfiguration(actionConf.toProperties());
     }
 
     private Configuration getConfiguration(String hostPort) {

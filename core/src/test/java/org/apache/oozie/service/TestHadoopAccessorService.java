@@ -34,11 +34,17 @@ public class TestHadoopAccessorService extends XTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         new File(getTestCaseConfDir(), "hadoop-confx").mkdir();
+        new File(getTestCaseConfDir(), "action-confx").mkdir();
         InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("test-hadoop-config.xml");
         OutputStream os = new FileOutputStream(new File(getTestCaseConfDir() + "/hadoop-confx", "core-site.xml"));
         IOUtils.copyStream(is, os);
+        is = Thread.currentThread().getContextClassLoader().getResourceAsStream("test-action-config.xml");
+        os = new FileOutputStream(new File(getTestCaseConfDir() + "/action-confx", "action.xml"));
+        IOUtils.copyStream(is, os);
         setSystemProperty("oozie.service.HadoopAccessorService.hadoop.configurations",
                           "*=hadoop-conf,jt=hadoop-confx");
+        setSystemProperty("oozie.service.HadoopAccessorService.action.configurations",
+                          "*=hadoop-conf,jt=action-confx");
         if (System.getProperty("oozie.test.hadoop.security", "simple").equals("kerberos")) {
             setSystemProperty("oozie.service.HadoopAccessorService.kerberos.enabled", "true");
             setSystemProperty("oozie.service.HadoopAccessorService.keytab.file", getKeytabFile());
@@ -60,7 +66,14 @@ public class TestHadoopAccessorService extends XTestCase {
         assertNotNull(has.createJobConf("*"));
         assertNotNull(has.createJobConf("jt"));
         assertEquals("bar", has.createJobConf("jt").get("foo"));
+        assertNotNull(has.createActionDefaultConf("*", "action"));
+        assertNotNull(has.createActionDefaultConf("jt", "action"));
+        assertNotNull(has.createActionDefaultConf("jt", "actionx"));
+        assertNotNull(has.createActionDefaultConf("jtx", "action"));
+        assertEquals("action.bar", has.createActionDefaultConf("jt", "action").get("action.foo"));
+        assertNull(has.createActionDefaultConf("*", "action").get("action.foo"));
     }
+
     public void testAccessor() throws Exception {
         Services services = Services.get();
         HadoopAccessorService has = services.get(HadoopAccessorService.class);

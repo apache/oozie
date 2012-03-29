@@ -48,7 +48,7 @@ import java.util.List;
 public class TestMapReduceActionError extends ActionExecutorTestCase {
 
     @Override
-    protected void setSystemProps() {
+    protected void setSystemProps() throws Exception {
         super.setSystemProps();
         setSystemProperty("oozie.service.ActionService.executor.classes", MapReduceActionExecutor.class.getName());
     }

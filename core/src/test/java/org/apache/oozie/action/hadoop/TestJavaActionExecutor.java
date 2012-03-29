@@ -19,6 +19,7 @@ package org.apache.oozie.action.hadoop;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringReader;
@@ -67,9 +68,15 @@ import org.jdom.Element;
 public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
     @Override
-    protected void setSystemProps() {
+    protected void setSystemProps() throws Exception {
         super.setSystemProps();
         setSystemProperty("oozie.service.ActionService.executor.classes", JavaActionExecutor.class.getName());
+        setSystemProperty("oozie.service.HadoopAccessorService.action.configurations",
+                          "*=hadoop-conf," + getJobTrackerUri() + "=action-conf");
+        new File(getTestCaseConfDir(), "action-conf").mkdir();
+        InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("test-action-config.xml");
+        OutputStream os = new FileOutputStream(new File(getTestCaseConfDir() + "/action-conf", "java.xml"));
+        IOUtils.copyStream(is, os);
     }
 
     public void testLauncherJar() throws Exception {
@@ -187,6 +194,8 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertNull(conf.get("b"));
         assertNull(conf.get("oozie.launcher.d"));
         assertNull(conf.get("d"));
+        assertNull(conf.get("action.foo"));
+        assertEquals("action.barbar", conf.get("action.foofoo"));
 
         conf = ae.createBaseHadoopConf(context, actionXml);
         ae.setupActionConf(conf, context, actionXml, getFsTestCaseDir());
@@ -195,6 +204,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertEquals("BB", conf.get("b"));
         assertEquals("C", conf.get("c"));
         assertEquals("D", conf.get("oozie.launcher.d"));
+        assertEquals("action.bar", conf.get("action.foo"));
 
         conf = ae.createBaseHadoopConf(context, actionXml);
         ae.setupLauncherConf(conf, actionXml, getFsTestCaseDir(), context);

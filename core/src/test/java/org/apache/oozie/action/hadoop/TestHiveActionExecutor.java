@@ -61,7 +61,7 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
     private static final String OUTPUT_DIRNAME = "output";
     private static final String DATA_FILENAME = "data.txt";
 
-    protected void setSystemProps() {
+    protected void setSystemProps() throws Exception {
         super.setSystemProps();
         setSystemProperty("oozie.service.ActionService.executor.classes",
                 HiveActionExecutor.class.getName());

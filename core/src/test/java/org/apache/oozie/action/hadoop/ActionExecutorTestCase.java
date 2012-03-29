@@ -63,7 +63,7 @@ public abstract class ActionExecutorTestCase extends XFsTestCase {
         new Services().init();
     }
 
-    protected void setSystemProps() {
+    protected void setSystemProps() throws Exception {
     }
 
     @Override

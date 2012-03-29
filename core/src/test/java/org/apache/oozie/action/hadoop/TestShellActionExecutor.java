@@ -48,7 +48,7 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
     private static final String PERL_SCRIPT_CONTENT = "print \"MY_VAR=TESTING\";";
 
     @Override
-    protected void setSystemProps() {
+    protected void setSystemProps() throws Exception {
         super.setSystemProps();
         setSystemProperty("oozie.service.ActionService.executor.classes", ShellActionExecutor.class.getName());
     }

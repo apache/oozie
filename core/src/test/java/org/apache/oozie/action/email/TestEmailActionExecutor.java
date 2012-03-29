@@ -43,7 +43,7 @@ public class TestEmailActionExecutor extends ActionExecutorTestCase {
     }
 
     @Override
-    protected void setSystemProps() {
+    protected void setSystemProps() throws Exception {
         super.setSystemProps();
         setSystemProperty("oozie.service.ActionService.executor.classes", EmailActionExecutor.class.getName());
     }

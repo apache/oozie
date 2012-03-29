@@ -33,7 +33,7 @@ import java.text.MessageFormat;
 
 public class TestFsActionExecutor extends ActionExecutorTestCase {
 
-    protected void setSystemProps() {
+    protected void setSystemProps() throws Exception {
         super.setSystemProps();
         setSystemProperty("oozie.service.ActionService.executor.classes", FsActionExecutor.class.getName());
     }

@@ -67,7 +67,7 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
             "store B into '$OUT' USING PigStorage();\n";
 
     @Override
-    protected void setSystemProps() {
+    protected void setSystemProps() throws Exception {
         super.setSystemProps();
         setSystemProperty("oozie.service.ActionService.executor.classes", PigActionExecutor.class.getName());
     }
