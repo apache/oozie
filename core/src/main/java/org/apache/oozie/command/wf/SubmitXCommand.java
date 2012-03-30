@@ -168,7 +168,7 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
 
             LogUtils.setLogInfo(workflow, logInfo);
             LOG = XLog.resetPrefix(LOG);
-            LOG.debug("Workflow record created, Status [{1}]", workflow.getStatus());
+            LOG.debug("Workflow record created, Status [{0}]", workflow.getStatus());
             Element wfElem = XmlUtils.parseXml(app.getDefinition());
             ELEvaluator evalSla = createELEvaluatorForGroup(conf, "wf-sla-submit");
             String jobSlaXml = verifySlaElements(wfElem, evalSla);
