@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -237,11 +237,15 @@ public class XConfiguration extends Configuration {
     private void parse(InputStream is) throws IOException {
         try {
             DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
+            // support for includes in the xml file
+            docBuilderFactory.setNamespaceAware(true);
+            docBuilderFactory.setXIncludeAware(true);
             // ignore all comments inside the xml file
             docBuilderFactory.setIgnoringComments(true);
             DocumentBuilder builder = docBuilderFactory.newDocumentBuilder();
             Document doc = builder.parse(is);
             parseDocument(doc);
+
         }
         catch (SAXException e) {
             throw new IOException(e);
@@ -255,6 +259,9 @@ public class XConfiguration extends Configuration {
     private void parse(Reader reader) throws IOException {
         try {
             DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
+            // support for includes in the xml file
+            docBuilderFactory.setNamespaceAware(true);
+            docBuilderFactory.setXIncludeAware(true);
             // ignore all comments inside the xml file
             docBuilderFactory.setIgnoringComments(true);
             DocumentBuilder builder = docBuilderFactory.newDocumentBuilder();
@@ -271,11 +278,16 @@ public class XConfiguration extends Configuration {
 
     // Canibalized from Hadoop <code>Configuration.loadResource()</code>.
     private void parseDocument(Document doc) throws IOException {
+        Element root = doc.getDocumentElement();
+        if (!"configuration".equals(root.getTagName())) {
+            throw new IOException("bad conf file: top-level element not <configuration>");
+        }
+        processNodes(root);
+    }
+
+    // Canibalized from Hadoop <code>Configuration.loadResource()</code>.
+    private void processNodes(Element root) throws IOException {
         try {
-            Element root = doc.getDocumentElement();
-            if (!"configuration".equals(root.getTagName())) {
-                throw new IOException("bad conf file: top-level element not <configuration>");
-            }
             NodeList props = root.getChildNodes();
             for (int i = 0; i < props.getLength(); i++) {
                 Node propNode = props.item(i);
@@ -283,6 +295,10 @@ public class XConfiguration extends Configuration {
                     continue;
                 }
                 Element prop = (Element) propNode;
+                if (prop.getTagName().equals("configuration")) {
+                    processNodes(prop);
+                    continue;
+                }
                 if (!"property".equals(prop.getTagName())) {
                     throw new IOException("bad conf file: element not <property>");
                 }
@@ -302,7 +318,6 @@ public class XConfiguration extends Configuration {
                         value = ((Text) field.getFirstChild()).getData();
                     }
                 }
-
                 if (attr != null && value != null) {
                     set(attr, value);
                 }

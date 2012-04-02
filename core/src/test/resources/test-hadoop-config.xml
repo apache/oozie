@@ -24,4 +24,9 @@
         <value>bar</value>
     </property>
 
+    <property>
+        <name>abc</name>
+        <value>def</value>
+    </property>
+
 </configuration>

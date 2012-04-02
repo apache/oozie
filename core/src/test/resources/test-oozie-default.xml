@@ -16,7 +16,9 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<configuration>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
+ <configuration xmlns:xi="http://www.w3.org/2001/XInclude">
 
     <property>
         <name>oozie.dummy</name>
