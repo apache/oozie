@@ -1379,7 +1379,7 @@
 
     <property>
         <name>oozie.service.HadoopAccessorService.action.configurations</name>
-        <value>*=hadoop-conf</value>
+        <value>*=action-conf</value>
         <description>
             Comma separated AUTHORITY=ACTION_CONF_DIR, where AUTHORITY is the HOST:PORT of
             the Hadoop MapReduce service (JobTracker, YARN). The wildcard '*' configuration is

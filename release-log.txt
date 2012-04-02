@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-798 it would be nice to keep action specific configs in action-conf instead of hadoop-conf (rvs via tucu)
 OOZIE-790 default concurrency value is inconsistent between doc and implementation.(Mohammad)
 OOZIE-793 remove HiveMain check for HADOOP_HOME (tucu)
 OOZIE-792 add default action configs per cluster (tucu)
