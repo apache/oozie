@@ -65,6 +65,7 @@ public abstract class XFsTestCase extends XTestCase {
 
 
         conf.set("oozie.service.HadoopAccessorService.hadoop.configurations", "*=hadoop-conf");
+        conf.set("oozie.service.HadoopAccessorService.action.configurations", "*=action-conf");
 
         has = new HadoopAccessorService();
         has.init(conf);

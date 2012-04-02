@@ -255,6 +255,8 @@ public abstract class XTestCase extends TestCase {
 
         File hadoopConfDir = new File(testCaseConfDir, "hadoop-conf");
         hadoopConfDir.mkdir();
+        File actionConfDir = new File(testCaseConfDir, "action-conf");
+        actionConfDir.mkdir();
         source = new File(OOZIE_SRC_DIR, "core/src/test/resources/hadoop-config.xml");
         target = new File(hadoopConfDir, "hadoop-site.xml");
         IOUtils.copyStream(new FileInputStream(source), new FileOutputStream(target));
