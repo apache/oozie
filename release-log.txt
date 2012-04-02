@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-794: oozie job -info -filter should error out on bundle job and workflow job (virag via Mohammad)
 OOZIE-799: Testcases failing due to missing action-conf dir. (Virag via Mohammad)
 OOZIE-798 it would be nice to keep action specific configs in action-conf instead of hadoop-conf (rvs via tucu)
 OOZIE-790 default concurrency value is inconsistent between doc and implementation.(Mohammad)

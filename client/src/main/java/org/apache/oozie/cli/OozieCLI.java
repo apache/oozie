@@ -618,6 +618,7 @@ public class OozieCLI {
     }
 
     protected void setDebugMode(OozieClient wc) {
+
         String debug = System.getenv(ENV_OOZIE_DEBUG);
         if (debug != null && !debug.isEmpty()) {
             int debugVal = 0;
@@ -751,6 +752,10 @@ public class OozieCLI {
             }
             else if (options.contains(INFO_OPTION)) {
                 if (commandLine.getOptionValue(INFO_OPTION).endsWith("-B")) {
+                    String filter = commandLine.getOptionValue(FILTER_OPTION);
+                    if (filter != null) {
+                        throw new OozieCLIException("Filter option is currently not supported for a Bundle job");
+                    }
                     printBundleJob(wc.getBundleJobInfo(commandLine.getOptionValue(INFO_OPTION)), options
                             .contains(LOCAL_TIME_OPTION), options.contains(VERBOSE_OPTION));
                 }
@@ -764,14 +769,26 @@ public class OozieCLI {
                             .contains(LOCAL_TIME_OPTION), options.contains(VERBOSE_OPTION));
                 }
                 else if (commandLine.getOptionValue(INFO_OPTION).contains("-C@")) {
+                    String filter = commandLine.getOptionValue(FILTER_OPTION);
+                    if (filter != null) {
+                        throw new OozieCLIException("Filter option is not supported for a Coordinator action");
+                    }
                     printCoordAction(wc.getCoordActionInfo(commandLine.getOptionValue(INFO_OPTION)), options
                             .contains(LOCAL_TIME_OPTION));
                 }
                 else if (commandLine.getOptionValue(INFO_OPTION).contains("-W@")) {
+                    String filter = commandLine.getOptionValue(FILTER_OPTION);
+                    if (filter != null) {
+                        throw new OozieCLIException("Filter option is not supported for a Workflow action");
+                    }
                     printWorkflowAction(wc.getWorkflowActionInfo(commandLine.getOptionValue(INFO_OPTION)),
                             options.contains(LOCAL_TIME_OPTION), options.contains(VERBOSE_OPTION));
                 }
                 else {
+                    String filter = commandLine.getOptionValue(FILTER_OPTION);
+                    if (filter != null) {
+                        throw new OozieCLIException("Filter option is currently not supported for a Workflow job");
+                    }
                     String s = commandLine.getOptionValue(OFFSET_OPTION);
                     int start = Integer.parseInt((s != null) ? s : "0");
                     s = commandLine.getOptionValue(LEN_OPTION);
