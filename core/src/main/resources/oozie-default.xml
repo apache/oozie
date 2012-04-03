@@ -1456,18 +1456,10 @@
             Automatic retry interval for workflow action is in minutes and the default value is 10 minutes.
         </description>
     </property>
-    
+
     <property>
         <name>oozie.service.LiteWorkflowStoreService.user.retry.error.code</name>
-        <value>
-            JA008,
-            JA009,
-            JA017,
-            JA018,
-            JA019,
-            FS009,
-            FS008
-        </value>
+        <value>JA008,JA009,JA017,JA018,JA019,FS009,FS008</value>
         <description>
             Automatic retry interval for workflow action is handled for these specified error code:
             FS009, FS008 is file exists error when using chmod in fs action.

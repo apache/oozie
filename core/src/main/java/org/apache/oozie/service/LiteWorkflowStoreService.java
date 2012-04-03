@@ -18,6 +18,7 @@
 package org.apache.oozie.service;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.util.StringUtils;
 import org.apache.oozie.command.wf.ReRunXCommand;
 
 import org.apache.oozie.client.WorkflowAction;
@@ -168,8 +169,11 @@ public abstract class LiteWorkflowStoreService extends WorkflowStoreService {
      */
     public static Set<String> getUserRetryErrorCode() {
         Configuration conf = Services.get().get(ConfigurationService.class).getConf();
-        Collection<String> strings = (Collection<String>) conf.getStringCollection(CONF_USER_RETRY_ERROR_CODE);
-        Collection<String> extra = (Collection<String>) conf.getStringCollection(CONF_USER_RETRY_ERROR_CODE_EXT);
+        // eliminating whitespaces in the error codes value specification
+        String errorCodeString = conf.get(CONF_USER_RETRY_ERROR_CODE).replaceAll("\\s+", "");
+        Collection<String> strings = StringUtils.getStringCollection(errorCodeString);
+        String errorCodeExtString = conf.get(CONF_USER_RETRY_ERROR_CODE_EXT).replaceAll("\\s+", "");
+        Collection<String> extra = StringUtils.getStringCollection(errorCodeExtString);
         Set<String> set = new HashSet<String>();
         set.addAll(strings);
         set.addAll(extra);

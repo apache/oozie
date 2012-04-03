@@ -17,6 +17,10 @@
  */
 package org.apache.oozie.service;
 
+import java.util.Set;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.ForTestingActionExecutor;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowStoreService;
 import org.apache.oozie.test.XTestCase;
@@ -41,6 +45,18 @@ public class TestLiteWorkflowStoreService extends XTestCase {
         WorkflowStoreService wls = Services.get().get(WorkflowStoreService.class);
         assertNotNull(wls);
         assertNotNull(wls.create());
+    }
+
+    public void testRetry() throws Exception {
+        //  Introducing whitespaces in the error codes string
+        String errorCodeWithWhitespaces = "\n\t\t" + ForTestingActionExecutor.TEST_ERROR + "\n  ";
+        Configuration testConf = Services.get().get(ConfigurationService.class).getConf();
+        // Setting configuration parameter for error codes
+        testConf.set(LiteWorkflowStoreService.CONF_USER_RETRY_ERROR_CODE, errorCodeWithWhitespaces);
+        testConf.set(LiteWorkflowStoreService.CONF_USER_RETRY_ERROR_CODE_EXT, " ");
+        // Retrieval to enlist the codes properly, otherwise whitespaces cause the key-value lookup to return false
+        Set<String> allowedRetryCodes = LiteWorkflowStoreService.getUserRetryErrorCode();
+        assertTrue(allowedRetryCodes.contains(ForTestingActionExecutor.TEST_ERROR));   
     }
 
 
