@@ -96,6 +96,36 @@ public class TestLiteWorkflowAppService extends XTestCase {
         }
     }
 
+    /**
+     * Making sure an exception is thrown when a WF exceeds the maximum length
+     *
+     * @throws Exception
+     */
+    public void testMaxWfDefinition() throws Exception {
+        setSystemProperty(WorkflowAppService.CONFG_MAX_WF_LENGTH, "100");
+        Services services = new Services();
+        try {
+            services.init();
+
+            Reader reader = IOUtils.getResourceAsReader("wf-schema-valid.xml", -1);
+            Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
+            IOUtils.copyCharStream(reader, writer);
+
+            Configuration conf = new XConfiguration();
+
+            WorkflowAppService wps = services.get(WorkflowAppService.class);
+            wps.readDefinition("file://" + getTestCaseDir() + File.separator + "workflow.xml", getTestUser(),
+                    "authToken", conf);
+            fail("an exception should be thrown as the definition exceeds the given maximum");
+        }
+        catch (WorkflowException wfe) {
+            assertEquals(wfe.getErrorCode(), ErrorCode.E0736);
+        }
+        finally {
+            services.destroy();
+        }
+    }
+
     public void testNoAppPath() throws Exception {
         Services services = new Services();
         services.init();

@@ -54,7 +54,10 @@ public abstract class WorkflowAppService implements Service {
 
     public static final String HADOOP_USER = "user.name";
 
+    public static final String CONFG_MAX_WF_LENGTH = CONF_PREFIX + "WorkflowDefinitionMaxLength";
+
     private Path systemLibPath;
+    private long maxWFLength;
 
     /**
      * Initialize the workflow application service.
@@ -62,10 +65,14 @@ public abstract class WorkflowAppService implements Service {
      * @param services services instance.
      */
     public void init(Services services) {
-        String path = services.getConf().get(SYSTEM_LIB_PATH, " ");
+        Configuration conf = services.getConf();
+
+        String path = conf.get(SYSTEM_LIB_PATH, " ");
         if (path.trim().length() > 0) {
             systemLibPath = new Path(path.trim());
         }
+
+        maxWFLength = conf.getInt(CONFG_MAX_WF_LENGTH, 100000);
     }
 
     /**
@@ -107,11 +114,19 @@ public abstract class WorkflowAppService implements Service {
                 path = new Path(path, "workflow.xml");
             }
 
+            FileStatus fsStatus = fs.getFileStatus(path);
+            if (fsStatus.getLen() > this.maxWFLength) {
+                throw new WorkflowException(ErrorCode.E0736, fsStatus.getLen(), this.maxWFLength);
+            }
+
             Reader reader = new InputStreamReader(fs.open(path));
             StringWriter writer = new StringWriter();
             IOUtils.copyCharStream(reader, writer);
             return writer.toString();
 
+        }
+        catch (WorkflowException wfe) {
+            throw wfe;
         }
         catch (IOException ex) {
             throw new WorkflowException(ErrorCode.E0710, ex.getMessage(), ex);

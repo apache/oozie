@@ -467,6 +467,15 @@
     </property>
 
     <property>
+        <name>oozie.service.WorkflowAppService.WorkflowDefinitionMaxLength</name>
+        <value>100000</value>
+        <description>
+            The maximum length of the workflow definition in bytes
+            An error will be reported if the length exceeds the given maximum
+        </description>
+    </property>
+
+    <property>
         <name>oozie.service.ELService.ext.functions.workflow</name>
         <value>
         </value>
