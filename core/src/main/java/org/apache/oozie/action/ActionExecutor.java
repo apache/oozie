@@ -27,6 +27,7 @@ import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.servlet.CallbackServlet;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -43,7 +44,9 @@ public abstract class ActionExecutor {
     /**
      * Configuration prefix for action executor (sub-classes) properties.
      */
-    public static final String CONF_PREFIX = "oozie.action.";
+	public static final String CONF_PREFIX = "oozie.action.";
+
+	public static final String MAX_RETRIES = CONF_PREFIX + "retries.max";
 
     /**
      * Error code used by {@link #convertException} when there is not register error information for an exception.
@@ -196,10 +199,6 @@ public abstract class ActionExecutor {
         public void setErrorInfo(String str, String exMsg);
     }
 
-    /**
-     * Define the default maximum number of retry attempts for transient errors (total attempts = 1 + MAX_RETRIES).
-     */
-    public static final int MAX_RETRIES = 3;
 
     /**
      * Define the default inteval in seconds between retries.
@@ -216,7 +215,7 @@ public abstract class ActionExecutor {
      * @param type action executor type.
      */
     protected ActionExecutor(String type) {
-        this(type, MAX_RETRIES, RETRY_INTERVAL);
+        this(type, RETRY_INTERVAL);
     }
 
     /**
@@ -226,9 +225,9 @@ public abstract class ActionExecutor {
      * @param retryAttempts retry attempts.
      * @param retryInterval retry interval, in seconds.
      */
-    protected ActionExecutor(String type, int retryAttempts, long retryInterval) {
+    protected ActionExecutor(String type, long retryInterval) {
         this.type = ParamChecker.notEmpty(type, "type");
-        this.maxRetries = retryAttempts;
+        this.maxRetries = getOozieConf().getInt(MAX_RETRIES, 3);
         this.retryInterval = retryInterval;
     }
 

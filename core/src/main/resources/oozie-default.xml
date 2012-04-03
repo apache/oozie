@@ -1268,6 +1268,14 @@
     <!-- This is common to the subclasses action executors for map-reduce and pig -->
 
     <property>
+        <name>oozie.action.retries.max</name>
+        <value>3</value>
+        <description>
+           The number of retries for executing an action in case of failure
+        </description>
+    </property>
+
+    <property>
         <name>oozie.action.hadoop.delete.hdfs.tmp.dir</name>
         <value>false</value>
         <description>

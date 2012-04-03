@@ -17,6 +17,7 @@
  */
 package org.apache.oozie.action;
 
+import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.client.WorkflowAction;
 
@@ -27,8 +28,11 @@ public class TestActionExecutor extends XTestCase {
 
     private static class MyActionExecutor extends ActionExecutor {
 
+		private int maxRetries;
+
         protected MyActionExecutor() {
             super("type");
+            this.maxRetries = getMaxRetries();
         }
 
         public void initActionType() {
@@ -39,12 +43,14 @@ public class TestActionExecutor extends XTestCase {
         }
 
         protected MyActionExecutor(int maxRetries, int retryInterval) {
-            super("type", maxRetries, retryInterval);
+            super("type", retryInterval);
+            super.setMaxRetries(maxRetries);
+            this.maxRetries = maxRetries;
         }
 
         public void start(Context context, WorkflowAction action) throws ActionExecutorException {
             assertEquals("type", getType());
-            assertEquals(ActionExecutor.MAX_RETRIES, getMaxRetries());
+            assertEquals(this.maxRetries, getMaxRetries());
             assertEquals(ActionExecutor.RETRY_INTERVAL, getRetryInterval());
         }
 
@@ -64,6 +70,18 @@ public class TestActionExecutor extends XTestCase {
             return true;
         }
     }
+
+	@Override
+	protected void setUp() throws Exception {
+		super.setUp();
+		new Services().init();
+	}
+
+	@Override
+	protected void tearDown() throws Exception {
+		Services.get().destroy();
+		super.tearDown();
+	}
 
     public void testActionExecutor() throws Exception {
         ActionExecutor.enableInit();
