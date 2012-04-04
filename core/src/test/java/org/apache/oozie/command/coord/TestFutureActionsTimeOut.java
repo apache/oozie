@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.URI;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -58,7 +59,7 @@ public class TestFutureActionsTimeOut extends XTestCase {
     }
 
     public void testEngine() throws Exception {
-        String appPath = getTestCaseDir() + File.separator + "coordinator.xml";
+        String appPath = "file://" + getTestCaseDir() + File.separator + "coordinator.xml";
         String jobId = _testSubmitJob(appPath);
         Date createDate = new Date();
         _testTimeout(jobId, createDate);
@@ -141,9 +142,9 @@ public class TestFutureActionsTimeOut extends XTestCase {
         }
     }
 
-    private void writeToFile(String appXml, String appPath) throws IOException {
+    private void writeToFile(String appXml, String appPath) throws Exception {
         // TODO Auto-generated method stub
-        File wf = new File(appPath);
+        File wf = new File(new URI(appPath).getPath());
         PrintWriter out = null;
         try {
             out = new PrintWriter(new FileWriter(wf));

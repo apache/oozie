@@ -663,12 +663,32 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         assertTrue(DistributedCache.getSymlink(jobConf));
 
-        // 1 launcher JAR, 1 wf lib JAR, 2 <file> JARs
-        assertEquals(4, DistributedCache.getFileClassPaths(jobConf).length);
+        Path[] filesInClasspath = DistributedCache.getFileClassPaths(jobConf);
+        boolean hasMrappsJar = false;
+        for (Path path : filesInClasspath) {
+            if (path.getName().equals("MRAppJar.jar")) {
+                hasMrappsJar = true;
+            }
+        }
+        if (hasMrappsJar) {
+            // we need to do this because of MR2 injecting a JAR on the client side.
+            // MRAppJar JAR, 1 launcher JAR, 1 wf lib JAR, 2 <file> JARs
+            assertEquals(5, filesInClasspath.length);
+        }
+        else {
+            // 1 launcher JAR, 1 wf lib JAR, 2 <file> JARs
+            assertEquals(4, filesInClasspath.length);
 
-        // #CLASSPATH_ENTRIES# 4, 1 wf lib sos, 4 <file> sos, 2 <file> files
-        assertEquals(11, DistributedCache.getCacheFiles(jobConf).length);
-
+        }
+        if (hasMrappsJar) {
+            // we need to do this because of MR2 injecting a JAR on the client side.
+            // #CLASSPATH_ENTRIES# 5 (4+MRAppJar), 1 wf lib sos, 4 <file> sos, 2 <file> files
+            assertEquals(12, DistributedCache.getCacheFiles(jobConf).length);
+        }
+        else {
+            // #CLASSPATH_ENTRIES# 4, 1 wf lib sos, 4 <file> sos, 2 <file> files
+            assertEquals(11, DistributedCache.getCacheFiles(jobConf).length);
+        }
         // 2 <archive> files
         assertEquals(2, DistributedCache.getCacheArchives(jobConf).length);
     }

@@ -95,7 +95,7 @@ public class TestPurgeService extends XDataTestCase {
 
         final DagEngine engine = new DagEngine("u", "a");
         Configuration conf = new XConfiguration();
-        conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
+        conf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
         conf.setStrings(OozieClient.USER_NAME, getTestUser());
         conf.setStrings(OozieClient.GROUP_NAME, getTestGroup());
 

@@ -251,7 +251,7 @@ public class TestActionErrors extends XDataTestCase {
 
         final DagEngine engine = new DagEngine("u", "a");
         Configuration conf = new XConfiguration();
-        conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
+        conf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
 
         conf.set(OozieClient.LOG_TOKEN, "t");
@@ -299,7 +299,7 @@ public class TestActionErrors extends XDataTestCase {
 
         final DagEngine engine = new DagEngine("u", "a");
         Configuration conf = new XConfiguration();
-        conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
+        conf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
 
         conf.set(OozieClient.LOG_TOKEN, "t");
@@ -370,7 +370,7 @@ public class TestActionErrors extends XDataTestCase {
 
         final DagEngine engine = new DagEngine("u", "a");
         Configuration conf = new XConfiguration();
-        conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
+        conf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
 
         conf.set(OozieClient.LOG_TOKEN, "t");
@@ -434,7 +434,7 @@ public class TestActionErrors extends XDataTestCase {
 
         final DagEngine engine = new DagEngine("u", "a");
         Configuration conf = new XConfiguration();
-        conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
+        conf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
 
         conf.set(OozieClient.LOG_TOKEN, "t");
@@ -512,7 +512,7 @@ public class TestActionErrors extends XDataTestCase {
 
         final DagEngine engine = new DagEngine("u", "a");
         Configuration conf = new XConfiguration();
-        conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
+        conf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
 
         conf.set(OozieClient.LOG_TOKEN, "t");
@@ -550,7 +550,7 @@ public class TestActionErrors extends XDataTestCase {
 
         final DagEngine engine = new DagEngine("u", "a");
         Configuration conf = new XConfiguration();
-        conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
+        conf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
 
         conf.set(OozieClient.LOG_TOKEN, "t");
@@ -591,7 +591,7 @@ public class TestActionErrors extends XDataTestCase {
 
         final DagEngine engine = new DagEngine("u", "a");
         Configuration conf = new XConfiguration();
-        conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
+        conf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
 
         conf.set(OozieClient.LOG_TOKEN, "t");

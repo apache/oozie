@@ -118,7 +118,7 @@ public class TestAuthorizationService extends XDataTestCase {
 
         final DagEngine engine = new DagEngine(getTestUser(), "a");
         Configuration jobConf = new XConfiguration();
-        jobConf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
+        jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
         jobConf.set(OozieClient.USER_NAME, getTestUser());
         if (useDefaultGroup) {
             jobConf.set(OozieClient.GROUP_NAME, getTestGroup());
