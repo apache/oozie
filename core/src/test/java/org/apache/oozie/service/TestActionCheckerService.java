@@ -85,7 +85,7 @@ public class TestActionCheckerService extends XDataTestCase {
 
         final DagEngine engine = new DagEngine(getTestUser(), "a");
         Configuration conf = new XConfiguration();
-        conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
+        conf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(WorkflowAppService.HADOOP_USER, getTestUser());
 
         conf.set(OozieClient.LOG_TOKEN, "t");
@@ -141,7 +141,7 @@ public class TestActionCheckerService extends XDataTestCase {
 
         final DagEngine engine = new DagEngine("u", "a");
         Configuration conf = new XConfiguration();
-        conf.set(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
+        conf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
         conf.setStrings(WorkflowAppService.HADOOP_USER, getTestUser());
         conf.setStrings(OozieClient.GROUP_NAME, getTestGroup());
 

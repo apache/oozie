@@ -60,7 +60,7 @@ public class TestReRunXCommand extends XFsTestCase {
 
         final OozieClient wfClient = LocalOozie.getClient();
         Properties conf = wfClient.createConfiguration();
-        conf.setProperty(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
+        conf.setProperty(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
         conf.setProperty(OozieClient.USER_NAME, getTestUser());
 
 
@@ -114,7 +114,7 @@ public class TestReRunXCommand extends XFsTestCase {
 
         final OozieClient wfClient = LocalOozie.getClient();
         Properties conf = wfClient.createConfiguration();
-        conf.setProperty(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
+        conf.setProperty(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
         conf.setProperty(OozieClient.USER_NAME, getTestUser());
 
 
@@ -157,7 +157,7 @@ public class TestReRunXCommand extends XFsTestCase {
 
         final OozieClient wfClient = LocalOozie.getClient();
         Properties conf = wfClient.createConfiguration();
-        conf.setProperty(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
+        conf.setProperty(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
         conf.setProperty(OozieClient.USER_NAME, getTestUser());
 
 
@@ -193,7 +193,7 @@ public class TestReRunXCommand extends XFsTestCase {
 
         final OozieClient wfClient = LocalOozie.getClient();
         Properties conf = wfClient.createConfiguration();
-        conf.setProperty(OozieClient.APP_PATH, getTestCaseDir() + File.separator + "workflow.xml");
+        conf.setProperty(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
         conf.setProperty(OozieClient.USER_NAME, getTestUser());
 
 

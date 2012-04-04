@@ -89,7 +89,7 @@ public class TestHadoopAccessorService extends XTestCase {
 
         JobClient jc = has.createJobClient(user, conf);
         assertNotNull(jc);
-        FileSystem fs = has.createFileSystem(user, conf);
+        FileSystem fs = has.createFileSystem(user, new URI(getNameNodeUri()), conf);
         assertNotNull(fs);
         fs = has.createFileSystem(user, uri, conf);
         assertNotNull(fs);
@@ -100,13 +100,6 @@ public class TestHadoopAccessorService extends XTestCase {
 
         try {
             has.createJobClient(user, conf);
-            fail();
-        }
-        catch (Throwable ex) {
-        }
-
-        try {
-            has.createFileSystem(user, conf);
             fail();
         }
         catch (Throwable ex) {

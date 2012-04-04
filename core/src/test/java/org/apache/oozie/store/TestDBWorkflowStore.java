@@ -125,13 +125,13 @@ public class TestDBWorkflowStore extends XTestCase {
 
         conf1.set(OozieClient.APP_PATH, "testPath");
         conf1.set(OozieClient.LOG_TOKEN, "testToken");
-        conf1.set(OozieClient.USER_NAME, "testUser1");
+        conf1.set(OozieClient.USER_NAME, getTestUser());
         wfBean1 = createWorkflow(app, conf1, "auth");
 
         Configuration conf2 = new Configuration();
         conf2.set(OozieClient.APP_PATH, "testPath");
         conf2.set(OozieClient.LOG_TOKEN, "testToken");
-        conf2.set(OozieClient.USER_NAME, "testUser2");
+        conf2.set(OozieClient.USER_NAME, getTestUser2());
         wfBean2 = createWorkflow(app, conf2, "auth");
 
         store.insertWorkflow(wfBean1);
@@ -412,19 +412,19 @@ public class TestDBWorkflowStore extends XTestCase {
         assertEquals(2, wfBeans.size());
 
         filter = new HashMap<String, List<String>>();
-        filter.put("user", Arrays.asList("testUser1"));
+        filter.put("user", Arrays.asList(getTestUser()));
         wfInfo = store.getWorkflowsInfo(filter, 1, 2);
         wfBeans = wfInfo.getWorkflows();
         assertEquals(1, wfBeans.size());
 
         filter = new HashMap<String, List<String>>();
-        filter.put("user", Arrays.asList("testUser1", "testUser2"));
+        filter.put("user", Arrays.asList(getTestUser(), getTestUser2()));
         wfInfo = store.getWorkflowsInfo(filter, 1, 2);
         wfBeans = wfInfo.getWorkflows();
         assertEquals(2, wfBeans.size());
 
         filter = new HashMap<String, List<String>>();
-        filter.put("user", Arrays.asList("testUser1"));
+        filter.put("user", Arrays.asList(getTestUser()));
         filter.put("status", Arrays.asList("succeeded"));
 
         wfInfo = store.getWorkflowsInfo(filter, 1, 2);
@@ -432,7 +432,7 @@ public class TestDBWorkflowStore extends XTestCase {
         assertEquals(1, wfBeans.size());
 
         filter = new HashMap<String, List<String>>();
-        filter.put("user", Arrays.asList("testUser1", "testUser2"));
+        filter.put("user", Arrays.asList(getTestUser(), getTestUser2()));
         filter.put("name", Arrays.asList("testApp"));
         wfInfo = store.getWorkflowsInfo(filter, 1, 2);
         wfBeans = wfInfo.getWorkflows();
@@ -442,7 +442,7 @@ public class TestDBWorkflowStore extends XTestCase {
         assertEquals(2, wfInfo.getLen());
 
         filter = new HashMap<String, List<String>>();
-        filter.put("user", Arrays.asList("testUser1", "testUser2"));
+        filter.put("user", Arrays.asList(getTestUser(), getTestUser2()));
         filter.put("name", Arrays.asList("testApp"));
         wfInfo = store.getWorkflowsInfo(filter, 1, 1);
         wfBeans = wfInfo.getWorkflows();
@@ -461,7 +461,7 @@ public class TestDBWorkflowStore extends XTestCase {
         Configuration conf2 = new Configuration();
         conf2.set(OozieClient.APP_PATH, "testPath");
         conf2.set(OozieClient.LOG_TOKEN, "testToken");
-        conf2.set(OozieClient.USER_NAME, "testUser2");
+        conf2.set(OozieClient.USER_NAME, getTestUser2());
         WorkflowJobBean wfBean3 = createWorkflow(app, conf2, "auth");
 
         store.insertWorkflow(wfBean3);

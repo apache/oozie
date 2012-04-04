@@ -350,25 +350,7 @@ public class HadoopAccessorService implements Service {
     }
 
     /**
-     * Return a FileSystem created with the provided user/group.
-     *
-     *
-     * @param conf Configuration with all necessary information to create the FileSystem.
-     * @return FileSystem created with the provided user/group.
-     * @throws HadoopAccessorException if the filesystem could not be created.
-     */
-    public FileSystem createFileSystem(String user, final Configuration conf)
-            throws HadoopAccessorException {
-        try {
-            return createFileSystem(user, new URI(conf.get("fs.default.name")), conf);
-        }
-        catch (URISyntaxException ex) {
-            throw new HadoopAccessorException(ErrorCode.E0902, ex);
-        }
-    }
-
-    /**
-     * Return a FileSystem created with the provided user/group for the specified URI.
+     * Return a FileSystem created with the provided user for the specified URI.
      *
      *
      * @param uri file system URI.

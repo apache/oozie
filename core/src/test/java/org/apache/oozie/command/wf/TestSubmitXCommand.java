@@ -51,7 +51,7 @@ public class TestSubmitXCommand extends XDataTestCase {
                 + "<end name='end' /> " + "</workflow-app>";
 
         writeToFile(appXml, appPath + "/workflow.xml");
-        conf.set(OozieClient.APP_PATH, appPath + "/workflow.xml");
+        conf.set(OozieClient.APP_PATH, "file://" + appPath + "/workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set("GB", "5");
         SubmitXCommand sc = new SubmitXCommand(conf, "UNIT_TESTING");
@@ -72,7 +72,7 @@ public class TestSubmitXCommand extends XDataTestCase {
                 + "<end name='end' /> " + "</workflow-app>";
 
         writeToFile(appXml, appPath + "/workflow.xml");
-        conf.set(OozieClient.APP_PATH, appPath);
+        conf.set(OozieClient.APP_PATH, "file://" + appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
 
         SubmitXCommand sc = new SubmitXCommand(conf, "UNIT_TESTING");
@@ -92,7 +92,7 @@ public class TestSubmitXCommand extends XDataTestCase {
                 + "<end name='end' /> " + "</workflow-app>";
 
         writeToFile(appXml, appPath + "/workflow.xml");
-        conf.set(OozieClient.APP_PATH, appPath + "/workflow.xml");
+        conf.set(OozieClient.APP_PATH, "file://" + appPath + "/workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
 
         SubmitXCommand sc = new SubmitXCommand(conf, "UNIT_TESTING");
@@ -112,7 +112,7 @@ public class TestSubmitXCommand extends XDataTestCase {
                 + "<end name='end' /> " + "</workflow-app>";
 
         writeToFile(appXml, appPath + "/test.xml");
-        conf.set(OozieClient.APP_PATH, appPath + "/test.xml");
+        conf.set(OozieClient.APP_PATH, "file://" + appPath + "/test.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
 
         SubmitXCommand sc = new SubmitXCommand(conf, "UNIT_TESTING");
@@ -132,7 +132,7 @@ public class TestSubmitXCommand extends XDataTestCase {
                 + "<end name='end' /> " + "</workflow-app>";
 
         writeToFile(appXml, appPath + "/test.xml");
-        conf.set(OozieClient.APP_PATH, appPath + "/does_not_exist.xml");
+        conf.set(OozieClient.APP_PATH, "file://" + appPath + "/does_not_exist.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
         SubmitXCommand sc = new SubmitXCommand(conf, "UNIT_TESTING");
 

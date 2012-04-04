@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.URL;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
@@ -54,7 +55,7 @@ public class TestPastActionsTimeOut extends XTestCase {
     }
 
     public void testEngine() throws Exception {
-        String appPath = getTestCaseDir() + File.separator + "coordinator.xml";
+        String appPath = "file://" + getTestCaseDir() + File.separator + "coordinator.xml";
         String jobId = _testSubmitJob(appPath);
         _testTimeout(jobId);
     }
@@ -105,9 +106,9 @@ public class TestPastActionsTimeOut extends XTestCase {
         }
     }
 
-    private void writeToFile(String appXml, String appPath) throws IOException {
+    private void writeToFile(String appXml, String appPath) throws Exception {
         // TODO Auto-generated method stub
-        File wf = new File(appPath);
+        File wf = new File(new URL(appPath).getPath());
         PrintWriter out = null;
         try {
             out = new PrintWriter(new FileWriter(wf));
