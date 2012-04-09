@@ -140,64 +140,69 @@ public class TestDecisionActionExecutor extends XFsTestCase {
     }
 
     public void testDecision() throws Exception {
-        ActionExecutor decision = new DecisionActionExecutor();
+        new Services().init();
+        try {
+            ActionExecutor decision = new DecisionActionExecutor();
 
-        assertEquals(DecisionActionExecutor.ACTION_TYPE, decision.getType());
+            assertEquals(DecisionActionExecutor.ACTION_TYPE, decision.getType());
 
-        WorkflowActionBean action = new WorkflowActionBean();
-        action.setConf("<switch xmlns='uri:oozie:workflow:0.1'>" +
+            WorkflowActionBean action = new WorkflowActionBean();
+            action.setConf("<switch xmlns='uri:oozie:workflow:0.1'>" +
                 "<case to='a'>true</case>" +
                 "<case to='b'>true</case>" +
                 "<case to='c'>false</case>" +
                 "<default to='d'/></switch>");
 
-        decision.start(new Context(action), action);
-        assertEquals(WorkflowAction.Status.DONE, action.getStatus());
-        decision.end(new Context(action), action);
-        assertEquals(WorkflowAction.Status.OK, action.getStatus());
-        assertEquals("a", action.getExternalStatus());
+            decision.start(new Context(action), action);
+            assertEquals(WorkflowAction.Status.DONE, action.getStatus());
+            decision.end(new Context(action), action);
+            assertEquals(WorkflowAction.Status.OK, action.getStatus());
+            assertEquals("a", action.getExternalStatus());
 
-        action.setConf("<switch xmlns='uri:oozie:workflow:0.1'>" +
+            action.setConf("<switch xmlns='uri:oozie:workflow:0.1'>" +
                 "<case to='a'>false</case>" +
                 "<case to='b'>true</case>" +
                 "<case to='c'>false</case>" +
                 "<default to='d'/></switch>");
 
-        decision.start(new Context(action), action);
-        assertEquals(WorkflowAction.Status.DONE, action.getStatus());
-        decision.end(new Context(action), action);
-        assertEquals(WorkflowAction.Status.OK, action.getStatus());
-        assertEquals("b", action.getExternalStatus());
+            decision.start(new Context(action), action);
+            assertEquals(WorkflowAction.Status.DONE, action.getStatus());
+            decision.end(new Context(action), action);
+            assertEquals(WorkflowAction.Status.OK, action.getStatus());
+            assertEquals("b", action.getExternalStatus());
 
-
-        action.setConf("<switch xmlns='uri:oozie:workflow:0.1'>" +
+            action.setConf("<switch xmlns='uri:oozie:workflow:0.1'>" +
                 "<case to='a'>false</case>" +
                 "<case to='b'>false</case>" +
                 "<case to='c'>false</case>" +
                 "<default to='d'/></switch>");
 
-        decision.start(new Context(action), action);
-        assertEquals(WorkflowAction.Status.DONE, action.getStatus());
-        decision.end(new Context(action), action);
-        assertEquals(WorkflowAction.Status.OK, action.getStatus());
-        assertEquals("d", action.getExternalStatus());
+            decision.start(new Context(action), action);
+            assertEquals(WorkflowAction.Status.DONE, action.getStatus());
+            decision.end(new Context(action), action);
+            assertEquals(WorkflowAction.Status.OK, action.getStatus());
+            assertEquals("d", action.getExternalStatus());
 
-        try {
-            action.setConf("<wrong>" +
+            try {
+                action.setConf("<wrong>" +
                     "<case to='a'>false</case>" +
                     "<case to='b'>false</case>" +
                     "<case to='c'>false</case>" +
                     "<default to='d'/></switch>");
 
-            decision.start(new Context(action), action);
-            fail();
+                decision.start(new Context(action), action);
+                fail();
+             }
+             catch (ActionExecutorException ex) {
+                assertEquals(ActionExecutorException.ErrorType.FAILED, ex.getErrorType());
+                assertEquals(DecisionActionExecutor.XML_ERROR, ex.getErrorCode());
+             }
+             catch (Exception ex) {
+                fail();
+             }
         }
-        catch (ActionExecutorException ex) {
-            assertEquals(ActionExecutorException.ErrorType.FAILED, ex.getErrorType());
-            assertEquals(DecisionActionExecutor.XML_ERROR, ex.getErrorCode());
-        }
-        catch (Exception ex) {
-            fail();
+        finally {
+            Services.get().destroy();
         }
     }
 }
