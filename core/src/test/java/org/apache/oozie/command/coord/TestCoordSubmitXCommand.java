@@ -155,7 +155,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
 
         // CASE 4: Success case i.e. Single instances for input and single instance for output, but both with ","
         reader = IOUtils.getResourceAsReader("coord-multiple-input-instance4.xml", -1);
-        writer = new FileWriter(appPath);
+        writer = new FileWriter(new URI(appPath).getPath());
         IOUtils.copyCharStream(reader, writer);
         sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
 
@@ -230,7 +230,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
 
         // CASE 4: Success case, where only one instance is configured, but expression has a ","
         reader = IOUtils.getResourceAsReader("coord-multiple-output-instance4.xml", -1);
-        writer = new FileWriter(appPath);
+        writer = new FileWriter(new URI(appPath).getPath());
         IOUtils.copyCharStream(reader, writer);
         sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
 
