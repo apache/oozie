@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -101,14 +101,18 @@ public class CoordKillXCommand extends KillTransitionXCommand {
         }
     }
 
-    private void updateCoordAction(CoordinatorActionBean action) throws CommandException {
+    private void updateCoordAction(CoordinatorActionBean action, boolean makePending) throws CommandException {
         action.setStatus(CoordinatorActionBean.Status.KILLED);
-        action.incrementAndGetPending();
+        if (makePending) {
+            action.incrementAndGetPending();
+        } else {
+            // set pending to false
+            action.setPending(0);
+        }
         action.setLastModifiedTime(new Date());
         try {
             jpaService.execute(new CoordActionUpdateStatusJPAExecutor(action));
-        }
-        catch (JPAExecutorException e) {
+        } catch (JPAExecutorException e) {
             throw new CommandException(e);
         }
     }
@@ -121,13 +125,15 @@ public class CoordKillXCommand extends KillTransitionXCommand {
                     // queue a WorkflowKillXCommand to delete the workflow job and actions
                     if (action.getExternalId() != null) {
                         queue(new KillXCommand(action.getExternalId()));
-                        updateCoordAction(action);
+                        // As the kill command for children is queued, set pending flag for coord action to be true
+                        updateCoordAction(action, true);
                         LOG.debug(
                                 "Killed coord action = [{0}], new status = [{1}], pending = [{2}] and queue KillXCommand for [{3}]",
                                 action.getId(), action.getStatus(), action.getPending(), action.getExternalId());
                     }
                     else {
-                        updateCoordAction(action);
+                        // As killing children is not required, set pending flag for coord action to be false
+                        updateCoordAction(action, false);
                         LOG.debug("Killed coord action = [{0}], current status = [{1}], pending = [{2}]",
                                 action.getId(), action.getStatus(), action.getPending());
                     }
