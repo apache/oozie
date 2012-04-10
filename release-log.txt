@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-805 TestCoordSubmitX failing.(Virag via Mohammad)
 OOZIE-803 UP Remove HadoopAccessorService createFileSystem() method that takes config only (tucu)
 OOZIE-802 Add minicluster config as hadoop-site.xml for testcases (tucu)
 OOZIE-796 Making the maximum number of job retrials configurable (Mohamed via Mohammad)
