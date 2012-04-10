@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,8 +23,10 @@ import java.util.List;
 
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
+import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
+import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
@@ -35,6 +37,7 @@ import org.apache.oozie.service.SchemaService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.StatusTransitService;
 import org.apache.oozie.test.XDataTestCase;
+import org.apache.oozie.workflow.WorkflowInstance;
 
 public class TestCoordKillXCommand extends XDataTestCase {
     private Services services;
@@ -198,6 +201,57 @@ public class TestCoordKillXCommand extends XDataTestCase {
         } catch (CommandException ce) {
             //Job doesn't exist. Exception is expected.
         }
+    }
+
+
+    /**
+     * Test: Kill a waiting coord action
+     * @throws Exception
+     */
+    public void testCoordKillWaiting() throws Exception {
+        CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
+        // Create a workflow job with RUNNING status
+        WorkflowJobBean wfJob1 = this
+                .addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
+        // Create a coordinator job with RUNNING status
+        CoordinatorActionBean action1 = addRecordToCoordActionTable(coordJob.getId(), 1,
+                CoordinatorAction.Status.RUNNING, "coord-action-get.xml", wfJob1.getId(), "RUNNING", 0);
+        // Create a coordinator job with WAITING status
+        CoordinatorActionBean action2 = addRecordToCoordActionTable(coordJob.getId(), 2,
+                CoordinatorAction.Status.WAITING, "coord-action-get.xml", null, null, 0);
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+        CoordJobGetJPAExecutor coordJobGetCmd = new CoordJobGetJPAExecutor(coordJob.getId());
+        CoordActionGetJPAExecutor coordActionGetCmd1 = new CoordActionGetJPAExecutor(action1.getId());
+        CoordActionGetJPAExecutor coordActionGetCmd2 = new CoordActionGetJPAExecutor(action2.getId());
+
+        coordJob = jpaService.execute(coordJobGetCmd);
+        action1 = jpaService.execute(coordActionGetCmd1);
+        action2 = jpaService.execute(coordActionGetCmd2);
+
+        // Make sure the status is updated
+        assertEquals(coordJob.getStatus(), CoordinatorJob.Status.RUNNING);
+        assertEquals(action1.getStatus(), CoordinatorAction.Status.RUNNING);
+        assertEquals(action2.getStatus(), CoordinatorAction.Status.WAITING);
+
+        // Issue the kill command
+        new CoordKillXCommand(coordJob.getId()).call();
+
+        coordJob = jpaService.execute(coordJobGetCmd);
+        action1 = jpaService.execute(coordActionGetCmd1);
+        action2 = jpaService.execute(coordActionGetCmd2);
+
+        // Check the status and pending flag after kill command is issued
+        assertEquals(coordJob.getStatus(), CoordinatorJob.Status.KILLED);
+        assertEquals(action1.getStatus(), CoordinatorAction.Status.KILLED);
+        // The wf job is running and can be killed, so pending for coord action
+        // kill should be true
+        assertEquals(action1.getPending(), 1);
+        assertEquals(action2.getStatus(), CoordinatorAction.Status.KILLED);
+        // The coord job is waiting and no wf created yet, so pending for coord
+        // action kill should be false
+        assertEquals(action2.getPending(), 0);
     }
 
     public class MyCoordKillXCommand extends CoordKillXCommand {

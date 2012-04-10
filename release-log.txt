@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-791: coord job status not updated to done_with_error after kill(Virag via Mohammad)
 OOZIE-804 TestDecisionActionExecutor failing due to uninitialized conf.(virag via Mohammad)
 OOZIE-805 TestCoordSubmitX failing.(Virag via Mohammad)
 OOZIE-803 UP Remove HadoopAccessorService createFileSystem() method that takes config only (tucu)
