@@ -221,6 +221,69 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
         assertEquals("xyz", childConf.get("abc"));
     }
 
+    public void testGetGroupFromParent() throws Exception {
+        Path subWorkflowAppPath = getFsTestCaseDir();
+        FileSystem fs = getFileSystem();
+        Writer writer = new OutputStreamWriter(fs.create(new Path(subWorkflowAppPath, "workflow.xml")));
+        writer.write(APP1);
+        writer.close();
+
+        XConfiguration protoConf = getBaseProtoConf();
+        WorkflowJobBean workflow = createBaseWorkflow(protoConf, "W");
+        String defaultConf = workflow.getConf();
+        XConfiguration newConf = new XConfiguration(new StringReader(defaultConf));
+        String actionConf = "<sub-workflow xmlns='uri:oozie:workflow:0.1' name='subwf'>" +
+                "      <app-path>" + subWorkflowAppPath + File.separator + "workflow.xml" + "</app-path>" +
+                "      <configuration>" +
+                "        <property>" +
+                "          <name>a</name>" +
+                "          <value>A</value>" +
+                "        </property>" +
+                "      </configuration>" +
+                "</sub-workflow>";
+
+        final WorkflowActionBean action = (WorkflowActionBean) workflow.getActions().get(0);
+        action.setConf(actionConf);
+
+        // negative test
+        SubWorkflowActionExecutor subWorkflow = new SubWorkflowActionExecutor();
+        workflow.setConf(newConf.toXmlString());
+
+        subWorkflow.start(new Context(workflow, action), action);
+
+        OozieClient oozieClient = subWorkflow.getWorkflowClient(new Context(workflow, action),
+                                                                      SubWorkflowActionExecutor.LOCAL);
+
+        subWorkflow.check(new Context(workflow, action), action);
+        subWorkflow.end(new Context(workflow, action), action);
+
+        assertEquals(WorkflowAction.Status.OK, action.getStatus());
+
+        WorkflowJob wf = oozieClient.getJobInfo(action.getExternalId());
+        Configuration childConf = new XConfiguration(new StringReader(wf.getConf()));
+
+        assertFalse(getTestGroup() == childConf.get(OozieClient.GROUP_NAME));
+
+        // positive test
+        newConf.set(OozieClient.GROUP_NAME, getTestGroup());
+        workflow.setConf(newConf.toXmlString());
+        WorkflowActionBean action1 = new WorkflowActionBean();
+        action1.setConf(actionConf);
+        action1.setId("W1");
+
+        subWorkflow.start(new Context(workflow, action1), action1);
+
+        oozieClient = subWorkflow.getWorkflowClient(new Context(workflow, action1),
+                                                                      SubWorkflowActionExecutor.LOCAL);
+
+        subWorkflow.check(new Context(workflow, action1), action1);
+        subWorkflow.end(new Context(workflow, action1), action1);
+
+        wf = oozieClient.getJobInfo(action1.getExternalId());
+        childConf = new XConfiguration(new StringReader(wf.getConf()));
+        assertEquals(getTestGroup(), childConf.get(OozieClient.GROUP_NAME));
+    }
+
     public void testConfigNotPropagation() throws Exception {
         Path subWorkflowAppPath = getFsTestCaseDir();
         FileSystem fs = getFileSystem();
