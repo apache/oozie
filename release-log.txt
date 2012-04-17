@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-813 Sub-workflow child job does not get group name even if parent carries.(Mona via Mohammad)
 OOZIE-791: coord job status not updated to done_with_error after kill(Virag via Mohammad)
 OOZIE-804 TestDecisionActionExecutor failing due to uninitialized conf.(Virag via Mohammad)
 OOZIE-805 TestCoordSubmitX failing(Virag via Mohamamd).

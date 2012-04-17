@@ -24,11 +24,11 @@ import org.apache.oozie.DagEngine;
 import org.apache.oozie.LocalOozieClient;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.service.DagEngineService;
-import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.PropertiesUtils;
 import org.apache.oozie.util.XmlUtils;
@@ -140,8 +140,8 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
                 String appPath = eConf.getChild("app-path", ns).getTextTrim();
 
                 XConfiguration subWorkflowConf = new XConfiguration();
+                Configuration parentConf = new XConfiguration(new StringReader(context.getWorkflow().getConf()));
                 if (eConf.getChild(("propagate-configuration"), ns) != null) {
-                    Configuration parentConf = new XConfiguration(new StringReader(context.getWorkflow().getConf()));
                     XConfiguration.copy(parentConf, subWorkflowConf);
                 }
 
@@ -149,6 +149,10 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
                 Configuration protoActionConf = context.getProtoActionConf();
                 XConfiguration.copy(protoActionConf, subWorkflowConf);
                 subWorkflowConf.set(OozieClient.APP_PATH, appPath);
+                String group = ConfigUtils.getWithDeprecatedCheck(parentConf, OozieClient.JOB_ACL, OozieClient.GROUP_NAME, null);
+                if(group != null) {
+                    subWorkflowConf.set(OozieClient.GROUP_NAME, group);
+                }
                 injectInline(eConf.getChild("configuration", ns), subWorkflowConf);
                 injectCallback(context, subWorkflowConf);
                 injectRecovery(extId, subWorkflowConf);
