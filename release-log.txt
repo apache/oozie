@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-812 ooziedb tool does not create VALIDATE_CONN table (tucu)
 OOZIE-824 ooziedb tool creates derby.log in current directory (tucu)
 OOZIE-823 datelist-java-main example has namenode harcoded in app path the job.properties (tucu)
 OOZIE-817 Fix the unreasonable definition of the schema to fs action (yians via tucu)
