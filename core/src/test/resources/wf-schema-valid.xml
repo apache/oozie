@@ -90,7 +90,20 @@
         <error to="b"/>
     </action>
 
-    <join name="f" to="z"/>
+    <join name="f" to="g"/>
+
+    <action name="g">
+        <fs>
+            <mkdir path='/tmp'/>
+            <chmod path='/tmp' permissions='-rwxrw-rw-' dir-files='false'/>
+            <move source='/tmp' target='/tmp2'/>
+            <delete path='/tmp2'/>
+            <mkdir path='/tmp3'/>
+            <delete path='/tmp3'/>
+        </fs>
+        <ok to="z"/>
+        <error to="b"/>
+    </action>
 
     <end name="z"/>
 </workflow-app>

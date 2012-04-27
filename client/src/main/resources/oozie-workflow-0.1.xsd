@@ -183,12 +183,12 @@
     </xs:complexType>
 
     <xs:complexType name="FS">
-        <xs:sequence>
-            <xs:element name="delete" type="workflow:DELETE" minOccurs="0" maxOccurs="unbounded"/>
-            <xs:element name="mkdir" type="workflow:MKDIR" minOccurs="0" maxOccurs="unbounded"/>
-            <xs:element name="move" type="workflow:MOVE" minOccurs="0" maxOccurs="unbounded"/>
-            <xs:element name="chmod" type="workflow:CHMOD" minOccurs="0" maxOccurs="unbounded"/>
-        </xs:sequence>
+	<xs:choice minOccurs="0" maxOccurs="unbounded">
+            <xs:element name="delete" type="workflow:DELETE"/>
+            <xs:element name="mkdir" type="workflow:MKDIR"/>
+            <xs:element name="move" type="workflow:MOVE"/>
+            <xs:element name="chmod" type="workflow:CHMOD"/>
+        </xs:choice>
     </xs:complexType>
 
     <xs:complexType name="HTTP">

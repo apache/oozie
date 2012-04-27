@@ -284,7 +284,11 @@ public class TestLiteWorkflowAppService extends XTestCase {
             assertEquals("b", app.getNode("e").getTransitions().get(1));
             assertTrue(app.getNode("e").getConf().startsWith("<pig"));
 
-            assertEquals("z", app.getNode("f").getTransitions().get(0));
+            assertEquals("g", app.getNode("f").getTransitions().get(0));
+
+            assertEquals("z", app.getNode("g").getTransitions().get(0));
+            assertEquals("b", app.getNode("g").getTransitions().get(1));
+            assertTrue(app.getNode("g").getConf().startsWith("<fs"));
 
             assertNotNull(app.getNode("z"));
         }
