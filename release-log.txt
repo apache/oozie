@@ -1,17 +1,18 @@
 -- Oozie 3.2.0 release
 
+OOZIE-820 OOZIE-820 Shell action to support env-var value with = sign (mona via tucu)
 OOZIE-813 Sub-workflow child job does not get group name even if parent carries.(Mona via Mohammad)
-OOZIE-791: coord job status not updated to done_with_error after kill(Virag via Mohammad)
+OOZIE-791 coord job status not updated to done_with_error after kill(Virag via Mohammad)
 OOZIE-804 TestDecisionActionExecutor failing due to uninitialized conf.(Virag via Mohammad)
 OOZIE-805 TestCoordSubmitX failing(Virag via Mohamamd).
 OOZIE-803 UP Remove HadoopAccessorService createFileSystem() method that takes config only (tucu)
 OOZIE-802 Add minicluster config as hadoop-site.xml for testcases (tucu)
 OOZIE-796 Making the maximum number of job retrials configurable (Mohamed via Mohammad)
-OOZIE-741: the size of the workflow definition file (Mohamed via Mohammad)
+OOZIE-741 the size of the workflow definition file (Mohamed via Mohammad)
 OOZIE-797 Action retry not reading default error code.(Mona via Mohammad)
-OOZIE-780: XConfiguration parser can't parse XML file with <include> element (Virag via Mohammad)
-OOZIE-794: oozie job -info -filter should error out on bundle job and workflow job (virag via Mohammad)
-OOZIE-799: Testcases failing due to missing action-conf dir. (Virag via Mohammad)
+OOZIE-780 XConfiguration parser can't parse XML file with <include> element (Virag via Mohammad)
+OOZIE-794 oozie job -info -filter should error out on bundle job and workflow job (virag via Mohammad)
+OOZIE-799 Testcases failing due to missing action-conf dir. (Virag via Mohammad)
 OOZIE-798 it would be nice to keep action specific configs in action-conf instead of hadoop-conf (rvs via tucu)
 OOZIE-790 default concurrency value is inconsistent between doc and implementation.(Mohammad)
 OOZIE-793 remove HiveMain check for HADOOP_HOME (tucu)
