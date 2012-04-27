@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-824 ooziedb tool creates derby.log in current directory (tucu)
 OOZIE-823 datelist-java-main example has namenode harcoded in app path the job.properties (tucu)
 OOZIE-817 Fix the unreasonable definition of the schema to fs action (yians via tucu)
 OOZIE-820 OOZIE-820 Shell action to support env-var value with = sign (mona via tucu)

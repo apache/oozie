@@ -55,6 +55,7 @@ OOZIEDB_OPTS="-Doozie.home.dir=${OOZIE_HOME}";
 OOZIEDB_OPTS="${OOZIEDB_OPTS} -Doozie.config.dir=${OOZIE_CONFIG}";
 OOZIEDB_OPTS="${OOZIEDB_OPTS} -Doozie.log.dir=${OOZIE_LOG}";
 OOZIEDB_OPTS="${OOZIEDB_OPTS} -Doozie.data.dir=${OOZIE_DATA}";
+OOZIEDB_OPTS="${OOZIEDB_OPTS} -Dderby.stream.error.file=${OOZIE_LOG}/derby.log"
 
 OOZIECPPATH=""
 for i in "${BASEDIR}/libtools/"*.jar; do
