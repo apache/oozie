@@ -74,7 +74,7 @@
         <hadoop.auth.version>0.23.1</hadoop.auth.version>
 
          <!-- Sharelib component versions -->
-         <hive.version>0.9.0-SNAPSHOT</hive.version>
+         <hive.version>0.9.0</hive.version>
          <pig.version>0.9.0</pig.version>
          <sqoop.version>1.5.0-incubating-SNAPSHOT</sqoop.version>
          <streaming.version>${hadoop.version}</streaming.version>
