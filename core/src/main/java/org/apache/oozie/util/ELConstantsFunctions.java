@@ -17,7 +17,13 @@
  */
 package org.apache.oozie.util;
 
+import org.apache.hadoop.conf.Configuration;
+import org.jdom.Element;
+import org.json.JSONObject;
+
 import java.text.SimpleDateFormat;
+import java.util.Map;
+import java.util.Properties;
 import java.util.TimeZone;
 import java.util.Date;
 import java.net.URLEncoder;
@@ -124,6 +130,27 @@ public class ELConstantsFunctions {
         catch (UnsupportedEncodingException uee) {
             throw new RuntimeException("It should never happen");
         }
+    }
+
+    public static String toJsonStr(Map<String, String> map) {
+        JSONObject json = new JSONObject(map);
+        return XmlUtils.escapeCharsForXML(json.toString());
+    }
+
+    public static String toPropertiesStr(Map<String, String> map) {
+        Properties props = new Properties();
+        for (Map.Entry<String, String> entry: map.entrySet()) {
+            props.setProperty(entry.getKey(), entry.getValue());
+        }
+        return XmlUtils.escapeCharsForXML(PropertiesUtils.propertiesToString(props));
+    }
+
+    public static String toConfigurationStr(Map<String, String> map) {
+        Configuration conf = new Configuration(false);
+        for (Map.Entry<String, String> entry: map.entrySet()) {
+            conf.set(entry.getKey(), entry.getValue());
+        }
+        return XmlUtils.escapeCharsForXML(XmlUtils.prettyPrint(conf).toString());
     }
 
 }
