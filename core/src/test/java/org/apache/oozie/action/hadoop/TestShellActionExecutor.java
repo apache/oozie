@@ -180,6 +180,50 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
     }
 
     /**
+     * Test that env variable can contain '=' symbol within value
+     *
+     * @throws Exception
+     */
+    public void testEnvVar() throws Exception {
+
+        String shellScript = "ls -ltr\necho var1=$var1\necho var2=$var2";
+        FileSystem fs = getFileSystem();
+        // Create the script file with canned shell command
+        Path script = new Path(getAppPath(), "script.sh");
+        Writer w = new OutputStreamWriter(fs.create(script));
+        w.write(shellScript);
+        w.close();
+
+        String envValueHavingEqualSign = "a=b;c=d";
+        // Create sample shell action xml
+        String actionXml = "<shell>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+                + getNameNodeUri() + "</name-node>" + "<exec>sh</exec>" + "<argument>-c</argument>"
+                + "<argument>script.sh</argument>" + "<argument>A</argument>" + "<argument>B</argument>"
+                + "<env-var>var1=val1</env-var>" + "<env-var>var2=" + envValueHavingEqualSign + "</env-var>" + "<file>" + script.toString()
+                + "#" + script.getName() + "</file>" + "<capture-output />" + "</shell>";
+
+        Context context = createContext(actionXml);
+        // Submit the action
+        final RunningJob launcherJob = submitAction(context);
+        waitFor(30 * 1000, new Predicate() { // Wait for the external job to
+                    // finish
+                    public boolean evaluate() throws Exception {
+                        return launcherJob.isComplete();
+                    }
+                });
+
+        ShellActionExecutor ae = new ShellActionExecutor();
+        WorkflowAction action = context.getAction();
+        ae.check(context, action);
+        ae.end(context, action);
+
+        // Checking action data from shell script output
+        assertEquals(envValueHavingEqualSign, PropertiesUtils.stringToProperties(action.getData())
+                    .getProperty("var2"));
+
+    }
+
+    /**
      * Submit the WF with a Shell action and very of the job succeeds
      *
      * @param actionXml

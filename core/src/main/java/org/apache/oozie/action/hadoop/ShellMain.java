@@ -115,7 +115,7 @@ public class ShellMain extends LauncherMain {
         // Adding user-specified environments
         String[] envs = MapReduceMain.getStrings(actionConf, CONF_OOZIE_SHELL_ENVS);
         for (String env : envs) {
-            String[] varValue = env.split("="); // Error case is handled in
+            String[] varValue = env.split("=",2); // Error case is handled in
                                                 // ShellActionExecutor
             envp.put(varValue[0], varValue[1]);
         }
