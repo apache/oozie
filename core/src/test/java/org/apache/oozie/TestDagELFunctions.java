@@ -19,6 +19,7 @@ package org.apache.oozie;
 
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.workflow.lite.EndNodeDef;
 import org.apache.oozie.workflow.lite.LiteWorkflowApp;
 import org.apache.oozie.workflow.WorkflowInstance;
@@ -100,6 +101,15 @@ public class TestDagELFunctions extends XTestCase {
         assertEquals("em", eval.evaluate("${wf:errorMessage('actionName')}", String.class));
 
         assertEquals("B", eval.evaluate("${wf:actionData('actionName')['b']}", String.class));
+
+        String expected = XmlUtils.escapeCharsForXML("{\"b\":\"B\"}");
+        assertEquals(expected, eval.evaluate("${toJsonStr(wf:actionData('actionName'))}", String.class));
+        expected = XmlUtils.escapeCharsForXML("b=B");
+        assertTrue(eval.evaluate("${toPropertiesStr(wf:actionData('actionName'))}", String.class).contains(expected));
+        conf = new XConfiguration();
+        conf.set("b", "B");
+        expected = XmlUtils.escapeCharsForXML(XmlUtils.prettyPrint(conf).toString());
+        assertTrue(eval.evaluate("${toConfigurationStr(wf:actionData('actionName'))}", String.class).contains(expected));
 
         assertEquals("ext", eval.evaluate("${wf:actionExternalId('actionName')}", String.class));
         assertEquals("tracker", eval.evaluate("${wf:actionTrackerUri('actionName')}", String.class));
