@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -193,17 +194,16 @@ public abstract class XCommand<T> implements XCallable<T> {
      * @throws CommandException thrown i the lock could not be obtained.
      */
     private void acquireLock() throws InterruptedException, CommandException {
-		if (getEntityKey() == null) {
-			// no lock for null entity key
-			return;
-		}
+        if (getEntityKey() == null) {
+            // no lock for null entity key
+            return;
+        }
         lock = Services.get().get(MemoryLocksService.class).getWriteLock(getEntityKey(), getLockTimeOut());
         if (lock == null) {
             Instrumentation instrumentation = Services.get().get(InstrumentationService.class).get();
             instrumentation.incr(INSTRUMENTATION_GROUP, getName() + ".lockTimeOut", 1);
             if (isReQueueRequired()) {
                 //if not acquire the lock, re-queue itself with default delay
-                resetUsed();
                 queue(this, getRequeueDelay());
                 LOG.debug("Could not get lock [{0}], timed out [{1}]ms, and requeue itself [{2}]", this.toString(), getLockTimeOut(), getName());
             } else {
@@ -232,16 +232,11 @@ public abstract class XCommand<T> implements XCallable<T> {
      */
     @Override
     public final T call() throws CommandException {
-        if (used.compareAndSet(true, true)) {
-            // avoid throwing needless exceptions in case of interrupts
-            if (this.inInterruptMode()) {
-                LOG.debug("Command [{0}] key [{1}]  already used", getName(), getEntityKey());
-                return null;
-            }
-            else {
-                throw new IllegalStateException(this.getClass().getSimpleName() + " already used.");
-            }
+        if (CallableQueueService.INTERRUPT_TYPES.contains(this.getType()) && used.get()) {
+            LOG.debug("Command [{0}] key [{1}]  already used for [{2}]", getName(), getEntityKey(), this.toString());
+            return null;
         }
+
         commandQueue = null;
         Instrumentation instrumentation = Services.get().get(InstrumentationService.class).get();
         instrumentation.incr(INSTRUMENTATION_GROUP, getName() + ".executions", 1);
@@ -264,7 +259,13 @@ public abstract class XCommand<T> implements XCallable<T> {
                 if (lock != null) {
                     this.executeInterrupts();
                 }
+
                 if (!isLockRequired() || (lock != null) || this.inInterruptMode()) {
+                    if (CallableQueueService.INTERRUPT_TYPES.contains(this.getType())
+                            && !used.compareAndSet(false, true)) {
+                        LOG.debug("Command [{0}] key [{1}]  already executed for [{2}]", getName(), getEntityKey(), this.toString());
+                        return null;
+                    }
                     LOG.debug("Load state for [{0}]", getEntityKey());
                     loadState();
                     LOG = XLog.resetPrefix(LOG);
@@ -330,7 +331,7 @@ public abstract class XCommand<T> implements XCallable<T> {
     protected void executeInterrupts() {
         CallableQueueService callableQueueService = Services.get().get(CallableQueueService.class);
         // getting all the list of interrupts to be executed
-        List<XCallable<?>> callables = callableQueueService.checkInterrupts(this.getEntityKey());
+        Set<XCallable<?>> callables = callableQueueService.checkInterrupts(this.getEntityKey());
 
         if (callables != null) {
             // executing the list of interrupts in the given order of insertion
