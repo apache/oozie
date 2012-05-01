@@ -291,18 +291,7 @@
 
     <property>
         <name>oozie.service.CallableQueueService.InterruptTypes</name>
-        <value>
-            kill,
-            resume,
-            suspend,
-            bundle_kill,
-            bundle_resume,
-            bundle_suspend,
-            coord_kill,
-            coord_change,
-            coord_resume,
-            coord_suspend
-        </value>
+        <value>kill,resume,suspend,bundle_kill,bundle_resume,bundle_suspend,coord_kill,coord_change,coord_resume,coord_suspend</value>
         <description>
             Getting the types of XCommands that are considered to be of Interrupt type
         </description>

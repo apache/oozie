@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -90,9 +91,9 @@ public class CallableQueueService implements Service, Instrumentable {
 
     private final Map<String, Date> uniqueCallables = new ConcurrentHashMap<String, Date>();
 
-    private final ConcurrentHashMap<String, List<XCallable<?>>> interruptCommandsMap = new ConcurrentHashMap<String, List<XCallable<?>>>();
+    private final ConcurrentHashMap<String, Set<XCallable<?>>> interruptCommandsMap = new ConcurrentHashMap<String, Set<XCallable<?>>>();
 
-    private final HashSet<String> interruptTypes = new HashSet<String>();
+    public static final HashSet<String> INTERRUPT_TYPES = new HashSet<String>();
 
     private int interruptMapMaxSize;
 
@@ -446,7 +447,8 @@ public class CallableQueueService implements Service, Instrumentable {
         boolean callableNextEligible = conf.getBoolean(CONF_CALLABLE_NEXT_ELIGIBLE, true);
 
         for (String type : conf.getStringCollection(CONF_CALLABLE_INTERRUPT_TYPES)) {
-            interruptTypes.add(type);
+            log.debug("Adding interrupt type [{0}]", type);
+            INTERRUPT_TYPES.add(type);
         }
 
         if (!callableNextEligible) {
@@ -686,7 +688,7 @@ public class CallableQueueService implements Service, Instrumentable {
      * exist a List of Interrupt Callable for the same lock key will bereturned,
      * otherwise it will return null
      */
-    public List<XCallable<?>> checkInterrupts(String lockKey) {
+    public Set<XCallable<?>> checkInterrupts(String lockKey) {
 
         if (lockKey != null) {
             return interruptCommandsMap.remove(lockKey);
@@ -703,12 +705,12 @@ public class CallableQueueService implements Service, Instrumentable {
     public void checkInterruptTypes(XCallable<?> callable) {
         if ((callable instanceof CompositeCallable) && (((CompositeCallable) callable).getCallables() != null)) {
             for (XCallable<?> singleCallable : ((CompositeCallable) callable).getCallables()) {
-                if (interruptTypes.contains(singleCallable.getType())) {
+                if (INTERRUPT_TYPES.contains(singleCallable.getType())) {
                     insertCallableIntoInterruptMap(singleCallable);
                 }
             }
         }
-        else if (interruptTypes.contains(callable.getType())) {
+        else if (INTERRUPT_TYPES.contains(callable.getType())) {
             insertCallableIntoInterruptMap(callable);
         }
     }
@@ -721,14 +723,16 @@ public class CallableQueueService implements Service, Instrumentable {
      */
     public void insertCallableIntoInterruptMap(XCallable<?> callable) {
         if (interruptCommandsMap.size() < interruptMapMaxSize) {
-            List<XCallable<?>> newList = Collections.synchronizedList(new ArrayList<XCallable<?>>());
-            List<XCallable<?>> interruptList = interruptCommandsMap.putIfAbsent(callable.getEntityKey(), newList);
-            if (interruptList == null) {
-                interruptList = newList;
+            Set<XCallable<?>> newSet = Collections.synchronizedSet(new LinkedHashSet<XCallable<?>>());
+            Set<XCallable<?>> interruptSet = interruptCommandsMap.putIfAbsent(callable.getEntityKey(), newSet);
+            if (interruptSet == null) {
+                interruptSet = newSet;
             }
-            interruptList.add(callable);
-            log.trace("Inserting an interrupt element [{1}] to the interrupt map", interruptCommandsMap.size(),
-                    callable.toString());
+            if (interruptSet.add(callable)) {
+                log.trace("Inserting an interrupt element [{0}] to the interrupt map", callable.toString());
+            } else {
+                log.trace("Interrupt element [{0}] already present", callable.toString());
+            }
         }
         else {
             log.warn(

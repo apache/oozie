@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-819: Interrupt map doesn't have unique set of commands for a given jobid(virag via Mohammad)
 OOZIE-810 Modify Oozie POM to pickup doxia 9.2y from a repo where it is avail(tucu via Mohammad)
 OOZIE-241 EL function(s) to expose action output data as a (XML/JSON/PROP) blob (tucu)
 OOZIE-825 Update oozie-sharelib-hive to use Hive 0.9.0 (virag via tucu)
