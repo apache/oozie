@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-810 Modify Oozie POM to pickup doxia 9.2y from a repo where it is avail(tucu via Mohammad)
 OOZIE-241 EL function(s) to expose action output data as a (XML/JSON/PROP) blob (tucu)
 OOZIE-820 Shell action to support env-var value with = sign (Mona via Mohammad)
 OOZIE-825 Update oozie-sharelib-hive to use Hive 0.9.0 (virag via tucu)

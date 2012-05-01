@@ -152,10 +152,11 @@
             </snapshots>
         </pluginRepository>
         <pluginRepository>
-            <id>yahoo.github</id>
-            <url>http://yahoo.github.com/maven/repository</url>
+            <id>repository.cloudera.com</id>
+            <name>repository.cloudera.com-releases</name>
+            <url>https://repository.cloudera.com/artifactory/ext-release-local</url>
             <snapshots>
-                <enabled>true</enabled>
+                <enabled>false</enabled>
             </snapshots>
         </pluginRepository>
     </pluginRepositories>
