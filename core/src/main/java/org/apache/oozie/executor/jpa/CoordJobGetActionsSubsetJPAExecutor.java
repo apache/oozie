@@ -17,6 +17,8 @@
  */
 package org.apache.oozie.executor.jpa;
 
+import java.sql.Date;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,6 +27,9 @@ import javax.persistence.Query;
 
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.client.CoordinatorAction;
+import org.apache.oozie.service.Services;
+import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ParamChecker;
 
 /**
@@ -58,35 +63,51 @@ public class CoordJobGetActionsSubsetJPAExecutor implements JPAExecutor<List<Coo
     @Override
     @SuppressWarnings("unchecked")
     public List<CoordinatorActionBean> execute(EntityManager em) throws JPAExecutorException {
-        List<CoordinatorActionBean> actions;
         List<CoordinatorActionBean> actionList = new ArrayList<CoordinatorActionBean>();
         try {
-            Query q = em.createNamedQuery("GET_ACTIONS_FOR_COORD_JOB_ORDER_BY_NOMINAL_TIME");
-            if (!filterList.isEmpty()) {
-                // Add the filter clause
-                String query = q.toString();
-                StringBuilder sbTotal = new StringBuilder(query);
-                int offset = query.lastIndexOf("order");
-                // Get the 'where' clause for status filters
-                StringBuilder statusClause = getStatusClause(filterList);
-                // Insert 'where' before 'order by'
-                sbTotal.insert(offset, statusClause);
-                q = em.createQuery(sbTotal.toString());
-            }
-            q.setParameter("jobId", coordJobId);
-            q.setFirstResult(start - 1);
-            q.setMaxResults(len);
-            actions = q.getResultList();
+            if (!Services.get().getConf()
+                    .getBoolean(CoordActionGetForInfoJPAExecutor.COORD_GET_ALL_COLS_FOR_ACTION, false)) {
+                Query q = em.createNamedQuery("GET_ACTIONS_FOR_COORD_JOB_ORDER_BY_NOMINAL_TIME");
+                q = setQueryParameters(q, em);
+                List<Object[]> actions = q.getResultList();
 
-            for (CoordinatorActionBean a : actions) {
-                CoordinatorActionBean aa = getBeanForRunningCoordAction(a);
-                actionList.add(aa);
+                for (Object[] a : actions) {
+                    CoordinatorActionBean aa = getBeanForRunningCoordAction(a);
+                    actionList.add(aa);
+                }
+            } else {
+                Query q = em.createNamedQuery("GET_ALL_COLS_FOR_ACTIONS_FOR_COORD_JOB_ORDER_BY_NOMINAL_TIME");
+                q = setQueryParameters(q, em);
+                List<CoordinatorActionBean> caActions = q.getResultList();
+
+                for (CoordinatorActionBean a : caActions) {
+                    CoordinatorActionBean aa = getBeanForCoordAction(a);
+                    actionList.add(aa);
+                }
             }
         }
         catch (Exception e) {
             throw new JPAExecutorException(ErrorCode.E0603, e);
         }
         return actionList;
+    }
+
+    private Query setQueryParameters(Query q, EntityManager em){
+        if (!filterList.isEmpty()) {
+            // Add the filter clause
+            String query = q.toString();
+            StringBuilder sbTotal = new StringBuilder(query);
+            int offset = query.lastIndexOf("order");
+            // Get the 'where' clause for status filters
+            StringBuilder statusClause = getStatusClause(filterList);
+            // Insert 'where' before 'order by'
+            sbTotal.insert(offset, statusClause);
+            q = em.createQuery(sbTotal.toString());
+        }
+        q.setParameter("jobId", coordJobId);
+        q.setFirstResult(start - 1);
+        q.setMaxResults(len);
+        return q;
     }
 
     // Form the where clause to filter by status values
@@ -106,7 +127,7 @@ public class CoordJobGetActionsSubsetJPAExecutor implements JPAExecutor<List<Coo
         return sb;
     }
 
-    private CoordinatorActionBean getBeanForRunningCoordAction(CoordinatorActionBean a) {
+    private CoordinatorActionBean getBeanForCoordAction(CoordinatorActionBean a){
         if (a != null) {
             CoordinatorActionBean action = new CoordinatorActionBean();
             action.setId(a.getId());
@@ -130,6 +151,57 @@ public class CoordJobGetActionsSubsetJPAExecutor implements JPAExecutor<List<Coo
             return action;
         }
         return null;
+    }
+
+    private CoordinatorActionBean getBeanForRunningCoordAction(Object arr[]) {
+        CoordinatorActionBean bean = new CoordinatorActionBean();
+        if (arr[0] != null) {
+            bean.setId((String) arr[0]);
+        }
+        if (arr[1] != null) {
+            bean.setActionNumber((Integer) arr[1]);
+        }
+        if (arr[2] != null) {
+            bean.setConsoleUrl((String) arr[2]);
+        }
+        if (arr[3] != null) {
+            bean.setErrorCode((String) arr[3]);
+        }
+        if (arr[4] != null) {
+            bean.setErrorMessage((String) arr[4]);
+        }
+        if (arr[5] != null) {
+            bean.setExternalId((String) arr[5]);
+        }
+        if (arr[6] != null) {
+            bean.setExternalStatus((String) arr[6]);
+        }
+        if (arr[7] != null) {
+            bean.setJobId((String) arr[7]);
+        }
+        if (arr[8] != null) {
+            bean.setTrackerUri((String) arr[8]);
+        }
+        if (arr[9] != null) {
+            bean.setCreatedTime(DateUtils.toDate((Timestamp) arr[9]));
+        }
+        if (arr[10] != null) {
+            bean.setNominalTime(DateUtils.toDate((Timestamp) arr[10]));
+        }
+        if (arr[11] != null) {
+            bean.setStatus(CoordinatorAction.Status.valueOf((String) arr[11]));
+        }
+        if (arr[12] != null) {
+            bean.setLastModifiedTime(DateUtils.toDate((Timestamp) arr[12]));
+        }
+        if (arr[13] != null) {
+            bean.setMissingDependencies((String) arr[13]);
+        }
+        if (arr[14] != null) {
+            bean.setTimeOut((Integer) arr[14]);
+        }
+        return bean;
+
     }
 
 }

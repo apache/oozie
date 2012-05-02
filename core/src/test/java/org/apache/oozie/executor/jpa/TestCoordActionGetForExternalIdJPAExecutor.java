@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,19 +48,25 @@ public class TestCoordActionGetForExternalIdJPAExecutor extends XDataTestCase {
     public void testCoordActionGet() throws Exception {
         int actionNum = 1;
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
-        CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), actionNum, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 0);
-        _testGetActionByExternalId(action.getId(), action.getId() + "_E");
+        CoordinatorActionBean action = createCoordAction(job.getId(), actionNum, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 0);
+        action.setSlaXml(XDataTestCase.slaXml);
+     // Insert the action
+        insertRecordCoordAction(action);
+        _testGetActionByExternalId(action.getId(), job.getId(), CoordinatorAction.Status.WAITING, 0, action.getId() + "_E", XDataTestCase.slaXml);
     }
 
-    private void _testGetActionByExternalId(String actionId, String extId) throws Exception {
+    private void _testGetActionByExternalId(String actionId, String jobId, CoordinatorAction.Status status, int pending, String extId, String slaXml) throws Exception {
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
             assertNotNull(jpaService);
             CoordActionGetForExternalIdJPAExecutor actionGetCmd = new CoordActionGetForExternalIdJPAExecutor(extId);
             CoordinatorActionBean action = jpaService.execute(actionGetCmd);
             assertNotNull(action);
-            assertEquals(action.getId(), actionId);
-            assertEquals(action.getExternalId(), extId);
+            assertEquals(actionId, action.getId());
+            assertEquals(status, action.getStatus());
+            assertEquals(pending, action.getPending());
+            assertEquals(extId, action.getExternalId());
+            assertEquals(slaXml, action.getSlaXml());
         }
         catch (Exception ex) {
             ex.printStackTrace();

@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,6 +26,7 @@ import javax.persistence.Query;
 
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.util.ParamChecker;
 
 public class CoordActionsGetForRecoveryJPAExecutor implements JPAExecutor<List<CoordinatorActionBean>> {
@@ -48,30 +49,51 @@ public class CoordActionsGetForRecoveryJPAExecutor implements JPAExecutor<List<C
     /* (non-Javadoc)
      * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
      */
+    @SuppressWarnings("unchecked")
     @Override
     public List<CoordinatorActionBean> execute(EntityManager em) throws JPAExecutorException {
         List<CoordinatorActionBean> allActions = new ArrayList<CoordinatorActionBean>();
-        List<CoordinatorActionBean> actions;
+
         try {
             Query q = em.createNamedQuery("GET_COORD_ACTIONS_FOR_RECOVERY_OLDER_THAN");
             Timestamp ts = new Timestamp(System.currentTimeMillis() - this.checkAgeSecs * 1000);
             q.setParameter("lastModifiedTime", ts);
-            actions = q.getResultList();
-            for (CoordinatorActionBean action : actions) {
-                allActions.add(action);
+            List<Object[]> objectArrList = q.getResultList();
+            for (Object[] arr : objectArrList) {
+                CoordinatorActionBean caa = getBeanForCoordinatorActionFromArray(arr);
+                allActions.add(caa);
             }
 
             q = em.createNamedQuery("GET_COORD_ACTIONS_WAITING_SUBMITTED_OLDER_THAN");
             q.setParameter("lastModifiedTime", ts);
-            actions = q.getResultList();
-            for (CoordinatorActionBean action : actions) {
-                allActions.add(action);
+            objectArrList = q.getResultList();
+            for (Object[] arr : objectArrList) {
+                CoordinatorActionBean caa = getBeanForCoordinatorActionFromArray(arr);
+                allActions.add(caa);
             }
-            
+
             return allActions;
         }
         catch (IllegalStateException e) {
             throw new JPAExecutorException(ErrorCode.E0601, e.getMessage(), e);
         }
     }
+
+    private CoordinatorActionBean getBeanForCoordinatorActionFromArray(Object[] arr) {
+        CoordinatorActionBean bean = new CoordinatorActionBean();
+        if (arr[0] != null) {
+            bean.setId((String) arr[0]);
+        }
+        if (arr[1] != null){
+            bean.setJobId((String) arr[1]);
+        }
+        if (arr[2] != null) {
+            bean.setStatus(CoordinatorAction.Status.valueOf((String) arr[2]));
+        }
+        if (arr[3] != null) {
+            bean.setExternalId((String) arr[3]);
+        }
+        return bean;
+    }
+
 }

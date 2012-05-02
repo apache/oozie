@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -255,9 +255,9 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
     private void checkCoordActions(String jobId, int number, CoordinatorJob.Status status) {
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
-            List<CoordinatorActionBean> actions = jpaService.execute(new CoordJobGetActionsJPAExecutor(jobId));
-            if (actions.size() != number) {
-                fail("Should have " + number + " actions created for job " + jobId + ", but jave " + actions.size() + " actions.");
+            Integer actionsSize = jpaService.execute(new CoordJobGetActionsJPAExecutor(jobId));
+            if (actionsSize != number) {
+                fail("Should have " + number + " actions created for job " + jobId + ", but has " + actionsSize + " actions.");
             }
 
             if (status != null) {

@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -63,7 +63,6 @@ public class TestCoordinatorStore extends XTestCase {
             _testGetActionForJob(jobId, actionId);
             _testGetActionForJobInExecOrder(jobId, actionId);
             _testGetActionForJobInLastOnly(jobId, actionId);
-            _testGetActionByExternalId(actionId, actionId + "_E");
             _testGetActionRunningCount(actionId);
             _testGetRecoveryActionsGroupByJobId(jobId);
             _testUpdateCoordAction(actionId);
@@ -139,20 +138,6 @@ public class TestCoordinatorStore extends XTestCase {
         }
     }
 
-    private void _testGetActionByExternalId(String actionId, String extId) {
-        store.beginTrx();
-        try {
-            CoordinatorActionBean action = store.getCoordinatorActionForExternalId(extId);
-            assertEquals(action.getId(), actionId);
-            assertEquals(action.getExternalId(), extId);
-            store.commitTrx();
-        }
-        catch (Exception ex) {
-            store.rollbackTrx();
-            ex.printStackTrace();
-            fail("Unable to GET a record for COORD ActionBy External ID. actionId =" + actionId + " extID =" + extId);
-        }
-    }
 
     private void _testGetActionForJobInExecOrder(String jobId, String actionId) {
         store.beginTrx();
@@ -189,14 +174,8 @@ public class TestCoordinatorStore extends XTestCase {
     private void _testGetActionForJob(String jobId, String actionId) {
         store.beginTrx();
         try {
-            List<CoordinatorActionBean> actionList = store.getActionsForCoordinatorJob(jobId, false);
-            assertEquals(actionList.size(), 1);
-            CoordinatorActionBean action = actionList.get(0);
-            assertEquals(jobId, action.getJobId());
-            assertEquals(actionId, action.getId());
-            assertEquals(action.getStatus(), CoordinatorAction.Status.READY);
-            assertEquals(action.getActionNumber(), 1);
-            assertEquals(action.getExternalId(), actionId + "_E");
+            int coordActionsCount = store.getActionsForCoordinatorJob(jobId, false);
+            assertEquals(coordActionsCount, 1);
             store.commitTrx();
         }
         catch (Exception ex) {

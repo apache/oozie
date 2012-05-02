@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ import org.apache.oozie.util.ParamChecker;
 /**
  * Load coordinator actions for a coordinator job.
  */
-public class CoordJobGetActionsJPAExecutor implements JPAExecutor<List<CoordinatorActionBean>> {
+public class CoordJobGetActionsJPAExecutor implements JPAExecutor<Integer> {
 
     private String coordJobId = null;
 
@@ -46,47 +46,16 @@ public class CoordJobGetActionsJPAExecutor implements JPAExecutor<List<Coordinat
 
     @Override
     @SuppressWarnings("unchecked")
-    public List<CoordinatorActionBean> execute(EntityManager em) throws JPAExecutorException {
-        List<CoordinatorActionBean> actionBeans = new ArrayList<CoordinatorActionBean>();
+    public Integer execute(EntityManager em) throws JPAExecutorException {
         try {
             Query q = em.createNamedQuery("GET_ACTIONS_FOR_COORD_JOB");
             q.setParameter("jobId", coordJobId);
-            List<CoordinatorActionBean> actions = q.getResultList();
-            for (CoordinatorActionBean a : actions) {
-                CoordinatorActionBean aa = getBeanForRunningCoordAction(a);
-                actionBeans.add(aa);
-            }
-            
-            return actionBeans;
+            Long count = (Long) q.getSingleResult();
+            return Integer.valueOf(count.intValue());
         }
         catch (Exception e) {
             throw new JPAExecutorException(ErrorCode.E0603, e);
-        }        
+        }
     }
 
-    private CoordinatorActionBean getBeanForRunningCoordAction(CoordinatorActionBean a) {
-        if (a != null) {
-            CoordinatorActionBean action = new CoordinatorActionBean();
-            action.setId(a.getId());
-            action.setActionNumber(a.getActionNumber());
-            action.setActionXml(a.getActionXml());
-            action.setConsoleUrl(a.getConsoleUrl());
-            action.setCreatedConf(a.getCreatedConf());
-            action.setExternalStatus(a.getExternalStatus());
-            action.setMissingDependencies(a.getMissingDependencies());
-            action.setRunConf(a.getRunConf());
-            action.setTimeOut(a.getTimeOut());
-            action.setTrackerUri(a.getTrackerUri());
-            action.setType(a.getType());
-            action.setCreatedTime(a.getCreatedTime());
-            action.setExternalId(a.getExternalId());
-            action.setJobId(a.getJobId());
-            action.setLastModifiedTime(a.getLastModifiedTime());
-            action.setNominalTime(a.getNominalTime());
-            action.setSlaXml(a.getSlaXml());
-            action.setStatus(a.getStatus());
-            return action;
-        }
-        return null;
-    }
 }

@@ -616,11 +616,11 @@ public class StatusTransitService implements Service {
                 // this is not the first instance, we should only check jobs
                 // that have actions been
                 // updated >= start time of last service run;
-                List<CoordinatorActionBean> actionList = jpaService
+                List<String> coordJobIdList = jpaService
                         .execute(new CoordActionsGetByLastModifiedTimeJPAExecutor(lastInstanceStartTime));
                 Set<String> coordIds = new HashSet<String>();
-                for (CoordinatorActionBean action : actionList) {
-                    coordIds.add(action.getJobId());
+                for (String coordJobId : coordJobIdList) {
+                    coordIds.add(coordJobId);
                 }
                 pendingJobCheckList = new ArrayList<CoordinatorJobBean>();
                 for (String coordId : coordIds.toArray(new String[coordIds.size()])) {
