@@ -1590,4 +1590,12 @@
 		</description>
 	</property>
 
+	<property>
+		<name>oozie.coord.action.get.all.attributes</name>
+		<value>false</value>
+		<description>
+			Setting to true is not recommended as coord job/action info will bring all columns of the action in memory.
+			Set it true only if backward compatibility for action/job info is required.
+		</description>
+	</property>
 </configuration>

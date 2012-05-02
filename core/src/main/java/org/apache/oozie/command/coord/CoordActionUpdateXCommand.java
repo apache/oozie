@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,6 +35,7 @@ import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.executor.jpa.CoordActionGetForExternalIdJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionUpdateJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionUpdateStatusJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 
 public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
@@ -89,7 +90,7 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
                 LOG.warn("Unexpected workflow " + workflow.getId() + " STATUS " + workflow.getStatus());
                 // update lastModifiedTime
                 coordAction.setLastModifiedTime(new Date());
-                jpaService.execute(new CoordActionUpdateJPAExecutor(coordAction));
+                jpaService.execute(new CoordActionUpdateStatusJPAExecutor(coordAction));
 
                 return null;
             }
@@ -98,7 +99,7 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
                     + " to " + coordAction.getStatus() + ", pending = " + coordAction.getPending());
 
             coordAction.setLastModifiedTime(new Date());
-            jpaService.execute(new CoordActionUpdateJPAExecutor(coordAction));
+            jpaService.execute(new CoordActionUpdateStatusJPAExecutor(coordAction));
             if (slaStatus != null) {
                 SLADbOperations.writeStausEvent(coordAction.getSlaXml(), coordAction.getId(), slaStatus,
                         SlaAppType.COORDINATOR_ACTION, LOG);
@@ -196,7 +197,7 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
             // update lastModifiedTime
             coordAction.setLastModifiedTime(new Date());
             try {
-                jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionUpdateJPAExecutor(coordAction));
+                jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionUpdateStatusJPAExecutor(coordAction));
             }
             catch (JPAExecutorException je) {
                 throw new CommandException(je);

@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.client.SLAEvent.Status;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
-import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionGetForCheckJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 
 /**
@@ -88,7 +88,7 @@ public class CoordActionCheckXCommand extends CoordinatorXCommand<Void> {
                     else {
                         LOG.warn("Unexpected workflow " + wf.getId() + " STATUS " + wf.getStatus());
                         coordAction.setLastModifiedTime(new Date());
-                        jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionUpdateJPAExecutor(coordAction));
+                        jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionUpdateStatusJPAExecutor(coordAction));
                         return null;
                     }
                 }
@@ -97,7 +97,7 @@ public class CoordActionCheckXCommand extends CoordinatorXCommand<Void> {
             LOG.debug("Updating Coordintaor actionId :" + coordAction.getId() + "status to ="
                             + coordAction.getStatus());
             coordAction.setLastModifiedTime(new Date());
-            jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionUpdateJPAExecutor(coordAction));
+            jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionUpdateStatusJPAExecutor(coordAction));
 
             if (slaStatus != null) {
                 SLADbOperations.writeStausEvent(coordAction.getSlaXml(), coordAction.getId(), slaStatus,
@@ -136,7 +136,7 @@ public class CoordActionCheckXCommand extends CoordinatorXCommand<Void> {
             jpaService = Services.get().get(JPAService.class);
 
             if (jpaService != null) {
-                coordAction = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
+                coordAction = jpaService.execute(new CoordActionGetForCheckJPAExecutor(actionId));
                 LogUtils.setLogInfo(coordAction, logInfo);
             }
             else {

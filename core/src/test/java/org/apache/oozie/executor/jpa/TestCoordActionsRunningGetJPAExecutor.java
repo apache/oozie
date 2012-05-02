@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,10 +60,10 @@ public class TestCoordActionsRunningGetJPAExecutor extends XDataTestCase {
         assertNotNull(jpaService);
 
         CoordActionsRunningGetJPAExecutor coordGetCmd = new CoordActionsRunningGetJPAExecutor(0);
-        List<CoordinatorActionBean> ret = jpaService.execute(coordGetCmd);
+        List<String> coordActionIds = jpaService.execute(coordGetCmd);
 
-        assertNotNull(ret);
-        assertEquals(ret.size(), 1);
+        assertNotNull(coordActionIds);
+        assertEquals(1, coordActionIds.size());
     }
 
 }

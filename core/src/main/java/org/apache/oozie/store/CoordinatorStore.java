@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -654,13 +654,13 @@ public class CoordinatorStore extends Store {
      * @return A List of CoordinatorActionBean
      * @throws StoreException
      */
-    public List<CoordinatorActionBean> getActionsForCoordinatorJob(final String jobId, final boolean locking)
+    public Integer getActionsForCoordinatorJob(final String jobId, final boolean locking)
             throws StoreException {
         ParamChecker.notEmpty(jobId, "CoordinatorJobID");
-        List<CoordinatorActionBean> actions = doOperation("getActionsForCoordinatorJob",
-                                                          new Callable<List<CoordinatorActionBean>>() {
+        Integer actionsCount = doOperation("getActionsForCoordinatorJob",
+                                                          new Callable<Integer>() {
                                                               @SuppressWarnings("unchecked")
-                                                              public List<CoordinatorActionBean> call() throws StoreException {
+                                                              public Integer call() throws StoreException {
                                                                   List<CoordinatorActionBean> actions;
                                                                   List<CoordinatorActionBean> actionList = new ArrayList<CoordinatorActionBean>();
                                                                   try {
@@ -675,11 +675,13 @@ public class CoordinatorStore extends Store {
                                                                       * fetch.setReadLockMode(LockModeType.WRITE);
                                                                       * fetch.setLockTimeout(-1); // 1 second }
                                                                       */
-                                                                      actions = q.getResultList();
+                                                                      Long count = (Long) q.getSingleResult();
+                                                                      return Integer.valueOf(count.intValue());
+                                                                      /*actions = q.getResultList();
                                                                       for (CoordinatorActionBean a : actions) {
                                                                           CoordinatorActionBean aa = getBeanForRunningCoordAction(a);
                                                                           actionList.add(aa);
-                                                                      }
+                                                                      }*/
                                                                   }
                                                                   catch (IllegalStateException e) {
                                                                       throw new StoreException(ErrorCode.E0601, e.getMessage(), e);
@@ -687,11 +689,11 @@ public class CoordinatorStore extends Store {
                                                                   /*
                                                                   * if (locking) { return actions; } else {
                                                                   */
-                                                                  return actionList;
+
                                                                   // }
                                                               }
                                                           });
-        return actions;
+        return actionsCount;
     }
 
     /**
@@ -764,36 +766,6 @@ public class CoordinatorStore extends Store {
         return null;
     }
 
-    /*
-     * do not need this public void updateCoordinatorActionForExternalId(final
-     * CoordinatorActionBean action) throws StoreException { // TODO
-     * Auto-generated method stub ParamChecker.notNull(action,
-     * "updateCoordinatorActionForExternalId");
-     * doOperation("updateCoordinatorActionForExternalId", new Callable<Void>()
-     * { public Void call() throws SQLException, StoreException,
-     * WorkflowException { Query q =
-     * entityManager.createNamedQuery("UPDATE_COORD_ACTION_FOR_EXTERNALID");
-     * setActionQueryParameters(action,q); q.executeUpdate(); return null; } });
-     * }
-     */
-    public CoordinatorActionBean getCoordinatorActionForExternalId(final String externalId) throws StoreException {
-        // TODO Auto-generated method stub
-        ParamChecker.notEmpty(externalId, "coodinatorActionExternalId");
-        CoordinatorActionBean cBean = doOperation("getCoordinatorActionForExternalId",
-                                                  new Callable<CoordinatorActionBean>() {
-                                                      public CoordinatorActionBean call() throws StoreException {
-                                                          CoordinatorActionBean caBean = null;
-                                                          Query q = entityManager.createNamedQuery("GET_COORD_ACTION_FOR_EXTERNALID");
-                                                          q.setParameter("externalId", externalId);
-                                                          List<CoordinatorActionBean> actionList = q.getResultList();
-                                                          if (actionList.size() > 0) {
-                                                              caBean = actionList.get(0);
-                                                          }
-                                                          return caBean;
-                                                      }
-                                                  });
-        return cBean;
-    }
 
     public List<CoordinatorActionBean> getRunningActionsForCoordinatorJob(final String jobId, final boolean locking)
             throws StoreException {

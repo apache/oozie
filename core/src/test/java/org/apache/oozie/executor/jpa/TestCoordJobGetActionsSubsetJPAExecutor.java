@@ -19,8 +19,10 @@ package org.apache.oozie.executor.jpa;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
+import org.apache.hadoop.fs.Path;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.client.CoordinatorAction;
@@ -29,6 +31,7 @@ import org.apache.oozie.local.LocalOozie;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
+import org.apache.oozie.util.DateUtils;
 
 public class TestCoordJobGetActionsSubsetJPAExecutor extends XDataTestCase {
     Services services;
@@ -51,19 +54,60 @@ public class TestCoordJobGetActionsSubsetJPAExecutor extends XDataTestCase {
 
     public void testCoordActionGet() throws Exception {
         int actionNum = 1;
+        String resourceXmlName = "coord-action-get.xml";
+        Date dummyCreationTime = new Date();
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
-        CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), actionNum, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 0);
+        CoordinatorActionBean action = createCoordAction(job.getId(), actionNum, CoordinatorAction.Status.WAITING, resourceXmlName, 0);
+        // Add some attributes
+        action.setConsoleUrl("consoleUrl");
+        action.setExternalStatus("externalStatus");
+        action.setErrorCode("errorCode");
+        action.setErrorMessage("errorMessage");
+        action.setTrackerUri("trackerUri");
+        action.setCreatedTime(dummyCreationTime);
+        String testDir = getTestCaseDir();
+        String missDeps = "file://#testDir/2009/29/_SUCCESS#file://#testDir/2009/22/_SUCCESS#file://#testDir/2009/15/_SUCCESS#file://#testDir/2009/08/_SUCCESS";
+        missDeps = missDeps.replaceAll("#testDir", testDir);
+        action.setMissingDependencies(missDeps);
+        action.setTimeOut(10);
+        // Insert the action
+        insertRecordCoordAction(action);
 
-        _testGetActionsSubset(job.getId(), action.getId(), 1, 1);
+        Path appPath = new Path(getFsTestCaseDir(), "coord");
+        String actionXml = getCoordActionXml(appPath, resourceXmlName);
+        String actionNominalTime = getActionNominalTime(actionXml);
+        //Pass expected values
+        _testGetActionsSubset(job.getId(), action.getId(), 1, 1, "consoleUrl", "errorCode", "errorMessage",
+                action.getId() + "_E", "externalStatus", "trackerUri", dummyCreationTime,
+                DateUtils.parseDateUTC(actionNominalTime), missDeps, 10, CoordinatorAction.Status.WAITING);
+
     }
 
-    private void _testGetActionsSubset(String jobId, String actionId, int start, int len) throws Exception {
+    private void _testGetActionsSubset(String jobId, String actionId, int start, int len, String consoleUrl,
+            String errorCode, String errorMessage, String externalId, String externalStatus, String trackerUri,
+            Date createdTime, Date nominalTime, String missDeps, int timeout, CoordinatorAction.Status status)
+            throws Exception {
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
-        CoordJobGetActionsSubsetJPAExecutor actionGetCmd = new CoordJobGetActionsSubsetJPAExecutor(jobId, Collections.<String>emptyList(), start, len);
+        CoordJobGetActionsSubsetJPAExecutor actionGetCmd = new CoordJobGetActionsSubsetJPAExecutor(jobId,
+                Collections.<String> emptyList(), start, len);
         List<CoordinatorActionBean> actions = jpaService.execute(actionGetCmd);
-        assertEquals(actions.size(), 1);
-        assertEquals(actions.get(0).getId(), actionId);
+        CoordinatorActionBean action = actions.get(0);
+
+        assertEquals(1, actions.size());
+        assertEquals(actionId, action.getId());
+        assertEquals(jobId, action.getJobId());
+        assertEquals(consoleUrl, action.getConsoleUrl());
+        assertEquals(errorCode, action.getErrorCode());
+        assertEquals(errorMessage, action.getErrorMessage());
+        assertEquals(externalId, action.getExternalId());
+        assertEquals(externalStatus, action.getExternalStatus());
+        assertEquals(trackerUri, action.getTrackerUri());
+        assertEquals(createdTime, action.getCreatedTime());
+        assertEquals(nominalTime, action.getNominalTime());
+        assertEquals(missDeps, action.getMissingDependencies());
+        assertEquals(timeout, action.getTimeOut());
+        assertEquals(status, action.getStatus());
     }
 
     // Check the ordering of actions by nominal time
@@ -114,6 +158,38 @@ public class TestCoordJobGetActionsSubsetJPAExecutor extends XDataTestCase {
         // As actions are filtered by RUNNING status, only 1 action should be returned
         assertEquals(actions.size(), 1);
         assertEquals(actions.get(0).getActionNumber(), 1);
+    }
+
+    public void testGetActionAllColumns() throws Exception{
+        setSystemProperty(CoordActionGetForInfoJPAExecutor.COORD_GET_ALL_COLS_FOR_ACTION, "true");
+        new Services().init();
+        try {
+            int actionNum = 1;
+            String slaXml = "slaXml";
+            String resourceXmlName = "coord-action-get.xml";
+            CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
+            CoordinatorActionBean action = createCoordAction(job.getId(), actionNum, CoordinatorAction.Status.WAITING,
+                    resourceXmlName, 0);
+            action.setSlaXml(slaXml);
+            insertRecordCoordAction(action);
+            _testGetForInfoAllActions(job.getId(), slaXml, 1, 1);
+        }
+        finally {
+            Services.get().destroy();
+        }
+    }
+
+    private void _testGetForInfoAllActions(String jobId, String slaXml, int start, int len) throws Exception {
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+        CoordJobGetActionsSubsetJPAExecutor actionGetCmd = new CoordJobGetActionsSubsetJPAExecutor(jobId,
+                Collections.<String> emptyList(), start, len);
+        List<CoordinatorActionBean> actions = jpaService.execute(actionGetCmd);
+        CoordinatorActionBean action = actions.get(0);
+
+        assertEquals(CoordinatorAction.Status.WAITING, action.getStatus());
+        assertEquals(slaXml, action.getSlaXml());
+        assertEquals(0, action.getPending());
     }
 
 }

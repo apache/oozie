@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -142,25 +142,25 @@ public class ActionCheckerService implements Service {
                 throw new CommandException(ErrorCode.E0610);
             }
 
-            List<CoordinatorActionBean> cactions;
+            List<String> cactionIds;
             try {
-                cactions = jpaService.execute(new CoordActionsRunningGetJPAExecutor(
+                cactionIds = jpaService.execute(new CoordActionsRunningGetJPAExecutor(
                         actionCheckDelay));
             }
             catch (JPAExecutorException je) {
                 throw new CommandException(je);
             }
 
-            if (cactions == null || cactions.size() == 0) {
+            if (cactionIds == null || cactionIds.size() == 0) {
                 return;
             }
 
-            msg.append(" COORD_ACTIONS : " + cactions.size());
-
-            for (CoordinatorActionBean caction : cactions) {
+            msg.append(" COORD_ACTIONS : " + cactionIds.size());
+            System.out.println("MyCoordactions "+cactionIds.size());
+            for (String coordActionId : cactionIds) {
                 Services.get().get(InstrumentationService.class).get().incr(INSTRUMENTATION_GROUP,
                         INSTR_CHECK_COORD_ACTIONS_COUNTER, 1);
-                    queueCallable(new CoordActionCheckXCommand(caction.getId(), actionCheckDelay));
+                    queueCallable(new CoordActionCheckXCommand(coordActionId, actionCheckDelay));
             }
 
         }

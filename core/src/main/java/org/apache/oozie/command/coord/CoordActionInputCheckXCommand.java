@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,7 @@ import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.coord.CoordELEvaluator;
 import org.apache.oozie.coord.CoordELFunctions;
-import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionGetForInputCheckJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.HadoopAccessorException;
@@ -97,7 +97,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             // update lastModifiedTime
             coordAction.setLastModifiedTime(new Date());
             try {
-                jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionUpdateJPAExecutor(coordAction));
+                jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionUpdateForInputCheckJPAExecutor(coordAction));
             }
             catch (JPAExecutorException e) {
                 throw new CommandException(e);
@@ -146,7 +146,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                 }
             }
             coordAction.setLastModifiedTime(new Date());
-            jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionUpdateJPAExecutor(coordAction));
+            jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionUpdateForInputCheckJPAExecutor(coordAction));
         }
         catch (Exception e) {
             throw new CommandException(ErrorCode.E1021, e.getMessage(), e);
@@ -488,7 +488,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             jpaService = Services.get().get(JPAService.class);
         }
         try {
-            coordAction = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
+            coordAction = jpaService.execute(new CoordActionGetForInputCheckJPAExecutor(actionId));
             coordJob = jpaService.execute(new CoordJobGetJPAExecutor(coordAction.getJobId()));
         }
         catch (JPAExecutorException je) {

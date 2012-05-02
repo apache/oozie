@@ -74,7 +74,7 @@ public class TestCoordActionsInDateRange extends XDataTestCase {
             // Test a bad date format.
             try {
               String badDate = "bad" + date1;
-              CoordActionsInDateRange.getCoordActionsFromDates(
+              CoordActionsInDateRange.getCoordActionIdsFromDates(
                   job.getId().toString(),
                   badDate + "::" + date2);
               fail("Accepted badly formatted date: " + badDate);
@@ -86,7 +86,7 @@ public class TestCoordActionsInDateRange extends XDataTestCase {
             // Test a bad scope.
             try {
               String badScope = date1 + "0xbad5c09e" + date2;
-              CoordActionsInDateRange.getCoordActionsFromDates(
+              CoordActionsInDateRange.getCoordActionIdsFromDates(
                   job.getId().toString(),
                   badScope);
               fail("Accepted bad range scope: " + badScope);
@@ -97,7 +97,7 @@ public class TestCoordActionsInDateRange extends XDataTestCase {
 
             // Test inverted start and end dates.
             try {
-              CoordActionsInDateRange.getCoordActionsFromDates(
+              CoordActionsInDateRange.getCoordActionIdsFromDates(
                   job.getId().toString(),
                   date2 + "::" + date1);
               fail("Accepted inverted dates: [Start::End] = " + date2 + "::" + date1);
@@ -107,12 +107,12 @@ public class TestCoordActionsInDateRange extends XDataTestCase {
             }
 
             // Testing for the number of coordinator actions in a date range that spans from half an hour prior to the nominal time to 1 hour after the nominal time
-            int noOfActions = CoordActionsInDateRange.getCoordActionsFromDates(job.getId().toString(), date1 + "::" + date2).size();
+            int noOfActions = CoordActionsInDateRange.getCoordActionIdsFromDates(job.getId().toString(), date1 + "::" + date2).size();
             assertEquals(1, noOfActions);
 
             // Testing for the number of coordinator actions in a date range that spans from half an hour after the nominal time to 1 hour after the nominal time
             date1 = DateUtils.formatDateUTC(new Date(nominalTimeMilliseconds + (noOfMillisecondsinOneHour / 2)));
-            noOfActions = CoordActionsInDateRange.getCoordActionsFromDates(job.getId().toString(), date1 + "::" + date2).size();
+            noOfActions = CoordActionsInDateRange.getCoordActionIdsFromDates(job.getId().toString(), date1 + "::" + date2).size();
             assertEquals(0, noOfActions);
         }
         catch (Exception e) {

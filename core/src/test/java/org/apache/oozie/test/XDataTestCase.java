@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -78,6 +78,15 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 
 public abstract class XDataTestCase extends XFsTestCase {
+
+    protected static String slaXml = " <sla:info xmlns:sla='uri:oozie:sla:0.1'>" + " <sla:app-name>test-app</sla:app-name>"
+            + " <sla:nominal-time>2009-03-06T10:00Z</sla:nominal-time>" + " <sla:should-start>5</sla:should-start>"
+            + " <sla:should-end>120</sla:should-end>"
+            + " <sla:notification-msg>Notifying User for nominal time : 2009-03-06T10:00Z </sla:notification-msg>"
+            + " <sla:alert-contact>abc@yahoo.com</sla:alert-contact>"
+            + " <sla:dev-contact>abc@yahoo.com</sla:dev-contact>"
+            + " <sla:qa-contact>abc@yahoo.com</sla:qa-contact>" + " <sla:se-contact>abc@yahoo.com</sla:se-contact>"
+            + "</sla:info>";
 
     /**
      * Insert coord job for testing.
@@ -1090,6 +1099,25 @@ public abstract class XDataTestCase extends XFsTestCase {
         }
         catch (IOException ioe) {
             throw new RuntimeException(XLog.format("Could not get " + resourceXmlName, ioe));
+        }
+    }
+
+    /**
+     * Inserts a record to coord action table
+     * @param action the record to be inserted
+     * @throws Exception
+     */
+   protected void insertRecordCoordAction(CoordinatorActionBean action) throws Exception {
+        try {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            assertNotNull(jpaService);
+            CoordActionInsertJPAExecutor coordActionInsertCmd = new CoordActionInsertJPAExecutor(action);
+            jpaService.execute(coordActionInsertCmd);
+        }
+        catch (JPAExecutorException je) {
+            je.printStackTrace();
+            fail("Unable to insert the test coord action record to table");
+            throw je;
         }
     }
 

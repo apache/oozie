@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@ import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.executor.jpa.CoordActionGetForInfoJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
@@ -47,7 +48,7 @@ public class CoordActionInfoXCommand extends CoordinatorXCommand<CoordinatorActi
         if (jpaService != null) {
             CoordinatorActionBean action;
             try {
-                action = jpaService.execute(new CoordActionGetJPAExecutor(this.id));
+                action = jpaService.execute(new CoordActionGetForInfoJPAExecutor(this.id));
             }
             catch (JPAExecutorException e) {
                 throw new CommandException(e);

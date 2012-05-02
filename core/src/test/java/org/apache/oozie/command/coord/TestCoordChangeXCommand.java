@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -284,13 +284,24 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         assertEquals(DateUtils.convertDateToString(coordJob.getPauseTime()), DateUtils.convertDateToString(pauseTime));
         assertEquals(Job.Status.RUNNING, coordJob.getStatus());
         assertEquals(2, coordJob.getLastActionNumber());
+        try {
+            jpaService.execute(new CoordJobGetActionByActionNumberJPAExecutor(job.getId(), 3));
+            fail("Expected to fail as action 3 should have been deleted");
+        }
+        catch (JPAExecutorException jpae) {
+            assertEquals(ErrorCode.E0603, jpae.getErrorCode());
+            jpae.printStackTrace();
+        }
 
-        CoordinatorActionBean actionBean = jpaService.execute(new CoordJobGetActionByActionNumberJPAExecutor(job
-                .getId(), 3));
-        assertNull(actionBean);
+        try {
+            jpaService.execute(new CoordJobGetActionByActionNumberJPAExecutor(job.getId(), 4));
+            fail("Expected to fail as action 4 should have been deleted");
+        }
+        catch (JPAExecutorException jpae) {
+            assertEquals(ErrorCode.E0603, jpae.getErrorCode());
+            jpae.printStackTrace();
+        }
 
-        actionBean = jpaService.execute(new CoordJobGetActionByActionNumberJPAExecutor(job.getId(), 4));
-        assertNull(actionBean);
     }
 
     protected CoordinatorJobBean addRecordToCoordJobTableForPauseTimeTest(CoordinatorJob.Status status, Date start,
