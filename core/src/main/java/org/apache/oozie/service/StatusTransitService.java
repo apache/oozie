@@ -29,6 +29,7 @@ import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
+import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.command.CommandException;
@@ -624,7 +625,18 @@ public class StatusTransitService implements Service {
                 }
                 pendingJobCheckList = new ArrayList<CoordinatorJobBean>();
                 for (String coordId : coordIds.toArray(new String[coordIds.size()])) {
-                    CoordinatorJobBean coordJob = jpaService.execute(new CoordJobGetJPAExecutor(coordId));
+                    CoordinatorJobBean coordJob;
+                    try{
+                        coordJob = jpaService.execute(new CoordJobGetJPAExecutor(coordId));
+                    }
+                    catch (JPAExecutorException jpaee) {
+                        if (jpaee.getErrorCode().equals(ErrorCode.E0604)) {
+                            LOG.warn("Exception happened during StatusTransitRunnable; Coordinator Job doesn't exist", jpaee);
+                            continue;
+                        } else {
+                            throw jpaee;
+                        }
+                    }
                     // Running coord job might have pending false
                     if (coordJob.isPending() || coordJob.getStatus().equals(Job.Status.RUNNING)) {
                         pendingJobCheckList.add(coordJob);
