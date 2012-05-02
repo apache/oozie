@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -768,6 +768,40 @@ public class TestStatusTransitService extends XDataTestCase {
             throw je;
         }
         return wfBean;
+    }
+
+    /**
+     * Tests functionality of the StatusTransitService Runnable command. </p> Insert a coordinator job with RUNNING and
+     * pending true and coordinator actions for that job with pending false. Insert a coordinator action with a stale coord job id. Then, runs the StatusTransitService runnable and ensures
+     * the job status of the good job changes to SUCCEEDED.
+     *
+     * @throws Exception
+     */
+    public void testCoordStatusTransitServiceStaleCoordActions() throws Exception {
+
+        // this block will initialize the lastinstancetime for status transit service
+        Runnable runnable = new StatusTransitRunnable();
+        runnable.run();
+
+        Date start = DateUtils.parseDateUTC("2009-02-01T01:00Z");
+        Date end = DateUtils.parseDateUTC("2009-02-02T23:59Z");
+
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, start, end, true, true, 3);
+        // add a record with stale reference to coord job id
+        addRecordToCoordActionTable("ABCD", 3, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
+        // add records with reference to correct job ids
+        addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
+        addRecordToCoordActionTable(job.getId(), 2, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
+        addRecordToCoordActionTable(job.getId(), 3, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
+
+        runnable = new StatusTransitRunnable();
+        runnable.run();
+        Thread.sleep(1000);
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        CoordJobGetJPAExecutor coordGetCmd = new CoordJobGetJPAExecutor(job.getId());
+        CoordinatorJobBean coordJob = jpaService.execute(coordGetCmd);
+        assertEquals(CoordinatorJob.Status.SUCCEEDED, coordJob.getStatus());
     }
 
 }

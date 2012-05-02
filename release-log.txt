@@ -1,8 +1,9 @@
 -- Oozie 3.2.0 release
 
-OOZIE-815: Remove select * from queries related to coord action (Virag via Mohammad)
-OOZIE-826: TestCoordKillXCommand's testCoordKillXCommandUniqueness testcase is failing after interrupt changes(virag via Mohammad)
-OOZIE-819: Interrupt map doesn't have unique set of commands for a given jobid(virag via Mohammad)
+OOZIE-827 StatusTransitService fails to run if a stale reference to coord job is present (virag via tucu)
+OOZIE-815 Remove select * from queries related to coord action (Virag via Mohammad)
+OOZIE-826 TestCoordKillXCommand's testCoordKillXCommandUniqueness testcase is failing after interrupt changes(virag via Mohammad)
+OOZIE-819 Interrupt map doesn't have unique set of commands for a given jobid(virag via Mohammad)
 OOZIE-810 Modify Oozie POM to pickup doxia 9.2y from a repo where it is avail(tucu via Mohammad)
 OOZIE-241 EL function(s) to expose action output data as a (XML/JSON/PROP) blob (tucu)
 OOZIE-820 Shell action to support env-var value with = sign (Mona via Mohammad)
