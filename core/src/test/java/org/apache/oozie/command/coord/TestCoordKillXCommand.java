@@ -273,6 +273,7 @@ public class TestCoordKillXCommand extends XDataTestCase {
 
         @Override
         protected Void execute() throws CommandException {
+            super.execute();
             try {
                 Thread.sleep(wait);
             }
