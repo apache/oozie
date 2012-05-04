@@ -126,6 +126,7 @@ OOZIE-589 Make the command requeue interval configurable.(Mohammad)
 OOZIE-156 Add support for a SQOOP action. (tucu)
 OOZIE-77  Oozie should support Kerberos authentication on its HTTP REST API. (tucu)
 OOZIE-622 Remove system sharelib tests from TestLiteWorkflowAppService. (tucu)
+OOZIE-588 Oozie to allow drill down to hadoop job's details (virag via Mohammad)
 OOZIE-68  Add Hive action. (tucu)
 OOZIE-608 Fix test failure for testCoordChangeXCommand, testCoordChangeEndTime Unit
 OOZIE-610 Oozie system share lib should have jars per action type. (tucu)
