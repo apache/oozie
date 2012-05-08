@@ -73,15 +73,19 @@ public class TestAuthorizationService extends XDataTestCase {
     }
     private Services services;
 
-    private void init(boolean useDefaultGroup) throws Exception {
+    private void init(boolean useDefaultGroup, boolean useAdminUsersFile) throws Exception {
         setSystemProperty(SchemaService.WF_CONF_EXT_SCHEMAS, "wf-ext-schema.xsd");
-
-        Reader adminListReader = IOUtils.getResourceAsReader("adminusers.txt", -1);
-        Writer adminListWriter = new FileWriter(new File(getTestCaseConfDir(), "adminusers.txt"));
-        IOUtils.copyCharStream(adminListReader, adminListWriter);
 
         services = new Services();
         Configuration conf = services.getConf();
+        if (useAdminUsersFile) {
+            Reader adminListReader = IOUtils.getResourceAsReader("adminusers.txt", -1);
+            Writer adminListWriter = new FileWriter(new File(getTestCaseConfDir(), "adminusers.txt"));
+            IOUtils.copyCharStream(adminListReader, adminListWriter);
+        }
+        else {
+            conf.set(AuthorizationService.CONF_ADMIN_GROUPS, getTestGroup());
+        }
         conf.set(Services.CONF_SERVICE_CLASSES,
                  conf.get(Services.CONF_SERVICE_CLASSES) + "," + AuthorizationService.class.getName() +
                  "," + DummyGroupsService.class.getName());
@@ -111,7 +115,7 @@ public class TestAuthorizationService extends XDataTestCase {
     }
 
     private void _testAuthorizationService(boolean useDefaultGroup) throws Exception {
-        init(useDefaultGroup);
+        init(useDefaultGroup, true);
         Reader reader = IOUtils.getResourceAsReader("wf-ext-schema-valid.xml", -1);
         Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
         IOUtils.copyCharStream(reader, writer);
@@ -160,31 +164,14 @@ public class TestAuthorizationService extends XDataTestCase {
         assertNotNull(as);
         as.authorizeForGroup(getTestUser(), getTestGroup());
         assertNotNull(as.getDefaultGroup(getTestUser()));
-        as.authorizeForAdmin("admin", false);
-        as.authorizeForAdmin("admin", true);
-        try {
-            as.authorizeForAdmin(getTestUser(), true);
-            fail();
-        }
-        catch (AuthorizationException ex) {
-        }
-        try {
-            as.authorizeForAdmin(getTestUser(), true);
-            fail();
-        }
-        catch (AuthorizationException ex) {
-        }
 
         as.authorizeForApp(getTestUser2(), getTestGroup(), appPath, jobConf);
 
-        // this test fails in pre Hadoop 20S
-        if (System.getProperty("hadoop20", "false").toLowerCase().equals("false")) {
-            try {
-                as.authorizeForApp(getTestUser3(), getTestGroup(), appPath, jobConf);
-                fail();
-            }
-            catch (AuthorizationException ex) {
-            }
+        try {
+            as.authorizeForApp(getTestUser3(), getTestGroup(), appPath, jobConf);
+            fail();
+        }
+        catch (AuthorizationException ex) {
         }
 
         as.authorizeForJob(getTestUser(), jobId, false);
@@ -201,7 +188,7 @@ public class TestAuthorizationService extends XDataTestCase {
     }
 
     public void testAuthorizationServiceForCoord() throws Exception {
-        init(false);
+        init(false, true);
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, false, false);
         assertNotNull(job);
         AuthorizationService as = services.get(AuthorizationService.class);
@@ -211,7 +198,7 @@ public class TestAuthorizationService extends XDataTestCase {
     }
 
     public void testAuthorizationServiceForBundle() throws Exception {
-        init(false);
+        init(false, true);
         BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP, false);
         assertNotNull(job);
         AuthorizationService as = services.get(AuthorizationService.class);
@@ -221,14 +208,14 @@ public class TestAuthorizationService extends XDataTestCase {
     }
 
     public void testDefaultGroup() throws Exception {
-        init(false);
+        init(false, true);
         AuthorizationService as = services.get(AuthorizationService.class);
         assertNotNull(as);
         assertNotNull(as.getDefaultGroup(getTestUser()));
     }
 
     public void testErrors() throws Exception {
-        init(false);
+        init(false, true);
         services.setService(ForTestAuthorizationService.class);
         AuthorizationService as = services.get(AuthorizationService.class);
 
@@ -313,4 +300,31 @@ public class TestAuthorizationService extends XDataTestCase {
         }
     }
 
+    private void _testAdminUsers(boolean useAdminFile, String adminUser, String regularUser) throws Exception {
+        init(true, useAdminFile);
+
+        AuthorizationService as = services.get(AuthorizationService.class);
+        as.authorizeForAdmin(adminUser, false);
+        as.authorizeForAdmin(adminUser, true);
+        try {
+            as.authorizeForAdmin(regularUser, true);
+            fail();
+        }
+        catch (AuthorizationException ex) {
+        }
+        try {
+            as.authorizeForAdmin(regularUser, true);
+            fail();
+        }
+        catch (AuthorizationException ex) {
+        }
+    }
+
+    public void testAdminUsersWithAdminFile() throws Exception {
+        _testAdminUsers(true, "admin", getTestUser());
+    }
+
+    public void testAdminUsersWithAdminGroup() throws Exception {
+        _testAdminUsers(false, getTestUser(), getTestUser2());
+    }
 }

@@ -66,6 +66,11 @@ public class AuthorizationService implements Service {
     public static final String CONF_DEFAULT_GROUP_AS_ACL = CONF_PREFIX + "default.group.as.acl";
 
     /**
+     * Configuration parameter to define admin groups, if NULL/empty the adminusers.txt file is used.
+     */
+    public static final String CONF_ADMIN_GROUPS = CONF_PREFIX + "admin.groups";
+
+    /**
      * File that contains list of admin users for Oozie.
      */
     public static final String ADMIN_USERS_FILE = "adminusers.txt";
@@ -73,12 +78,20 @@ public class AuthorizationService implements Service {
     protected static final String INSTRUMENTATION_GROUP = "authorization";
     protected static final String INSTR_FAILED_AUTH_COUNTER = "authorization.failed";
 
+    private Set<String> adminGroups;
     private Set<String> adminUsers;
     private boolean authorizationEnabled;
     private boolean useDefaultGroupAsAcl;
 
     private final XLog log = XLog.getLog(getClass());
     private Instrumentation instrumentation;
+
+    private String[] getTrimmedStrings(String str) {
+        if (null == str || "".equals(str.trim())) {
+            return new String[0];
+        }
+        return str.trim().split("\\s*,\\s*");
+    }
 
     /**
      * Initialize the service. <p/> Reads the security related configuration. parameters - security enabled and list of
@@ -88,20 +101,30 @@ public class AuthorizationService implements Service {
      * @throws ServiceException thrown if the service could not be initialized.
      */
     public void init(Services services) throws ServiceException {
-        adminUsers = new HashSet<String>();
-        authorizationEnabled = ConfigUtils.getWithDeprecatedCheck(services.getConf(), CONF_AUTHORIZATION_ENABLED,
-                                                             CONF_SECURITY_ENABLED, false);
-        instrumentation = Services.get().get(InstrumentationService.class).get();
+        authorizationEnabled =
+            ConfigUtils.getWithDeprecatedCheck(services.getConf(), CONF_AUTHORIZATION_ENABLED,
+                                               CONF_SECURITY_ENABLED, false);
         if (authorizationEnabled) {
-            log.info("Oozie running with security enabled");
-            loadAdminUsers();
+            log.info("Oozie running with authorization enabled");
+            useDefaultGroupAsAcl = Services.get().getConf().getBoolean(CONF_DEFAULT_GROUP_AS_ACL, false);
+            String[] str = getTrimmedStrings(Services.get().getConf().get(CONF_ADMIN_GROUPS));
+            if (str.length > 0) {
+                log.info("Admin users will be checked against the defined admin groups");
+                adminGroups = new HashSet<String>();
+                for (String s : str) {
+                    adminGroups.add(s.trim());
+                }
+            }
+            else {
+                log.info("Admin users will be checked against the 'adminusers.txt' file contents");
+                adminUsers = new HashSet<String>();
+                loadAdminUsers();
+            }
         }
         else {
-            log.warn("Oozie running with security disabled");
+            log.warn("Oozie running with authorization disabled");
         }
-
-        useDefaultGroupAsAcl = Services.get().getConf().getBoolean(CONF_DEFAULT_GROUP_AS_ACL, false);
-
+        instrumentation = Services.get().get(InstrumentationService.class).get();
     }
 
     /**
@@ -238,7 +261,25 @@ public class AuthorizationService implements Service {
      * @return if the user has admin privileges or not.
      */
     protected boolean isAdmin(String user) {
-        return adminUsers.contains(user);
+        boolean admin = false;
+        if (adminUsers != null) {
+            admin = adminUsers.contains(user);
+        }
+        else {
+            for (String adminGroup : adminGroups) {
+                try {
+                    admin = isUserInGroup(user, adminGroup);
+                    if (admin) {
+                        break;
+                    }
+                }
+                catch (AuthorizationException ex) {
+                    log.warn("Admin check failed, " + ex.toString(), ex);
+                    break;
+                }
+            }
+        }
+        return admin;
     }
 
     /**

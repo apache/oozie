@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-773 AuthorizationService should be able to use a group to identify superusers (tucu)
 OOZIE-827 StatusTransitService fails to run if a stale reference to coord job is present (virag via tucu)
 OOZIE-783 Upgrade to Junit4 (virag via tucu)
 OOZIE-815 Remove select * from queries related to coord action (Virag via Mohammad)
