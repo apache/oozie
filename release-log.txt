@@ -1,18 +1,21 @@
--- Oozie 3.2.0 release
+-- Oozie trunk
 
 OOZIE-773 AuthorizationService should be able to use a group to identify superusers (tucu)
-OOZIE-827 StatusTransitService fails to run if a stale reference to coord job is present (virag via tucu)
 OOZIE-783 Upgrade to Junit4 (virag via tucu)
+OOZIE-812 ooziedb tool does not create VALIDATE_CONN table (tucu)
+OOZIE-824 ooziedb tool creates derby.log in current directory (tucu)
+OOZIE-823 datelist-java-main example has namenode harcoded in app path the job.properties (tucu)
+OOZIE-817 Fix the unreasonable definition of the schema to fs action (yians via tucu)
+
+-- Oozie 3.2.0 release
+
+OOZIE-827 StatusTransitService fails to run if a stale reference to coord job is present (virag via tucu)
 OOZIE-815 Remove select * from queries related to coord action (Virag via Mohammad)
 OOZIE-826 TestCoordKillXCommand's testCoordKillXCommandUniqueness testcase is failing after interrupt changes(virag via Mohammad)
 OOZIE-819 Interrupt map doesn't have unique set of commands for a given jobid(virag via Mohammad)
 OOZIE-810 Modify Oozie POM to pickup doxia 9.2y from a repo where it is avail(tucu via Mohammad)
 OOZIE-241 EL function(s) to expose action output data as a (XML/JSON/PROP) blob (tucu)
 OOZIE-825 Update oozie-sharelib-hive to use Hive 0.9.0 (virag via tucu)
-OOZIE-812 ooziedb tool does not create VALIDATE_CONN table (tucu)
-OOZIE-824 ooziedb tool creates derby.log in current directory (tucu)
-OOZIE-823 datelist-java-main example has namenode harcoded in app path the job.properties (tucu)
-OOZIE-817 Fix the unreasonable definition of the schema to fs action (yians via tucu)
 OOZIE-820 OOZIE-820 Shell action to support env-var value with = sign (mona via tucu)
 OOZIE-813 Sub-workflow child job does not get group name even if parent carries.(Mona via Mohammad)
 OOZIE-791 coord job status not updated to done_with_error after kill(Virag via Mohammad)
