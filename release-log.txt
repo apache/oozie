@@ -1,5 +1,6 @@
 -- Oozie 3.2.0 release
 
+OOZIE-832 Rename readme.txt file to README.txt and update contents(Mohammad)
 OOZIE-827 StatusTransitService fails to run if a stale reference to coord job is present (virag via tucu)
 OOZIE-815 Remove select * from queries related to coord action (Virag via Mohammad)
 OOZIE-826 TestCoordKillXCommand's testCoordKillXCommandUniqueness testcase is failing after interrupt changes(virag via Mohammad)
