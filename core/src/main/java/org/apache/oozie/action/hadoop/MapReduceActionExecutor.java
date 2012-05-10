@@ -20,7 +20,6 @@ package org.apache.oozie.action.hadoop;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -37,7 +36,6 @@ import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
 import org.jdom.Namespace;
 import org.json.simple.JSONObject;
-import org.mortbay.util.ajax.JSON;
 
 public class MapReduceActionExecutor extends JavaActionExecutor {
 
@@ -227,14 +225,13 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
     }
 
     /**
-     * Return the sharelib postfix for the action.
+     * Return the sharelib name for the action.
      *
-     * @param context executor context.
-     * @param actionXml the action XML.
-     * @return the action sharelib post fix, this implementation returns <code>NULL</code>
-     * or <code>streaming</code> if the mapreduce action is streaming.
+     * @return returns <code>streaming</code> if mapreduce-streaming action, <code>NULL</code> otherwise.
+     * @param actionXml
      */
-    protected String getShareLibPostFix(Context context, Element actionXml) {
+    @Override
+    protected String getDefaultShareLibName(Element actionXml) {
         Namespace ns = actionXml.getNamespace();
         return (actionXml.getChild("streaming", ns) != null) ? "mapreduce-streaming" : null;
     }

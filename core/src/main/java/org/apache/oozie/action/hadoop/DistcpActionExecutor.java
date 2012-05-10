@@ -84,4 +84,16 @@ public class DistcpActionExecutor extends JavaActionExecutor{
         }
         return str;
     }
+
+    /**
+     * Return the sharelib name for the action.
+     *
+     * @return returns <code>distcp</code>.
+     * @param actionXml
+     */
+    @Override
+    protected String getDefaultShareLibName(Element actionXml) {
+        return "distcp";
+    }
+
 }

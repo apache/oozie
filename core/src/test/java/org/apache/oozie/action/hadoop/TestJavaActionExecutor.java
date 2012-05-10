@@ -255,6 +255,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         actionXml = XmlUtils.parseXml("<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node> <configuration>" +
                 "<property><name>mapred.job.queue.name</name><value>AQ</value></property>" +
+                "<property><name>oozie.action.sharelib.for.java</name><value>sharelib-java</value></property>" +
                 "</configuration>" + "<main-class>MAIN-CLASS</main-class>" +
                 "</java>");
         actionConf = ae.createBaseHadoopConf(context, actionXml);
@@ -262,6 +263,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         conf = ae.createLauncherConf(getFileSystem(), context, action, actionXml, actionConf);
         assertEquals("AQ", conf.get("mapred.job.queue.name"));
         assertEquals("AQ", actionConf.get("mapred.job.queue.name"));
+        assertEquals("sharelib-java", actionConf.get("oozie.action.sharelib.for.java"));
 
         actionXml = XmlUtils.parseXml("<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node> <configuration>" +
@@ -819,5 +821,38 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         workflow.setAuthToken(authToken);
         workflow.setWorkflowInstance(wfInstance);
         return workflow;
+    }
+
+    public void testActionSharelibResolution() throws Exception {
+        JavaActionExecutor ae = new JavaActionExecutor() {
+            @Override
+            protected String getDefaultShareLibName(Element actionXml) {
+                return "java-action-executor";
+            }
+        };
+
+        WorkflowJobBean wfBean = new WorkflowJobBean();
+        String jobConf = "<configuration/>";
+        wfBean.setConf(jobConf);
+
+        WorkflowActionBean action = new WorkflowActionBean();
+        Context context = new Context(wfBean, action);
+
+        Configuration actionConf = new XConfiguration();
+
+        assertEquals("java-action-executor", ae.getShareLibName(context, new Element("java"), actionConf));
+
+        Services.get().getConf().set("oozie.action.sharelib.for.java", "java-oozie-conf");
+        assertEquals("java-oozie-conf", ae.getShareLibName(context, new Element("java"), actionConf));
+
+        jobConf = "<configuration>" + "<property>"
+               + "<name>oozie.action.sharelib.for.java</name>"
+               + "<value>java-job-conf</value>" + "</property>"
+               + "</configuration>";
+        wfBean.setConf(jobConf);
+        assertEquals("java-job-conf", ae.getShareLibName(context, new Element("java"), actionConf));
+
+        actionConf.set("oozie.action.sharelib.for.java", "java-action-conf");
+        assertEquals("java-action-conf", ae.getShareLibName(context, new Element("java"), actionConf));
     }
 }

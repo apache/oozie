@@ -586,4 +586,12 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         String counters = context.getVar("hadoop.counters");
         assertTrue(counters.contains("Counter"));
     }
+
+    public void testDefaultShareLibName() {
+        MapReduceActionExecutor ae = new MapReduceActionExecutor();
+        Element e = new Element("mapreduce");
+        assertNull(ae.getDefaultShareLibName(e));
+        e.addContent(new Element("streaming"));
+        assertEquals("mapreduce-streaming", ae.getDefaultShareLibName(e));
+    }
 }

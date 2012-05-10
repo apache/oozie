@@ -376,13 +376,13 @@ public class JavaActionExecutor extends ActionExecutor {
         }
     }
 
-    protected void addShareLib(Path appPath, Configuration conf, String actionShareLibPostfix)
+    protected void addShareLib(Path appPath, Configuration conf, String actionShareLibName)
     throws ActionExecutorException {
-        if (actionShareLibPostfix != null) {
+        if (actionShareLibName != null) {
             try {
                 Path systemLibPath = Services.get().get(WorkflowAppService.class).getSystemLibPath();
                 if (systemLibPath != null) {
-                    Path actionLibPath = new Path(systemLibPath, actionShareLibPostfix);
+                    Path actionLibPath = new Path(systemLibPath, actionShareLibName);
                     String user = conf.get("user.name");
                     String group = conf.get("group.name");
                     FileSystem fs =
@@ -460,7 +460,7 @@ public class JavaActionExecutor extends ActionExecutor {
         // Action sharelibs are only added if user has specified to use system libpath
         if (wfJobConf.getBoolean(OozieClient.USE_SYSTEM_LIBPATH, false)) {
             // add action specific sharelibs
-            addShareLib(appPath, conf, getShareLibPostFix(context, actionXml));
+            addShareLib(appPath, conf, getShareLibName(context, actionXml, conf));
         }
     }
 
@@ -497,6 +497,10 @@ public class JavaActionExecutor extends ActionExecutor {
             JobConf launcherJobConf = createBaseHadoopConf(context, actionXml);
             setupLauncherConf(launcherJobConf, actionXml, appPathRoot, context);
 
+            String actionShareLibProperty = actionConf.get(ACTION_SHARELIB_FOR + getType());
+            if (actionShareLibProperty != null) {
+                launcherJobConf.set(ACTION_SHARELIB_FOR + getType(), actionShareLibProperty);
+            }
             setLibFilesArchives(context, actionXml, appPathRoot, launcherJobConf);
             String jobName = XLog.format("oozie:launcher:T={0}:W={1}:A={2}:ID={3}", getType(), context.getWorkflow()
                     .getAppName(), action.getName(), context.getWorkflow().getId());
@@ -1076,22 +1080,60 @@ public class JavaActionExecutor extends ActionExecutor {
         return FINAL_STATUS.contains(externalStatus);
     }
 
+
     /**
-     * Return the sharelib postfix for the action.
+     * Return the sharelib name for the action.
      * <p/>
      * If <code>NULL</code> or emtpy, it means that the action does not use the action
      * sharelib.
      * <p/>
      * If a non-empty string, i.e. <code>foo</code>, it means the action uses the
-     * action sharelib subdirectory <code>foo</code> and all JARs in the <code>foo</code>
-     * directory will be in the action classpath.
+     * action sharelib subdirectory <code>foo</code> and all JARs in the sharelib
+     * <code>foo</code> directory will be in the action classpath.
+     * <p/>
+     * The resolution is done using the following precedence order:
+     * <ul>
+     *     <li><b>action.sharelib.for.#ACTIONTYPE#</b> in the action configuration</li>
+     *     <li><b>action.sharelib.for.#ACTIONTYPE#</b> in the job configuration</li>
+     *     <li><b>action.sharelib.for.#ACTIONTYPE#</b> in the oozie configuration</li>
+     *     <li>Action Executor <code>getDefaultShareLibName()</code> method</li>
+     * </ul>
+     *
      *
      * @param context executor context.
-     * @param actionXml the action XML.
-     * @return the action sharelib post fix, this implementation returns <code>NULL</code>.
+     * @param actionXml
+     *@param conf action configuration.  @return the action sharelib name.
      */
-    protected String getShareLibPostFix(Context context, Element actionXml) {
-        return null;
+    protected String getShareLibName(Context context, Element actionXml, Configuration conf) {
+        String name = conf.get(ACTION_SHARELIB_FOR + getType());
+        if (name == null) {
+            try {
+                XConfiguration jobConf = new XConfiguration(new StringReader(context.getWorkflow().getConf()));
+                name = jobConf.get(ACTION_SHARELIB_FOR + getType());
+                if (name == null) {
+                    name = Services.get().getConf().get(ACTION_SHARELIB_FOR + getType());
+                    if (name == null) {
+                        name = getDefaultShareLibName(actionXml);
+                    }
+                }
+            }
+            catch (IOException ex) {
+                throw new RuntimeException("It cannot happen, " + ex.toString(), ex);
+            }
+        }
+        return name;
     }
 
+    private final static String ACTION_SHARELIB_FOR = "oozie.action.sharelib.for.";
+
+
+    /**
+     * Returns the default sharelib name for the action if any.
+     *
+     * @param actionXml the action XML fragment.
+     * @return the sharelib name for the action, <code>NULL</code> if none.
+     */
+    protected String getDefaultShareLibName(Element actionXml) {
+        return null;
+    }
 }

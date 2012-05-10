@@ -114,13 +114,13 @@ public class SqoopActionExecutor extends JavaActionExecutor {
 
 
     /**
-     * Return the sharelib postfix for the action.
+     * Return the sharelib name for the action.
      *
-     * @param context executor context.
-     * @param actionXml the action XML.
-     * @return the action sharelib post fix, this implementation returns <code>hive</code>.
+     * @return returns <code>sqoop</code>.
+     * @param actionXml
      */
-    protected String getShareLibPostFix(Context context, Element actionXml) {
+    @Override
+    protected String getDefaultShareLibName(Element actionXml) {
         return "sqoop";
     }
 

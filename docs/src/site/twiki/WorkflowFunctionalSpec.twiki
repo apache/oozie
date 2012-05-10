@@ -2574,6 +2574,29 @@ A workflow job can specify a share library path using the job property =oozie.li
 
 A workflow job can use the system share library by setting the job property =oozie.use.system.libpath= to =true=.
 
+---+++ 17.1 Action Share Library Override (since Oozie 3.3)
+
+Oozie share libraries are organized per action type, for example Pig action share library directory is =share/lib/pig/=
+and Mapreduce Streaming share library direcotry is =share/library/mapreduce-streaming/=.
+
+Oozie bundles a share library for specific versions of streaming, pig, hive, sqoop, distcp actions. These versions
+of streaming, pig, hive, sqoop and distcp have been tested and verified to work correctly with the version of Oozie
+that includes them.
+
+In addition, Oozie provides a mechanism to override the action share library JARs to allow using an alternate version
+of of the action JARs.
+
+This mechanism enables Oozie administrators to patch share library JARs, to include alternate versios of the share
+libraries, to provide acess to more than one version at the same time.
+
+The sharelibrary override is supported at server level and at job level. The share library name is resolved using
+the following precedence order:
+
+   *  action.sharelib.for.#ACTIONTYPE# in the action configuration
+   *  action.sharelib.for.#ACTIONTYPE# in the job configuration
+   *  action.sharelib.for.#ACTIONTYPE# in the oozie server configuration
+   *  action's =ActionExecutor getDefaultShareLibName()= method
+
 ---++ 18 User-Retry for Workflow Actions (since Oozie 3.1)
 
 Oozie provides User-Retry capabilities when an action is in =ERROR= or =FAILED= state.
