@@ -39,10 +39,11 @@
     </organization>
 
     <properties>
+        <distMgmtSnapshotsName>Apache Development Snapshot Repository</distMgmtSnapshotsName>
+        <distMgmtSnapshotsUrl>https://repository.apache.org/content/repositories/snapshots</distMgmtSnapshotsUrl>
+
         <!-- to be able to run a single test case from the main project -->
         <failIfNoTests>false</failIfNoTests>
-
-        <internal.maven.repository>file:///tmp/internalmavenrepo</internal.maven.repository>
 
         <test.timeout>3600</test.timeout>
 
@@ -66,12 +67,15 @@
         <oozie.test.config.file>${oozie.test.default.config.file}</oozie.test.config.file>
 
         <hadoop.version>1.0.1</hadoop.version>
+
+        <hadooplib.version>${hadoop.version}.oozie-${project.version}</hadooplib.version>
+        
         <clover.license>/home/jenkins/tools/clover/latest/lib/clover.license</clover.license>
         <!--
         This is required while we support a a pre 0.23 version of Hadoop which does not have
         the hadoop-auth artifact. After we phase-out pre 0.23 we can get rid of this property.
         -->
-        <hadoop.auth.version>0.23.1</hadoop.auth.version>
+        <hadoop.auth.version>2.0.0-SNAPSHOT</hadoop.auth.version>
 
          <!-- Sharelib component versions -->
          <hive.version>0.9.0</hive.version>
@@ -94,21 +98,18 @@
 
     <distributionManagement>
         <repository>
-            <id>internal.maven.repo</id>
-            <name>Internal Repository for Integration</name>
-            <url>${internal.maven.repository}</url>
+          <id>apache.staging.https</id>
+          <name>Apache Release Distribution Repository</name>
+          <url>https://repository.apache.org/service/local/staging/deploy/maven2</url>
         </repository>
+        <snapshotRepository>
+          <id>apache.snapshots.https</id>
+          <name>${distMgmtSnapshotsName}</name>
+          <url>${distMgmtSnapshotsUrl}</url>
+        </snapshotRepository>
     </distributionManagement>
 
     <repositories>
-        <repository>
-            <id>internal.maven.repo</id>
-            <name>Internal Repository for Integration</name>
-            <url>${internal.maven.repository}</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
         <repository>
             <id>central</id>
             <url>http://repo1.maven.org/maven2</url>
@@ -139,18 +140,9 @@
                 <enabled>false</enabled>
             </snapshots>
         </repository>
-
     </repositories>
 
     <pluginRepositories>
-        <pluginRepository>
-            <id>internal.maven.repo</id>
-            <name>Internal Repository for Integration</name>
-            <url>${internal.maven.repository}</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </pluginRepository>
         <pluginRepository>
             <id>repository.cloudera.com</id>
             <name>repository.cloudera.com-releases</name>
@@ -262,13 +254,13 @@
             <dependency>
                 <groupId>org.apache.oozie</groupId>
                 <artifactId>oozie-hadoop</artifactId>
-                <version>${hadoop.version}</version>
+                <version>${hadooplib.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.apache.oozie</groupId>
                 <artifactId>oozie-hadoop-test</artifactId>
-                <version>${hadoop.version}</version>
+                <version>${hadooplib.version}</version>
             </dependency>
 
             <dependency>

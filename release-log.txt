@@ -1,5 +1,6 @@
 -- Oozie trunk
 
+OOZIE-831 POMs cleanup/fixing of hadoop version and to be able to publish oozie JARs to maven repo (tucu)
 OOZIE-830 add support for multiple/configurable sharelibs for each action type (tucu)
 OOZIE-773 AuthorizationService should be able to use a group to identify superusers (tucu)
 OOZIE-783 Upgrade to Junit4 (virag via tucu)
