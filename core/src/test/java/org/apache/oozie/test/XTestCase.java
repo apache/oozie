@@ -28,6 +28,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -53,7 +55,6 @@ import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.util.IOUtils;
@@ -197,6 +198,12 @@ public abstract class XTestCase extends TestCase {
     public static final String TEST_GROUP_PROP = "oozie.test.group";
 
     /**
+     * System property that specifies the wait time, in seconds, between testcases before
+     * triggering a shutdown. The default value is 10 sec.
+     */
+    public static final String TEST_MINICLUSTER_MONITOR_SHUTDOWN_WAIT = "oozie.test.minicluster.monitor.shutdown.wait";
+
+    /**
      * Initialize the test working directory. <p/> If it does not exist it creates it, if it already exists it deletes
      * all its contents. <p/> The test working directory it is not deleted after the test runs. <p/>
      *
@@ -204,6 +211,7 @@ public abstract class XTestCase extends TestCase {
      */
     @Override
     protected void setUp() throws Exception {
+        RUNNING_TESTCASES.incrementAndGet();
         super.setUp();
         String baseDir = System.getProperty(OOZIE_TEST_DIR, new File("target/test-data").getAbsolutePath());
         String msg = null;
@@ -294,6 +302,8 @@ public abstract class XTestCase extends TestCase {
         sysProps = null;
         testCaseDir = null;
         super.tearDown();
+        RUNNING_TESTCASES.decrementAndGet();
+        LAST_TESTCASE_FINISHED.set(System.currentTimeMillis());
     }
 
     /**
@@ -677,49 +687,83 @@ public abstract class XTestCase extends TestCase {
             UserGroupInformation.createUserForTesting(getTestUser3(), new String[] { "users" } );
             conf.set("hadoop.tmp.dir", "target/test-data"+"/minicluster");
 
-            dfsCluster = new MiniDFSCluster(conf, dataNodes, true, null);
-            FileSystem fileSystem = dfsCluster.getFileSystem();
-            fileSystem.mkdirs(new Path("target/test-data"));
-            fileSystem.mkdirs(new Path("target/test-data"+"/minicluster/mapred"));
-            fileSystem.mkdirs(new Path("/user"));
-            fileSystem.mkdirs(new Path("/tmp"));
-            fileSystem.mkdirs(new Path("/hadoop/mapred/system"));
-            fileSystem.setPermission(new Path("target/test-data"), FsPermission.valueOf("-rwxrwxrwx"));
-            fileSystem.setPermission(new Path("target/test-data"+"/minicluster"), FsPermission.valueOf("-rwxrwxrwx"));
-            fileSystem.setPermission(new Path("target/test-data"+"/minicluster/mapred"), FsPermission.valueOf("-rwxrwxrwx"));
-            fileSystem.setPermission(new Path("/user"), FsPermission.valueOf("-rwxrwxrwx"));
-            fileSystem.setPermission(new Path("/tmp"), FsPermission.valueOf("-rwxrwxrwx"));
-            fileSystem.setPermission(new Path("/hadoop/mapred/system"), FsPermission.valueOf("-rwx------"));
-            String nnURI = fileSystem.getUri().toString();
-            int numDirs = 1;
-            String[] racks = null;
-            String[] hosts = null;
-            mrCluster = new MiniMRCluster(0, 0, taskTrackers, nnURI, numDirs, racks, hosts, null, conf);
-            JobConf jobConf = mrCluster.createJobConf();
-            System.setProperty(OOZIE_TEST_JOB_TRACKER, jobConf.get("mapred.job.tracker"));
-            System.setProperty(OOZIE_TEST_NAME_NODE, jobConf.get("fs.default.name"));
-            ProxyUsers.refreshSuperUserGroupsConfiguration(conf);
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-                @Override
-                public void run() {
-                    try {
-                        if (mrCluster != null) {
-                            mrCluster.shutdown();
-                        }
-                    }
-                    catch (Exception ex) {
-                        System.out.println(ex);
-                    }
-                    try {
-                        if (dfsCluster != null) {
-                            dfsCluster.shutdown();
-                        }
-                    }
-                    catch (Exception ex) {
-                        System.out.println(ex);
+            try {
+                dfsCluster = new MiniDFSCluster(conf, dataNodes, true, null);
+                FileSystem fileSystem = dfsCluster.getFileSystem();
+                fileSystem.mkdirs(new Path("target/test-data"));
+                fileSystem.mkdirs(new Path("target/test-data"+"/minicluster/mapred"));
+                fileSystem.mkdirs(new Path("/user"));
+                fileSystem.mkdirs(new Path("/tmp"));
+                fileSystem.mkdirs(new Path("/hadoop/mapred/system"));
+                fileSystem.setPermission(new Path("target/test-data"), FsPermission.valueOf("-rwxrwxrwx"));
+                fileSystem.setPermission(new Path("target/test-data"+"/minicluster"), FsPermission.valueOf("-rwxrwxrwx"));
+                fileSystem.setPermission(new Path("target/test-data"+"/minicluster/mapred"), FsPermission.valueOf("-rwxrwxrwx"));
+                fileSystem.setPermission(new Path("/user"), FsPermission.valueOf("-rwxrwxrwx"));
+                fileSystem.setPermission(new Path("/tmp"), FsPermission.valueOf("-rwxrwxrwx"));
+                fileSystem.setPermission(new Path("/hadoop/mapred/system"), FsPermission.valueOf("-rwx------"));
+                String nnURI = fileSystem.getUri().toString();
+                int numDirs = 1;
+                String[] racks = null;
+                String[] hosts = null;
+                mrCluster = new MiniMRCluster(0, 0, taskTrackers, nnURI, numDirs, racks, hosts, null, conf);
+                JobConf jobConf = mrCluster.createJobConf();
+                System.setProperty(OOZIE_TEST_JOB_TRACKER, jobConf.get("mapred.job.tracker"));
+                System.setProperty(OOZIE_TEST_NAME_NODE, jobConf.get("fs.default.name"));
+                ProxyUsers.refreshSuperUserGroupsConfiguration(conf);
+            }
+            catch (Exception ex) {
+                shutdownMiniCluster();
+                throw ex;
+            }
+            new MiniClusterShutdownMonitor().start();
+        }
+    }
+
+    private static void shutdownMiniCluster() {
+        try {
+            if (mrCluster != null) {
+                mrCluster.shutdown();
+            }
+        }
+        catch (Exception ex) {
+            System.out.println(ex);
+        }
+        try {
+            if (dfsCluster != null) {
+                dfsCluster.shutdown();
+            }
+        }
+        catch (Exception ex) {
+            System.out.println(ex);
+        }
+    }
+
+    private static final AtomicLong LAST_TESTCASE_FINISHED = new AtomicLong();
+    private static final AtomicInteger RUNNING_TESTCASES = new AtomicInteger();
+
+    private static class MiniClusterShutdownMonitor extends Thread {
+
+        public MiniClusterShutdownMonitor() {
+            setDaemon(true);
+        }
+
+        public void run() {
+            long shutdownWait = Long.parseLong(System.getProperty(TEST_MINICLUSTER_MONITOR_SHUTDOWN_WAIT, "10")) * 1000;
+            LAST_TESTCASE_FINISHED.set(System.currentTimeMillis());
+            while (true) {
+                if (RUNNING_TESTCASES.get() == 0) {
+                    if (System.currentTimeMillis() - LAST_TESTCASE_FINISHED.get() > shutdownWait) {
+                        break;
                     }
                 }
-            });
+                try {
+                    Thread.sleep(1000);
+                }
+                catch (InterruptedException ex) {
+                    break;
+                }
+            }
+            shutdownMiniCluster();
         }
     }
 
