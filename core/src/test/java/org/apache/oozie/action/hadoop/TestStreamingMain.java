@@ -44,13 +44,11 @@ public class TestStreamingMain extends MainTestCase {
         Path outputDir = new Path(getFsTestCaseDir(), "output");
 
         XConfiguration jobConf = new XConfiguration();
+        XConfiguration.copy(createJobConf(), jobConf);
 
         jobConf.setInt("mapred.map.tasks", 1);
         jobConf.setInt("mapred.map.max.attempts", 1);
         jobConf.setInt("mapred.reduce.max.attempts", 1);
-        jobConf.set("mapred.job.tracker", getJobTrackerUri());
-        jobConf.set("fs.default.name", getNameNodeUri());
-        jobConf.set("mapreduce.framework.name", "yarn");
 
         jobConf.set("user.name", getTestUser());
         jobConf.set("hadoop.job.ugi", getTestUser() + "," + getTestGroup());

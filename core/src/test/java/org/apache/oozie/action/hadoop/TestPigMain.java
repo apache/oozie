@@ -67,16 +67,13 @@ public class TestPigMain extends PigTestCase {
         Path outputDir = new Path(getFsTestCaseDir(), "output");
 
         XConfiguration jobConf = new XConfiguration();
+        XConfiguration.copy(createJobConf(), jobConf);
 
         jobConf.set("user.name", getTestUser());
         jobConf.set("group.name", getTestGroup());
         jobConf.setInt("mapred.map.tasks", 1);
         jobConf.setInt("mapred.map.max.attempts", 1);
         jobConf.setInt("mapred.reduce.max.attempts", 1);
-        jobConf.set("mapred.job.tracker", getJobTrackerUri());
-        jobConf.set("fs.default.name", getNameNodeUri());
-
-        jobConf.set("mapreduce.framework.name", "yarn");
 
         // option to specify whether stats should be stored or not
         jobConf.set("oozie.action.external.stats.write", Boolean.toString(writeStats));

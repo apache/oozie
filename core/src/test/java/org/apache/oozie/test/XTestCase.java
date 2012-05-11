@@ -723,5 +723,22 @@ public abstract class XTestCase extends TestCase {
         }
     }
 
+    /**
+     * Returns a jobconf preconfigured to talk with the test cluster/minicluster.
+     * @return a jobconf preconfigured to talk with the test cluster/minicluster.
+     */
+    protected JobConf createJobConf() {
+        JobConf jobConf;
+        if (mrCluster != null) {
+            jobConf = mrCluster.createJobConf();
+        }
+        else {
+            jobConf = new JobConf();
+            jobConf.set("mapred.job.tracker", getJobTrackerUri());
+            jobConf.set("fs.default.name", getNameNodeUri());
+        }
+        return jobConf;
+    }
+
 }
 

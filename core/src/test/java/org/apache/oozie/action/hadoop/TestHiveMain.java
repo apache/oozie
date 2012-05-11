@@ -80,7 +80,7 @@ public class TestHiveMain extends MainTestCase {
             w.close();
 
             XConfiguration jobConf = new XConfiguration();
-            jobConf.set("mapreduce.framework.name", "yarn");
+            XConfiguration.copy(createJobConf(), jobConf);
 
             jobConf.set("oozie.hive.log.level", "DEBUG");
 
@@ -89,8 +89,6 @@ public class TestHiveMain extends MainTestCase {
             jobConf.setInt("mapred.map.tasks", 1);
             jobConf.setInt("mapred.map.max.attempts", 1);
             jobConf.setInt("mapred.reduce.max.attempts", 1);
-            jobConf.set("mapred.job.tracker", getJobTrackerUri());
-            jobConf.set("fs.default.name", getNameNodeUri());
             jobConf.set("javax.jdo.option.ConnectionURL", "jdbc:derby:" + getTestCaseDir() + "/db;create=true");
             jobConf.set("javax.jdo.option.ConnectionDriverName", "org.apache.derby.jdbc.EmbeddedDriver");
             jobConf.set("javax.jdo.option.ConnectionUserName", "sa");
