@@ -35,6 +35,24 @@ Expand the Oozie distribution =tar.gz=.
 
 Expand the Hadoop distribution =tar.gz= (as the Oozie Unix user).
 
+*NOTE:* Configure the Hadoop cluster with proxyuser for the Oozie process.
+
+The following two properties are required in Hadoop core-site.xml:
+
+<verbatim>
+  <!-- OOZIE -->
+  <property>
+    <name>hadoop.proxyuser.[OOZIE_SERVER_USER].hosts</name>
+    <value>[OOZIE_SERVER_HOSTNAME]</value>
+  </property>
+  <property>
+    <name>hadoop.proxyuser.[OOZIE_SERVER_USER].groups</name>
+    <value>[USER_GROUPS_THAT_ALLOW_IMPERSONATION]</value>
+  </property>
+</verbatim>
+
+Replace the capital letter sections with specific values and then restart Hadoop.
+
 Expand the Oozie hadooplibs =tar.gz= in the same location Oozie distribution =tar.gz= was expanded. A
 *hadooplibs/* directory will be created containing the Hadoop JARs for the versions of Hadoop that
 the Oozie distribution supports.
