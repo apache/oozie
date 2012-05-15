@@ -1,5 +1,6 @@
 -- Oozie trunk
 
+OOZIE-839 materialization of action does not take into account the lookupInterval for the calculations (tucu)
 OOZIE-835 XTestCase Minicluster hangs when shutting down with an exception using Hadoop 2 (tucu)
 OOZIE-834 Testcases for MapReduceMain, StreamingMain, PigMain, HiveMain fail with Hadoop 2 (tucu)
 OOZIE-831 POMs cleanup/fixing of hadoop version and to be able to publish oozie JARs to maven repo (tucu)

@@ -67,12 +67,14 @@ public class CoordMaterializeTriggerService implements Service {
      */
     static class CoordMaterializeTriggerRunnable implements Runnable {
         private int materializationWindow;
+        private int lookupInterval;
         private long delay = 0;
         private List<XCallable<Void>> callables;
         private List<XCallable<Void>> delayedCallables;
 
-        public CoordMaterializeTriggerRunnable(int materializationWindow) {
+        public CoordMaterializeTriggerRunnable(int materializationWindow, int lookupInterval) {
             this.materializationWindow = materializationWindow;
+            this.lookupInterval = lookupInterval;
         }
 
         @Override
@@ -112,7 +114,7 @@ public class CoordMaterializeTriggerService implements Service {
             try {
 
                 // get current date
-                Date currDate = new Date(new Date().getTime() + CONF_LOOKUP_INTERVAL_DEFAULT * 1000);
+                Date currDate = new Date(new Date().getTime() + lookupInterval * 1000);
                 // get list of all jobs that have actions that should be materialized.
                 int materializationLimit = Services.get().getConf()
                         .getInt(CONF_MATERIALIZATION_SYSTEM_LIMIT, CONF_MATERIALIZATION_SYSTEM_LIMIT_DEFAULT);
@@ -175,10 +177,14 @@ public class CoordMaterializeTriggerService implements Service {
     @Override
     public void init(Services services) throws ServiceException {
         Configuration conf = services.getConf();
-        Runnable lookupTriggerJobsRunnable = new CoordMaterializeTriggerRunnable(conf.getInt(
-                CONF_MATERIALIZATION_WINDOW, CONF_MATERIALIZATION_WINDOW_DEFAULT));// Default is 1 hour
-        services.get(SchedulerService.class).schedule(lookupTriggerJobsRunnable, 10,
-                                                      conf.getInt(CONF_LOOKUP_INTERVAL, CONF_LOOKUP_INTERVAL_DEFAULT),// Default is 5 minutes
+        // default is 3600sec (1hr)
+        int materializationWindow = conf.getInt(CONF_MATERIALIZATION_WINDOW, CONF_MATERIALIZATION_WINDOW_DEFAULT);
+        // default is 300sec (5min)
+        int lookupInterval = Services.get().getConf().getInt(CONF_LOOKUP_INTERVAL, CONF_LOOKUP_INTERVAL_DEFAULT);
+
+        Runnable lookupTriggerJobsRunnable = new CoordMaterializeTriggerRunnable(materializationWindow, lookupInterval);
+
+        services.get(SchedulerService.class).schedule(lookupTriggerJobsRunnable, 10, lookupInterval,
                                                       SchedulerService.Unit.SEC);
     }
 
