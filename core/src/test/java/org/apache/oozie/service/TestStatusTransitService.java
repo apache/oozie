@@ -299,7 +299,8 @@ public class TestStatusTransitService extends XDataTestCase {
 
         Runnable runnable = new StatusTransitRunnable();
         runnable.run();
-        waitFor(5 * 1000, new Predicate() {
+        // Keeping wait time to 10s to ensure status is updated
+        waitFor(10 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
                 CoordinatorJobBean coordJob = jpaService.execute(new CoordJobGetJPAExecutor(jobId));
                 return coordJob.getStatus() == CoordinatorJob.Status.SUSPENDED;

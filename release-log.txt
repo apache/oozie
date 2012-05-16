@@ -1,5 +1,6 @@
 -- Oozie trunk
 
+OOZIE-829 Increase the wait time for testcases failing intermittently (virag via tucu)
 OOZIE-839 materialization of action does not take into account the lookupInterval for the calculations (tucu)
 OOZIE-835 XTestCase Minicluster hangs when shutting down with an exception using Hadoop 2 (tucu)
 OOZIE-834 Testcases for MapReduceMain, StreamingMain, PigMain, HiveMain fail with Hadoop 2 (tucu)
@@ -14,7 +15,7 @@ OOZIE-817 Fix the unreasonable definition of the schema to fs action (yians via 
 
 -- Oozie 3.2.0 release
 
-OOZIE-833: Add Hadoop proxyuser related settings to quick start guide.(Virag via Mohammad)
+OOZIE-833 Add Hadoop proxyuser related settings to quick start guide.(Virag via Mohammad)
 OOZIE-832 Rename readme.txt file to README.txt and update contents(Mohammad)
 OOZIE-827 StatusTransitService fails to run if a stale reference to coord job is present (virag via tucu)
 OOZIE-815 Remove select * from queries related to coord action (Virag via Mohammad)
