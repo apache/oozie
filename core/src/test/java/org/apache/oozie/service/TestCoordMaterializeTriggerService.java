@@ -68,7 +68,7 @@ public class TestCoordMaterializeTriggerService extends XDataTestCase {
         final CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, start, end, false, false, 0);
 
         Thread.sleep(3000);
-        Runnable runnable = new CoordMaterializeTriggerRunnable(3600);
+        Runnable runnable = new CoordMaterializeTriggerRunnable(3600, 300);
         runnable.run();
         Thread.sleep(1000);
 
@@ -92,7 +92,7 @@ public class TestCoordMaterializeTriggerService extends XDataTestCase {
         final CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, start, end, false, false, 0);
 
         Thread.sleep(3000);
-        Runnable runnable = new CoordMaterializeTriggerRunnable(3600);
+        Runnable runnable = new CoordMaterializeTriggerRunnable(3600, 300);
         runnable.run();
         Thread.sleep(1000);
 
