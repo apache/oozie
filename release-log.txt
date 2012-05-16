@@ -1,5 +1,6 @@
--- Oozie trunk
+-- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-842 Update trunk POMs version to 3.3.0-SNAPSHOT (tucu)
 OOZIE-818 CoordChangeXCommand deletes past coordinator actions (shwethags via tucu)
 OOZIE-829 Increase the wait time for testcases failing intermittently (virag via tucu)
 OOZIE-839 materialization of action does not take into account the lookupInterval for the calculations (tucu)
@@ -14,7 +15,7 @@ OOZIE-824 ooziedb tool creates derby.log in current directory (tucu)
 OOZIE-823 datelist-java-main example has namenode harcoded in app path the job.properties (tucu)
 OOZIE-817 Fix the unreasonable definition of the schema to fs action (yians via tucu)
 
--- Oozie 3.2.0 release
+-- Oozie 3.2.0 release (unreleased)
 
 OOZIE-833 Add Hadoop proxyuser related settings to quick start guide.(Virag via Mohammad)
 OOZIE-832 Rename readme.txt file to README.txt and update contents(Mohammad)
