@@ -1,4 +1,4 @@
--- Oozie 3.2.0 release
+-- Oozie 3.2.0 release (unreleased)
 
 OOZIE-833: Add Hadoop proxyuser related settings to quick start guide.(Virag via Mohammad)
 OOZIE-832 Rename readme.txt file to README.txt and update contents(Mohammad)
