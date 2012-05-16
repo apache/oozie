@@ -18,14 +18,13 @@
 package org.apache.oozie.executor.jpa;
 
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
 
-import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.command.CommandException;
 import org.apache.oozie.util.ParamChecker;
 
 /**
- * Update the CoordinatorAction into a Bean and persist it.
+ * Deletes the coordinator action if its in WAITING or READY state.
  */
 public class CoordActionRemoveJPAExecutor implements JPAExecutor<Void> {
 
@@ -33,7 +32,7 @@ public class CoordActionRemoveJPAExecutor implements JPAExecutor<Void> {
     private String coordActionId = null;
 
     /**
-     * This constructs the object to Update the CoordinatorAction into a Bean and persist it.
+     * Constructor which records coordinator action id.
      * 
      * @param coordAction
      */
@@ -47,20 +46,19 @@ public class CoordActionRemoveJPAExecutor implements JPAExecutor<Void> {
      */
     @Override
     public Void execute(EntityManager em) throws JPAExecutorException {
+        Query g = em.createNamedQuery("DELETE_UNSCHEDULED_ACTION");
+        g.setParameter("id", coordActionId);
+        int actionsDeleted;
         try {
-            CoordinatorActionBean action = em.find(CoordinatorActionBean.class, coordActionId);
-            if (action != null) {
-                em.remove(action);
-            }
-            else {
-                throw new CommandException(ErrorCode.E0605, coordActionId);
-            }
-
-            return null;
-        }
-        catch (Exception e) {
+            actionsDeleted = g.executeUpdate();
+        } catch (Exception e) {
             throw new JPAExecutorException(ErrorCode.E0603, e);
         }
+
+        if (actionsDeleted == 0)
+            throw new JPAExecutorException(ErrorCode.E1022, coordActionId);
+
+        return null;
     }
 
     /* (non-Javadoc)

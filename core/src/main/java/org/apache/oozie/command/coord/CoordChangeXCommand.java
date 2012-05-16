@@ -17,13 +17,13 @@
  */
 package org.apache.oozie.command.coord;
 
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
-import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
@@ -33,6 +33,7 @@ import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
+import org.apache.oozie.coord.TimeUnit;
 import org.apache.oozie.executor.jpa.CoordActionRemoveJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetActionByActionNumberJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
@@ -142,6 +143,21 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
     }
 
     /**
+     * Returns the actual last action time(one instance before coordJob.lastActionTime)
+     * @return Date - last action time if coordJob.getLastActionTime() is not null, null otherwise
+     */
+    private Date getLastActionTime() {
+        if(coordJob.getLastActionTime() == null)
+            return null;
+
+        Calendar d = Calendar.getInstance(DateUtils.getTimeZone(coordJob.getTimeZone()));
+        d.setTime(coordJob.getLastActionTime());
+        TimeUnit timeUnit = TimeUnit.valueOf(coordJob.getTimeUnitStr());
+        d.add(timeUnit.getCalendarUnit(), -coordJob.getFrequency());
+        return d.getTime();
+    }
+
+    /**
      * Check if new end time is valid.
      *
      * @param coordJob coordinator job id.
@@ -157,12 +173,11 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
         }
 
         // New endTime cannot be before coordinator job's last action time.
-        Date lastActionTime = coordJob.getLastActionTime();
+        Date lastActionTime = getLastActionTime();
         if (lastActionTime != null) {
-            Date d = new Date(lastActionTime.getTime() - coordJob.getFrequency() * 60 * 1000);
-            if (!newEndTime.after(d)) {
+            if (!newEndTime.after(lastActionTime)) {
                 throw new CommandException(ErrorCode.E1015, newEndTime,
-                        "must be after coordinator job's last action time [" + d + "]");
+                        "must be after coordinator job's last action time [" + lastActionTime + "]");
             }
         }
     }
@@ -195,14 +210,17 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
         Date lastActionTime = coordJob.getLastActionTime();
         if (lastActionTime != null) {
             // d is the real last action time.
-            Date d = new Date(lastActionTime.getTime() - coordJob.getFrequency() * 60 * 1000);
+            Calendar d = Calendar.getInstance(DateUtils.getTimeZone(coordJob.getTimeZone()));
+            d.setTime(getLastActionTime());
+            TimeUnit timeUnit = TimeUnit.valueOf(coordJob.getTimeUnitStr());
+
             int lastActionNumber = coordJob.getLastActionNumber();
 
             boolean hasChanged = false;
             while (true) {
-                if (!newPauseTime.after(d)) {
-                    deleteAction(coordJob.getId(), lastActionNumber);
-                    d = new Date(d.getTime() - coordJob.getFrequency() * 60 * 1000);
+                if (!newPauseTime.after(d.getTime())) {
+                    deleteAction(lastActionNumber);
+                    d.add(timeUnit.getCalendarUnit(), -coordJob.getFrequency());
                     lastActionNumber = lastActionNumber - 1;
 
                     hasChanged = true;
@@ -214,7 +232,8 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
 
             if (hasChanged == true) {
                 coordJob.setLastActionNumber(lastActionNumber);
-                Date d1 = new Date(d.getTime() + coordJob.getFrequency() * 60 * 1000);
+                d.add(timeUnit.getCalendarUnit(), coordJob.getFrequency());
+                Date d1 = d.getTime();
                 coordJob.setLastActionTime(d1);
                 coordJob.setNextMaterializedTime(d1);
                 coordJob.resetDoneMaterialization();
@@ -223,17 +242,15 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
     }
 
     /**
-     * Delete last action for a coordinator job
+     * Delete coordinator action
      *
-     * @param coordJob coordinator job
-     * @param lastActionNum last action number of the coordinator job
+     * @param actionNum coordinator action number
      */
-    private void deleteAction(String jobId, int lastActionNum) throws CommandException {
+    private void deleteAction(int actionNum) throws CommandException {
         try {
-            String coordActionId = jpaService.execute(new CoordJobGetActionByActionNumberJPAExecutor(jobId, lastActionNum));
-            jpaService.execute(new CoordActionRemoveJPAExecutor(coordActionId));
-        }
-        catch (JPAExecutorException e) {
+            String actionId = jpaService.execute(new CoordJobGetActionByActionNumberJPAExecutor(jobId, actionNum));
+            jpaService.execute(new CoordActionRemoveJPAExecutor(actionId));
+        } catch (JPAExecutorException e) {
             throw new CommandException(e);
         }
     }
@@ -300,6 +317,13 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
                 if (!resetPauseTime) {
                     processLookaheadActions(coordJob, newPauseTime);
                 }
+            }
+
+            if (coordJob.getNextMaterializedTime() != null && coordJob.getEndTime().compareTo(coordJob.getNextMaterializedTime()) <= 0) {
+                LOG.info("[" + coordJob.getId() + "]: all actions have been materialized, job status = " + coordJob.getStatus()
+                        + ", set pending to true");
+                // set doneMaterialization to true when materialization is done
+                coordJob.setDoneMaterialization();
             }
 
             jpaService.execute(new CoordJobUpdateJPAExecutor(this.coordJob));

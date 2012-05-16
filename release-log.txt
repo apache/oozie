@@ -1,5 +1,6 @@
 -- Oozie trunk
 
+OOZIE-818 CoordChangeXCommand deletes past coordinator actions (shwethags via tucu)
 OOZIE-829 Increase the wait time for testcases failing intermittently (virag via tucu)
 OOZIE-839 materialization of action does not take into account the lookupInterval for the calculations (tucu)
 OOZIE-835 XTestCase Minicluster hangs when shutting down with an exception using Hadoop 2 (tucu)

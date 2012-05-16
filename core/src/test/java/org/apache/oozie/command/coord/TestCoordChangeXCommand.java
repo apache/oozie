@@ -19,14 +19,13 @@ package org.apache.oozie.command.coord;
 
 import java.util.Date;
 
-import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
-import org.apache.oozie.client.Job;
 import org.apache.oozie.client.CoordinatorJob.Execution;
 import org.apache.oozie.client.CoordinatorJob.Timeunit;
+import org.apache.oozie.client.Job;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.executor.jpa.CoordJobGetActionByActionNumberJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
@@ -267,8 +266,8 @@ public class TestCoordChangeXCommand extends XDataTestCase {
      */
     public void testCoordChangePauseTime() throws Exception {
         Date start = new Date();
-        Date end = new Date(start.getTime() + (20 * 60 * 1000));
-        Date pauseTime = new Date(start.getTime() + (10 * 60 * 1000));
+        Date end = new Date(start.getTime() + (4 * 60 * 60 * 1000));    //4 hrs
+        Date pauseTime = new Date(start.getTime() + (2 * 60 * 60 * 1000));  //2 hrs
         String pauseTimeChangeStr = "pausetime=" + DateUtils.convertDateToString(pauseTime);
         final CoordinatorJobBean job = addRecordToCoordJobTableForPauseTimeTest(CoordinatorJob.Status.RUNNING, start,
                 end, end, true, false, 4);
@@ -304,11 +303,33 @@ public class TestCoordChangeXCommand extends XDataTestCase {
 
     }
 
+    //Checks that RUNNING coord action is not deleted
+    public void testCoordActionDelete() throws Exception {
+        Date start = new Date();
+        Date end = new Date(start.getTime() + (4 * 60 * 60 * 1000));    //4 hrs
+        Date pauseTime = new Date(start.getTime() + (2 * 60 * 60 * 1000));  //2 hrs
+        String pauseTimeChangeStr = "pausetime=" + DateUtils.convertDateToString(pauseTime);
+        final CoordinatorJobBean job = addRecordToCoordJobTableForPauseTimeTest(CoordinatorJob.Status.RUNNING, start,
+                end, end, true, false, 4);
+        addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
+        addRecordToCoordActionTable(job.getId(), 2, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
+        addRecordToCoordActionTable(job.getId(), 3, CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0);
+        addRecordToCoordActionTable(job.getId(), 4, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 0);
+
+        try {
+            new CoordChangeXCommand(job.getId(), pauseTimeChangeStr).call();
+            fail("Should not reach here.");
+        } catch(CommandException e) {
+            if(e.getErrorCode() != ErrorCode.E1022)
+                fail("Error code should be E1022");
+        }
+    }
+
     protected CoordinatorJobBean addRecordToCoordJobTableForPauseTimeTest(CoordinatorJob.Status status, Date start,
             Date end, Date lastActionTime, boolean pending, boolean doneMatd, int lastActionNum) throws Exception {
         CoordinatorJobBean coordJob = createCoordJob(status, start, end, pending, doneMatd, lastActionNum);
-        coordJob.setFrequency(5);
-        coordJob.setTimeUnit(Timeunit.MINUTE);
+        coordJob.setFrequency(1);
+        coordJob.setTimeUnit(Timeunit.HOUR);
         coordJob.setLastActionNumber(lastActionNum);
         coordJob.setLastActionTime(lastActionTime);
         try {
@@ -336,6 +357,8 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         coordJob.setStatus(CoordinatorJob.Status.SUCCEEDED);
         coordJob.setCreatedTime(new Date());
         coordJob.setLastModifiedTime(DateUtils.parseDateUTC("2009-01-02T23:59Z"));
+        coordJob.setTimeZone("UTC");
+        coordJob.setTimeUnit(Timeunit.MINUTE);
         coordJob.setUser("testUser");
         coordJob.setGroup("testGroup");
         coordJob.setAuthToken("notoken");
