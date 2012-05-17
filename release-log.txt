@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-603 Invalid regex expression for IDENTIFIER type in xsd files (navis via tucu)
 OOZIE-842 Update trunk POMs version to 3.3.0-SNAPSHOT (tucu)
 OOZIE-818 CoordChangeXCommand deletes past coordinator actions (shwethags via tucu)
 OOZIE-829 Increase the wait time for testcases failing intermittently (virag via tucu)

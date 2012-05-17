@@ -22,7 +22,7 @@
     <xs:element name="bundle-app" type="bundle:BUNDLE-APP"/>
     <xs:simpleType name="IDENTIFIER">
         <xs:restriction base="xs:string">
-            <xs:pattern value="([a-zA-Z]([\-_a-zA-Z0-9])*){1,39})"/>
+            <xs:pattern value="([a-zA-Z]([\-_a-zA-Z0-9])*){1,39}"/>
         </xs:restriction>
     </xs:simpleType>
     <xs:complexType name="BUNDLE-APP">
