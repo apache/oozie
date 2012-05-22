@@ -17,7 +17,7 @@ OOZIE-824 ooziedb tool creates derby.log in current directory (tucu)
 OOZIE-823 datelist-java-main example has namenode harcoded in app path the job.properties (tucu)
 OOZIE-817 Fix the unreasonable definition of the schema to fs action (yians via tucu)
 
--- Oozie 3.2.0 release (unreleased)
+-- Oozie 3.2.0 release
 
 OOZIE-847 Example directory has few files without license text(Mohammad)
 OOZIE-845 Delete 0 size files from repository(Mohammad)
