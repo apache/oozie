@@ -1,8 +1,9 @@
 -- Oozie 3.2.0 release (unreleased)
 
+OOZIE-849 set version in branch-3.2 to 3.2.0-incubating (tucu)
 OOZIE-847 Example directory has few files without license text(Mohammad)
 OOZIE-845 Delete 0 size files from repository(Mohammad)
-OOZIE-833: Add Hadoop proxyuser related settings to quick start guide.(Virag via Mohammad)
+OOZIE-833 Add Hadoop proxyuser related settings to quick start guide.(Virag via Mohammad)
 OOZIE-832 Rename readme.txt file to README.txt and update contents(Mohammad)
 OOZIE-827 StatusTransitService fails to run if a stale reference to coord job is present (virag via tucu)
 OOZIE-815 Remove select * from queries related to coord action (Virag via Mohammad)
