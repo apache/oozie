@@ -34,7 +34,7 @@
             <xs:element name="output-events" type="coordinator:OUTPUTEVENTS" minOccurs="0" maxOccurs="1"/>
             <xs:element name="action" type="coordinator:ACTION" minOccurs="1" maxOccurs="1"/>
         </xs:sequence>
-        <xs:attribute name="name" type="coordinator:IDENTIFIER" use="required"/>
+        <xs:attribute name="name" type="xs:string" use="required"/>
         <xs:attribute name="frequency" type="xs:string" use="required"/>
         <xs:attribute name="start" type="xs:string" use="required"/>
         <xs:attribute name="end" type="xs:string" use="required"/>

@@ -30,6 +30,7 @@ import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.oozie.util.ConfigUtils;
+import org.apache.oozie.util.ELUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.ParamChecker;
@@ -151,7 +152,7 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
 
             WorkflowJobBean workflow = new WorkflowJobBean();
             workflow.setId(wfInstance.getId());
-            workflow.setAppName(app.getName());
+            workflow.setAppName(ELUtils.resolveAppName(app.getName(), conf));
             workflow.setAppPath(conf.get(OozieClient.APP_PATH));
             workflow.setConf(XmlUtils.prettyPrint(conf).toString());
             workflow.setProtoActionConf(protoActionConf.toXmlString());

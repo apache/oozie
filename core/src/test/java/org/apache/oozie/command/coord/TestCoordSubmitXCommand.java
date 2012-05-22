@@ -65,7 +65,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
     public void testBasicSubmit() throws Exception {
         Configuration conf = new XConfiguration();
         String appPath = "file://" + getTestCaseDir() + File.separator + "coordinator.xml";
-        String appXml = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" start=\"2009-02-01T01:00Z\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
+        String appXml = "<coordinator-app name=\"${appName}-foo\" frequency=\"${coord:days(1)}\" start=\"2009-02-01T01:00Z\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
                 + "xmlns=\"uri:oozie:coordinator:0.2\"> <controls> "
                 + "<execution>LIFO</execution> </controls> <datasets> "
                 + "<dataset name=\"a\" frequency=\"${coord:days(7)}\" initial-instance=\"2009-02-01T01:00Z\" "
@@ -83,17 +83,18 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         writeToFile(appXml, appPath);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
+        conf.set("appName", "var-app-name");
         CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
         String jobId = sc.call();
 
         assertEquals(jobId.substring(jobId.length() - 2), "-C");
         CoordinatorJobBean job = checkCoordJobs(jobId);
-        if (job != null) {
-            assertEquals(job.getTimeout(), Services.get().getConf().getInt(
-                    "oozie.service.coord.normal.default.timeout", -2));
-            assertEquals(job.getConcurrency(), Services.get().getConf().getInt(
-                    "oozie.service.coord.default.concurrency", 1));
-        }
+        assertNotNull(job);
+        assertEquals("var-app-name-foo", job.getAppName());
+        assertEquals(job.getTimeout(), Services.get().getConf().getInt(
+                "oozie.service.coord.normal.default.timeout", -2));
+        assertEquals(job.getConcurrency(), Services.get().getConf().getInt(
+                "oozie.service.coord.default.concurrency", 1));
     }
 
     /**

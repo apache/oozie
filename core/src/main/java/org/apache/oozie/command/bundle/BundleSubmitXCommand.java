@@ -56,6 +56,7 @@ import org.apache.oozie.service.UUIDService.ApplicationType;
 import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ELEvaluator;
+import org.apache.oozie.util.ELUtils;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.InstrumentUtils;
 import org.apache.oozie.util.LogUtils;
@@ -399,8 +400,9 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
 
             bundleJob.setId(jobId);
             bundleJob.setAuthToken(this.authToken);
-            bundleJob.setAppName(XmlUtils.parseXml(bundleBean.getOrigJobXml()).getAttributeValue("name"));
-            bundleJob.setAppName(bundleJob.getAppName());
+            String name = XmlUtils.parseXml(bundleBean.getOrigJobXml()).getAttributeValue("name");
+            name = ELUtils.resolveAppName(name, conf);
+            bundleJob.setAppName(name);
             bundleJob.setAppPath(conf.get(OozieClient.BUNDLE_APP_PATH));
             // bundleJob.setStatus(BundleJob.Status.PREP); //This should be set in parent class.
             bundleJob.setCreatedTime(new Date());

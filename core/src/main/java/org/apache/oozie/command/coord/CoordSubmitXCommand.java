@@ -72,6 +72,7 @@ import org.apache.oozie.service.UUIDService.ApplicationType;
 import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ELEvaluator;
+import org.apache.oozie.util.ELUtils;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.InstrumentUtils;
 import org.apache.oozie.util.LogUtils;
@@ -574,8 +575,8 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
 
         // Application name
         if (this.coordName == null) {
-            val = resolveAttribute("name", eAppXml, evalNofuncs);
-            coordJob.setAppName(val);
+            String name = ELUtils.resolveAppName(eAppXml.getAttribute("name").getValue(), conf);
+            coordJob.setAppName(name);
         }
         else {
             // this coord job is created from bundle

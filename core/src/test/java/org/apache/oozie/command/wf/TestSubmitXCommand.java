@@ -23,9 +23,13 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.local.LocalOozie;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.service.Services;
+import org.apache.oozie.service.WorkflowStoreService;
+import org.apache.oozie.store.WorkflowStore;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.service.XLogService;
@@ -43,6 +47,24 @@ public class TestSubmitXCommand extends XDataTestCase {
         LocalOozie.stop();
         super.tearDown();
     }
+
+  public void testSubmitAppName() throws Exception {
+      Configuration conf = new XConfiguration();
+      String appPath = getTestCaseDir();
+      String appXml = "<workflow-app xmlns='uri:oozie:workflow:0.1' name='${appName}-foo'> " + "<start to='end' /> "
+              + "<end name='end' /> " + "</workflow-app>";
+
+      writeToFile(appXml, appPath + "/workflow.xml");
+      conf.set(OozieClient.APP_PATH, "file://" + appPath + "/workflow.xml");
+      conf.set(OozieClient.USER_NAME, getTestUser());
+      conf.set("appName", "var-app-name");
+      SubmitXCommand sc = new SubmitXCommand(conf, "UNIT_TESTING");
+      String jobId = sc.call();
+      WorkflowStoreService wss = Services.get().get(WorkflowStoreService.class);
+      WorkflowStore ws = wss.create();
+      WorkflowJobBean wfb = ws.getWorkflow(jobId, false);
+      assertEquals("var-app-name-foo", wfb.getAppName());
+  }
 
     public void testSubmitReservedVars() throws Exception {
         Configuration conf = new XConfiguration();

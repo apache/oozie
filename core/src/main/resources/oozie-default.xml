@@ -384,8 +384,26 @@
     <!--  List of supported groups for ELService -->
 	<property>
         <name>oozie.service.ELService.groups</name>
-        <value>workflow,wf-sla-submit,coord-job-submit-freq,coord-job-submit-nofuncs,coord-job-submit-data,coord-job-submit-instances,coord-sla-submit,coord-action-create,coord-action-create-inst,coord-sla-create,coord-action-start</value>
+        <value>job-submit,workflow,wf-sla-submit,coord-job-submit-freq,coord-job-submit-nofuncs,coord-job-submit-data,coord-job-submit-instances,coord-sla-submit,coord-action-create,coord-action-create-inst,coord-sla-create,coord-action-start</value>
         <description>List of groups for different ELServices</description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.constants.job-submit</name>
+        <value>
+        </value>
+        <description>
+            EL constant declarations, separated by commas, format is [PREFIX:]NAME=CLASS#CONSTANT.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.functions.job-submit</name>
+        <value>
+        </value>
+        <description>
+          EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
+        </description>
     </property>
 
 <!-- Workflow specifics -->

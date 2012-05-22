@@ -40,7 +40,7 @@
             <xs:element name="end" type="workflow:END" minOccurs="1" maxOccurs="1"/>
             <xs:any namespace="uri:oozie:sla:0.1" minOccurs="0" maxOccurs="1"/>
         </xs:sequence>
-        <xs:attribute name="name" type="workflow:IDENTIFIER" use="required"/>
+        <xs:attribute name="name" type="xs:string" use="required"/>
     </xs:complexType>
 
     <xs:complexType name="START">

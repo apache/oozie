@@ -113,6 +113,9 @@ public class TestBundleStartXCommand extends XDataTestCase {
 
         BundleJobGetJPAExecutor bundleJobGetExecutor = new BundleJobGetJPAExecutor(submitCmd.getJob().getId());
         job = jpaService.execute(bundleJobGetExecutor);
+        assertEquals("bundle-app-name", job.getAppName());
+        job = jpaService.execute(bundleJobGetExecutor);
+
         assertEquals(job.getStatus(), Job.Status.PREP);
 
         new BundleStartXCommand(job.getId()).call();

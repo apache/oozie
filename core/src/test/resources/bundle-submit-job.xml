@@ -15,7 +15,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<bundle-app name='BUNDLE-TEST' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='uri:oozie:bundle:0.1'>
+<bundle-app name='${appName}' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='uri:oozie:bundle:0.1'>
           <controls> 
                  <kick-off-time>2099-02-01T00:00Z</kick-off-time>
           </controls>
