@@ -686,7 +686,7 @@
                 <plugin>
                     <groupId>org.apache.rat</groupId>
                     <artifactId>apache-rat-plugin</artifactId>
-                    <version>0.7</version>
+                    <version>0.8</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -822,11 +822,20 @@
                 <groupId>org.apache.rat</groupId>
                 <artifactId>apache-rat-plugin</artifactId>
                 <configuration>
+                    <excludeSubProjects>false</excludeSubProjects>
                     <excludes>
+                        <exclude>**/*iml</exclude>
                         <exclude>release-log.txt</exclude>
                         <exclude>work.log</exclude>
                         <exclude>SecurityAuth.audit</exclude>
                         <exclude>.gitignore</exclude>
+                        <exclude>docs/src/site/twiki/*.twiki</exclude>
+                        <exclude>examples/src/main/data/*</exclude>
+                        <exclude>core/src/test/resources/test-ioutils.txt</exclude>
+                        <exclude>core/src/test/resources/PigMain.txt</exclude>
+                        <exclude>webapp/src/main/resources/.gitignore</exclude>
+                        <exclude>**/target/**</exclude>
+                        <exclude>**/build/**</exclude>
                     </excludes>
                 </configuration>
             </plugin>
