@@ -1,7 +1,5 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
-OOZIE-851 demo workflow example does not enable sharelib for pig and streaming (tucu)
-OOZIE-850 apache-rat report should be a single global report file (tucu)
 OOZIE-637 parametrization of 'name' attribute in workflow/coordinator/bundle (tucu)
 OOZIE-603 Invalid regex expression for IDENTIFIER type in xsd files (navis via tucu)
 OOZIE-842 Update trunk POMs version to 3.3.0-SNAPSHOT (tucu)
@@ -21,6 +19,9 @@ OOZIE-817 Fix the unreasonable definition of the schema to fs action (yians via 
 
 -- Oozie 3.2.0 release
 
+OOZIE-852 remove pipes binaries from the source (tucu)
+OOZIE-851 demo workflow example does not enable sharelib for pig and streaming (tucu)
+OOZIE-850 apache-rat report should be a single global report file (tucu)
 OOZIE-847 Example directory has few files without license text(Mohammad)
 OOZIE-845 Delete 0 size files from repository(Mohammad)
 OOZIE-833 Add Hadoop proxyuser related settings to quick start guide.(Virag via Mohammad)

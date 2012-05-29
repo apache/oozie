@@ -412,13 +412,12 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
     }
 
     public void testPipes() throws Exception {
-        if (Boolean.parseBoolean(System.getProperty("oozie.test.hadoop.pipes", "false"))) {
-            String wordCountBinary = TestPipesMain.getProgramName(this);
-            Path programPath = new Path(getFsTestCaseDir(), "wordcount-simple");
+        Path programPath = new Path(getFsTestCaseDir(), "wordcount-simple");
 
-            FileSystem fs = getFileSystem();
+        FileSystem fs = getFileSystem();
 
-            InputStream is = IOUtils.getResourceAsStream(wordCountBinary, -1);
+        InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("wordcount-simple");
+        if (is != null) {
             OutputStream os = fs.create(programPath);
             IOUtils.copyStream(is, os);
 
@@ -436,6 +435,11 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
                     + getPipesConfig(inputDir.toString(), outputDir.toString()).toXmlString(false) + "<file>"
                     + programPath + "</file>" + "</map-reduce>";
             _testSubmit("pipes", actionXml);
+        }
+        else {
+            System.out.println(
+                "SKIPPING TEST: TestMapReduceActionExecutor.testPipes(), " +
+                "binary 'wordcount-simple' not available in the classpath");
         }
     }
 
