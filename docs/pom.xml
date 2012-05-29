@@ -42,6 +42,17 @@
     <build>
         <plugins>
             <plugin>
+                 <groupId>org.apache.rat</groupId>
+                 <artifactId>apache-rat-plugin</artifactId>
+                 <configuration>
+                     <excludeSubProjects>false</excludeSubProjects>
+                     <excludes>
+                         <!-- excluding all as the root POM does the full check-->
+                         <exclude>**</exclude>
+                     </excludes>
+                 </configuration>
+             </plugin>
+             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-deploy-plugin</artifactId>
                 <configuration>
@@ -55,16 +66,6 @@
                     <descriptors>
                         <descriptor>../src/main/assemblies/docs.xml</descriptor>
                     </descriptors>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.rat</groupId>
-                <artifactId>apache-rat-plugin</artifactId>
-                <configuration>
-                    <excludes>
-                        <exclude>src/site/twiki/*.twiki</exclude>
-                        <exclude>SecurityAuth.audit</exclude>
-                    </excludes>
                 </configuration>
             </plugin>
         </plugins>

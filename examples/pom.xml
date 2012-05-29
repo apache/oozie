@@ -109,26 +109,23 @@
     <build>
         <plugins>
             <plugin>
+                 <groupId>org.apache.rat</groupId>
+                 <artifactId>apache-rat-plugin</artifactId>
+                 <configuration>
+                     <excludeSubProjects>false</excludeSubProjects>
+                     <excludes>
+                         <!-- excluding all as the root POM does the full check-->
+                         <exclude>**</exclude>
+                     </excludes>
+                 </configuration>
+             </plugin>
+             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <configuration>
                     <descriptors>
                         <descriptor>../src/main/assemblies/examples.xml</descriptor>
                     </descriptors>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.rat</groupId>
-                <artifactId>apache-rat-plugin</artifactId>
-                <configuration>
-                    <excludes>
-                        <exclude>SecurityAuth.audit</exclude>
-                        <exclude>src/test/resources/PigMain.txt</exclude>
-                        <exclude>src/test/resources/test-ioutils.txt</exclude>
-                        <exclude>.gitignore</exclude>
-                        <exclude>src/main/data/*</exclude>
-                        <exclude>src/main/resources/.gitignore</exclude>
-                    </excludes>
                 </configuration>
             </plugin>
         </plugins>
