@@ -1,5 +1,7 @@
 -- Oozie 3.2.0 release
 
+OOZIE-851 demo workflow example does not enable sharelib for pig and streaming (tucu)
+OOZIE-850 apache-rat report should be a single global report file (tucu)
 OOZIE-850 apache-rat report should be a single global report file (tucu)
 OOZIE-849 set version in branch-3.2 to 3.2.0-incubating (tucu)
 OOZIE-847 Example directory has few files without license text(Mohammad)
