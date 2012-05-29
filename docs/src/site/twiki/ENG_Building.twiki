@@ -141,8 +141,6 @@ testcases.
 *oozie.test.name.node*= : indicates the URI of the NameNode when using a Hadoop cluster for testing, default value
 'hdfs://localhost:9000'
 
-*oozie.test.hadoop.pipes*= : indicates if Hadoop pipes test case should be run or not, default value 'false'
-
 *oozie.test.hadoop.security*= : indicates the type of Hadoop authentication for testing, valid values are 'simple' or
 'kerberos, default value 'simple'
 
@@ -187,6 +185,18 @@ value is =/tmp=.
 *test.exclude*= : specifies a testcase class (just the class name) to exclude for the tests run, for example =TestSubmitCommand=.
 
 *test.exclude.pattern*= : specifies one or more patterns for testcases to exclude, for example =**/Test*Command.java=.
+
+---+++ Testing Map Reduce Pipes Action
+
+Pipes testcases require Hadoop's *wordcount-simple* pipes binary example to run. The  *wordcount-simple* pipes binary
+should be compiled for the build platform and copied into Oozie's *core/src/test/resources/* directory. The binary file
+must be named *wordcount-simple*.
+
+If the  *wordcount-simple* pipes binary file is not available the testcase will do a NOP and it will print to its output
+file the following message 'SKIPPING TEST: TestPipesMain, binary 'wordcount-simple' not available in the classpath'.
+
+There are 2 testcases that use the *wordcount-simple* pipes binary, *TestPipesMain* and *TestMapReduceActionExecutor*,
+the 'SKIPPING TEST..." message would appear in the testcase log file of both testcases.
 
 ---+++ Testing Hive Action
 

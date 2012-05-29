@@ -1,9 +1,12 @@
 -- Oozie 3.2.0 release
 
+OOZIE-852 remove pipes binaries from the source (tucu)
 OOZIE-851 demo workflow example does not enable sharelib for pig and streaming (tucu)
 OOZIE-850 apache-rat report should be a single global report file (tucu)
-OOZIE-850 apache-rat report should be a single global report file (tucu)
 OOZIE-849 set version in branch-3.2 to 3.2.0-incubating (tucu)
+OOZIE-852 remove pipes binaries from the source (tucu)
+OOZIE-851 demo workflow example does not enable sharelib for pig and streaming (tucu)
+OOZIE-850 apache-rat report should be a single global report file (tucu)
 OOZIE-847 Example directory has few files without license text(Mohammad)
 OOZIE-845 Delete 0 size files from repository(Mohammad)
 OOZIE-833 Add Hadoop proxyuser related settings to quick start guide.(Virag via Mohammad)
