@@ -30,7 +30,7 @@ Apache Oozie(TM) How to Contribute
 
     * (Optional) An IDE (ie. Eclipse, IntelliJ, Netbeans can be easily used with the IDEs Maven support).
 
-    * To be online for the first build to download required plugins and dependencies.
+    * Be online for the first build to download required plugins and dependencies.
 
 * Getting the Source
 
@@ -50,42 +50,41 @@ Apache Oozie(TM) How to Contribute
 
   First create an issue in {{{./IssueTracking.html}Oozie Issue Tracking System}} describing the bug,
   improvement, new feature, task; and discuss if appropiate. It is important that the subject of
-  the issue to be descriptive of the issue, and consize, as it will be used for the CHANGES log.
+  the issue to be descriptive of the issue, and consize, as it will be used for the RELEASE LOG.
   All discussions should be done in the Issue Tracking System to make easier for developers to
   follow or come back in the future.
 
   Oozie development follows a Review Then Commit model.
 
   Work on the issue in your local development environment and when you think it is ready for review
-  or integration submit the patch for a code review request using
-  {{{http://reviews.apache.org}Apache Code Review System}}.
+  or integration upload your patch to the JIRA issue (remember to grant license to Apache) and change
+  the status of the JIRA to 'Patch Available'.
 
   Refine the patch based on the review discussions.
 
-  <<Important facts about the Code Review system>>:
+  Once your patch has been +1ed by Oozie committers (according to the project bylaws) the patch
+  can be committed to the Version Control system. If you are a committer, you can commit it
+  yourself. If you are not a committer, one of the committers that +1ed the patch will commit it
+  on your behalf.
 
-    * The Code Review system is integrated with the Issue Tracking system (all review discussions
-    are logged in the Issue tracking system). For this you must enter the issue ID in the review
-    request.
+  If required, backports for releases branches should follow. If the backports are trivial there
+  is no need for a new review.
 
-    * The Code Review system is shared with other Apache projects, you must enter <<oozie>> as the
-	    group for the review request.
+  The corresponding issue in the Issue Tracking and in the Code Review systems must be resolved as
+  'fixed' by the committer once the patch has been committed to all relevant branches.
 
-	    * The Code Review system only accept patches generated with <<svn diff>> syntax
-	    (<<git diff --no-prefix>> syntax is not accepted. If you work using Apache Git repository,
-	    you'll have to apply the patch to an SVN checkout and then generate the SVN patch from there).
+  <<IMPORTANT:>> Do not 'Close' the issue, resolve it as 'Fixed'. The issue will be closed by
+  the release mananger of the of the target release branch at release time.
 
-	  Once your patch has been +1ed by Oozie committers (according to the project bylaws) the patch
-	  can be committed to the Version Control system. If you are a committer, you can commit it
-	  yourself. If you are not a committer, one of the committers that +1ed the patch will commit it
-	  on your behalf.
+  If the reviewers consider that it will easier to review the patch to
+  {{{http://reviews.apache.org}Apache Code Review System}}, he/she may upload the patch to Apache
+  Code Review System, or ask the contributor of the patch  to do so. Once the review is complete
+  in Apache Code Review System, the contributor must upload the final patch to the Apache JIRA
+  where it will be +1.
+  
+* Patches General Guidelines
 
-	  The corresponding issue in the Issue Tracking and in the Code Review systems must be closed as
-	  'fixed'by the committer once the patch has been committed to all relevant branches.
-
-	* Patches General Guidelines
-
-	** Coding Conventions
+** Coding Conventions
 
   Oozie uses {{{http://java.sun.com/docs/codeconv/CodeConventions.pdf}Java standard coding conventions}}
   with the following changes:
@@ -109,6 +108,8 @@ Apache Oozie(TM) How to Contribute
 
     * Don't reformat code that is not part of the patch.
 
+    * else/catch/finally start on a new line.
+    
 ** Test Cases
 
   All patches should include test cases whenever possible. Test cases should have as much coverage
@@ -118,7 +119,7 @@ Apache Oozie(TM) How to Contribute
 
   If the patch is adding/modifying functionality that is user facing, it must include documentation.
 
-** Changes Log File
+** Release Log File
 
-  The Changes Log file must be edited by the committer committing the patch (the patch must not
-  include changes to the Changes Log file). This is to avoid unnecessary conflicts.
+  The Release Log file must be edited by the committer committing the patch (the patch must not
+  include changes to the Release Log file). This is to avoid unnecessary conflicts.
