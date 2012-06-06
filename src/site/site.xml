@@ -51,7 +51,7 @@
 
     <menu name="Documentation">
       <item name="3.2.0-incubating" href="./docs/3.2.0-incubating/docs/index.html"/>
-      <item name="Quick start" href="./docs/3.2.0-incubating/docs/QuickStart.html"/>
+      <item name="Quick start" href="./docs/3.2.0-incubating/docs/DG_QuickStart.html"/>
       <item name="Overview" href="./overview.html"/>
       <item name="MapReduce Cookbook" href="./map-reduce-cookbook.html"/>
       <item name="Pig Cookbook" href="./pig-cookbook.html"/>
