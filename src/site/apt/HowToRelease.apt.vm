@@ -256,11 +256,28 @@ https://svn.apache.org/repos/asf/incubator/oozie/branches/branch-X.Y -m "Branchi
 
    [[1]] Wait 24 hours for release to propagate to mirrors.
 
-   [[1]] Edit the website. Details: TBD
+   [[1]] Update the website.
+
+     [[A]] Do any necessary site updates in the <<<branches/ap-pages>>> branch
+     (don't miss the doc links in the <<<site.xml>>> file).
+
+     [[A]] Generate the new site pages <<<mvn site>>>.
+
+     [[A]] After verifying the new site is correct, commit the changes to
+     <<<branches/ap-pages>>>.
+
+     [[A]] Checkout the site:
 
 -----------------------------------------------------------------------------
         svn co https://svn.apache.org/repos/asf/incubator/oozie/site
 -----------------------------------------------------------------------------
+
+     [[A]] Go to the <<<site/publish/>>> directory and delete all files and
+     directories but the <<<docs/>>> directory.
+
+     [[A]] Copy the <<<brances/ap-pages/target/site/>>> files and directories.
+
+     [[A]] Commit the changes.
 
    [[1]] Wait until you see your changes reflected on the Apache web site.
 
