@@ -449,57 +449,6 @@ public class TestLiteWorkflowAppService extends XTestCase {
         }
     }
 
-    public void testCreateprotoConfWithSubWorkflow_Case1_ParentWorkflowContainingLibs() throws Exception {
-        // When parent workflow has an non-empty lib directory,
-        // APP_LIB_PATH_LIST should contain libraries from both parent and
-        // subworkflow (child)
-        Services services = new Services();
-        try {
-            services.init();
-            Reader reader = IOUtils.getResourceAsReader("wf-schema-valid.xml", -1);
-            Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
-            IOUtils.copyCharStream(reader, writer);
-
-            createTestCaseSubDir("lib");
-            writer = new FileWriter(getTestCaseDir() + "/lib/childdependency1.jar");
-            writer.write("bla bla");
-            writer.close();
-            writer = new FileWriter(getTestCaseDir() + "/lib/childdependency2.so");
-            writer.write("bla bla");
-            writer.close();
-            WorkflowAppService wps = Services.get().get(WorkflowAppService.class);
-            Configuration jobConf = new XConfiguration();
-            jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
-            jobConf.set(OozieClient.USER_NAME, getTestUser());
-            jobConf.set(WorkflowAppService.APP_LIB_PATH_LIST, "parentdependency1.jar");
-
-            Configuration protoConf = wps.createProtoActionConf(jobConf, "authToken", true);
-            assertEquals(getTestUser(), protoConf.get(OozieClient.USER_NAME));
-
-            assertEquals(3, protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST).length);
-            String f1 = protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST)[0];
-            String f2 = protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST)[1];
-            String f3 = protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST)[2];
-            String ref1 = "parentdependency1.jar";
-            String ref2 = getTestCaseDir() + "/lib/childdependency1.jar";
-            String ref3 = getTestCaseDir() + "/lib/childdependency2.so";
-            List<String> expected = new ArrayList<String>();
-            expected.add(ref1);
-            expected.add(ref2);
-            expected.add(ref3);
-            List<String> found = new ArrayList<String>();
-            found.add(f1);
-            found.add(f2);
-            found.add(f3);
-            Collections.sort(found);
-            Collections.sort(expected);
-            assertEquals(expected, found);
-        }
-        finally {
-            services.destroy();
-        }
-    }
-
     public void testCreateprotoConfWithSubWorkflow_Case2_ParentWorkflowWithoutLibs() throws Exception {
         // When parent workflow has an empty (or missing) lib directory,
         // APP_LIB_PATH_LIST should contain libraries from only the subworkflow

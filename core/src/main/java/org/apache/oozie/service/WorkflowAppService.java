@@ -38,8 +38,11 @@ import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Service that provides application workflow definition reading from the path and creation of the proto configuration.
@@ -169,7 +172,7 @@ public abstract class WorkflowAppService implements Service {
             XLog.getLog(getClass()).debug("jobConf.libPath = " + jobConf.get(OozieClient.LIBPATH));
             XLog.getLog(getClass()).debug("jobConf.appPath = " + appPath);
 
-            List<String> filePaths;
+            Collection<String> filePaths;
             if (isWorkflowJob) {
                 // app path could be a directory
                 Path path = new Path(uri.getPath());
@@ -180,7 +183,7 @@ public abstract class WorkflowAppService implements Service {
                 }
             }
             else {
-                filePaths = new ArrayList<String>();
+                filePaths = new LinkedHashSet<String>();
             }
 
             String[] libPaths = jobConf.getStrings(OozieClient.LIBPATH);
@@ -188,7 +191,7 @@ public abstract class WorkflowAppService implements Service {
                 for (int i = 0; i < libPaths.length; i++) {
                     if (libPaths[i].trim().length() > 0) {
                         Path libPath = new Path(libPaths[i].trim());
-                        List<String> libFilePaths = getLibFiles(fs, libPath);
+                        Collection<String> libFilePaths = getLibFiles(fs, libPath);
                         filePaths.addAll(libFilePaths);
                     }
                 }
@@ -201,12 +204,7 @@ public abstract class WorkflowAppService implements Service {
                 if (entry.getKey().startsWith("oozie.")) {
                     String name = entry.getKey();
                     String value = entry.getValue();
-                    // Append application lib jars of both parent and child in
-                    // subworkflow to APP_LIB_PATH_LIST
-                    if ((conf.get(name) != null) && name.equals(APP_LIB_PATH_LIST)) {
-                        value = value + "," + conf.get(name);
-                    }
-                    conf.set(name, value);
+                    conf.set(name, value);  //TODO ARGGHHHHH!!!!
                 }
             }
             XConfiguration retConf = new XConfiguration();
@@ -254,8 +252,8 @@ public abstract class WorkflowAppService implements Service {
      * @return list of paths.
      * @throws IOException thrown if the lib paths could not be obtained.
      */
-    private List<String> getLibFiles(FileSystem fs, Path libPath) throws IOException {
-        List<String> libPaths = new ArrayList<String>();
+    private Collection<String> getLibFiles(FileSystem fs, Path libPath) throws IOException {
+        Set<String> libPaths = new LinkedHashSet<String>();
         if (fs.exists(libPath)) {
             FileStatus[] files = fs.listStatus(libPath, new NoPathFilter());
 
