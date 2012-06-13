@@ -766,9 +766,6 @@ public class JavaActionExecutor extends ActionExecutor {
                         log.debug("Credentials object is null for name= " + credName + ", type=" + credProps.getType());
                     }
                 }
-                else {
-                    log.warn("Could not find credentials properties for: " + credName);
-                }
             }
         }
 
