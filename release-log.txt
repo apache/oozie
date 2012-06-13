@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-764 remove log warnings when credentials are null (rkanter via tucu)
 OOZIE-637 parametrization of 'name' attribute in workflow/coordinator/bundle (tucu)
 OOZIE-603 Invalid regex expression for IDENTIFIER type in xsd files (navis via tucu)
 OOZIE-842 Update trunk POMs version to 3.3.0-SNAPSHOT (tucu)
