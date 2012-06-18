@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-867 Unit test to account for log retrieval from multiple gzipped oozie.log files (mona via tucu)
 OOZIE-649 Fail fast when a date doesn't parse correctly (rkanter via tucu)
 OOZIE-871 actions from subworkflows that use oozie.libpath have duplicate classpath (tucu)
 OOZIE-764 remove log warnings when credentials are null (rkanter via tucu)
