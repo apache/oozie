@@ -97,6 +97,40 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
                 "oozie.service.coord.default.concurrency", 1));
     }
 
+    public void testBasicSubmitWithStartTimeAfterEndTime() throws Exception {
+        Configuration conf = new XConfiguration();
+        String appPath = "file://" + getTestCaseDir() + File.separator + "coordinator.xml";
+        String appXml = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" start=\"2010-02-01T01:00Z\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
+                + "xmlns=\"uri:oozie:coordinator:0.2\"> <controls> "
+                + "<execution>LIFO</execution> </controls> <datasets> "
+                + "<dataset name=\"a\" frequency=\"${coord:days(7)}\" initial-instance=\"2009-02-01T01:00Z\" "
+                + "timezone=\"UTC\"> <uri-template>file:///tmp/coord/workflows/${YEAR}/${DAY}</uri-template> </dataset> "
+                + "<dataset name=\"local_a\" frequency=\"${coord:days(7)}\" initial-instance=\"2009-02-01T01:00Z\" "
+                + "timezone=\"UTC\"> <uri-template>file:///tmp/coord/workflows/${YEAR}/${DAY}</uri-template> </dataset> "
+                + "</datasets> <input-events> "
+                + "<data-in name=\"A\" dataset=\"a\"> <instance>${coord:latest(0)}</instance> </data-in>  "
+                + "</input-events> "
+                + "<output-events> <data-out name=\"LOCAL_A\" dataset=\"local_a\"> "
+                + "<instance>${coord:current(-1)}</instance> </data-out> </output-events> <action> <workflow> <app-path>hdfs:///tmp/workflows/</app-path> "
+                + "<configuration> <property> <name>inputA</name> <value>${coord:dataIn('A')}</value> </property> "
+                + "<property> <name>inputB</name> <value>${coord:dataOut('LOCAL_A')}</value> "
+                + "</property></configuration> </workflow> </action> </coordinator-app>";
+        writeToFile(appXml, appPath);
+        conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+
+        try {
+            sc.call();
+            fail("Expected to catch errors due to incorrectly specified Start and End Time");
+        }
+        catch (CommandException e) {
+            assertEquals(sc.getJob().getStatus(), Job.Status.FAILED);
+            assertEquals(e.getErrorCode(), ErrorCode.E1003);
+            assertTrue(e.getMessage().contains("Coordinator Start Time cannot be greater than End Time."));
+        }
+    }
+
     /**
      * Testing for when user tries to submit a coordinator application having data-in events
      * that erroneously specify multiple input data instances inside a single <instance> tag.

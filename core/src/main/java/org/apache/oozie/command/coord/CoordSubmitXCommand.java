@@ -222,6 +222,8 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
             initEvaluators();
             Element eJob = basicResolveAndIncludeDS(appXml, conf, coordJob);
 
+            validateCoordinatorJob();
+
             // checking if the coordinator application data input/output events
             // specify multiple data instance values in erroneous manner
             checkMultipleTimeInstances(eJob, COORD_INPUT_EVENTS, COORD_INPUT_EVENTS_DATA_IN);
@@ -295,10 +297,20 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         return jobId;
     }
 
-    /*
-     * Check against multiple data instance values inside a single <instance> tag
-     * If found, the job is not submitted and user is informed to correct the error, instead of defaulting to the first instance value in the list
+    /**
+     * Method that validates values in the definition for correctness. Placeholder to add more.
      */
+    private void validateCoordinatorJob() {
+        // check if startTime < endTime
+        if (coordJob.getStartTime().after(coordJob.getEndTime())) {
+            throw new IllegalArgumentException("Coordinator Start Time cannot be greater than End Time.");
+        }
+    }
+
+  /*
+  * Check against multiple data instance values inside a single <instance> tag
+  * If found, the job is not submitted and user is informed to correct the error, instead of defaulting to the first instance value in the list
+  */
     private void checkMultipleTimeInstances(Element eCoordJob, String eventType, String dataType) throws CoordinatorJobException {
         Element eventsSpec, dataSpec, instance;
         List<Element> instanceSpecList;
