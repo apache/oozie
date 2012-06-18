@@ -106,6 +106,18 @@ public class TestCoordActionsInDateRange extends XDataTestCase {
               assertEquals(ErrorCode.E0308, e.getErrorCode());
             }
 
+            // Test a lenient date
+            try {
+              String lenientDate = date2.replaceAll("[^-]*T", "50T"); // Like date2 but with the 50th day of the month
+              CoordActionsInDateRange.getCoordActionIdsFromDates(
+                  job.getId().toString(),
+                  date1 + "::" + lenientDate);
+              fail("Accepted lenient date: " + lenientDate);
+            } catch(XException e) {
+              // Pass
+              assertEquals(ErrorCode.E0308, e.getErrorCode());
+            }
+
             // Testing for the number of coordinator actions in a date range that spans from half an hour prior to the nominal time to 1 hour after the nominal time
             int noOfActions = CoordActionsInDateRange.getCoordActionIdsFromDates(job.getId().toString(), date1 + "::" + date2).size();
             assertEquals(1, noOfActions);

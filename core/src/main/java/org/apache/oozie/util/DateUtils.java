@@ -99,6 +99,8 @@ public class DateUtils {
 
     private static DateFormat getISO8601DateFormat() {
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
+        // Stricter parsing to prevent dates such as 2011-12-50T01:00Z (December 50th) from matching
+        dateFormat.setLenient(false);
         dateFormat.setTimeZone(UTC);
         return dateFormat;
     }
