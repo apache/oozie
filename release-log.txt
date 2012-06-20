@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-879 distcp packaging with Hadoop 1 brings in lots of unwanted dependencies (rkanter via tucu)
 OOZIE-559 Create DistCp WF example (rkanter via tucu)
 OOZIE-34  connProps should mask DB password when logging != DEBUG (rkanter via tucu)
 OOZIE-877 update hadooplib POMs to use hadoop-2.0.0-alpha release (tucu)

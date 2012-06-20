@@ -34,6 +34,7 @@
 
     <properties>
         <sharelib.action.postfix>mapreduce-streaming</sharelib.action.postfix>
+        <sharelib.transitive.filtering>true</sharelib.transitive.filtering>
     </properties>
 
     <dependencies>

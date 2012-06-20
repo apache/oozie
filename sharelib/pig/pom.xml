@@ -34,6 +34,7 @@
 
     <properties>
         <sharelib.action.postfix>pig</sharelib.action.postfix>
+        <sharelib.transitive.filtering>true</sharelib.transitive.filtering>
     </properties>
 
     <dependencies>

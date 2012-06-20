@@ -34,6 +34,7 @@
 
     <properties>
         <sharelib.action.postfix>sqoop</sharelib.action.postfix>
+        <sharelib.transitive.filtering>true</sharelib.transitive.filtering>
     </properties>
 
     <dependencies>

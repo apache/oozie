@@ -28,8 +28,11 @@
             <outputDirectory>/share/lib/${sharelib.action.postfix}</outputDirectory>
             <unpack>false</unpack>
             <useTransitiveDependencies>true</useTransitiveDependencies>
-            <useTransitiveFiltering>true</useTransitiveFiltering>
+            <useTransitiveFiltering>${sharelib.transitive.filtering}</useTransitiveFiltering>
             <scope>runtime</scope>
+            <excludes>
+                <exclude>org.apache.oozie:oozie-hadoop-distcp:jar</exclude>
+            </excludes>
         </dependencySet>
     </dependencySets>
 
