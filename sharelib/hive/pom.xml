@@ -22,12 +22,12 @@
     <parent>
         <groupId>org.apache.oozie</groupId>
         <artifactId>oozie-main</artifactId>
-        <version>3.2.0-incubating</version>
+        <version>3.2.1-incubating-SNAPSHOT</version>
         <relativePath>../..</relativePath>
     </parent>
     <groupId>org.apache.oozie</groupId>
     <artifactId>oozie-sharelib-hive</artifactId>
-    <version>3.2.0-incubating</version>
+    <version>3.2.1-incubating-SNAPSHOT</version>
     <description>Apache Oozie Share Lib Hive</description>
     <name>Apache Oozie Share Lib Hive</name>
     <packaging>jar</packaging>

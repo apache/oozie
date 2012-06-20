@@ -1,3 +1,7 @@
+-- Oozie 3.2.1 (not released)
+
+OOZIE-867 update version of branch-2 to 3.2.1-incubating-SNAPSHOT (tucu)
+
 -- Oozie 3.2.0 release
 
 OOZIE-852 remove pipes binaries from the source (tucu)
