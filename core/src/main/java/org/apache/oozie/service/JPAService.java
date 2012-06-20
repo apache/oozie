@@ -175,7 +175,9 @@ public class JPAService implements Service, Instrumentable {
         // and connection pool are initialized one time only
         entityManager.getTransaction().begin();
         OpenJPAEntityManagerFactorySPI spi = (OpenJPAEntityManagerFactorySPI) factory;
-        LOG.info("JPA configuration: {0}", spi.getConfiguration().getConnectionProperties());
+        // Mask the password with '***'
+        String logMsg = spi.getConfiguration().getConnectionProperties().replaceAll("Password=.*?,", "Password=***,");
+        LOG.info("JPA configuration: {0}", logMsg);
         entityManager.getTransaction().commit();
         entityManager.close();
     }

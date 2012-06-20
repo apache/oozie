@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-34  connProps should mask DB password when logging != DEBUG (rkanter via tucu)
 OOZIE-877 update hadooplib POMs to use hadoop-2.0.0-alpha release (tucu)
 OOZIE-766 Verify distcp action works with Hadoop 0.23 (rkanter via tucu)
 OOZIE-801 Accepts coordinator with start time > end time (svenkat via tucu)
