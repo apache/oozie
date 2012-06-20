@@ -55,6 +55,7 @@
       <item name="Overview" href="./overview.html"/>
       <item name="MapReduce Cookbook" href="./map-reduce-cookbook.html"/>
       <item name="Pig Cookbook" href="./pig-cookbook.html"/>
+      <item name="Java Cookbook" href="./java-cookbook.html"/>
       <item name="Older releases" href="./docs"/>
     </menu>
 
