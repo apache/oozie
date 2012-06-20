@@ -51,6 +51,10 @@
             <directory>${basedir}/oozie/target/partial-sharelib</directory>
             <outputDirectory>/</outputDirectory>
         </fileSet>
+        <fileSet>
+           <directory>${basedir}/distcp/target/partial-sharelib</directory>
+           <outputDirectory>/</outputDirectory>
+       </fileSet>
     </fileSets>
 
 </assembly>

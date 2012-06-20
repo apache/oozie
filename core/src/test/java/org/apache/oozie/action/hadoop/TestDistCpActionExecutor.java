@@ -44,13 +44,20 @@ public class TestDistCpActionExecutor extends ActionExecutorTestCase{
         setSystemProperty("oozie.service.ActionService.executor.classes", DistcpActionExecutor.class.getName());
     }
 
-    public void testSimpestdistCpSubmitOK() throws Exception {
+    public void testDistCpFile() throws Exception {
+        Path inputPath = new Path(getFsTestCaseDir(), "input.txt");
+        final Path outputPath = new Path(getFsTestCaseDir(), "output.txt");
+        byte[] content = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".getBytes();
+        
+        OutputStream os = getFileSystem().create(inputPath);
+        os.write(content);
+        os.close();
+        
         String actionXml = "<distcp>" +
                 "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
-                "<arg>-Dmyqueue</arg>" +
-                "<arg>input</arg>"+
-                "<arg>output</arg>" +
+                "<arg>" + inputPath + "</arg>"+
+                "<arg>" + outputPath + "</arg>" +
                 "</distcp>";
         Context context = createContext(actionXml);
         final RunningJob runningJob = submitAction(context);
@@ -60,6 +67,33 @@ public class TestDistCpActionExecutor extends ActionExecutorTestCase{
             }
         });
         assertTrue(runningJob.isSuccessful());
+        
+        waitFor(60 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                return getFileSystem().exists(outputPath);
+            }
+        });
+        assertTrue(getFileSystem().exists(outputPath));
+        
+        byte[] readContent = new byte[content.length];
+        InputStream is = getFileSystem().open(outputPath);
+        int offset = 0;        
+        while (offset < readContent.length)
+        {
+            int numRead = is.read(readContent, offset, readContent.length);
+            if(numRead == -1) {
+                break;
+            }
+            offset += numRead;
+        }
+        assertEquals(is.read(), -1);
+        is.close();
+        offset = 0;
+        while (offset < readContent.length)
+        {
+            assertEquals(readContent[offset], content[offset]);
+            offset++;
+        }
     }
 
 
