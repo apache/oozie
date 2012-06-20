@@ -117,10 +117,17 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             StringBuilder existList = new StringBuilder();
             StringBuilder nonExistList = new StringBuilder();
             StringBuilder nonResolvedList = new StringBuilder();
+            String firstMissingDependency = "";
             CoordCommandUtils.getResolvedList(coordAction.getMissingDependencies(), nonExistList, nonResolvedList);
 
-            LOG.info("[" + actionId + "]::CoordActionInputCheck:: Missing deps:" + nonExistList.toString() + " "
+            // For clarity regarding which is the missing dependency in synchronous order
+            // instead of printing entire list, some of which, may be available
+            if(nonExistList.length() > 0) {
+                firstMissingDependency = nonExistList.toString().split(CoordELFunctions.INSTANCE_SEPARATOR)[0];
+            }
+            LOG.info("[" + actionId + "]::CoordActionInputCheck:: Missing deps:" + firstMissingDependency + " "
                     + nonResolvedList.toString());
+            // Updating the list of data dependencies that are available and those that are yet not
             boolean status = checkInput(actionXml, existList, nonExistList, actionConf);
             coordAction.setLastModifiedTime(currentTime);
             coordAction.setActionXml(actionXml.toString());

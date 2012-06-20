@@ -135,6 +135,8 @@ public class OozieCLI {
 
     private boolean used;
 
+    private static final String INSTANCE_SEPARATOR = "#";
+
     static {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < LINE_WIDTH; i++) {
@@ -875,6 +877,10 @@ public class OozieCLI {
             System.out.println(RULER);
 
             for (CoordinatorAction action : actions) {
+                String missingDep = action.getMissingDependencies();
+                if(!missingDep.isEmpty()) {
+                    missingDep = missingDep.split(INSTANCE_SEPARATOR)[0];
+                }
                 System.out.println(maskIfNull(action.getId()) + VERBOSE_DELIMITER + action.getActionNumber()
                         + VERBOSE_DELIMITER + maskIfNull(action.getConsoleUrl()) + VERBOSE_DELIMITER
                         + maskIfNull(action.getErrorCode()) + VERBOSE_DELIMITER + maskIfNull(action.getErrorMessage())
@@ -884,7 +890,7 @@ public class OozieCLI {
                         + maskDate(action.getCreatedTime(), localtime) + VERBOSE_DELIMITER
                         + maskDate(action.getNominalTime(), localtime) + action.getStatus() + VERBOSE_DELIMITER
                         + maskDate(action.getLastModifiedTime(), localtime) + VERBOSE_DELIMITER
-                        + maskIfNull(action.getMissingDependencies()));
+                        + maskIfNull(missingDep));
 
                 System.out.println(RULER);
             }
@@ -946,7 +952,11 @@ public class OozieCLI {
         System.out.println("Nominal Time         : " + maskDate(coordAction.getNominalTime(), contains));
         System.out.println("Status               : " + coordAction.getStatus());
         System.out.println("Last Modified        : " + maskDate(coordAction.getLastModifiedTime(), contains));
-        System.out.println("Missing Dependencies : " + maskIfNull(coordAction.getMissingDependencies()));
+        String missingDep = coordAction.getMissingDependencies();
+        if(!missingDep.isEmpty()) {
+            missingDep = missingDep.split(INSTANCE_SEPARATOR)[0];
+        }
+        System.out.println("First Missing Dependency : " + maskIfNull(missingDep));
 
         System.out.println(RULER);
     }

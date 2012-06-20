@@ -142,6 +142,50 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
     }
 
     /**
+     * Test to check that missing dependencies list starts from the first unavailable dependency in synchronous order
+     * @throws Exception
+     */
+    public void testActionInputMissingDependencies() throws Exception {
+        String jobId = "0000000-" + new Date().getTime() + "-TestCoordActionInputCheckXCommand-C";
+        Date startTime = DateUtils.parseDateUTC("2009-02-15T23:59Z");
+        Date endTime = DateUtils.parseDateUTC("2009-02-16T23:59Z");
+        CoordinatorJobBean job = addRecordToCoordJobTable(jobId, startTime, endTime);
+        new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
+
+        // providing some of the dataset dirs required as per coordinator specification - /2009/12, /2009/05, /2009/29, /2009/22
+        createDir(getTestCaseDir() + "/2009/12/");
+        createDir(getTestCaseDir() + "/2009/29/");
+
+        new CoordActionInputCheckXCommand(job.getId() + "@1", job.getId()).call();
+        CoordinatorActionBean action = null;
+        try {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            action = jpaService.execute(new CoordActionGetJPAExecutor(job.getId() + "@1"));
+        }
+        catch (JPAExecutorException se) {
+            fail("Action ID " + job.getId() + "@1" + " was not stored properly in db");
+        }
+
+        // Missing dependencies recorded by the coordinator action after input check
+        String missDepsOrder = action.getMissingDependencies();
+        // Expected missing dependencies are /2009/05, /2009/29, and /2009/22.
+
+        int index = missDepsOrder.indexOf("/2009/12");
+        if( index >= 0) {
+            fail("Dependency should be available! current list: " + missDepsOrder);
+        }
+        // Case when /2009/29 exists but checking stops since dataset synchronously expected before i.e. /2009/05 is missing
+        index = missDepsOrder.indexOf("/2009/29");
+        if( index < 0) {
+            fail("Data should have been in missing dependency list! current list: " + missDepsOrder);
+        }
+        index = missDepsOrder.indexOf("/2009/05");
+        if( index < 0) {
+            fail("Data should have been in missing dependency list! current list: " + missDepsOrder);
+        }
+    }
+
+    /**
      * This test case verifies if getCoordInputCheckRequeueInterval picks up the
      * overridden value. In reality, the value could be overridden in
      * oozie-site.xml.

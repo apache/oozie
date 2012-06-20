@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-563 Missing dependency showing feeds that are already present (mona via tucu)
 OOZIE-879 streaming sharelib brings in lots of unwanted dependencies (rkanter via tucu)
 OOZIE-876 distcp packaging with Hadoop 1 brings in lots of unwanted dependencies (rkanter via tucu)
 OOZIE-559 Create DistCp WF example (rkanter via tucu)
