@@ -31,6 +31,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -257,8 +258,9 @@ public class JavaActionExecutor extends ActionExecutor {
             XConfiguration actionDefaults = has.createActionDefaultConf(actionConf.get(HADOOP_JOB_TRACKER), getType());
             XConfiguration.injectDefaults(actionDefaults, actionConf);
             Namespace ns = actionXml.getNamespace();
-            Element e = actionXml.getChild("job-xml", ns);
-            if (e != null) {
+            Iterator<Element> it = actionXml.getChildren("job-xml", ns).iterator();
+            while (it.hasNext()) {
+                Element e = it.next();
                 String jobXml = e.getTextTrim();
                 Path path = new Path(appPath, jobXml);
                 FileSystem fs = getActionFileSystem(context, actionXml);
@@ -266,7 +268,7 @@ public class JavaActionExecutor extends ActionExecutor {
                 checkForDisallowedProps(jobXmlConf, "job-xml");
                 XConfiguration.copy(jobXmlConf, actionConf);
             }
-            e = actionXml.getChild("configuration", ns);
+            Element e = actionXml.getChild("configuration", ns);
             if (e != null) {
                 String strConf = XmlUtils.prettyPrint(e).toString();
                 XConfiguration inlineConf = new XConfiguration(new StringReader(strConf));

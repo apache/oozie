@@ -138,7 +138,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         Element actionXml = XmlUtils.parseXml("<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
-                "<job-xml>job.xml</job-xml>" + "<configuration>" +
+                "<job-xml>job.xml</job-xml>" + "<job-xml>job2.xml</job-xml>" + "<configuration>" +
                 "<property><name>oozie.launcher.a</name><value>LA</value></property>" +
                 "<property><name>a</name><value>AA</value></property>" +
                 "<property><name>b</name><value>BB</value></property>" +
@@ -181,6 +181,13 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         OutputStream os = getFileSystem().create(new Path(getFsTestCaseDir(), "job.xml"));
         conf.writeXml(os);
         os.close();
+        
+        conf = new XConfiguration();
+        conf.set("e", "E");
+        conf.set("oozie.launcher.f", "F");
+        os = getFileSystem().create(new Path(getFsTestCaseDir(), "job2.xml"));
+        conf.writeXml(os);
+        os.close();
 
         conf = ae.createBaseHadoopConf(context, actionXml);
         assertEquals(protoConf.get(WorkflowAppService.HADOOP_USER), conf.get(WorkflowAppService.HADOOP_USER));
@@ -204,6 +211,8 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertEquals("BB", conf.get("b"));
         assertEquals("C", conf.get("c"));
         assertEquals("D", conf.get("oozie.launcher.d"));
+        assertEquals("E", conf.get("e"));
+        assertEquals("F", conf.get("oozie.launcher.f"));
         assertEquals("action.bar", conf.get("action.foo"));
 
         conf = ae.createBaseHadoopConf(context, actionXml);
