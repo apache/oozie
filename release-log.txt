@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-877 update hadooplib POMs to use hadoop-2.0.0-alpha release (tucu)
 OOZIE-766 Verify distcp action works with Hadoop 0.23 (rkanter via tucu)
 OOZIE-801 Accepts coordinator with start time > end time (svenkat via tucu)
 OOZIE-867 Unit test to account for log retrieval from multiple gzipped oozie.log files (mona via tucu)

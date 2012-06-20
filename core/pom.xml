@@ -534,7 +534,7 @@
 
         <!-- Forcing antlr-runtime 3.0.1 for Hive action testcases -->
         <!-- This is required because Pig 0.9.0 requires 3.4  and  -->
-        <!-- Hive 0.9.0-SNAPSHOT requires 3.0.1                    -->
+        <!-- Hive 0.9.0 requires 3.0.1                             -->
         <profile>
             <id>testHive</id>
             <activation>
