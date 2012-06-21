@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-875 Support for multiple job-xml elements in extension action nodes (rkanter via tucu)
 OOZIE-880 oozie.job.acl is not working (virag)
 OOZIE-12  Support for multiple job-xml elements in action nodes (rkanter via tucu)
 OOZIE-563 Missing dependency showing feeds that are already present (mona via tucu)
