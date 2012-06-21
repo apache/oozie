@@ -29,7 +29,6 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -464,16 +463,8 @@ public class OozieClient {
             Element conf = doc.createElement("configuration");
             doc.appendChild(conf);
             conf.appendChild(doc.createTextNode("\n"));
-            for (Enumeration e = props.keys(); e.hasMoreElements();) {
-                String name = (String) e.nextElement();
-                Object object = props.get(name);
-                String value;
-                if (object instanceof String) {
-                    value = (String) object;
-                }
-                else {
-                    continue;
-                }
+            for (String name : props.stringPropertyNames()) { // Properties whose key or value is not of type String are omitted.
+                String value = props.getProperty(name);
                 Element propNode = doc.createElement("property");
                 conf.appendChild(propNode);
 
