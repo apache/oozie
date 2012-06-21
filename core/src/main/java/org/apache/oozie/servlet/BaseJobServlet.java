@@ -168,7 +168,10 @@ public abstract class BaseJobServlet extends JsonRestServlet {
             }
             AuthorizationService auth = Services.get().get(AuthorizationService.class);
 
-            if (acl == null && auth.useDefaultGroupAsAcl()) {
+            if (acl != null){
+            	 conf.set(OozieClient.GROUP_NAME, acl);
+            }
+            else if (acl == null && auth.useDefaultGroupAsAcl()) {
                 acl = auth.getDefaultGroup(user);
                 conf.set(OozieClient.GROUP_NAME, acl);
             }
