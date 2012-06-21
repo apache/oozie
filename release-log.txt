@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-880 oozie.job.acl is not working (virag)
 OOZIE-12  Support for multiple job-xml elements in action nodes (rkanter via tucu)
 OOZIE-563 Missing dependency showing feeds that are already present (mona via tucu)
 OOZIE-879 streaming sharelib brings in lots of unwanted dependencies (rkanter via tucu)
@@ -268,10 +269,10 @@ GH-0073 Suspend a coordinator bundle.
 GH-0072 Resume a coordinator bundle.
 GH-0065 Kill a coordinator bundle.
 GH-0074 Variable definition at coordinator bundle level.
-GH-0098 XCommand Code refactoring. 
+GH-0098 XCommand Code refactoring.
 GH-0099 JPA command refactor.
 GH-0077 Reprocessing of coordinator jobs.
-GH-0078 Option to rerun from failed node. 
+GH-0078 Option to rerun from failed node.
 GH-0075 Provide access to date list.
 GH-0077 Reprocess a complete coordinator bundle.
 GH-0110 Redesign Coordinator Job's status.
