@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE_870 Parameterize Credentials(britt via virag)
 OOZIE_846 OozieClient iterates over Properties using Hashtable method (lars_francke via tucu)
 OOZIE-875 Support for multiple job-xml elements in extension action nodes (rkanter via tucu)
 OOZIE-880 oozie.job.acl is not working (virag)
