@@ -744,7 +744,8 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         String actionXml = "<workflow-app xmlns='uri:oozie:workflow:0.2.5' name='pig-wf'>" + "<credentials>"
                 + "<credential name='abcname' type='abc'>" + "<property>" + "<name>property1</name>"
                 + "<value>value1</value>" + "</property>" + "<property>" + "<name>property2</name>"
-                + "<value>value2</value>" + "</property>" + "</credential>" + "</credentials>"
+                + "<value>value2</value>" + "</property>" + "<property>" + "<name>${property3}</name>"
+                + "<value>${value3}</value>" + "</property>" + "</credential>" + "</credentials>"
                 + "<start to='pig1' />" + "<action name='pig1' cred='abcname'>" + "<pig>" + "</pig>"
                 + "<ok to='end' />" + "<error to='fail' />" + "</action>" + "<kill name='fail'>"
                 + "<message>Pig failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>" + "</kill>"
@@ -767,6 +768,8 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         Element actionXmlconf = XmlUtils.parseXml(action.getConf());
         // action job configuration
         Configuration actionConf = ae.createBaseHadoopConf(context, actionXmlconf);
+        actionConf.set("property3", "prop3");
+        actionConf.set("value3", "val3");
 
         // Setting the credential properties in launcher conf
         HashMap<String, CredentialsProperties> credProperties = ae.setCredentialPropertyToActionConf(context,
@@ -775,6 +778,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         CredentialsProperties prop = credProperties.get("abcname");
         assertEquals("value1", prop.getProperties().get("property1"));
         assertEquals("value2", prop.getProperties().get("property2"));
+        assertEquals("val3", prop.getProperties().get("prop3"));
 
         Configuration conf = Services.get().getConf();
         conf.set("oozie.credentials.credentialclasses", "abc=org.apache.oozie.action.hadoop.InsertTestToken");

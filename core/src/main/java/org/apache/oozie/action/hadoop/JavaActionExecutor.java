@@ -62,6 +62,7 @@ import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.servlet.CallbackServlet;
+import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.PropertiesUtils;
 import org.apache.oozie.util.XConfiguration;
@@ -727,7 +728,7 @@ public class JavaActionExecutor extends ActionExecutor {
             WorkflowAction action, Configuration actionConf) throws Exception {
         HashMap<String, CredentialsProperties> credPropertiesMap = null;
         if (context != null && action != null) {
-            credPropertiesMap = getActionCredentialsProperties(context, action);
+            credPropertiesMap = getActionCredentialsProperties(context, action, actionConf);
             if (credPropertiesMap != null) {
                 for (String key : credPropertiesMap.keySet()) {
                     CredentialsProperties prop = credPropertiesMap.get(key);
@@ -774,14 +775,14 @@ public class JavaActionExecutor extends ActionExecutor {
     }
 
     protected HashMap<String, CredentialsProperties> getActionCredentialsProperties(Context context,
-            WorkflowAction action) throws Exception {
+            WorkflowAction action, Configuration conf) throws Exception {
         HashMap<String, CredentialsProperties> props = new HashMap<String, CredentialsProperties>();
         if (context != null && action != null) {
             String credsInAction = action.getCred();
             log.debug("Get credential '" + credsInAction + "' properties for action : " + action.getId());
             String[] credNames = credsInAction.split(",");
             for (String credName : credNames) {
-                CredentialsProperties credProps = getCredProperties(context, credName);
+                CredentialsProperties credProps = getCredProperties(context, credName, conf);
                 props.put(credName, credProps);
             }
         }
@@ -792,32 +793,37 @@ public class JavaActionExecutor extends ActionExecutor {
     }
 
     @SuppressWarnings("unchecked")
-    protected CredentialsProperties getCredProperties(Context context, String credName)
+    protected CredentialsProperties getCredProperties(Context context, String credName, Configuration conf)
             throws Exception {
         CredentialsProperties credProp = null;
         String workflowXml = ((WorkflowJobBean) context.getWorkflow()).getWorkflowInstance().getApp().getDefinition();
         Element elementJob = XmlUtils.parseXml(workflowXml);
         Element credentials = elementJob.getChild("credentials", elementJob.getNamespace());
         if (credentials != null) {
-            for (Element credential : (List<Element>) credentials.getChildren("credential", credentials
-                    .getNamespace())) {
+            for (Element credential : (List<Element>) credentials.getChildren("credential", credentials.getNamespace())) {
                 String name = credential.getAttributeValue("name");
                 String type = credential.getAttributeValue("type");
                 log.debug("getCredProperties: Name: " + name + ", Type: " + type);
                 if (name.equalsIgnoreCase(credName)) {
                     credProp = new CredentialsProperties(name, type);
-                    for (Element property : (List<Element>) credential.getChildren("property", credential
-                            .getNamespace())) {
-                        credProp.getProperties().put(property.getChildText("name", property.getNamespace()),
-                                property.getChildText("value", property.getNamespace()));
-                        log.debug("getCredProperties: Properties name :'"
-                                + property.getChildText("name", property.getNamespace()) + "', Value : '"
-                                + property.getChildText("value", property.getNamespace()) + "'");
+                    for (Element property : (List<Element>) credential.getChildren("property",
+                            credential.getNamespace())) {
+                        String propertyName = property.getChildText("name", property.getNamespace());
+                        String propertyValue = property.getChildText("value", property.getNamespace());
+                        ELEvaluator eval = new ELEvaluator();
+                        for (Map.Entry<String, String> entry : conf) {
+                            eval.setVariable(entry.getKey(), entry.getValue().trim());
+                        }
+                        propertyName = eval.evaluate(propertyName, String.class);
+                        propertyValue = eval.evaluate(propertyValue, String.class);
+
+                        credProp.getProperties().put(propertyName, propertyValue);
+                        log.debug("getCredProperties: Properties name :'" + propertyName + "', Value : '"
+                                + propertyValue + "'");
                     }
                 }
             }
-        }
-        else {
+        } else {
             log.warn("credentials is null for the action");
         }
         return credProp;
