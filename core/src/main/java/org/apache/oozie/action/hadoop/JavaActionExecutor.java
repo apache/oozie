@@ -538,6 +538,14 @@ public class JavaActionExecutor extends ActionExecutor {
             }
             LauncherMapper.setupMainArguments(launcherJobConf, args);
 
+            List<Element> javaopts = actionXml.getChildren("java-opt", ns);
+            for (Element opt: javaopts) {
+                String opts = launcherJobConf.get("mapred.child.java.opts", "");
+                opts = opts + " " + opt.getTextTrim();
+                opts = opts.trim();
+                launcherJobConf.set("mapred.child.java.opts", opts);
+            }
+
             Element opt = actionXml.getChild("java-opts", ns);
             if (opt != null) {
                 String opts = launcherJobConf.get("mapred.child.java.opts", "");

@@ -868,4 +868,57 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         actionConf.set("oozie.action.sharelib.for.java", "java-action-conf");
         assertEquals("java-action-conf", ae.getShareLibName(context, new Element("java"), actionConf));
     }
+
+    public void testJavaOpts() throws Exception {
+        String actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+                + getNameNodeUri() + "</name-node>" + "<job-xml>job.xml</job-xml>" + "<job-xml>job2.xml</job-xml>"
+                + "<configuration>" + "<property><name>oozie.launcher.a</name><value>LA</value></property>"
+                + "<property><name>a</name><value>AA</value></property>"
+                + "<property><name>b</name><value>BB</value></property>" + "</configuration>"
+                + "<main-class>MAIN-CLASS</main-class>" + "<java-opts>JAVA-OPT1 JAVA-OPT2</java-opts>"
+                + "<arg>A1</arg>" + "<arg>A2</arg>" + "<file>f.jar</file>" + "<archive>a.tar</archive>" + "</java>";
+
+        JavaActionExecutor ae = new JavaActionExecutor();
+
+        WorkflowJobBean wfBean = addRecordToWfJobTable("test1", actionXml);
+        WorkflowActionBean action = (WorkflowActionBean) wfBean.getActions().get(0);
+        action.setType(ae.getType());
+        action.setConf(actionXml);
+
+        Context context = new Context(wfBean, action);
+
+        Element actionXmlconf = XmlUtils.parseXml(action.getConf());
+
+        Configuration actionConf = ae.createBaseHadoopConf(context, actionXmlconf);
+
+        Configuration conf = ae.createLauncherConf(getFileSystem(), context, action, actionXmlconf, actionConf);
+
+        assertTrue(conf.get("mapred.child.java.opts").contains("JAVA-OPT1"));
+        assertTrue(conf.get("mapred.child.java.opts").contains("JAVA-OPT2"));
+
+        actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+                + getNameNodeUri() + "</name-node>" + "<job-xml>job.xml</job-xml>" + "<job-xml>job2.xml</job-xml>"
+                + "<configuration>" + "<property><name>oozie.launcher.a</name><value>LA</value></property>"
+                + "<property><name>a</name><value>AA</value></property>"
+                + "<property><name>b</name><value>BB</value></property>" + "</configuration>"
+                + "<main-class>MAIN-CLASS</main-class>" + "<java-opt>JAVA-OPT1</java-opt>"
+                + "<java-opt>JAVA-OPT2</java-opt>" + "<arg>A1</arg>" + "<arg>A2</arg>" + "<file>f.jar</file>"
+                + "<archive>a.tar</archive>" + "</java>";
+
+        wfBean = addRecordToWfJobTable("test1", actionXml);
+        action = (WorkflowActionBean) wfBean.getActions().get(0);
+        action.setType(ae.getType());
+        action.setConf(actionXml);
+
+        context = new Context(wfBean, action);
+
+        actionXmlconf = XmlUtils.parseXml(action.getConf());
+
+        actionConf = ae.createBaseHadoopConf(context, actionXmlconf);
+
+        conf = ae.createLauncherConf(getFileSystem(), context, action, actionXmlconf, actionConf);
+
+        assertTrue(conf.get("mapred.child.java.opts").contains("JAVA-OPT1"));
+        assertTrue(conf.get("mapred.child.java.opts").contains("JAVA-OPT2"));
+    }
 }

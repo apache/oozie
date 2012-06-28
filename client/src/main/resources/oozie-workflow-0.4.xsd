@@ -193,7 +193,10 @@
             <xs:element name="job-xml" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
             <xs:element name="configuration" type="workflow:CONFIGURATION" minOccurs="0" maxOccurs="1"/>
             <xs:element name="main-class" type="xs:string" minOccurs="1" maxOccurs="1"/>
-            <xs:element name="java-opts" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:choice minOccurs="0" maxOccurs="1">
+            	<xs:element name="java-opts" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            	<xs:element name="java-opt" type="xs:string" minOccurs="1" maxOccurs="unbounded"/>
+            </xs:choice>
             <xs:element name="arg" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
             <xs:element name="file" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
             <xs:element name="archive" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>

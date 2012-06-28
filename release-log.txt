@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-861 allow for use of multiple <java-opts> (britt via virag)
 OOZIE_870 Parameterize Credentials(britt via virag)
 OOZIE_846 OozieClient iterates over Properties using Hashtable method (lars_francke via tucu)
 OOZIE-875 Support for multiple job-xml elements in extension action nodes (rkanter via tucu)

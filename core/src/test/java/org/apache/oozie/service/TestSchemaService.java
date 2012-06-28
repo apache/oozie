@@ -92,6 +92,22 @@ public class TestSchemaService extends XTestCase {
             "<end name='end'/>" +
             "</workflow-app>";
 
+    private static final String WF_4_MULTIPLE_JAVA_OPTS = "<workflow-app xmlns='uri:oozie:workflow:0.4' name ='app'>" +
+            "<start to='a'/>" +
+            "<action name='a'>" +
+            "<java>" +
+            "<job-tracker>JT</job-tracker>" +
+            "<name-node>NN</name-node>" +
+            "<main-class>main.java</main-class>" +
+            "<java-opt>-Dparam1=1</java-opt>" +
+            "<java-opt>-Dparam2=2</java-opt>" +
+            "</java>" +
+            "<ok to='end'/>" +
+            "<error to='end'/>" +
+            "</action>" +
+             "<end name='end'/>" +
+            "</workflow-app>";
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -112,6 +128,12 @@ public class TestSchemaService extends XTestCase {
         SchemaService wss = Services.get().get(SchemaService.class);
         Validator validator = wss.getSchema(SchemaName.WORKFLOW).newValidator();
         validator.validate(new StreamSource(new StringReader(APP1)));
+    }
+
+    public void testWfMultipleJavaOpts() throws Exception {
+        SchemaService wss = Services.get().get(SchemaService.class);
+        Validator validator = wss.getSchema(SchemaName.WORKFLOW).newValidator();
+        validator.validate(new StreamSource(new StringReader(WF_4_MULTIPLE_JAVA_OPTS)));
     }
 
     // Test for validation of workflow definition against pattern defined in schema to complete within 3 seconds
