@@ -54,7 +54,7 @@ Java Cookbook
 ----------------------------------------------------------
 
 
-      The <<<java-opts>>> element, if present, contains the command line parameters which are to be used to start the JVM that will execute the Java application.
+      The <<<java-opts>>> element, if present, contains the command line parameters which are to be used to start the JVM that will execute the Java application. For multiple command line parameters, there may instead be a <<<java-opt>>> element for each.
 
       The <<<arg>>> elements, if present, contains arguments for the main function. The value of each <<<arg>>> element is considered a single argument and they are passed to the main method <in the same order>.
 
