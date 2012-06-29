@@ -204,6 +204,30 @@ public class TestOozieCLI extends DagServletTestCase {
         });
     }
 
+    /**
+     * Check if "-debug" option is accepted at CLI with job run command
+     * 
+     * @throws Exception
+     */
+    public void testRunWithDebug() throws Exception {
+        runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED, new Callable<Void>() {
+            public Void call() throws Exception {
+                Path appPath = new Path(getFsTestCaseDir(), "app");
+                getFileSystem().mkdirs(appPath);
+                getFileSystem().create(new Path(appPath, "workflow.xml")).close();
+                String oozieUrl = getContextURL();
+                int wfCount = MockDagEngineService.INIT_WF_COUNT;
+                String[] args = new String[]{"job", "-run", "-oozie", oozieUrl, "-config",
+                        createConfigFile(appPath.toString()), "-debug"};
+                assertEquals(0, new OozieCLI().run(args));
+                assertEquals("submit", MockDagEngineService.did);
+                assertTrue(MockDagEngineService.started.get(wfCount));
+
+                return null;
+            }
+        });
+    }
+
     public void testStart() throws Exception {
         runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED, new Callable<Void>() {
             public Void call() throws Exception {
