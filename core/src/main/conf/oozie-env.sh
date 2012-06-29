@@ -22,7 +22,7 @@
 # Settings for the Embedded Tomcat that runs Oozie
 # Java System properties for Oozie should be specified in this variable
 #
-# export CATALINA_OPTS=
+export CATALINA_OPTS=-Xmx1024m
 
 # Oozie configuration file to load from Oozie configuration directory
 #
