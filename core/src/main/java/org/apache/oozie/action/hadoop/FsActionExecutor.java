@@ -113,10 +113,11 @@ public class FsActionExecutor extends ActionExecutor {
                         else {
                             if (command.equals("chmod")) {
                                 Path path = getPath(commandElement, "path");
+                                boolean recursive = commandElement.getChild("recursive") != null;
                                 String str = commandElement.getAttributeValue("dir-files");
                                 boolean dirFiles = (str == null) || Boolean.parseBoolean(str);
                                 String permissionsMask = commandElement.getAttributeValue("permissions").trim();
-                                chmod(context, path, permissionsMask, dirFiles);
+                                chmod(context, path, permissionsMask, dirFiles, recursive);
                             }
                             else {
                                 if (command.equals("touchz")) {
@@ -257,7 +258,7 @@ public class FsActionExecutor extends ActionExecutor {
         }
     }
 
-    void chmod(Context context, Path path, String permissions, boolean dirFiles) throws ActionExecutorException {
+    void chmod(Context context, Path path, String permissions, boolean dirFiles, boolean recursive) throws ActionExecutorException {
         try {
             validatePath(path, true);
             FileSystem fs = getFileSystemFor(path, context);
@@ -275,6 +276,9 @@ public class FsActionExecutor extends ActionExecutor {
                 paths = new Path[filesStatus.length];
                 for (int i = 0; i < filesStatus.length; i++) {
                     paths[i] = filesStatus[i].getPath();
+                    if (recursive && filesStatus[i].isDir()){
+                        chmod(context, paths[i], permissions, dirFiles, recursive);
+                    }
                 }
             }
             else {
