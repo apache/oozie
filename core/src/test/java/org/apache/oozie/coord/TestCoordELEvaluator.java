@@ -123,7 +123,8 @@ public class TestCoordELEvaluator extends XTestCase {
     }
 
     public void testCreateDataEvaluator() throws Exception {
-        String jobXml = "<coordinator-app name=\"mycoordinator-app\" start=\"2009-02-01T01:00GMT\" end=\"2009-02-03T23:59GMT\" frequency=\"720\"";
+        String jobXml = "<coordinator-app name=\"mycoordinator-app\" start=\"2009-02-01T01:00GMT\" end=\"2009-02-03T23:59GMT\" timezone=\"UTC\"";
+        jobXml += " frequency=\"720\" freq_timeunit=\"MINUTE\"";
         jobXml += " action-nominal-time='2009-09-01T00:00Z' action-actual-time='2010-10-01T00:00Z'>";
         jobXml += "<input-events><data-in name=\"A\" dataset=\"a\"><uris>file:///tmp/coord/US/2009/1/30|file:///tmp/coord/US/2009/1/31</uris>";
         jobXml += "<dataset name=\"a\" frequency=\"1440\" initial-instance=\"2009-01-01T00:00Z\">";

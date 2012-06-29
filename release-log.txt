@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-882 CoordELEvaluator.createDataEvaluator doesn't set timezone for coord action (shwethags via tucu)
 OOZIE-892 increase default JVM max memory to 1GB to avoid OOM (rkanter via tucu)
 OOZIE-861 allow for use of multiple <java-opts> (britt via virag)
 OOZIE_870 Parameterize Credentials(britt via virag)

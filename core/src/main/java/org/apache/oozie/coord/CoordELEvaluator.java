@@ -143,6 +143,9 @@ public class CoordELEvaluator {
         String strNominalTime = eJob.getAttributeValue("action-nominal-time");
         if (strNominalTime != null) {
             appInst.setNominalTime(DateUtils.parseDateUTC(strNominalTime));
+            appInst.setTimeZone(DateUtils.getTimeZone(eJob.getAttributeValue("timezone")));
+            appInst.setFrequency(Integer.parseInt(eJob.getAttributeValue("frequency")));
+            appInst.setTimeUnit(TimeUnit.valueOf(eJob.getAttributeValue("freq_timeunit")));
             appInst.setActionId(actionId);
             appInst.setName(eJob.getAttributeValue("name"));
         }
