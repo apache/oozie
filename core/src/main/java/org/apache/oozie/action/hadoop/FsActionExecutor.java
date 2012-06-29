@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
 
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -116,6 +117,12 @@ public class FsActionExecutor extends ActionExecutor {
                                 boolean dirFiles = (str == null) || Boolean.parseBoolean(str);
                                 String permissionsMask = commandElement.getAttributeValue("permissions").trim();
                                 chmod(context, path, permissionsMask, dirFiles);
+                            }
+                            else {
+                                if (command.equals("touchz")) {
+                                    Path path = getPath(commandElement, "path");
+                                    touchz(context, path);
+                                }
                             }
                         }
                     }
@@ -279,6 +286,27 @@ public class FsActionExecutor extends ActionExecutor {
             for (Path p : paths) {
                 fs.setPermission(p, newFsPermission);
             }
+        }
+        catch (Exception ex) {
+            throw convertException(ex);
+        }
+    }
+
+    void touchz(Context context, Path path) throws ActionExecutorException {
+        try {
+            validatePath(path, true);
+            FileSystem fs = getFileSystemFor(path, context);
+
+            FileStatus st;
+            if (fs.exists(path)) {
+                st = fs.getFileStatus(path);
+                if (st.isDir()) {
+                    throw new Exception(path.toString() + " is a directory");
+                } else if (st.getLen() != 0)
+                    throw new Exception(path.toString() + " must be a zero-length file");
+            }
+            FSDataOutputStream out = fs.create(path);
+            out.close();
         }
         catch (Exception ex) {
             throw convertException(ex);

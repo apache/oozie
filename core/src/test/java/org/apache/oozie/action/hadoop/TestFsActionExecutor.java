@@ -29,6 +29,8 @@ import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.text.MessageFormat;
 
 public class TestFsActionExecutor extends ActionExecutorTestCase {
@@ -218,6 +220,58 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
         assertEquals("rwx---r--", fs.getFileStatus(grandchild).getPermission().toString());
     }
 
+    public void testTouchz() throws Exception {
+        FsActionExecutor ae = new FsActionExecutor();
+        FileSystem fs = getFileSystem();
+
+        Path dir = new Path(getFsTestCaseDir(), "dir1");
+        Path f1 = new Path(dir + "/newfile1");
+        Path f2 = new Path(dir + "/newfile2");
+        Context context = createContext("<fs/>");
+
+        fs.mkdirs(dir);
+        fs.createNewFile(f1);
+
+        assertTrue(fs.exists(f1));
+        assertTrue(fs.getFileStatus(f1).getLen() == 0);
+
+        ae.touchz(context, f1);
+        ae.touchz(context, f2);
+
+        assertTrue(fs.exists(f1));
+        assertTrue(fs.exists(f2));
+
+        FileStatus fs1 = fs.getFileStatus(f1);
+        FileStatus fs2 = fs.getFileStatus(f2);
+
+        assertFalse(fs1.isDir());
+        assertFalse(fs2.isDir());
+        assertTrue(fs1.getLen() == 0);
+        assertTrue(fs2.getLen() == 0);
+
+        try {
+            ae.touchz(context, dir);
+            fail();
+        }
+        catch (Exception ex) {
+            assertTrue(ex.getMessage().contains("is a directory"));
+        }
+
+        //Test touchz on a non-zero length file
+        Path f3 = new Path(dir + "/newfile3");
+        Writer writer = new OutputStreamWriter(fs.create(f3));
+        writer.write("This is not a zero length file");
+        writer.close();
+
+        try {
+            ae.touchz(context, f3);
+            fail();
+        }
+        catch (Exception ex) {
+            assertTrue(ex.getMessage().contains("must be a zero-length file"));
+        }
+    }
+
     public void testDoOperations() throws Exception {
         FsActionExecutor ae = new FsActionExecutor();
         FileSystem fs = getFileSystem();
@@ -236,13 +290,18 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
         fs.mkdirs(chmod2);
         Path child2 = new Path(chmod2, "child2");
         fs.mkdirs(child2);
+        Path newFile1 = new Path(mkdir + "newFile1");
+        Path newFile2 = new Path(mkdir + "newFile2");
+        fs.createNewFile(newFile1);
 
         String str = MessageFormat.format("<root><mkdir path=''{0}''/>" +
                 "<delete path=''{1}''/>" +
                 "<move source=''{2}'' target=''{3}''/>" +
                 "<chmod path=''{4}'' permissions=''-rwxrwxrwx''/>" +
                 "<chmod path=''{5}'' permissions=''-rwxrwx---'' dir-files=''false''/>" +
-                "</root>", mkdir, delete, source, target, chmod1, chmod2);
+                "<touchz path=''{6}''/>" +
+                "<touchz path=''{7}''/>" +
+                "</root>", mkdir, delete, source, target, chmod1, chmod2, newFile1, newFile2);
 
         Element xml = XmlUtils.parseXml(str);
 
@@ -252,6 +311,8 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
         assertFalse(fs.exists(delete));
         assertFalse(fs.exists(source));
         assertTrue(fs.exists(target));
+        assertTrue(fs.exists(newFile1));
+        assertTrue(fs.exists(newFile2));
 
         assertEquals("rwxrwxrwx", fs.getFileStatus(chmod1).getPermission().toString());
         assertNotSame("rwxrwxrwx", fs.getFileStatus(child1).getPermission().toString());
@@ -278,14 +339,18 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
         fs.mkdirs(chmod2);
         Path child2 = new Path(chmod2, "child2");
         fs.mkdirs(child2);
+        Path newFile1 = new Path(mkdir + "newFile1");
+        Path newFile2 = new Path(mkdir + "newFile2");
+        fs.createNewFile(newFile1);
 
         String actionXml = MessageFormat.format("<fs><mkdir path=''{0}''/>" +
                 "<delete path=''{1}''/>" +
                 "<move source=''{2}'' target=''{3}''/>" +
                 "<chmod path=''{4}'' permissions=''-rwxrwxrwx''/>" +
                 "<chmod path=''{5}'' permissions=''-rwxrwx---'' dir-files=''false''/>" +
-                "</fs>", mkdir, delete, source, target, chmod1, chmod2);
-
+                "<touchz path=''{6}''/>" +
+                "<touchz path=''{7}''/>" +
+                "</fs>", mkdir, delete, source, target, chmod1, chmod2, newFile1, newFile2);
 
         Context context = createContext(actionXml);
         WorkflowAction action = context.getAction();
@@ -308,6 +373,8 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
         assertFalse(fs.exists(delete));
         assertFalse(fs.exists(source));
         assertTrue(fs.exists(target));
+        assertTrue(fs.exists(newFile1));
+        assertTrue(fs.exists(newFile2));
 
         assertEquals("rwxrwxrwx", fs.getFileStatus(chmod1).getPermission().toString());
         assertNotSame("rwxrwxrwx", fs.getFileStatus(child1).getPermission().toString());
