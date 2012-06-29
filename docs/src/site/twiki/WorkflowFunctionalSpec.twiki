@@ -1045,7 +1045,7 @@ In the =move= command the =source= path must exist. The following scenarios are 
    * However, if the =target= path is an already existing directory, the =move= action will place your =source= as a child of the =target= directory.
 
 The =chmod= command changes the permissions for the specified path. Permissions can be specified using the Unix Symbolic representation (e.g. -rwxrw-rw-) or an octal representation (755).
- When doing a =chmod= command on a directory, by default the command is applied to the directory and the files one level within the directory. To apply the =chmod= command to the directory, without affecting the files within it, the =dir-files= attribute must be set to =false=.
+ When doing a =chmod= command on a directory, by default the command is applied to the directory and the files one level within the directory. To apply the =chmod= command to the directory, without affecting the files within it, the =dir-files= attribute must be set to =false=. To apply the =chmod= command recursively to all levels within a directory, put a <recursive/> element inside the <chmod> element.
 
 The =touchz= command creates a zero length file in the specified path if none exists. If one already exists, then touchz will perform a touch operation.
 
