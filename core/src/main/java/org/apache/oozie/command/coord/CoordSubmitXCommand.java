@@ -308,7 +308,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
     }
 
   /*
-  * Check against multiple data instance values inside a single <instance> tag
+  * Check against multiple data instance values inside a single <instance> <start-instance> or <end-instance> tag
   * If found, the job is not submitted and user is informed to correct the error, instead of defaulting to the first instance value in the list
   */
     private void checkMultipleTimeInstances(Element eCoordJob, String eventType, String dataType) throws CoordinatorJobException {
@@ -339,6 +339,47 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
                         handleExpresionWithMultipleInstances(eventType, dataType, instanceValue);
                     }
                 }
+
+                // In case of input-events, there can be multiple child <start-instance> datasets. Iterating to ensure none of them have errors
+                instanceSpecList = dataSpec.getChildren("start-instance", ns);
+                instanceIter = instanceSpecList.iterator();
+                while(instanceIter.hasNext()) {
+                    instance = ((Element) instanceIter.next());
+                    if(instance.getContentSize() == 0) { //empty string or whitespace
+                        throw new CoordinatorJobException(ErrorCode.E1021, "<start-instance> tag within " + eventType + " is empty!");
+                    }
+                    instanceValue = instance.getContent(0).toString();
+                    boolean isInvalid = false;
+                    try {
+                        isInvalid = evalAction.checkForExistence(instanceValue, ",");
+                    } catch (Exception e) {
+                        handleELParseException(eventType, dataType, instanceValue);
+                    }
+                    if (isInvalid) { // reaching this block implies start instance is not empty i.e. length > 0
+                        handleExpresionWithStartMultipleInstances(eventType, dataType, instanceValue);
+                    }
+                }
+
+                // In case of input-events, there can be multiple child <end-instance> datasets. Iterating to ensure none of them have errors
+                instanceSpecList = dataSpec.getChildren("end-instance", ns);
+                instanceIter = instanceSpecList.iterator();
+                while(instanceIter.hasNext()) {
+                    instance = ((Element) instanceIter.next());
+                    if(instance.getContentSize() == 0) { //empty string or whitespace
+                        throw new CoordinatorJobException(ErrorCode.E1021, "<end-instance> tag within " + eventType + " is empty!");
+                    }
+                    instanceValue = instance.getContent(0).toString();
+                    boolean isInvalid = false;
+                    try {
+                        isInvalid = evalAction.checkForExistence(instanceValue, ",");
+                    } catch (Exception e) {
+                        handleELParseException(eventType, dataType, instanceValue);
+                    }
+                    if (isInvalid) { // reaching this block implies instance is not empty i.e. length > 0
+                        handleExpresionWithMultipleEndInstances(eventType, dataType, instanceValue);
+                    }
+                }
+
             }
         }
     }
@@ -365,6 +406,30 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         }
         throw new CoordinatorJobException(ErrorCode.E1021, eventType + " instance '" + instanceValue
                 + "' contains more than one date instance. Coordinator job NOT SUBMITTED. " + correctAction);
+    }
+
+    private void handleExpresionWithStartMultipleInstances(String eventType, String dataType, String instanceValue)
+            throws CoordinatorJobException {
+        String correctAction = null;
+        if(dataType.equals(COORD_INPUT_EVENTS_DATA_IN)) {
+            correctAction = "Coordinator app definition should have separate <end-instance> tag per data-in start-instance";
+        } else if(dataType.equals(COORD_OUTPUT_EVENTS_DATA_OUT)) {
+            correctAction = "Coordinator app definition can have only one <end-instance> tag per data-out start-instance";
+        }
+        throw new CoordinatorJobException(ErrorCode.E1021, eventType + "end instance '" + instanceValue
+                + "' contains more than one date start-instance. Coordinator job NOT SUBMITTED. " + correctAction);
+    }
+
+    private void handleExpresionWithMultipleEndInstances(String eventType, String dataType, String instanceValue)
+            throws CoordinatorJobException {
+        String correctAction = null;
+        if(dataType.equals(COORD_INPUT_EVENTS_DATA_IN)) {
+            correctAction = "Coordinator app definition should have separate <start-instance> tag per data-in end-instance";
+        } else if(dataType.equals(COORD_OUTPUT_EVENTS_DATA_OUT)) {
+            correctAction = "Coordinator app definition can have only one <start-instance> tag per data-out end-instance";
+        }
+        throw new CoordinatorJobException(ErrorCode.E1021, eventType + "end-instance '" + instanceValue
+                + "' contains more than one date end-instance. Coordinator job NOT SUBMITTED. " + correctAction);
     }
 
     /**

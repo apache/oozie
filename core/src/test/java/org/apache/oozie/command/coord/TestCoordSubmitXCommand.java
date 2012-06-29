@@ -203,6 +203,90 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
     }
 
     /**
+     * Testing for when user tries to submit a coordinator application having data-in events
+     * that erroneously specify multiple input data instances inside a single <start-instance> tag.
+     * Job gives submission error and indicates appropriate correction
+     * Testing both negative(error) and well as positive(success) cases
+     */
+    public void testBasicSubmitWithMultipleStartInstancesInputEvent() throws Exception {
+        Configuration conf = new XConfiguration();
+        String appPath = "file://" + getTestCaseDir() + File.separator + "coordinator.xml";
+
+        // CASE 1: Failure case i.e. multiple data-in start-instances
+        Reader reader = IOUtils.getResourceAsReader("coord-multiple-input-start-instance1.xml", -1);
+        Writer writer = new FileWriter(new URI(appPath).getPath());
+        IOUtils.copyCharStream(reader, writer);
+        conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+
+        try {
+            sc.call();
+            fail("Expected to catch errors due to incorrectly specified input data set start-instances");
+        }
+        catch (CommandException e) {
+            assertEquals(sc.getJob().getStatus(), Job.Status.FAILED);
+            assertEquals(e.getErrorCode(), ErrorCode.E1021);
+            assertTrue(e.getMessage().contains(sc.COORD_INPUT_EVENTS) && e.getMessage().contains("per data-in start-instance"));
+        }
+
+        // CASE 2: Success case i.e. Single start instances for input and single start instance for output, but both with ","
+        reader = IOUtils.getResourceAsReader("coord-multiple-input-start-instance2.xml", -1);
+        writer = new FileWriter(new URI(appPath).getPath());
+        IOUtils.copyCharStream(reader, writer);
+        sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+
+        try {
+            sc.call();
+        }
+        catch (CommandException e) {
+            fail("Unexpected failure: " + e);
+        }
+    }
+
+    /**
+     * Testing for when user tries to submit a coordinator application having data-in events
+     * that erroneously specify multiple input data instances inside a single <start-instance> tag.
+     * Job gives submission error and indicates appropriate correction
+     * Testing both negative(error) and well as positive(success) cases
+     */
+    public void testBasicSubmitWithMultipleEndInstancesInputEvent() throws Exception {
+        Configuration conf = new XConfiguration();
+        String appPath = "file://" + getTestCaseDir() + File.separator + "coordinator.xml";
+
+        // CASE 1: Failure case i.e. multiple data-in start-instances
+        Reader reader = IOUtils.getResourceAsReader("coord-multiple-input-end-instance1.xml", -1);
+        Writer writer = new FileWriter(new URI(appPath).getPath());
+        IOUtils.copyCharStream(reader, writer);
+        conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+
+        try {
+            sc.call();
+            fail("Expected to catch errors due to incorrectly specified input data set end-instances");
+        }
+        catch (CommandException e) {
+            assertEquals(sc.getJob().getStatus(), Job.Status.FAILED);
+            assertEquals(e.getErrorCode(), ErrorCode.E1021);
+            assertTrue(e.getMessage().contains(sc.COORD_INPUT_EVENTS) && e.getMessage().contains("per data-in end-instance"));
+        }
+
+        // CASE 2: Success case i.e. Single end instances for input and single end instance for output, but both with ","
+        reader = IOUtils.getResourceAsReader("coord-multiple-input-end-instance2.xml", -1);
+        writer = new FileWriter(new URI(appPath).getPath());
+        IOUtils.copyCharStream(reader, writer);
+        sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+
+        try {
+            sc.call();
+        }
+        catch (CommandException e) {
+            fail("Unexpected failure: " + e);
+        }
+    }
+
+    /**
      * Testing for when user tries to submit a coordinator application having data-out events
      * that erroneously specify multiple output data instances inside a single <instance> tag.
      * Job gives submission error and indicates appropriate correction
