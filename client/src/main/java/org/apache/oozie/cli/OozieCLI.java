@@ -123,6 +123,7 @@ public class OozieCLI {
 
     public static final String VERBOSE_OPTION = "verbose";
     public static final String VERBOSE_DELIMITER = "\t";
+    public static final String DEBUG_OPTION = "debug";
 
     public static final String PIGFILE_OPTION = "file";
 
@@ -219,6 +220,7 @@ public class OozieCLI {
         Option config = new Option(CONFIG_OPTION, true, "job configuration file '.xml' or '.properties'");
         Option submit = new Option(SUBMIT_OPTION, false, "submit a job");
         Option run = new Option(RUN_OPTION, false, "run a job");
+        Option debug = new Option(DEBUG_OPTION, false, "Use debug mode to see debugging statements on stdout");
         Option rerun = new Option(RERUN_OPTION, true,
                 "rerun a job  (coordinator requires -action or -date, bundle requires -coordinator or -date)");
         Option dryrun = new Option(DRYRUN_OPTION, false,
@@ -277,6 +279,7 @@ public class OozieCLI {
         jobOptions.addOption(changeValue);
         jobOptions.addOption(localtime);
         jobOptions.addOption(verbose);
+        jobOptions.addOption(debug);
         jobOptions.addOption(offset);
         jobOptions.addOption(len);
         jobOptions.addOption(filter);
@@ -615,11 +618,11 @@ public class OozieCLI {
     protected XOozieClient createXOozieClient(CommandLine commandLine) throws OozieCLIException {
         XOozieClient wc = new AuthOozieClient(getOozieUrl(commandLine), getAuthOption(commandLine));
         addHeader(wc);
-        setDebugMode(wc);
+        setDebugMode(wc,commandLine.hasOption(DEBUG_OPTION));
         return wc;
     }
 
-    protected void setDebugMode(OozieClient wc) {
+    protected void setDebugMode(OozieClient wc, boolean debugOpt) {
 
         String debug = System.getenv(ENV_OOZIE_DEBUG);
         if (debug != null && !debug.isEmpty()) {
@@ -632,6 +635,9 @@ public class OozieCLI {
                 ex.printStackTrace();
             }
             wc.setDebugMode(debugVal);
+        }
+        else if(debugOpt){  // CLI argument "-debug" used
+            wc.setDebugMode(1);
         }
     }
 
