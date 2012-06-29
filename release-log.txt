@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-872 Support touchz in fs node of oozie worklfow (britt via virag)
 OOZIE-769 Adding "-debug" option to Oozie CLI for debug statements to stdout (mona via virag)
 OOZIE-795 update the oozie commit build profile (virag)
 OOZIE-860 start-instance and end-instance should limit 1 (britt via virag)

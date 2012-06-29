@@ -182,6 +182,7 @@
             <xs:element name="mkdir" type="workflow:MKDIR"/>
             <xs:element name="move" type="workflow:MOVE"/>
             <xs:element name="chmod" type="workflow:CHMOD"/>
+            <xs:element name="touchz" type="workflow:TOUCHZ"/>
         </xs:choice>
     </xs:complexType>
 
@@ -265,6 +266,10 @@
         <xs:attribute name="path" type="xs:string" use="required"/>
         <xs:attribute name="permissions" type="xs:string" use="required"/>
         <xs:attribute name="dir-files" type="xs:string"/>
+    </xs:complexType>
+    
+    <xs:complexType name="TOUCHZ">
+        <xs:attribute name="path" type="xs:string" use="required"/>
     </xs:complexType>
     
     <xs:complexType name="CREDENTIALS">             
