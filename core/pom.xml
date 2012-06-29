@@ -30,6 +30,9 @@
     <description>Apache Oozie Core</description>
     <name>Apache Oozie Core</name>
     <packaging>jar</packaging>
+    <properties>
+        <test.exclude.pattern>_</test.exclude.pattern>
+    </properties>
 
     <dependencies>
 
@@ -424,9 +427,19 @@
                             <excludes>
                                 <exclude>**/TestRerun.java</exclude>
                                 <exclude>**/TestCallableQueueService.java</exclude>
-                                <exclude>**/TestPigActionExecutor.java</exclude>
-                                <exclude>**/TestCallableQueueService.java</exclude>
-                                <exclude>**/TestSshActionExecutor.java</exclude>
+                                <exclude>**/TestSsh*.java</exclude>
+                                <exclude>**/TestHive*.java</exclude>
+                                <exclude>**/TestSqoop*.java</exclude>
+                                <exclude>**/TestActionErrors.java</exclude>
+                                <exclude>**/TestJavaActionExecutor.java</exclude>
+                                <exclude>**/TestLauncher.java</exclude>
+                                <exclude>**/TestShellActionExecutor.java</exclude>
+                                <exclude>**/TestActionStartXCommand.java</exclude>
+                                <exclude>**/TestActionCheckXCommand.java</exclude>
+                                <exclude>**/TestCoordRerunXCommand.java</exclude>
+                                <exclude>**/util/Test**</exclude>
+                                <exclude>**/bundle/Test**</exclude>
+                                <exclude>**/${test.exclude.pattern}/*</exclude>
                             </excludes>
                         </configuration>
                     </plugin>
