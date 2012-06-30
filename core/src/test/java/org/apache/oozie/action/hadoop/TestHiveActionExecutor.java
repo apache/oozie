@@ -67,15 +67,6 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
                 HiveActionExecutor.class.getName());
     }
 
-    public void testVariableSubstitutionSimple() throws Exception {
-        String key = "test.random.key";
-        String keyExpression = "${" + key + "}";
-        Map<String, String> varMap = new HashMap<String, String>();
-        varMap.put(key, keyExpression);
-        String value = HiveMain.substitute(varMap, keyExpression);
-        assertTrue("Unexpected value " + value, value.equals(keyExpression));
-    }
-
     public void testSetupMethods() throws Exception {
         HiveActionExecutor ae = new HiveActionExecutor();
         assertEquals("hive", ae.getType());
