@@ -222,15 +222,15 @@ public class HiveMain extends LauncherMain {
         // Prepare the Hive Script
         String script = readStringFromFile(scriptPath);
         System.out.println();
-        System.out.println("Original script [" + scriptPath + "] content: ");
+        System.out.println("Script [" + scriptPath + "] content: ");
         System.out.println("------------------------");
         System.out.println(script);
         System.out.println("------------------------");
         System.out.println();
 
+        // Pass any parameters to Hive via arguments
         String[] params = MapReduceMain.getStrings(hiveConf, HIVE_PARAMS);
         if (params.length > 0) {
-            Map<String, String> varMap = new HashMap<String, String>();
             System.out.println("Parameters:");
             System.out.println("------------------------");
             for (String param : params) {
@@ -242,20 +242,9 @@ public class HiveMain extends LauncherMain {
                 } else if (idx == 0) {
                     throw new RuntimeException("Parameter value not specified: " + param);
                 }
-                String var = param.substring(0, idx);
-                String val = param.substring(idx + 1, param.length());
-                varMap.put(var, val);
+                arguments.add("--hivevar");
+                arguments.add(param);
             }
-            System.out.println("------------------------");
-            System.out.println();
-
-            String resolvedScript = substitute(varMap, script);
-            scriptPath = scriptPath + ".sub";
-            writeStringToFile(scriptPath, resolvedScript);
-
-            System.out.println("Resolved script [" + scriptPath + "] content: ");
-            System.out.println("------------------------");
-            System.out.println(resolvedScript);
             System.out.println("------------------------");
             System.out.println();
         }
@@ -326,27 +315,4 @@ public class HiveMain extends LauncherMain {
             }
         }
      }
-
-    private static void writeStringToFile(String filePath, String str) throws IOException {
-        BufferedWriter out = null;
-        try {
-            out = new BufferedWriter(new FileWriter(filePath));
-            out.write(str);
-        }
-        finally {
-            if (out != null) {
-                out.close();
-            }
-        }
-    }
-
-    static String substitute(Map<String, String> vars, String expr) {
-        for (Map.Entry<String, String> entry : vars.entrySet()) {
-            String var = "${" + entry.getKey() + "}";
-            String value = entry.getValue();
-            expr = expr.replace(var, value);
-        }
-        return expr;
-    }
-
 }
