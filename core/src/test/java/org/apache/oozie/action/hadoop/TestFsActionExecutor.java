@@ -340,7 +340,7 @@ public void testChmodRecursive() throws Exception {
                 "<chmod path=''{5}'' permissions=''-rwxrwx---'' dir-files=''false''/>" +
                 "<touchz path=''{6}''/>" +
                 "<touchz path=''{7}''/>" +
-                "<chmod path=''{8}'' permissions=''-rwxrwx---'' recursive/>" +
+                "<chmod path=''{8}'' permissions=''-rwxrwx---''> <recursive/> </chmod>" +
                 "</root>", mkdir, delete, source, target, chmod1, chmod2, newFile1, newFile2, chmod3);
 
         Element xml = XmlUtils.parseXml(str);

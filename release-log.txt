@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-896 TestFsActionExecutor.java failing (britt via virag)
 OOZIE-881 Support for recursive chmod (britt via virag)
 OOZIE-872 Support touchz in fs node of oozie worklfow (britt via virag)
 OOZIE-769 Adding "-debug" option to Oozie CLI for debug statements to stdout (mona via virag)
