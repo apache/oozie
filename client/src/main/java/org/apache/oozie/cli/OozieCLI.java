@@ -884,7 +884,7 @@ public class OozieCLI {
 
             for (CoordinatorAction action : actions) {
                 String missingDep = action.getMissingDependencies();
-                if(!missingDep.isEmpty()) {
+                if(missingDep != null && !missingDep.isEmpty()) {
                     missingDep = missingDep.split(INSTANCE_SEPARATOR)[0];
                 }
                 System.out.println(maskIfNull(action.getId()) + VERBOSE_DELIMITER + action.getActionNumber()
@@ -959,7 +959,7 @@ public class OozieCLI {
         System.out.println("Status               : " + coordAction.getStatus());
         System.out.println("Last Modified        : " + maskDate(coordAction.getLastModifiedTime(), contains));
         String missingDep = coordAction.getMissingDependencies();
-        if(!missingDep.isEmpty()) {
+        if(missingDep != null && !missingDep.isEmpty()) {
             missingDep = missingDep.split(INSTANCE_SEPARATOR)[0];
         }
         System.out.println("First Missing Dependency : " + maskIfNull(missingDep));
