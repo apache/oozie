@@ -83,7 +83,7 @@ public class OozieDBCLI {
         used = true;
 
         CLIParser parser = new CLIParser("ooziedb.sh", HELP_INFO);
-        parser.addCommand(HELP_CMD, "", "display usage", new Options(), false);
+        parser.addCommand(HELP_CMD, "", "display usage for all commands or specified command", new Options(), false);
         parser.addCommand(VERSION_CMD, "", "show Oozie DB version information", new Options(), false);
         parser.addCommand(CREATE_CMD, "", "create Oozie DB schema", createUpgradeOptions(), false);
         parser.addCommand(UPGRADE_CMD, "", "upgrade Oozie DB", createUpgradeOptions(), false);
@@ -93,7 +93,7 @@ public class OozieDBCLI {
             System.out.println();
             CLIParser.Command command = parser.parse(args);
             if (command.getName().equals(HELP_CMD)) {
-                parser.showHelp();
+                parser.showHelp(command.getCommandLine());
             }
             else if (command.getName().equals(VERSION_CMD)) {
                 showVersion();

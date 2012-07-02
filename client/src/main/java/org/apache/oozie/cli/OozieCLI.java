@@ -381,7 +381,7 @@ public class OozieCLI {
         used = true;
 
         final CLIParser parser = new CLIParser(OOZIE_OPTION, getCLIHelp());
-        parser.addCommand(HELP_CMD, "", "display usage", new Options(), false);
+        parser.addCommand(HELP_CMD, "", "display usage for all commands or specified command", new Options(), false);
         parser.addCommand(VERSION_CMD, "", "show client version", new Options(), false);
         parser.addCommand(JOB_CMD, "", "job operations", createJobOptions(), false);
         parser.addCommand(JOBS_CMD, "", "jobs status", createJobsOptions(), false);
@@ -430,7 +430,7 @@ public class OozieCLI {
 
     private void processCommand(CLIParser parser, CLIParser.Command command) throws Exception {
         if (command.getName().equals(HELP_CMD)) {
-            parser.showHelp();
+            parser.showHelp(command.getCommandLine());
         }
         else if (command.getName().equals(JOB_CMD)) {
             jobCommand(command.getCommandLine());

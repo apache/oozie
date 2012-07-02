@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-898 Oozie help [subcommand] should only print help for that subcommand (rkanter via tucu)
 OOZIE-895 Oozie Hive-action should use Hive var replacement (rkanter via tucu)
 OOZIE-888 Change default logging levels for oozieops and hadoop.security.authentication.server to INFO from DEBUG (rkanter via tucu)
 OOZIE-896 TestFsActionExecutor.java failing (britt via virag)
