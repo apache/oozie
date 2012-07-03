@@ -921,4 +921,80 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertTrue(conf.get("mapred.child.java.opts").contains("JAVA-OPT1"));
         assertTrue(conf.get("mapred.child.java.opts").contains("JAVA-OPT2"));
     }
+    
+    public void testActionLibsPath() throws Exception {
+        // Test adding a directory
+        Path actionLibPath = new Path(getFsTestCaseDir(), "actionlibs");
+        getFileSystem().mkdirs(actionLibPath);        
+        Path jar1Path = new Path(actionLibPath, "jar1.jar");
+        getFileSystem().create(jar1Path).close();
+        Path jar2Path = new Path(actionLibPath, "jar2.jar");
+        getFileSystem().create(jar2Path).close();
+        
+        String actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<name-node>" + getNameNodeUri() + "</name-node>" +
+                "<job-xml>job.xml</job-xml>" + "<job-xml>job2.xml</job-xml>" + "<configuration>" +
+                "<property><name>oozie.launcher.oozie.libpath</name><value>" + actionLibPath + "</value></property>" + 
+                "</configuration>" + "<main-class>MAIN-CLASS</main-class>" +
+                "</java>";
+        Element eActionXml = XmlUtils.parseXml(actionXml);
+        Context context = createContext(actionXml);
+        
+        JavaActionExecutor ae = new JavaActionExecutor();
+
+        Configuration jobConf = ae.createBaseHadoopConf(context, eActionXml);
+        ae.setupLauncherConf(jobConf, eActionXml, getAppPath(), context);
+        ae.setLibFilesArchives(context, eActionXml, getAppPath(), jobConf);
+        
+        URI[] cacheFiles = DistributedCache.getCacheFiles(jobConf);
+        String cacheFilesStr = Arrays.toString(cacheFiles);
+        assertTrue(cacheFilesStr.contains(jar1Path.toString()));
+        assertTrue(cacheFilesStr.contains(jar2Path.toString()));
+        
+        // Test adding a file
+        Path jar3Path = new Path(getFsTestCaseDir(), "jar3.jar");
+        getFileSystem().create(jar3Path).close();
+        
+        actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<name-node>" + getNameNodeUri() + "</name-node>" +
+                "<job-xml>job.xml</job-xml>" + "<job-xml>job2.xml</job-xml>" + "<configuration>" +
+                "<property><name>oozie.launcher.oozie.libpath</name><value>" + jar3Path + "</value></property>" + 
+                "</configuration>" + "<main-class>MAIN-CLASS</main-class>" +
+                "</java>";
+        eActionXml = XmlUtils.parseXml(actionXml);
+        context = createContext(actionXml);
+        
+        ae = new JavaActionExecutor();
+
+        jobConf = ae.createBaseHadoopConf(context, eActionXml);
+        ae.setupLauncherConf(jobConf, eActionXml, getAppPath(), context);
+        ae.setLibFilesArchives(context, eActionXml, getAppPath(), jobConf);
+        
+        cacheFiles = DistributedCache.getCacheFiles(jobConf);
+        cacheFilesStr = Arrays.toString(cacheFiles);
+        assertTrue(cacheFilesStr.contains(jar3Path.toString()));
+                
+        // Test adding a directory and a file (comma separated)
+        actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<name-node>" + getNameNodeUri() + "</name-node>" +
+                "<job-xml>job.xml</job-xml>" + "<job-xml>job2.xml</job-xml>" + "<configuration>" +
+                "<property><name>oozie.launcher.oozie.libpath</name><value>" + actionLibPath + "," + jar3Path + 
+                "</value></property>" + 
+                "</configuration>" + "<main-class>MAIN-CLASS</main-class>" +
+                "</java>";
+        eActionXml = XmlUtils.parseXml(actionXml);
+        context = createContext(actionXml);
+        
+        ae = new JavaActionExecutor();
+
+        jobConf = ae.createBaseHadoopConf(context, eActionXml);
+        ae.setupLauncherConf(jobConf, eActionXml, getAppPath(), context);
+        ae.setLibFilesArchives(context, eActionXml, getAppPath(), jobConf);
+        
+        cacheFiles = DistributedCache.getCacheFiles(jobConf);
+        cacheFilesStr = Arrays.toString(cacheFiles);
+        assertTrue(cacheFilesStr.contains(jar1Path.toString()));
+        assertTrue(cacheFilesStr.contains(jar2Path.toString()));
+        assertTrue(cacheFilesStr.contains(jar3Path.toString()));
+    }
 }
