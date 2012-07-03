@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-748 Add support for oozie.libpath to be set on a per-action basis in workflow.xml (rkanter via virag)
 OOZIE-899 NullPointerException on string check - Missing input dependency (mona via virag)
 OOZIE-898 Oozie help [subcommand] should only print help for that subcommand (rkanter via tucu)
 OOZIE-895 Oozie Hive-action should use Hive var replacement (rkanter via tucu)

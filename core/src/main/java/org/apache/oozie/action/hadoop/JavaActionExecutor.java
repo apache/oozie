@@ -309,7 +309,6 @@ public class JavaActionExecutor extends ActionExecutor {
                         path = new Path(uri.toString());
 
                         String user = conf.get("user.name");
-                        String group = conf.get("group.name");
                         Services.get().get(HadoopAccessorService.class).addFileToClassPath(user, path, conf);
                     }
                     else {
@@ -387,13 +386,43 @@ public class JavaActionExecutor extends ActionExecutor {
                 if (systemLibPath != null) {
                     Path actionLibPath = new Path(systemLibPath, actionShareLibName);
                     String user = conf.get("user.name");
-                    String group = conf.get("group.name");
                     FileSystem fs =
                         Services.get().get(HadoopAccessorService.class).createFileSystem(user, appPath.toUri(), conf);
                     if (fs.exists(actionLibPath)) {
                         FileStatus[] files = fs.listStatus(actionLibPath);
                         for (FileStatus file : files) {
                             addToCache(conf, appPath, file.getPath().toUri().getPath(), false);
+                        }
+                    }
+                }
+            }
+            catch (HadoopAccessorException ex){
+                throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED,
+                        ex.getErrorCode().toString(), ex.getMessage());
+            }
+            catch (IOException ex){
+                throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED,
+                        "It should never happen", ex.getMessage());
+            }
+        }
+    }
+    
+    protected void addActionLibs(Path appPath, Configuration conf) throws ActionExecutorException {
+        String[] actionLibsStrArr = conf.getStrings("oozie.launcher.oozie.libpath");
+        if (actionLibsStrArr != null) {
+            try {
+                for (String actionLibsStr : actionLibsStrArr) {
+                    actionLibsStr = actionLibsStr.trim();
+                    if (actionLibsStr.length() > 0)
+                    {
+                        Path actionLibsPath = new Path(actionLibsStr);
+                        String user = conf.get("user.name");
+                        FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, appPath.toUri(), conf);
+                        if (fs.exists(actionLibsPath)) {
+                            FileStatus[] files = fs.listStatus(actionLibsPath);
+                            for (FileStatus file : files) {
+                                addToCache(conf, appPath, file.getPath().toUri().getPath(), false);
+                            }
                         }
                     }
                 }
@@ -424,6 +453,9 @@ public class JavaActionExecutor extends ActionExecutor {
                 addToCache(conf, appPath, path, false);
             }
         }
+        
+        // Action libs
+        addActionLibs(appPath, conf);
 
         // files and archives defined in the action
         for (Element eProp : (List<Element>) actionXml.getChildren()) {
