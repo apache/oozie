@@ -106,6 +106,64 @@ public class TestV1JobsServlet extends DagServletTestCase {
                 DagEngine de = services.get(DagEngineService.class).getDagEngine(getTestUser(), "undef");
                 StringReader sr = new StringReader(de.getJob(MockDagEngineService.JOB_ID + wfCount).getConf());
                 Configuration conf1 = new XConfiguration(sr);
+                wfCount++;
+
+                jobConf = new XConfiguration();
+                jobConf.set(OozieClient.USER_NAME, getTestUser());
+
+                params = new HashMap<String, String>();
+                url = createURL("", params);
+                conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
+                conn.setDoOutput(true);
+                jobConf.writeXml(conn.getOutputStream());
+                assertEquals(HttpServletResponse.SC_BAD_REQUEST, conn.getResponseCode());
+
+                Path libPath1 = new Path(getFsTestCaseDir(), "libpath1");
+                fs.mkdirs(libPath1);
+                Path jobXmlPath1 = new Path(libPath1, "workflow.xml");
+                fs.create(jobXmlPath1);
+                jobConf = new XConfiguration();
+                jobConf.set(OozieClient.USER_NAME, getTestUser());
+                jobConf.set(OozieClient.LIBPATH, libPath1.toString());
+
+                params = new HashMap<String, String>();
+                url = createURL("", params);
+                conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
+                conn.setDoOutput(true);
+                jobConf.writeXml(conn.getOutputStream());
+                assertEquals(HttpServletResponse.SC_CREATED, conn.getResponseCode());
+                assertEquals(HttpServletResponse.SC_CREATED, conn.getResponseCode());
+                obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                assertEquals(MockDagEngineService.JOB_ID + wfCount + MockDagEngineService.JOB_ID_END,
+                             obj.get(JsonTags.JOB_ID));
+                assertFalse(MockDagEngineService.started.get(wfCount));
+                wfCount++;
+
+                Path libPath2 = new Path(getFsTestCaseDir(), "libpath2");
+                fs.mkdirs(libPath2);
+                jobConf = new XConfiguration();
+                jobConf.set(OozieClient.USER_NAME, getTestUser());
+                jobConf.set(OozieClient.LIBPATH, libPath1.toString() + "," + libPath2.toString());
+
+                params = new HashMap<String, String>();
+                url = createURL("", params);
+                conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
+                conn.setDoOutput(true);
+                jobConf.writeXml(conn.getOutputStream());
+                assertEquals(HttpServletResponse.SC_CREATED, conn.getResponseCode());
+                assertEquals(HttpServletResponse.SC_CREATED, conn.getResponseCode());
+                obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                assertEquals(MockDagEngineService.JOB_ID + wfCount + MockDagEngineService.JOB_ID_END,
+                             obj.get(JsonTags.JOB_ID));
+                assertFalse(MockDagEngineService.started.get(wfCount));
+                wfCount++;
+
                 return null;
             }
         });

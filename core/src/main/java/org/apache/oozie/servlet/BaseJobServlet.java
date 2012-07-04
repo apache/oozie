@@ -181,9 +181,14 @@ public abstract class BaseJobServlet extends JsonRestServlet {
             String bundlePath = conf.get(OozieClient.BUNDLE_APP_PATH);
 
             if (wfPath == null && coordPath == null && bundlePath == null) {
-                String libPath = conf.get(XOozieClient.LIBPATH);
-                conf.set(OozieClient.APP_PATH, libPath);
-                wfPath = libPath;
+                String[] libPaths = conf.getStrings(XOozieClient.LIBPATH);
+                if (libPaths != null && libPaths.length > 0 && libPaths[0].trim().length() > 0) {
+                    conf.set(OozieClient.APP_PATH, libPaths[0].trim());
+                    wfPath = libPaths[0].trim();
+                }
+                else {
+                    throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0405);
+                }
             }
             ServletUtilities.ValidateAppPath(wfPath, coordPath, bundlePath);
 

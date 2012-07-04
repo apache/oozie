@@ -73,6 +73,7 @@ public enum ErrorCode {
     E0402(XLog.STD, "Invalid callback ID [{0}]"),
     E0403(XLog.STD, "Invalid callback data, {0}"),
     E0404(XLog.STD, "Only one of the properties are allowed [{0}]"),
+    E0405(XLog.STD, "Submission request doesn't have any application or lib path"),
 
     E0420(XLog.STD, "Invalid jobs filter [{0}], {1}"),
     E0421(XLog.STD, "Invalid job filter [{0}], {1}"),

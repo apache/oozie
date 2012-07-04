@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ public class ServletUtilities {
     /**
      * accessory static method to check the app path parameter for the request
      * used only for job-related request and only one of them should exist
-     * 
+     *
      * @param wfPath workflow app path
      * @param coordPath coordinator app path
      * @throws XServletException
@@ -46,7 +46,7 @@ public class ServletUtilities {
      * accessory static method to check the app path parameter for the request
      * used only for job-related request and only one of them should exist
      * bundle appPath is also checked
-     * 
+     *
      * @param wfPath workflow app path
      * @param coordPath coordinator app path
      * @param bundlePath bundle app path
@@ -54,27 +54,31 @@ public class ServletUtilities {
      */
     protected static void ValidateAppPath(String wfPath, String coordPath, String bundlePath) throws XServletException {
         int n = 0;
-        
+
         if (wfPath != null) {
             n ++;
         }
-        
+
         if (coordPath != null) {
             n ++;
         }
-        
+
         if (bundlePath != null) {
             n ++;
         }
-        
+
+        if (n == 0) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "a workflow, coordinator, or bundle app path is required");
+        }
+
         if (n != 1) {
-            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302);
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Multiple app paths specified, only one is allowed");
         }
     }
 
     /**
      * accessory static method to check the lib path parameter for the request
-     * 
+     *
      * @param libPath lib path
      * @throws XServletException
      */
