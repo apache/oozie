@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-885 A race condition can cause the workflow/coordinator to run even after the bundle job is killed (virag)
 OOZIE-901 When Submitting a job without an app path, Oozie doesn't properly handle multiple paths from oozie.libpath (rkanter via virag)
 OOZIE-748 Add support for oozie.libpath to be set on a per-action basis in workflow.xml (rkanter via virag)
 OOZIE-899 NullPointerException on string check - Missing input dependency (mona via virag)

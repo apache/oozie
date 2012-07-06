@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -155,53 +155,60 @@ public class RecoveryService implements Service {
         private void runBundleRecovery(){
             XLog.Info.get().clear();
             XLog log = XLog.getLog(getClass());
-
+            List<BundleActionBean> bactions = null;
             try {
-                List<BundleActionBean> bactions = jpaService.execute(new BundleActionsGetWaitingOlderJPAExecutor(bundleOlderThan));
-                msg.append(", BUNDLE_ACTIONS : " + bactions.size());
-                for (BundleActionBean baction : bactions) {
-                    Services.get().get(InstrumentationService.class).get().incr(INSTRUMENTATION_GROUP,
-                            INSTR_RECOVERED_BUNDLE_ACTIONS_COUNTER, 1);
-                    if(baction.getStatus() == Job.Status.PREP){
+                bactions = jpaService.execute(new BundleActionsGetWaitingOlderJPAExecutor(bundleOlderThan));
+            }
+            catch (JPAExecutorException ex) {
+                log.warn("Error reading bundle actions from database", ex);
+                return;
+            }
+            msg.append(", BUNDLE_ACTIONS : " + bactions.size());
+            for (BundleActionBean baction : bactions) {
+                try {
+                    Services.get().get(InstrumentationService.class).get()
+                            .incr(INSTRUMENTATION_GROUP, INSTR_RECOVERED_BUNDLE_ACTIONS_COUNTER, 1);
+                    if (baction.getCoordId() == null) {
+                        log.error("CoordId is null for Bundle action " + baction.getBundleActionId());
+                        continue;
+                    }
+                    if (baction.getStatus() == Job.Status.PREP) {
                         BundleJobBean bundleJob = null;
-                        try {
-                            if (jpaService != null) {
-                                bundleJob = jpaService.execute(new BundleJobGetJPAExecutor(baction.getBundleId()));
-                            }
-                            if(bundleJob != null){
-                                Element bAppXml = XmlUtils.parseXml(bundleJob.getJobXml());
-                                List<Element> coordElems = bAppXml.getChildren("coordinator", bAppXml.getNamespace());
-                                for (Element coordElem : coordElems) {
-                                    Attribute name = coordElem.getAttribute("name");
-                                    if (name.getValue().equals(baction.getCoordName())) {
-                                        Configuration coordConf = mergeConfig(coordElem,bundleJob);
-                                        coordConf.set(OozieClient.BUNDLE_ID, baction.getBundleId());
-                                        queueCallable(new CoordSubmitXCommand(coordConf, bundleJob.getAuthToken(), bundleJob.getId(), name.getValue()));
-                                    }
+
+                        if (jpaService != null) {
+                            bundleJob = jpaService.execute(new BundleJobGetJPAExecutor(baction.getBundleId()));
+                        }
+                        if (bundleJob != null) {
+                            Element bAppXml = XmlUtils.parseXml(bundleJob.getJobXml());
+                            List<Element> coordElems = bAppXml.getChildren("coordinator", bAppXml.getNamespace());
+                            for (Element coordElem : coordElems) {
+                                Attribute name = coordElem.getAttribute("name");
+                                if (name.getValue().equals(baction.getCoordName())) {
+                                    Configuration coordConf = mergeConfig(coordElem, bundleJob);
+                                    coordConf.set(OozieClient.BUNDLE_ID, baction.getBundleId());
+                                    queueCallable(new CoordSubmitXCommand(coordConf, bundleJob.getAuthToken(),
+                                            bundleJob.getId(), name.getValue()));
                                 }
                             }
                         }
-                        catch (JDOMException jex) {
-                            throw new CommandException(ErrorCode.E1301, jex);
-                        }
-                        catch (JPAExecutorException je) {
-                            throw new CommandException(je);
-                        }
+
                     }
-                    else if(baction.getStatus() == Job.Status.KILLED){
+                    else if (baction.getStatus() == Job.Status.KILLED) {
                         queueCallable(new CoordKillXCommand(baction.getCoordId()));
                     }
-                    else if(baction.getStatus() == Job.Status.SUSPENDED){
+                    else if (baction.getStatus() == Job.Status.SUSPENDED) {
                         queueCallable(new CoordSuspendXCommand(baction.getCoordId()));
                     }
-                    else if(baction.getStatus() == Job.Status.RUNNING){
+                    else if (baction.getStatus() == Job.Status.RUNNING) {
                         queueCallable(new CoordResumeXCommand(baction.getCoordId()));
                     }
                 }
+                catch (Exception ex) {
+                    log.error("Exception, {0}", ex.getMessage(), ex);
+                }
             }
-            catch (Exception ex) {
-                log.error("Exception, {0}", ex.getMessage(), ex);
-            }
+
+
         }
 
         /**
@@ -210,32 +217,39 @@ public class RecoveryService implements Service {
         private void runCoordActionRecovery() {
             XLog.Info.get().clear();
             XLog log = XLog.getLog(getClass());
-
+            List<CoordinatorActionBean> cactions = null;
             try {
-                List<CoordinatorActionBean> cactions = jpaService.execute(new CoordActionsGetForRecoveryJPAExecutor(coordOlderThan));
-                msg.append(", COORD_ACTIONS : " + cactions.size());
-                for (CoordinatorActionBean caction : cactions) {
-                    Services.get().get(InstrumentationService.class).get().incr(INSTRUMENTATION_GROUP,
-                                                                                INSTR_RECOVERED_COORD_ACTIONS_COUNTER, 1);
+                cactions = jpaService.execute(new CoordActionsGetForRecoveryJPAExecutor(coordOlderThan));
+            }
+            catch (JPAExecutorException ex) {
+                log.warn("Error reading coord actions from database", ex);
+                return;
+            }
+            msg.append(", COORD_ACTIONS : " + cactions.size());
+            for (CoordinatorActionBean caction : cactions) {
+                try {
+                    Services.get().get(InstrumentationService.class).get()
+                            .incr(INSTRUMENTATION_GROUP, INSTR_RECOVERED_COORD_ACTIONS_COUNTER, 1);
                     if (caction.getStatus() == CoordinatorActionBean.Status.WAITING) {
-						queueCallable(new CoordActionInputCheckXCommand(
-								caction.getId(), caction.getJobId()));
+                        queueCallable(new CoordActionInputCheckXCommand(caction.getId(), caction.getJobId()));
 
-						log.info("Recover a WAITTING coord action and resubmit CoordActionInputCheckXCommand :"
-								+ caction.getId());
+                        log.info("Recover a WAITTING coord action and resubmit CoordActionInputCheckXCommand :"
+                                + caction.getId());
                     }
                     else if (caction.getStatus() == CoordinatorActionBean.Status.SUBMITTED) {
-                        CoordinatorJobBean coordJob = jpaService.execute(new CoordJobGetJPAExecutor(caction.getJobId()));
-						queueCallable(new CoordActionStartXCommand(
-								caction.getId(), coordJob.getUser(),
-								coordJob.getAuthToken(), caction.getJobId()));
+                        CoordinatorJobBean coordJob = jpaService
+                                .execute(new CoordJobGetJPAExecutor(caction.getJobId()));
+                        queueCallable(new CoordActionStartXCommand(caction.getId(), coordJob.getUser(),
+                                coordJob.getAuthToken(), caction.getJobId()));
 
-                        log.info("Recover a SUBMITTED coord action and resubmit CoordActionStartCommand :" + caction.getId());
+                        log.info("Recover a SUBMITTED coord action and resubmit CoordActionStartCommand :"
+                                + caction.getId());
                     }
                     else if (caction.getStatus() == CoordinatorActionBean.Status.SUSPENDED) {
                         if (caction.getExternalId() != null) {
                             queueCallable(new SuspendXCommand(caction.getExternalId()));
-                            log.debug("Recover a SUSPENDED coord action and resubmit SuspendXCommand :" + caction.getId());
+                            log.debug("Recover a SUSPENDED coord action and resubmit SuspendXCommand :"
+                                    + caction.getId());
                         }
                     }
                     else if (caction.getStatus() == CoordinatorActionBean.Status.KILLED) {
@@ -251,10 +265,12 @@ public class RecoveryService implements Service {
                         }
                     }
                 }
+                catch (Exception ex) {
+                    log.error("Exception, {0}", ex.getMessage(), ex);
+                }
             }
-            catch (Exception ex) {
-                log.error("Exception, {0}", ex.getMessage(), ex);
-            }
+
+
         }
 
         /**
@@ -285,55 +301,54 @@ public class RecoveryService implements Service {
             XLog.Info.get().clear();
             XLog log = XLog.getLog(getClass());
             // queue command for action recovery
+            List<WorkflowActionBean> actions = null;
             try {
-                List<WorkflowActionBean> actions = null;
-                try {
-                    actions = jpaService.execute(new WorkflowActionsGetPendingJPAExecutor(olderThan));
-                }
-                catch (JPAExecutorException ex) {
-                    log.warn("Exception while reading pending actions from storage", ex);
-                }
-                //log.debug("QUEUING[{0}] pending wf actions for potential recovery", actions.size());
-                msg.append(" WF_ACTIONS " + actions.size());
+                actions = jpaService.execute(new WorkflowActionsGetPendingJPAExecutor(olderThan));
+            }
+            catch (JPAExecutorException ex) {
+                log.warn("Exception while reading pending actions from storage", ex);
+                return;
+            }
+            // log.debug("QUEUING[{0}] pending wf actions for potential recovery",
+            // actions.size());
+            msg.append(" WF_ACTIONS " + actions.size());
 
-                for (WorkflowActionBean action : actions) {
-                    Services.get().get(InstrumentationService.class).get().incr(INSTRUMENTATION_GROUP,
-                            INSTR_RECOVERED_ACTIONS_COUNTER, 1);
+            for (WorkflowActionBean action : actions) {
+                try {
+                    Services.get().get(InstrumentationService.class).get()
+                            .incr(INSTRUMENTATION_GROUP, INSTR_RECOVERED_ACTIONS_COUNTER, 1);
                     if (action.getStatus() == WorkflowActionBean.Status.PREP
                             || action.getStatus() == WorkflowActionBean.Status.START_MANUAL) {
-						queueCallable(new ActionStartXCommand(action.getId(),
-								action.getType()));
+                        queueCallable(new ActionStartXCommand(action.getId(), action.getType()));
                     }
                     else if (action.getStatus() == WorkflowActionBean.Status.START_RETRY) {
                         Date nextRunTime = action.getPendingAge();
-                            queueCallable(new ActionStartXCommand(action.getId(), action.getType()), nextRunTime.getTime()
-                                    - System.currentTimeMillis());
+                        queueCallable(new ActionStartXCommand(action.getId(), action.getType()), nextRunTime.getTime()
+                                - System.currentTimeMillis());
                     }
                     else if (action.getStatus() == WorkflowActionBean.Status.DONE
                             || action.getStatus() == WorkflowActionBean.Status.END_MANUAL) {
-                            queueCallable(new ActionEndXCommand(action.getId(), action.getType()));
+                        queueCallable(new ActionEndXCommand(action.getId(), action.getType()));
                     }
                     else if (action.getStatus() == WorkflowActionBean.Status.END_RETRY) {
                         Date nextRunTime = action.getPendingAge();
-						queueCallable(new ActionEndXCommand(action.getId(),
-								action.getType()), nextRunTime.getTime()
-								- System.currentTimeMillis());
+                        queueCallable(new ActionEndXCommand(action.getId(), action.getType()), nextRunTime.getTime()
+                                - System.currentTimeMillis());
 
                     }
                     else if (action.getStatus() == WorkflowActionBean.Status.OK
                             || action.getStatus() == WorkflowActionBean.Status.ERROR) {
-						queueCallable(new SignalXCommand(action.getJobId(),
-								action.getId()));
+                        queueCallable(new SignalXCommand(action.getJobId(), action.getId()));
                     }
                     else if (action.getStatus() == WorkflowActionBean.Status.USER_RETRY) {
-						queueCallable(new ActionStartXCommand(action.getId(),
-								action.getType()));
+                        queueCallable(new ActionStartXCommand(action.getId(), action.getType()));
                     }
                 }
+                catch (Exception ex) {
+                    log.error("Exception, {0}", ex.getMessage(), ex);
+                }
             }
-            catch (Exception ex) {
-                log.error("Exception, {0}", ex.getMessage(), ex);
-            }
+
         }
 
         /**
