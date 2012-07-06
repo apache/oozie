@@ -298,6 +298,11 @@ public class JsonSLAEvent implements SLAEvent, JsonBean {
         // TODO Auto-generated method stub
         return null;
     }
+    
+    @SuppressWarnings("unchecked")
+    public JSONObject toJSONObject(String timeZoneId) {
+        return null;
+    }
 
     public JsonSLAEvent() {
 

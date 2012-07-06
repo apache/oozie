@@ -115,6 +115,11 @@ public class JsonCoordinatorAction implements CoordinatorAction, JsonBean {
 
     @SuppressWarnings("unchecked")
     public JSONObject toJSONObject() {
+        return toJSONObject("GMT");
+    }
+    
+    @SuppressWarnings("unchecked")
+    public JSONObject toJSONObject(String timeZoneId) {
         JSONObject json = new JSONObject();
         json.put(JsonTags.COORDINATOR_ACTION_ID, id);
         json.put(JsonTags.COORDINATOR_JOB_ID, jobId);
@@ -122,20 +127,20 @@ public class JsonCoordinatorAction implements CoordinatorAction, JsonBean {
         json.put(JsonTags.COORDINATOR_ACTION_NUMBER, actionNumber);
         json.put(JsonTags.COORDINATOR_ACTION_CREATED_CONF, createdConf);
         json.put(JsonTags.COORDINATOR_ACTION_CREATED_TIME, JsonUtils
-                .formatDateRfc822(createdTime));
+                .formatDateRfc822(createdTime, timeZoneId));
         json.put(JsonTags.COORDINATOR_ACTION_NOMINAL_TIME, JsonUtils
-                .formatDateRfc822(nominalTime));
+                .formatDateRfc822(nominalTime, timeZoneId));
         json.put(JsonTags.COORDINATOR_ACTION_EXTERNALID, externalId);
         // json.put(JsonTags.COORDINATOR_ACTION_START_TIME, JsonUtils
-        // .formatDateRfc822(startTime));
+        // .formatDateRfc822(startTime), timeZoneId);
         json.put(JsonTags.COORDINATOR_ACTION_STATUS, status.toString());
         json.put(JsonTags.COORDINATOR_ACTION_RUNTIME_CONF, runConf);
         json.put(JsonTags.COORDINATOR_ACTION_LAST_MODIFIED_TIME, JsonUtils
-                .formatDateRfc822(lastModifiedTime));
+                .formatDateRfc822(lastModifiedTime, timeZoneId));
         // json.put(JsonTags.COORDINATOR_ACTION_START_TIME, JsonUtils
-        // .formatDateRfc822(startTime));
+        // .formatDateRfc822(startTime), timeZoneId);
         // json.put(JsonTags.COORDINATOR_ACTION_END_TIME, JsonUtils
-        // .formatDateRfc822(endTime));
+        // .formatDateRfc822(endTime), timeZoneId);
         json.put(JsonTags.COORDINATOR_ACTION_MISSING_DEPS, missingDependencies);
         json.put(JsonTags.COORDINATOR_ACTION_EXTERNAL_STATUS, externalStatus);
         json.put(JsonTags.COORDINATOR_ACTION_TRACKER_URI, trackerUri);
@@ -315,13 +320,14 @@ public class JsonCoordinatorAction implements CoordinatorAction, JsonBean {
      * Convert a nodes list into a JSONArray.
      *
      * @param actions nodes list.
+     * @param timeZoneId time zone to use for dates in the JSON array.
      * @return the corresponding JSON array.
      */
     @SuppressWarnings("unchecked")
-    public static JSONArray toJSONArray(List<? extends JsonCoordinatorAction> actions) {
+    public static JSONArray toJSONArray(List<? extends JsonCoordinatorAction> actions, String timeZoneId) {
         JSONArray array = new JSONArray();
         for (JsonCoordinatorAction action : actions) {
-            array.add(action.toJSONObject());
+            array.add(action.toJSONObject(timeZoneId));
         }
         return array;
     }

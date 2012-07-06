@@ -108,7 +108,7 @@ public class V0JobsServlet extends BaseJobsServlet {
             .getDagEngine(getUser(request), getAuthToken(request));
             WorkflowsInfo jobs = dagEngine.getJobs(filter, start, len);
             List<WorkflowJobBean> jsonWorkflows = jobs.getWorkflows();
-            json.put(JsonTags.WORKFLOWS_JOBS, WorkflowJobBean.toJSONArray(jsonWorkflows));
+            json.put(JsonTags.WORKFLOWS_JOBS, WorkflowJobBean.toJSONArray(jsonWorkflows, "GMT"));
             json.put(JsonTags.WORKFLOWS_TOTAL, jobs.getTotal());
             json.put(JsonTags.WORKFLOWS_OFFSET, jobs.getStart());
             json.put(JsonTags.WORKFLOWS_LEN, jobs.getLen());

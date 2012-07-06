@@ -32,6 +32,7 @@ import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.service.Services;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
@@ -233,6 +234,24 @@ public class TestV1AdminServlet extends DagServletTestCase {
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
                 JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
                 assertTrue(json.containsKey(JsonTags.QUEUE_DUMP));
+                return null;
+            }
+        });
+
+    }
+    
+    public void testAvailableTimeZones() throws Exception {
+        runTest("/v1/admin/*", V1AdminServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
+            public Void call() throws Exception {
+                URL url = createURL(RestConstants.ADMIN_TIME_ZONES_RESOURCE, Collections.EMPTY_MAP);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
+                assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
+                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                assertTrue(json.containsKey(JsonTags.AVAILABLE_TIME_ZONES));
+                JSONArray array = (JSONArray) json.get(JsonTags.AVAILABLE_TIME_ZONES);
+                assertFalse(array.isEmpty());
                 return null;
             }
         });

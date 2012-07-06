@@ -630,7 +630,7 @@ public class V1JobServlet extends BaseJobServlet {
             else {
                 coordActions = CoordRerunXCommand.getCoordActions(rerunType, jobId, scope);
             }
-            json.put(JsonTags.COORDINATOR_ACTIONS, CoordinatorActionBean.toJSONArray(coordActions));
+            json.put(JsonTags.COORDINATOR_ACTIONS, CoordinatorActionBean.toJSONArray(coordActions, "GMT"));
         }
         catch (BaseEngineException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);

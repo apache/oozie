@@ -25,10 +25,18 @@ import org.json.simple.JSONObject;
 public interface JsonBean {
 
     /**
-     * Return the JSONObject for the bean.
+     * Return the JSONObject for the bean with GMT time zone.
      *
-     * @return the JSONObject for the bean.
+     * @return the JSONObject for the bean with GMT time zone.
      */
     public JSONObject toJSONObject();
+    
+    /**
+     * Return the JSONObject for the bean with the given time zone.
+     *
+     * @param timeZoneId the time zone to use
+     * @return the JSONObject for the bean with the given time zone.
+     */
+    public JSONObject toJSONObject(String timeZoneId);
 
 }

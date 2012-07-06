@@ -137,6 +137,11 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
 
     @SuppressWarnings("unchecked")
     public JSONObject toJSONObject() {
+        return toJSONObject("GMT");
+    }
+    
+    @SuppressWarnings("unchecked")
+    public JSONObject toJSONObject(String timeZoneId) {
         JSONObject json = new JSONObject();
         json.put(JsonTags.COORDINATOR_JOB_PATH, getAppPath());
         json.put(JsonTags.COORDINATOR_JOB_NAME, getAppName());
@@ -150,17 +155,18 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
         json.put(JsonTags.COORDINATOR_JOB_TIMEZONE, getTimeZone());
         json.put(JsonTags.COORDINATOR_JOB_CONCURRENCY, getConcurrency());
         json.put(JsonTags.COORDINATOR_JOB_TIMEOUT, getTimeout());
-        json.put(JsonTags.COORDINATOR_JOB_LAST_ACTION_TIME, JsonUtils.formatDateRfc822(getLastActionTime()));
-        json.put(JsonTags.COORDINATOR_JOB_NEXT_MATERIALIZED_TIME, JsonUtils.formatDateRfc822(getNextMaterializedTime()));
-        json.put(JsonTags.COORDINATOR_JOB_START_TIME, JsonUtils.formatDateRfc822(getStartTime()));
-        json.put(JsonTags.COORDINATOR_JOB_END_TIME, JsonUtils.formatDateRfc822(getEndTime()));
-        json.put(JsonTags.COORDINATOR_JOB_PAUSE_TIME, JsonUtils.formatDateRfc822(getPauseTime()));
+        json.put(JsonTags.COORDINATOR_JOB_LAST_ACTION_TIME, JsonUtils.formatDateRfc822(getLastActionTime(), timeZoneId));
+        json.put(JsonTags.COORDINATOR_JOB_NEXT_MATERIALIZED_TIME, 
+                JsonUtils.formatDateRfc822(getNextMaterializedTime(), timeZoneId));
+        json.put(JsonTags.COORDINATOR_JOB_START_TIME, JsonUtils.formatDateRfc822(getStartTime(), timeZoneId));
+        json.put(JsonTags.COORDINATOR_JOB_END_TIME, JsonUtils.formatDateRfc822(getEndTime(), timeZoneId));
+        json.put(JsonTags.COORDINATOR_JOB_PAUSE_TIME, JsonUtils.formatDateRfc822(getPauseTime(), timeZoneId));
         json.put(JsonTags.COORDINATOR_JOB_USER, getUser());
         json.put(JsonTags.COORDINATOR_JOB_GROUP, getGroup());
         json.put(JsonTags.COORDINATOR_JOB_ACL, getAcl());
         json.put(JsonTags.COORDINATOR_JOB_CONSOLE_URL, getConsoleUrl());
         json.put(JsonTags.COORDINATOR_JOB_MAT_THROTTLING, getMatThrottling());
-        json.put(JsonTags.COORDINATOR_ACTIONS, JsonCoordinatorAction.toJSONArray(actions));
+        json.put(JsonTags.COORDINATOR_ACTIONS, JsonCoordinatorAction.toJSONArray(actions, timeZoneId));
         json.put(JsonTags.TO_STRING,toString());
 
         return json;
@@ -375,14 +381,15 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
      * Convert a coordinator application list into a JSONArray.
      *
      * @param applications list.
+     * @param timeZoneId time zone to use for dates in the JSON array.
      * @return the corresponding JSON array.
      */
     @SuppressWarnings("unchecked")
-    public static JSONArray toJSONArray(List<? extends JsonCoordinatorJob> applications) {
+    public static JSONArray toJSONArray(List<? extends JsonCoordinatorJob> applications, String timeZoneId) {
         JSONArray array = new JSONArray();
         if (applications != null) {
             for (JsonCoordinatorJob application : applications) {
-                array.add(application.toJSONObject());
+                array.add(application.toJSONObject(timeZoneId));
             }
         }
         return array;

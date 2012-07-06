@@ -182,5 +182,9 @@ public interface JsonTags {
     public static final Object BUNDLE_JOB_TOTAL = "total";
     public static final Object BUNDLE_JOB_OFFSET = "offset";
     public static final Object BUNDLE_JOB_LEN = "len";
+    
+    public static final String AVAILABLE_TIME_ZONES = "available-timezones";
+    public static final String TIME_ZOME_DISPLAY_NAME = "timezoneDisplayName";
+    public static final String TIME_ZONE_ID = "timezoneId";
 
 }

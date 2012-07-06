@@ -284,6 +284,8 @@ public class V1JobsServlet extends BaseJobsServlet {
             String filter = request.getParameter(RestConstants.JOBS_FILTER_PARAM);
             String startStr = request.getParameter(RestConstants.OFFSET_PARAM);
             String lenStr = request.getParameter(RestConstants.LEN_PARAM);
+            String timeZoneId = request.getParameter(RestConstants.TIME_ZONE_PARAM) == null 
+                    ? "GMT" : request.getParameter(RestConstants.TIME_ZONE_PARAM);
             int start = (startStr != null) ? Integer.parseInt(startStr) : 1;
             start = (start < 1) ? 1 : start;
             int len = (lenStr != null) ? Integer.parseInt(lenStr) : 50;
@@ -292,7 +294,7 @@ public class V1JobsServlet extends BaseJobsServlet {
                     getAuthToken(request));
             WorkflowsInfo jobs = dagEngine.getJobs(filter, start, len);
             List<WorkflowJobBean> jsonWorkflows = jobs.getWorkflows();
-            json.put(JsonTags.WORKFLOWS_JOBS, WorkflowJobBean.toJSONArray(jsonWorkflows));
+            json.put(JsonTags.WORKFLOWS_JOBS, WorkflowJobBean.toJSONArray(jsonWorkflows, timeZoneId));
             json.put(JsonTags.WORKFLOWS_TOTAL, jobs.getTotal());
             json.put(JsonTags.WORKFLOWS_OFFSET, jobs.getStart());
             json.put(JsonTags.WORKFLOWS_LEN, jobs.getLen());
@@ -316,6 +318,8 @@ public class V1JobsServlet extends BaseJobsServlet {
             String filter = request.getParameter(RestConstants.JOBS_FILTER_PARAM);
             String startStr = request.getParameter(RestConstants.OFFSET_PARAM);
             String lenStr = request.getParameter(RestConstants.LEN_PARAM);
+            String timeZoneId = request.getParameter(RestConstants.TIME_ZONE_PARAM) == null 
+                    ? "GMT" : request.getParameter(RestConstants.TIME_ZONE_PARAM);
             int start = (startStr != null) ? Integer.parseInt(startStr) : 1;
             start = (start < 1) ? 1 : start;
             int len = (lenStr != null) ? Integer.parseInt(lenStr) : 50;
@@ -324,7 +328,7 @@ public class V1JobsServlet extends BaseJobsServlet {
                     getUser(request), getAuthToken(request));
             CoordinatorJobInfo jobs = coordEngine.getCoordJobs(filter, start, len);
             List<CoordinatorJobBean> jsonJobs = jobs.getCoordJobs();
-            json.put(JsonTags.COORDINATOR_JOBS, CoordinatorJobBean.toJSONArray(jsonJobs));
+            json.put(JsonTags.COORDINATOR_JOBS, CoordinatorJobBean.toJSONArray(jsonJobs, timeZoneId));
             json.put(JsonTags.COORD_JOB_TOTAL, jobs.getTotal());
             json.put(JsonTags.COORD_JOB_OFFSET, jobs.getStart());
             json.put(JsonTags.COORD_JOB_LEN, jobs.getLen());
@@ -343,6 +347,8 @@ public class V1JobsServlet extends BaseJobsServlet {
             String filter = request.getParameter(RestConstants.JOBS_FILTER_PARAM);
             String startStr = request.getParameter(RestConstants.OFFSET_PARAM);
             String lenStr = request.getParameter(RestConstants.LEN_PARAM);
+            String timeZoneId = request.getParameter(RestConstants.TIME_ZONE_PARAM) == null 
+                    ? "GMT" : request.getParameter(RestConstants.TIME_ZONE_PARAM);
             int start = (startStr != null) ? Integer.parseInt(startStr) : 1;
             start = (start < 1) ? 1 : start;
             int len = (lenStr != null) ? Integer.parseInt(lenStr) : 50;
@@ -353,7 +359,7 @@ public class V1JobsServlet extends BaseJobsServlet {
             BundleJobInfo jobs = bundleEngine.getBundleJobs(filter, start, len);
             List<BundleJobBean> jsonJobs = jobs.getBundleJobs();
 
-            json.put(JsonTags.BUNDLE_JOBS, BundleJobBean.toJSONArray(jsonJobs));
+            json.put(JsonTags.BUNDLE_JOBS, BundleJobBean.toJSONArray(jsonJobs, timeZoneId));
             json.put(JsonTags.BUNDLE_JOB_TOTAL, jobs.getTotal());
             json.put(JsonTags.BUNDLE_JOB_OFFSET, jobs.getStart());
             json.put(JsonTags.BUNDLE_JOB_LEN, jobs.getLen());

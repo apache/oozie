@@ -100,6 +100,11 @@ public class JsonWorkflowJob implements WorkflowJob, JsonBean {
 
     @SuppressWarnings("unchecked")
     public JSONObject toJSONObject() {
+        return toJSONObject("GMT");
+    }
+    
+    @SuppressWarnings("unchecked")
+    public JSONObject toJSONObject(String timeZoneId) {
         JSONObject json = new JSONObject();
         json.put(JsonTags.WORKFLOW_APP_PATH, getAppPath());
         json.put(JsonTags.WORKFLOW_APP_NAME, getAppName());
@@ -108,16 +113,16 @@ public class JsonWorkflowJob implements WorkflowJob, JsonBean {
         json.put(JsonTags.WORKFLOW_PARENT_ID, getParentId());
         json.put(JsonTags.WORKFLOW_CONF, getConf());
         json.put(JsonTags.WORKFLOW_STATUS, getStatus().toString());
-        json.put(JsonTags.WORKFLOW_LAST_MOD_TIME, JsonUtils.formatDateRfc822(getLastModifiedTime()));
-        json.put(JsonTags.WORKFLOW_CREATED_TIME, JsonUtils.formatDateRfc822(getCreatedTime()));
-        json.put(JsonTags.WORKFLOW_START_TIME, JsonUtils.formatDateRfc822(getStartTime()));
-        json.put(JsonTags.WORKFLOW_END_TIME, JsonUtils.formatDateRfc822(getEndTime()));
+        json.put(JsonTags.WORKFLOW_LAST_MOD_TIME, JsonUtils.formatDateRfc822(getLastModifiedTime(), timeZoneId));
+        json.put(JsonTags.WORKFLOW_CREATED_TIME, JsonUtils.formatDateRfc822(getCreatedTime(), timeZoneId));
+        json.put(JsonTags.WORKFLOW_START_TIME, JsonUtils.formatDateRfc822(getStartTime(), timeZoneId));
+        json.put(JsonTags.WORKFLOW_END_TIME, JsonUtils.formatDateRfc822(getEndTime(), timeZoneId));
         json.put(JsonTags.WORKFLOW_USER, getUser());
         json.put(JsonTags.WORKFLOW_GROUP, getGroup());
         json.put(JsonTags.WORKFLOW_ACL, getAcl());
         json.put(JsonTags.WORKFLOW_RUN, (long) getRun());
         json.put(JsonTags.WORKFLOW_CONSOLE_URL, getConsoleUrl());
-        json.put(JsonTags.WORKFLOW_ACTIONS, JsonWorkflowAction.toJSONArray(actions));
+        json.put(JsonTags.WORKFLOW_ACTIONS, JsonWorkflowAction.toJSONArray(actions, timeZoneId));
         json.put(JsonTags.TO_STRING, toString());
         return json;
     }
@@ -285,14 +290,15 @@ public class JsonWorkflowJob implements WorkflowJob, JsonBean {
      * Convert a workflows list into a JSONArray.
      *
      * @param workflows workflows list.
+     * @param timeZoneId time zone to use for dates in the JSON array.
      * @return the corresponding JSON array.
      */
     @SuppressWarnings("unchecked")
-    public static JSONArray toJSONArray(List<? extends JsonWorkflowJob> workflows) {
+    public static JSONArray toJSONArray(List<? extends JsonWorkflowJob> workflows, String timeZoneId) {
         JSONArray array = new JSONArray();
         if (workflows != null) {
             for (JsonWorkflowJob node : workflows) {
-                array.add(node.toJSONObject());
+                array.add(node.toJSONObject(timeZoneId));
             }
         }
         return array;

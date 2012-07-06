@@ -18,7 +18,9 @@
 package org.apache.oozie.servlet;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Map;
+import java.util.TimeZone;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -117,6 +119,11 @@ public abstract class BaseAdminServlet extends JsonRestServlet {
             getQueueDump(json);
             sendJsonResponse(response, HttpServletResponse.SC_OK, json);
         }
+        else if (resource.equals(RestConstants.ADMIN_TIME_ZONES_RESOURCE)) {
+            JSONObject json = new JSONObject();
+            json.put(JsonTags.AVAILABLE_TIME_ZONES, availableTimeZonesToJsonArray());
+            sendJsonResponse(response, HttpServletResponse.SC_OK, json);
+        }
     }
 
     @Override
@@ -176,5 +183,20 @@ public abstract class BaseAdminServlet extends JsonRestServlet {
             throws XServletException;
 
     protected abstract void getQueueDump(JSONObject json) throws XServletException;
+    
+    private JSONArray availableTimeZonesToJsonArray() {
+        JSONArray array = new JSONArray();
+        for (String tzId : TimeZone.getAvailableIDs()) {
+            // skip id's that are like "GMT+01:00" because they won't get parsed correctly later (but allow just "GMT")
+            if (!tzId.contains("GMT") || tzId.equals("GMT")) {
+                JSONObject json = new JSONObject();    
+                TimeZone tZone = TimeZone.getTimeZone(tzId);
+                json.put(JsonTags.TIME_ZOME_DISPLAY_NAME, tZone.getDisplayName(false, TimeZone.SHORT) + " (" + tzId + ")");
+                json.put(JsonTags.TIME_ZONE_ID, tzId);
+                array.add(json);
+            }
+        }
+        return array;
+    }
 
 }

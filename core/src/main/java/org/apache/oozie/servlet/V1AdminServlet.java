@@ -37,7 +37,7 @@ public class V1AdminServlet extends BaseAdminServlet {
 
     private static final long serialVersionUID = 1L;
     private static final String INSTRUMENTATION_NAME = "v1admin";
-    private static final ResourceInfo RESOURCES_INFO[] = new ResourceInfo[7];
+    private static final ResourceInfo RESOURCES_INFO[] = new ResourceInfo[8];
 
     static {
         RESOURCES_INFO[0] = new ResourceInfo(RestConstants.ADMIN_STATUS_RESOURCE, Arrays.asList("PUT", "GET"),
@@ -54,6 +54,8 @@ public class V1AdminServlet extends BaseAdminServlet {
         RESOURCES_INFO[5] = new ResourceInfo(RestConstants.ADMIN_BUILD_VERSION_RESOURCE, Arrays.asList("GET"),
                 Collections.EMPTY_LIST);
         RESOURCES_INFO[6] = new ResourceInfo(RestConstants.ADMIN_QUEUE_DUMP_RESOURCE, Arrays.asList("GET"),
+                Collections.EMPTY_LIST);
+        RESOURCES_INFO[7] = new ResourceInfo((RestConstants.ADMIN_TIME_ZONES_RESOURCE), Arrays.asList("GET"),
                 Collections.EMPTY_LIST);
     }
 

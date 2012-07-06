@@ -215,6 +215,8 @@ public abstract class BaseJobServlet extends JsonRestServlet {
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String jobId = getResourceName(request);
         String show = request.getParameter(RestConstants.JOB_SHOW_PARAM);
+        String timeZoneId = request.getParameter(RestConstants.TIME_ZONE_PARAM) == null
+                ? "GMT" : request.getParameter(RestConstants.TIME_ZONE_PARAM);
 
         try {
             AuthorizationService auth = Services.get().get(AuthorizationService.class);
@@ -237,7 +239,7 @@ public abstract class BaseJobServlet extends JsonRestServlet {
                 throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, e);
             }
             startCron();
-            sendJsonResponse(response, HttpServletResponse.SC_OK, job);
+            sendJsonResponse(response, HttpServletResponse.SC_OK, job, timeZoneId);
         }
         else if (show.equals(RestConstants.JOB_SHOW_LOG)) {
             response.setContentType(TEXT_UTF8);

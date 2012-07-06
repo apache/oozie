@@ -125,6 +125,11 @@ public class JsonWorkflowAction implements WorkflowAction, JsonBean {
 
     @SuppressWarnings("unchecked")
     public JSONObject toJSONObject() {
+        return toJSONObject("GMT");
+    }
+    
+    @SuppressWarnings("unchecked")
+    public JSONObject toJSONObject(String timeZoneId) {
         JSONObject json = new JSONObject();
         json.put(JsonTags.WORKFLOW_ACTION_ID, id);
         json.put(JsonTags.WORKFLOW_ACTION_NAME, name);
@@ -133,8 +138,8 @@ public class JsonWorkflowAction implements WorkflowAction, JsonBean {
         json.put(JsonTags.WORKFLOW_ACTION_CONF, conf);
         json.put(JsonTags.WORKFLOW_ACTION_STATUS, status.toString());
         json.put(JsonTags.WORKFLOW_ACTION_RETRIES, (long) retries);
-        json.put(JsonTags.WORKFLOW_ACTION_START_TIME, JsonUtils.formatDateRfc822(startTime));
-        json.put(JsonTags.WORKFLOW_ACTION_END_TIME, JsonUtils.formatDateRfc822(endTime));
+        json.put(JsonTags.WORKFLOW_ACTION_START_TIME, JsonUtils.formatDateRfc822(startTime, timeZoneId));
+        json.put(JsonTags.WORKFLOW_ACTION_END_TIME, JsonUtils.formatDateRfc822(endTime, timeZoneId));
         json.put(JsonTags.WORKFLOW_ACTION_TRANSITION, transition);
         json.put(JsonTags.WORKFLOW_ACTION_DATA, data);
         json.put(JsonTags.WORKFLOW_ACTION_STATS, stats);
@@ -335,13 +340,14 @@ public class JsonWorkflowAction implements WorkflowAction, JsonBean {
      * Convert a nodes list into a JSONArray.
      *
      * @param nodes nodes list.
+     * @param timeZoneId time zone to use for dates in the JSON array.
      * @return the corresponding JSON array.
      */
     @SuppressWarnings("unchecked")
-    public static JSONArray toJSONArray(List<? extends JsonWorkflowAction> nodes) {
+    public static JSONArray toJSONArray(List<? extends JsonWorkflowAction> nodes, String timeZoneId) {
         JSONArray array = new JSONArray();
         for (JsonWorkflowAction node : nodes) {
-            array.add(node.toJSONObject());
+            array.add(node.toJSONObject(timeZoneId));
         }
         return array;
     }

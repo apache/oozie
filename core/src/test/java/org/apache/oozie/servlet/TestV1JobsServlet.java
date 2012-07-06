@@ -195,6 +195,7 @@ public class TestV1JobsServlet extends DagServletTestCase {
                 params.put(RestConstants.JOBS_FILTER_PARAM, "name=x");
                 params.put(RestConstants.OFFSET_PARAM, "2");
                 params.put(RestConstants.LEN_PARAM, "100");
+                params.put(RestConstants.TIME_ZONE_PARAM, "PST");
                 url = createURL("", params);
                 conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
@@ -208,6 +209,8 @@ public class TestV1JobsServlet extends DagServletTestCase {
                     assertEquals(MockDagEngineService.JOB_ID + i + MockDagEngineService.JOB_ID_END,
                                  ((JSONObject) array.get(i)).get(JsonTags.WORKFLOW_ID));
                     assertNotNull(((JSONObject) array.get(i)).get(JsonTags.WORKFLOW_APP_PATH));
+                    String startTime = (((JSONObject) array.get(i)).get(JsonTags.WORKFLOW_START_TIME)).toString();
+                    assertTrue(startTime.endsWith("PST") || startTime.endsWith("PDT")); // PDT if on daylight saving time
                 }
 
                 params = new HashMap<String, String>();
