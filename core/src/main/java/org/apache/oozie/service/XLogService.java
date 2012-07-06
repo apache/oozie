@@ -190,6 +190,7 @@ public class XLogService implements Service, Instrumentable {
         if (logFile == null) {
             log.warn("Oozie WS log will be disabled, missing property 'log4j.appender.oozie.File' for 'oozie' "
                     + "appender");
+            logOverWS = false;
         }
         else {
             logFile = logFile.trim();
