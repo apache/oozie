@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -61,22 +61,31 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
     @Override
     protected Void execute() throws CommandException {
         try {
-            LOG.debug("STARTED BundleStatusUpdateXCommand with bubdle id : " + coordjob.getBundleId()
+            LOG.debug("STARTED BundleStatusUpdateXCommand with bundle id : " + coordjob.getBundleId()
                     + " coord job ID: " + coordjob.getId() + " coord Status " + coordjob.getStatus());
             Job.Status coordCurrentStatus = coordjob.getStatus();
             Job.Status bundleActionStatus = bundleaction.getStatus();
-            bundleaction.setStatus(coordCurrentStatus);
-
+            // The status of bundle action should not be updated if it doesn't have a coord-id
+            // For e.g, if bundle action is killed and coord-job is in prep, then the bundle status
+            // should not be updated
+            if (bundleaction.getCoordId() != null) {
+                bundleaction.setStatus(coordCurrentStatus);
+            }
             if (bundleaction.isPending()) {
                 bundleaction.decrementAndGetPending();
             }
             bundleaction.setLastModifiedTime(new Date());
             bundleaction.setCoordId(coordjob.getId());
             jpaService.execute(new BundleActionUpdateJPAExecutor(bundleaction));
-            LOG.info("Updated bundle action [{0}] from prev status [{1}] to current coord status [{2}], and new bundle action pending [{3}]", bundleaction
+            if (bundleaction.getCoordId() != null) {
+                LOG.info("Updated bundle action [{0}] from prev status [{1}] to current coord status [{2}], and new bundle action pending [{3}]", bundleaction
                     .getBundleActionId(), bundleActionStatus, coordCurrentStatus, bundleaction.getPending());
-
-            LOG.debug("ENDED BundleStatusUpdateXCommand with bubdle id : " + coordjob.getBundleId() + " coord job ID: "
+            }
+            else {
+                LOG.info("Updated Bundle action [{0}], status = [{1}], pending = [{2}]", bundleaction.getBundleActionId(),
+                        bundleActionStatus, bundleaction.getPending());
+            }
+            LOG.debug("ENDED BundleStatusUpdateXCommand with bundle id : " + coordjob.getBundleId() + " coord job ID: "
                     + coordjob.getId() + " coord Status " + coordjob.getStatus());
         }
         catch (Exception ex) {
@@ -137,11 +146,11 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
      */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
-        if (bundleaction.getStatusStr().compareToIgnoreCase(prevStatus.toString()) != 0) {
-            // Previous status are not matched with bundle action status
-            // So that's the error and we should not be updating the Bundle Action status
-            // however we need to decrement the pending flag.
-            if (bundleaction.isPending()) {
+        if (bundleaction.getStatusStr().compareToIgnoreCase(prevStatus.toString()) != 0 && bundleaction.getCoordId()!=null) {
+            // pending should be decremented only if status of coord job and bundle action is same
+            // e.g if bundle is killed and coord job is running, then pending should not be false
+            // to allow recovery service to pick and kill the coord job
+            if (bundleaction.isPending() && coordjob.getStatus().equals(bundleaction.getStatus())) {
                 bundleaction.decrementAndGetPending();
             }
             bundleaction.setLastModifiedTime(new Date());
@@ -155,6 +164,11 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
                             bundleaction.getBundleActionId(), bundleaction.getStatusStr(), prevStatus.toString(),
                             bundleaction.getPending());
             throw new PreconditionException(ErrorCode.E1308, bundleaction.getStatusStr(), prevStatus.toString());
+        }
+        else if (bundleaction.getStatusStr().compareToIgnoreCase(prevStatus.toString()) != 0) {
+            LOG.info("Bundle action [{0}] status [{1}] is different from prev coord status [{2}], pending = [{3}] and bundle not yet updated with coord-id",
+                    bundleaction.getBundleActionId(), bundleaction.getStatusStr(), prevStatus.toString(),
+                    bundleaction.getPending());
         }
     }
 
