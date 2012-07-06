@@ -50,7 +50,7 @@ Content-Type: application/json;charset=UTF-8
 
 This endpoint is for obtaining Oozie system status and configuration information.
 
-It supports the following sub-resources: =status, os-env, sys-props, configuration, instrumentation, systems=.
+It supports the following sub-resources: =status, os-env, sys-props, configuration, instrumentation, systems, available-timezones=.
 
 ---++++ System Status
 
@@ -282,6 +282,61 @@ Content-Type: application/json;charset=UTF-8
 {buildVersion: "3.0.0-SNAPSHOT" }
 </verbatim>
 
+---++++ Available Time Zones
+
+A HTTP GET request returns the available time zones.
+
+*Request:*
+
+<verbatim>
+GET /oozie/v1/admin/available-timezones
+</verbatim>
+
+*Response:*
+
+<verbatim>
+HTTP/1.1 200 OK
+Content-Type: application/json;charset=UTF-8
+.
+{
+  "available-timezones":[
+    {
+      "timezoneDisplayName":"SST (Pacific\/Midway)",
+      "timezoneId":"Pacific\/Midway"
+    },
+    {
+      "timezoneDisplayName":"NUT (Pacific\/Niue)",
+      "timezoneId":"Pacific\/Niue"
+    },
+    {
+      "timezoneDisplayName":"SST (Pacific\/Pago_Pago)",
+      "timezoneId":"Pacific\/Pago_Pago"
+    },
+    {
+      "timezoneDisplayName":"SST (Pacific\/Samoa)",
+      "timezoneId":"Pacific\/Samoa"
+    },
+    {
+      "timezoneDisplayName":"SST (US\/Samoa)",
+      "timezoneId":"US\/Samoa"
+    },
+    {
+      "timezoneDisplayName":"HAST (America\/Adak)",
+      "timezoneId":"America\/Adak"
+    },
+    {
+      "timezoneDisplayName":"HAST (America\/Atka)",
+      "timezoneId":"America\/Atka"
+    },
+    {
+      "timezoneDisplayName":"HST (HST)",
+      "timezoneId":"HST"
+    },
+    ...
+  ]
+}
+</verbatim>
+
 ---+++ Job and Jobs End-Points
 
 _Modified in Oozie v1 WS API_
@@ -435,7 +490,7 @@ A HTTP GET request retrieves the job information.
 *Request:*
 
 <verbatim>
-GET /oozie/v1/job/job-3?show=info
+GET /oozie/v1/job/job-3?show=info&timezone=GMT
 </verbatim>
 
 *Response for a workflow job:*
@@ -616,7 +671,7 @@ A HTTP GET request retrieves workflow and coordinator jobs information.
 *Request:*
 
 <verbatim>
-GET /oozie/v1/jobs?filter=user%3Dbansalm&offset=1&len=50
+GET /oozie/v1/jobs?filter=user%3Dbansalm&offset=1&len=50&timezone=GMT
 </verbatim>
 
 Note that the filter is URL encoded, its decoded value is <code>user=tucu</code>.

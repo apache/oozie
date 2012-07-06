@@ -337,11 +337,13 @@ public abstract class JsonRestServlet extends HttpServlet {
      * @param response servlet response.
      * @param statusCode HTTP status code.
      * @param bean bean to send as JSON response.
+     * @param timeZoneId time zone to use for dates in the JSON response.
      * @throws java.io.IOException thrown if the bean could not be serialized to the response output stream.
      */
-    protected void sendJsonResponse(HttpServletResponse response, int statusCode, JsonBean bean) throws IOException {
+    protected void sendJsonResponse(HttpServletResponse response, int statusCode, JsonBean bean, String timeZoneId) 
+            throws IOException {
         response.setStatus(statusCode);
-        JSONObject json = bean.toJSONObject();
+        JSONObject json = bean.toJSONObject(timeZoneId);
         response.setContentType(JSTON_UTF8);
         json.writeJSONString(response.getWriter());
     }

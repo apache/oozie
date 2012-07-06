@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-887 Support for choosing timezone in Oozie UI (rkanter via tucu)
 OOZIE-902 XLogService doesn't properly disable WS log streaming if log4j.appender.oozie.File is missing (rkanter via tucu)
 OOZIE-885 A race condition can cause the workflow/coordinator to run even after the bundle job is killed (virag)
 OOZIE-901 When Submitting a job without an app path, Oozie doesn't properly handle multiple paths from oozie.libpath (rkanter via virag)

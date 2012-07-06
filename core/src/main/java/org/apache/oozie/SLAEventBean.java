@@ -188,14 +188,15 @@ public class SLAEventBean extends JsonSLAEvent implements Writable {
      * Convert a SLAEvent list into a JSONArray.
      *
      * @param SLAEVent list.
+     * @param timeZoneId time zone to use for dates in the JSON array.
      * @return the corresponding JSON array.
      */
     @SuppressWarnings("unchecked")
-    public static JSONArray toJSONArray(List<? extends SLAEventBean> events) {
+    public static JSONArray toJSONArray(List<? extends SLAEventBean> events, String timeZoneId) {
         JSONArray array = new JSONArray();
         if (events != null) {
             for (JsonSLAEvent node : events) {
-                array.add(node.toJSONObject());
+                array.add(node.toJSONObject(timeZoneId));
             }
         }
         return array;

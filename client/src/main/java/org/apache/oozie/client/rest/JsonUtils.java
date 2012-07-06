@@ -35,18 +35,30 @@ import org.json.simple.JSONObject;
 public class JsonUtils {
 
     /**
+     * Format a Date in RFC822 with the given time zone.
+     *
+     * @param date date to format.
+     * @param timeZoneId the time zone to use
+     * @return RFC822 for the date, <code>null</code> if the date was <code>null</null>.
+     */
+    public static String formatDateRfc822(Date date, String timeZoneId) {
+        if (date != null) {
+            TimeZone tZone = TimeZone.getTimeZone(timeZoneId);
+            SimpleDateFormat dateFormater = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
+            dateFormater.setTimeZone(tZone);
+            return dateFormater.format(date);
+        }
+        return null;
+    }
+    
+    /**
      * Format a Date in RFC822 GMT.
      *
      * @param date date to format.
      * @return RFC822 GMT for the date, <code>null</code> if the date was <code>null</null>.
      */
     public static String formatDateRfc822(Date date) {
-        if (date != null) {
-            SimpleDateFormat dateFormater = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.US);
-            dateFormater.setTimeZone(TimeZone.getTimeZone("GMT"));
-            return dateFormater.format(date);
-        }
-        return null;
+        return formatDateRfc822(date, "GMT");
     }
 
     /**

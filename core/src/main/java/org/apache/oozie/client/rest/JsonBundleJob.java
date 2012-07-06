@@ -138,6 +138,15 @@ public class JsonBundleJob implements BundleJob, JsonBean {
     @Override
     @SuppressWarnings("unchecked")
     public JSONObject toJSONObject() {
+        return toJSONObject("GMT");
+    }
+    
+    /* (non-Javadoc)
+     * @see org.apache.oozie.client.rest.JsonBean#toJSONObject(String timeZoneId)
+     */
+    @Override
+    @SuppressWarnings("unchecked")
+    public JSONObject toJSONObject(String timeZoneId) {
         JSONObject json = new JSONObject();
         json.put(JsonTags.BUNDLE_JOB_PATH, appPath);
         json.put(JsonTags.BUNDLE_JOB_NAME, appName);
@@ -147,16 +156,16 @@ public class JsonBundleJob implements BundleJob, JsonBean {
         json.put(JsonTags.BUNDLE_JOB_STATUS, getStatus().toString());
         json.put(JsonTags.BUNDLE_JOB_TIMEUNIT, getTimeUnit().toString());
         json.put(JsonTags.BUNDLE_JOB_TIMEOUT, timeOut);
-        json.put(JsonTags.BUNDLE_JOB_KICKOFF_TIME, JsonUtils.formatDateRfc822(getKickoffTime()));
-        json.put(JsonTags.BUNDLE_JOB_START_TIME, JsonUtils.formatDateRfc822(getStartTime()));
-        json.put(JsonTags.BUNDLE_JOB_END_TIME, JsonUtils.formatDateRfc822(getEndTime()));
-        json.put(JsonTags.BUNDLE_JOB_PAUSE_TIME, JsonUtils.formatDateRfc822(getPauseTime()));
-        json.put(JsonTags.BUNDLE_JOB_CREATED_TIME, JsonUtils.formatDateRfc822(getCreatedTime()));
+        json.put(JsonTags.BUNDLE_JOB_KICKOFF_TIME, JsonUtils.formatDateRfc822(getKickoffTime(), timeZoneId));
+        json.put(JsonTags.BUNDLE_JOB_START_TIME, JsonUtils.formatDateRfc822(getStartTime(), timeZoneId));
+        json.put(JsonTags.BUNDLE_JOB_END_TIME, JsonUtils.formatDateRfc822(getEndTime(), timeZoneId));
+        json.put(JsonTags.BUNDLE_JOB_PAUSE_TIME, JsonUtils.formatDateRfc822(getPauseTime(), timeZoneId));
+        json.put(JsonTags.BUNDLE_JOB_CREATED_TIME, JsonUtils.formatDateRfc822(getCreatedTime(), timeZoneId));
         json.put(JsonTags.BUNDLE_JOB_USER, getUser());
         json.put(JsonTags.BUNDLE_JOB_GROUP, getGroup());
         json.put(JsonTags.BUNDLE_JOB_ACL, getAcl());
         json.put(JsonTags.BUNDLE_JOB_CONSOLE_URL, getConsoleUrl());
-        json.put(JsonTags.BUNDLE_COORDINATOR_JOBS, JsonCoordinatorJob.toJSONArray(coordJobs));
+        json.put(JsonTags.BUNDLE_COORDINATOR_JOBS, JsonCoordinatorJob.toJSONArray(coordJobs, timeZoneId));
         json.put(JsonTags.TO_STRING, toString());
 
         return json;
@@ -458,14 +467,15 @@ public class JsonBundleJob implements BundleJob, JsonBean {
      * Convert a Bundle job list into a JSONArray.
      *
      * @param application list.
+     * @param timeZoneId time zone to use for dates in the JSON array.
      * @return the corresponding JSON array.
      */
     @SuppressWarnings("unchecked")
-    public static JSONArray toJSONArray(List<? extends JsonBundleJob> applications) {
+    public static JSONArray toJSONArray(List<? extends JsonBundleJob> applications, String timeZoneId) {
         JSONArray array = new JSONArray();
         if (applications != null) {
             for (JsonBundleJob application : applications) {
-                array.add(application.toJSONObject());
+                array.add(application.toJSONObject(timeZoneId));
             }
         }
         return array;

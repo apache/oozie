@@ -18,6 +18,7 @@ The =oozie= CLI interacts with Oozie via its WS API.
 <verbatim>
 usage:
       the env variable 'OOZIE_URL' is used as default value for the '-oozie' option
+      the env variable 'OOZIE_TIMEZONE' is used as default value for the '-timezone' option
       custom headers for Oozie web services can be specified using '-Dheader:NAME=VALUE'
 
       oozie help : display usage
@@ -38,7 +39,8 @@ usage:
                 -info <arg>           info of a job
                 -kill <arg>           kill a job
                 -len <arg>            number of actions (default TOTAL ACTIONS, requires -info)
-                -localtime            use local time (default GMT)
+                -localtime            use local time (same as passing your time zone to -timezone).
+                                      Overrides -timezone option
                 -log <arg>            job log
                 -nocleanup            do not clean up output-events of the coordinator rerun actions
                                       (requires -rerun)
@@ -51,6 +53,8 @@ usage:
                 -start <arg>          start a job
                 -submit               submit a job
                 -suspend <arg>        suspend a job
+                -timezone <arg>       use time zone with the specified ID (default GMT).
+                                      See 'oozie info -timezones' for a list
                 -value <arg>          new endtime/concurrency/pausetime value for changing a
                                       coordinator job; new pausetime value for changing a bundle job
                 -verbose              verbose mode
@@ -62,9 +66,12 @@ usage:
                  -jobtype <arg>   job type ('Supported in Oozie-2.0 or later versions ONLY -
                                   coordinator' or 'wf' (default))
                  -len <arg>       number of jobs (default '100')
-                 -localtime       use local time (default GMT)
+                 -localtime       use local time (same as passing your time zone to -timezone).
+                                  Overrides -timezone option
                  -offset <arg>    jobs offset (default '1')
                  -oozie <arg>     Oozie URL
+                 -timezone <arg>  use time zone with the specified ID (default GMT).
+                                  See 'oozie info -timezones' for a list
                  -verbose         verbose mode
 .
       oozie admin <OPTIONS> : admin operations
@@ -92,6 +99,9 @@ usage:
                 -D <property=value>   set/override value for given property
                 -file <arg>           Pig script
                 -oozie <arg>          Oozie URL
+.
+      oozie info <OPTIONS> : get more detailed info about specific topics
+                -timezones   display a list of available time zones
 </verbatim>
 
 ---++ Common CLI Options
@@ -136,6 +146,18 @@ If the <code>-oozie</code> option is not specified, the =oozie= CLI will look fo
 and uses it if set.
 
 If the option is not provided and the environment variable is not set, the =oozie= CLI will fail.
+
+---+++ Time zone
+
+The <code>-timezone TIME_ZONE_ID</code> option in the =job= and =jobs= sub-commands allows you to specify the time zone to use in 
+the output of those sub-commands. The <code>TIME_ZONE_ID</code> should be one of the standard Java Time Zone IDs.  You can get a
+list of the available time zones with the command =oozie info -timezones=.
+
+If the <code>-localtime</code> option is used, it will cause Oozie to use whatever the time zone is of the machine. If 
+both <code>-localtime</code> and <code>-timezone TIME_ZONE_ID</code> are used, the <code>-localtime</code> option will override 
+the <code>-timezone TIME_ZONE_ID</code> option.  If neither option is given, Oozie will look for the =OOZIE_TIMEZONE= environment 
+variable and uses it if set.  If neither option is given and the environment variable is not set, or if Oozie is given an invalid 
+time zone, it will use GMT.
 
 ---++ Job Operations
 
@@ -705,6 +727,36 @@ The parameters for the job must be provided in a Java Properties file (.properti
 specified in this file. pigScriptFile is a local file. All jar files (including pig jar file) and all other files needed by the pig job (e.g., parameter file in above example) need to be uploaded onto HDFS under libpath beforehand. The workflow.xml will be created in Oozie server internally. Users can get the workflow.xml from console or command line(-definition).
 
 The job will be created and run right away.
+
+---++ Info Operations
+
+The Info sub-command provides a convenient place for Oozie to display misc information. 
+
+---+++ Getting a list of time zones
+
+Example:
+
+<verbatim>
+$ oozie info -timezones
+.
+The format is "SHORT_NAME (ID)"
+Give the ID to the -timezone argument
+Available Time Zones :
+      SST (Pacific/Midway)
+      NUT (Pacific/Niue)
+      SST (Pacific/Pago_Pago)
+      SST (Pacific/Samoa)
+      SST (US/Samoa)
+      HAST (America/Adak)
+      HAST (America/Atka)
+      HST (HST)
+      ...      
+</verbatim>
+
+The <code>-timezones</code> option will print out a (long) list of all available time zones. 
+
+These IDs (the text in the parentheses) are what should be used for the <code>-timezone TIME_ZONE_ID</code> option in the =job= 
+and =jobs= sub-commands
 
 [[index][::Go back to Oozie Documentation Index::]]
 

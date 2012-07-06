@@ -80,6 +80,11 @@ function checkUrl(value, metadata, record, row, col, store) {
         return "N";
     }
 }
+    
+function getTimeZone() {
+    Ext.state.Manager.setProvider(new Ext.state.CookieProvider());
+    return Ext.state.Manager.get("TimezoneId","GMT");
+}
 
 // Makes a tree node from an XML
 function treeNodeFromXml(XmlEl) {
@@ -299,7 +304,7 @@ function jobDetailsPopup(response, request) {
             icon: 'ext-2.2/resources/images/default/grid/refresh.gif',
             handler: function() {
                 Ext.Ajax.request({
-                    url: getOozieBase() + 'job/' + workflowId,
+                    url: getOozieBase() + 'job/' + workflowId + "?timezone=" + getTimeZone(),
                     success: function(response, request) {
                         jobDetails = eval("(" + response.responseText + ")");
                         jobActionStatus.loadData(jobDetails["actions"]);
@@ -712,7 +717,7 @@ function coordJobDetailsPopup(response, request) {
             icon: 'ext-2.2/resources/images/default/grid/refresh.gif',
             handler: function() {
                 Ext.Ajax.request({
-                    url: getOozieBase() + 'job/' + coordJobId,
+                    url: getOozieBase() + 'job/' + coordJobId + "?timezone=" + getTimeZone(),
                     success: function(response, request) {
                         jobDetails = eval("(" + response.responseText + ")");
                         jobActionStatus.loadData(jobDetails["actions"]);
@@ -1045,7 +1050,7 @@ function bundleJobDetailsPopup(response, request) {
             icon: 'ext-2.2/resources/images/default/grid/refresh.gif',
             handler: function() {
                 Ext.Ajax.request({
-                    url: getOozieBase() + 'job/' + bundleJobId,
+                    url: getOozieBase() + 'job/' + bundleJobId + "?timezone=" + getTimeZone(),
                     success: function(response, request) {
                         jobDetails = eval("(" + response.responseText + ")");
                         jobActionStatus.loadData(jobDetails["bundleCoordJobs"]);
@@ -1162,7 +1167,7 @@ function bundleJobDetailsPopup(response, request) {
 
 function jobDetailsGridWindow(workflowId) {
     Ext.Ajax.request({
-        url: getOozieBase() + 'job/' + workflowId,
+        url: getOozieBase() + 'job/' + workflowId + "?timezone=" + getTimeZone(),
         success: jobDetailsPopup
 
     });
@@ -1178,7 +1183,7 @@ function coordJobDetailsGridWindow(coordJobId) {
          icon: Ext.MessageBox.INFO
          });
          */
-        url: getOozieBase() + 'job/' + coordJobId,
+        url: getOozieBase() + 'job/' + coordJobId + "?timezone=" + getTimeZone(),
         success: coordJobDetailsPopup
         // success: alert("succeeded " + response),
         // failure: alert("Coordinator PopUP did not work" + coordJobId),
@@ -1187,7 +1192,7 @@ function coordJobDetailsGridWindow(coordJobId) {
 
 function bundleJobDetailsGridWindow(bundleJobId) {
     Ext.Ajax.request({
-        url: getOozieBase() + 'job/' + bundleJobId,
+        url: getOozieBase() + 'job/' + bundleJobId + "?timezone=" + getTimeZone(),
         success: bundleJobDetailsPopup
     });
 }
@@ -1237,7 +1242,8 @@ function showConfigurationInWindow(dataObject, windowTitle) {
 var coord_jobs_store = new Ext.data.JsonStore({
 	baseParams: {
         jobtype: "coord",
-        filter: ""
+        filter: "",
+        timezone: getTimeZone()
     },
     idProperty: 'coordJobId',
     totalProperty: 'total',
@@ -1255,7 +1261,8 @@ coord_jobs_store.proxy.conn.method = "GET";
  */
 var jobs_store = new Ext.data.JsonStore({
     baseParams: {
-        filter: ""
+        filter: "",
+        timezone: getTimeZone()
     },
     idProperty: 'id',
     totalProperty: 'total',
@@ -1275,7 +1282,8 @@ var bundle_jobs_store = new Ext.data.JsonStore({
 
 	baseParams: {
         jobtype: "bundle",
-        filter: ""
+        filter: "",
+        timezone: getTimeZone()
     },
     idProperty: 'bundleJobId',
     totalProperty: 'total',
@@ -1315,6 +1323,7 @@ var refreshCustomJobsAction = new Ext.Action({
     text: 'status=KILLED',
     handler: function() {
         jobs_store.baseParams.filter = this.text;
+        jobs_store.baseParams.timezone = getTimeZone();
         jobs_store.reload();
     }
 
@@ -1324,6 +1333,7 @@ var refreshActiveJobsAction = new Ext.Action({
     text: 'Active Jobs',
     handler: function() {
         jobs_store.baseParams.filter = 'status=RUNNING';
+        jobs_store.baseParams.timezone = getTimeZone();
         jobs_store.reload();
     }
 });
@@ -1332,6 +1342,7 @@ var refreshAllJobsAction = new Ext.Action({
     text: 'All Jobs',
     handler: function() {
         jobs_store.baseParams.filter = '';
+        jobs_store.baseParams.timezone = getTimeZone();
         jobs_store.reload();
     }
 
@@ -1341,6 +1352,7 @@ var refreshDoneJobsAction = new Ext.Action({
     text: 'Done Jobs',
     handler: function() {
         jobs_store.baseParams.filter = 'status=SUCCEEDED;status=KILLED';
+        jobs_store.baseParams.timezone = getTimeZone();
         jobs_store.reload();
     }
 });
@@ -1349,6 +1361,7 @@ var refreshCoordCustomJobsAction = new Ext.Action({
     text: 'status=KILLED',
     handler: function() {
         coord_jobs_store.baseParams.filter = this.text;
+        coord_jobs_store.baseParams.timezone = getTimeZone();
         coord_jobs_store.reload();
     }
 });
@@ -1358,6 +1371,7 @@ var refreshCoordActiveJobsAction = new Ext.Action({
     text: 'Active Jobs',
     handler: function() {
         coord_jobs_store.baseParams.filter = 'status=RUNNING';
+        coord_jobs_store.baseParams.timezone = getTimeZone();
         coord_jobs_store.reload();
         /*
          Ext.Ajax.request( {
@@ -1375,6 +1389,7 @@ var refreshCoordAllJobsAction = new Ext.Action({
     text: 'All Jobs',
     handler: function() {
         coord_jobs_store.baseParams.filter = '';
+        coord_jobs_store.baseParams.timezone = getTimeZone();
         coord_jobs_store.reload();
         /*
          Ext.Ajax.request( {
@@ -1392,6 +1407,7 @@ var refreshCoordDoneJobsAction = new Ext.Action({
     text: 'Done Jobs',
     handler: function() {
         coord_jobs_store.baseParams.filter = 'status=SUCCEEDED;status=KILLED';
+        coord_jobs_store.baseParams.timezone = getTimeZone();
         coord_jobs_store.reload();
         /*
          Ext.Ajax.request( {
@@ -1409,6 +1425,7 @@ var refreshBundleActiveJobsAction = new Ext.Action({
     text: 'Active Jobs',
     handler: function() {
         bundle_jobs_store.baseParams.filter = 'status=RUNNING';
+        bundle_jobs_store.baseParams.timezone = getTimeZone();
         bundle_jobs_store.reload();
     }
 });
@@ -1417,6 +1434,7 @@ var refreshBundleAllJobsAction = new Ext.Action({
     text: 'All Jobs',
     handler: function() {
 		bundle_jobs_store.baseParams.filter = '';
+                bundle_jobs_store.baseParams.timezone = getTimeZone();
 		bundle_jobs_store.reload();
     }
 });
@@ -1425,6 +1443,7 @@ var refreshBundleDoneJobsAction = new Ext.Action({
     text: 'Done Jobs',
     handler: function() {
 	bundle_jobs_store.baseParams.filter = 'status=SUCCEEDED;status=KILLED';
+        bundle_jobs_store.baseParams.timezone = getTimeZone();
         bundle_jobs_store.reload();
     }
 });
@@ -1448,6 +1467,7 @@ var changeFilterAction = new Ext.Action({
             if (btn == 'ok' && text) {
                 refreshCustomJobsAction.setText(text);
                 jobs_store.baseParams.filter = text;
+                jobs_store.baseParams.timezone = getTimeZone();
                 jobs_store.reload();
             }
         });
@@ -1461,6 +1481,7 @@ var changeCoordFilterAction = new Ext.Action({
             if (btn == 'ok' && text) {
                 refreshCoordCustomJobsAction.setText(text);
                 coord_jobs_store.baseParams.filter = text;
+                coord_jobs_store.baseParams.timezone = getTimeZone();
                 coord_jobs_store.reload();
             }
         });
@@ -1582,6 +1603,7 @@ var viewCoordJobs = new Ext.Action({
          });
          */
         // coord_jobs_store.baseParams.filter = 'jobtype=coord';
+        coord_jobs_store.baseParams.timezone = getTimeZone();
         coord_jobs_store.reload();
     }
 });
@@ -1589,6 +1611,7 @@ var viewCoordJobs = new Ext.Action({
 var viewBundleJobs = new Ext.Action({
     text: 'All Jobs',
     handler: function() {
+        bundle_jobs_store.baseParams.timezone = getTimeZone();
         bundle_jobs_store.reload();
     }
 });
@@ -1628,6 +1651,16 @@ var treeRoot = new Ext.tree.TreeNode({
     expanded: true,
 
 });
+
+var timeZones_store = new Ext.data.JsonStore({
+    autoLoad: true,
+    root: 'available-timezones',
+    fields: ['timezoneDisplayName','timezoneId'],
+    proxy: new Ext.data.HttpProxy({
+        url: getOozieBase() + 'admin' + "/available-timezones"
+    })
+});
+timeZones_store.proxy.conn.method = "GET";
 
 function initConsole() {
     function showJobContextMenu(thisGrid, rowIndex, cellIndex, e) {
@@ -1712,6 +1745,7 @@ function initConsole() {
             text: "&nbsp;&nbsp;&nbsp;",
             icon: 'ext-2.2/resources/images/default/grid/refresh.gif',
             handler: function() {
+                jobs_store.baseParams.timezone = getTimeZone();
                 jobs_store.reload();
             }
         }, refreshAllJobsAction, refreshActiveJobsAction, refreshDoneJobsAction, {
@@ -1835,6 +1869,7 @@ function initConsole() {
             text: "&nbsp;&nbsp;&nbsp;",
             icon: 'ext-2.2/resources/images/default/grid/refresh.gif',
             handler: function() {
+                coord_jobs_store.baseParams.timezone = getTimeZone();
                 coord_jobs_store.reload();
             }
         }, refreshCoordAllJobsAction, refreshCoordActiveJobsAction, refreshCoordDoneJobsAction,
@@ -1904,6 +1939,7 @@ function initConsole() {
             text: "&nbsp;&nbsp;&nbsp;",
             icon: 'ext-2.2/resources/images/default/grid/refresh.gif',
             handler: function() {
+                bundle_jobs_store.baseParams.timezone = getTimeZone();
                 bundle_jobs_store.reload();
             }
         }, refreshBundleAllJobsAction, refreshBundleActiveJobsAction, refreshBundleDoneJobsAction,
@@ -1918,6 +1954,33 @@ function initConsole() {
             }
         }
     });
+    Ext.state.Manager.setProvider(new Ext.state.CookieProvider());
+    var currentTimezone = Ext.state.Manager.get("TimezoneId","GMT");
+    var settingsArea = new Ext.FormPanel({
+        title: 'Settings',
+        items: [{
+            xtype: 'combo',
+            width: 300,
+            fieldLabel: 'Timezone',
+            emptyText: 'Select a timezone...',
+            store: timeZones_store,
+            displayField: 'timezoneDisplayName',
+            valueField: 'timezoneId',
+            selectOnFocus: true,
+            mode: 'local',
+            typeAhead: true,
+            editable: false,
+            triggerAction: 'all',
+            value: currentTimezone,
+            listeners: 
+            { select: { fn:function(combo, value)
+                {
+                    Ext.state.Manager.setProvider(new Ext.state.CookieProvider());
+                    Ext.state.Manager.set("TimezoneId",this.value);
+                }
+            }}
+        }]
+    });
     var tabs = new Ext.TabPanel({
         renderTo: 'oozie-console',
         height: 500,
@@ -1930,6 +1993,7 @@ function initConsole() {
     tabs.add(bundleJobArea);
     tabs.add(adminGrid);
     tabs.add(resultArea);
+    tabs.add(settingsArea);
     tabs.setActiveTab(jobs_grid);
     checkStatus.execute();
     viewConfig.execute();

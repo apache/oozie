@@ -420,11 +420,16 @@ public class TestOozieCLI extends DagServletTestCase {
                 assertEquals(0, new OozieCLI().run(args));
                 assertEquals(RestConstants.JOB_SHOW_INFO, MockDagEngineService.did);
 
+                args = new String[]{"job", "-timezone", "PST", "-oozie", oozieUrl, "-info", 
+                    MockDagEngineService.JOB_ID + "1" + MockDagEngineService.JOB_ID_END};
+                assertEquals(0, new OozieCLI().run(args));
+                assertEquals(RestConstants.JOB_SHOW_INFO, MockDagEngineService.did);
+                
                 args = new String[]{"job", "-oozie", oozieUrl, "-info", MockDagEngineService.JOB_ID + "2" +
                     MockDagEngineService.JOB_ID_END};
                 assertEquals(0, new OozieCLI().run(args));
                 assertEquals(RestConstants.JOB_SHOW_INFO, MockDagEngineService.did);
-
+                
                 args = new String[]{"job", "-oozie", oozieUrl, "-info",
                         MockDagEngineService.JOB_ID + (MockDagEngineService.workflows.size() + 1)};
                 assertEquals(-1, new OozieCLI().run(args));
@@ -446,6 +451,12 @@ public class TestOozieCLI extends DagServletTestCase {
                         "name=x"};
                 assertEquals(0, new OozieCLI().run(args));
                 assertEquals(RestConstants.JOBS_FILTER_PARAM, MockDagEngineService.did);
+                
+                args = new String[]{"jobs", "-timezone", "PST", "-len", "3", "-offset", "2", "-oozie", oozieUrl, 
+                    "-filter", "name=x"};
+                assertEquals(0, new OozieCLI().run(args));
+                assertEquals(RestConstants.JOBS_FILTER_PARAM, MockDagEngineService.did);
+                
                 args = new String[]{"jobs", "-jobtype", "coord",  "-filter", "status=FAILED", "-oozie", oozieUrl};
                 assertEquals(0, new OozieCLI().run(args));
                 assertEquals(RestConstants.JOBS_FILTER_PARAM, MockDagEngineService.did);                
@@ -605,5 +616,10 @@ public class TestOozieCLI extends DagServletTestCase {
                 return null;
             }
         });
+    }
+    
+    public void testInfo() throws Exception {
+        String[] args = new String[]{"info"};
+        assertEquals(0, new OozieCLI().run(args));
     }
 }
