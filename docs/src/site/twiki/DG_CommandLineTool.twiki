@@ -724,7 +724,7 @@ oozie.libpath=hdfs://localhost:9000/user/oozie/pig/lib/
 </verbatim>
 
 The parameters for the job must be provided in a Java Properties file (.properties). jobtracker, namenode, libpath must be
-specified in this file. pigScriptFile is a local file. All jar files (including pig jar file) and all other files needed by the pig job (e.g., parameter file in above example) need to be uploaded onto HDFS under libpath beforehand. The workflow.xml will be created in Oozie server internally. Users can get the workflow.xml from console or command line(-definition).
+specified in this file. pigScriptFile is a local file. All jar files (including pig jar file) and all other files needed by the pig job (e.g., parameter file in above example) need to be uploaded onto HDFS under libpath beforehand. The workflow.xml will be created in Oozie server internally. Users can get the workflow.xml from console or command line(-definition). Everything after -X will be pass through parameters to pig.
 
 The job will be created and run right away.
 
@@ -757,6 +757,21 @@ The <code>-timezones</code> option will print out a (long) list of all available
 
 These IDs (the text in the parentheses) are what should be used for the <code>-timezone TIME_ZONE_ID</code> option in the =job= 
 and =jobs= sub-commands
+
+---++ Map-reduce Operations
+
+---+++ Submitting a map-reduce job
+
+Example:
+
+<verbatim>
+$ oozie mapreduce -oozie http://localhost:8080/oozie -config job.properties
+</verbatim>
+
+The parameters must be in the Java Properties file (.properties). This file must be specified for a map-reduce job.
+The properties file must specify the =mapred.mapper.class=, =mapred.reducer.class=, =mapred.input.dir=, =mapred.output.dir=, =oozie.libpath= properties.
+
+The map-reduce job will be created and submitted. All jar files and all other files needed by the mapreduce job need to be uploaded onto HDFS under libpath beforehand. The workflow.xml will be created in Oozie server internally. Users can get the workflow.xml from console or command line(-definition).
 
 [[index][::Go back to Oozie Documentation Index::]]
 
