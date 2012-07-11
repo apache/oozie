@@ -85,6 +85,7 @@ public class OozieCLI {
     public static final String VALIDATE_CMD = "validate";
     public static final String SLA_CMD = "sla";
     public static final String PIG_CMD = "pig";
+    public static final String MR_CMD = "mapreduce";
     public static final String INFO_CMD = "info";
 
     public static final String OOZIE_OPTION = "oozie";
@@ -143,6 +144,11 @@ public class OozieCLI {
     private boolean used;
 
     private static final String INSTANCE_SEPARATOR = "#";
+
+    private static final String MAPRED_MAPPER = "mapred.mapper.class";
+    private static final String MAPRED_REDUCER = "mapred.reducer.class";
+    private static final String MAPRED_INPUT = "mapred.input.dir";
+    private static final String MAPRED_OUTPUT = "mapred.output.dir";
 
     static {
         StringBuilder sb = new StringBuilder();
@@ -388,7 +394,27 @@ public class OozieCLI {
         infoOptions.addOption(timezones);
         return infoOptions;
     }
-    
+
+    /**
+     * Create option for command line option 'mapreduce'
+     * @return mapreduce options
+     */
+    @SuppressWarnings("static-access")
+    protected Options createMROptions() {
+        Option oozie = new Option(OOZIE_OPTION, true, "Oozie URL");
+        Option config = new Option(CONFIG_OPTION, true, "job configuration file '.properties'");
+        Option property = OptionBuilder.withArgName("property=value").hasArgs(2).withValueSeparator().withDescription(
+                "set/override value for given property").create("D");
+        Option doAs = new Option(DO_AS_OPTION, true, "doAs user, impersonates as the specified user");
+        Options mrOptions = new Options();
+        mrOptions.addOption(oozie);
+        mrOptions.addOption(doAs);
+        mrOptions.addOption(config);
+        mrOptions.addOption(property);
+        addAuthOptions(mrOptions);
+        return mrOptions;
+    }
+
     /**
      * Run a CLI programmatically.
      * <p/>
@@ -416,6 +442,7 @@ public class OozieCLI {
         parser.addCommand(PIG_CMD, "-X ", "submit a pig job, everything after '-X' are pass-through parameters to pig",
                 createPigOptions(), true);
         parser.addCommand(INFO_CMD, "", "get more detailed info about specific topics", createInfoOptions(), false);
+        parser.addCommand(MR_CMD, "", "submit a mapreduce job", createMROptions(), false);
 
         try {
             final CLIParser.Command command = parser.parse(args);
@@ -481,6 +508,9 @@ public class OozieCLI {
         }
         else if (command.getName().equals(INFO_CMD)) {
             infoCommand(command.getCommandLine());
+        }
+        else if (command.getName().equals(MR_CMD)){
+            mrCommand(command.getCommandLine());
         }
     }
     protected String getOozieUrl(CommandLine commandLine) {
@@ -1484,6 +1514,39 @@ public class OozieCLI {
                 TimeZone tZone = TimeZone.getTimeZone(tzId);
                 System.out.println("      " + tZone.getDisplayName(false, TimeZone.SHORT) + " (" + tzId + ")");
             }
+        }
+    }
+
+
+    private void mrCommand(CommandLine commandLine) throws IOException, OozieCLIException {
+        try {
+            XOozieClient wc = createXOozieClient(commandLine);
+            Properties conf = getConfiguration(wc, commandLine);
+
+            String mapper = conf.getProperty(MAPRED_MAPPER);
+            if (mapper == null) {
+                throw new OozieCLIException("mapper is not specified in conf");
+            }
+
+            String reducer = conf.getProperty(MAPRED_REDUCER);
+            if (reducer == null) {
+                throw new OozieCLIException("reducer is not specified in conf");
+            }
+
+            String inputDir = conf.getProperty(MAPRED_INPUT);
+            if (inputDir == null) {
+                throw new OozieCLIException("mapred.input.dir is not specified in conf");
+            }
+
+            String outputDir = conf.getProperty(MAPRED_OUTPUT);
+            if (outputDir == null) {
+                throw new OozieCLIException("mapred.output.dir is not specified in conf");
+            }
+
+            System.out.println(JOB_ID_PREFIX + wc.submitMapReduce(conf));
+        }
+        catch (OozieClientException ex) {
+            throw new OozieCLIException(ex.toString(), ex);
         }
     }
 }

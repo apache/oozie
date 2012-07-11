@@ -347,11 +347,13 @@ These endpoints is for submitting, managing and retrieving information of workfl
 
 A HTTP POST request with an XML configuration as payload creates a job.
 
-The type of job is determined by the presence of one of the following 2 properties (only one must be present):
+The type of job is determined by the presence of one of the following 3 properties:
 
    * =oozie.wf.application.path= : path to a workflow aplication directory, creates a workflow job
    * =oozie.coord.application.path= : path to a coordinator application file, creates a coordinator job
    * =oozie.bundle.application.path= : path to a bundle application file, creates a bundle job
+   
+Or, if none of those are present, the jobtype parameter determines the type of job to run. It can either be mapreduce or pig.
 
 *Request:*
 
