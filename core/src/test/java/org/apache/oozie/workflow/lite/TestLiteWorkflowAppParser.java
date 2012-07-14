@@ -174,10 +174,11 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>", new StartNodeDef("one"))
         .addNode(new ActionNodeDef("one", dummyConf, TestActionNodeHandler.class, "f", "end"))
         .addNode(new ForkNodeDef("f", Arrays.asList(new String[]{"two", "three"})))
-        .addNode(new ActionNodeDef("two", dummyConf,  TestActionNodeHandler.class, "j", "end"))
-        .addNode(new ActionNodeDef("three", dummyConf, TestActionNodeHandler.class, "j", "end"))
+        .addNode(new ActionNodeDef("two", dummyConf,  TestActionNodeHandler.class, "j", "k"))
+        .addNode(new ActionNodeDef("three", dummyConf, TestActionNodeHandler.class, "j", "k"))
         .addNode(new JoinNodeDef("j", "four"))
         .addNode(new ActionNodeDef("four", dummyConf, TestActionNodeHandler.class, "end", "end"))
+        .addNode(new KillNodeDef("k", "kill"))
         .addNode(new EndNodeDef("end"));
 
         try {
@@ -205,15 +206,16 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         LiteWorkflowApp def = new LiteWorkflowApp("testWf", "<worklfow-app/>", new StartNodeDef("one"))
         .addNode(new ActionNodeDef("one", dummyConf, TestActionNodeHandler.class, "f","end"))
         .addNode(new ForkNodeDef("f", Arrays.asList(new String[]{"two", "three"})))
-        .addNode(new ActionNodeDef("two", dummyConf, TestActionNodeHandler.class, "f2","end"))
-        .addNode(new ActionNodeDef("three", dummyConf, TestActionNodeHandler.class, "j","end"))
+        .addNode(new ActionNodeDef("two", dummyConf, TestActionNodeHandler.class, "f2","k"))
+        .addNode(new ActionNodeDef("three", dummyConf, TestActionNodeHandler.class, "j","k"))
         .addNode(new ForkNodeDef("f2", Arrays.asList(new String[]{"four", "five", "six"})))
-        .addNode(new ActionNodeDef("four", dummyConf, TestActionNodeHandler.class, "j2","end"))
-        .addNode(new ActionNodeDef("five", dummyConf, TestActionNodeHandler.class, "j2","end"))
-        .addNode(new ActionNodeDef("six", dummyConf, TestActionNodeHandler.class,"j2", "end"))
+        .addNode(new ActionNodeDef("four", dummyConf, TestActionNodeHandler.class, "j2","k"))
+        .addNode(new ActionNodeDef("five", dummyConf, TestActionNodeHandler.class, "j2","k"))
+        .addNode(new ActionNodeDef("six", dummyConf, TestActionNodeHandler.class,"j2", "k"))
         .addNode(new JoinNodeDef("j2", "seven"))
-        .addNode(new ActionNodeDef("seven", dummyConf, TestActionNodeHandler.class, "j","end"))
+        .addNode(new ActionNodeDef("seven", dummyConf, TestActionNodeHandler.class, "j","k"))
         .addNode(new JoinNodeDef("j", "end"))
+        .addNode(new KillNodeDef("k", "kill"))
         .addNode(new EndNodeDef("end"));
 
         try {
@@ -237,9 +239,10 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         LiteWorkflowApp def = new LiteWorkflowApp("testWf", "<worklfow-app/>", new StartNodeDef("one"))
         .addNode(new ActionNodeDef("one", dummyConf, TestActionNodeHandler.class, "f","end"))
         .addNode(new ForkNodeDef("f", Arrays.asList(new String[]{"two", "three"})))
-        .addNode(new ActionNodeDef("two", dummyConf, TestActionNodeHandler.class, "j","end"))
-        .addNode(new ActionNodeDef("three", dummyConf, TestActionNodeHandler.class, "end","end"))
+        .addNode(new ActionNodeDef("two", dummyConf, TestActionNodeHandler.class, "j","k"))
+        .addNode(new ActionNodeDef("three", dummyConf, TestActionNodeHandler.class, "end","k"))
         .addNode(new JoinNodeDef("j", "end"))
+        .addNode(new KillNodeDef("k", "kill"))
         .addNode(new EndNodeDef("end"));
 
         try {
@@ -247,7 +250,11 @@ public class TestLiteWorkflowAppParser extends XTestCase {
             fail("Expected to catch an exception but did not encounter any");
         } catch (Exception ex) {
             WorkflowException we = (WorkflowException) ex.getCause();
-            assertEquals(ErrorCode.E0730, we.getErrorCode());
+            assertEquals(ErrorCode.E0737, we.getErrorCode());
+            // Make sure the message contains the nodes and type involved in the invalid transition to end
+            assertTrue(we.getMessage().contains("three"));
+            assertTrue(we.getMessage().contains("node [end]"));
+            assertTrue(we.getMessage().contains("type [end]"));
         }
     }
 
@@ -270,14 +277,15 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         LiteWorkflowApp def = new LiteWorkflowApp("testWf", "<worklfow-app/>", new StartNodeDef("one"))
             .addNode(new ActionNodeDef("one", dummyConf, TestActionNodeHandler.class, "f","end"))
             .addNode(new ForkNodeDef("f", Arrays.asList(new String[]{"four", "three", "two"})))
-            .addNode(new ActionNodeDef("two", dummyConf, TestActionNodeHandler.class, "j","end"))
-            .addNode(new ActionNodeDef("three", dummyConf, TestActionNodeHandler.class, "j","end"))
-            .addNode(new ActionNodeDef("four", dummyConf, TestActionNodeHandler.class, "f2","end"))
+            .addNode(new ActionNodeDef("two", dummyConf, TestActionNodeHandler.class, "j","k"))
+            .addNode(new ActionNodeDef("three", dummyConf, TestActionNodeHandler.class, "j","k"))
+            .addNode(new ActionNodeDef("four", dummyConf, TestActionNodeHandler.class, "f2","k"))
             .addNode(new ForkNodeDef("f2", Arrays.asList(new String[]{"five", "six"})))
-            .addNode(new ActionNodeDef("five", dummyConf, TestActionNodeHandler.class, "j2","end"))
-            .addNode(new ActionNodeDef("six", dummyConf, TestActionNodeHandler.class, "j2","end"))
+            .addNode(new ActionNodeDef("five", dummyConf, TestActionNodeHandler.class, "j2","k"))
+            .addNode(new ActionNodeDef("six", dummyConf, TestActionNodeHandler.class, "j2","k"))
             .addNode(new JoinNodeDef("j", "j2"))
-            .addNode(new JoinNodeDef("j2", "end"))
+            .addNode(new JoinNodeDef("j2", "k"))
+            .addNode(new KillNodeDef("k", "kill"))
             .addNode(new EndNodeDef("end"));
 
         try {
@@ -294,7 +302,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
      2->ok->3
      2->fail->j
      3->ok->j
-     3->fail->end
+     3->fail->k
     */
     public void testTransitionFailure1() throws WorkflowException{
         LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
@@ -305,8 +313,9 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         .addNode(new ActionNodeDef("one", dummyConf, TestActionNodeHandler.class, "f","end"))
         .addNode(new ForkNodeDef("f", Arrays.asList(new String[]{"two","three"})))
         .addNode(new ActionNodeDef("two", dummyConf, TestActionNodeHandler.class, "three", "j"))
-        .addNode(new ActionNodeDef("three", dummyConf, TestActionNodeHandler.class, "j", "end"))
+        .addNode(new ActionNodeDef("three", dummyConf, TestActionNodeHandler.class, "j", "k"))
         .addNode(new JoinNodeDef("j", "end"))
+        .addNode(new KillNodeDef("k", "kill"))
         .addNode(new EndNodeDef("end"));
 
         try {
@@ -327,7 +336,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
     2->fail->3
     2->ok->j
     3->ok->j
-    3->fail->end
+    3->fail->k
    */
    public void testTransitionFailure2() throws WorkflowException{
        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
@@ -338,8 +347,9 @@ public class TestLiteWorkflowAppParser extends XTestCase {
        .addNode(new ActionNodeDef("one", dummyConf, TestActionNodeHandler.class, "f","end"))
        .addNode(new ForkNodeDef("f", Arrays.asList(new String[]{"two","three"})))
        .addNode(new ActionNodeDef("two", dummyConf, TestActionNodeHandler.class, "j", "three"))
-       .addNode(new ActionNodeDef("three", dummyConf, TestActionNodeHandler.class, "j", "end"))
+       .addNode(new ActionNodeDef("three", dummyConf, TestActionNodeHandler.class, "j", "k"))
        .addNode(new JoinNodeDef("j", "end"))
+       .addNode(new KillNodeDef("k", "kill"))
        .addNode(new EndNodeDef("end"));
 
        try {
@@ -371,9 +381,10 @@ public class TestLiteWorkflowAppParser extends XTestCase {
        .addNode(new ActionNodeDef("one", dummyConf, TestActionNodeHandler.class, "f","end"))
        .addNode(new ForkNodeDef("f", Arrays.asList(new String[]{"two","three"})))
        .addNode(new ActionNodeDef("two", dummyConf, TestActionNodeHandler.class, "j", "four"))
-       .addNode(new ActionNodeDef("three", dummyConf, TestActionNodeHandler.class, "four", "end"))
-       .addNode(new ActionNodeDef("four", dummyConf, TestActionNodeHandler.class, "j", "end"))
+       .addNode(new ActionNodeDef("three", dummyConf, TestActionNodeHandler.class, "four", "k"))
+       .addNode(new ActionNodeDef("four", dummyConf, TestActionNodeHandler.class, "j", "k"))
        .addNode(new JoinNodeDef("j", "end"))
+       .addNode(new KillNodeDef("k", "kill"))
        .addNode(new EndNodeDef("end"));
 
        try {
@@ -409,11 +420,12 @@ public class TestLiteWorkflowAppParser extends XTestCase {
        .addNode(new ActionNodeDef("two", dummyConf,  TestActionNodeHandler.class, "j", "f1"))
        .addNode(new ActionNodeDef("three", dummyConf, TestActionNodeHandler.class, "j", "f1"))
        .addNode(new ForkNodeDef("f1", Arrays.asList(new String[]{"four", "five"})))
-       .addNode(new ActionNodeDef("four", dummyConf,  TestActionNodeHandler.class, "j1", "end"))
-       .addNode(new ActionNodeDef("five", dummyConf, TestActionNodeHandler.class, "j1", "end"))
+       .addNode(new ActionNodeDef("four", dummyConf,  TestActionNodeHandler.class, "j1", "k"))
+       .addNode(new ActionNodeDef("five", dummyConf, TestActionNodeHandler.class, "j1", "k"))
        .addNode(new JoinNodeDef("j", "six"))
        .addNode(new JoinNodeDef("j1", "six"))
        .addNode(new ActionNodeDef("six", dummyConf, TestActionNodeHandler.class, "end", "end"))
+       .addNode(new KillNodeDef("k", "kill"))
        .addNode(new EndNodeDef("end"));
 
        try {
@@ -439,10 +451,71 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         .addNode(new ActionNodeDef("one", dummyConf, TestActionNodeHandler.class, "f","end"))
         .addNode(new ForkNodeDef("f", Arrays.asList(new String[]{"two","three"})))
         .addNode(new DecisionNodeDef("two", dummyConf, TestDecisionNodeHandler.class, Arrays.asList(new String[]{"four","five","four"})))
-        .addNode(new ActionNodeDef("four", dummyConf, TestActionNodeHandler.class, "j", "end"))
-        .addNode(new ActionNodeDef("five", dummyConf, TestActionNodeHandler.class, "j", "end"))
-        .addNode(new ActionNodeDef("three", dummyConf, TestActionNodeHandler.class, "j", "end"))
+        .addNode(new ActionNodeDef("four", dummyConf, TestActionNodeHandler.class, "j", "k"))
+        .addNode(new ActionNodeDef("five", dummyConf, TestActionNodeHandler.class, "j", "k"))
+        .addNode(new ActionNodeDef("three", dummyConf, TestActionNodeHandler.class, "j", "k"))
+        .addNode(new KillNodeDef("k", "kill"))
         .addNode(new JoinNodeDef("j", "end"))
+        .addNode(new EndNodeDef("end"));
+
+        try {
+            invokeForkJoin(parser, def);
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("Unexpected Exception");
+        }
+    }
+
+    /*
+    f->(2,3)
+    2->decision node->{4,j,4}
+    3->decision node->{j,5,j}
+    4->j
+    5->j
+    */
+    public void testDecisionsToJoinForkJoin() throws WorkflowException{
+        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+                LiteWorkflowStoreService.LiteDecisionHandler.class,
+                LiteWorkflowStoreService.LiteActionHandler.class);
+        LiteWorkflowApp def = new LiteWorkflowApp("name", "def", new StartNodeDef("one"))
+        .addNode(new ActionNodeDef("one", dummyConf, TestActionNodeHandler.class, "f","end"))
+        .addNode(new ForkNodeDef("f", Arrays.asList(new String[]{"two","three"})))
+        .addNode(new DecisionNodeDef("two", dummyConf, TestDecisionNodeHandler.class, Arrays.asList(new String[]{"four","j","four"})))
+        .addNode(new DecisionNodeDef("three", dummyConf, TestDecisionNodeHandler.class, Arrays.asList(new String[]{"j","five","j"})))
+        .addNode(new ActionNodeDef("four", dummyConf, TestActionNodeHandler.class, "j", "k"))
+        .addNode(new ActionNodeDef("five", dummyConf, TestActionNodeHandler.class, "j", "k"))
+        .addNode(new JoinNodeDef("j", "end"))
+        .addNode(new KillNodeDef("k", "kill"))
+        .addNode(new EndNodeDef("end"));
+
+        try {
+            invokeForkJoin(parser, def);
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("Unexpected Exception");
+        }
+    }
+
+    /*
+    f->(2,3)
+    2->decision node->{4,k,4}
+    3->decision node->{k,5,k}
+    4->j
+    5->j
+    */
+    public void testDecisionsToKillForkJoin() throws WorkflowException{
+        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+                LiteWorkflowStoreService.LiteDecisionHandler.class,
+                LiteWorkflowStoreService.LiteActionHandler.class);
+        LiteWorkflowApp def = new LiteWorkflowApp("name", "def", new StartNodeDef("one"))
+        .addNode(new ActionNodeDef("one", dummyConf, TestActionNodeHandler.class, "f","end"))
+        .addNode(new ForkNodeDef("f", Arrays.asList(new String[]{"two","three"})))
+        .addNode(new DecisionNodeDef("two", dummyConf, TestDecisionNodeHandler.class, Arrays.asList(new String[]{"four","k","four"})))
+        .addNode(new DecisionNodeDef("three", dummyConf, TestDecisionNodeHandler.class, Arrays.asList(new String[]{"k","five","k"})))
+        .addNode(new ActionNodeDef("four", dummyConf, TestActionNodeHandler.class, "j", "k"))
+        .addNode(new ActionNodeDef("five", dummyConf, TestActionNodeHandler.class, "j", "k"))
+        .addNode(new JoinNodeDef("j", "end"))
+        .addNode(new KillNodeDef("k", "kill"))
         .addNode(new EndNodeDef("end"));
 
         try {
@@ -456,8 +529,8 @@ public class TestLiteWorkflowAppParser extends XTestCase {
     /*
      *f->(2,3)
      *2->decision node->{3,4}
-     *3->end
-     *4->end
+     *3->j
+     *4->j
      */
     public void testDecisionForkJoinFailure() throws WorkflowException{
         LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
@@ -467,9 +540,10 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         .addNode(new ActionNodeDef("one", dummyConf, TestActionNodeHandler.class, "f","end"))
         .addNode(new ForkNodeDef("f", Arrays.asList(new String[]{"two","three"})))
         .addNode(new DecisionNodeDef("two", dummyConf, TestDecisionNodeHandler.class, Arrays.asList(new String[]{"four","three"})))
-        .addNode(new ActionNodeDef("three", dummyConf, TestActionNodeHandler.class, "j", "end"))
-        .addNode(new ActionNodeDef("four", dummyConf, TestActionNodeHandler.class, "j", "end"))
+        .addNode(new ActionNodeDef("three", dummyConf, TestActionNodeHandler.class, "j", "k"))
+        .addNode(new ActionNodeDef("four", dummyConf, TestActionNodeHandler.class, "j", "k"))
         .addNode(new JoinNodeDef("j", "end"))
+        .addNode(new KillNodeDef("k", "kill"))
         .addNode(new EndNodeDef("end"));
 
         try {
@@ -481,6 +555,39 @@ public class TestLiteWorkflowAppParser extends XTestCase {
             // Make sure the message contains the nodes involved in the invalid transition
             assertTrue(we.getMessage().contains("two"));
             assertTrue(we.getMessage().contains("three"));
+        }
+    }
+    
+    /*
+     *f->(2,3)
+     *2->decision node->{4,end}
+     *3->j
+     *4->j
+     */
+    public void testDecisionToEndForkJoinFailure() throws WorkflowException{
+        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+                LiteWorkflowStoreService.LiteDecisionHandler.class,
+                LiteWorkflowStoreService.LiteActionHandler.class);
+        LiteWorkflowApp def = new LiteWorkflowApp("name", "def", new StartNodeDef("one"))
+        .addNode(new ActionNodeDef("one", dummyConf, TestActionNodeHandler.class, "f","end"))
+        .addNode(new ForkNodeDef("f", Arrays.asList(new String[]{"two","three"})))
+        .addNode(new DecisionNodeDef("two", dummyConf, TestDecisionNodeHandler.class, Arrays.asList(new String[]{"four","end"})))
+        .addNode(new ActionNodeDef("three", dummyConf, TestActionNodeHandler.class, "j", "k"))
+        .addNode(new ActionNodeDef("four", dummyConf, TestActionNodeHandler.class, "j", "k"))
+        .addNode(new JoinNodeDef("j", "end"))
+        .addNode(new KillNodeDef("k", "kill"))
+        .addNode(new EndNodeDef("end"));
+
+        try {
+            invokeForkJoin(parser, def);
+            fail("Expected to catch an exception but did not encounter any");
+        } catch (Exception ex) {
+            WorkflowException we = (WorkflowException) ex.getCause();
+            assertEquals(ErrorCode.E0737, we.getErrorCode());
+            // Make sure the message contains the nodes and type involved in the invalid transition to end
+            assertTrue(we.getMessage().contains("two"));
+            assertTrue(we.getMessage().contains("node [end]"));
+            assertTrue(we.getMessage().contains("type [end]"));
         }
     }
 
@@ -501,12 +608,13 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         .addNode(new DecisionNodeDef("one", dummyConf, TestDecisionNodeHandler.class, Arrays.asList(new String[]{"f1","f2"})))
         .addNode(new ForkNodeDef("f1", Arrays.asList(new String[]{"two","three"})))
         .addNode(new ForkNodeDef("f2", Arrays.asList(new String[]{"four","five"})))
-        .addNode(new ActionNodeDef("two", dummyConf, TestActionNodeHandler.class, "j1", "end"))
-        .addNode(new ActionNodeDef("three", dummyConf, TestActionNodeHandler.class, "j1", "end"))
-        .addNode(new ActionNodeDef("four", dummyConf, TestActionNodeHandler.class, "j2", "end"))
-        .addNode(new ActionNodeDef("five", dummyConf, TestActionNodeHandler.class, "j2", "end"))
+        .addNode(new ActionNodeDef("two", dummyConf, TestActionNodeHandler.class, "j1", "k"))
+        .addNode(new ActionNodeDef("three", dummyConf, TestActionNodeHandler.class, "j1", "k"))
+        .addNode(new ActionNodeDef("four", dummyConf, TestActionNodeHandler.class, "j2", "k"))
+        .addNode(new ActionNodeDef("five", dummyConf, TestActionNodeHandler.class, "j2", "k"))
         .addNode(new JoinNodeDef("j1", "end"))
         .addNode(new JoinNodeDef("j2", "end"))
+        .addNode(new KillNodeDef("k", "kill"))
         .addNode(new EndNodeDef("end"));
 
         try {
