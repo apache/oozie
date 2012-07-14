@@ -61,6 +61,7 @@ Enough reading already? Follow the steps in [[DG_QuickStart][Oozie Quick Start]]
 ---++ Administrator Documentation
 
    * [[AG_Install][Oozie Install]]
+   * [[AG_OozieLogging][Oozie Logging]]
    * [[AG_HadoopConfiguration][Hadoop Configuration]]
    * [[AG_Monitoring][Oozie Monitoring]]
    * [[DG_CommandLineTool][Command Line Tool]]

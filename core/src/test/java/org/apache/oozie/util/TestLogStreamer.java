@@ -104,9 +104,7 @@ public class TestLogStreamer extends XTestCase {
         // This GZip file would be included in list of files for log retrieval, provided, there is an overlap between
         // the two time windows i) time duration during which the GZipped log file is modified ii) time window between
         // start and end times of the job
-        Calendar cal = new GregorianCalendar();
-        String outFilename = "oozie.log." + cal.get(Calendar.YEAR) + "-" + (cal.get(Calendar.MONTH) + 1) + "-"
-                + cal.get(Calendar.DATE) + "-" + cal.get(Calendar.HOUR_OF_DAY) + ".gz";
+        String outFilename = "oozie.log" + formatDateForFilename(new GregorianCalendar()) + ".gz";
         File f = new File(getTestCaseDir() + "/" + outFilename);
         StringBuilder sb = new StringBuilder();
         sb.append("\n2009-06-24 02:43:13,958 DEBUG _L8_:323" + logStatement + "End workflow state change");
@@ -188,19 +186,19 @@ public class TestLogStreamer extends XTestCase {
         xf.setLogLevel("DEBUG|INFO");
 
         // Test to check if all gz log files in the range jobStartTime-currentTime are retrieved
-        String outFilename = "oozie.log.2012-04-24-19.gz";
+        String outFilename = "oozie.log-2012-04-24-19.gz";
         File f = new File(getTestCaseDir() + "/" + outFilename);
         StringBuilder logLines = new StringBuilder();
         logLines.append("\n2012-04-24 19:43:13,958 DEBUG _L19_:323" + logStatement);
         writeToGZFile(f,logLines);
 
-        outFilename = "oozie.log.2012-04-24-20.gz";
+        outFilename = "oozie.log-2012-04-24-20.gz";
         f = new File(getTestCaseDir() + "/" + outFilename);
         logLines = new StringBuilder();
         logLines.append("\n2012-04-24 20:43:13,958 DEBUG _L20_:323" + logStatement);
         writeToGZFile(f,logLines);
 
-        outFilename = "oozie.log.2012-04-24-21.gz";
+        outFilename = "oozie.log-2012-04-24-21.gz";
         f = new File(getTestCaseDir() + "/" + outFilename);
         logLines = new StringBuilder();
         logLines.append("\n2012-04-24 21:43:13,958 DEBUG _L21_:323" + logStatement);
@@ -246,5 +244,39 @@ public class TestLogStreamer extends XTestCase {
         byte[] buf = strg.getBytes();
         gzout.write(buf, 0, buf.length);
         gzout.close();
+    }
+    
+    private String formatDateForFilename(Calendar cal) {
+        int year = cal.get(Calendar.YEAR);
+        int month = cal.get(Calendar.MONTH) + 1;
+        int date = cal.get(Calendar.DATE);
+        int hour = cal.get(Calendar.HOUR_OF_DAY);
+        
+        StringBuilder sb = new StringBuilder("-");
+        if (year < 10) {
+            sb.append("000");
+        } else if (year < 100) {
+            sb.append("00");
+        } else if (year < 1000) {
+            sb.append("0");
+        }
+        sb.append(year);
+        sb.append("-");
+        if (month < 10) {
+            sb.append("0");
+        }
+        sb.append(month);
+        sb.append("-");
+        if (date < 10) {
+            sb.append("0");
+        }
+        sb.append(date);
+        sb.append("-");
+        if (hour < 10) {
+            sb.append("0");
+        }
+        sb.append(hour);
+        
+        return sb.toString();
     }
 }
