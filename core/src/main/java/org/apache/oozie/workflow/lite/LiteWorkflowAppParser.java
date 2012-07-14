@@ -170,19 +170,23 @@ public class LiteWorkflowAppParser {
         for (int i = 0; i < transitions.size(); i++) {
             NodeDef node = app.getNode(transitions.get(i));
             if (node instanceof DecisionNodeDef) {
-                Set<String> decisionSet = new HashSet<String>(node.getTransitions());
+                // Make sure the transition is valid
+                validateTransition(errorToTransitions, transitions, app, node);
+                // Add each transition to transitions (once) if they are not a kill node
+                HashSet<String> decisionSet = new HashSet<String>(node.getTransitions());
                 for (String ds : decisionSet) {
-                    if (transitions.contains(ds)) {
-                        throw new WorkflowException(ErrorCode.E0734, node.getName(), ds);
-                    } else {
+                    if (!(app.getNode(ds) instanceof KillNodeDef)) {
                         transitions.add(ds);
                     }
                 }
             } else if (node instanceof ActionNodeDef) {
                 // Make sure the transition is valid
                 validateTransition(errorToTransitions, transitions, app, node);
-                // Add the "ok-to" transition of node
-                transitions.add(node.getTransitions().get(0));
+                // Add the "ok-to" transition of node if its not a kill node
+                String okTo = node.getTransitions().get(0);
+                if (!(app.getNode(okTo) instanceof KillNodeDef)) {
+                    transitions.add(okTo);
+                }
                 String errorTo = node.getTransitions().get(1);
                 // Add the "error-to" transition if the transition is a Action Node
                 if (app.getNode(errorTo) instanceof ActionNodeDef) {
@@ -222,15 +226,20 @@ public class LiteWorkflowAppParser {
     private void validateTransition(List<String> errorToTransitions, List<String> transitions, LiteWorkflowApp app, NodeDef node)
             throws WorkflowException {
         for (String transition : node.getTransitions()) {
+            // Make sure the transition node is not an end node
+            NodeDef tNode = app.getNode(transition);
+            if (tNode instanceof EndNodeDef) {
+                throw new WorkflowException(ErrorCode.E0737, node.getName(), transition, "end");
+            }
             // Make sure the transition node is either a join node or is not already visited
-            if (transitions.contains(transition) && !(app.getNode(transition) instanceof JoinNodeDef)) {
-                throw new WorkflowException(ErrorCode.E0734, node.getName(), transition);
+            if (transitions.contains(transition) && !(tNode instanceof JoinNodeDef)) {
+                    throw new WorkflowException(ErrorCode.E0734, node.getName(), transition);
+                }
+                // Make sure the transition node is not the same as an already visited 'error-to' transition
+                if (errorToTransitions.contains(transition)) {
+                    throw new WorkflowException(ErrorCode.E0735, node.getName(), transition);
+                }
             }
-            // Make sure the transition node is not the same as an already visited 'error-to' transition
-            if (errorToTransitions.contains(transition)) {
-                throw new WorkflowException(ErrorCode.E0735, node.getName(), transition);
-            }
-        }
 
     }
 
