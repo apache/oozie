@@ -80,8 +80,10 @@ Apache Oozie(TM) How to Contribute
   {{{http://reviews.apache.org}Apache Code Review System}}, he/she may upload the patch to Apache
   Code Review System, or ask the contributor of the patch  to do so. Once the review is complete
   in Apache Code Review System, the contributor must upload the final patch to the Apache JIRA
-  where it will be +1.
-  
+  where it will be +1'd.
+  The SVN reviewboard base-directory URL to use when uploading patches, is:
+  {{http://svn.apache.org/repos/asf/incubator/oozie/trunk}}
+
 * Patches General Guidelines
 
 ** Coding Conventions
@@ -123,3 +125,10 @@ Apache Oozie(TM) How to Contribute
 
   The Release Log file must be edited by the committer committing the patch (the patch must not
   include changes to the Release Log file). This is to avoid unnecessary conflicts.
+
+* Easy Tasks (for newcomers)
+
+  Some easy-to-do tasks can be found via {{{https://issues.apache.org/jira/secure/IssueNavigator.jspa?reset=true&jqlQuery=project+%3D+OOZIE+AND+labels+%3D+newbie}this JIRA search}} result.
+  These tasks are marked with the label 'newbie' and are generally easy
+  tasks to do, that shouldn't require in-depth knowledge of Oozie to attack.
+
