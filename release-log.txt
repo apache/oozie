@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-905 Clarify and improve Oozie logging configuration and streaming (rkanter via tucu)
 OOZIE-890 Support for map-reduce in OozieCLI (britt via virag)
 OOZIE-887 Support for choosing timezone in Oozie UI (rkanter via tucu)
 OOZIE-902 XLogService doesn't properly disable WS log streaming if log4j.appender.oozie.File is missing (rkanter via tucu)

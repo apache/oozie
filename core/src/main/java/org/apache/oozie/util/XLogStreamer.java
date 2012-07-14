@@ -312,6 +312,12 @@ public class XLogStreamer {
         Collections.sort(fileList);
         return fileList;
     }
+    
+    /**
+     * This pattern matches the end of a gzip filename to have a format like "-YYYY-MM-dd-HH.gz" with capturing groups for each part
+     * of the date
+     */
+    public static final Pattern gzTimePattern = Pattern.compile(".*-(\\d\\d\\d\\d)-(\\d\\d)-(\\d\\d)-(\\d\\d)\\.gz");
 
     /**
      * Returns the creation time of the .gz archive if it is relevant to the job
@@ -324,16 +330,19 @@ public class XLogStreamer {
     private long getGZFileCreationTime(String fileName, long startTime, long endTime) {
         // Default return value of -1 to exclude the file
         long returnVal = -1;
-        int dateStartIndex = 10;
-        String[] dateDetails;
-        try {
-            dateDetails = fileName.substring(dateStartIndex, fileName.length() - 3).split("-");
-            // Terminate the execution if all the details year, month, day and hour are not available
-            if (dateDetails.length == 4) {
-                int year = Integer.parseInt(dateDetails[0]);
-                int month = Integer.parseInt(dateDetails[1]);
-                int day = Integer.parseInt(dateDetails[2]);
-                int hour = Integer.parseInt(dateDetails[3]);
+        
+        // Include oozie.log as oozie.log.gz if it is accidentally GZipped
+        if (fileName.equals("oozie.log.gz")) {
+            LOG.warn("oozie.log has been GZipped, which is unexpected");
+            // Return a value other than -1 to include the file in list
+            returnVal = 0;
+        } else {
+            Matcher m = gzTimePattern.matcher(fileName);
+            if (m.matches() && m.groupCount() == 4) {
+                int year = Integer.parseInt(m.group(1));
+                int month = Integer.parseInt(m.group(2));
+                int day = Integer.parseInt(m.group(3));
+                int hour = Integer.parseInt(m.group(4));
                 int minute = 0;
                 Calendar calendarEntry = Calendar.getInstance();
                 calendarEntry.set(year, month - 1, day, hour, minute); // give month-1(Say, 7 for August)
@@ -349,33 +358,10 @@ public class XLogStreamer {
                         || (startTime <= logFileStartTime && endTime >= logFileEndTime)) {
                     returnVal = logFileStartTime;
                 }
-            }
-        } catch (StringIndexOutOfBoundsException ex) {
-            // Inclusion of oozie.log as oozie.log.gz if it is accidentally GZipped
-            LOG.warn("oozie.log has been GZipped, which is unexpected");
-            if (fileName.equals("oozie.log.gz")) {
-                // Return a value other than -1 to include the file in list
-                returnVal = 0;
             } else {
+                LOG.debug("Filename " + fileName + " does not match the expected format");
                 returnVal = -1;
             }
-        } catch (NumberFormatException ex) {
-            StringBuilder sb = new StringBuilder("");
-            sb.append("NumberFormatException encountered. Filename " + fileName + " is in invalid format\n");
-            for (StackTraceElement stackTraceElement : ex.getStackTrace())
-                sb.append(stackTraceElement + "\n");
-            LOG.debug(sb);
-            // Return -1 to exclude the file
-            returnVal = -1;
-        } catch (Exception ex) {
-            StringBuilder sb = new StringBuilder("");
-            sb.append("Exception occured while trying to retrieve the log content from the GZip file " + fileName
-                    + ". This is an unexpected behavior\n");
-            for (StackTraceElement stackTraceElement : ex.getStackTrace())
-                sb.append(stackTraceElement + "\n");
-            LOG.debug(sb);
-            // Return -1 to exclude the file
-            returnVal = -1;
         }
         return returnVal;
     }

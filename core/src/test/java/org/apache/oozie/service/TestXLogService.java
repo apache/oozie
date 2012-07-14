@@ -27,6 +27,8 @@ import org.apache.oozie.util.XLog;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.StringWriter;
+import java.util.Properties;
 
 public class TestXLogService extends XTestCase {
 
@@ -139,6 +141,140 @@ public class TestXLogService extends XTestCase {
         ls.init(null);
         assertEquals(logs, System.getProperty(XLogService.OOZIE_LOG_DIR));
         ls.destroy();
+    }
+    
+    public void testDisableLogOverWS() throws Exception {
+        Properties props = new Properties();
+        // Test missing logfile
+        props.setProperty("log4j.appender.oozie.File", "");
+        File propsFile = new File(getTestCaseConfDir(), "test-disable-log-over-ws-log4j.properties");
+        FileOutputStream fos = new FileOutputStream(propsFile);
+        props.store(fos, "");
+        setSystemProperty(XLogService.LOG4J_FILE, propsFile.getName());
+        XLogService ls = new XLogService();
+        ls.init(null);
+        assertTrue(doStreamDisabledCheck(ls));
+        ls.destroy();
+        
+        // Test non-absolute path for logfile
+        props.setProperty("log4j.appender.oozie.File", "oozie.log");
+        fos = new FileOutputStream(propsFile);
+        props.store(fos, "");
+        ls = new XLogService();
+        ls.init(null);
+        assertTrue(doStreamDisabledCheck(ls));
+        ls.destroy();
+        
+        // Test missing appender class
+        props.setProperty("log4j.appender.oozie.File", "${oozie.log.dir}/oozie.log");
+        props.setProperty("log4j.appender.oozie", "");
+        fos = new FileOutputStream(propsFile);
+        props.store(fos, "");
+        ls = new XLogService();
+        ls.init(null);
+        assertTrue(doStreamDisabledCheck(ls));
+        ls.destroy();
+        
+        // Test appender class not DailyRollingFileAppender or RollingFileAppender
+        props.setProperty("log4j.appender.oozie", "org.blah.blah");
+        fos = new FileOutputStream(propsFile);
+        props.store(fos, "");
+        ls = new XLogService();
+        ls.init(null);
+        assertTrue(doStreamDisabledCheck(ls));
+        ls.destroy();
+        
+        // Test DailyRollingFileAppender but missing DatePattern
+        props.setProperty("log4j.appender.oozie", "org.apache.log4j.DailyRollingFileAppender");
+        props.setProperty("log4j.appender.oozie.DatePattern", "");
+        fos = new FileOutputStream(propsFile);
+        props.store(fos, "");
+        ls = new XLogService();
+        ls.init(null);
+        assertTrue(doStreamDisabledCheck(ls));
+        ls.destroy();
+        
+        // Test DailyRollingFileAppender but DatePattern that doesn't end with 'HH' or 'dd'
+        props.setProperty("log4j.appender.oozie.DatePattern", "'.'yyyy-MM");
+        fos = new FileOutputStream(propsFile);
+        props.store(fos, "");
+        ls = new XLogService();
+        ls.init(null);
+        assertTrue(doStreamDisabledCheck(ls));
+        ls.destroy();
+        
+        // Test DailyRollingFileAppender with everything correct (dd)
+        props.setProperty("log4j.appender.oozie.DatePattern", "'.'yyyy-MM-dd");
+        fos = new FileOutputStream(propsFile);
+        props.store(fos, "");
+        ls = new XLogService();
+        ls.init(null);
+        assertFalse(doStreamDisabledCheck(ls));
+        ls.destroy();
+        
+        // Test DailyRollingFileAppender with everything correct (HH)
+        props.setProperty("log4j.appender.oozie.DatePattern", "'.'yyyy-MM-dd-HH");
+        fos = new FileOutputStream(propsFile);
+        props.store(fos, "");
+        ls = new XLogService();
+        ls.init(null);
+        assertFalse(doStreamDisabledCheck(ls));
+        ls.destroy();
+        
+        // Test RollingFileAppender but missing FileNamePattern
+        props.setProperty("log4j.appender.oozie", "org.apache.log4j.rolling.RollingFileAppender");
+        props.setProperty("log4j.appender.oozie.RollingPolicy.FileNamePattern", "");
+        fos = new FileOutputStream(propsFile);
+        props.store(fos, "");
+        ls = new XLogService();
+        ls.init(null);
+        assertTrue(doStreamDisabledCheck(ls));
+        ls.destroy();
+        
+        // Test RollingFileAppender but FileNamePattern with incorrect ending
+        props.setProperty("log4j.appender.oozie.RollingPolicy.FileNamePattern", "${oozie.log.dir}/oozie.log-blah");
+        fos = new FileOutputStream(propsFile);
+        props.store(fos, "");
+        ls = new XLogService();
+        ls.init(null);
+        assertTrue(doStreamDisabledCheck(ls));
+        ls.destroy();
+        
+        // Test RollingFileAppender but FileNamePattern with incorrect beginning
+        props.setProperty("log4j.appender.oozie.RollingPolicy.FileNamePattern", "${oozie.log.dir}/blah.log-%d{yyyy-MM-dd-HH}");
+        fos = new FileOutputStream(propsFile);
+        props.store(fos, "");
+        ls = new XLogService();
+        ls.init(null);
+        assertTrue(doStreamDisabledCheck(ls));
+        ls.destroy();
+        
+        // Test RollingFileAppender with everything correct
+        props.setProperty("log4j.appender.oozie.RollingPolicy.FileNamePattern", "${oozie.log.dir}/oozie.log-%d{yyyy-MM-dd-HH}");
+        fos = new FileOutputStream(propsFile);
+        props.store(fos, "");
+        ls = new XLogService();
+        ls.init(null);
+        assertFalse(doStreamDisabledCheck(ls));
+        ls.destroy();
+        
+        // Test RollingFileAppender with everything correct (gz)
+        props.setProperty("log4j.appender.oozie.RollingPolicy.FileNamePattern", "${oozie.log.dir}/oozie.log-%d{yyyy-MM-dd-HH}.gz");
+        fos = new FileOutputStream(propsFile);
+        props.store(fos, "");
+        ls = new XLogService();
+        ls.init(null);
+        assertFalse(doStreamDisabledCheck(ls));
+        ls.destroy();
+    }
+    
+    private boolean doStreamDisabledCheck(XLogService ls) throws Exception {
+        StringWriter w = new StringWriter();
+        ls.streamLog(null, null, null, w);
+        if (w.toString().equals("Log streaming disabled!!")) {
+            return true;
+        }
+        return false;
     }
 
 }
