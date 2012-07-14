@@ -1,0 +1,87 @@
+<noautolink>
+
+[[index][::Go back to Oozie Documentation Index::]]
+
+---+!! Oozie Logging
+
+%TOC%
+
+---++ Default Oozie Logging
+
+Oozie's logging properties can be configured in its log4j properties file (default is =oozie-log4j.properties=). Most log messages
+are configured by default to be written to the =oozie= appender. 
+
+The default configuration for the =oozie= appender is shown below.
+
+---+++ Default Configuration
+
+<verbatim>
+log4j.appender.oozie=org.apache.log4j.rolling.RollingFileAppender
+log4j.appender.oozie.RollingPolicy=org.apache.oozie.util.OozieRollingPolicy
+log4j.appender.oozie.File=${oozie.log.dir}/oozie.log
+log4j.appender.oozie.Append=true
+log4j.appender.oozie.layout=org.apache.log4j.PatternLayout
+log4j.appender.oozie.layout.ConversionPattern=%d{ISO8601} %5p %c{1}:%L - %m%n
+log4j.appender.oozie.RollingPolicy.FileNamePattern=${log4j.appender.oozie.File}-%d{yyyy-MM-dd-HH}
+log4j.appender.oozie.RollingPolicy.MaxHistory=720
+</verbatim>
+
+In this configuration, the active log file will be named =oozie.log= and all old log files will be named =oozie.log-yyyy-MM-dd-HH=
+(where =yyyy-MM-dd-HH= is the time that that log file was created; e.g. 2012-07-21-05). All log files are in the same directory 
+(whatever =oozie.log.dir= is assigned to). A maximum of 720 older log files will be retained. The active log file is rolled every
+hour, so 720 old logs means that they are kept for 30 days before being deleted. 
+
+To keep all old logs instead of deleting them, =log4j.appender.oozie.RollingPolicy.MaxHistory= can be set to =-1=. 
+Additionally, =log4j.appender.oozie.RollingPolicy= can be set to =org.apache.log4j.rolling.TimeBasedRollingPolicy=, which has the 
+same exact behavior as =org.apache.oozie.util.OozieRollingPolicy= except that it does not delete old logs.
+
+---+++ Restrictions
+
+In order for Oozie logging to work 100% correctly, the following restrictions must be observed (described below and in 
+the =oozie-log4j.properties= file): 
+
+* The appender that Oozie uses must be named "oozie" (i.e. =log4j.appender.oozie=)
+
+* =log4j.appender.oozie.RollingPolicy.FileNamePattern= must end with "-%d{yyyy-MM-dd-HH}.gz" or "-%d{yyyy-MM-dd-HH}". 
+If it ends with ".gz" the old logs will be compressed when rolled
+
+* =log4j.appender.oozie.RollingPolicy.FileNamePattern= must start with the value of =log4j.appender.oozie.File=
+
+---++ Previous Default Oozie Logging
+
+Oozie previously used the logging configuration shown below as the default for the =oozie= appender. The other appender that Oozie 
+writes to still use a configuration similar to this.
+
+---+++ Previous Default Configuration
+
+<verbatim>
+log4j.appender.oozie=org.apache.log4j.DailyRollingFileAppender
+log4j.appender.oozie.File=${oozie.log.dir}/oozie.log
+log4j.appender.oozie.Append=true
+log4j.appender.oozie.layout=org.apache.log4j.PatternLayout
+log4j.appender.oozie.layout.ConversionPattern=%d{ISO8601} %5p %c{1}:%L - %m%n
+log4j.appender.oozie.DatePattern='.'yyyy-MM-dd-HH
+</verbatim>
+
+In this configuration, the active log file will be named =oozie.log= and all old log files will be named =oozie.log.yyyy-MM-dd-HH=
+(where =yyyy-MM-dd-HH= is the time that the log file was created; e.g. 2012-07-21-05). All log files are in the same directory
+(whatever =oozie.log.dir= is assigned to). All older log files are retained. The active log file is rolled every hour.
+
+---+++ Restrictions
+
+In order for Oozie logging to work 100% correctly, the following restrictions must be observed (described below and in the 
+=oozie-log4j.properties= file): 
+
+* The appender that Oozie uses must be named "oozie" (i.e. =log4j.appender.oozie=)
+
+* =log4j.appender.oozie.DatePattern= must end with either "dd" or "HH". If it ends with "HH", the log will be rolled every hour;
+if it ends with "dd", the log will be rolled every day.
+
+---++ Other Oozie Logging
+
+While Oozie can technically use any valid log4j Appender or configurations that violate the above restrictions, certain 
+features related to logs may be disabled and/or not work correctly, and is thus not advised. 
+
+[[index][::Go back to Oozie Documentation Index::]]
+
+</noautolink>
