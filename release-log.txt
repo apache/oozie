@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-900 Indicate that the exception thrown from the db-cli during an error is for debug purposes (harsh)
 OOZIE-865 ForkJoin validator checks total lengths of forks vs. joins instead of actual paths (rkanter via tucu)
 OOZIE-905 Clarify and improve Oozie logging configuration and streaming (rkanter via tucu)
 OOZIE-890 Support for map-reduce in OozieCLI (britt via virag)

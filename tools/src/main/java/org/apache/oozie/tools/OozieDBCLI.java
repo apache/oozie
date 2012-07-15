@@ -137,6 +137,7 @@ public class OozieDBCLI {
             System.err.println();
             System.err.println("Error: " + ex.getMessage());
             System.err.println();
+            System.err.println("Stack trace for the error was (for debug purposes):");
             System.err.println("--------------------------------------");
             ex.printStackTrace(System.err);
             System.err.println("--------------------------------------");
