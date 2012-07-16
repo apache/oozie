@@ -29,6 +29,7 @@
 
     <xs:complexType name="WORKFLOW-APP">
         <xs:sequence>
+        	<xs:element name="global" type="workflow:GLOBAL" minOccurs="0" maxOccurs="1"/>
         	<xs:element name="credentials" type="workflow:CREDENTIALS" minOccurs="0" maxOccurs="1"/>
             <xs:element name="start" type="workflow:START" minOccurs="1" maxOccurs="1"/>
             <xs:choice minOccurs="0" maxOccurs="unbounded">
@@ -42,6 +43,14 @@
             <xs:any namespace="uri:oozie:sla:0.1" minOccurs="0" maxOccurs="1"/>
         </xs:sequence>
         <xs:attribute name="name" type="xs:string" use="required"/>
+    </xs:complexType>
+    
+    <xs:complexType name="GLOBAL">
+    	<xs:sequence>
+            <xs:element name="job-tracker" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="name-node" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="configuration" type="workflow:CONFIGURATION" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
     </xs:complexType>
 
     <xs:complexType name="START">
@@ -139,8 +148,8 @@
 
     <xs:complexType name="MAP-REDUCE">
         <xs:sequence>
-            <xs:element name="job-tracker" type="xs:string" minOccurs="1" maxOccurs="1"/>
-            <xs:element name="name-node" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="job-tracker" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="name-node" type="xs:string" minOccurs="0" maxOccurs="1"/>
             <xs:element name="prepare" type="workflow:PREPARE" minOccurs="0" maxOccurs="1"/>
             <xs:choice minOccurs="0" maxOccurs="1">
                 <xs:element name="streaming" type="workflow:STREAMING" minOccurs="0" maxOccurs="1"/>
@@ -155,8 +164,8 @@
 
     <xs:complexType name="PIG">
         <xs:sequence>
-            <xs:element name="job-tracker" type="xs:string" minOccurs="1" maxOccurs="1"/>
-            <xs:element name="name-node" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="job-tracker" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="name-node" type="xs:string" minOccurs="0" maxOccurs="1"/>
             <xs:element name="prepare" type="workflow:PREPARE" minOccurs="0" maxOccurs="1"/>
             <xs:element name="job-xml" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
             <xs:element name="configuration" type="workflow:CONFIGURATION" minOccurs="0" maxOccurs="1"/>
@@ -188,8 +197,8 @@
 
     <xs:complexType name="JAVA">
         <xs:sequence>
-            <xs:element name="job-tracker" type="xs:string" minOccurs="1" maxOccurs="1"/>
-            <xs:element name="name-node" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="job-tracker" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="name-node" type="xs:string" minOccurs="0" maxOccurs="1"/>
             <xs:element name="prepare" type="workflow:PREPARE" minOccurs="0" maxOccurs="1"/>
             <xs:element name="job-xml" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
             <xs:element name="configuration" type="workflow:CONFIGURATION" minOccurs="0" maxOccurs="1"/>
