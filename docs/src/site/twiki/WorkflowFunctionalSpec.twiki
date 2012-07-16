@@ -2630,6 +2630,31 @@ Examples of User-Retry in a workflow aciton is :
 </action>
 </verbatim>
 
+---++ 19 Global Configurations
+
+Oozie allows a global section to reduce the redundant job-tracker and name-node declarations for each action. The user can define
+a =global= section in the beginning of the workflow.xml . The global section may contain the configuration, job-tracker, or
+name-node that the user would like to set for every action. If a user then redefines one of these in a specific action node,
+Oozie will update use the specific declaration instead of the global one for that action.
+
+Example of a global element:
+
+<verbatim>
+<workflow-app xmlns="uri:oozie:workflow:0.4" name="wf-name">
+<global>
+   <job-tracker>${job-tracker}</job-tracker>
+   <name-node>${namd-node}</name-node>
+   <configuration>
+        <property>
+            <name>mapred.job.queue.name</name>
+            <value>${queueName}</value>
+        </property>
+    </configuration>
+</global>
+...
+</verbatim>
+
+
 ---++ Appendixes
 
 #OozieWFSchema

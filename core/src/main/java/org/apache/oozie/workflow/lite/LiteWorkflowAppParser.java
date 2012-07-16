@@ -59,6 +59,7 @@ public class LiteWorkflowAppParser {
 
     private static final String SLA_INFO = "info";
     private static final String CREDENTIALS = "credentials";
+    private static final String GLOBAL = "global";
 
     private static final String NAME_A = "name";
     private static final String CRED_A = "cred";
@@ -255,6 +256,7 @@ public class LiteWorkflowAppParser {
     private LiteWorkflowApp parse(String strDef, Element root) throws WorkflowException {
         Namespace ns = root.getNamespace();
         LiteWorkflowApp def = null;
+        Element global = null;
         for (Element eNode : (List<Element>) root.getChildren()) {
             if (eNode.getName().equals(START_E)) {
                 def = new LiteWorkflowApp(root.getAttributeValue(NAME_A), strDef,
@@ -311,7 +313,8 @@ public class LiteWorkflowAppParser {
                                                     }
                                                     else {
                                                         eActionConf = elem;
-                                                    }
+                                                        handleGlobal(ns, global, elem);
+                                                        }
                                                 }
                                             }
                                         }
@@ -330,7 +333,12 @@ public class LiteWorkflowAppParser {
                                             // No operation is required
                                         }
                                         else {
-                                            throw new WorkflowException(ErrorCode.E0703, eNode.getName());
+                                            if (eNode.getName().equals(GLOBAL)) {
+                                                global = eNode;
+                                            }
+                                            else {
+                                                throw new WorkflowException(ErrorCode.E0703, eNode.getName());
+                                            }
                                         }
                                     }
                                 }
@@ -409,4 +417,85 @@ public class LiteWorkflowAppParser {
         }
         traversed.put(node.getName(), VisitStatus.VISITED);
     }
+
+    /**
+     * Handle the global section
+     *
+     * @param ns
+     * @param global
+     * @param eActionConf
+     * @throws WorkflowException
+     */
+
+    private void handleGlobal(Namespace ns, Element global, Element eActionConf) throws WorkflowException {
+
+        if (global != null) {
+            Element globalJobTracker = global.getChild("job-tracker", ns);
+            Element globalNameNode = global.getChild("name-node", ns);
+            Element globalConfiguration = global.getChild("configuration", ns);
+
+            if (globalJobTracker != null && eActionConf.getChild("job-tracker", ns) == null) {
+                Element jobTracker = new Element("job-tracker", ns);
+                jobTracker.setText(globalJobTracker.getText());
+                eActionConf.addContent(0, jobTracker);
+            }
+
+            if (globalNameNode != null && eActionConf.getChild("name-node", ns) == null) {
+                Element nameNode = new Element("name-node", ns);
+                nameNode.setText(globalNameNode.getText());
+                eActionConf.addContent(1, nameNode);
+            }
+
+            if (globalConfiguration != null) {
+                Element actionConfiguration = eActionConf.getChild("configuration", ns);
+                if (actionConfiguration == null) {
+                    actionConfiguration = new Element("configuration", ns);
+                    int index = 2;
+                    index += eActionConf.getChild("prepare", ns) == null ? 0 : 2;
+                    index += eActionConf.getChild("job-xml", ns) == null ? 0 : 2;
+                    index += eActionConf.getChild("pipes", ns) == null ? 0 : 2;
+                    index += eActionConf.getChild("streaming", ns) == null ? 0 : 2;
+
+                    eActionConf.addContent(index, actionConfiguration);
+                }
+                for (Element globalConfig : (List<Element>) globalConfiguration.getChildren()) {
+                    boolean isSet = false;
+                    String globalVarName = globalConfig.getChildText("name", ns);
+                    for (Element local : (List<Element>) actionConfiguration.getChildren()) {
+                        if (local.getChildText("name", ns).equals(globalVarName)) {
+                            isSet = true;
+                        }
+                    }
+                    if (!isSet) {
+                        Element varToCopy = new Element("property", ns);
+                        Element varName = new Element("name", ns);
+                        Element varValue = new Element("value", ns);
+
+                        varName.setText(globalConfig.getChildText("name", ns));
+                        varValue.setText(globalConfig.getChildText("value", ns));
+
+                        varToCopy.addContent(varName);
+                        varToCopy.addContent(varValue);
+
+                        actionConfiguration.addContent(varToCopy);
+                    }
+                }
+            }
+        }
+        else {
+            if (eActionConf.getName().equalsIgnoreCase("pig") || eActionConf.getName().equalsIgnoreCase("map-reduce")
+                    || eActionConf.getName().equalsIgnoreCase("java")
+                    || eActionConf.getName().equalsIgnoreCase("shell")
+                    || eActionConf.getName().equalsIgnoreCase("hive")) {
+
+                if (eActionConf.getChild("name-node", ns) == null) {
+                    throw new WorkflowException(ErrorCode.E0701, "No name-node defined");
+                }
+                if (eActionConf.getChild("job-tracker", ns) == null) {
+                    throw new WorkflowException(ErrorCode.E0701, "No job-tracker defined");
+                }
+            }
+        }
+    }
+
 }
