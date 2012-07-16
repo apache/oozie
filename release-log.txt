@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-908 Oozie docs build instructions for hadoop versions (mona via virag)
 OOZIE-874 Eliminate redundancies in xml (britt via virag)
 OOZIE-900 Indicate that the exception thrown from the db-cli during an error is for debug purposes (harsh)
 OOZIE-865 ForkJoin validator checks total lengths of forks vs. joins instead of actual paths (rkanter via tucu)

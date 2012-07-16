@@ -113,6 +113,8 @@ specified in the =test.properties= file (which is loaded by the =XTestCase= clas
 *includeHadoopJars* (*): includes Hadoop JARs and its transitive dependencies in the Oozie WAR file, default is
 undefined (Hadoop JARs are not included).
 
+*hadoop.version* =(*)=: indicates the Hadoop version(Hadoop-1 or Hadoop-2) you wish to build Oozie against specifically. It will substitute this value in the Oozie POM properties and pull the corresponding Hadoop artifacts from Maven. Default version is 1.0.1 for Hadoop-1 (the most common case). For Hadoop-2, the version you can pass is *2.0.0-alpha*.
+
 *generateSite* (*): generates Oozie documentation, default is undefined (no documentation is generated)
 
 *skipTests* (*): skips the execution of all testcases, no value required, default is undefined
@@ -232,6 +234,23 @@ The following Maven invocation builds an Oozie distribution:
 <verbatim>
 $ mvn clean package assembly:single
 </verbatim>
+
+*Build instructions with Hadoop Yarn (Hadoop-2.x)*
+
+Following values can be passed as maven properties
+   * -Dhadoop.version			: *2.0.0-alpha*
+   * -Dpig.version (optional)	: either *0.9.2* or *0.10.2*
+   
+For e.g.
+<verbatim>
+$ mvn clean package assembly:single -Dhadoop.version=2.0.0-alpha
+</verbatim>
+
+If none of these parameters are specified, the defaults are
+   * -Dhadoop.version			: *1.0.1*
+   * -Dhadoop.auth.version		: *2.0.0-alpha*
+   * -Dpig.version				: *0.9.0*
+
 
 The following properties should be specified when building a release:
 
