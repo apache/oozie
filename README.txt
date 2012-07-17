@@ -2,7 +2,7 @@ Apache Oozie
 =============
 
 What is Oozie
---------------
+-------------
 
 Oozie is an extensible, scalable and reliable system to define, manage, schedule, and execute complex Hadoop workloads via web services. More specifically, this includes:
 
@@ -14,7 +14,7 @@ Oozie is an extensible, scalable and reliable system to define, manage, schedule
   * Authentication, authorization, and capacity-aware load throttling to allow multi-tenant software as a service.
 
 Oozie Overview
-----------
+--------------
 
 Oozie is a server based Workflow Engine specialized in running workflow jobs with actions that run Hadoop Map/Reduce and Pig jobs.
 
@@ -36,10 +36,10 @@ Oozie workflows can be parameterized (using variables like ${inputDir} within th
 
 Documentations :
 -----------------
-Oozie web service is bundle with the built-in details documentation.
+Oozie web service is bundled with the built-in details documentation.
 
-More inforamtion could be found at:
-http://incubator.apache.org/oozie/
+More information can be found at:
+  http://incubator.apache.org/oozie/
 
 Oozie Quick Start:
   http://incubator.apache.org/oozie/QuickStart.html
