@@ -84,6 +84,8 @@ public class JavaActionExecutor extends ActionExecutor {
     public static final int MAX_EXTERNAL_STATS_SIZE_DEFAULT = Integer.MAX_VALUE;
     private static final Set<String> DISALLOWED_PROPERTIES = new HashSet<String>();
     public final static String MAX_EXTERNAL_STATS_SIZE = "oozie.external.stats.max.size";
+    public static final String ACL_VIEW_JOB = "mapreduce.job.acl-view-job";
+    public static final String ACL_MODIFY_JOB = "mapreduce.job.acl-modify-job";
     private static int maxActionOutputLen;
     private static int maxExternalStatsSize;
 
@@ -507,7 +509,6 @@ public class JavaActionExecutor extends ActionExecutor {
     }
 
     private static final String QUEUE_NAME = "mapred.job.queue.name";
-    private static final String OOZIE_LAUNCHER_QUEUE_NAME = "oozie.launcher.mapred.job.queue.name";
 
     private static final Set<String> SPECIAL_PROPERTIES = new HashSet<String>();
 
@@ -515,6 +516,8 @@ public class JavaActionExecutor extends ActionExecutor {
         SPECIAL_PROPERTIES.add(QUEUE_NAME);
         SPECIAL_PROPERTIES.add("mapreduce.jobtracker.kerberos.principal");
         SPECIAL_PROPERTIES.add("dfs.namenode.kerberos.principal");
+        SPECIAL_PROPERTIES.add(ACL_VIEW_JOB);
+        SPECIAL_PROPERTIES.add(ACL_MODIFY_JOB);
     }
 
     @SuppressWarnings("unchecked")
@@ -586,26 +589,12 @@ public class JavaActionExecutor extends ActionExecutor {
                 launcherJobConf.set("mapred.child.java.opts", opts);
             }
 
-            // properties from action that are needed by the launcher (QUEUE NAME)
+            // properties from action that are needed by the launcher (e.g. QUEUE NAME, ACLs)
             // maybe we should add queue to the WF schema, below job-tracker
-            for (String name : SPECIAL_PROPERTIES) {
-                String value = actionConf.get(name);
-                if (value != null) {
-                    if (!name.equals(QUEUE_NAME) ||
-                        (name.equals(QUEUE_NAME) && launcherJobConf.get(OOZIE_LAUNCHER_QUEUE_NAME) == null)) {
-                        launcherJobConf.set(name, value);
-                    }
-                }
-            }
+            actionConfToLauncherConf(actionConf, launcherJobConf);
 
             // to disable cancelation of delegation token on launcher job end
             launcherJobConf.setBoolean("mapreduce.job.complete.cancel.delegation.tokens", false);
-
-            if (context.getWorkflow().getAcl() != null) {
-                // setting the group owning the Oozie job to allow anybody in that
-                // group to kill the jobs.
-                launcherJobConf.set("mapreduce.job.acl-modify-job", context.getWorkflow().getAcl());
-            }
 
             return launcherJobConf;
         }
@@ -628,6 +617,14 @@ public class JavaActionExecutor extends ActionExecutor {
 
     void injectLauncherCallback(Context context, Configuration launcherConf) {
         injectCallback(context, launcherConf);
+    }
+
+    private void actionConfToLauncherConf(Configuration actionConf, JobConf launcherConf) {
+        for (String name : SPECIAL_PROPERTIES) {
+            if (actionConf.get(name) != null && launcherConf.get("oozie.launcher." + name) == null) {
+                launcherConf.set(name, actionConf.get(name));
+            }
+        }
     }
 
     public void submitLauncher(FileSystem actionFs, Context context, WorkflowAction action) throws ActionExecutorException {
