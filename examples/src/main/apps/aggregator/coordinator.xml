@@ -23,10 +23,10 @@
 
     <datasets>
         <dataset name="raw-logs" frequency="${coord:minutes(20)}" initial-instance="2010-01-01T00:00Z" timezone="UTC">
-            <uri-template>${nameNode}/user/${coord:user()}/examples/input-data/rawLogs/${YEAR}/${MONTH}/${DAY}/${HOUR}/${MINUTE}</uri-template>
+            <uri-template>${nameNode}/user/${coord:user()}/${examplesRoot}/input-data/rawLogs/${YEAR}/${MONTH}/${DAY}/${HOUR}/${MINUTE}</uri-template>
         </dataset>
         <dataset name="aggregated-logs" frequency="${coord:hours(1)}" initial-instance="2010-01-01T01:00Z" timezone="UTC">
-            <uri-template>${nameNode}/user/${coord:user()}/examples/output-data/aggregator/aggregatedLogs/${YEAR}/${MONTH}/${DAY}/${HOUR}</uri-template>
+            <uri-template>${nameNode}/user/${coord:user()}/${examplesRoot}/output-data/aggregator/aggregatedLogs/${YEAR}/${MONTH}/${DAY}/${HOUR}</uri-template>
         </dataset>
     </datasets>
 
@@ -45,7 +45,7 @@
 
     <action>
         <workflow>
-            <app-path>${nameNode}/user/${coord:user()}/examples/apps/aggregator</app-path>
+            <app-path>${nameNode}/user/${coord:user()}/${examplesRoot}/apps/aggregator</app-path>
             <configuration>
                 <property>
                     <name>jobTracker</name>
