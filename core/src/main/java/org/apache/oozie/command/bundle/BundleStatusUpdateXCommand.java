@@ -64,11 +64,9 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
             LOG.debug("STARTED BundleStatusUpdateXCommand with bundle id : " + coordjob.getBundleId()
                     + " coord job ID: " + coordjob.getId() + " coord Status " + coordjob.getStatus());
             Job.Status coordCurrentStatus = coordjob.getStatus();
-            Job.Status bundleActionStatus = bundleaction.getStatus();
-            // The status of bundle action should not be updated if it doesn't have a coord-id
-            // For e.g, if bundle action is killed and coord-job is in prep, then the bundle status
-            // should not be updated
-            if (bundleaction.getCoordId() != null) {
+            // The status of bundle action should not be updated if the bundle action is in terminal state
+            // TODO - change this once bottom up rerun is allowed to change the bundle action state
+            if (!bundleaction.isTerminalStatus()) {
                 bundleaction.setStatus(coordCurrentStatus);
             }
             if (bundleaction.isPending()) {
@@ -79,11 +77,11 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
             jpaService.execute(new BundleActionUpdateJPAExecutor(bundleaction));
             if (bundleaction.getCoordId() != null) {
                 LOG.info("Updated bundle action [{0}] from prev status [{1}] to current coord status [{2}], and new bundle action pending [{3}]", bundleaction
-                    .getBundleActionId(), bundleActionStatus, coordCurrentStatus, bundleaction.getPending());
+                    .getBundleActionId(), bundleaction.getStatus(), coordCurrentStatus, bundleaction.getPending());
             }
             else {
                 LOG.info("Updated Bundle action [{0}], status = [{1}], pending = [{2}]", bundleaction.getBundleActionId(),
-                        bundleActionStatus, bundleaction.getPending());
+                        bundleaction.getStatus(), bundleaction.getPending());
             }
             LOG.debug("ENDED BundleStatusUpdateXCommand with bundle id : " + coordjob.getBundleId() + " coord job ID: "
                     + coordjob.getId() + " coord Status " + coordjob.getStatus());
