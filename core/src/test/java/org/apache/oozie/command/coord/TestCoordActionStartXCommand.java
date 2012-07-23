@@ -244,8 +244,6 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
         createdConf += "<value>localhost:9001</value></property>";
         createdConf += "<property> <name>nameNode</name> <value>hdfs://localhost:9000</value></property>";
         createdConf += "<property> <name>queueName</name> <value>default</value></property>";
-        createdConf += "<property> <name>mapreduce.jobtracker.kerberos.principal</name> <value>default</value></property>";
-        createdConf += "<property> <name>dfs.namenode.kerberos.principal</name> <value>default</value></property>";
         createdConf += "</configuration> ";
 
         action.setCreatedConf(createdConf);
