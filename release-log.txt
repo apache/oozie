@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-917 Coordinator Job from 'KILLED' or 'FAILED' doesn't move to 'DONEWITHERROR' if the job materialization is not done(virag)
 OOZIE-916 aggregator example uses hardcoded 'examples' value instead of parameterized (examplesRoot) value in path (wypoon via virag)
 OOZIE-904 TestBundleStartX Failing (virag)
 OOZIE-907 Default ACL settings for Oozie launcher (mona via virag)
