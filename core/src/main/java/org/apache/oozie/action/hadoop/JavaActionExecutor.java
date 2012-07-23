@@ -514,8 +514,6 @@ public class JavaActionExecutor extends ActionExecutor {
 
     static {
         SPECIAL_PROPERTIES.add(QUEUE_NAME);
-        SPECIAL_PROPERTIES.add("mapreduce.jobtracker.kerberos.principal");
-        SPECIAL_PROPERTIES.add("dfs.namenode.kerberos.principal");
         SPECIAL_PROPERTIES.add(ACL_VIEW_JOB);
         SPECIAL_PROPERTIES.add(ACL_MODIFY_JOB);
     }
