@@ -277,7 +277,7 @@ public class StatusTransitService implements Service {
                         }
 
                         int nonPendingCoordActionsCount = coordActionStatusList.size();
-                        if (coordJob.isDoneMaterialization()
+                        if ((coordJob.isDoneMaterialization() || coordStatus[0] == Job.Status.FAILED || coordStatus[0] == Job.Status.KILLED)
                                 && checkCoordTerminalStatus(coordActionStatus, nonPendingCoordActionsCount, coordStatus)) {
                             LOG.info("Set coordinator job [" + jobId + "] status to '" + coordStatus[0].toString()
                                     + "' from '" + coordJob.getStatus() + "'");
