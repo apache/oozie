@@ -226,6 +226,12 @@ public class CoordSuspendXCommand extends SuspendTransitionXCommand {
         else if (coordJob.getStatus() == Job.Status.RUNNING) {
             coordJob.setStatus(Job.Status.SUSPENDED);
         }
+        else if (coordJob.getStatus() == Job.Status.PAUSED) {
+            coordJob.setStatus(Job.Status.SUSPENDED);
+        }
+        else if (coordJob.getStatus() == Job.Status.PREPPAUSED) {
+            coordJob.setStatus(Job.Status.PREPSUSPENDED);
+        }
         coordJob.setPending();
     }
 
