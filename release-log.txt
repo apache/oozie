@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-922 Global section code doesn't properly handle extension actions (rkanter via tucu)
 OOZIE-915 Obsolete NN/JT kerberos principal property names not removed from some places (mona via virag)
 OOZIE-707 Suspending a paused coordinator job suspends the children but the status of job remains unchanged (virag)
 OOZIE-917 Coordinator Job from 'KILLED' or 'FAILED' doesn't move to 'DONEWITHERROR' if the job materialization is not done(virag)
