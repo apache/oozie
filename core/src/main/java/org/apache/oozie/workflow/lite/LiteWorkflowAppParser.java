@@ -429,32 +429,35 @@ public class LiteWorkflowAppParser {
 
     private void handleGlobal(Namespace ns, Element global, Element eActionConf) throws WorkflowException {
 
+        // Use the action's namespace when getting children of the action (will be different than ns for extension actions)
+        Namespace actionNs = eActionConf.getNamespace();
+        
         if (global != null) {
             Element globalJobTracker = global.getChild("job-tracker", ns);
             Element globalNameNode = global.getChild("name-node", ns);
             Element globalConfiguration = global.getChild("configuration", ns);
 
-            if (globalJobTracker != null && eActionConf.getChild("job-tracker", ns) == null) {
-                Element jobTracker = new Element("job-tracker", ns);
+            if (globalJobTracker != null && eActionConf.getChild("job-tracker", actionNs) == null) {
+                Element jobTracker = new Element("job-tracker", actionNs);
                 jobTracker.setText(globalJobTracker.getText());
                 eActionConf.addContent(0, jobTracker);
             }
 
-            if (globalNameNode != null && eActionConf.getChild("name-node", ns) == null) {
-                Element nameNode = new Element("name-node", ns);
+            if (globalNameNode != null && eActionConf.getChild("name-node", actionNs) == null) {
+                Element nameNode = new Element("name-node", actionNs);
                 nameNode.setText(globalNameNode.getText());
                 eActionConf.addContent(1, nameNode);
             }
 
             if (globalConfiguration != null) {
-                Element actionConfiguration = eActionConf.getChild("configuration", ns);
+                Element actionConfiguration = eActionConf.getChild("configuration", actionNs);
                 if (actionConfiguration == null) {
-                    actionConfiguration = new Element("configuration", ns);
+                    actionConfiguration = new Element("configuration", actionNs);
                     int index = 2;
-                    index += eActionConf.getChild("prepare", ns) == null ? 0 : 2;
-                    index += eActionConf.getChild("job-xml", ns) == null ? 0 : 2;
-                    index += eActionConf.getChild("pipes", ns) == null ? 0 : 2;
-                    index += eActionConf.getChild("streaming", ns) == null ? 0 : 2;
+                    index += eActionConf.getChild("prepare", actionNs) == null ? 0 : 2;
+                    index += eActionConf.getChild("job-xml", actionNs) == null ? 0 : 2;
+                    index += eActionConf.getChild("pipes", actionNs) == null ? 0 : 2;
+                    index += eActionConf.getChild("streaming", actionNs) == null ? 0 : 2;
 
                     eActionConf.addContent(index, actionConfiguration);
                 }
@@ -462,14 +465,14 @@ public class LiteWorkflowAppParser {
                     boolean isSet = false;
                     String globalVarName = globalConfig.getChildText("name", ns);
                     for (Element local : (List<Element>) actionConfiguration.getChildren()) {
-                        if (local.getChildText("name", ns).equals(globalVarName)) {
+                        if (local.getChildText("name", actionNs).equals(globalVarName)) {
                             isSet = true;
                         }
                     }
                     if (!isSet) {
-                        Element varToCopy = new Element("property", ns);
-                        Element varName = new Element("name", ns);
-                        Element varValue = new Element("value", ns);
+                        Element varToCopy = new Element("property", actionNs);
+                        Element varName = new Element("name", actionNs);
+                        Element varValue = new Element("value", actionNs);
 
                         varName.setText(globalConfig.getChildText("name", ns));
                         varValue.setText(globalConfig.getChildText("value", ns));
@@ -488,10 +491,10 @@ public class LiteWorkflowAppParser {
                     || eActionConf.getName().equalsIgnoreCase("shell")
                     || eActionConf.getName().equalsIgnoreCase("hive")) {
 
-                if (eActionConf.getChild("name-node", ns) == null) {
+                if (eActionConf.getChild("name-node", actionNs) == null) {
                     throw new WorkflowException(ErrorCode.E0701, "No name-node defined");
                 }
-                if (eActionConf.getChild("job-tracker", ns) == null) {
+                if (eActionConf.getChild("job-tracker", actionNs) == null) {
                     throw new WorkflowException(ErrorCode.E0701, "No job-tracker defined");
                 }
             }

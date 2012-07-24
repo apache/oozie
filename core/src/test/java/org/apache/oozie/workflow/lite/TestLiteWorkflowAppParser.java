@@ -40,6 +40,8 @@ import org.apache.oozie.workflow.lite.TestLiteWorkflowLib.TestDecisionNodeHandle
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.action.hadoop.DistcpActionExecutor;
+import org.apache.oozie.action.hadoop.HiveActionExecutor;
 
 public class TestLiteWorkflowAppParser extends XTestCase {
     public static String dummyConf = "<java></java>";
@@ -48,6 +50,8 @@ public class TestLiteWorkflowAppParser extends XTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         new Services().init();
+        Services.get().get(ActionService.class).register(HiveActionExecutor.class);
+        Services.get().get(ActionService.class).register(DistcpActionExecutor.class);
     }
 
     @Override
@@ -127,6 +131,98 @@ public class TestLiteWorkflowAppParser extends XTestCase {
                 "</pig>";
         assertEquals(expectedE.replaceAll(" ",""), e.replaceAll(" ", ""));
 
+    }
+    
+    public void testParserGlobalExtensionActions() throws Exception {
+        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+                                                                 LiteWorkflowStoreService.LiteDecisionHandler.class,
+                                                                 LiteWorkflowStoreService.LiteActionHandler.class);
+
+        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid-global-ext.xml", -1));
+
+        String a = app.getNode("a").getConf();
+        String expectedA =
+             "<hive xmlns=\"uri:oozie:hive-action:0.2\">\r\n" +
+             "  <job-tracker>foo</job-tracker>\r\n" +
+             "  <name-node>bar</name-node>\r\n" +
+             "  <prepare>\r\n" +
+             "    <delete path=\"/tmp\" />\r\n" +
+             "    <mkdir path=\"/tmp\" />\r\n" +
+             "  </prepare>\r\n" +
+             "  <configuration>\r\n" +
+             "    <property>\r\n" +
+             "      <name>c</name>\r\n" +
+             "      <value>C</value>\r\n" +
+             "    </property>\r\n" +
+             "    <property>\r\n" +
+             "      <name>a</name>\r\n" +
+             "      <value>A</value>\r\n" +
+             "    </property>\r\n" +
+             "    <property>\r\n" +
+             "      <name>b</name>\r\n" +
+             "      <value>B</value>\r\n" +
+             "    </property>\r\n" +
+             "  </configuration>\r\n" +
+             "  <script>script.q</script>\r\n" +
+             "  <param>INPUT=/tmp/table</param>\r\n" +
+             "  <param>OUTPUT=/tmp/hive</param>\r\n" +
+             "</hive>";
+        System.out.println("AAA " + expectedA.replaceAll(" ", ""));
+        assertEquals(expectedA.replaceAll(" ",""), a.replaceAll(" ", ""));
+    }
+    
+    public void testParserGlobalExtensionActionsLocalAlreadyExists() throws Exception {
+        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+                                                                 LiteWorkflowStoreService.LiteDecisionHandler.class,
+                                                                 LiteWorkflowStoreService.LiteActionHandler.class);
+
+        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid-global-ext.xml", -1));
+
+        String b = app.getNode("b").getConf();
+        String expectedB =
+             "<distcp xmlns=\"uri:oozie:distcp-action:0.1\">\r\n" +
+             "  <job-tracker>blah</job-tracker>\r\n" +
+             "  <name-node>meh</name-node>\r\n" +
+             "  <prepare>\r\n" +
+             "    <delete path=\"/tmp2\" />\r\n" +
+             "    <mkdir path=\"/tmp2\" />\r\n" +
+             "  </prepare>\r\n" +
+             "  <configuration>\r\n" +
+             "    <property>\r\n" +
+             "      <name>a</name>\r\n" +
+             "      <value>A2</value>\r\n" +
+             "    </property>\r\n" +
+             "    <property>\r\n" +
+             "      <name>b</name>\r\n" +
+             "      <value>B</value>\r\n" +
+             "    </property>\r\n" +
+             "  </configuration>\r\n" +
+             "  <arg>/tmp/data.txt</arg>\r\n" +
+             "  <arg>/tmp2/data.txt</arg>\r\n" +
+             "</distcp>";
+        assertEquals(expectedB.replaceAll(" ",""), b.replaceAll(" ", ""));
+    }
+    
+    public void testParserGlobalExtensionActionsNoGlobal() throws Exception {
+        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+                                                                 LiteWorkflowStoreService.LiteDecisionHandler.class,
+                                                                 LiteWorkflowStoreService.LiteActionHandler.class);
+        
+        // If no global section is defined, some extension actions (e.g. hive) must still have name-node and job-tracker elements
+        // or the handleGlobal() method will throw an exception
+        
+        parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid-global-ext-no-global.xml", -1));
+        
+        try {
+            parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-invalid-global-ext-no-global.xml", -1));
+            fail();
+        }
+        catch (WorkflowException ex) {
+            assertEquals(ErrorCode.E0701, ex.getErrorCode());
+        }
+        catch (Exception ex) {
+            fail();
+        }
     }
 
     public void testParser() throws Exception {
