@@ -410,25 +410,15 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
 
     private void handleExpresionWithStartMultipleInstances(String eventType, String dataType, String instanceValue)
             throws CoordinatorJobException {
-        String correctAction = null;
-        if(dataType.equals(COORD_INPUT_EVENTS_DATA_IN)) {
-            correctAction = "Coordinator app definition should have separate <end-instance> tag per data-in start-instance";
-        } else if(dataType.equals(COORD_OUTPUT_EVENTS_DATA_OUT)) {
-            correctAction = "Coordinator app definition can have only one <end-instance> tag per data-out start-instance";
-        }
-        throw new CoordinatorJobException(ErrorCode.E1021, eventType + "end instance '" + instanceValue
+        String correctAction = "Coordinator app definition should not have multiple start-instances";
+        throw new CoordinatorJobException(ErrorCode.E1021, eventType + " start-instance '" + instanceValue
                 + "' contains more than one date start-instance. Coordinator job NOT SUBMITTED. " + correctAction);
     }
 
     private void handleExpresionWithMultipleEndInstances(String eventType, String dataType, String instanceValue)
             throws CoordinatorJobException {
-        String correctAction = null;
-        if(dataType.equals(COORD_INPUT_EVENTS_DATA_IN)) {
-            correctAction = "Coordinator app definition should have separate <start-instance> tag per data-in end-instance";
-        } else if(dataType.equals(COORD_OUTPUT_EVENTS_DATA_OUT)) {
-            correctAction = "Coordinator app definition can have only one <start-instance> tag per data-out end-instance";
-        }
-        throw new CoordinatorJobException(ErrorCode.E1021, eventType + "end-instance '" + instanceValue
+        String correctAction = "Coordinator app definition should not have multiple end-instances";
+        throw new CoordinatorJobException(ErrorCode.E1021, eventType + " end-instance '" + instanceValue
                 + "' contains more than one date end-instance. Coordinator job NOT SUBMITTED. " + correctAction);
     }
 

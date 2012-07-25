@@ -1,6 +1,7 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
-OOZIE_925 Change default logging level for oozie to INFO (rkanter via tucu)
+OOZIE-920 Incorrect error message for multiple start instances in coordinator xml (bcyr via tucu)
+OOZIE-925 Change default logging level for oozie to INFO (rkanter via tucu)
 OOZIE-924 CATALINA_OPTS should include $CATALINA_OPTS in oozie-env.sh (rkanter via tucu)
 OOZIE-922 Global section code doesn't properly handle extension actions (rkanter via tucu)
 OOZIE-915 Obsolete NN/JT kerberos principal property names not removed from some places (mona via virag)

@@ -227,7 +227,8 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         catch (CommandException e) {
             assertEquals(sc.getJob().getStatus(), Job.Status.FAILED);
             assertEquals(e.getErrorCode(), ErrorCode.E1021);
-            assertTrue(e.getMessage().contains(sc.COORD_INPUT_EVENTS) && e.getMessage().contains("per data-in start-instance"));
+            assertTrue(e.getMessage().contains(sc.COORD_INPUT_EVENTS)
+                    && e.getMessage().contains("Coordinator app definition should not have multiple start-instances"));
         }
 
         // CASE 2: Success case i.e. Single start instances for input and single start instance for output, but both with ","
@@ -269,7 +270,8 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         catch (CommandException e) {
             assertEquals(sc.getJob().getStatus(), Job.Status.FAILED);
             assertEquals(e.getErrorCode(), ErrorCode.E1021);
-            assertTrue(e.getMessage().contains(sc.COORD_INPUT_EVENTS) && e.getMessage().contains("per data-in end-instance"));
+            assertTrue(e.getMessage().contains(sc.COORD_INPUT_EVENTS)
+                    && e.getMessage().contains("Coordinator app definition should not have multiple end-instances"));
         }
 
         // CASE 2: Success case i.e. Single end instances for input and single end instance for output, but both with ","
