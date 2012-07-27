@@ -392,6 +392,9 @@ the POST URL, the job will be started immediately and its status will be =RUNNIN
 Coordinator jobs with start time in the future they will not create any action until the start time 
 happens.
 
+A coordinator job will remain in =PREP= status until it's triggered, in which case it will change to =RUNNING= status.
+The 'action=start' parameter is not valid for coordinator jobs.
+
 ---++++ Managing a Job
 
 A HTTP PUT request starts, suspends, resumes or kills a job.
