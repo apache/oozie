@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-903 Workflow action status 'Ok' but the workflow job remains in 'RUNNING' (virag)
 OOZIE-928 Clarify the documentation for submitting coordinator jobs using web services API (rkanter via virag)
 OOZIE-920 Incorrect error message for multiple start instances in coordinator xml (bcyr via tucu)
 OOZIE-925 Change default logging level for oozie to INFO (rkanter via tucu)
