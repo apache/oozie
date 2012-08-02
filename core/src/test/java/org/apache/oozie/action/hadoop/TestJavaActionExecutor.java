@@ -103,7 +103,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         Configuration conf = new XConfiguration();
         conf.set("user.name", "a");
         try {
-            ae.checkForDisallowedProps(conf, "x");
+            JavaActionExecutor.checkForDisallowedProps(conf, "x");
             fail();
         }
         catch (ActionExecutorException ex) {
@@ -112,7 +112,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         conf = new XConfiguration();
         conf.set("mapred.job.tracker", "a");
         try {
-            ae.checkForDisallowedProps(conf, "x");
+            JavaActionExecutor.checkForDisallowedProps(conf, "x");
             fail();
         }
         catch (ActionExecutorException ex) {
@@ -121,7 +121,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         conf = new XConfiguration();
         conf.set("fs.default.name", "a");
         try {
-            ae.checkForDisallowedProps(conf, "x");
+            JavaActionExecutor.checkForDisallowedProps(conf, "x");
             fail();
         }
         catch (ActionExecutorException ex) {
@@ -130,7 +130,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         conf = new XConfiguration();
         conf.set("a", "a");
         try {
-            ae.checkForDisallowedProps(conf, "x");
+            JavaActionExecutor.checkForDisallowedProps(conf, "x");
         }
         catch (ActionExecutorException ex) {
             fail();

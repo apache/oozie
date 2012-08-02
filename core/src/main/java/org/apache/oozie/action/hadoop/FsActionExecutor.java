@@ -18,7 +18,9 @@
 package org.apache.oozie.action.hadoop;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.net.URISyntaxException;
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -72,6 +74,37 @@ public class FsActionExecutor extends ActionExecutor {
             }
         }
     }
+    
+    Path resolveToFullPath(Path nameNode, Path path, boolean withScheme) throws ActionExecutorException {
+        Path fullPath;
+        
+        // If no nameNode is given, validate the path as-is and return it as-is
+        if (nameNode == null) {
+            validatePath(path, withScheme);
+            fullPath = path;
+        } else {
+            // If the path doesn't have a scheme or authority, use the nameNode which should have already been verified earlier
+            String pathScheme = path.toUri().getScheme();
+            String pathAuthority = path.toUri().getAuthority();
+            if (pathScheme == null || pathAuthority == null) {
+                if (path.isAbsolute()) {
+                    String nameNodeSchemeAuthority = nameNode.toUri().getScheme() + "://" + nameNode.toUri().getAuthority();
+                    fullPath = new Path(nameNodeSchemeAuthority + path.toString());
+                } else {
+                    throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS011", 
+                            "Path [{0}] cannot be relative", path);
+                }
+            } else {
+                // If the path has a scheme and authority, but its not the nameNode then validate the path as-is and return it as-is
+                // If it is the nameNode, then it should have already been verified earlier so return it as-is
+                if (!nameNode.toUri().getScheme().equals(pathScheme) || !nameNode.toUri().getAuthority().equals(pathAuthority)) {
+                    validatePath(path, withScheme);
+                }
+                fullPath = path;
+            }
+        }
+        return fullPath;
+    }
 
     void validateSameNN(Path source, Path dest) throws ActionExecutorException {
         Path destPath = new Path(source, dest);
@@ -84,6 +117,45 @@ public class FsActionExecutor extends ActionExecutor {
                     "move, target NN URI different from that of source", dest);
         }
     }
+    
+    XConfiguration parseJobXML(Context context, Element element) 
+            throws IOException, ActionExecutorException, HadoopAccessorException, URISyntaxException {
+        Path appPathRoot = new Path(context.getWorkflow().getAppPath());
+
+        FileSystem fs = context.getAppFileSystem();
+        
+        // app path could be a file
+        if (context.getAppFileSystem().isFile(appPathRoot)) {
+            appPathRoot = appPathRoot.getParent();
+        }
+        
+        XConfiguration jobXmlConfs = null;
+        Iterator<Element> it = element.getChildren("job-xml", element.getNamespace()).iterator();
+        while (it.hasNext()) {
+            Element e = it.next();
+            String jobXml = e.getTextTrim();
+            Path path = new Path(appPathRoot, jobXml);
+            XConfiguration jobXmlConf = new XConfiguration(fs.open(path));
+            JavaActionExecutor.checkForDisallowedProps(jobXmlConf, "job-xml");
+            if (jobXmlConfs == null) {
+                jobXmlConfs = new XConfiguration();
+            }
+            XConfiguration.copy(jobXmlConf, jobXmlConfs);
+        }
+        return jobXmlConfs;
+    }
+    
+    XConfiguration parseConfiguration(Element element) 
+            throws IOException, ActionExecutorException, HadoopAccessorException, URISyntaxException {
+        Element e = element.getChild("configuration", element.getNamespace());
+        if (e != null) {
+            String strConf = XmlUtils.prettyPrint(e).toString();
+            XConfiguration inlineConf = new XConfiguration(new StringReader(strConf));
+            JavaActionExecutor.checkForDisallowedProps(inlineConf, "inline configuration");
+            return inlineConf;
+        }
+        return null;
+    }
 
     @SuppressWarnings("unchecked")
     void doOperations(Context context, Element element) throws ActionExecutorException {
@@ -93,22 +165,44 @@ public class FsActionExecutor extends ActionExecutor {
             if (!recovery) {
                 fs.mkdirs(getRecoveryPath(context));
             }
+            
+            Path nameNodePath = null;
+            Element nameNodeElement = element.getChild("name-node", element.getNamespace());
+            if (nameNodeElement != null) {
+                String nameNode = nameNodeElement.getTextTrim();
+                if (nameNode != null) {
+                    nameNodePath = new Path(nameNode);
+                    // Verify the name node now
+                    validatePath(nameNodePath, true);
+                }
+            }
+            
+            XConfiguration fsConf = new XConfiguration();
+            XConfiguration jobXMLConf = parseJobXML(context, element);
+            if (jobXMLConf != null) {
+                XConfiguration.copy(jobXMLConf, fsConf);
+            }
+            XConfiguration configConf = parseConfiguration(element);
+            if (configConf != null) {
+                XConfiguration.copy(configConf, fsConf);
+            }
+            
             for (Element commandElement : (List<Element>) element.getChildren()) {
                 String command = commandElement.getName();
                 if (command.equals("mkdir")) {
                     Path path = getPath(commandElement, "path");
-                    mkdir(context, path);
+                    mkdir(context, fsConf, nameNodePath, path);
                 }
                 else {
                     if (command.equals("delete")) {
                         Path path = getPath(commandElement, "path");
-                        delete(context, path);
+                        delete(context, fsConf,nameNodePath, path);
                     }
                     else {
                         if (command.equals("move")) {
                             Path source = getPath(commandElement, "source");
                             Path target = getPath(commandElement, "target");
-                            move(context, source, target, recovery);
+                            move(context, fsConf,nameNodePath, source, target, recovery);
                         }
                         else {
                             if (command.equals("chmod")) {
@@ -117,12 +211,12 @@ public class FsActionExecutor extends ActionExecutor {
                                 String str = commandElement.getAttributeValue("dir-files");
                                 boolean dirFiles = (str == null) || Boolean.parseBoolean(str);
                                 String permissionsMask = commandElement.getAttributeValue("permissions").trim();
-                                chmod(context, path, permissionsMask, dirFiles, recursive);
+                                chmod(context, fsConf,nameNodePath, path, permissionsMask, dirFiles, recursive);
                             }
                             else {
                                 if (command.equals("touchz")) {
                                     Path path = getPath(commandElement, "path");
-                                    touchz(context, path);
+                                    touchz(context, fsConf,nameNodePath, path);
                                 }
                             }
                         }
@@ -138,14 +232,18 @@ public class FsActionExecutor extends ActionExecutor {
     /**
      * @param path
      * @param context
+     * @param fsConf
      * @return FileSystem
      * @throws HadoopAccessorException
      */
-    private FileSystem getFileSystemFor(Path path, Context context) throws HadoopAccessorException {
+    private FileSystem getFileSystemFor(Path path, Context context, XConfiguration fsConf) throws HadoopAccessorException {
         String user = context.getWorkflow().getUser();
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
         JobConf conf = has.createJobConf(path.toUri().getAuthority());
         XConfiguration.copy(context.getProtoActionConf(), conf);
+        if (fsConf != null) {
+            XConfiguration.copy(fsConf, conf);
+        }
         return has.createFileSystem(user, path.toUri(), conf);
     }
 
@@ -163,9 +261,13 @@ public class FsActionExecutor extends ActionExecutor {
     }
 
     void mkdir(Context context, Path path) throws ActionExecutorException {
+        mkdir(context, null, null, path);
+    }
+
+    void mkdir(Context context, XConfiguration fsConf, Path nameNodePath, Path path) throws ActionExecutorException {
         try {
-            validatePath(path, true);
-            FileSystem fs = getFileSystemFor(path, context);
+            path = resolveToFullPath(nameNodePath, path, true);
+            FileSystem fs = getFileSystemFor(path, context, fsConf);
 
             if (!fs.exists(path)) {
                 if (!fs.mkdirs(path)) {
@@ -187,9 +289,22 @@ public class FsActionExecutor extends ActionExecutor {
      * @throws ActionExecutorException
      */
     public void delete(Context context, Path path) throws ActionExecutorException {
+        delete(context, null, null, path);
+    }
+
+    /**
+     * Delete path
+     *
+     * @param context
+     * @param fsConf
+     * @param nameNodePath 
+     * @param path
+     * @throws ActionExecutorException
+     */
+    public void delete(Context context, XConfiguration fsConf, Path nameNodePath, Path path) throws ActionExecutorException {
         try {
-            validatePath(path, true);
-            FileSystem fs = getFileSystemFor(path, context);
+            path = resolveToFullPath(nameNodePath, path, true);
+            FileSystem fs = getFileSystemFor(path, context, fsConf);
 
             if (fs.exists(path)) {
                 if (!fs.delete(path, true)) {
@@ -238,10 +353,26 @@ public class FsActionExecutor extends ActionExecutor {
      * @throws ActionExecutorException
      */
     public void move(Context context, Path source, Path target, boolean recovery) throws ActionExecutorException {
+        move(context, null, null, source, target, recovery);
+    }
+
+    /**
+     * Move source to target
+     *
+     * @param context
+     * @param fsConf 
+     * @param nameNodePath
+     * @param source
+     * @param target
+     * @param recovery
+     * @throws ActionExecutorException
+     */
+    public void move(Context context, XConfiguration fsConf, Path nameNodePath, Path source, Path target, boolean recovery) 
+            throws ActionExecutorException {
         try {
-            validatePath(source, true);
+            source = resolveToFullPath(nameNodePath, source, true);
             validateSameNN(source, target);
-            FileSystem fs = getFileSystemFor(source, context);
+            FileSystem fs = getFileSystemFor(source, context, fsConf);
 
             if (!fs.exists(source) && !recovery) {
                 throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS006",
@@ -259,9 +390,14 @@ public class FsActionExecutor extends ActionExecutor {
     }
 
     void chmod(Context context, Path path, String permissions, boolean dirFiles, boolean recursive) throws ActionExecutorException {
+        chmod(context, null, null, path, permissions, dirFiles, recursive);
+    }
+
+    void chmod(Context context, XConfiguration fsConf, Path nameNodePath, Path path, String permissions, boolean dirFiles, 
+            boolean recursive) throws ActionExecutorException {
         try {
-            validatePath(path, true);
-            FileSystem fs = getFileSystemFor(path, context);
+            path = resolveToFullPath(nameNodePath, path, true);
+            FileSystem fs = getFileSystemFor(path, context, fsConf);
 
             if (!fs.exists(path)) {
                 throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS009",
@@ -277,7 +413,7 @@ public class FsActionExecutor extends ActionExecutor {
                 for (int i = 0; i < filesStatus.length; i++) {
                     paths[i] = filesStatus[i].getPath();
                     if (recursive && filesStatus[i].isDir()){
-                        chmod(context, paths[i], permissions, dirFiles, recursive);
+                        chmod(context, fsConf, nameNodePath, paths[i], permissions, dirFiles, recursive);
                     }
                 }
             }
@@ -297,9 +433,13 @@ public class FsActionExecutor extends ActionExecutor {
     }
 
     void touchz(Context context, Path path) throws ActionExecutorException {
+        touchz(context, null, null, path);
+    }
+
+    void touchz(Context context, XConfiguration fsConf, Path nameNodePath, Path path) throws ActionExecutorException {
         try {
-            validatePath(path, true);
-            FileSystem fs = getFileSystemFor(path, context);
+            path = resolveToFullPath(nameNodePath, path, true);
+            FileSystem fs = getFileSystemFor(path, context, fsConf);
 
             FileStatus st;
             if (fs.exists(path)) {

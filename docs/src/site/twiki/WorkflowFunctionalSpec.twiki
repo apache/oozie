@@ -14,6 +14,11 @@ Map/Reduce and Pig jobs.
 %TOC%
 
 ---++ Changelog
+---+++!! 2012JUL23
+
+   * #Appendix A, updated XML schema 0.4 (Fs action)
+   * #3.2.4 Updated to mention that a =name-node=, a =job-xml=, and a =configuration= element are allowed in the Fs action as of 
+schema 0.4
 ---+++!! 2012JUN19
 
    * #Appendix A, added XML schema 0.4
@@ -1072,6 +1077,41 @@ If relative paths are used it will be relative to the specified user home direct
 
 In the above example, a directory named after the workflow job ID is created and the input of the job, passed as
 workflow configuration parameter, is archived under the previously created directory.
+
+As of schema 0.4, if a =name-node= element is specified, then it is not necessary for any of the paths to start with the file system
+URI as it is taken from the =name-node= element. This is also true if the name-node is specified in the global section 
+(see [[WorkflowFunctionalSpec#GlobalConfigurations][Global Configurations]])
+
+As of schema 0.4, zero or more =job-xml= elements can be specified; these must refer to Hadoop JobConf =job.xml= formatted files
+bundled in the workflow application. They can be used to set additional properties for the FileSystem instance.
+
+As of schema 0.4, if a =configuration= element is specified, then it will also be used to set additional JobConf properties for the 
+FileSystem instance. Properties specified in the =configuration= element override properties specified in the files specified 
+by any =job-xml= elements.
+
+*Example:*
+
+<verbatim>
+<workflow-app name="sample-wf" xmlns="uri:oozie:workflow:0.4">
+    ...
+    <action name="hdfscommands">
+        <fs>
+           <name-node>hdfs://foo:9000</name-node>
+           <job-xml>fs-info.xml</job-xml>
+           <configuration>
+             <property>
+               <name>some.property</name>
+               <value>some.value</value>
+             </property>
+           </configuration>
+           <delete path='/usr/tucu/temp-data'/>
+        </fs>
+        <ok to="myotherjob"/>
+        <error to="errorcleanup"/>
+    </action>
+    ...
+</workflow-app>
+</verbatim>
 
 #SshAction
 ---++++ 3.2.5 Ssh Action
@@ -2150,6 +2190,7 @@ Examples of User-Retry in a workflow aciton is :
 </action>
 </verbatim>
 
+#GlobalConfigurations
 ---++ 19 Global Configurations
 
 Oozie allows a global section to reduce the redundant job-tracker and name-node declarations for each action. The user can define
@@ -2343,12 +2384,18 @@ Example of a global element:
     </xs:complexType>
 
     <xs:complexType name="FS">
-	<xs:choice minOccurs="0" maxOccurs="unbounded">
-            <xs:element name="delete" type="workflow:DELETE"/>
-            <xs:element name="mkdir" type="workflow:MKDIR"/>
-            <xs:element name="move" type="workflow:MOVE"/>
-            <xs:element name="chmod" type="workflow:CHMOD"/>
-        </xs:choice>
+	<xs:sequence>
+            <xs:element name="name-node" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="job-xml" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="configuration" type="workflow:CONFIGURATION" minOccurs="0" maxOccurs="1"/>
+            <xs:choice minOccurs="0" maxOccurs="unbounded">                
+                <xs:element name="delete" type="workflow:DELETE"/>
+                <xs:element name="mkdir" type="workflow:MKDIR"/>
+                <xs:element name="move" type="workflow:MOVE"/>
+                <xs:element name="chmod" type="workflow:CHMOD"/>
+                <xs:element name="touchz" type="workflow:TOUCHZ"/>
+            </xs:choice>
+        </xs:sequence>
     </xs:complexType>
 
     <xs:complexType name="JAVA">

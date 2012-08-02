@@ -186,13 +186,18 @@
     </xs:complexType>
 
     <xs:complexType name="FS">
-	<xs:choice minOccurs="0" maxOccurs="unbounded">
-            <xs:element name="delete" type="workflow:DELETE"/>
-            <xs:element name="mkdir" type="workflow:MKDIR"/>
-            <xs:element name="move" type="workflow:MOVE"/>
-            <xs:element name="chmod" type="workflow:CHMOD"/>
-            <xs:element name="touchz" type="workflow:TOUCHZ"/>
-        </xs:choice>
+	<xs:sequence>
+            <xs:element name="name-node" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="job-xml" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="configuration" type="workflow:CONFIGURATION" minOccurs="0" maxOccurs="1"/>
+            <xs:choice minOccurs="0" maxOccurs="unbounded">                
+                <xs:element name="delete" type="workflow:DELETE"/>
+                <xs:element name="mkdir" type="workflow:MKDIR"/>
+                <xs:element name="move" type="workflow:MOVE"/>
+                <xs:element name="chmod" type="workflow:CHMOD"/>
+                <xs:element name="touchz" type="workflow:TOUCHZ"/>
+            </xs:choice>
+        </xs:sequence>
     </xs:complexType>
 
     <xs:complexType name="JAVA">
