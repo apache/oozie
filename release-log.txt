@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-937 Mention how to use the sharelib in the Quick Start page of the docs (rkanter via tucu)
 OOZIE-886 Display request header info when trace is enabled (jay7306 via tucu)
 OOZIE-932 space needed between "Created" and "Nominal time" in oozieCLI output (egashira via virag) 
 OOZIE-903 Workflow action status 'Ok' but the workflow job remains in 'RUNNING' (virag)

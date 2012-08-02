@@ -147,6 +147,8 @@ $ hadoop fs -put share share
 *IMPORTANT:* This must be done using the Oozie Hadoop (HDFS) user. If a =share= directory already exists in HDFS,
 it must be deleted before copying it again.
 
+See the [[WorkflowFunctionalSpec#ShareLib][Workflow Functional Specification]] for more information about the Oozie ShareLib.
+
 [[index][::Go back to Oozie Documentation Index::]]
 
 </noautolink>
