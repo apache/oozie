@@ -17,6 +17,7 @@
  */
 package org.apache.oozie.action.hadoop;
 
+import java.io.OutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -67,6 +68,7 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
 
         try {
             ae.validatePath(new Path("hdfs://x/bla"), false);
+            fail();
         }
         catch (ActionExecutorException ex) {
             assertEquals("FS003", ex.getErrorCode());	
@@ -74,6 +76,7 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
 
         try {
             ae.validatePath(new Path("bla"), true);
+            fail();
         }
         catch (ActionExecutorException ex) {
             assertEquals("FS001", ex.getErrorCode());	
@@ -81,6 +84,70 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
 
         try {
             ae.validatePath(new Path("file://bla"), true);
+            fail();
+        }
+        catch (ActionExecutorException ex) {
+            assertEquals("FS002", ex.getErrorCode());	
+        }
+    }
+    
+    public void testResolveToFullPath() throws Exception {
+        FsActionExecutor ae = new FsActionExecutor();
+        
+        assertEquals(new Path("hdfs://x/bla"), ae.resolveToFullPath(null, new Path("hdfs://x/bla"), true));
+        assertEquals(new Path("bla"), ae.resolveToFullPath(null, new Path("bla"), false));
+        
+        assertEquals(new Path("hdfs://x/bla"), ae.resolveToFullPath(new Path("hdfs://x"), new Path("/bla"), true));
+        
+        assertEquals(new Path("hdfs://x/bla"), ae.resolveToFullPath(new Path("hdfs://x/ha"), new Path("/bla"), true));
+        
+        assertEquals(new Path("hdfs://x/bla"), ae.resolveToFullPath(new Path("hdfs://z"), new Path("hdfs://x/bla"), true));
+        
+        assertEquals(new Path("hdfs://x/bla"), ae.resolveToFullPath(new Path("hdfs://x"), new Path("hdfs://x/bla"), true));
+
+        try {
+            ae.resolveToFullPath(null, new Path("hdfs://x/bla"), false);
+            fail();
+        }
+        catch (ActionExecutorException ex) {
+            assertEquals("FS003", ex.getErrorCode());	
+        }
+
+        try {
+            ae.resolveToFullPath(null, new Path("bla"), true);
+            fail();
+        }
+        catch (ActionExecutorException ex) {
+            assertEquals("FS001", ex.getErrorCode());	
+        }
+
+        try {
+            ae.resolveToFullPath(null, new Path("file://bla"), true);
+            fail();
+        }
+        catch (ActionExecutorException ex) {
+            assertEquals("FS002", ex.getErrorCode());	
+        }
+        
+        try {
+            ae.resolveToFullPath(new Path("hdfs://z"), new Path("hdfs://x/bla"), false);
+            fail();
+        }
+        catch (ActionExecutorException ex) {
+            assertEquals("FS003", ex.getErrorCode());	
+        }
+
+        try {
+            ae.resolveToFullPath(new Path("hdfs://z"), new Path("bla"), true);
+            fail();
+        }
+        catch (ActionExecutorException ex) {
+            assertEquals("FS011", ex.getErrorCode());	
+        }
+
+        try {
+            ae.resolveToFullPath(new Path("hdfs://z"), new Path("file://bla"), true);
+            fail();
         }
         catch (ActionExecutorException ex) {
             assertEquals("FS002", ex.getErrorCode());	
@@ -93,6 +160,7 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
 
         try {
             ae.validateSameNN(new Path("hdfs://x/bla"), new Path("viefs://x/bla"));
+            fail();
         }
         catch (ActionExecutorException ex) {
             assertEquals("FS007", ex.getErrorCode());   
@@ -100,10 +168,83 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
 
         try {
             ae.validateSameNN(new Path("hdfs://x/bla"), new Path("hdfs://y/bla"));
+            fail();
         }
         catch (ActionExecutorException ex) {
             assertEquals("FS007", ex.getErrorCode());   
         }
+    }
+    
+    public void testParseJobXML() throws Exception {
+        FsActionExecutor ae = new FsActionExecutor();
+        FileSystem fs = getFileSystem();
+        
+        Path mkdir = new Path(getFsTestCaseDir(), "mkdir");
+
+        String str = MessageFormat.format("<fs>"
+                + "<mkdir path=''{0}''/>"
+                + "</fs>", mkdir);
+        Element xml = XmlUtils.parseXml(str);
+
+        assertNull(ae.parseJobXML(createContext("<fs/>"), xml));
+        
+        
+        str = MessageFormat.format("<fs>"
+                + "<job-xml>job1.xml</job-xml>"
+                + "<job-xml>job2.xml</job-xml>"
+                + "<mkdir path=''{0}''/>"
+                + "</fs>", mkdir);
+        xml = XmlUtils.parseXml(str);
+        
+        Path appPath = new Path(getFsTestCaseDir(), "app");
+        getFileSystem().mkdirs(appPath);
+        
+        XConfiguration jConf = new XConfiguration();
+        jConf.set("p1", "v1");
+        jConf.set("p2", "v2");
+        OutputStream os = getFileSystem().create(new Path(appPath, "job1.xml"));
+        jConf.writeXml(os);
+        os.close();
+        
+        jConf = new XConfiguration();
+        jConf.set("p3", "v3");
+        jConf.set("p2", "v4");
+        os = getFileSystem().create(new Path(appPath, "job2.xml"));
+        jConf.writeXml(os);
+        os.close();
+        
+        XConfiguration jobXMLConf = ae.parseJobXML(createContext("<fs/>"), xml);
+        assertEquals(jobXMLConf.get("p1"), "v1");
+        assertEquals(jobXMLConf.get("p2"), "v4");
+        assertEquals(jobXMLConf.get("p3"), "v3");
+    }
+    
+    public void testParseConfiguration() throws Exception {
+        FsActionExecutor ae = new FsActionExecutor();
+        FileSystem fs = getFileSystem();
+        
+        Path mkdir = new Path(getFsTestCaseDir(), "mkdir");
+
+        String str = MessageFormat.format("<fs>"
+                + "<mkdir path=''{0}''/>"
+                + "</fs>", mkdir);
+        Element xml = XmlUtils.parseXml(str);
+
+        assertNull(ae.parseConfiguration(xml));
+        
+        
+        str = MessageFormat.format("<fs>"
+                + "<configuration>"
+                + "<property><name>p1</name><value>v1</value></property>"
+                + "<property><name>p2</name><value>v2</value></property>"
+                + "</configuration>"
+                + "<mkdir path=''{0}''/>"
+                + "</fs>", mkdir);
+        xml = XmlUtils.parseXml(str);
+
+        XConfiguration configConf = ae.parseConfiguration(xml);
+        assertEquals(configConf.get("p1"), "v1");
+        assertEquals(configConf.get("p2"), "v2");
     }
 
     public void testMkdir() throws Exception {
@@ -365,6 +506,76 @@ public void testChmodRecursive() throws Exception {
         assertEquals("rwxrwx---", fs.getFileStatus(child3).getPermission().toString());
         assertEquals("rwxrwx---", fs.getFileStatus(grandchild3).getPermission().toString());
     }
+    
+    public void testDoOperationsWithNameNodeElement() throws Exception {
+        FsActionExecutor ae = new FsActionExecutor();
+        FileSystem fs = getFileSystem();
+
+        Path mkdir = new Path(getFsTestCaseDir(), "mkdir");
+        Path mkdirX = new Path(mkdir.toUri().getPath());
+        Path delete = new Path(getFsTestCaseDir(), "delete");
+        Path deleteX = new Path(delete.toUri().getPath());
+        fs.mkdirs(delete);
+        Path source = new Path(getFsTestCaseDir(), "source");
+        Path sourceX = new Path(source.toUri().getPath());
+        fs.mkdirs(source);
+        Path target = new Path(new Path(getFsTestCaseDir(), "target").toUri().getPath());
+        Path chmod1 = new Path(getFsTestCaseDir(), "chmod1");
+        Path chmod1X = new Path(chmod1.toUri().getPath());
+        fs.mkdirs(chmod1);
+        Path child1 = new Path(chmod1, "child1");
+        fs.mkdirs(child1);
+        Path chmod2 = new Path(getFsTestCaseDir(), "chmod2");
+        Path chmod2X = new Path(chmod2.toUri().getPath());
+        fs.mkdirs(chmod2);
+        Path child2 = new Path(chmod2, "child2");
+        fs.mkdirs(child2);
+        Path newFile1 = new Path(mkdir + "newFile1");
+        Path newFile1X = new Path(newFile1.toUri().getPath());
+        Path newFile2 = new Path(mkdir + "newFile2");
+        Path newFile2X = new Path(newFile2.toUri().getPath());
+        fs.createNewFile(newFile1);
+        Path chmod3 = new Path(getFsTestCaseDir(), "chmod3");
+        Path chmod3X = new Path(chmod3.toUri().getPath());
+        fs.mkdirs(chmod3);
+        Path child3 = new Path(chmod3, "child3");
+        fs.mkdirs(child3);
+        Path grandchild3 = new Path(child3, "grandchild1");
+        fs.mkdirs(grandchild3);
+
+        String str = MessageFormat.format("<root><name-node>{0}</name-node>" +
+                "<mkdir path=''{1}''/>" +
+                "<delete path=''{2}''/>" +
+                "<move source=''{3}'' target=''{4}''/>" +
+                "<chmod path=''{5}'' permissions=''-rwxrwxrwx''/>" +
+                "<chmod path=''{6}'' permissions=''-rwxrwx---'' dir-files=''false''/>" +
+                "<touchz path=''{7}''/>" +
+                "<touchz path=''{8}''/>" +
+                "<chmod path=''{9}'' permissions=''-rwxrwx---''> <recursive/> </chmod>" +
+                "</root>", getNameNodeUri(), mkdirX, deleteX, sourceX, target, chmod1X, chmod2X, newFile1X, newFile2X, chmod3X);
+
+        Element xml = XmlUtils.parseXml(str);
+
+        ae.doOperations(createContext("<fs/>"), xml);
+
+        assertTrue(fs.exists(mkdir));
+        assertFalse(fs.exists(delete));
+        assertFalse(fs.exists(source));
+        assertTrue(fs.exists(target));
+        assertTrue(fs.exists(newFile1));
+        assertTrue(fs.exists(newFile2));
+
+        assertEquals("rwxrwxrwx", fs.getFileStatus(chmod1).getPermission().toString());
+        assertNotSame("rwxrwxrwx", fs.getFileStatus(child1).getPermission().toString());
+        assertEquals("rwxrwx---", fs.getFileStatus(chmod2).getPermission().toString());
+        assertNotSame("rwxrwx---", fs.getFileStatus(child2).getPermission().toString());
+
+        assertEquals("rwxrwx---", fs.getFileStatus(child3).getPermission().toString());
+        assertEquals("rwxrwx---", fs.getFileStatus(grandchild3).getPermission().toString());
+
+        assertEquals("rwxrwx---", fs.getFileStatus(child3).getPermission().toString());
+        assertEquals("rwxrwx---", fs.getFileStatus(grandchild3).getPermission().toString());
+    }
 
     public void testSubmit() throws Exception {
         FsActionExecutor ae = new FsActionExecutor();
@@ -396,6 +607,76 @@ public void testChmodRecursive() throws Exception {
                 "<touchz path=''{6}''/>" +
                 "<touchz path=''{7}''/>" +
                 "</fs>", mkdir, delete, source, target, chmod1, chmod2, newFile1, newFile2);
+
+        Context context = createContext(actionXml);
+        WorkflowAction action = context.getAction();
+
+        assertFalse(fs.exists(ae.getRecoveryPath(context)));
+
+        ae.start(context, action);
+
+        assertTrue(fs.exists(ae.getRecoveryPath(context)));
+
+        ae.check(context, context.getAction());
+        assertEquals("OK", context.getAction().getExternalStatus());
+        assertNull(context.getAction().getData());
+        ae.end(context, context.getAction());
+        assertEquals(WorkflowAction.Status.OK, context.getAction().getStatus());
+
+        assertFalse(fs.exists(ae.getRecoveryPath(context)));
+
+        assertTrue(fs.exists(mkdir));
+        assertFalse(fs.exists(delete));
+        assertFalse(fs.exists(source));
+        assertTrue(fs.exists(target));
+        assertTrue(fs.exists(newFile1));
+        assertTrue(fs.exists(newFile2));
+
+        assertEquals("rwxrwxrwx", fs.getFileStatus(chmod1).getPermission().toString());
+        assertNotSame("rwxrwxrwx", fs.getFileStatus(child1).getPermission().toString());
+        assertEquals("rwxrwx---", fs.getFileStatus(chmod2).getPermission().toString());
+        assertNotSame("rwxrwx---", fs.getFileStatus(child2).getPermission().toString());
+
+    }
+    
+    public void testSubmitWithNameNode() throws Exception {
+        FsActionExecutor ae = new FsActionExecutor();
+        FileSystem fs = getFileSystem();
+
+        Path mkdir = new Path(getFsTestCaseDir(), "mkdir");
+        Path mkdirX = new Path(mkdir.toUri().getPath());
+        Path delete = new Path(getFsTestCaseDir(), "delete");
+        Path deleteX = new Path(delete.toUri().getPath());
+        fs.mkdirs(delete);
+        Path source = new Path(getFsTestCaseDir(), "source");
+        Path sourceX = new Path(source.toUri().getPath());
+        fs.mkdirs(source);
+        Path target = new Path(new Path(getFsTestCaseDir(), "target").toUri().getPath());
+        Path chmod1 = new Path(getFsTestCaseDir(), "chmod1");
+        Path chmod1X = new Path(chmod1.toUri().getPath());
+        fs.mkdirs(chmod1);
+        Path child1 = new Path(chmod1, "child1");
+        fs.mkdirs(child1);
+        Path chmod2 = new Path(getFsTestCaseDir(), "chmod2");
+        Path chmod2X = new Path(chmod2.toUri().getPath());
+        fs.mkdirs(chmod2);
+        Path child2 = new Path(chmod2, "child2");
+        fs.mkdirs(child2);
+        Path newFile1 = new Path(mkdir + "newFile1");
+        Path newFile1X = new Path(newFile1.toUri().getPath());
+        Path newFile2 = new Path(mkdir + "newFile2");
+        Path newFile2X = new Path(newFile2.toUri().getPath());
+        fs.createNewFile(newFile1);
+
+        String actionXml = MessageFormat.format("<fs><name-node>{0}</name-node>" + 
+                "<mkdir path=''{1}''/>" +
+                "<delete path=''{2}''/>" +
+                "<move source=''{3}'' target=''{4}''/>" +
+                "<chmod path=''{5}'' permissions=''-rwxrwxrwx''/>" +
+                "<chmod path=''{6}'' permissions=''-rwxrwx---'' dir-files=''false''/>" +
+                "<touchz path=''{7}''/>" +
+                "<touchz path=''{8}''/>" +
+                "</fs>", getNameNodeUri(), mkdirX, deleteX, sourceX, target, chmod1X, chmod2X, newFile1X, newFile2X);
 
         Context context = createContext(actionXml);
         WorkflowAction action = context.getAction();

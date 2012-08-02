@@ -175,7 +175,7 @@ public class JavaActionExecutor extends ActionExecutor {
         return maxExternalStatsSize;
     }
 
-    void checkForDisallowedProps(Configuration conf, String confName) throws ActionExecutorException {
+    static void checkForDisallowedProps(Configuration conf, String confName) throws ActionExecutorException {
         for (String prop : DISALLOWED_PROPERTIES) {
             if (conf.get(prop) != null) {
                 throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "JA010",
