@@ -156,7 +156,7 @@ public class JavaActionExecutor extends ActionExecutor {
                     ActionExecutorException.ErrorType.NON_TRANSIENT, "JA004");
             registerError(org.apache.hadoop.hdfs.server.namenode.SafeModeException.class.getName(),
                     ActionExecutorException.ErrorType.NON_TRANSIENT, "JA005");
-            registerError(ConnectException.class.getName(), ActionExecutorException.ErrorType.TRANSIENT, "JA006");
+            registerError(ConnectException.class.getName(), ActionExecutorException.ErrorType.TRANSIENT, "  JA006");
             registerError(JDOMException.class.getName(), ActionExecutorException.ErrorType.ERROR, "JA007");
             registerError(FileNotFoundException.class.getName(), ActionExecutorException.ErrorType.ERROR, "JA008");
             registerError(IOException.class.getName(), ActionExecutorException.ErrorType.TRANSIENT, "JA009");

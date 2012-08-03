@@ -34,12 +34,16 @@ import java.io.StringReader;
 //TODO javadoc
 public abstract class LiteWorkflowLib implements WorkflowLib {
     private Schema schema;
+    private Class<? extends ControlNodeHandler> controlHandlerClass;
     private Class<? extends DecisionNodeHandler> decisionHandlerClass;
     private Class<? extends ActionNodeHandler> actionHandlerClass;
 
-    public LiteWorkflowLib(Schema schema, Class<? extends DecisionNodeHandler> decisionHandlerClass,
+    public LiteWorkflowLib(Schema schema,
+                           Class<? extends ControlNodeHandler> controlNodeHandler,
+                           Class<? extends DecisionNodeHandler> decisionHandlerClass,
                            Class<? extends ActionNodeHandler> actionHandlerClass) {
         this.schema = schema;
+        this.controlHandlerClass = controlNodeHandler;
         this.decisionHandlerClass = decisionHandlerClass;
         this.actionHandlerClass = actionHandlerClass;
     }
@@ -47,7 +51,7 @@ public abstract class LiteWorkflowLib implements WorkflowLib {
     @Override
     public WorkflowApp parseDef(String appXml) throws WorkflowException {
         ParamChecker.notEmpty(appXml, "appXml");
-        return new LiteWorkflowAppParser(schema, decisionHandlerClass, actionHandlerClass)
+        return new LiteWorkflowAppParser(schema, controlHandlerClass, decisionHandlerClass, actionHandlerClass)
                 .validateAndParse(new StringReader(appXml));
     }
 

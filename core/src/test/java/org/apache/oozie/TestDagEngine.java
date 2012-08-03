@@ -127,21 +127,21 @@ public class TestDagEngine extends XTestCase {
         assertEquals("CCCC", conf.get("e"));
         assertEquals("CCCCCCCC", conf.get("f"));
 
-        waitFor(5000, new Predicate() {
+        waitFor(10000, new Predicate() {
             public boolean evaluate() throws Exception {
                 WorkflowJobBean bean = Services.get().get(WorkflowStoreService.class).create().getWorkflow(jobId1, false);
                 return bean.getWorkflowInstance().getStatus().isEndState();
             }
         });
         assertEquals(WorkflowJob.Status.KILLED, engine.getJob(jobId1).getStatus());
-        waitFor(5000, new Predicate() {
+        waitFor(10000, new Predicate() {
             public boolean evaluate() throws Exception {
                 return CallbackServlet.JOB_ID != null;
             }
         });
         assertEquals(wf.getId(), CallbackServlet.JOB_ID);
-        assertEquals("a", CallbackServlet.NODE_NAME);
-        assertEquals("T:kill", CallbackServlet.STATUS);
+        assertEquals("kill", CallbackServlet.NODE_NAME);
+        assertEquals("T:null", CallbackServlet.STATUS);
     }
 
     public void testJobDefinition() throws Exception {

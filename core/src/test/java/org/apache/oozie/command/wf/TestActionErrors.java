@@ -30,6 +30,7 @@ import org.apache.oozie.DagEngine;
 import org.apache.oozie.ForTestingActionExecutor;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.action.control.KillActionExecutor;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.OozieClient;
@@ -278,9 +279,16 @@ public class TestActionErrors extends XDataTestCase {
         List<WorkflowActionBean> actions = jpaService.execute(wfActionsGetCmd);
 
         int n = actions.size();
-        WorkflowActionBean action = actions.get(n - 1);
+        WorkflowActionBean action = null;
+        for (WorkflowActionBean bean : actions) {
+            if (bean.getType().equals("test")) {
+                action = bean;
+                break;
+            }
+        }
+        assertNotNull(action);
         assertEquals("TEST_ERROR", action.getErrorCode());
-        assertEquals("[end]", action.getErrorMessage());
+        assertEquals("end", action.getErrorMessage());
         assertEquals(WorkflowAction.Status.ERROR, action.getStatus());
     }
 
@@ -456,7 +464,14 @@ public class TestActionErrors extends XDataTestCase {
         store.beginTrx();
         while (retryCount <= maxRetries) {
             List<WorkflowActionBean> actions = store.getActionsForWorkflow(jobId, false);
-            WorkflowActionBean action = actions.get(0);
+            WorkflowActionBean action = null;
+            for (WorkflowActionBean bean : actions) {
+                if (bean.getType().equals("test")) {
+                    action = bean;
+                    break;
+                }
+            }
+            assertNotNull(action);
             aId = action.getId();
             assertEquals(expectedStatus, action.getStatus());
             assertEquals(expectedRetryCount, action.getRetries());
@@ -534,7 +549,7 @@ public class TestActionErrors extends XDataTestCase {
         store.commitTrx();
         store.closeTrx();
     }
-    
+
     /**
      * Provides functionality to test user retry
      *
@@ -562,18 +577,31 @@ public class TestActionErrors extends XDataTestCase {
 
         final JPAService jpaService = Services.get().get(JPAService.class);
         final WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(jobId);
-    
+
         final WorkflowActionsGetForJobJPAExecutor actionsGetExecutor = new WorkflowActionsGetForJobJPAExecutor(jobId);
         waitFor(5000, new Predicate() {
             public boolean evaluate() throws Exception {
-            	List<WorkflowActionBean> actions = jpaService.execute(actionsGetExecutor);
-                WorkflowActionBean action = actions.get(0);
-                return (action.getUserRetryCount() == 2);
+                List<WorkflowActionBean> actions = jpaService.execute(actionsGetExecutor);
+                WorkflowActionBean action = null;
+                for (WorkflowActionBean bean : actions) {
+                    if (bean.getType().equals("test")) {
+                        action = bean;
+                        break;
+                    }
+                }
+                return (action != null && action.getUserRetryCount() == 2);
             }
         });
-        
+
         List<WorkflowActionBean> actions = jpaService.execute(actionsGetExecutor);
-        WorkflowActionBean action = actions.get(0);
+        WorkflowActionBean action = null;
+        for (WorkflowActionBean bean : actions) {
+            if (bean.getType().equals("test")) {
+                action = bean;
+                break;
+            }
+        }
+        assertNotNull(action);
         assertEquals(2, action.getUserRetryCount());
     }
 
@@ -620,7 +648,14 @@ public class TestActionErrors extends XDataTestCase {
         assertEquals(WorkflowJob.Status.FAILED, engine.getJob(jobId).getStatus());
 
         List<WorkflowActionBean> actions = store2.getActionsForWorkflow(jobId, false);
-        WorkflowActionBean action = actions.get(0);
+        WorkflowActionBean action = null;
+        for (WorkflowActionBean bean : actions) {
+            if (bean.getType().equals("test")) {
+                action = bean;
+                break;
+            }
+        }
+        assertNotNull(action);
         assertEquals(expActionErrorCode, action.getErrorCode());
         store2.commitTrx();
         store2.closeTrx();

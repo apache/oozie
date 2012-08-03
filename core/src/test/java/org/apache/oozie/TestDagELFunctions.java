@@ -19,6 +19,7 @@ package org.apache.oozie;
 
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.workflow.lite.EndNodeDef;
 import org.apache.oozie.workflow.lite.LiteWorkflowApp;
@@ -53,7 +54,9 @@ public class TestDagELFunctions extends XTestCase {
         conf.set(OozieClient.USER_NAME, "user");
         conf.set("a", "A");
         LiteWorkflowApp def =
-                new LiteWorkflowApp("name", "<workflow-app/>", new StartNodeDef("end")).addNode(new EndNodeDef("end"));
+                new LiteWorkflowApp("name", "<workflow-app/>",
+                    new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "end")).
+                        addNode(new EndNodeDef("end", LiteWorkflowStoreService.LiteControlNodeHandler.class));
         LiteWorkflowInstance job = new LiteWorkflowInstance(def, conf, "wfId");
 
         WorkflowJobBean wf = new WorkflowJobBean();

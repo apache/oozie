@@ -27,6 +27,7 @@ import org.apache.oozie.client.WorkflowJob;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.oozie.workflow.lite.NodeHandler;
 
 import java.io.File;
 import java.io.StringReader;
@@ -229,7 +230,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
         writer.close();
 
         XConfiguration protoConf = getBaseProtoConf();
-        WorkflowJobBean workflow = createBaseWorkflow(protoConf, "W");
+        final WorkflowJobBean workflow = createBaseWorkflow(protoConf, "W");
         String defaultConf = workflow.getConf();
         XConfiguration newConf = new XConfiguration(new StringReader(defaultConf));
         String actionConf = "<sub-workflow xmlns='uri:oozie:workflow:0.1' name='subwf'>" +
@@ -246,13 +247,20 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
         action.setConf(actionConf);
 
         // negative test
-        SubWorkflowActionExecutor subWorkflow = new SubWorkflowActionExecutor();
+        final SubWorkflowActionExecutor subWorkflow = new SubWorkflowActionExecutor();
         workflow.setConf(newConf.toXmlString());
 
         subWorkflow.start(new Context(workflow, action), action);
 
         OozieClient oozieClient = subWorkflow.getWorkflowClient(new Context(workflow, action),
                                                                       SubWorkflowActionExecutor.LOCAL);
+        waitFor(5000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                subWorkflow.check(new Context(workflow, action), action);
+                return action.getStatus() == WorkflowActionBean.Status.DONE;
+            }
+        });
 
         subWorkflow.check(new Context(workflow, action), action);
         subWorkflow.end(new Context(workflow, action), action);
@@ -267,7 +275,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
         // positive test
         newConf.set(OozieClient.GROUP_NAME, getTestGroup());
         workflow.setConf(newConf.toXmlString());
-        WorkflowActionBean action1 = new WorkflowActionBean();
+        final WorkflowActionBean action1 = new WorkflowActionBean();
         action1.setConf(actionConf);
         action1.setId("W1");
 
@@ -275,6 +283,14 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
 
         oozieClient = subWorkflow.getWorkflowClient(new Context(workflow, action1),
                                                                       SubWorkflowActionExecutor.LOCAL);
+
+        waitFor(5000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                subWorkflow.check(new Context(workflow, action1), action1);
+                return action1.getStatus() == WorkflowActionBean.Status.DONE;
+            }
+        });
 
         subWorkflow.check(new Context(workflow, action1), action1);
         subWorkflow.end(new Context(workflow, action1), action1);

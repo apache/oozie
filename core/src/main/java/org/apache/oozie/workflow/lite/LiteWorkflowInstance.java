@@ -222,7 +222,10 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
                     // TEST THIS
                     if (last >= 0) {
                         String transitionTo = getTransitionNode(fullTransitions.get(last));
-
+                        if (nodeDef instanceof ForkNodeDef) {
+                            transitionTo = "*"; // WF action cannot hold all transitions for a fork.
+                                                // transitions are hardcoded in the WF app.
+                        }
                         persistentVars.put(nodeDef.getName() + WorkflowInstance.NODE_VAR_SEPARATOR + TRANSITION_TO,
                                            transitionTo);
                     }
@@ -299,6 +302,7 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
             }
             else {
                 List<String> killedNodes = terminateNodes(Status.KILLED);
+
                 if (killedNodes.size() > 1) {
                     log.warn(XLog.STD, "Workflow completed [{0}], killing [{1}] running nodes", status, killedNodes
                             .size());
@@ -428,21 +432,23 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
         for (Map.Entry<String, NodeInstance> entry : executionPaths.entrySet()) {
             if (entry.getValue().started) {
                 NodeDef nodeDef = def.getNode(entry.getValue().nodeName);
-                NodeHandler nodeHandler = newInstance(nodeDef.getHandlerClass());
-                try {
-                    if (endStatus == Status.KILLED) {
-                        nodeHandler.kill(new Context(nodeDef, entry.getKey(), null));
-                    }
-                    else {
-                        if (endStatus == Status.FAILED) {
-                            nodeHandler.fail(new Context(nodeDef, entry.getKey(), null));
+                if (!(nodeDef instanceof ControlNodeDef)) {
+                    NodeHandler nodeHandler = newInstance(nodeDef.getHandlerClass());
+                    try {
+                        if (endStatus == Status.KILLED) {
+                            nodeHandler.kill(new Context(nodeDef, entry.getKey(), null));
                         }
+                        else {
+                            if (endStatus == Status.FAILED) {
+                                nodeHandler.fail(new Context(nodeDef, entry.getKey(), null));
+                            }
+                        }
+                        endNodes.add(nodeDef.getName());
                     }
-                    endNodes.add(nodeDef.getName());
-                }
-                catch (Exception ex) {
-                    log.warn(XLog.STD, "Error Changing node state to [{0}] for Node [{1}]", endStatus.toString(),
-                             nodeDef.getName(), ex);
+                    catch (Exception ex) {
+                        log.warn(XLog.STD, "Error Changing node state to [{0}] for Node [{1}]", endStatus.toString(),
+                                 nodeDef.getName(), ex);
+                    }
                 }
             }
         }

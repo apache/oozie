@@ -107,7 +107,14 @@ public class TestActionCheckerService extends XDataTestCase {
         assertNotNull(jpaService);
         WorkflowActionsGetForJobJPAExecutor actionsGetExecutor = new WorkflowActionsGetForJobJPAExecutor(jobId);
         List<WorkflowActionBean> actions = jpaService.execute(actionsGetExecutor);
-        WorkflowActionBean action = actions.get(0);
+        WorkflowActionBean action = null;
+        for (WorkflowActionBean bean : actions) {
+            if (bean.getType().equals("test")) {
+                action = bean;
+                break;
+            }
+        }
+        assertNotNull(action);
         assertEquals(WorkflowActionBean.Status.RUNNING, action.getStatus());
 
         Thread.sleep(2000);
@@ -166,7 +173,14 @@ public class TestActionCheckerService extends XDataTestCase {
         assertNotNull(jpaService);
         WorkflowActionsGetForJobJPAExecutor actionsGetExecutor = new WorkflowActionsGetForJobJPAExecutor(jobId);
         List<WorkflowActionBean> actions = jpaService.execute(actionsGetExecutor);
-        WorkflowActionBean action = actions.get(0);
+        WorkflowActionBean action = null;
+        for (WorkflowActionBean bean : actions) {
+            if (bean.getType().equals("test")) {
+                action = bean;
+                break;
+            }
+        }
+        assertNotNull(action);
         assertEquals(WorkflowActionBean.Status.RUNNING, action.getStatus());
 
         action.setLastCheckTime(new Date());
@@ -180,7 +194,14 @@ public class TestActionCheckerService extends XDataTestCase {
         Thread.sleep(3000);
 
         List<WorkflowActionBean> actions2 = jpaService.execute(actionsGetExecutor);
-        WorkflowActionBean action2 = actions2.get(0);
+        WorkflowActionBean action2 = null;
+        for (WorkflowActionBean bean : actions2) {
+            if (bean.getType().equals("test")) {
+                action2 = bean;
+                break;
+            }
+        }
+        assertNotNull(action);
         assertEquals(WorkflowActionBean.Status.RUNNING, action2.getStatus());
         assertEquals(WorkflowJob.Status.RUNNING, engine.getJob(jobId).getStatus());
     }

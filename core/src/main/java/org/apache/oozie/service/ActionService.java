@@ -19,6 +19,11 @@ package org.apache.oozie.service;
 
 import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.oozie.action.ActionExecutor;
+import org.apache.oozie.action.control.EndActionExecutor;
+import org.apache.oozie.action.control.ForkActionExecutor;
+import org.apache.oozie.action.control.JoinActionExecutor;
+import org.apache.oozie.action.control.KillActionExecutor;
+import org.apache.oozie.action.control.StartActionExecutor;
 import org.apache.oozie.service.Service;
 import org.apache.oozie.service.ServiceException;
 import org.apache.oozie.service.Services;
@@ -45,8 +50,12 @@ public class ActionService implements Service {
         ActionExecutor.resetInitInfo();
         ActionExecutor.disableInit();
         executors = new HashMap<String, Class<? extends ActionExecutor>>();
-        Class<? extends ActionExecutor>[] classes =
-                (Class<? extends ActionExecutor>[]) services.getConf().getClasses(CONF_ACTION_EXECUTOR_CLASSES);
+
+        Class<? extends ActionExecutor>[] classes = new Class[] { StartActionExecutor.class,
+            EndActionExecutor.class, KillActionExecutor.class,  ForkActionExecutor.class, JoinActionExecutor.class };
+        registerExecutors(classes);
+
+        classes = (Class<? extends ActionExecutor>[]) services.getConf().getClasses(CONF_ACTION_EXECUTOR_CLASSES);
         registerExecutors(classes);
 
         classes = (Class<? extends ActionExecutor>[]) services.getConf().getClasses(CONF_ACTION_EXECUTOR_EXT_CLASSES);

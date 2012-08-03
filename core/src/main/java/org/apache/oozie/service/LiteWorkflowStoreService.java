@@ -19,6 +19,11 @@ package org.apache.oozie.service;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.StringUtils;
+import org.apache.oozie.action.control.EndActionExecutor;
+import org.apache.oozie.action.control.ForkActionExecutor;
+import org.apache.oozie.action.control.JoinActionExecutor;
+import org.apache.oozie.action.control.KillActionExecutor;
+import org.apache.oozie.action.control.StartActionExecutor;
 import org.apache.oozie.command.wf.ReRunXCommand;
 
 import org.apache.oozie.client.WorkflowAction;
@@ -28,10 +33,17 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.workflow.WorkflowException;
 import org.apache.oozie.workflow.WorkflowInstance;
 import org.apache.oozie.workflow.lite.ActionNodeHandler;
+import org.apache.oozie.workflow.lite.ControlNodeHandler;
 import org.apache.oozie.workflow.lite.DecisionNodeHandler;
+import org.apache.oozie.workflow.lite.EndNodeDef;
+import org.apache.oozie.workflow.lite.ForkNodeDef;
+import org.apache.oozie.workflow.lite.JoinNodeDef;
+import org.apache.oozie.workflow.lite.KillNodeDef;
+import org.apache.oozie.workflow.lite.NodeDef;
 import org.apache.oozie.workflow.lite.NodeHandler;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
+import org.apache.oozie.workflow.lite.StartNodeDef;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 
@@ -59,10 +71,11 @@ public abstract class LiteWorkflowStoreService extends WorkflowStoreService {
      * necessary information to create ActionExecutors.
      *
      * @param context NodeHandler context.
+     * @param actionType the action type.
      * @throws WorkflowException thrown if there was an error parsing the action configuration.
      */
     @SuppressWarnings("unchecked")
-    protected static void liteExecute(NodeHandler.Context context) throws WorkflowException {
+    protected static void liteExecute(NodeHandler.Context context, String actionType) throws WorkflowException {
         XLog log = XLog.getLog(LiteWorkflowStoreService.class);
         String jobId = context.getProcessInstance().getId();
         String nodeName = context.getNodeDef().getName();
@@ -79,16 +92,16 @@ public abstract class LiteWorkflowStoreService extends WorkflowStoreService {
             String nodeConf = context.getNodeDef().getConf();
             String executionPath = context.getExecutionPath();
 
-            String actionType;
-            try {
-                Element element = XmlUtils.parseXml(nodeConf);
-                actionType = element.getName();
-                nodeConf = XmlUtils.prettyPrint(element).toString();
+            if (actionType == null) {
+                try {
+                    Element element = XmlUtils.parseXml(nodeConf);
+                    actionType = element.getName();
+                    nodeConf = XmlUtils.prettyPrint(element).toString();
+                }
+                catch (JDOMException ex) {
+                    throw new WorkflowException(ErrorCode.E0700, ex.getMessage(), ex);
+                }
             }
-            catch (JDOMException ex) {
-                throw new WorkflowException(ErrorCode.E0700, ex.getMessage(), ex);
-            }
-
             log.debug(" Creating action for node [{0}]", nodeName);
             action.setType(actionType);
             action.setExecutionPath(executionPath);
@@ -236,7 +249,7 @@ public abstract class LiteWorkflowStoreService extends WorkflowStoreService {
 
         @Override
         public void start(Context context) throws WorkflowException {
-            liteExecute(context);
+            liteExecute(context, null);
         }
 
         @Override
@@ -259,7 +272,7 @@ public abstract class LiteWorkflowStoreService extends WorkflowStoreService {
 
         @Override
         public void start(Context context) throws WorkflowException {
-            liteExecute(context);
+            liteExecute(context, null);
         }
 
         @Override
@@ -275,5 +288,35 @@ public abstract class LiteWorkflowStoreService extends WorkflowStoreService {
         public void fail(Context context) {
             liteFail(context);
         }
+    }
+
+    // wires workflow lib control nodes with Oozie Dag
+    public static class LiteControlNodeHandler extends ControlNodeHandler {
+
+      @Override
+      public void touch(Context context) throws WorkflowException {
+          Class<? extends NodeDef> nodeClass = context.getNodeDef().getClass();
+          String nodeType;
+          if (nodeClass.equals(StartNodeDef.class)) {
+            nodeType = StartActionExecutor.TYPE;
+          }
+          else if (nodeClass.equals(EndNodeDef.class)) {
+              nodeType = EndActionExecutor.TYPE;
+          }
+          else if (nodeClass.equals(KillNodeDef.class)) {
+              nodeType = KillActionExecutor.TYPE;
+          }
+          else if (nodeClass.equals(ForkNodeDef.class)) {
+              nodeType = ForkActionExecutor.TYPE;
+          }
+          else if (nodeClass.equals(JoinNodeDef.class)) {
+              nodeType = JoinActionExecutor.TYPE;
+          } else {
+            throw new IllegalStateException("Invalid node type: " + nodeClass);
+          }
+
+          liteExecute(context, nodeType);
+      }
+
     }
 }

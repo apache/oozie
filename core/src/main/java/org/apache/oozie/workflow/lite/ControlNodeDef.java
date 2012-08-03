@@ -17,19 +17,20 @@
  */
 package org.apache.oozie.workflow.lite;
 
-import java.util.Collections;
+import java.util.List;
 
 /**
- * Node definition for END control node.
+ * Node definition for control nodes: START/END/KILL/FORK/JOIN.
  */
-public class EndNodeDef extends ControlNodeDef {
+public abstract class ControlNodeDef extends NodeDef {
 
-    EndNodeDef() {
+    ControlNodeDef() {
     }
 
     @SuppressWarnings("unchecked")
-    public EndNodeDef(String name, Class<? extends ControlNodeHandler> klass) {
-        super(name, "", klass, Collections.EMPTY_LIST);
+    public ControlNodeDef(String name, String conf, Class<? extends ControlNodeHandler> controlHandlerClass,
+                          List <String> transitions) {
+        super(name, conf, controlHandlerClass, transitions);
     }
 
 }

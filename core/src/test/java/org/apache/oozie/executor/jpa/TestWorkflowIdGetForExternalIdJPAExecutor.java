@@ -24,6 +24,7 @@ import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.executor.jpa.WorkflowIdGetForExternalIdJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobInsertJPAExecutor;
 import org.apache.oozie.service.JPAService;
+import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.workflow.WorkflowApp;
@@ -65,8 +66,10 @@ public class TestWorkflowIdGetForExternalIdJPAExecutor extends XDataTestCase {
 
     @Override
     protected WorkflowJobBean addRecordToWfJobTable(WorkflowJob.Status jobStatus, WorkflowInstance.Status instanceStatus) throws Exception {
-        WorkflowApp app = new LiteWorkflowApp("testApp", "<workflow-app/>", new StartNodeDef("end"))
-                .addNode(new EndNodeDef("end"));
+        WorkflowApp app =
+            new LiteWorkflowApp("testApp", "<workflow-app/>",
+                new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "end")).
+                    addNode(new EndNodeDef("end", LiteWorkflowStoreService.LiteControlNodeHandler.class));
         Configuration conf = new Configuration();
         conf.set(OozieClient.APP_PATH, "testPath");
         conf.set(OozieClient.LOG_TOKEN, "testToken");

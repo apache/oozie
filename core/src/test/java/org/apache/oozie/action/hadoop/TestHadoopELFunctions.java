@@ -22,6 +22,7 @@ import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.command.wf.ActionXCommand;
 import org.apache.oozie.service.ELService;
+import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.UUIDService.ApplicationType;
@@ -49,8 +50,9 @@ public class TestHadoopELFunctions extends ActionExecutorTestCase {
 
         WorkflowJobBean workflow = new WorkflowJobBean();
         workflow.setProtoActionConf("<configuration/>");
-        LiteWorkflowApp wfApp = new LiteWorkflowApp("x", "<workflow-app/>", new StartNodeDef("a"));
-        wfApp.addNode(new EndNodeDef("a"));
+        LiteWorkflowApp wfApp = new LiteWorkflowApp("x", "<workflow-app/>",
+            new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "a"));
+        wfApp.addNode(new EndNodeDef("a", LiteWorkflowStoreService.LiteControlNodeHandler.class));
         WorkflowInstance wi = new LiteWorkflowInstance(wfApp, new XConfiguration(), "1");
 
         workflow.setWorkflowInstance(wi);
@@ -93,8 +95,9 @@ public class TestHadoopELFunctions extends ActionExecutorTestCase {
 
         WorkflowJobBean workflow = new WorkflowJobBean();
         workflow.setProtoActionConf("<configuration/>");
-        LiteWorkflowApp wfApp = new LiteWorkflowApp("x", "<workflow-app/>", new StartNodeDef("a"));
-        wfApp.addNode(new EndNodeDef("a"));
+        LiteWorkflowApp wfApp = new LiteWorkflowApp("x", "<workflow-app/>",
+            new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "a"));
+        wfApp.addNode(new EndNodeDef("a", LiteWorkflowStoreService.LiteControlNodeHandler.class));
         WorkflowInstance wi = new LiteWorkflowInstance(wfApp, new XConfiguration(), "1");
 
         workflow.setWorkflowInstance(wi);

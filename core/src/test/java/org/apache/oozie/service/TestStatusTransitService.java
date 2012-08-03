@@ -747,8 +747,9 @@ public class TestStatusTransitService extends XDataTestCase {
 
     protected WorkflowJobBean addRecordToWfJobTable(String wfId, WorkflowJob.Status jobStatus,
             WorkflowInstance.Status instanceStatus) throws Exception {
-        WorkflowApp app = new LiteWorkflowApp("testApp", "<workflow-app/>", new StartNodeDef("end"))
-                .addNode(new EndNodeDef("end"));
+        WorkflowApp app = new LiteWorkflowApp("testApp", "<workflow-app/>",
+            new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "end")).
+                addNode(new EndNodeDef("end", LiteWorkflowStoreService.LiteControlNodeHandler.class));
         Configuration conf = new Configuration();
         Path appUri = new Path(getAppPath(), "workflow.xml");
         conf.set(OozieClient.APP_PATH, appUri.toString());

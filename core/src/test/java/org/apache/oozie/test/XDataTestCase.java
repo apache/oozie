@@ -57,6 +57,7 @@ import org.apache.oozie.executor.jpa.SLAEventInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobInsertJPAExecutor;
 import org.apache.oozie.service.JPAService;
+import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.WorkflowAppService;
@@ -547,8 +548,9 @@ public abstract class XDataTestCase extends XFsTestCase {
      */
     protected WorkflowJobBean addRecordToWfJobTable(WorkflowJob.Status jobStatus, WorkflowInstance.Status instanceStatus)
             throws Exception {
-        WorkflowApp app = new LiteWorkflowApp("testApp", "<workflow-app/>", new StartNodeDef("end"))
-                .addNode(new EndNodeDef("end"));
+        WorkflowApp app = new LiteWorkflowApp("testApp", "<workflow-app/>",
+            new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "end")).
+                addNode(new EndNodeDef("end", LiteWorkflowStoreService.LiteControlNodeHandler.class));
         Configuration conf = new Configuration();
         Path appUri = new Path(getAppPath(), "workflow.xml");
         conf.set(OozieClient.APP_PATH, appUri.toString());
