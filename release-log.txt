@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-936 TestActionFailover failing (virag)
 OOZIE-931 inconsistency on timestamp format between CLI command and web UI (egashira via virag)
 OOZIE-708 Update the parent entity status dynamically (virag)
 OOZIE-243 Workflow nodes START/END/KILL/FORK/JOIN should create rows in the action DB table (tucu)
