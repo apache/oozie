@@ -967,9 +967,9 @@ public class OozieCLI {
                         + VERBOSE_DELIMITER + maskIfNull(action.getExternalId()) + VERBOSE_DELIMITER
                         + maskIfNull(action.getExternalStatus()) + VERBOSE_DELIMITER + maskIfNull(action.getJobId())
                         + VERBOSE_DELIMITER + maskIfNull(action.getTrackerUri()) + VERBOSE_DELIMITER
-                        + maskDate(action.getCreatedTime(), timeZoneId) + VERBOSE_DELIMITER
-                        + maskDate(action.getNominalTime(), timeZoneId) + action.getStatus() + VERBOSE_DELIMITER
-                        + maskDate(action.getLastModifiedTime(), timeZoneId) + VERBOSE_DELIMITER
+                        + maskDate(action.getCreatedTime(), timeZoneId, verbose) + VERBOSE_DELIMITER
+                        + maskDate(action.getNominalTime(), timeZoneId, verbose) + action.getStatus() + VERBOSE_DELIMITER
+                        + maskDate(action.getLastModifiedTime(), timeZoneId, verbose) + VERBOSE_DELIMITER
                         + maskIfNull(missingDep));
 
                 System.out.println(RULER);
@@ -982,8 +982,8 @@ public class OozieCLI {
             for (CoordinatorAction action : actions) {
                 System.out.println(String.format(COORD_ACTION_FORMATTER, maskIfNull(action.getId()),
                         action.getStatus(), maskIfNull(action.getExternalId()), maskIfNull(action.getErrorCode()),
-                        maskDate(action.getCreatedTime(), timeZoneId), maskDate(action.getNominalTime(), timeZoneId),
-                        maskDate(action.getLastModifiedTime(), timeZoneId)));
+                        maskDate(action.getCreatedTime(), timeZoneId, verbose), maskDate(action.getNominalTime(), timeZoneId, verbose),
+                        maskDate(action.getLastModifiedTime(), timeZoneId, verbose)));
 
                 System.out.println(RULER);
             }
@@ -1007,9 +1007,9 @@ public class OozieCLI {
         System.out.println(RULER);
 
         for (CoordinatorJob job : coordinators) {
-            System.out.println(String.format(BUNDLE_COORD_JOBS_FORMATTER, maskIfNull(job.getId()), job.getStatus(), job
-                    .getFrequency(), job.getTimeUnit(), maskDate(job.getStartTime(), timeZoneId), maskDate(job
-                    .getNextMaterializedTime(), timeZoneId)));
+            System.out.println(String.format(BUNDLE_COORD_JOBS_FORMATTER, maskIfNull(job.getId()), job.getStatus(),
+                    job.getFrequency(), job.getTimeUnit(), maskDate(job.getStartTime(), timeZoneId, verbose),
+                    maskDate(job.getNextMaterializedTime(), timeZoneId, verbose)));
 
             System.out.println(RULER);
         }
@@ -1028,10 +1028,10 @@ public class OozieCLI {
         System.out.println("External Status      : " + maskIfNull(coordAction.getExternalStatus()));
         System.out.println("Job ID               : " + maskIfNull(coordAction.getJobId()));
         System.out.println("Tracker URI          : " + maskIfNull(coordAction.getTrackerUri()));
-        System.out.println("Created              : " + maskDate(coordAction.getCreatedTime(), timeZoneId));
-        System.out.println("Nominal Time         : " + maskDate(coordAction.getNominalTime(), timeZoneId));
+        System.out.println("Created              : " + maskDate(coordAction.getCreatedTime(), timeZoneId, false));
+        System.out.println("Nominal Time         : " + maskDate(coordAction.getNominalTime(), timeZoneId, false));
         System.out.println("Status               : " + coordAction.getStatus());
-        System.out.println("Last Modified        : " + maskDate(coordAction.getLastModifiedTime(), timeZoneId));
+        System.out.println("Last Modified        : " + maskDate(coordAction.getLastModifiedTime(), timeZoneId, false));
         String missingDep = coordAction.getMissingDependencies();
         if(missingDep != null && !missingDep.isEmpty()) {
             missingDep = missingDep.split(INSTANCE_SEPARATOR)[0];
@@ -1047,7 +1047,7 @@ public class OozieCLI {
             System.out.println(RULER);
             for (CoordinatorAction action : actions) {
                 System.out.println(maskIfNull(action.getId()) + VERBOSE_DELIMITER
-                        + maskDate(action.getNominalTime(), null));
+                        + maskDate(action.getNominalTime(), null,false));
             }
         }
         else {
@@ -1069,9 +1069,9 @@ public class OozieCLI {
         System.out.println("Retries           : " + action.getRetries());
         System.out.println("Tracker URI       : " + maskIfNull(action.getTrackerUri()));
         System.out.println("Type              : " + maskIfNull(action.getType()));
-        System.out.println("Started           : " + maskDate(action.getStartTime(), timeZoneId));
+        System.out.println("Started           : " + maskDate(action.getStartTime(), timeZoneId, verbose));
         System.out.println("Status            : " + action.getStatus());
-        System.out.println("Ended             : " + maskDate(action.getEndTime(), timeZoneId));
+        System.out.println("Ended             : " + maskDate(action.getEndTime(), timeZoneId, verbose));
 
         if (verbose) {
             System.out.println("External Stats    : " + action.getStats());
@@ -1100,10 +1100,10 @@ public class OozieCLI {
         System.out.println("Run           : " + job.getRun());
         System.out.println("User          : " + maskIfNull(job.getUser()));
         System.out.println("Group         : " + maskIfNull(job.getGroup()));
-        System.out.println("Created       : " + maskDate(job.getCreatedTime(), timeZoneId));
-        System.out.println("Started       : " + maskDate(job.getStartTime(), timeZoneId));
-        System.out.println("Last Modified : " + maskDate(job.getLastModifiedTime(), timeZoneId));
-        System.out.println("Ended         : " + maskDate(job.getEndTime(), timeZoneId));
+        System.out.println("Created       : " + maskDate(job.getCreatedTime(), timeZoneId, verbose));
+        System.out.println("Started       : " + maskDate(job.getStartTime(), timeZoneId, verbose));
+        System.out.println("Last Modified : " + maskDate(job.getLastModifiedTime(), timeZoneId, verbose));
+        System.out.println("Ended         : " + maskDate(job.getEndTime(), timeZoneId, verbose));
         System.out.println("CoordAction ID: " + maskIfNull(job.getParentId()));
 
         List<WorkflowAction> actions = job.getActions();
@@ -1130,8 +1130,9 @@ public class OozieCLI {
                             + maskIfNull(action.getExternalStatus()) + VERBOSE_DELIMITER + maskIfNull(action.getName())
                             + VERBOSE_DELIMITER + action.getRetries() + VERBOSE_DELIMITER
                             + maskIfNull(action.getTrackerUri()) + VERBOSE_DELIMITER + maskIfNull(action.getType())
-                            + VERBOSE_DELIMITER + maskDate(action.getStartTime(), timeZoneId) + VERBOSE_DELIMITER
-                            + action.getStatus() + VERBOSE_DELIMITER + maskDate(action.getEndTime(), timeZoneId));
+                            + VERBOSE_DELIMITER + maskDate(action.getStartTime(), timeZoneId, verbose)
+                            + VERBOSE_DELIMITER + action.getStatus() + VERBOSE_DELIMITER
+                            + maskDate(action.getEndTime(), timeZoneId, verbose));
 
                     System.out.println(RULER);
                 }
@@ -1204,10 +1205,11 @@ public class OozieCLI {
                             + VERBOSE_DELIMITER + maskIfNull(job.getGroup()) + VERBOSE_DELIMITER + job.getConcurrency()
                             + VERBOSE_DELIMITER + job.getFrequency() + VERBOSE_DELIMITER + job.getTimeUnit()
                             + VERBOSE_DELIMITER + maskIfNull(job.getTimeZone()) + VERBOSE_DELIMITER + job.getTimeout()
-                            + VERBOSE_DELIMITER + maskDate(job.getStartTime(), timeZoneId) + VERBOSE_DELIMITER
-                            + maskDate(job.getNextMaterializedTime(), timeZoneId) + VERBOSE_DELIMITER + job.getStatus()
-                            + VERBOSE_DELIMITER + maskDate(job.getLastActionTime(), timeZoneId) + VERBOSE_DELIMITER
-                            + maskDate(job.getEndTime(), timeZoneId));
+                            + VERBOSE_DELIMITER + maskDate(job.getStartTime(), timeZoneId, verbose) + VERBOSE_DELIMITER
+                            + maskDate(job.getNextMaterializedTime(), timeZoneId, verbose) + VERBOSE_DELIMITER
+                            + job.getStatus() + VERBOSE_DELIMITER
+                            + maskDate(job.getLastActionTime(), timeZoneId, verbose) + VERBOSE_DELIMITER
+                            + maskDate(job.getEndTime(), timeZoneId, verbose));
 
                     System.out.println(RULER);
                 }
@@ -1220,7 +1222,7 @@ public class OozieCLI {
                 for (CoordinatorJob job : jobs) {
                     System.out.println(String.format(COORD_JOBS_FORMATTER, maskIfNull(job.getId()), maskIfNull(job
                             .getAppName()), job.getStatus(), job.getFrequency(), job.getTimeUnit(), maskDate(job
-                            .getStartTime(), timeZoneId), maskDate(job.getNextMaterializedTime(), timeZoneId)));
+                            .getStartTime(), timeZoneId, verbose), maskDate(job.getNextMaterializedTime(), timeZoneId, verbose)));
 
                     System.out.println(RULER);
                 }
@@ -1245,9 +1247,9 @@ public class OozieCLI {
                             + VERBOSE_DELIMITER + maskIfNull(job.getAppPath()) + VERBOSE_DELIMITER
                             + maskIfNull(job.getUser()) + VERBOSE_DELIMITER + maskIfNull(job.getGroup())
                             + VERBOSE_DELIMITER + job.getStatus() + VERBOSE_DELIMITER
-                            + maskDate(job.getKickoffTime(), timeZoneId) + VERBOSE_DELIMITER
-                            + maskDate(job.getPauseTime(), timeZoneId) + VERBOSE_DELIMITER
-                            + maskDate(job.getCreatedTime(), timeZoneId) + VERBOSE_DELIMITER
+                            + maskDate(job.getKickoffTime(), timeZoneId, verbose) + VERBOSE_DELIMITER
+                            + maskDate(job.getPauseTime(), timeZoneId, verbose) + VERBOSE_DELIMITER
+                            + maskDate(job.getCreatedTime(), timeZoneId, verbose) + VERBOSE_DELIMITER
                             + maskIfNull(job.getConsoleUrl()));
 
                     System.out.println(RULER);
@@ -1259,9 +1261,11 @@ public class OozieCLI {
                 System.out.println(RULER);
 
                 for (BundleJob job : jobs) {
-                    System.out.println(String.format(BUNDLE_JOBS_FORMATTER, maskIfNull(job.getId()), maskIfNull(job
-                            .getAppName()), job.getStatus(), maskDate(job.getKickoffTime(), timeZoneId), maskDate(job
-                            .getCreatedTime(), timeZoneId), maskIfNull(job.getUser()), maskIfNull(job.getGroup())));
+                    System.out.println(String.format(BUNDLE_JOBS_FORMATTER, maskIfNull(job.getId()),
+                            maskIfNull(job.getAppName()), job.getStatus(),
+                            maskDate(job.getKickoffTime(), timeZoneId, verbose),
+                            maskDate(job.getCreatedTime(), timeZoneId, verbose), maskIfNull(job.getUser()),
+                            maskIfNull(job.getGroup())));
                     System.out.println(RULER);
                 }
             }
@@ -1353,10 +1357,11 @@ public class OozieCLI {
                             + VERBOSE_DELIMITER + maskIfNull(job.getAppPath()) + VERBOSE_DELIMITER
                             + maskIfNull(job.getConsoleUrl()) + VERBOSE_DELIMITER + maskIfNull(job.getUser())
                             + VERBOSE_DELIMITER + maskIfNull(job.getGroup()) + VERBOSE_DELIMITER + job.getRun()
-                            + VERBOSE_DELIMITER + maskDate(job.getCreatedTime(), timeZoneId) + VERBOSE_DELIMITER
-                            + maskDate(job.getStartTime(), timeZoneId) + VERBOSE_DELIMITER + job.getStatus()
-                            + VERBOSE_DELIMITER + maskDate(job.getLastModifiedTime(), timeZoneId) + VERBOSE_DELIMITER
-                            + maskDate(job.getEndTime(), timeZoneId));
+                            + VERBOSE_DELIMITER + maskDate(job.getCreatedTime(), timeZoneId, verbose)
+                            + VERBOSE_DELIMITER + maskDate(job.getStartTime(), timeZoneId, verbose) + VERBOSE_DELIMITER
+                            + job.getStatus() + VERBOSE_DELIMITER
+                            + maskDate(job.getLastModifiedTime(), timeZoneId, verbose) + VERBOSE_DELIMITER
+                            + maskDate(job.getEndTime(), timeZoneId, verbose));
 
                     System.out.println(RULER);
                 }
@@ -1367,9 +1372,10 @@ public class OozieCLI {
                 System.out.println(RULER);
 
                 for (WorkflowJob job : jobs) {
-                    System.out.println(String.format(WORKFLOW_JOBS_FORMATTER, maskIfNull(job.getId()), maskIfNull(job
-                            .getAppName()), job.getStatus(), maskIfNull(job.getUser()), maskIfNull(job.getGroup()),
-                            maskDate(job.getStartTime(), timeZoneId), maskDate(job.getEndTime(), timeZoneId)));
+                    System.out.println(String.format(WORKFLOW_JOBS_FORMATTER, maskIfNull(job.getId()),
+                            maskIfNull(job.getAppName()), job.getStatus(), maskIfNull(job.getUser()),
+                            maskIfNull(job.getGroup()), maskDate(job.getStartTime(), timeZoneId, verbose),
+                            maskDate(job.getEndTime(), timeZoneId, verbose)));
 
                     System.out.println(RULER);
                 }
@@ -1387,12 +1393,19 @@ public class OozieCLI {
         return "-";
     }
 
-    private String maskDate(Date date, String timeZoneId) {
+    private String maskDate(Date date, String timeZoneId, boolean verbose) {
         if (date == null) {
             return "-";
         }
 
-        SimpleDateFormat dateFormater = new SimpleDateFormat("yyyy-MM-dd HH:mm zzz", Locale.US);
+        SimpleDateFormat dateFormater = null;
+        if (verbose) {
+            dateFormater = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss zzz", Locale.US);
+        }
+        else {
+            dateFormater = new SimpleDateFormat("yyyy-MM-dd HH:mm zzz", Locale.US);
+        }
+
         if (timeZoneId != null) {
             dateFormater.setTimeZone(TimeZone.getTimeZone(timeZoneId));
         }
