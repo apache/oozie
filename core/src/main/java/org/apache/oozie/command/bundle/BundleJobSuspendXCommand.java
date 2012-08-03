@@ -151,7 +151,9 @@ public class BundleJobSuspendXCommand extends SuspendTransitionXCommand {
     public void suspendChildren() throws CommandException {
         try {
             for (BundleActionBean action : this.bundleActions) {
-                if (action.getStatus() == Job.Status.RUNNING || action.getStatus() == Job.Status.PREP) {
+                if (action.getStatus() == Job.Status.RUNNING || action.getStatus() == Job.Status.RUNNINGWITHERROR
+                        || action.getStatus() == Job.Status.PREP || action.getStatus() == Job.Status.PAUSED
+                        || action.getStatus() == Job.Status.PAUSEDWITHERROR) {
                     // queue a CoordSuspendXCommand
                     if (action.getCoordId() != null) {
                         queue(new CoordSuspendXCommand(action.getCoordId()));
@@ -181,6 +183,12 @@ public class BundleJobSuspendXCommand extends SuspendTransitionXCommand {
             action.setStatus(Job.Status.SUSPENDED);
         }
         else if (action.getStatus() == Job.Status.RUNNINGWITHERROR) {
+            action.setStatus(Job.Status.SUSPENDEDWITHERROR);
+        }
+        else if (action.getStatus() == Job.Status.PAUSED) {
+            action.setStatus(Job.Status.SUSPENDED);
+        }
+        else if (action.getStatus() == Job.Status.PAUSEDWITHERROR) {
             action.setStatus(Job.Status.SUSPENDEDWITHERROR);
         }
 
