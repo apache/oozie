@@ -153,7 +153,7 @@ public class CoordActionReadyXCommand extends CoordinatorXCommand<Void> {
 
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
-        if (coordJob.getStatus() != Job.Status.RUNNING && coordJob.getStatus() != Job.Status.SUCCEEDED && coordJob.getStatus() != Job.Status.PAUSED && coordJob.getStatus() != Job.Status.PAUSEDWITHERROR) {
+        if (coordJob.getStatus() != Job.Status.RUNNING && coordJob.getStatus() != Job.Status.RUNNINGWITHERROR && coordJob.getStatus() != Job.Status.SUCCEEDED && coordJob.getStatus() != Job.Status.PAUSED && coordJob.getStatus() != Job.Status.PAUSEDWITHERROR) {
             throw new PreconditionException(ErrorCode.E1100, "[" + jobId
                     + "]::CoordActionReady:: Ignoring job. Coordinator job is not in RUNNING state, but state="
                     + coordJob.getStatus());

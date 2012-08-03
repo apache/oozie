@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,6 +29,7 @@ import org.apache.oozie.executor.jpa.CoordJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.StatusTransitService;
 import org.apache.oozie.test.XDataTestCase;
 
 public class TestBundleRerunXCommand extends XDataTestCase {
@@ -73,6 +74,7 @@ public class TestBundleRerunXCommand extends XDataTestCase {
         assertEquals(Job.Status.RUNNING, job.getStatus());
     }
 
+
     /**
      * Test : Rerun bundle job for coordScope
      *
@@ -96,6 +98,35 @@ public class TestBundleRerunXCommand extends XDataTestCase {
         job = jpaService.execute(bundleJobGetExecutor);
         assertEquals(Job.Status.RUNNING, job.getStatus());
     }
+
+    /**
+     * Test : Rerun a DONEWITHERROR bundle job. Status should
+     * change to RUNNINGWITHERROR
+     *
+     * @throws Exception
+     */
+    public void testBundleRerunWithError() throws Exception {
+        Services.get().destroy();
+        setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_STATES_WITHOUT_ERROR, "false");
+        new Services().init();
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.DONEWITHERROR, false);
+        this.addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.SUCCEEDED);
+        this.addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.FAILED);
+        addRecordToCoordJobTable("action1", CoordinatorJob.Status.SUCCEEDED, false, false);
+        addRecordToCoordJobTable("action2", CoordinatorJob.Status.FAILED, false, false);
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+        BundleJobGetJPAExecutor bundleJobGetExecutor = new BundleJobGetJPAExecutor(job.getId());
+        job = jpaService.execute(bundleJobGetExecutor);
+        assertEquals(Job.Status.DONEWITHERROR, job.getStatus());
+
+        new BundleRerunXCommand(job.getId(), null, "2009-02-01T00:00Z", false, true).call();
+
+        job = jpaService.execute(bundleJobGetExecutor);
+        assertEquals(Job.Status.RUNNINGWITHERROR, job.getStatus());
+    }
+
 
     /**
      * Test : Rerun PREP bundle job
@@ -148,6 +179,35 @@ public class TestBundleRerunXCommand extends XDataTestCase {
     }
 
     /**
+     * Test : Rerun PAUSEDINERROR bundle job. Status shouldn't change.
+     *
+     * @throws Exception
+     */
+    public void testBundleRerunInPausedWithError() throws Exception {
+        Date curr = new Date();
+        Date pauseTime = new Date(curr.getTime() - 1000);
+        BundleJobBean job = this.addRecordToBundleJobTableWithPausedTime(Job.Status.PAUSEDWITHERROR, false, pauseTime);
+        this.addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.FAILED);
+        this.addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.PAUSED);
+        addRecordToCoordJobTable("action1", CoordinatorJob.Status.FAILED, false, false);
+        addRecordToCoordJobTable("action2", CoordinatorJob.Status.PAUSED, false, false);
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+        BundleJobGetJPAExecutor bundleJobGetExecutor = new BundleJobGetJPAExecutor(job.getId());
+        job = jpaService.execute(bundleJobGetExecutor);
+        assertEquals(Job.Status.PAUSEDWITHERROR, job.getStatus());
+
+        new BundleRerunXCommand(job.getId(), "action2", null, false, true).call();
+
+        job = jpaService.execute(bundleJobGetExecutor);
+        assertEquals(Job.Status.PAUSEDWITHERROR, job.getStatus());
+        assertNotNull(job.getPauseTime());
+        assertFalse(job.isPending());
+    }
+
+
+    /**
      * Test : Rerun suspended bundle job
      *
      * @throws Exception
@@ -170,6 +230,34 @@ public class TestBundleRerunXCommand extends XDataTestCase {
         job = jpaService.execute(bundleJobGetExecutor);
         assertEquals(Job.Status.RUNNING, job.getStatus());
     }
+
+    /**
+     * Test : Rerun SUSPENDEDINERROR bundle job
+     *
+     * @throws Exception
+     */
+    public void testBundleRerunInSuspendedWithError() throws Exception {
+        Services.get().destroy();
+        setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_STATES_WITHOUT_ERROR, "false");
+        new Services().init();
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.SUSPENDEDWITHERROR, false);
+        this.addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.SUSPENDED);
+        this.addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.SUSPENDEDWITHERROR);
+        addRecordToCoordJobTable("action1", CoordinatorJob.Status.SUSPENDED, false, false);
+        addRecordToCoordJobTable("action2", CoordinatorJob.Status.SUSPENDEDWITHERROR, false, false);
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+        BundleJobGetJPAExecutor bundleJobGetExecutor = new BundleJobGetJPAExecutor(job.getId());
+        job = jpaService.execute(bundleJobGetExecutor);
+        assertEquals(Job.Status.SUSPENDEDWITHERROR, job.getStatus());
+
+        new BundleRerunXCommand(job.getId(), "action2", null, false, true).call();
+
+        job = jpaService.execute(bundleJobGetExecutor);
+        assertEquals(Job.Status.RUNNINGWITHERROR, job.getStatus());
+    }
+
 
     protected BundleJobBean addRecordToBundleJobTableWithPausedTime(Job.Status jobStatus, boolean pending, Date pausedTime) throws Exception {
         BundleJobBean bundle = createBundleJob(jobStatus, pending);

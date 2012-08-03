@@ -33,6 +33,7 @@ import org.apache.oozie.executor.jpa.CoordJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.StatusTransitService;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
@@ -256,6 +257,32 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         CoordinatorJobBean coordJob = jpaService.execute(coordGetCmd);
         assertEquals(Job.Status.RUNNING, coordJob.getStatus());
         assertFalse(coordJob.isDoneMaterialization());
+    }
+
+    /**
+     * Change the pause time and end time of a failed coordinator job. Check whether the status changes
+     * to RUNNINGWITHERROR
+     * @throws Exception
+     */
+    public void testCoordChangeStatus() throws Exception {
+        Services.get().destroy();
+        setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_STATES_WITHOUT_ERROR, "false");
+        new Services().init();
+        Date startTime = new Date();
+        Date endTime = new Date(startTime.getTime() + (20 * 60 * 1000));
+
+        final CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.FAILED, startTime, endTime,
+                true, true, 0);
+
+        String pauseTime = DateUtils.convertDateToString(startTime.getTime() + 10 * 60 * 1000);
+        String newEndTime = DateUtils.convertDateToString(startTime.getTime() + 40 * 60 * 1000);
+
+        new CoordChangeXCommand(job.getId(), "endtime=" + newEndTime + ";pausetime=" + pauseTime).call();
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        CoordJobGetJPAExecutor coordGetCmd = new CoordJobGetJPAExecutor(job.getId());
+        CoordinatorJobBean coordJob = jpaService.execute(coordGetCmd);
+        assertEquals(Job.Status.RUNNINGWITHERROR, coordJob.getStatus());
     }
 
     /**

@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,9 @@
 package org.apache.oozie.command;
 
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.Job;
+import org.apache.oozie.util.StatusUtils;
 
 /**
  * Transition command for rerun the job. The derived class has to override these following functions:
@@ -66,7 +68,14 @@ public abstract class RerunTransitionXCommand<T> extends TransitionXCommand<T> {
             job = this.getJob();
         }
         prevStatus = job.getStatus();
-        job.setStatus(Job.Status.RUNNING);
+        if (prevStatus == Job.Status.SUCCEEDED || prevStatus == Job.Status.PAUSED
+                || prevStatus == Job.Status.SUSPENDED || prevStatus == Job.Status.RUNNING) {
+            job.setStatus(Job.Status.RUNNING);
+        }
+        else {
+            // Check for backward compatibility
+            job.setStatus(StatusUtils.getStatusIfBackwardSupportTrue(Job.Status.RUNNINGWITHERROR));
+        }
         job.setPending();
     }
 

@@ -703,6 +703,31 @@ public class TestCoordRerunXCommand extends XDataTestCase {
         }
     }
 
+
+    /**
+     * Test : Rerun DONEWITHERROR coordinator job
+     *
+     * @throws Exception
+     */
+    public void testCoordRerunInDoneWithError() throws Exception {
+        Services.get().destroy();
+        setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_STATES_WITHOUT_ERROR, "false");
+        new Services().init();
+        CoordinatorJobBean job = this.addRecordToCoordJobTable(Job.Status.DONEWITHERROR, false, false);
+        addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.FAILED, "coord-rerun-action1.xml", 0);
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+        CoordJobGetJPAExecutor coordJobGetExecutor = new CoordJobGetJPAExecutor(job.getId());
+        job = jpaService.execute(coordJobGetExecutor);
+        assertEquals(Job.Status.DONEWITHERROR, job.getStatus());
+
+        new CoordRerunXCommand(job.getId(), RestConstants.JOB_COORD_RERUN_DATE, "2009-12-15T01:00Z", false, true)
+                .call();
+        job = jpaService.execute(coordJobGetExecutor);
+        assertEquals(Job.Status.RUNNINGWITHERROR, job.getStatus());
+
+    }
     /**
      * Test : Rerun paused coordinator job
      *
@@ -725,6 +750,31 @@ public class TestCoordRerunXCommand extends XDataTestCase {
 
         job = jpaService.execute(coordJobGetExecutor);
         assertEquals(Job.Status.PAUSED, job.getStatus());
+        assertNotNull(job.getPauseTime());
+    }
+
+    /**
+     * Test : Rerun PAUSEDWITHERROR coordinator job
+     *
+     * @throws Exception
+     */
+    public void testCoordRerunInPausedWithError() throws Exception {
+        Date curr = new Date();
+        Date pauseTime = new Date(curr.getTime() - 1000);
+        CoordinatorJobBean job = this.addRecordToCoordJobTableWithPausedTime(Job.Status.PAUSEDWITHERROR, false, false, pauseTime);
+        addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.FAILED, "coord-rerun-action1.xml", 0);
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+        CoordJobGetJPAExecutor coordJobGetExecutor = new CoordJobGetJPAExecutor(job.getId());
+        job = jpaService.execute(coordJobGetExecutor);
+        assertEquals(Job.Status.PAUSEDWITHERROR, job.getStatus());
+
+        new CoordRerunXCommand(job.getId(), RestConstants.JOB_COORD_RERUN_DATE, "2009-12-15T01:00Z", false, true)
+                .call();
+
+        job = jpaService.execute(coordJobGetExecutor);
+        assertEquals(Job.Status.PAUSEDWITHERROR, job.getStatus());
         assertNotNull(job.getPauseTime());
     }
 

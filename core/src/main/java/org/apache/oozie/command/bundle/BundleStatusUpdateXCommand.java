@@ -20,6 +20,7 @@ package org.apache.oozie.command.bundle;
 import java.util.Date;
 
 import org.apache.oozie.BundleActionBean;
+import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
@@ -30,6 +31,8 @@ import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.StatusUpdateXCommand;
 import org.apache.oozie.executor.jpa.BundleActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleActionUpdateJPAExecutor;
+import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.BundleJobUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
@@ -72,6 +75,14 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
             if (bundleaction.isPending()) {
                 bundleaction.decrementAndGetPending();
             }
+            // TODO - Uncomment this when bottom up rerun can change terminal state
+            /*BundleJobBean bundleJob = jpaService.execute(new BundleJobGetJPAExecutor(bundleaction.getBundleId()));
+            if (!bundleJob.isPending()) {
+                bundleJob.setPending();
+                jpaService.execute(new BundleJobUpdateJPAExecutor(bundleJob));
+                LOG.info("Updated bundle job [{0}] pending to true", bundleaction.getBundleId());
+            }*/
+
             bundleaction.setLastModifiedTime(new Date());
             bundleaction.setCoordId(coordjob.getId());
             jpaService.execute(new BundleActionUpdateJPAExecutor(bundleaction));

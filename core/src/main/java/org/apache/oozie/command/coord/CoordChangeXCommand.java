@@ -45,6 +45,7 @@ import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.util.StatusUtils;
 
 public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
     private final String jobId;
@@ -289,14 +290,18 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
         try {
             if (newEndTime != null) {
                 coordJob.setEndTime(newEndTime);
-                if (coordJob.getStatus() == CoordinatorJob.Status.SUCCEEDED
-                        || coordJob.getStatus() == CoordinatorJob.Status.RUNNING
-                        || coordJob.getStatus() == CoordinatorJob.Status.DONEWITHERROR
-                        || coordJob.getStatus() == CoordinatorJob.Status.FAILED) {
+                if (coordJob.getStatus() == CoordinatorJob.Status.SUCCEEDED){
                     coordJob.setStatus(CoordinatorJob.Status.RUNNING);
-                    coordJob.setPending();
-                    coordJob.resetDoneMaterialization();
                 }
+                if (coordJob.getStatus() == CoordinatorJob.Status.DONEWITHERROR
+                        || coordJob.getStatus() == CoordinatorJob.Status.FAILED) {
+                    // Check for backward compatibility for Oozie versions (3.2 and before)
+                    // when RUNNINGWITHERROR, SUSPENDEDWITHERROR and
+                    // PAUSEDWITHERROR is not supported
+                    coordJob.setStatus(StatusUtils.getStatusIfBackwardSupportTrue(CoordinatorJob.Status.RUNNINGWITHERROR));
+                }
+                coordJob.setPending();
+                coordJob.resetDoneMaterialization();
             }
 
             if (newConcurrency != null) {
@@ -306,14 +311,23 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
             if (newPauseTime != null || resetPauseTime == true) {
                 this.coordJob.setPauseTime(newPauseTime);
                 if (oldPauseTime != null && newPauseTime != null) {
-                    if (oldPauseTime.before(newPauseTime) && this.coordJob.getStatus() == Job.Status.PAUSED) {
-                        this.coordJob.setStatus(Job.Status.RUNNING);
+                    if (oldPauseTime.before(newPauseTime)) {
+                        if (this.coordJob.getStatus() == Job.Status.PAUSED) {
+                            this.coordJob.setStatus(Job.Status.RUNNING);
+                        }
+                        else if (this.coordJob.getStatus() == Job.Status.PAUSEDWITHERROR) {
+                            this.coordJob.setStatus(Job.Status.RUNNINGWITHERROR);
+                        }
                     }
                 }
-                else if (oldPauseTime != null && newPauseTime == null && this.coordJob.getStatus() == Job.Status.PAUSED) {
-                    this.coordJob.setStatus(Job.Status.RUNNING);
+                else if (oldPauseTime != null && newPauseTime == null) {
+                    if (this.coordJob.getStatus() == Job.Status.PAUSED) {
+                        this.coordJob.setStatus(Job.Status.RUNNING);
+                    }
+                    else if (this.coordJob.getStatus() == Job.Status.PAUSEDWITHERROR) {
+                        this.coordJob.setStatus(Job.Status.RUNNINGWITHERROR);
+                    }
                 }
-
                 if (!resetPauseTime) {
                     processLookaheadActions(coordJob, newPauseTime);
                 }

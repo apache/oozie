@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,6 +26,7 @@ import java.io.Writer;
 import java.net.URI;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.Job;
@@ -369,6 +370,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testBasicSubmitWithBundleId() throws Exception {
+        BundleJobBean coordJob = addRecordToBundleJobTable(Job.Status.PREP, false);
         Configuration conf = new XConfiguration();
         String appPath = "file://" + getTestCaseDir() + File.separator + "coordinator.xml";
         String appXml = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" start=\"2009-02-01T01:00Z\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
@@ -390,15 +392,15 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
 
-        this.addRecordToBundleActionTable("OOZIE-B", "COORD-NAME", 0, Job.Status.PREP);
+        this.addRecordToBundleActionTable(coordJob.getId(), "COORD-NAME", 0, Job.Status.PREP);
 
-        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING", "OOZIE-B", "COORD-NAME");
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING", coordJob.getId(), "COORD-NAME");
         String jobId = sc.call();
 
         assertEquals(jobId.substring(jobId.length() - 2), "-C");
         CoordinatorJobBean job = checkCoordJobs(jobId);
         if (job != null) {
-            assertEquals("OOZIE-B", job.getBundleId());
+            assertEquals(coordJob.getId(), job.getBundleId());
             assertEquals("COORD-NAME", job.getAppName());
             assertEquals("uri:oozie:coordinator:0.2", job.getAppNamespace());
         } else {

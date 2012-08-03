@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -174,7 +174,8 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
      */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
-        if (!(coordJob.getStatus() == CoordinatorJobBean.Status.PREP || coordJob.getStatus() == CoordinatorJobBean.Status.RUNNING)) {
+        if (!(coordJob.getStatus() == CoordinatorJobBean.Status.PREP || coordJob.getStatus() == CoordinatorJobBean.Status.RUNNING
+                || coordJob.getStatus() == CoordinatorJobBean.Status.RUNNINGWITHERROR)) {
             throw new PreconditionException(ErrorCode.E1100, "CoordMaterializeTransitionXCommand for jobId=" + jobId
                     + " job is not in PREP or RUNNING but in " + coordJob.getStatus());
         }
@@ -365,8 +366,11 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         // if the job endtime == action endtime, we don't need to materialize this job anymore
         Date jobEndTime = job.getEndTime();
 
-        LOG.info("[" + job.getId() + "]: Update status from " + job.getStatus() + " to RUNNING");
-        job.setStatus(Job.Status.RUNNING);
+
+        if (job.getStatus() == CoordinatorJob.Status.PREP){
+            LOG.info("[" + job.getId() + "]: Update status from " + job.getStatus() + " to RUNNING");
+            job.setStatus(Job.Status.RUNNING);
+        }
         job.setPending();
 
         if (jobEndTime.compareTo(endMatdTime) <= 0) {

@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -76,6 +76,25 @@ public class TestBundleJobSuspendXCommand extends XDataTestCase {
         assertEquals(Job.Status.SUSPENDED, job.getStatus());
     }
 
+    /**
+     * Test : Suspend bundle job in RUNNINGWITHERROR state
+     *
+     * @throws Exception
+     */
+    public void testBundleSuspendWithError() throws Exception {
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.RUNNINGWITHERROR, false);
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+        BundleJobGetJPAExecutor bundleJobGetCmd = new BundleJobGetJPAExecutor(job.getId());
+        job = jpaService.execute(bundleJobGetCmd);
+        assertEquals(Job.Status.RUNNINGWITHERROR, job.getStatus());
+
+        new BundleJobSuspendXCommand(job.getId()).call();
+
+        job = jpaService.execute(bundleJobGetCmd);
+        assertEquals(Job.Status.SUSPENDEDWITHERROR, job.getStatus());
+    }
     /**
      * Test : Suspend bundle job
      *
