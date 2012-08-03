@@ -20,6 +20,7 @@ package org.apache.oozie.command.coord;
 import java.util.Date;
 
 import org.apache.oozie.CoordinatorActionBean;
+import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.XException;
@@ -36,6 +37,8 @@ import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.executor.jpa.CoordActionGetForExternalIdJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionUpdateStatusJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 
 public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
@@ -91,7 +94,12 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
                 // update lastModifiedTime
                 coordAction.setLastModifiedTime(new Date());
                 jpaService.execute(new CoordActionUpdateStatusJPAExecutor(coordAction));
-
+                // TODO - Uncomment this when bottom up rerun can change terminal state
+                /* CoordinatorJobBean coordJob = jpaService.execute(new CoordJobGetJPAExecutor(coordAction.getJobId()));
+                if (!coordJob.isPending()) {
+                    coordJob.setPending();
+                    jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
+                }*/
                 return null;
             }
 
@@ -100,6 +108,13 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
 
             coordAction.setLastModifiedTime(new Date());
             jpaService.execute(new CoordActionUpdateStatusJPAExecutor(coordAction));
+            // TODO - Uncomment this when bottom up rerun can change terminal state
+            /*CoordinatorJobBean coordJob = jpaService.execute(new CoordJobGetJPAExecutor(coordAction.getJobId()));
+            if (!coordJob.isPending()) {
+                coordJob.setPending();
+                jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
+                LOG.info("Updating Coordinator job "+ coordJob.getId() + "pending to true");
+            }*/
             if (slaStatus != null) {
                 SLADbOperations.writeStausEvent(coordAction.getSlaXml(), coordAction.getId(), slaStatus,
                         SlaAppType.COORDINATOR_ACTION, LOG);

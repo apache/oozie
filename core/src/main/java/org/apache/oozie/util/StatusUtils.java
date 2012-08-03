@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,10 +46,12 @@ public class StatusUtils {
                     if (coordJob.getStatus() == Job.Status.DONEWITHERROR) {
                         newStatus = Job.Status.SUCCEEDED;
                     }
-                    else if (coordJob.getStatus() == Job.Status.PAUSED) {
+                    else if (coordJob.getStatus() == Job.Status.PAUSED
+                            || coordJob.getStatus() == Job.Status.PAUSEDWITHERROR) {
                         newStatus = Job.Status.RUNNING;
                     }
-                    else if (coordJob.getStatus() == Job.Status.RUNNING && coordJob.isDoneMaterialization()) {
+                    else if ((coordJob.getStatus() == Job.Status.RUNNING || coordJob.getStatus() == Job.Status.RUNNINGWITHERROR)
+                            && coordJob.isDoneMaterialization()) {
                         newStatus = Job.Status.SUCCEEDED;
                     }
                     else if (coordJob.getStatus() == Job.Status.PREPSUSPENDED) {
@@ -147,4 +149,31 @@ public class StatusUtils {
         }
         return ret;
     }
+
+    /**
+     * Get the status of coordinator job for Oozie versions (3.2 and before) when RUNNINGWITHERROR,
+     * SUSPENDEDWITHERROR and PAUSEDWITHERROR are not supported
+     * @param coordJob
+     * @return
+     */
+    public static Job.Status getStatusIfBackwardSupportTrue(Job.Status currentJobStatus) {
+        Job.Status newStatus = currentJobStatus;
+        Configuration conf = Services.get().getConf();
+        boolean backwardSupportForStatesWithoutError = conf.getBoolean(
+                StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_STATES_WITHOUT_ERROR, true);
+        if (backwardSupportForStatesWithoutError) {
+            if (currentJobStatus == Job.Status.PAUSEDWITHERROR) {
+                newStatus = Job.Status.PAUSED;
+            }
+            else if (currentJobStatus == Job.Status.SUSPENDEDWITHERROR) {
+                newStatus = Job.Status.SUSPENDED;
+            }
+            else if (currentJobStatus == Job.Status.RUNNINGWITHERROR) {
+                newStatus = Job.Status.RUNNING;
+            }
+        }
+
+        return newStatus;
+    }
+
 }

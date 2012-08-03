@@ -610,36 +610,39 @@ To create a coordinator job, a job configuration that resolves all coordinator a
 
 A coordinator job is a running instance of a coordinator application running from a start time to an end time.
 
-At any time, a coordinator job is in one of the following status: *PREP, RUNNING, PREPSUSPENDED, SUSPENDED, PREPPAUSED, PAUSED, SUCCEEDED, DONWITHERROR, KILLED, FAILED*.
+At any time, a coordinator job is in one of the following status: *PREP, RUNNING, RUNNINGWITHERROR, PREPSUSPENDED, SUSPENDED, SUSPENDEDWITHERROR, PREPPAUSED, PAUSED, PAUSEDWITHERROR, SUCCEEDED, DONEWITHERROR, KILLED, FAILED*.
 
 Valid coordinator job status transitions are:
 
    * *PREP --> PREPSUSPENDED | PREPPAUSED | RUNNING | KILLED*
-   * *RUNNING --> SUSPENDED | PAUSED | SUCCEEDED | DONWITHERROR | KILLED | FAILED*
+   * *RUNNING --> RUNNINGWITHERROR | SUSPENDED | PAUSED | SUCCEEDED | KILLED*
+   * *RUNNINGWITHERROR --> RUNNING | SUSPENDEDWITHERROR | PAUSEDWITHERROR | DONEWITHERROR | KILLED | FAILED*
    * *PREPSUSPENDED --> PREP | KILLED*
    * *SUSPENDED --> RUNNING | KILLED*
+   * *SUSPENDEDWITHERROR --> RUNNINGWITHERROR | KILLED*
    * *PREPPAUSED --> PREP | KILLED*
    * *PAUSED --> SUSPENDED | RUNNING | KILLED*
+   * *PAUSEDWITHERROR --> SUSPENDEDWITHERROR | RUNNINGWITHERROR | KILLED*
 
 When a coordinator job is submitted, oozie parses the coordinator job XML. Oozie then creates a record for the coordinator with status *PREP* and returns a unique ID. The coordinator is also started immediately if pause time is not set.
 
-When a user requests to suspend a coordinator job that is in *PREP* state, oozie puts the job in status *PREPSUSPEND*. Similarly, when pause time reaches for a coordinator job with *PREP* status, oozie puts the job in status *PREPPAUSED*.
+When a user requests to suspend a coordinator job that is in *PREP* state, oozie puts the job in status *PREPSUSPENDED*. Similarly, when pause time reaches for a coordinator job with *PREP* status, oozie puts the job in status *PREPPAUSED*.
 
-Conversely, when a user requests to resume a *PREPSUSPEND* coordinator job, oozie puts the job in status *PREP*. And when pause time is reset for a coordinator job and job status is *PREPPAUSED*, oozie puts the job in status *PREP*.
+Conversely, when a user requests to resume a *PREPSUSPENDED* coordinator job, oozie puts the job in status *PREP*. And when pause time is reset for a coordinator job and job status is *PREPPAUSED*, oozie puts the job in status *PREP*.
 
-When a coordinator job starts, oozie puts the job in status *RUNNING* and start materializing workflow jobs based on job frequency.
+When a coordinator job starts, oozie puts the job in status *RUNNING* and start materializing workflow jobs based on job frequency. If any workflow job goes to *FAILED/KILLED/TIMEDOUT* state, the coordinator job is put in *RUNNINGWITHERROR*
 
-When a user requests to kill a coordinator job, oozie puts the job in status *KILLED* and it sends kill to all submitted workflow jobs. If any coordinator action finishes with not *KILLED*, oozie puts the coordinator job into *DONEWITHERROR*.
+When a user requests to kill a coordinator job, oozie puts the job in status *KILLED* and it sends kill to all submitted workflow jobs.
 
-When a user requests to suspend a coordinator job that is in *RUNNING* status, oozie puts the job in status *SUSPEND* and it suspends all submitted workflow jobs.
+When a user requests to suspend a coordinator job that is in *RUNNING* status, oozie puts the job in status *SUSPENDED* and it suspends all submitted workflow jobs. Similarly, when a user requests to suspend a coordinator job that is in *RUNNINGWITHERROR* status, oozie puts the job in status *SUSPENDEDWITHERROR* and it suspends all submitted workflow jobs.
 
-When pause time reaches for a coordinator job that is in *RUNNING* status, oozie puts the job in status *PAUSED*.
+When pause time reaches for a coordinator job that is in *RUNNING* status, oozie puts the job in status *PAUSED*. Similarly, when pause time reaches for a coordinator job that is in *RUNNINGWITHERROR* status, oozie puts the job in status *PAUSEDWITHERROR*.
 
-Conversely, when a user requests to resume a *SUSPEND* coordinator job, oozie puts the job in status *RUNNING*. And when pause time is reset for a coordinator job and job status is *PAUSED*, oozie puts the job in status *RUNNING*.
+Conversely, when a user requests to resume a *SUSPENDED* coordinator job, oozie puts the job in status *RUNNING*. Also,  when a user requests to resume a *SUSPENDEDWITHERROR* coordinator job, oozie puts the job in status *RUNNINGWITHERROR*. And when pause time is reset for a coordinator job and job status is *PAUSED*, oozie puts the job in status *RUNNING*. Also, when the pause time is reset for a coordinator job and job status is *PAUSEDWITHERROR*, oozie puts the job in status *RUNNINGWITHERROR*
 
 A coordinator job creates workflow jobs (commonly coordinator actions) only for the duration of the coordinator job and only if the coordinator job is in *RUNNING* status. If the coordinator job has been suspended, when resumed it will create all the coordinator actions that should have been created during the time it was suspended, actions will not be lost, they will delayed.
 
-When the coordinator job materialization finishs and all workflow jobs finish, oozie updates the coordinator status accordingly. For example, if all workflows are *SUCCEEDED*, oozie put the coordinator job into *SUCCEEDED* status. However, if any workflow job finishes with not *SUCCEEDED* (e.g. *KILLED* or *FAILED* or *TIMEOUT*), oozie puts the coordinator job into *DONEWITHERROR*. If all coordinator actions are *TIMEDOUT*, oozie puts the coordinator job into *DONEWITHERROR*.
+When the coordinator job materialization finishs and all workflow jobs finish, oozie updates the coordinator status accordingly. For example, if all workflows are *SUCCEEDED*, oozie puts the coordinator job into *SUCCEEDED* status. If all workflows are *FAILED*, oozie puts the coordinator job into *FAILED* status. If all workflows are *KILLED*, the coordinator job status changes to KILLED. However, if any workflow job finishes with not *SUCCEEDED* and combination of *KILLED*, *FAILED* or *TIMEOUT*, oozie puts the coordinator job into *DONEWITHERROR*. If all coordinator actions are *TIMEDOUT*, oozie puts the coordinator job into *DONEWITHERROR*.
 
 
 ---++++ 6.1.3. Coordinator Action

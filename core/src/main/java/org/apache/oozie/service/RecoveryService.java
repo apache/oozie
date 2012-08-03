@@ -196,10 +196,12 @@ public class RecoveryService implements Service {
                     else if (baction.getStatus() == Job.Status.KILLED) {
                         queueCallable(new CoordKillXCommand(baction.getCoordId()));
                     }
-                    else if (baction.getStatus() == Job.Status.SUSPENDED) {
+                    else if (baction.getStatus() == Job.Status.SUSPENDED
+                            || baction.getStatus() == Job.Status.SUSPENDEDWITHERROR) {
                         queueCallable(new CoordSuspendXCommand(baction.getCoordId()));
                     }
-                    else if (baction.getStatus() == Job.Status.RUNNING) {
+                    else if (baction.getStatus() == Job.Status.RUNNING
+                            || baction.getStatus() == Job.Status.RUNNINGWITHERROR) {
                         queueCallable(new CoordResumeXCommand(baction.getCoordId()));
                     }
                 }

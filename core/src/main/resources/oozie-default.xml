@@ -1265,6 +1265,18 @@
         </description>
     </property>
     
+    <property>
+        <name>oozie.service.StatusTransitService.backward.support.for.states.without.error</name>
+        <value>true</value>
+        <description>
+            true, if you want to keep Oozie 3.2 status transit.
+            Change it to false for Oozie 4.x releases.
+            if set true,
+            No states like RUNNINGWITHERROR, SUSPENDEDWITHERROR and PAUSEDWITHERROR
+            for coordinator and bundle
+        </description>
+    </property>
+
     <!-- PauseTransitService -->
     <property>
         <name>oozie.service.PauseTransitService.PauseTransit.interval</name>

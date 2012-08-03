@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -65,6 +65,30 @@ public class TestCoordResumeXCommand extends XDataTestCase {
         new CoordResumeXCommand(job.getId()).call();
         job = jpaService.execute(coordJobGetCmd);
         assertEquals(job.getStatus(), CoordinatorJob.Status.RUNNING);
+    }
+
+
+    /**
+     * Test : suspend a RUNNINGWITHERROR coordinator job and check the status to RUNNINGWITHERROR on resume
+     *
+     * @throws Exception
+     */
+    public void testCoordSuspendWithErrorAndResumeWithErrorForRunning() throws Exception {
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNINGWITHERROR, false, false);
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+        CoordJobGetJPAExecutor coordJobGetCmd = new CoordJobGetJPAExecutor(job.getId());
+        job = jpaService.execute(coordJobGetCmd);
+        assertEquals(job.getStatus(), CoordinatorJob.Status.RUNNINGWITHERROR);
+
+        new CoordSuspendXCommand(job.getId()).call();
+        job = jpaService.execute(coordJobGetCmd);
+        assertEquals(job.getStatus(), CoordinatorJob.Status.SUSPENDEDWITHERROR);
+
+        new CoordResumeXCommand(job.getId()).call();
+        job = jpaService.execute(coordJobGetCmd);
+        assertEquals(job.getStatus(), CoordinatorJob.Status.RUNNINGWITHERROR);
     }
 
     /**

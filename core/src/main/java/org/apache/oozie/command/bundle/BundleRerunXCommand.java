@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -213,12 +213,16 @@ public class BundleRerunXCommand extends RerunTransitionXCommand<Void> {
     public void updateJob() throws CommandException {
         try {
             // rerun a paused bundle job will keep job status at paused and pending at previous pending
-            if (getPrevStatus()!= null && getPrevStatus().equals(Job.Status.PAUSED)) {
-                bundleJob.setStatus(Job.Status.PAUSED);
-                if (prevPending) {
-                    bundleJob.setPending();
-                } else {
-                    bundleJob.resetPending();
+            if (getPrevStatus() != null) {
+                Job.Status bundleJobStatus = getPrevStatus();
+                if (bundleJobStatus.equals(Job.Status.PAUSED) || bundleJobStatus.equals(Job.Status.PAUSEDWITHERROR)) {
+                    bundleJob.setStatus(bundleJobStatus);
+                    if (prevPending) {
+                        bundleJob.setPending();
+                    }
+                    else {
+                        bundleJob.resetPending();
+                    }
                 }
             }
             jpaService.execute(new BundleJobUpdateJPAExecutor(bundleJob));

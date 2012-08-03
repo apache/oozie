@@ -377,8 +377,12 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
     public void updateJob() throws CommandException {
         try {
             // rerun a paused coordinator job will keep job status at paused and pending at previous pending
-            if (getPrevStatus()!= null && getPrevStatus().equals(Job.Status.PAUSED)) {
-                coordJob.setStatus(Job.Status.PAUSED);
+
+            if (getPrevStatus()!= null){
+                Job.Status coordJobStatus = getPrevStatus();
+                if(coordJobStatus.equals(Job.Status.PAUSED) || coordJobStatus.equals(Job.Status.PAUSEDWITHERROR)) {
+                    coordJob.setStatus(coordJobStatus);
+                }
                 if (prevPending) {
                     coordJob.setPending();
                 } else {
@@ -404,7 +408,16 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
     @Override
     public final void transitToNext() {
         prevStatus = coordJob.getStatus();
-        coordJob.setStatus(Job.Status.RUNNING);
+        if (prevStatus == CoordinatorJob.Status.SUCCEEDED || prevStatus == CoordinatorJob.Status.PAUSED
+                || prevStatus == CoordinatorJob.Status.SUSPENDED || prevStatus == CoordinatorJob.Status.RUNNING) {
+            coordJob.setStatus(Job.Status.RUNNING);
+        }
+        else {
+            // Check for backward compatibility for Oozie versions (3.2 and before)
+            // when RUNNINGWITHERROR, SUSPENDEDWITHERROR and
+            // PAUSEDWITHERROR is not supported
+            coordJob.setStatus(StatusUtils.getStatusIfBackwardSupportTrue(CoordinatorJob.Status.RUNNINGWITHERROR));
+        }
         // used for backward support of coordinator 0.1 schema
         coordJob.setStatus(StatusUtils.getStatusForCoordRerun(coordJob, prevStatus));
         coordJob.setPending();

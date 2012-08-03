@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,6 +27,7 @@ import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
+import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
@@ -43,6 +44,7 @@ import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.util.StatusUtils;
 
 public class BundleJobChangeXCommand extends XCommand<Void> {
     private String jobId;
@@ -164,7 +166,12 @@ public class BundleJobChangeXCommand extends XCommand<Void> {
                 }
                 else if (isChangeEndTime) {
                     bundleJob.setEndTime(newEndTime);
-                    bundleJob.setStatus(Job.Status.RUNNING);
+                    if (bundleJob.getStatus() == Job.Status.SUCCEEDED) {
+                        bundleJob.setStatus(Job.Status.RUNNING);
+                    }
+                    if (bundleJob.getStatus() == Job.Status.DONEWITHERROR || bundleJob.getStatus() == Job.Status.FAILED) {
+                        bundleJob.setStatus(StatusUtils.getStatusIfBackwardSupportTrue(Job.Status.RUNNINGWITHERROR));
+                    }
                 }
                 for (BundleActionBean action : this.bundleActions) {
                     // queue coord change commands;

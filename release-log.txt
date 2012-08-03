@@ -1,10 +1,11 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-708 Update the parent entity status dynamically (virag)
 OOZIE-243 Workflow nodes START/END/KILL/FORK/JOIN should create rows in the action DB table (tucu)
 OOZIE-913 Add Name Node, job-xml, and configuration Elements to FS action (rkanter via tucu)
 OOZIE-937 Mention how to use the sharelib in the Quick Start page of the docs (rkanter via tucu)
 OOZIE-886 Display request header info when trace is enabled (jay7306 via tucu)
-OOZIE-932 space needed between "Created" and "Nominal time" in oozieCLI output (egashira via virag) 
+OOZIE-932 space needed between "Created" and "Nominal time" in oozieCLI output (egashira via virag)
 OOZIE-903 Workflow action status 'Ok' but the workflow job remains in 'RUNNING' (virag)
 OOZIE-928 Clarify the documentation for submitting coordinator jobs using web services API (rkanter via virag)
 OOZIE-920 Incorrect error message for multiple start instances in coordinator xml (bcyr via tucu)

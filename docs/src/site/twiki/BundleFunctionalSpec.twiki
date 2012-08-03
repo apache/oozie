@@ -45,39 +45,44 @@ EL expressions can be used in XML attribute values and XML text element values. 
 
 ---+++ 4.1. Bundle Job Status
 
-At any time, a bundle job is in one of the following status: *PREP, RUNNING, SUSPENDED, PREPSUSPENDED, PAUSED, PREPPAUSED, SUCCEEDED, DONEWITHERROR, KILLED, FAILED*.
+At any time, a bundle job is in one of the following status: *PREP, RUNNING, RUNNINGWITHERROR, SUSPENDED, PREPSUSPENDED, SUSPENDEDWITHERROR, PAUSED, PAUSEDWITHERROR, PREPPAUSED, SUCCEEDED, DONEWITHERROR, KILLED, FAILED*.
 
 ---+++ 4.2. Transitions of Bundle Job Status 
-
-At any time, a bundle job is in one of the following status: PREP, RUNNING, PREPSUSPENDED, SUSPENDED, PREPPAUSED, PAUSED, SUCCEEDED, DONWITHERROR, KILLED, FAILED.
 
 Valid bundle job status transitions are:
 
    * *PREP --> PREPSUSPENDED | PREPPAUSED | RUNNING | KILLED*
-   * *RUNNING --> SUSPENDED | PAUSED | SUCCEEDED | DONWITHERROR | KILLED | FAILED*
+   * *RUNNING --> RUNNINGWITHERROR | SUSPENDED | PAUSED | SUCCEEDED | KILLED*
+   * *RUNNINGWITHERROR --> RUNNING | SUSPENDEDWITHERROR | PAUSEDWITHERROR | DONEWITHERROR | FAILED | KILLED*
    * *PREPSUSPENDED --> PREP | KILLED*
    * *SUSPENDED --> RUNNING | KILLED*
+   * *SUSPENDEDWITHERROR --> RUNNINGWITHERROR | KILLED*
    * *PREPPAUSED --> PREP | KILLED*
    * *PAUSED --> SUSPENDED | RUNNING | KILLED*
+   * *PAUSEDWITHERROR --> SUSPENDEDWITHERROR | RUNNINGWITHERROR | KILLED*
 
 ---+++ 4.3. Details of Status Transitions
 When a bundle job is submitted, oozie parses the bundle job XML. Oozie then creates a record for the bundle with status *PREP* and returns a unique ID.
 
-When a user requests to suspend a bundle job that is in *PREP* state, oozie puts the job in status *PREPSUSPEND*. Similarly, when pause time reaches for a bundle job with *PREP* status, oozie puts the job in status *PREPPAUSED*.
+When a user requests to suspend a bundle job that is in *PREP* state, oozie puts the job in status *PREPSUSPENDED*. Similarly, when pause time reaches for a bundle job with *PREP* status, oozie puts the job in status *PREPPAUSED*.
 
-Conversely, when a user requests to resume a PREPSUSPENDED bundle job, oozie puts the job in status *PREP*. And when pause time is reset for a bundle job that is in PREPPAUSED state, oozie puts the job in status *PREP*.
+Conversely, when a user requests to resume a *PREPSUSPENDED* bundle job, oozie puts the job in status *PREP*. And when pause time is reset for a bundle job that is in *PREPPAUSED* state, oozie puts the job in status *PREP*.
 
 There are two ways a bundle job could be started.
-     * If =kick-off-time= (defined in the bundle xml) reaches. The default value is null which means starts coordinators NOW.
-    * If user sends a start request to START the bundle.
 
-When a bundle job starts, oozie puts the job in status *RUNNING* and it submits the all coordinator jobs.
+     * If =kick-off-time= (defined in the bundle xml) reaches. The default value is null which means starts coordinators NOW.
+
+     * If user sends a start request to START the bundle.
+
+When a bundle job starts, oozie puts the job in status *RUNNING* and it submits all the coordinator jobs. If any coordinator job goes to *FAILED/KILLED/DONEWITHERROR* state, the bundle job is put in *RUNNINGWITHERROR*
 
 When a user requests to kill a bundle job, oozie puts the job in status *KILLED* and it sends kill to all submitted coordinator jobs.
 
-When a user requests to suspend a bundle job that is not in *PREP* status, oozie puts the job in status *SUSPEND* and it suspends all submitted coordinator jobs.
+When a user requests to suspend a bundle job that is in *RUNNING* status, oozie puts the job in status *SUSPENDED* and it suspends all submitted coordinator jobs. Similarly, when a user requests to suspend a bundle job that is in *RUNNINGWITHERROR* status, oozie puts the job in status *SUSPENDEDWITHERROR* and it suspends all submitted coordinator jobs.
 
-When pause time reaches for a bundle job that is not in *PREP* status, oozie puts the job in status *PAUSED*. When the paused time is reset, Oozie puts back the job in status *RUNNING*.
+When pause time reaches for a bundle job that is in *RUNNING* status, oozie puts the job in status *PAUSED*. When pause time reaches for a bundle job that is in *RUNNINGWITHERROR* status, oozie puts the job in status *PAUSEDWITHERROR*.
+
+Conversely, when a user requests to resume a *SUSPENDED* bundle job, oozie puts the job in status *RUNNING*. Similarly, when a user requests to resume a *SUSPENDEDWITHERROR* bundle job, oozie puts the job in status *RUNNINGWITHERROR*. And when pause time is reset for a bundle job and job status is *PAUSED*, oozie puts the job in status *RUNNING*. Similarly, when the pause time is reset for a bundle job and job status is *PAUSEDWITHERROR*, oozie puts the job in status *RUNNINGWITHERROR*
 
 When all the coordinator jobs finish, oozie updates the bundle status accordingly. If all coordinators reaches to the _same_ terminal state, bundle job status also move to the same status. For example, if all coordinators are *SUCCEEDED*, oozie puts the bundle job into *SUCCEEDED* status. However, if all coordinator jobs don't finish with the same status, oozie puts the bundle job into *DONEWITHERROR*.
     

@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,9 +54,7 @@ import org.apache.openjpa.persistence.jdbc.Index;
 
         @NamedQuery(name = "GET_BUNDLE_JOBS_COLUMNS", query = "select w.id, w.appName, w.appPath, w.conf, w.status, w.kickoffTimestamp, w.startTimestamp, w.endTimestamp, w.pauseTimestamp, w.createdTimestamp, w.user, w.group, w.timeUnitStr, w.timeOut from BundleJobBean w order by w.createdTimestamp desc"),
 
-        @NamedQuery(name = "GET_BUNDLE_JOBS_PENDING", query = "select OBJECT(w) from BundleJobBean w where w.pending = 1 order by w.lastModifiedTimestamp"),
-
-        @NamedQuery(name = "GET_BUNDLE_JOBS_RUNNING", query = "select OBJECT(w) from BundleJobBean w where w.status = 'RUNNING' OR w.status = 'RUNNINGWITHERROR' order by w.lastModifiedTimestamp"),
+        @NamedQuery(name = "GET_BUNDLE_JOBS_RUNNING_OR_PENDING", query = "select OBJECT(w) from BundleJobBean w where w.status = 'RUNNING' OR w.status = 'RUNNINGWITHERROR' OR w.pending = 1 order by w.lastModifiedTimestamp"),
 
         @NamedQuery(name = "GET_BUNDLE_JOBS_NEED_START", query = "select OBJECT(w) from BundleJobBean w where w.status = 'PREP' AND (w.kickoffTimestamp IS NULL OR (w.kickoffTimestamp IS NOT NULL AND w.kickoffTimestamp <= :currentTime)) order by w.lastModifiedTimestamp"),
 
@@ -64,7 +62,7 @@ import org.apache.openjpa.persistence.jdbc.Index;
 
         @NamedQuery(name = "GET_BUNDLE_JOBS_UNPAUSED", query = "select OBJECT(w) from BundleJobBean w where w.status = 'RUNNING' OR w.status = 'RUNNINGWITHERROR' OR w.status = 'PREP' order by w.lastModifiedTimestamp"),
 
-        @NamedQuery(name = "GET_BUNDLE_JOBS_OLDER_THAN", query = "select OBJECT(w) from BundleJobBean w where w.startTimestamp <= :matTime AND (w.status = 'PREP' OR w.status = 'RUNNING')  order by w.lastModifiedTimestamp"),
+        @NamedQuery(name = "GET_BUNDLE_JOBS_OLDER_THAN", query = "select OBJECT(w) from BundleJobBean w where w.startTimestamp <= :matTime AND (w.status = 'PREP' OR w.status = 'RUNNING' or w.status = 'RUNNINGWITHERROR')  order by w.lastModifiedTimestamp"),
 
         @NamedQuery(name = "GET_BUNDLE_JOBS_OLDER_THAN_STATUS", query = "select OBJECT(w) from BundleJobBean w where w.status = :status AND w.lastModifiedTimestamp <= :lastModTime order by w.lastModifiedTimestamp"),
 
