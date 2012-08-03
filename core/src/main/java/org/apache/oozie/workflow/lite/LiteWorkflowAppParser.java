@@ -41,8 +41,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.Stack;
 
 /**
  * Class to parse and validate workflow xml
@@ -81,6 +79,7 @@ public class LiteWorkflowAppParser {
     public static final String VALIDATE_FORK_JOIN = "oozie.validate.ForkJoin";
 
     private Schema schema;
+    private Class<? extends ControlNodeHandler> controlNodeHandler;
     private Class<? extends DecisionNodeHandler> decisionHandlerClass;
     private Class<? extends ActionNodeHandler> actionHandlerClass;
 
@@ -91,9 +90,12 @@ public class LiteWorkflowAppParser {
     private List<String> forkList = new ArrayList<String>();
     private List<String> joinList = new ArrayList<String>();
 
-    public LiteWorkflowAppParser(Schema schema, Class<? extends DecisionNodeHandler> decisionHandlerClass,
+    public LiteWorkflowAppParser(Schema schema,
+                                 Class<? extends ControlNodeHandler> controlNodeHandler,
+                                 Class<? extends DecisionNodeHandler> decisionHandlerClass,
                                  Class<? extends ActionNodeHandler> actionHandlerClass) throws WorkflowException {
         this.schema = schema;
+        this.controlNodeHandler = controlNodeHandler;
         this.decisionHandlerClass = decisionHandlerClass;
         this.actionHandlerClass = actionHandlerClass;
     }
@@ -260,15 +262,16 @@ public class LiteWorkflowAppParser {
         for (Element eNode : (List<Element>) root.getChildren()) {
             if (eNode.getName().equals(START_E)) {
                 def = new LiteWorkflowApp(root.getAttributeValue(NAME_A), strDef,
-                                          new StartNodeDef(eNode.getAttributeValue(TO_A)));
+                                          new StartNodeDef(controlNodeHandler, eNode.getAttributeValue(TO_A)));
             }
             else {
                 if (eNode.getName().equals(END_E)) {
-                    def.addNode(new EndNodeDef(eNode.getAttributeValue(NAME_A)));
+                    def.addNode(new EndNodeDef(eNode.getAttributeValue(NAME_A), controlNodeHandler));
                 }
                 else {
                     if (eNode.getName().equals(KILL_E)) {
-                        def.addNode(new KillNodeDef(eNode.getAttributeValue(NAME_A), eNode.getChildText(KILL_MESSAGE_E, ns)));
+                        def.addNode(new KillNodeDef(eNode.getAttributeValue(NAME_A),
+                                                    eNode.getChildText(KILL_MESSAGE_E, ns), controlNodeHandler));
                     }
                     else {
                         if (eNode.getName().equals(FORK_E)) {
@@ -276,11 +279,12 @@ public class LiteWorkflowAppParser {
                             for (Element tran : (List<Element>) eNode.getChildren(FORK_PATH_E, ns)) {
                                 paths.add(tran.getAttributeValue(FORK_START_A));
                             }
-                            def.addNode(new ForkNodeDef(eNode.getAttributeValue(NAME_A), paths));
+                            def.addNode(new ForkNodeDef(eNode.getAttributeValue(NAME_A), controlNodeHandler, paths));
                         }
                         else {
                             if (eNode.getName().equals(JOIN_E)) {
-                                def.addNode(new JoinNodeDef(eNode.getAttributeValue(NAME_A), eNode.getAttributeValue(TO_A)));
+                                def.addNode(new JoinNodeDef(eNode.getAttributeValue(NAME_A), controlNodeHandler,
+                                                            eNode.getAttributeValue(TO_A)));
                             }
                             else {
                                 if (eNode.getName().equals(DECISION_E)) {

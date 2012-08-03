@@ -19,33 +19,17 @@ package org.apache.oozie.workflow.lite;
 
 import java.util.Collections;
 
-//TODO javadoc
-public class KillNodeDef extends NodeDef {
+/**
+ * Node definition for KILL control node.
+ */
+public class KillNodeDef extends ControlNodeDef {
 
     KillNodeDef() {
     }
 
     @SuppressWarnings("unchecked")
-    public KillNodeDef(String name, String message) {
-        super(name, message, KillNodeHandler.class, Collections.EMPTY_LIST);
-    }
-
-    public static class KillNodeHandler extends NodeHandler {
-
-        public boolean enter(Context context) {
-            return true;
-        }
-
-        public String exit(Context context) {
-            context.killJob();
-            return null;
-        }
-
-        public void kill(Context context) {
-        }
-
-        public void fail(Context context) {
-        }
+    public KillNodeDef(String name, String message, Class<? extends ControlNodeHandler> klass) {
+        super(name, message, klass, Collections.EMPTY_LIST);
     }
 
 }

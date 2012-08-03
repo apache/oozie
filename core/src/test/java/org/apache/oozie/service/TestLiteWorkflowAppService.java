@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.List;
 
 import junit.framework.Assert;
+import org.apache.oozie.workflow.lite.StartNodeDef;
 
 public class TestLiteWorkflowAppService extends XTestCase {
 
@@ -266,8 +267,8 @@ public class TestLiteWorkflowAppService extends XTestCase {
             LiteWorkflowApp app = (LiteWorkflowApp) wps.parseDef(jobConf, "authToken");
             assertNotNull(app);
             assertEquals("test-wf", app.getName());
-            assertNotNull(app.getNode("::start::"));
-            assertEquals("a", app.getNode("::start::").getTransitions().get(0));
+            assertNotNull(app.getNode(StartNodeDef.START));
+            assertEquals("a", app.getNode(StartNodeDef.START).getTransitions().get(0));
             assertEquals("b", app.getNode("a").getTransitions().get(0));
             assertEquals("c", app.getNode("a").getTransitions().get(1));
             assertEquals("c", app.getNode("a").getTransitions().get(2));

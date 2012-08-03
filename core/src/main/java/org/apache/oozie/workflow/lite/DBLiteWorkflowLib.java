@@ -35,9 +35,11 @@ import org.apache.oozie.ErrorCode;
 public class DBLiteWorkflowLib extends LiteWorkflowLib {
     private final Connection connection;
 
-    public DBLiteWorkflowLib(Schema schema, Class<? extends DecisionNodeHandler> decisionHandlerClass,
+    public DBLiteWorkflowLib(Schema schema,
+                             Class<? extends ControlNodeHandler> controlNodeHandler,
+                             Class<? extends DecisionNodeHandler> decisionHandlerClass,
                              Class<? extends ActionNodeHandler> actionHandlerClass, Connection connection) {
-        super(schema, decisionHandlerClass, actionHandlerClass);
+        super(schema, controlNodeHandler, decisionHandlerClass, actionHandlerClass);
         this.connection = connection;
     }
 

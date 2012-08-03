@@ -27,6 +27,7 @@ import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.XException;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
+import org.apache.oozie.action.control.ControlNodeActionExecutor;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
@@ -126,8 +127,15 @@ public class ActionEndXCommand extends ActionXCommand<Void> {
         LOG.debug("STARTED ActionEndXCommand for action " + actionId);
 
         Configuration conf = wfJob.getWorkflowInstance().getConf();
-        int maxRetries = conf.getInt(OozieClient.ACTION_MAX_RETRIES, executor.getMaxRetries());
-        long retryInterval = conf.getLong(OozieClient.ACTION_RETRY_INTERVAL, executor.getRetryInterval());
+
+        int maxRetries = 0;
+        long retryInterval = 0;
+
+        if (!(executor instanceof ControlNodeActionExecutor)) {
+            maxRetries = conf.getInt(OozieClient.ACTION_MAX_RETRIES, executor.getMaxRetries());
+            retryInterval = conf.getLong(OozieClient.ACTION_RETRY_INTERVAL, executor.getRetryInterval());
+        }
+
         executor.setMaxRetries(maxRetries);
         executor.setRetryInterval(retryInterval);
 

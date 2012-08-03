@@ -28,6 +28,7 @@ import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.XException;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
+import org.apache.oozie.action.control.ControlNodeActionExecutor;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
@@ -135,8 +136,14 @@ public class ActionStartXCommand extends ActionXCommand<Void> {
         LOG.debug("STARTED ActionStartXCommand for wf actionId=" + actionId);
         Configuration conf = wfJob.getWorkflowInstance().getConf();
 
-        int maxRetries = conf.getInt(OozieClient.ACTION_MAX_RETRIES, executor.getMaxRetries());
-        long retryInterval = conf.getLong(OozieClient.ACTION_RETRY_INTERVAL, executor.getRetryInterval());
+        int maxRetries = 0;
+        long retryInterval = 0;
+
+        if (!(executor instanceof ControlNodeActionExecutor)) {
+            maxRetries = conf.getInt(OozieClient.ACTION_MAX_RETRIES, executor.getMaxRetries());
+            retryInterval = conf.getLong(OozieClient.ACTION_RETRY_INTERVAL, executor.getRetryInterval());
+        }
+
         executor.setMaxRetries(maxRetries);
         executor.setRetryInterval(retryInterval);
 
@@ -153,11 +160,13 @@ public class ActionStartXCommand extends ActionXCommand<Void> {
             }
             context = new ActionXCommand.ActionExecutorContext(wfJob, wfAction, isRetry, isUserRetry);
             try {
-                String tmpActionConf = XmlUtils.removeComments(wfAction.getConf());
-                String actionConf = context.getELEvaluator().evaluate(tmpActionConf, String.class);
-                wfAction.setConf(actionConf);
-                LOG.debug("Start, name [{0}] type [{1}] configuration{E}{E}{2}{E}", wfAction.getName(), wfAction
-                        .getType(), actionConf);
+                if (!(executor instanceof ControlNodeActionExecutor)) {
+                    String tmpActionConf = XmlUtils.removeComments(wfAction.getConf());
+                    String actionConf = context.getELEvaluator().evaluate(tmpActionConf, String.class);
+                    wfAction.setConf(actionConf);
+                    LOG.debug("Start, name [{0}] type [{1}] configuration{E}{E}{2}{E}", wfAction.getName(), wfAction
+                            .getType(), actionConf);
+                }
             }
             catch (ELEvaluationException ex) {
                 throw new ActionExecutorException(ActionExecutorException.ErrorType.TRANSIENT, EL_EVAL_ERROR, ex

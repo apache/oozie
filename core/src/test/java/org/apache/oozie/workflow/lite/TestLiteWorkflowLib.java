@@ -113,6 +113,26 @@ public class TestLiteWorkflowLib extends XTestCase {
         }
     }
 
+    public static class TestControlNodeHandler extends ControlNodeHandler {
+
+        @Override
+        public boolean enter(Context context) throws WorkflowException {
+            boolean done = true;
+            super.enter(context);
+            Class<? extends NodeDef> nodeClass = context.getNodeDef().getClass();
+            if (nodeClass.equals(JoinNodeDef.class)) {
+                String parentExecutionPath = context.getExecutionPath();
+                String forkCount = context.getVar(FORK_COUNT_PREFIX + parentExecutionPath);
+                done = forkCount == null;
+            }
+            return done;
+        }
+
+        @Override
+        public void touch(Context context) throws WorkflowException {
+        }
+    }
+
     public static class TestRootContextHandler extends SynchNodeHandler {
 
         @Override
@@ -175,19 +195,27 @@ public class TestLiteWorkflowLib extends XTestCase {
     }
 
     public void testEmptyWorkflow() throws WorkflowException {
-        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>", new StartNodeDef("end"))
-                .addNode(new EndNodeDef("end"));
+        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>",
+                                                  new StartNodeDef(TestControlNodeHandler.class, "end"))
+                .addNode(new EndNodeDef("end", TestControlNodeHandler.class));
 
-        LiteWorkflowInstance job = new LiteWorkflowInstance(def, new XConfiguration(), "1");
+        final LiteWorkflowInstance job = new LiteWorkflowInstance(def, new XConfiguration(), "1");
         assertEquals(WorkflowInstance.Status.PREP, job.getStatus());
         job.start();
+        waitFor(5 * 1000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                return job.getStatus() == WorkflowInstance.Status.SUCCEEDED;
+            }
+        });
         assertEquals(WorkflowInstance.Status.SUCCEEDED, job.getStatus());
     }
 
     public void testKillWorkflow() throws WorkflowException {
-        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>", new StartNodeDef("kill"))
-                .addNode(new KillNodeDef("kill", "killed"))
-                .addNode(new EndNodeDef("end"));
+        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>",
+            new StartNodeDef(TestControlNodeHandler.class, "kill"))
+                .addNode(new KillNodeDef("kill", "killed", TestControlNodeHandler.class))
+                .addNode(new EndNodeDef("end", TestControlNodeHandler.class));
 
         LiteWorkflowInstance job = new LiteWorkflowInstance(def, new XConfiguration(), "1");
         assertEquals(WorkflowInstance.Status.PREP, job.getStatus());
@@ -196,9 +224,10 @@ public class TestLiteWorkflowLib extends XTestCase {
     }
 
     public void testWorkflowStates() throws WorkflowException {
-        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>", new StartNodeDef("one"))
+        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>",
+                                                  new StartNodeDef(TestControlNodeHandler.class, "one"))
                 .addNode(new NodeDef("one", null, AsynchNodeHandler.class, Arrays.asList(new String[]{"end"})))
-                .addNode(new EndNodeDef("end"));
+                .addNode(new EndNodeDef("end", TestControlNodeHandler.class));
 
         LiteWorkflowInstance job = new LiteWorkflowInstance(def, new XConfiguration(), "1");
         assertEquals(WorkflowInstance.Status.PREP, job.getStatus());
@@ -322,9 +351,10 @@ public class TestLiteWorkflowLib extends XTestCase {
     }
 
     public void testSynchSimple() throws WorkflowException {
-        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>", new StartNodeDef("one"))
+        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>",
+                                                  new StartNodeDef(TestControlNodeHandler.class, "one"))
                 .addNode(new NodeDef("one", null, SynchNodeHandler.class, Arrays.asList(new String[]{"end"})))
-                .addNode(new EndNodeDef("end"));
+                .addNode(new EndNodeDef("end", TestControlNodeHandler.class));
 
         LiteWorkflowInstance job = new LiteWorkflowInstance(def, new XConfiguration(), "1");
         job.start();
@@ -337,9 +367,10 @@ public class TestLiteWorkflowLib extends XTestCase {
     }
 
     public void testNodeContext() throws WorkflowException {
-        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>", new StartNodeDef("one"))
+        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>",
+                                                  new StartNodeDef(TestControlNodeHandler.class, "one"))
                 .addNode(new NodeDef("one", null, TestRootContextHandler.class, Arrays.asList(new String[]{"end"})))
-                .addNode(new EndNodeDef("end"));
+                .addNode(new EndNodeDef("end", TestControlNodeHandler.class));
 
         LiteWorkflowInstance job = new LiteWorkflowInstance(def, new XConfiguration(), "1");
         job.setVar("a", "A");
@@ -356,10 +387,11 @@ public class TestLiteWorkflowLib extends XTestCase {
     }
 
     public void testSynchDouble() throws WorkflowException {
-        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>", new StartNodeDef("one"))
+        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>",
+                                                  new StartNodeDef(TestControlNodeHandler.class, "one"))
                 .addNode(new NodeDef("one", null, SynchNodeHandler.class, Arrays.asList(new String[]{"two"})))
                 .addNode(new NodeDef("two", null, SynchNodeHandler.class, Arrays.asList(new String[]{"end"})))
-                .addNode(new EndNodeDef("end"));
+                .addNode(new EndNodeDef("end", TestControlNodeHandler.class));
 
         LiteWorkflowInstance job = new LiteWorkflowInstance(def, new XConfiguration(), "1");
         job.start();
@@ -372,9 +404,10 @@ public class TestLiteWorkflowLib extends XTestCase {
     }
 
     public void testAsynchSimple() throws WorkflowException {
-        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>", new StartNodeDef("one"))
+        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>",
+                                                  new StartNodeDef(TestControlNodeHandler.class, "one"))
                 .addNode(new NodeDef("one", null, AsynchNodeHandler.class, Arrays.asList(new String[]{"end"})))
-                .addNode(new EndNodeDef("end"));
+                .addNode(new EndNodeDef("end", TestControlNodeHandler.class));
 
         LiteWorkflowInstance job = new LiteWorkflowInstance(def, new XConfiguration(), "1");
         job.start();
@@ -391,9 +424,10 @@ public class TestLiteWorkflowLib extends XTestCase {
     }
 
     public void testInvalidExecutionPath() throws WorkflowException {
-        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>", new StartNodeDef("one"))
+        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>",
+                                                  new StartNodeDef(TestControlNodeHandler.class, "one"))
                 .addNode(new NodeDef("one", null, AsynchNodeHandler.class, Arrays.asList(new String[]{"end"})))
-                .addNode(new EndNodeDef("end"));
+                .addNode(new EndNodeDef("end", TestControlNodeHandler.class));
 
         LiteWorkflowInstance job = new LiteWorkflowInstance(def, new XConfiguration(), "1");
         job.start();
@@ -406,14 +440,16 @@ public class TestLiteWorkflowLib extends XTestCase {
 
     public void testSimpleFork() throws WorkflowException {
 
-        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>", new StartNodeDef("one"))
+        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>",
+                                                  new StartNodeDef(TestControlNodeHandler.class, "one"))
                 .addNode(new NodeDef("one", null, SynchNodeHandler.class, Arrays.asList(new String[]{"f"})))
-                .addNode(new ForkNodeDef("f", Arrays.asList(new String[]{"two", "three"})))
+                .addNode(new ForkNodeDef("f", TestControlNodeHandler.class,
+                                         Arrays.asList(new String[]{"two", "three"})))
                 .addNode(new NodeDef("two", null, SynchNodeHandler.class, Arrays.asList(new String[]{"j"})))
                 .addNode(new NodeDef("three", null, SynchNodeHandler.class, Arrays.asList(new String[]{"j"})))
-                .addNode(new JoinNodeDef("j", "four"))
+                .addNode(new JoinNodeDef("j", TestControlNodeHandler.class, "four"))
                 .addNode(new NodeDef("four", null, SynchNodeHandler.class, Arrays.asList(new String[]{"end"})))
-                .addNode(new EndNodeDef("end"));
+                .addNode(new EndNodeDef("end", TestControlNodeHandler.class));
 
         LiteWorkflowInstance job = new LiteWorkflowInstance(def, new XConfiguration(), "1");
         job.start();
@@ -432,12 +468,13 @@ public class TestLiteWorkflowLib extends XTestCase {
 
     public void testForkedContext() throws WorkflowException {
 
-        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>", new StartNodeDef("f"))
-                .addNode(new ForkNodeDef("f", Arrays.asList(new String[]{"a", "b"})))
+        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>",
+            new StartNodeDef(TestControlNodeHandler.class, "f"))
+                .addNode(new ForkNodeDef("f", TestControlNodeHandler.class,  Arrays.asList(new String[]{"a", "b"})))
                 .addNode(new NodeDef("a", null, TestForkedContextHandler.class, Arrays.asList(new String[]{"j"})))
                 .addNode(new NodeDef("b", null, SynchNodeHandler.class, Arrays.asList(new String[]{"j"})))
-                .addNode(new JoinNodeDef("j", "end"))
-                .addNode(new EndNodeDef("end"));
+                .addNode(new JoinNodeDef("j", TestControlNodeHandler.class, "end"))
+                .addNode(new EndNodeDef("end", TestControlNodeHandler.class));
 
         LiteWorkflowInstance job = new LiteWorkflowInstance(def, new XConfiguration(), "1");
         job.start();
@@ -448,19 +485,22 @@ public class TestLiteWorkflowLib extends XTestCase {
 
     public void testNestedFork() throws WorkflowException {
 
-        LiteWorkflowApp def = new LiteWorkflowApp("testWf", "<worklfow-app/>", new StartNodeDef("one"))
+        LiteWorkflowApp def = new LiteWorkflowApp("testWf", "<worklfow-app/>",
+            new StartNodeDef(TestControlNodeHandler.class, "one"))
                 .addNode(new NodeDef("one", null, SynchNodeHandler.class, Arrays.asList(new String[]{"f"})))
-                .addNode(new ForkNodeDef("f", Arrays.asList(new String[]{"two", "three"})))
+                .addNode(new ForkNodeDef("f", TestControlNodeHandler.class,
+                                         Arrays.asList(new String[]{"two", "three"})))
                 .addNode(new NodeDef("two", null, SynchNodeHandler.class, Arrays.asList(new String[]{"f2"})))
                 .addNode(new NodeDef("three", null, SynchNodeHandler.class, Arrays.asList(new String[]{"j"})))
-                .addNode(new ForkNodeDef("f2", Arrays.asList(new String[]{"four", "five", "six"})))
+                .addNode(new ForkNodeDef("f2", TestControlNodeHandler.class,
+                                         Arrays.asList(new String[]{"four", "five", "six"})))
                 .addNode(new NodeDef("four", null, SynchNodeHandler.class, Arrays.asList(new String[]{"j2"})))
                 .addNode(new NodeDef("five", null, SynchNodeHandler.class, Arrays.asList(new String[]{"j2"})))
                 .addNode(new NodeDef("six", null, SynchNodeHandler.class, Arrays.asList(new String[]{"j2"})))
-                .addNode(new JoinNodeDef("j2", "seven"))
+                .addNode(new JoinNodeDef("j2", TestControlNodeHandler.class, "seven"))
                 .addNode(new NodeDef("seven", null, SynchNodeHandler.class, Arrays.asList(new String[]{"j"})))
-                .addNode(new JoinNodeDef("j", "end"))
-                .addNode(new EndNodeDef("end"));
+                .addNode(new JoinNodeDef("j", TestControlNodeHandler.class, "end"))
+                .addNode(new EndNodeDef("end", TestControlNodeHandler.class));
 
         LiteWorkflowInstance job = new LiteWorkflowInstance(def, new XConfiguration(), "abcde");
         job.start();
@@ -483,12 +523,13 @@ public class TestLiteWorkflowLib extends XTestCase {
 
     public void testKillWithRunningNodes() throws WorkflowException {
 
-        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>", new StartNodeDef("f"))
-                .addNode(new ForkNodeDef("f", Arrays.asList(new String[]{"a", "b"})))
+        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>",
+                                                  new StartNodeDef(TestControlNodeHandler.class, "f"))
+                .addNode(new ForkNodeDef("f", TestControlNodeHandler.class, Arrays.asList(new String[]{"a", "b"})))
                 .addNode(new NodeDef("a", null, SynchNodeHandler.class, Arrays.asList(new String[]{"j"})))
                 .addNode(new NodeDef("b", null, AsynchNodeHandler.class, Arrays.asList(new String[]{"j"})))
-                .addNode(new JoinNodeDef("j", "end"))
-                .addNode(new EndNodeDef("end"));
+                .addNode(new JoinNodeDef("j", TestControlNodeHandler.class, "end"))
+                .addNode(new EndNodeDef("end", TestControlNodeHandler.class));
 
         LiteWorkflowInstance job = new LiteWorkflowInstance(def, new XConfiguration(), "1");
         job.start();
@@ -502,11 +543,13 @@ public class TestLiteWorkflowLib extends XTestCase {
 
     public void testFailWithRunningNodes() throws WorkflowException {
 
-        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>", new StartNodeDef("f"))
-                .addNode(new ForkNodeDef("f", Arrays.asList(new String[]{"a", "b"})))
+        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>",
+            new StartNodeDef(TestControlNodeHandler.class, "f"))
+                .addNode(new ForkNodeDef("f", TestControlNodeHandler.class, Arrays.asList(new String[]{"a", "b"})))
                 .addNode(new NodeDef("a", null, SynchNodeHandler.class, Arrays.asList(new String[]{"j"})))
                 .addNode(new NodeDef("b", null, AsynchNodeHandler.class, Arrays.asList(new String[]{"j"})))
-                .addNode(new JoinNodeDef("j", "end")).addNode(new EndNodeDef("end"));
+                .addNode(new JoinNodeDef("j", TestControlNodeHandler.class, "end"))
+            .addNode(new EndNodeDef("end", TestControlNodeHandler.class));
 
 
         LiteWorkflowInstance job = new LiteWorkflowInstance(def, new XConfiguration(), "1");
@@ -522,12 +565,13 @@ public class TestLiteWorkflowLib extends XTestCase {
 
     public void testDoneWithRunningNodes() throws WorkflowException {
 
-        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>", new StartNodeDef("f"))
-                .addNode(new ForkNodeDef("f", Arrays.asList(new String[]{"a", "b"})))
+        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>",
+            new StartNodeDef(TestControlNodeHandler.class, "f"))
+                .addNode(new ForkNodeDef("f", TestControlNodeHandler.class, Arrays.asList(new String[]{"a", "b"})))
                 .addNode(new NodeDef("a", null, AsynchNodeHandler.class, Arrays.asList(new String[]{"j"})))
                 .addNode(new NodeDef("b", null, AsynchNodeHandler.class, Arrays.asList(new String[]{"end"})))
-                .addNode(new JoinNodeDef("j", "end"))
-                .addNode(new EndNodeDef("end"));
+                .addNode(new JoinNodeDef("j", TestControlNodeHandler.class, "end"))
+                .addNode(new EndNodeDef("end", TestControlNodeHandler.class));
 
         LiteWorkflowInstance job = new LiteWorkflowInstance(def, new XConfiguration(), "1");
         job.start();
@@ -541,13 +585,14 @@ public class TestLiteWorkflowLib extends XTestCase {
 
     public void testWFKillWithRunningNodes() throws WorkflowException {
 
-        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>", new StartNodeDef("f"))
-                .addNode(new ForkNodeDef("f", Arrays.asList(new String[]{"a", "b"})))
+        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>",
+            new StartNodeDef(TestControlNodeHandler.class, "f"))
+                .addNode(new ForkNodeDef("f", TestControlNodeHandler.class, Arrays.asList(new String[]{"a", "b"})))
                 .addNode(new NodeDef("a", null, AsynchNodeHandler.class, Arrays.asList(new String[]{"j"})))
                 .addNode(new NodeDef("b", null, AsynchNodeHandler.class, Arrays.asList(new String[]{"kill"})))
-                .addNode(new JoinNodeDef("j", "end"))
-                .addNode(new KillNodeDef("kill", "killed"))
-                .addNode(new EndNodeDef("end"));
+                .addNode(new JoinNodeDef("j", TestControlNodeHandler.class, "end"))
+                .addNode(new KillNodeDef("kill", "killed", TestControlNodeHandler.class))
+                .addNode(new EndNodeDef("end", TestControlNodeHandler.class));
 
         LiteWorkflowInstance job = new LiteWorkflowInstance(def, new XConfiguration(), "1");
         job.start();
@@ -561,12 +606,13 @@ public class TestLiteWorkflowLib extends XTestCase {
 
     public void testWfFailWithRunningNodes() throws WorkflowException {
 
-        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>", new StartNodeDef("f"))
-                .addNode(new ForkNodeDef("f", Arrays.asList(new String[]{"a", "b"})))
+        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>",
+            new StartNodeDef(TestControlNodeHandler.class, "f"))
+                .addNode(new ForkNodeDef("f", TestControlNodeHandler.class, Arrays.asList(new String[]{"a", "b"})))
                 .addNode(new NodeDef("a", null, AsynchNodeHandler.class, Arrays.asList(new String[]{"j"})))
                 .addNode(new NodeDef("b", null, AsynchNodeHandler.class, Arrays.asList(new String[]{"x"})))
-                .addNode(new JoinNodeDef("j", "end"))
-                .addNode(new EndNodeDef("end"));
+                .addNode(new JoinNodeDef("j", TestControlNodeHandler.class, "end"))
+                .addNode(new EndNodeDef("end", TestControlNodeHandler.class));
 
         LiteWorkflowInstance job = new LiteWorkflowInstance(def, new XConfiguration(), "1");
         try {
@@ -588,12 +634,13 @@ public class TestLiteWorkflowLib extends XTestCase {
         decTrans.add("one");
         decTrans.add("two");
         decTrans.add("three");
-        LiteWorkflowApp def = new LiteWorkflowApp("testWf", "<worklfow-app/>", new StartNodeDef("d"))
+        LiteWorkflowApp def = new LiteWorkflowApp("testWf", "<worklfow-app/>",
+            new StartNodeDef(TestControlNodeHandler.class, "d"))
                 .addNode(new DecisionNodeDef("d", "", TestDecisionNodeHandler.class, decTrans))
                 .addNode(new NodeDef("one", null, SynchNodeHandler.class, Arrays.asList(new String[]{"end"})))
                 .addNode(new NodeDef("two", null, SynchNodeHandler.class, Arrays.asList(new String[]{"end"})))
                 .addNode(new NodeDef("three", null, SynchNodeHandler.class, Arrays.asList(new String[]{"end"})))
-                .addNode(new EndNodeDef("end"));
+                .addNode(new EndNodeDef("end", TestControlNodeHandler.class));
 
         LiteWorkflowInstance job = new LiteWorkflowInstance(def, new XConfiguration(), "abcde");
         job.start();
@@ -649,11 +696,12 @@ public class TestLiteWorkflowLib extends XTestCase {
 
 
     public void testActionOKError() throws WorkflowException {
-        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>", new StartNodeDef("a"))
+        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>",
+            new StartNodeDef(TestControlNodeHandler.class, "a"))
                 .addNode(new ActionNodeDef("a", "", TestActionNodeHandler.class, "b", "c"))
                 .addNode(new NodeDef("b", null, SynchNodeHandler.class, Arrays.asList(new String[]{"end"})))
                 .addNode(new NodeDef("c", null, SynchNodeHandler.class, Arrays.asList(new String[]{"end"})))
-                .addNode(new EndNodeDef("end"));
+                .addNode(new EndNodeDef("end", TestControlNodeHandler.class));
 
         LiteWorkflowInstance job = new LiteWorkflowInstance(def, new XConfiguration(), "1");
 
@@ -679,9 +727,10 @@ public class TestLiteWorkflowLib extends XTestCase {
     }
 
     public void testJobPersistance() throws WorkflowException {
-        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>", new StartNodeDef("one"))
+        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>",
+            new StartNodeDef(TestControlNodeHandler.class, "one"))
                 .addNode(new NodeDef("one", null, AsynchNodeHandler.class, Arrays.asList(new String[]{"end"})))
-                .addNode(new EndNodeDef("end"));
+                .addNode(new EndNodeDef("end", TestControlNodeHandler.class));
 
         LiteWorkflowInstance job = new LiteWorkflowInstance(def, new XConfiguration(), "1");
         job.setVar("a", "A");
@@ -709,11 +758,12 @@ public class TestLiteWorkflowLib extends XTestCase {
 
 
     public void testImmediateError() throws WorkflowException {
-        LiteWorkflowApp workflowDef = new LiteWorkflowApp("testWf", "<worklfow-app/>", new StartNodeDef("one"))
+        LiteWorkflowApp workflowDef = new LiteWorkflowApp("testWf", "<worklfow-app/>",
+            new StartNodeDef(TestControlNodeHandler.class, "one"))
                 .addNode(new NodeDef("one", null, SynchNodeHandler.class, Arrays.asList(new String[]{"two"})))
                 .addNode(new NodeDef("two", null, SynchNodeHandler.class, Arrays.asList(new String[]{"four"})))
                 .addNode(new NodeDef("three", null, SynchNodeHandler.class, Arrays.asList(new String[]{"end"})))
-                .addNode(new EndNodeDef("end"));
+                .addNode(new EndNodeDef("end", TestControlNodeHandler.class));
 
         LiteWorkflowInstance workflowJob = new LiteWorkflowInstance(workflowDef, new XConfiguration(), "abcde");
         try {
@@ -732,9 +782,9 @@ public class TestLiteWorkflowLib extends XTestCase {
 
     public void testSelfTransition() throws WorkflowException {
         try {
-            new LiteWorkflowApp("wf", "<worklfow-app/>", new StartNodeDef("one"))
+            new LiteWorkflowApp("wf", "<worklfow-app/>", new StartNodeDef(TestControlNodeHandler.class, "one"))
                     .addNode(new NodeDef("one", null, SynchNodeHandler.class, Arrays.asList(new String[]{"one"})))
-                    .addNode(new EndNodeDef("end"));
+                    .addNode(new EndNodeDef("end", TestControlNodeHandler.class));
             fail();
         }
         catch (WorkflowException ex) {
@@ -743,10 +793,11 @@ public class TestLiteWorkflowLib extends XTestCase {
     }
 
     public void testLoopSimple() throws WorkflowException {
-        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>", new StartNodeDef("one"))
+        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>",
+            new StartNodeDef(TestControlNodeHandler.class, "one"))
                 .addNode(new NodeDef("one", null, SynchNodeHandler.class, Arrays.asList(new String[]{"two"})))
                 .addNode(new NodeDef("two", null, SynchNodeHandler.class, Arrays.asList(new String[]{"one"})))
-                .addNode(new EndNodeDef("end"));
+                .addNode(new EndNodeDef("end", TestControlNodeHandler.class));
 
         LiteWorkflowInstance job = new LiteWorkflowInstance(def, new XConfiguration(), "1");
         try {
@@ -761,14 +812,16 @@ public class TestLiteWorkflowLib extends XTestCase {
 
     public void testLoopFork() throws WorkflowException {
 
-        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>", new StartNodeDef("one"))
+        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>",
+            new StartNodeDef(TestControlNodeHandler.class, "one"))
                 .addNode(new NodeDef("one", null, SynchNodeHandler.class, Arrays.asList(new String[]{"f"})))
-                .addNode(new ForkNodeDef("f", Arrays.asList(new String[]{"two", "three"})))
+                .addNode(new ForkNodeDef("f", TestControlNodeHandler.class,
+                                         Arrays.asList(new String[]{"two", "three"})))
                 .addNode(new NodeDef("two", null, SynchNodeHandler.class, Arrays.asList(new String[]{"j"})))
                 .addNode(new NodeDef("three", null, SynchNodeHandler.class, Arrays.asList(new String[]{"j"})))
-                .addNode(new JoinNodeDef("j", "four"))
+                .addNode(new JoinNodeDef("j", TestControlNodeHandler.class, "four"))
                 .addNode(new NodeDef("four", null, SynchNodeHandler.class, Arrays.asList(new String[]{"f"})))
-                .addNode(new EndNodeDef("end"));
+                .addNode(new EndNodeDef("end", TestControlNodeHandler.class));
 
         LiteWorkflowInstance job = new LiteWorkflowInstance(def, new XConfiguration(), "1");
         try {

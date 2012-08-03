@@ -17,6 +17,7 @@
  */
 package org.apache.oozie.store;
 
+import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.util.XLog;
 
 import java.sql.SQLException;
@@ -119,8 +120,9 @@ public class TestDBWorkflowStore extends XTestCase {
 
     private void _testInsertWF() throws Exception {
         store.beginTrx();
-        WorkflowApp app = new LiteWorkflowApp("testApp", "<workflow-app/>", new StartNodeDef("end"))
-                .addNode(new EndNodeDef("end"));
+        WorkflowApp app = new LiteWorkflowApp("testApp", "<workflow-app/>",
+            new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "end")).
+            addNode(new EndNodeDef("end", LiteWorkflowStoreService.LiteControlNodeHandler.class));
         Configuration conf1 = new Configuration();
 
         conf1.set(OozieClient.APP_PATH, "testPath");
@@ -456,8 +458,9 @@ public class TestDBWorkflowStore extends XTestCase {
         store.beginTrx();
         wfBean1.setEndTime(new Date(System.currentTimeMillis() - (31 * 24 * 60 * 60 * 1000l)));
         wfBean2.setEndTime(new Date(System.currentTimeMillis() - (31 * 24 * 60 * 60 * 1000l)));
-        WorkflowApp app = new LiteWorkflowApp("testApp", "<workflow-app/>", new StartNodeDef("end"))
-                .addNode(new EndNodeDef("end"));
+        WorkflowApp app = new LiteWorkflowApp("testApp", "<workflow-app/>",
+            new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "end")).
+                addNode(new EndNodeDef("end", LiteWorkflowStoreService.LiteControlNodeHandler.class));
         Configuration conf2 = new Configuration();
         conf2.set(OozieClient.APP_PATH, "testPath");
         conf2.set(OozieClient.LOG_TOKEN, "testToken");

@@ -134,7 +134,8 @@ public class DBLiteWorkflowStoreService extends LiteWorkflowStoreService impleme
 
     private WorkflowLib getWorkflowLib(Connection conn) {
         javax.xml.validation.Schema schema = Services.get().get(SchemaService.class).getSchema(SchemaName.WORKFLOW);
-        return new DBLiteWorkflowLib(schema, LiteDecisionHandler.class, LiteActionHandler.class, conn);
+        return new DBLiteWorkflowLib(schema, LiteControlNodeHandler.class,
+                                     LiteDecisionHandler.class, LiteActionHandler.class, conn);
     }
 
     @Override

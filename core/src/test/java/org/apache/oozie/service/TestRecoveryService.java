@@ -134,7 +134,14 @@ public class TestRecoveryService extends XDataTestCase {
         final WorkflowStore store = Services.get().get(WorkflowStoreService.class).create();
         store.beginTrx();
         List<WorkflowActionBean> actions = store.getActionsForWorkflow(jobId, false);
-        WorkflowActionBean action = actions.get(0);
+        WorkflowActionBean action = null;
+        for (WorkflowActionBean bean : actions) {
+            if (bean.getType().equals("test")) {
+                action = bean;
+                break;
+            }
+        }
+        assertNotNull(action);
         final String actionId = action.getId();
         assertEquals(WorkflowActionBean.Status.RUNNING, action.getStatus());
         String actionConf = action.getConf();

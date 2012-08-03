@@ -50,6 +50,7 @@ import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.service.HadoopAccessorService;
+import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.WorkflowAppService;
@@ -794,8 +795,9 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
     }
 
     private WorkflowJobBean addRecordToWfJobTable(String wfId, String wfxml) throws Exception {
-        WorkflowApp app = new LiteWorkflowApp("testApp", wfxml, new StartNodeDef("start"))
-                .addNode(new EndNodeDef("end"));
+        WorkflowApp app = new LiteWorkflowApp("testApp", wfxml,
+            new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "start")).
+                addNode(new EndNodeDef("end", LiteWorkflowStoreService.LiteControlNodeHandler.class));
         Configuration conf = Services.get().get(HadoopAccessorService.class).
             createJobConf(new URI(getNameNodeUri()).getAuthority());
         conf.set(OozieClient.APP_PATH, getNameNodeUri() + "/testPath");

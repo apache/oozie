@@ -27,6 +27,7 @@ import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.service.CallbackService;
+import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.WorkflowAppService;
@@ -226,8 +227,10 @@ public abstract class ActionExecutorTestCase extends XFsTestCase {
         content += "<end name='end' /></workflow-app>";
         writeToFile(content, getAppPath(), "workflow.xml");
 
-        WorkflowApp app = new LiteWorkflowApp("testApp", "<workflow-app/>", new StartNodeDef("end"))
-                .addNode(new EndNodeDef("end"));
+        WorkflowApp app = new LiteWorkflowApp("testApp", "<workflow-app/>",
+                                              new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class,
+                                                               "end"))
+                .addNode(new EndNodeDef("end", LiteWorkflowStoreService.LiteControlNodeHandler.class));
         XConfiguration wfConf = new XConfiguration();
         wfConf.set(OozieClient.USER_NAME, getTestUser());
         wfConf.set(OozieClient.APP_PATH, appUri.toString());
@@ -259,8 +262,9 @@ public abstract class ActionExecutorTestCase extends XFsTestCase {
 
         writeToFile(wfxml, getAppPath(), "workflow.xml");
 
-        WorkflowApp app = new LiteWorkflowApp("test-wf-cred", wfxml, new StartNodeDef("start")).addNode(new EndNodeDef(
-                "end"));
+        WorkflowApp app = new LiteWorkflowApp("test-wf-cred", wfxml,
+            new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "start")).
+            addNode(new EndNodeDef("end", LiteWorkflowStoreService.LiteControlNodeHandler.class));
         XConfiguration wfConf = new XConfiguration();
         wfConf.set(OozieClient.USER_NAME, getTestUser());
         wfConf.set(OozieClient.APP_PATH, appUri.toString());
