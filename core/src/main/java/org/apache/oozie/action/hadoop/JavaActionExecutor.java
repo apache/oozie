@@ -234,53 +234,45 @@ public class JavaActionExecutor extends ActionExecutor {
             throw convertException(ex);
         }
     }
-
-    protected FileSystem getActionFileSystem(Context context, WorkflowAction action) throws ActionExecutorException {
-        try {
-            Element actionXml = XmlUtils.parseXml(action.getConf());
-            return getActionFileSystem(context, actionXml);
+    
+    public static void parseJobXmlAndConfiguration(Context context, Element element, Path appPath, Configuration conf) 
+            throws IOException, ActionExecutorException, HadoopAccessorException, URISyntaxException {
+        Namespace ns = element.getNamespace();
+        Iterator<Element> it = element.getChildren("job-xml", ns).iterator();
+        while (it.hasNext()) {
+            Element e = it.next();
+            String jobXml = e.getTextTrim();
+            Path path = new Path(appPath, jobXml);
+            FileSystem fs = context.getAppFileSystem();
+            Configuration jobXmlConf = new XConfiguration(fs.open(path));
+            checkForDisallowedProps(jobXmlConf, "job-xml");
+            XConfiguration.copy(jobXmlConf, conf);
         }
-        catch (JDOMException ex) {
-            throw convertException(ex);
+        Element e = element.getChild("configuration", ns);
+        if (e != null) {
+            String strConf = XmlUtils.prettyPrint(e).toString();
+            XConfiguration inlineConf = new XConfiguration(new StringReader(strConf));
+            checkForDisallowedProps(inlineConf, "inline configuration");
+            XConfiguration.copy(inlineConf, conf);
         }
     }
-
-    protected FileSystem getActionFileSystem(Context context, Element actionXml) throws ActionExecutorException {
-        try {
-            return context.getAppFileSystem();
-        }
-        catch (Exception ex) {
-            throw convertException(ex);
-        }
-    }
-
-    Configuration setupActionConf(Configuration actionConf, Context context, Element actionXml, Path appPath)
+    
+    Configuration setupActionConf(Configuration actionConf, Context context, Element actionXml, Path appPath) 
             throws ActionExecutorException {
         try {
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
             XConfiguration actionDefaults = has.createActionDefaultConf(actionConf.get(HADOOP_JOB_TRACKER), getType());
             XConfiguration.injectDefaults(actionDefaults, actionConf);
-            Namespace ns = actionXml.getNamespace();
-            Iterator<Element> it = actionXml.getChildren("job-xml", ns).iterator();
-            while (it.hasNext()) {
-                Element e = it.next();
-                String jobXml = e.getTextTrim();
-                Path path = new Path(appPath, jobXml);
-                FileSystem fs = getActionFileSystem(context, actionXml);
-                Configuration jobXmlConf = new XConfiguration(fs.open(path));
-                checkForDisallowedProps(jobXmlConf, "job-xml");
-                XConfiguration.copy(jobXmlConf, actionConf);
-            }
-            Element e = actionXml.getChild("configuration", ns);
-            if (e != null) {
-                String strConf = XmlUtils.prettyPrint(e).toString();
-                XConfiguration inlineConf = new XConfiguration(new StringReader(strConf));
-                checkForDisallowedProps(inlineConf, "inline configuration");
-                XConfiguration.copy(inlineConf, actionConf);
-            }
+            parseJobXmlAndConfiguration(context, actionXml, appPath, actionConf);
             return actionConf;
         }
         catch (IOException ex) {
+            throw convertException(ex);
+        }
+        catch (HadoopAccessorException ex) {
+            throw convertException(ex);
+        }
+        catch (URISyntaxException ex) {
             throw convertException(ex);
         }
     }
@@ -868,7 +860,7 @@ public class JavaActionExecutor extends ActionExecutor {
     public void start(Context context, WorkflowAction action) throws ActionExecutorException {
         try {
             XLog.getLog(getClass()).debug("Starting action " + action.getId() + " getting Action File System");
-            FileSystem actionFs = getActionFileSystem(context, action);
+            FileSystem actionFs = context.getAppFileSystem();
             XLog.getLog(getClass()).debug("Preparing action Dir through copying " + context.getActionDir());
             prepareActionDir(actionFs, context);
             XLog.getLog(getClass()).debug("Action Dir is ready. Submitting the action ");
@@ -895,7 +887,7 @@ public class JavaActionExecutor extends ActionExecutor {
         }
         finally {
             try {
-                FileSystem actionFs = getActionFileSystem(context, action);
+                FileSystem actionFs = context.getAppFileSystem();
                 cleanUpActionDir(actionFs, context);
             }
             catch (Exception ex) {
@@ -924,7 +916,7 @@ public class JavaActionExecutor extends ActionExecutor {
         boolean exception = false;
         try {
             Element actionXml = XmlUtils.parseXml(action.getConf());
-            FileSystem actionFs = getActionFileSystem(context, actionXml);
+            FileSystem actionFs = context.getAppFileSystem();
             JobConf jobConf = createBaseHadoopConf(context, actionXml);
             jobClient = createJobClient(context, jobConf);
             RunningJob runningJob = jobClient.getJob(JobID.forName(action.getExternalId()));
@@ -1089,7 +1081,7 @@ public class JavaActionExecutor extends ActionExecutor {
         }
         finally {
             try {
-                FileSystem actionFs = getActionFileSystem(context, action);
+                FileSystem actionFs = context.getAppFileSystem();
                 cleanUpActionDir(actionFs, context);
                 if (jobClient != null) {
                     jobClient.close();

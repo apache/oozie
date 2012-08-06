@@ -117,45 +117,6 @@ public class FsActionExecutor extends ActionExecutor {
                     "move, target NN URI different from that of source", dest);
         }
     }
-    
-    XConfiguration parseJobXML(Context context, Element element) 
-            throws IOException, ActionExecutorException, HadoopAccessorException, URISyntaxException {
-        Path appPathRoot = new Path(context.getWorkflow().getAppPath());
-
-        FileSystem fs = context.getAppFileSystem();
-        
-        // app path could be a file
-        if (context.getAppFileSystem().isFile(appPathRoot)) {
-            appPathRoot = appPathRoot.getParent();
-        }
-        
-        XConfiguration jobXmlConfs = null;
-        Iterator<Element> it = element.getChildren("job-xml", element.getNamespace()).iterator();
-        while (it.hasNext()) {
-            Element e = it.next();
-            String jobXml = e.getTextTrim();
-            Path path = new Path(appPathRoot, jobXml);
-            XConfiguration jobXmlConf = new XConfiguration(fs.open(path));
-            JavaActionExecutor.checkForDisallowedProps(jobXmlConf, "job-xml");
-            if (jobXmlConfs == null) {
-                jobXmlConfs = new XConfiguration();
-            }
-            XConfiguration.copy(jobXmlConf, jobXmlConfs);
-        }
-        return jobXmlConfs;
-    }
-    
-    XConfiguration parseConfiguration(Element element) 
-            throws IOException, ActionExecutorException, HadoopAccessorException, URISyntaxException {
-        Element e = element.getChild("configuration", element.getNamespace());
-        if (e != null) {
-            String strConf = XmlUtils.prettyPrint(e).toString();
-            XConfiguration inlineConf = new XConfiguration(new StringReader(strConf));
-            JavaActionExecutor.checkForDisallowedProps(inlineConf, "inline configuration");
-            return inlineConf;
-        }
-        return null;
-    }
 
     @SuppressWarnings("unchecked")
     void doOperations(Context context, Element element) throws ActionExecutorException {
@@ -178,14 +139,12 @@ public class FsActionExecutor extends ActionExecutor {
             }
             
             XConfiguration fsConf = new XConfiguration();
-            XConfiguration jobXMLConf = parseJobXML(context, element);
-            if (jobXMLConf != null) {
-                XConfiguration.copy(jobXMLConf, fsConf);
+            Path appPath = new Path(context.getWorkflow().getAppPath());
+            // app path could be a file
+            if (fs.isFile(appPath)) {
+                appPath = appPath.getParent();
             }
-            XConfiguration configConf = parseConfiguration(element);
-            if (configConf != null) {
-                XConfiguration.copy(configConf, fsConf);
-            }
+            JavaActionExecutor.parseJobXmlAndConfiguration(context, element, appPath, fsConf);
             
             for (Element commandElement : (List<Element>) element.getChildren()) {
                 String command = commandElement.getName();

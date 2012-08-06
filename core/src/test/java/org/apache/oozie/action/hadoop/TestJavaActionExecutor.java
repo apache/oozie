@@ -1076,4 +1076,41 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertNotSame(conf.get(JavaActionExecutor.ACL_VIEW_JOB), actionConf.get(JavaActionExecutor.ACL_VIEW_JOB));
         assertNotSame(conf.get(JavaActionExecutor.ACL_MODIFY_JOB), actionConf.get(JavaActionExecutor.ACL_MODIFY_JOB));
     }
+    
+    public void testParseJobXmlAndConfiguration() throws Exception {
+        String str = "<java>"
+                + "<job-xml>job1.xml</job-xml>"
+                + "<job-xml>job2.xml</job-xml>"
+                + "<configuration>"
+                + "<property><name>p1</name><value>v1a</value></property>"
+                + "<property><name>p2</name><value>v2</value></property>"
+                + "</configuration>"
+                + "</java>";
+        Element xml = XmlUtils.parseXml(str);
+        Path appPath = new Path(getFsTestCaseDir(), "app");
+        getFileSystem().mkdirs(appPath);
+        
+        XConfiguration jConf = new XConfiguration();
+        jConf.set("p1", "v1b");
+        jConf.set("p3", "v3a");
+        OutputStream os = getFileSystem().create(new Path(appPath, "job1.xml"));
+        jConf.writeXml(os);
+        os.close();
+        
+        jConf = new XConfiguration();
+        jConf.set("p4", "v4");
+        jConf.set("p3", "v3b");
+        os = getFileSystem().create(new Path(appPath, "job2.xml"));
+        jConf.writeXml(os);
+        os.close();
+        
+        Configuration conf = new XConfiguration();
+        assertEquals(0, conf.size());
+        JavaActionExecutor.parseJobXmlAndConfiguration(createContext("<java/>"), xml, appPath, conf);
+        assertEquals(4, conf.size());
+        assertEquals("v1a", conf.get("p1"));
+        assertEquals("v2", conf.get("p2"));
+        assertEquals("v3b", conf.get("p3"));
+        assertEquals("v4", conf.get("p4"));
+    }
 }
