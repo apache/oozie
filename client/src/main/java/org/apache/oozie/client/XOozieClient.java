@@ -35,6 +35,12 @@ public class XOozieClient extends OozieClient {
     public static final String JT = "mapred.job.tracker";
 
     public static final String NN = "fs.default.name";
+    
+    @Deprecated
+    public static final String JT_PRINCIPAL = "mapreduce.jobtracker.kerberos.principal";
+    
+    @Deprecated
+    public static final String NN_PRINCIPAL = "dfs.namenode.kerberos.principal";
 
     public static final String PIG_SCRIPT = "oozie.pig.script";
 
