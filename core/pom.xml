@@ -39,7 +39,7 @@
         <dependency>
             <groupId>org.apache.oozie</groupId>
             <artifactId>oozie-hadoop-test</artifactId>
-            <scope>provided</scope>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
