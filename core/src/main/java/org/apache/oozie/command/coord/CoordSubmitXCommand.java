@@ -77,6 +77,8 @@ import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.InstrumentUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.util.ParameterVerifier;
+import org.apache.oozie.util.ParameterVerifierException;
 import org.apache.oozie.util.PropertiesUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
@@ -218,6 +220,8 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
             String appNamespace = readAppNamespace(appXml);
             coordJob.setAppNamespace(appNamespace);
 
+            ParameterVerifier.verifyParameters(conf, XmlUtils.parseXml(appXml));
+            
             appXml = XmlUtils.removeComments(appXml);
             initEvaluators();
             Element eJob = basicResolveAndIncludeDS(appXml, conf, coordJob);
@@ -273,6 +277,11 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
             exceptionOccured = true;
             LOG.warn("ERROR:  ", cex);
             throw new CommandException(cex);
+        }
+        catch (ParameterVerifierException pex) {
+            exceptionOccured = true;
+            LOG.warn("ERROR: ", pex);
+            throw new CommandException(pex);
         }
         catch (IllegalArgumentException iex) {
             exceptionOccured = true;

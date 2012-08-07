@@ -29,8 +29,9 @@
 
     <xs:complexType name="WORKFLOW-APP">
         <xs:sequence>
-        	<xs:element name="global" type="workflow:GLOBAL" minOccurs="0" maxOccurs="1"/>
-        	<xs:element name="credentials" type="workflow:CREDENTIALS" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="parameters" type="workflow:PARAMETERS" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="global" type="workflow:GLOBAL" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="credentials" type="workflow:CREDENTIALS" minOccurs="0" maxOccurs="1"/>
             <xs:element name="start" type="workflow:START" minOccurs="1" maxOccurs="1"/>
             <xs:choice minOccurs="0" maxOccurs="unbounded">
                 <xs:element name="decision" type="workflow:DECISION" minOccurs="1" maxOccurs="1"/>
@@ -45,6 +46,20 @@
         <xs:attribute name="name" type="xs:string" use="required"/>
     </xs:complexType>
     
+    <xs:complexType name="PARAMETERS">
+        <xs:sequence>
+            <xs:element name="property" minOccurs="1" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="name" minOccurs="1" maxOccurs="1" type="xs:string"/>
+                        <xs:element name="value" minOccurs="0" maxOccurs="1" type="xs:string"/>
+                        <xs:element name="description" minOccurs="0" maxOccurs="1" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+
     <xs:complexType name="GLOBAL">
     	<xs:sequence>
             <xs:element name="job-tracker" type="xs:string" minOccurs="1" maxOccurs="1"/>

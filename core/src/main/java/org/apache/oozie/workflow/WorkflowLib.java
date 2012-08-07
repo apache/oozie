@@ -31,10 +31,11 @@ public interface WorkflowLib {
      * Parse a workflow application definition.
      *
      * @param wfXml string containing the workflow definition.
+     * @param jobConf job configuration
      * @return the parse workflow application.
      * @throws WorkflowException thrown if the definition could not be parsed.
      */
-    public WorkflowApp parseDef(String wfXml) throws WorkflowException;
+    public WorkflowApp parseDef(String wfXml, Configuration jobConf) throws WorkflowException;
 
 
     /**

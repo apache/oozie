@@ -49,10 +49,10 @@ public abstract class LiteWorkflowLib implements WorkflowLib {
     }
 
     @Override
-    public WorkflowApp parseDef(String appXml) throws WorkflowException {
+    public WorkflowApp parseDef(String appXml, Configuration jobConf) throws WorkflowException {
         ParamChecker.notEmpty(appXml, "appXml");
         return new LiteWorkflowAppParser(schema, controlHandlerClass, decisionHandlerClass, actionHandlerClass)
-                .validateAndParse(new StringReader(appXml));
+                .validateAndParse(new StringReader(appXml), jobConf);
     }
 
     @Override
