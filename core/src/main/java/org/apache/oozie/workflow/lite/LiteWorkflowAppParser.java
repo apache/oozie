@@ -21,9 +21,12 @@ import org.apache.oozie.workflow.WorkflowException;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.util.ParameterVerifier;
+import org.apache.oozie.util.ParameterVerifierException;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.ActionService;
+import org.apache.hadoop.conf.Configuration;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.Namespace;
@@ -58,6 +61,7 @@ public class LiteWorkflowAppParser {
     private static final String SLA_INFO = "info";
     private static final String CREDENTIALS = "credentials";
     private static final String GLOBAL = "global";
+    private static final String PARAMETERS = "parameters";
 
     private static final String NAME_A = "name";
     private static final String CRED_A = "cred";
@@ -107,7 +111,7 @@ public class LiteWorkflowAppParser {
      * @return LiteWorkflowApp
      * @throws WorkflowException
      */
-    public LiteWorkflowApp validateAndParse(Reader reader) throws WorkflowException {
+    public LiteWorkflowApp validateAndParse(Reader reader, Configuration jobConf) throws WorkflowException {
         try {
             StringWriter writer = new StringWriter();
             IOUtils.copyCharStream(reader, writer);
@@ -119,6 +123,7 @@ public class LiteWorkflowAppParser {
             }
 
             Element wfDefElement = XmlUtils.parseXml(strDef);
+            ParameterVerifier.verifyParameters(jobConf, wfDefElement);
             LiteWorkflowApp app = parse(strDef, wfDefElement);
             Map<String, VisitStatus> traversed = new HashMap<String, VisitStatus>();
             traversed.put(app.getNode(StartNodeDef.START).getName(), VisitStatus.VISITING);
@@ -128,6 +133,9 @@ public class LiteWorkflowAppParser {
                 validateForkJoin(app);
             }
             return app;
+        }
+        catch (ParameterVerifierException ex) {
+            throw new WorkflowException(ex);
         }
         catch (JDOMException ex) {
             throw new WorkflowException(ErrorCode.E0700, ex.getMessage(), ex);
@@ -341,7 +349,12 @@ public class LiteWorkflowAppParser {
                                                 global = eNode;
                                             }
                                             else {
-                                                throw new WorkflowException(ErrorCode.E0703, eNode.getName());
+                                                if (eNode.getName().equals(PARAMETERS)) {
+                                                    // No operation is required
+                                                }
+                                                else {
+                                                    throw new WorkflowException(ErrorCode.E0703, eNode.getName());
+                                                }
                                             }
                                         }
                                     }

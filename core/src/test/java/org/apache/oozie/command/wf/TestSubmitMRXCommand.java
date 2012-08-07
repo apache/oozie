@@ -67,7 +67,7 @@ public class TestSubmitMRXCommand extends XFsTestCase {
 
         //verifying is a valid WF
         WorkflowAppService wps = Services.get().get(WorkflowAppService.class);
-        wps.parseDef(xml);
+        wps.parseDef(xml, conf);
 
         Element wfE = XmlUtils.parseXml(xml);
         Namespace ns = wfE.getNamespace();

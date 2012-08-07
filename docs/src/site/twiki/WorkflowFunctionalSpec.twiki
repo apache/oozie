@@ -14,6 +14,10 @@ Map/Reduce and Pig jobs.
 %TOC%
 
 ---++ Changelog
+---+++!! 2012JUL26
+
+   * #Appendix A, updated XML schema 0.4 to include =parameters= element
+   * #4.1 Updated to mention about =parameters= element as of schema 0.4
 ---+++!! 2012JUL23
 
    * #Appendix A, updated XML schema 0.4 (Fs action)
@@ -1465,6 +1469,60 @@ When submitting a workflow job for the workflow definition above, 3 workflow job
    * =inputDir:=
    * =outputDir:=
 
+If the above 3 properties are not specified, the job will fail. 
+
+As of schema 0.4, a list of formal parameters can be provided which will allow Oozie to verify, at submission time, that said 
+properties are actually specified (i.e. before the job is executed and fails). Default values can also be provided. 
+
+*Example:*
+
+The previous parameterized workflow definition with formal parameters:
+
+<verbatim>
+<workflow-app name='hello-wf' xmlns="uri:oozie:workflow:0.4">
+    <parameters>
+        <property>
+            <name>inputDir</name>
+        </property>
+        <property>
+            <name>outputDir</name>
+            <value>out-dir</value>
+        </property>
+    </parameters>
+    ...
+    <action name='firstjob'>
+        <map-reduce>
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+            <configuration>
+                <property>
+                    <name>mapred.mapper.class</name>
+                    <value>com.foo.FirstMapper</value>
+                </property>
+                <property>
+                    <name>mapred.reducer.class</name>
+                    <value>com.foo.FirstReducer</value>
+                </property>
+                <property>
+                    <name>mapred.input.dir</name>
+                    <value>${inputDir}</value>
+                </property>
+                <property>
+                    <name>mapred.output.dir</name>
+                    <value>${outputDir}</value>
+                </property>
+            </configuration>
+        </map-reduce>
+        <ok to='secondjob'/>
+        <error to='killcleanup'/>
+    </action>
+    ...
+</workflow-app>
+</verbatim>
+
+In the above example, if =inputDir= is not specified, Oozie will print an error message instead of submitting the job. If
+=outputDir= is not specified, Oozie will use the default value, =out-dir=.
+
 #WorkflowELSupport
 ---+++ 4.2 Expression Language Functions
 
@@ -2236,7 +2294,8 @@ Example of a global element:
 
     <xs:complexType name="WORKFLOW-APP">
         <xs:sequence>
-        	<xs:element name="credentials" type="workflow:CREDENTIALS" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="parameters" type="workflow:PARAMETERS" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="credentials" type="workflow:CREDENTIALS" minOccurs="0" maxOccurs="1"/>
             <xs:element name="start" type="workflow:START" minOccurs="1" maxOccurs="1"/>
             <xs:choice minOccurs="0" maxOccurs="unbounded">
                 <xs:element name="decision" type="workflow:DECISION" minOccurs="1" maxOccurs="1"/>
@@ -2249,6 +2308,20 @@ Example of a global element:
             <xs:any namespace="uri:oozie:sla:0.1" minOccurs="0" maxOccurs="1"/>
         </xs:sequence>
         <xs:attribute name="name" type="xs:string" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="PARAMETERS">
+        <xs:sequence>
+            <xs:element name="property" minOccurs="1" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="name" minOccurs="1" maxOccurs="1" type="xs:string"/>
+                        <xs:element name="value" minOccurs="0" maxOccurs="1" type="xs:string"/>
+                        <xs:element name="description" minOccurs="0" maxOccurs="1" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
     </xs:complexType>
 
     <xs:complexType name="START">

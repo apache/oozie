@@ -39,11 +39,11 @@ public class LiteWorkflowAppService extends WorkflowAppService {
         String appPath = ParamChecker.notEmpty(jobConf.get(OozieClient.APP_PATH), OozieClient.APP_PATH);
         String user = ParamChecker.notEmpty(jobConf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
         String workflowXml = readDefinition(appPath, user, authToken, jobConf);
-        return parseDef(workflowXml);
+        return parseDef(workflowXml, jobConf);
     }
 
-    public WorkflowApp parseDef(String workflowXml) throws WorkflowException {
+    public WorkflowApp parseDef(String workflowXml, Configuration jobConf) throws WorkflowException {
         WorkflowLib workflowLib = Services.get().get(WorkflowStoreService.class).getWorkflowLibWithNoDB();
-        return workflowLib.parseDef(workflowXml);
+        return workflowLib.parseDef(workflowXml, jobConf);
     }
 }

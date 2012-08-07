@@ -41,6 +41,7 @@ import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.action.hadoop.DistcpActionExecutor;
 import org.apache.oozie.action.hadoop.HiveActionExecutor;
+import org.apache.hadoop.conf.Configuration;
 
 public class TestLiteWorkflowAppParser extends XTestCase {
     public static String dummyConf = "<java></java>";
@@ -65,7 +66,8 @@ public class TestLiteWorkflowAppParser extends XTestCase {
             LiteWorkflowStoreService.LiteDecisionHandler.class,
             LiteWorkflowStoreService.LiteActionHandler.class);
 
-        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid-global.xml", -1));
+        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid-global.xml", -1), 
+                new Configuration());
 
         String d = app.getNode("d").getConf();
         String expectedD =
@@ -104,7 +106,8 @@ public class TestLiteWorkflowAppParser extends XTestCase {
                 LiteWorkflowStoreService.LiteDecisionHandler.class,
                 LiteWorkflowStoreService.LiteActionHandler.class);
 
-        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid-global.xml", -1));
+        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid-global.xml", -1), 
+                new Configuration());
 
         String e = app.getNode("e").getConf();
         String expectedE =
@@ -140,7 +143,8 @@ public class TestLiteWorkflowAppParser extends XTestCase {
             LiteWorkflowStoreService.LiteDecisionHandler.class,
             LiteWorkflowStoreService.LiteActionHandler.class);
 
-        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid-global-ext.xml", -1));
+        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid-global-ext.xml", -1), 
+                new Configuration());
 
         String a = app.getNode("a").getConf();
         String expectedA =
@@ -179,7 +183,8 @@ public class TestLiteWorkflowAppParser extends XTestCase {
             LiteWorkflowStoreService.LiteDecisionHandler.class,
             LiteWorkflowStoreService.LiteActionHandler.class);
 
-        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid-global-ext.xml", -1));
+        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid-global-ext.xml", -1), 
+                new Configuration());
 
         String b = app.getNode("b").getConf();
         String expectedB =
@@ -215,10 +220,11 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         // If no global section is defined, some extension actions (e.g. hive) must still have name-node and job-tracker elements
         // or the handleGlobal() method will throw an exception
         
-        parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid-global-ext-no-global.xml", -1));
+        parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid-global-ext-no-global.xml", -1), new Configuration());
         
         try {
-            parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-invalid-global-ext-no-global.xml", -1));
+            parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-invalid-global-ext-no-global.xml", -1), 
+                    new Configuration());
             fail();
         }
         catch (WorkflowException ex) {
@@ -235,10 +241,10 @@ public class TestLiteWorkflowAppParser extends XTestCase {
                                                                  LiteWorkflowStoreService.LiteDecisionHandler.class,
                                                                  LiteWorkflowStoreService.LiteActionHandler.class);
 
-        parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid.xml", -1));
+        parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid.xml", -1), new Configuration());
 
         try {
-            parser.validateAndParse(IOUtils.getResourceAsReader("wf-loop1-invalid.xml", -1));
+            parser.validateAndParse(IOUtils.getResourceAsReader("wf-loop1-invalid.xml", -1), new Configuration());
             fail();
         }
         catch (WorkflowException ex) {
@@ -249,7 +255,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         }
 
         try {
-            parser.validateAndParse(IOUtils.getResourceAsReader("wf-unsupported-action.xml", -1));
+            parser.validateAndParse(IOUtils.getResourceAsReader("wf-unsupported-action.xml", -1), new Configuration());
             fail();
         }
         catch (WorkflowException ex) {
@@ -260,7 +266,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         }
 
         try {
-            parser.validateAndParse(IOUtils.getResourceAsReader("wf-loop2-invalid.xml", -1));
+            parser.validateAndParse(IOUtils.getResourceAsReader("wf-loop2-invalid.xml", -1), new Configuration());
             fail();
         }
         catch (WorkflowException ex) {
@@ -271,7 +277,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         }
 
         try {
-            parser.validateAndParse(IOUtils.getResourceAsReader("wf-transition-invalid.xml", -1));
+            parser.validateAndParse(IOUtils.getResourceAsReader("wf-transition-invalid.xml", -1), new Configuration());
             fail();
         }
         catch (WorkflowException ex) {
@@ -293,7 +299,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
             public void run() {
                 try {
                     // Validate against wf def
-                    parser.validateAndParse(new StringReader(TestSchemaService.APP_NEG_TEST));
+                    parser.validateAndParse(new StringReader(TestSchemaService.APP_NEG_TEST), new Configuration());
                     fail("Expected to catch WorkflowException but didn't encounter any");
                 } catch (WorkflowException we) {
                     assertEquals(ErrorCode.E0701, we.getErrorCode());

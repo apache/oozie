@@ -239,10 +239,11 @@ public abstract class WorkflowAppService implements Service {
     /**
      * Parse workflow definition.
      * @param wfXml workflow.
+     * @param jobConf job configuration
      * @return workflow application.
      * @throws WorkflowException thrown if the workflow application could not be parsed.
      */
-    public abstract WorkflowApp parseDef(String wfXml) throws WorkflowException;
+    public abstract WorkflowApp parseDef(String wfXml, Configuration jobConf) throws WorkflowException;
 
     /**
      * Get all library paths.

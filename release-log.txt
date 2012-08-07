@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-239 Add formal parameters to WF & COORD XML (rkanter via tucu)
 OOZIE-938 Remove some duplicated code in FsActionExecutor (rkanter via tucu)
 OOZIE-939 JT_PRINCIPAL and NN_PRINCIPAL must be added back to XOozieClient (rkanter via tucu)
 OOZIE-930 Bundle not pass SUSPEND command to PAUSED coord job (virag)

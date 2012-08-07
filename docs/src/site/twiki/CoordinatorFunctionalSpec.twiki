@@ -12,6 +12,11 @@ The goal of this document is to define a coordinator engine system specialized i
 
 ---++ Changelog
 
+---+++!! 26/JUL/2012
+
+   * #Appendix A, updated XML schema 0.4 to include =parameters= element
+   * #6.5 Updated to mention about =parameters= element as of schema 0.4
+
 ---+++!! 23/NOV/2011:
 
    * Update execution order typo 
@@ -1175,6 +1180,53 @@ In the above example there are 6 configuration parameters (variables) that have 
    * =language= : language to compute by this job, used in the uri-template
 
 IMPORTANT: Note that this example is not completely correct as it always consumes the last 24 instances of the 'logs' dataset. It is assumed that all days have 24 hours. For timezones that observe daylight saving this application will not work as expected as it will consume the wrong number of dataset instances in DST switch days. To be able to handle these scenarios, the =${coord:hoursInDays(int n)}= and =${coord:daysInMonths(int n)}= EL functions must be used (refer to section #6.6.2 and #6.6.3).
+
+If the above 6 properties are not specified, the job will fail. 
+
+As of schema 0.4, a list of formal parameters can be provided which will allow Oozie to verify, at submission time, that said 
+properties are actually specified (i.e. before the job is executed and fails). Default values can also be provided. 
+
+*Example:*
+
+The previous parameterized coordinator application definition with formal parameters:
+
+<verbatim>
+   <coordinator-app name="app-coord" frequency="${coord:days(1)}"
+                    start="${jobStart}" end="${jobEnd}" timezone="${timezone}"
+                    xmlns="uri:oozie:coordinator:0.1">
+      <parameters>
+          <property>
+              <name>jobStart</name>
+          </property>
+          <property>
+              <name>jobEnd</name>
+              <value>2012-12-01T22:00Z</value>
+          </property>
+      </parameters>
+      <datasets>
+        <dataset name="logs" frequency="${coord:hours(1)}"
+                 initial-instance="${logsInitialInstance}" timezone="${timezone}">
+          <uri-template>
+            hdfs://bar:9000/app/logs/${market}/${language}/${YEAR}${MONTH}/${DAY}/${HOUR}
+          </uri-template>
+        </dataset>
+      </datasets>
+      <input-events>
+        <data-in name="input" dataset="logs">
+          <start-instance>${coord:current(-23)}</start-instance>
+          <end-instance>${coord:current(0)}</end-instance>
+        </data-in>
+      </input-events>
+      <action>
+        <workflow>
+        ...
+       </workflow>
+      </action>      
+   </coordinator-app>
+</verbatim>
+
+In the above example, if =jobStart= is not specified, Oozie will print an error message instead of submitting the job. If
+=jobEnd= is not specified, Oozie will use the default value, =2012-12-01T22:00Z=.
 
 ---+++ 6.6. Parameterization of Dataset Instances in Input and Output Events
 
@@ -2606,6 +2658,131 @@ Refer to the [[DG_CoordinatorRerun][Rerunning Coordinator Actions]] for details 
         <xs:attribute name="start" type="xs:string" use="required"/>
         <xs:attribute name="end" type="xs:string" use="required"/>
         <xs:attribute name="timezone" type="xs:string" use="required"/>
+    </xs:complexType>
+    <xs:complexType name="CONTROLS">
+        <xs:sequence minOccurs="0" maxOccurs="1">
+            <xs:element name="timeout" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="concurrency" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="execution" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="throttle" type="xs:string" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="DATASETS">
+        <xs:sequence minOccurs="0" maxOccurs="1">
+            <xs:element name="include" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:choice minOccurs="0" maxOccurs="unbounded">
+                <xs:element name="dataset" type="coordinator:SYNCDATASET" minOccurs="0" maxOccurs="1"/>
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="SYNCDATASET">
+        <xs:sequence>
+            <xs:element name="uri-template" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="done-flag" type="xs:string" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+        <xs:attribute name="name" type="coordinator:IDENTIFIER" use="required"/>
+        <xs:attribute name="frequency" type="xs:string" use="required"/>
+        <xs:attribute name="initial-instance" type="xs:string" use="required"/>
+        <xs:attribute name="timezone" type="xs:string" use="required"/>
+    </xs:complexType>
+    <xs:complexType name="INPUTEVENTS">
+        <xs:sequence minOccurs="1" maxOccurs="1">
+            <xs:element name="data-in" type="coordinator:DATAIN" minOccurs="1" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="DATAIN">
+        <xs:choice minOccurs="1" maxOccurs="1">
+            <xs:element name="instance" type="xs:string" minOccurs="1" maxOccurs="unbounded"/>
+            <xs:sequence minOccurs="1" maxOccurs="1">
+                <xs:element name="start-instance" type="xs:string" minOccurs="1" maxOccurs="1"/>
+                <xs:element name="end-instance" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            </xs:sequence>
+        </xs:choice>
+        <xs:attribute name="name" type="coordinator:IDENTIFIER" use="required"/>
+        <xs:attribute name="dataset" type="coordinator:IDENTIFIER" use="required"/>
+    </xs:complexType>
+    <xs:complexType name="OUTPUTEVENTS">
+        <xs:sequence minOccurs="1" maxOccurs="1">
+            <xs:element name="data-out" type="coordinator:DATAOUT" minOccurs="1" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="DATAOUT">
+        <xs:sequence minOccurs="1" maxOccurs="1">
+            <xs:element name="instance" type="xs:string" minOccurs="1" maxOccurs="1"/>
+        </xs:sequence>
+        <xs:attribute name="name" type="coordinator:IDENTIFIER" use="required"/>
+        <xs:attribute name="dataset" type="coordinator:IDENTIFIER" use="required"/>
+    </xs:complexType>
+    <xs:complexType name="ACTION">
+        <xs:sequence minOccurs="1" maxOccurs="1">
+            <xs:element name="workflow" type="coordinator:WORKFLOW" minOccurs="1" maxOccurs="1"/>
+            <xs:any namespace="uri:oozie:sla:0.1" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="WORKFLOW">
+        <xs:sequence>
+            <xs:element name="app-path" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="configuration" type="coordinator:CONFIGURATION" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="FLAG"/>
+    <xs:complexType name="CONFIGURATION">
+        <xs:sequence>
+            <xs:element name="property" minOccurs="1" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="name" minOccurs="1" maxOccurs="1" type="xs:string"/>
+                        <xs:element name="value" minOccurs="1" maxOccurs="1" type="xs:string"/>
+                        <xs:element name="description" minOccurs="0" maxOccurs="1" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+</xs:schema>
+</verbatim>
+
+---++++ Oozie Coordinator Schema 0.4
+
+<verbatim>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:coordinator="uri:oozie:coordinator:0.2"
+           elementFormDefault="qualified" targetNamespace="uri:oozie:coordinator:0.2">
+
+    <xs:element name="coordinator-app" type="coordinator:COORDINATOR-APP"/>
+    <xs:element name="datasets" type="coordinator:DATASETS"/>
+    <xs:simpleType name="IDENTIFIER">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="([a-zA-Z]([\-_a-zA-Z0-9])*){1,39})"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:complexType name="COORDINATOR-APP">
+        <xs:sequence>
+            <xs:element name="parameters" type="coordinator:PARAMETERS" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="controls" type="coordinator:CONTROLS" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="datasets" type="coordinator:DATASETS" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="input-events" type="coordinator:INPUTEVENTS" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="output-events" type="coordinator:OUTPUTEVENTS" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="action" type="coordinator:ACTION" minOccurs="1" maxOccurs="1"/>
+        </xs:sequence>
+        <xs:attribute name="name" type="coordinator:IDENTIFIER" use="required"/>
+        <xs:attribute name="frequency" type="xs:string" use="required"/>
+        <xs:attribute name="start" type="xs:string" use="required"/>
+        <xs:attribute name="end" type="xs:string" use="required"/>
+        <xs:attribute name="timezone" type="xs:string" use="required"/>
+    </xs:complexType>
+    <xs:complexType name="PARAMETERS">
+        <xs:sequence>
+            <xs:element name="property" minOccurs="1" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="name" minOccurs="1" maxOccurs="1" type="xs:string"/>
+                        <xs:element name="value" minOccurs="0" maxOccurs="1" type="xs:string"/>
+                        <xs:element name="description" minOccurs="0" maxOccurs="1" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
     </xs:complexType>
     <xs:complexType name="CONTROLS">
         <xs:sequence minOccurs="0" maxOccurs="1">
