@@ -217,10 +217,12 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
             coordJob.setOrigJobXml(appXml);
             LOG.debug("jobXml after initial validation " + XmlUtils.prettyPrint(appXml).toString());
 
-            String appNamespace = readAppNamespace(appXml);
+            Element eXml = XmlUtils.parseXml(appXml);
+            
+            String appNamespace = readAppNamespace(eXml);
             coordJob.setAppNamespace(appNamespace);
 
-            ParameterVerifier.verifyParameters(conf, XmlUtils.parseXml(appXml));
+            ParameterVerifier.verifyParameters(conf, eXml);
             
             appXml = XmlUtils.removeComments(appXml);
             initEvaluators();
@@ -272,6 +274,11 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
                 + "***actions for instance***" + action;
                 return output;
             }
+        }
+        catch (JDOMException jex) {
+            exceptionOccured = true;
+            LOG.warn("ERROR: ", jex);
+            throw new CommandException(ErrorCode.E0700, jex.getMessage(), jex);
         }
         catch (CoordinatorJobException cex) {
             exceptionOccured = true;
@@ -470,28 +477,21 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
     /**
      * Read the application XML schema namespace
      *
-     * @param xmlContent input coordinator xml
+     * @param coordXmlElement input coordinator xml Element
      * @return app xml namespace
      * @throws CoordinatorJobException
      */
-    private String readAppNamespace(String xmlContent) throws CoordinatorJobException {
-        try {
-            Element coordXmlElement = XmlUtils.parseXml(xmlContent);
-            Namespace ns = coordXmlElement.getNamespace();
-            if (ns != null && bundleId != null && ns.getURI().equals(SchemaService.COORDINATOR_NAMESPACE_URI_1)) {
-                throw new CoordinatorJobException(ErrorCode.E1319, "bundle app can not submit coordinator namespace "
-                        + SchemaService.COORDINATOR_NAMESPACE_URI_1 + ", please use 0.2 or later");
-            }
-            if (ns != null) {
-                return ns.getURI();
-            }
-            else {
-                throw new CoordinatorJobException(ErrorCode.E0700, "the application xml namespace is not given");
-            }
+    private String readAppNamespace(Element coordXmlElement) throws CoordinatorJobException {
+        Namespace ns = coordXmlElement.getNamespace();
+        if (ns != null && bundleId != null && ns.getURI().equals(SchemaService.COORDINATOR_NAMESPACE_URI_1)) {
+            throw new CoordinatorJobException(ErrorCode.E1319, "bundle app can not submit coordinator namespace "
+                    + SchemaService.COORDINATOR_NAMESPACE_URI_1 + ", please use 0.2 or later");
         }
-        catch (JDOMException ex) {
-            LOG.warn("JDOMException :", ex);
-            throw new CoordinatorJobException(ErrorCode.E0700, ex.getMessage(), ex);
+        if (ns != null) {
+            return ns.getURI();
+        }
+        else {
+            throw new CoordinatorJobException(ErrorCode.E0700, "the application xml namespace is not given");
         }
     }
 

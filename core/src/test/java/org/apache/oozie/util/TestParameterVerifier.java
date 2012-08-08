@@ -121,4 +121,46 @@ public class TestParameterVerifier extends XTestCase {
         assertEquals(1, conf.size());
         assertEquals("planet", conf.get("hello"));
     }
+    
+    public void testVerifyParametersEmptyName() throws Exception {
+        Configuration conf = new Configuration(false);
+        
+        String str = "<root xmlns=\"uri:oozie:workflow:0.4\"><parameters>"
+                + "<property><name></name></property>"
+                + "</parameters></root>";
+        try {
+            ParameterVerifier.verifyParameters(conf, XmlUtils.parseXml(str));
+            fail();
+        } catch(ParameterVerifierException ex) {
+            assertEquals(ErrorCode.E0739, ex.getErrorCode());
+        }
+        
+        str = "<root xmlns=\"uri:oozie:workflow:0.4\"><parameters>"
+                + "<property><name>hello</name></property>"
+                + "<property><name></name></property>"
+                + "</parameters></root>";
+        try {
+            ParameterVerifier.verifyParameters(conf, XmlUtils.parseXml(str));
+            fail();
+        } catch(ParameterVerifierException ex) {
+            assertEquals(ErrorCode.E0739, ex.getErrorCode());
+        }
+    }
+    
+    public void testSupportsParameters() throws Exception {
+        assertFalse(ParameterVerifier.supportsParameters("uri:oozie:workflow:0.3"));
+        assertTrue(ParameterVerifier.supportsParameters("uri:oozie:workflow:0.4"));
+        assertTrue(ParameterVerifier.supportsParameters("uri:oozie:workflow:0.5"));
+        
+        assertFalse(ParameterVerifier.supportsParameters("uri:oozie:coordinator:0.3"));
+        assertTrue(ParameterVerifier.supportsParameters("uri:oozie:coordinator:0.4"));
+        assertTrue(ParameterVerifier.supportsParameters("uri:oozie:coordinator:0.5"));
+        
+        assertFalse(ParameterVerifier.supportsParameters("uri:oozie:bundle:0.1"));
+        assertTrue(ParameterVerifier.supportsParameters("uri:oozie:bundle:0.2"));
+        assertTrue(ParameterVerifier.supportsParameters("uri:oozie:bundle:0.3"));
+        
+        assertFalse(ParameterVerifier.supportsParameters("uri:oozie:foo:0.4"));
+        assertFalse(ParameterVerifier.supportsParameters("foo"));
+    }
 }

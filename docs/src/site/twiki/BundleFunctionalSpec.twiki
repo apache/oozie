@@ -159,6 +159,60 @@ A bundle definition is defined in XML by a name, controls and one or more coordi
 </bundle-app>
 </verbatim>
 
+---+++ 4.4.  Bundle Formal Parameters
+As of schema 0.2, a list of formal parameters can be provided which will allow Oozie to verify, at submission time, that said 
+properties are actually specified (i.e. before the job is executed and fails). Default values can also be provided. 
+
+*Example:*
+
+The previous Bundle Job application definition with formal parameters:
+
+<verbatim>
+<bundle-app name='APPNAME' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='uri:oozie:bundle:0.2'> 
+  <parameters>
+      <property>
+          <name>appPath</name>
+      </property>
+      <property>
+          <name>appPath2</name>
+          <value>hdfs://foo:9000/user/joe/job/job.properties</value>
+      </property>
+  </parameters>
+  <controls>
+       <kick-off-time>${kickOffTime}</kick-off-time>
+  </controls>
+   <coordinator name='coordJobFromBundle1' >
+       <app-path>${appPath}</app-path>
+       <configuration>
+         <property>
+              <name>startTime1</name>
+              <value>${START_TIME}</value>
+          </property>
+         <property>
+              <name>endTime1</name>
+              <value>${END_TIME}</value>
+          </property>
+      </configuration>
+   </coordinator>
+   <coordinator name='coordJobFromBundle2' >
+       <app-path>${appPath2}</app-path>
+       <configuration>
+         <property>
+              <name>startTime2</name>
+              <value>${START_TIME2}</value>
+          </property>
+         <property>
+              <name>endTime2</name>
+              <value>${END_TIME2}</value>
+          </property>
+      </configuration>
+   </coordinator>
+</bundle-app>
+</verbatim>
+
+In the above example, if =appPath= is not specified, Oozie will print an error message instead of submitting the job. If
+=appPath2= is not specified, Oozie will use the default value, =hdfs://foo:9000/user/joe/job/job.properties=.
+
 
 ---++ 5. User Propagation
 
@@ -238,7 +292,7 @@ Refer to the [[DG_CoordinatorRerun][Rerunning Coordinator Actions]] for details 
 
 ---+++ Appendix A, Oozie Bundle XML-Schema
 
----++++ Oozie Bundle Schema
+---++++ Oozie Bundle Schema 0.1
 
 <verbatim>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:bundle="uri:oozie:bundle:0.1"
@@ -256,6 +310,68 @@ Refer to the [[DG_CoordinatorRerun][Rerunning Coordinator Actions]] for details 
             <xs:element name="coordinator" type="bundle:COORDINATOR" minOccurs="1" maxOccurs="unbounded"/>
         </xs:sequence>
         <xs:attribute name="name" type="bundle:IDENTIFIER" use="required"/>
+    </xs:complexType>
+    <xs:complexType name="CONTROLS">
+        <xs:sequence minOccurs="0" maxOccurs="1">
+            <xs:element name="kick-off-time" type="xs:string" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="COORDINATOR">
+        <xs:sequence  minOccurs="1" maxOccurs="1">
+            <xs:element name="app-path" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="configuration" type="bundle:CONFIGURATION" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+        <xs:attribute name="name" type="bundle:IDENTIFIER" use="required"/>
+        <xs:attribute name="critical" type="xs:string" use="optional"/>
+    </xs:complexType>
+    <xs:complexType name="CONFIGURATION">
+        <xs:sequence>
+            <xs:element name="property" minOccurs="1" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="name" minOccurs="1" maxOccurs="1" type="xs:string"/>
+                        <xs:element name="value" minOccurs="1" maxOccurs="1" type="xs:string"/>
+                        <xs:element name="description" minOccurs="0" maxOccurs="1" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+</xs:schema>
+</verbatim>
+
+---++++ Oozie Bundle Schema 0.2
+
+<verbatim>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:bundle="uri:oozie:bundle:0.2"
+           elementFormDefault="qualified" targetNamespace="uri:oozie:bundle:0.2">
+
+    <xs:element name="bundle-app" type="bundle:BUNDLE-APP"/>
+    <xs:simpleType name="IDENTIFIER">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="([a-zA-Z]([\-_a-zA-Z0-9])*){1,39}"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:complexType name="BUNDLE-APP">
+        <xs:sequence>
+            <xs:element name="parameters" type="bundle:PARAMETERS" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="controls" type="bundle:CONTROLS" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="coordinator" type="bundle:COORDINATOR" minOccurs="1" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="name" type="xs:string" use="required"/>
+    </xs:complexType>
+    <xs:complexType name="PARAMETERS">
+        <xs:sequence>
+            <xs:element name="property" minOccurs="1" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="name" minOccurs="1" maxOccurs="1" type="xs:string"/>
+                        <xs:element name="value" minOccurs="0" maxOccurs="1" type="xs:string"/>
+                        <xs:element name="description" minOccurs="0" maxOccurs="1" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
     </xs:complexType>
     <xs:complexType name="CONTROLS">
         <xs:sequence minOccurs="0" maxOccurs="1">
