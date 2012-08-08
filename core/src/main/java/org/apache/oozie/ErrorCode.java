@@ -144,6 +144,7 @@ public enum ErrorCode {
     E0736(XLog.STD, "Workflow definition lenght [{0}] exceeded maximum allowed length [{1}]"),
     E0737(XLog.STD, "Invalid transition from node [{0}] to node [{1}] while using Fork/Join because node [{1}] is of type [{2}]"),
     E0738(XLog.STD, "The following {0} parameters are required but were not defined and no default values are available: {1}"),
+    E0739(XLog.STD, "Parameter name cannot be empty"),
 
     E0800(XLog.STD, "Action it is not running its in [{1}] state, action [{0}]"),
     E0801(XLog.STD, "Workflow already running, workflow [{0}]"),

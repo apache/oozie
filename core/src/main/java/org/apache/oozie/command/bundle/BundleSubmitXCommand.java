@@ -64,6 +64,7 @@ import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.PropertiesUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
+import org.apache.oozie.util.ParameterVerifier;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -131,6 +132,8 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
         try {
             InstrumentUtils.incrJobCounter(getName(), 1, getInstrumentation());
 
+            ParameterVerifier.verifyParameters(conf, XmlUtils.parseXml(bundleBean.getOrigJobXml()));
+            
             XmlUtils.removeComments(this.bundleBean.getOrigJobXml().toString());
             // Resolving all variables in the job properties.
             // This ensures the Hadoop Configuration semantics is preserved.
