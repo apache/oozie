@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-921 Changes in global section for the Name Node in FS action (bcyr via virag)
 OOZIE-942 Add formal Parameters to bundle XML (rkanter via virag)
 OOZIE-239 Add formal parameters to WF & COORD XML (rkanter via tucu)
 OOZIE-938 Remove some duplicated code in FsActionExecutor (rkanter via tucu)

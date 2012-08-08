@@ -66,14 +66,12 @@ public class TestLiteWorkflowAppParser extends XTestCase {
             LiteWorkflowStoreService.LiteDecisionHandler.class,
             LiteWorkflowStoreService.LiteActionHandler.class);
 
-        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid-global.xml", -1), 
+        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid-global.xml", -1),
                 new Configuration());
 
         String d = app.getNode("d").getConf();
         String expectedD =
              "<map-reduce xmlns=\"uri:oozie:workflow:0.4\">\r\n" +
-             "  <job-tracker>foo</job-tracker>\r\n" +
-             "  <name-node>bar</name-node>\r\n" +
              "  <prepare>\r\n" +
              "    <delete path=\"/tmp\" />\r\n" +
              "    <mkdir path=\"/tmp\" />\r\n" +
@@ -83,6 +81,10 @@ public class TestLiteWorkflowAppParser extends XTestCase {
              "    <reducer>/mywc.sh</reducer>\r\n" +
              "  </streaming>\r\n" +
              "  <job-xml>/tmp</job-xml>\r\n" +
+             "  <file>/tmp</file>\r\n" +
+             "  <archive>/tmp</archive>\r\n" +
+             "  <job-tracker>foo</job-tracker>\r\n" +
+             "  <name-node>bar</name-node>\r\n" +
              "  <configuration>\r\n" +
              "    <property>\r\n" +
              "      <name>a</name>\r\n" +
@@ -93,8 +95,6 @@ public class TestLiteWorkflowAppParser extends XTestCase {
              "      <value>B</value>\r\n" +
              "    </property>\r\n" +
              "  </configuration>\r\n" +
-             "  <file>/tmp</file>\r\n" +
-             "  <archive>/tmp</archive>\r\n" +
              "</map-reduce>";
         assertEquals(expectedD.replaceAll(" ",""), d.replaceAll(" ", ""));
 
@@ -106,14 +106,12 @@ public class TestLiteWorkflowAppParser extends XTestCase {
                 LiteWorkflowStoreService.LiteDecisionHandler.class,
                 LiteWorkflowStoreService.LiteActionHandler.class);
 
-        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid-global.xml", -1), 
+        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid-global.xml", -1),
                 new Configuration());
 
         String e = app.getNode("e").getConf();
         String expectedE =
                 "<pig xmlns=\"uri:oozie:workflow:0.4\">\r\n" +
-                "  <job-tracker>foo</job-tracker>\r\n" +
-                "  <name-node>bar</name-node>\r\n" +
                 "  <prepare>\r\n" +
                 "    <delete path=\"/tmp\" />\r\n" +
                 "    <mkdir path=\"/tmp\" />\r\n" +
@@ -132,25 +130,25 @@ public class TestLiteWorkflowAppParser extends XTestCase {
                 "  <param>x</param>\r\n" +
                 "  <file>/tmp</file>\r\n" +
                 "  <file>/tmp</file>\r\n" +
+                "  <job-tracker>foo</job-tracker>\r\n" +
+                "  <name-node>bar</name-node>\r\n" +
                 "</pig>";
         assertEquals(expectedE.replaceAll(" ", ""), e.replaceAll(" ", ""));
 
     }
-    
+
     public void testParserGlobalExtensionActions() throws Exception {
         LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
             LiteWorkflowStoreService.LiteControlNodeHandler.class,
             LiteWorkflowStoreService.LiteDecisionHandler.class,
             LiteWorkflowStoreService.LiteActionHandler.class);
 
-        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid-global-ext.xml", -1), 
+        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid-global-ext.xml", -1),
                 new Configuration());
 
         String a = app.getNode("a").getConf();
         String expectedA =
              "<hive xmlns=\"uri:oozie:hive-action:0.2\">\r\n" +
-             "  <job-tracker>foo</job-tracker>\r\n" +
-             "  <name-node>bar</name-node>\r\n" +
              "  <prepare>\r\n" +
              "    <delete path=\"/tmp\" />\r\n" +
              "    <mkdir path=\"/tmp\" />\r\n" +
@@ -172,18 +170,20 @@ public class TestLiteWorkflowAppParser extends XTestCase {
              "  <script>script.q</script>\r\n" +
              "  <param>INPUT=/tmp/table</param>\r\n" +
              "  <param>OUTPUT=/tmp/hive</param>\r\n" +
+             "  <job-tracker>foo</job-tracker>\r\n" +
+             "  <name-node>bar</name-node>\r\n" +
              "</hive>";
         System.out.println("AAA " + expectedA.replaceAll(" ", ""));
         assertEquals(expectedA.replaceAll(" ",""), a.replaceAll(" ", ""));
     }
-    
+
     public void testParserGlobalExtensionActionsLocalAlreadyExists() throws Exception {
         LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
             LiteWorkflowStoreService.LiteControlNodeHandler.class,
             LiteWorkflowStoreService.LiteDecisionHandler.class,
             LiteWorkflowStoreService.LiteActionHandler.class);
 
-        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid-global-ext.xml", -1), 
+        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid-global-ext.xml", -1),
                 new Configuration());
 
         String b = app.getNode("b").getConf();
@@ -210,20 +210,20 @@ public class TestLiteWorkflowAppParser extends XTestCase {
              "</distcp>";
         assertEquals(expectedB.replaceAll(" ",""), b.replaceAll(" ", ""));
     }
-    
+
     public void testParserGlobalExtensionActionsNoGlobal() throws Exception {
         LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
             LiteWorkflowStoreService.LiteControlNodeHandler.class,
             LiteWorkflowStoreService.LiteDecisionHandler.class,
             LiteWorkflowStoreService.LiteActionHandler.class);
-        
+
         // If no global section is defined, some extension actions (e.g. hive) must still have name-node and job-tracker elements
         // or the handleGlobal() method will throw an exception
-        
+
         parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid-global-ext-no-global.xml", -1), new Configuration());
-        
+
         try {
-            parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-invalid-global-ext-no-global.xml", -1), 
+            parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-invalid-global-ext-no-global.xml", -1),
                     new Configuration());
             fail();
         }
