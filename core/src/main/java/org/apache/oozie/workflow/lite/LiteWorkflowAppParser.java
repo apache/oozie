@@ -24,6 +24,7 @@ import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.ParameterVerifier;
 import org.apache.oozie.util.ParameterVerifierException;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.ActionService;
 import org.apache.hadoop.conf.Configuration;
@@ -448,7 +449,7 @@ public class LiteWorkflowAppParser {
 
         // Use the action's namespace when getting children of the action (will be different than ns for extension actions)
         Namespace actionNs = eActionConf.getNamespace();
-        
+
         if (global != null) {
             Element globalJobTracker = global.getChild("job-tracker", ns);
             Element globalNameNode = global.getChild("name-node", ns);
@@ -457,26 +458,20 @@ public class LiteWorkflowAppParser {
             if (globalJobTracker != null && eActionConf.getChild("job-tracker", actionNs) == null) {
                 Element jobTracker = new Element("job-tracker", actionNs);
                 jobTracker.setText(globalJobTracker.getText());
-                eActionConf.addContent(0, jobTracker);
+                eActionConf.addContent(jobTracker);
             }
 
             if (globalNameNode != null && eActionConf.getChild("name-node", actionNs) == null) {
                 Element nameNode = new Element("name-node", actionNs);
                 nameNode.setText(globalNameNode.getText());
-                eActionConf.addContent(1, nameNode);
+                eActionConf.addContent(nameNode);
             }
 
             if (globalConfiguration != null) {
                 Element actionConfiguration = eActionConf.getChild("configuration", actionNs);
                 if (actionConfiguration == null) {
                     actionConfiguration = new Element("configuration", actionNs);
-                    int index = 2;
-                    index += eActionConf.getChild("prepare", actionNs) == null ? 0 : 2;
-                    index += eActionConf.getChild("job-xml", actionNs) == null ? 0 : 2;
-                    index += eActionConf.getChild("pipes", actionNs) == null ? 0 : 2;
-                    index += eActionConf.getChild("streaming", actionNs) == null ? 0 : 2;
-
-                    eActionConf.addContent(index, actionConfiguration);
+                    eActionConf.addContent(actionConfiguration);
                 }
                 for (Element globalConfig : (List<Element>) globalConfiguration.getChildren()) {
                     boolean isSet = false;
@@ -503,10 +498,11 @@ public class LiteWorkflowAppParser {
             }
         }
         else {
-            if (eActionConf.getName().equalsIgnoreCase("pig") || eActionConf.getName().equalsIgnoreCase("map-reduce")
-                    || eActionConf.getName().equalsIgnoreCase("java")
-                    || eActionConf.getName().equalsIgnoreCase("shell")
-                    || eActionConf.getName().equalsIgnoreCase("hive")) {
+            ActionExecutor ae = Services.get().get(ActionService.class).getExecutor(eActionConf.getName());
+            if (ae == null) {
+                throw new WorkflowException(ErrorCode.E0723, "Unsupported action type");
+            }
+            if (ae.requiresNNJT) {
 
                 if (eActionConf.getChild("name-node", actionNs) == null) {
                     throw new WorkflowException(ErrorCode.E0701, "No name-node defined");

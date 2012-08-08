@@ -52,6 +52,8 @@ public abstract class ActionExecutor {
      * Error code used by {@link #convertException} when there is not register error information for an exception.
      */
     public static final String ERROR_OTHER = "OTHER";
+    
+    public boolean requiresNNJT = false;
 
     private static class ErrorInfo {
         ActionExecutorException.ErrorType errorType;

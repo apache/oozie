@@ -105,10 +105,12 @@ public class JavaActionExecutor extends ActionExecutor {
 
     public JavaActionExecutor() {
         this("java");
+        requiresNNJT = true;
     }
 
     protected JavaActionExecutor(String type) {
         super(type);
+        requiresNNJT = true;
     }
 
     protected String getLauncherJarName() {
