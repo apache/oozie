@@ -100,6 +100,48 @@ public class TestLiteWorkflowAppParser extends XTestCase {
 
     }
 
+    public void testParserGlobalJobXML() throws Exception {
+        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+            LiteWorkflowStoreService.LiteControlNodeHandler.class,
+            LiteWorkflowStoreService.LiteDecisionHandler.class,
+            LiteWorkflowStoreService.LiteActionHandler.class);
+
+        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid-global-jobXml.xml", -1),
+                new Configuration());
+
+        String d = app.getNode("d").getConf();
+        String expectedD =
+             "<map-reduce xmlns=\"uri:oozie:workflow:0.4\">\r\n" +
+             "  <prepare>\r\n" +
+             "    <delete path=\"/tmp\" />\r\n" +
+             "    <mkdir path=\"/tmp\" />\r\n" +
+             "  </prepare>\r\n" +
+             "  <streaming>\r\n" +
+             "    <mapper>/mycat.sh</mapper>\r\n" +
+             "    <reducer>/mywc.sh</reducer>\r\n" +
+             "  </streaming>\r\n" +
+             "  <job-xml>/tmp</job-xml>\r\n" +
+             "  <file>/tmp</file>\r\n" +
+             "  <archive>/tmp</archive>\r\n" +
+             "  <job-tracker>foo</job-tracker>\r\n" +
+             "  <name-node>bar</name-node>\r\n" +
+             "  <job-xml>/spam1</job-xml>\r\n" +
+             "  <job-xml>/spam2</job-xml>\r\n" +
+             "  <configuration>\r\n" +
+             "    <property>\r\n" +
+             "      <name>a</name>\r\n" +
+             "      <value>A</value>\r\n" +
+             "    </property>\r\n" +
+             "    <property>\r\n" +
+             "      <name>b</name>\r\n" +
+             "      <value>B</value>\r\n" +
+             "    </property>\r\n" +
+             "  </configuration>\r\n" +
+             "</map-reduce>";
+        assertEquals(expectedD.replaceAll(" ",""), d.replaceAll(" ", ""));
+
+    }
+
     public void testParserGlobalLocalAlreadyExists() throws Exception{
         LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
                 LiteWorkflowStoreService.LiteControlNodeHandler.class,

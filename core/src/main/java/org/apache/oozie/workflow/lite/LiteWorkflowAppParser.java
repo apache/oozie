@@ -453,6 +453,7 @@ public class LiteWorkflowAppParser {
         if (global != null) {
             Element globalJobTracker = global.getChild("job-tracker", ns);
             Element globalNameNode = global.getChild("name-node", ns);
+            List<Element> globalJobXml = global.getChildren("job-xml", ns);
             Element globalConfiguration = global.getChild("configuration", ns);
 
             if (globalJobTracker != null && eActionConf.getChild("job-tracker", actionNs) == null) {
@@ -465,6 +466,25 @@ public class LiteWorkflowAppParser {
                 Element nameNode = new Element("name-node", actionNs);
                 nameNode.setText(globalNameNode.getText());
                 eActionConf.addContent(nameNode);
+            }
+
+            if (!globalJobXml.isEmpty()) {
+                List<Element> actionJobXml = eActionConf.getChildren("job-xml", actionNs);
+                for(Element jobXml: globalJobXml){
+                    boolean alreadyExists = false;
+                    for(Element actionXml: actionJobXml){
+                        if(jobXml.getText().equals(actionXml.getText())){
+                            alreadyExists = true;
+                        }
+                    }
+
+                    if (!alreadyExists){
+                        Element ejobXml = new Element("job-xml", actionNs);
+                        ejobXml.setText(jobXml.getText());
+                        eActionConf.addContent(ejobXml);
+                    }
+
+                }
             }
 
             if (globalConfiguration != null) {
