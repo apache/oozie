@@ -223,8 +223,8 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
         coordJob.setExecution(Execution.FIFO);
         coordJob.setConcurrency(1);
         try {
-            coordJob.setEndTime(DateUtils.parseDateUTC("2009-02-03T23:59Z"));
-            coordJob.setStartTime(DateUtils.parseDateUTC("2009-02-01T23:59Z"));
+            coordJob.setEndTime(DateUtils.parseDateOozieTZ("2009-02-03T23:59Z"));
+            coordJob.setStartTime(DateUtils.parseDateOozieTZ("2009-02-01T23:59Z"));
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -256,8 +256,8 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
         coordJob.setExecution(Execution.FIFO);
         coordJob.setConcurrency(1);
         try {
-            coordJob.setEndTime(DateUtils.parseDateUTC("2009-02-03T23:59Z"));
-            coordJob.setStartTime(DateUtils.parseDateUTC("2009-02-01T23:59Z"));
+            coordJob.setEndTime(DateUtils.parseDateOozieTZ("2009-02-03T23:59Z"));
+            coordJob.setStartTime(DateUtils.parseDateOozieTZ("2009-02-01T23:59Z"));
         }
         catch (Exception e) {
             e.printStackTrace();

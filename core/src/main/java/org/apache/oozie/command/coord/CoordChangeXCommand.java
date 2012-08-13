@@ -110,7 +110,7 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
         if (map.containsKey(OozieClient.CHANGE_VALUE_ENDTIME)) {
             String value = map.get(OozieClient.CHANGE_VALUE_ENDTIME);
             try {
-                newEndTime = DateUtils.parseDateUTC(value);
+                newEndTime = DateUtils.parseDateOozieTZ(value);
             }
             catch (Exception ex) {
                 throw new CommandException(ErrorCode.E1015, value, "must be a valid date");
@@ -134,7 +134,7 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
             }
             else {
                 try {
-                    newPauseTime = DateUtils.parseDateUTC(value);
+                    newPauseTime = DateUtils.parseDateOozieTZ(value);
                 }
                 catch (Exception ex) {
                     throw new CommandException(ErrorCode.E1015, value, "must be a valid date");

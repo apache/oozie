@@ -54,7 +54,8 @@ public class TestBundlePurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testSucBundlePurgeXCommand() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateUTC("2011-01-01T01:00Z"));
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateOozieTZ(
+            "2011-01-01T01:00Z"));
         this.addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.SUCCEEDED);
         this.addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.SUCCEEDED);
 
@@ -106,7 +107,8 @@ public class TestBundlePurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testFailBundlePurgeXCommand() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.DONEWITHERROR, DateUtils.parseDateUTC("2011-01-01T01:00Z"));
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.DONEWITHERROR, DateUtils.parseDateOozieTZ(
+            "2011-01-01T01:00Z"));
         this.addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.FAILED);
         this.addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.SUCCEEDED);
 
@@ -158,7 +160,8 @@ public class TestBundlePurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testKillBundlePurgeXCommand() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.KILLED, DateUtils.parseDateUTC("2011-01-01T01:00Z"));
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.KILLED, DateUtils.parseDateOozieTZ(
+            "2011-01-01T01:00Z"));
         this.addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.KILLED);
         this.addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.KILLED);
 
@@ -210,7 +213,8 @@ public class TestBundlePurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testBundlePurgeXCommandFailed() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.RUNNING, DateUtils.parseDateUTC("2011-01-01T01:00Z"));
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.RUNNING, DateUtils.parseDateOozieTZ(
+            "2011-01-01T01:00Z"));
         this.addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.RUNNING);
         this.addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.SUCCEEDED);
 

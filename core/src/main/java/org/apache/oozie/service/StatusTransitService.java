@@ -155,7 +155,7 @@ public class StatusTransitService implements Service {
             }
             else {
                 LOG.info("Running bundle status service from last instance time =  "
-                        + DateUtils.convertDateToString(lastInstanceStartTime));
+                        + DateUtils.formatDateOozieTZ(lastInstanceStartTime));
                 // this is not the first instance, we should only check jobs that have actions been
                 // updated >= start time of last service run;
                 List<BundleActionBean> actionList = jpaService
@@ -703,7 +703,7 @@ public class StatusTransitService implements Service {
             }
             else {
                 LOG.info("Running coordinator status service from last instance time =  "
-                        + DateUtils.convertDateToString(lastInstanceStartTime));
+                        + DateUtils.formatDateOozieTZ(lastInstanceStartTime));
                 // this is not the first instance, we should only check jobs
                 // that have actions been
                 // updated >= start time of last service run;

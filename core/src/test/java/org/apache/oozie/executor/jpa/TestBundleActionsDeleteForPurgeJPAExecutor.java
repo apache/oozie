@@ -46,7 +46,8 @@ public class TestBundleActionsDeleteForPurgeJPAExecutor extends XDataTestCase {
     }
 
     public void testBundleActionsDeleteForPurgeJPAExecutor() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateUTC("2011-01-01T01:00Z"));
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateOozieTZ(
+            "2011-01-01T01:00Z"));
         this.addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.SUCCEEDED);
         this.addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.SUCCEEDED);
         _testBundleActionsDelete(job.getId());

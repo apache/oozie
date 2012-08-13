@@ -404,8 +404,8 @@ public class CoordCommandUtils {
         eAction.removeAttribute("start");
         eAction.removeAttribute("end");
         eAction.setAttribute("instance-number", Integer.toString(instanceCount));
-        eAction.setAttribute("action-nominal-time", DateUtils.formatDateUTC(nominalTime));
-        eAction.setAttribute("action-actual-time", DateUtils.formatDateUTC(actualTime));
+        eAction.setAttribute("action-nominal-time", DateUtils.formatDateOozieTZ(nominalTime));
+        eAction.setAttribute("action-actual-time", DateUtils.formatDateOozieTZ(actualTime));
 
         boolean isSla = CoordCommandUtils.materializeSLA(eAction.getChild("action", eAction.getNamespace()).getChild(
                 "info", eAction.getNamespace("sla")), nominalTime, conf);

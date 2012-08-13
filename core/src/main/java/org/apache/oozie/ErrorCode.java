@@ -175,7 +175,7 @@ public enum ErrorCode {
 
     E1001(XLog.STD, "Could not read the coordinator job definition, {0}"),
     E1002(XLog.STD, "Invalid coordinator application URI [{0}], {1}"),
-    E1003(XLog.STD, "Invalid coordinator application attributes [{0}], {1}"),
+    E1003(XLog.STD, "Invalid coordinator application attributes, {0}"),
     E1004(XLog.STD, "Expression language evaluation error [{0}], {1}"),
     E1005(XLog.STD, "Could not read the coordinator job configuration read from DB, {0}"),
     E1006(XLog.STD, "Invalid coordinator application [{0}], {1}"),

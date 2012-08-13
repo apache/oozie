@@ -188,17 +188,17 @@ public class TestCoordELFunctions extends XTestCase {
         ;
         ds.setFrequency(1);
         ds.setTimeUnit(TimeUnit.DAY);
-        ds.setInitInstance(DateUtils.parseDateUTC("2009-01-02T00:00Z"));
+        ds.setInitInstance(DateUtils.parseDateOozieTZ("2009-01-02T00:00Z"));
         ds.setTimeZone(DateUtils.getTimeZone("UTC"));
         ds.setName("test1");
         ds.setType("SYNC");
 
-        appInst.setActualTime(DateUtils.parseDateUTC("2009-09-10T23:59Z"));
+        appInst.setActualTime(DateUtils.parseDateOozieTZ("2009-09-10T23:59Z"));
         appInst.setTimeZone(DateUtils.getTimeZone("UTC"));
 
-        ds.setInitInstance(DateUtils.parseDateUTC("2009-01-01T08:00Z"));
-        appInst.setNominalTime(DateUtils.parseDateUTC("2009-01-01T08:00Z"));
-        appInst.setActualTime(DateUtils.parseDateUTC("2010-10-01T00:00Z"));
+        ds.setInitInstance(DateUtils.parseDateOozieTZ("2009-01-01T08:00Z"));
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2009-01-01T08:00Z"));
+        appInst.setActualTime(DateUtils.parseDateOozieTZ("2010-10-01T00:00Z"));
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
         expr = "${coord:hoursInDay(0)}";
         assertEquals("24", CoordELFunctions.evalAndWrap(eval, expr));
@@ -210,8 +210,8 @@ public class TestCoordELFunctions extends XTestCase {
         expr = "${coord:hoursInDay(-2)}";
         assertEquals("24", CoordELFunctions.evalAndWrap(eval, expr));
 
-        appInst.setNominalTime(DateUtils.parseDateUTC("2009-03-08T08:00Z"));
-        appInst.setActualTime(DateUtils.parseDateUTC("2010-10-01T00:00Z"));
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2009-03-08T08:00Z"));
+        appInst.setActualTime(DateUtils.parseDateOozieTZ("2010-10-01T00:00Z"));
         ds.setTimeZone(DateUtils.getTimeZone("UTC"));
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
         expr = "${coord:hoursInDay(0)}";
@@ -222,8 +222,8 @@ public class TestCoordELFunctions extends XTestCase {
         expr = "${coord:hoursInDay(0)}";
         assertEquals("24", CoordELFunctions.evalAndWrap(eval, expr));
 
-        appInst.setNominalTime(DateUtils.parseDateUTC("2009-03-08T08:00Z"));
-        appInst.setActualTime(DateUtils.parseDateUTC("2010-10-01T00:00Z"));
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2009-03-08T08:00Z"));
+        appInst.setActualTime(DateUtils.parseDateOozieTZ("2010-10-01T00:00Z"));
         ds.setTimeZone(DateUtils.getTimeZone("America/Los_Angeles"));
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
         expr = "${coord:hoursInDay(0)}";
@@ -232,14 +232,14 @@ public class TestCoordELFunctions extends XTestCase {
         expr = "${coord:hoursInDay(1)}";
         assertEquals("24", CoordELFunctions.evalAndWrap(eval, expr));
 
-        appInst.setNominalTime(DateUtils.parseDateUTC("2009-11-01T08:00Z"));
-        appInst.setActualTime(DateUtils.parseDateUTC("2010-10-01T00:00Z"));
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2009-11-01T08:00Z"));
+        appInst.setActualTime(DateUtils.parseDateOozieTZ("2010-10-01T00:00Z"));
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
         expr = "${coord:hoursInDay(0)}";
         assertEquals("25", CoordELFunctions.evalAndWrap(eval, expr));
 
-        appInst.setNominalTime(DateUtils.parseDateUTC("2009-03-08T08:00Z"));
-        appInst.setActualTime(DateUtils.parseDateUTC("2010-10-01T00:00Z"));
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2009-03-08T08:00Z"));
+        appInst.setActualTime(DateUtils.parseDateOozieTZ("2010-10-01T00:00Z"));
         ds.setTimeZone(DateUtils.getTimeZone("America/Los_Angeles"));
         ds.setEndOfDuration(TimeUnit.END_OF_DAY);
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
@@ -264,17 +264,17 @@ public class TestCoordELFunctions extends XTestCase {
         ;
         ds.setFrequency(1);
         ds.setTimeUnit(TimeUnit.MONTH);
-        ds.setInitInstance(DateUtils.parseDateUTC("2009-01-02T00:00Z"));
+        ds.setInitInstance(DateUtils.parseDateOozieTZ("2009-01-02T00:00Z"));
         ds.setTimeZone(DateUtils.getTimeZone("UTC"));
         ds.setName("test1");
         ds.setType("SYNC");
 
-        appInst.setActualTime(DateUtils.parseDateUTC("2009-09-10T23:59Z"));
+        appInst.setActualTime(DateUtils.parseDateOozieTZ("2009-09-10T23:59Z"));
         appInst.setTimeZone(DateUtils.getTimeZone("UTC"));
 
-        ds.setInitInstance(DateUtils.parseDateUTC("2009-01-01T00:00Z"));
-        appInst.setNominalTime(DateUtils.parseDateUTC("2009-02-01T11:00Z"));
-        appInst.setActualTime(DateUtils.parseDateUTC("2010-10-01T00:00Z"));
+        ds.setInitInstance(DateUtils.parseDateOozieTZ("2009-01-01T00:00Z"));
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2009-02-01T11:00Z"));
+        appInst.setActualTime(DateUtils.parseDateOozieTZ("2010-10-01T00:00Z"));
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
         expr = "${coord:daysInMonth(0)}";
         assertEquals("28", CoordELFunctions.evalAndWrap(eval, expr));
@@ -292,8 +292,8 @@ public class TestCoordELFunctions extends XTestCase {
         assertEquals("31", CoordELFunctions.evalAndWrap(eval, expr));
 
         ds.setTimeZone(DateUtils.getTimeZone("America/Los_Angeles"));
-        appInst.setNominalTime(DateUtils.parseDateUTC("2009-02-01T11:00Z")); // Feb
-        appInst.setActualTime(DateUtils.parseDateUTC("2010-10-01T00:00Z"));
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2009-02-01T11:00Z")); // Feb
+        appInst.setActualTime(DateUtils.parseDateOozieTZ("2010-10-01T00:00Z"));
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
         expr = "${coord:daysInMonth(0)}";
         assertEquals("28", CoordELFunctions.evalAndWrap(eval, expr)); // Jan
@@ -303,17 +303,17 @@ public class TestCoordELFunctions extends XTestCase {
         ds.setFrequency(1);
         ds.setTimeUnit(TimeUnit.MONTH);
         ds.setEndOfDuration(TimeUnit.END_OF_MONTH);
-        ds.setInitInstance(DateUtils.parseDateUTC("2009-01-02T00:00Z"));
+        ds.setInitInstance(DateUtils.parseDateOozieTZ("2009-01-02T00:00Z"));
         ds.setTimeZone(DateUtils.getTimeZone("UTC"));
         ds.setName("test1");
         ds.setType("SYNC");
 
-        appInst.setActualTime(DateUtils.parseDateUTC("2009-09-10T23:59Z"));
+        appInst.setActualTime(DateUtils.parseDateOozieTZ("2009-09-10T23:59Z"));
         appInst.setTimeZone(DateUtils.getTimeZone("UTC"));
         // Case 1
-        ds.setInitInstance(DateUtils.parseDateUTC("2009-01-01T00:00Z"));
-        appInst.setNominalTime(DateUtils.parseDateUTC("2009-02-01T11:00Z"));
-        appInst.setActualTime(DateUtils.parseDateUTC("2010-10-01T00:00Z"));
+        ds.setInitInstance(DateUtils.parseDateOozieTZ("2009-01-01T00:00Z"));
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2009-02-01T11:00Z"));
+        appInst.setActualTime(DateUtils.parseDateOozieTZ("2010-10-01T00:00Z"));
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
         expr = "${coord:daysInMonth(0)}";
         assertEquals("28", CoordELFunctions.evalAndWrap(eval, expr));
@@ -331,8 +331,8 @@ public class TestCoordELFunctions extends XTestCase {
         assertEquals("31", CoordELFunctions.evalAndWrap(eval, expr));
 
         ds.setTimeZone(DateUtils.getTimeZone("America/Los_Angeles"));
-        appInst.setNominalTime(DateUtils.parseDateUTC("2009-02-01T11:00Z")); // Feb
-        appInst.setActualTime(DateUtils.parseDateUTC("2010-10-01T00:00Z"));
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2009-02-01T11:00Z")); // Feb
+        appInst.setActualTime(DateUtils.parseDateOozieTZ("2010-10-01T00:00Z"));
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
         expr = "${coord:daysInMonth(0)}";
         assertEquals("28", CoordELFunctions.evalAndWrap(eval, expr)); // Jan
@@ -369,19 +369,19 @@ public class TestCoordELFunctions extends XTestCase {
         String expr = "${coord:current(-1)}";
         assertEquals("2009-09-08T23:59Z", CoordELFunctions.evalAndWrap(eval, expr));
 
-        appInst.setNominalTime(DateUtils.parseDateUTC("2009-05-30T00:45Z"));
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2009-05-30T00:45Z"));
         ds.setFrequency(1);
         ds.setTimeUnit(TimeUnit.DAY);
-        ds.setInitInstance(DateUtils.parseDateUTC("2009-01-02T00:00Z"));
+        ds.setInitInstance(DateUtils.parseDateOozieTZ("2009-01-02T00:00Z"));
         ds.setTimeZone(DateUtils.getTimeZone("America/Los_Angeles"));
         expr = "${coord:current(0)} ${coord:current(1)} ${coord:current(-1)} ${coord:current(-3)}";
         assertEquals("2009-05-29T23:00Z 2009-05-30T23:00Z 2009-05-28T23:00Z 2009-05-26T23:00Z", CoordELFunctions
                 .evalAndWrap(eval, expr));
 
-        appInst.setNominalTime(DateUtils.parseDateUTC("2009-05-30T00:45Z"));
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2009-05-30T00:45Z"));
         ds.setFrequency(30);
         ds.setTimeUnit(TimeUnit.MINUTE);
-        ds.setInitInstance(DateUtils.parseDateUTC("2009-01-08T00:00Z"));
+        ds.setInitInstance(DateUtils.parseDateOozieTZ("2009-01-08T00:00Z"));
         expr = "${coord:current(0)} ${coord:current(1)} ${coord:current(-1)} ${coord:current(-3)}";
         assertEquals("2009-05-30T00:30Z 2009-05-30T01:00Z 2009-05-30T00:00Z 2009-05-29T23:00Z", eval.evaluate(expr,
                                                                                                               String.class));
@@ -391,13 +391,13 @@ public class TestCoordELFunctions extends XTestCase {
         ;
         ds.setFrequency(1);
         ds.setTimeUnit(TimeUnit.DAY);
-        ds.setInitInstance(DateUtils.parseDateUTC("2009-01-02T00:00Z"));
+        ds.setInitInstance(DateUtils.parseDateOozieTZ("2009-01-02T00:00Z"));
         ds.setTimeZone(DateUtils.getTimeZone("UTC"));
         ds.setName("test1");
         ds.setType("SYNC");
 
-        appInst.setActualTime(DateUtils.parseDateUTC("2009-09-10T23:59Z"));
-        appInst.setNominalTime(DateUtils.parseDateUTC("2009-05-30T00:00Z "));
+        appInst.setActualTime(DateUtils.parseDateOozieTZ("2009-09-10T23:59Z"));
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2009-05-30T00:00Z "));
         appInst.setTimeZone(DateUtils.getTimeZone("UTC"));
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
 
@@ -414,7 +414,7 @@ public class TestCoordELFunctions extends XTestCase {
         assertEquals("2009-05-27T00:00Z", CoordELFunctions.evalAndWrap(eval, expr));
 
         ds.setFrequency(7);
-        ds.setInitInstance(DateUtils.parseDateUTC("2009-01-08T00:00Z"));
+        ds.setInitInstance(DateUtils.parseDateOozieTZ("2009-01-08T00:00Z"));
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
 
         expr = "${coord:current(0)}";
@@ -430,21 +430,21 @@ public class TestCoordELFunctions extends XTestCase {
         assertEquals("2009-05-07T00:00Z", CoordELFunctions.evalAndWrap(eval, expr));
 
         // Spring DST transition
-        appInst.setNominalTime(DateUtils.parseDateUTC("2009-03-08T10:45Z"));
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2009-03-08T10:45Z"));
         ds.setFrequency(1);
         ds.setTimeUnit(TimeUnit.DAY);
-        ds.setInitInstance(DateUtils.parseDateUTC("2009-03-06T10:00Z"));
+        ds.setInitInstance(DateUtils.parseDateOozieTZ("2009-03-06T10:00Z"));
         ds.setTimeZone(DateUtils.getTimeZone("America/Los_Angeles"));
         expr = "${coord:current(-2)} ${coord:current(-1)} ${coord:current(0)} ${coord:current(1)} ${coord:current(2)}";
         assertEquals("2009-03-06T10:00Z 2009-03-07T10:00Z 2009-03-08T09:00Z 2009-03-09T09:00Z 2009-03-10T09:00Z",
                      CoordELFunctions.evalAndWrap(eval, expr));
 
         // Winter DST Transition
-        appInst.setNominalTime(DateUtils.parseDateUTC("2009-11-01T08:00Z"));
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2009-11-01T08:00Z"));
 
         ds.setFrequency(1);
         ds.setTimeUnit(TimeUnit.DAY);
-        ds.setInitInstance(DateUtils.parseDateUTC("2009-10-30T08:00Z"));
+        ds.setInitInstance(DateUtils.parseDateOozieTZ("2009-10-30T08:00Z"));
         ds.setTimeZone(DateUtils.getTimeZone("America/Los_Angeles"));
         expr = "${coord:current(-2)} ${coord:current(-1)} ${coord:current(0)} ${coord:current(1)} ${coord:current(2)}";
         // System.out.println("AAAAA " + CoordELFunctions.evalAndWrap(eval,
@@ -455,11 +455,11 @@ public class TestCoordELFunctions extends XTestCase {
         // EndofDay testing
         ds.setFrequency(1);
         ds.setTimeUnit(TimeUnit.DAY);
-        ds.setInitInstance(DateUtils.parseDateUTC("2009-01-02T09:00Z"));
+        ds.setInitInstance(DateUtils.parseDateOozieTZ("2009-01-02T09:00Z"));
         ds.setTimeZone(DateUtils.getTimeZone("UTC"));
         ds.setName("test1");
         ds.setType("SYNC");
-        appInst.setNominalTime(DateUtils.parseDateUTC("2009-05-30T12:00Z "));
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2009-05-30T12:00Z "));
         ds.setEndOfDuration(TimeUnit.END_OF_DAY);
 
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
@@ -473,8 +473,8 @@ public class TestCoordELFunctions extends XTestCase {
         // From Specification
         // Case 1
         ds.setEndOfDuration(TimeUnit.END_OF_DAY);
-        ds.setInitInstance(DateUtils.parseDateUTC("2009-01-01T08:00Z"));
-        appInst.setNominalTime(DateUtils.parseDateUTC("2009-01-01T08:00Z"));
+        ds.setInitInstance(DateUtils.parseDateOozieTZ("2009-01-01T08:00Z"));
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2009-01-01T08:00Z"));
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
 
         expr = "${coord:current(0)}";
@@ -486,8 +486,8 @@ public class TestCoordELFunctions extends XTestCase {
         // Case 2
         ds.setEndOfDuration(TimeUnit.END_OF_DAY);
         ds.setTimeZone(DateUtils.getTimeZone("America/Los_Angeles"));
-        ds.setInitInstance(DateUtils.parseDateUTC("2009-01-01T08:00Z"));
-        appInst.setNominalTime(DateUtils.parseDateUTC("2009-01-01T08:00Z"));
+        ds.setInitInstance(DateUtils.parseDateOozieTZ("2009-01-01T08:00Z"));
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2009-01-01T08:00Z"));
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
 
         expr = "${coord:current(0)}";
@@ -503,8 +503,8 @@ public class TestCoordELFunctions extends XTestCase {
         // Case 3
         ds.setEndOfDuration(TimeUnit.END_OF_DAY);
         ds.setTimeZone(DateUtils.getTimeZone("America/Los_Angeles"));
-        ds.setInitInstance(DateUtils.parseDateUTC("2009-01-01T07:01Z"));
-        appInst.setNominalTime(DateUtils.parseDateUTC("2009-01-01T08:01Z"));
+        ds.setInitInstance(DateUtils.parseDateOozieTZ("2009-01-01T07:01Z"));
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2009-01-01T08:01Z"));
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
 
         expr = "${coord:current(0)}";
@@ -516,8 +516,8 @@ public class TestCoordELFunctions extends XTestCase {
         // Case 4
         ds.setEndOfDuration(TimeUnit.END_OF_DAY);
         ds.setTimeZone(DateUtils.getTimeZone("America/Los_Angeles"));
-        ds.setInitInstance(DateUtils.parseDateUTC("2009-01-01T7:00Z"));
-        appInst.setNominalTime(DateUtils.parseDateUTC("2009-01-01T18:00Z"));
+        ds.setInitInstance(DateUtils.parseDateOozieTZ("2009-01-01T7:00Z"));
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2009-01-01T18:00Z"));
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
 
         expr = "${coord:current(0)}";
@@ -529,8 +529,8 @@ public class TestCoordELFunctions extends XTestCase {
         // Case 5
         ds.setEndOfDuration(TimeUnit.END_OF_DAY);
         ds.setTimeZone(DateUtils.getTimeZone("America/Los_Angeles"));
-        ds.setInitInstance(DateUtils.parseDateUTC("2009-03-07T07:00Z"));
-        appInst.setNominalTime(DateUtils.parseDateUTC("2009-03-07T09:00Z"));
+        ds.setInitInstance(DateUtils.parseDateOozieTZ("2009-03-07T07:00Z"));
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2009-03-07T09:00Z"));
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
 
         expr = "${coord:current(0)}";
@@ -542,8 +542,8 @@ public class TestCoordELFunctions extends XTestCase {
         // Case 6
         ds.setEndOfDuration(TimeUnit.END_OF_DAY);
         ds.setTimeZone(DateUtils.getTimeZone("America/Los_Angeles"));
-        ds.setInitInstance(DateUtils.parseDateUTC("2009-03-08T07:00Z"));
-        appInst.setNominalTime(DateUtils.parseDateUTC("2009-03-08T08:00Z"));
+        ds.setInitInstance(DateUtils.parseDateOozieTZ("2009-03-08T07:00Z"));
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2009-03-08T08:00Z"));
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
 
         expr = "${coord:current(0)}";
@@ -555,8 +555,8 @@ public class TestCoordELFunctions extends XTestCase {
         // Case 7
         ds.setEndOfDuration(TimeUnit.END_OF_DAY);
         ds.setTimeZone(DateUtils.getTimeZone("America/Los_Angeles"));
-        ds.setInitInstance(DateUtils.parseDateUTC("2009-03-09T07:00Z"));
-        appInst.setNominalTime(DateUtils.parseDateUTC("2009-03-10T08:01Z"));
+        ds.setInitInstance(DateUtils.parseDateOozieTZ("2009-03-09T07:00Z"));
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2009-03-10T08:01Z"));
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
 
         expr = "${coord:current(0)}";
@@ -569,8 +569,8 @@ public class TestCoordELFunctions extends XTestCase {
         ds.setEndOfDuration(TimeUnit.END_OF_DAY);
         ds.setFrequency(2); // Changed
         ds.setTimeZone(DateUtils.getTimeZone("America/Los_Angeles"));
-        ds.setInitInstance(DateUtils.parseDateUTC("2009-03-09T07:00Z"));
-        appInst.setNominalTime(DateUtils.parseDateUTC("2009-03-10T07:00Z"));
+        ds.setInitInstance(DateUtils.parseDateOozieTZ("2009-03-09T07:00Z"));
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2009-03-10T07:00Z"));
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
 
         expr = "${coord:current(0)}";
@@ -586,8 +586,8 @@ public class TestCoordELFunctions extends XTestCase {
         ds.setEndOfDuration(TimeUnit.END_OF_MONTH);
         ds.setFrequency(1);
         ds.setTimeZone(DateUtils.getTimeZone("UTC"));
-        ds.setInitInstance(DateUtils.parseDateUTC("2009-01-01T00:00Z"));
-        appInst.setNominalTime(DateUtils.parseDateUTC("2009-02-01T00:00Z"));
+        ds.setInitInstance(DateUtils.parseDateOozieTZ("2009-01-01T00:00Z"));
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2009-02-01T00:00Z"));
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
 
         expr = "${coord:current(0)}";
@@ -599,8 +599,8 @@ public class TestCoordELFunctions extends XTestCase {
         // Case 2
         ds.setEndOfDuration(TimeUnit.END_OF_MONTH);
         ds.setTimeZone(DateUtils.getTimeZone("UTC"));
-        ds.setInitInstance(DateUtils.parseDateUTC("2009-01-01T08:00Z"));
-        appInst.setNominalTime(DateUtils.parseDateUTC("2009-02-01T08:00Z"));
+        ds.setInitInstance(DateUtils.parseDateOozieTZ("2009-01-01T08:00Z"));
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2009-02-01T08:00Z"));
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
 
         expr = "${coord:current(0)}";
@@ -612,8 +612,8 @@ public class TestCoordELFunctions extends XTestCase {
         // Case 3
         ds.setEndOfDuration(TimeUnit.END_OF_MONTH);
         ds.setTimeZone(DateUtils.getTimeZone("UTC"));
-        ds.setInitInstance(DateUtils.parseDateUTC("2009-01-31T08:00Z"));
-        appInst.setNominalTime(DateUtils.parseDateUTC("2009-02-01T08:00Z"));
+        ds.setInitInstance(DateUtils.parseDateOozieTZ("2009-01-31T08:00Z"));
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2009-02-01T08:00Z"));
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
 
         expr = "${coord:current(0)}";
@@ -625,8 +625,8 @@ public class TestCoordELFunctions extends XTestCase {
         // Case 4
         ds.setEndOfDuration(TimeUnit.END_OF_MONTH);
         ds.setTimeZone(DateUtils.getTimeZone("America/Los_Angeles"));
-        ds.setInitInstance(DateUtils.parseDateUTC("2009-01-01T08:00Z"));
-        appInst.setNominalTime(DateUtils.parseDateUTC("2009-02-01T08:00Z"));
+        ds.setInitInstance(DateUtils.parseDateOozieTZ("2009-01-01T08:00Z"));
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2009-02-01T08:00Z"));
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
 
         expr = "${coord:current(0)}";
@@ -638,8 +638,8 @@ public class TestCoordELFunctions extends XTestCase {
         // Case 5
         ds.setEndOfDuration(TimeUnit.END_OF_MONTH);
         ds.setTimeZone(DateUtils.getTimeZone("America/Los_Angeles"));
-        ds.setInitInstance(DateUtils.parseDateUTC("2009-02-02T08:00Z"));
-        appInst.setNominalTime(DateUtils.parseDateUTC("2009-03-02T08:00Z"));
+        ds.setInitInstance(DateUtils.parseDateOozieTZ("2009-02-02T08:00Z"));
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2009-03-02T08:00Z"));
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
 
         expr = "${coord:current(0)}";
@@ -651,8 +651,8 @@ public class TestCoordELFunctions extends XTestCase {
         // Case 6
         ds.setEndOfDuration(TimeUnit.END_OF_MONTH);
         ds.setTimeZone(DateUtils.getTimeZone("America/Los_Angeles"));
-        ds.setInitInstance(DateUtils.parseDateUTC("2009-02-01T08:00Z"));
-        appInst.setNominalTime(DateUtils.parseDateUTC("2009-03-01T08:00Z"));
+        ds.setInitInstance(DateUtils.parseDateOozieTZ("2009-02-01T08:00Z"));
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2009-03-01T08:00Z"));
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
 
         expr = "${coord:current(0)}";
@@ -665,8 +665,8 @@ public class TestCoordELFunctions extends XTestCase {
         ds.setEndOfDuration(TimeUnit.END_OF_MONTH);
         ds.setFrequency(3);
         ds.setTimeZone(DateUtils.getTimeZone("America/Los_Angeles"));
-        ds.setInitInstance(DateUtils.parseDateUTC("2009-02-01T08:00Z"));
-        appInst.setNominalTime(DateUtils.parseDateUTC("2009-03-01T08:00Z"));
+        ds.setInitInstance(DateUtils.parseDateOozieTZ("2009-02-01T08:00Z"));
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2009-03-01T08:00Z"));
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
 
         expr = "${coord:current(0)}";
@@ -863,15 +863,15 @@ public class TestCoordELFunctions extends XTestCase {
         appInst = new SyncCoordAction();
         ds = new SyncCoordDataset();
         ds.setFrequency(1);
-        ds.setInitInstance(DateUtils.parseDateUTC("2009-09-01T23:59Z"));
+        ds.setInitInstance(DateUtils.parseDateOozieTZ("2009-09-01T23:59Z"));
         ds.setTimeUnit(TimeUnit.DAY);
         ds.setTimeZone(DateUtils.getTimeZone("America/Los_Angeles"));
         ds.setName("test");
         ds.setUriTemplate("hdfs://localhost:9000/user/" + getTestUser() + "/US/${YEAR}/${MONTH}/${DAY}");
         ds.setType("SYNC");
         ds.setDoneFlag("");
-        appInst.setActualTime(DateUtils.parseDateUTC("2009-09-10T23:59Z"));
-        appInst.setNominalTime(DateUtils.parseDateUTC("2009-09-09T23:59Z"));
+        appInst.setActualTime(DateUtils.parseDateOozieTZ("2009-09-10T23:59Z"));
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2009-09-09T23:59Z"));
         appInst.setTimeZone(DateUtils.getTimeZone("America/Los_Angeles"));
         appInst.setActionId("00000-oozie-C@1");
         appInst.setName("mycoordinator-app");

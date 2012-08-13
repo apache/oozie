@@ -51,11 +51,11 @@ public class TestBundleJobsGetForPurgeJPAExecutor extends XDataTestCase {
     }
 
     public void testBundleJobsGetForPurgeJPAExecutor() throws Exception {
-        this.addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateUTC("2011-01-01T01:00Z"));
+        this.addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateOozieTZ("2011-01-01T01:00Z"));
 
         _testBundleJobsForPurge(10, 1);
 
-        this.addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateUTC("2011-01-02T01:00Z"));
+        this.addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateOozieTZ("2011-01-02T01:00Z"));
         _testBundleJobsForPurge(10, 2);
     }
 

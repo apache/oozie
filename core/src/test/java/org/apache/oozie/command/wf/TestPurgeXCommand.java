@@ -26,7 +26,6 @@ import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
-import org.apache.oozie.command.CommandException;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
@@ -247,8 +246,8 @@ public class TestPurgeXCommand extends XDataTestCase {
         conf.set(OozieClient.USER_NAME, getTestUser());
 
         WorkflowJobBean wfBean = createWorkflow(app, conf, "auth", jobStatus, instanceStatus);
-        wfBean.setStartTime(DateUtils.parseDateUTC("2015-12-18T01:00Z"));
-        wfBean.setEndTime(DateUtils.parseDateUTC("2015-12-18T03:00Z"));
+        wfBean.setStartTime(DateUtils.parseDateOozieTZ("2015-12-18T01:00Z"));
+        wfBean.setEndTime(DateUtils.parseDateOozieTZ("2015-12-18T03:00Z"));
 
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
@@ -286,8 +285,8 @@ public class TestPurgeXCommand extends XDataTestCase {
         workflow.setGroup(conf.get(OozieClient.GROUP_NAME));
         workflow.setAuthToken(authToken);
         workflow.setWorkflowInstance(wfInstance);
-        workflow.setStartTime(DateUtils.parseDateUTC("2009-12-18T01:00Z"));
-        workflow.setEndTime(DateUtils.parseDateUTC("2009-12-18T03:00Z"));
+        workflow.setStartTime(DateUtils.parseDateOozieTZ("2009-12-18T01:00Z"));
+        workflow.setEndTime(DateUtils.parseDateOozieTZ("2009-12-18T03:00Z"));
         return workflow;
     }
 

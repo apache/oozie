@@ -43,9 +43,11 @@ public class TestBundleJobDeleteJPAExecutor extends XDataTestCase {
     }
 
     public void testBundleJobDeleteJPAExecutor() throws Exception {
-        BundleJobBean job1 = this.addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateUTC("2011-01-01T01:00Z"));
+        BundleJobBean job1 = this.addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateOozieTZ(
+            "2011-01-01T01:00Z"));
         _testBundleJobDelete(job1.getId());
-        BundleJobBean job2 = this.addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateUTC("2011-01-02T01:00Z"));
+        BundleJobBean job2 = this.addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateOozieTZ(
+            "2011-01-02T01:00Z"));
         _testBundleJobDelete(job2.getId());
     }
 

@@ -208,7 +208,7 @@ public class TestCoordPurgeXCommand extends XDataTestCase {
     @Override
     protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, boolean pending, boolean doneMatd) throws Exception {
         CoordinatorJobBean coordJob = createCoordJob(status, pending, doneMatd);
-        coordJob.setLastModifiedTime(DateUtils.parseDateUTC("2009-12-18T01:00Z"));
+        coordJob.setLastModifiedTime(DateUtils.parseDateOozieTZ("2009-12-18T01:00Z"));
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
             assertNotNull(jpaService);

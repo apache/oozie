@@ -257,7 +257,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
     @SuppressWarnings("unchecked")
     private boolean checkUnresolvedInstances(Element eAction, Configuration actionConf) throws Exception {
         String strAction = XmlUtils.prettyPrint(eAction).toString();
-        Date nominalTime = DateUtils.parseDateUTC(eAction.getAttributeValue("action-nominal-time"));
+        Date nominalTime = DateUtils.parseDateOozieTZ(eAction.getAttributeValue("action-nominal-time"));
         String actualTimeStr = eAction.getAttributeValue("action-actual-time");
         Date actualTime = null;
         if (actualTimeStr == null) {
@@ -265,7 +265,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             "from previous version. Assign current date to actual time, action = " + actionId);
             actualTime = new Date();
         } else {
-            actualTime = DateUtils.parseDateUTC(actualTimeStr);
+            actualTime = DateUtils.parseDateOozieTZ(actualTimeStr);
         }
 
         StringBuffer resultedXml = new StringBuffer();

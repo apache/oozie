@@ -918,7 +918,7 @@ public class CoordinatorStore extends Store {
                     action = actions.get(0);
                 }
                 else {
-                    throw new StoreException(ErrorCode.E0605, DateUtils.convertDateToString(nominalTime));
+                    throw new StoreException(ErrorCode.E0605, DateUtils.formatDateOozieTZ(nominalTime));
                 }
                 return getBeanForRunningCoordAction(action);
             }

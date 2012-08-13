@@ -171,7 +171,7 @@ public class CoordELFunctions {
         Calendar baseCalDate = DateUtils.getCalendar(strBaseDate);
         StringBuilder buffer = new StringBuilder();
         baseCalDate.add(TimeUnit.valueOf(unit).getCalendarUnit(), offset);
-        buffer.append(DateUtils.formatDateUTC(baseCalDate));
+        buffer.append(DateUtils.formatDateOozieTZ(baseCalDate));
         return buffer.toString();
     }
 
@@ -180,7 +180,7 @@ public class CoordELFunctions {
     }
 
     /**
-     * Determine the date-time in UTC of n-th future available dataset instance
+     * Determine the date-time in Oozie processing timezone of n-th future available dataset instance
      * from nominal Time but not beyond the instance specified as 'instance.
      * <p/>
      * It depends on:
@@ -204,7 +204,7 @@ public class CoordELFunctions {
      *        domain: n >= 0, n is integer
      * @param instance: How many future instance it should check? value should
      *        be >=0
-     * @return date-time in UTC of the n-th instance
+     * @return date-time in Oozie processing timezone of the n-th instance
      *         <p/>
      * @throws Exception
      */
@@ -257,7 +257,7 @@ public class CoordELFunctions {
                     if (available == n) {
                         XLog.getLog(CoordELFunctions.class).debug("Found future File: " + pathWithDoneFlag);
                         resolved = true;
-                        retVal = DateUtils.formatDateUTC(nominalInstanceCal);
+                        retVal = DateUtils.formatDateOozieTZ(nominalInstanceCal);
                         eval.setVariable("resolved_path", uriPath);
                         break;
                     }
@@ -299,7 +299,7 @@ public class CoordELFunctions {
         ELEvaluator eval = ELEvaluator.getCurrent();
         SyncCoordAction action = ParamChecker.notNull((SyncCoordAction) eval.getVariable(COORD_ACTION),
                 "Coordinator Action");
-        return DateUtils.formatDateUTC(action.getNominalTime());
+        return DateUtils.formatDateOozieTZ(action.getNominalTime());
     }
 
     public static String ph3_coord_nominalTime() throws Exception {
@@ -316,7 +316,7 @@ public class CoordELFunctions {
      */
     public static String ph2_coord_formatTime(String dateTimeStr, String format)
         throws Exception {
-        Date dateTime = DateUtils.parseDateUTC(dateTimeStr);
+        Date dateTime = DateUtils.parseDateOozieTZ(dateTimeStr);
         return DateUtils.formatDateCustom(dateTime, format);
     }
 
@@ -369,7 +369,7 @@ public class CoordELFunctions {
         if (coordAction == null) {
             throw new RuntimeException("Associated Application instance should be defined with key " + COORD_ACTION);
         }
-        return DateUtils.formatDateUTC(coordAction.getActualTime());
+        return DateUtils.formatDateOozieTZ(coordAction.getActualTime());
     }
 
     public static String ph3_coord_actualTime() throws Exception {
@@ -412,13 +412,14 @@ public class CoordELFunctions {
     }
 
     /**
-     * Determine the date-time in UTC of n-th dataset instance. <p/> It depends on: <p/> 1. Data set frequency <p/> 2.
+     * Determine the date-time in Oozie processing timezone of n-th dataset instance. <p/> It depends on: <p/> 1.
+     * Data set frequency <p/> 2.
      * Data set Time unit (day, month, minute) <p/> 3. Data set Time zone/DST <p/> 4. End Day/Month flag <p/> 5. Data
      * set initial instance <p/> 6. Action Creation Time
      *
      * @param n instance count domain: n is integer
-     * @return date-time in UTC of the n-th instance returns 'null' means n-th instance is earlier than Initial-Instance
-     *         of DS
+     * @return date-time in Oozie processing timezone of the n-th instance returns 'null' means n-th instance is
+     * earlier than Initial-Instance of DS
      * @throws Exception
      */
     public static String ph2_coord_current(int n) throws Exception {
@@ -493,13 +494,14 @@ public class CoordELFunctions {
     }
 
     /**
-     * Determine the date-time in UTC of n-th latest available dataset instance. <p/> It depends on: <p/> 1. Data set
-     * frequency <p/> 2. Data set Time unit (day, month, minute) <p/> 3. Data set Time zone/DST <p/> 4. End Day/Month
-     * flag <p/> 5. Data set initial instance <p/> 6. Action Creation Time <p/> 7. Existence of dataset's directory
+     * Determine the date-time in Oozie processing timezone of n-th latest available dataset instance. <p/> It depends
+     * on: <p/> 1. Data set frequency <p/> 2. Data set Time unit (day, month, minute) <p/> 3. Data set Time zone/DST
+     * <p/> 4. End Day/Month flag <p/> 5. Data set initial instance <p/> 6. Action Creation Time <p/> 7. Existence of
+     * dataset's directory
      *
      * @param n :instance count <p/> domain: n > 0, n is integer
-     * @return date-time in UTC of the n-th instance <p/> returns 'null' means n-th instance is earlier than
-     *         Initial-Instance of DS
+     * @return date-time in Oozie processing timezone of the n-th instance <p/> returns 'null' means n-th instance is
+     * earlier than Initial-Instance of DS
      * @throws Exception
      */
     public static String ph3_coord_latest(int n) throws Exception {
@@ -721,7 +723,7 @@ public class CoordELFunctions {
                     .warn("If the initial instance of the dataset is later than the current-instance specified, such as coord:current({0}) in this case, an empty string is returned. This means that no data is available at the current-instance specified by the user and the user could try modifying his initial-instance to an earlier time.", n);
             return "";
         }
-        String str = DateUtils.formatDateUTC(nominalInstanceCal);
+        String str = DateUtils.formatDateOozieTZ(nominalInstanceCal);
         return str;
     }
 
@@ -769,7 +771,7 @@ public class CoordELFunctions {
                     if (available == offset) {
                         XLog.getLog(CoordELFunctions.class).debug("Found Latest File: " + pathWithDoneFlag);
                         resolved = true;
-                        retVal = DateUtils.formatDateUTC(nominalInstanceCal);
+                        retVal = DateUtils.formatDateOozieTZ(nominalInstanceCal);
                         eval.setVariable("resolved_path", uriPath);
                         break;
                     }

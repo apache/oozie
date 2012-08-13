@@ -125,11 +125,34 @@ Refer to section #6.5 'Parameterization of Coordinator Applications' for more de
 
 ---++ 4. Datetime, Frequency and Time-Period Representation
 
+Oozie processes coordinator jobs in a fixed timezone with no DST (typically =UTC=), this timezone is referred as 'Oozie
+processing timezone'.
+
+The Oozie processing timezone is used to resolve coordinator jobs start/end times, job pause times and the initial-instance
+of datasets. Also, all coordinator dataset instance URI templates are resolved to a datetime in the Oozie processing
+time-zone.
+
+All the datetimes used in coordinator applications and job parameters to coordinator applications must be specified
+in the Oozie processing timezone. If Oozie processing timezone is =UTC=, the qualifier is  *Z*. If Oozie processing
+time zone is other than =UTC=, the qualifier must be the GMT offset, =(+/-)####=.
+
+For example, a datetime in =UTC=  is =2012-08-12T00:00Z=, the same datetime in =GMT+5:30= is =2012-08-12T05:30+0530=.
+
+For simplicity, there rest of this specification uses =UTC= datetimes.
+
+#datetime
 ---+++ 4.1. Datetime
 
-All datetime values are always in [[http://en.wikipedia.org/wiki/Coordinated_Universal_Time][UTC]] and [[http://www.w3.org/TR/NOTE-datetime][W3C Date-Time format]] down to a minute precision, 'YYYY-MM-DDTHH:mmZ'.
+If the Oozie processing timezone is =UTC=, all datetime values are always in
+[[http://en.wikipedia.org/wiki/Coordinated_Universal_Time][UTC]] down to a minute precision, 'YYYY-MM-DDTHH:mmZ'.
 
 For example =2009-08-10T13:10Z= is August 10th 2009 at 13:10 UTC.
+
+If the Oozie processing timezone is a GMT offset =GMT(+/-)####=, all datetime values are always in
+[[http://en.wikipedia.org/wiki/ISO_8601][ISO 8601]] in the corresponding GMT offset down to a minute precision,
+'YYYY-MM-DDTHH:mmGMT(+/-)####'.
+
+For example =2009-08-10T13:10+0530= is August 10th 2009 at 13:10 GMT+0530, India timezone.
 
 ---++++ 4.1.1 End of the day in Datetime Values
 
@@ -150,7 +173,7 @@ Oozie Coordinator must provide a tool for developers to list all supported timez
 
 ---+++ 4.3. Timezones and Daylight-Saving
 
-While Oozie coordinator engine works in UTC, it provides DST support for coordinator applications.
+While Oozie coordinator engine works in a fixed timezone with no DST (typically =UTC=), it provides DST support for coordinator applications.
 
 The baseline datetime for datasets and coordinator applications are expressed in UTC. The baseline datetime is the time of the first occurrence.
 

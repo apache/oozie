@@ -58,7 +58,7 @@ public class TestCoordJobGetActionForNominalTimeJPAExecutor extends XDataTestCas
         String actionXml = getCoordActionXml(appPath, "coord-action-get.xml");
         String actionNomialTime = getActionNominalTime(actionXml);
 
-        _testGetActionForNominalTime(job.getId(), action.getId(), DateUtils.parseDateUTC(actionNomialTime));
+        _testGetActionForNominalTime(job.getId(), action.getId(), DateUtils.parseDateOozieTZ(actionNomialTime));
     }
 
     private void _testGetActionForNominalTime(String jobId, String actionId, Date d) throws Exception {

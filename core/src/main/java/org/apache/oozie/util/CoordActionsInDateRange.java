@@ -26,17 +26,13 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.oozie.CoordinatorActionBean;
-import org.apache.oozie.CoordinatorActionInfo;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
-import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.executor.jpa.CoordJobGetActionIdsForDateRangeJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetActionsForDatesJPAExecutor;
-import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.util.DateUtils;
-import org.apache.oozie.util.ParamChecker;
+
 /**
  * This class provides the utility of listing
  * coordinator actions that were executed between a certain
@@ -89,8 +85,8 @@ public class CoordActionsInDateRange {
             Date end;
             try {
             // Get the start and end dates for the range
-                start = DateUtils.parseDateUTC(dateRange[0].trim());
-                end = DateUtils.parseDateUTC(dateRange[1].trim());
+                start = DateUtils.parseDateOozieTZ(dateRange[0].trim());
+                end = DateUtils.parseDateOozieTZ(dateRange[1].trim());
             }
             catch (ParseException dx) {
                 throw new XException(ErrorCode.E0308, "Error in parsing start or end date. " + dx);
@@ -119,8 +115,8 @@ public class CoordActionsInDateRange {
             Date end;
             try {
             // Get the start and end dates for the range
-                start = DateUtils.parseDateUTC(dateRange[0].trim());
-                end = DateUtils.parseDateUTC(dateRange[1].trim());
+                start = DateUtils.parseDateOozieTZ(dateRange[0].trim());
+                end = DateUtils.parseDateOozieTZ(dateRange[1].trim());
             }
             catch (ParseException dx) {
                 throw new XException(ErrorCode.E0308, "Error in parsing start or end date. " + dx);

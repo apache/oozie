@@ -68,7 +68,7 @@ public class TestBundleChangeXCommand extends XDataTestCase {
         new BundleJobChangeXCommand(job.getId(), "pausetime=" + dateStr).call();
 
         job = jpaService.execute(bundleJobGetCmd);
-        assertEquals(job.getPauseTime(), DateUtils.parseDateUTC(dateStr));
+        assertEquals(job.getPauseTime(), DateUtils.parseDateOozieTZ(dateStr));
     }
 
     /**
@@ -100,7 +100,7 @@ public class TestBundleChangeXCommand extends XDataTestCase {
 
         new BundleJobChangeXCommand(bundleJob.getId(), "pausetime=" + dateStr).call();
         bundleJob = jpaService.execute(bundleJobGetCmd);
-        assertEquals(DateUtils.parseDateUTC(dateStr), bundleJob.getPauseTime());
+        assertEquals(DateUtils.parseDateOozieTZ(dateStr), bundleJob.getPauseTime());
 
         final String coordJobId = coordJob.getId();
         waitFor(60000, new Predicate() {
@@ -111,7 +111,7 @@ public class TestBundleChangeXCommand extends XDataTestCase {
         });
 
         coordJob = jpaService.execute(new CoordJobGetJPAExecutor(coordJob.getId()));
-        assertEquals(DateUtils.parseDateUTC(dateStr), coordJob.getPauseTime());
+        assertEquals(DateUtils.parseDateOozieTZ(dateStr), coordJob.getPauseTime());
     }
 
     /**
@@ -180,6 +180,6 @@ public class TestBundleChangeXCommand extends XDataTestCase {
         new BundleJobChangeXCommand(job.getId(), "endtime=" + dateStr).call();
 
         job = jpaService.execute(bundleJobGetCmd);
-        assertEquals(job.getEndTime(), DateUtils.parseDateUTC(dateStr));
+        assertEquals(job.getEndTime(), DateUtils.parseDateOozieTZ(dateStr));
     }
 }

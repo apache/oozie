@@ -62,7 +62,7 @@ public class CoordJobGetActionForNominalTimeJPAExecutor implements JPAExecutor<C
             action = actions.get(0);
         }
         else {
-            throw new JPAExecutorException(ErrorCode.E0605, DateUtils.convertDateToString(nominalTime));
+            throw new JPAExecutorException(ErrorCode.E0605, DateUtils.formatDateOozieTZ(nominalTime));
         }
         return getBeanForRunningCoordAction(action);
     }

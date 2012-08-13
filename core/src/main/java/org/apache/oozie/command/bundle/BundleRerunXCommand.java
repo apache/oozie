@@ -139,8 +139,8 @@ public class BundleRerunXCommand extends RerunTransitionXCommand<Void> {
                         rerunDateScope = dateScope;
                     }
                     else {
-                        String coordStart = DateUtils.convertDateToString(coordJob.getStartTime());
-                        String coordEnd = DateUtils.convertDateToString(coordJob.getEndTime());
+                        String coordStart = DateUtils.formatDateOozieTZ(coordJob.getStartTime());
+                        String coordEnd = DateUtils.formatDateOozieTZ(coordJob.getEndTime());
                         rerunDateScope = coordStart + "::" + coordEnd;
                     }
                     LOG.debug("Queuing rerun range [" + rerunDateScope + "] for coord id " + coordId + " of bundle "

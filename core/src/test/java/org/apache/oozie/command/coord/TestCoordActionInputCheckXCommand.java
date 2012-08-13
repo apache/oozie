@@ -47,13 +47,22 @@ import org.apache.oozie.util.XLog;
 public class TestCoordActionInputCheckXCommand extends XDataTestCase {
     protected Services services;
 
+    protected String getProcessingTZ() {
+        return DateUtils.OOZIE_PROCESSING_TIMEZONE_DEFAULT;
+    }
+
+    private String TZ;
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
         setSystemProperty(XLogService.LOG4J_FILE, "oozie-log4j.properties");
+        setSystemProperty(DateUtils.OOZIE_PROCESSING_TIMEZONE_KEY, getProcessingTZ());
         services = new Services();
         services.init();
         cleanUpDBTables();
+        TZ = (getProcessingTZ().equals(DateUtils.OOZIE_PROCESSING_TIMEZONE_DEFAULT)) 
+             ? "Z" : getProcessingTZ().substring(3);
     }
 
     @Override
@@ -93,8 +102,8 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
     }
 
     public void testCoordActionInputCheckXCommandUniqueness() throws Exception {
-        Date startTime = DateUtils.parseDateUTC("2009-02-01T23:59Z");
-        Date endTime = DateUtils.parseDateUTC("2009-02-02T23:59Z");
+        Date startTime = DateUtils.parseDateOozieTZ("2009-02-01T23:59" + TZ);
+        Date endTime = DateUtils.parseDateOozieTZ("2009-02-02T23:59" + TZ);
         CoordinatorJobBean job = addRecordToCoordJobTableForWaiting("coord-job-for-action-input-check.xml",
                 CoordinatorJob.Status.RUNNING, startTime, endTime, false, true, 3);
 
@@ -131,8 +140,8 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
 
     public void testActionInputCheck() throws Exception {
         String jobId = "0000000-" + new Date().getTime() + "-TestCoordActionInputCheckXCommand-C";
-        Date startTime = DateUtils.parseDateUTC("2009-02-01T23:59Z");
-        Date endTime = DateUtils.parseDateUTC("2009-02-02T23:59Z");
+        Date startTime = DateUtils.parseDateOozieTZ("2009-02-01T23:59" + TZ);
+        Date endTime = DateUtils.parseDateOozieTZ("2009-02-02T23:59" + TZ);
         CoordinatorJobBean job = addRecordToCoordJobTable(jobId, startTime, endTime);
         new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
         createDir(getTestCaseDir() + "/2009/29/");
@@ -147,8 +156,8 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
      */
     public void testActionInputMissingDependencies() throws Exception {
         String jobId = "0000000-" + new Date().getTime() + "-TestCoordActionInputCheckXCommand-C";
-        Date startTime = DateUtils.parseDateUTC("2009-02-15T23:59Z");
-        Date endTime = DateUtils.parseDateUTC("2009-02-16T23:59Z");
+        Date startTime = DateUtils.parseDateOozieTZ("2009-02-15T23:59" + TZ);
+        Date endTime = DateUtils.parseDateOozieTZ("2009-02-16T23:59" + TZ);
         CoordinatorJobBean job = addRecordToCoordJobTable(jobId, startTime, endTime);
         new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
 
@@ -198,8 +207,8 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
          * CoordActionInputCheckXCommand constructor.
          */
         String jobId = "0000000-" + new Date().getTime() + "-TestCoordActionInputCheckXCommand-C";
-        Date startTime = DateUtils.parseDateUTC("2009-02-01T23:59Z");
-        Date endTime = DateUtils.parseDateUTC("2009-02-02T23:59Z");
+        Date startTime = DateUtils.parseDateOozieTZ("2009-02-01T23:59" + TZ);
+        Date endTime = DateUtils.parseDateOozieTZ("2009-02-02T23:59" + TZ);
         CoordinatorJobBean job = addRecordToCoordJobTable(jobId, startTime, endTime);
         /* Override the property value for testing purpose only. */
         long testedValue = 12000;
@@ -250,7 +259,7 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
 
     protected CoordinatorActionBean addRecordToCoordActionTableForWaiting(String jobId, int actionNum,
             CoordinatorAction.Status status, String resourceXmlName) throws Exception {
-        CoordinatorActionBean action = createCoordAction(jobId, actionNum, status, resourceXmlName, 0);
+        CoordinatorActionBean action = createCoordAction(jobId, actionNum, status, resourceXmlName, 0, TZ);
         String testDir = getTestCaseDir();
         String missDeps = "file://#testDir/2009/29/_SUCCESS#file://#testDir/2009/22/_SUCCESS#file://#testDir/2009/15/_SUCCESS#file://#testDir/2009/08/_SUCCESS";
         missDeps = missDeps.replaceAll("#testDir", testDir);
@@ -300,7 +309,7 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
 
         String confStr = jobConf.toXmlString(false);
         coordJob.setConf(confStr);
-        String appXml = "<coordinator-app xmlns='uri:oozie:coordinator:0.2' name='NAME' frequency=\"1\" start='2009-02-01T01:00Z' end='2009-02-03T23:59Z' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
+        String appXml = "<coordinator-app xmlns='uri:oozie:coordinator:0.2' name='NAME' frequency=\"1\" start='2009-02-01T01:00" + TZ + "' end='2009-02-03T23:59" + TZ + "' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
         appXml += "<controls>";
         appXml += "<timeout>10</timeout>";
         appXml += "<concurrency>2</concurrency>";
@@ -308,7 +317,7 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         appXml += "</controls>";
         appXml += "<input-events>";
         appXml += "<data-in name='A' dataset='a'>";
-        appXml += "<dataset name='a' frequency='7' initial-instance='2009-01-01T01:00Z' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
+        appXml += "<dataset name='a' frequency='7' initial-instance='2009-01-01T01:00" + TZ + "' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
         appXml += "<uri-template>file://" + testDir + "/${YEAR}/${DAY}</uri-template>";
         appXml += "</dataset>";
         appXml += "<start-instance>${coord:current(-3)}</start-instance>";
@@ -317,7 +326,7 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         appXml += "</input-events>";
         appXml += "<output-events>";
         appXml += "<data-out name='LOCAL_A' dataset='local_a'>";
-        appXml += "<dataset name='local_a' frequency='7' initial-instance='2009-01-01T01:00Z' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
+        appXml += "<dataset name='local_a' frequency='7' initial-instance='2009-01-01T01:00" + TZ + "' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
         appXml += "<uri-template>file://" + testDir + "/${YEAR}/${DAY}</uri-template>";
         appXml += "</dataset>";
         appXml += "<start-instance>${coord:current(-3)}</start-instance>";

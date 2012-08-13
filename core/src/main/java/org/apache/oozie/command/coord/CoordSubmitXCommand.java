@@ -24,8 +24,6 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -34,7 +32,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TimeZone;
 import java.util.TreeSet;
 
 import javax.xml.transform.stream.StreamSource;
@@ -66,7 +63,6 @@ import org.apache.oozie.service.SchemaService;
 import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
-import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.service.SchemaService.SchemaName;
 import org.apache.oozie.service.UUIDService.ApplicationType;
 import org.apache.oozie.util.ConfigUtils;
@@ -661,12 +657,12 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
 
         // start time
         val = resolveAttribute("start", eAppXml, evalNofuncs);
-        ParamChecker.checkUTC(val, "start");
-        coordJob.setStartTime(DateUtils.parseDateUTC(val));
+        ParamChecker.checkDateOozieTZ(val, "start");
+        coordJob.setStartTime(DateUtils.parseDateOozieTZ(val));
         // end time
         val = resolveAttribute("end", eAppXml, evalNofuncs);
-        ParamChecker.checkUTC(val, "end");
-        coordJob.setEndTime(DateUtils.parseDateUTC(val));
+        ParamChecker.checkDateOozieTZ(val, "end");
+        coordJob.setEndTime(DateUtils.parseDateOozieTZ(val));
         // Time zone
         val = resolveAttribute("timezone", eAppXml, evalNofuncs);
         ParamChecker.checkTimeZone(val, "timezone");
@@ -867,7 +863,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
             addAnAttribute("end_of_duration", dsElem, evalFreq.getVariable("endOfDuration") == null ? TimeUnit.NONE
                     .toString() : ((TimeUnit) evalFreq.getVariable("endOfDuration")).toString());
             val = resolveAttribute("initial-instance", dsElem, evalNofuncs);
-            ParamChecker.checkUTC(val, "initial-instance");
+            ParamChecker.checkDateOozieTZ(val, "initial-instance");
             checkInitialInstance(val);
             val = resolveAttribute("timezone", dsElem, evalNofuncs);
             ParamChecker.checkTimeZone(val, "timezone");
@@ -1119,17 +1115,17 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
      */
     private void checkInitialInstance(String val) throws CoordinatorJobException, IllegalArgumentException {
         Date initialInstance, givenInstance;
-        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
-        df.setTimeZone(TimeZone.getTimeZone("UTC"));
         try {
             initialInstance = DateUtils.parseDateUTC("1970-01-01T00:00Z");
-            givenInstance = DateUtils.parseDateUTC(val);
+            givenInstance = DateUtils.parseDateOozieTZ(val);
         }
         catch (Exception e) {
-            throw new IllegalArgumentException("Unable to parse dataset initial-instance string '" + val + "' to Date object. ",e);
+            throw new IllegalArgumentException("Unable to parse dataset initial-instance string '" + val +
+                                               "' to Date object. ",e);
         }
         if(givenInstance.compareTo(initialInstance) < 0) {
-            throw new CoordinatorJobException(ErrorCode.E1021, "Dataset initial-instance " + df.format(givenInstance) + " is earlier than the default initial instance " + df.format(initialInstance));
+            throw new CoordinatorJobException(ErrorCode.E1021, "Dataset initial-instance " + val +
+                    " is earlier than the default initial instance " + DateUtils.formatDateOozieTZ(initialInstance));
         }
     }
 

@@ -92,7 +92,7 @@ public class CoordUtils {
             else {
                 try {
                     // Get action for the nominal time
-                    Date date = DateUtils.parseDateUTC(s.trim());
+                    Date date = DateUtils.parseDateOozieTZ(s.trim());
                     CoordinatorActionBean coordAction = jpaService
                             .execute(new CoordJobGetActionForNominalTimeJPAExecutor(jobId, date));
 
