@@ -63,8 +63,8 @@ public class TestCoordMaterializeTriggerService extends XDataTestCase {
      */
     public void testCoordMaterializeTriggerService1() throws Exception {
 
-        Date start = DateUtils.parseDateUTC("2009-02-01T01:00Z");
-        Date end = DateUtils.parseDateUTC("2009-02-20T23:59Z");
+        Date start = DateUtils.parseDateOozieTZ("2009-02-01T01:00Z");
+        Date end = DateUtils.parseDateOozieTZ("2009-02-20T23:59Z");
         final CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, start, end, false, false, 0);
 
         Thread.sleep(3000);
@@ -109,8 +109,8 @@ public class TestCoordMaterializeTriggerService extends XDataTestCase {
 
         String startDateStr = null, endDateStr = null;
         try {
-            startDateStr = DateUtils.formatDateUTC(start);
-            endDateStr = DateUtils.formatDateUTC(end);
+            startDateStr = DateUtils.formatDateOozieTZ(start);
+            endDateStr = DateUtils.formatDateOozieTZ(end);
 
             appXml = appXml.replaceAll("#start", startDateStr);
             appXml = appXml.replaceAll("#end", endDateStr);

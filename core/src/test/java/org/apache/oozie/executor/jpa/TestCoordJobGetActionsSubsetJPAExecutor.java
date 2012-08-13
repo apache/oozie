@@ -79,7 +79,7 @@ public class TestCoordJobGetActionsSubsetJPAExecutor extends XDataTestCase {
         //Pass expected values
         _testGetActionsSubset(job.getId(), action.getId(), 1, 1, "consoleUrl", "errorCode", "errorMessage",
                 action.getId() + "_E", "externalStatus", "trackerUri", dummyCreationTime,
-                DateUtils.parseDateUTC(actionNominalTime), missDeps, 10, CoordinatorAction.Status.WAITING);
+                DateUtils.parseDateOozieTZ(actionNominalTime), missDeps, 10, CoordinatorAction.Status.WAITING);
 
     }
 

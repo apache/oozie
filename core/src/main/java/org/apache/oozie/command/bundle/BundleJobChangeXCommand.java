@@ -27,7 +27,6 @@ import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
-import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
@@ -130,7 +129,7 @@ public class BundleJobChangeXCommand extends XCommand<Void> {
             String value = map.get(OozieClient.CHANGE_VALUE_PAUSETIME);
             if (!value.equals(""))   {
                 try {
-                    newPauseTime = DateUtils.parseDateUTC(value);
+                    newPauseTime = DateUtils.parseDateOozieTZ(value);
                 }
                 catch (Exception ex) {
                     throw new CommandException(ErrorCode.E1317, value, "is not a valid date");
@@ -143,7 +142,7 @@ public class BundleJobChangeXCommand extends XCommand<Void> {
             String value = map.get(OozieClient.CHANGE_VALUE_ENDTIME);
             if (!value.equals(""))   {
                 try {
-                    newEndTime = DateUtils.parseDateUTC(value);
+                    newEndTime = DateUtils.parseDateOozieTZ(value);
                 }
                 catch (Exception ex) {
                     throw new CommandException(ErrorCode.E1317, value, "is not a valid date");

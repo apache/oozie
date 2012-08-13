@@ -51,8 +51,6 @@ import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobUpdateJPAExecutor;
 import org.apache.oozie.service.PurgeService.PurgeRunnable;
-import org.apache.oozie.service.Services;
-import org.apache.oozie.service.ActionService;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.IOUtils;
@@ -217,7 +215,8 @@ public class TestPurgeService extends XDataTestCase {
      * Calls the purge service, and ensure the job does not exist in the system.
      */
     public void testPurgeServiceForBundle() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateUTC("2011-01-01T01:00Z"));
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateOozieTZ(
+            "2011-01-01T01:00Z"));
         final String jobId = job.getId();
         this.addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.SUCCEEDED);
         this.addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.SUCCEEDED);
@@ -297,7 +296,7 @@ public class TestPurgeService extends XDataTestCase {
     @Override
     protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, boolean pending, boolean doneMatd) throws Exception {
         CoordinatorJobBean coordJob = createCoordJob(status, pending, doneMatd);
-        coordJob.setLastModifiedTime(DateUtils.parseDateUTC("2009-12-18T01:00Z"));
+        coordJob.setLastModifiedTime(DateUtils.parseDateOozieTZ("2009-12-18T01:00Z"));
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
             assertNotNull(jpaService);

@@ -170,15 +170,15 @@ public class TestParamChecker extends XTestCase {
     }
 
     public void testCheckUTC() {
-        ParamChecker.checkUTC("2009-02-01T01:00Z", "test");
+        ParamChecker.checkDateOozieTZ("2009-02-01T01:00Z", "test");
         try {
-            ParamChecker.checkUTC("2009-02-01T01:00", "test");
+            ParamChecker.checkDateOozieTZ("2009-02-01T01:00", "test");
             fail();
         }
         catch (Exception ex) {
         }
         try {
-            ParamChecker.checkUTC("2009-02-01U01:00Z", "test");
+            ParamChecker.checkDateOozieTZ("2009-02-01U01:00Z", "test");
             fail();
         }
         catch (Exception ex) {

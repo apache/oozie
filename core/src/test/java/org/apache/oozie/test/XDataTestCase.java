@@ -256,8 +256,8 @@ public abstract class XDataTestCase extends XFsTestCase {
         coordJob.setConcurrency(1);
         coordJob.setMatThrottling(1);
         try {
-            coordJob.setStartTime(DateUtils.parseDateUTC("2009-12-15T01:00Z"));
-            coordJob.setEndTime(DateUtils.parseDateUTC("2009-12-17T01:00Z"));
+            coordJob.setStartTime(DateUtils.parseDateOozieTZ("2009-12-15T01:00Z"));
+            coordJob.setEndTime(DateUtils.parseDateOozieTZ("2009-12-17T01:00Z"));
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -496,6 +496,10 @@ public abstract class XDataTestCase extends XFsTestCase {
         return action;
     }
 
+    protected CoordinatorActionBean createCoordAction(String jobId, int actionNum, CoordinatorAction.Status status,
+            String resourceXmlName, int pending) throws Exception {
+        return createCoordAction(jobId, actionNum, status, resourceXmlName, pending, "Z");
+    }
     /**
      * Create coord action bean
      *
@@ -508,11 +512,12 @@ public abstract class XDataTestCase extends XFsTestCase {
      * @throws Exception thrown if unable to create coord action bean
      */
     protected CoordinatorActionBean createCoordAction(String jobId, int actionNum, CoordinatorAction.Status status,
-            String resourceXmlName, int pending) throws Exception {
+            String resourceXmlName, int pending, String oozieTimeZoneMask) throws Exception {
         String actionId = Services.get().get(UUIDService.class).generateChildId(jobId, actionNum + "");
         Path appPath = new Path(getFsTestCaseDir(), "coord");
         String actionXml = getCoordActionXml(appPath, resourceXmlName);
-        String actionNomialTime = getActionNominalTime(actionXml);
+        actionXml = actionXml.replace("${TZ}", oozieTimeZoneMask);
+        String actionNominalTime = getActionNominalTime(actionXml);
 
         CoordinatorActionBean action = new CoordinatorActionBean();
         action.setId(actionId);
@@ -521,7 +526,7 @@ public abstract class XDataTestCase extends XFsTestCase {
         action.setActionNumber(actionNum);
         action.setPending(pending);
         try {
-            action.setNominalTime(DateUtils.parseDateUTC(actionNomialTime));
+            action.setNominalTime(DateUtils.parseDateOozieTZ(actionNominalTime));
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -786,8 +791,8 @@ public abstract class XDataTestCase extends XFsTestCase {
     protected String getCoordJobXml(Path appPath, Date start, Date end) {
         String startDateStr = null, endDateStr = null;
         try {
-            startDateStr = DateUtils.formatDateUTC(start);
-            endDateStr = DateUtils.formatDateUTC(end);
+            startDateStr = DateUtils.formatDateOozieTZ(start);
+            endDateStr = DateUtils.formatDateOozieTZ(end);
         }
         catch (Exception ex) {
             ex.printStackTrace();

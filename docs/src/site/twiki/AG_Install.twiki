@@ -396,6 +396,35 @@ streaming and pig actions.
 
 The bundled Streaming and Pig JARs are the ones used by Oozie testcases.
 
+---++ Oozie Coordinators/Bundles Processing Timezone
+
+By default Oozie runs coordinator and bundle jobs using =UTC= timezone for datetime values specified in the application
+XML and in the job parameter properties. This includes coordinator applications start and end times of jobs, coordinator
+datasets initial-instance, bundle applications kick-offtimes. In addition, coordinator dataset instance URI templates
+will be resolved using datetime values of the Oozie processing timezone.
+
+It is possible to set the Oozie processing timezone to a timezone that is an offset of UTC, alternate timezones must
+expressed in using a GMT offset ( =GMT+/-####= ). For example: =GMT+0530= (India timezone).
+
+To change the default =UTC= timezone, use the =oozie.processing.timezone= property in the =oozie-site.xml=. For example:
+
+<verbatim>
+<configuration>
+    <property>
+        <name>oozie.processing.timezone</name>
+        <value>GMT+0530</value>
+    </property>
+</configuration>
+</verbatim>
+
+*IMPORTANT:* If using a processing timezone other than =UTC=, all datetime values in coordinator and bundle jobs must
+be expressed in the corresponding timezone, for example =2012-08-08T12:42+0530=.
+
+*NOTE:* It is strongly encouraged to use =UTC=, the default Oozie processing timezone.
+
+For more details on using an alternate Oozie processing timezone, please reffer to the
+[[CoordinatorFunctionalSpec#datetime][Coordinator Fuctional Specification, section '4. Datetime']]
+
 ---++ Advanced/Custom Environment Settings
 
 Oozie can be configured to use Unix standard filesystem hierarchy for its different files

@@ -57,7 +57,7 @@ public class SLADbOperations {
             // change to
             // CommandException
         }
-        Date nominalTime = DateUtils.parseDateUTC(strNominalTime);
+        Date nominalTime = DateUtils.parseDateOozieTZ(strNominalTime);
         // Setting expected start time
         String strRelExpectedStart = getTagElement(eSla, "should-start");
         if (strRelExpectedStart == null || strRelExpectedStart.length() == 0) {
@@ -131,7 +131,7 @@ public class SLADbOperations {
             // change to
             // CommandException
         }
-        Date nominalTime = DateUtils.parseDateUTC(strNominalTime);
+        Date nominalTime = DateUtils.parseDateOozieTZ(strNominalTime);
         // Setting expected start time
         String strRelExpectedStart = getTagElement(eSla, "should-start");
         if (strRelExpectedStart == null || strRelExpectedStart.length() == 0) {

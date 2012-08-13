@@ -21,7 +21,6 @@ import java.util.Date;
 import java.util.List;
 
 import org.apache.hadoop.fs.Path;
-import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
@@ -58,7 +57,7 @@ public class TestCoordJobGetActionIdsForDatesJPAExecutor extends XDataTestCase {
         Path appPath = new Path(getFsTestCaseDir(), "coord");
         String actionXml = getCoordActionXml(appPath, "coord-action-get.xml");
         String actionNomialTime = getActionNominalTime(actionXml);
-        Date nominalTime = DateUtils.parseDateUTC(actionNomialTime);
+        Date nominalTime = DateUtils.parseDateOozieTZ(actionNomialTime);
 
         Date d1 = new Date(nominalTime.getTime() - 1000);
         Date d2 = new Date(nominalTime.getTime() + 1000);

@@ -293,7 +293,7 @@ public class SLAEventBean extends JsonSLAEvent implements Writable {
 
     private String getDateString(Date d) {
         try {
-            return DateUtils.formatDateUTC(d);
+            return DateUtils.formatDateOozieTZ(d);
         }
         catch (Exception e) {
             e.printStackTrace();

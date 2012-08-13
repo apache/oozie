@@ -19,19 +19,16 @@ package org.apache.oozie.executor.jpa;
 
 import java.util.Date;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.local.LocalOozie;
-import org.apache.oozie.service.CallableQueueService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
-import org.apache.oozie.util.XmlUtils;
 
 public class TestCoordActionGetForInfoJPAExecutor extends XDataTestCase {
     Services services;
@@ -89,7 +86,7 @@ public class TestCoordActionGetForInfoJPAExecutor extends XDataTestCase {
         // Pass the expected values
         _testGetForInfo(action.getId(), job.getId(), CoordinatorAction.Status.WAITING, action.getId() + "_E",
                 errorCode, errorMessage, consoleUrl, externalStatus, trackerUri, createdTime, missingDeps,
-                DateUtils.parseDateUTC(actionNominalTime), actionNum, lastModifiedTime);
+                DateUtils.parseDateOozieTZ(actionNominalTime), actionNum, lastModifiedTime);
 
        //services.destroy();
     }

@@ -41,6 +41,17 @@ import org.apache.oozie.util.DateUtils;
 public class TestCoordChangeXCommand extends XDataTestCase {
     private Services services;
 
+    /**
+     * Return the UTC date and time in W3C format down to second
+     * (yyyy-MM-ddTHH:mmZ). i.e.: 1997-07-16T19:20Z The input date is a
+     * long (Unix Time Stamp)
+     *
+     * @return the formatted time string.
+     */
+    public static String convertDateToString(long timeStamp) {
+        return DateUtils.formatDateOozieTZ(new Date(timeStamp));
+    }
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -76,12 +87,12 @@ public class TestCoordChangeXCommand extends XDataTestCase {
             fail("Exception thrown " + ex);
         }
 
-        String pauseTime = DateUtils.convertDateToString(new Date().getTime() + 10 * 60 * 1000);
-        String endTime = DateUtils.convertDateToString(new Date().getTime() + 20 * 60 * 1000);
+        String pauseTime = convertDateToString(new Date().getTime() + 10 * 60 * 1000);
+        String endTime = convertDateToString(new Date().getTime() + 20 * 60 * 1000);
 
         new CoordChangeXCommand(jobId, "endtime=" + endTime + ";concurrency=200").call();
         try {
-            checkCoordJobs(jobId, DateUtils.parseDateUTC(endTime), 200, null, false);
+            checkCoordJobs(jobId, DateUtils.parseDateOozieTZ(endTime), 200, null, false);
         }
         catch (Exception ex) {
             ex.printStackTrace();
@@ -91,7 +102,7 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         String changeValue = "endtime=" + endTime + ";concurrency=200;pausetime=" + pauseTime;
         new CoordChangeXCommand(jobId, changeValue).call();
         try {
-            checkCoordJobs(jobId, DateUtils.parseDateUTC(endTime), 200, DateUtils.parseDateUTC(pauseTime), true);
+            checkCoordJobs(jobId, DateUtils.parseDateOozieTZ(endTime), 200, DateUtils.parseDateOozieTZ(pauseTime), true);
         }
         catch (Exception ex) {
             ex.printStackTrace();
@@ -100,7 +111,7 @@ public class TestCoordChangeXCommand extends XDataTestCase {
 
         new CoordChangeXCommand(jobId, "endtime=" + endTime + ";concurrency=200;pausetime=").call();
         try {
-            checkCoordJobs(jobId, DateUtils.parseDateUTC(endTime), 200, null, true);
+            checkCoordJobs(jobId, DateUtils.parseDateOozieTZ(endTime), 200, null, true);
         }
         catch (Exception ex) {
             ex.printStackTrace();
@@ -109,7 +120,7 @@ public class TestCoordChangeXCommand extends XDataTestCase {
 
         new CoordChangeXCommand(jobId, "endtime=" + endTime + ";pausetime=;concurrency=200").call();
         try {
-            checkCoordJobs(jobId, DateUtils.parseDateUTC(endTime), 200, null, true);
+            checkCoordJobs(jobId, DateUtils.parseDateOozieTZ(endTime), 200, null, true);
         }
         catch (Exception ex) {
             ex.printStackTrace();
@@ -118,7 +129,7 @@ public class TestCoordChangeXCommand extends XDataTestCase {
 
         new CoordChangeXCommand(jobId, "endtime=2012-12-20T05:00Z;concurrency=-200").call();
         try {
-            checkCoordJobs(jobId, DateUtils.parseDateUTC("2012-12-20T05:00Z"), -200, null, false);
+            checkCoordJobs(jobId, DateUtils.parseDateOozieTZ("2012-12-20T05:00Z"), -200, null, false);
         }
         catch (Exception ex) {
             ex.printStackTrace();
@@ -127,7 +138,7 @@ public class TestCoordChangeXCommand extends XDataTestCase {
 
         new CoordChangeXCommand(jobId, "endtime=2012-12-20T05:00Z").call();
         try {
-            checkCoordJobs(jobId, DateUtils.parseDateUTC("2012-12-20T05:00Z"), null, null, false);
+            checkCoordJobs(jobId, DateUtils.parseDateOozieTZ("2012-12-20T05:00Z"), null, null, false);
         }
         catch (Exception ex) {
             ex.printStackTrace();
@@ -239,12 +250,13 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         final CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime,
                 true, true, 0);
 
-        String pauseTime = DateUtils.convertDateToString(startTime.getTime() + 10 * 60 * 1000);
-        String newEndTime = DateUtils.convertDateToString(startTime.getTime() + 40 * 60 * 1000);
+        String pauseTime = convertDateToString(startTime.getTime() + 10 * 60 * 1000);
+        String newEndTime = convertDateToString(startTime.getTime() + 40 * 60 * 1000);
 
         new CoordChangeXCommand(job.getId(), "endtime=" + newEndTime + ";pausetime=" + pauseTime).call();
         try {
-            checkCoordJobs(job.getId(), DateUtils.parseDateUTC(newEndTime), null, DateUtils.parseDateUTC(pauseTime),
+            checkCoordJobs(job.getId(), DateUtils.parseDateOozieTZ(newEndTime), null, DateUtils.parseDateOozieTZ(
+                pauseTime),
                     true);
         }
         catch (Exception ex) {
@@ -274,8 +286,8 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         final CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.FAILED, startTime, endTime,
                 true, true, 0);
 
-        String pauseTime = DateUtils.convertDateToString(startTime.getTime() + 10 * 60 * 1000);
-        String newEndTime = DateUtils.convertDateToString(startTime.getTime() + 40 * 60 * 1000);
+        String pauseTime = convertDateToString(startTime.getTime() + 10 * 60 * 1000);
+        String newEndTime = convertDateToString(startTime.getTime() + 40 * 60 * 1000);
 
         new CoordChangeXCommand(job.getId(), "endtime=" + newEndTime + ";pausetime=" + pauseTime).call();
 
@@ -295,7 +307,7 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         Date start = new Date();
         Date end = new Date(start.getTime() + (4 * 60 * 60 * 1000));    //4 hrs
         Date pauseTime = new Date(start.getTime() + (2 * 60 * 60 * 1000));  //2 hrs
-        String pauseTimeChangeStr = "pausetime=" + DateUtils.convertDateToString(pauseTime);
+        String pauseTimeChangeStr = "pausetime=" + DateUtils.formatDateOozieTZ(pauseTime);
         final CoordinatorJobBean job = addRecordToCoordJobTableForPauseTimeTest(CoordinatorJob.Status.RUNNING, start,
                 end, end, true, false, 4);
         addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
@@ -307,7 +319,7 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         JPAService jpaService = Services.get().get(JPAService.class);
         CoordJobGetJPAExecutor coordGetCmd = new CoordJobGetJPAExecutor(job.getId());
         CoordinatorJobBean coordJob = jpaService.execute(coordGetCmd);
-        assertEquals(DateUtils.convertDateToString(coordJob.getPauseTime()), DateUtils.convertDateToString(pauseTime));
+        assertEquals(DateUtils.formatDateOozieTZ(coordJob.getPauseTime()), DateUtils.formatDateOozieTZ(pauseTime));
         assertEquals(Job.Status.RUNNING, coordJob.getStatus());
         assertEquals(2, coordJob.getLastActionNumber());
         try {
@@ -335,7 +347,7 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         Date start = new Date();
         Date end = new Date(start.getTime() + (4 * 60 * 60 * 1000));    //4 hrs
         Date pauseTime = new Date(start.getTime() + (2 * 60 * 60 * 1000));  //2 hrs
-        String pauseTimeChangeStr = "pausetime=" + DateUtils.convertDateToString(pauseTime);
+        String pauseTimeChangeStr = "pausetime=" + DateUtils.formatDateOozieTZ(pauseTime);
         final CoordinatorJobBean job = addRecordToCoordJobTableForPauseTimeTest(CoordinatorJob.Status.RUNNING, start,
                 end, end, true, false, 4);
         addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
@@ -383,7 +395,7 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         coordJob.setAppPath("testAppPath");
         coordJob.setStatus(CoordinatorJob.Status.SUCCEEDED);
         coordJob.setCreatedTime(new Date());
-        coordJob.setLastModifiedTime(DateUtils.parseDateUTC("2009-01-02T23:59Z"));
+        coordJob.setLastModifiedTime(DateUtils.parseDateOozieTZ("2009-01-02T23:59Z"));
         coordJob.setTimeZone("UTC");
         coordJob.setTimeUnit(Timeunit.MINUTE);
         coordJob.setUser("testUser");
@@ -436,9 +448,9 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         coordJob.setExecution(Execution.FIFO);
         coordJob.setConcurrency(1);
         try {
-            coordJob.setStartTime(DateUtils.parseDateUTC("2009-02-01T01:00Z"));
-            coordJob.setEndTime(DateUtils.parseDateUTC("2009-02-01T01:09Z"));
-            coordJob.setLastActionTime(DateUtils.parseDateUTC("2009-02-01T01:10Z"));
+            coordJob.setStartTime(DateUtils.parseDateOozieTZ("2009-02-01T01:00Z"));
+            coordJob.setEndTime(DateUtils.parseDateOozieTZ("2009-02-01T01:09Z"));
+            coordJob.setLastActionTime(DateUtils.parseDateOozieTZ("2009-02-01T01:10Z"));
         }
         catch (Exception e) {
             e.printStackTrace();

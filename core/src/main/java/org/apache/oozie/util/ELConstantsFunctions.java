@@ -105,15 +105,13 @@ public class ELConstantsFunctions {
     }
 
     /**
-     * Return the UTC current date and time in W3C format down to second (yyyy-MM-ddTHH:mm:ssZ). i.e.:
+     * Return the current datetime in ISO8601 using Oozie processing timezone, yyyy-MM-ddTHH:mm:ssZ. i.e.:
      * 1997-07-16T19:20:30Z
      *
      * @return the formatted time string.
      */
     public static String timestamp() {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-        return sdf.format(new Date());
+        return DateUtils.formatDateOozieTZ(new Date());
     }
 
     /**

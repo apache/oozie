@@ -22,6 +22,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.hadoop.util.VersionInfo;
 import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
+import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.Instrumentable;
 import org.apache.oozie.util.IOUtils;
@@ -107,6 +108,11 @@ public class Services {
         setServiceInternal(XLogService.class, false);
         setServiceInternal(ConfigurationService.class, true);
         conf = get(ConfigurationService.class).getConf();
+        DateUtils.setConf(conf);
+        if (!DateUtils.getOozieProcessingTimeZone().equals(DateUtils.UTC)) {
+            XLog.getLog(getClass()).warn("Oozie configured to work in a timezone other than UTC: {0}",
+                                         DateUtils.getOozieProcessingTimeZone().getID());
+        }
         systemId = conf.get(CONF_SYSTEM_ID, ("oozie-" + System.getProperty("user.name")));
         if (systemId.length() > MAX_SYSTEM_ID_LEN) {
             systemId = systemId.substring(0, MAX_SYSTEM_ID_LEN);

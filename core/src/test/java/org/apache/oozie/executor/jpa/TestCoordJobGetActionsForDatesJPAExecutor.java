@@ -58,7 +58,7 @@ public class TestCoordJobGetActionsForDatesJPAExecutor extends XDataTestCase {
         Path appPath = new Path(getFsTestCaseDir(), "coord");
         String actionXml = getCoordActionXml(appPath, "coord-action-get.xml");
         String actionNomialTime = getActionNominalTime(actionXml);
-        Date nominalTime = DateUtils.parseDateUTC(actionNomialTime);
+        Date nominalTime = DateUtils.parseDateOozieTZ(actionNomialTime);
 
         Date d1 = new Date(nominalTime.getTime() - 1000);
         Date d2 = new Date(nominalTime.getTime() + 1000);

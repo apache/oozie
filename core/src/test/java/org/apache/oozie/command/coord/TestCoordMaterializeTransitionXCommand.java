@@ -58,26 +58,26 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
     }
 
     public void testActionMater() throws Exception {
-        Date startTime = DateUtils.parseDateUTC("2009-03-06T010:00Z");
-        Date endTime = DateUtils.parseDateUTC("2009-03-11T10:00Z");
+        Date startTime = DateUtils.parseDateOozieTZ("2009-03-06T010:00Z");
+        Date endTime = DateUtils.parseDateOozieTZ("2009-03-11T10:00Z");
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, false, false, 0);
         new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
         checkCoordAction(job.getId() + "@1");
     }
 
     public void testActionMaterWithPauseTime1() throws Exception {
-        Date startTime = DateUtils.parseDateUTC("2009-03-06T10:00Z");
-        Date endTime = DateUtils.parseDateUTC("2009-03-06T10:14Z");
-        Date pauseTime = DateUtils.parseDateUTC("2009-03-06T10:04Z");
+        Date startTime = DateUtils.parseDateOozieTZ("2009-03-06T10:00Z");
+        Date endTime = DateUtils.parseDateOozieTZ("2009-03-06T10:14Z");
+        Date pauseTime = DateUtils.parseDateOozieTZ("2009-03-06T10:04Z");
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, pauseTime);
         new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
         checkCoordActions(job.getId(), 1, null);
     }
 
     public void testActionMaterWithPauseTime2() throws Exception {
-        Date startTime = DateUtils.parseDateUTC("2009-03-06T10:00Z");
-        Date endTime = DateUtils.parseDateUTC("2009-03-06T10:14Z");
-        Date pauseTime = DateUtils.parseDateUTC("2009-03-06T10:08Z");
+        Date startTime = DateUtils.parseDateOozieTZ("2009-03-06T10:00Z");
+        Date endTime = DateUtils.parseDateOozieTZ("2009-03-06T10:14Z");
+        Date pauseTime = DateUtils.parseDateOozieTZ("2009-03-06T10:08Z");
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, pauseTime);
         new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
         checkCoordActions(job.getId(), 2, null);
@@ -89,9 +89,9 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testActionMaterWithPauseTime3() throws Exception {
-        Date startTime = DateUtils.parseDateUTC("2009-03-06T10:00Z");
-        Date endTime = DateUtils.parseDateUTC("2009-03-06T10:14Z");
-        Date pauseTime = DateUtils.parseDateUTC("2009-03-06T09:58Z");
+        Date startTime = DateUtils.parseDateOozieTZ("2009-03-06T10:00Z");
+        Date endTime = DateUtils.parseDateOozieTZ("2009-03-06T10:14Z");
+        Date pauseTime = DateUtils.parseDateOozieTZ("2009-03-06T09:58Z");
         final CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, pauseTime);
         new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
         waitFor(1000*60, new Predicate() {
@@ -103,8 +103,8 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
     }
 
     public void testTimeout() throws Exception {
-        Date startTime = DateUtils.parseDateUTC("2009-03-06T10:00Z");
-        Date endTime = DateUtils.parseDateUTC("2009-03-06T10:14Z");
+        Date startTime = DateUtils.parseDateOozieTZ("2009-03-06T10:00Z");
+        Date endTime = DateUtils.parseDateOozieTZ("2009-03-06T10:14Z");
         Date pauseTime = null;
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime,
                 pauseTime, 300);
@@ -113,16 +113,16 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
     }
 
     public void testMatLookupCommand1() throws Exception {
-        Date startTime = DateUtils.parseDateUTC("2009-02-01T01:00Z");
-        Date endTime = DateUtils.parseDateUTC("2009-02-03T23:59Z");
+        Date startTime = DateUtils.parseDateOozieTZ("2009-02-01T01:00Z");
+        Date endTime = DateUtils.parseDateOozieTZ("2009-02-03T23:59Z");
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, startTime, endTime, false, false, 0);
         new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
         checkCoordJobs(job.getId(), CoordinatorJob.Status.RUNNING);
     }
 
     public void testMatThrottle() throws Exception {
-        Date startTime = DateUtils.parseDateUTC("2009-02-01T01:00Z");
-        Date endTime = DateUtils.parseDateUTC("2009-02-03T23:59Z");
+        Date startTime = DateUtils.parseDateOozieTZ("2009-02-01T01:00Z");
+        Date endTime = DateUtils.parseDateOozieTZ("2009-02-03T23:59Z");
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, startTime, endTime, false, false, 0);
         new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
         checkCoordWaiting(job.getId(), job.getMatThrottling());
@@ -134,8 +134,8 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testMatLookupCommand2() throws Exception {
-        Date startTime = DateUtils.parseDateUTC("2099-02-01T01:00Z");
-        Date endTime = DateUtils.parseDateUTC("2099-02-03T23:59Z");
+        Date startTime = DateUtils.parseDateOozieTZ("2099-02-01T01:00Z");
+        Date endTime = DateUtils.parseDateOozieTZ("2099-02-03T23:59Z");
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, startTime, endTime, false, false, 0);
         new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
         checkCoordJobs(job.getId(), CoordinatorJob.Status.PREP);
@@ -148,7 +148,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
      */
     public void testMatLookupCommand3() throws Exception {
         Date startTime = DateUtils.toDate(new Timestamp(System.currentTimeMillis() + 180 * 1000));
-        Date endTime = DateUtils.parseDateUTC("2099-02-03T23:59Z");
+        Date endTime = DateUtils.parseDateOozieTZ("2099-02-03T23:59Z");
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, startTime, endTime, false, false, 0);
         new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
         checkCoordJobs(job.getId(), CoordinatorJob.Status.RUNNING);
@@ -161,7 +161,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
      */
     public void testMatLookupCommand4() throws Exception {
         Date startTime = DateUtils.toDate(new Timestamp(System.currentTimeMillis() + 360 * 1000));
-        Date endTime = DateUtils.parseDateUTC("2099-02-03T23:59Z");
+        Date endTime = DateUtils.parseDateOozieTZ("2099-02-03T23:59Z");
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, startTime, endTime, false, false, 0);
         new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
         checkCoordJobs(job.getId(), CoordinatorJob.Status.PREP);

@@ -158,8 +158,8 @@ public class TestCoordELEvaluator extends XTestCase {
         dataEvntXML += "<uri-template>file:///tmp/coord/US/${YEAR}/${MONTH}/${DAY}</uri-template></dataset></data-in>";
         Element event = XmlUtils.parseXml(dataEvntXML);
         SyncCoordAction appInst = new SyncCoordAction();
-        appInst.setNominalTime(DateUtils.parseDateUTC("2009-09-08T01:00Z"));
-        appInst.setActualTime(DateUtils.parseDateUTC("2010-10-01T00:00Z"));
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2009-09-08T01:00Z"));
+        appInst.setActualTime(DateUtils.parseDateOozieTZ("2010-10-01T00:00Z"));
         appInst.setTimeUnit(TimeUnit.MINUTE);
         // Configuration conf = new
         // XConfiguration(IOUtils.getResourceAsReader("org/apache/oozie/coord/conf.xml",
@@ -180,8 +180,8 @@ public class TestCoordELEvaluator extends XTestCase {
     	String testCaseDir = getTestCaseDir();
     	Configuration conf = new XConfiguration(new StringReader(getConfString()));
 
-        Date actualTime = DateUtils.parseDateUTC("2009-09-01T01:00Z");
-        Date nominalTime = DateUtils.parseDateUTC("2009-09-01T00:00Z");
+        Date actualTime = DateUtils.parseDateOozieTZ("2009-09-01T01:00Z");
+        Date nominalTime = DateUtils.parseDateOozieTZ("2009-09-01T00:00Z");
         String dataEvntXML = "<data-in name=\"A\" dataset=\"a\"><uris>file:///"+testCaseDir+"/US/2009/1/30|file:///tmp/coord/US/2009/1/31</uris>";
         dataEvntXML += "<dataset name=\"a\" frequency=\"1440\" initial-instance=\"2009-01-01T00:00Z\"  freq_timeunit=\"MINUTE\" timezone=\"UTC\" end_of_duration=\"NONE\">";
         dataEvntXML += "<uri-template>file:///"+testCaseDir+"/${YEAR}/${MONTH}/${DAY}</uri-template></dataset></data-in>";

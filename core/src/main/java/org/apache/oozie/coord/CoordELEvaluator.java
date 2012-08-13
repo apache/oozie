@@ -23,7 +23,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.TimeZone;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.service.ELService;
@@ -142,7 +141,7 @@ public class CoordELEvaluator {
         SyncCoordAction appInst = new SyncCoordAction();
         String strNominalTime = eJob.getAttributeValue("action-nominal-time");
         if (strNominalTime != null) {
-            appInst.setNominalTime(DateUtils.parseDateUTC(strNominalTime));
+            appInst.setNominalTime(DateUtils.parseDateOozieTZ(strNominalTime));
             appInst.setTimeZone(DateUtils.getTimeZone(eJob.getAttributeValue("timezone")));
             appInst.setFrequency(Integer.parseInt(eJob.getAttributeValue("frequency")));
             appInst.setTimeUnit(TimeUnit.valueOf(eJob.getAttributeValue("freq_timeunit")));
@@ -151,7 +150,7 @@ public class CoordELEvaluator {
         }
         String strActualTime = eJob.getAttributeValue("action-actual-time");
         if (strActualTime != null) {
-            appInst.setActualTime(DateUtils.parseDateUTC(strActualTime));
+            appInst.setActualTime(DateUtils.parseDateOozieTZ(strActualTime));
         }
         CoordELFunctions.configureEvaluator(e, null, appInst);
         Element events = eJob.getChild("input-events", eJob.getNamespace());
@@ -200,9 +199,9 @@ public class CoordELEvaluator {
      */
     public static ELEvaluator createURIELEvaluator(String strDate) throws Exception {
         ELEvaluator eval = new ELEvaluator();
-        Calendar date = Calendar.getInstance(TimeZone.getTimeZone("UTC")); // TODO:UTC
+        Calendar date = Calendar.getInstance(DateUtils.getOozieProcessingTimeZone());
         // always???
-        date.setTime(DateUtils.parseDateUTC(strDate));
+        date.setTime(DateUtils.parseDateOozieTZ(strDate));
         eval.setVariable("YEAR", date.get(Calendar.YEAR));
         eval.setVariable("MONTH", make2Digits(date.get(Calendar.MONTH) + 1));
         eval.setVariable("DAY", make2Digits(date.get(Calendar.DAY_OF_MONTH)));
@@ -222,7 +221,7 @@ public class CoordELEvaluator {
         SyncCoordDataset ds = new SyncCoordDataset();
         Element eDataset = eData.getChild("dataset", eData.getNamespace());
         // System.out.println("eDATA :"+ XmlUtils.prettyPrint(eData));
-        Date initInstance = DateUtils.parseDateUTC(eDataset.getAttributeValue("initial-instance"));
+        Date initInstance = DateUtils.parseDateOozieTZ(eDataset.getAttributeValue("initial-instance"));
         ds.setInitInstance(initInstance);
         if (eDataset.getAttributeValue("frequency") != null) {
             int frequency = Integer.parseInt(eDataset.getAttributeValue("frequency"));

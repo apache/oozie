@@ -88,8 +88,8 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testActionStartWithEscapeStrings() throws Exception {
-        Date start = DateUtils.parseDateUTC("2009-12-15T01:00Z");
-        Date end = DateUtils.parseDateUTC("2009-12-16T01:00Z");
+        Date start = DateUtils.parseDateOozieTZ("2009-12-15T01:00Z");
+        Date end = DateUtils.parseDateOozieTZ("2009-12-16T01:00Z");
         CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, start, end, false,
                 false, 1);
 

@@ -18,7 +18,6 @@
 package org.apache.oozie.command.coord;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -836,8 +835,8 @@ public class TestCoordRerunXCommand extends XDataTestCase {
         setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_COORD_STATUS, "true");
         new Services().init();
 
-        Date start = DateUtils.parseDateUTC("2009-02-01T01:00Z");
-        Date end = DateUtils.parseDateUTC("2009-02-02T23:59Z");
+        Date start = DateUtils.parseDateOozieTZ("2009-02-01T01:00Z");
+        Date end = DateUtils.parseDateOozieTZ("2009-02-02T23:59Z");
         CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, start, end, false,
                 true, 3);
 
@@ -884,8 +883,8 @@ public class TestCoordRerunXCommand extends XDataTestCase {
         setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_COORD_STATUS, "true");
         new Services().init();
 
-        Date start = DateUtils.parseDateUTC("2009-02-01T01:00Z");
-        Date end = DateUtils.parseDateUTC("2009-02-02T23:59Z");
+        Date start = DateUtils.parseDateOozieTZ("2009-02-01T01:00Z");
+        Date end = DateUtils.parseDateOozieTZ("2009-02-02T23:59Z");
         CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUSPENDED, start, end, false,
                 true, 3);
 
@@ -933,8 +932,8 @@ public class TestCoordRerunXCommand extends XDataTestCase {
         setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_COORD_STATUS, "true");
         new Services().init();
 
-        Date start = DateUtils.parseDateUTC("2009-02-01T01:00Z");
-        Date end = DateUtils.parseDateUTC("2009-02-02T23:59Z");
+        Date start = DateUtils.parseDateOozieTZ("2009-02-01T01:00Z");
+        Date end = DateUtils.parseDateOozieTZ("2009-02-02T23:59Z");
         CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, start, end, false,
                 false, 3);
 
@@ -1021,8 +1020,8 @@ public class TestCoordRerunXCommand extends XDataTestCase {
         coordJob.setExecution(Execution.FIFO);
         coordJob.setConcurrency(1);
         try {
-            coordJob.setStartTime(DateUtils.parseDateUTC("2009-12-15T01:00Z"));
-            coordJob.setEndTime(DateUtils.parseDateUTC("2009-12-17T01:00Z"));
+            coordJob.setStartTime(DateUtils.parseDateOozieTZ("2009-12-15T01:00Z"));
+            coordJob.setEndTime(DateUtils.parseDateOozieTZ("2009-12-17T01:00Z"));
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -1051,7 +1050,7 @@ public class TestCoordRerunXCommand extends XDataTestCase {
         action.setId(actionId);
         action.setActionNumber(actionNum);
         try {
-            action.setNominalTime(DateUtils.parseDateUTC(actionNomialTime));
+            action.setNominalTime(DateUtils.parseDateOozieTZ(actionNomialTime));
         }
         catch (Exception e) {
             e.printStackTrace();
