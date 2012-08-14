@@ -2252,7 +2252,7 @@ Examples of User-Retry in a workflow aciton is :
 ---++ 19 Global Configurations
 
 Oozie allows a global section to reduce the redundant job-tracker and name-node declarations for each action. The user can define
-a =global= section in the beginning of the workflow.xml . The global section may contain the configuration, job-tracker, or
+a =global= section in the beginning of the workflow.xml . The global section may contain the job-xml, configuration, job-tracker, or
 name-node that the user would like to set for every action. If a user then redefines one of these in a specific action node,
 Oozie will update use the specific declaration instead of the global one for that action.
 
@@ -2263,6 +2263,7 @@ Example of a global element:
 <global>
    <job-tracker>${job-tracker}</job-tracker>
    <name-node>${namd-node}</name-node>
+   <job-xml>job1.xml</job-xml>
    <configuration>
         <property>
             <name>mapred.job.queue.name</name>
@@ -2295,6 +2296,7 @@ Example of a global element:
     <xs:complexType name="WORKFLOW-APP">
         <xs:sequence>
             <xs:element name="parameters" type="workflow:PARAMETERS" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="global" type="workflow:GLOBAL" minOccurs="0" maxOccurs="1"/>
             <xs:element name="credentials" type="workflow:CREDENTIALS" minOccurs="0" maxOccurs="1"/>
             <xs:element name="start" type="workflow:START" minOccurs="1" maxOccurs="1"/>
             <xs:choice minOccurs="0" maxOccurs="unbounded">
@@ -2321,6 +2323,15 @@ Example of a global element:
                     </xs:sequence>
                 </xs:complexType>
             </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="GLOBAL">
+    	<xs:sequence>
+            <xs:element name="job-tracker" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="name-node" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="job-xml" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="configuration" type="workflow:CONFIGURATION" minOccurs="0" maxOccurs="1"/>
         </xs:sequence>
     </xs:complexType>
 
