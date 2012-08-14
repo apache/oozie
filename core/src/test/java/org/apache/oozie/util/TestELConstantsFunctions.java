@@ -45,7 +45,7 @@ public class TestELConstantsFunctions extends XTestCase {
 
     public void testTimestamp() throws Exception {
         String s = ELConstantsFunctions.timestamp();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
         sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
         assertNotNull(sdf.parse(s));
     }

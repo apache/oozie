@@ -105,8 +105,8 @@ public class ELConstantsFunctions {
     }
 
     /**
-     * Return the current datetime in ISO8601 using Oozie processing timezone, yyyy-MM-ddTHH:mm:ssZ. i.e.:
-     * 1997-07-16T19:20:30Z
+     * Return the current datetime in ISO8601 using Oozie processing timezone, yyyy-MM-ddTHH:mmZ. i.e.:
+     * 1997-07-16T19:20Z
      *
      * @return the formatted time string.
      */
