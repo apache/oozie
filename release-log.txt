@@ -4,6 +4,7 @@ OOZIE-867 update version of branch-2 to 3.2.1-incubating-SNAPSHOT (tucu)
 
 -- Oozie 3.2.0 release
 
+OOZIE-947 Forward porting OOZIE-733 to branch 3.2.0 (Mona via virag)
 OOZIE-852 remove pipes binaries from the source (tucu)
 OOZIE-851 demo workflow example does not enable sharelib for pig and streaming (tucu)
 OOZIE-850 apache-rat report should be a single global report file (tucu)
@@ -244,10 +245,10 @@ GH-0073 Suspend a coordinator bundle.
 GH-0072 Resume a coordinator bundle.
 GH-0065 Kill a coordinator bundle.
 GH-0074 Variable definition at coordinator bundle level.
-GH-0098 XCommand Code refactoring. 
+GH-0098 XCommand Code refactoring.
 GH-0099 JPA command refactor.
 GH-0077 Reprocessing of coordinator jobs.
-GH-0078 Option to rerun from failed node. 
+GH-0078 Option to rerun from failed node.
 GH-0075 Provide access to date list.
 GH-0077 Reprocess a complete coordinator bundle.
 GH-0110 Redesign Coordinator Job's status.
