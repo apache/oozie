@@ -142,6 +142,7 @@ public class DateUtils {
      * @throws ParseException thrown if the given string was not an ISO8601 value for the Oozie processing timezon.
      */
     public static Date parseDateOozieTZ(String s) throws ParseException {
+        s = s.trim();
         ParsePosition pos = new ParsePosition(0);
         Date d = getISO8601DateFormat(ACTIVE_TIMEZONE, ACTIVE_MASK).parse(s, pos);
         if (d == null) {
