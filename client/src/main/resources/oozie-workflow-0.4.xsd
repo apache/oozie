@@ -64,6 +64,7 @@
     	<xs:sequence>
             <xs:element name="job-tracker" type="xs:string" minOccurs="0" maxOccurs="1"/>
             <xs:element name="name-node" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="job-xml" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
             <xs:element name="configuration" type="workflow:CONFIGURATION" minOccurs="0" maxOccurs="1"/>
         </xs:sequence>
     </xs:complexType>
