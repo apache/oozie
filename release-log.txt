@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-940 Junk messages appear in tomcat log (egashira via virag)
 OOZIE-955 TestCoordELFunctions and TestELConstantFunctions failing (bcry via tucu)
 OOZIE-954 Global section xsd should allow job-xml elements and update documentation (rkanter via tucu)
 OOZIE-951 Global section should make JT and NN optional (bcry via tucu)

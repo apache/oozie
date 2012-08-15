@@ -156,7 +156,6 @@ public class ActionCheckerService implements Service {
             }
 
             msg.append(" COORD_ACTIONS : " + cactionIds.size());
-            System.out.println("MyCoordactions "+cactionIds.size());
             for (String coordActionId : cactionIds) {
                 Services.get().get(InstrumentationService.class).get().incr(INSTRUMENTATION_GROUP,
                         INSTR_CHECK_COORD_ACTIONS_COUNTER, 1);
