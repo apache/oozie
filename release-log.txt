@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-947 Forward porting OOZIE-733 to 3.2 and trunk (mona via virag)
 OOZIE-889 Adding HCat credentials class for job conf (mona via virag)
 OOZIE-940 Junk messages appear in tomcat log (egashira via virag)
 OOZIE-955 TestCoordELFunctions and TestELConstantFunctions failing (bcry via tucu)
