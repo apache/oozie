@@ -21,9 +21,9 @@
 function prepare() {
   tmpDir=/tmp/oozie-war-packing-$$
   rm -rf ${tmpDir}
-  mkdir ${tmpDir}	
+  mkdir ${tmpDir}
   tmpWarDir=${tmpDir}/oozie-war
-  mkdir ${tmpWarDir}	
+  mkdir ${tmpWarDir}
   checkExec "creating staging directory ${tmpDir}"
 }
 
@@ -71,7 +71,7 @@ function checkFileDoesNotExist() {
 
 #finds a file under a directory any depth, file returns in variable RET
 function findFile() {
-   RET=`find -H ${1} -name ${2}`
+   RET=`find -H ${1} -name ${2} | grep -e "[0-9.a${hadoopJarsSuffix}].jar"`
    RET=`echo ${RET} | sed "s/ .*//"`
    if [ "${RET}" = "" ]; then
      echo
@@ -97,19 +97,23 @@ function getHadoopJars() {
   version=$1
   if [ "${version}" = "0.20.1" ]; then
     #List is separated by ":"
-    hadoopJars="hadoop*core*.jar"
+    hadoopJars="hadoop-core*.jar"
   elif [ "${version}" = "0.20.2" ]; then
     #List is separated by ":"
-    hadoopJars="hadoop*core*.jar"
+    hadoopJars="hadoop-core*.jar"
   elif [ "${version}" = "0.20.104" ]; then
     #List is separated by ":"
-    hadoopJars="hadoop*core*.jar:jackson-core-asl-*.jar:jackson-mapper-asl-*.jar"
+    hadoopJars="hadoop-core*.jar:jackson-core-asl-*.jar:jackson-mapper-asl-*.jar"
   elif [ "${version}" = "0.20.200" ]; then
     #List is separated by ":"
-    hadoopJars="hadoop*core*.jar:jackson-core-asl-*.jar:jackson-mapper-asl-*.jar:commons-configuration-*.jar"
+    hadoopJars="hadoop-core*.jar:jackson-core-asl-*.jar:jackson-mapper-asl-*.jar:commons-configuration-*.jar"
+  elif [[ "${version}" =~ .*23 ]]; then
+    suffix="-[0-9.]*"
+    #List is separated by ":"
+    hadoopJars="hadoop-mapreduce-client-core${suffix}.jar:hadoop-mapreduce-client-common${suffix}.jar:hadoop-mapreduce-client-jobclient${suffix}.jar:hadoop-mapreduce-client-app${suffix}.jar:hadoop-yarn-common${suffix}.jar:hadoop-yarn-api${suffix}.jar:hadoop-hdfs${suffix}.jar:hadoop-common${suffix}.jar:hadoop-auth${suffix}.jar:guava*.jar:protobuf-*.jar:avro-ipc-*.jar:jackson-core-asl-*.jar:jackson-mapper-asl-*.jar:commons-configuration-*.jar"
   else
     echo
-    echo "Exiting: Unsupported Hadoop version '${hadoopVer}', supported versions: 0.20.1, 0.20.2, 0.20.104 and 0.20.200"
+    echo "Exiting: Unsupported Hadoop version '${hadoopVer}', supported versions: 0.20.1, 0.20.2, 0.20.104, 0.20.200 and 0.23.x"
     echo
     cleanUp
     exit -1;
@@ -121,6 +125,7 @@ function printUsage() {
   echo " Options: -inputwar INPUT_OOZIE_WAR"
   echo "          -outputwar OUTPUT_OOZIE_WAR"
   echo "          [-hadoop HADOOP_VERSION HADOOP_PATH]"
+  echo "          [-hadoopJarsSNAPSHOT] (if Hadoop jars version on system is SNAPSHOT)"
   echo "          [-extjs EXTJS_PATH] (expanded or ZIP)"
   echo "          [-jars JARS_PATH] (multiple JAR path separated by ':')"
   echo
@@ -139,6 +144,7 @@ addExtjs=""
 addJars=""
 hadoopVersion=""
 hadoopHome=""
+hadoopJarsSuffix=""
 extjsHome=""
 jarsPath=""
 inputWar=""
@@ -166,6 +172,9 @@ do
     fi
     hadoopHome=$1
     addHadoop=true
+  elif [ "$1" = "-hadoopJarsSNAPSHOT" ]; then
+    shift
+    hadoopJarsSuffix="SNAPSHOT"
   elif [ "$1" = "-extjs" ]; then
     shift
     if [ $# -eq 0 ]; then
@@ -261,15 +270,18 @@ if [ "${addHadoop}" = "true" ]; then
     exit -1
   fi  
   ## adding hadoop
+    echo "Injecting following Hadoop JARs"
+    echo
     for jar in ${hadoopJars//:/$'\n'}
     do
       findFile ${hadoopHome} ${jar}
       jar=${RET}
+      echo ${jar}
       cp ${jar} ${tmpWarDir}/WEB-INF/lib/
       checkExec "copying jar ${jar} to staging"
-    done  
+    done
 fi
-  
+
 if [ "${addExtjs}" = "true" ]; then
   if [ ! "${components}" = "" ];then
     components="${components}, "
