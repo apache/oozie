@@ -1,6 +1,9 @@
 # Maven
 target
 
+# test-patch
+test-patch
+
 # IntelliJ
 *.iml
 *.ipr

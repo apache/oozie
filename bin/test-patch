@@ -21,6 +21,7 @@ SUMMARYFILE=${REPORTDIR}/TEST-SUMMARY.txt
 JIRA_URL="https://issues.apache.org"
 JIRA_URL_ISSUE_PREFIX="${JIRA_URL}/jira/browse/"
 
+VERBOSE=""
 DEBUG=""
 JIRA_ISSUE=""
 PATCHFILE=""
@@ -69,7 +70,7 @@ cleanupAndExit() {
 }
 ###############################################################################
 printUsage() {
-  echo "Usage: $0 (--jira=<JIRA ISSUE> | --patch=<PATCH PATH>) [--debug] [--tasks=<TASK,...>] [--no-cleanup]"
+  echo "Usage: $0 (--jira=<JIRA ISSUE> | --patch=<PATCH PATH>) [--debug] [--verbose] [--tasks=<TASK,...>] [--no-cleanup]"
   echo
 }
 ###############################################################################
@@ -91,6 +92,9 @@ parseArgs() {
       ;;
     --debug)
       DEBUG="-x"
+      ;;
+    --verbose)
+      VERBOSE="true"
       ;;
     *)
       echo "Invalid option"
