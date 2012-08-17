@@ -18,6 +18,7 @@ OP=""
 TEMPDIR=""
 REPORTDIR=""
 SUMMARYFILE=""
+STDOUT="/dev/null"
 
 ###############################################################################
 cleanupAndExit() {
@@ -25,7 +26,7 @@ cleanupAndExit() {
 }
 ###############################################################################
 printUsage() {
-  echo "Usage: $0 --taskname | (--op=pre|post|report --tempdir=<TEMP DIR> --reportdir=<REPORT DIR> --summaryfile=<SUMMARY FILE>)"
+  echo "Usage: $0 --taskname | (--op=pre|post|report --tempdir=<TEMP DIR> --reportdir=<REPORT DIR> --summaryfile=<SUMMARY FILE>) [--verbose]"
   echo
 }
 ###############################################################################
@@ -48,6 +49,9 @@ parseArgs() {
       ;;
     --summaryfile=*)
       SUMMARYFILE=${i#*=}
+      ;;
+    --verbose)
+      STDOUT="/dev/stdout"
       ;;
     esac
   done
@@ -72,12 +76,12 @@ case $OP in
   pre)
     ;;
   post)
-    mvn test -Dmaven.test.failure.ignore=true -fae -Doozie.test.waitfor.ratio=3 -Dtest.timeout=7200 > ${TEMPDIR}/${TASKNAME}.out
-    mvn test -Dtest=TestHiveActionExecutor,TestHiveMain -PtestHive -Dmaven.test.failure.ignore=true -fae -Doozie.test.waitfor.ratio=3 -Dtest.timeout=7200 >> ${TEMPDIR}/${TASKNAME}.out
+    mvn test -Dmaven.test.failure.ignore=true -fae -Doozie.test.waitfor.ratio=3 -Dtest.timeout=7200 | tee ${TEMPDIR}/${TASKNAME}.out >> $STDOUT
+    mvn test -Dtest=TestHiveActionExecutor,TestHiveMain -PtestHive -Dmaven.test.failure.ignore=true -fae -Doozie.test.waitfor.ratio=3 -Dtest.timeout=7200 | tee ${TEMPDIR}/${TASKNAME}.out >> $STDOUT
     exit 0
     ;;
   report)
-    failedTests=`find . -name 'TEST*.xml' | xargs grep  -l -E "<failure|<error" | sed -e "s|.*target/surefire-reports/TEST-|                  |g" | sed -e "s|\.xml||g"`
+    failedTests=`find . -name 'TEST*.xml' | xargs grep  -l -E "<failure|<error" | sed -e "s|.*target/surefire-reports/TEST-|          |g" | sed -e "s|\.xml||g"`
     echo ">>>${failedTests}<<<"
     if [ -n "${failedTests}" ] ; then
       echo "-1 ${TASKNAME} - the patch failed the following testcases:" >> $SUMMARYFILE

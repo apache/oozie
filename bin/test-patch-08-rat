@@ -87,10 +87,10 @@ parseArgs "$@"
 
 case $OP in
   pre)
-    mvn apache-rat:check > ${TEMPDIR}/${TASKNAME}-ratwarns-clean.txt`
+    mvn apache-rat:check > ${TEMPDIR}/${TASKNAME}-ratwarns-clean.txt
     ;;
   post)
-    mvn apache-rat:check > ${TEMPDIR}/${TASKNAME}-ratwarns-patch.txt`
+    mvn apache-rat:check > ${TEMPDIR}/${TASKNAME}-ratwarns-patch.txt
     ;;
   report)
     checkForWarnings
