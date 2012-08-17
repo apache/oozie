@@ -18,6 +18,7 @@ OP=""
 TEMPDIR=""
 REPORTDIR=""
 SUMMARYFILE=""
+STDOUT="/dev/null"
 
 ###############################################################################
 cleanupAndExit() {
@@ -25,7 +26,7 @@ cleanupAndExit() {
 }
 ###############################################################################
 printUsage() {
-  echo "Usage: $0 --taskname | (--op=pre|post|report --tempdir=<TEMP DIR> --reportdir=<REPORT DIR> --summaryfile=<SUMMARY FILE>)"
+  echo "Usage: $0 --taskname | (--op=pre|post|report --tempdir=<TEMP DIR> --reportdir=<REPORT DIR> --summaryfile=<SUMMARY FILE>) [--verbose]"
   echo
 }
 ###############################################################################
@@ -48,6 +49,9 @@ parseArgs() {
       ;;
     --summaryfile=*)
       SUMMARYFILE=${i#*=}
+      ;;
+    --verbose)
+      STDOUT="/dev/stdout"
       ;;
     esac
   done
@@ -86,11 +90,11 @@ parseArgs "$@"
 
 case $OP in
   pre)
-    mvn clean test -PtestPatchCompile -DskipTests > ${REPORTDIR}/${TASKNAME}-clean.txt
+    mvn clean test -PtestPatchCompile -DskipTests | tee ${REPORTDIR}/${TASKNAME}-clean.txt >> $STDOUT
     exit $?
     ;;
   post)
-    mvn clean test -PtestPatchCompile -DskipTests > ${REPORTDIR}/${TASKNAME}-patch.txt
+    mvn clean test -PtestPatchCompile -DskipTests | tee ${REPORTDIR}/${TASKNAME}-patch.txt >> $STDOUT
     exit $?
     ;;
   report)

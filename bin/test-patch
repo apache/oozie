@@ -21,12 +21,13 @@ SUMMARYFILE=${REPORTDIR}/TEST-SUMMARY.txt
 JIRA_URL="https://issues.apache.org"
 JIRA_URL_ISSUE_PREFIX="${JIRA_URL}/jira/browse/"
 
-VERBOSE=""
+VERBOSEOPTION=""
 DEBUG=""
 JIRA_ISSUE=""
 PATCHFILE=""
 TASKSTORUN=""
 VCSCLEANUP="true"
+STDOUT="/dev/null"
 
 ###############################################################################
 testPatchPrepare() {
@@ -94,7 +95,8 @@ parseArgs() {
       DEBUG="-x"
       ;;
     --verbose)
-      VERBOSE="true"
+      VERBOSEOPTION="--verbose"
+      STDOUT="/dev/stdout"
       ;;
     *)
       echo "Invalid option"
@@ -135,7 +137,9 @@ downloadPatch () {
 }
 ###############################################################################
 applyPatch() {
-  patch -f -E --dry-run -p0 < ${PATCHFILE} > ${REPORTDIR}/APPLY-PATCH.txt
+  echo "Applying patch" >> $STDOUT
+  echo "" >> $STDOUT
+  patch -f -E --dry-run -p0 < ${PATCHFILE} | tee ${REPORTDIR}/APPLY-PATCH.txt >> $STDOUT
   if [[ $? != 0 ]] ; then
     echo "Patch failed to apply to head of branch"
     echo
@@ -147,6 +151,7 @@ applyPatch() {
     echo
     cleanupAndExit 1
   fi
+  echo "" >> $STDOUT
   echo "Patch applied"
   echo "+1 PATCH_APPLIES" >> $SUMMARYFILE
   echo
@@ -157,7 +162,7 @@ run() {
   if [[ "${TASKSTORUN}" == "" || "${TASKSTORUN}" =~ "${task}" ]] ; then
       echo "  Running test task ${task}"
       outputFile="`basename $1`-$2.out"
-      bash ${DEBUG} $1 --op=$2 --tempdir=${TEMPDIR} --reportdir=${REPORTDIR} --summaryfile=${SUMMARYFILE} --patchfile=${PATCHFILE} &> ${TEMPDIR}/${outputFile}
+      bash ${DEBUG} $1 --op=$2 --tempdir=${TEMPDIR} --reportdir=${REPORTDIR} --summaryfile=${SUMMARYFILE} --patchfile=${PATCHFILE} ${VERBOSEOPTION} 2>&1 | tee ${TEMPDIR}/${outputFile} >> $STDOUT
       if [[ $? != 0 ]] ; then
         echo "  Failure, check for details ${TEMPDIR}/${outputFile}"
         echo
