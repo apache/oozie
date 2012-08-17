@@ -848,6 +848,8 @@
                         <exclude>webapp/src/main/resources/.gitignore</exclude>
                         <exclude>**/target/**</exclude>
                         <exclude>**/build/**</exclude>
+                        <exclude>.git/**</exclude>
+                        <exclude>test-patch/**</exclude>
                     </excludes>
                 </configuration>
             </plugin>
@@ -867,6 +869,29 @@
             <properties>
                 <oozie.test.forkMode>always</oozie.test.forkMode>
             </properties>
+        </profile>
+        <profile>
+            <id>testPatchCompile</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <fork>true</fork>
+                            <source>1.6</source>
+                            <target>1.6</target>
+                            <compilerArguments>
+                                <Xlint/>
+                                <Xmaxwarns>9999</Xmaxwarns>
+                            </compilerArguments>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
 

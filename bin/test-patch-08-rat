@@ -13,7 +13,7 @@
 #   limitations under the License.
 
 BASEDIR=$(pwd)
-TASKNAME="COMPILE"
+TASKNAME="RAT"
 OP=""
 TEMPDIR=""
 REPORTDIR=""
@@ -66,17 +66,18 @@ parseArgs() {
 }
 ###############################################################################
 checkForWarnings() {
-  grep '\[WARNING\]' ${REPORTDIR}/${TASKNAME}-clean.txt > ${TEMPDIR}/${TASKNAME}-javacwarns-clean.txt
-  grep '\[WARNING\]' ${REPORTDIR}/${TASKNAME}-patch.txt > ${TEMPDIR}/${TASKNAME}-javacwarns-patch.txt
-  cleanWarns=`cat ${TEMPDIR}/${TASKNAME}-javacwarns-clean.txt | awk 'BEGIN {total = 0} {total += 1} END {print total}'`
-  patchWarns=`cat ${TEMPDIR}/${TASKNAME}-javacwarns-patch.txt | awk 'BEGIN {total = 0} {total += 1} END {print total}'`
+  cleanWarns=`grep -c '\!?????' ${TEMPDIR}/${TASKNAME}-ratwarns-clean.txt`
+  patchWarns=`grep -c '\!?????' ${TEMPDIR}/${TASKNAME}-ratwarns-patch.txt`
   newWarns=`expr $patchWarns - $cleanWarns`
   if [[ $newWarns -le 0 ]] ; then
-    RAW_REPORT+=("+1 the patch does not seem to introduce new javac warnings")
+    RAW_REPORT+=("+1 the patch does not seem to introduce new RAT warnings")
     newWarns=0
   else
-    RAW_REPORT+=("-1 the patch seems to introduce $newWarns new javac warning(s)")
+    RAW_REPORT+=("-1 the patch seems to introduce $newWarns new RAT warning(s)")
     newWarns=1
+  fi
+  if [[ $cleanWarns != 0 ]] ; then
+    RAW_REPORT+=("WARNING: the current HEAD has $cleanWarns RAT warning(s), they should be addressed ASAP")
   fi
 }
 ###############################################################################
@@ -86,18 +87,14 @@ parseArgs "$@"
 
 case $OP in
   pre)
-    mvn clean test -PtestPatchCompile -DskipTests > ${REPORTDIR}/${TASKNAME}-clean.txt
-    exit $?
+    mvn apache-rat:check > ${TEMPDIR}/${TASKNAME}-ratwarns-clean.txt`
     ;;
   post)
-    mvn clean test -PtestPatchCompile -DskipTests > ${REPORTDIR}/${TASKNAME}-patch.txt
-    exit $?
+    mvn apache-rat:check > ${TEMPDIR}/${TASKNAME}-ratwarns-patch.txt`
     ;;
   report)
-    RAW_REPORT=("+1 the patch compiles")
     checkForWarnings
-    total=`expr 0 + $newWarns`
-    if [[ $total == 0 ]] ; then
+    if [[ $newWarns == 0 ]] ; then
       echo "+1 ${TASKNAME}" >> $SUMMARYFILE
     else
       echo "-1 ${TASKNAME}" >> $SUMMARYFILE

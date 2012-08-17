@@ -111,6 +111,19 @@ checkLinesLength() {
   fi
 }
 ###############################################################################
+checkForTestcases() {
+  testcases=`grep -c -i -e '^+++.*/test' ${PATCHFILE}`
+  if [[ ${testcases} == 0 ]] ; then
+    RAW_REPORT+=("-1 the patch does not add/modify any testcase")
+    #reverting for summary +1 calculation
+    testcases=1
+  else
+    RAW_REPORT+=("+1 the patch does adds/modifies ${testcases} testcase(s)")
+    #reverting for summary +1 calculation
+    testcases=0
+  fi
+}
+###############################################################################
 
 parseArgs "$@"
 
@@ -125,14 +138,15 @@ case $OP in
     checkNoTabs
     checkNoTrailingSpaces
     checkLinesLength
-    total=`expr $authorTags + $tabs + $trailingSpaces + $longLines`
+    checkForTestcases
+    total=`expr $authorTags + $tabs + $trailingSpaces + $longLines + $testcases`
     if [[ $total == 0 ]] ; then
       echo "+1 ${TASKNAME}" >> $SUMMARYFILE
     else
       echo "-1 ${TASKNAME}" >> $SUMMARYFILE
     fi
     for line in "${RAW_REPORT[@]}" ; do
-    echo "    ${line}" >> $SUMMARYFILE
+      echo "    ${line}" >> $SUMMARYFILE
     done
     ;;
 esac
