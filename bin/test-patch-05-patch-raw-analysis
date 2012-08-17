@@ -13,7 +13,7 @@
 #   limitations under the License.
 
 BASEDIR=$(pwd)
-TASKNAME="NO_AUTHORS"
+TASKNAME="RAW_PATCH_ANALYSIS"
 OP=""
 TEMPDIR=""
 REPORTDIR=""
@@ -75,6 +75,42 @@ parseArgs() {
   fi
 }
 ###############################################################################
+checkNoAuthors() {
+  authorTags=`grep "^+ " ${PATCHFILE} | grep -c -i -e ".*\*.* @author"`
+  if [[ ${authorTags} != 0 ]] ; then
+    RAW_REPORT+=("-1 the patch seems to contain ${authorTags} line(s) with @author tags")
+  else
+    RAW_REPORT+=("+1 the patch does not introduce any @author tags")
+  fi
+}
+###############################################################################
+checkNoTabs() {
+  tabs=`grep "^+ " ${PATCHFILE} | grep -c -P "\t"`
+  if [[ ${tabs} != 0 ]] ; then
+    RAW_REPORT+=("-1 the patch contains ${tabs} line(s) with tabs")
+  else
+    RAW_REPORT+=("+1 the patch does not introduce any tabs")
+  fi
+}
+###############################################################################
+checkNoTrailingSpaces() {
+  trailingSpaces=`grep "^+ " ${PATCHFILE} | grep -c -e " $"`
+  if [[ ${trailingSpaces} != 0 ]] ; then
+    RAW_REPORT+=("-1 the patch contains ${trailingSpaces} line(s) with trailing spaces")
+  else
+    RAW_REPORT+=("+1 the patch does not introduce any trailing spaces")
+  fi
+}
+###############################################################################
+checkLinesLength() {
+  longLines=`grep "^+ " ${PATCHFILE} | awk 'BEGIN{count=0}{if ( length > 132 ) { count=count+1} }END{ print count}'`
+  if [[ ${longLines} != 0 ]] ; then
+    RAW_REPORT+=("-1 the patch contains ${longLines} line(s) longer than 132 characters")
+  else
+    RAW_REPORT+=("+1 the patch does not introduce any line longer than 132")
+  fi
+}
+###############################################################################
 
 parseArgs "$@"
 
@@ -84,12 +120,20 @@ case $OP in
   post)
     ;;
   report)
-    authorTags=`grep -c -i -e '+.*\*.* @author' ${PATCHFILE}`
-    if [[ ${authorTags} != 0 ]] ; then
-      echo "-1 ${TASKNAME} - the patch seems to contain ${authorTags} @author tags" >> $SUMMARYFILE
-    else
+    RAW_REPORT=()
+    checkNoAuthors
+    checkNoTabs
+    checkNoTrailingSpaces
+    checkLinesLength
+    total=`expr $authorTags + $tabs + $trailingSpaces + $longLines`
+    if [[ $total == 0 ]] ; then
       echo "+1 ${TASKNAME}" >> $SUMMARYFILE
+    else
+      echo "-1 ${TASKNAME}" >> $SUMMARYFILE
     fi
+    for line in "${RAW_REPORT[@]}" ; do
+    echo "    ${line}" >> $SUMMARYFILE
+    done
     ;;
 esac
 
