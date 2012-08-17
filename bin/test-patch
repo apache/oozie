@@ -1,0 +1,245 @@
+#!/bin/bash
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
+BASEDIR=$(pwd)
+TESTPATCHDIR=${BASEDIR}/test-patch
+TEMPDIR=${TESTPATCHDIR}/tmp
+REPORTDIR=${TESTPATCHDIR}/reports
+SUMMARYFILE=${REPORTDIR}/TEST-SUMMARY.txt
+
+JIRA_URL="https://issues.apache.org"
+JIRA_URL_ISSUE_PREFIX="${JIRA_URL}/jira/browse/"
+
+DEBUG=""
+JIRA_ISSUE=""
+PATCHFILE=""
+TASKSTORUN=""
+VCSCLEANUP="true"
+
+###############################################################################
+testPatchPrepare() {
+  rm -rf ${TESTPATCHDIR}
+  mkdir ${TESTPATCHDIR}
+  mkdir ${TEMPDIR}
+  mkdir ${REPORTDIR}
+}
+###############################################################################
+vcsCleanup() {
+  vcsCleaned=false
+  which git &> /dev/null
+  if [[ $? == 0 ]] ; then
+    git status &> /dev/null
+    if [[ $? == 0 ]] ; then
+      git reset --hard HEAD > /dev/null
+      git clean -f -d > /dev/null
+      vcsCleaned=true
+    fi
+  fi
+  if [ "$vcsCleaned" != "true" ] ; then
+    which svn &> /dev/null
+    if [[ $? == 0 ]] ; then
+      svnOutput=`svn status 2>&1`
+      if [[  "$svnOutput" != *"is not a working copy" ]] ; then
+        svn revert -R . > /dev/null
+        svn status | grep "\?" | awk '{print $2}' | xargs rm -rf
+        vcsCleaned=true
+      fi
+    fi
+  fi
+  if [ "${vcsCleaned}" = "false" ] ; then
+    echo
+    echo "WARNING: Current directory, it is not under a source control system"
+    echo
+  fi
+}
+###############################################################################
+cleanupAndExit() {
+  exit $1
+}
+###############################################################################
+printUsage() {
+  echo "Usage: $0 (--jira=<JIRA ISSUE> | --patch=<PATCH PATH>) [--debug] [--tasks=<TASK,...>] [--no-cleanup]"
+  echo
+}
+###############################################################################
+parseArgs() {
+  for i in $*
+  do
+    case $i in
+    --jira=*)
+      JIRA_ISSUE=${i#*=}
+      ;;
+    --patch=*)
+      PATCHFILE=${i#*=}
+      ;;
+    --tasks=*)
+      TASKSTORUN=${i#*=}
+      ;;
+    --no-cleanup)
+      VCSCLEANUP=false
+      ;;
+    --debug)
+      DEBUG="-x"
+      ;;
+    *)
+      echo "Invalid option"
+      echo
+      printUsage
+      cleanupAndExit 1
+      ;;
+    esac
+  done
+  if [ "${JIRA_ISSUE}${PATCHFILE}" == "" ] ; then
+    echo "Either --jira or --patch options must be specified"
+    echo
+    printUsage
+    cleanupAndExit 1
+  fi
+}
+###############################################################################
+downloadPatch () {
+  PATCHFILE=${TEMPDIR}/test.patch
+  jiraPage=${TEMPDIR}/jira.txt
+  curl "${JIRA_URL_ISSUE_PREFIX}${JIRA_ISSUE}" > ${jiraPage}
+  if [[ `grep -c 'Patch Available' ${jiraPage}` == 0 ]] ; then
+    echo "$JIRA_ISSUE is not \"Patch Available\".  Exiting."
+    echo
+    cleanupAndExit 1
+  fi
+  relativePatchURL=`grep -o '"/jira/secure/attachment/[0-9]*/[^"]*' ${jiraPage} | grep -v -e 'htm[l]*$' | sort | tail -1 | grep -o '/jira/secure/attachment/[0-9]*/[^"]*'`
+  patchURL="${JIRA_URL}${relativePatchURL}"
+  patchNum=`echo $patchURL | grep -o '[0-9]*/' | grep -o '[0-9]*'`
+  curl ${patchURL} > ${PATCHFILE}
+  if [[ $? != 0 ]] ; then
+    echo "Could not download patch for ${JIRA_ISSUE} from ${patchURL}"
+    echo
+    cleanupAndExit 1
+  fi
+  echo "JIRA ${JIRA_ISSUE}, patch downloaded at `date` from ${patchURL}"
+  echo
+}
+###############################################################################
+applyPatch() {
+  patch -f -E --dry-run -p0 < ${PATCHFILE} > ${REPORTDIR}/APPLY-PATCH.txt
+  if [[ $? != 0 ]] ; then
+    echo "Patch failed to apply to head of branch"
+    echo
+    cleanupAndExit 1
+  fi
+  patch -f -E -p0 < ${PATCHFILE} > ${REPORTDIR}/APPLY-PATCH.txt
+  if [[ $? != 0 ]] ; then
+    echo "ODD!, dry run passed, but patch failed to apply to head of branch"
+    echo
+    cleanupAndExit 1
+  fi
+  echo "Patch applied"
+  echo "+1 PATCH_APPLIES" >> $SUMMARYFILE
+  echo
+}
+###############################################################################
+run() {
+  task=`$1 --taskname`
+  if [[ "${TASKSTORUN}" == "" || "${TASKSTORUN}" =~ "${task}" ]] ; then
+      echo "  Running test task ${task}"
+      outputFile="`basename $1`-$2.out"
+      bash ${DEBUG} $1 --op=$2 --tempdir=${TEMPDIR} --reportdir=${REPORTDIR} --summaryfile=${SUMMARYFILE} --patchfile=${PATCHFILE} &> ${TEMPDIR}/${outputFile}
+      if [[ $? != 0 ]] ; then
+        echo "  Failure, check for details ${TEMPDIR}/${task}-$2.out"
+        echo
+        cleanupAndExit 1
+      fi
+  fi
+}
+###############################################################################
+getAllTasks() {
+  TASKFILES=`ls -a bin/test\-patch\-[0-9][0-9]\-*`
+}
+###############################################################################
+prePatchRun() {
+  echo "Pre patch"
+  for taskFile in ${TASKFILES} ; do
+    run $taskFile pre
+  done
+  echo
+}
+###############################################################################
+postPatchRun() {
+  echo "Post patch"
+  for taskFile in ${TASKFILES} ; do
+    run $taskFile post
+  done
+  echo
+}
+###############################################################################
+createReports() {
+  echo "Reports"
+  for taskFile in ${TASKFILES} ; do
+    run $taskFile report
+  done
+  echo
+}
+###############################################################################
+
+echo
+
+parseArgs "$@"
+
+if [ -n "${DEBUG}" ] ; then
+  set -x
+fi
+
+if [ "${VCSCLEANUP}" == "true" ] ; then
+  vcsCleanup
+fi
+
+testPatchPrepare
+
+if [ "${PATCHFILE}" == "" ] ; then
+  downloadPatch ${JIRA_ISSUE}
+  echo "Testing JIRA ${JIRA_ISSUE}"
+  echo
+  echo "" > ${SUMMARYFILE}
+  echo "Testing JIRA ${JIRA_ISSUE}" >> ${SUMMARYFILE}
+  echo "" >> ${SUMMARYFILE}
+else
+  if [ ! -e ${PATCHFILE} ] ; then
+    echo "Patch file does not exist"
+    cleanupAndExit 1
+  fi
+  echo "Testing patch ${PATCHFILE}"
+  echo
+  echo "" > ${SUMMARYFILE}
+  echo "Testing patch ${PATCHFILE}" >> ${SUMMARYFILE}
+  echo "" >> ${SUMMARYFILE}
+fi
+
+echo "----------------------------" >> ${SUMMARYFILE}
+echo "" >> ${SUMMARYFILE}
+getAllTasks
+prePatchRun
+applyPatch
+postPatchRun
+createReports
+echo "" >> ${SUMMARYFILE}
+echo "----------------------------" >> ${SUMMARYFILE}
+echo "" >> ${SUMMARYFILE}
+
+cat ${SUMMARYFILE}
+
+echo
+echo "Refer to ${REPORTDIR} for detailed test-patch reports"
+echo
+
+grep "\-1" ${SUMMARYFILE} &> /dev/null
+exit `expr $? = 0`
