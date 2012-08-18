@@ -18,6 +18,7 @@ OP=""
 TEMPDIR=""
 REPORTDIR=""
 SUMMARYFILE=""
+MVNPASSTHRU=""
 
 ###############################################################################
 cleanupAndExit() {
@@ -25,7 +26,7 @@ cleanupAndExit() {
 }
 ###############################################################################
 printUsage() {
-  echo "Usage: $0 --taskname | (--op=pre|post|report --tempdir=<TEMP DIR> --reportdir=<REPORT DIR> --summaryfile=<SUMMARY FILE>)"
+  echo "Usage: $0 --taskname | (--op=pre|post|report --tempdir=<TEMP DIR> --reportdir=<REPORT DIR> --summaryfile=<SUMMARY FILE>) [-D<VALUE>...] [-P<VALUE>...]"
   echo
 }
 ###############################################################################
@@ -48,6 +49,12 @@ parseArgs() {
       ;;
     --summaryfile=*)
       SUMMARYFILE=${i#*=}
+      ;;
+    -D*)
+      MVNPASSTHRU="${MVNPASSTHRU} $i"
+      ;;
+    -P*)
+      MVNPASSTHRU="${MVNPASSTHRU} $i"
       ;;
     esac
   done
@@ -87,10 +94,10 @@ parseArgs "$@"
 
 case $OP in
   pre)
-    mvn apache-rat:check > ${TEMPDIR}/${TASKNAME}-ratwarns-clean.txt
+    mvn apache-rat:check ${MVNPASSTHRU} > ${TEMPDIR}/${TASKNAME}-ratwarns-clean.txt
     ;;
   post)
-    mvn apache-rat:check > ${TEMPDIR}/${TASKNAME}-ratwarns-patch.txt
+    mvn apache-rat:check ${MVNPASSTHRU} > ${TEMPDIR}/${TASKNAME}-ratwarns-patch.txt
     ;;
   report)
     checkForWarnings
