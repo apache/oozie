@@ -26,8 +26,10 @@ DEBUG=""
 JIRA_ISSUE=""
 PATCHFILE=""
 TASKSTORUN=""
+TASKSTOSKIP=""
 VCSCLEANUP="true"
 STDOUT="/dev/null"
+MVNPASSTHRU=""
 
 ###############################################################################
 testPatchPrepare() {
@@ -71,7 +73,16 @@ cleanupAndExit() {
 }
 ###############################################################################
 printUsage() {
-  echo "Usage: $0 (--jira=<JIRA ISSUE> | --patch=<PATCH PATH>) [--debug] [--verbose] [--tasks=<TASK,...>] [--no-cleanup]"
+  echo "Usage: $0 <OPTIONS>"
+  echo "          (--jira=<JIRA ISSUE> | --patch=<PATCH PATH>)"
+  echo "          [--tasks=<TASK,...>]"
+  echo "          [--skip-tasks=<TASK,...>]"
+  echo "          [-D<MVN PROPERTY>...]"
+  echo "          [-P<MVN PROFILE>...]"
+  echo "          [--list-tasks]"
+  echo "          [--no-cleanup]"
+  echo "          [--verbose]"
+  echo "          [--script-debug]"
   echo
 }
 ###############################################################################
@@ -88,10 +99,23 @@ parseArgs() {
     --tasks=*)
       TASKSTORUN=${i#*=}
       ;;
+    --skip-tasks=*)
+      TASKSTOSKIP=${i#*=}
+      ;;
+    --list-tasks)
+      listTasks
+      cleanupAndExit 0
+      ;;
+    -D*)
+      MVNPASSTHRU="${MVNPASSTHRU} $i"
+      ;;
+    -P*)
+      MVNPASSTHRU="${MVNPASSTHRU} $i"
+      ;;
     --no-cleanup)
       VCSCLEANUP=false
       ;;
-    --debug)
+    --script-debug)
       DEBUG="-x"
       ;;
     --verbose)
@@ -114,6 +138,17 @@ parseArgs() {
   fi
 }
 ###############################################################################
+listTasks() {
+  echo "Available Tasks:"
+  echo ""
+  getAllTasks
+  for taskFile in ${TASKFILES} ; do
+    taskName=`bash $taskFile --taskname`
+    echo "  $taskName"
+  done
+  echo
+}
+###############################################################################
 downloadPatch () {
   PATCHFILE=${TEMPDIR}/test.patch
   jiraPage=${TEMPDIR}/jira.txt
@@ -123,7 +158,9 @@ downloadPatch () {
     echo
     cleanupAndExit 1
   fi
-  relativePatchURL=`grep -o '"/jira/secure/attachment/[0-9]*/[^"]*' ${jiraPage} | grep -v -e 'htm[l]*$' | sort | tail -1 | grep -o '/jira/secure/attachment/[0-9]*/[^"]*'`
+  relativePatchURL=`grep -o '"/jira/secure/attachment/[0-9]*/[^"]*' ${jiraPage} \
+                   | grep -v -e 'htm[l]*$' | sort | tail -1 \
+                   | grep -o '/jira/secure/attachment/[0-9]*/[^"]*'`
   patchURL="${JIRA_URL}${relativePatchURL}"
   patchNum=`echo $patchURL | grep -o '[0-9]*/' | grep -o '[0-9]*'`
   curl ${patchURL} > ${PATCHFILE}
@@ -139,7 +176,8 @@ downloadPatch () {
 applyPatch() {
   echo "Applying patch" >> $STDOUT
   echo "" >> $STDOUT
-  patch -f -E --dry-run -p0 < ${PATCHFILE} | tee ${REPORTDIR}/APPLY-PATCH.txt >> $STDOUT
+  patch -f -E --dry-run -p0 < ${PATCHFILE} | tee ${REPORTDIR}/APPLY-PATCH.txt \
+        >> $STDOUT
   if [[ $? != 0 ]] ; then
     echo "Patch failed to apply to head of branch"
     echo
@@ -158,16 +196,20 @@ applyPatch() {
 }
 ###############################################################################
 run() {
-  task=`$1 --taskname`
+  task=`bash $1 --taskname`
   if [[ "${TASKSTORUN}" == "" || "${TASKSTORUN}" =~ "${task}" ]] ; then
+    if [[ ! "${TASKSTOSKIP}" =~ "${task}" ]] ; then
       echo "  Running test task ${task}"
       outputFile="`basename $1`-$2.out"
-      bash ${DEBUG} $1 --op=$2 --tempdir=${TEMPDIR} --reportdir=${REPORTDIR} --summaryfile=${SUMMARYFILE} --patchfile=${PATCHFILE} ${VERBOSEOPTION} 2>&1 | tee ${TEMPDIR}/${outputFile} >> $STDOUT
+      bash ${DEBUG} $1 --op=$2 --tempdir=${TEMPDIR} --reportdir=${REPORTDIR} \
+           --summaryfile=${SUMMARYFILE} --patchfile=${PATCHFILE} ${MVNPASSTHRU} \
+           ${VERBOSEOPTION} 2>&1 | tee ${TEMPDIR}/${outputFile} >> $STDOUT
       if [[ $? != 0 ]] ; then
         echo "  Failure, check for details ${TEMPDIR}/${outputFile}"
         echo
         cleanupAndExit 1
       fi
+    fi
   fi
 }
 ###############################################################################
@@ -251,4 +293,4 @@ echo "Refer to ${REPORTDIR} for detailed test-patch reports"
 echo
 
 grep "\-1" ${SUMMARYFILE} &> /dev/null
-exit `expr $? = 0`
+cleanupAndExit `expr $? = 0`

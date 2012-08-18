@@ -19,6 +19,7 @@ TEMPDIR=""
 REPORTDIR=""
 SUMMARYFILE=""
 STDOUT="/dev/null"
+MVNPASSTHRU=""
 
 ###############################################################################
 cleanupAndExit() {
@@ -26,7 +27,7 @@ cleanupAndExit() {
 }
 ###############################################################################
 printUsage() {
-  echo "Usage: $0 --taskname | (--op=pre|post|report --tempdir=<TEMP DIR> --reportdir=<REPORT DIR> --summaryfile=<SUMMARY FILE>) [--verbose]"
+  echo "Usage: $0 --taskname | (--op=pre|post|report --tempdir=<TEMP DIR> --reportdir=<REPORT DIR> --summaryfile=<SUMMARY FILE>) [--verbose] [-D<VALUE>...] [-P<VALUE>...]"
   echo
 }
 ###############################################################################
@@ -53,6 +54,12 @@ parseArgs() {
     --verbose)
       STDOUT="/dev/stdout"
       ;;
+    -D*)
+      MVNPASSTHRU="${MVNPASSTHRU} $i"
+      ;;
+    -P*)
+      MVNPASSTHRU="${MVNPASSTHRU} $i"
+      ;;
     esac
   done
   if [[ "${TASKNAME}" == "" || "${OP}" == "" || "${TEMPDIR}" == "" || "${REPORTDIR}" == "" || "${SUMMARYFILE}" == "" ]] ; then
@@ -76,13 +83,20 @@ case $OP in
   pre)
     ;;
   post)
-    mvn test -Dmaven.test.failure.ignore=true -fae -Doozie.test.waitfor.ratio=3 -Dtest.timeout=7200 | tee ${TEMPDIR}/${TASKNAME}.out >> $STDOUT
-    mvn test -Dtest=TestHiveActionExecutor,TestHiveMain -PtestHive -Dmaven.test.failure.ignore=true -fae -Doozie.test.waitfor.ratio=3 -Dtest.timeout=7200 | tee ${TEMPDIR}/${TASKNAME}.out >> $STDOUT
+    mvn test ${MVNPASSTHRU} -Dmaven.test.failure.ignore=true \
+        -Dmaven.test.error.ignore=true -fae -Doozie.test.waitfor.ratio=3 \
+        -Dtest.timeout=7200 | tee ${TEMPDIR}/${TASKNAME}.out >> $STDOUT
+    mvn test -Dtest=TestHiveActionExecutor,TestHiveMain ${MVNPASSTHRU} \
+        -PtestHive -Dmaven.test.failure.ignore=true -Dmaven.test.error.ignore=true \
+        -fae -Doozie.test.waitfor.ratio=3 -Dtest.timeout=7200 \
+        | tee -a ${TEMPDIR}/${TASKNAME}.out >> $STDOUT
     exit 0
     ;;
   report)
     failedTests=`find . -name 'TEST*.xml' | xargs grep  -l -E "<failure|<error" | sed -e "s|.*target/surefire-reports/TEST-|          |g" | sed -e "s|\.xml||g"`
-    echo ">>>${failedTests}<<<"
+    testsRun=`grep "Tests run:" ${TEMPDIR}/${TASKNAME}.out | awk '{print $3}' | sed 's/,//' | awk 'BEGIN {count=0} {count=count+$1} END {print "Tests run: "count}'`
+    testsFailed=`grep "Tests run:" ${TEMPDIR}/${TASKNAME}.out | awk '{print $5}' | sed 's/,//' | awk 'BEGIN {count=0} {count=count+$1} END {print "Tests failures: "count}'`
+    testsErrors=`grep "Tests run:" ${TEMPDIR}/${TASKNAME}.out | awk '{print $7}' | sed 's/,//' | awk 'BEGIN {count=0} {count=count+$1} END {print "Tests errors: "count}'`
     if [ -n "${failedTests}" ] ; then
       echo "-1 ${TASKNAME} - the patch failed the following testcases:" >> $SUMMARYFILE
       echo "" >> ${SUMMARYFILE}
@@ -91,6 +105,9 @@ case $OP in
     else
       echo "+1 ${TASKNAME}" >> $SUMMARYFILE
     fi
+    echo "  $testsRun" >> $SUMMARYFILE
+    echo "  $testsFailed" >> $SUMMARYFILE
+    echo "  $testsErrors" >> $SUMMARYFILE
     ;;
 esac
 
