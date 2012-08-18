@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@
 package org.apache.oozie.servlet;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.client.rest.JsonTags;
@@ -26,6 +27,7 @@ import org.apache.oozie.servlet.V1JobServlet;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -101,6 +103,62 @@ public class TestV1JobServlet extends DagServletTestCase {
 
     public void testKill() throws Exception {
         _testAction(RestConstants.JOB_ACTION_KILL, null);
+    }
+
+    /**
+     * This test will invoke the start action on a coordinator job using HTTP.
+     * Checks for 400 response
+     * @throws Exception
+     */
+    public void testStart() throws Exception {
+        runTest("/v1/job/*", V1JobServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
+            public Void call() throws Exception {
+                MockCoordinatorEngineService.reset();
+                Map<String, String> params = new HashMap<String, String>();
+                //testing for the start action
+                params.put(RestConstants.ACTION_PARAM, RestConstants.JOB_ACTION_START);
+                URL url = createURL(MockCoordinatorEngineService.JOB_ID + 1, params);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("PUT");
+                conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
+                conn.setDoOutput(true);
+                //check if the response is 400
+                assertEquals(HttpServletResponse.SC_BAD_REQUEST, conn.getResponseCode());
+                //check if the state remains uninitialized
+                assertEquals(null, MockCoordinatorEngineService.did);
+                return null;
+            }
+        });
+    }
+
+    /**
+     * This test will invoke the start action on a coordinator job. Since the coordinator job
+     * does not support a start action, the test case is expected to catch the error and verify
+     * the error message.
+     * @throws Exception
+     */
+    public void testStartForErrorCode() throws Exception {
+        @SuppressWarnings("serial")
+        V1JobServlet testV1JobServlet = new V1JobServlet() {
+
+            @Override
+            protected String getResourceName(HttpServletRequest request) {
+                return "-C";
+            }
+        };
+        try {
+            testV1JobServlet.startJob(null, null);
+            // should not get here!
+            fail("Negative test to test an exception. Should not be succeeding!");
+        } catch (XServletException xse) {
+            // check for the error code and the message
+            assertEquals(xse.getErrorCode(), ErrorCode.E0303);
+            assertTrue(xse.getMessage().contains("Invalid parameter value, [action] = [start]"));
+        } catch (Exception e) {
+            // should not get here!
+            fail("Did not expect a generic exception. Was expecting XServletException");
+        }
+
     }
 
     private void _testNonJsonResponses(final String show, final String contentType, final String response)
