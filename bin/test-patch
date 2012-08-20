@@ -203,7 +203,7 @@ run() {
       outputFile="`basename $1`-$2.out"
       bash ${DEBUG} $1 --op=$2 --tempdir=${TEMPDIR} --reportdir=${REPORTDIR} \
            --summaryfile=${SUMMARYFILE} --patchfile=${PATCHFILE} ${MVNPASSTHRU} \
-           ${VERBOSEOPTION} 2>&1 | tee ${TEMPDIR}/${outputFile} >> $STDOUT
+           ${VERBOSEOPTION} | tee ${TEMPDIR}/${outputFile} >> $STDOUT
       if [[ $? != 0 ]] ; then
         echo "  Failure, check for details ${TEMPDIR}/${outputFile}"
         echo
