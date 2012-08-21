@@ -34,7 +34,12 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import java.util.Enumeration;
 import java.util.concurrent.Callable;
+import javax.imageio.ImageIO;
+import junit.framework.Assert;
+import org.apache.oozie.ErrorCode;
 
 public class TestV1JobServlet extends DagServletTestCase {
 
@@ -297,6 +302,36 @@ public class TestV1JobServlet extends DagServletTestCase {
                 conn.setDoOutput(true);
                 assertEquals(HttpServletResponse.SC_BAD_REQUEST, conn.getResponseCode());
                 assertEquals(RestConstants.JOB_ACTION_CHANGE, MockCoordinatorEngineService.did);
+
+                return null;
+            }
+        });
+    }
+
+    public void testGraph() throws Exception {
+        runTest("/v1/job/*", V1JobServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+
+                MockDagEngineService.reset();
+                Map<String, String> params = new HashMap<String, String>();
+                params.put(RestConstants.JOB_SHOW_PARAM, RestConstants.JOB_SHOW_GRAPH);
+                URL url = createURL(MockDagEngineService.JOB_ID + 1 + MockDagEngineService.JOB_ID_END, params);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
+                assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.PNG_IMAGE_CONTENT_TYPE));
+                //Assert.assertNotNull(ImageIO.read(conn.getInputStream())); // Can't check this as the XML is just <workflow/>
+
+                // Negative test..  should fail
+                MockCoordinatorEngineService.reset();
+                params.clear();
+                params.put(RestConstants.JOB_SHOW_PARAM, RestConstants.JOB_SHOW_GRAPH);
+                url = createURL(MockCoordinatorEngineService.JOB_ID + 1, params);
+                conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                assertEquals(HttpServletResponse.SC_BAD_REQUEST, conn.getResponseCode());
+                assertEquals(ErrorCode.E0306.name(), conn.getHeaderField(RestConstants.OOZIE_ERROR_CODE));
 
                 return null;
             }

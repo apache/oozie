@@ -36,6 +36,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
+import java.util.List;
+import org.apache.oozie.ErrorCode;
+
 public class TestV0JobServlet extends DagServletTestCase {
 
     static {
@@ -195,6 +198,26 @@ public class TestV0JobServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_BAD_REQUEST, conn.getResponseCode());
                 assertEquals(RestConstants.JOB_SHOW_INFO, MockDagEngineService.did);
+                return null;
+            }
+        });
+    }
+
+    public void testGraph() throws Exception {
+        runTest("/v0/job/*", V0JobServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+
+                MockDagEngineService.reset();
+                Map<String, String> params = new HashMap<String, String>();
+                params.put(RestConstants.JOB_SHOW_PARAM, RestConstants.JOB_SHOW_GRAPH);
+                URL url = createURL(MockDagEngineService.JOB_ID + 1 + MockDagEngineService.JOB_ID_END, params);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+
+                assertEquals(HttpServletResponse.SC_BAD_REQUEST, conn.getResponseCode());
+                assertEquals(ErrorCode.E0306.name(), conn.getHeaderField(RestConstants.OOZIE_ERROR_CODE));
+
                 return null;
             }
         });

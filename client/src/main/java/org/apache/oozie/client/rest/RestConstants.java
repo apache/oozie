@@ -38,6 +38,8 @@ public interface RestConstants {
 
     public static final String TEXT_CONTENT_TYPE = "text/plain";
 
+    public static final String PNG_IMAGE_CONTENT_TYPE = "image/png";
+
     public static final String ACTION_PARAM = "action";
 
     public static final String OFFSET_PARAM = "offset";
@@ -76,6 +78,10 @@ public interface RestConstants {
     public static final String JOB_SHOW_LOG = "log";
 
     public static final String JOB_SHOW_DEFINITION = "definition";
+
+    public static final String JOB_SHOW_GRAPH = "graph";
+
+    public static final String JOB_SHOW_KILL_PARAM = "show-kill";
 
     public static final String JOB_BUNDLE_RERUN_COORD_SCOPE_PARAM = "coord-scope";
 

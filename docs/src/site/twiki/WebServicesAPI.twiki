@@ -649,7 +649,7 @@ Content-Type: application/xml;charset=UTF-8
 
 ---++++ Job Log
 
-A HTTP GET request retrieves the job log.
+An HTTP GET request retrieves the job log.
 
 *Request:*
 
@@ -668,6 +668,37 @@ Content-Type: text/plain;charset=UTF-8
 23:21:31,305 TRACE oozieapp:526 - USER[bansalm] GROUP[other] TOKEN[-] APP[test-wf] JOB[0-20090518232130-oozie-tucu] ACTION[mr-1] End
 ...
 </verbatim>
+
+---++++ Job graph
+
+An =HTTP GET= request returns the image of the workflow DAG (rendered as a PNG image).
+   * The nodes that are being executed are painted yellow
+   * The nodes that have successfully executed are painted green
+   * The nodes that have failed execution are painted red
+   * The nodes that are yet to be executed are pained gray
+   * An arc painted green marks the successful path taken so far
+   * An arc painted red marks the failure of the node and highlights the _error_ action
+   * An arc painted gray marks a path not taken yet
+
+*Request:*
+<verbatim>
+GET /oozie/v1/job/job-3?show=graph[&show-kill=true]
+</verbatim>
+
+*Response:*
+<verbatim>
+HTTP/1.1 200 OK
+Content-Type: image/png
+Content-Length: {image_size_in_bytes}
+
+{image_bits}
+</verbatim>
+
+The optional =show-kill= parameter shows =kill= node in the graph. Valid values for this parameter are =1=, =yes=, and =true=. This parameter has no effect when workflow fails and the failure node leads to the =kill= node; in  that case =kill= node is shown always.
+
+The node labels are the node names provided in the workflow XML.
+
+This API returns =HTTP 400= when run on a resource other than a workflow, viz. bundle and coordinator.
 
 ---++++ Jobs Information
 

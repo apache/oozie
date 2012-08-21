@@ -200,4 +200,13 @@ public class V0JobServlet extends BaseJobServlet {
         }
     }
 
+    /*
+     * Not implemented in v0
+     */
+    @Override
+    protected void streamJobGraph(HttpServletRequest request, HttpServletResponse response)
+            throws XServletException, IOException {
+        // Should this error code be NOT_IMPLEMENTED?
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0306);
+    }
 }
