@@ -23,6 +23,7 @@ JIRAHOST="https://issues.apache.org"
 JIRAURL="${JIRAHOST}/jira"
 JIRAURLISSUEPREFIX="${JIRAURL}/browse/"
 
+JIRAUPDATE="false"
 JIRACLI=""
 JIRAUSER="oozieqa"
 JIRAPASSWORD=""
@@ -81,7 +82,7 @@ vcsCleanup() {
 }
 ###############################################################################
 updateJira() {
-  if [[ "${JIRAPASSWORD}" != "" && "${JIRAISSUE}" != "" ]] ; then
+  if [[ "${JIRAUPDATE}" != "" && "${JIRAISSUE}" != "" ]] ; then
     if [ -z "$JIRACLI" ] ; then
       JIRACLI=${TOOLSDIR}/jira-cli/jira.sh
       if [ ! -e "${JIRACLI}" ] ; then
@@ -152,6 +153,7 @@ parseArgs() {
       ;;
     --jira-password=*)
       JIRAPASSWORD=${i#*=}
+      JIRAUPDATE="true"
       ;;
     -D*)
       MVNPASSTHRU="${MVNPASSTHRU} $i"
@@ -315,6 +317,10 @@ else
   echo "" >> ${SUMMARYFILE}
 fi
 
+if [ "${JIRAUPDATE}" == "true" ] ; then
+  echo "{code}" >> ${SUMMARYFILE}
+fi
+
 echo "----------------------------" >> ${SUMMARYFILE}
 echo "" >> ${SUMMARYFILE}
 getAllTasks
@@ -324,6 +330,11 @@ postPatchRun
 createReports
 echo "" >> ${SUMMARYFILE}
 echo "----------------------------" >> ${SUMMARYFILE}
+
+if [ "${JIRAUPDATE}" == "true" ] ; then
+  echo "{code}" >> ${SUMMARYFILE}
+fi
+
 echo "" >> ${SUMMARYFILE}
 
 if [ ! -z "${JIRAISSUE}" ]; then

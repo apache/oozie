@@ -17,7 +17,7 @@ TEMPDIR=${BASEDIR}/tmp
 STDOUT="/dev/null"
 
 JIRAAVAILPATCHQUERY="https://issues.apache.org/jira/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?jqlQuery=project+in+%28OOZIE%29+AND+status+%3D+%22Patch+Available%22+ORDER+BY+updated+DESC&tempMax=1000"
-TESTPATCHJOBURL"https://builds.apache.org/job/oozie-trunk-precommit-build"
+TESTPATCHJOBURL="https://builds.apache.org/job/oozie-trunk-precommit-build"
 TOKEN=""
 SUBMIT="false"
 DELETEHISTORYFILE="false"
@@ -28,7 +28,6 @@ printUsage() {
   echo "Usage: $0 <OPTIONS>"
   echo "          --submit --token=<OOZIE PRECOMMIT JOB TOKEN>"
   echo "          [--delete-history-file]"
-  echo "          [--verbose]"
   echo "          [--script-debug]"
   echo
 }
@@ -48,10 +47,6 @@ parseArgs() {
       ;;
     --delete-history-file)
       DELETEHISTORYFILE="true"
-      ;;
-    --verbose)
-      VERBOSEOPTION="--verbose"
-      STDOUT="/dev/stdout"
       ;;
     *)
       echo "Invalid option"
