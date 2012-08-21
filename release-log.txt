@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-477 Adding configurable filesystem support instead of hardcoded "hdfs" (mayank, mona via tucu)
 OOZIE-906 Show runtime job DAG visually in Oozie console/dashboard (vaidya via virag)
 OOZIE-958 typo in error message of E0736 (egashira via virag)
 OOZIE-923 Improve error message when a user tries to start a coordinator job (sms via virag)

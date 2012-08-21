@@ -30,6 +30,7 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.URI;
 import java.security.Permission;
 import java.text.MessageFormat;
 import java.util.Properties;
@@ -87,9 +88,9 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
 
     private void setRecoveryId(Configuration launcherConf, Path actionDir, String recoveryId) throws LauncherException {
         try {
-            FileSystem fs = FileSystem.get(launcherConf);
             String jobId = launcherConf.get("mapred.job.id");
             Path path = new Path(actionDir, recoveryId);
+            FileSystem fs = FileSystem.get(path.toUri(), launcherConf);
             if (!fs.exists(path)) {
                 try {
                     Writer writer = new OutputStreamWriter(fs.create(path));
@@ -130,7 +131,6 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
             throws HadoopAccessorException, IOException {
         String jobId = null;
         Path recoveryFile = new Path(actionDir, recoveryId);
-        //FileSystem fs = FileSystem.get(launcherConf);
         FileSystem fs = Services.get().get(HadoopAccessorService.class)
                 .createFileSystem(launcherConf.get("user.name"),recoveryFile.toUri(), launcherConf);
 
@@ -498,9 +498,10 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
                     }
                     if (errorMessage == null) {
                         File outputData = new File(System.getProperty("oozie.action.output.properties"));
-                        FileSystem fs = FileSystem.get(getJobConf());
+                        FileSystem fs = null;
                         if (outputData.exists()) {
-
+                            URI actionDirUri = new Path(actionDir, ACTION_OUTPUT_PROPS).toUri();
+                            fs = FileSystem.get(actionDirUri, getJobConf());
                             fs.copyFromLocalFile(new Path(outputData.toString()), new Path(actionDir,
                                                                                            ACTION_OUTPUT_PROPS));
                             reporter.incrCounter(COUNTER_GROUP, COUNTER_OUTPUT_DATA, 1);
@@ -530,7 +531,8 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
                             if (props.getProperty("id") == null) {
                                 throw new IllegalStateException("ID swap file does not have [id] property");
                             }
-                            fs = FileSystem.get(getJobConf());
+                            URI actionDirUri = new Path(actionDir, ACTION_NEW_ID_PROPS).toUri();
+                            fs = FileSystem.get(actionDirUri, getJobConf());
                             fs.copyFromLocalFile(new Path(newId.toString()), new Path(actionDir, ACTION_NEW_ID_PROPS));
                             reporter.incrCounter(COUNTER_GROUP, COUNTER_DO_ID_SWAP, 1);
 
@@ -585,7 +587,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         return jobConf;
     }
 
-    private void handleActionStatsData(FileSystem fs, Reporter reporter) throws IOException, LauncherException{
+    private void handleActionStatsData(FileSystem fs, Reporter reporter) throws IOException, LauncherException {
         File actionStatsData = new File(System.getProperty(EXTERNAL_ACTION_STATS));
         // If stats are stored by the action, then stats file should exist
         if (actionStatsData.exists()) {
@@ -599,6 +601,8 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
                 failLauncher(0, msg, null);
             }
             // copy the stats file to hdfs path which can be accessed by Oozie server
+            URI actionDirUri = new Path(actionDir, ACTION_STATS_PROPS).toUri();
+            fs = FileSystem.get(actionDirUri, getJobConf());
             fs.copyFromLocalFile(new Path(actionStatsData.toString()), new Path(actionDir,
                     ACTION_STATS_PROPS));
         }
@@ -609,15 +613,19 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         // if external ChildIDs are stored by the action, then the file should exist
         if (externalChildIDs.exists()) {
             // copy the externalChildIDs file to hdfs path which can be accessed by Oozie server
+            URI actionDirUri = new Path(actionDir, ACTION_EXTERNAL_CHILD_IDS_PROPS).toUri();
+            fs = FileSystem.get(actionDirUri, getJobConf());
             fs.copyFromLocalFile(new Path(externalChildIDs.toString()), new Path(actionDir,
                     ACTION_EXTERNAL_CHILD_IDS_PROPS));
         }
     }
 
-    private void setupMainConfiguration() throws IOException {
-        FileSystem fs = FileSystem.get(getJobConf());
-        fs.copyToLocalFile(new Path(getJobConf().get(OOZIE_ACTION_DIR_PATH), ACTION_CONF_XML), new Path(new File(
-                ACTION_CONF_XML).getAbsolutePath()));
+    private void setupMainConfiguration() throws IOException, HadoopAccessorException {
+        Path pathNew = new Path(new Path(actionDir, ACTION_CONF_XML),
+                new Path(new File(ACTION_CONF_XML).getAbsolutePath()));
+        FileSystem fs = FileSystem.get(pathNew.toUri(), getJobConf());
+        fs.copyToLocalFile(new Path(actionDir, ACTION_CONF_XML),
+                new Path(new File(ACTION_CONF_XML).getAbsolutePath()));
 
         System.setProperty("oozie.launcher.job.id", getJobConf().get("mapred.job.id"));
         System.setProperty("oozie.job.id", getJobConf().get(OOZIE_JOB_ID));
@@ -688,7 +696,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
                 pw.close();
                 errorProps.setProperty("exception.stacktrace", sw.toString());
             }
-            FileSystem fs = FileSystem.get(getJobConf());
+            FileSystem fs = FileSystem.get((new Path(actionDir, ACTION_ERROR_PROPS)).toUri(), getJobConf());
             OutputStream os = fs.create(new Path(actionDir, ACTION_ERROR_PROPS));
             errorProps.store(os, "");
             os.close();

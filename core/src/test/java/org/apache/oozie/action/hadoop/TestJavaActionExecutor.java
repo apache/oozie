@@ -1000,6 +1000,28 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertTrue(cacheFilesStr.contains(jar3Path.toString()));
     }
 
+    public void testFilesystemScheme() throws Exception {
+        try {
+            String actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+                    + getNameNodeUri() + "</name-node>" + "<main-class>" + LauncherMainTester.class.getName()
+                    + "</main-class>" + "</java>";
+            Element eActionXml = XmlUtils.parseXml(actionXml);
+            Context context = createContext(actionXml);
+            Path appPath = new Path("localfs://namenode:port/mydir");
+            JavaActionExecutor ae = new JavaActionExecutor();
+            JobConf conf = ae.createBaseHadoopConf(context, eActionXml);
+            setSystemProperty(HadoopAccessorService.SUPPORTED_FILESYSTEMS, "hdfs,viewfs");
+            new Services().init();
+            ae.setupActionConf(conf, context, eActionXml, appPath);
+
+            fail("Supposed to throw exception due to unsupported fs scheme - localfs");
+        }
+        catch (ActionExecutorException ae) {
+            assertTrue(ae.getMessage().contains("E0904"));
+            assertTrue(ae.getMessage().contains("Scheme [localfs] not supported"));
+        }
+    }
+
     public void testACLDefaults_launcherACLsSetToDefault() throws Exception {
         // CASE: launcher specific ACLs not configured - set defaults
         String actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +

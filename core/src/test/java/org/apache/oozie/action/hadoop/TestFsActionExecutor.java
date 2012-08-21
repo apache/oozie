@@ -17,15 +17,18 @@
  */
 package org.apache.oozie.action.hadoop;
 
-import java.io.OutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
+import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.action.ActionExecutorException;
+import org.apache.oozie.service.HadoopAccessorService;
+import org.apache.oozie.service.ServiceException;
+import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
@@ -52,7 +55,6 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
         XConfiguration protoConf = new XConfiguration();
         protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
 
-        
         WorkflowJobBean wf = createBaseWorkflow(protoConf, "fs-action");
         WorkflowActionBean action = (WorkflowActionBean) wf.getActions().get(0);
         action.setType(ae.getType());
@@ -71,7 +73,7 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
             fail();
         }
         catch (ActionExecutorException ex) {
-            assertEquals("FS003", ex.getErrorCode());	
+            assertEquals("FS002", ex.getErrorCode());
         }
 
         try {
@@ -79,30 +81,55 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
             fail();
         }
         catch (ActionExecutorException ex) {
-            assertEquals("FS001", ex.getErrorCode());	
+            assertEquals("FS001", ex.getErrorCode());
+        }
+
+        // testing schemes supported
+        setSystemProperty(HadoopAccessorService.SUPPORTED_FILESYSTEMS, "hdfs,viewfs");
+        new Services().init();
+        try {
+            ae.validatePath(new Path("viewfs://bla"), true);
+        }
+        catch (ActionExecutorException ex) {
+            fail("viewfs is a supported scheme. This should not throw exception");
         }
 
         try {
             ae.validatePath(new Path("file://bla"), true);
-            fail();
+
+            fail("file is not a supported scheme. This should throw exception");
         }
         catch (ActionExecutorException ex) {
-            assertEquals("FS002", ex.getErrorCode());	
+            assertTrue(ex.getMessage().contains("E0904"));
         }
     }
-    
+
+    public void testFileSchemeWildcard() throws Exception {
+        FsActionExecutor ae = new FsActionExecutor();
+        setSystemProperty(HadoopAccessorService.SUPPORTED_FILESYSTEMS, "*");
+        new Services().init();
+
+        try {
+            ae.validatePath(new Path("anyfs://bla"), true);
+        }
+        catch (ActionExecutorException ex) {
+            fail("Wildcard indicates ALL schemes will be allowed. This should pass");
+        }
+    }
+
+
     public void testResolveToFullPath() throws Exception {
         FsActionExecutor ae = new FsActionExecutor();
-        
+
         assertEquals(new Path("hdfs://x/bla"), ae.resolveToFullPath(null, new Path("hdfs://x/bla"), true));
         assertEquals(new Path("bla"), ae.resolveToFullPath(null, new Path("bla"), false));
-        
+
         assertEquals(new Path("hdfs://x/bla"), ae.resolveToFullPath(new Path("hdfs://x"), new Path("/bla"), true));
-        
+
         assertEquals(new Path("hdfs://x/bla"), ae.resolveToFullPath(new Path("hdfs://x/ha"), new Path("/bla"), true));
-        
+
         assertEquals(new Path("hdfs://x/bla"), ae.resolveToFullPath(new Path("hdfs://z"), new Path("hdfs://x/bla"), true));
-        
+
         assertEquals(new Path("hdfs://x/bla"), ae.resolveToFullPath(new Path("hdfs://x"), new Path("hdfs://x/bla"), true));
 
         try {
@@ -110,7 +137,7 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
             fail();
         }
         catch (ActionExecutorException ex) {
-            assertEquals("FS003", ex.getErrorCode());	
+            assertEquals("FS002", ex.getErrorCode());
         }
 
         try {
@@ -121,20 +148,22 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
             assertEquals("FS001", ex.getErrorCode());	
         }
 
+        setSystemProperty(HadoopAccessorService.SUPPORTED_FILESYSTEMS, null);
+        new Services().init();
         try {
             ae.resolveToFullPath(null, new Path("file://bla"), true);
             fail();
         }
         catch (ActionExecutorException ex) {
-            assertEquals("FS002", ex.getErrorCode());	
+            assertTrue(ex.getMessage().contains("E0904"));
         }
-        
+
         try {
             ae.resolveToFullPath(new Path("hdfs://z"), new Path("hdfs://x/bla"), false);
             fail();
         }
         catch (ActionExecutorException ex) {
-            assertEquals("FS003", ex.getErrorCode());	
+            assertEquals("FS002", ex.getErrorCode());
         }
 
         try {
@@ -150,10 +179,10 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
             fail();
         }
         catch (ActionExecutorException ex) {
-            assertEquals("FS002", ex.getErrorCode());	
+            assertTrue(ex.getMessage().contains("E0904"));
         }
     }
-    
+
     public void testvalidateSameNN() throws Exception {
         FsActionExecutor ae = new FsActionExecutor();
         ae.validateSameNN(new Path("hdfs://x/bla"), new Path("hdfs://x/foo"));

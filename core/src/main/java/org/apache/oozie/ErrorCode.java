@@ -172,6 +172,7 @@ public enum ErrorCode {
     E0901(XLog.OPS, "Namenode [{0}] not allowed, not in Oozie's whitelist"),
     E0902(XLog.OPS, "Exception occured: [{0}]"),
     E0903(XLog.OPS, "Invalid JobConf, it has not been created by HadoopAccessorService"),
+    E0904(XLog.STD, "Scheme [{0}] not supported in uri [{1}]"),
 
     E1001(XLog.STD, "Could not read the coordinator job definition, {0}"),
     E1002(XLog.STD, "Invalid coordinator application URI [{0}], {1}"),
