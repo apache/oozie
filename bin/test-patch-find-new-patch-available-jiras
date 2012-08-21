@@ -16,12 +16,18 @@ BASEDIR=$(pwd)
 TEMPDIR=${BASEDIR}/tmp
 STDOUT="/dev/null"
 
+JIRAAVAILPATCHQUERY="https://issues.apache.org/jira/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?jqlQuery=project+in+%28OOZIE%29+AND+status+%3D+%22Patch+Available%22+ORDER+BY+updated+DESC&tempMax=1000"
+TESTPATCHJOBURL"https://builds.apache.org/job/oozie-trunk-precommit-build"
 TOKEN=""
+SUBMIT="false"
+DELETEHISTORYFILE="false"
+
 RUNTESTSFILE=${BASEDIR}/TESTED_PATCHES.txt
 
 printUsage() {
   echo "Usage: $0 <OPTIONS>"
-  echo "          (--token=<OOZIE PRECOMMIT JOB TOKEN>)"
+  echo "          --submit --token=<OOZIE PRECOMMIT JOB TOKEN>"
+  echo "          [--delete-history-file]"
   echo "          [--verbose]"
   echo "          [--script-debug]"
   echo
@@ -31,11 +37,17 @@ parseArgs() {
   for i in $*
   do
     case $i in
+    --submit)
+      SUBMIT="true"
+      ;;
     --token=*)
       TOKEN=${i#*=}
       ;;
     --script-debug)
       DEBUG="-x"
+      ;;
+    --delete-history-file)
+      DELETEHISTORYFILE="true"
       ;;
     --verbose)
       VERBOSEOPTION="--verbose"
@@ -49,7 +61,7 @@ parseArgs() {
       ;;
     esac
   done
-  if [ "${TOKEN}" == "" ] ; then
+  if [[ "$SUBMIT" == "true" && "${TOKEN}" == "" ]] ; then
     echo "Token has not been specified"
     echo
     printUsage
@@ -60,7 +72,7 @@ parseArgs() {
 findAndSubmitAvailablePatches() {
 
 ## Grab all the key (issue numbers) and largest attachment id for each item in the XML
-curl "https://issues.apache.org/jira/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?jqlQuery=project+in+%28OOZIE%29+AND+status+%3D+%22Patch+Available%22+ORDER+BY+updated+DESC&tempMax=1000" > ${TEMPDIR}/patch-availables.xml
+curl "${JIRAAVAILPATCHQUERY}" > ${TEMPDIR}/patch-availables.xml
 if [ "$?" != "0" ] ; then
     echo "Could not retrieve available patches from JIRA"
     exit 1
@@ -81,12 +93,15 @@ cat ${TEMPDIR}/patch-availables.pair | while read PAIR ; do
   if [ "$COUNT" -lt "1" ] ; then
     ### Parse $PAIR into project, issue number, and attachment id
     ISSUE=`echo $PAIR | sed -e "s/,.*$//"`
-    ### Kick off job
-    echo "Starting job for issue $ISSUE"
-    curl --fail --location --retry 3 "https://builds.apache.org/job/oozie-trunk-precommit-build/buildWithParameters?token=${TOKEN}&JIRA_NUMBER=${ISSUE}" >> $STDOUT
-    if [ "$?" != "0" ] ; then
+    echo "Found new patch for issue $ISSUE"
+    if [ "$SUBMIT" == "true" ]; then
+      ### Kick off job
+      echo "Starting job for issue $ISSUE"
+      curl --fail --location --retry 3 "${TESTPATCHJOBURL}/buildWithParameters?token=${TOKEN}&JIRA_NUMBER=${ISSUE}" >> $STDOUT
+      if [ "$?" != "0" ] ; then
         echo "Could not submit precommit job for $ISSUE"
         exit 1
+      fi
     fi
     ### Mark this pair as tested by appending to file
     echo "$PAIR" >> ${RUNTESTSFILE}
@@ -101,6 +116,10 @@ parseArgs "$@"
 
 if [ -n "${DEBUG}" ] ; then
   set -x
+fi
+
+if [ "${DELETEHISTORYFILE}" == "true" ] ; then
+  rm ${RUNTESTSFILE}
 fi
 
 findAndSubmitAvailablePatches

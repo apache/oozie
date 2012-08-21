@@ -98,16 +98,31 @@ parseArgs "$@"
 case $OP in
   pre)
     mvn clean test -PtestPatchCompile -DskipTests ${MVNPASSTHRU} | tee ${REPORTDIR}/${TASKNAME}-clean.txt >> $STDOUT
-    exit $?
+    if [[ ${PIPESTATUS[0]} == 0 ]] ; then
+      echo "+1 HEAD compiles" >> ${TEMPDIR}/${TASKNAME}-compile.txt
+    else
+      echo "-1 HEAD does not compile" >> ${TEMPDIR}/${TASKNAME}-compile.txt
+    fi
     ;;
   post)
     mvn clean test -PtestPatchCompile -DskipTests ${MVNPASSTHRU} | tee ${REPORTDIR}/${TASKNAME}-patch.txt >> $STDOUT
-    exit $?
+    if [[ ${PIPESTATUS[0]} == 0 ]] ; then
+      echo "+1 patch compiles" >> ${TEMPDIR}/${TASKNAME}-compile.txt
+    else
+      echo "-1 patch does not compile" >> ${TEMPDIR}/${TASKNAME}-compile.txt
+    fi
     ;;
   report)
-    RAW_REPORT=("+1 the patch compiles")
+    RAW_REPORT=()
+    compileErrors=0
+    while read line; do
+      RAW_REPORT+=("$line")
+      if [[ "$line" =~ "-1" ]] ; then
+        compileErrors=1
+      fi
+    done < ${TEMPDIR}/${TASKNAME}-compile.txt
     checkForWarnings
-    total=`expr 0 + $newWarns`
+    total=`expr $compileErrors + $newWarns`
     if [[ $total == 0 ]] ; then
       echo "+1 ${TASKNAME}" >> $SUMMARYFILE
     else
