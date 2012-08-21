@@ -14,16 +14,22 @@
 
 BASEDIR=$(pwd)
 TESTPATCHDIR=${BASEDIR}/test-patch
+TOOLSDIR=${TESTPATCHDIR}/tools
 TEMPDIR=${TESTPATCHDIR}/tmp
 REPORTDIR=${TESTPATCHDIR}/reports
 SUMMARYFILE=${REPORTDIR}/TEST-SUMMARY.txt
 
-JIRA_URL="https://issues.apache.org"
-JIRA_URL_ISSUE_PREFIX="${JIRA_URL}/jira/browse/"
+JIRAHOST="https://issues.apache.org"
+JIRAURL="${JIRAHOST}/jira"
+JIRAURLISSUEPREFIX="${JIRAURL}/browse/"
+
+JIRACLI=""
+JIRAUSER="oozieqa"
+JIRAPASSWORD=""
+
 
 VERBOSEOPTION=""
-DEBUG=""
-JIRA_ISSUE=""
+JIRAISSUE=""
 PATCHFILE=""
 TASKSTORUN=""
 TASKSTOSKIP=""
@@ -33,10 +39,16 @@ MVNPASSTHRU=""
 
 ###############################################################################
 testPatchPrepare() {
-  rm -rf ${TESTPATCHDIR}
-  mkdir ${TESTPATCHDIR}
-  mkdir ${TEMPDIR}
-  mkdir ${REPORTDIR}
+  mkdir ${TESTPATCHDIR} 2> /dev/null
+  rm -rf ${REPORTDIR} 2> /dev/null
+  rm -rf ${TEMPDIR} 2> /dev/null
+  mkdir ${TOOLSDIR} 2> /dev/null
+  mkdir ${TEMPDIR} 2> /dev/null
+  mkdir ${REPORTDIR} 2> /dev/null
+  if [ ! -e "${TESTPATCHDIR}" ] ; then
+    echo "Could not create test-patch/ dir"
+    exit 1
+  fi
 }
 ###############################################################################
 vcsCleanup() {
@@ -68,7 +80,31 @@ vcsCleanup() {
   fi
 }
 ###############################################################################
+updateJira() {
+  if [[ "${JIRAPASSWORD}" != "" && "${JIRAISSUE}" != "" ]] ; then
+    if [ -z "$JIRACLI" ] ; then
+      JIRACLI=${TOOLSDIR}/jira-cli/jira.sh
+      if [ ! -e "${JIRACLI}" ] ; then
+        curl https://bobswift.atlassian.net/wiki/download/attachments/16285777/jira-cli-2.6.0-distribution.zip > ${TEMPDIR}/jira-cli.zip
+        if [ $? != 0 ] ; then
+         echo
+         echo "Could not download jira-cli tool, thus no JIRA updating"
+         echo
+         exit 1
+        fi
+        mkdir ${TEMPDIR}/jira-cli-tmp
+        (cd ${TEMPDIR}/jira-cli-tmp;jar xf ${TEMPDIR}/jira-cli.zip; mv jira-cli-2.6.0 ${TOOLSDIR}/jira-cli)
+        chmod u+x ${JIRACLI}
+      fi
+    fi
+    echo "Adding comment to JIRA"
+    comment=`cat ${SUMMARYFILE}`
+    $JIRACLI -s $JIRAURL -a addcomment -u $JIRAUSER -p "$JIRAPASSWORD" --comment "$comment" --issue $JIRAISSUE
+  fi
+}
+###############################################################################
 cleanupAndExit() {
+  updateJira
   exit $1
 }
 ###############################################################################
@@ -77,12 +113,14 @@ printUsage() {
   echo "          (--jira=<JIRA ISSUE> | --patch=<PATCH PATH>)"
   echo "          [--tasks=<TASK,...>]"
   echo "          [--skip-tasks=<TASK,...>]"
+  echo "          [--jira-cli=<JIRA CLIENT>]"
+  echo "          [--jira-user=<JIRA USER>]"
+  echo "          [--jira-password=<JIRA PASSWORD>]"
   echo "          [-D<MVN PROPERTY>...]"
   echo "          [-P<MVN PROFILE>...]"
   echo "          [--list-tasks]"
   echo "          [--no-cleanup]"
   echo "          [--verbose]"
-  echo "          [--script-debug]"
   echo
 }
 ###############################################################################
@@ -91,7 +129,7 @@ parseArgs() {
   do
     case $i in
     --jira=*)
-      JIRA_ISSUE=${i#*=}
+      JIRAISSUE=${i#*=}
       ;;
     --patch=*)
       PATCHFILE=${i#*=}
@@ -106,6 +144,15 @@ parseArgs() {
       listTasks
       cleanupAndExit 0
       ;;
+    --jira-cli=*)
+      JIRACLI=${i#*=}
+      ;;
+    --jira-user=*)
+      JIRAUSER=${i#*=}
+      ;;
+    --jira-password=*)
+      JIRAPASSWORD=${i#*=}
+      ;;
     -D*)
       MVNPASSTHRU="${MVNPASSTHRU} $i"
       ;;
@@ -114,9 +161,6 @@ parseArgs() {
       ;;
     --no-cleanup)
       VCSCLEANUP=false
-      ;;
-    --script-debug)
-      DEBUG="-x"
       ;;
     --verbose)
       VERBOSEOPTION="--verbose"
@@ -130,7 +174,7 @@ parseArgs() {
       ;;
     esac
   done
-  if [ "${JIRA_ISSUE}${PATCHFILE}" == "" ] ; then
+  if [ "${JIRAISSUE}${PATCHFILE}" == "" ] ; then
     echo "Either --jira or --patch options must be specified"
     echo
     printUsage
@@ -152,24 +196,24 @@ listTasks() {
 downloadPatch () {
   PATCHFILE=${TEMPDIR}/test.patch
   jiraPage=${TEMPDIR}/jira.txt
-  curl "${JIRA_URL_ISSUE_PREFIX}${JIRA_ISSUE}" > ${jiraPage}
+  curl "${JIRAURLISSUEPREFIX}${JIRAISSUE}" > ${jiraPage}
   if [[ `grep -c 'Patch Available' ${jiraPage}` == 0 ]] ; then
-    echo "$JIRA_ISSUE is not \"Patch Available\".  Exiting."
+    echo "$JIRAISSUE is not \"Patch Available\".  Exiting."
     echo
     cleanupAndExit 1
   fi
   relativePatchURL=`grep -o '"/jira/secure/attachment/[0-9]*/[^"]*' ${jiraPage} \
                    | grep -v -e 'htm[l]*$' | sort | tail -1 \
                    | grep -o '/jira/secure/attachment/[0-9]*/[^"]*'`
-  patchURL="${JIRA_URL}${relativePatchURL}"
+  patchURL="${JIRAHOST}${relativePatchURL}"
   patchNum=`echo $patchURL | grep -o '[0-9]*/' | grep -o '[0-9]*'`
   curl ${patchURL} > ${PATCHFILE}
   if [[ $? != 0 ]] ; then
-    echo "Could not download patch for ${JIRA_ISSUE} from ${patchURL}"
+    echo "Could not download patch for ${JIRAISSUE} from ${patchURL}"
     echo
     cleanupAndExit 1
   fi
-  echo "JIRA ${JIRA_ISSUE}, patch downloaded at `date` from ${patchURL}"
+  echo "JIRA ${JIRAISSUE}, patch downloaded at `date` from ${patchURL}"
   echo
 }
 ###############################################################################
@@ -178,7 +222,7 @@ applyPatch() {
   echo "" >> $STDOUT
   patch -f -E --dry-run -p0 < ${PATCHFILE} | tee ${REPORTDIR}/APPLY-PATCH.txt \
         >> $STDOUT
-  if [[ $? != 0 ]] ; then
+  if [[  ${PIPESTATUS[0]} != 0 ]] ; then
     echo "Patch failed to apply to head of branch"
     echo
     cleanupAndExit 1
@@ -201,9 +245,9 @@ run() {
     if [[ ! "${TASKSTOSKIP}" =~ "${task}" ]] ; then
       echo "  Running test task ${task}"
       outputFile="`basename $1`-$2.out"
-      bash ${DEBUG} $1 --op=$2 --tempdir=${TEMPDIR} --reportdir=${REPORTDIR} \
-           --summaryfile=${SUMMARYFILE} --patchfile=${PATCHFILE} ${MVNPASSTHRU} \
-           ${VERBOSEOPTION} | tee ${TEMPDIR}/${outputFile} >> $STDOUT
+      $1 --op=$2 --tempdir=${TEMPDIR} --reportdir=${REPORTDIR} \
+         --summaryfile=${SUMMARYFILE} --patchfile=${PATCHFILE} ${MVNPASSTHRU} \
+         ${VERBOSEOPTION} | tee ${TEMPDIR}/${outputFile} >> $STDOUT
       if [[ $? != 0 ]] ; then
         echo "  Failure, check for details ${TEMPDIR}/${outputFile}"
         echo
@@ -246,10 +290,6 @@ echo
 
 parseArgs "$@"
 
-if [ -n "${DEBUG}" ] ; then
-  set -x
-fi
-
 if [ "${VCSCLEANUP}" == "true" ] ; then
   vcsCleanup
 fi
@@ -257,11 +297,11 @@ fi
 testPatchPrepare
 
 if [ "${PATCHFILE}" == "" ] ; then
-  downloadPatch ${JIRA_ISSUE}
-  echo "Testing JIRA ${JIRA_ISSUE}"
+  downloadPatch ${JIRAISSUE}
+  echo "Testing JIRA ${JIRAISSUE}"
   echo
   echo "" > ${SUMMARYFILE}
-  echo "Testing JIRA ${JIRA_ISSUE}" >> ${SUMMARYFILE}
+  echo "Testing JIRA ${JIRAISSUE}" >> ${SUMMARYFILE}
   echo "" >> ${SUMMARYFILE}
 else
   if [ ! -e ${PATCHFILE} ] ; then
@@ -286,11 +326,18 @@ echo "" >> ${SUMMARYFILE}
 echo "----------------------------" >> ${SUMMARYFILE}
 echo "" >> ${SUMMARYFILE}
 
-cat ${SUMMARYFILE}
-
-echo
-echo "Refer to ${REPORTDIR} for detailed test-patch reports"
-echo
+if [ ! -z "${JIRAISSUE}" ]; then
+  echo "The full output of the test-patch run is available at"  >> ${SUMMARYFILE}
+  echo ""  >> ${SUMMARYFILE}
+  echo "   ${BUILD_URL}"  >> ${SUMMARYFILE}
+  echo ""  >> ${SUMMARYFILE}
+  cat ${SUMMARYFILE}
+else
+  cat ${SUMMARYFILE}
+  echo
+  echo "Refer to ${REPORTDIR} for detailed test-patch reports"
+  echo
+fi
 
 grep "\-1" ${SUMMARYFILE} &> /dev/null
 cleanupAndExit `expr $? = 0`
