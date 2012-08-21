@@ -20,15 +20,11 @@ package org.apache.oozie.servlet;
 import java.io.IOException;
 import java.util.Arrays;
 
-import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 import org.apache.oozie.BaseEngineException;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.OozieClient;
@@ -37,8 +33,6 @@ import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.service.AuthorizationException;
 import org.apache.oozie.service.AuthorizationService;
-import org.apache.oozie.service.HadoopAccessorException;
-import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.XLogService;
 import org.apache.oozie.util.ConfigUtils;
@@ -253,6 +247,11 @@ public abstract class BaseJobServlet extends JsonRestServlet {
             response.setStatus(HttpServletResponse.SC_OK);
             response.getWriter().write(wfDefinition);
         }
+        else if (show.equals(RestConstants.JOB_SHOW_GRAPH)) {
+            stopCron();
+            streamJobGraph(request, response);
+            startCron(); // -- should happen before you stream anything in response?
+        }
         else {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0303,
                     RestConstants.JOB_SHOW_PARAM, show);
@@ -362,4 +361,14 @@ public abstract class BaseJobServlet extends JsonRestServlet {
     abstract void streamJobLog(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException;
 
+    /**
+     * abstract method to create and stream image for runtime DAG -- workflow only
+     *
+     * @param request
+     * @param response
+     * @throws XServletException
+     * @throws IOException
+     */
+    abstract void streamJobGraph(HttpServletRequest request, HttpServletResponse response)
+            throws XServletException, IOException;
 }

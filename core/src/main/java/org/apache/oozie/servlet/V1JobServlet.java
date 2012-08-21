@@ -19,35 +19,22 @@ package org.apache.oozie.servlet;
 
 import java.io.IOException;
 import java.util.List;
-
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.apache.hadoop.conf.Configuration;
-import org.apache.oozie.BaseEngineException;
-import org.apache.oozie.BundleEngine;
-import org.apache.oozie.BundleEngineException;
-import org.apache.oozie.CoordinatorActionBean;
-import org.apache.oozie.CoordinatorActionInfo;
-import org.apache.oozie.CoordinatorEngine;
-import org.apache.oozie.CoordinatorEngineException;
+import org.apache.oozie.*;
+import org.apache.oozie.client.rest.*;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.coord.CoordRerunXCommand;
-import org.apache.oozie.coord.CoordUtils;
-import org.apache.oozie.DagEngine;
-import org.apache.oozie.DagEngineException;
-import org.apache.oozie.ErrorCode;
-import org.apache.oozie.client.rest.JsonBean;
-import org.apache.oozie.client.rest.JsonCoordinatorJob;
-import org.apache.oozie.client.rest.JsonTags;
-import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.service.BundleEngineService;
 import org.apache.oozie.service.CoordinatorEngineService;
 import org.apache.oozie.service.DagEngineService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.util.GraphGenerator;
 import org.apache.oozie.util.XLog;
 import org.json.simple.JSONObject;
+
 
 @SuppressWarnings("serial")
 public class V1JobServlet extends BaseJobServlet {
@@ -277,6 +264,31 @@ public class V1JobServlet extends BaseJobServlet {
         }
         else {
             streamCoordinatorJobLog(request, response);
+        }
+    }
+
+    @Override
+    protected void streamJobGraph(HttpServletRequest request, HttpServletResponse response)
+            throws XServletException, IOException {
+        String jobId = getResourceName(request);
+        if (jobId.endsWith("-W")) {
+            // Applicable only to worflow, for now
+            response.setContentType(RestConstants.PNG_IMAGE_CONTENT_TYPE);
+            try {
+                String showKill = request.getParameter(RestConstants.JOB_SHOW_KILL_PARAM);
+                boolean sK = showKill != null && (showKill.equalsIgnoreCase("yes") || showKill.equals("1") || showKill.equalsIgnoreCase("true"));
+
+                new GraphGenerator(
+                        getWorkflowJobDefinition(request, response),
+                        (JsonWorkflowJob)getWorkflowJob(request, response),
+                        sK).write(response.getOutputStream());
+            }
+            catch (Exception e) {
+                throw new XServletException(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, ErrorCode.E0307, e);
+            }
+        }
+        else {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0306);
         }
     }
 

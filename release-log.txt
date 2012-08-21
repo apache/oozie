@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-906 Show runtime job DAG visually in Oozie console/dashboard (vaidya via virag)
 OOZIE-958 typo in error message of E0736 (egashira via virag)
 OOZIE-923 Improve error message when a user tries to start a coordinator job (sms via virag)
 OOZIE-947 Forward porting OOZIE-733 to 3.2 and trunk (mona via virag)
