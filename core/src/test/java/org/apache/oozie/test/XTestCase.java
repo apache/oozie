@@ -54,6 +54,7 @@ import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.service.ConfigurationService;
+import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.store.StoreException;
@@ -284,6 +285,8 @@ public abstract class XTestCase extends TestCase {
            System.setProperty("oozie.test.db.host", "localhost");
         }
         setSystemProperty(ConfigurationService.OOZIE_DATA_DIR, testCaseDir);
+
+        setSystemProperty(HadoopAccessorService.SUPPORTED_FILESYSTEMS,"*");
 
         if (mrCluster != null) {
             OutputStream os = new FileOutputStream(new File(hadoopConfDir, "core-site.xml"));

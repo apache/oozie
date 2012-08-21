@@ -37,10 +37,8 @@ import java.io.Reader;
 import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -168,7 +166,7 @@ public abstract class WorkflowAppService implements Service {
 
             FileSystem fs = has.createFileSystem(user, uri, conf);
 
-            Path appPath = new Path(uri.getPath());
+            Path appPath = new Path(uri);
             XLog.getLog(getClass()).debug("jobConf.libPath = " + jobConf.get(OozieClient.LIBPATH));
             XLog.getLog(getClass()).debug("jobConf.appPath = " + appPath);
 
@@ -259,7 +257,7 @@ public abstract class WorkflowAppService implements Service {
             FileStatus[] files = fs.listStatus(libPath, new NoPathFilter());
 
             for (FileStatus file : files) {
-                libPaths.add(file.getPath().toUri().getPath().trim());
+                libPaths.add(file.getPath().toUri().toString());
             }
         }
         else {

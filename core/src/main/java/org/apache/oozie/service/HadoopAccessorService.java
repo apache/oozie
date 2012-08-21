@@ -73,6 +73,12 @@ public class HadoopAccessorService implements Service {
 
     private ConcurrentMap<String, UserGroupInformation> userUgiMap;
 
+    /**
+     * Supported filesystem schemes for namespace federation
+     */
+    public static final String SUPPORTED_FILESYSTEMS = CONF_PREFIX + "supported.filesystems";
+    private Set<String> supportedSchemes;
+
     public void init(Services services) throws ServiceException {
         init(services.getConf());
     }
@@ -115,6 +121,23 @@ public class HadoopAccessorService implements Service {
 
         loadHadoopConfigs(conf);
         preLoadActionConfigs(conf);
+
+        supportedSchemes = new HashSet<String>();
+        String[] schemesFromConf = conf.getStrings(SUPPORTED_FILESYSTEMS, new String[]{"hdfs"});
+        if(schemesFromConf != null) {
+            for (String scheme: schemesFromConf) {
+                scheme = scheme.trim();
+                // If user gives "*", supportedSchemes will be empty, so that checking is not done i.e. all schemes allowed
+                if(scheme.equals("*")) {
+                    if(schemesFromConf.length > 1) {
+                        throw new ServiceException(ErrorCode.E0100, getClass().getName(),
+                            SUPPORTED_FILESYSTEMS + " should contain either only wildcard or explicit list, not both");
+                    }
+                } else {
+                    supportedSchemes.add(scheme);
+                }
+            }
+        }
     }
 
     private void kerberosInit(Configuration serviceConf) throws ServiceException {
@@ -364,6 +387,9 @@ public class HadoopAccessorService implements Service {
         if (!conf.getBoolean(OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED, false)) {
             throw new HadoopAccessorException(ErrorCode.E0903);
         }
+
+        checkSupportedFilesystem(uri);
+
         String nameNode = uri.getAuthority();
         if (nameNode == null) {
             nameNode = conf.get("fs.default.name");
@@ -443,6 +469,21 @@ public class HadoopAccessorService implements Service {
             throw new IOException(ex);
         }
 
+    }
+
+    /**
+     * checks configuration parameter if filesystem scheme is among the list of supported ones
+     * this makes system robust to filesystems other than HDFS also
+     */
+
+    public void checkSupportedFilesystem(URI uri) throws HadoopAccessorException {
+        String uriScheme = uri.getScheme();
+        if(!supportedSchemes.isEmpty()) {
+            XLog.getLog(this.getClass()).debug("Checking if filesystem " + uriScheme + " is supported");
+            if (!supportedSchemes.contains(uriScheme)) {
+                throw new HadoopAccessorException(ErrorCode.E0904, uriScheme, uri.toString());
+            }
+        }
     }
 
 }

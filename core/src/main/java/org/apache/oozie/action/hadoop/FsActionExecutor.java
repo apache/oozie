@@ -54,30 +54,32 @@ public class FsActionExecutor extends ActionExecutor {
     }
 
     void validatePath(Path path, boolean withScheme) throws ActionExecutorException {
-        String scheme = path.toUri().getScheme();
-        if (withScheme) {
-            if (scheme == null) {
-                throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS001",
-                                                  "Missing scheme in path [{0}]", path);
+        try {
+            String scheme = path.toUri().getScheme();
+            if (withScheme) {
+                if (scheme == null) {
+                    throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS001",
+                                                      "Missing scheme in path [{0}]", path);
+                }
+                else {
+                    Services.get().get(HadoopAccessorService.class).checkSupportedFilesystem(path.toUri());
+                }
             }
             else {
-                if (!scheme.equals("hdfs")) {
+                if (scheme != null) {
                     throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS002",
-                                                      "Scheme [{0}] not supported in path [{1}]", scheme, path);
+                                                      "Scheme [{0}] not allowed in path [{1}]", scheme, path);
                 }
             }
         }
-        else { 
-            if (scheme != null) {
-                throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS003",
-                                                  "Scheme [{0}] not allowed in path [{1}]", scheme, path);
-            }
+        catch (HadoopAccessorException hex) {
+            throw convertException(hex);
         }
     }
-    
+
     Path resolveToFullPath(Path nameNode, Path path, boolean withScheme) throws ActionExecutorException {
         Path fullPath;
-        
+
         // If no nameNode is given, validate the path as-is and return it as-is
         if (nameNode == null) {
             validatePath(path, withScheme);

@@ -265,6 +265,9 @@ public class JavaActionExecutor extends ActionExecutor {
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
             XConfiguration actionDefaults = has.createActionDefaultConf(actionConf.get(HADOOP_JOB_TRACKER), getType());
             XConfiguration.injectDefaults(actionDefaults, actionConf);
+
+            has.checkSupportedFilesystem(appPath.toUri());
+
             parseJobXmlAndConfiguration(context, actionXml, appPath, actionConf);
             return actionConf;
         }
