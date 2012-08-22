@@ -207,11 +207,12 @@ public class Services {
         try {
             loadServices();
         }
-        catch (RuntimeException ex) {
-            XLog.getLog(getClass()).fatal(ex.getMessage(), ex);
-            throw ex;
+        catch (RuntimeException rex) {
+            XLog.getLog(getClass()).fatal(rex.getMessage(), rex);
+            throw rex;
         }
         catch (ServiceException ex) {
+            XLog.getLog(getClass()).fatal(ex.getMessage(), ex);
             SERVICES = null;
             throw ex;
         }
@@ -267,7 +268,9 @@ public class Services {
         try {
             Map<Class, Service> map = new LinkedHashMap<Class, Service>();
             Class[] classes = conf.getClasses(CONF_SERVICE_CLASSES);
+            log.debug("Services list obtained from property '" + CONF_SERVICE_CLASSES + "'");
             Class[] classesExt = conf.getClasses(CONF_SERVICE_EXT_CLASSES);
+            log.debug("Services list obtained from property '" + CONF_SERVICE_EXT_CLASSES + "'");
             List<Service> list = new ArrayList<Service>();
             loadServices(classes, list);
             loadServices(classesExt, list);
@@ -283,8 +286,9 @@ public class Services {
             for (Map.Entry<Class, Service> entry : map.entrySet()) {
                 setService(entry.getValue().getClass());
             }
-        } catch (RuntimeException ex) {
-            throw new ServiceException(ErrorCode.E0103, ex.getMessage(), ex);
+        } catch (RuntimeException rex) {
+            log.fatal("Runtime Exception during Services Load. Check your list of '" + CONF_SERVICE_CLASSES + "' or '" + CONF_SERVICE_EXT_CLASSES + "'");
+            throw new ServiceException(ErrorCode.E0103, rex.getMessage(), rex);
         }
     }
 
