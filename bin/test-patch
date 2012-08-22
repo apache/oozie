@@ -28,7 +28,6 @@ JIRAURL="${JIRAHOST}/jira"
 JIRAURLISSUEPREFIX="${JIRAURL}/browse/"
 
 JIRAUPDATE="false"
-JIRACLI=""
 JIRAUSER="oozieqa"
 JIRAPASSWORD=""
 
@@ -105,7 +104,7 @@ prepareTestPatchDirs() {
 ###############################################################################
 updateJira() {
   if [[ "${JIRAUPDATE}" != "" && "${JIRAISSUE}" != "" ]] ; then
-    if [[ "$JIRACLI" != "" && "$JIRAPASSWORD" != "" ]] ; then
+    if [[ "$JIRAPASSWORD" != "" ]] ; then
       JIRACLI=${TOOLSDIR}/jira-cli/jira.sh
       if [ ! -e "${JIRACLI}" ] ; then
         curl https://bobswift.atlassian.net/wiki/download/attachments/16285777/jira-cli-2.6.0-distribution.zip > ${TEMPDIR}/jira-cli.zip
@@ -273,6 +272,12 @@ applyPatch() {
         >> $STDOUT
   if [[  ${PIPESTATUS[0]} != 0 ]] ; then
     echo "Patch failed to apply to head of branch"
+    echo "Patch failed to apply to head of branch" >> ${SUMMARYFILE}
+    echo "" >> ${SUMMARYFILE}
+    echo "----------------------------" >> ${SUMMARYFILE}
+    if [ "${JIRAUPDATE}" == "true" ] ; then
+      echo "{code}" >> ${SUMMARYFILE}
+    fi
     echo
     cleanupAndExit 1
   fi
