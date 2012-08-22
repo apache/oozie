@@ -1062,6 +1062,32 @@ public class OozieClient {
         }
     }
 
+    private class BulkResponseStatus extends ClientCallable<List<BulkResponse>> {
+
+        BulkResponseStatus(String filter, int start, int len) {
+            super("GET", RestConstants.JOBS, "", prepareParams(RestConstants.JOBS_BULK_PARAM, filter,
+                    RestConstants.OFFSET_PARAM, Integer.toString(start), RestConstants.LEN_PARAM, Integer.toString(len)));
+        }
+
+        @Override
+        protected List<BulkResponse> call(HttpURLConnection conn) throws IOException, OozieClientException {
+            conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
+            if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
+                Reader reader = new InputStreamReader(conn.getInputStream());
+                JSONObject json = (JSONObject) JSONValue.parse(reader);
+                JSONArray results = (JSONArray) json.get(JsonTags.BULK_RESPONSES);
+                if (results == null) {
+                    results = new JSONArray();
+                }
+                return JsonToBean.createBulkResponseList(results);
+            }
+            else {
+                handleError(conn);
+            }
+            return null;
+        }
+    }
+
     private class CoordRerun extends ClientCallable<List<CoordinatorAction>> {
 
         CoordRerun(String jobId, String rerunType, String scope, boolean refresh, boolean noCleanup) {
@@ -1362,6 +1388,10 @@ public class OozieClient {
      */
     public List<BundleJob> getBundleJobsInfo(String filter, int start, int len) throws OozieClientException {
         return new BundleJobsStatus(filter, start, len).call();
+    }
+
+    public List<BulkResponse> getBulkInfo(String filter, int start, int len) throws OozieClientException {
+        return new BulkResponseStatus(filter, start, len).call();
     }
 
     private class GetQueueDump extends ClientCallable<List<String>> {

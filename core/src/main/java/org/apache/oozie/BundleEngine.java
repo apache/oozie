@@ -19,6 +19,7 @@ package org.apache.oozie;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -29,10 +30,13 @@ import java.util.Set;
 import java.util.StringTokenizer;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.client.rest.BulkResponseImpl;
+import org.apache.oozie.command.BulkJobsXCommand;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.bundle.BundleJobChangeXCommand;
 import org.apache.oozie.command.bundle.BundleJobResumeXCommand;
@@ -46,6 +50,7 @@ import org.apache.oozie.command.bundle.BundleSubmitXCommand;
 import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.XLogService;
+import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XLogStreamer;
@@ -357,4 +362,99 @@ public class BundleEngine extends BaseEngine {
         return map;
     }
 
+    /**
+     * Get bulk job response
+     *
+     * @param filter the filter string
+     * @param start start location for paging
+     * @param len total length to get
+     * @return bulk job info
+     * @throws BundleEngineException thrown if failed to get bulk job info
+     */
+    public BulkResponseInfo getBulkJobs(String bulkFilter, int start, int len) throws BundleEngineException {
+        Map<String,List<String>> bulkRequestMap = parseBulkFilter(bulkFilter);
+        try {
+            return new BulkJobsXCommand(bulkRequestMap, start, len).call();
+        }
+        catch (CommandException ex) {
+            throw new BundleEngineException(ex);
+        }
+    }
+
+    /**
+     * Parse filter string to a map with key = filter name and values = filter values
+     * Allowed keys are defined as constants on top
+     *
+     * @param filter the filter string
+     * @return filter key-value pair map
+     * @throws BundleEngineException thrown if failed to parse filter string
+     */
+    public static Map<String,List<String>> parseBulkFilter(String bulkParams) throws BundleEngineException {
+
+        Map<String,List<String>> bulkFilter = new HashMap<String,List<String>>();
+        // Functionality can be extended to different job levels - TODO extend filter parser and query
+        // E.g. String filterlevel = "coordinatoraction"; BulkResponseImpl.BULK_FILTER_LEVEL
+        if (bulkFilter != null) {
+            StringTokenizer st = new StringTokenizer(bulkParams, ";");
+            while (st.hasMoreTokens()) {
+                String token = st.nextToken();
+                if (token.contains("=")) {
+                    String[] pair = token.split("=");
+                    if (pair.length != 2) {
+                        throw new BundleEngineException(ErrorCode.E0420, token,
+                                "elements must be name=value pairs");
+                    }
+                    pair[0] = pair[0].toLowerCase();
+                    String[] values = pair[1].split(",");
+                    if (!BulkResponseImpl.BULK_FILTER_NAMES.contains(pair[0])) {
+                        throw new BundleEngineException(ErrorCode.E0420, token, XLog.format("invalid parameter name [{0}]",
+                                pair[0]));
+                    }
+                    // special check and processing for time related params
+                    if (pair[0].contains("time")) {
+                        try {
+                            DateUtils.parseDateUTC(pair[1]);
+                        }
+                        catch (ParseException e) {
+                            throw new BundleEngineException(ErrorCode.E0420, token, XLog.format(
+                                    "invalid value [{0}] for time. A datetime value of pattern [{1}] is expected", pair[1],
+                                    DateUtils.ISO8601_UTC_MASK));
+                        }
+                    }
+                    // special check for action status param
+                    // TODO: when extended for levels other than coord action, check against corresponding level's Status values
+                    if (pair[0].equals(BulkResponseImpl.BULK_FILTER_STATUS)) {
+                        for(String value : values) {
+                            try {
+                                CoordinatorAction.Status.valueOf(value);
+                            }
+                            catch (IllegalArgumentException ex) {
+                                throw new BundleEngineException(ErrorCode.E0420, token, XLog.format(
+                                        "invalid action status [{0}]", value));
+                            }
+                        }
+                    }
+                    // eventually adding into map for all cases e.g. names, times, status
+                    List<String> list = bulkFilter.get(pair[0]);
+                    if (list == null) {
+                        list = new ArrayList<String>();
+                        bulkFilter.put(pair[0], list);
+                    }
+                    for(String value : values) {
+                        value = value.trim();
+                        if(value.isEmpty()) {
+                            throw new BundleEngineException(ErrorCode.E0420, token, "value is empty or whitespace");
+                        }
+                        list.add(value);
+                    }
+                } else {
+                    throw new BundleEngineException(ErrorCode.E0420, token, "elements must be name=value pairs");
+                }
+            }
+            if(!bulkFilter.containsKey(BulkResponseImpl.BULK_FILTER_BUNDLE_NAME)) {
+                throw new BundleEngineException(ErrorCode.E0305, BulkResponseImpl.BULK_FILTER_BUNDLE_NAME);
+            }
+        }
+        return bulkFilter;
+    }
 }
