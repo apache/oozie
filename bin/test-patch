@@ -53,7 +53,7 @@ gitOrSvn() {
       SCM="git"
     fi
   fi
-  if [ "SCM" == "NONE" ] ; then
+  if [ "${SCM}" == "NONE" ] ; then
     which svn &> /dev/null
     if [[ $? == 0 ]] ; then
       svnOutput=`svn status 2>&1`
