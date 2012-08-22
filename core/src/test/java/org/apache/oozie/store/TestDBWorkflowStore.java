@@ -188,7 +188,7 @@ public class TestDBWorkflowStore extends XTestCase {
         // assertEquals(1,
         // store.getWorkflowCountWithStatusInLastNSeconds(WorkflowJob.Status.SUCCEEDED.name(),
         // 5));
-        Thread.sleep(1000);
+        sleep(1000);
         long t1 = System.currentTimeMillis();
         WorkflowJobBean wfBean = store.getWorkflow(wfBean2.getId(), false);
         store.updateWorkflow(wfBean);

@@ -73,7 +73,7 @@ public class TestBundleStartXCommand extends XDataTestCase {
         job = jpaService.execute(bundleJobGetExecutor);
         assertEquals(job.getStatus(), Job.Status.RUNNING);
 
-        Thread.sleep(2000);
+        sleep(2000);
 
         BundleActionsGetJPAExecutor bundleActionsGetExecutor = new BundleActionsGetJPAExecutor(job.getId());
         List<BundleActionBean> actions = jpaService.execute(bundleActionsGetExecutor);
@@ -123,7 +123,7 @@ public class TestBundleStartXCommand extends XDataTestCase {
         job = jpaService.execute(bundleJobGetExecutor);
         assertEquals(job.getStatus(), Job.Status.RUNNING);
 
-        Thread.sleep(2000);
+        sleep(2000);
 
         final BundleActionsGetJPAExecutor bundleActionsGetExecutor = new BundleActionsGetJPAExecutor(job.getId());
         List<BundleActionBean> actions = jpaService.execute(bundleActionsGetExecutor);
@@ -165,7 +165,7 @@ public class TestBundleStartXCommand extends XDataTestCase {
         job = jpaService.execute(bundleJobGetExecutor);
         assertEquals(job.getStatus(), Job.Status.RUNNING);
 
-        Thread.sleep(2000);
+        sleep(2000);
 
         BundleActionsGetJPAExecutor bundleActionsGetExecutor = new BundleActionsGetJPAExecutor(job.getId());
         List<BundleActionBean> actions = jpaService.execute(bundleActionsGetExecutor);

@@ -117,12 +117,12 @@ public class TestRecoveryService extends XDataTestCase {
         conf.set("running-mode", "async");
 
         //TODO CHECK, without this we get JPA concurrency exceptions, ODD
-        Thread.sleep(1000);
+        sleep(1000);
 
         final String jobId = engine.submitJob(conf, true);
 
         //TODO CHECK, without this we get JPA concurrency exceptions, ODD
-        Thread.sleep(1000);
+        sleep(1000);
 
         waitFor(5000, new Predicate() {
             public boolean evaluate() throws Exception {
@@ -130,7 +130,7 @@ public class TestRecoveryService extends XDataTestCase {
             }
         });
 
-        Thread.sleep(1000);
+        sleep(1000);
         final WorkflowStore store = Services.get().get(WorkflowStoreService.class).create();
         store.beginTrx();
         List<WorkflowActionBean> actions = store.getActionsForWorkflow(jobId, false);
@@ -154,7 +154,7 @@ public class TestRecoveryService extends XDataTestCase {
 
         Runnable recoveryRunnable = new RecoveryRunnable(0, 60, 60);
         recoveryRunnable.run();
-        Thread.sleep(3000);
+        sleep(3000);
 
         final WorkflowStore store2 = Services.get().get(WorkflowStoreService.class).create();
         assertEquals(WorkflowJob.Status.RUNNING, engine.getJob(jobId).getStatus());
@@ -167,9 +167,9 @@ public class TestRecoveryService extends XDataTestCase {
         store2.commitTrx();
         store2.closeTrx();
 
-        Thread.sleep(1000);
+        sleep(1000);
         recoveryRunnable.run();
-        Thread.sleep(3000);
+        sleep(3000);
 
         waitFor(10000, new Predicate() {
             public boolean evaluate() throws Exception {
@@ -200,7 +200,7 @@ public class TestRecoveryService extends XDataTestCase {
         
         Runnable recoveryRunnable = new RecoveryRunnable(0, 60, 60);
         recoveryRunnable.run();
-        Thread.sleep(3000);
+        sleep(3000);
         
         final WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(action.getId());
 
@@ -261,7 +261,7 @@ public class TestRecoveryService extends XDataTestCase {
             store.closeTrx();
         }
 
-        Thread.sleep(3000);
+        sleep(3000);
         Runnable recoveryRunnable = new RecoveryRunnable(0, 1,1);
         recoveryRunnable.run();
 
@@ -307,7 +307,7 @@ public class TestRecoveryService extends XDataTestCase {
         createDir(getTestCaseDir() + "/2009/15/");
         createDir(getTestCaseDir() + "/2009/08/");
 
-        Thread.sleep(3000);
+        sleep(3000);
 
         Runnable recoveryRunnable = new RecoveryRunnable(0, 1, 1);
         recoveryRunnable.run();
@@ -347,7 +347,7 @@ public class TestRecoveryService extends XDataTestCase {
         addRecordToCoordActionTable(coordJob.getId(), 1,
                 CoordinatorAction.Status.SUSPENDED, "coord-action-get.xml", wfJobId, "RUNNING", 1);
 
-        Thread.sleep(3000);
+        sleep(3000);
 
         Runnable recoveryRunnable = new RecoveryRunnable(0, 1, 1);
         recoveryRunnable.run();
@@ -384,7 +384,7 @@ public class TestRecoveryService extends XDataTestCase {
         addRecordToCoordActionTable(coordJob.getId(), 1,
                 CoordinatorAction.Status.KILLED, "coord-action-get.xml", wfJobId, "RUNNING", 1);
 
-        Thread.sleep(3000);
+        sleep(3000);
 
         Runnable recoveryRunnable = new RecoveryRunnable(0, 1, 1);
         recoveryRunnable.run();
@@ -421,7 +421,7 @@ public class TestRecoveryService extends XDataTestCase {
         addRecordToCoordActionTable(coordJob.getId(), 1,
                 CoordinatorAction.Status.RUNNING, "coord-action-get.xml", wfJobId, "SUSPENDED", 1);
 
-        Thread.sleep(3000);
+        sleep(3000);
 
         Runnable recoveryRunnable = new RecoveryRunnable(0, 1, 1);
         recoveryRunnable.run();

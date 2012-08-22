@@ -142,13 +142,13 @@ public class TestWorkflowKillXCommand extends XDataTestCase {
 
         services.destroy();
 
-        Thread.sleep(5000);
+        sleep(5000);
 
         setSystemProperty(LiteWorkflowStoreService.CONF_NODE_DEF_VERSION, LiteWorkflowStoreService.NODE_DEF_VERSION_1);
         services = new Services();
         services.init();
 
-        Thread.sleep(5000);
+        sleep(5000);
 
         new KillXCommand(job.getId()).call();
 

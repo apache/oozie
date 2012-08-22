@@ -213,7 +213,7 @@ public class TestReRunXCommand extends XFsTestCase {
         writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
         IOUtils.copyCharStream(reader, writer);
 
-        Thread.sleep(5000);
+        sleep(5000);
 
         conf.setProperty(OozieClient.RERUN_SKIP_NODES, "hdfs11");
         wfClient.reRun(jobId1, conf);

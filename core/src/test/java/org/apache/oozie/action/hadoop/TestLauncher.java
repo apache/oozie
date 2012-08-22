@@ -106,8 +106,13 @@ public class TestLauncher extends XFsTestCase {
     public void testEmpty() throws Exception {
         Path actionDir = getFsTestCaseDir();
         FileSystem fs = getFileSystem();
-        RunningJob runningJob = _test();
-        Thread.sleep(2000);
+        final RunningJob runningJob = _test();
+        waitFor(2000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                return runningJob.isComplete();
+            }
+        });
         assertTrue(runningJob.isSuccessful());
 
         assertTrue(LauncherMapper.isMainDone(runningJob));
@@ -123,8 +128,13 @@ public class TestLauncher extends XFsTestCase {
     public void testExit0() throws Exception {
         Path actionDir = getFsTestCaseDir();
         FileSystem fs = getFileSystem();
-        RunningJob runningJob = _test("exit0");
-        Thread.sleep(2000);
+        final RunningJob runningJob = _test("exit0");
+        waitFor(2000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                return runningJob.isComplete();
+            }
+        });
         assertTrue(runningJob.isSuccessful());
 
         assertTrue(LauncherMapper.isMainDone(runningJob));
@@ -140,8 +150,13 @@ public class TestLauncher extends XFsTestCase {
     public void testExit1() throws Exception {
         Path actionDir = getFsTestCaseDir();
         FileSystem fs = getFileSystem();
-        RunningJob runningJob = _test("exit1");
-        Thread.sleep(2000);
+        final RunningJob runningJob = _test("exit1");
+        waitFor(2000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                return runningJob.isComplete();
+            }
+        });
         assertTrue(runningJob.isSuccessful());
 
         assertTrue(LauncherMapper.isMainDone(runningJob));
@@ -157,8 +172,13 @@ public class TestLauncher extends XFsTestCase {
     public void testException() throws Exception {
         Path actionDir = getFsTestCaseDir();
         FileSystem fs = getFileSystem();
-        RunningJob runningJob = _test("ex");
-        Thread.sleep(2000);
+        final RunningJob runningJob = _test("ex");
+        waitFor(2000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                return runningJob.isComplete();
+            }
+        });
         assertTrue(runningJob.isSuccessful());
 
         assertTrue(LauncherMapper.isMainDone(runningJob));
@@ -174,8 +194,13 @@ public class TestLauncher extends XFsTestCase {
     public void testOutput() throws Exception {
         Path actionDir = getFsTestCaseDir();
         FileSystem fs = getFileSystem();
-        RunningJob runningJob = _test("out");
-        Thread.sleep(2000);
+        final RunningJob runningJob = _test("out");
+        waitFor(2000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                return runningJob.isComplete();
+            }
+        });
         assertTrue(runningJob.isSuccessful());
 
         assertTrue(LauncherMapper.isMainDone(runningJob));
@@ -191,8 +216,13 @@ public class TestLauncher extends XFsTestCase {
     public void testNewId() throws Exception {
         Path actionDir = getFsTestCaseDir();
         FileSystem fs = getFileSystem();
-        RunningJob runningJob = _test("id");
-        Thread.sleep(2000);
+        final RunningJob runningJob = _test("id");
+        waitFor(2000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                return runningJob.isComplete();
+            }
+        });
         assertTrue(runningJob.isSuccessful());
 
         assertTrue(LauncherMapper.isMainDone(runningJob));
@@ -208,8 +238,13 @@ public class TestLauncher extends XFsTestCase {
     public void testSecurityManager() throws Exception {
         Path actionDir = getFsTestCaseDir();
         FileSystem fs = getFileSystem();
-        RunningJob runningJob = _test("securityManager");
-        Thread.sleep(2000);
+        final RunningJob runningJob = _test("securityManager");
+        waitFor(2000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                return runningJob.isComplete();
+            }
+        });
         assertTrue(runningJob.isSuccessful());
 
         assertTrue(LauncherMapper.isMainDone(runningJob));

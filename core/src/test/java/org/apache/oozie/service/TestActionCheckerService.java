@@ -101,7 +101,7 @@ public class TestActionCheckerService extends XDataTestCase {
                 return (engine.getJob(jobId).getStatus() == WorkflowJob.Status.RUNNING);
             }
         });
-        Thread.sleep(2000);
+        sleep(2000);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
@@ -117,7 +117,7 @@ public class TestActionCheckerService extends XDataTestCase {
         assertNotNull(action);
         assertEquals(WorkflowActionBean.Status.RUNNING, action.getStatus());
 
-        Thread.sleep(2000);
+        sleep(2000);
         Runnable actionCheckRunnable = new ActionCheckRunnable(0);
         actionCheckRunnable.run();
 
@@ -159,7 +159,7 @@ public class TestActionCheckerService extends XDataTestCase {
         conf.set("running-mode", "async");
 
         final String jobId = engine.submitJob(conf, true);
-        Thread.sleep(200);
+        sleep(200);
 
         waitFor(5000, new Predicate() {
             public boolean evaluate() throws Exception {
@@ -167,7 +167,7 @@ public class TestActionCheckerService extends XDataTestCase {
             }
         });
 
-        Thread.sleep(100);
+        sleep(100);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
@@ -191,7 +191,7 @@ public class TestActionCheckerService extends XDataTestCase {
         Runnable actionCheckRunnable = new ActionCheckRunnable(actionCheckDelay);
         actionCheckRunnable.run();
 
-        Thread.sleep(3000);
+        sleep(3000);
 
         List<WorkflowActionBean> actions2 = jpaService.execute(actionsGetExecutor);
         WorkflowActionBean action2 = null;
@@ -223,10 +223,10 @@ public class TestActionCheckerService extends XDataTestCase {
         final CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), actionNum,
                 CoordinatorAction.Status.RUNNING, "coord-action-get.xml", wfJob.getId(), "RUNNING", 0);
 
-        Thread.sleep(3000);
+        sleep(3000);
         Runnable actionCheckRunnable = new ActionCheckRunnable(1);
         actionCheckRunnable.run();
-        Thread.sleep(3000);
+        sleep(3000);
 
         waitFor(200000, new Predicate() {
             public boolean evaluate() throws Exception {

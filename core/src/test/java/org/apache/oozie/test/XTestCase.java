@@ -537,6 +537,20 @@ public abstract class XTestCase extends TestCase {
             throw new RuntimeException(ex);
         }
     }
+    
+    /**
+     * Wait the specified amount of time; the timeout will be scaled by the oozie.test.waitfor.ratio property.
+     * 
+     * @param sleepTime time in milliseconds to wait
+     */
+    protected void sleep(int sleepTime) {
+        waitFor(sleepTime, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                return false;
+            }
+        });
+    }
 
     /**
      * Return the Hadoop Job Tracker to use for testing. </p> The value is taken from the Java sytem property {@link

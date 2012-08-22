@@ -123,7 +123,7 @@ public class TestLastModified extends XFsTestCase {
 
             lastModTime = wf.getLastModifiedTime();
 
-            Thread.sleep(1000);
+            sleep(1000);
 
             wc.resume(jobId);
             wf = wc.getJobInfo(jobId);
