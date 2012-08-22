@@ -25,6 +25,7 @@ import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.DagEngineException;
 import org.apache.oozie.DagEngine;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
@@ -40,15 +41,18 @@ import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.db.SLADbOperations;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.client.SLAEvent.Status;
+import org.apache.oozie.client.rest.JsonBean;
+import org.apache.oozie.executor.jpa.BulkUpdateInsertForCoordActionStartJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
-import org.apache.oozie.executor.jpa.WorkflowJobUpdateJPAExecutor;
-
 import org.jdom.Element;
 import org.jdom.JDOMException;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
 
@@ -65,6 +69,8 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
     private CoordinatorActionBean coordAction = null;
     private JPAService jpaService = null;
     private String jobId = null;
+    private List<JsonBean> updateList = new ArrayList<JsonBean>();
+    private List<JsonBean> insertList = new ArrayList<JsonBean>();
 
     public CoordActionStartXCommand(String id, String user, String token, String jobId) {
         //super("coord_action_start", "coord_action_start", 1, XLog.OPS);
@@ -160,8 +166,11 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
             try {
                 boolean startJob = true;
                 Configuration conf = new XConfiguration(new StringReader(coordAction.getRunConf()));
-                SLADbOperations.writeStausEvent(coordAction.getSlaXml(), coordAction.getId(), Status.STARTED,
-                                                SlaAppType.COORDINATOR_ACTION, log);
+                SLAEventBean slaEvent = SLADbOperations.createStatusEvent(coordAction.getSlaXml(), coordAction.getId(), Status.STARTED,
+                        SlaAppType.COORDINATOR_ACTION, log);
+                if(slaEvent != null) {
+                    insertList.add(slaEvent);
+                }
 
                 // Normalize workflow appPath here;
                 JobUtils.normalizeAppPath(conf.get(OozieClient.USER_NAME), conf.get(OozieClient.GROUP_NAME), conf);
@@ -176,8 +185,15 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
                     log.debug("Updating WF record for WFID :" + wfId + " with parent id: " + actionId);
                     WorkflowJobBean wfJob = jpaService.execute(new WorkflowJobGetJPAExecutor(wfId));
                     wfJob.setParentId(actionId);
-                    jpaService.execute(new WorkflowJobUpdateJPAExecutor(wfJob));
-                    jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionUpdateForStartJPAExecutor(coordAction));
+                    wfJob.setLastModifiedTime(new Date());
+                    updateList.add(wfJob);
+                    updateList.add(coordAction);
+                    try {
+                        jpaService.execute(new BulkUpdateInsertForCoordActionStartJPAExecutor(updateList, insertList));
+                    }
+                    catch (JPAExecutorException je) {
+                        throw new CommandException(je);
+                    }
                 }
                 else {
                     log.error(ErrorCode.E0610);
@@ -215,20 +231,22 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
                     coordAction.setErrorMessage(errMsg);
                     coordAction.setErrorCode(errCode);
 
-                    JPAService jpaService = Services.get().get(JPAService.class);
-                    if (jpaService != null) {
-                        try {
-                            jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionUpdateForStartJPAExecutor(coordAction));
-                        }
-                        catch (JPAExecutorException je) {
-                            throw new CommandException(je);
-                        }
+                    updateList = new ArrayList<JsonBean>();
+                    updateList.add(coordAction);
+                    insertList = new ArrayList<JsonBean>();
+
+                    SLAEventBean slaEvent = SLADbOperations.createStatusEvent(coordAction.getSlaXml(), coordAction.getId(), Status.FAILED,
+                            SlaAppType.COORDINATOR_ACTION, log);
+                    if(slaEvent != null) {
+                        insertList.add(slaEvent); //Update SLA events
                     }
-                    else {
-                        log.error(ErrorCode.E0610);
+                    try {
+                        // call JPAExecutor to do the bulk writes
+                        jpaService.execute(new BulkUpdateInsertForCoordActionStartJPAExecutor(updateList, insertList));
                     }
-                    SLADbOperations.writeStausEvent(coordAction.getSlaXml(), coordAction.getId(), Status.FAILED,
-                            SlaAppType.COORDINATOR_ACTION, log); //Update SLA events
+                    catch (JPAExecutorException je) {
+                        throw new CommandException(je);
+                    }
                     queue(new CoordActionReadyXCommand(coordAction.getJobId()));
                 }
             }

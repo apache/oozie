@@ -19,18 +19,26 @@ package org.apache.oozie.command.coord;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.TimeZone;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
+import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.coord.TimeUnit;
+import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.store.CoordinatorStore;
@@ -52,22 +60,31 @@ public class CoordActionMaterializeCommand extends CoordinatorCommand<Void> {
     private final XLog log = XLog.getLog(getClass());
     private String user;
     private String group;
+    private List<JsonBean> insertList = new ArrayList<JsonBean>();
+    private List<JsonBean> updateList = new ArrayList<JsonBean>();
+
     /**
      * Default timeout for catchup jobs, in minutes, after which coordinator input check will timeout
      */
     public static final String CONF_DEFAULT_TIMEOUT_CATCHUP = Service.CONF_PREFIX + "coord.catchup.default.timeout";
 
     public CoordActionMaterializeCommand(String jobId, Date startTime, Date endTime) {
-        super("coord_action_mater", "coord_action_mater", 1, XLog.STD);
+        super("coord_action_mater", "coord_action_mater", 1, XLog.STD, false);
         this.jobId = jobId;
         this.startTime = startTime;
         this.endTime = endTime;
     }
 
     @Override
-    protected Void call(CoordinatorStore store) throws StoreException, CommandException {
-        // CoordinatorJobBean job = store.getCoordinatorJob(jobId, true);
-        CoordinatorJobBean job = store.getEntityManager().find(CoordinatorJobBean.class, jobId);
+    protected Void call(CoordinatorStore store) throws CommandException {
+        CoordJobGetJPAExecutor getCoordJob = new CoordJobGetJPAExecutor(jobId);
+        CoordinatorJobBean job;
+        try {
+            job = Services.get().get(JPAService.class).execute(getCoordJob);
+        }
+        catch (JPAExecutorException jex) {
+            throw new CommandException(jex);
+        }
         setLogInfo(job);
         if (job.getLastActionTime() != null && job.getLastActionTime().compareTo(endTime) >= 0) {
             log.info("ENDED Coordinator materialization for jobId = " + jobId
@@ -88,7 +105,7 @@ public class CoordActionMaterializeCommand extends CoordinatorCommand<Void> {
             if (job.getStatus() == CoordinatorJob.Status.PREMATER) {
                 job.setStatus(CoordinatorJob.Status.RUNNING);
             }
-            store.updateCoordinatorJob(job);
+            updateList.add(job);
             return null;
         }
 
@@ -115,7 +132,7 @@ public class CoordActionMaterializeCommand extends CoordinatorCommand<Void> {
             catch (CommandException ex) {
                 log.warn("Exception occurs:" + ex + " Making the job failed ");
                 job.setStatus(CoordinatorJobBean.Status.FAILED);
-                store.updateCoordinatorJob(job);
+                updateList.add(job);
             }
             catch (Exception e) {
                 log.error("Excepion thrown :", e);
@@ -234,8 +251,8 @@ public class CoordActionMaterializeCommand extends CoordinatorCommand<Void> {
     private void storeToDB(CoordinatorActionBean actionBean, String actionXml, CoordinatorStore store) throws Exception {
         log.debug("In storeToDB() action Id " + actionBean.getId() + " Size of actionXml " + actionXml.length());
         actionBean.setActionXml(actionXml);
-        store.insertCoordinatorAction(actionBean);
-        writeActionRegistration(actionXml, actionBean, store);
+        insertList.add(actionBean);
+        createActionRegistration(actionXml, actionBean, store);
 
         // TODO: time 100s should be configurable
         queueCallable(new CoordActionNotificationXCommand(actionBean), 100);
@@ -248,12 +265,15 @@ public class CoordActionMaterializeCommand extends CoordinatorCommand<Void> {
      * @param store
      * @throws Exception
      */
-    private void writeActionRegistration(String actionXml, CoordinatorActionBean actionBean, CoordinatorStore store)
+    private void createActionRegistration(String actionXml, CoordinatorActionBean actionBean, CoordinatorStore store)
             throws Exception {
         Element eAction = XmlUtils.parseXml(actionXml);
         Element eSla = eAction.getChild("action", eAction.getNamespace()).getChild("info", eAction.getNamespace("sla"));
-        SLADbOperations.writeSlaRegistrationEvent(eSla, store, actionBean.getId(), SlaAppType.COORDINATOR_ACTION, user,
-                                                  group);
+        SLAEventBean slaEvent = SLADbOperations.createSlaRegistrationEvent(eSla, store, actionBean.getId(),
+                SlaAppType.COORDINATOR_ACTION, user, group);
+        if(slaEvent != null) {
+            insertList.add(slaEvent);
+        }
     }
 
     /**
@@ -261,7 +281,7 @@ public class CoordActionMaterializeCommand extends CoordinatorCommand<Void> {
      * @param store
      * @throws StoreException
      */
-    private void updateJobTable(CoordinatorJobBean job, CoordinatorStore store) throws StoreException {
+    private void updateJobTable(CoordinatorJobBean job, CoordinatorStore store) {
         // TODO: why do we need this? Isn't lastMatTime enough???
         job.setLastActionTime(endTime);
         job.setLastActionNumber(lastActionNumber);
@@ -278,7 +298,7 @@ public class CoordActionMaterializeCommand extends CoordinatorCommand<Void> {
             log.info("[" + job.getId() + "]: Update status from PREMATER to RUNNING");
         }
         job.setNextMaterializedTime(endTime);
-        store.updateCoordinatorJob(job);
+        updateList.add(job);
     }
 
     @Override
@@ -288,6 +308,18 @@ public class CoordActionMaterializeCommand extends CoordinatorCommand<Void> {
         try {
             if (lock(jobId)) {
                 call(store);
+                JPAService jpaService = Services.get().get(JPAService.class);
+                if (jpaService != null) {
+                    try {
+                        jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, insertList));
+                    }
+                    catch (JPAExecutorException je) {
+                        throw new CommandException(je);
+                    }
+                }
+                else {
+                    throw new CommandException(ErrorCode.E0610);
+                }
             }
             else {
                 queueCallable(new CoordActionMaterializeCommand(jobId, startTime, endTime),

@@ -18,10 +18,13 @@
 package org.apache.oozie.command.coord;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.XException;
 import org.apache.oozie.service.JPAService;
@@ -34,8 +37,10 @@ import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.client.SLAEvent.Status;
+import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.executor.jpa.BulkUpdateInsertForCoordActionStatusJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionGetForCheckJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 
@@ -47,6 +52,8 @@ public class CoordActionCheckXCommand extends CoordinatorXCommand<Void> {
     private int actionCheckDelay;
     private CoordinatorActionBean coordAction = null;
     private JPAService jpaService = null;
+    private List<JsonBean> updateList = new ArrayList<JsonBean>();
+    private List<JsonBean> insertList = new ArrayList<JsonBean>();
 
     public CoordActionCheckXCommand(String actionId, int actionCheckDelay) {
         super("coord_action_check", "coord_action_check", 0);
@@ -88,7 +95,8 @@ public class CoordActionCheckXCommand extends CoordinatorXCommand<Void> {
                     else {
                         LOG.warn("Unexpected workflow " + wf.getId() + " STATUS " + wf.getStatus());
                         coordAction.setLastModifiedTime(new Date());
-                        jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionUpdateStatusJPAExecutor(coordAction));
+                        updateList.add(coordAction);
+                        jpaService.execute(new BulkUpdateInsertForCoordActionStatusJPAExecutor(updateList, null));
                         return null;
                     }
                 }
@@ -97,12 +105,17 @@ public class CoordActionCheckXCommand extends CoordinatorXCommand<Void> {
             LOG.debug("Updating Coordintaor actionId :" + coordAction.getId() + "status to ="
                             + coordAction.getStatus());
             coordAction.setLastModifiedTime(new Date());
-            jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionUpdateStatusJPAExecutor(coordAction));
+            updateList.add(coordAction);
 
             if (slaStatus != null) {
-                SLADbOperations.writeStausEvent(coordAction.getSlaXml(), coordAction.getId(), slaStatus,
+                SLAEventBean slaEvent = SLADbOperations.createStatusEvent(coordAction.getSlaXml(), coordAction.getId(), slaStatus,
                         SlaAppType.COORDINATOR_ACTION, LOG);
+                if(slaEvent != null) {
+                    insertList.add(slaEvent);
+                }
             }
+
+            jpaService.execute(new BulkUpdateInsertForCoordActionStatusJPAExecutor(updateList, insertList));
         }
         catch (XException ex) {
             LOG.warn("CoordActionCheckCommand Failed ", ex);

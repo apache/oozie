@@ -79,6 +79,7 @@ public abstract class StartTransitionXCommand extends TransitionXCommand<Void> {
         transitToNext();
         updateJob();
         StartChildren();
+        performWrites();
         notifyParent();
         return null;
     }

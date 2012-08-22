@@ -111,4 +111,8 @@ public class CoordPauseXCommand extends PauseTransitionXCommand {
 
     }
 
+    @Override
+    public void performWrites() throws CommandException {
+    }
+
 }

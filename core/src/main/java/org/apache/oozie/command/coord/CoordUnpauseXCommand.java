@@ -126,4 +126,8 @@ public class CoordUnpauseXCommand extends UnpauseTransitionXCommand {
 
     }
 
+    @Override
+    public void performWrites() throws CommandException {
+    }
+
 }

@@ -73,6 +73,7 @@ public abstract class SuspendTransitionXCommand extends TransitionXCommand<Void>
         try {
             suspendChildren();
             updateJob();
+            performWrites();
         } finally {
             notifyParent();
         }

@@ -18,9 +18,7 @@
 package org.apache.oozie.store;
 
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -29,7 +27,6 @@ import javax.persistence.Query;
 
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.SLAEventBean;
-import org.apache.oozie.XException;
 import org.apache.oozie.service.InstrumentationService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.Instrumentation;

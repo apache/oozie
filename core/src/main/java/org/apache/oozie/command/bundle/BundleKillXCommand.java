@@ -30,10 +30,9 @@ import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.KillTransitionXCommand;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.coord.CoordKillXCommand;
-import org.apache.oozie.executor.jpa.BundleActionUpdateJPAExecutor;
+import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleActionsGetJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
-import org.apache.oozie.executor.jpa.BundleJobUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
@@ -134,16 +133,11 @@ public class BundleKillXCommand extends KillTransitionXCommand {
      * @param action
      * @throws CommandException
      */
-    private void updateBundleAction(BundleActionBean action) throws CommandException {
+    private void updateBundleAction(BundleActionBean action) {
         action.incrementAndGetPending();
         action.setLastModifiedTime(new Date());
         action.setStatus(Job.Status.KILLED);
-        try {
-            jpaService.execute(new BundleActionUpdateJPAExecutor(action));
-        }
-        catch (JPAExecutorException e) {
-            throw new CommandException(e);
-        }
+        updateList.add(action);
     }
 
     /* (non-Javadoc)
@@ -165,9 +159,17 @@ public class BundleKillXCommand extends KillTransitionXCommand {
      * @see org.apache.oozie.command.TransitionXCommand#updateJob()
      */
     @Override
-    public void updateJob() throws CommandException {
+    public void updateJob() {
+        updateList.add(bundleJob);
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.KillTransitionXCommand#performWrites()
+     */
+    @Override
+    public void performWrites() throws CommandException {
         try {
-            jpaService.execute(new BundleJobUpdateJPAExecutor(bundleJob));
+            jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, null));
         }
         catch (JPAExecutorException e) {
             throw new CommandException(e);

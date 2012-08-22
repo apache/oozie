@@ -35,9 +35,10 @@ import javax.persistence.Table;
 
 import org.apache.hadoop.io.Writable;
 import org.apache.oozie.client.Job.Status;
+import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.WritableUtils;
-import org.apache.openjpa.persistence.jdbc.Index;
+import org.json.simple.JSONObject;
 
 @Entity
 @Table(name = "BUNDLE_ACTIONS")
@@ -72,7 +73,7 @@ import org.apache.openjpa.persistence.jdbc.Index;
         @NamedQuery(name = "GET_BUNDLE_ACTIONS_OLDER_THAN", query = "select OBJECT(w) from BundleActionBean w order by w.lastModifiedTimestamp"),
 
         @NamedQuery(name = "DELETE_COMPLETED_ACTIONS_FOR_BUNDLE", query = "delete from BundleActionBean a where a.bundleId = :bundleId and (a.status = 'SUCCEEDED' OR a.status = 'FAILED' OR a.status= 'KILLED' OR a.status = 'DONEWITHERROR')")})
-public class BundleActionBean implements Writable {
+public class BundleActionBean implements Writable, JsonBean {
 
     @Id
     @Column(name = "bundle_action_id")
@@ -363,5 +364,15 @@ public class BundleActionBean implements Writable {
         if (d != -1) {
             setLastModifiedTime(new Date(d));
         }
+    }
+
+    @Override
+    public JSONObject toJSONObject() {
+        return null;
+    }
+
+    @Override
+    public JSONObject toJSONObject(String timeZoneId) {
+        return null;
     }
 }

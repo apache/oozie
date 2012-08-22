@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,19 +17,24 @@
  */
 package org.apache.oozie.command.wf;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.XException;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.client.SLAEvent.Status;
+import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionGetJPAExecutor;
-import org.apache.oozie.executor.jpa.WorkflowActionUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
-import org.apache.oozie.executor.jpa.WorkflowJobUpdateJPAExecutor;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.service.ActionService;
@@ -50,6 +55,8 @@ public class ActionKillXCommand extends ActionXCommand<Void> {
     private WorkflowJobBean wfJob;
     private WorkflowActionBean wfAction;
     private JPAService jpaService = null;
+    private List<JsonBean> updateList = new ArrayList<JsonBean>();
+    private List<JsonBean> insertList = new ArrayList<JsonBean>();
 
     public ActionKillXCommand(String actionId, String type) {
         super("action.kill", type, 0);
@@ -121,11 +128,15 @@ public class ActionKillXCommand extends ActionXCommand<Void> {
                     wfAction.resetPending();
                     wfAction.setStatus(WorkflowActionBean.Status.KILLED);
 
-                    jpaService.execute(new WorkflowActionUpdateJPAExecutor(wfAction));
-                    jpaService.execute(new WorkflowJobUpdateJPAExecutor(wfJob));
+                    updateList.add(wfAction);
+                    wfJob.setLastModifiedTime(new Date());
+                    updateList.add(wfJob);
                     // Add SLA status event (KILLED) for WF_ACTION
-                    SLADbXOperations.writeStausEvent(wfAction.getSlaXml(), wfAction.getId(), Status.KILLED,
+                    SLAEventBean slaEvent = SLADbXOperations.createStatusEvent(wfAction.getSlaXml(), wfAction.getId(), Status.KILLED,
                             SlaAppType.WORKFLOW_ACTION);
+                    if(slaEvent != null) {
+                        insertList.add(slaEvent);
+                    }
                     queue(new NotificationXCommand(wfJob, wfAction));
                 }
                 catch (ActionExecutorException ex) {
@@ -134,21 +145,25 @@ public class ActionKillXCommand extends ActionXCommand<Void> {
                     wfAction.setErrorInfo(ex.getErrorCode().toString(),
                             "KILL COMMAND FAILED - exception while executing job kill");
                     wfJob.setStatus(WorkflowJobBean.Status.KILLED);
-                    try {
-                        jpaService.execute(new WorkflowActionUpdateJPAExecutor(wfAction));
-                        jpaService.execute(new WorkflowJobUpdateJPAExecutor(wfJob));
-                    }
-                    catch (JPAExecutorException je) {
-                        throw new CommandException(je);
-                    }
+                    updateList.add(wfAction);
+                    wfJob.setLastModifiedTime(new Date());
+                    updateList.add(wfJob);
                     // What will happen to WF and COORD_ACTION, NOTIFICATION?
-                    SLADbXOperations.writeStausEvent(wfAction.getSlaXml(), wfAction.getId(), Status.FAILED,
+                    SLAEventBean slaEvent = SLADbXOperations.createStatusEvent(wfAction.getSlaXml(), wfAction.getId(), Status.FAILED,
                             SlaAppType.WORKFLOW_ACTION);
+                    if(slaEvent != null) {
+                        insertList.add(slaEvent);
+                    }
                     LOG.warn("Exception while executing kill(). Error Code [{0}], Message[{1}]",
                             ex.getErrorCode(), ex.getMessage(), ex);
                 }
-                catch (JPAExecutorException je) {
-                    throw new CommandException(je);
+                finally {
+                    try {
+                        jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, insertList));
+                    }
+                    catch (JPAExecutorException e) {
+                        throw new CommandException(e);
+                    }
                 }
             }
         }

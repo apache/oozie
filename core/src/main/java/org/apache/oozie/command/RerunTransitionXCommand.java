@@ -18,7 +18,6 @@
 package org.apache.oozie.command;
 
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.util.StatusUtils;
 
@@ -96,6 +95,7 @@ public abstract class RerunTransitionXCommand<T> extends TransitionXCommand<T> {
             transitToNext();
             rerunChildren();
             updateJob();
+            performWrites();
         }
         finally {
             notifyParent();

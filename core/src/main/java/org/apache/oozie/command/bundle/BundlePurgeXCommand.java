@@ -17,21 +17,20 @@
  */
 package org.apache.oozie.command.bundle;
 
+import java.util.Collection;
 import java.util.List;
 
-import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
+import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.XCommand;
-import org.apache.oozie.executor.jpa.BundleActionsDeleteForPurgeJPAExecutor;
-import org.apache.oozie.executor.jpa.BundleJobDeleteJPAExecutor;
+import org.apache.oozie.executor.jpa.BulkDeleteForPurgeJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobsGetForPurgeJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.util.XLog;
 
 /**
  * This class is used for bundle purge command
@@ -40,7 +39,7 @@ public class BundlePurgeXCommand extends XCommand<Void> {
     private JPAService jpaService = null;
     private final int olderThan;
     private final int limit;
-    private List<BundleJobBean> jobList = null;
+    private List<? extends JsonBean> jobList = null;
 
     public BundlePurgeXCommand(int olderThan, int limit) {
         super("bundle_purge", "bundle_purge", 0);
@@ -77,15 +76,11 @@ public class BundlePurgeXCommand extends XCommand<Void> {
 
         int actionDeleted = 0;
         if (jobList != null && jobList.size() != 0) {
-            for (BundleJobBean bundle : jobList) {
-                String jobId = bundle.getId();
-                try {
-                    jpaService.execute(new BundleJobDeleteJPAExecutor(jobId));
-                    actionDeleted += jpaService.execute(new BundleActionsDeleteForPurgeJPAExecutor(jobId));
-                }
-                catch (JPAExecutorException e) {
-                    throw new CommandException(e);
-                }
+            try {
+                actionDeleted = jpaService.execute(new BulkDeleteForPurgeJPAExecutor((Collection<JsonBean>) jobList));
+            }
+            catch (JPAExecutorException je) {
+                throw new CommandException(je);
             }
             LOG.debug("ENDED Bundle-Purge deleted jobs :" + jobList.size() + " and actions " + actionDeleted);
         }

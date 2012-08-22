@@ -17,11 +17,14 @@
  */
 package org.apache.oozie.command.wf;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.DagELFunctions;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.XException;
@@ -33,13 +36,13 @@ import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.client.SLAEvent.Status;
+import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionGetJPAExecutor;
-import org.apache.oozie.executor.jpa.WorkflowActionUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
-import org.apache.oozie.executor.jpa.WorkflowJobUpdateJPAExecutor;
 import org.apache.oozie.service.ActionService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
@@ -60,6 +63,8 @@ public class ActionEndXCommand extends ActionXCommand<Void> {
     private WorkflowActionBean wfAction = null;
     private JPAService jpaService = null;
     private ActionExecutor executor = null;
+    private List<JsonBean> updateList = new ArrayList<JsonBean>();
+    private List<JsonBean> insertList = new ArrayList<JsonBean>();
 
     public ActionEndXCommand(String actionId, String type) {
         super("action.end", type, 0);
@@ -169,46 +174,46 @@ public class ActionEndXCommand extends ActionXCommand<Void> {
                         executor.getType());
                 wfAction.setErrorInfo(END_DATA_MISSING, "Execution Ended, but End Data Missing from Action");
                 failJob(context);
-                jpaService.execute(new WorkflowActionUpdateJPAExecutor(wfAction));
-                jpaService.execute(new WorkflowJobUpdateJPAExecutor(wfJob));
-                return null;
+            } else {
+                wfAction.setRetries(0);
+                wfAction.setEndTime(new Date());
+    
+                boolean shouldHandleUserRetry = false;
+                Status slaStatus = null;
+                switch (wfAction.getStatus()) {
+                    case OK:
+                        slaStatus = Status.SUCCEEDED;
+                        break;
+                    case KILLED:
+                        slaStatus = Status.KILLED;
+                        break;
+                    case FAILED:
+                        slaStatus = Status.FAILED;
+                        shouldHandleUserRetry = true;
+                        break;
+                    case ERROR:
+                        LOG.info("ERROR is considered as FAILED for SLA");
+                        slaStatus = Status.KILLED;
+                        shouldHandleUserRetry = true;
+                        break;
+                    default:
+                        slaStatus = Status.FAILED;
+                        shouldHandleUserRetry = true;
+                        break;
+                }
+                if (!shouldHandleUserRetry || !handleUserRetry(wfAction)) {
+                    SLAEventBean slaEvent = SLADbXOperations.createStatusEvent(wfAction.getSlaXml(), wfAction.getId(), slaStatus, SlaAppType.WORKFLOW_ACTION);
+                    LOG.debug("Queuing commands for action=" + actionId + ", status=" + wfAction.getStatus()
+                            + ", Set pending=" + wfAction.getPending());
+                    if(slaEvent != null) {
+                        insertList.add(slaEvent);
+                    }
+                    queue(new SignalXCommand(jobId, actionId));
+                }
             }
-            wfAction.setRetries(0);
-            wfAction.setEndTime(new Date());
-
-            boolean shouldHandleUserRetry = false;
-            Status slaStatus = null;
-            switch (wfAction.getStatus()) {
-                case OK:
-                    slaStatus = Status.SUCCEEDED;
-                    break;
-                case KILLED:
-                    slaStatus = Status.KILLED;
-                    break;
-                case FAILED:
-                    slaStatus = Status.FAILED;
-                    shouldHandleUserRetry = true;
-                    break;
-                case ERROR:
-                    LOG.info("ERROR is considered as FAILED for SLA");
-                    slaStatus = Status.KILLED;
-                    shouldHandleUserRetry = true;
-                    break;
-                default:
-                    slaStatus = Status.FAILED;
-                    shouldHandleUserRetry = true;
-                    break;
-            }
-            if (!shouldHandleUserRetry || !handleUserRetry(wfAction)) {
-                SLADbXOperations.writeStausEvent(wfAction.getSlaXml(), wfAction.getId(), slaStatus, SlaAppType.WORKFLOW_ACTION);
-                LOG.debug(
-                        "Queuing commands for action=" + actionId + ", status=" + wfAction.getStatus()
-                        + ", Set pending=" + wfAction.getPending());
-                queue(new SignalXCommand(jobId, actionId));
-            }
-
-            jpaService.execute(new WorkflowActionUpdateJPAExecutor(wfAction));
-            jpaService.execute(new WorkflowJobUpdateJPAExecutor(wfJob));
+            updateList.add(wfAction);
+            wfJob.setLastModifiedTime(new Date());
+            updateList.add(wfJob);
         }
         catch (ActionExecutorException ex) {
             LOG.warn(
@@ -243,19 +248,18 @@ public class ActionEndXCommand extends ActionXCommand<Void> {
             DagELFunctions.setActionInfo(wfInstance, wfAction);
             wfJob.setWorkflowInstance(wfInstance);
 
+            updateList.add(wfAction);
+            wfJob.setLastModifiedTime(new Date());
+            updateList.add(wfJob);
+        }
+        finally {
             try {
-                jpaService.execute(new WorkflowActionUpdateJPAExecutor(wfAction));
-                jpaService.execute(new WorkflowJobUpdateJPAExecutor(wfJob));
+                jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, insertList));
             }
-            catch (JPAExecutorException je) {
-                throw new CommandException(je);
+            catch (JPAExecutorException e) {
+                throw new CommandException(e);
             }
-
         }
-        catch (JPAExecutorException je) {
-            throw new CommandException(je);
-        }
-
 
         LOG.debug("ENDED ActionEndXCommand for action " + actionId);
         return null;

@@ -17,20 +17,22 @@
  */
 package org.apache.oozie.command.wf;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.coord.CoordActionUpdateXCommand;
+import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
-import org.apache.oozie.executor.jpa.WorkflowActionUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetActionsJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
-import org.apache.oozie.executor.jpa.WorkflowJobUpdateJPAExecutor;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.InstrumentUtils;
@@ -45,6 +47,7 @@ public class ResumeXCommand extends WorkflowXCommand<Void> {
     private String id;
     private JPAService jpaService = null;
     private WorkflowJobBean workflow = null;
+    private List<JsonBean> updateList = new ArrayList<JsonBean>();
 
     public ResumeXCommand(String id) {
         super("resume", "resume", 1);
@@ -70,7 +73,7 @@ public class ResumeXCommand extends WorkflowXCommand<Void> {
                     // START_MANUAL or END_RETRY or END_MANUAL
                     if (action.isRetryOrManual()) {
                         action.setPendingOnly();
-                        jpaService.execute(new WorkflowActionUpdateJPAExecutor(action));
+                        updateList.add(action);
                     }
 
                     if (action.isPending()) {
@@ -102,7 +105,9 @@ public class ResumeXCommand extends WorkflowXCommand<Void> {
                     }
                 }
 
-                jpaService.execute(new WorkflowJobUpdateJPAExecutor(workflow));
+                workflow.setLastModifiedTime(new Date());
+                updateList.add(workflow);
+                jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, null));
                 queue(new NotificationXCommand(workflow));
             }
             return null;

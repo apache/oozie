@@ -20,18 +20,19 @@ package org.apache.oozie.command.wf;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.client.SLAEvent.Status;
+import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.XException;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.coord.CoordActionUpdateXCommand;
+import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
-import org.apache.oozie.executor.jpa.WorkflowActionUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionsGetForJobJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
-import org.apache.oozie.executor.jpa.WorkflowJobUpdateJPAExecutor;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.workflow.WorkflowException;
@@ -42,6 +43,7 @@ import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.db.SLADbXOperations;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -55,6 +57,8 @@ public class KillXCommand extends WorkflowXCommand<Void> {
     private WorkflowJobBean wfJob;
     private List<WorkflowActionBean> actionList;
     private JPAService jpaService = null;
+    private List<JsonBean> updateList = new ArrayList<JsonBean>();
+    private List<JsonBean> insertList = new ArrayList<JsonBean>();
 
     public KillXCommand(String wfId) {
         super("kill", "kill", 1);
@@ -106,7 +110,11 @@ public class KillXCommand extends WorkflowXCommand<Void> {
         if (wfJob.getStatus() != WorkflowJob.Status.FAILED) {
             InstrumentUtils.incrJobCounter(getName(), 1, getInstrumentation());
             wfJob.setStatus(WorkflowJob.Status.KILLED);
-            SLADbXOperations.writeStausEvent(wfJob.getSlaXml(), wfJob.getId(), Status.KILLED, SlaAppType.WORKFLOW_JOB);
+            SLAEventBean slaEvent = SLADbXOperations.createStatusEvent(wfJob.getSlaXml(), wfJob.getId(),
+                    Status.KILLED, SlaAppType.WORKFLOW_JOB);
+            if(slaEvent != null) {
+                insertList.add(slaEvent);
+            }
             try {
                 wfJob.getWorkflowInstance().kill();
             }
@@ -124,7 +132,7 @@ public class KillXCommand extends WorkflowXCommand<Void> {
                     action.setPending();
                     action.setStatus(WorkflowActionBean.Status.KILLED);
 
-                    jpaService.execute(new WorkflowActionUpdateJPAExecutor(action));
+                    updateList.add(action);
 
                     queue(new ActionKillXCommand(action.getId(), action.getType()));
                 }
@@ -136,16 +144,21 @@ public class KillXCommand extends WorkflowXCommand<Void> {
 
                     action.setStatus(WorkflowActionBean.Status.KILLED);
                     action.resetPending();
-                    SLADbXOperations.writeStausEvent(action.getSlaXml(), action.getId(), Status.KILLED,
-                            SlaAppType.WORKFLOW_ACTION);
-                    jpaService.execute(new WorkflowActionUpdateJPAExecutor(action));
+                    SLAEventBean slaEvent = SLADbXOperations.createStatusEvent(action.getSlaXml(), action.getId(),
+                            Status.KILLED, SlaAppType.WORKFLOW_ACTION);
+                    if(slaEvent != null) {
+                        insertList.add(slaEvent);
+                    }
+                    updateList.add(action);
                 }
             }
-            jpaService.execute(new WorkflowJobUpdateJPAExecutor(wfJob));
+            wfJob.setLastModifiedTime(new Date());
+            updateList.add(wfJob);
+            jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, insertList));
             queue(new NotificationXCommand(wfJob));
         }
-        catch (JPAExecutorException je) {
-            throw new CommandException(je);
+        catch (JPAExecutorException e) {
+            throw new CommandException(e);
         }
         finally {
             if(wfJob.getStatus() == WorkflowJob.Status.KILLED) {

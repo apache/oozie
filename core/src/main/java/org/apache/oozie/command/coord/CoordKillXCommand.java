@@ -28,10 +28,9 @@ import org.apache.oozie.command.wf.KillXCommand;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.KillTransitionXCommand;
 import org.apache.oozie.command.PreconditionException;
-import org.apache.oozie.executor.jpa.CoordActionUpdateStatusJPAExecutor;
+import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetActionsNotCompletedJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordJobUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
@@ -102,7 +101,7 @@ public class CoordKillXCommand extends KillTransitionXCommand {
         }
     }
 
-    private void updateCoordAction(CoordinatorActionBean action, boolean makePending) throws CommandException {
+    private void updateCoordAction(CoordinatorActionBean action, boolean makePending) {
         action.setStatus(CoordinatorActionBean.Status.KILLED);
         if (makePending) {
             action.incrementAndGetPending();
@@ -111,43 +110,34 @@ public class CoordKillXCommand extends KillTransitionXCommand {
             action.setPending(0);
         }
         action.setLastModifiedTime(new Date());
-        try {
-            jpaService.execute(new CoordActionUpdateStatusJPAExecutor(action));
-        } catch (JPAExecutorException e) {
-            throw new CommandException(e);
-        }
+        updateList.add(action);
     }
 
     @Override
     public void killChildren() throws CommandException {
-        try {
-            if (actionList != null) {
-                for (CoordinatorActionBean action : actionList) {
-                    // queue a WorkflowKillXCommand to delete the workflow job and actions
-                    if (action.getExternalId() != null) {
-                        queue(new KillXCommand(action.getExternalId()));
-                        // As the kill command for children is queued, set pending flag for coord action to be true
-                        updateCoordAction(action, true);
-                        LOG.debug(
-                                "Killed coord action = [{0}], new status = [{1}], pending = [{2}] and queue KillXCommand for [{3}]",
-                                action.getId(), action.getStatus(), action.getPending(), action.getExternalId());
-                    }
-                    else {
-                        // As killing children is not required, set pending flag for coord action to be false
-                        updateCoordAction(action, false);
-                        LOG.debug("Killed coord action = [{0}], current status = [{1}], pending = [{2}]",
-                                action.getId(), action.getStatus(), action.getPending());
-                    }
+        if (actionList != null) {
+            for (CoordinatorActionBean action : actionList) {
+                // queue a WorkflowKillXCommand to delete the workflow job and actions
+                if (action.getExternalId() != null) {
+                    queue(new KillXCommand(action.getExternalId()));
+                    // As the kill command for children is queued, set pending flag for coord action to be true
+                    updateCoordAction(action, true);
+                    LOG.debug(
+                            "Killed coord action = [{0}], new status = [{1}], pending = [{2}] and queue KillXCommand for [{3}]",
+                            action.getId(), action.getStatus(), action.getPending(), action.getExternalId());
+                }
+                else {
+                    // As killing children is not required, set pending flag for coord action to be false
+                    updateCoordAction(action, false);
+                    LOG.debug("Killed coord action = [{0}], current status = [{1}], pending = [{2}]",
+                            action.getId(), action.getStatus(), action.getPending());
                 }
             }
-
-            jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
-
-            LOG.debug("Killed coord actions for the coordinator=[{0}]", jobId);
         }
-        catch (JPAExecutorException ex) {
-            throw new CommandException(ex);
-        }
+
+        updateList.add(coordJob);
+
+        LOG.debug("Killed coord actions for the coordinator=[{0}]", jobId);
     }
 
     @Override
@@ -161,11 +151,19 @@ public class CoordKillXCommand extends KillTransitionXCommand {
 
     @Override
     public void updateJob() throws CommandException {
+        updateList.add(coordJob);
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.KillTransitionXCommand#performWrites()
+     */
+    @Override
+    public void performWrites() throws CommandException {
         try {
-            jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
+            jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, null));
         }
-        catch (JPAExecutorException ex) {
-            throw new CommandException(ex);
+        catch (JPAExecutorException e) {
+            throw new CommandException(e);
         }
     }
 

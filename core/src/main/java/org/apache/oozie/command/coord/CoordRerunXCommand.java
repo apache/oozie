@@ -19,18 +19,15 @@ package org.apache.oozie.command.coord;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorActionInfo;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.XException;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.action.hadoop.FsActionExecutor;
@@ -45,15 +42,11 @@ import org.apache.oozie.command.RerunTransitionXCommand;
 import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.coord.CoordELFunctions;
 import org.apache.oozie.coord.CoordUtils;
-import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordJobGetActionForNominalTimeJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordJobGetActionsForDatesJPAExecutor;
+import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordJobUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.InstrumentUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
@@ -224,7 +217,7 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
         coordAction.setExternalStatus("");
         coordAction.setRerunTime(new Date());
         coordAction.setLastModifiedTime(new Date());
-        jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionUpdateJPAExecutor(coordAction));
+        updateList.add(coordAction);
         writeActionRegistration(coordAction.getActionXml(), coordAction, coordJob.getUser(), coordJob.getGroup());
     }
 
@@ -241,8 +234,11 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
             throws Exception {
         Element eAction = XmlUtils.parseXml(actionXml);
         Element eSla = eAction.getChild("action", eAction.getNamespace()).getChild("info", eAction.getNamespace("sla"));
-        SLADbOperations.writeSlaRegistrationEvent(eSla, actionBean.getId(), SlaAppType.COORDINATOR_ACTION, user, group,
-                LOG);
+        SLAEventBean slaEvent = SLADbOperations.createSlaRegistrationEvent(eSla, actionBean.getId(),
+                SlaAppType.COORDINATOR_ACTION, user, group, LOG);
+        if(slaEvent != null) {
+            insertList.add(slaEvent);
+        }
     }
 
     /* (non-Javadoc)
@@ -374,26 +370,32 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
     }
 
     @Override
-    public void updateJob() throws CommandException {
-        try {
-            // rerun a paused coordinator job will keep job status at paused and pending at previous pending
-
-            if (getPrevStatus()!= null){
-                Job.Status coordJobStatus = getPrevStatus();
-                if(coordJobStatus.equals(Job.Status.PAUSED) || coordJobStatus.equals(Job.Status.PAUSEDWITHERROR)) {
-                    coordJob.setStatus(coordJobStatus);
-                }
-                if (prevPending) {
-                    coordJob.setPending();
-                } else {
-                    coordJob.resetPending();
-                }
+    public void updateJob() {
+        if (getPrevStatus()!= null){
+            Job.Status coordJobStatus = getPrevStatus();
+            if(coordJobStatus.equals(Job.Status.PAUSED) || coordJobStatus.equals(Job.Status.PAUSEDWITHERROR)) {
+                coordJob.setStatus(coordJobStatus);
             }
-
-            jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
+            if (prevPending) {
+                coordJob.setPending();
+            } else {
+                coordJob.resetPending();
+            }
         }
-        catch (JPAExecutorException je) {
-            throw new CommandException(je);
+
+        updateList.add(coordJob);
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.RerunTransitionXCommand#performWrites()
+     */
+    @Override
+    public void performWrites() throws CommandException {
+        try {
+            jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, insertList));
+        }
+        catch (JPAExecutorException e) {
+            throw new CommandException(e);
         }
     }
 

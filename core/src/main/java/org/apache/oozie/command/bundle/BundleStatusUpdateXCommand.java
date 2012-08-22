@@ -20,7 +20,6 @@ package org.apache.oozie.command.bundle;
 import java.util.Date;
 
 import org.apache.oozie.BundleActionBean;
-import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
@@ -31,8 +30,6 @@ import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.StatusUpdateXCommand;
 import org.apache.oozie.executor.jpa.BundleActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleActionUpdateJPAExecutor;
-import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
-import org.apache.oozie.executor.jpa.BundleJobUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
