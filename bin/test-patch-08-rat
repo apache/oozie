@@ -12,6 +12,10 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+if [ "${TESTPATCHDEBUG}" == "true" ] ; then
+  set -x
+fi
+
 BASEDIR=$(pwd)
 TASKNAME="RAT"
 OP=""
@@ -73,18 +77,18 @@ parseArgs() {
 }
 ###############################################################################
 checkForWarnings() {
-  cleanWarns=`grep -c '\!?????' ${TEMPDIR}/${TASKNAME}-ratwarns-clean.txt`
-  patchWarns=`grep -c '\!?????' ${TEMPDIR}/${TASKNAME}-ratwarns-patch.txt`
+  cleanWarns=`grep -c '\!?????' ${REPORTDIR}/${TASKNAME}-clean.txt`
+  patchWarns=`grep -c '\!?????' ${REPORTDIR}/${TASKNAME}-patch.txt`
   newWarns=`expr $patchWarns - $cleanWarns`
   if [[ $newWarns -le 0 ]] ; then
-    RAW_REPORT+=("+1 the patch does not seem to introduce new RAT warnings")
+    REPORT+=("+1 the patch does not seem to introduce new RAT warnings")
     newWarns=0
   else
-    RAW_REPORT+=("-1 the patch seems to introduce $newWarns new RAT warning(s)")
+    REPORT+=("-1 the patch seems to introduce $newWarns new RAT warning(s)")
     newWarns=1
   fi
   if [[ $cleanWarns != 0 ]] ; then
-    RAW_REPORT+=("WARNING: the current HEAD has $cleanWarns RAT warning(s), they should be addressed ASAP")
+    REPORT+=("WARNING: the current HEAD has $cleanWarns RAT warning(s), they should be addressed ASAP")
   fi
 }
 ###############################################################################
@@ -94,10 +98,10 @@ parseArgs "$@"
 
 case $OP in
   pre)
-    mvn apache-rat:check ${MVNPASSTHRU} > ${TEMPDIR}/${TASKNAME}-ratwarns-clean.txt
+    mvn apache-rat:check ${MVNPASSTHRU} > ${REPORTDIR}/${TASKNAME}-clean.txt
     ;;
   post)
-    mvn apache-rat:check ${MVNPASSTHRU} > ${TEMPDIR}/${TASKNAME}-ratwarns-patch.txt
+    mvn apache-rat:check ${MVNPASSTHRU} > ${REPORTDIR}/${TASKNAME}-patch.txt
     ;;
   report)
     checkForWarnings
@@ -106,7 +110,7 @@ case $OP in
     else
       echo "-1 ${TASKNAME}" >> $SUMMARYFILE
     fi
-    for line in "${RAW_REPORT[@]}" ; do
+    for line in "${REPORT[@]}" ; do
       echo "    ${line}" >> $SUMMARYFILE
     done
     ;;

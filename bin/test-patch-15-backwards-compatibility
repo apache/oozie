@@ -17,12 +17,12 @@ if [ "${TESTPATCHDEBUG}" == "true" ] ; then
 fi
 
 BASEDIR=$(pwd)
-TASKNAME="CLEAN"
+TASKNAME="BACKWARDS_COMPATIBILITY"
 OP=""
 TEMPDIR=""
 REPORTDIR=""
 SUMMARYFILE=""
-MVNPASSTHRU=""
+PATCHFILE=""
 
 ###############################################################################
 cleanupAndExit() {
@@ -30,7 +30,7 @@ cleanupAndExit() {
 }
 ###############################################################################
 printUsage() {
-  echo "Usage: $0 --taskname | (--op=pre|post|report --tempdir=<TEMP DIR>) [-D<VALUE>...] [-P<VALUE>...]"
+  echo "Usage: $0 --taskname | (--op=pre|post|report --tempdir=<TEMP DIR> --reportdir=<REPORT DIR> --summaryfile=<SUMMARY FILE>)"
   echo
 }
 ###############################################################################
@@ -54,15 +54,12 @@ parseArgs() {
     --summaryfile=*)
       SUMMARYFILE=${i#*=}
       ;;
-    -D*)
-      MVNPASSTHRU="${MVNPASSTHRU} $i"
-      ;;
-    -P*)
-      MVNPASSTHRU="${MVNPASSTHRU} $i"
+    --patchfile=*)
+      PATCHFILE=${i#*=}
       ;;
     esac
   done
-  if [[ "${OP}" == "" || "${TEMPDIR}" == "" ]] ; then
+  if [[ "${TASKNAME}" == "" || "${OP}" == "" || "${TEMPDIR}" == "" || "${REPORTDIR}" == "" || "${SUMMARYFILE}" == "" || "${PATCHFILE}" == "" ]] ; then
     echo "Missing options"
     echo
     printUsage
@@ -76,19 +73,47 @@ parseArgs() {
   fi
 }
 ###############################################################################
-
+checkJPAAnnotations() {
+  annotations=`grep -c -E "^(\+|\-).*(@Column|@Lob|@Basic|@Entity|@Transient)" ${PATCHFILE}`
+  if [[ ${annotations} != 0 ]] ; then
+    REPORT+=("-1 the patch seems to change ${annotations} line(s) with JPA Entity/Colum/Basic/Lob/Transient annotations")
+  else
+    REPORT+=("+1 the patch does not change any JPA Entity/Colum/Basic/Lob/Transient annotations")
+  fi
+}
+###############################################################################
+checkJPAFiles() {
+  persistenceXml=`grep -c -i -E '^\+\+\+.*/persistence.xml' ${PATCHFILE}`
+  ormXml=`grep -c -i -E '^\+\+\+.*/*-orm.xml' ${PATCHFILE}`
+  jpaFiles=`expr $persistenceXml + $ormXml`
+  if [[ ${jpaFiles} != 0 ]] ; then
+    REPORT+=("-1 the patch modifies ${jpaFiles} JPA file(s), persistence.xml or *-orm.xml")
+  else
+    REPORT+=("+1 the patch does not modify JPA files")
+  fi
+}
+###############################################################################
 
 parseArgs "$@"
 
 case $OP in
   pre)
-    mvn clean ${MVNPASSTHRU} > ${TEMPDIR}/${TASKNAME}.txt
-    exit $?
     ;;
   post)
     ;;
   report)
-    echo "   ${TASKNAME} cleaned target directories" >> $SUMMARYFILE
+    REPORT=()
+    checkJPAAnnotations
+    checkJPAFiles
+    total=`expr $annotations + $jpaFiles`
+    if [[ $total == 0 ]] ; then
+      echo "+1 ${TASKNAME}" >> $SUMMARYFILE
+    else
+      echo "-1 ${TASKNAME}" >> $SUMMARYFILE
+    fi
+    for line in "${REPORT[@]}" ; do
+      echo "    ${line}" >> $SUMMARYFILE
+    done
     ;;
 esac
 

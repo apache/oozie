@@ -12,6 +12,10 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+if [ "${TESTPATCHDEBUG}" == "true" ] ; then
+  set -x
+fi
+
 BASEDIR=$(pwd)
 TASKNAME="COMPILE"
 OP=""
@@ -83,10 +87,10 @@ checkForWarnings() {
   patchWarns=`cat ${TEMPDIR}/${TASKNAME}-javacwarns-patch.txt | awk 'BEGIN {total = 0} {total += 1} END {print total}'`
   newWarns=`expr $patchWarns - $cleanWarns`
   if [[ $newWarns -le 0 ]] ; then
-    RAW_REPORT+=("+1 the patch does not seem to introduce new javac warnings")
+    REPORT+=("+1 the patch does not seem to introduce new javac warnings")
     newWarns=0
   else
-    RAW_REPORT+=("-1 the patch seems to introduce $newWarns new javac warning(s)")
+    REPORT+=("-1 the patch seems to introduce $newWarns new javac warning(s)")
     newWarns=1
   fi
 }
@@ -113,10 +117,10 @@ case $OP in
     fi
     ;;
   report)
-    RAW_REPORT=()
+    REPORT=()
     compileErrors=0
     while read line; do
-      RAW_REPORT+=("$line")
+      REPORT+=("$line")
       if [[ "$line" =~ "-1" ]] ; then
         compileErrors=1
       fi
@@ -128,7 +132,7 @@ case $OP in
     else
       echo "-1 ${TASKNAME}" >> $SUMMARYFILE
     fi
-    for line in "${RAW_REPORT[@]}" ; do
+    for line in "${REPORT[@]}" ; do
       echo "    ${line}" >> $SUMMARYFILE
     done
     ;;

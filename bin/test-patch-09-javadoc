@@ -17,7 +17,7 @@ if [ "${TESTPATCHDEBUG}" == "true" ] ; then
 fi
 
 BASEDIR=$(pwd)
-TASKNAME="CLEAN"
+TASKNAME="JAVADOC"
 OP=""
 TEMPDIR=""
 REPORTDIR=""
@@ -30,7 +30,7 @@ cleanupAndExit() {
 }
 ###############################################################################
 printUsage() {
-  echo "Usage: $0 --taskname | (--op=pre|post|report --tempdir=<TEMP DIR>) [-D<VALUE>...] [-P<VALUE>...]"
+  echo "Usage: $0 --taskname | (--op=pre|post|report --tempdir=<TEMP DIR> --reportdir=<REPORT DIR> --summaryfile=<SUMMARY FILE>) [-D<VALUE>...] [-P<VALUE>...]"
   echo
 }
 ###############################################################################
@@ -62,7 +62,7 @@ parseArgs() {
       ;;
     esac
   done
-  if [[ "${OP}" == "" || "${TEMPDIR}" == "" ]] ; then
+  if [[ "${TASKNAME}" == "" || "${OP}" == "" || "${TEMPDIR}" == "" || "${REPORTDIR}" == "" || "${SUMMARYFILE}" == "" ]] ; then
     echo "Missing options"
     echo
     printUsage
@@ -76,19 +76,42 @@ parseArgs() {
   fi
 }
 ###############################################################################
-
+checkForWarnings() {
+  cleanWarns=`grep '\[WARNING\]' ${REPORTDIR}/${TASKNAME}-clean.txt | awk '/Javadoc Warnings/,EOF' | grep warning | awk 'BEGIN {total = 0} {total += 1} END {print total}'`
+  patchWarns=`grep '\[WARNING\]' ${REPORTDIR}/${TASKNAME}-patch.txt | awk '/Javadoc Warnings/,EOF' | grep warning | awk 'BEGIN {total = 0} {total += 1} END {print total}'`
+  newWarns=`expr $patchWarns - $cleanWarns`
+  if [[ $newWarns -le 0 ]] ; then
+    REPORT+=("+1 the patch does not seem to introduce new Javadoc warnings")
+    newWarns=0
+  else
+    REPORT+=("-1 the patch seems to introduce $newWarns new Javadoc warning(s)")
+    newWarns=1
+  fi
+  if [[ $cleanWarns != 0 ]] ; then
+    REPORT+=("WARNING: the current HEAD has $cleanWarns Javadoc warning(s)")
+  fi
+}
+###############################################################################
 
 parseArgs "$@"
 
 case $OP in
   pre)
-    mvn clean ${MVNPASSTHRU} > ${TEMPDIR}/${TASKNAME}.txt
-    exit $?
+    mvn clean javadoc:javadoc ${MVNPASSTHRU} > ${REPORTDIR}/${TASKNAME}-clean.txt
     ;;
   post)
+    mvn clean javadoc:javadoc ${MVNPASSTHRU} > ${REPORTDIR}/${TASKNAME}-patch.txt
     ;;
   report)
-    echo "   ${TASKNAME} cleaned target directories" >> $SUMMARYFILE
+    checkForWarnings
+    if [[ $newWarns == 0 ]] ; then
+      echo "+1 ${TASKNAME}" >> $SUMMARYFILE
+    else
+      echo "-1 ${TASKNAME}" >> $SUMMARYFILE
+    fi
+    for line in "${REPORT[@]}" ; do
+      echo "    ${line}" >> $SUMMARYFILE
+    done
     ;;
 esac
 

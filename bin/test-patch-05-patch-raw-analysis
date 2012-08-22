@@ -12,6 +12,10 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+if [ "${TESTPATCHDEBUG}" == "true" ] ; then
+  set -x
+fi
+
 BASEDIR=$(pwd)
 TASKNAME="RAW_PATCH_ANALYSIS"
 OP=""
@@ -53,12 +57,6 @@ parseArgs() {
     --patchfile=*)
       PATCHFILE=${i#*=}
       ;;
-    *)
-      echo "Invalid option"
-      echo
-      printUsage
-      cleanupAndExit 1
-      ;;
     esac
   done
   if [[ "${TASKNAME}" == "" || "${OP}" == "" || "${TEMPDIR}" == "" || "${REPORTDIR}" == "" || "${SUMMARYFILE}" == "" || "${PATCHFILE}" == "" ]] ; then
@@ -78,47 +76,47 @@ parseArgs() {
 checkNoAuthors() {
   authorTags=`grep "^+ " ${PATCHFILE} | grep -c -i -e ".*\*.* @author"`
   if [[ ${authorTags} != 0 ]] ; then
-    RAW_REPORT+=("-1 the patch seems to contain ${authorTags} line(s) with @author tags")
+    REPORT+=("-1 the patch seems to contain ${authorTags} line(s) with @author tags")
   else
-    RAW_REPORT+=("+1 the patch does not introduce any @author tags")
+    REPORT+=("+1 the patch does not introduce any @author tags")
   fi
 }
 ###############################################################################
 checkNoTabs() {
   tabs=`grep "^+ " ${PATCHFILE} | grep -c -P "\t"`
   if [[ ${tabs} != 0 ]] ; then
-    RAW_REPORT+=("-1 the patch contains ${tabs} line(s) with tabs")
+    REPORT+=("-1 the patch contains ${tabs} line(s) with tabs")
   else
-    RAW_REPORT+=("+1 the patch does not introduce any tabs")
+    REPORT+=("+1 the patch does not introduce any tabs")
   fi
 }
 ###############################################################################
 checkNoTrailingSpaces() {
   trailingSpaces=`grep "^+ " ${PATCHFILE} | grep -c -e " $"`
   if [[ ${trailingSpaces} != 0 ]] ; then
-    RAW_REPORT+=("-1 the patch contains ${trailingSpaces} line(s) with trailing spaces")
+    REPORT+=("-1 the patch contains ${trailingSpaces} line(s) with trailing spaces")
   else
-    RAW_REPORT+=("+1 the patch does not introduce any trailing spaces")
+    REPORT+=("+1 the patch does not introduce any trailing spaces")
   fi
 }
 ###############################################################################
 checkLinesLength() {
   longLines=`grep "^+ " ${PATCHFILE} | awk 'BEGIN{count=0}{if ( length > 132 ) { count=count+1} }END{ print count}'`
   if [[ ${longLines} != 0 ]] ; then
-    RAW_REPORT+=("-1 the patch contains ${longLines} line(s) longer than 132 characters")
+    REPORT+=("-1 the patch contains ${longLines} line(s) longer than 132 characters")
   else
-    RAW_REPORT+=("+1 the patch does not introduce any line longer than 132")
+    REPORT+=("+1 the patch does not introduce any line longer than 132")
   fi
 }
 ###############################################################################
 checkForTestcases() {
   testcases=`grep -c -i -e '^+++.*/test' ${PATCHFILE}`
   if [[ ${testcases} == 0 ]] ; then
-    RAW_REPORT+=("-1 the patch does not add/modify any testcase")
+    REPORT+=("-1 the patch does not add/modify any testcase")
     #reverting for summary +1 calculation
     testcases=1
   else
-    RAW_REPORT+=("+1 the patch does adds/modifies ${testcases} testcase(s)")
+    REPORT+=("+1 the patch does adds/modifies ${testcases} testcase(s)")
     #reverting for summary +1 calculation
     testcases=0
   fi
@@ -133,7 +131,7 @@ case $OP in
   post)
     ;;
   report)
-    RAW_REPORT=()
+    REPORT=()
     checkNoAuthors
     checkNoTabs
     checkNoTrailingSpaces
@@ -145,7 +143,7 @@ case $OP in
     else
       echo "-1 ${TASKNAME}" >> $SUMMARYFILE
     fi
-    for line in "${RAW_REPORT[@]}" ; do
+    for line in "${REPORT[@]}" ; do
       echo "    ${line}" >> $SUMMARYFILE
     done
     ;;
