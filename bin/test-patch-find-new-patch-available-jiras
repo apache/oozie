@@ -14,7 +14,6 @@
 
 BASEDIR=$(pwd)
 TEMPDIR=${BASEDIR}/tmp
-STDOUT="/dev/null"
 
 JIRAAVAILPATCHQUERY="https://issues.apache.org/jira/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?jqlQuery=project+in+%28OOZIE%29+AND+status+%3D+%22Patch+Available%22+ORDER+BY+updated+DESC&tempMax=1000"
 TESTPATCHJOBURL="https://builds.apache.org/job/oozie-trunk-precommit-build"
@@ -67,16 +66,16 @@ parseArgs() {
 findAndSubmitAvailablePatches() {
 
 ## Grab all the key (issue numbers) and largest attachment id for each item in the XML
-curl "${JIRAAVAILPATCHQUERY}" > ${TEMPDIR}/patch-availables.xml
+curl --fail --location --retry 3 "${JIRAAVAILPATCHQUERY}" > ${TEMPDIR}/patch-availables.xml
 if [ "$?" != "0" ] ; then
     echo "Could not retrieve available patches from JIRA"
     exit 1
 fi
-xpath -q -e "//item/key/text() | //item/attachments/attachment[not(../attachment/@id > @id)]/@id" ${TEMPDIR}/patch-availables.xml | tee -a $STDOUT > ${TEMPDIR}/patch-attachments.element
+xpath -q -e "//item/key/text() | //item/attachments/attachment[not(../attachment/@id > @id)]/@id" ${TEMPDIR}/patch-availables.xml > ${TEMPDIR}/patch-attachments.element
 
 ### Replace newlines with nothing, then replace id=" with =, then replace " with newline
 ### to yield lines with pairs (issueNumber,largestAttachmentId). Example: OOZIE-123,456984
-cat ${TEMPDIR}/patch-attachments.element | awk '{ if ( $1 ~ /^OOZIE\-/) {JIRA=$1 }; if ($1 ~ /id=/) { print JIRA","$1} }' | sed 's/id\="//' | sed 's/"//' | tee -a $STDOUT > ${TEMPDIR}/patch-availables.pair
+cat ${TEMPDIR}/patch-attachments.element | awk '{ if ( $1 ~ /^OOZIE\-/) {JIRA=$1 }; if ($1 ~ /id=/) { print JIRA","$1} }' | sed 's/id\="//' | sed 's/"//' > ${TEMPDIR}/patch-availables.pair
 
 ### Iterate through issue list and find the (issueNumber,largestAttachmentId) pairs that have
 ### not been tested (ie don't already exist in the patch_tested.txt file
@@ -91,8 +90,8 @@ cat ${TEMPDIR}/patch-availables.pair | while read PAIR ; do
     echo "Found new patch for issue $ISSUE"
     if [ "$SUBMIT" == "true" ]; then
       ### Kick off job
-      echo "Starting job for issue $ISSUE"
-      curl --fail --location --retry 3 "${TESTPATCHJOBURL}/buildWithParameters?token=${TOKEN}&JIRA_NUMBER=${ISSUE}" >> $STDOUT
+      echo "Submitting job for issue $ISSUE"
+      curl --fail --location --retry 3 "${TESTPATCHJOBURL}/buildWithParameters?token=${TOKEN}&JIRA_NUMBER=${ISSUE}" > /dev/null
       if [ "$?" != "0" ] ; then
         echo "Could not submit precommit job for $ISSUE"
         exit 1
