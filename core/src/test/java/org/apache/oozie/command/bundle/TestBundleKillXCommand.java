@@ -111,7 +111,7 @@ public class TestBundleKillXCommand extends XDataTestCase {
         job = jpaService.execute(bundleJobGetCmd);
         assertEquals(Job.Status.RUNNING, job.getStatus());
 
-        Thread.sleep(2000);
+        sleep(2000);
 
         BundleActionsGetJPAExecutor bundleActionsGetCmd = new BundleActionsGetJPAExecutor(job.getId());
         List<BundleActionBean> actions = jpaService.execute(bundleActionsGetCmd);

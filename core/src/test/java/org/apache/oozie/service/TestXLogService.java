@@ -97,7 +97,7 @@ public class TestXLogService extends XTestCase {
         XLogService ls = new XLogService();
         ls.init(null);
         assertTrue(LogFactory.getLog("a").isTraceEnabled());
-        Thread.sleep(1 * 1000);
+        sleep(1 * 1000);
         is = cl.getResourceAsStream("test-custom-log4j.properties");
         IOUtils.copyStream(is, new FileOutputStream(log4jFile));
         float originalRatio = XTestCase.WAITFOR_RATIO;

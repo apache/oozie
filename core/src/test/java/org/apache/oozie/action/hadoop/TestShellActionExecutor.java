@@ -245,7 +245,7 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         // Thread.sleep(2000);
         assertTrue(launcherJob.isSuccessful());
 
-        Thread.sleep(2000);// Wait more to make sure no ID swap happens
+        sleep(2000);// Wait more to make sure no ID swap happens
         assertFalse(LauncherMapper.hasIdSwap(launcherJob));
 
         ShellActionExecutor ae = new ShellActionExecutor();

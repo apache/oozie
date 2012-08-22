@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-957 TestStatusTransitService and TestCoordKillXCommand are failing randomly; replace Thread.sleep() (rkanter via tucu)
 OOZIE-477 Adding configurable filesystem support instead of hardcoded "hdfs" (mayank, mona via tucu)
 OOZIE-906 Show runtime job DAG visually in Oozie console/dashboard (vaidya via virag)
 OOZIE-958 typo in error message of E0736 (egashira via virag)

@@ -49,7 +49,7 @@ public class TestWorkflowActionsRunningGetJPAExecutor extends XDataTestCase {
         WorkflowJobBean job = addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
         addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.OK);
         addRecordToWfActionTableWithRunningStatus(job.getId(), "2", WorkflowAction.Status.RUNNING);
-        Thread.sleep(2000);
+        sleep(2000);
         _testGetRunningActions(1);
     }
 

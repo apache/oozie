@@ -232,7 +232,7 @@ public class TestSshActionExecutor extends XFsTestCase {
         final Context context = new Context(workflow, action);
         ssh.start(context, action);
 
-        Thread.sleep(200);
+        sleep(200);
         final WorkflowActionBean action1 = new WorkflowActionBean();
         action1.setId("actionId");
         action1.setConf("<ssh xmlns='" + getActionXMLSchema() + "'>" +
@@ -244,7 +244,7 @@ public class TestSshActionExecutor extends XFsTestCase {
         action1.setName("ssh");
         final SshActionExecutor ssh1 = new SshActionExecutor();
         final Context context1 = new Context(workflow, action1);
-        Thread.sleep(500);
+        sleep(500);
         ssh1.start(context1, action1);
         assertEquals(action1.getExternalId(), action.getExternalId());
 

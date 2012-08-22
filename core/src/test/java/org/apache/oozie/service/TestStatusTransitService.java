@@ -89,7 +89,7 @@ public class TestStatusTransitService extends XDataTestCase {
 
         Runnable runnable = new StatusTransitRunnable();
         runnable.run();
-        Thread.sleep(1000);
+        sleep(1000);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         CoordJobGetJPAExecutor coordGetCmd = new CoordJobGetJPAExecutor(job.getId());
@@ -115,7 +115,7 @@ public class TestStatusTransitService extends XDataTestCase {
 
         Runnable runnable = new StatusTransitRunnable();
         runnable.run();
-        Thread.sleep(1000);
+        sleep(1000);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         CoordJobGetJPAExecutor coordGetCmd = new CoordJobGetJPAExecutor(job.getId());
@@ -152,7 +152,7 @@ public class TestStatusTransitService extends XDataTestCase {
 
         Runnable runnable = new StatusTransitRunnable();
         runnable.run();
-        Thread.sleep(1000);
+        sleep(1000);
 
         CoordJobGetJPAExecutor coordGetCmd = new CoordJobGetJPAExecutor(coordJob.getId());
         coordJob = jpaService.execute(coordGetCmd);
@@ -385,7 +385,7 @@ public class TestStatusTransitService extends XDataTestCase {
 
         assertEquals(Job.Status.SUSPENDED, coordJob.getStatus());
 
-        Thread.sleep(3000);
+        sleep(3000);
 
         new CoordResumeXCommand(coordJobId).call();
 
@@ -635,7 +635,7 @@ public class TestStatusTransitService extends XDataTestCase {
 
         Runnable runnable = new StatusTransitRunnable();
         runnable.run();
-        Thread.sleep(1000);
+        sleep(1000);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         CoordJobGetJPAExecutor coordGetCmd = new CoordJobGetJPAExecutor(job.getId());
@@ -760,14 +760,14 @@ public class TestStatusTransitService extends XDataTestCase {
 
         assertEquals(Job.Status.SUSPENDED, job.getStatus());
 
-        Thread.sleep(3000);
+        sleep(3000);
 
         new BundleJobResumeXCommand(bundleId).call();
 
         job = jpaService.execute(bundleJobGetCmd);
         assertTrue(job.getStatus() == Job.Status.SUCCEEDED || job.getStatus() == Job.Status.RUNNING);
 
-        Thread.sleep(3000);
+        sleep(3000);
 
         Runnable runnable = new StatusTransitRunnable();
         runnable.run();
@@ -1175,7 +1175,7 @@ public class TestStatusTransitService extends XDataTestCase {
 
         runnable = new StatusTransitRunnable();
         runnable.run();
-        Thread.sleep(1000);
+        sleep(1000);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         CoordJobGetJPAExecutor coordGetCmd = new CoordJobGetJPAExecutor(job.getId());

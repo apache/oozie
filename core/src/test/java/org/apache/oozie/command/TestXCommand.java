@@ -164,7 +164,7 @@ public class TestXCommand extends XTestCase {
     public void testXCommandLifecycleLockingFailingToLock() throws Exception {
         Thread t = new LockGetter();
         t.start();
-        Thread.sleep(150);
+        sleep(150);
         AXCommand command = new AXCommand(true);
         try {
             command.call();
@@ -212,7 +212,7 @@ public class TestXCommand extends XTestCase {
                 if (lock == null) {
                     fail();
                 }
-                Thread.sleep(150);
+                sleep(150);
             }
             catch (InterruptedException ex) {
                 // NOP

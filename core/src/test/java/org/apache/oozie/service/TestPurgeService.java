@@ -110,7 +110,7 @@ public class TestPurgeService extends XDataTestCase {
         });
         assertEquals(WorkflowJob.Status.SUCCEEDED, engine.getJob(jobId).getStatus());
         new PurgeXCommand(1, 10000).call();
-        Thread.sleep(1000);
+        sleep(1000);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(jobId);
