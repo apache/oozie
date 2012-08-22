@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-918 Changing log level from DEBUG to TRACE for trivial log statements (mona via virag)
 OOZIE-957 TestStatusTransitService and TestCoordKillXCommand are failing randomly; replace Thread.sleep() (rkanter via tucu)
 OOZIE-477 Adding configurable filesystem support instead of hardcoded "hdfs" (mayank, mona via tucu)
 OOZIE-906 Show runtime job DAG visually in Oozie console/dashboard (vaidya via virag)
