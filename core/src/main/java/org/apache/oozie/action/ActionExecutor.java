@@ -27,9 +27,10 @@ import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.servlet.CallbackServlet;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
@@ -264,6 +265,7 @@ public abstract class ActionExecutor {
      * all its possible errors. <p/> Subclasses overriding must invoke super.
      */
     public void initActionType() {
+        XLog.getLog(getClass()).trace(" Init Action Type : [{0}]", getType());
         ERROR_INFOS.put(getType(), new LinkedHashMap<Class, ErrorInfo>());
     }
 
@@ -312,10 +314,15 @@ public abstract class ActionExecutor {
             Map<Class, ErrorInfo> executorErrorInfo = ERROR_INFOS.get(getType());
             executorErrorInfo.put(klass, new ErrorInfo(errorType, errorCode));
         }
-        catch (ClassNotFoundException ex) {
+        catch (ClassNotFoundException cnfe) {
             XLog.getLog(getClass()).warn(
-                    "Exception [{0}] no in classpath, ActionExecutor [{1}] will handled it as ERROR", exClass,
+                    "Exception [{0}] not in classpath, ActionExecutor [{1}] will handle it as ERROR", exClass,
                     getType());
+        }
+        catch (java.lang.NoClassDefFoundError err) {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            err.printStackTrace(new PrintStream(baos));
+            XLog.getLog(getClass()).warn(baos.toString());
         }
     }
 

@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-934 Exception reporting during Services startup is inadequate (mona via virag)
 OOZIE-914 Make sure all commands do their JPA writes within a single JPA executor (mona via virag)
 OOZIE-918 Changing log level from DEBUG to TRACE for trivial log statements (mona via virag)
 OOZIE-957 TestStatusTransitService and TestCoordKillXCommand are failing randomly; replace Thread.sleep() (rkanter via tucu)

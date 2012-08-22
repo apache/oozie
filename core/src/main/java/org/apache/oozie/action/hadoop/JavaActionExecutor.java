@@ -18,11 +18,13 @@
 package org.apache.oozie.action.hadoop;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.io.StringReader;
 import java.net.ConnectException;
 import java.net.URI;
@@ -132,6 +134,7 @@ public class JavaActionExecutor extends ActionExecutor {
 
     @Override
     public void initActionType() {
+        XLog log = XLog.getLog(getClass());
         super.initActionType();
         maxActionOutputLen = getOozieConf()
           .getInt(LauncherMapper.CONF_OOZIE_ACTION_MAX_OUTPUT_DATA,
@@ -165,6 +168,11 @@ public class JavaActionExecutor extends ActionExecutor {
         }
         catch (IOException ex) {
             throw new RuntimeException(ex);
+        }
+        catch (java.lang.NoClassDefFoundError err) {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            err.printStackTrace(new PrintStream(baos));
+            log.warn(baos.toString());
         }
     }
 
