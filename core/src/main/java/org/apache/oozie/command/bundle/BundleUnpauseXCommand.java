@@ -116,4 +116,8 @@ public class BundleUnpauseXCommand extends UnpauseTransitionXCommand {
 
     }
 
+    @Override
+    public void performWrites() throws CommandException {
+    }
+
 }

@@ -20,7 +20,9 @@ package org.apache.oozie.command.wf;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -36,13 +38,13 @@ import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.executor.jpa.BulkUpdateDeleteJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
-import org.apache.oozie.executor.jpa.WorkflowActionDeleteJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionsGetForJobJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
-import org.apache.oozie.executor.jpa.WorkflowJobUpdateJPAExecutor;
 import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
@@ -77,6 +79,8 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
     private WorkflowJobBean wfBean;
     private List<WorkflowActionBean> actions;
     private JPAService jpaService;
+    private List<JsonBean> updateList = new ArrayList<JsonBean>();
+    private List<JsonBean> deleteList = new ArrayList<JsonBean>();
 
     private static final Set<String> DISALLOWED_DEFAULT_PROPERTIES = new HashSet<String>();
     private static final Set<String> DISALLOWED_USER_PROPERTIES = new HashSet<String>();
@@ -166,32 +170,36 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
             throw new CommandException(ErrorCode.E0711, ex.getMessage(), ex);
         }
 
-        try {
-            for (int i = 0; i < actions.size(); i++) {
-                if (!nodesToSkip.contains(actions.get(i).getName())) {
-                    jpaService.execute(new WorkflowActionDeleteJPAExecutor(actions.get(i).getId()));
-                    LOG.info("Deleting Action[{0}] for re-run", actions.get(i).getId());
-                }
-                else {
-                    copyActionData(newWfInstance, oldWfInstance);
-                }
+        for (int i = 0; i < actions.size(); i++) {
+            if (!nodesToSkip.contains(actions.get(i).getName())) {
+                deleteList.add(actions.get(i));
+                LOG.info("Deleting Action[{0}] for re-run", actions.get(i).getId());
             }
-
-            wfBean.setAppPath(conf.get(OozieClient.APP_PATH));
-            wfBean.setConf(XmlUtils.prettyPrint(conf).toString());
-            wfBean.setLogToken(conf.get(OozieClient.LOG_TOKEN, ""));
-            wfBean.setUser(conf.get(OozieClient.USER_NAME));
-            String group = ConfigUtils.getWithDeprecatedCheck(conf, OozieClient.JOB_ACL, OozieClient.GROUP_NAME, null);
-            wfBean.setGroup(group);
-            wfBean.setExternalId(conf.get(OozieClient.EXTERNAL_ID));
-            wfBean.setEndTime(null);
-            wfBean.setRun(wfBean.getRun() + 1);
-            wfBean.setStatus(WorkflowJob.Status.PREP);
-            wfBean.setWorkflowInstance(newWfInstance);
-            jpaService.execute(new WorkflowJobUpdateJPAExecutor(wfBean));
+            else {
+                copyActionData(newWfInstance, oldWfInstance);
+            }
         }
-        catch (JPAExecutorException e) {
-            throw new CommandException(e);
+
+        wfBean.setAppPath(conf.get(OozieClient.APP_PATH));
+        wfBean.setConf(XmlUtils.prettyPrint(conf).toString());
+        wfBean.setLogToken(conf.get(OozieClient.LOG_TOKEN, ""));
+        wfBean.setUser(conf.get(OozieClient.USER_NAME));
+        String group = ConfigUtils.getWithDeprecatedCheck(conf, OozieClient.JOB_ACL, OozieClient.GROUP_NAME, null);
+        wfBean.setGroup(group);
+        wfBean.setExternalId(conf.get(OozieClient.EXTERNAL_ID));
+        wfBean.setEndTime(null);
+        wfBean.setRun(wfBean.getRun() + 1);
+        wfBean.setStatus(WorkflowJob.Status.PREP);
+        wfBean.setWorkflowInstance(newWfInstance);
+
+        try {
+            wfBean.setLastModifiedTime(new Date());
+            updateList.add(wfBean);
+            // call JPAExecutor to do the bulk writes
+            jpaService.execute(new BulkUpdateDeleteJPAExecutor(updateList, deleteList, true));
+        }
+        catch (JPAExecutorException je) {
+            throw new CommandException(je);
         }
 
         return null;

@@ -17,15 +17,15 @@
  */
 package org.apache.oozie.command.coord;
 
+import java.util.Collection;
 import java.util.List;
 
-import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
+import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
-import org.apache.oozie.executor.jpa.CoordActionsDeleteForPurgeJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordJobDeleteJPAExecutor;
+import org.apache.oozie.executor.jpa.BulkDeleteForPurgeJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobsGetForPurgeJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
@@ -38,7 +38,7 @@ public class CoordPurgeXCommand extends CoordinatorXCommand<Void> {
     private JPAService jpaService = null;
     private final int olderThan;
     private final int limit;
-    private List<CoordinatorJobBean> jobList = null;
+    private List<? extends JsonBean> jobList = null;
 
     public CoordPurgeXCommand(int olderThan, int limit) {
         super("coord_purge", "coord_purge", 0);
@@ -55,15 +55,11 @@ public class CoordPurgeXCommand extends CoordinatorXCommand<Void> {
 
         int actionDeleted = 0;
         if (jobList != null && jobList.size() != 0) {
-            for (CoordinatorJobBean coord : jobList) {
-                String jobId = coord.getId();
-                try {
-                    jpaService.execute(new CoordJobDeleteJPAExecutor(jobId));
-                    actionDeleted += jpaService.execute(new CoordActionsDeleteForPurgeJPAExecutor(jobId));
-                }
-                catch (JPAExecutorException e) {
-                    throw new CommandException(e);
-                }
+            try {
+                actionDeleted = jpaService.execute(new BulkDeleteForPurgeJPAExecutor((Collection<JsonBean>) jobList));
+            }
+            catch (JPAExecutorException je) {
+                throw new CommandException(je);
             }
             LOG.debug("ENDED Coord-Purge deleted jobs :" + jobList.size() + " and actions " + actionDeleted);
         }

@@ -17,17 +17,10 @@
  */
 package org.apache.oozie.command.coord;
 
-import org.apache.oozie.CoordinatorJobBean;
-import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.command.Command;
-import org.apache.oozie.command.CommandException;
-import org.apache.oozie.service.DagXLogInfoService;
-import org.apache.oozie.service.XLogService;
 import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.store.Store;
-import org.apache.oozie.store.StoreException;
 import org.apache.oozie.store.WorkflowStore;
-import org.apache.oozie.util.XLog;
 
 public abstract class CoordinatorCommand<T> extends Command<T, CoordinatorStore> {
 
@@ -35,9 +28,12 @@ public abstract class CoordinatorCommand<T> extends Command<T, CoordinatorStore>
         super(name, type, priority, logMask);
     }
 
-    public CoordinatorCommand(String name, String type, int priority, int logMask,
-                              boolean dryrun) {
-        super(name, type, priority, logMask, (dryrun) ? false : true, dryrun);
+    public CoordinatorCommand(String name, String type, int priority, int logMask, boolean withStore) {
+        super(name, type, priority, logMask, withStore);
+    }
+
+    public CoordinatorCommand(String name, String type, int priority, int logMask, boolean withStore, boolean dryrun) {
+        super(name, type, priority, logMask, (dryrun) ? false : withStore, dryrun);
     }
 
     /**

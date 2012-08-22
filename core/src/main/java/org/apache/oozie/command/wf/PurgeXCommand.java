@@ -17,25 +17,25 @@
  */
 package org.apache.oozie.command.wf;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.XException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.executor.jpa.BulkDeleteForPurgeJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
-import org.apache.oozie.executor.jpa.WorkflowActionsDeleteForPurgeJPAExecutor;
-import org.apache.oozie.executor.jpa.WorkflowJobDeleteJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobsGetForPurgeJPAExecutor;
 
 public class PurgeXCommand extends WorkflowXCommand<Void> {
     private JPAService jpaService = null;
     private int olderThan;
     private int limit;
-    private List<WorkflowJobBean> jobList = null;
+    private List<? extends JsonBean> jobList = null;
 
     public PurgeXCommand(int olderThan, int limit) {
         super("purge", "purge", 0);
@@ -49,15 +49,11 @@ public class PurgeXCommand extends WorkflowXCommand<Void> {
 
         int actionDeleted = 0;
         if (jobList != null && jobList.size() != 0) {
-            for (WorkflowJobBean w : jobList) {
-                String wfId = w.getId();
-                try {
-                    jpaService.execute(new WorkflowJobDeleteJPAExecutor(wfId));
-                    actionDeleted += jpaService.execute(new WorkflowActionsDeleteForPurgeJPAExecutor(wfId));
-                }
-                catch (JPAExecutorException e) {
-                    throw new CommandException(e);
-                }
+            try {
+                actionDeleted = jpaService.execute(new BulkDeleteForPurgeJPAExecutor((Collection<JsonBean>) jobList));
+            }
+            catch (JPAExecutorException je) {
+                throw new CommandException(je);
             }
             LOG.debug("ENDED Workflow-Purge deleted jobs :" + jobList.size() + " and actions " + actionDeleted);
         }

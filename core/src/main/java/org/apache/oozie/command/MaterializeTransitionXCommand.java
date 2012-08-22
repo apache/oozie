@@ -71,6 +71,7 @@ public abstract class MaterializeTransitionXCommand extends TransitionXCommand<V
         try {
             materialize();
             updateJob();
+            performWrites();
         } finally {
             notifyParent();
         }

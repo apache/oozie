@@ -31,10 +31,9 @@ import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.SuspendTransitionXCommand;
 import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.command.wf.SuspendXCommand;
-import org.apache.oozie.executor.jpa.CoordActionUpdateStatusJPAExecutor;
+import org.apache.oozie.executor.jpa.BulkUpdateInsertForCoordActionStatusJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetActionsRunningJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordJobUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
@@ -150,12 +149,7 @@ public class CoordSuspendXCommand extends SuspendTransitionXCommand {
                 coordJob.resetPending();
                 LOG.debug("Exception happened, fail coordinator job id = " + jobId + ", status = "
                         + coordJob.getStatus());
-                try {
-                    jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
-                }
-                catch (JPAExecutorException je) {
-                    LOG.error("Failed to update coordinator job : " + jobId, je);
-                }
+                updateList.add(coordJob);
             }
         }
     }
@@ -176,29 +170,32 @@ public class CoordSuspendXCommand extends SuspendTransitionXCommand {
      * @see org.apache.oozie.command.TransitionXCommand#updateJob()
      */
     @Override
-    public void updateJob() throws CommandException {
+    public void updateJob() {
         InstrumentUtils.incrJobCounter(getName(), 1, getInstrumentation());
         coordJob.setLastModifiedTime(new Date());
         coordJob.setSuspendedTime(new Date());
         LOG.debug("Suspend coordinator job id = " + jobId + ", status = " + coordJob.getStatus() + ", pending = " + coordJob.isPending());
+        updateList.add(coordJob);
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.SuspendTransitionXCommand#performWrites()
+     */
+    @Override
+    public void performWrites() throws CommandException {
         try {
-            jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
+            jpaService.execute(new BulkUpdateInsertForCoordActionStatusJPAExecutor(updateList, null));
         }
-        catch (JPAExecutorException e) {
-            throw new CommandException(e);
+        catch (JPAExecutorException jex) {
+            throw new CommandException(jex);
         }
     }
 
-    private void updateCoordAction(CoordinatorActionBean action) throws CommandException {
+    private void updateCoordAction(CoordinatorActionBean action) {
         action.setStatus(CoordinatorActionBean.Status.SUSPENDED);
         action.incrementAndGetPending();
         action.setLastModifiedTime(new Date());
-        try {
-            jpaService.execute(new CoordActionUpdateStatusJPAExecutor(action));
-        }
-        catch (JPAExecutorException e) {
-            throw new CommandException(e);
-        }
+        updateList.add(action);
     }
 
     /* (non-Javadoc)

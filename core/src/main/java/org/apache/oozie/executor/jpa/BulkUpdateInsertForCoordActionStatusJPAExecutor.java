@@ -18,8 +18,12 @@
 package org.apache.oozie.executor.jpa;
 
 import java.util.Collection;
+import java.util.Date;
 
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
+
+import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.FaultInjection;
 import org.apache.oozie.client.rest.JsonBean;
@@ -27,28 +31,30 @@ import org.apache.oozie.util.ParamChecker;
 
 /**
  * Class for inserting and updating beans in bulk
- * @param <T>
-*/
-public class BulkUpdateInsertJPAExecutor implements JPAExecutor<Void> {
+ *
+ */
+public class BulkUpdateInsertForCoordActionStatusJPAExecutor implements JPAExecutor<Void> {
 
     private Collection<JsonBean> updateList;
     private Collection<JsonBean> insertList;
 
     /**
-     * Initialize the JPAExecutor using the insert and update list of JSON beans
+     * Initialize the JPAExecutor using the update and insert list of JSON beans
+     *
      * @param updateList
-     * @param insertList
      */
-    public BulkUpdateInsertJPAExecutor(Collection<JsonBean> updateList, Collection<JsonBean> insertList) {
+    public BulkUpdateInsertForCoordActionStatusJPAExecutor(Collection<JsonBean> updateList,
+            Collection<JsonBean> insertList) {
         this.updateList = updateList;
         this.insertList = insertList;
     }
 
-    public BulkUpdateInsertJPAExecutor() {
+    public BulkUpdateInsertForCoordActionStatusJPAExecutor() {
     }
 
     /**
      * Sets the update list for JSON bean
+     *
      * @param updateList
      */
     public void setUpdateList(Collection<JsonBean> updateList) {
@@ -57,47 +63,62 @@ public class BulkUpdateInsertJPAExecutor implements JPAExecutor<Void> {
 
     /**
      * Sets the insert list for JSON bean
+     *
      * @param insertList
      */
     public void setInsertList(Collection<JsonBean> insertList) {
         this.insertList = insertList;
     }
 
-
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     *
      * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
      */
     @Override
     public String getName() {
-        return "BulkUpdateInsertJPAExecutor";
+        return "BulkUpdateInsertForCoordActionStatusJPAExecutor";
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
+    /*
+     * (non-Javadoc)
+     *
+     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.
+     * EntityManager)
      */
     @Override
     public Void execute(EntityManager em) throws JPAExecutorException {
         try {
-            if (insertList!= null){
-                for (JsonBean entity: insertList){
+            if (insertList != null) {
+                for (JsonBean entity : insertList) {
                     ParamChecker.notNull(entity, "JsonBean");
                     em.persist(entity);
                 }
             }
             // Only used by test cases to check for rollback of transaction
             FaultInjection.activate("org.apache.oozie.command.SkipCommitFaultInjection");
-            if (updateList!= null){
-                for (JsonBean entity: updateList){
+            if (updateList != null) {
+                for (JsonBean entity : updateList) {
                     ParamChecker.notNull(entity, "JsonBean");
-                    em.merge(entity);
+                    if (entity instanceof CoordinatorActionBean) {
+                        CoordinatorActionBean action = (CoordinatorActionBean) entity;
+                        Query q = em.createNamedQuery("UPDATE_COORD_ACTION_STATUS_PENDING_TIME");
+                        q.setParameter("id", action.getId());
+                        q.setParameter("status", action.getStatus().toString());
+                        q.setParameter("pending", action.getPending());
+                        q.setParameter("lastModifiedTime", new Date());
+                        q.executeUpdate();
+                    }
+                    else {
+                        em.merge(entity);
+                    }
                 }
             }
+            // Since the return type is Void, we have to return null
             return null;
         }
         catch (Exception e) {
             throw new JPAExecutorException(ErrorCode.E0603, e);
         }
     }
-
-
 }

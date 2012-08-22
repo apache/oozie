@@ -17,12 +17,15 @@
  */
 package org.apache.oozie.command.wf;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import javax.servlet.jsp.el.ELException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.FaultInjection;
+import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.XException;
@@ -34,14 +37,14 @@ import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.client.SLAEvent.Status;
+import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.coord.CoordActionUpdateXCommand;
+import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionGetJPAExecutor;
-import org.apache.oozie.executor.jpa.WorkflowActionUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
-import org.apache.oozie.executor.jpa.WorkflowJobUpdateJPAExecutor;
 import org.apache.oozie.service.ActionService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
@@ -66,6 +69,8 @@ public class ActionStartXCommand extends ActionXCommand<Void> {
     private WorkflowActionBean wfAction = null;
     private JPAService jpaService = null;
     private ActionExecutor executor = null;
+    private List<JsonBean> updateList = new ArrayList<JsonBean>();
+    private List<JsonBean> insertList = new ArrayList<JsonBean>();
 
     public ActionStartXCommand(String actionId, String type) {
         super("action.start", type, 0);
@@ -159,6 +164,7 @@ public class ActionStartXCommand extends ActionXCommand<Void> {
                 isUserRetry = true;
             }
             context = new ActionXCommand.ActionExecutorContext(wfJob, wfAction, isRetry, isUserRetry);
+            boolean caught = false;
             try {
                 if (!(executor instanceof ControlNodeActionExecutor)) {
                     String tmpActionConf = XmlUtils.removeComments(wfAction.getConf());
@@ -169,79 +175,81 @@ public class ActionStartXCommand extends ActionXCommand<Void> {
                 }
             }
             catch (ELEvaluationException ex) {
+                caught = true;
                 throw new ActionExecutorException(ActionExecutorException.ErrorType.TRANSIENT, EL_EVAL_ERROR, ex
                         .getMessage(), ex);
             }
             catch (ELException ex) {
+                caught = true;
                 context.setErrorInfo(EL_ERROR, ex.getMessage());
                 LOG.warn("ELException in ActionStartXCommand ", ex.getMessage(), ex);
                 handleError(context, wfJob, wfAction);
-                return null;
             }
             catch (org.jdom.JDOMException je) {
+                caught = true;
                 context.setErrorInfo("ParsingError", je.getMessage());
                 LOG.warn("JDOMException in ActionStartXCommand ", je.getMessage(), je);
                 handleError(context, wfJob, wfAction);
-                return null;
             }
             catch (Exception ex) {
+                caught = true;
                 context.setErrorInfo(EL_ERROR, ex.getMessage());
                 LOG.warn("Exception in ActionStartXCommand ", ex.getMessage(), ex);
                 handleError(context, wfJob, wfAction);
-                return null;
             }
-            wfAction.setErrorInfo(null, null);
-            incrActionCounter(wfAction.getType(), 1);
+            if(!caught) {
+                wfAction.setErrorInfo(null, null);
+                incrActionCounter(wfAction.getType(), 1);
 
-            LOG.info("Start action [{0}] with user-retry state : userRetryCount [{1}], userRetryMax [{2}], userRetryInterval [{3}]",
-                            wfAction.getId(), wfAction.getUserRetryCount(), wfAction.getUserRetryMax(), wfAction
-                                    .getUserRetryInterval());
+                LOG.info("Start action [{0}] with user-retry state : userRetryCount [{1}], userRetryMax [{2}], userRetryInterval [{3}]",
+                                wfAction.getId(), wfAction.getUserRetryCount(), wfAction.getUserRetryMax(), wfAction
+                                        .getUserRetryInterval());
 
-            Instrumentation.Cron cron = new Instrumentation.Cron();
-            cron.start();
-            context.setStartTime();
-            executor.start(context, wfAction);
-            cron.stop();
-            FaultInjection.activate("org.apache.oozie.command.SkipCommitFaultInjection");
-            addActionCron(wfAction.getType(), cron);
+                Instrumentation.Cron cron = new Instrumentation.Cron();
+                cron.start();
+                context.setStartTime();
+                executor.start(context, wfAction);
+                cron.stop();
+                FaultInjection.activate("org.apache.oozie.command.SkipCommitFaultInjection");
+                addActionCron(wfAction.getType(), cron);
 
-            wfAction.setRetries(0);
-            if (wfAction.isExecutionComplete()) {
-                if (!context.isExecuted()) {
-                    LOG.warn(XLog.OPS, "Action Completed, ActionExecutor [{0}] must call setExecutionData()", executor
-                            .getType());
-                    wfAction.setErrorInfo(EXEC_DATA_MISSING,
-                            "Execution Complete, but Execution Data Missing from Action");
-                    failJob(context);
-                    jpaService.execute(new WorkflowActionUpdateJPAExecutor(wfAction));
-                    jpaService.execute(new WorkflowJobUpdateJPAExecutor(wfJob));
-                    return null;
+                wfAction.setRetries(0);
+                if (wfAction.isExecutionComplete()) {
+                    if (!context.isExecuted()) {
+                        LOG.warn(XLog.OPS, "Action Completed, ActionExecutor [{0}] must call setExecutionData()", executor
+                                .getType());
+                        wfAction.setErrorInfo(EXEC_DATA_MISSING,
+                                "Execution Complete, but Execution Data Missing from Action");
+                        failJob(context);
+                    } else {
+                        wfAction.setPending();
+                        queue(new ActionEndXCommand(wfAction.getId(), wfAction.getType()));
+                    }
                 }
-                wfAction.setPending();
-                queue(new ActionEndXCommand(wfAction.getId(), wfAction.getType()));
-            }
-            else {
-                if (!context.isStarted()) {
-                    LOG.warn(XLog.OPS, "Action Started, ActionExecutor [{0}] must call setStartData()", executor
-                            .getType());
-                    wfAction.setErrorInfo(START_DATA_MISSING, "Execution Started, but Start Data Missing from Action");
-                    failJob(context);
-                    jpaService.execute(new WorkflowActionUpdateJPAExecutor(wfAction));
-                    jpaService.execute(new WorkflowJobUpdateJPAExecutor(wfJob));
-                    return null;
+                else {
+                    if (!context.isStarted()) {
+                        LOG.warn(XLog.OPS, "Action Started, ActionExecutor [{0}] must call setStartData()", executor
+                                .getType());
+                        wfAction.setErrorInfo(START_DATA_MISSING, "Execution Started, but Start Data Missing from Action");
+                        failJob(context);
+                    } else {
+                        queue(new NotificationXCommand(wfJob, wfAction));
+                    }
                 }
-                queue(new NotificationXCommand(wfJob, wfAction));
+
+                LOG.warn(XLog.STD, "[***" + wfAction.getId() + "***]" + "Action status=" + wfAction.getStatusStr());
+
+                updateList.add(wfAction);
+                wfJob.setLastModifiedTime(new Date());
+                updateList.add(wfJob);
+                // Add SLA status event (STARTED) for WF_ACTION
+                SLAEventBean slaEvent = SLADbXOperations.createStatusEvent(wfAction.getSlaXml(), wfAction.getId(), Status.STARTED,
+                        SlaAppType.WORKFLOW_ACTION);
+                if(slaEvent != null) {
+                    insertList.add(slaEvent);
+                }
+                LOG.warn(XLog.STD, "[***" + wfAction.getId() + "***]" + "Action updated in DB!");
             }
-
-            LOG.warn(XLog.STD, "[***" + wfAction.getId() + "***]" + "Action status=" + wfAction.getStatusStr());
-
-            jpaService.execute(new WorkflowActionUpdateJPAExecutor(wfAction));
-            jpaService.execute(new WorkflowJobUpdateJPAExecutor(wfJob));
-            // Add SLA status event (STARTED) for WF_ACTION
-            SLADbXOperations.writeStausEvent(wfAction.getSlaXml(), wfAction.getId(), Status.STARTED,
-                    SlaAppType.WORKFLOW_ACTION);
-            LOG.warn(XLog.STD, "[***" + wfAction.getId() + "***]" + "Action updated in DB!");
-
         }
         catch (ActionExecutorException ex) {
             LOG.warn("Error starting action [{0}]. ErrorType [{1}], ErrorCode [{2}], Message [{3}]",
@@ -269,26 +277,33 @@ public class ActionStartXCommand extends ActionXCommand<Void> {
                         // update coordinator action
                         new CoordActionUpdateXCommand(wfJob, 3).call();
                         new WfEndXCommand(wfJob).call(); // To delete the WF temp dir
-                        SLADbXOperations.writeStausEvent(wfAction.getSlaXml(), wfAction.getId(), Status.FAILED,
+                        SLAEventBean slaEvent1 = SLADbXOperations.createStatusEvent(wfAction.getSlaXml(), wfAction.getId(), Status.FAILED,
                                 SlaAppType.WORKFLOW_ACTION);
-                        SLADbXOperations.writeStausEvent(wfJob.getSlaXml(), wfJob.getId(), Status.FAILED,
+                        if(slaEvent1 != null) {
+                            insertList.add(slaEvent1);
+                        }
+                        SLAEventBean slaEvent2 = SLADbXOperations.createStatusEvent(wfJob.getSlaXml(), wfJob.getId(), Status.FAILED,
                                 SlaAppType.WORKFLOW_JOB);
+                        if(slaEvent2 != null) {
+                            insertList.add(slaEvent2);
+                        }
                     }
                     catch (XException x) {
                         LOG.warn("ActionStartXCommand - case:FAILED ", x.getMessage());
                     }
                     break;
             }
-            try {
-                jpaService.execute(new WorkflowActionUpdateJPAExecutor(wfAction));
-                jpaService.execute(new WorkflowJobUpdateJPAExecutor(wfJob));
-            }
-            catch (JPAExecutorException je) {
-                throw new CommandException(je);
-            }
+            updateList.add(wfAction);
+            wfJob.setLastModifiedTime(new Date());
+            updateList.add(wfJob);
         }
-        catch (JPAExecutorException je) {
-            throw new CommandException(je);
+        finally {
+            try {
+                jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, insertList));
+            }
+            catch (JPAExecutorException e) {
+                throw new CommandException(e);
+            }
         }
 
         LOG.debug("ENDED ActionStartXCommand for wf actionId=" + actionId + ", jobId=" + jobId);
@@ -299,15 +314,19 @@ public class ActionStartXCommand extends ActionXCommand<Void> {
     private void handleError(ActionExecutorContext context, WorkflowJobBean workflow, WorkflowActionBean action)
             throws CommandException {
         failJob(context);
-        try {
-            jpaService.execute(new WorkflowActionUpdateJPAExecutor(action));
-            jpaService.execute(new WorkflowJobUpdateJPAExecutor(workflow));
+        updateList.add(wfAction);
+        wfJob.setLastModifiedTime(new Date());
+        updateList.add(wfJob);
+        SLAEventBean slaEvent1 = SLADbXOperations.createStatusEvent(action.getSlaXml(), action.getId(),
+                Status.FAILED, SlaAppType.WORKFLOW_ACTION);
+        if(slaEvent1 != null) {
+            insertList.add(slaEvent1);
         }
-        catch (JPAExecutorException je) {
-            throw new CommandException(je);
+        SLAEventBean slaEvent2 = SLADbXOperations.createStatusEvent(workflow.getSlaXml(), workflow.getId(),
+                Status.FAILED, SlaAppType.WORKFLOW_JOB);
+        if(slaEvent2 != null) {
+            insertList.add(slaEvent2);
         }
-        SLADbXOperations.writeStausEvent(action.getSlaXml(), action.getId(), Status.FAILED, SlaAppType.WORKFLOW_ACTION);
-        SLADbXOperations.writeStausEvent(workflow.getSlaXml(), workflow.getId(), Status.FAILED, SlaAppType.WORKFLOW_JOB);
         // update coordinator action
         new CoordActionUpdateXCommand(workflow, 3).call();
         new WfEndXCommand(wfJob).call(); //To delete the WF temp dir

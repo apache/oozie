@@ -28,6 +28,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
@@ -36,10 +37,9 @@ import org.apache.oozie.command.MaterializeTransitionXCommand;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.coord.TimeUnit;
-import org.apache.oozie.executor.jpa.CoordActionInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionsActiveCountJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordJobUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Service;
@@ -96,8 +96,16 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
      */
     @Override
     public void updateJob() throws CommandException {
+        updateList.add(coordJob);
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.MaterializeTransitionXCommand#performWrites()
+     */
+    @Override
+    public void performWrites() throws CommandException {
         try {
-            jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
+            jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, insertList));
         }
         catch (JPAExecutorException jex) {
             throw new CommandException(jex);
@@ -345,7 +353,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
                 + actionXml.length());
         actionBean.setActionXml(actionXml);
 
-        jpaService.execute(new CoordActionInsertJPAExecutor(actionBean));
+        insertList.add(actionBean);
         writeActionRegistration(actionXml, actionBean);
 
         // TODO: time 100s should be configurable
@@ -356,8 +364,11 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
     private void writeActionRegistration(String actionXml, CoordinatorActionBean actionBean) throws Exception {
         Element eAction = XmlUtils.parseXml(actionXml);
         Element eSla = eAction.getChild("action", eAction.getNamespace()).getChild("info", eAction.getNamespace("sla"));
-        SLADbOperations.writeSlaRegistrationEvent(eSla, actionBean.getId(), SlaAppType.COORDINATOR_ACTION, coordJob
+        SLAEventBean slaEvent = SLADbOperations.createSlaRegistrationEvent(eSla, actionBean.getId(), SlaAppType.COORDINATOR_ACTION, coordJob
                 .getUser(), coordJob.getGroup(), LOG);
+        if(slaEvent != null) {
+            insertList.add(slaEvent);
+        }
     }
 
     private void updateJobMaterializeInfo(CoordinatorJobBean job) throws CommandException {

@@ -102,4 +102,8 @@ public class BundlePauseXCommand extends PauseTransitionXCommand {
 
     }
 
+    @Override
+    public void performWrites() throws CommandException {
+    }
+
 }

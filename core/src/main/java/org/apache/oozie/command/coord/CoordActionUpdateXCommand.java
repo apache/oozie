@@ -17,11 +17,13 @@
  */
 package org.apache.oozie.command.coord;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import org.apache.oozie.CoordinatorActionBean;
-import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.XException;
 import org.apache.oozie.service.JPAService;
@@ -32,13 +34,11 @@ import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.client.SLAEvent.Status;
+import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.executor.jpa.BulkUpdateInsertForCoordActionStatusJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionGetForExternalIdJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordActionUpdateJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordActionUpdateStatusJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordJobUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 
 public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
@@ -46,6 +46,8 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
     private CoordinatorActionBean coordAction = null;
     private JPAService jpaService = null;
     private int maxRetries = 1;
+    private List<JsonBean> updateList = new ArrayList<JsonBean>();
+    private List<JsonBean> insertList = new ArrayList<JsonBean>();
 
     public CoordActionUpdateXCommand(WorkflowJobBean workflow) {
         super("coord-action-update", "coord-action-update", 1);
@@ -93,7 +95,8 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
                 LOG.warn("Unexpected workflow " + workflow.getId() + " STATUS " + workflow.getStatus());
                 // update lastModifiedTime
                 coordAction.setLastModifiedTime(new Date());
-                jpaService.execute(new CoordActionUpdateStatusJPAExecutor(coordAction));
+                updateList.add(coordAction);
+                jpaService.execute(new BulkUpdateInsertForCoordActionStatusJPAExecutor(updateList, null));
                 // TODO - Uncomment this when bottom up rerun can change terminal state
                 /* CoordinatorJobBean coordJob = jpaService.execute(new CoordJobGetJPAExecutor(coordAction.getJobId()));
                 if (!coordJob.isPending()) {
@@ -107,7 +110,7 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
                     + " to " + coordAction.getStatus() + ", pending = " + coordAction.getPending());
 
             coordAction.setLastModifiedTime(new Date());
-            jpaService.execute(new CoordActionUpdateStatusJPAExecutor(coordAction));
+            updateList.add(coordAction);
             // TODO - Uncomment this when bottom up rerun can change terminal state
             /*CoordinatorJobBean coordJob = jpaService.execute(new CoordJobGetJPAExecutor(coordAction.getJobId()));
             if (!coordJob.isPending()) {
@@ -116,13 +119,19 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
                 LOG.info("Updating Coordinator job "+ coordJob.getId() + "pending to true");
             }*/
             if (slaStatus != null) {
-                SLADbOperations.writeStausEvent(coordAction.getSlaXml(), coordAction.getId(), slaStatus,
+                SLAEventBean slaEvent = SLADbOperations.createStatusEvent(coordAction.getSlaXml(), coordAction.getId(), slaStatus,
                         SlaAppType.COORDINATOR_ACTION, LOG);
+                if(slaEvent != null) {
+                    insertList.add(slaEvent);
+                }
             }
             if (workflow.getStatus() != WorkflowJob.Status.SUSPENDED
                     && workflow.getStatus() != WorkflowJob.Status.RUNNING) {
                 queue(new CoordActionReadyXCommand(coordAction.getJobId()));
             }
+
+            jpaService.execute(new BulkUpdateInsertForCoordActionStatusJPAExecutor(updateList, insertList));
+
             LOG.debug("ENDED CoordActionUpdateXCommand for wfId=" + workflow.getId());
         }
         catch (XException ex) {

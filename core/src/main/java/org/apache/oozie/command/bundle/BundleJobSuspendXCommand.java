@@ -23,16 +23,14 @@ import java.util.List;
 import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.XException;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.SuspendTransitionXCommand;
 import org.apache.oozie.command.coord.CoordSuspendXCommand;
-import org.apache.oozie.executor.jpa.BundleActionUpdateJPAExecutor;
+import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleActionsGetJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
-import org.apache.oozie.executor.jpa.BundleJobUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
@@ -71,6 +69,19 @@ public class BundleJobSuspendXCommand extends SuspendTransitionXCommand {
      */
     @Override
     public void setJob(Job job) {
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.SuspendTransitionXCommand#performWrites()
+     */
+    @Override
+    public void performWrites() throws CommandException {
+        try {
+            jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, null));
+        }
+        catch (JPAExecutorException e) {
+            throw new CommandException(e);
+        }
     }
 
     /* (non-Javadoc)
@@ -133,49 +144,39 @@ public class BundleJobSuspendXCommand extends SuspendTransitionXCommand {
      * @see org.apache.oozie.command.TransitionXCommand#updateJob()
      */
     @Override
-    public void updateJob() throws CommandException {
+    public void updateJob() {
         InstrumentUtils.incrJobCounter("bundle_suspend", 1, null);
         bundleJob.setSuspendedTime(new Date());
         bundleJob.setLastModifiedTime(new Date());
 
         LOG.debug("Suspend bundle job id = " + jobId + ", status = " + bundleJob.getStatus() + ", pending = " + bundleJob.isPending());
-        try {
-            jpaService.execute(new BundleJobUpdateJPAExecutor(bundleJob));
-        }
-        catch (JPAExecutorException e) {
-            throw new CommandException(e);
-        }
+        updateList.add(bundleJob);
     }
 
     @Override
     public void suspendChildren() throws CommandException {
-        try {
-            for (BundleActionBean action : this.bundleActions) {
-                if (action.getStatus() == Job.Status.RUNNING || action.getStatus() == Job.Status.RUNNINGWITHERROR
-                        || action.getStatus() == Job.Status.PREP || action.getStatus() == Job.Status.PAUSED
-                        || action.getStatus() == Job.Status.PAUSEDWITHERROR) {
-                    // queue a CoordSuspendXCommand
-                    if (action.getCoordId() != null) {
-                        queue(new CoordSuspendXCommand(action.getCoordId()));
-                        updateBundleAction(action);
-                        LOG.debug("Suspend bundle action = [{0}], new status = [{1}], pending = [{2}] and queue CoordSuspendXCommand for [{3}]",
-                                action.getBundleActionId(), action.getStatus(), action.getPending(), action.getCoordId());
-                    } else {
-                        updateBundleAction(action);
-                        LOG.debug("Suspend bundle action = [{0}], new status = [{1}], pending = [{2}] and coord id is null",
-                                action.getBundleActionId(), action.getStatus(), action.getPending());
-                    }
-
+        for (BundleActionBean action : this.bundleActions) {
+            if (action.getStatus() == Job.Status.RUNNING || action.getStatus() == Job.Status.RUNNINGWITHERROR
+                    || action.getStatus() == Job.Status.PREP || action.getStatus() == Job.Status.PAUSED
+                    || action.getStatus() == Job.Status.PAUSEDWITHERROR) {
+                // queue a CoordSuspendXCommand
+                if (action.getCoordId() != null) {
+                    queue(new CoordSuspendXCommand(action.getCoordId()));
+                    updateBundleAction(action);
+                    LOG.debug("Suspend bundle action = [{0}], new status = [{1}], pending = [{2}] and queue CoordSuspendXCommand for [{3}]",
+                            action.getBundleActionId(), action.getStatus(), action.getPending(), action.getCoordId());
+                } else {
+                    updateBundleAction(action);
+                    LOG.debug("Suspend bundle action = [{0}], new status = [{1}], pending = [{2}] and coord id is null",
+                            action.getBundleActionId(), action.getStatus(), action.getPending());
                 }
+
             }
-            LOG.debug("Suspended bundle actions for the bundle=[{0}]", jobId);
         }
-        catch (XException ex) {
-            throw new CommandException(ex);
-        }
+        LOG.debug("Suspended bundle actions for the bundle=[{0}]", jobId);
     }
 
-    private void updateBundleAction(BundleActionBean action) throws CommandException {
+    private void updateBundleAction(BundleActionBean action) {
         if (action.getStatus() == Job.Status.PREP) {
             action.setStatus(Job.Status.PREPSUSPENDED);
         }
@@ -194,11 +195,6 @@ public class BundleJobSuspendXCommand extends SuspendTransitionXCommand {
 
         action.incrementAndGetPending();
         action.setLastModifiedTime(new Date());
-        try {
-            jpaService.execute(new BundleActionUpdateJPAExecutor(action));
-        }
-        catch (JPAExecutorException e) {
-            throw new CommandException(e);
-        }
+        updateList.add(action);
     }
 }

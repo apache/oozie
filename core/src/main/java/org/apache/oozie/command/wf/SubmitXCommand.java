@@ -20,6 +20,7 @@ package org.apache.oozie.command.wf;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.service.HadoopAccessorException;
@@ -37,7 +38,8 @@ import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.command.CommandException;
-import org.apache.oozie.executor.jpa.WorkflowJobInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.ELService;
 import org.apache.oozie.service.SchemaService;
 import org.apache.oozie.store.StoreException;
@@ -53,9 +55,11 @@ import org.apache.oozie.service.SchemaService.SchemaName;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
+import org.apache.oozie.client.rest.JsonBean;
 import org.jdom.Element;
 import org.jdom.Namespace;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -69,6 +73,7 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
 
     private Configuration conf;
     private String authToken;
+    private List<JsonBean> insertList = new ArrayList<JsonBean>();
 
     public SubmitXCommand(Configuration conf, String authToken) {
         super("submit", "submit", 1);
@@ -178,9 +183,15 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
             // System.out.println("SlaXml :"+ slaXml);
 
             //store.insertWorkflow(workflow);
+            insertList.add(workflow);
             JPAService jpaService = Services.get().get(JPAService.class);
             if (jpaService != null) {
-                jpaService.execute(new WorkflowJobInsertJPAExecutor(workflow));
+                try {
+                    jpaService.execute(new BulkUpdateInsertJPAExecutor(null, insertList));
+                }
+                catch (JPAExecutorException je) {
+                    throw new CommandException(je);
+                }
             }
             else {
                 LOG.error(ErrorCode.E0610);
@@ -223,7 +234,11 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
         try {
             if (slaXml != null && slaXml.length() > 0) {
                 Element eSla = XmlUtils.parseXml(slaXml);
-                SLADbOperations.writeSlaRegistrationEvent(eSla, id, SlaAppType.WORKFLOW_JOB, user, group, log);
+                SLAEventBean slaEvent = SLADbOperations.createSlaRegistrationEvent(eSla, id,
+                        SlaAppType.WORKFLOW_JOB, user, group, log);
+                if(slaEvent != null) {
+                    insertList.add(slaEvent);
+                }
             }
         }
         catch (Exception e) {

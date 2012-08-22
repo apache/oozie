@@ -17,7 +17,11 @@
  */
 package org.apache.oozie.command;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.oozie.client.Job;
+import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.util.ParamChecker;
 
 /**
@@ -29,6 +33,8 @@ import org.apache.oozie.util.ParamChecker;
 public abstract class TransitionXCommand<T> extends XCommand<T> {
 
     protected Job job;
+    protected List<JsonBean> updateList = new ArrayList<JsonBean>();
+    protected List<JsonBean> insertList = new ArrayList<JsonBean>();
 
     public TransitionXCommand(String name, String type, int priority) {
         super(name, type, priority);
@@ -58,6 +64,13 @@ public abstract class TransitionXCommand<T> extends XCommand<T> {
      * @throws CommandException
      */
     public abstract void notifyParent() throws CommandException;
+
+    /**
+     * This will be used to perform atomically all the writes within this command.
+     *
+     * @throws CommandException
+     */
+    public abstract void performWrites() throws CommandException;
 
     /* (non-Javadoc)
      * @see org.apache.oozie.command.XCommand#execute()

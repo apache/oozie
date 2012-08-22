@@ -17,6 +17,7 @@
  */
 package org.apache.oozie.command.bundle;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -29,14 +30,14 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.XCommand;
 import org.apache.oozie.command.coord.CoordChangeXCommand;
-import org.apache.oozie.executor.jpa.BundleActionUpdateJPAExecutor;
+import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleActionsGetJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
-import org.apache.oozie.executor.jpa.BundleJobUpdateJPAExecutor;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.DateUtils;
@@ -55,6 +56,7 @@ public class BundleJobChangeXCommand extends XCommand<Void> {
     private Date newEndTime = null;
     boolean isChangePauseTime = false;
     boolean isChangeEndTime = false;
+    private List<JsonBean> updateList = new ArrayList<JsonBean>();
 
     private static final Set<String> ALLOWED_CHANGE_OPTIONS = new HashSet<String>();
     static {
@@ -179,10 +181,11 @@ public class BundleJobChangeXCommand extends XCommand<Void> {
                         LOG.info("Queuing CoordChangeXCommand coord job = " + action.getCoordId() + " to change "
                                 + changeValue);
                         action.setPending(action.getPending() + 1);
-                        jpaService.execute(new BundleActionUpdateJPAExecutor(action));
+                        updateList.add(action);
                     }
                 }
-                jpaService.execute(new BundleJobUpdateJPAExecutor(bundleJob));
+                updateList.add(bundleJob);
+                jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, null));
             }
             return null;
         }

@@ -24,8 +24,6 @@ import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.client.SLAEvent.Status;
 import org.apache.oozie.command.CommandException;
-import org.apache.oozie.executor.jpa.SLAEventInsertJPAExecutor;
-import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.DateUtils;
 import org.jdom.Element;
@@ -43,11 +41,11 @@ public class SLADbXOperations {
      * @param groupName group name
      * @throws Exception
      */
-    public static void writeSlaRegistrationEvent(Element eSla, String slaId,
+    public static SLAEventBean createSlaRegistrationEvent(Element eSla, String slaId,
                                                  SlaAppType appType, String user, String groupName)
             throws Exception {
         if (eSla == null) {
-            return;
+            return null;
         }
         SLAEventBean sla = new SLAEventBean();
         // sla.setClientId(getTagElement( eSla, "client-id"));
@@ -107,14 +105,7 @@ public class SLADbXOperations {
         sla.setJobStatus(Status.CREATED);
         sla.setStatusTimestamp(new Date());
 
-        JPAService jpaService = Services.get().get(JPAService.class);
-
-        if (jpaService != null) {
-            jpaService.execute(new SLAEventInsertJPAExecutor(sla));
-        }
-        else {
-            throw new CommandException(ErrorCode.E0610, "unable to write sla event.");
-        }
+        return sla;
 
     }
 
@@ -126,7 +117,7 @@ public class SLADbXOperations {
      * @param appType SLA app type
      * @throws Exception
      */
-    public static void writeSlaStatusEvent(String id,
+    public static SLAEventBean createSlaStatusEvent(String id,
                                            Status status, SlaAppType appType) throws Exception {
         SLAEventBean sla = new SLAEventBean();
         sla.setSlaId(id);
@@ -134,14 +125,7 @@ public class SLADbXOperations {
         sla.setAppType(appType);
         sla.setStatusTimestamp(new Date());
 
-        JPAService jpaService = Services.get().get(JPAService.class);
-
-        if (jpaService != null) {
-            jpaService.execute(new SLAEventInsertJPAExecutor(sla));
-        }
-        else {
-            throw new CommandException(ErrorCode.E0610, "unable to write sla event.");
-        }
+        return sla;
     }
 
     /**
@@ -153,13 +137,13 @@ public class SLADbXOperations {
      * @param appType SLA app type
      * @throws CommandException
      */
-    public static void writeStausEvent(String slaXml, String id, Status stat,
+    public static SLAEventBean createStatusEvent(String slaXml, String id, Status stat,
                                        SlaAppType appType) throws CommandException {
         if (slaXml == null || slaXml.length() == 0) {
-            return;
+            return null;
         }
         try {
-            writeSlaStatusEvent(id, stat, appType);
+            return createSlaStatusEvent(id, stat, appType);
         }
         catch (Exception e) {
             throw new CommandException(ErrorCode.E1007, " id " + id, e);

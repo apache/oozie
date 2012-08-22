@@ -17,20 +17,22 @@
  */
 package org.apache.oozie.command.wf;
 
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.coord.CoordActionUpdateXCommand;
+import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionRetryManualGetJPAExecutor;
-import org.apache.oozie.executor.jpa.WorkflowActionUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
-import org.apache.oozie.executor.jpa.WorkflowJobUpdateJPAExecutor;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.InstrumentUtils;
@@ -44,6 +46,7 @@ public class SuspendXCommand extends WorkflowXCommand<Void> {
     private final String wfid;
     private WorkflowJobBean wfJobBean;
     private JPAService jpaService;
+    private static List<JsonBean> updateList = new ArrayList<JsonBean>();
 
     public SuspendXCommand(String id) {
         super("suspend", "suspend", 1);
@@ -58,7 +61,9 @@ public class SuspendXCommand extends WorkflowXCommand<Void> {
         InstrumentUtils.incrJobCounter(getName(), 1, getInstrumentation());
         try {
             suspendJob(this.jpaService, this.wfJobBean, this.wfid, null);
-            jpaService.execute(new WorkflowJobUpdateJPAExecutor(this.wfJobBean));
+            this.wfJobBean.setLastModifiedTime(new Date());
+            updateList.add(this.wfJobBean);
+            jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, null));
             queue(new NotificationXCommand(this.wfJobBean));
         }
         catch (WorkflowException e) {
@@ -121,7 +126,7 @@ public class SuspendXCommand extends WorkflowXCommand<Void> {
                 else {
                     action.resetPendingOnly();
                 }
-                jpaService.execute(new WorkflowActionUpdateJPAExecutor(action));
+                updateList.add(action);
 
             }
         }

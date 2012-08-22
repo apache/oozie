@@ -46,9 +46,10 @@ import org.apache.oozie.workflow.lite.LiteWorkflowApp;
 import org.apache.oozie.workflow.lite.StartNodeDef;
 
 /**
- * Testcases for bulk JPA writes - inserts and updates
+ * Testcases for bulk JPA writes - insert and update operations for Coord Action
+ * Start command
  */
-public class TestBulkUpdateInsertJPAExecutor extends XDataTestCase {
+public class TestBulkUpdateInsertForCoordActionStartJPAExecutor extends XDataTestCase {
     Services services;
 
     @Override
@@ -86,7 +87,7 @@ public class TestBulkUpdateInsertJPAExecutor extends XDataTestCase {
         updateList.add(coordJob);
         updateList.add(wfJob);
         updateList.add(action);
-        BulkUpdateInsertJPAExecutor bulkUpdateCmd = new BulkUpdateInsertJPAExecutor();
+        BulkUpdateInsertForCoordActionStartJPAExecutor bulkUpdateCmd = new BulkUpdateInsertForCoordActionStartJPAExecutor();
         bulkUpdateCmd.setUpdateList(updateList);
         jpaService.execute(bulkUpdateCmd);
 
@@ -128,7 +129,7 @@ public class TestBulkUpdateInsertJPAExecutor extends XDataTestCase {
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
-        BulkUpdateInsertJPAExecutor bulkInsertCmd = new BulkUpdateInsertJPAExecutor();
+        BulkUpdateInsertForCoordActionStartJPAExecutor bulkInsertCmd = new BulkUpdateInsertForCoordActionStartJPAExecutor();
         bulkInsertCmd.setInsertList(insertList);
         jpaService.execute(bulkInsertCmd);
 
@@ -174,7 +175,7 @@ public class TestBulkUpdateInsertJPAExecutor extends XDataTestCase {
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
 
-        BulkUpdateInsertJPAExecutor bulkUpdateCmd = new BulkUpdateInsertJPAExecutor(updateList, insertList);
+        BulkUpdateInsertForCoordActionStartJPAExecutor bulkUpdateCmd = new BulkUpdateInsertForCoordActionStartJPAExecutor(updateList, insertList);
         jpaService.execute(bulkUpdateCmd);
 
         coordJob = jpaService.execute(new CoordJobGetJPAExecutor(coordJob.getId()));
@@ -216,7 +217,7 @@ public class TestBulkUpdateInsertJPAExecutor extends XDataTestCase {
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
 
-        BulkUpdateInsertJPAExecutor wfUpdateCmd1 = new BulkUpdateInsertJPAExecutor(updateList, insertList);
+        BulkUpdateInsertForCoordActionStartJPAExecutor wfUpdateCmd1 = new BulkUpdateInsertForCoordActionStartJPAExecutor(updateList, insertList);
 
         // set fault injection to true, so transaction is roll backed
         setSystemProperty(FaultInjection.FAULT_INJECTION, "true");

@@ -31,10 +31,9 @@ import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.ResumeTransitionXCommand;
 import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.command.wf.ResumeXCommand;
-import org.apache.oozie.executor.jpa.CoordActionUpdateStatusJPAExecutor;
+import org.apache.oozie.executor.jpa.BulkUpdateInsertForCoordActionStatusJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetActionsSuspendedJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordJobUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
@@ -109,18 +108,13 @@ public class CoordResumeXCommand extends ResumeTransitionXCommand {
      * @see org.apache.oozie.command.TransitionXCommand#updateJob()
      */
     @Override
-    public void updateJob() throws CommandException {
+    public void updateJob() {
         InstrumentUtils.incrJobCounter(getName(), 1, getInstrumentation());
         coordJob.setSuspendedTime(null);
         coordJob.setLastModifiedTime(new Date());
         LOG.debug("Resume coordinator job id = " + jobId + ", status = " + coordJob.getStatus() + ", pending = "
                 + coordJob.isPending());
-        try {
-            jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
-        }
-        catch (JPAExecutorException e) {
-            throw new CommandException(e);
-        }
+        updateList.add(coordJob);
     }
 
     /* (non-Javadoc)
@@ -161,12 +155,7 @@ public class CoordResumeXCommand extends ResumeTransitionXCommand {
                 coordJob.resetPending();
                 LOG.warn("Resume children failed so fail coordinator, coordinator job id = " + jobId + ", status = "
                         + coordJob.getStatus());
-                try {
-                    jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
-                }
-                catch (JPAExecutorException je) {
-                    LOG.error("Failed to update coordinator job : " + jobId, je);
-                }
+                updateList.add(coordJob);
             }
         }
     }
@@ -183,16 +172,24 @@ public class CoordResumeXCommand extends ResumeTransitionXCommand {
         }
     }
 
-    private void updateCoordAction(CoordinatorActionBean action) throws CommandException {
-        action.setStatus(CoordinatorActionBean.Status.RUNNING);
-        action.incrementAndGetPending();
-        action.setLastModifiedTime(new Date());
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.ResumeTransitionXCommand#performWrites()
+     */
+    @Override
+    public void performWrites() throws CommandException {
         try {
-            jpaService.execute(new CoordActionUpdateStatusJPAExecutor(action));
+            jpaService.execute(new BulkUpdateInsertForCoordActionStatusJPAExecutor(updateList, null));
         }
         catch (JPAExecutorException e) {
             throw new CommandException(e);
         }
+    }
+
+    private void updateCoordAction(CoordinatorActionBean action) {
+        action.setStatus(CoordinatorActionBean.Status.RUNNING);
+        action.incrementAndGetPending();
+        action.setLastModifiedTime(new Date());
+        updateList.add(action);
     }
 
     /* (non-Javadoc)

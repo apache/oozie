@@ -32,13 +32,12 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.StartTransitionXCommand;
 import org.apache.oozie.command.coord.CoordSubmitXCommand;
-import org.apache.oozie.executor.jpa.BundleActionGetJPAExecutor;
-import org.apache.oozie.executor.jpa.BundleActionInsertJPAExecutor;
-import org.apache.oozie.executor.jpa.BundleActionUpdateJPAExecutor;
+import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
@@ -166,6 +165,19 @@ public class BundleStartXCommand extends StartTransitionXCommand {
     public void notifyParent() {
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.StartTransitionXCommand#performWrites()
+     */
+    @Override
+    public void performWrites() throws CommandException {
+        try {
+            jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, insertList));
+        }
+        catch (JPAExecutorException e) {
+            throw new CommandException(e);
+        }
+    }
+
     /**
      * Insert bundle actions
      *
@@ -200,26 +212,25 @@ public class BundleStartXCommand extends StartTransitionXCommand {
                 throw new CommandException(ErrorCode.E1301, jex);
             }
 
-            try {
-                // if there is no coordinator for this bundle, failed it.
-                if (map.isEmpty()) {
-                    bundleJob.setStatus(Job.Status.FAILED);
-                    bundleJob.resetPending();
+            // if there is no coordinator for this bundle, failed it.
+            if (map.isEmpty()) {
+                bundleJob.setStatus(Job.Status.FAILED);
+                bundleJob.resetPending();
+                try {
                     jpaService.execute(new BundleJobUpdateJPAExecutor(bundleJob));
-                    LOG.debug("No coord jobs for the bundle=[{0}], failed it!!", jobId);
-                    throw new CommandException(ErrorCode.E1318, jobId);
+                }
+                catch (JPAExecutorException jex) {
+                    throw new CommandException(jex);
                 }
 
-                for (Entry<String, Boolean> coordName : map.entrySet()) {
-                    BundleActionBean action = createBundleAction(jobId, coordName.getKey(), coordName.getValue());
-
-                    jpaService.execute(new BundleActionInsertJPAExecutor(action));
-                }
-            }
-            catch (JPAExecutorException je) {
-                throw new CommandException(je);
+                LOG.debug("No coord jobs for the bundle=[{0}], failed it!!", jobId);
+                throw new CommandException(ErrorCode.E1318, jobId);
             }
 
+            for (Entry<String, Boolean> coordName : map.entrySet()) {
+                BundleActionBean action = createBundleAction(jobId, coordName.getKey(), coordName.getValue());
+                insertList.add(action);
+            }
         }
         else {
             throw new CommandException(ErrorCode.E0604, jobId);
@@ -260,8 +271,8 @@ public class BundleStartXCommand extends StartTransitionXCommand {
 
                     queue(new CoordSubmitXCommand(coordConf, bundleJob.getAuthToken(), bundleJob.getId(), name.getValue()));
 
-                    updateBundleAction(name.getValue());
                 }
+                updateBundleAction();
             }
             catch (JDOMException jex) {
                 throw new CommandException(ErrorCode.E1301, jex);
@@ -275,11 +286,12 @@ public class BundleStartXCommand extends StartTransitionXCommand {
         }
     }
 
-    private void updateBundleAction(String coordName) throws JPAExecutorException {
-        BundleActionBean action = jpaService.execute(new BundleActionGetJPAExecutor(jobId, coordName));
-        action.incrementAndGetPending();
-        action.setLastModifiedTime(new Date());
-        jpaService.execute(new BundleActionUpdateJPAExecutor(action));
+    private void updateBundleAction() throws JPAExecutorException {
+        for(JsonBean bAction : insertList) {
+            BundleActionBean action = (BundleActionBean) bAction;
+            action.incrementAndGetPending();
+            action.setLastModifiedTime(new Date());
+        }
     }
 
     /**
@@ -348,11 +360,6 @@ public class BundleStartXCommand extends StartTransitionXCommand {
      */
     @Override
     public void updateJob() throws CommandException {
-        try {
-            jpaService.execute(new BundleJobUpdateJPAExecutor(bundleJob));
-        }
-        catch (JPAExecutorException je) {
-            throw new CommandException(je);
-        }
+        updateList.add(bundleJob);
     }
 }
