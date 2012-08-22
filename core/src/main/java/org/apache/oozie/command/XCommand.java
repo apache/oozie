@@ -266,10 +266,10 @@ public abstract class XCommand<T> implements XCallable<T> {
                         LOG.debug("Command [{0}] key [{1}]  already executed for [{2}]", getName(), getEntityKey(), this.toString());
                         return null;
                     }
-                    LOG.debug("Load state for [{0}]", getEntityKey());
+                    LOG.trace("Load state for [{0}]", getEntityKey());
                     loadState();
                     LOG = XLog.resetPrefix(LOG);
-                    LOG.debug("Precondition check for command [{0}] key [{1}]", getName(), getEntityKey());
+                    LOG.trace("Precondition check for command [{0}] key [{1}]", getName(), getEntityKey());
                     verifyPrecondition();
                     LOG.debug("Execute command [{0}] key [{1}]", getName(), getEntityKey());
                     Instrumentation.Cron executeCron = new Instrumentation.Cron();
