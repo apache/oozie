@@ -12,6 +12,10 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+if [ "${TESTPATCHDEBUG}" == "true" ] ; then
+  set -x
+fi
+
 BASEDIR=$(pwd)
 TESTPATCHDIR=${BASEDIR}/test-patch
 TOOLSDIR=${TESTPATCHDIR}/tools
@@ -34,12 +38,59 @@ JIRAISSUE=""
 PATCHFILE=""
 TASKSTORUN=""
 TASKSTOSKIP=""
-VCSCLEANUP="true"
+RESETSCM="false"
+DIRTYSCM="false"
 STDOUT="/dev/null"
 MVNPASSTHRU=""
 
 ###############################################################################
-testPatchPrepare() {
+gitOrSvn() {
+  SCM="NONE"
+  which git &> /dev/null
+  if [[ $? == 0 ]] ; then
+    git status &> /dev/null
+    if [[ $? == 0 ]] ; then
+      SCM="git"
+    fi
+  fi
+  if [ "SCM" == "NONE" ] ; then
+    which svn &> /dev/null
+    if [[ $? == 0 ]] ; then
+      svnOutput=`svn status 2>&1`
+      if [[  "$svnOutput" != *"is not a working copy" ]] ; then
+        SCM="svn"
+      fi
+    fi
+  fi
+  if [ "${SCM}" == "NONE" ] ; then
+    echo "The current workspace is not under Source Control (GIT or SVN)"
+    exit 1
+  fi
+}
+###############################################################################
+prepareSCM() {
+  gitOrSvn
+  if [ "${DIRTYSCM}" != "true" ] ; then
+    if [ "${RESETSCM}" == "true" ] ; then
+      if [ "${SCM}" == "git" ] ; then
+        git reset --hard HEAD > /dev/null
+        git clean -f -d > /dev/null
+      fi
+      if [ "${SCM}" == "svn" ] ; then
+        svn revert -R . > /dev/null
+        svn status | grep "\?" | awk '{print $2}' | xargs rm -rf
+      fi
+    else
+      echo "It should not happen DIRTYSCM=false & RESETSCM=false"
+      exit 1
+    fi
+    echo "Cleaning local ${SCM} workspace" >> ${SUMMARYFILE}
+  else
+    echo "WARNING: Running test-patch on a dirty local ${SCM} workspace" >> ${SUMMARYFILE}
+  fi
+}
+###############################################################################
+prepareTestPatchDirs() {
   mkdir ${TESTPATCHDIR} 2> /dev/null
   rm -rf ${REPORTDIR} 2> /dev/null
   rm -rf ${TEMPDIR} 2> /dev/null
@@ -52,38 +103,9 @@ testPatchPrepare() {
   fi
 }
 ###############################################################################
-vcsCleanup() {
-  vcsCleaned=false
-  which git &> /dev/null
-  if [[ $? == 0 ]] ; then
-    git status &> /dev/null
-    if [[ $? == 0 ]] ; then
-      git reset --hard HEAD > /dev/null
-      git clean -f -d > /dev/null
-      vcsCleaned=true
-    fi
-  fi
-  if [ "$vcsCleaned" != "true" ] ; then
-    which svn &> /dev/null
-    if [[ $? == 0 ]] ; then
-      svnOutput=`svn status 2>&1`
-      if [[  "$svnOutput" != *"is not a working copy" ]] ; then
-        svn revert -R . > /dev/null
-        svn status | grep "\?" | awk '{print $2}' | xargs rm -rf
-        vcsCleaned=true
-      fi
-    fi
-  fi
-  if [ "${vcsCleaned}" = "false" ] ; then
-    echo
-    echo "WARNING: Current directory, it is not under a source control system"
-    echo
-  fi
-}
-###############################################################################
 updateJira() {
   if [[ "${JIRAUPDATE}" != "" && "${JIRAISSUE}" != "" ]] ; then
-    if [ -z "$JIRACLI" ] ; then
+    if [[ "$JIRACLI" != "" && "$JIRAPASSWORD" != "" ]] ; then
       JIRACLI=${TOOLSDIR}/jira-cli/jira.sh
       if [ ! -e "${JIRACLI}" ] ; then
         curl https://bobswift.atlassian.net/wiki/download/attachments/16285777/jira-cli-2.6.0-distribution.zip > ${TEMPDIR}/jira-cli.zip
@@ -97,10 +119,14 @@ updateJira() {
         (cd ${TEMPDIR}/jira-cli-tmp;jar xf ${TEMPDIR}/jira-cli.zip; mv jira-cli-2.6.0 ${TOOLSDIR}/jira-cli)
         chmod u+x ${JIRACLI}
       fi
+      echo "Adding comment to JIRA"
+      comment=`cat ${SUMMARYFILE}`
+      $JIRACLI -s $JIRAURL -a addcomment -u $JIRAUSER -p "$JIRAPASSWORD" --comment "$comment" --issue $JIRAISSUE
+      echo
+    else
+      echo "Skipping JIRA update"
+      echo
     fi
-    echo "Adding comment to JIRA"
-    comment=`cat ${SUMMARYFILE}`
-    $JIRACLI -s $JIRAURL -a addcomment -u $JIRAUSER -p "$JIRAPASSWORD" --comment "$comment" --issue $JIRAISSUE
   fi
 }
 ###############################################################################
@@ -112,6 +138,7 @@ cleanupAndExit() {
 printUsage() {
   echo "Usage: $0 <OPTIONS>"
   echo "          (--jira=<JIRA ISSUE> | --patch=<PATCH PATH>)"
+  echo "          (--reset-scm | --dirty-scm)"
   echo "          [--tasks=<TASK,...>]"
   echo "          [--skip-tasks=<TASK,...>]"
   echo "          [--jira-cli=<JIRA CLIENT>]"
@@ -120,7 +147,6 @@ printUsage() {
   echo "          [-D<MVN PROPERTY>...]"
   echo "          [-P<MVN PROFILE>...]"
   echo "          [--list-tasks]"
-  echo "          [--no-cleanup]"
   echo "          [--verbose]"
   echo
 }
@@ -161,8 +187,11 @@ parseArgs() {
     -P*)
       MVNPASSTHRU="${MVNPASSTHRU} $i"
       ;;
-    --no-cleanup)
-      VCSCLEANUP=false
+    --reset-scm)
+      RESETSCM="true"
+      ;;
+    --dirty-scm)
+      DIRTYSCM="true"
       ;;
     --verbose)
       VERBOSEOPTION="--verbose"
@@ -172,15 +201,33 @@ parseArgs() {
       echo "Invalid option"
       echo
       printUsage
-      cleanupAndExit 1
+      exit 1
       ;;
     esac
   done
-  if [ "${JIRAISSUE}${PATCHFILE}" == "" ] ; then
-    echo "Either --jira or --patch options must be specified"
+  if [[ "${JIRAISSUE}" == "" && "${PATCHFILE}" == "" ]] ; then
+    echo "Either --jira or --patch option must be specified"
     echo
     printUsage
-    cleanupAndExit 1
+    exit 1
+  fi
+  if [[ "${JIRAISSUE}" != "" && "${PATCHFILE}" != "" ]] ; then
+    echo "Cannot specify --jira or --patch options together"
+    echo
+    printUsage
+    exit 1
+  fi
+  if [[ "${RESETSCM}" == "false" && "${DIRTYSCM}" == "false" ]] ; then
+    echo "Either --reset-scm or --dirty-scm option must be specified"
+    echo
+    printUsage
+    exit 1
+  fi
+  if [[ "${RESETSCM}" == "true" && "${DIRTYSCM}" == "true" ]] ; then
+    echo "Cannot specify --reset-scm and --dirty-scm options together"
+    echo
+    printUsage
+    exit 1
   fi
 }
 ###############################################################################
@@ -245,7 +292,7 @@ run() {
   task=`bash $1 --taskname`
   if [[ "${TASKSTORUN}" == "" || "${TASKSTORUN}" =~ "${task}" ]] ; then
     if [[ ! "${TASKSTOSKIP}" =~ "${task}" ]] ; then
-      echo "  Running test task ${task}"
+      echo "  Running test-patch task ${task}"
       outputFile="`basename $1`-$2.out"
       $1 --op=$2 --tempdir=${TEMPDIR} --reportdir=${REPORTDIR} \
          --summaryfile=${SUMMARYFILE} --patchfile=${PATCHFILE} ${MVNPASSTHRU} \
@@ -292,17 +339,18 @@ echo
 
 parseArgs "$@"
 
-if [ "${VCSCLEANUP}" == "true" ] ; then
-  vcsCleanup
-fi
+prepareTestPatchDirs
 
-testPatchPrepare
+echo "" > ${SUMMARYFILE}
+
+prepareSCM
+
+echo "" >> ${SUMMARYFILE}
 
 if [ "${PATCHFILE}" == "" ] ; then
   downloadPatch ${JIRAISSUE}
   echo "Testing JIRA ${JIRAISSUE}"
   echo
-  echo "" > ${SUMMARYFILE}
   echo "Testing JIRA ${JIRAISSUE}" >> ${SUMMARYFILE}
   echo "" >> ${SUMMARYFILE}
 else
@@ -312,7 +360,6 @@ else
   fi
   echo "Testing patch ${PATCHFILE}"
   echo
-  echo "" > ${SUMMARYFILE}
   echo "Testing patch ${PATCHFILE}" >> ${SUMMARYFILE}
   echo "" >> ${SUMMARYFILE}
 fi

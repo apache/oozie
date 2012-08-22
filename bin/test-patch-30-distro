@@ -17,11 +17,12 @@ if [ "${TESTPATCHDEBUG}" == "true" ] ; then
 fi
 
 BASEDIR=$(pwd)
-TASKNAME="CLEAN"
+TASKNAME="DISTRO"
 OP=""
 TEMPDIR=""
 REPORTDIR=""
 SUMMARYFILE=""
+STDOUT="/dev/null"
 MVNPASSTHRU=""
 
 ###############################################################################
@@ -30,7 +31,7 @@ cleanupAndExit() {
 }
 ###############################################################################
 printUsage() {
-  echo "Usage: $0 --taskname | (--op=pre|post|report --tempdir=<TEMP DIR>) [-D<VALUE>...] [-P<VALUE>...]"
+  echo "Usage: $0 --taskname | (--op=pre|post|report --tempdir=<TEMP DIR> --reportdir=<REPORT DIR> --summaryfile=<SUMMARY FILE>) [--verbose] [-D<VALUE>...] [-P<VALUE>...]"
   echo
 }
 ###############################################################################
@@ -54,6 +55,9 @@ parseArgs() {
     --summaryfile=*)
       SUMMARYFILE=${i#*=}
       ;;
+    --verbose)
+      STDOUT="/dev/stdout"
+      ;;
     -D*)
       MVNPASSTHRU="${MVNPASSTHRU} $i"
       ;;
@@ -62,7 +66,7 @@ parseArgs() {
       ;;
     esac
   done
-  if [[ "${OP}" == "" || "${TEMPDIR}" == "" ]] ; then
+  if [[ "${TASKNAME}" == "" || "${OP}" == "" || "${TEMPDIR}" == "" || "${REPORTDIR}" == "" || "${SUMMARYFILE}" == "" ]] ; then
     echo "Missing options"
     echo
     printUsage
@@ -77,18 +81,25 @@ parseArgs() {
 }
 ###############################################################################
 
-
 parseArgs "$@"
 
 case $OP in
   pre)
-    mvn clean ${MVNPASSTHRU} > ${TEMPDIR}/${TASKNAME}.txt
-    exit $?
     ;;
   post)
+    mvn package assembly:single -DgenerateDocs -DskipTests | tee ${REPORTDIR}/${TASKNAME}.out >> $STDOUT
+    exitCode=${PIPESTATUS[0]}
+    echo "$exitCode" >  ${TEMPDIR}/${TASKNAME}.exitCode
     ;;
   report)
-    echo "   ${TASKNAME} cleaned target directories" >> $SUMMARYFILE
+    exitCode=`cat ${TEMPDIR}/${TASKNAME}.exitCode`
+    if [[ "$exitCode" != "0" ]] ; then
+      echo "-1 ${TASKNAME}" >> $SUMMARYFILE
+      echo "    -1 distro tarball fails with the patch" >> $SUMMARYFILE
+         else
+      echo "+1 ${TASKNAME}" >> $SUMMARYFILE
+      echo "    +1 distro tarball builds with the patch " >> $SUMMARYFILE
+    fi
     ;;
 esac
 
