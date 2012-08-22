@@ -25,6 +25,7 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.regex.Matcher;
 
@@ -39,6 +40,7 @@ import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.action.hadoop.MapperReducerForTest;
+import org.apache.oozie.client.BundleJob;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.Job;
@@ -88,6 +90,9 @@ public abstract class XDataTestCase extends XFsTestCase {
             + " <sla:dev-contact>abc@yahoo.com</sla:dev-contact>"
             + " <sla:qa-contact>abc@yahoo.com</sla:qa-contact>" + " <sla:se-contact>abc@yahoo.com</sla:se-contact>"
             + "</sla:info>";
+
+    protected String bundleName;
+    protected String CREATE_TIME = "2012-07-22T00:00Z";
 
     /**
      * Insert coord job for testing.
@@ -1126,6 +1131,66 @@ public abstract class XDataTestCase extends XFsTestCase {
             fail("Unable to insert the test coord action record to table");
             throw je;
         }
+    }
+
+    /**
+     * Adds the db records for the Bulk Monitor tests
+     */
+    protected void addRecordsForBulkMonitor() throws Exception {
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+        // adding the bundle job
+        BundleJobBean bundle = addRecordToBundleJobTable(BundleJob.Status.RUNNING, false);
+        String bundleId = bundle.getId();
+        bundleName = bundle.getAppName();
+
+        // adding coordinator job(s) for this bundle
+        addRecordToCoordJobTableWithBundle(bundleId, "Coord1", CoordinatorJob.Status.RUNNING, true, true, 2);
+        addRecordToCoordJobTableWithBundle(bundleId, "Coord2", CoordinatorJob.Status.RUNNING, true, true, 1);
+        addRecordToCoordJobTableWithBundle(bundleId, "Coord3", CoordinatorJob.Status.RUNNING, true, true, 1);
+
+        // adding coordinator action #1 to Coord#1
+        CoordinatorActionBean action1 = new CoordinatorActionBean();
+        action1.setId("Coord1@1");
+        action1.setStatus(CoordinatorAction.Status.FAILED);
+        action1.setCreatedTime(DateUtils.parseDateUTC(CREATE_TIME));
+        action1.setJobId("Coord1");
+
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(DateUtils.parseDateUTC(CREATE_TIME));
+        cal.add(Calendar.DATE, -1);
+
+        action1.setNominalTime(cal.getTime());
+        CoordActionInsertJPAExecutor actionInsert = new CoordActionInsertJPAExecutor(action1);
+        jpaService.execute(actionInsert);
+
+        // adding coordinator action #2 to Coord#1
+        CoordinatorActionBean action2 = new CoordinatorActionBean();
+        action2.setId("Coord1@2");
+        action2.setStatus(CoordinatorAction.Status.KILLED);
+        action2.setCreatedTime(DateUtils.parseDateUTC(CREATE_TIME));
+        action2.setJobId("Coord1");
+
+        cal.setTime(DateUtils.parseDateUTC(CREATE_TIME));
+        cal.add(Calendar.DATE, -1);
+
+        action2.setNominalTime(cal.getTime());
+        actionInsert = new CoordActionInsertJPAExecutor(action2);
+        jpaService.execute(actionInsert);
+
+        // adding coordinator action #3 to Coord#2
+        CoordinatorActionBean action3 = new CoordinatorActionBean();
+        action3.setId("Coord2@1");
+        action3.setStatus(CoordinatorAction.Status.KILLED);
+        action3.setCreatedTime(DateUtils.parseDateUTC(CREATE_TIME));
+        action3.setJobId("Coord2");
+
+        cal.setTime(DateUtils.parseDateUTC(CREATE_TIME));
+        cal.add(Calendar.DATE, -1);
+
+        action3.setNominalTime(cal.getTime());
+        actionInsert = new CoordActionInsertJPAExecutor(action3);
+        jpaService.execute(actionInsert);
     }
 
 }

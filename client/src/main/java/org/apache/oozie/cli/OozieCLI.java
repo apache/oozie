@@ -50,6 +50,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.oozie.BuildInfo;
 import org.apache.oozie.client.AuthOozieClient;
+import org.apache.oozie.client.BulkResponse;
 import org.apache.oozie.client.BundleJob;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
@@ -132,6 +133,8 @@ public class OozieCLI {
     public static final String PIGFILE_OPTION = "file";
     
     public static final String INFO_TIME_ZONES_OPTION = "timezones";
+
+    public static final String BULK_OPTION = "bulk";
 
     private static final String[] OOZIE_HELP = {
             "the env variable '" + ENV_OOZIE_URL + "' is used as default value for the '-" + OOZIE_OPTION + "' option",
@@ -327,6 +330,10 @@ public class OozieCLI {
                 "use time zone with the specified ID (default GMT).\nSee 'oozie info -timezones' for a list");
         Option verbose = new Option(VERBOSE_OPTION, false, "verbose mode");
         Option doAs = new Option(DO_AS_OPTION, true, "doAs user, impersonates as the specified user");
+        Option bulkMonitor = new Option(BULK_OPTION, true, "key-value pairs to filter bulk jobs response. e.g. bundle=<B>\\;" +
+                "coordinators=<C>\\;actionstatus=<S>\\;startcreatedtime=<SC>\\;endcreatedtime=<EC>\\;" +
+                "startscheduledtime=<SS>\\;endscheduledtime=<ES>\\; coordinators and actionstatus can be multiple comma separated values" +
+                "bundle and coordinators are 'names' of those jobs. Bundle name is mandatory, other params are optional");
         start.setType(Integer.class);
         len.setType(Integer.class);
         Options jobsOptions = new Options();
@@ -340,6 +347,7 @@ public class OozieCLI {
         jobsOptions.addOption(filter);
         jobsOptions.addOption(jobtype);
         jobsOptions.addOption(verbose);
+        jobsOptions.addOption(bulkMonitor);
         addAuthOptions(jobsOptions);
         return jobsOptions;
     }
@@ -1088,6 +1096,7 @@ public class OozieCLI {
 
     private static final String WORKFLOW_ACTION_FORMATTER = "%-78s%-10s%-23s%-11s%-10s";
     private static final String COORD_ACTION_FORMATTER = "%-43s%-10s%-37s%-10s%-21s%-21s";
+    private static final String BULK_RESPONSE_FORMATTER = "%-41s%-41s%-37s%-37s%-13s%-21s%-24s";
 
     private void printJob(WorkflowJob job, String timeZoneId, boolean verbose) throws IOException {
         System.out.println("Job ID : " + maskIfNull(job.getId()));
@@ -1170,8 +1179,13 @@ public class OozieCLI {
         String timeZoneId = getTimeZoneId(commandLine);
         jobtype = (jobtype != null) ? jobtype : "wf";
         int len = Integer.parseInt((s != null) ? s : "0");
+        String bulkFilterString = commandLine.getOptionValue(BULK_OPTION);
+
         try {
-            if (jobtype.toLowerCase().contains("wf")) {
+            if (bulkFilterString != null) {
+                printBulkJobs(wc.getBulkInfo(bulkFilterString, start, len), timeZoneId);
+            }
+            else if (jobtype.toLowerCase().contains("wf")) {
                 printJobs(wc.getJobsInfo(filter, start, len), timeZoneId, commandLine.hasOption(VERBOSE_OPTION));
             }
             else if (jobtype.toLowerCase().startsWith("coord")) {
@@ -1230,6 +1244,24 @@ public class OozieCLI {
         }
         else {
             System.out.println("No Jobs match your criteria!");
+        }
+    }
+
+    private void printBulkJobs(List<BulkResponse> jobs, String timeZoneId) throws IOException {
+        if (jobs != null && jobs.size() > 0) {
+            System.out.println(String.format(BULK_RESPONSE_FORMATTER, "Bundle Name", "Coordinator Name",
+                    "Coord Action ID", "External ID", "Status", "Created Time", "Error Message"));
+
+            for (BulkResponse response : jobs) {
+                System.out.println(String.format(BULK_RESPONSE_FORMATTER, maskIfNull((response.getBundle()).getAppName()),
+                        maskIfNull((response.getCoordinator()).getAppName()), maskIfNull((response.getAction()).getId()),
+                        maskIfNull((response.getAction()).getExternalId()), (response.getAction()).getStatus(),
+                        maskDate((response.getAction()).getCreatedTime(), timeZoneId, false), (response.getAction()).getErrorMessage()));
+                System.out.println(RULER);
+            }
+        }
+        else {
+            System.out.println("Bulk request criteria did not match any coordinator actions");
         }
     }
 

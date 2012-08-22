@@ -109,6 +109,8 @@ public interface RestConstants {
 
     public static final String JOBS_FILTER_PARAM = "filter";
 
+    public static final String JOBS_BULK_PARAM = "bulk";
+
     public static final String JOBS_EXTERNAL_ID_PARAM = "external-id";
 
     public static final String ADMIN_STATUS_RESOURCE = "status";

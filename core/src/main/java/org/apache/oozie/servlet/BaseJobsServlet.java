@@ -52,7 +52,8 @@ public abstract class BaseJobsServlet extends JsonRestServlet {
                                                   String.class, false, Arrays.asList("GET")),
                 new JsonRestServlet.ParameterInfo(RestConstants.LEN_PARAM,
                                                   String.class, false, Arrays.asList("GET")),
-
+                new JsonRestServlet.ParameterInfo(RestConstants.JOBS_BULK_PARAM,
+                                                  String.class, false, Arrays.asList("GET")),
                 new JsonRestServlet.ParameterInfo(
                         RestConstants.JOBS_EXTERNAL_ID_PARAM, String.class,
                         false, Arrays.asList("GET"))));

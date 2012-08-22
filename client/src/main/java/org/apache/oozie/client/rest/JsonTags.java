@@ -182,7 +182,15 @@ public interface JsonTags {
     public static final Object BUNDLE_JOB_TOTAL = "total";
     public static final Object BUNDLE_JOB_OFFSET = "offset";
     public static final Object BUNDLE_JOB_LEN = "len";
-    
+
+    public static final String BULK_RESPONSE_BUNDLE = "bulkbundle";
+    public static final String BULK_RESPONSE_COORDINATOR = "bulkcoord";
+    public static final String BULK_RESPONSE_ACTION = "bulkaction";
+    public static final Object BULK_RESPONSES = "bulkresponses";
+    public static final Object BULK_RESPONSE_TOTAL = "total";
+    public static final Object BULK_RESPONSE_OFFSET = "offset";
+    public static final Object BULK_RESPONSE_LEN = "len";
+
     public static final String AVAILABLE_TIME_ZONES = "available-timezones";
     public static final String TIME_ZOME_DISPLAY_NAME = "timezoneDisplayName";
     public static final String TIME_ZONE_ID = "timezoneId";

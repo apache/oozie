@@ -17,6 +17,7 @@
  */
 package org.apache.oozie.client.rest;
 
+import org.apache.oozie.client.BulkResponse;
 import org.apache.oozie.client.BundleJob;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
@@ -63,6 +64,7 @@ public class JsonToBean {
     private static final Map<String, Property> COORD_JOB = new HashMap<String, Property>();
     private static final Map<String, Property> COORD_ACTION = new HashMap<String, Property>();
     private static final Map<String, Property> BUNDLE_JOB = new HashMap<String, Property>();
+    private static final Map<String, Property> BULK_RESPONSE = new HashMap<String, Property>();
 
     static {
         WF_ACTION.put("getId", new Property(JsonTags.WORKFLOW_ACTION_ID, String.class));
@@ -169,6 +171,11 @@ public class JsonToBean {
         BUNDLE_JOB.put("getConsoleUrl",new Property(JsonTags.BUNDLE_JOB_CONSOLE_URL, String.class));
         BUNDLE_JOB.put("getCoordinators",new Property(JsonTags.BUNDLE_COORDINATOR_JOBS, CoordinatorJob.class, true));
         BUNDLE_JOB.put("toString", new Property(JsonTags.TO_STRING, String.class));
+
+        BULK_RESPONSE.put("getBundle", new Property(JsonTags.BULK_RESPONSE_BUNDLE, BundleJob.class, true));
+        BULK_RESPONSE.put("getCoordinator", new Property(JsonTags.BULK_RESPONSE_COORDINATOR, CoordinatorJob.class, true));
+        BULK_RESPONSE.put("getAction", new Property(JsonTags.BULK_RESPONSE_ACTION, CoordinatorAction.class, true));
+
     }
 
     /**
@@ -366,6 +373,23 @@ public class JsonToBean {
         List<BundleJob> list = new ArrayList<BundleJob>();
         for (Object obj : json) {
             list.add(createBundleJob((JSONObject) obj));
+        }
+        return list;
+    }
+
+    /**
+     * Creates a list of bulk response beans from a JSON array.
+     *
+     * @param json json array.
+     * @return a list of bulk response beans from a JSON array.
+     */
+    public static List<BulkResponse> createBulkResponseList(JSONArray json) {
+        List<BulkResponse> list = new ArrayList<BulkResponse>();
+        for (Object obj : json) {
+            BulkResponse bulkObj = (BulkResponse) Proxy.newProxyInstance
+                    (JsonToBean.class.getClassLoader(), new Class[]{BulkResponse.class},
+                    new JsonInvocationHandler(BULK_RESPONSE, (JSONObject) obj));
+            list.add(bulkObj);
         }
         return list;
     }

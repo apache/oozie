@@ -38,7 +38,7 @@ public class DateUtils {
 
     public static final TimeZone UTC = getTimeZone("UTC");
 
-    private static final String ISO8601_UTC_MASK = "yyyy-MM-dd'T'HH:mm'Z'";
+    public static final String ISO8601_UTC_MASK = "yyyy-MM-dd'T'HH:mm'Z'";
     private static final String ISO8601_TZ_MASK_WITHOUT_OFFSET = "yyyy-MM-dd'T'HH:mm";
 
     private static String ACTIVE_MASK = ISO8601_UTC_MASK;
