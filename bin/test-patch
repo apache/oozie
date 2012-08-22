@@ -348,12 +348,7 @@ prepareTestPatchDirs
 
 echo "" > ${SUMMARYFILE}
 
-prepareSCM
-
-echo "" >> ${SUMMARYFILE}
-
 if [ "${PATCHFILE}" == "" ] ; then
-  downloadPatch ${JIRAISSUE}
   echo "Testing JIRA ${JIRAISSUE}"
   echo
   echo "Testing JIRA ${JIRAISSUE}" >> ${SUMMARYFILE}
@@ -367,6 +362,14 @@ else
   echo
   echo "Testing patch ${PATCHFILE}" >> ${SUMMARYFILE}
   echo "" >> ${SUMMARYFILE}
+fi
+
+prepareSCM
+
+echo "" >> ${SUMMARYFILE}
+
+if [ "${PATCHFILE}" == "" ] ; then
+  downloadPatch ${JIRAISSUE}
 fi
 
 if [ "${JIRAUPDATE}" == "true" ] ; then
