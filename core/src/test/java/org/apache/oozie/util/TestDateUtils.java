@@ -24,6 +24,7 @@ import org.junit.Test;
 
 import java.text.ParseException;
 import java.util.Date;
+import java.util.TimeZone;
 
 public class TestDateUtils {
 
@@ -97,4 +98,42 @@ public class TestDateUtils {
         DateUtils.setConf(conf);
     }
 
+    @Test
+    public void testGetTimeZoneValidFormats() throws Exception {
+        Assert.assertEquals(TimeZone.getTimeZone("America/Los_Angeles"), DateUtils.getTimeZone("America/Los_Angeles"));
+
+        Assert.assertEquals(TimeZone.getTimeZone("PST"), DateUtils.getTimeZone("PST"));
+
+        Assert.assertEquals(TimeZone.getTimeZone("GMT"), DateUtils.getTimeZone("GMT"));
+
+        // Check that these four TimeZones are all equal
+        TimeZone GMTOffsetColon = TimeZone.getTimeZone("GMT-07:00");
+        TimeZone GMTOffsetNoColon = TimeZone.getTimeZone("GMT-0700");
+        TimeZone oozieGMTOffsetColon = DateUtils.getTimeZone("GMT-07:00");
+        TimeZone oozieGMTOffsetNoColon = DateUtils.getTimeZone("GMT-0700");
+        Assert.assertEquals(GMTOffsetColon, GMTOffsetNoColon);
+        Assert.assertEquals(GMTOffsetNoColon, oozieGMTOffsetColon);
+        Assert.assertEquals(oozieGMTOffsetColon, oozieGMTOffsetNoColon);
+        Assert.assertFalse(TimeZone.getTimeZone("GMT").equals(oozieGMTOffsetNoColon));
+
+        // Check that these four TimeZones are all equal
+        GMTOffsetColon = TimeZone.getTimeZone("GMT+05:30");
+        GMTOffsetNoColon = TimeZone.getTimeZone("GMT+0530");
+        oozieGMTOffsetColon = DateUtils.getTimeZone("GMT+05:30");
+        oozieGMTOffsetNoColon = DateUtils.getTimeZone("GMT+0530");
+        Assert.assertEquals(GMTOffsetColon, GMTOffsetNoColon);
+        Assert.assertEquals(GMTOffsetNoColon, oozieGMTOffsetColon);
+        Assert.assertEquals(oozieGMTOffsetColon, oozieGMTOffsetNoColon);
+        Assert.assertFalse(TimeZone.getTimeZone("GMT").equals(oozieGMTOffsetNoColon));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetTimeZoneInvalidFormat() throws Exception {
+        DateUtils.getTimeZone("This_is_not_a_TimeZone_id");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetTimeZoneInvalidFormatNull() throws Exception {
+        DateUtils.getTimeZone(null);
+    }
 }

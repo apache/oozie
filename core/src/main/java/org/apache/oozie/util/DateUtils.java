@@ -26,6 +26,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.hadoop.conf.Configuration;
@@ -35,6 +36,8 @@ import org.apache.oozie.coord.TimeUnit;
  * Date utility classes to parse and format datetimes in Oozie expected datetime formats.
  */
 public class DateUtils {
+
+    private static final Pattern GMT_OFFSET_COLON_PATTERN = Pattern.compile("^GMT(\\-|\\+)(\\d{2})(\\d{2})$");
 
     public static final TimeZone UTC = getTimeZone("UTC");
 
@@ -50,7 +53,7 @@ public class DateUtils {
 
     private static boolean OOZIE_IN_UTC = true;
 
-    private static final String VALID_TIMEZONE_MASK = "^UTC$|^GMT(\\+|\\-)\\d{4}$";
+    private static final Pattern VALID_TIMEZONE_PATTERN = Pattern.compile("^UTC$|^GMT(\\+|\\-)\\d{4}$");
 
     /**
      * Configures the Datetime parsing with Oozie processing timezone.
@@ -62,8 +65,7 @@ public class DateUtils {
      */
     public static void setConf(Configuration conf) {
         String tz = conf.get(OOZIE_PROCESSING_TIMEZONE_KEY, OOZIE_PROCESSING_TIMEZONE_DEFAULT);
-        Pattern pattern = Pattern.compile(VALID_TIMEZONE_MASK);
-        if (!pattern.matcher(tz).find()) {
+        if (!VALID_TIMEZONE_PATTERN.matcher(tz).matches()) {
             throw new RuntimeException("Invalid Oozie timezone, it must be 'UTC' or 'GMT(+/-)####");
         }
         ACTIVE_TIMEZONE = TimeZone.getTimeZone(tz);
@@ -107,6 +109,25 @@ public class DateUtils {
     }
 
     /**
+     * {@link TimeZone#getTimeZone(java.lang.String)} takes the timezone ID as an argument; for invalid IDs it returns the
+     * <code>GMT</code> TimeZone.  A timezone ID formatted like <code>GMT-####</code> is not a valid ID, however, it will actually
+     * map this to the <code>GMT-##:##</code> TimeZone, instead of returning the <code>GMT</code> TimeZone.  We check (later)
+     * check that a timezone ID is valid by calling {@link TimeZone#getTimeZone(java.lang.String)} and seeing if the returned
+     * TimeZone ID is equal to the original; because we want to allow <code>GMT-####</code>, while still disallowing actual
+     * invalid IDs, we have to manually replace <code>GMT-####</code> with <code>GMT-##:##</code> first.
+     *
+     * @param tzId The timezone ID
+     * @return If tzId matches <code>GMT-####</code>, then we return <code>GMT-##:##</code>; otherwise, we return tzId unaltered
+     */
+    private static String handleGMTOffsetTZNames(String tzId) {
+        Matcher m = GMT_OFFSET_COLON_PATTERN.matcher(tzId);
+        if (m.matches() && m.groupCount() == 3) {
+            tzId = "GMT" + m.group(1) + m.group(2) + ":" + m.group(3);
+        }
+        return tzId;
+    }
+
+    /**
      * Returns the {@link TimeZone} for the given timezone ID.
      *
      * @param tzId timezone ID.
@@ -116,7 +137,9 @@ public class DateUtils {
         if (tzId == null) {
             throw new IllegalArgumentException("Invalid TimeZone: " + tzId);
         }
+        tzId = handleGMTOffsetTZNames(tzId);    // account for GMT-####
         TimeZone tz = TimeZone.getTimeZone(tzId);
+        // If these are not equal, it means that the tzId is not valid (invalid tzId's return GMT)
         if (!tz.getID().equals(tzId)) {
             throw new IllegalArgumentException("Invalid TimeZone: " + tzId);
         }
