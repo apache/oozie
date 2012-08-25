@@ -1553,6 +1553,10 @@ string. This is the common behavior when using =firstNotNull()= in node configur
 
 It returns the concatenation of 2 strings. A string with =null= value is considered as an empty string.
 
+*String replaceAll(String src, String regex, String replacement)*
+
+Replace each occurrence of regular expression match in the first string with the =replacement= string and return the replaced string. A 'regex' string with =null= value is considered as no change. A 'replacement' string with =null= value is consider as an empty string.
+
 *String trim(String s)*
 
 It returns the trimmed value of the given string. A string with =null= value is considered as an empty string.

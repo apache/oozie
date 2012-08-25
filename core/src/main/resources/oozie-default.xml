@@ -453,6 +453,7 @@
         <value>
             firstNotNull=org.apache.oozie.util.ELConstantsFunctions#firstNotNull,
             concat=org.apache.oozie.util.ELConstantsFunctions#concat,
+            replaceAll=org.apache.oozie.util.ELConstantsFunctions#replaceAll,
             trim=org.apache.oozie.util.ELConstantsFunctions#trim,
             timestamp=org.apache.oozie.util.ELConstantsFunctions#timestamp,
             urlEncode=org.apache.oozie.util.ELConstantsFunctions#urlEncode,
