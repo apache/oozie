@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-969 Unit tests in TestStatusTransitService failing due to change in CoordKillX (mona via virag)
 OOZIE-965 Allow the timezone attribute in coordinator jobs to use a format like GMT-#### (rkanter via tucu)
 OOZIE-848 Bulk Monitoring API - Consolidated view of jobs (mona via virag)
 OOZIE-934 Exception reporting during Services startup is inadequate (mona via virag)
