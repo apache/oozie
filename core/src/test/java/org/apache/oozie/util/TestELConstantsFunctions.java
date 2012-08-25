@@ -43,6 +43,16 @@ public class TestELConstantsFunctions extends XTestCase {
         assertEquals("", ELConstantsFunctions.concat(null, null));
     }
 
+    public void testReplaceAll() {
+        assertEquals("aefefd", ELConstantsFunctions.replaceAll("abcbcd", "bc", "ef"));
+        assertEquals("d1 d2 d3", ELConstantsFunctions.replaceAll("d1,d2,d3", ",", " "));
+        assertEquals("ayyycd", ELConstantsFunctions.replaceAll("abcbcd", "bcb", "yyy"));
+        assertEquals("acd", ELConstantsFunctions.replaceAll("abcbcd", "bcb", ""));
+        assertEquals(null, ELConstantsFunctions.replaceAll(null, "bcb", "yyy"));
+        assertEquals("abcbcd", ELConstantsFunctions.replaceAll("abcbcd", null, "XYZ"));
+        assertEquals("acd", ELConstantsFunctions.replaceAll("abcbcd", "bcb", null));
+    }
+
     public void testTimestamp() throws Exception {
         String s = ELConstantsFunctions.timestamp();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");

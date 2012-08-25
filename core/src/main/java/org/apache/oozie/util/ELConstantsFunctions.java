@@ -95,6 +95,30 @@ public class ELConstantsFunctions {
     }
 
     /**
+     * Replace each occurrence of regular expression match in the first string
+     * with the <code>replacement</code> string. This EL function utilizes the
+     * java String class replaceAll method. For more details please see
+     *
+     * <code>http://docs.oracle.com/javase/6/docs/api/java/lang/String.html#replaceAll(java.lang.String,%20java.lang.String)</code>
+     *
+     * @param src source string.
+     * @param regex the regular expression to which this string is to be
+     *        matched. null means no replacement.
+     * @param replacement - the string to be substituted for each match. If
+     *        null, it will considered as ""
+     * @return the replaced string.
+     */
+    public static String replaceAll(String src, String regex, String replacement) {
+        if (src != null && regex != null) {
+            if (replacement == null) {
+                replacement = "";
+            }
+            return src.replaceAll(regex, replacement);
+        }
+        return src;
+    }
+
+    /**
      * Return the trimmed version of the given string.
      *
      * @param input string to be trimmed
