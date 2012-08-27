@@ -741,6 +741,7 @@ $ oozie info -timezones
 .
 The format is "SHORT_NAME (ID)"
 Give the ID to the -timezone argument
+GMT offsets can also be used (e.g. GMT-07:00, GMT-0700, GMT+05:30, GMT+0530)
 Available Time Zones :
       SST (Pacific/Midway)
       NUT (Pacific/Niue)
