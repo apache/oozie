@@ -51,6 +51,12 @@ then
   exit 1
 fi
 
+# if the configuration dir has a env file, source it
+if [ -f ${OOZIE_CONFIG}/oozie-env.sh ]
+then
+  source ${OOZIE_CONFIG}/oozie-env.sh
+fi
+
 OOZIEDB_OPTS="-Doozie.home.dir=${OOZIE_HOME}";
 OOZIEDB_OPTS="${OOZIEDB_OPTS} -Doozie.config.dir=${OOZIE_CONFIG}";
 OOZIEDB_OPTS="${OOZIEDB_OPTS} -Doozie.log.dir=${OOZIE_LOG}";
