@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-961 Load Hbase credentials in Oozie (virag)
 OOZIE-963 Add new EL function to replace all instances of a sub-string with another one (kamrul via virag)
 OOZIE-969 Unit tests in TestStatusTransitService failing due to change in CoordKillX (mona via virag)
 OOZIE-965 Allow the timezone attribute in coordinator jobs to use a format like GMT-#### (rkanter via tucu)
