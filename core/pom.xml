@@ -37,6 +37,12 @@
     <dependencies>
 
         <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
             <groupId>org.apache.oozie</groupId>
             <artifactId>oozie-hadoop-test</artifactId>
             <scope>test</scope>

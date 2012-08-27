@@ -83,6 +83,7 @@
          <sqoop.version>1.5.0-incubating-SNAPSHOT</sqoop.version>
          <streaming.version>${hadoop.version}</streaming.version>
          <distcp.version>${hadooplib.version}</distcp.version>
+         <hbase.version>0.94.0</hbase.version>
     </properties>
 
     <modules>
@@ -321,6 +322,12 @@
                 <groupId>org.apache.oozie</groupId>
                 <artifactId>oozie-hadoop-distcp</artifactId>
                 <version>${distcp.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.hbase</groupId>
+                <artifactId>hbase</artifactId>
+                <version>${hbase.version}</version>
             </dependency>
 
             <dependency>
