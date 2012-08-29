@@ -46,7 +46,7 @@ public class SuspendXCommand extends WorkflowXCommand<Void> {
     private final String wfid;
     private WorkflowJobBean wfJobBean;
     private JPAService jpaService;
-    private static List<JsonBean> updateList = new ArrayList<JsonBean>();
+    private List<JsonBean> updateList = new ArrayList<JsonBean>();
 
     public SuspendXCommand(String id) {
         super("suspend", "suspend", 1);
@@ -60,7 +60,7 @@ public class SuspendXCommand extends WorkflowXCommand<Void> {
     protected Void execute() throws CommandException {
         InstrumentUtils.incrJobCounter(getName(), 1, getInstrumentation());
         try {
-            suspendJob(this.jpaService, this.wfJobBean, this.wfid, null);
+            suspendJob(this.jpaService, this.wfJobBean, this.wfid, null, updateList);
             this.wfJobBean.setLastModifiedTime(new Date());
             updateList.add(this.wfJobBean);
             jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, null));
@@ -90,8 +90,8 @@ public class SuspendXCommand extends WorkflowXCommand<Void> {
      * @throws WorkflowException thrown if failed to suspend workflow instance
      * @throws CommandException thrown if unable set pending false for actions
      */
-    public static void suspendJob(JPAService jpaService, WorkflowJobBean workflow, String id, String actionId)
-            throws WorkflowException, CommandException {
+    public static void suspendJob(JPAService jpaService, WorkflowJobBean workflow, String id,
+            String actionId, List<JsonBean> updateList) throws WorkflowException, CommandException {
         if (workflow.getStatus() == WorkflowJob.Status.RUNNING) {
             workflow.getWorkflowInstance().suspend();
             WorkflowInstance wfInstance = workflow.getWorkflowInstance();
@@ -99,7 +99,7 @@ public class SuspendXCommand extends WorkflowXCommand<Void> {
             workflow.setStatus(WorkflowJob.Status.SUSPENDED);
             workflow.setWorkflowInstance(wfInstance);
 
-            setPendingFalseForActions(jpaService, id, actionId);
+            setPendingFalseForActions(jpaService, id, actionId, updateList);
         }
     }
 
@@ -112,8 +112,8 @@ public class SuspendXCommand extends WorkflowXCommand<Void> {
      * @param actionId workflow action id
      * @throws CommandException thrown if failed to update workflow action
      */
-    private static void setPendingFalseForActions(JPAService jpaService, String id, String actionId)
-            throws CommandException {
+    private static void setPendingFalseForActions(JPAService jpaService, String id, String actionId,
+            List<JsonBean> updateList) throws CommandException {
         List<WorkflowActionBean> actions;
         try {
             actions = jpaService.execute(new WorkflowActionRetryManualGetJPAExecutor(id));
@@ -126,8 +126,11 @@ public class SuspendXCommand extends WorkflowXCommand<Void> {
                 else {
                     action.resetPendingOnly();
                 }
-                updateList.add(action);
-
+                if (updateList != null) { // will be null when suspendJob
+                                          // invoked statically via
+                                          // handleNonTransient()
+                    updateList.add(action);
+                }
             }
         }
         catch (JPAExecutorException je) {
