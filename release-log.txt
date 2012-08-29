@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-979 bump up trunk version to 3.4.0-SNAPSHOT (tucu)
 
 -- Oozie 3.3.0 release (unreleased)
 
