@@ -822,6 +822,11 @@
 
                         <!-- See 'testSqoop' profile in core/pom.xml and the Building doc-->
                         <exclude>**/TestSqoop*.java</exclude>
+
+                        <!-- Explictly use -Dtest=TestMapReduceActionExecutorUberJar to test the uber jar functionality.
+                             Requires at least Hadoop 1.2.0 or 2.2.0.
+                        -->
+                        <exclude>**/TestMapReduceActionExecutorUberJar.java</exclude>
                     </excludes>
                     <!-- DO NOT CHANGE THIS VALUES, TESTCASES CANNOT RUN IN PARALLEL -->
                     <parallel>classes</parallel>

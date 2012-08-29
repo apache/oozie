@@ -79,6 +79,12 @@ public class MapReduceMain extends LauncherMain {
         JobConf jobConf = new JobConf();
         addActionConf(jobConf, actionConf);
 
+        // Set for uber jar
+        String uberJar = actionConf.get(MapReduceActionExecutor.OOZIE_MAPREDUCE_UBER_JAR);
+        if (uberJar != null && uberJar.trim().length() > 0) {
+            jobConf.setJar(uberJar);
+        }
+
         // propagate delegation related props from launcher job to MR job
         if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
             jobConf.set("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));

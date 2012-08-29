@@ -25,6 +25,16 @@
     <!-- ************************** VERY IMPORTANT  ************************** -->
 
     <property>
+        <name>oozie.action.mapreduce.uber.jar.enable</name>
+        <value>false</value>
+        <description>
+            If true, enables the oozie.mapreduce.uber.jar mapreduce workflow configuration property, which is used to specify an
+            uber jar in HDFS.  Submitting a workflow with an uber jar requires at least Hadoop 2.2.0 or 1.2.0.  If false, workflows
+            which specify the oozie.mapreduce.uber.jar configuration property will fail.
+        </description>
+    </property>
+
+    <property>
         <name>oozie.processing.timezone</name>
         <value>UTC</value>
         <description>
