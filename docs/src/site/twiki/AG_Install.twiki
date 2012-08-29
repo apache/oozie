@@ -425,6 +425,24 @@ be expressed in the corresponding timezone, for example =2012-08-08T12:42+0530=.
 For more details on using an alternate Oozie processing timezone, please reffer to the
 [[CoordinatorFunctionalSpec#datetime][Coordinator Fuctional Specification, section '4. Datetime']]
 
+#UberJar
+---++ MapReduce Workflow Uber Jars
+For Map-Reduce jobs (not including streaming or pipes), additional jar files can also be included via an uber jar. An uber jar is a
+jar file that contains additional jar files within a "lib" folder (see
+[[WorkflowFunctionalSpec#AppDeployment][Workflow Functional Specification]] for more information). Submitting a workflow with an uber jar
+requires at least Hadoop 2.2.0 or 1.2.0. As such, using uber jars in a workflow is disabled by default. To enable this feature, use
+the =oozie.action.mapreduce.uber.jar.enable= property in the =oozie-site.xml= (and make sure to use a supported version of Hadoop).
+
+<verbatim>
+<configuration>
+    <property>
+        <name>oozie.action.mapreduce.uber.jar.enable</name>
+        <value>true</value>
+    </property>
+</configuration>
+</verbatim>
+
+
 ---++ Advanced/Custom Environment Settings
 
 Oozie can be configured to use Unix standard filesystem hierarchy for its different files

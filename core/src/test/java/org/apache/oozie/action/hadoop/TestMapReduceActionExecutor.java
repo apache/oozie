@@ -41,11 +41,18 @@ import java.io.File;
 import java.io.OutputStream;
 import java.io.InputStream;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.Writer;
 import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
+import java.util.jar.JarOutputStream;
+import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.oozie.action.ActionExecutorException;
 
 public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
 
@@ -60,6 +67,13 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         MapReduceActionExecutor ae = new MapReduceActionExecutor();
         Path jar = new Path(ae.getOozieRuntimeDir(), ae.getLauncherJarName());
         assertTrue(new File(jar.toString()).exists());
+    }
+
+    public Element createUberJarActionXML(String uberJarPath, String additional) throws Exception{
+        return XmlUtils.parseXml("<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>"
+                + "<name-node>" + getNameNodeUri() + "</name-node>" + additional + "<configuration>"
+                + "<property><name>oozie.mapreduce.uber.jar</name><value>" + uberJarPath + "</value></property>"
+                + "</configuration>" + "</map-reduce>");
     }
 
     public void testSetupMethods() throws Exception {
@@ -103,6 +117,69 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         Configuration conf = ae.createBaseHadoopConf(context, actionXml);
         ae.setupActionConf(conf, context, actionXml, getFsTestCaseDir());
         assertEquals("IN", conf.get("mapred.input.dir"));
+
+        // Enable uber jars to test that MapReduceActionExecutor picks up the oozie.mapreduce.uber.jar property correctly
+        Services serv = Services.get();
+        boolean originalUberJarDisabled = serv.getConf().getBoolean("oozie.action.mapreduce.uber.jar.enable", false);
+        serv.getConf().setBoolean("oozie.action.mapreduce.uber.jar.enable", true);
+
+        actionXml = createUberJarActionXML(getNameNodeUri() + "/app/job.jar", "");
+        conf = ae.createBaseHadoopConf(context, actionXml);
+        ae.setupActionConf(conf, context, actionXml, getFsTestCaseDir());
+        assertEquals(getNameNodeUri() + "/app/job.jar", conf.get("oozie.mapreduce.uber.jar"));  // absolute path with namenode
+        JobConf launcherJobConf = ae.createLauncherConf(getFileSystem(), context, action, actionXml, conf);
+        assertEquals(getNameNodeUri() + "/app/job.jar", launcherJobConf.getJar());              // same for launcher conf
+
+        actionXml = createUberJarActionXML("/app/job.jar", "");
+        conf = ae.createBaseHadoopConf(context, actionXml);
+        ae.setupActionConf(conf, context, actionXml, getFsTestCaseDir());
+        assertEquals(getNameNodeUri() + "/app/job.jar", conf.get("oozie.mapreduce.uber.jar"));  // absolute path without namenode
+        launcherJobConf = ae.createLauncherConf(getFileSystem(), context, action, actionXml, conf);
+        assertEquals(getNameNodeUri() + "/app/job.jar", launcherJobConf.getJar());              // same for launcher conf
+
+        actionXml = createUberJarActionXML("job.jar", "");
+        conf = ae.createBaseHadoopConf(context, actionXml);
+        ae.setupActionConf(conf, context, actionXml, getFsTestCaseDir());
+        assertEquals(getFsTestCaseDir() + "/job.jar", conf.get("oozie.mapreduce.uber.jar"));    // relative path
+        launcherJobConf = ae.createLauncherConf(getFileSystem(), context, action, actionXml, conf);
+        assertEquals(getFsTestCaseDir() + "/job.jar", launcherJobConf.getJar());                // same for launcher
+
+        actionXml = createUberJarActionXML("job.jar", "<streaming></streaming>");
+        conf = ae.createBaseHadoopConf(context, actionXml);
+        ae.setupActionConf(conf, context, actionXml, getFsTestCaseDir());
+        assertEquals("", conf.get("oozie.mapreduce.uber.jar"));                                 // ignored for streaming
+        launcherJobConf = ae.createLauncherConf(getFileSystem(), context, action, actionXml, conf);
+        assertNull(launcherJobConf.getJar());                                                   // same for launcher conf (not set)
+
+        actionXml = createUberJarActionXML("job.jar", "<pipes></pipes>");
+        conf = ae.createBaseHadoopConf(context, actionXml);
+        ae.setupActionConf(conf, context, actionXml, getFsTestCaseDir());
+        assertEquals("", conf.get("oozie.mapreduce.uber.jar"));                                 // ignored for pipes
+        launcherJobConf = ae.createLauncherConf(getFileSystem(), context, action, actionXml, conf);
+        assertNull(launcherJobConf.getJar());                                                   // same for launcher conf (not set)
+
+        actionXml = XmlUtils.parseXml("<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>"
+                + "<name-node>" + getNameNodeUri() + "</name-node>" + "</map-reduce>");
+        conf = ae.createBaseHadoopConf(context, actionXml);
+        ae.setupActionConf(conf, context, actionXml, getFsTestCaseDir());
+        assertNull(conf.get("oozie.mapreduce.uber.jar"));                                       // doesn't resolve if not set
+        launcherJobConf = ae.createLauncherConf(getFileSystem(), context, action, actionXml, conf);
+        assertNull(launcherJobConf.getJar());                                                   // same for launcher conf
+
+        // Disable uber jars to test that MapReduceActionExecutor won't allow the oozie.mapreduce.uber.jar property
+        serv.getConf().setBoolean("oozie.action.mapreduce.uber.jar.enable", false);
+        try {
+            actionXml = createUberJarActionXML(getNameNodeUri() + "/app/job.jar", "");
+            conf = ae.createBaseHadoopConf(context, actionXml);
+            ae.setupActionConf(conf, context, actionXml, getFsTestCaseDir());
+            assertEquals(getNameNodeUri() + "/app/job.jar", conf.get("oozie.mapreduce.uber.jar"));
+        } catch (ActionExecutorException aee) {
+            assertEquals("MR003", aee.getErrorCode());
+            assertEquals(ActionExecutorException.ErrorType.ERROR, aee.getErrorType());
+            assertTrue(aee.getMessage().contains("oozie.action.mapreduce.uber.jar.enable"));
+            assertTrue(aee.getMessage().contains("oozie.mapreduce.uber.jar"));
+        }
+        serv.getConf().setBoolean("oozie.action.mapreduce.uber.jar.enable", originalUberJarDisabled);
 
         actionXml = XmlUtils.parseXml("<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>"
                 + "<name-node>" + getNameNodeUri() + "</name-node>" + "<streaming>" + "<mapper>M</mapper>"
@@ -221,7 +298,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         return runningJob;
     }
 
-    private void _testSubmit(String name, String actionXml) throws Exception {
+    private String _testSubmit(String name, String actionXml) throws Exception {
 
         Context context = createContext(name, actionXml);
         final RunningJob launcherJob = submitAction(context);
@@ -266,6 +343,8 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
 
         //External Child IDs will always be null in case of MR action.
         assertNull(context.getExternalChildIDs());
+
+        return mrJob.getID().toString();
     }
 
     private void _testSubmitWithCredentials(String name, String actionXml) throws Exception {
@@ -327,6 +406,16 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         return conf;
     }
 
+    protected XConfiguration getMapReduceUberJarConfig(String inputDir, String outputDir) throws Exception{
+        XConfiguration conf = new XConfiguration();
+        conf.set("mapred.mapper.class", MapperReducerUberJarForTest.class.getName());
+        conf.set("mapred.reducer.class", MapperReducerUberJarForTest.class.getName());
+        conf.set("mapred.input.dir", inputDir);
+        conf.set("mapred.output.dir", outputDir);
+        conf.set("oozie.mapreduce.uber.jar", createAndUploadUberJar().toUri().toString());
+        return conf;
+    }
+
     public void testMapReduce() throws Exception {
         FileSystem fs = getFileSystem();
 
@@ -360,6 +449,121 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
                 + getMapReduceCredentialsConfig(inputDir.toString(), outputDir.toString()).toXmlString(false)
                 + "</map-reduce>";
         _testSubmitWithCredentials("map-reduce", actionXml);
+    }
+
+    protected Path createAndUploadUberJar() throws Exception {
+        Path localJobJarPath = makeUberJarWithLib(getTestCaseDir());
+        Path remoteJobJarPath = new Path(getAppPath(), localJobJarPath.getName());
+        getFileSystem().moveFromLocalFile(localJobJarPath, remoteJobJarPath);
+        File localJobJarFile = new File(localJobJarPath.toUri().toString());
+        if (localJobJarFile.exists()) {     // just to make sure
+            localJobJarFile.delete();
+        }
+        return remoteJobJarPath;
+    }
+
+    private Path makeUberJarWithLib(String testDir) throws Exception {
+        Path jobJarPath = new Path(testDir, "uber.jar");
+        FileOutputStream fos = new FileOutputStream(new File(jobJarPath.toUri().getPath()));
+        JarOutputStream jos = new JarOutputStream(fos);
+        // Have to put in real jar files or it will complain
+        createAndAddJarToJar(jos, new File(new Path(testDir, "lib1.jar").toUri().getPath()));
+        createAndAddJarToJar(jos, new File(new Path(testDir, "lib2.jar").toUri().getPath()));
+        jos.close();
+        return jobJarPath;
+    }
+
+    private void createAndAddJarToJar(JarOutputStream jos, File jarFile) throws Exception {
+        FileOutputStream fos2 = new FileOutputStream(jarFile);
+        JarOutputStream jos2 = new JarOutputStream(fos2);
+        // Have to have at least one entry or it will complain
+        ZipEntry ze = new ZipEntry(jarFile.getName() + ".inside");
+        jos2.putNextEntry(ze);
+        jos2.closeEntry();
+        jos2.close();
+        ze = new ZipEntry("lib/" + jarFile.getName());
+        jos.putNextEntry(ze);
+        FileInputStream in = new FileInputStream(jarFile);
+        byte buf[] = new byte[1024];
+        int numRead;
+        do {
+            numRead = in.read(buf);
+            if (numRead >= 0) {
+                jos.write(buf, 0, numRead);
+            }
+        } while (numRead != -1);
+        in.close();
+        jos.closeEntry();
+        jarFile.delete();
+    }
+
+    public void _testMapReduceWithUberJar() throws Exception {
+        FileSystem fs = getFileSystem();
+
+        Path inputDir = new Path(getFsTestCaseDir(), "input");
+        Path outputDir = new Path(getFsTestCaseDir(), "output");
+
+        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+        w.write("dummy\n");
+        w.write("dummy\n");
+        w.close();
+
+        String actionXml = "<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+                + getNameNodeUri() + "</name-node>"
+                + getMapReduceUberJarConfig(inputDir.toString(), outputDir.toString()).toXmlString(false) + "</map-reduce>";
+        String jobID = _testSubmit("map-reduce", actionXml);
+
+        boolean containsLib1Jar = false;
+        String lib1JarStr = "jobcache/" + jobID + "/jars/lib/lib1.jar";
+        Pattern lib1JarPatYarn = Pattern.compile(
+                ".*appcache/application_" + jobID.replaceFirst("job_", "") + "/filecache/.*/uber.jar/lib/lib1.jar");
+        boolean containsLib2Jar = false;
+        String lib2JarStr = "jobcache/" + jobID + "/jars/lib/lib1.jar";
+        Pattern lib2JarPatYarn = Pattern.compile(
+                ".*appcache/application_" + jobID.replaceFirst("job_", "") + "/filecache/.*/uber.jar/lib/lib2.jar");
+
+        FileStatus[] fstats = getFileSystem().listStatus(outputDir);
+        for (FileStatus fstat : fstats) {
+            Path p = fstat.getPath();
+            if (getFileSystem().isFile(p) && p.getName().startsWith("part-")) {
+                InputStream is = getFileSystem().open(p);
+                Scanner sc = new Scanner(is);
+                while (sc.hasNextLine()) {
+                    String line = sc.nextLine();
+                    containsLib1Jar = (containsLib1Jar || line.endsWith(lib1JarStr) || lib1JarPatYarn.matcher(line).matches());
+                    containsLib2Jar = (containsLib2Jar || line.endsWith(lib2JarStr) || lib2JarPatYarn.matcher(line).matches());
+                }
+                sc.close();
+                is.close();
+            }
+        }
+
+        assertTrue("lib/lib1.jar should have been unzipped from the uber jar and added to the classpath but was not",
+                containsLib1Jar);
+        assertTrue("lib/lib2.jar should have been unzipped from the uber jar and added to the classpath but was not",
+                containsLib2Jar);
+    }
+
+    // With the oozie.action.mapreduce.uber.jar.enable property set to false, a workflow with an uber jar should fail
+    // (this happens before we get to Hadoop, so not having the correct version of Hadoop doesn't matter here; the
+    // TestMapReduceActionExecutorUberJar.testMapReduceWithUberJarEnabled() test actually tests the uber jar functionality, but
+    // this test is excluded by default)
+    public void testMapReduceWithUberJarDisabled() throws Exception {
+        Services serv = Services.get();
+        boolean originalUberJarDisabled = serv.getConf().getBoolean("oozie.action.mapreduce.uber.jar.enable", false);
+        try {
+            serv.getConf().setBoolean("oozie.action.mapreduce.uber.jar.enable", false);
+            _testMapReduceWithUberJar();
+        } catch (ActionExecutorException aee) {
+            assertEquals("MR003", aee.getErrorCode());
+            assertEquals(ActionExecutorException.ErrorType.ERROR, aee.getErrorType());
+            assertTrue(aee.getMessage().contains("oozie.action.mapreduce.uber.jar.enable"));
+            assertTrue(aee.getMessage().contains("oozie.mapreduce.uber.jar"));
+        } catch (Exception e) {
+            throw e;
+        } finally {
+            serv.getConf().setBoolean("oozie.action.mapreduce.uber.jar.enable", originalUberJarDisabled);
+        }
     }
 
     protected XConfiguration getStreamingConfig(String inputDir, String outputDir) {
