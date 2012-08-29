@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (trunk - unreleased)
 
+OOZIE-971 TestRecoveryService failing very often in pre-commit builds (mona via virag)
 OOZIE-960 TestStatusTransitService failing intermittently (virag)
 OOZIE-968 source oozie environment from conf in oozie db setup script (svenkat via virag)
 OOZIE-944 Implement Workflow Generator UI Tool (egashira via virag)
