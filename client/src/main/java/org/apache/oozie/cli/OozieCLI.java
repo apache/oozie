@@ -32,6 +32,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.TimeZone;
 import java.util.concurrent.Callable;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
@@ -152,6 +154,8 @@ public class OozieCLI {
     private static final String MAPRED_REDUCER = "mapred.reducer.class";
     private static final String MAPRED_INPUT = "mapred.input.dir";
     private static final String MAPRED_OUTPUT = "mapred.output.dir";
+
+    private static final Pattern GMT_OFFSET_SHORTEN_PATTERN = Pattern.compile("(.* )GMT((?:-|\\+)\\d{2}:\\d{2})");
 
     static {
         StringBuilder sb = new StringBuilder();
@@ -1441,7 +1445,14 @@ public class OozieCLI {
         if (timeZoneId != null) {
             dateFormater.setTimeZone(TimeZone.getTimeZone(timeZoneId));
         }
-        return dateFormater.format(date);
+        String dateString = dateFormater.format(date);
+        // Most TimeZones are 3 or 4 characters; GMT offsets (e.g. GMT-07:00) are 9, so lets remove the "GMT" part to make it 6
+        // to fit better
+        Matcher m = GMT_OFFSET_SHORTEN_PATTERN.matcher(dateString);
+        if (m.matches() && m.groupCount() == 2) {
+            dateString = m.group(1) + m.group(2);
+        }
+        return dateString;
     }
 
     private void validateCommand(CommandLine commandLine) throws OozieCLIException {
@@ -1556,10 +1567,11 @@ public class OozieCLI {
      
     private void printAvailableTimeZones() {
         System.out.println("The format is \"SHORT_NAME (ID)\"\nGive the ID to the -timezone argument");
+        System.out.println("GMT offsets can also be used (e.g. GMT-07:00, GMT-0700, GMT+05:30, GMT+0530)");
         System.out.println("Available Time Zones:");
         for (String tzId : TimeZone.getAvailableIDs()) {
-            // skip id's that are like "GMT+01:00" because they won't get parsed correctly later (but allow just "GMT")
-            if (!tzId.contains("GMT") || tzId.equals("GMT")) {
+            // skip id's that are like "Etc/GMT+01:00" because their display names are like "GMT-01:00", which is confusing
+            if (!tzId.startsWith("Etc/GMT")) {
                 TimeZone tZone = TimeZone.getTimeZone(tzId);
                 System.out.println("      " + tZone.getDisplayName(false, TimeZone.SHORT) + " (" + tzId + ")");
             }

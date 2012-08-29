@@ -18,7 +18,6 @@
 package org.apache.oozie.servlet;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.TimeZone;
 
@@ -184,18 +183,44 @@ public abstract class BaseAdminServlet extends JsonRestServlet {
 
     protected abstract void getQueueDump(JSONObject json) throws XServletException;
     
+    private static final JSONArray GMTOffsetTimeZones = new JSONArray();
+    static {
+        prepareGMTOffsetTimeZones();
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static void prepareGMTOffsetTimeZones() {
+        for (String tzId : new String[]{"GMT-12:00", "GMT-11:00", "GMT-10:00", "GMT-09:00", "GMT-08:00", "GMT-07:00", "GMT-06:00",
+                                        "GMT-05:00", "GMT-04:00", "GMT-03:00", "GMT-02:00", "GMT-01:00", "GMT+01:00", "GMT+02:00",
+                                        "GMT+03:00", "GMT+04:00", "GMT+05:00", "GMT+06:00", "GMT+07:00", "GMT+08:00", "GMT+09:00",
+                                        "GMT+10:00", "GMT+11:00", "GMT+12:00"}) {
+            TimeZone tz = TimeZone.getTimeZone(tzId);
+            JSONObject json = new JSONObject();
+            json.put(JsonTags.TIME_ZOME_DISPLAY_NAME, tz.getDisplayName(false, TimeZone.SHORT) + " (" + tzId + ")");
+            json.put(JsonTags.TIME_ZONE_ID, tzId);
+            GMTOffsetTimeZones.add(json);
+        }
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private JSONArray availableTimeZonesToJsonArray() {
         JSONArray array = new JSONArray();
         for (String tzId : TimeZone.getAvailableIDs()) {
-            // skip id's that are like "GMT+01:00" because they won't get parsed correctly later (but allow just "GMT")
-            if (!tzId.contains("GMT") || tzId.equals("GMT")) {
-                JSONObject json = new JSONObject();    
+            // skip id's that are like "Etc/GMT+01:00" because their display names are like "GMT-01:00", which is confusing
+            if (!tzId.startsWith("Etc/GMT")) {
+                JSONObject json = new JSONObject();
                 TimeZone tZone = TimeZone.getTimeZone(tzId);
                 json.put(JsonTags.TIME_ZOME_DISPLAY_NAME, tZone.getDisplayName(false, TimeZone.SHORT) + " (" + tzId + ")");
                 json.put(JsonTags.TIME_ZONE_ID, tzId);
                 array.add(json);
             }
         }
+
+        // The combo box this populates cannot be edited, so the user can't type in GMT offsets (like in the CLI), so we'll add
+        // in some hourly offsets here (though the user will not be able to use other offsets without editing the cookie manually
+        // and they are not in order)
+        array.addAll(GMTOffsetTimeZones);
+
         return array;
     }
 
