@@ -1659,4 +1659,20 @@
 			then ALL file schemes will be allowed.
 		</description>
 	</property>
+
+    <!-- Oozie HTTP Notifications -->
+
+    <property>
+        <name>oozie.notification.url.connection.timeout</name>
+        <value>10000</value>
+        <description>
+            Defines the timeout, in milliseconds, for Oozie HTTP notification callbacks. Oozie does
+            HTTP notifications for workflow jobs which set the 'oozie.wf.action.notification.url',
+            'oozie.wf.worklfow.notification.url' and/or 'oozie.coord.action.notification.url'
+            properties in their job.properties. Refer to section '5 Oozie Notifications' in the
+            Workflow specification for details.
+        </description>
+    </property>
+
+
 </configuration>

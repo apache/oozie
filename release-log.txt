@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-977 NotificationXCommand (job.notification queue entry) should set a timeout in the HTTP connections it makes (tucu)
 OOZIE-654 Provide a way to use 'uber' jars with Oozie MR actions (rkanter via tucu)
 OOZIE-979 bump up trunk version to 3.4.0-SNAPSHOT (tucu)
 

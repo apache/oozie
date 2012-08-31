@@ -28,6 +28,8 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.command.wf.NotificationXCommand;
+import org.apache.oozie.service.Services;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
@@ -42,7 +44,8 @@ public class CoordActionNotificationXCommand extends CoordinatorXCommand<Void> {
     private static final String STATUS_PATTERN = "\\$status";
     private static final String ACTION_ID_PATTERN = "\\$actionId";
 
-    private int retries = 0;
+    //this variable is package private only for test purposes
+    int retries = 0;
 
     public CoordActionNotificationXCommand(CoordinatorActionBean actionBean) {
         super("coord_action_notification", "coord_action_notification", 0);
@@ -70,8 +73,13 @@ public class CoordActionNotificationXCommand extends CoordinatorXCommand<Void> {
             url = url.replaceAll(STATUS_PATTERN, actionBean.getStatus().toString());
             LOG.debug("Notification URL :" + url);
             try {
+                int timeout = Services.get().getConf().getInt(
+                    NotificationXCommand.NOTIFICATION_URL_CONNECTION_TIMEOUT_KEY,
+                    NotificationXCommand.NOTIFICATION_URL_CONNECTION_TIMEOUT_DEFAULT);
                 URL urlObj = new URL(url);
                 HttpURLConnection urlConn = (HttpURLConnection) urlObj.openConnection();
+                urlConn.setConnectTimeout(timeout);
+                urlConn.setReadTimeout(timeout);
                 if (urlConn.getResponseCode() != HttpURLConnection.HTTP_OK) {
                     handleRetry(url);
                 }
