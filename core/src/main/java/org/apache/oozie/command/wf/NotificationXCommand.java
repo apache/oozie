@@ -22,6 +22,7 @@ import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.service.Services;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
@@ -32,12 +33,17 @@ import java.net.URL;
 
 public class NotificationXCommand extends WorkflowXCommand<Void> {
 
+    public static final String NOTIFICATION_URL_CONNECTION_TIMEOUT_KEY = "oozie.notification.url.connection.timeout";
+    public static final int NOTIFICATION_URL_CONNECTION_TIMEOUT_DEFAULT = 10 * 1000; // 10 seconds
+
     private static final String STATUS_PATTERN = "\\$status";
     private static final String JOB_ID_PATTERN = "\\$jobId";
     private static final String NODE_NAME_PATTERN = "\\$nodeName";
 
     private String url;
-    private int retries = 0;
+
+    //this variable is package private only for test purposes
+    int retries = 0;
 
     public NotificationXCommand(WorkflowJobBean workflow) {
         super("job.notification", "job.notification", 0);
@@ -92,9 +98,13 @@ public class NotificationXCommand extends WorkflowXCommand<Void> {
         //if command is requeue, the logInfo has to set to thread local Info object again
         LogUtils.setLogInfo(logInfo);
         if (url != null) {
+            int timeout = Services.get().getConf().getInt(NOTIFICATION_URL_CONNECTION_TIMEOUT_KEY,
+                                                          NOTIFICATION_URL_CONNECTION_TIMEOUT_DEFAULT);
             try {
                 URL url = new URL(this.url);
                 HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
+                urlConn.setConnectTimeout(timeout);
+                urlConn.setReadTimeout(timeout);
                 if (urlConn.getResponseCode() != HttpURLConnection.HTTP_OK) {
                     handleRetry();
                 }
