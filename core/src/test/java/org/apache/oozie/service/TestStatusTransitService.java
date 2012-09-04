@@ -33,6 +33,7 @@ import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.command.bundle.BundleJobResumeXCommand;
 import org.apache.oozie.command.bundle.BundleJobSuspendXCommand;
+import org.apache.oozie.command.bundle.BundleKillXCommand;
 import org.apache.oozie.command.coord.CoordKillXCommand;
 import org.apache.oozie.command.coord.CoordResumeXCommand;
 import org.apache.oozie.command.coord.CoordSuspendXCommand;
@@ -74,7 +75,9 @@ public class TestStatusTransitService extends XDataTestCase {
         super.tearDown();
     }
 
-    // Exclude some of the services classes from loading so they dont interfere while the test case is running
+
+    // Exclude some of the services classes from loading so they dont interfere
+    // while the test case is running
     private void setClassesToBeExcluded(Configuration conf) {
         String classes = conf.get(Services.CONF_SERVICE_CLASSES);
         StringBuilder builder = new StringBuilder(classes);
@@ -888,6 +891,87 @@ public class TestStatusTransitService extends XDataTestCase {
         assertFalse(coordJob2.isPending());
         assertEquals(Job.Status.KILLED, coordJob2.getStatus());
     }
+
+    /**
+     * Test : kill a bundle job with coord jobs as DONEWITHERROR
+     * <p/>
+     * Initially the bundle job should be KILLED and then DONEWITHERROR
+     *
+     * @throws Exception
+     */
+    public void testBundleStatusTransitServiceKilled1() throws Exception {
+        BundleJobBean bundleJob = this.addRecordToBundleJobTable(Job.Status.RUNNING, true);
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+
+        final String bundleId = bundleJob.getId();
+        addRecordToBundleActionTable(bundleId, "action1", 0, Job.Status.DONEWITHERROR);
+        addRecordToBundleActionTable(bundleId, "action2", 0, Job.Status.DONEWITHERROR);
+
+        addRecordToCoordJobTableWithBundle(bundleId, "action1", CoordinatorJob.Status.DONEWITHERROR, false, true, 2);
+        addRecordToCoordJobTableWithBundle(bundleId, "action2", CoordinatorJob.Status.DONEWITHERROR, false, true, 2);
+
+        new BundleKillXCommand(bundleId).call();
+        waitFor(5 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                BundleJobBean bundle = jpaService.execute(new BundleJobGetJPAExecutor(bundleId));
+                return bundle.getStatus() == Job.Status.KILLED;
+            }
+        });
+
+        bundleJob = jpaService.execute(new BundleJobGetJPAExecutor(bundleId));
+        assertEquals(Job.Status.KILLED, bundleJob.getStatus());
+
+        Runnable runnable = new StatusTransitRunnable();
+        runnable.run();
+
+        waitFor(15 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                BundleJobBean bundle = jpaService.execute(new BundleJobGetJPAExecutor(bundleId));
+                return bundle.getStatus() == Job.Status.DONEWITHERROR;
+            }
+        });
+
+        bundleJob = jpaService.execute(new BundleJobGetJPAExecutor(bundleId));
+        assertEquals(Job.Status.DONEWITHERROR, bundleJob.getStatus());
+
+    }
+
+
+    /**
+     * Test : Make the bundle kill itself by having one of the coord job fail preparation.
+     *
+     * @throws Exception
+     */
+    public void testBundleStatusTransitServiceKilled2() throws Exception {
+        BundleJobBean bundleJob = this.addRecordToBundleJobTable(Job.Status.RUNNING, true);
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+
+        final String bundleId = bundleJob.getId();
+        // Add a bundle action with no coordinator to make it fail
+        addRecordToBundleActionTable(bundleId, null, 0, Job.Status.KILLED);
+        addRecordToBundleActionTable(bundleId, "action2", 0, Job.Status.RUNNING);
+        addRecordToCoordJobTableWithBundle(bundleId, "action2", CoordinatorJob.Status.RUNNING, true, true, 2);
+        addRecordToCoordActionTable("action2", 1, CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0);
+
+        Runnable runnable = new StatusTransitRunnable();
+        // first time, service will call bundle kill
+        runnable.run();
+        sleep(10000);
+        runnable.run();
+
+        waitFor(25 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                BundleJobBean bundle = jpaService.execute(new BundleJobGetJPAExecutor(bundleId));
+                return bundle.getStatus() == Job.Status.KILLED;
+            }
+        });
+
+        bundleJob = jpaService.execute(new BundleJobGetJPAExecutor(bundleId));
+        assertEquals(Job.Status.KILLED, bundleJob.getStatus());
+    }
+
 
     /**
      * Test : kill one coord job and keep the other running. Check whether the bundle job's status
