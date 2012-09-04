@@ -14,6 +14,9 @@ Map/Reduce and Pig jobs.
 %TOC%
 
 ---++ Changelog
+---+++!! 2012AUG30
+
+   * #4.2.2 Added two EL functions (replaceAll and appendAll)
 ---+++!! 2012JUL26
 
    * #Appendix A, updated XML schema 0.4 to include =parameters= element
@@ -1556,6 +1559,10 @@ It returns the concatenation of 2 strings. A string with =null= value is conside
 *String replaceAll(String src, String regex, String replacement)*
 
 Replace each occurrence of regular expression match in the first string with the =replacement= string and return the replaced string. A 'regex' string with =null= value is considered as no change. A 'replacement' string with =null= value is consider as an empty string.
+
+*String appendAll(String src, String append, String delimeter)*
+
+ Add the =append= string into each splitted sub-strings of the first string(=src=). The split is performed into =src= string using the =delimiter=. E.g. =appendAll("/a/b/,/c/b/,/c/d/", "ADD", ",")= will return =/a/b/ADD,/c/b/ADD,/c/d/ADD=. A =append= string with =null= value is consider as an empty string. A =delimiter= string with value =null= is considered as no append in the string.
 
 *String trim(String s)*
 
