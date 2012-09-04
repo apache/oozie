@@ -133,8 +133,8 @@ public class BundleJobSuspendXCommand extends SuspendTransitionXCommand {
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
         if (bundleJob.getStatus() == Job.Status.SUCCEEDED || bundleJob.getStatus() == Job.Status.FAILED
-                || bundleJob.getStatus() == Job.Status.KILLED) {
-            LOG.info("BundleJobSuspendXCommand is not going to execute because job finished or failed or killed, id = "
+                || bundleJob.getStatus() == Job.Status.KILLED || bundleJob.getStatus() == Job.Status.DONEWITHERROR) {
+            LOG.info("BundleJobSuspendXCommand is not going to execute because job either succeeded, failed, killed, or donewitherror; id = "
                             + jobId + ", status = " + bundleJob.getStatus());
             throw new PreconditionException(ErrorCode.E1312, jobId, bundleJob.getStatus().toString());
         }

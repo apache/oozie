@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -95,11 +95,12 @@ public class BundleKillXCommand extends KillTransitionXCommand {
      */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
-        if (bundleJob.getStatus() == CoordinatorJob.Status.SUCCEEDED
-                || bundleJob.getStatus() == CoordinatorJob.Status.FAILED
-                || bundleJob.getStatus() == CoordinatorJob.Status.DONEWITHERROR) {
-            LOG.info("BundleKillXCommand not killed - job either finished SUCCEEDED, FAILED or DONEWITHERROR, job id = "
-                            + jobId + ", status = " + bundleJob.getStatus());
+        if (bundleJob.getStatus() == Job.Status.SUCCEEDED
+                || bundleJob.getStatus() == Job.Status.FAILED
+                || bundleJob.getStatus() == Job.Status.DONEWITHERROR
+                || bundleJob.getStatus() == Job.Status.KILLED) {
+            LOG.info("Bundle job cannot be killed - job already SUCCEEDED, FAILED, KILLED or DONEWITHERROR, job id = "
+                    + jobId + ", status = " + bundleJob.getStatus());
             throw new PreconditionException(ErrorCode.E1020, jobId);
         }
     }
@@ -134,9 +135,11 @@ public class BundleKillXCommand extends KillTransitionXCommand {
      * @throws CommandException
      */
     private void updateBundleAction(BundleActionBean action) {
-        action.incrementAndGetPending();
         action.setLastModifiedTime(new Date());
-        action.setStatus(Job.Status.KILLED);
+        if (!action.isTerminalStatus()) {
+            action.incrementAndGetPending();
+            action.setStatus(Job.Status.KILLED);
+        }
         updateList.add(action);
     }
 
