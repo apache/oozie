@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.WorkflowJobBean;
@@ -37,15 +38,20 @@ import org.apache.oozie.service.SchemaService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.StatusTransitService;
 import org.apache.oozie.test.XDataTestCase;
+import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.workflow.WorkflowInstance;
 
 public class TestCoordKillXCommand extends XDataTestCase {
     private Services services;
+    private String[] excludedServices = { "org.apache.oozie.service.StatusTransitService",
+            "org.apache.oozie.service.PauseTransitService",
+            "org.apache.oozie.service.CoordMaterializeTriggerService", "org.apache.oozie.service.RecoveryService" };
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
         services = new Services();
+        setClassesToBeExcluded(services.getConf(), excludedServices);
         services.init();
         cleanUpDBTables();
     }
@@ -62,7 +68,11 @@ public class TestCoordKillXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testCoordKillSuccess1() throws Exception {
-        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
+        String currentDatePlusMonth = XDataTestCase.getCurrentDateafterIncrementingInMonths(1);
+        Date start = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
+        Date end = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
+
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, start, end, false, true, 0);
         CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.READY, "coord-action-get.xml", 0);
 
         JPAService jpaService = Services.get().get(JPAService.class);
@@ -89,7 +99,11 @@ public class TestCoordKillXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testCoordKillSuccess2() throws Exception {
-        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
+        String currentDatePlusMonth = XDataTestCase.getCurrentDateafterIncrementingInMonths(1);
+        Date start = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
+        Date end = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
+
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, start, end, false, true, 0);
         CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0);
 
         JPAService jpaService = Services.get().get(JPAService.class);
@@ -116,7 +130,7 @@ public class TestCoordKillXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testCoordKillFailedOnAction() throws Exception {
-        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, true);
         CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
 
         JPAService jpaService = Services.get().get(JPAService.class);
@@ -146,12 +160,14 @@ public class TestCoordKillXCommand extends XDataTestCase {
     public void testCoordKillForBackwardSupport() throws Exception {
         Services.get().destroy();
         setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_COORD_STATUS, "true");
-        new Services().init();
+        Services services = new Services();
+        setClassesToBeExcluded(services.getConf(), excludedServices);
+        services.init();
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
 
-        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, true);
         CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0);
 
         job.setAppNamespace(SchemaService.COORDINATOR_NAMESPACE_URI_1);
@@ -182,7 +198,7 @@ public class TestCoordKillXCommand extends XDataTestCase {
     public void testCoordKillFailed() throws Exception {
         final String testJobId = "0000001-" + new Date().getTime() + "-testCoordKill-C";
 
-        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, true);
         CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.READY, "coord-action-get.xml", 0);
 
         JPAService jpaService = Services.get().get(JPAService.class);
@@ -209,7 +225,10 @@ public class TestCoordKillXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testCoordKillWaiting() throws Exception {
-        CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
+        String currentDatePlusMonth = XDataTestCase.getCurrentDateafterIncrementingInMonths(1);
+        Date start = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
+        Date end = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
+        CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, start, end, false, true, 0);
         // Create a workflow job with RUNNING status
         WorkflowJobBean wfJob1 = this
                 .addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
@@ -286,8 +305,10 @@ public class TestCoordKillXCommand extends XDataTestCase {
     }
 
     public void testCoordKillXCommandUniqueness() throws Exception {
-
-        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
+        String currentDatePlusMonth = XDataTestCase.getCurrentDateafterIncrementingInMonths(1);
+        Date start = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
+        Date end = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, start, end, false, false, 0);
 
         final MyCoordKillXCommand callable1 = new MyCoordKillXCommand(job.getId(), 100);
         final MyCoordKillXCommand callable2 = new MyCoordKillXCommand(job.getId(), 100);

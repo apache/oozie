@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,6 +43,7 @@ import org.apache.oozie.service.ActionCheckerService.ActionCheckRunnable;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.ActionService;
 import org.apache.oozie.test.XDataTestCase;
+import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.workflow.WorkflowInstance;
@@ -53,12 +54,17 @@ import org.apache.oozie.workflow.WorkflowInstance;
 public class TestActionCheckerService extends XDataTestCase {
 
     private Services services;
+    private String[] excludedServices = {"org.apache.oozie.service.StatusTransitService",
+            "org.apache.oozie.service.PauseTransitService",
+            "org.apache.oozie.service.CoordMaterializeTriggerService", "org.apache.oozie.service.RecoveryService",
+            "org.apache.oozie.service.ActionCheckerService"};
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
         setSystemProperty(SchemaService.WF_CONF_EXT_SCHEMAS, "wf-ext-schema.xsd");
         services = new Services();
+        setClassesToBeExcluded(services.getConf(), excludedServices);
         services.init();
         cleanUpDBTables();
         services.get(ActionService.class).register(ForTestingActionExecutor.class);
@@ -69,6 +75,7 @@ public class TestActionCheckerService extends XDataTestCase {
         services.destroy();
         super.tearDown();
     }
+
 
     /**
      * Tests functionality of the Action Checker Service Runnable. </p> Starts
@@ -217,7 +224,10 @@ public class TestActionCheckerService extends XDataTestCase {
     public void testActionCheckerServiceCoord() throws Exception {
         final int actionNum = 1;
         final CoordinatorEngine ce = new CoordinatorEngine(getTestUser(), "UNIT_TESTING");
-        final CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
+        String currentDatePlusMonth = XDataTestCase.getCurrentDateafterIncrementingInMonths(1);
+        Date start = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
+        Date end = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
+        final CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, start, end, false, false, 0);
         final WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED,
                 WorkflowInstance.Status.SUCCEEDED);
         final CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), actionNum,

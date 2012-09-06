@@ -186,6 +186,9 @@ public class TestBundleRerunXCommand extends XDataTestCase {
     public void testBundleRerunInPausedWithError() throws Exception {
         Date curr = new Date();
         Date pauseTime = new Date(curr.getTime() - 1000);
+        Services.get().destroy();
+        setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_STATES_WITHOUT_ERROR, "false");
+        new Services().init();
         BundleJobBean job = this.addRecordToBundleJobTableWithPausedTime(Job.Status.PAUSEDWITHERROR, false, pauseTime);
         this.addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.FAILED);
         this.addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.PAUSED);
