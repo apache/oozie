@@ -457,7 +457,9 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         Configuration conf = new XConfiguration();
         String appPath = "file://" + getTestCaseDir() + File.separator + "coordinator.xml";
         String appXml = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" start=\"2009-02-01T01:00Z\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
-                + "xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='uri:oozie:coordinator:0.2' xmlns:sla='uri:oozie:sla:0.1'> <controls> <timeout>10</timeout> <concurrency>2</concurrency> "
+                + "xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='uri:oozie:coordinator:0.2' "
+                +       "xmlns:sla='uri:oozie:sla:0.1'> <controls> <timeout>${coord:minutes(10)}</timeout> "
+                +       "<concurrency>2</concurrency> "
                 + "<execution>LIFO</execution> </controls> <datasets> "
                 + "<dataset name=\"a\" frequency=\"${coord:days(7)}\" initial-instance=\"2009-02-01T01:00Z\" "
                 + "timezone=\"UTC\"> <uri-template>file:///tmp/coord/workflows/${YEAR}/${DAY}</uri-template> </dataset> "
@@ -490,7 +492,8 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         String jobId = sc.call();
 
         assertEquals(jobId.substring(jobId.length() - 2), "-C");
-        checkCoordJobs(jobId);
+        CoordinatorJobBean job = checkCoordJobs(jobId);
+        assertEquals(job.getTimeout(), 10);
     }
 
     /**

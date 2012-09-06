@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-984 Allow EL Functions in Coordinator timeout (rkanter via tucu)
 OOZIE-972 Provide  EL function to append a string in each substring of another string separated by delimiter (kamrul via virag)
 OOZIE-977 NotificationXCommand (job.notification queue entry) should set a timeout in the HTTP connections it makes (tucu)
 OOZIE-654 Provide a way to use 'uber' jars with Oozie MR actions (rkanter via tucu)

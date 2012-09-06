@@ -669,7 +669,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         coordJob.setTimeZone(val);
 
         // controls
-        val = resolveTagContents("timeout", eAppXml.getChild("controls", eAppXml.getNamespace()), evalNofuncs);
+        val = resolveTagContents("timeout", eAppXml.getChild("controls", eAppXml.getNamespace()), evalFreq);
         if (val == "") {
             val = Services.get().getConf().get(CONF_DEFAULT_TIMEOUT_NORMAL);
         }
