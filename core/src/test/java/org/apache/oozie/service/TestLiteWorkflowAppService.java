@@ -450,10 +450,9 @@ public class TestLiteWorkflowAppService extends XTestCase {
         }
     }
 
-    public void testCreateprotoConfWithSubWorkflow_Case2_ParentWorkflowWithoutLibs() throws Exception {
-        // When parent workflow has an empty (or missing) lib directory,
-        // APP_LIB_PATH_LIST should contain libraries from only the subworkflow
-        // (child)
+    public void testCreateprotoConfWithSubWorkflow_CheckSubworkflowLibInClasspath() throws Exception {
+        // When subworkflow has non-empty lib directory, APP_LIB_PATH_LIST for
+        // subworkflow should maintain its corresponding libraries in path
         Services services = new Services();
         try {
             services.init();
@@ -472,6 +471,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             Configuration jobConf = new XConfiguration();
             jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
             jobConf.set(OozieClient.USER_NAME, getTestUser());
+            jobConf.set(WorkflowAppService.APP_LIB_PATH_LIST, "parentdependency1.jar");
 
             Configuration protoConf = wps.createProtoActionConf(jobConf, "authToken", true);
             assertEquals(getTestUser(), protoConf.get(OozieClient.USER_NAME));

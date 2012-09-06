@@ -202,7 +202,10 @@ public abstract class WorkflowAppService implements Service {
                 if (entry.getKey().startsWith("oozie.")) {
                     String name = entry.getKey();
                     String value = entry.getValue();
-                    conf.set(name, value);  //TODO ARGGHHHHH!!!!
+                    // if property already exists, should not overwrite
+                    if(conf.get(name) == null) {
+                        conf.set(name, value);
+                    }
                 }
             }
             XConfiguration retConf = new XConfiguration();
@@ -261,7 +264,7 @@ public abstract class WorkflowAppService implements Service {
             }
         }
         else {
-            XLog.getLog(getClass()).warn("libpath [{0}] does not exists", libPath);
+            XLog.getLog(getClass()).warn("libpath [{0}] does not exist", libPath);
         }
         return libPaths;
     }
