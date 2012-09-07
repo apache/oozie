@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-988 Improve verification of TestJavaActionExecutor.testLibFileArchives (rkanter via tucu)
 OOZIE-973 Allow Oozie to run against Hadoop trunk branch (rkanter via tucu)
 OOZIE-975 Test cases should not load all the services classes (virag)
 OOZIE-984 Allow EL Functions in Coordinator timeout (rkanter via tucu)
