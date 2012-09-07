@@ -676,33 +676,48 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertTrue(DistributedCache.getSymlink(jobConf));
 
         Path[] filesInClasspath = DistributedCache.getFileClassPaths(jobConf);
-        boolean hasMrappsJar = false;
-        for (Path path : filesInClasspath) {
-            if (path.getName().equals("MRAppJar.jar")) {
-                hasMrappsJar = true;
+        for (Path p : new Path[]{new Path(getAppPath(), jar), rootJar}) {
+            boolean found = false;
+            for (Path c : filesInClasspath) {
+                if (!found && p.toUri().getPath().equals(c.toUri().getPath())) {
+                    found = true;
+                }
             }
+            assertTrue("file " + p.toUri().getPath() + " not found in classpath", found);
         }
-        if (hasMrappsJar) {
-            // we need to do this because of MR2 injecting a JAR on the client side.
-            // MRAppJar JAR, 1 launcher JAR, 1 wf lib JAR, 2 <file> JARs
-            assertEquals(5, filesInClasspath.length);
+        for (Path p : new Path[]{new Path(getAppPath(), file), rootFile, new Path(getAppPath(), so), rootSo,
+                                 new Path(getAppPath(), so1), rootSo1}) {
+            boolean found = false;
+            for (Path c : filesInClasspath) {
+                if (!found && p.toUri().getPath().equals(c.toUri().getPath())) {
+                    found = true;
+                }
+            }
+            assertFalse("file " + p.toUri().getPath() + " found in classpath", found);
         }
-        else {
-            // 1 launcher JAR, 1 wf lib JAR, 2 <file> JARs
-            assertEquals(4, filesInClasspath.length);
 
+        URI[] filesInCache = DistributedCache.getCacheFiles(jobConf);
+        for (Path p : new Path[]{new Path(getAppPath(), jar), rootJar, new Path(getAppPath(), file), rootFile,
+                                 new Path(getAppPath(), so), rootSo, new Path(getAppPath(), so1), rootSo1}) {
+            boolean found = false;
+            for (URI c : filesInCache) {
+                if (!found && p.toUri().getPath().equals(c.getPath())) {
+                    found = true;
+                }
+            }
+            assertTrue("file " + p.toUri().getPath() + " not found in cache", found);
         }
-        if (hasMrappsJar) {
-            // we need to do this because of MR2 injecting a JAR on the client side.
-            // #CLASSPATH_ENTRIES# 5 (4+MRAppJar), 1 wf lib sos, 4 <file> sos, 2 <file> files
-            assertEquals(12, DistributedCache.getCacheFiles(jobConf).length);
+
+        URI[] archivesInCache = DistributedCache.getCacheArchives(jobConf);
+        for (Path p : new Path[]{new Path(getAppPath(), archive), rootArchive}) {
+            boolean found = false;
+            for (URI c : archivesInCache) {
+                if (!found && p.toUri().getPath().equals(c.getPath())) {
+                    found = true;
+                }
+            }
+            assertTrue("archive " + p.toUri().getPath() + " not found in cache", found);
         }
-        else {
-            // #CLASSPATH_ENTRIES# 4, 1 wf lib sos, 4 <file> sos, 2 <file> files
-            assertEquals(11, DistributedCache.getCacheFiles(jobConf).length);
-        }
-        // 2 <archive> files
-        assertEquals(2, DistributedCache.getCacheArchives(jobConf).length);
     }
 
     public void testPrepare() throws Exception {
