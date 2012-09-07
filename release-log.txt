@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-809 MySQL TEXT columns should be MEDIUMTEXT (rkanter via tucu)
 OOZIE-988 Improve verification of TestJavaActionExecutor.testLibFileArchives (rkanter via tucu)
 OOZIE-973 Allow Oozie to run against Hadoop trunk branch (rkanter via tucu)
 OOZIE-975 Test cases should not load all the services classes (virag)
