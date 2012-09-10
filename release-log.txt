@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-990 TestLogStreamer.testStreamLog fails in very rare cases (rkanter via tucu)
 OOZIE-987 Fix minor bug in one of the uber jar tests (rkanter via tucu)
 OOZIE-809 MySQL TEXT columns should be MEDIUMTEXT (rkanter via tucu)
 OOZIE-988 Improve verification of TestJavaActionExecutor.testLibFileArchives (rkanter via tucu)
