@@ -565,7 +565,8 @@ public class JavaActionExecutor extends ActionExecutor {
                     prepareXML);
 
             LauncherMapper.setupMainClass(launcherJobConf, getLauncherMain(launcherJobConf, actionXml));
-
+            LauncherMapper.setupSupportedFileSystems(
+                launcherJobConf, Services.get().getConf().get(HadoopAccessorService.SUPPORTED_FILESYSTEMS));
             LauncherMapper.setupMaxOutputData(launcherJobConf, maxActionOutputLen);
             LauncherMapper.setupMaxExternalStatsSize(launcherJobConf, maxExternalStatsSize);
 

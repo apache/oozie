@@ -18,6 +18,7 @@
 package org.apache.oozie.action.hadoop;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.service.Services;
@@ -50,7 +51,7 @@ public class TestPrepareActionsDriver extends XFsTestCase {
             fs.delete(newDir, true);
         }
 
-        PrepareActionsDriver.doOperations(prepareXML);
+        PrepareActionsDriver.doOperations(Arrays.asList("hdfs"), prepareXML);
         assertTrue(fs.exists(actionDir));
     }
 
@@ -68,7 +69,7 @@ public class TestPrepareActionsDriver extends XFsTestCase {
 
         try {
             prepareXML = "prepare>" + "<mkdir path='" + newDir + "'/>" + "</prepare>";
-            PrepareActionsDriver.doOperations(prepareXML);
+            PrepareActionsDriver.doOperations(Arrays.asList("hdfs"), prepareXML);
             fail("Expected to catch an exception but did not encounter any");
         } catch (LauncherException le) {
             assertEquals(le.getCause().getClass(), org.xml.sax.SAXParseException.class);

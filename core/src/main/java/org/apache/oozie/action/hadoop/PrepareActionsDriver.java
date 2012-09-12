@@ -20,11 +20,14 @@ package org.apache.oozie.action.hadoop;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.service.HadoopAccessorService;
 import org.xml.sax.SAXException;
-import org.apache.oozie.action.hadoop.FileSystemActions;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
+
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.ParserConfigurationException;
@@ -41,14 +44,14 @@ public class PrepareActionsDriver {
      * @param prepareXML Prepare XML block in string format
      * @throws LauncherException
      */
-    static void doOperations(String prepareXML) throws LauncherException {
+    static void doOperations(Collection<String> supportedFileSystems, String prepareXML) throws LauncherException {
         try {
             Document doc = getDocumentFromXML(prepareXML);
             doc.getDocumentElement().normalize();
 
             // Get the list of child nodes, basically, each one corresponding to a separate action
             NodeList nl = doc.getDocumentElement().getChildNodes();
-            FileSystemActions fsActions = new FileSystemActions();
+            FileSystemActions fsActions = new FileSystemActions(supportedFileSystems);
 
             for (int i = 0; i < nl.getLength(); ++i) {
                 String commandType = "";
