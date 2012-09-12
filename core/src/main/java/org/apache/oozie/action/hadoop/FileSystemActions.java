@@ -18,8 +18,8 @@
 package org.apache.oozie.action.hadoop;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashSet;
-import java.util.Set;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.conf.Configuration;
@@ -30,13 +30,9 @@ import org.w3c.dom.Node;
  *
  */
 public class FileSystemActions {
-    private static Set<String> supportedFileSystems = new HashSet<String>();
+    private static Collection<String> supportedFileSystems;
 
-    public FileSystemActions() {
-        supportedFileSystems.add("hdfs");
-    }
-
-    public FileSystemActions(Set<String> fileSystems) {
+    public FileSystemActions(Collection<String> fileSystems) {
         supportedFileSystems = fileSystems;
     }
 
@@ -102,10 +98,12 @@ public class FileSystemActions {
                 String nullScheme = "Scheme of the path " + path + " is null";
                 System.out.println(nullScheme);
                 throw new LauncherException(nullScheme);
-            } else if (!supportedFileSystems.contains(scheme.toLowerCase())) {
-                String unsupportedScheme = "Scheme of the provided path " + path + " is of type not supported.";
-                System.out.println(unsupportedScheme);
-                throw new LauncherException(unsupportedScheme);
+            } else if (supportedFileSystems.size() != 1 || !supportedFileSystems.iterator().next().equals("*")) {
+                if (!supportedFileSystems.contains(scheme.toLowerCase())) {
+                    String unsupportedScheme = "Scheme of '" + path + "' is not supported.";
+                    System.out.println(unsupportedScheme);
+                    throw new LauncherException(unsupportedScheme);
+                }
             }
         } else if (scheme != null) {
             String notNullScheme = "Scheme of the path " + path + " is not null as specified.";

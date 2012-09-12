@@ -55,6 +55,7 @@ import org.apache.oozie.util.XLog;
 public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, Runnable {
 
     public static final String CONF_OOZIE_ACTION_MAIN_CLASS = "oozie.launcher.action.main.class";
+    public static final String CONF_OOZIE_ACTION_SUPPORTED_FILESYSTEMS = "oozie.launcher.action.supported.filesystems";
 
     public static final String CONF_OOZIE_ACTION_MAX_OUTPUT_DATA = "oozie.action.max.output.data";
 
@@ -146,6 +147,10 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
 
     public static void setupMainClass(Configuration launcherConf, String javaMainClass) {
         launcherConf.set(CONF_OOZIE_ACTION_MAIN_CLASS, javaMainClass);
+    }
+
+    public static void setupSupportedFileSystems(Configuration launcherConf, String supportedFileSystems) {
+        launcherConf.set(CONF_OOZIE_ACTION_SUPPORTED_FILESYSTEMS, supportedFileSystems);
     }
 
     public static void setupMainArguments(Configuration launcherConf, String[] args) {
@@ -642,7 +647,8 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         String prepareXML = getJobConf().get(ACTION_PREPARE_XML);
         if (prepareXML != null) {
              if (!prepareXML.equals("")) {
-                 PrepareActionsDriver.doOperations(prepareXML);
+                 PrepareActionsDriver.doOperations(
+                     getJobConf().getStringCollection(CONF_OOZIE_ACTION_SUPPORTED_FILESYSTEMS), prepareXML);
              } else {
                  System.out.println("There are no prepare actions to execute.");
              }

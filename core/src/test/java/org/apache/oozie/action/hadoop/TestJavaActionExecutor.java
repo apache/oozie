@@ -259,6 +259,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertEquals("MAIN-CLASS", ae.getLauncherMain(conf, actionXml));
         assertTrue(conf.get("mapred.child.java.opts").contains("JAVA-OPTS"));
         assertEquals(Arrays.asList("A1", "A2"), Arrays.asList(LauncherMapper.getMainArguments(conf)));
+        assertNotNull(conf.get(LauncherMapper.CONF_OOZIE_ACTION_SUPPORTED_FILESYSTEMS));
 
         assertTrue(getFileSystem().exists(new Path(context.getActionDir(), LauncherMapper.ACTION_CONF_XML)));
 
