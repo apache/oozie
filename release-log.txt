@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (unreleased)
 
+OOZIE-991 action prepare executions work only with HDFS filesystems (tucu)
 OOZIE-981 Subworkflow lib not found in classpath when parent workflow lib overwrites it (mona via virag)
 OOZIE-978 Bundle status doesn't transit to KILLED after a coordinator job fails submission (virag)
 OOZIE-971 TestRecoveryService failing very often in pre-commit builds (mona via virag)

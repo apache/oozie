@@ -21,6 +21,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.fs.permission.FsPermission;
+import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.test.XFsTestCase;
 import org.apache.oozie.service.Services;
 import org.w3c.dom.Document;
@@ -28,6 +29,7 @@ import org.w3c.dom.Node;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.Arrays;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -63,7 +65,7 @@ public class TestFileSystemActions extends XFsTestCase {
         Document doc = PrepareActionsDriver.getDocumentFromXML(prepareXML);
         Node n = doc.getDocumentElement().getChildNodes().item(0);
 
-        new FileSystemActions().execute(n);
+        new FileSystemActions(Arrays.asList("hdfs")).execute(n);
         assertFalse(fs.exists(newDir));
     }
 
@@ -84,7 +86,7 @@ public class TestFileSystemActions extends XFsTestCase {
         Document doc = PrepareActionsDriver.getDocumentFromXML(prepareXML);
         Node n = doc.getDocumentElement().getChildNodes().item(0);
 
-        new FileSystemActions().execute(n);
+        new FileSystemActions(Arrays.asList("hdfs")).execute(n);
         assertTrue(fs.exists(newDir));
     }
 
@@ -92,7 +94,7 @@ public class TestFileSystemActions extends XFsTestCase {
     public void testForInvalidScheme() throws Exception {
         Path actionDir = getFsTestCaseDir();
         // Construct a path with invalid scheme
-        Path newDir = new Path("http" + actionDir.toString().substring(4) + "/delete");
+        Path newDir = new Path("file:/" + actionDir.toString().substring(5) + "/delete");
         // Construct prepare XML block with the path
         String prepareXML = "<prepare>" + "<delete path='" + newDir + "'/>" + "</prepare>";
         // Parse the XML to get the node
@@ -100,11 +102,11 @@ public class TestFileSystemActions extends XFsTestCase {
         Node n = doc.getDocumentElement().getChildNodes().item(0);
 
         try {
-            new FileSystemActions().execute(n);
+            new FileSystemActions(Arrays.asList("hdfs")).execute(n);
             fail("Expected to catch an exception but did not encounter any");
         } catch (LauncherException le) {
             Path path = new Path(n.getAttributes().getNamedItem("path").getNodeValue().trim());
-            assertEquals(le.getMessage(), "Scheme of the provided path " + path + " is of type not supported.");
+            assertEquals("Scheme of '" + path + "' is not supported.", le.getMessage());
         } catch(Exception ex){
             fail("Expected a LauncherException but received an Exception");
         }
@@ -127,11 +129,11 @@ public class TestFileSystemActions extends XFsTestCase {
         Node n = doc.getDocumentElement().getChildNodes().item(0);
 
         try {
-            new FileSystemActions().execute(n);
+            new FileSystemActions(Arrays.asList("hdfs")).execute(n);
             fail("Expected to catch an exception but did not encounter any");
         } catch (LauncherException le) {
             Path path = new Path(n.getAttributes().getNamedItem("path").getNodeValue().trim());
-            assertEquals(le.getMessage(), "Scheme of the path " + path + " is null");
+            assertEquals("Scheme of the path " + path + " is null", le.getMessage());
         } catch(Exception ex) {
             fail("Expected a LauncherException but received an Exception");
         }
