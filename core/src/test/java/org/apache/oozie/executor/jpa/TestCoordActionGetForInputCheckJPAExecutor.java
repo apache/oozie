@@ -41,12 +41,10 @@ public class TestCoordActionGetForInputCheckJPAExecutor extends XDataTestCase {
         services = new Services();
         services.init();
         cleanUpDBTables();
-        LocalOozie.start();
     }
 
     @Override
     protected void tearDown() throws Exception {
-        LocalOozie.stop();
         services.destroy();
         super.tearDown();
     }
