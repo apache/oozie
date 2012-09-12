@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-989 Testcases failing intermittently where coordinator jobs are in catchup mode (virag)
 OOZIE-991 action prepare executions work only with HDFS filesystems (tucu)
 OOZIE-990 TestLogStreamer.testStreamLog fails in very rare cases (rkanter via tucu)
 OOZIE-987 Fix minor bug in one of the uber jar tests (rkanter via tucu)
