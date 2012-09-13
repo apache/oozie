@@ -152,14 +152,22 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                     queue(new CoordActionInputCheckXCommand(coordAction.getId(), coordAction.getJobId()), getCoordInputCheckRequeueInterval());
                 }
             }
-            coordAction.setLastModifiedTime(new Date());
-            jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionUpdateForInputCheckJPAExecutor(coordAction));
         }
         catch (Exception e) {
             throw new CommandException(ErrorCode.E1021, e.getMessage(), e);
         }
-        cron.stop();
-
+        finally {
+            coordAction.setLastModifiedTime(new Date());
+            cron.stop();
+            if(jpaService != null) {
+                try {
+                    jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionUpdateForInputCheckJPAExecutor(coordAction));
+                }
+                catch(JPAExecutorException jex) {
+                    throw new CommandException(ErrorCode.E1021, jex.getMessage(), jex);
+                }
+            }
+        }
         return null;
     }
 
@@ -412,7 +420,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
      * @return true if path exists
      * @throws IOException thrown if unable to access the path
      */
-    private boolean pathExists(String sPath, Configuration actionConf) throws IOException {
+    protected boolean pathExists(String sPath, Configuration actionConf) throws IOException {
         LOG.debug("checking for the file " + sPath);
         Path path = new Path(sPath);
         String user = ParamChecker.notEmpty(actionConf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
@@ -422,6 +430,8 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             return has.createFileSystem(user, path.toUri(), fsConf).exists(path);
         }
         catch (HadoopAccessorException e) {
+            coordAction.setErrorCode(e.getErrorCode().toString());
+            coordAction.setErrorMessage(e.getMessage());
             throw new IOException(e);
         }
     }
@@ -460,6 +470,26 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                     "uri-template", event.getNamespace()).getTextTrim()));
         }
         return uris.toString();
+    }
+
+    /**
+     * getting the error code of the coord action. (used mainly for unit testing)
+     */
+    protected String getCoordActionErrorCode() {
+        if (coordAction != null) {
+            return coordAction.getErrorCode();
+        }
+        return null;
+    }
+
+    /**
+     * getting the error message of the coord action. (used mainly for unit testing)
+     */
+    protected String getCoordActionErrorMsg() {
+        if (coordAction != null) {
+            return coordAction.getErrorMessage();
+        }
+        return null;
     }
 
     /* (non-Javadoc)

@@ -22,6 +22,8 @@ import java.io.Reader;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+
+import org.apache.hadoop.fs.Path;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.client.CoordinatorAction;
@@ -35,6 +37,7 @@ import org.apache.oozie.executor.jpa.CoordActionInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.CallableQueueService;
+import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.XLogService;
@@ -191,6 +194,44 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         index = missDepsOrder.indexOf("/2009/05");
         if( index < 0) {
             fail("Data should have been in missing dependency list! current list: " + missDepsOrder);
+        }
+    }
+
+    /**
+     * Testing a non existing namenode path
+     *
+     * @throws Exception
+     */
+    public void testNonExistingNameNode() throws Exception {
+        String jobId = "0000000-" + new Date().getTime() + "-TestCoordActionInputCheckXCommand-C";
+        Date startTime = DateUtils.parseDateUTC("2009-02-01T23:59Z");
+        Date endTime = DateUtils.parseDateUTC("2009-02-02T23:59Z");
+        CoordinatorJobBean job = addRecordToCoordJobTable(jobId, startTime, endTime);
+        new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
+        CoordActionInputCheckXCommand caicc = new CoordActionInputCheckXCommand(job.getId() + "@1", job.getId());
+        caicc.loadState();
+
+        // Override the name node while list for testing purpose only.
+        String[] whiteList = new String[1];
+        whiteList[0] = "localhost:5330";
+        setSystemProperty(HadoopAccessorService.NAME_NODE_WHITELIST, whiteList[0]);
+        new Services().init();
+
+        // setting the configuration
+        XConfiguration jobConf = new XConfiguration();
+        jobConf.set(OozieClient.USER_NAME, getTestUser());
+
+        // setting the test path with nonExistDir
+        Path appPath = new Path(getFsTestCaseDir(), "coord");
+        String inputDir = appPath.toString() + "/coord-input/2010/07/09/01/00";
+        String nonExistDir = inputDir.replaceFirst("localhost", "nonExist");
+        try {
+            caicc.pathExists(nonExistDir, jobConf);
+            fail("Should throw exception due to non-existent NN path. Therefore fail");
+        }
+        catch (IOException ioe) {
+            assertEquals(caicc.getCoordActionErrorCode(), "E0901");
+            assertTrue(caicc.getCoordActionErrorMsg().contains("not in Oozies whitelist"));
         }
     }
 
