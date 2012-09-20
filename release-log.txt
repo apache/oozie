@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-998 test-patch doesn't allow lines that are exactly 132 characters (rkanter via tucu)
 OOZIE-739 a coord action fails because the uri points to a namenode that is not in whitelist. the E0901 error shows in the oozie.log, but not written to the database (mona,mbattisha via virag)
 OOZIE-989 Testcases failing intermittently where coordinator jobs are in catchup mode (virag)
 OOZIE-990 TestLogStreamer.testStreamLog fails in very rare cases (rkanter via tucu)
