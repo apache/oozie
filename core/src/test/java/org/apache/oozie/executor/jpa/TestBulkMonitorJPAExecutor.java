@@ -45,14 +45,12 @@ public class TestBulkMonitorJPAExecutor extends XDataTestCase {
         services = new Services();
         services.init();
         cleanUpDBTables();
-        LocalOozie.start();
         jpaService = Services.get().get(JPAService.class);
         addRecordsForBulkMonitor();
     }
 
     @Override
     protected void tearDown() throws Exception {
-        LocalOozie.stop();
         services.destroy();
         super.tearDown();
     }

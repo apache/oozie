@@ -260,14 +260,12 @@ public abstract class XDataTestCase extends XFsTestCase {
         coordJob.setExecution(Execution.FIFO);
         coordJob.setConcurrency(1);
         coordJob.setMatThrottling(1);
-        try {
-            coordJob.setStartTime(DateUtils.parseDateOozieTZ("2009-12-15T01:00Z"));
-            coordJob.setEndTime(DateUtils.parseDateOozieTZ("2009-12-17T01:00Z"));
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-            fail("Could not set Date/time");
-        }
+        // Set the start and end time in future
+        String currentDatePlusMonth = XDataTestCase.getCurrentDateafterIncrementingInMonths(1);
+        Date start = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
+        Date end = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
+        coordJob.setStartTime(start);
+        coordJob.setEndTime(end);
         return coordJob;
     }
 

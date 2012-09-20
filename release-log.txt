@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (unreleased)
 
+OOZIE-989 Testcases failing intermittently where coordinator jobs are in catchup mode (virag)
 OOZIE-997 Add schema def. for distcp to work with global section and add missing xsd's for client xml validation (virag)
 OOZIE-991 action prepare executions work only with HDFS filesystems (tucu)
 OOZIE-981 Subworkflow lib not found in classpath when parent workflow lib overwrites it (mona via virag)

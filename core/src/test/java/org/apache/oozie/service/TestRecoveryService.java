@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -186,9 +186,9 @@ public class TestRecoveryService extends XDataTestCase {
         store3.commitTrx();
         store3.closeTrx();
     }
-    
+
     /**
-     * Tests functionality of the Recovery Service Runnable command. </p> Starts an action with USER_RETRY status. 
+     * Tests functionality of the Recovery Service Runnable command. </p> Starts an action with USER_RETRY status.
      * Runs the recovery runnable, and ensures the state changes to OK and the job completes successfully.
      *
      * @throws Exception
@@ -197,11 +197,11 @@ public class TestRecoveryService extends XDataTestCase {
         final JPAService jpaService = Services.get().get(JPAService.class);
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
         WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.USER_RETRY);
-        
+
         Runnable recoveryRunnable = new RecoveryRunnable(0, 60, 60);
         recoveryRunnable.run();
         sleep(3000);
-        
+
         final WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(action.getId());
 
         waitFor(5000, new Predicate() {
@@ -233,7 +233,7 @@ public class TestRecoveryService extends XDataTestCase {
         assertTrue(launcherJob.isSuccessful());
         assertTrue(LauncherMapper.hasIdSwap(launcherJob));
     }
-    
+
 
     /**
      * Tests functionality of the Recovery Service Runnable command. </p> Insert a coordinator job with RUNNING and
@@ -294,8 +294,9 @@ public class TestRecoveryService extends XDataTestCase {
      */
     public void testCoordActionRecoveryServiceForWaiting() throws Exception {
 
-        Date startTime = DateUtils.parseDateOozieTZ("2009-02-01T23:59Z");
-        Date endTime = DateUtils.parseDateOozieTZ("2009-02-02T23:59Z");
+        String currentDatePlusMonth = XDataTestCase.getCurrentDateafterIncrementingInMonths(1);
+        Date startTime = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
+        Date endTime = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
         CoordinatorJobBean job = addRecordToCoordJobTableForWaiting("coord-job-for-action-input-check.xml",
                 CoordinatorJob.Status.RUNNING, startTime, endTime, false, true, 0);
 
@@ -413,9 +414,7 @@ public class TestRecoveryService extends XDataTestCase {
      */
     public void testCoordActionRecoveryServiceForResume() throws Exception {
 
-        Date start = DateUtils.parseDateOozieTZ("2009-02-01T01:00Z");
-        Date end = DateUtils.parseDateOozieTZ("2009-02-02T23:59Z");
-        CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, start, end, false, false, 1);
+        CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
         WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUSPENDED, WorkflowInstance.Status.SUSPENDED);
         final String wfJobId = wfJob.getId();
         addRecordToCoordActionTable(coordJob.getId(), 1,
@@ -700,7 +699,7 @@ public class TestRecoveryService extends XDataTestCase {
             throw se;
         }
     }
-    
+
     @Override
     protected WorkflowActionBean addRecordToWfActionTable(String wfId, String actionName, WorkflowAction.Status status)
             throws Exception {
