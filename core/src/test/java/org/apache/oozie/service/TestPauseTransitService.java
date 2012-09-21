@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,7 @@ package org.apache.oozie.service;
 
 import java.util.Date;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.CoordinatorJobBean;
@@ -35,14 +36,19 @@ import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.PauseTransitService.PauseTransitRunnable;
 import org.apache.oozie.test.XDataTestCase;
+import org.apache.oozie.util.DateUtils;
 
 public class TestPauseTransitService extends XDataTestCase {
     private Services services;
+    private String[] excludedServices = { "org.apache.oozie.service.StatusTransitService",
+            "org.apache.oozie.service.PauseTransitService",
+            "org.apache.oozie.service.CoordMaterializeTriggerService", "org.apache.oozie.service.RecoveryService" };
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
         services = new Services();
+        setClassesToBeExcluded(services.getConf(), excludedServices);
         services.init();
         cleanUpDBTables();
     }
@@ -52,6 +58,7 @@ public class TestPauseTransitService extends XDataTestCase {
         services.destroy();
         super.tearDown();
     }
+
 
     /**
      * Test : Pause a PREP bundle, then delay its pausetime to unpause it.
@@ -157,8 +164,13 @@ public class TestPauseTransitService extends XDataTestCase {
 
         BundleActionBean bundleAction1 = this.addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.RUNNING);
         BundleActionBean bundleAction2 = this.addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.RUNNING);
-        CoordinatorJobBean coordJob1 = addRecordToCoordJobTable("action1", CoordinatorJob.Status.RUNNING, false);
-        CoordinatorJobBean coordJob2 = addRecordToCoordJobTable("action2", CoordinatorJob.Status.RUNNING, false);
+
+        String currentDatePlusMonth = XDataTestCase.getCurrentDateafterIncrementingInMonths(1);
+        Date start = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
+        Date end = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
+
+        CoordinatorJobBean coordJob1 = addRecordToCoordJobTable("action1", CoordinatorJob.Status.RUNNING, start, end, false);
+        CoordinatorJobBean coordJob2 = addRecordToCoordJobTable("action2", CoordinatorJob.Status.RUNNING, start, end, false);
 
         coordJob1.setPauseTime(pauseTime);
         coordJob1.setBundleId(job.getId());
@@ -223,8 +235,13 @@ public class TestPauseTransitService extends XDataTestCase {
 
         BundleActionBean bundleAction1 = this.addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.PAUSED);
         BundleActionBean bundleAction2 = this.addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.PAUSED);
-        CoordinatorJobBean coordJob1 = addRecordToCoordJobTable("action1", CoordinatorJob.Status.PAUSED, false);
-        CoordinatorJobBean coordJob2 = addRecordToCoordJobTable("action2", CoordinatorJob.Status.PAUSED, false);
+
+        String currentDatePlusMonth = XDataTestCase.getCurrentDateafterIncrementingInMonths(1);
+        Date start = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
+        Date end = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
+
+        CoordinatorJobBean coordJob1 = addRecordToCoordJobTable("action1", CoordinatorJob.Status.PAUSED, start, end, false);
+        CoordinatorJobBean coordJob2 = addRecordToCoordJobTable("action2", CoordinatorJob.Status.PAUSED, start, end, false);
 
         coordJob1.setPauseTime(null);
         coordJob1.setBundleId(job.getId());
@@ -291,8 +308,12 @@ public class TestPauseTransitService extends XDataTestCase {
 
         Date pauseTime = new Date(new Date().getTime() - 30 * 1000);
 
-        CoordinatorJobBean coordJob1 = addRecordToCoordJobTable("action1", CoordinatorJob.Status.RUNNING, false);
-        CoordinatorJobBean coordJob2 = addRecordToCoordJobTable("action2", CoordinatorJob.Status.RUNNING, false);
+        String currentDatePlusMonth = XDataTestCase.getCurrentDateafterIncrementingInMonths(1);
+        Date start = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
+        Date end = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
+
+        CoordinatorJobBean coordJob1 = addRecordToCoordJobTable("action1", CoordinatorJob.Status.RUNNING, start, end, false);
+        CoordinatorJobBean coordJob2 = addRecordToCoordJobTable("action2", CoordinatorJob.Status.RUNNING, start, end, false);
 
         coordJob1.setAppNamespace(SchemaService.COORDINATOR_NAMESPACE_URI_1);
         coordJob1.setPauseTime(pauseTime);
@@ -378,9 +399,9 @@ public class TestPauseTransitService extends XDataTestCase {
         assertEquals(Job.Status.RUNNING, job.getStatus());
     }
 
-    protected CoordinatorJobBean addRecordToCoordJobTable(String coordId, CoordinatorJob.Status status, boolean pending)
-            throws Exception {
-        CoordinatorJobBean coordJob = createCoordJob(status, pending, false);
+    protected CoordinatorJobBean addRecordToCoordJobTable(String coordId, CoordinatorJob.Status status, Date start,
+            Date end, boolean pending) throws Exception {
+        CoordinatorJobBean coordJob = createCoordJob(status, start, end, pending, false, 0);
         coordJob.setId(coordId);
         coordJob.setAppName(coordId);
         try {

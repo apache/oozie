@@ -198,8 +198,46 @@ public abstract class XDataTestCase extends XFsTestCase {
      * @return coordinator job bean
      * @throws Exception
      */
-    protected CoordinatorJobBean addRecordToCoordJobTableWithBundle(String bundleId, String coordId, CoordinatorJob.Status status, boolean pending, boolean doneMatd, int lastActionNumber) throws Exception {
+    protected CoordinatorJobBean addRecordToCoordJobTableWithBundle(String bundleId, String coordId,
+            CoordinatorJob.Status status, boolean pending, boolean doneMatd, int lastActionNumber) throws Exception {
         CoordinatorJobBean coordJob = createCoordJob(status, pending, doneMatd);
+        coordJob.setBundleId(bundleId);
+        // coord id and coord name are the same
+        coordJob.setId(coordId);
+        coordJob.setAppName(coordId);
+        coordJob.setLastActionNumber(lastActionNumber);
+        try {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            assertNotNull(jpaService);
+            CoordJobInsertJPAExecutor coordInsertCmd = new CoordJobInsertJPAExecutor(coordJob);
+            jpaService.execute(coordInsertCmd);
+        }
+        catch (JPAExecutorException je) {
+            je.printStackTrace();
+            fail("Unable to insert the test coord job record to table");
+            throw je;
+        }
+
+        return coordJob;
+    }
+
+
+    /**
+     * Add coordinator job bean with bundle id info.
+     *
+     * @param bundleId bundle id
+     * @param coordId coord id and coord name
+     * @param status job status
+     * @param start start time
+     * @param end end time
+     * @param pending true if pending is true
+     * @param doneMatd true if doneMaterialization is true
+     * @param lastActionNumber last action number
+     * @return coordinator job bean
+     * @throws Exception
+     */
+    protected CoordinatorJobBean addRecordToCoordJobTableWithBundle(String bundleId, String coordId, CoordinatorJob.Status status, Date start, Date end, boolean pending, boolean doneMatd, int lastActionNumber) throws Exception {
+        CoordinatorJobBean coordJob = createCoordJob(status, start, end, pending, doneMatd, 0);
         coordJob.setBundleId(bundleId);
         //coord id and coord name are the same
         coordJob.setId(coordId);
@@ -219,6 +257,8 @@ public abstract class XDataTestCase extends XFsTestCase {
 
         return coordJob;
     }
+
+
 
     /**
      * Create coord job bean
@@ -1131,6 +1171,20 @@ public abstract class XDataTestCase extends XFsTestCase {
         }
     }
 
+   // Exclude some of the services classes from loading so they dont interfere
+   // while the test case is running
+   protected void setClassesToBeExcluded(Configuration conf, String[] excludedServices) {
+       String classes = conf.get(Services.CONF_SERVICE_CLASSES);
+       StringBuilder builder = new StringBuilder(classes);
+       for (String s : excludedServices) {
+           int index = builder.indexOf(s);
+           if (index != -1) {
+               builder.replace(index, index + s.length() + 1, "");
+           }
+       }
+       conf.set(Services.CONF_SERVICE_CLASSES, new String(builder));
+   }
+
     /**
      * Adds the db records for the Bulk Monitor tests
      */
@@ -1189,6 +1243,17 @@ public abstract class XDataTestCase extends XFsTestCase {
         action3.setNominalTime(cal.getTime());
         actionInsert = new CoordActionInsertJPAExecutor(action3);
         jpaService.execute(actionInsert);
+    }
+
+    /**
+     * Add a month to the current time
+     * @param incrementMonth
+     * @return
+     */
+    protected static String getCurrentDateafterIncrementingInMonths(int incrementMonth) {
+        Calendar currentDate = Calendar.getInstance();
+        currentDate.set(Calendar.MONTH, currentDate.get(Calendar.MONTH) + incrementMonth);
+        return DateUtils.formatDateOozieTZ(currentDate);
     }
 
 }

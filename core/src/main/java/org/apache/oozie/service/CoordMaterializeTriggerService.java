@@ -121,20 +121,20 @@ public class CoordMaterializeTriggerService implements Service {
                 CoordJobsToBeMaterializedJPAExecutor cmatcmd = new CoordJobsToBeMaterializedJPAExecutor(currDate,
                         materializationLimit);
                 List<CoordinatorJobBean> materializeJobs = jpaService.execute(cmatcmd);
-                LOG.debug("CoordMaterializeTriggerService - Curr Date= " + currDate + ", Num jobs to materialize = "
+                LOG.info("CoordMaterializeTriggerService - Curr Date= " + currDate + ", Num jobs to materialize = "
                         + materializeJobs.size());
                 for (CoordinatorJobBean coordJob : materializeJobs) {
                     Services.get().get(InstrumentationService.class).get()
                             .incr(INSTRUMENTATION_GROUP, INSTR_MAT_JOBS_COUNTER, 1);
                     int numWaitingActions = jpaService
                             .execute(new CoordActionsActiveCountJPAExecutor(coordJob.getId()));
-                    LOG.debug("Job :" + coordJob.getId() + "  numWaitingActions : " + numWaitingActions
+                    LOG.info("Job :" + coordJob.getId() + "  numWaitingActions : " + numWaitingActions
                             + " MatThrottle : " + coordJob.getMatThrottling());
                     // update lastModifiedTime so next time others might have higher chance to get pick up
                     coordJob.setLastModifiedTime(new Date());
                     jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
                     if (numWaitingActions >= coordJob.getMatThrottling()) {
-                        LOG.debug("Materialization skipped for JobID [" + coordJob.getId() + " already waiting "
+                        LOG.info("info for JobID [" + coordJob.getId() + " already waiting "
                                 + numWaitingActions + " actions. MatThrottle is : " + coordJob.getMatThrottling());
                         continue;
                     }
