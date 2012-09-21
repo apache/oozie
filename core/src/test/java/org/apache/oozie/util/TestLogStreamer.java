@@ -22,6 +22,7 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -34,6 +35,8 @@ public class TestLogStreamer extends XTestCase {
 
     static String logStatement = " - USER[oozie] GROUP[-] TOKEN[-] APP[-] "
                 + "JOB[14-200904160239--example-forkjoinwf] ACTION[-] ";
+
+    private final static SimpleDateFormat filenameDateFormatter = new SimpleDateFormat("yyyy-MM-dd-HH");
 
     public void testStreamLog() throws IOException {
         long currTime = System.currentTimeMillis();
@@ -104,7 +107,7 @@ public class TestLogStreamer extends XTestCase {
         // This GZip file would be included in list of files for log retrieval, provided, there is an overlap between
         // the two time windows i) time duration during which the GZipped log file is modified ii) time window between
         // start and end times of the job
-        String outFilename = "oozie.log" + formatDateForFilename(new GregorianCalendar()) + ".gz";
+        String outFilename = "oozie.log-" + filenameDateFormatter.format(new Date(currTime)) + ".gz";
         File f = new File(getTestCaseDir() + "/" + outFilename);
         StringBuilder sb = new StringBuilder();
         sb.append("\n2009-06-24 02:43:13,958 DEBUG _L8_:323" + logStatement + "End workflow state change");
@@ -244,39 +247,5 @@ public class TestLogStreamer extends XTestCase {
         byte[] buf = strg.getBytes();
         gzout.write(buf, 0, buf.length);
         gzout.close();
-    }
-    
-    private String formatDateForFilename(Calendar cal) {
-        int year = cal.get(Calendar.YEAR);
-        int month = cal.get(Calendar.MONTH) + 1;
-        int date = cal.get(Calendar.DATE);
-        int hour = cal.get(Calendar.HOUR_OF_DAY);
-        
-        StringBuilder sb = new StringBuilder("-");
-        if (year < 10) {
-            sb.append("000");
-        } else if (year < 100) {
-            sb.append("00");
-        } else if (year < 1000) {
-            sb.append("0");
-        }
-        sb.append(year);
-        sb.append("-");
-        if (month < 10) {
-            sb.append("0");
-        }
-        sb.append(month);
-        sb.append("-");
-        if (date < 10) {
-            sb.append("0");
-        }
-        sb.append(date);
-        sb.append("-");
-        if (hour < 10) {
-            sb.append("0");
-        }
-        sb.append(hour);
-        
-        return sb.toString();
     }
 }

@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (unreleased)
 
+OOZIE-990 TestLogStreamer.testStreamLog fails in very rare cases (rkanter via virag)
 OOZIE-989 Testcases failing intermittently where coordinator jobs are in catchup mode (virag)
 OOZIE-997 Add schema def. for distcp to work with global section and add missing xsd's for client xml validation (virag)
 OOZIE-991 action prepare executions work only with HDFS filesystems (tucu)
