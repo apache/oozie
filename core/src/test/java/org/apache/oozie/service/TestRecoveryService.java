@@ -186,9 +186,9 @@ public class TestRecoveryService extends XDataTestCase {
         store3.commitTrx();
         store3.closeTrx();
     }
-
+    
     /**
-     * Tests functionality of the Recovery Service Runnable command. </p> Starts an action with USER_RETRY status.
+     * Tests functionality of the Recovery Service Runnable command. </p> Starts an action with USER_RETRY status. 
      * Runs the recovery runnable, and ensures the state changes to OK and the job completes successfully.
      *
      * @throws Exception
@@ -197,16 +197,16 @@ public class TestRecoveryService extends XDataTestCase {
         final JPAService jpaService = Services.get().get(JPAService.class);
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
         WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.USER_RETRY);
-
+        
         Runnable recoveryRunnable = new RecoveryRunnable(0, 60, 60);
         recoveryRunnable.run();
         sleep(3000);
-
+        
         final WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(action.getId());
 
         waitFor(5000, new Predicate() {
             public boolean evaluate() throws Exception {
-            	WorkflowActionBean a = jpaService.execute(wfActionGetCmd);
+                WorkflowActionBean a = jpaService.execute(wfActionGetCmd);
                 return a.getExternalId() != null;
             }
         });
@@ -233,7 +233,7 @@ public class TestRecoveryService extends XDataTestCase {
         assertTrue(launcherJob.isSuccessful());
         assertTrue(LauncherMapper.hasIdSwap(launcherJob));
     }
-
+    
 
     /**
      * Tests functionality of the Recovery Service Runnable command. </p> Insert a coordinator job with RUNNING and
@@ -699,7 +699,7 @@ public class TestRecoveryService extends XDataTestCase {
             throw se;
         }
     }
-
+    
     @Override
     protected WorkflowActionBean addRecordToWfActionTable(String wfId, String actionName, WorkflowAction.Status status)
             throws Exception {

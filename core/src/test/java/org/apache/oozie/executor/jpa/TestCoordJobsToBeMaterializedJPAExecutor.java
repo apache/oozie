@@ -47,8 +47,7 @@ public class TestCoordJobsToBeMaterializedJPAExecutor extends XFsTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        services = new Services();
-        services.init();
+        LocalOozie.start();
         cleanUpDBTables();
     }
 
@@ -57,7 +56,7 @@ public class TestCoordJobsToBeMaterializedJPAExecutor extends XFsTestCase {
      */
     @Override
     protected void tearDown() throws Exception {
-        services.destroy();
+        LocalOozie.stop();
         super.tearDown();
     }
 
