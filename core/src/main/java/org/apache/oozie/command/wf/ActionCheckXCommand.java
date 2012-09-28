@@ -28,6 +28,7 @@ import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.XException;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
+import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.WorkflowAction.Status;
 import org.apache.oozie.client.rest.JsonBean;
@@ -158,6 +159,9 @@ public class ActionCheckXCommand extends ActionXCommand<Void> {
         ActionExecutorContext context = null;
         try {
             boolean isRetry = false;
+            if (wfAction.getRetries() > 0) {
+                isRetry = true;
+            }
             boolean isUserRetry = false;
             context = new ActionXCommand.ActionExecutorContext(wfJob, wfAction, isRetry, isUserRetry);
             incrActionCounter(wfAction.getType(), 1);
@@ -197,6 +201,14 @@ public class ActionCheckXCommand extends ActionXCommand<Void> {
                     break;
                 case ERROR:
                     handleUserRetry(wfAction);
+                    break;
+                case TRANSIENT:                 // retry N times, then suspend workflow
+                    if (!handleTransient(context, executor, WorkflowAction.Status.RUNNING)) {
+                        handleNonTransient(context, executor, WorkflowAction.Status.START_MANUAL);
+                        wfAction.setPendingAge(new Date());
+                        wfAction.setRetries(0);
+                        wfAction.setStartTime(null);
+                    }
                     break;
             }
             wfAction.setLastCheckTime(new Date());
