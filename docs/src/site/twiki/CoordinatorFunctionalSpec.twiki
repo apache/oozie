@@ -2460,10 +2460,10 @@ If you add *sla* tags to the Coordinator or Workflow XML files, then the SLA inf
             <sla:should-start>${5 * MINUTES}</sla:should-start>
             <sla:should-end>${55 * MINUTES}</sla:should-end>
             <sla:message>log processor run for: ${coord:nominalTime()}</sla:message>
-            <sla:alert-contact>joe@yahoo-inc.com</sla:alert-contact>
-            <sla:dev-contact>abc@yahoo-inc.com</sla:dev-contact>
-            <sla:qa-contact>abc@yahoo-inc.com</sla:qa-contact>
-            <sla:se-contact>abc@yahoo-inc.com</sla:se-contact>
+            <sla:alert-contact>joe@example.com</sla:alert-contact>
+            <sla:dev-contact>abc@example.com</sla:dev-contact>
+            <sla:qa-contact>abc@example.com</sla:qa-contact>
+            <sla:se-contact>abc@example.com</sla:se-contact>
             <sla:upstream-apps>application-a,application-b</sla:upstream-apps>
             <sla:alert-percentage>99</sla:alert-percentage>
             <sla:alert-frequency>${24 * LAST_HOUR}</sla:alert-frequency>
@@ -2505,10 +2505,10 @@ If you add *sla* tags to the Coordinator or Workflow XML files, then the SLA inf
         <sla:should-start>${10 * MINUTES}</sla:should-start>
         <sla:should-end>${30 * MINUTES}</sla:should-end>
         <sla:message>abc.grouper for input ${input}</sla:message>
-        <sla:alert-contact>joe@yahoo-inc.com</sla:alert-contact>
-        <sla:dev-contact>abc@yahoo-inc.com</sla:dev-contact>
-        <sla:qa-contact>abc@yahoo-inc.com</sla:qa-contact>
-        <sla:se-contact>abc@yahoo-inc.com</sla:se-contact>
+        <sla:alert-contact>joe@example.com</sla:alert-contact>
+        <sla:dev-contact>abc@example.com</sla:dev-contact>
+        <sla:qa-contact>abc@example.com</sla:qa-contact>
+        <sla:se-contact>abc@example.com</sla:se-contact>
         <sla:upstream-apps>applicaion-a,application-b</sla:upstream-apps>
         <sla:alert-percentage>99</sla:alert-percentage>
         <sla:alert-frequency>${24 * LAST_HOUR}</sla:alert-frequency>

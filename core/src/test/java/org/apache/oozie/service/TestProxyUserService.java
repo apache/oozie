@@ -222,7 +222,7 @@ public class TestProxyUserService extends XTestCase {
         try {
             ProxyUserService proxyUser = services.get(ProxyUserService.class);
             Assert.assertNotNull(proxyUser);
-            proxyUser.validate("foo", "www.yahoo.com", "bar");
+            proxyUser.validate("foo", "www.example.com", "bar");
             fail();
         }
         catch (AccessControlException ex) {

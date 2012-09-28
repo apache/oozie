@@ -21,7 +21,7 @@
 # invoking this script.
 # export WORKSPACE=PATH_TO_WORKSPACE
 # export TOOLS_HOME=PATH_TO_COMMON_LIBRAARY_HOME
-# export OOZIE_GIT_REPO=git://github.com/yahoo/oozie.git
+# export OOZIE_GIT_REPO=git://github.com/apache/oozie.git
 
 # You can also explicitly change JAVA_HOME or M3_HOME below.
 

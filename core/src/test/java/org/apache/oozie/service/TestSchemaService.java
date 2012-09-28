@@ -54,8 +54,8 @@ public class TestSchemaService extends XTestCase {
             + "<end name='end'/>"
             + "<sla:info> <sla:app-name>5</sla:app-name> <sla:nominal-time>2009-03-06T010:00Z</sla:nominal-time> "
             + "<sla:should-start>5</sla:should-start> <sla:should-end>50</sla:should-end> "
-            + "<sla:alert-contact>abc@yahoo.com</sla:alert-contact> <sla:dev-contact>abc@yahoo.com</sla:dev-contact>"
-            + " <sla:qa-contact>abc@yahoo.com</sla:qa-contact> <sla:se-contact>abc@yahoo.com</sla:se-contact>"
+            + "<sla:alert-contact>abc@example.com</sla:alert-contact> <sla:dev-contact>abc@example.com</sla:dev-contact>"
+            + " <sla:qa-contact>abc@example.com</sla:qa-contact> <sla:se-contact>abc@example.com</sla:se-contact>"
             + "</sla:info>" + "</workflow-app>";
 
     private static final String WF_SLA_APP_NW = "<workflow-app xmlns='uri:oozie:workflow:0.1' name='app'  xmlns:sla='uri:oozie:sla:0.1'>"
@@ -63,8 +63,8 @@ public class TestSchemaService extends XTestCase {
             + "<end name='end'/>"
             + "<sla:info> <sla:app-name>5</sla:app-name> <sla:nominal-time>2009-03-06T010:00Z</sla:nominal-time> "
             + "<sla:should-start>5</sla:should-start> <sla:should-end>50</sla:should-end> "
-            + "<sla:alert-contact>abc@yahoo.com</sla:alert-contact> <sla:dev-contact>abc@yahoo.com</sla:dev-contact>"
-            + " <sla:qa-contact>abc@yahoo.com</sla:qa-contact> <sla:se-contact>abc@yahoo.com</sla:se-contact>"
+            + "<sla:alert-contact>abc@example.com</sla:alert-contact> <sla:dev-contact>abc@example.com</sla:dev-contact>"
+            + " <sla:qa-contact>abc@example.com</sla:qa-contact> <sla:se-contact>abc@example.com</sla:se-contact>"
             + "</sla:info>" + "</workflow-app>";
 
     private static final String COORD_APP1 = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" start=\"${start}\" end=\"${end}\" timezone=\"${timezone}\" xmlns=\"uri:oozie:coordinator:0.2\">"
@@ -235,8 +235,8 @@ public class TestSchemaService extends XTestCase {
                 + "<controls> <timeout>10</timeout> <concurrency>2</concurrency> <execution>LIFO</execution> </controls> <datasets> <dataset name='a' frequency='${coord:days(7)}' initial-instance='2009-02-01T01:00Z' timezone='UTC'> <uri-template>file:///tmp/coord/workflows/${YEAR}/${DAY}</uri-template> </dataset> <dataset name='local_a' frequency='${coord:days(7)}' initial-instance='2009-02-01T01:00Z' timezone='UTC'> <uri-template>file:///tmp/coord/workflows/${YEAR}/${DAY}</uri-template> </dataset> </datasets> <input-events> <data-in name='A' dataset='a'> <instance>${coord:latest(0)}</instance> </data-in>  </input-events> <output-events> <data-out name='LOCAL_A' dataset='local_a'> <instance>${coord:current(-1)}</instance> </data-out> </output-events> <action> <workflow> <app-path>hdfs:///tmp/workflows/</app-path> <configuration> <property> <name>inputA</name> <value>${coord:dataIn('A')}</value> </property> <property> <name>inputB</name> <value>${coord:dataOut('LOCAL_A')}</value> </property></configuration> </workflow>  "
                 + "<sla:info> <sla:app-name>5</sla:app-name> <sla:nominal-time>2009-03-06T010:00Z</sla:nominal-time> "
                 + "<sla:should-start>5</sla:should-start> <sla:should-end>50</sla:should-end> "
-                + "<sla:alert-contact>abc@yahoo.com</sla:alert-contact> <sla:dev-contact>abc@yahoo.com</sla:dev-contact>"
-                + " <sla:qa-contact>abc@yahoo.com</sla:qa-contact> <sla:se-contact>abc@yahoo.com</sla:se-contact>"
+                + "<sla:alert-contact>abc@example.com</sla:alert-contact> <sla:dev-contact>abc@example.com</sla:dev-contact>"
+                + " <sla:qa-contact>abc@example.com</sla:qa-contact> <sla:se-contact>abc@example.com</sla:se-contact>"
                 + "</sla:info>" + "</action> </coordinator-app>";
 
         Element e = XmlUtils.parseXml(COORD_APP1);

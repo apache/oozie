@@ -36,10 +36,10 @@
 			<sla:should-end>120</sla:should-end>
 			<sla:notification-msg>Notifying User for ${coord:nominalTime()}
 				nominal time </sla:notification-msg>
-			<sla:alert-contact>abc@yahoo.com</sla:alert-contact>
-			<sla:dev-contact>abc@yahoo.com</sla:dev-contact>
-			<sla:qa-contact>abc@yahoo.com</sla:qa-contact>
-			<sla:se-contact>abc@yahoo.com</sla:se-contact>
+			<sla:alert-contact>abc@example.com</sla:alert-contact>
+			<sla:dev-contact>abc@example.com</sla:dev-contact>
+			<sla:qa-contact>abc@example.com</sla:qa-contact>
+			<sla:se-contact>abc@example.com</sla:se-contact>
 		</sla:info>
 	</action>
 </coordinator-app>
