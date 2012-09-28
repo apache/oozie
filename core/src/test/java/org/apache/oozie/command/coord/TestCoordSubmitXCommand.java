@@ -479,10 +479,10 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
                 + " <sla:should-start>${5 * MINUTES}</sla:should-start>"
                 + " <sla:should-end>${2 * HOURS}</sla:should-end>"
                 + " <sla:notification-msg>Notifying User for ${coord:nominalTime()} nominal time </sla:notification-msg>"
-                + " <sla:alert-contact>abc@yahoo.com</sla:alert-contact>"
-                + " <sla:dev-contact>abc@yahoo.com</sla:dev-contact>"
-                + " <sla:qa-contact>abc@yahoo.com</sla:qa-contact>"
-                + " <sla:se-contact>abc@yahoo.com</sla:se-contact>"
+                + " <sla:alert-contact>abc@example.com</sla:alert-contact>"
+                + " <sla:dev-contact>abc@example.com</sla:dev-contact>"
+                + " <sla:qa-contact>abc@example.com</sla:qa-contact>"
+                + " <sla:se-contact>abc@example.com</sla:se-contact>"
                 + " <sla:alert-frequency>LAST_HOUR</sla:alert-frequency>"
                 + " <sla:alert-percentage>10</sla:alert-percentage>" + "</sla:info>" + "</action> </coordinator-app>";
         writeToFile(appXml, appPath);

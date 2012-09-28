@@ -59,7 +59,7 @@
         </property>
         <property>
 		  <name>urlTemplate</name>
-		  <value>http://yahoo.com/test?custid1=yahoo&amp;custid2=us&amp;offset=0&amp;hits=10</value>
+		  <value>http://example.com/test?custid1=somecompany&amp;custid2=us&amp;offset=0&amp;hits=10</value>
 		</property>
       </configuration>
     </workflow>
