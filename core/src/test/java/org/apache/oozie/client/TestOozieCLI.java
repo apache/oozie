@@ -235,6 +235,7 @@ public class TestOozieCLI extends DagServletTestCase {
     }
 
     public void testSubmitDoAs() throws Exception {
+        setSystemProperty("oozie.authentication.simple.anonymous.allowed", "false");
         runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED, new Callable<Void>() {
             public Void call() throws Exception {
                 String oozieUrl = getContextURL();
