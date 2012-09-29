@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1003 TestOozieCLI.testSubmitDoAs() should disable anonymous request (tucu)
 OOZIE-1004 Oozie client needs to bundle slf4j JARs (tucu)
 OOZIE-1000 Remove Yahoo branding from docs, tests, etc (rkanter via virag)
 OOZIE-999 XLogStreamer requires log4j.appender.oozie.layout.ConversionPattern to contain a "-" (dash) or streaming logs to web UI and CLI don't work (rkanter via virag)
