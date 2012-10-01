@@ -1,0 +1,88 @@
+#!/bin/bash
+
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+run() {
+  echo "\$ ${@}"
+  "${@}"
+  exitCode=$?
+  if [[ $exitCode != 0 ]]; then
+    echo
+    echo "Failed! running ${@} in `pwd`"
+    echo
+    exit $exitCode
+  fi
+}
+
+branchUrl=`svn info | grep URL | awk '{print $2}'`
+
+tempDir="/tmp/oozie.$$"
+
+run mkdir $tempDir
+
+run cd $tempDir
+
+run svn co $branchUrl oozie-src
+
+run cd oozie-src
+
+find . -name .svn | xargs rm -rf
+
+releaseVersion=`mvn help:evaluate -Dexpression=project.version | grep -v INFO | grep -v WARNING`
+
+if [ "$releaseVersion}" = "" ]; then
+  echo "Could not determine branch version from POM"
+  exit 1
+fi
+
+run cd ..
+
+run mv oozie-src oozie-$releaseVersion
+
+run tar czf oozie-${releaseVersion}.tar.gz oozie-$releaseVersion
+
+run cp oozie-$releaseVersion/release-log.txt .
+
+run cd oozie-$releaseVersion
+
+run mvn apache-rat:check
+
+run cd ..
+
+run cp oozie-${releaseVersion}/target/rat.txt rat_report
+
+run rm -rf oozie-${releaseVersion}
+
+MD5CMD="md5sum"
+which $MD5CMD
+if [[ $? != 0 ]]; then
+  MD5CMD="md5"
+fi
+run $MD5CMD oozie-${releaseVersion}.tar.gz > oozie-${releaseVersion}.tar.gz.md5
+
+run gpg --armor --output oozie-${releaseVersion}.tar.gz.asc --detach-sig oozie-${releaseVersion}.tar.gz
+
+run gpg --verify oozie-${releaseVersion}.tar.gz.asc oozie-${releaseVersion}.tar.gz
+
+echo
+echo
+echo "Release artifacts avail at ${tempDir}"
+echo "----------------"
+ls -1
+echo "----------------"
+echo
+
+
