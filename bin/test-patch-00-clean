@@ -83,6 +83,9 @@ parseArgs "$@"
 case $OP in
   pre)
     mvn clean ${MVNPASSTHRU} > ${TEMPDIR}/${TASKNAME}.txt
+    # removing files created outside of target/ by pig-main and hive-main testcases
+    rm core/pig*
+    rm core/hive*
     exit $?
     ;;
   post)
