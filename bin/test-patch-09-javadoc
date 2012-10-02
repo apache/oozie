@@ -88,7 +88,7 @@ checkForWarnings() {
     newWarns=1
   fi
   if [[ $cleanWarns != 0 ]] ; then
-    REPORT+=("WARNING: the current HEAD has $cleanWarns Javadoc warning(s)")
+    REPORT+=("{color:red}WARNING{color}: the current HEAD has $cleanWarns Javadoc warning(s)")
   fi
 }
 ###############################################################################
