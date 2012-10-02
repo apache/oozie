@@ -272,12 +272,9 @@ applyPatch() {
         >> $STDOUT
   if [[  ${PIPESTATUS[0]} != 0 ]] ; then
     echo "Patch failed to apply to head of branch"
-    echo "{color:red}-1{code} Patch failed to apply to head of branch" >> ${SUMMARYFILE}
+    echo "{color:red}-1{color} Patch failed to apply to head of branch" >> ${SUMMARYFILE}
     echo "" >> ${SUMMARYFILE}
     echo "----------------------------" >> ${SUMMARYFILE}
-    if [ "${JIRAUPDATE}" == "true" ] ; then
-      echo "{code}" >> ${SUMMARYFILE}
-    fi
     echo
     cleanupAndExit 1
   fi
@@ -394,11 +391,10 @@ if [[ $WARNINGS != 0 ]]; then
 fi
 echo "" >> ${SUMMARYFILE}
 
-
 if [ ! -z "${JIRAISSUE}" ]; then
   echo "The full output of the test-patch run is available at"  >> ${SUMMARYFILE}
   echo ""  >> ${SUMMARYFILE}
-  echo "   ${BUILD_URL}"  >> ${SUMMARYFILE}
+  echo ".   ${BUILD_URL}"  >> ${SUMMARYFILE}
   echo ""  >> ${SUMMARYFILE}
   cat ${SUMMARYFILE}
 else

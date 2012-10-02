@@ -110,19 +110,19 @@ case $OP in
     testsExitCode=`cat ${TEMPDIR}/${TASKNAME}.exitCode`
     if [[ "$testsExitCode" != "0" ]] ; then
       if [ -n "${failedTests}" ] ; then
-        echo "{color:red}-1{code} ${TASKNAME} - the patch failed the following testcases:" >> $SUMMARYFILE
+        echo "{color:red}-1{color} ${TASKNAME} - the patch failed the following testcases:" >> $SUMMARYFILE
         echo "" >> ${SUMMARYFILE}
         echo "${failedTests}" >> $SUMMARYFILE
         echo "" >> ${SUMMARYFILE}
       else
-        echo "{color:red}-1{code} ${TASKNAME} - patch does not compile, cannot run testcases" >> $SUMMARYFILE
+        echo "{color:red}-1{color} ${TASKNAME} - patch does not compile, cannot run testcases" >> $SUMMARYFILE
       fi
     else
-      echo "{color:green}+1{code} ${TASKNAME}" >> $SUMMARYFILE
+      echo "{color:green}+1{color} ${TASKNAME}" >> $SUMMARYFILE
     fi
-    echo "   $testsRun" >> $SUMMARYFILE
-    echo "   $testsFailed" >> $SUMMARYFILE
-    echo "   $testsErrors" >> $SUMMARYFILE
+    echo ".   $testsRun" >> $SUMMARYFILE
+    echo ".   $testsFailed" >> $SUMMARYFILE
+    echo ".   $testsErrors" >> $SUMMARYFILE
     ;;
 esac
 

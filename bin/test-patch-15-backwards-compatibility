@@ -76,9 +76,9 @@ parseArgs() {
 checkJPAAnnotations() {
   annotations=`grep -c -E "^(\+|\-).*(@Column|@Lob|@Basic|@Entity|@Transient)" ${PATCHFILE}`
   if [[ ${annotations} != 0 ]] ; then
-    REPORT+=("{color:red}-1{code} the patch seems to change ${annotations} line(s) with JPA Entity/Colum/Basic/Lob/Transient annotations")
+    REPORT+=("{color:red}-1{color} the patch seems to change ${annotations} line(s) with JPA Entity/Colum/Basic/Lob/Transient annotations")
   else
-    REPORT+=("{color:green}+1{code} the patch does not change any JPA Entity/Colum/Basic/Lob/Transient annotations")
+    REPORT+=("{color:green}+1{color} the patch does not change any JPA Entity/Colum/Basic/Lob/Transient annotations")
   fi
 }
 ###############################################################################
@@ -87,9 +87,9 @@ checkJPAFiles() {
   ormXml=`grep -c -i -E '^\+\+\+.*/*-orm.xml' ${PATCHFILE}`
   jpaFiles=`expr $persistenceXml + $ormXml`
   if [[ ${jpaFiles} != 0 ]] ; then
-    REPORT+=("{color:red}-1{code} the patch modifies ${jpaFiles} JPA file(s), persistence.xml or *-orm.xml")
+    REPORT+=("{color:red}-1{color} the patch modifies ${jpaFiles} JPA file(s), persistence.xml or *-orm.xml")
   else
-    REPORT+=("{color:green}+1{code} the patch does not modify JPA files")
+    REPORT+=("{color:green}+1{color} the patch does not modify JPA files")
   fi
 }
 ###############################################################################
@@ -107,12 +107,12 @@ case $OP in
     checkJPAFiles
     total=`expr $annotations + $jpaFiles`
     if [[ $total == 0 ]] ; then
-      echo "{color:green}+1{code} ${TASKNAME}" >> $SUMMARYFILE
+      echo "{color:green}+1{color} ${TASKNAME}" >> $SUMMARYFILE
     else
-      echo "{color:red}-1{code} ${TASKNAME}" >> $SUMMARYFILE
+      echo "{color:red}-1{color} ${TASKNAME}" >> $SUMMARYFILE
     fi
     for line in "${REPORT[@]}" ; do
-      echo "    ${line}" >> $SUMMARYFILE
+      echo ".    ${line}" >> $SUMMARYFILE
     done
     ;;
 esac

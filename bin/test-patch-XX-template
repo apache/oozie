@@ -1,4 +1,4 @@
-#!/bin/bash
+!/bin/bash
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -84,7 +84,7 @@ case $OP in
   post)
     ;;
   report)
-    echo "{color:green}+1{code} ${TASKNAME}" >> $SUMMARYFILE
+    echo "{color:green}+1{color} ${TASKNAME}" >> $SUMMARYFILE
     ;;
 esac
 
