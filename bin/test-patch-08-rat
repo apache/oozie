@@ -22,6 +22,7 @@ OP=""
 TEMPDIR=""
 REPORTDIR=""
 SUMMARYFILE=""
+STDOUT="/dev/null"
 MVNPASSTHRU=""
 
 ###############################################################################
@@ -53,6 +54,9 @@ parseArgs() {
       ;;
     --summaryfile=*)
       SUMMARYFILE=${i#*=}
+      ;;
+    --verbose)
+      STDOUT="/dev/stdout"
       ;;
     -D*)
       MVNPASSTHRU="${MVNPASSTHRU} $i"
@@ -98,10 +102,12 @@ parseArgs "$@"
 
 case $OP in
   pre)
-    mvn apache-rat:check ${MVNPASSTHRU} > ${REPORTDIR}/${TASKNAME}-clean.txt
+    mvn apache-rat:check ${MVNPASSTHRU} > $STDOUT
+    cp target/rat.txt ${REPORTDIR}/${TASKNAME}-clean.txt
     ;;
   post)
-    mvn apache-rat:check ${MVNPASSTHRU} > ${REPORTDIR}/${TASKNAME}-patch.txt
+    mvn apache-rat:check ${MVNPASSTHRU} > $STDOUT
+    cp target/rat.txt ${REPORTDIR}/${TASKNAME}-patch.txt
     ;;
   report)
     checkForWarnings
