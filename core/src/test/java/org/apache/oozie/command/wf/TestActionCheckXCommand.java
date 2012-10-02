@@ -268,11 +268,18 @@ public class TestActionCheckXCommand extends XDataTestCase {
                 assertEquals(0, action1.getRetries());
                 new ActionCheckXCommand(actionId).call();
 
+                waitFor(30 * 1000, new Predicate() {
+                    @Override
+                    public boolean evaluate() throws Exception {
+                        WorkflowActionBean action1a = jpaService.execute(wfActionGetCmd);
+                        return (action1a.getRetries() > 0);
+                    }
+                });
                 waitFor(180 * 1000, new Predicate() {
                     @Override
                     public boolean evaluate() throws Exception {
                         WorkflowActionBean action1a = jpaService.execute(wfActionGetCmd);
-                        return (action1a.getRetries() == maxRetries + 1);
+                        return (action1a.getRetries() == 0);
                     }
                 });
                 WorkflowActionBean action1b = jpaService.execute(wfActionGetCmd);
@@ -390,11 +397,18 @@ public class TestActionCheckXCommand extends XDataTestCase {
                 assertEquals(0, action1.getRetries());
                 new ActionCheckXCommand(actionId).call();
 
+                waitFor(30 * 1000, new Predicate() {
+                    @Override
+                    public boolean evaluate() throws Exception {
+                        WorkflowActionBean action1a = jpaService.execute(wfActionGetCmd);
+                        return (action1a.getRetries() > 0);
+                    }
+                });
                 waitFor(180 * 1000, new Predicate() {
                     @Override
                     public boolean evaluate() throws Exception {
                         WorkflowActionBean action1a = jpaService.execute(wfActionGetCmd);
-                        return (action1a.getRetries() == maxRetries + 1);
+                        return (action1a.getRetries() == 0);
                     }
                 });
                 WorkflowActionBean action1b = jpaService.execute(wfActionGetCmd);
