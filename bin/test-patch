@@ -272,7 +272,7 @@ applyPatch() {
         >> $STDOUT
   if [[  ${PIPESTATUS[0]} != 0 ]] ; then
     echo "Patch failed to apply to head of branch"
-    echo "Patch failed to apply to head of branch" >> ${SUMMARYFILE}
+    echo "{color:red}-1{code} Patch failed to apply to head of branch" >> ${SUMMARYFILE}
     echo "" >> ${SUMMARYFILE}
     echo "----------------------------" >> ${SUMMARYFILE}
     if [ "${JIRAUPDATE}" == "true" ] ; then
@@ -289,7 +289,7 @@ applyPatch() {
   fi
   echo "" >> $STDOUT
   echo "Patch applied"
-  echo "+1 PATCH_APPLIES" >> $SUMMARYFILE
+  echo "{color:green}+1{color} PATCH_APPLIES" >> $SUMMARYFILE
   echo
 }
 ###############################################################################
@@ -372,10 +372,6 @@ if [ "${PATCHFILE}" == "" ] ; then
   downloadPatch ${JIRAISSUE}
 fi
 
-if [ "${JIRAUPDATE}" == "true" ] ; then
-  echo "{code}" >> ${SUMMARYFILE}
-fi
-
 echo "----------------------------" >> ${SUMMARYFILE}
 echo "" >> ${SUMMARYFILE}
 getAllTasks
@@ -385,11 +381,12 @@ postPatchRun
 createReports
 echo "" >> ${SUMMARYFILE}
 echo "----------------------------" >> ${SUMMARYFILE}
-
-if [ "${JIRAUPDATE}" == "true" ] ; then
-  echo "{code}" >> ${SUMMARYFILE}
+MINUSONES=`grep -c "\-1" ${SUMMARYFILE}`
+if [[ $MINUSONES == 0 ]]; then
+  echo "{color:green}Overall result: Good!, no -1s{color}" >> ${SUMMARYFILE}
+else
+  echo "{color:red}Overall result: Please check the reported -1(s){color}" >> ${SUMMARYFILE}
 fi
-
 echo "" >> ${SUMMARYFILE}
 
 if [ ! -z "${JIRAISSUE}" ]; then

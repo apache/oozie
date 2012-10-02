@@ -85,14 +85,14 @@ checkForWarnings() {
   patchWarns=`grep -c '\!?????' ${REPORTDIR}/${TASKNAME}-patch.txt`
   newWarns=`expr $patchWarns - $cleanWarns`
   if [[ $newWarns -le 0 ]] ; then
-    REPORT+=("+1 the patch does not seem to introduce new RAT warnings")
+    REPORT+=("{color:green}+1{code} the patch does not seem to introduce new RAT warnings")
     newWarns=0
   else
-    REPORT+=("-1 the patch seems to introduce $newWarns new RAT warning(s)")
+    REPORT+=("{color:red}-1{code} the patch seems to introduce $newWarns new RAT warning(s)")
     newWarns=1
   fi
   if [[ $cleanWarns != 0 ]] ; then
-    REPORT+=("WARNING: the current HEAD has $cleanWarns RAT warning(s), they should be addressed ASAP")
+    REPORT+=("{color:red}WARNING: the current HEAD has $cleanWarns RAT warning(s), they should be addressed ASAP{color}")
   fi
 }
 ###############################################################################
@@ -112,9 +112,9 @@ case $OP in
   report)
     checkForWarnings
     if [[ $newWarns == 0 ]] ; then
-      echo "+1 ${TASKNAME}" >> $SUMMARYFILE
+      echo "{color:green}+1{code} ${TASKNAME}" >> $SUMMARYFILE
     else
-      echo "-1 ${TASKNAME}" >> $SUMMARYFILE
+      echo "{color:red}-1{code} ${TASKNAME}" >> $SUMMARYFILE
     fi
     for line in "${REPORT[@]}" ; do
       echo "    ${line}" >> $SUMMARYFILE
