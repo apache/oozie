@@ -1,6 +1,5 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
-OOZIE-1007 Add license headers to all files don't have them  (egashira via tucu)
 OOZIE-1005 Tests from OOZIE-994 use wrong condition in waitFor (rkanter via virag)
 OOZIE-992 Add overall status to test-patch messages and add some color-coding for negative results (tucu)
 OOZIE-1003 TestOozieCLI.testSubmitDoAs() should disable anonymous request (tucu)
@@ -22,6 +21,7 @@ OOZIE-979 bump up trunk version to 3.4.0-SNAPSHOT (tucu)
 
 -- Oozie 3.3.0 release (unreleased)
 
+OOZIE-1007 Add license headers to all files don't have them  (egashira via tucu)
 OOZIE-1006 Oozie fails to add required dependency for Hadoop 3.0.2 (venkatesh via virag)
 OOZIE-975 Test cases should not load all the services classes (virag)
 OOZIE-989 Testcases failing intermittently where coordinator jobs are in catchup mode (virag)
