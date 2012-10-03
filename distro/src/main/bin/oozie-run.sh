@@ -33,4 +33,5 @@ done
 BASEDIR=`dirname ${PRG}`
 BASEDIR=`cd ${BASEDIR}/..;pwd`
 
+echo "WARN: Use of this script is deprecated; use 'oozied.sh run' instead"
 exec ${BASEDIR}/bin/oozied.sh run 

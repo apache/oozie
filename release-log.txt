@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-669 Remove oozie-start.sh, oozie-stop.sh & oozie-run.sh scripts, leaving oozied.sh (rkanter via tucu)
 OOZIE-1005 Tests from OOZIE-994 use wrong condition in waitFor (rkanter via virag)
 OOZIE-992 Add overall status to test-patch messages and add some color-coding for negative results (tucu)
 OOZIE-1003 TestOozieCLI.testSubmitDoAs() should disable anonymous request (tucu)
