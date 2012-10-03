@@ -21,7 +21,7 @@ function printUsage() {
   echo
   echo " Usage  : oozie-setup.sh <OPTIONS>"
   echo "          [-extjs EXTJS_PATH] (expanded or ZIP, to enable the Oozie webconsole)"
-  echo "          [-hadoop HADOOP_VERSION HADOOP_PATH] (Hadoop version [0.20.1|0.20.2|0.20.104|0.20.200]"
+  echo "          [-hadoop HADOOP_VERSION HADOOP_PATH] (Hadoop version [0.20.1|0.20.2|0.20.104|0.20.200|0.23.x|2.x]"
   echo "                                                and Hadoop install dir)"
   echo "          [-jars JARS_PATH] (multiple JAR path separated by ':')"
   echo "          (without options does default setup, without the Oozie webconsole)"

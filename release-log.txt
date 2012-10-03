@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (unreleased)
 
+OOZIE-1006 Oozie fails to add required dependency for Hadoop 2.0.2 (venkatesh via virag)
 OOZIE-975 Test cases should not load all the services classes (virag)
 OOZIE-990 TestLogStreamer.testStreamLog fails in very rare cases (rkanter via virag)
 OOZIE-989 Testcases failing intermittently where coordinator jobs are in catchup mode (virag)
