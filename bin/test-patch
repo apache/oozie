@@ -286,7 +286,7 @@ applyPatch() {
   fi
   echo "" >> $STDOUT
   echo "Patch applied"
-  echo "{color:green}+1{color} PATCH_APPLIES" >> $SUMMARYFILE
+  echo "{color:green}+1 PATCH_APPLIES{color}" >> $SUMMARYFILE
   echo
 }
 ###############################################################################

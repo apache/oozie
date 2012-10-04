@@ -83,15 +83,16 @@ parseArgs "$@"
 case $OP in
   pre)
     mvn clean ${MVNPASSTHRU} > ${TEMPDIR}/${TASKNAME}.txt
+    EXITCODE=$?
     # removing files created outside of target/ by pig-main and hive-main testcases
-    rm core/pig*
-    rm core/hive*
-    exit $?
+    rm -f core/pig*
+    rm -f core/hive*
+    exit $EXITCODE
     ;;
   post)
     ;;
   report)
-    echo "{color:green}+1{color} ${TASKNAME} cleaned target directories" >> $SUMMARYFILE
+    echo "{color:green}+1 ${TASKNAME}{color}" >> $SUMMARYFILE
     ;;
 esac
 
