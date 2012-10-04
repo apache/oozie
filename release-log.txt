@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (unreleased)
 
+OOZIE-1013 Build failing as the license header comment is appearing before xml declaration in some files (virag)
 OOZIE-1007 Add license headers to all files don't have them  (egashira via tucu)
 OOZIE-1006 Oozie fails to add required dependency for Hadoop 2.0.2 (venkatesh via virag)
 OOZIE-975 Test cases should not load all the services classes (virag)
