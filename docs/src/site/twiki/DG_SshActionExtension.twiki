@@ -72,7 +72,7 @@ The configuration of the =ssh= action can be parameterized (templatized) using E
             <host>foo@bar.com<host>
             <command>uploaddata</command>
             <args>jdbc:derby://bar.com:1527/myDB</args>
-            <args>hdfs://foobar.com:9000/usr/tucu/myData</args>
+            <args>hdfs://foobar.com:8020/usr/tucu/myData</args>
         </ssh>
         <ok to="myotherjob"/>
         <error to="errorcleanup"/>
@@ -82,7 +82,7 @@ The configuration of the =ssh= action can be parameterized (templatized) using E
 </verbatim>
 
 In the above example, the =uploaddata= shell command is executed with two arguments, =jdbc:derby://foo.com:1527/myDB=
-and =hdfs://foobar.com:9000/usr/tucu/myData=.
+and =hdfs://foobar.com:8020/usr/tucu/myData=.
 
 The =uploaddata= shell must be available in the remote host and available in the command path.
 

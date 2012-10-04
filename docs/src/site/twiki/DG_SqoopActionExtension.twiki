@@ -112,8 +112,8 @@ Using the =command= element:
     ...
     <action name="myfirsthivejob">
         <sqoop xmlns="uri:oozie:sqoop-action:0.2">
-            <job-traker>foo:9001</job-tracker>
-            <name-node>bar:9000</name-node>
+            <job-traker>foo:8021</job-tracker>
+            <name-node>bar:8020</name-node>
             <prepare>
                 <delete path="${jobOutput}"/>
             </prepare>
@@ -123,7 +123,7 @@ Using the =command= element:
                     <value>true</value>
                 </property>
             </configuration>
-            <command>import  --connect jdbc:hsqldb:file:db.hsqldb --table TT --target-dir hdfs://localhost:9000/user/tucu/foo -m 1</command>
+            <command>import  --connect jdbc:hsqldb:file:db.hsqldb --table TT --target-dir hdfs://localhost:8020/user/tucu/foo -m 1</command>
         </sqoop>
         <ok to="myotherjob"/>
         <error to="errorcleanup"/>
@@ -139,8 +139,8 @@ The same Sqoop action using =arg= elements:
     ...
     <action name="myfirsthivejob">
         <sqoop xmlns="uri:oozie:sqoop-action:0.2">
-            <job-traker>foo:9001</job-tracker>
-            <name-node>bar:9000</name-node>
+            <job-traker>foo:8021</job-tracker>
+            <name-node>bar:8020</name-node>
             <prepare>
                 <delete path="${jobOutput}"/>
             </prepare>
@@ -156,7 +156,7 @@ The same Sqoop action using =arg= elements:
             <arg>--table</arg>
             <arg>TT</arg>
             <arg>--target-dir</arg>
-            <arg>hdfs://localhost:9000/user/tucu/foo</arg>
+            <arg>hdfs://localhost:8020/user/tucu/foo</arg>
             <arg>-m</arg>
             <arg>1</arg>
         </sqoop>
