@@ -76,7 +76,7 @@ parseArgs() {
 
 parseArgs "$@"
 
-echo "  Running COMPILE op=$OP"
+echo "  Running XX op=$OP"
 
 case $OP in
   pre)
@@ -84,7 +84,7 @@ case $OP in
   post)
     ;;
   report)
-    echo "{color:green}+1{color} ${TASKNAME}" >> $SUMMARYFILE
+    echo "{color:green}+1 ${TASKNAME}{color}" >> $SUMMARYFILE
     ;;
 esac
 

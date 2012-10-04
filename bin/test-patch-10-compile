@@ -128,9 +128,9 @@ case $OP in
     checkForWarnings
     total=`expr $compileErrors + $newWarns`
     if [[ $total == 0 ]] ; then
-      echo "{color:green}+1{color} ${TASKNAME}" >> $SUMMARYFILE
+      echo "{color:green}+1 ${TASKNAME}{color}" >> $SUMMARYFILE
     else
-      echo "{color:red}-1{color} ${TASKNAME}" >> $SUMMARYFILE
+      echo "{color:red}-1 ${TASKNAME}{color}" >> $SUMMARYFILE
     fi
     for line in "${REPORT[@]}" ; do
       echo ".    ${line}" >> $SUMMARYFILE
