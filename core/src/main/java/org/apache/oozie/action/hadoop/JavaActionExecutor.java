@@ -81,6 +81,7 @@ public class JavaActionExecutor extends ActionExecutor {
     private static final String HADOOP_USER = "user.name";
     private static final String HADOOP_JOB_TRACKER = "mapred.job.tracker";
     private static final String HADOOP_JOB_TRACKER_2 = "mapreduce.jobtracker.address";
+    private static final String HADOOP_YARN_RM = "yarn.resourcemanager.address";
     private static final String HADOOP_NAME_NODE = "fs.default.name";
     public static final String OOZIE_COMMON_LIBDIR = "oozie";
     public static final int MAX_EXTERNAL_STATS_SIZE_DEFAULT = Integer.MAX_VALUE;
@@ -103,6 +104,7 @@ public class JavaActionExecutor extends ActionExecutor {
         DISALLOWED_PROPERTIES.add(HADOOP_JOB_TRACKER);
         DISALLOWED_PROPERTIES.add(HADOOP_NAME_NODE);
         DISALLOWED_PROPERTIES.add(HADOOP_JOB_TRACKER_2);
+        DISALLOWED_PROPERTIES.add(HADOOP_YARN_RM);
     }
 
     public JavaActionExecutor() {
@@ -202,6 +204,7 @@ public class JavaActionExecutor extends ActionExecutor {
         conf.set(HADOOP_USER, context.getProtoActionConf().get(WorkflowAppService.HADOOP_USER));
         conf.set(HADOOP_JOB_TRACKER, jobTracker);
         conf.set(HADOOP_JOB_TRACKER_2, jobTracker);
+        conf.set(HADOOP_YARN_RM, jobTracker);
         conf.set(HADOOP_NAME_NODE, nameNode);
         conf.set("mapreduce.fileoutputcommitter.marksuccessfuljobs", "true");
         return conf;
@@ -244,8 +247,8 @@ public class JavaActionExecutor extends ActionExecutor {
             throw convertException(ex);
         }
     }
-    
-    public static void parseJobXmlAndConfiguration(Context context, Element element, Path appPath, Configuration conf) 
+
+    public static void parseJobXmlAndConfiguration(Context context, Element element, Path appPath, Configuration conf)
             throws IOException, ActionExecutorException, HadoopAccessorException, URISyntaxException {
         Namespace ns = element.getNamespace();
         Iterator<Element> it = element.getChildren("job-xml", ns).iterator();
@@ -266,8 +269,8 @@ public class JavaActionExecutor extends ActionExecutor {
             XConfiguration.copy(inlineConf, conf);
         }
     }
-    
-    Configuration setupActionConf(Configuration actionConf, Context context, Element actionXml, Path appPath) 
+
+    Configuration setupActionConf(Configuration actionConf, Context context, Element actionXml, Path appPath)
             throws ActionExecutorException {
         try {
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
@@ -413,7 +416,7 @@ public class JavaActionExecutor extends ActionExecutor {
             }
         }
     }
-    
+
     protected void addActionLibs(Path appPath, Configuration conf) throws ActionExecutorException {
         String[] actionLibsStrArr = conf.getStrings("oozie.launcher.oozie.libpath");
         if (actionLibsStrArr != null) {
@@ -460,7 +463,7 @@ public class JavaActionExecutor extends ActionExecutor {
                 addToCache(conf, appPath, path, false);
             }
         }
-        
+
         // Action libs
         addActionLibs(appPath, conf);
 

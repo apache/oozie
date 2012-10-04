@@ -537,10 +537,10 @@ public abstract class XTestCase extends TestCase {
             throw new RuntimeException(ex);
         }
     }
-    
+
     /**
      * Wait the specified amount of time; the timeout will be scaled by the oozie.test.waitfor.ratio property.
-     * 
+     *
      * @param sleepTime time in milliseconds to wait
      */
     protected void sleep(int sleepTime) {
@@ -725,6 +725,10 @@ public abstract class XTestCase extends TestCase {
                 mrCluster = new MiniMRCluster(0, 0, taskTrackers, nnURI, numDirs, racks, hosts, null, conf);
                 JobConf jobConf = mrCluster.createJobConf();
                 System.setProperty(OOZIE_TEST_JOB_TRACKER, jobConf.get("mapred.job.tracker"));
+                String rmAddress = jobConf.get("yarn.resourcemanager.address");
+                if (rmAddress != null) {
+                    System.setProperty(OOZIE_TEST_JOB_TRACKER, rmAddress);
+                }
                 System.setProperty(OOZIE_TEST_NAME_NODE, jobConf.get("fs.default.name"));
                 ProxyUsers.refreshSuperUserGroupsConfiguration(conf);
             }
