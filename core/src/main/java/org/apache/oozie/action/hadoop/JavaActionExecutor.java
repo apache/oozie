@@ -82,6 +82,7 @@ public class JavaActionExecutor extends ActionExecutor {
     private static final String HADOOP_JOB_TRACKER = "mapred.job.tracker";
     private static final String HADOOP_JOB_TRACKER_2 = "mapreduce.jobtracker.address";
     private static final String HADOOP_NAME_NODE = "fs.default.name";
+    private static final String HADOOP_JOB_NAME = "mapred.job.name";
     public static final String OOZIE_COMMON_LIBDIR = "oozie";
     public static final int MAX_EXTERNAL_STATS_SIZE_DEFAULT = Integer.MAX_VALUE;
     private static final Set<String> DISALLOWED_PROPERTIES = new HashSet<String>();
@@ -543,9 +544,15 @@ public class JavaActionExecutor extends ActionExecutor {
                 launcherJobConf.set(ACTION_SHARELIB_FOR + getType(), actionShareLibProperty);
             }
             setLibFilesArchives(context, actionXml, appPathRoot, launcherJobConf);
-            String jobName = XLog.format("oozie:launcher:T={0}:W={1}:A={2}:ID={3}", getType(), context.getWorkflow()
-                    .getAppName(), action.getName(), context.getWorkflow().getId());
+
+            String jobName = launcherJobConf.get(HADOOP_JOB_NAME);
+            if (jobName == null || jobName.isEmpty()) {
+                jobName = XLog.format(
+                        "oozie:launcher:T={0}:W={1}:A={2}:ID={3}", getType(),
+                        context.getWorkflow().getAppName(), action.getName(),
+                        context.getWorkflow().getId());
             launcherJobConf.setJobName(jobName);
+            }
 
             String jobId = context.getWorkflow().getId();
             String actionId = action.getId();
@@ -649,9 +656,15 @@ public class JavaActionExecutor extends ActionExecutor {
             setupActionConf(actionConf, context, actionXml, appPathRoot);
             XLog.getLog(getClass()).debug("Setting LibFilesArchives ");
             setLibFilesArchives(context, actionXml, appPathRoot, actionConf);
-            String jobName = XLog.format("oozie:action:T={0}:W={1}:A={2}:ID={3}", getType(), context.getWorkflow()
-                    .getAppName(), action.getName(), context.getWorkflow().getId());
-            actionConf.set("mapred.job.name", jobName);
+
+            String jobName = actionConf.get(HADOOP_JOB_NAME);
+            if (jobName == null || jobName.isEmpty()) {
+                jobName = XLog.format("oozie:action:T={0}:W={1}:A={2}:ID={3}",
+                        getType(), context.getWorkflow().getAppName(),
+                        action.getName(), context.getWorkflow().getId());
+                actionConf.set(HADOOP_JOB_NAME, jobName);
+            }
+
             injectActionCallback(context, actionConf);
 
             if (context.getWorkflow().getAcl() != null) {

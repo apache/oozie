@@ -795,6 +795,97 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         assertTrue(counters.contains("Counter"));
     }
 
+    /**
+     * Test "oozie.launcher.mapred.job.name" and "mapred.job.name" can be set in
+     * the action configuration and not overridden by the action executor
+     *
+     * @throws Exception
+     */
+    public void testSetMapredJobName() throws Exception {
+        final String launcherJobName = "MapReduceLauncherTest";
+        final String mapredJobName = "MapReduceTest";
+
+        FileSystem fs = getFileSystem();
+
+        Path inputDir = new Path(getFsTestCaseDir(), "input");
+        Path outputDir = new Path(getFsTestCaseDir(), "output");
+
+        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir,
+                "data.txt")));
+        w.write("dummy\n");
+        w.write("dummy\n");
+        w.close();
+
+        XConfiguration mrConfig = getMapReduceConfig(inputDir.toString(),
+                outputDir.toString());
+        mrConfig.set("oozie.launcher.mapred.job.name", launcherJobName);
+        mrConfig.set("mapred.job.name", mapredJobName);
+
+        StringBuilder sb = new StringBuilder("<map-reduce>")
+                .append("<job-tracker>").append(getJobTrackerUri())
+                .append("</job-tracker>").append("<name-node>")
+                .append(getNameNodeUri()).append("</name-node>")
+                .append(mrConfig.toXmlString(false)).append("</map-reduce>");
+        String actionXml = sb.toString();
+
+        Context context = createContext("map-reduce", actionXml);
+        final RunningJob launcherJob = submitAction(context);
+        String launcherId = context.getAction().getExternalId();
+        waitFor(120 * 2000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                return launcherJob.isComplete();
+            }
+        });
+
+        assertTrue(launcherJob.isSuccessful());
+        assertTrue(LauncherMapper.hasIdSwap(launcherJob));
+        // Assert launcher job name has been set
+        System.out.println("Launcher job name: " + launcherJob.getJobName());
+        assertTrue(launcherJob.getJobName().equals(launcherJobName));
+
+        MapReduceActionExecutor ae = new MapReduceActionExecutor();
+        ae.check(context, context.getAction());
+        assertFalse(launcherId.equals(context.getAction().getExternalId()));
+
+        JobConf conf = ae.createBaseHadoopConf(context,
+                XmlUtils.parseXml(actionXml));
+        String user = conf.get("user.name");
+
+        JobClient jobClient = Services.get().get(HadoopAccessorService.class)
+                .createJobClient(user, conf);
+        final RunningJob mrJob = jobClient.getJob(JobID.forName(context
+                .getAction().getExternalId()));
+
+        waitFor(120 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                return mrJob.isComplete();
+            }
+        });
+        assertTrue(mrJob.isSuccessful());
+        ae.check(context, context.getAction());
+
+        assertEquals("SUCCEEDED", context.getAction().getExternalStatus());
+        assertNull(context.getAction().getData());
+
+        ae.end(context, context.getAction());
+        assertEquals(WorkflowAction.Status.OK, context.getAction().getStatus());
+
+        // Assert Mapred job name has been set
+        System.out.println("Mapred job name: " + mrJob.getJobName());
+        assertTrue(mrJob.getJobName().equals(mapredJobName));
+
+        // Assert for stats info stored in the context.
+        assertNull(context.getExecutionStats());
+
+        // External Child IDs will always be null in case of MR action.
+        assertNull(context.getExternalChildIDs());
+
+        // hadoop.counters will always be set in case of MR action.
+        assertNotNull(context.getVar("hadoop.counters"));
+        String counters = context.getVar("hadoop.counters");
+        assertTrue(counters.contains("Counter"));
+    }
+
     public void testDefaultShareLibName() {
         MapReduceActionExecutor ae = new MapReduceActionExecutor();
         Element e = new Element("mapreduce");

@@ -181,12 +181,6 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
                             .getExternalId(), action.getId());
                 }
 
-                // TODO this has to be done in a better way
-                if (!runningJob.getJobName().startsWith("oozie:action:")) {
-                    throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "MR001",
-                                                      "ID swap should have happened in launcher job [{0}]", action.getExternalId());
-                }
-
                 Counters counters = runningJob.getCounters();
                 if (counters != null) {
                     ActionStats stats = new MRStats(counters);
