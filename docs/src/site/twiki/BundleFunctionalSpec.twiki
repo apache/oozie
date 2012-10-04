@@ -175,7 +175,7 @@ The previous Bundle Job application definition with formal parameters:
       </property>
       <property>
           <name>appPath2</name>
-          <value>hdfs://foo:9000/user/joe/job/job.properties</value>
+          <value>hdfs://foo:8020/user/joe/job/job.properties</value>
       </property>
   </parameters>
   <controls>
@@ -211,7 +211,7 @@ The previous Bundle Job application definition with formal parameters:
 </verbatim>
 
 In the above example, if =appPath= is not specified, Oozie will print an error message instead of submitting the job. If
-=appPath2= is not specified, Oozie will use the default value, =hdfs://foo:9000/user/joe/job/job.properties=.
+=appPath2= is not specified, Oozie will use the default value, =hdfs://foo:8020/user/joe/job/job.properties=.
 
 
 ---++ 5. User Propagation
@@ -254,7 +254,7 @@ submitted to the Oozie using an XML configuration file (Hadoop XML configuration
     </property>
     <property>
         <name>oozie.bundle.application.path</name>
-        <value>hdfs://foo:9000/user/joe/mybundles/hello-bundle1.xml</value>
+        <value>hdfs://foo:8020/user/joe/mybundles/hello-bundle1.xml</value>
     </property>
     ...
 </configuration>

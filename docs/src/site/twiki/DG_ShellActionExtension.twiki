@@ -159,7 +159,7 @@ How to run any shell script or perl script or CPP executable
 The corresponding job properties file used to submit Oozie job could be as follows:
 
 <verbatim>
-oozie.wf.application.path=hdfs://localhost:9000/user/kamrul/workflows/script
+oozie.wf.application.path=hdfs://localhost:8020/user/kamrul/workflows/script
 
 #Execute is expected to be in the Workflow directory.
 #Shell Script to run
@@ -169,8 +169,8 @@ EXEC=script.sh
 #Perl script
 #EXEC=script.pl
 
-jobTracker=localhost:9001
-nameNode=hdfs://localhost:9000
+jobTracker=localhost:8021
+nameNode=hdfs://localhost:8020
 queueName=default
 
 </verbatim>
@@ -209,13 +209,13 @@ How to run any java program bundles in a jar.
 The corresponding job properties file used to submit Oozie job could be as follows:
 
 <verbatim>
-oozie.wf.application.path=hdfs://localhost:9000/user/kamrul/workflows/script
+oozie.wf.application.path=hdfs://localhost:8020/user/kamrul/workflows/script
 
 #Hello.jar file is expected to be in the Workflow directory.
 EXEC=Hello.jar
 
-jobTracker=localhost:9001
-nameNode=hdfs://localhost:9000
+jobTracker=localhost:8021
+nameNode=hdfs://localhost:8020
 queueName=default
 </verbatim>
 
