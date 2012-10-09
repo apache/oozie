@@ -21,7 +21,8 @@ TESTPATCHDIR=${BASEDIR}/test-patch
 TOOLSDIR=${TESTPATCHDIR}/tools
 TEMPDIR=${TESTPATCHDIR}/tmp
 REPORTDIR=${TESTPATCHDIR}/reports
-SUMMARYFILE=${REPORTDIR}/TEST-SUMMARY.txt
+SUMMARYFILE=${REPORTDIR}/TEST-SUMMARY.jira
+SUMMARYFILETXT=${REPORTDIR}/TEST-SUMMARY.txt
 
 JIRAHOST="https://issues.apache.org"
 JIRAURL="${JIRAHOST}/jira"
@@ -380,14 +381,14 @@ echo "" >> ${SUMMARYFILE}
 echo "----------------------------" >> ${SUMMARYFILE}
 MINUSONES=`grep -c "\}\-1" ${SUMMARYFILE}`
 if [[ $MINUSONES == 0 ]]; then
-  echo "{color:green}Overall result: Good!, no -1s{color}" >> ${SUMMARYFILE}
+  echo "{color:green}*+1 Overall result, good!, no -1s*{color}" >> ${SUMMARYFILE}
 else
-  echo "{color:red}Overall result: Please check the reported -1(s){color}" >> ${SUMMARYFILE}
+  echo "{color:red}*-1 Overall result, please check the reported -1(s)*{color}" >> ${SUMMARYFILE}
 fi
 echo "" >> ${SUMMARYFILE}
 WARNINGS=`grep -c "\}WARNING" ${SUMMARYFILE}`
 if [[ $WARNINGS != 0 ]]; then
-  echo "{color:red}There is at least one warning, please check{color}" >> ${SUMMARYFILE}
+  echo "{color:red}.   There is at least one warning, please check{color}" >> ${SUMMARYFILE}
 fi
 echo "" >> ${SUMMARYFILE}
 
@@ -396,13 +397,15 @@ if [ ! -z "${JIRAISSUE}" ]; then
   echo ""  >> ${SUMMARYFILE}
   echo ".   ${BUILD_URL}"  >> ${SUMMARYFILE}
   echo ""  >> ${SUMMARYFILE}
-  cat ${SUMMARYFILE}
 else
-  cat ${SUMMARYFILE}
   echo
   echo "Refer to ${REPORTDIR} for detailed test-patch reports"
   echo
 fi
+
+cat ${SUMMARYFILE} | sed -e 's/{color}//' -e 's/{color:green}//' -e 's/{color:red}//' -e 's/^\.//' -e 's/^\*//' -e 's/\*$//' > ${SUMMARYFILETXT}
+
+cat ${SUMMARYFILETXT}
 
 grep "\-1" ${SUMMARYFILE} &> /dev/null
 cleanupAndExit `expr $? = 0`
