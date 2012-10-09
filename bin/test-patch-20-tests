@@ -103,27 +103,30 @@ case $OP in
     echo "$exitCode" >  ${TEMPDIR}/${TASKNAME}.exitCode
     ;;
   report)
-    failedTests=`find . -name 'TEST*.xml' | xargs grep  -l -E "<failure|<error" | sed -e "s|.*target/surefire-reports/TEST-|          |g" | sed -e "s|\.xml||g"`
-    testsRun=`grep "Tests run:" ${TEMPDIR}/${TASKNAME}.out | grep -v " Time elapsed:" | awk '{print $3}' | sed 's/,//' | awk 'BEGIN {count=0} {count=count+$1} END {print "Tests run: "count}'`
-    testsFailed=`grep "Tests run:" ${TEMPDIR}/${TASKNAME}.out | grep -v " Time elapsed:" | awk '{print $5}' | sed 's/,//' | awk 'BEGIN {count=0} {count=count+$1} END {print "Tests failures: "count}'`
-    testsErrors=`grep "Tests run:" ${TEMPDIR}/${TASKNAME}.out | grep -v " Time elapsed:" | awk '{print $7}' | sed 's/,//' | awk 'BEGIN {count=0} {count=count+$1} END {print "Tests errors: "count}'`
-    hasFailures=`expr $testFailed + $testsErrors`
+    failedTests=` find . -name '*\.txt' | grep target/surefire-reports | xargs grep  "<<< FAILURE" | grep -v "Tests run:" | sed 's/.*\.txt\://' | sed 's/ .*//'`
+    testsRun=`grep "Tests run:" ${TEMPDIR}/${TASKNAME}.out | grep -v " Time elapsed:" | awk '{print $3}' | sed 's/,//' | awk 'BEGIN {count=0} {count=count+$1} END {print count}'`
+    testsFailed=`grep "Tests run:" ${TEMPDIR}/${TASKNAME}.out | grep -v " Time elapsed:" | awk '{print $5}' | sed 's/,//' | awk 'BEGIN {count=0} {count=count+$1} END {print count}'`
+    testsErrors=`grep "Tests run:" ${TEMPDIR}/${TASKNAME}.out | grep -v " Time elapsed:" | awk '{print $7}' | sed 's/,//' | awk 'BEGIN {count=0} {count=count+$1} END {print count}'`
+    hasFailures=`expr $testsFailed + $testsErrors`
     testsExitCode=`cat ${TEMPDIR}/${TASKNAME}.exitCode`
     if [[ $hasFailures != 0 ]] ; then
-      echo "{color:red}-1 ${TASKNAME}{color} - the patch failed the following testcases:" >> $SUMMARYFILE
+      echo "{color:red}-1 ${TASKNAME}{color}" >> $SUMMARYFILE
+      echo ".    Tests run: $testsRun" >> $SUMMARYFILE
+      echo ".    Tests failed: $testsFailed" >> $SUMMARYFILE
+      echo ".    Tests errors: $testsErrors" >> $SUMMARYFILE
       echo "" >> ${SUMMARYFILE}
-      echo "${failedTests}" >> $SUMMARYFILE
+      echo ".    The patch failed the following testcases:" >> $SUMMARYFILE
+      echo "" >> ${SUMMARYFILE}
+      echo "${failedTests}" | sed 's/^/.      /' >> $SUMMARYFILE
       echo "" >> ${SUMMARYFILE}
     else
       if [[ "$testsExitCode" != "0" ]] ; then
           echo "{color:red}-1 ${TASKNAME}{color} - patch does not compile, cannot run testcases" >> $SUMMARYFILE
       else
         echo "{color:green}+1 ${TASKNAME}{color}" >> $SUMMARYFILE
+        echo ".    Tests run: $testsRun" >> $SUMMARYFILE
       fi
     fi
-    echo ".   $testsRun" >> $SUMMARYFILE
-    echo ".   $testsFailed" >> $SUMMARYFILE
-    echo ".   $testsErrors" >> $SUMMARYFILE
     ;;
 esac
 
