@@ -46,8 +46,11 @@ else
     JAVA_BIN=${JAVA_HOME}/bin/java
 fi
 
+# Prime OOZIE_CLIENT_OPTS with JAVA_PROPERTIES for backwards compatibility
+OOZIE_CLIENT_OPTS="${JAVA_PROPERTIES} ${OOZIE_CLIENT_OPTS}"
+
 while [[ ${1} =~ ^\-D ]]; do
-  JAVA_PROPERTIES="${JAVA_PROPERTIES} ${1}"
+  OOZIE_CLIENT_OPTS="${OOZIE_CLIENT_OPTS} ${1}"
   shift
 done
-${JAVA_BIN} ${JAVA_PROPERTIES} -cp ${OOZIECPPATH} org.apache.oozie.cli.OozieCLI "${@}"
+${JAVA_BIN} ${OOZIE_CLIENT_OPTS} -cp ${OOZIECPPATH} org.apache.oozie.cli.OozieCLI "${@}"
