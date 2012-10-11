@@ -99,6 +99,15 @@
             </includes>
             <fileMode>0555</fileMode>
         </fileSet>
+        <fileSet>
+            <directory>${basedir}/../workflowgenerator/target</directory>
+            <outputDirectory>/</outputDirectory>
+            <includes>
+                <include>oozie-wfgen.war</include>
+            </includes>
+            <fileMode>0555</fileMode>
+        </fileSet>
+
     </fileSets>
     <files>
         <!-- Oozie configuration files -->
