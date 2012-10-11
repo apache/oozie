@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (unreleased)
 
+OOZIE-976 add workflowgenerator into distro tarball (egashira via tucu)
 OOZIE-993 Hadoop 23 doesn't accept user defined jobtracker (virag)
 OOZIE-1013 Build failing as the license header comment is appearing before xml declaration in some files (virag)
 OOZIE-1007 Add license headers to all files don't have them  (egashira via tucu)

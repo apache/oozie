@@ -2,71 +2,83 @@
 Workflow Generator Tool
 =========================
 
+-----------------------------------------------
 What is Workflow Generator Tool
-----------------------
+-----------------------------------------------
 Workflow generator tool is a web application where a user can construct Oozie workflow through GUI.
 Since it is based on html and javascript, a user needs only browser to access the tool. (major browsers such as Chrome, Firefox, IE supported)
 It is developed using Google Web Toolkit ( https://developers.google.com/web-toolkit/ ), which provides functionality to compile java code into javascript.
 Therefore, although final product is in javascript, development process is performed in java.
 
 
-How to build and launch Workflow Generator Tool
-----------------------
+-------------------------------------------------------------------------------------
+How to build and launch Workflow Generator Tool as part of entire oozie package build
+-------------------------------------------------------------------------------------
 
-There are three possible options
-Option-A) launch app using bundled tomcat
-Option-B) launch app using web server that you are already running (without using bundled tomcat)
-Option-C) launch app in dev mode using bundled internal web server provided by GWT.
+1. run mkdistro.sh on top-level directory
+---------------------
+bin/mkdistro.sh -P wfgen
+---------------------
+[NOTE]
+currently workflow generator is not included in build as default, thus need to specify maven profile (-P wfgen)
 
-Option-A would be good for easy start since you don't have to install and run tomcat server by yourself.
-Option-B would be suitable when you want to host this application on the existing tomcat instance. You need to copy war file into webapp directory of existing tomcat.
-Option-C would be suitable for development of the tool since you can see error messages for debugging, and don't need to create and copy war file every time
+2. move to output directory
+--------------------
+cd distro/target/oozie-<version>-distro/oozie-<version>
+--------------------
 
-Option-C internally using java class (servlet), not javascript.
-On browser UI, therefore, DOM operation (e.g., creating/deleting nodewidget) might be slower than using pure javascript (Option-A and B)
+3-(a). copy the war file to oozie-server/webapps/
+--------------------
+cp oozie-wfgen.war ./oozie-server/webapps
+--------------------
 
-============================
+or
+
+3-(b). create /libext and copy the war file to it
+--------------------
+mkdir libext
+cp oozie-wfgen.war ./libext
+--------------------
+[NOTE]
+bin/oozie-setup.sh is implemented such that wfgen.war is automatically picked up and deployed to oozie server
+
+4. start oozie server (using bin/oozie-setup.sh and bin/oozie-start.sh) and check through browser
+---------------------
+http://localhost:11000/oozie-wfgen
+---------------------
+[NOTE]
+using default port number, which is 11000. tomcat server may fail to start if other application already using the same port. please make sure the port is not used.
+
+
+
+----------------------------------------------------------------------------------------
+How to build and launch Workflow Generator Tool only (not whole package build)
+----------------------------------------------------------------------------------------
+
+There are two possible options
+Option-A) launch app using web server that you are already running (without using bundled tomcat)
+Option-B) launch app in dev mode using bundled internal web server provided by GWT.
+
+Option-A would be suitable when you want to host this application on the existing tomcat instance. You need to copy war file into webapp directory of existing tomcat.
+Option-B would be suitable for development of the tool since you can see error messages for debugging, and don't need to create and copy war file every time
+
+Option-B internally using java class (servlet), not javascript.
+On browser UI, therefore, DOM operation (e.g., creating/deleting nodewidget) might be slower than using pure javascript (Option-A)
+
+===============================================
 <Option-A>
 
-1. build project
+1. build workflowgenerator and create war file
 ---------------------
-mvn clean package -Dmaven.test.skip=true
----------------------
-[NOTE]
-test case not implemented yet, so please skip test, otherwise may fail
-during the build process, tomcat package is automatically downloaded from apache site. war file is also generated and copied into webapps directory of tomcat.
-
-2. start web server
----------------------
-target/workflowgenerator-1.0-SNAPSHOT-tomcat/bin/startup.sh
----------------------
-
-3. check through browser
----------------------
-http://localhost:8080/workflowgenerator-1.0-SNAPSHOT/
+cd workflowgenerator // assuming you are on top directory
+mvn clean package
 ---------------------
 [NOTE]
-using default port number, which is 8080. tomcat server may fail to start if other application already using the same port. please make sure the port is not used. If you want to change the port number, please edit target/workflowgenerator-1.0-SNAPSHOT-tomcat/conf/server.xml
-
-4. stop web server
----------------------
-target/workflowgenerator-1.0-SNAPSHOT-tomcat/bin/shutdown.sh
----------------------
-
-
-============================
-<Option-B>
-
-1. build project and create war file
----------------------
-mvn clean package -Dmaven.test.skip=true
----------------------
-[NOTE]
-test case not implemented yet, so please skip test, otherwise may fail
+test case not implemented yet
 
 2. copy war file to webapps directory of web server
 ---------------------
-cp target/workflowgenerator-1.0-SNAPSHOT.war <webserver-installed-directory>/webapps/
+cp target/oozie-wfgen.war <webserver-installed-directory>/webapps/
 ---------------------
 
 3. start web server
@@ -78,10 +90,10 @@ name of start script might be different in your web-server, please change accord
 
 4. check through browser
 ---------------------
-http://localhost:8080/workflowgenerator-1.0-SNAPSHOT/
+http://localhost:8080/oozie-wfgen
 ---------------------
 [NOTE]
-port number might not be 8080 in your web-server setting, please change accordingly
+port number might not be 8080 in your web-server setting (usually it's default in tomcat), please change accordingly
 
 5. stop web server
 ---------------------
@@ -89,12 +101,12 @@ port number might not be 8080 in your web-server setting, please change accordin
 ---------------------
 [NOTE] name of shutdown script might be different in your web-server, please change accordingly
 
-
-============================
-<Option-C>
+===============================================
+<Option-B>
 
 1. compile and start GWT launcher
 ---------------------
+cd workflowgenerator // assuming you are on top directory
 mvn clean gwt:run
 ---------------------
 you will see GWT launcher program automatically starts

@@ -69,7 +69,7 @@
         <hadoop.version>1.0.1</hadoop.version>
 
         <hadooplib.version>${hadoop.version}.oozie-${project.version}</hadooplib.version>
-        
+
         <clover.license>/home/jenkins/tools/clover/latest/lib/clover.license</clover.license>
         <!--
         This is required while we support a a pre 0.23 version of Hadoop which does not have
@@ -878,10 +878,13 @@
             </properties>
         </profile>
         <profile>
-            <id>testPatchCompile</id>
+            <id>wfgen</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
             </activation>
+            <modules>
+                <module>workflowgenerator</module>
+            </modules>
             <build>
                 <plugins>
                     <plugin>
@@ -901,5 +904,4 @@
             </build>
         </profile>
     </profiles>
-
 </project>

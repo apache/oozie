@@ -21,13 +21,18 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
-  <!-- POM file generated with GWT webAppCreator -->
+  <parent>
+    <groupId>org.apache.oozie</groupId>
+    <artifactId>oozie-main</artifactId>
+    <version>3.3.0-SNAPSHOT</version>
+  </parent>
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.apache.oozie</groupId>
-  <artifactId>workflowgenerator</artifactId>
+  <artifactId>oozie-workflowgenerator</artifactId>
+  <version>3.3.0-SNAPSHOT</version>
   <packaging>war</packaging>
-  <version>1.0-SNAPSHOT</version>
-  <name>GWT Maven Archetype</name>
+  <description>Apache Oozie WorkflowGenerator</description>
+  <name>Apache Oozie WorkflowGenerator</name>
 
   <properties>
     <!-- Convenience property to set the GWT version -->
@@ -89,6 +94,7 @@
    <build>
     <!-- Generate compiled stuff in the folder used for developing mode -->
     <outputDirectory>${webappDirectory}/WEB-INF/classes</outputDirectory>
+    <finalName>oozie-wfgen</finalName>
 
     <plugins>
 
@@ -162,55 +168,6 @@
              </execution>
          </executions>
       </plugin>
-        <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-antrun-plugin</artifactId>
-            <version>1.6</version>
-            <executions>
-                <execution>
-                    <configuration>
-                        <target>
-                            <mkdir dir="downloads"/>
-                            <get src="http://archive.apache.org/dist/tomcat/tomcat-6/v6.0.32/bin/apache-tomcat-6.0.32.tar.gz"
-                                 dest="downloads/tomcat.tar.gz" verbose="true" skipexisting="true"/>
-                            <delete dir="target/tomcat-pkg"/>
-                            <mkdir dir="target/tomcat-pkg"/>
-                            <delete dir="target/${project.artifactId}-${project.version}-tomcat"/>
-                            <mkdir dir="target/${project.artifactId}-${project.version}-tomcat"/>
-                            <gunzip src="downloads/tomcat.tar.gz" dest="target/tomcat-pkg/tomcat.tar"/>
-                            <untar src="target/tomcat-pkg/tomcat.tar" dest="target/tomcat-pkg"/>
-                            <move file="target/tomcat-pkg/apache-tomcat-6.0.32" tofile="target/${project.artifactId}-${project.version}-tomcat"/>
-                            <delete dir="target/tomcat-pkg"/>
-                            <delete dir="target/${project.artifactId}-${project.version}-tomcat/webapps"/>
-                            <mkdir dir="target/${project.artifactId}-${project.version}-tomcat/webapps"/>
-                            <copy file="target/${project.artifactId}-${project.version}.war" toDir="target/${project.artifactId}-${project.version}-tomcat/webapps"/>
-                            <chmod dir="target/${project.artifactId}-${project.version}-tomcat/bin" perm="ugo+rx" includes="**/*.sh"/>
-                        </target>
-                    </configuration>
-                    <goals>
-                        <goal>run</goal>
-                    </goals>
-                    <phase>package</phase>
-                </execution>
-            </executions>
-        </plugin>
-        <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-assembly-plugin</artifactId>
-            <executions>
-                <execution>
-                    <goals>
-                        <goal>assembly</goal>
-                    </goals>
-                    <phase>package</phase>
-                </execution>
-            </executions>
-            <configuration>
-                <descriptors>
-                    <descriptor>src/main/assemblies/workflowgenerator.xml</descriptor>
-                </descriptors>
-            </configuration>
-        </plugin>
     </plugins>
     <resources>
         <resource>
