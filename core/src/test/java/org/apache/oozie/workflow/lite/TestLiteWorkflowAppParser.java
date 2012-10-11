@@ -27,6 +27,7 @@ import java.util.Map;
 
 import org.apache.oozie.service.ActionService;
 import org.apache.oozie.service.LiteWorkflowStoreService;
+import org.apache.oozie.service.SchemaService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.workflow.WorkflowException;
 import org.apache.oozie.workflow.lite.TestLiteWorkflowLib.TestActionNodeHandler;
