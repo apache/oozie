@@ -49,6 +49,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        setSystemProperty("oozie.service.SchemaService.wf.ext.schemas", "hive-action-0.2.xsd");
         new Services().init();
         Services.get().get(ActionService.class).register(HiveActionExecutor.class);
         Services.get().get(ActionService.class).register(DistcpActionExecutor.class);
@@ -921,4 +922,59 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         validateForkJoin.invoke(parser, def);
     }
 
+    // If Xerces 2.10.0 is not explicitly listed as a dependency in the poms, then Java will revert to an older version that has
+    // a race conditon in the validator.  This test is to make sure we don't accidently remove the dependency.
+    public void testRaceConditionWithOldXerces() throws Exception {
+        javax.xml.validation.Schema schema = Services.get().get(SchemaService.class).getSchema(SchemaService.SchemaName.WORKFLOW);
+        final int numThreads = 20;
+        final RCThread[] threads = new RCThread[numThreads];
+        for (int i = 0; i < numThreads; i++) {
+            LiteWorkflowAppParser parser = new LiteWorkflowAppParser(schema,
+                                                                     LiteWorkflowStoreService.LiteControlNodeHandler.class,
+                                                                     LiteWorkflowStoreService.LiteDecisionHandler.class,
+                                                                     LiteWorkflowStoreService.LiteActionHandler.class);
+            threads[i] = new RCThread(parser);
+        }
+        for (int i = 0; i < numThreads; i++) {
+            threads[i].start();
+        }
+        waitFor(120 * 1000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                boolean allDone = true;
+                for (int i = 0; i < numThreads; i++) {
+                    allDone = allDone & threads[i].done;
+                }
+                return allDone;
+            }
+        });
+        boolean error = false;
+        for (int i = 0; i < numThreads; i++) {
+            error = error || threads[i].error;
+        }
+        assertFalse(error);
+    }
+
+    public class RCThread extends Thread {
+
+        private LiteWorkflowAppParser parser;
+        boolean done = false;
+        boolean error = false;
+
+        public RCThread(LiteWorkflowAppParser parser) {
+            this.parser = parser;
+        }
+
+        @Override
+        public void run() {
+            try {
+                parser.validateAndParse(IOUtils.getResourceAsReader("wf-race-condition.xml", -1), new Configuration());
+            }
+            catch (Exception e) {
+                error = true;
+                e.printStackTrace();
+            }
+            done = true;
+        }
+    }
 }

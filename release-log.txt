@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1017 Add test to make sure old version of Xerces isn't being used (rkanter via tucu)
 OOZIE-949 Allow the user to set 'mapred.job.name' (jrkinley via tucu)
 OOZIE-1009 Documentation pages should use default ports for Oozie/JT/NN (tucu)
 OOZIE-669 Deprecate oozie-start.sh, oozie-stop.sh & oozie-run.sh scripts (rkanter via tucu)
