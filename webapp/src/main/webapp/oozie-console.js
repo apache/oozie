@@ -674,13 +674,13 @@ function coordJobDetailsPopup(response, request) {
             name: 'user',
             width: 200,
             value: jobDetails["user"]
-	}, {
+        }, {
             fieldLabel: 'Group',
             editable: false,
             name: 'group',
             width: 200,
             value: jobDetails["group"]
-	}, {
+        }, {
             fieldLabel: 'Frequency',
             editable: false,
             name: 'frequency',
@@ -696,14 +696,32 @@ function coordJobDetailsPopup(response, request) {
             fieldLabel: 'Start Time',
             editable: false,
             name: 'startTime',
-            width: 170,
+            width: 200,
             value: jobDetails["startTime"]
         }, {
             fieldLabel: 'Next Matd',
             editable: false,
             name: 'nextMaterializedTime',
-            width: 170,
+            width: 200,
             value: jobDetails["nextMaterializedTime"]
+        }, {
+            fieldLabel: 'End Time',
+            editable: false,
+            name: 'endTime',
+            width: 200,
+            value: jobDetails["endTime"]
+        }, {
+            fieldLabel: 'Pause Time',
+            editable: false,
+            name: 'pauseTime',
+            width: 200,
+            value: jobDetails["pauseTime"]
+        }, {
+            fieldLabel: 'Concurrency',
+            editable: false,
+            name: 'concurrency',
+            width: 200,
+            value: jobDetails["concurrency"]
         }, ]
     });
     var fs = new Ext.FormPanel({

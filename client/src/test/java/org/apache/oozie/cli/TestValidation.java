@@ -21,7 +21,6 @@ import junit.framework.TestCase;
 
 import java.net.URL;
 import java.net.URI;
-import java.util.concurrent.TimeoutException;
 import java.io.File;
 
 public class TestValidation extends TestCase {
@@ -42,23 +41,4 @@ public class TestValidation extends TestCase {
         String[] args = new String[]{"validate", getPath("invalid.xml")};
         assertEquals(-1, new OozieCLI().run(args));
     }
-
-    // Test for Validation of workflow definition against pattern defined in schema to complete within 3 seconds
-    public void testTimeout() throws Exception {
-        final String[] args = new String[] { "validate", getPath("timeout.xml") };
-        Thread testThread = new Thread() {
-            public void run() {
-                assertEquals(-1, new OozieCLI().run(args));
-            }
-        };
-        testThread.start();
-        Thread.sleep(3000);
-        // Timeout if validation takes more than 3 seconds
-        testThread.interrupt();
-
-        if (testThread.isInterrupted()) {
-            throw new TimeoutException("The pattern validation took too long to complete");
-        }
-    }
-
 }

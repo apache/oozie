@@ -170,6 +170,14 @@ The same Sqoop action using =arg= elements:
 NOTE: The =arg= elements syntax, while more verbose, allows to have spaces in a single argument, something useful when
 using free from queries.
 
+---+++ Sqoop Action Counters
+
+The counters of the map-reduce job run by the Sqoop action are available to be used in the workflow via the
+[[WorkflowFunctionalSpec#HadoopCountersEL][hadoop:counters() EL function]].
+
+If the Sqoop action run an import all command, the =hadoop:counters()= EL will return the aggregated counters
+of all map-reduce jobs run by the Sqoop import all command.
+
 ---+++ Sqoop Action Logging
 
 Sqoop action logs are redirected to the Oozie Launcher map-reduce job task STDOUT/STDERR that runs Sqoop.

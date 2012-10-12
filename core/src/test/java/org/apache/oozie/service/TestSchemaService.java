@@ -22,23 +22,15 @@ import org.apache.oozie.service.SchemaService.SchemaName;
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
-import org.xml.sax.SAXParseException;
 
 import javax.xml.validation.Validator;
 import javax.xml.transform.stream.StreamSource;
 
 import java.io.StringReader;
-import java.util.concurrent.TimeoutException;
 
 public class TestSchemaService extends XTestCase {
 
-    public static final String LONG_STRING_PATTERN_VALIDATION = "I_am_long_string_with_a_period_._which_is_not_allowed_according_to_schema";
-    public static final String APP_NEG_TEST = "<workflow-app xmlns='uri:oozie:workflow:0.1' name='"+LONG_STRING_PATTERN_VALIDATION+"'>" +
-            "<start to='end'/>" +
-            "<end name='end'/>" +
-            "</workflow-app>";
-
-	private static final String APP1 = "<workflow-app xmlns='uri:oozie:workflow:0.1' name='app'>" +
+    private static final String APP1 = "<workflow-app xmlns='uri:oozie:workflow:0.1' name='app'>" +
             "<start to='end'/>" +
             "<end name='end'/>" +
             "</workflow-app>";
@@ -134,34 +126,6 @@ public class TestSchemaService extends XTestCase {
         SchemaService wss = Services.get().get(SchemaService.class);
         Validator validator = wss.getSchema(SchemaName.WORKFLOW).newValidator();
         validator.validate(new StreamSource(new StringReader(WF_4_MULTIPLE_JAVA_OPTS)));
-    }
-
-    // Test for validation of workflow definition against pattern defined in schema to complete within 3 seconds
-    public void testWfSchemaFailure() throws Exception {
-        SchemaService wss = Services.get().get(SchemaService.class);
-        final Validator validator = wss.getSchema(SchemaName.WORKFLOW).newValidator();
-        Thread testThread = new Thread() {
-            public void run() {
-                try {
-                    // Validate against wf def
-                    validator.validate(new StreamSource(new StringReader(APP_NEG_TEST)));
-                    fail("Expected to catch ParseException but didn't encounter any");
-                } catch (SAXParseException saxpe) {
-                    // Expected
-                } catch (Exception e) {
-                    fail("Expected to catch ParseException but an unexpected error happened " + e.getMessage());
-                }
-            }
-        };
-
-        testThread.start();
-        Thread.sleep(3000);
-        // Timeout if validation takes more than 3 seconds
-        testThread.interrupt();
-
-        if (testThread.isInterrupted()) {
-            throw new TimeoutException("the pattern validation took too long to complete");
-        }
     }
 
     public void testWfSchemaV2() throws Exception {

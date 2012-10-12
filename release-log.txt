@@ -1,5 +1,10 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1012 Sqoop jobs are unable to utilize Hadoop Counters (jarcec via virag)
+OOZIE-986 Oozie client shell script should use consistent naming for java options (stevenwillis via tucu)
+OOZIE-1018 Display coord job start time, end time, pause time, concurrency in job -info (mona via tucu)
+OOZIE-1016 Tests that use junit assert or fail in a new thread report success when they are actually failing (rkanter via tucu)
+OOZIE-1017 Add test to make sure old version of Xerces isn't being used (rkanter via tucu)
 OOZIE-949 Allow the user to set 'mapred.job.name' (jrkinley via tucu)
 OOZIE-1009 Documentation pages should use default ports for Oozie/JT/NN (tucu)
 OOZIE-669 Deprecate oozie-start.sh, oozie-stop.sh & oozie-run.sh scripts (rkanter via tucu)
@@ -24,6 +29,7 @@ OOZIE-979 bump up trunk version to 3.4.0-SNAPSHOT (tucu)
 
 -- Oozie 3.3.0 release (unreleased)
 
+OOZIE-976 add workflowgenerator into distro tarball (egashira via tucu)
 OOZIE-993 Hadoop 23 doesn't accept user defined jobtracker (virag)
 OOZIE-1013 Build failing as the license header comment is appearing before xml declaration in some files (virag)
 OOZIE-1007 Add license headers to all files don't have them  (egashira via tucu)

@@ -954,9 +954,13 @@ public class OozieCLI {
         System.out.println(RULER);
 
         List<CoordinatorAction> actions = coordJob.getActions();
-        System.out.println("Job Name : " + maskIfNull(coordJob.getAppName()));
-        System.out.println("App Path : " + maskIfNull(coordJob.getAppPath()));
-        System.out.println("Status   : " + coordJob.getStatus());
+        System.out.println("Job Name    : " + maskIfNull(coordJob.getAppName()));
+        System.out.println("App Path    : " + maskIfNull(coordJob.getAppPath()));
+        System.out.println("Status      : " + coordJob.getStatus());
+        System.out.println("Start Time  : " + maskDate(coordJob.getStartTime(), timeZoneId, false));
+        System.out.println("End Time    : " + maskDate(coordJob.getEndTime(), timeZoneId, false));
+        System.out.println("Pause Time  : " + maskDate(coordJob.getPauseTime(), timeZoneId, false));
+        System.out.println("Concurrency : " + coordJob.getConcurrency());
         System.out.println(RULER);
 
         if (verbose) {

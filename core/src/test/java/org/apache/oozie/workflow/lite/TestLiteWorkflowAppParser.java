@@ -18,21 +18,17 @@
 package org.apache.oozie.workflow.lite;
 
 
-import java.io.StringReader;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeoutException;
 
 
 import org.apache.oozie.service.ActionService;
 import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.SchemaService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.service.SchemaService.SchemaName;
-import org.apache.oozie.service.TestSchemaService;
 import org.apache.oozie.workflow.WorkflowException;
 import org.apache.oozie.workflow.lite.TestLiteWorkflowLib.TestActionNodeHandler;
 import org.apache.oozie.workflow.lite.TestLiteWorkflowLib.TestDecisionNodeHandler;
@@ -49,6 +45,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        setSystemProperty("oozie.service.SchemaService.wf.ext.schemas", "hive-action-0.2.xsd");
         new Services().init();
         Services.get().get(ActionService.class).register(HiveActionExecutor.class);
         Services.get().get(ActionService.class).register(DistcpActionExecutor.class);
@@ -327,38 +324,6 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         }
         catch (Exception ex) {
             fail();
-        }
-    }
-
-    // Test for validation of workflow definition against pattern defined in schema to complete within 3 seconds
-    public void testWfValidationFailure() throws Exception {
-        SchemaService wss = Services.get().get(SchemaService.class);
-        final LiteWorkflowAppParser parser = new LiteWorkflowAppParser(wss.getSchema(SchemaName.WORKFLOW),
-                LiteWorkflowStoreService.LiteControlNodeHandler.class,
-                LiteWorkflowStoreService.LiteDecisionHandler.class, LiteWorkflowStoreService.LiteActionHandler.class);
-
-        Thread testThread = new Thread() {
-            public void run() {
-                try {
-                    // Validate against wf def
-                    parser.validateAndParse(new StringReader(TestSchemaService.APP_NEG_TEST), new Configuration());
-                    fail("Expected to catch WorkflowException but didn't encounter any");
-                } catch (WorkflowException we) {
-                    assertEquals(ErrorCode.E0701, we.getErrorCode());
-                    assertTrue(we.getCause().toString().contains("SAXParseException"));
-                } catch (Exception e) {
-                    fail("Expected to catch WorkflowException but an unexpected error happened");
-                }
-
-            }
-        };
-        testThread.start();
-        Thread.sleep(3000);
-        // Timeout if validation takes more than 3 seconds
-        testThread.interrupt();
-
-        if (testThread.isInterrupted()) {
-            throw new TimeoutException("the pattern validation took too long to complete");
         }
     }
 
@@ -921,4 +886,59 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         validateForkJoin.invoke(parser, def);
     }
 
+    // If Xerces 2.10.0 is not explicitly listed as a dependency in the poms, then Java will revert to an older version that has
+    // a race conditon in the validator.  This test is to make sure we don't accidently remove the dependency.
+    public void testRaceConditionWithOldXerces() throws Exception {
+        javax.xml.validation.Schema schema = Services.get().get(SchemaService.class).getSchema(SchemaService.SchemaName.WORKFLOW);
+        final int numThreads = 20;
+        final RCThread[] threads = new RCThread[numThreads];
+        for (int i = 0; i < numThreads; i++) {
+            LiteWorkflowAppParser parser = new LiteWorkflowAppParser(schema,
+                                                                     LiteWorkflowStoreService.LiteControlNodeHandler.class,
+                                                                     LiteWorkflowStoreService.LiteDecisionHandler.class,
+                                                                     LiteWorkflowStoreService.LiteActionHandler.class);
+            threads[i] = new RCThread(parser);
+        }
+        for (int i = 0; i < numThreads; i++) {
+            threads[i].start();
+        }
+        waitFor(120 * 1000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                boolean allDone = true;
+                for (int i = 0; i < numThreads; i++) {
+                    allDone = allDone & threads[i].done;
+                }
+                return allDone;
+            }
+        });
+        boolean error = false;
+        for (int i = 0; i < numThreads; i++) {
+            error = error || threads[i].error;
+        }
+        assertFalse(error);
+    }
+
+    public class RCThread extends Thread {
+
+        private LiteWorkflowAppParser parser;
+        boolean done = false;
+        boolean error = false;
+
+        public RCThread(LiteWorkflowAppParser parser) {
+            this.parser = parser;
+        }
+
+        @Override
+        public void run() {
+            try {
+                parser.validateAndParse(IOUtils.getResourceAsReader("wf-race-condition.xml", -1), new Configuration());
+            }
+            catch (Exception e) {
+                error = true;
+                e.printStackTrace();
+            }
+            done = true;
+        }
+    }
 }
