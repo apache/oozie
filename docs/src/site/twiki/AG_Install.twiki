@@ -454,7 +454,7 @@ This script is sourced before the configuration =oozie-env.sh= and supports addi
 environment variables (shown with their default values):
 
 <verbatim>
-export OOZIE_CONF=${OOZIE_HOME}/conf
+export OOZIE_CONFIG=${OOZIE_HOME}/conf
 export OOZIE_DATA={OOZIE_HOME}/data
 export OOZIE_LOG={OOZIE_HOME}/logs
 export CATALINA_BASE=${OOZIE_HOME}/oozie-server
