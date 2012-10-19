@@ -33,29 +33,7 @@ done
 BASEDIR=`dirname ${PRG}`
 BASEDIR=`cd ${BASEDIR}/..;pwd`
 
-OOZIE_HOME=${BASEDIR}
-OOZIE_CONFIG=${OOZIE_HOME}/conf
-OOZIE_LOG=${OOZIE_HOME}/logs
-OOZIE_DATA=${OOZIE_HOME}/data
-
-if [ -f ${OOZIE_HOME}/bin/oozie-env.sh ]
-then
-  source ${OOZIE_HOME}/bin/oozie-env.sh
-fi
-
-if [ ! -d ${OOZIE_CONFIG} ]
-then
-  echo
-  echo "ERROR: Oozie configuration directory could not be found at ${OOZIE_CONFIG}"
-  echo
-  exit 1
-fi
-
-# if the configuration dir has a env file, source it
-if [ -f ${OOZIE_CONFIG}/oozie-env.sh ]
-then
-  source ${OOZIE_CONFIG}/oozie-env.sh
-fi
+source ${BASEDIR}/bin/oozie-sys.sh -silent
 
 OOZIEDB_OPTS="-Doozie.home.dir=${OOZIE_HOME}";
 OOZIEDB_OPTS="${OOZIEDB_OPTS} -Doozie.config.dir=${OOZIE_CONFIG}";
