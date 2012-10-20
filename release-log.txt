@@ -1,5 +1,8 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-967 Coordinator action window in web UI never finishes refreshing (kinley via tucu)
+OOZIE-1024 ooziedb.sh script should keep OOZIE_CONFIG, OOZIE_LOG, and OOZIE_DATA if previously set (rkanter via tucu)
+OOZIE-1023 Docs list OOZIE_CONF instead of OOZIE_CONFIG env var (rkanter via tucu)
 OOZIE-1012 Sqoop jobs are unable to utilize Hadoop Counters (jarcec via virag)
 OOZIE-986 Oozie client shell script should use consistent naming for java options (stevenwillis via tucu)
 OOZIE-1018 Display coord job start time, end time, pause time, concurrency in job -info (mona via tucu)
