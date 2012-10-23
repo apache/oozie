@@ -33,12 +33,14 @@ import org.json.simple.JSONValue;
 public class XOozieClient extends OozieClient {
 
     public static final String JT = "mapred.job.tracker";
+    public static final String JT_2 = "mapreduce.jobtracker.address";
 
     public static final String NN = "fs.default.name";
-    
+    public static final String NN_2 = "fs.defaultFS";
+
     @Deprecated
     public static final String JT_PRINCIPAL = "mapreduce.jobtracker.kerberos.principal";
-    
+
     @Deprecated
     public static final String NN_PRINCIPAL = "dfs.namenode.kerberos.principal";
 
@@ -100,13 +102,19 @@ public class XOozieClient extends OozieClient {
 
     private void validateHttpSubmitConf(Properties conf) {
         String JT = conf.getProperty(XOozieClient.JT);
+        String JT_2 = conf.getProperty(XOozieClient.JT_2);
         if (JT == null) {
-            throw new RuntimeException("jobtracker is not specified in conf");
+            if(JT_2 == null) {
+                throw new RuntimeException("jobtracker is not specified in conf");
+            }
         }
 
         String NN = conf.getProperty(XOozieClient.NN);
+        String NN_2 = conf.getProperty(XOozieClient.NN_2);
         if (NN == null) {
-            throw new RuntimeException("namenode is not specified in conf");
+            if(NN_2 == null) {
+                throw new RuntimeException("namenode is not specified in conf");
+            }
         }
 
         String libPath = conf.getProperty(LIBPATH);

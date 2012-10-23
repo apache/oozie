@@ -25,6 +25,7 @@ import org.jdom.Namespace;
 import org.apache.oozie.client.XOozieClient;
 import org.apache.oozie.command.CommandException;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -32,6 +33,7 @@ import java.util.Set;
 
 public class SubmitMRXCommand extends SubmitHttpXCommand {
     private static final Set<String> SKIPPED_CONFS = new HashSet<String>();
+    private static final Map<String, String> DEPRECATE_MAP = new HashMap<String, String>();
 
     public SubmitMRXCommand(Configuration conf, String authToken) {
         super("submitMR", "submitMR", conf, authToken);
@@ -43,7 +45,11 @@ public class SubmitMRXCommand extends SubmitHttpXCommand {
         SKIPPED_CONFS.add(XOozieClient.NN);
         // a brillant mind made a change in Configuration that 'fs.default.name' key gets converted to 'fs.defaultFS'
         // in Hadoop 0.23, we need skip that one too, keeping the old one because of Hadoop 1
-        SKIPPED_CONFS.add("fs.defaultFS");
+        SKIPPED_CONFS.add(XOozieClient.NN_2);
+
+        DEPRECATE_MAP.put(XOozieClient.NN, XOozieClient.NN_2);
+        DEPRECATE_MAP.put(XOozieClient.JT, XOozieClient.JT_2);
+        DEPRECATE_MAP.put(WorkflowAppService.HADOOP_USER, "mapreduce.job.user.name");
     }
 
     private Element generateConfigurationSection(Configuration conf, Namespace ns) {
@@ -53,7 +59,8 @@ public class SubmitMRXCommand extends SubmitHttpXCommand {
             Map.Entry<String, String> entry = iter.next();
             String name = entry.getKey();
             if (MANDATORY_OOZIE_CONFS.contains(name) || OPTIONAL_OOZIE_CONFS.contains(name)
-                    || SKIPPED_CONFS.contains(name)) {
+                    || SKIPPED_CONFS.contains(name)
+                    || DEPRECATE_MAP.containsValue(name)) {
                 continue;
             }
 
@@ -78,10 +85,12 @@ public class SubmitMRXCommand extends SubmitHttpXCommand {
     private Element generateMRSection(Configuration conf, Namespace ns) {
         Element mapreduce = new Element("map-reduce", ns);
         Element jt = new Element("job-tracker", ns);
-        jt.addContent(conf.get(XOozieClient.JT));
+        String newJTVal = conf.get(DEPRECATE_MAP.get(XOozieClient.JT));
+        jt.addContent(newJTVal != null ? newJTVal : (conf.get(XOozieClient.JT)));
         mapreduce.addContent(jt);
         Element nn = new Element("name-node", ns);
-        nn.addContent(conf.get(XOozieClient.NN));
+        String newNNVal = conf.get(DEPRECATE_MAP.get(XOozieClient.NN));
+        nn.addContent(newNNVal != null ? newNNVal : (conf.get(XOozieClient.NN)));
         mapreduce.addContent(nn);
 
         if (conf.size() > MANDATORY_OOZIE_CONFS.size()) { // excluding JT, NN,
@@ -113,8 +122,15 @@ public class SubmitMRXCommand extends SubmitHttpXCommand {
     protected String getWorkflowXml(Configuration conf) {
         for (String key : MANDATORY_OOZIE_CONFS) {
             String value = conf.get(key);
-            if (value == null) {
-                throw new RuntimeException(key + " is not specified");
+            if(value == null) {
+                if(DEPRECATE_MAP.containsKey(key)) {
+                    if(conf.get(DEPRECATE_MAP.get(key)) == null) {
+                        throw new RuntimeException(key + " or " + DEPRECATE_MAP.get(key) + " is not specified");
+                    }
+                }
+                else {
+                    throw new RuntimeException(key + " is not specified");
+                }
             }
         }
 
