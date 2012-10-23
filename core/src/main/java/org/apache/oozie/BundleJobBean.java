@@ -66,7 +66,17 @@ import org.apache.openjpa.persistence.jdbc.Index;
 
         @NamedQuery(name = "GET_BUNDLE_JOBS_OLDER_THAN_STATUS", query = "select OBJECT(w) from BundleJobBean w where w.status = :status AND w.lastModifiedTimestamp <= :lastModTime order by w.lastModifiedTimestamp"),
 
-        @NamedQuery(name = "GET_COMPLETED_BUNDLE_JOBS_OLDER_THAN", query = "select OBJECT(w) from BundleJobBean w where ( w.status = 'SUCCEEDED' OR w.status = 'FAILED' OR w.status = 'KILLED' OR w.status = 'DONEWITHERROR') AND w.lastModifiedTimestamp <= :lastModTime order by w.lastModifiedTimestamp")})
+        @NamedQuery(name = "GET_COMPLETED_BUNDLE_JOBS_OLDER_THAN", query = "select OBJECT(w) from BundleJobBean w where ( w.status = 'SUCCEEDED' OR w.status = 'FAILED' OR w.status = 'KILLED' OR w.status = 'DONEWITHERROR') AND w.lastModifiedTimestamp <= :lastModTime order by w.lastModifiedTimestamp"),
+
+        @NamedQuery(name = "BULK_MONITOR_BUNDLE_QUERY", query = "SELECT b.id, b.status FROM BundleJobBean b WHERE b.appName = :appName"),
+
+        // Join query
+        @NamedQuery(name = "BULK_MONITOR_ACTIONS_QUERY", query = "SELECT a.id, a.actionNumber, a.errorCode, a.errorMessage, a.externalId, " +
+                "a.externalStatus, a.status, a.createdTimestamp, a.nominalTimestamp, a.missingDependencies, " +
+                "c.id, c.appName, c.status FROM CoordinatorActionBean a, CoordinatorJobBean c " +
+                "WHERE a.jobId = c.id AND c.bundleId = :bundleId ORDER BY a.jobId, a.createdTimestamp"),
+
+        @NamedQuery(name = "BULK_MONITOR_COUNT_QUERY", query = "SELECT COUNT(a) FROM CoordinatorActionBean a, CoordinatorJobBean c") })
 public class BundleJobBean extends JsonBundleJob implements Writable {
 
     @Basic
