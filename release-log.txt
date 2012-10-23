@@ -1,5 +1,6 @@
 -- Oozie 3.3.0 release (unreleased)
 
+OOZIE-1027 Command line mr does not support NN/JT parameters properly (Mona via Mohammad)
 OOZIE-1020 BulkJPAExecutor handling date-time value incorrectly.(Mona via Mohammad)
 OOZIE-976 add workflowgenerator into distro tarball (egashira via tucu)
 OOZIE-993 Hadoop 23 doesn't accept user defined jobtracker (virag)
