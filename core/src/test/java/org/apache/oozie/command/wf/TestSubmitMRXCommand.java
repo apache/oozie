@@ -113,4 +113,36 @@ public class TestSubmitMRXCommand extends XFsTestCase {
 
         }
     }
+
+    public void testWFXmlGenerationNewConfigProps() throws Exception {
+        try {
+            Configuration conf = new Configuration(false);
+            conf.set(XOozieClient.NN_2, "new_NN");
+            conf.set(XOozieClient.JT_2, "new_JT");
+            conf.set("mapred.mapper.class", "TestMapper");
+            conf.set("mapred.reducer.class", "TestReducer");
+            conf.set("mapred.input.dir", "testInput");
+            conf.set("mapred.output.dir", "testOutput");
+            conf.set(OozieClient.LIBPATH, "libpath");
+            conf.set("mapreduce.job.user.name", "test_user");
+
+            SubmitMRXCommand submitMRCmd = new SubmitMRXCommand(conf, "token");
+            String xml = submitMRCmd.getWorkflowXml(conf);
+
+            //verifying is a valid WF
+            WorkflowAppService wps = Services.get().get(WorkflowAppService.class);
+            wps.parseDef(xml, conf);
+
+            Element wfE = XmlUtils.parseXml(xml);
+            Namespace ns = wfE.getNamespace();
+            Element actionE = wfE.getChild("action", ns).getChild("map-reduce", ns);
+            Element nnE = actionE.getChild("name-node", ns);
+            assertEquals(nnE.getTextTrim(), "new_NN");
+            Element jtE = actionE.getChild("job-tracker", ns);
+            assertEquals(jtE.getTextTrim(), "new_JT");
+        }
+        catch(Exception e) {
+            fail("should have passed");
+        }
+    }
 }
