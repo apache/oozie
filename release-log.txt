@@ -1,5 +1,7 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1027 Command line mr does not support NN/JT parameters properly (Mona via Mohammad)
+OOZIE-1020 BulkJPAExecutor handling date-time value incorrectly.(Mona via Mohammad)`
 OOZIE-967 Coordinator action window in web UI never finishes refreshing (kinley via tucu)
 OOZIE-1024 ooziedb.sh script should keep OOZIE_CONFIG, OOZIE_LOG, and OOZIE_DATA if previously set (rkanter via tucu)
 OOZIE-1023 Docs list OOZIE_CONF instead of OOZIE_CONFIG env var (rkanter via tucu)

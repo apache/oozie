@@ -790,27 +790,34 @@ The valid values of job type are: =workflow=, =coordinator= or =bundle=.
 
 A HTTP GET request retrieves a bulk response for all actions, corresponding to a particular bundle, that satisfy user specified criteria.
 This is useful for monitoring purposes, where user can find out about the status of downstream jobs with a single bulk request.
-The criteria are used for filtering the actions returned. Valid options (case insensitive) for these request criteria are:
+The criteria are used for filtering the actions returned. Valid options (_case insensitive_) for these request criteria are:
 
-   * bundle: the application name from the bundle definition
-   * coordinators: the application name(s) from the coordinator definition.
-   * actionStatus: the status of coordinator action (Valid values are WAITING, READY, SUBMITTED, RUNNING, SUSPENDED, TIMEDOUT, SUCCEEDED, KILLED, FAILED)
-   * startCreatedTime: the start of the window you want to look at, of the actions' created time
-   * endCreatedTime: the end of above window
-   * startScheduledTime: the start of the window you want to look at, of the actions' scheduled i.e. nominal time.
-   * endScheduledTime: the end of above window
+   * *bundle*: the application name from the bundle definition
+   * *coordinators*: the application name(s) from the coordinator definition.
+   * *actionStatus*: the status of coordinator action (Valid values are WAITING, READY, SUBMITTED, RUNNING, SUSPENDED, TIMEDOUT, SUCCEEDED, KILLED, FAILED)
+   * *startCreatedTime*: the start of the window you want to look at, of the actions' created time
+   * *endCreatedTime*: the end of above window
+   * *startScheduledTime*: the start of the window you want to look at, of the actions' scheduled i.e. nominal time.
+   * *endScheduledTime*: the end of above window
 
 Specifying 'bundle' is REQUIRED. All the rest are OPTIONAL but that might result in thousands of results depending on the size of your job. (pagination comes into play then)
 
-The query will do an AND among all the filter names.
+If no 'actionStatus' values provided, by default KILLED,FAILED will be used.
+For e.g if the query string is only "bundle=MyBundle", the response will have all actions (across all coordinators) whose status is KILLED or FAILED
+
+The query will do an AND among all the filter names, and OR among each filter name's values.
 
 The syntax for the request criteria is <verbatim>[NAME=VALUE][;NAME=VALUE]*</verbatim>
 
-For 'coordinators' and 'actionStatus', if user wants to check for multiple values, they can be passed in a comma-separated manner. *Note*: The query will do an OR among them. Hence no need to repeat the criteria name
+For 'coordinators' and 'actionStatus', if user wants to check for multiple values, they can be passed in a comma-separated manner.
+*Note*: The query will do an OR among them. Hence no need to repeat the criteria name
 
-All the time parameter values should be specified in ISO8601 format i.e. yyyy-MM-dd'T'HH:mm'Z'
+All the time values should be specified in *ISO8601 (UTC)* format i.e. *yyyy-MM-dd'T'HH:mm'Z'*
 
 Additionally the =offset= and =len= parameters can be used as usual for pagination. The start parameter is base 1.
+
+If you specify a coordinator in the list, that does not exist, no error is thrown; simply the response will be empty or pertaining to the other valid coordinators.
+However, if bundle name provided does not exist, an error is thrown.
 
 *Request:*
 
@@ -818,7 +825,7 @@ Additionally the =offset= and =len= parameters can be used as usual for paginati
 GET /oozie/v1/jobs?bulk=bundle%3Dmy-bundle-app;coordinators%3Dmy-coord-1,my-coord-5;actionStatus%3DKILLED&offset=1&len=50
 </verbatim>
 
-Note that the filter is URL encoded, its decoded value is <code>user=bansalm</code>. If typing in browser URL, one can type decoded value itself i.e. using '='
+Note that the filter is URL encoded, its decoded value is <code>user=chitnis</code>. If typing in browser URL, one can type decoded value itself i.e. using '='
 
 *Response:*
 

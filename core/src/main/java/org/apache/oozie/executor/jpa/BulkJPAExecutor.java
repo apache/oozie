@@ -21,8 +21,12 @@ import java.sql.Timestamp;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
@@ -39,21 +43,14 @@ import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ParamChecker;
 
 /**
- * Load the coordinators for specified bundle in the Coordinator job bean
+ * The query executor class for bulk monitoring queries i.e. debugging bundle ->
+ * coord actions directly
  */
 public class BulkJPAExecutor implements JPAExecutor<BulkResponseInfo> {
     private Map<String, List<String>> bulkFilter;
     // defaults
     private int start = 1;
     private int len = 50;
-
-    public static final String bundleQuery = "SELECT b.id, b.status FROM BundleJobBean b WHERE b.appName = :appName";
-    // Join query
-    public static final String actionQuery = "SELECT a.id, a.actionNumber, a.errorCode, a.errorMessage, a.externalId, " +
-            "a.externalStatus, a.status, a.createdTimestamp, a.nominalTimestamp, a.missingDependencies, " +
-            "c.id, c.appName, c.status FROM CoordinatorActionBean a, CoordinatorJobBean c " +
-            "WHERE a.jobId = c.id AND c.bundleId = :bundleId ORDER BY a.jobId, a.createdTimestamp";
-    public static final String countQuery = "SELECT COUNT(a) FROM CoordinatorActionBean a, CoordinatorJobBean c ";
 
     public BulkJPAExecutor(Map<String, List<String>> bulkFilter, int start, int len) {
         ParamChecker.notNull(bulkFilter, "bulkFilter");
@@ -62,7 +59,8 @@ public class BulkJPAExecutor implements JPAExecutor<BulkResponseInfo> {
         this.len = len;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
      * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
      */
     @Override
@@ -70,59 +68,28 @@ public class BulkJPAExecutor implements JPAExecutor<BulkResponseInfo> {
         return "BulkJPAExecutor";
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
      * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
      */
     @Override
-    @SuppressWarnings("unchecked")
     public BulkResponseInfo execute(EntityManager em) throws JPAExecutorException {
-        BundleJobBean bundleBean = new BundleJobBean();
-
         List<BulkResponseImpl> responseList = new ArrayList<BulkResponseImpl>();
+        Map<String, Timestamp> actionTimes = new HashMap<String, Timestamp>();
 
         try {
+            // Lightweight Query 1 on Bundle level to fetch the bundle job
+            // corresponding to name
+            BundleJobBean bundleBean = bundleQuery(em);
 
-            // Lightweight Query 1 on Bundle level to fetch the bundle job params corresponding to name
-            String bundleName = bulkFilter.get(BulkResponseImpl.BULK_FILTER_BUNDLE_NAME).get(0);
-            Query q = em.createQuery(bundleQuery);
-            q.setParameter("appName", bundleName);
-            List<Object[]> bundles = (List<Object[]>) q.getResultList();
-            if(bundles.isEmpty()) {
-                throw new JPAExecutorException(ErrorCode.E0603, "No bundle entries found for bundle name: " + bundleName);
-            }
-            if(bundles.size() > 1) { // more than one bundles running with same name - ERROR. Fail fast
-                throw new JPAExecutorException(ErrorCode.E0603, "Non-unique bundles present for same bundle name: " + bundleName);
-            }
-            bundleBean = getBeanForBundleJob(bundles.get(0), bundleName);
+            // Join query between coordinator job and coordinator action tables
+            // to get entries for specific bundleId only
+            String conditions = actionQuery(em, bundleBean, actionTimes, responseList);
 
-            //Join query between coordinator job and coordinator action tables to get entries for specific bundleId only
-            StringBuilder conditionClause = new StringBuilder();
-            conditionClause.append(coordNamesClause(bulkFilter.get(BulkResponseImpl.BULK_FILTER_COORD_NAME)));
-            conditionClause.append(statusClause(bulkFilter.get(BulkResponseImpl.BULK_FILTER_STATUS)));
-            conditionClause.append(timesClause());
-            StringBuilder getActions = new StringBuilder(actionQuery);
-            int offset = getActions.indexOf("ORDER");
-            getActions.insert(offset-1, conditionClause);
-            q = em.createQuery(getActions.toString());
-            q.setParameter("bundleId", bundleBean.getId());
-            // pagination
-            q.setFirstResult(start - 1);
-            q.setMaxResults(len);
+            // Query to get the count of records
+            long total = countQuery(conditions, em, bundleBean, actionTimes);
 
-            List<Object[]> response = q.getResultList();
-            for (Object[] r : response) {
-                BulkResponseImpl br = getResponseFromObject(bundleBean, r);
-                responseList.add(br);
-            }
-
-            StringBuilder getTotal = new StringBuilder(countQuery);
-            String query = q.toString();
-            getTotal.append(query.substring(query.indexOf("WHERE"), query.indexOf("ORDER")));
-            Query qTotal = em.createQuery(getTotal.toString());
-            qTotal.setParameter("bundleId", bundleBean.getId());
-            long total = ((Long) qTotal.getSingleResult()).longValue();
-
-            BulkResponseInfo bulk = new BulkResponseInfo(responseList, start, len , total);
+            BulkResponseInfo bulk = new BulkResponseInfo(responseList, start, len, total);
             return bulk;
         }
         catch (Exception e) {
@@ -130,19 +97,85 @@ public class BulkJPAExecutor implements JPAExecutor<BulkResponseInfo> {
         }
     }
 
+    @SuppressWarnings("unchecked")
+    private BundleJobBean bundleQuery(EntityManager em) throws JPAExecutorException {
+        BundleJobBean bundleBean = new BundleJobBean();
+        String bundleName = bulkFilter.get(BulkResponseImpl.BULK_FILTER_BUNDLE_NAME).get(0);
+        Query q = em.createNamedQuery("BULK_MONITOR_BUNDLE_QUERY");
+        q.setParameter("appName", bundleName);
+        List<Object[]> bundles = (List<Object[]>) q.getResultList();
+        if (bundles.isEmpty()) {
+            throw new JPAExecutorException(ErrorCode.E0603, "No bundle entries found for bundle name: "
+                    + bundleName);
+        }
+        if (bundles.size() > 1) { // more than one bundles running with same
+                                  // name - ERROR. Fail fast
+            throw new JPAExecutorException(ErrorCode.E0603, "Non-unique bundles present for same bundle name: "
+                    + bundleName);
+        }
+        bundleBean = getBeanForBundleJob(bundles.get(0), bundleName);
+        return bundleBean;
+    }
+
+    @SuppressWarnings("unchecked")
+    private String actionQuery(EntityManager em, BundleJobBean bundleBean,
+            Map<String, Timestamp> times, List<BulkResponseImpl> responseList) throws ParseException {
+        Query q = em.createNamedQuery("BULK_MONITOR_ACTIONS_QUERY");
+        StringBuilder getActions = new StringBuilder(q.toString());
+        StringBuilder conditionClause = new StringBuilder();
+        conditionClause.append(coordNamesClause(bulkFilter.get(BulkResponseImpl.BULK_FILTER_COORD_NAME)));
+        conditionClause.append(statusClause(bulkFilter.get(BulkResponseImpl.BULK_FILTER_STATUS)));
+        int offset = getActions.indexOf("ORDER");
+        getActions.insert(offset - 1, conditionClause);
+        timesClause(getActions, offset, times);
+        q = em.createQuery(getActions.toString());
+        Iterator<Entry<String, Timestamp>> iter = times.entrySet().iterator();
+        while (iter.hasNext()) {
+            Entry<String, Timestamp> time = iter.next();
+            q.setParameter(time.getKey(), time.getValue());
+        }
+        q.setParameter("bundleId", bundleBean.getId());
+        // pagination
+        q.setFirstResult(start - 1);
+        q.setMaxResults(len);
+
+        List<Object[]> response = q.getResultList();
+        for (Object[] r : response) {
+            BulkResponseImpl br = getResponseFromObject(bundleBean, r);
+            responseList.add(br);
+        }
+        return q.toString();
+    }
+
+    private long countQuery(String clause, EntityManager em, BundleJobBean bundleBean, Map<String, Timestamp> times) {
+        Query q = em.createNamedQuery("BULK_MONITOR_COUNT_QUERY");
+        StringBuilder getTotal = new StringBuilder(q.toString() + " ");
+        getTotal.append(clause.substring(clause.indexOf("WHERE"), clause.indexOf("ORDER")));
+        q = em.createQuery(getTotal.toString());
+        q.setParameter("bundleId", bundleBean.getId());
+        Iterator<Entry<String, Timestamp>> iter = times.entrySet().iterator();
+        while (iter.hasNext()) {
+            Entry<String, Timestamp> time = iter.next();
+            q.setParameter(time.getKey(), time.getValue());
+        }
+        long total = ((Long) q.getSingleResult()).longValue();
+        return total;
+    }
+
     // Form the where clause to filter by coordinator names
     private StringBuilder coordNamesClause(List<String> coordNames) {
         StringBuilder sb = new StringBuilder();
         boolean firstVal = true;
         for (String name : nullToEmpty(coordNames)) {
-            if(firstVal) {
+            if (firstVal) {
                 sb.append(" AND c.appName IN (\'" + name + "\'");
                 firstVal = false;
-            } else {
+            }
+            else {
                 sb.append(",\'" + name + "\'");
             }
         }
-        if(!firstVal) {
+        if (!firstVal) {
             sb.append(") ");
         }
         return sb;
@@ -153,40 +186,49 @@ public class BulkJPAExecutor implements JPAExecutor<BulkResponseInfo> {
         StringBuilder sb = new StringBuilder();
         boolean firstVal = true;
         for (String status : nullToEmpty(statuses)) {
-            if(firstVal) {
+            if (firstVal) {
                 sb.append(" AND a.status IN (\'" + status + "\'");
                 firstVal = false;
-            } else {
+            }
+            else {
                 sb.append(",\'" + status + "\'");
             }
         }
-        if(!firstVal) {
+        if (!firstVal) {
             sb.append(") ");
-        } else { // statuses was null. adding default
+        }
+        else { // statuses was null. adding default
             sb.append(" AND a.status IN ('KILLED', 'FAILED') ");
         }
         return sb;
     }
 
-    private StringBuilder timesClause() throws ParseException {
-        StringBuilder sb = new StringBuilder();
+    private void timesClause(StringBuilder sb, int offset, Map<String, Timestamp> eachTime) throws ParseException {
+        Timestamp ts = null;
         List<String> times = bulkFilter.get(BulkResponseImpl.BULK_FILTER_START_CREATED_EPOCH);
-        if(times != null) {
-            sb.append(" AND a.createdTimestamp >= '" + new Timestamp(DateUtils.parseDateUTC(times.get(0)).getTime()) + "'");
+        if (times != null) {
+            ts = new Timestamp(DateUtils.parseDateUTC(times.get(0)).getTime());
+            sb.insert(offset - 1, " AND a.createdTimestamp >= :startCreated");
+            eachTime.put("startCreated", ts);
         }
         times = bulkFilter.get(BulkResponseImpl.BULK_FILTER_END_CREATED_EPOCH);
-        if(times != null) {
-            sb.append(" AND a.createdTimestamp <= '" + new Timestamp(DateUtils.parseDateUTC(times.get(0)).getTime()) + "'");
+        if (times != null) {
+            ts = new Timestamp(DateUtils.parseDateUTC(times.get(0)).getTime());
+            sb.insert(offset - 1, " AND a.createdTimestamp <= :endCreated");
+            eachTime.put("endCreated", ts);
         }
         times = bulkFilter.get(BulkResponseImpl.BULK_FILTER_START_NOMINAL_EPOCH);
-        if(times != null) {
-            sb.append(" AND a.nominalTimestamp >= '" + new Timestamp(DateUtils.parseDateUTC(times.get(0)).getTime()) + "'");
+        if (times != null) {
+            ts = new Timestamp(DateUtils.parseDateUTC(times.get(0)).getTime());
+            sb.insert(offset - 1, " AND a.nominalTimestamp >= :startNominal");
+            eachTime.put("startNominal", ts);
         }
         times = bulkFilter.get(BulkResponseImpl.BULK_FILTER_END_NOMINAL_EPOCH);
-        if(times != null) {
-            sb.append(" AND a.nominalTimestamp <= '" + new Timestamp(DateUtils.parseDateUTC(times.get(0)).getTime()) + "'");
+        if (times != null) {
+            ts = new Timestamp(DateUtils.parseDateUTC(times.get(0)).getTime());
+            sb.insert(offset - 1, " AND a.nominalTimestamp <= :endNominal");
+            eachTime.put("endNominal", ts);
         }
-        return sb;
     }
 
     private BulkResponseImpl getResponseFromObject(BundleJobBean bundleBean, Object arr[]) {
@@ -239,12 +281,14 @@ public class BulkJPAExecutor implements JPAExecutor<BulkResponseInfo> {
         return bean;
     }
 
-    private BundleJobBean getBeanForBundleJob(Object[] barr, String name) throws Exception {
+    private BundleJobBean getBeanForBundleJob(Object[] barr, String name) throws JPAExecutorException {
         BundleJobBean bean = new BundleJobBean();
         if (barr[0] != null) {
             bean.setId((String) barr[0]);
-        } else {
-            throw new JPAExecutorException(ErrorCode.E0603, "bundleId returned by query is null - cannot retrieve bulk results");
+        }
+        else {
+            throw new JPAExecutorException(ErrorCode.E0603,
+                    "bundleId returned by query is null - cannot retrieve bulk results");
         }
         bean.setAppName(name);
         if (barr[1] != null) {
@@ -255,7 +299,7 @@ public class BulkJPAExecutor implements JPAExecutor<BulkResponseInfo> {
 
     // null safeguard
     public static List<String> nullToEmpty(List<String> input) {
-        return input == null ? Collections.<String>emptyList() : input;
+        return input == null ? Collections.<String> emptyList() : input;
     }
 
 }
