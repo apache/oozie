@@ -414,6 +414,11 @@ public abstract class XTestCase extends TestCase {
                 throw new RuntimeException(XLog.format("could not delete path [{0}]", file.getAbsolutePath()));
             }
         }
+        else {
+            // With a dangling symlink, exists() doesn't return true so try to delete it anyway; we fail silently in case the file
+            // truely doesn't exist
+            file.delete();
+        }
     }
 
     /**
