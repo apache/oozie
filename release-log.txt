@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1032 Create JMSService used for any JMS compliant product (Mohammad)
 OOZIE-1027 Command line mr does not support NN/JT parameters properly (Mona via Mohammad)
 OOZIE-1020 BulkJPAExecutor handling date-time value incorrectly.(Mona via Mohammad)`
 OOZIE-967 Coordinator action window in web UI never finishes refreshing (kinley via tucu)

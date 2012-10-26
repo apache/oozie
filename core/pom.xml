@@ -265,6 +265,12 @@
             <scope>compile</scope>
         </dependency>
 
+           <dependency>
+                <groupId>org.apache.activemq</groupId>
+                <artifactId>activemq-all</artifactId>
+                <scope>compile</scope>
+           </dependency>
+
         <!-- For drawing runtime DAG -->
         <dependency>
             <groupId>net.sf.jung</groupId>

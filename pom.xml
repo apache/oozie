@@ -457,6 +457,12 @@
                 <version>${hive.version}</version>
             </dependency>
 
+           <dependency>
+                <groupId>org.apache.activemq</groupId>
+                <artifactId>activemq-all</artifactId>
+                <version>5.7.0</version>
+           </dependency>
+
             <dependency>
                 <groupId>commons-logging</groupId>
                 <artifactId>commons-logging</artifactId>
