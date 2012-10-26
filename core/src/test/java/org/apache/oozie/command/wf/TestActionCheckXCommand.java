@@ -239,6 +239,10 @@ public class TestActionCheckXCommand extends XDataTestCase {
     }
 
     public void testActionCheckTransientDuringLauncher() throws Exception {
+        // When using YARN, skip this test because it relies on shutting down the job tracker, which isn't used in YARN
+        if (createJobConf().get("yarn.resourcemanager.address") != null) {
+            return;
+        }
         services.destroy();
         // Make the ActionCheckXCommand run more frequently so the test won't take as long
         setSystemProperty("oozie.service.ActionCheckerService.action.check.interval", "10");
@@ -345,6 +349,10 @@ public class TestActionCheckXCommand extends XDataTestCase {
     }
 
     public void testActionCheckTransientDuringMRAction() throws Exception {
+        // When using YARN, skip this test because it relies on shutting down the job tracker, which isn't used in YARN
+        if (createJobConf().get("yarn.resourcemanager.address") != null) {
+            return;
+        }
         services.destroy();
         // Make the ActionCheckXCommand run more frequently so the test won't take as long
         setSystemProperty("oozie.service.ActionCheckerService.action.check.interval", "10");
