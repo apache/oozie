@@ -414,6 +414,11 @@ public abstract class XTestCase extends TestCase {
                 throw new RuntimeException(XLog.format("could not delete path [{0}]", file.getAbsolutePath()));
             }
         }
+        else {
+            // With a dangling symlink, exists() doesn't return true so try to delete it anyway; we fail silently in case the file
+            // truely doesn't exist
+            file.delete();
+        }
     }
 
     /**
@@ -703,6 +708,10 @@ public abstract class XTestCase extends TestCase {
             UserGroupInformation.createUserForTesting(getTestUser2(), userGroups);
             UserGroupInformation.createUserForTesting(getTestUser3(), new String[] { "users" } );
             conf.set("hadoop.tmp.dir", "target/test-data"+"/minicluster");
+
+            // Scheduler properties required for YARN to work
+            conf.set("yarn.scheduler.capacity.root.queues", "default");
+            conf.set("yarn.scheduler.capacity.root.default.capacity", "100");
 
             try {
                 dfsCluster = new MiniDFSCluster(conf, dataNodes, true, null);

@@ -1,7 +1,10 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1029 MiniMRCluster fails to start when used against YARN (rkanter via tucu)
+OOZIE-1011 Tests from OOZIE-994 fail when run against Hadoop trunk (rkanter via tucu)
+OOZIE-1027 XTestCase.delete() can cause tests to fail if it runs into a dangling symlink (rkanter via tucu)
 OOZIE-1027 Command line mr does not support NN/JT parameters properly (Mona via Mohammad)
-OOZIE-1020 BulkJPAExecutor handling date-time value incorrectly.(Mona via Mohammad)`
+OOZIE-1020 BulkJPAExecutor handling date-time value incorrectly.(Mona via Mohammad)
 OOZIE-967 Coordinator action window in web UI never finishes refreshing (kinley via tucu)
 OOZIE-1024 ooziedb.sh script should keep OOZIE_CONFIG, OOZIE_LOG, and OOZIE_DATA if previously set (rkanter via tucu)
 OOZIE-1023 Docs list OOZIE_CONF instead of OOZIE_CONFIG env var (rkanter via tucu)
