@@ -2,7 +2,7 @@
 OOZIE-587 Out of memory issues due to current query design.(virag via mohammad)
 
 -- Oozie 3.1.3 release
-
+OOZIE-810 Modify Oozie POM to pickup doxia 9.2y from a repo where it is avail(tucu via Mohammad)
 OOZIE-694 Update the Install and Quick start guide with appropriate hadoop versions for branch-3.1 (Mohammad)
 OOZIE-602 Update the Hadoop version to be an Apache Hadoop version (tucu)
 OOZIE-689 XTestCase proxyuser settings fails with Hadoop 1.0.0/0.23.1 (tucu)
