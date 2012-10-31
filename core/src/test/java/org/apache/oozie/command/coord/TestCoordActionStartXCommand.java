@@ -36,6 +36,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
+import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.action.hadoop.MapperReducerForTest;
@@ -44,6 +45,7 @@ import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.CoordinatorAction.Status;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.executor.jpa.CoordActionGetForStartJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
@@ -74,11 +76,44 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
         super.tearDown();
     }
 
+    /**
+     * Test the working of CoordActionStartXCommand with standard coord action
+     * XML and then check the action
+     *
+     * @throws IOException
+     * @throws JPAExecutorException
+     * @throws CommandException
+     */
     public void testActionStartCommand() throws IOException, JPAExecutorException, CommandException {
         String actionId = new Date().getTime() + "-COORD-ActionStartCommand-C@1";
-        addRecordToActionTable(actionId, 1);
+        addRecordToActionTable(actionId, 1, null);
         new CoordActionStartXCommand(actionId, "me", "mytoken", "myjob").call();
         checkCoordAction(actionId);
+    }
+
+    /**
+     * Coord action XML contains non-supported parameterized action name and
+     * test that CoordActionStartXCommand stores error code and error message in
+     * action's table during error handling
+     *
+     * @throws IOException
+     * @throws JPAExecutorException
+     * @throws CommandException
+     */
+    public void testActionStartWithErrorReported() throws IOException, JPAExecutorException, CommandException {
+        String actionId = new Date().getTime() + "-COORD-ActionStartCommand-C@1";
+        String wfApp = "<start to='${someParam}' />";
+        addRecordToActionTable(actionId, 1, wfApp);
+        new CoordActionStartXCommand(actionId, "me", "mytoken", "myjob").call();
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        CoordinatorActionBean action = jpaService.execute(new CoordActionGetForStartJPAExecutor(actionId));
+        if (action.getStatus() == CoordinatorAction.Status.SUBMITTED) {
+            fail("Expected status was FAILED due to incorrect XML element");
+        }
+        assertEquals(action.getErrorCode(), ErrorCode.E0701.toString());
+        assertTrue(action.getErrorMessage().contains(
+                "XML schema error, cvc-pattern-valid: Value '${someParam}' "
+                        + "is not facet-valid with respect to pattern"));
     }
 
     /**
@@ -174,7 +209,8 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
         return new XConfiguration(jobConf);
     }
 
-    private void addRecordToActionTable(String actionId, int actionNum) throws IOException, JPAExecutorException {
+    private void addRecordToActionTable(String actionId, int actionNum, String wfParam)
+            throws IOException, JPAExecutorException {
         final JPAService jpaService = Services.get().get(JPAService.class);
         CoordinatorActionBean action = new CoordinatorActionBean();
         action.setJobId(actionId);
@@ -249,7 +285,14 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
         action.setCreatedConf(createdConf);
         jpaService.execute(new CoordActionInsertJPAExecutor(action));
         String content = "<workflow-app xmlns='uri:oozie:workflow:0.2'  xmlns:sla='uri:oozie:sla:0.1' name='no-op-wf'>";
-        content += "<start to='end' />";
+        if (wfParam != null) {
+            if (!wfParam.isEmpty()) {
+                content += wfParam;
+            }
+        }
+        else {
+            content += "<start to='end' />";
+        }
         String slaXml2 = " <sla:info>"
                 // + " <sla:client-id>axonite-blue</sla:client-id>"
                 + " <sla:app-name>test-app</sla:app-name>" + " <sla:nominal-time>2009-03-06T10:00Z</sla:nominal-time>"
