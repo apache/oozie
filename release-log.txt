@@ -1,4 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
+
+OOZIE-959  Use API from OOZIE-906 in console (Ashish via Mohammad)
 OOZIE-1014 Coordinator action failure error not propagated (mona)
 OOZIE-1029 MiniMRCluster fails to start when used against YARN (rkanter via tucu)
 OOZIE-1011 Tests from OOZIE-994 fail when run against Hadoop trunk (rkanter via tucu)
