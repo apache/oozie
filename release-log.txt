@@ -1,5 +1,7 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-959  Use API from OOZIE-906 in console (Ashish via Mohammad)
+OOZIE-1036 Utility class to parse HCat URI (Ryota via Mohammad)
 OOZIE-1033 Generic utility class to register/unregister a JMS message handler(Mohammad)
 OOZIE-1032 Create JMSService used for any JMS compliant product (Mohammad)
 OOZIE-1027 Command line mr does not support NN/JT parameters properly (Mona via Mohammad)
