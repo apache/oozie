@@ -169,6 +169,40 @@ function getPagingBar(dataStore) {
     return pagingBar;
 }
 
+// Image object display
+Ext.ux.Image = Ext.extend(Ext.BoxComponent, {
+
+    url: Ext.BLANK_IMAGE_URL,  //for initial src value
+
+    autoEl: {
+        tag: 'img',
+        src: Ext.BLANK_IMAGE_URL,
+    },
+
+    initComponent: function() {
+         Ext.ux.Image.superclass.initComponent.call(this);
+         this.addEvents('load');
+   },
+
+//  Add our custom processing to the onRender phase.
+//  We add a ‘load’ listener to our element.
+    onRender: function() {
+        Ext.ux.Image.superclass.onRender.apply(this, arguments);
+        this.el.on('load', this.onLoad, this);
+        if(this.url){
+            this.setSrc(this.url);
+        }
+    },
+
+    onLoad: function() {
+        this.fireEvent('load', this);
+    },
+
+    setSrc: function(src) {
+        this.el.dom.src = src;
+    }
+});
+
 // stuff to show details of a job
 function jobDetailsPopup(response, request) {
     var jobDefinitionArea = new Ext.form.TextArea({
@@ -498,6 +532,18 @@ function jobDetailsPopup(response, request) {
             win.show();
         }
     }
+    var dagImg = new Ext.ux.Image({
+                id: 'dagImage',
+                url: getOozieBase() + 'job/' + workflowId + "?show=graph",
+                readOnly: true,
+                editable: false,
+                autoScroll: true
+    });
+
+    function fetchDAG(workflowId) {
+        dagImg.setSrc(getOozieBase() + 'job/' + workflowId + '?show=graph&token=' + Math.random());
+    }
+
     var jobDetailsTab = new Ext.TabPanel({
         activeTab: 0,
         autoHeight: true,
@@ -532,6 +578,16 @@ function jobDetailsPopup(response, request) {
                 }
             }]
 
+        }, {
+            title: 'Job DAG',
+            items: dagImg,
+            tbar: [{
+                text: "&nbsp;&nbsp;&nbsp;",
+                icon: 'ext-2.2/resources/images/default/grid/refresh.gif',
+                handler: function() {
+                    fetchDAG(workflowId);
+                }
+            }]
         }]
     });
     jobDetailsTab.addListener("tabchange", function(panel, selectedTab) {
@@ -544,6 +600,8 @@ function jobDetailsPopup(response, request) {
         }
         else if (selectedTab.title == 'Job Definition') {
             fetchDefinition(workflowId);
+        } else if(selectedTab.title == 'Job DAG') {
+            fetchDAG(workflowId);
         }
         jobs_grid.setVisible(false);
     });
@@ -674,13 +732,13 @@ function coordJobDetailsPopup(response, request) {
             name: 'user',
             width: 200,
             value: jobDetails["user"]
-	}, {
+        }, {
             fieldLabel: 'Group',
             editable: false,
             name: 'group',
             width: 200,
             value: jobDetails["group"]
-	}, {
+        }, {
             fieldLabel: 'Frequency',
             editable: false,
             name: 'frequency',
@@ -704,7 +762,7 @@ function coordJobDetailsPopup(response, request) {
             name: 'nextMaterializedTime',
             width: 170,
             value: jobDetails["nextMaterializedTime"]
-        }, ]
+        }]
     });
     var fs = new Ext.FormPanel({
         frame: true,
@@ -941,8 +999,8 @@ function coordJobDetailsPopup(response, request) {
 	   items: [jobLogArea, actionsTextBox, getLogButton],
            tbar: [ {
                 text: "&nbsp;&nbsp;&nbsp;",
-                icon: 'ext-2.2/resources/images/default/grid/refresh.gif',
-                 }],
+                icon: 'ext-2.2/resources/images/default/grid/refresh.gif'
+                 }]
 	   }]
 });
 
@@ -1523,11 +1581,9 @@ var checkStatus = new Ext.Action({
                 else {
                     checkStatus.setText("<font color='007000' size='2> Status - Normal</font>");
                 }
-            },
-
+            }
         });
-    },
-
+    }
 });
 
 
@@ -1639,17 +1695,14 @@ var viewOSDetails = new Ext.Action({
             success: function(response, request) {
                 var configData = getConfigObject(response.responseText);
                 configGridData.loadData(configData);
-            },
-
+            }
         });
-    },
-
+    }
 });
 
 var treeRoot = new Ext.tree.TreeNode({
     text: "Instrumentation",
-    expanded: true,
-
+    expanded: true
 });
 
 var timeZones_store = new Ext.data.JsonStore({
@@ -1760,8 +1813,7 @@ function initConsole() {
             cellclick: {
                 fn: showJobContextMenu
             }
-        },
-
+        }
     });
     var expander = new Ext.grid.RowExpander({
         tpl: new Ext.Template('<br><p><b>Name:</b> {name}</p>', '<p><b>Value:</b> {value}</p>')
@@ -1888,7 +1940,7 @@ function initConsole() {
             cellclick: {
                 fn: showCoordJobContextMenu
             }
-        },
+        }
     });
     var bundleJobArea = new Ext.grid.GridPanel({
         store: bundle_jobs_store,
