@@ -115,6 +115,7 @@ public interface JsonTags {
     public static final String COORDINATOR_ACTION_NOMINAL_TIME = "nominalTime";
     public static final String COORDINATOR_ACTION_STATUS = "status";
     public static final String COORDINATOR_ACTION_MISSING_DEPS = "missingDependencies";
+    public static final String COORDINATOR_ACTION_PUSH_MISSING_DEPS = "pushMissingDependencies";
     public static final String COORDINATOR_ACTION_EXTERNAL_STATUS = "externalStatus";
     public static final String COORDINATOR_ACTION_TRACKER_URI = "trackerUri";
     public static final String COORDINATOR_ACTION_CONSOLE_URL = "consoleUrl";

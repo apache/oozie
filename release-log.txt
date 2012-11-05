@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1042 Coordinator action table schema change. (Mohammad)
 OOZIE-959  Use API from OOZIE-906 in console (Ashish via Mohammad)
 OOZIE-1036 Utility class to parse HCat URI (Ryota via Mohammad)
 OOZIE-1033 Generic utility class to register/unregister a JMS message handler(Mohammad)
