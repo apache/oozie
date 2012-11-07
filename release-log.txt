@@ -1,5 +1,8 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
-
+OOZIE-1048 Enable propagation of native libraries as a VM argument using java.library.path (venkatesh via tucu)
+OOZIE-1011 Tests from OOZIE-994 fail when run against Hadoop trunk (rkanter via tucu)
+OOZIE-1037 XTestCase.delete() can cause tests to fail if it runs into a dangling symlink (rkanter via tucu)
+OOZIE-1014 Coordinator action failure error not propagated (mona)
 OOZIE-1042 Coordinator action table schema change. (Mohammad)
 OOZIE-959  Use API from OOZIE-906 in console (Ashish via Mohammad)
 OOZIE-1036 Utility class to parse HCat URI (Ryota via Mohammad)

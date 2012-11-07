@@ -66,6 +66,9 @@ setup_catalina_opts() {
   catalina_opts="${catalina_opts} -Doozie.http.port=${OOZIE_HTTP_PORT}";
   catalina_opts="${catalina_opts} -Doozie.base.url=${OOZIE_BASE_URL}";
 
+  # add required native libraries such as compression codecs
+  catalina_opts="${catalina_opts} -Djava.library.path=${JAVA_LIBRARY_PATH}";
+
   echo "Adding to CATALINA_OPTS:     ${catalina_opts}"
 
   export CATALINA_OPTS="${CATALINA_OPTS} ${catalina_opts}"
