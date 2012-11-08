@@ -1185,6 +1185,18 @@ public abstract class XDataTestCase extends XFsTestCase {
        conf.set(Services.CONF_SERVICE_CLASSES, new String(builder));
    }
 
+   /**
+    * Add a particular service class to be run in addition to default ones
+    * @param conf
+    * @param serviceName
+    */
+   protected void addServiceToRun(Configuration conf, String serviceName) {
+       String classes = conf.get(Services.CONF_SERVICE_CLASSES);
+       StringBuilder builder = new StringBuilder(classes);
+       builder.append("," + serviceName);
+       conf.set(Services.CONF_SERVICE_CLASSES, new String(builder));
+   }
+
     /**
      * Adds the db records for the Bulk Monitor tests
      */

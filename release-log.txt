@@ -1,4 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
+
+OOZIE-1039 Implement the Missing Dependency structure for HCat partitions (mona via mohammad)
 OOZIE-1028 Add EL function to allow date ranges to be used for dataset ranges (rkanter via tucu)
 OOZIE-1045 Parameterize <unresolved-instances> tag currently hardcoded (egashira via mona)
 OOZIE-1029 MiniMRCluster fails to start when used against YARN (rkanter via tucu)

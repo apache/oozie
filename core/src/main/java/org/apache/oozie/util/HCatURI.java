@@ -85,7 +85,7 @@ public class HCatURI {
             }
             String[] keyVal = part.split(PARTITION_KEYVAL_SEPARATOR, -1);
             if (keyVal.length != 2) {
-                throw new URISyntaxException(uri.toString(), "Parition key value pair is not specified properly in ("
+                throw new URISyntaxException(uri.toString(), "Partition key value pair is not specified properly in ("
                         + part + ")");
             }
             partitions.put(keyVal[0], keyVal[1]);
@@ -138,11 +138,11 @@ public class HCatURI {
         this.partitions = partitions;
     }
 
-    public String getParitionValue(String key) {
+    public String getPartitionValue(String key) {
         return partitions.get(key);
     }
 
-    public String setParition(String key, String value) {
+    public String setPartition(String key, String value) {
         return partitions.put(key, value);
     }
 

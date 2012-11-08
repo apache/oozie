@@ -37,8 +37,8 @@ public class TestHCatURI {
         assertEquals(uri.getServer(),"hcat.yahoo.com:5080");
         assertEquals(uri.getDb(),"mydb");
         assertEquals(uri.getTable(),"clicks");
-        assertEquals(uri.getParitionValue("datastamp"),"12");
-        assertEquals(uri.getParitionValue("region"),"us");
+        assertEquals(uri.getPartitionValue("datastamp"),"12");
+        assertEquals(uri.getPartitionValue("region"),"us");
 
     }
 
@@ -60,8 +60,8 @@ public class TestHCatURI {
         assertEquals(uri.getServer(),"hcat.yahoo.com:5080");
         assertEquals(uri.getDb(),"mydb");
         assertEquals(uri.getTable(),"clicks");
-        assertEquals(uri.getParitionValue("datastamp"),"12");
-        assertEquals(uri.getParitionValue("region"),"us");
+        assertEquals(uri.getPartitionValue("datastamp"),"12");
+        assertEquals(uri.getPartitionValue("region"),"us");
     }
 
     @Test
@@ -82,8 +82,8 @@ public class TestHCatURI {
         assertEquals(uri.getServer(),"hcat.yahoo.com:5080");
         assertEquals(uri.getDb(),"mydb");
         assertEquals(uri.getTable(),"clicks");
-        assertEquals(uri.getParitionValue("datastamp"),"12");
-        assertEquals(uri.getParitionValue("region"),"us");
+        assertEquals(uri.getPartitionValue("datastamp"),"12");
+        assertEquals(uri.getPartitionValue("region"),"us");
     }
 
     @Test
@@ -104,8 +104,8 @@ public class TestHCatURI {
         assertEquals(uri.getServer(),"hcat.yahoo.com:5080");
         assertEquals(uri.getDb(),"mydb");
         assertEquals(uri.getTable(),"clicks");
-        assertEquals(uri.getParitionValue("datastamp"),"12");
-        assertEquals(uri.getParitionValue("region"),"us");
+        assertEquals(uri.getPartitionValue("datastamp"),"12");
+        assertEquals(uri.getPartitionValue("region"),"us");
     }
 
 
@@ -127,8 +127,8 @@ public class TestHCatURI {
         assertEquals(uri.getServer(),"hcat.yahoo.com:5080");
         assertEquals(uri.getDb(),"mydb");
         assertEquals(uri.getTable(),"clicks");
-        assertEquals(uri.getParitionValue("datastamp"),"12");
-        assertEquals(uri.getParitionValue("region"),"us");
+        assertEquals(uri.getPartitionValue("datastamp"),"12");
+        assertEquals(uri.getPartitionValue("region"),"us");
     }
 
     @Test(expected = URISyntaxException.class)

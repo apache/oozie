@@ -196,6 +196,7 @@ public enum ErrorCode {
     E1020(XLog.STD, "Could not kill coord job, this job either finished successfully or does not exist , [{0}]"),
     E1021(XLog.STD, "Coord Action Input Check Error: {0}"),
     E1022(XLog.STD, "Cannot delete running/completed coordinator action: [{0}]"),
+    E1023(XLog.STD, "Coord Action push Input Check Error: {0}"),
 
     E1100(XLog.STD, "Command precondition does not hold before execution, [{0}]"),
 
@@ -225,6 +226,10 @@ public enum ErrorCode {
     E1319(XLog.STD, "Invalid bundle coord job namespace, [{0}]"),
 
     E1400(XLog.STD, "doAs (proxyuser) failure"),
+
+    E1501(XLog.STD, "Partition Dependency Manager could not add cache entry"),
+    E1502(XLog.STD, "Partition cache lookup error"),
+    E1503(XLog.STD, "Error in Metadata URI"),
 
     ETEST(XLog.STD, "THIS SHOULD HAPPEN ONLY IN TESTING, invalid job id [{0}]"),;
 

@@ -162,6 +162,12 @@
             <scope>compile</scope>
         </dependency>
 
+        <dependency>
+            <groupId>com.googlecode.concurrentlinkedhashmap</groupId>
+            <artifactId>concurrentlinkedhashmap-lru</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
         <!--
         Oozie web-app module must exclude it.
          -->
