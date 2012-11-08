@@ -676,6 +676,109 @@ public class TestCoordELFunctions extends XTestCase {
         assertEquals("2009-06-01T07:00Z", CoordELFunctions.evalAndWrap(eval, expr));
     }
 
+    public void testOffset() throws Exception {
+        init("coord-action-create");
+        String expr = "${coord:offset(-1440, \"MINUTE\")}";
+        assertEquals("2009-09-08T23:59Z", CoordELFunctions.evalAndWrap(eval, expr));
+        expr = "${coord:offset(-24, \"HOUR\")}";
+        assertEquals("2009-09-08T23:59Z", CoordELFunctions.evalAndWrap(eval, expr));
+        expr = "${coord:offset(-1, \"DAY\")}";
+        assertEquals("2009-09-08T23:59Z", CoordELFunctions.evalAndWrap(eval, expr));
+        expr = "${coord:offset(1, \"MONTH\")}";
+        assertEquals("2009-10-09T23:59Z", CoordELFunctions.evalAndWrap(eval, expr));
+        expr = "${coord:offset(1, \"YEAR\")}";
+        assertEquals("2010-09-09T23:59Z", CoordELFunctions.evalAndWrap(eval, expr));
+        expr = "${coord:offset(-10, \"DAY\")}";
+        assertEquals("", CoordELFunctions.evalAndWrap(eval, expr));
+
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2015-01-02T00:45Z"));
+        ds.setFrequency(1);
+        ds.setTimeUnit(TimeUnit.YEAR);
+        ds.setInitInstance(DateUtils.parseDateOozieTZ("2010-01-02T00:01Z"));
+        ds.setTimeZone(DateUtils.getTimeZone("America/Los_Angeles"));
+        // Year
+        expr = "${coord:offset(0, \"YEAR\")} ${coord:offset(1, \"YEAR\")} ${coord:offset(-1, \"YEAR\")}"
+                + " ${coord:offset(-3, \"YEAR\")}";
+        assertEquals("2015-01-02T00:01Z 2016-01-02T00:01Z 2014-01-02T00:01Z 2012-01-02T00:01Z", eval.evaluate(expr, String.class));
+        // Month
+        expr = "${coord:offset(0, \"MONTH\")} ${coord:offset(12, \"MONTH\")} ${coord:offset(-12, \"MONTH\")}"
+                + " ${coord:offset(-36, \"MONTH\")}";
+        assertEquals("2015-01-02T00:01Z 2016-01-02T00:01Z 2014-01-02T00:01Z 2012-01-02T00:01Z", eval.evaluate(expr, String.class));
+        // Day
+        expr = "${coord:offset(0, \"DAY\")} ${coord:offset(365, \"DAY\")} ${coord:offset(-365, \"DAY\")}"
+                + " ${coord:offset(-1096, \"DAY\")}";   // its -1096 instead of -1095 because of DST (extra 1 day)
+        assertEquals("2015-01-02T00:01Z 2016-01-02T00:01Z 2014-01-02T00:01Z 2012-01-02T00:01Z", eval.evaluate(expr, String.class));
+        // Hour
+        expr = "${coord:offset(0, \"HOUR\")} ${coord:offset(8760, \"HOUR\")} ${coord:offset(-8760, \"HOUR\")}"
+                + " ${coord:offset(-26304, \"HOUR\")}"; // its -26304 instead of -26280 because of DST (extra 24 hours)
+        assertEquals("2015-01-02T00:01Z 2016-01-02T00:01Z 2014-01-02T00:01Z 2012-01-02T00:01Z", eval.evaluate(expr, String.class));
+        // Minute
+        expr = "${coord:offset(0, \"MINUTE\")} ${coord:offset(525600, \"MINUTE\")} ${coord:offset(-525600, \"MINUTE\")}"
+                + " ${coord:offset(-1578240, \"MINUTE\")}"; // its -1578240 instead of -1576800 because of DST (extra 1440 minutes)
+        assertEquals("2015-01-02T00:01Z 2016-01-02T00:01Z 2014-01-02T00:01Z 2012-01-02T00:01Z", eval.evaluate(expr, String.class));
+
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2015-01-02T00:45Z"));
+        ds.setFrequency(1);
+        ds.setTimeUnit(TimeUnit.MINUTE);
+        ds.setInitInstance(DateUtils.parseDateOozieTZ("2010-01-02T00:01Z"));
+        ds.setTimeZone(DateUtils.getTimeZone("America/Los_Angeles"));
+        // Minute
+        expr = "${coord:offset(0, \"MINUTE\")} ${coord:offset(1, \"MINUTE\")} ${coord:offset(-1, \"MINUTE\")}"
+                + " ${coord:offset(-3, \"MINUTE\")}";
+        assertEquals("2015-01-02T00:45Z 2015-01-02T00:46Z 2015-01-02T00:44Z 2015-01-02T00:42Z", eval.evaluate(expr, String.class));
+        // Hour
+        expr = "${coord:offset(0, \"HOUR\")} ${coord:offset(1, \"HOUR\")} ${coord:offset(-1, \"HOUR\")}"
+                + " ${coord:offset(-3, \"HOUR\")}";
+        assertEquals("2015-01-02T00:45Z 2015-01-02T01:45Z 2015-01-01T23:45Z 2015-01-01T21:45Z", eval.evaluate(expr, String.class));
+        // Day
+        expr = "${coord:offset(0, \"DAY\")} ${coord:offset(1, \"DAY\")} ${coord:offset(-1, \"DAY\")}"
+                + " ${coord:offset(-3, \"DAY\")}";
+        assertEquals("2015-01-02T00:45Z 2015-01-03T00:45Z 2015-01-01T00:45Z 2014-12-30T00:45Z", eval.evaluate(expr, String.class));
+        // Month
+        expr = "${coord:offset(0, \"MONTH\")} ${coord:offset(1, \"MONTH\")} ${coord:offset(-1, \"MONTH\")}"
+                + " ${coord:offset(-3, \"MONTH\")}";
+        assertEquals("2015-01-02T00:45Z 2015-02-02T00:45Z 2014-12-02T00:45Z 2014-10-01T23:45Z", eval.evaluate(expr, String.class));
+        // Year
+        expr = "${coord:offset(0, \"YEAR\")} ${coord:offset(1, \"YEAR\")} ${coord:offset(-1, \"YEAR\")}"
+                + " ${coord:offset(-3, \"YEAR\")}";
+        assertEquals("2015-01-02T00:45Z 2016-01-02T00:45Z 2014-01-02T00:45Z 2012-01-02T00:45Z", eval.evaluate(expr, String.class));
+
+        // Test rewinding when the given offset isn't a multiple of the frequency
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2015-01-02T00:45Z"));
+        ds.setFrequency(4);
+        ds.setTimeUnit(TimeUnit.HOUR);
+        ds.setInitInstance(DateUtils.parseDateOozieTZ("2010-01-02T00:01Z"));
+        ds.setTimeZone(DateUtils.getTimeZone("America/Los_Angeles"));
+        expr = "${coord:offset(5, \"MINUTE\")}";
+        assertEquals("2015-01-02T00:01Z", CoordELFunctions.evalAndWrap(eval, expr));
+        expr = "${coord:offset(1, \"HOUR\")}";
+        assertEquals("2015-01-02T00:01Z", CoordELFunctions.evalAndWrap(eval, expr));
+        expr = "${coord:offset(7, \"HOUR\")}";
+        assertEquals("2015-01-02T04:01Z", CoordELFunctions.evalAndWrap(eval, expr));
+        expr = "${coord:offset(-2, \"HOUR\")}";
+        assertEquals("2015-01-01T20:01Z", CoordELFunctions.evalAndWrap(eval, expr));
+        expr = "${coord:offset(-43825, \"HOUR\")}";
+        assertEquals("", CoordELFunctions.evalAndWrap(eval, expr));
+
+        // "blah" is not a valid TimeUnit
+        expr = "${coord:offset(1, \"blah\")}";
+        try {
+            CoordELFunctions.evalAndWrap(eval, expr);
+            fail("eval of " + expr + " should have thrown an exception");
+        } catch(Exception e) {
+            assertTrue(e.getMessage().contains("Unable to evaluate"));
+        }
+
+        // 4.5 is not a valid integer
+        expr = "${coord:offset(4.5, \"blah\")}";
+        try {
+            CoordELFunctions.evalAndWrap(eval, expr);
+            fail("eval of " + expr + " should have thrown an exception");
+        } catch(Exception e) {
+            assertTrue(e.getMessage().contains("Unable to evaluate"));
+        }
+    }
+
     public void testLatest() throws Exception {
         init("coord-action-start");
         String expr = "${coord:latest(0)}";
