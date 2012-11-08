@@ -1525,7 +1525,139 @@ The 'app-coord-daily' coordinator application runs every every day, uses 24 inst
 
 The output datasets from the 'app-coord-hourly' coordinator application are the input to the 'app-coord-daily' coordinator application thereby forming a simple data-pipeline application.
 
----++++ 6.6.2. coord:hoursInDay(int n) EL Function for Synchronous Datasets
+---++++ 6.6.2. coord:offset(int n, String timeUnit) EL Function for Synchronous Datasets
+
+=${coord:offset(int n, String timeUnit)}= represents the n<sup>th</sup> timeUnit, relative to the coordinator action creation
+(materialization) time. The coordinator action creation (materialization) time is computed based on the coordinator job start time
+and its frequency.
+
+It is an alternative to the =${coord:current(int n)}= command (see previous section) and can be used anywhere
+=${coord:current(int n)}= can be used. The difference between the two functions is that =${coord:current(int n)}= computes an offset
+based on the n<sup>th</sup> multiple of the frequency, while =${coord:offset(int n, String timeUnit)}= computes an offset based on
+the n<sup>th</sup> multiple of =timeUnit=.
+
+=n= can be a negative integer, zero or a positive integer.
+
+=timeUnit= can be any one of the following constants: ="MINUTE"=, ="HOUR"=, ="DAY"=, ="MONTH"=, ="YEAR"=
+
+=${coord:offset(int n, String timeUnit)}= returns the nominal datetime for n<sup>th</sup> timeUnit relative to the coordinator
+action creation (materialization) time.
+
+When used directly, =${coord:offset(int n, String timeUnit)}= performs the following calculation:
+
+<verbatim>
+DS_FREQ: dataset frequency (minutes)
+CA_NT = coordinator action creation (materialization) nominal time
+coord:offset(int n, String timeUnit) = CA_NT + floor(timeUnit * n div DS_FREQ) * DS_FREQ
+</verbatim>
+
+NOTE: The formula above is not 100% correct, because DST changes the calculation has to account for hour shifts. Oozie Coordinator
+must make the correct calculation accounting for DTS hour shifts.
+
+When used in 'instance' or 'end-instance' XML elements, the above equation is used; the effect of the floor function is to
+"rewind" the resolved datetime to match the latest instance before the resolved time.
+When used in 'start-instance' XML elements, a slight modification to the above equation is used; instead of being "rewinded", the
+resolved datetime is "fastforwarded" to match the earliest instance after the resolved time.
+See the next two examples for more information.
+
+*%GREEN% Examples: %ENDCOLOR%*
+
+1. *=${coord:offset(int n, String timeUnit)}= datetime calculation:*
+
+Datasets Definition:
+
+<verbatim>
+<datasets>
+.
+  <dataset name="logs" frequency="${coord:days(1)}"
+           initial-instance="2009-01-01T24:00Z" timezone="UTC">
+    <uri-template>hdfs://bar:8020/app/logs/${YEAR}${MONTH}/${DAY}</uri-template>
+  </dataset>
+.
+  <dataset name="weeklySiteAccessStats" frequency="${coord:days(7)}"
+           initial-instance="2009-01-07T24:00Z" timezone="UTC">
+    <uri-template>hdfs://bar:8020/app/weeklystats/${YEAR}/${MONTH}/${DAY}</uri-template>
+  </dataset>
+.
+</datasets>
+</verbatim>
+
+For a coordinator action creation time: =2009-05-29T24:00Z= the =${coord:offset(int n, String timeUnit)}= EL function would resolve
+to the following datetime values for the 'logs' and 'weeklySiteStats' datasets:
+
+| *${coord:offset(int n, String timeUnit)}* | *Dataset 'logs'* | *Dataset 'weeklySiteAccessStats'* |
+| =${coord:offset(0, "MINUTE")}= <br/> =${coord:offset(0, "HOUR")}= <br/> =${coord:offset(0, "DAY")}= <br/> =${coord:offset(0, "MONTH")}= <br/> =${coord:offset(0, "YEAR")}= | =2009-05-29T24:00Z= | =2009-05-27T24:00Z= |
+| =${coord:offset(1440, "MINUTE")}= <br/> =${coord:offset(24, "HOUR")}= <br/> =${coord:offset(1, "DAY")}= | =2009-05-30T24:00Z= | =2009-05-27T24:00Z= |
+| =${coord:offset(-1440, "MINUTE")}= <br/> =${coord:offset(-24, "HOUR")}= <br/> =${coord:offset(-1, "DAY")}= | =2009-05-28T24:00Z= | =2009-05-20T24:00Z= |
+| =${coord:offset(-4320, "MINUTE")}= <br/> =${coord:offset(-72, "HOUR")}= <br/> =${coord:offset(-3, "DAY")}= | =2009-05-26T24:00Z= | =2009-05-20T24:00Z= |
+| =${coord:offset(11520, "MINUTE")}= <br/> =${coord:offset(192, "HOUR")}= <br/> =${coord:offset(8, "DAY")}= | =2009-06-06T24:00Z= | =2009-06-03T24:00Z= |
+| =${coord:offset(10, "MINUTE")}= | =2009-05-29T24:00Z= | =2009-05-27T24:00Z= |
+
+Some things to note about the above example:
+   1. When =n= is 0, the =timeUnit= doesn't really matter because 0 minutes is the same as 0 hours, 0 days, etc
+   2. There are multiple ways to express the same value (e.g. ${coord:offset(24, "HOUR")}= is equivalent to =${coord:offset(1, "DAY")}=)
+   3. The datetimes resolved for the 2 datasets differ when the =${coord:offset(int n, String timeUnit)}= function is invoked with the same arguments. This is because the =${coord:offset(int n, String timeUnit)}= function takes into consideration the initial-time and the frequency for the dataset for which is performing the calculation.
+   4. As mentioned before, if the resolved time doesn't fall exactly on an instance, it will get "rewinded" to match the latest instance before the resolved time.  For example, =${coord:offset(1, "DAY")}= is resolved to =2009-05-27T24:00Z= for the 'weeklysiteStats' dataset even though this is the same as =${coord:offset(0, "DAY")}=; this is because the frequency is 7 days, so =${coord:offset(1, "DAY")}= had to be "rewinded".
+
+2. *"fastforwarding" in <start-instance> =${coord:offset(int n, String timeUnit)}= calculation:*
+
+When specifying dataset instances, keep in mind that the resolved value of =${coord:offset(int n, String timeUnit)}= must line up
+with an offset of a multiple of the frequency when used in an 'instance' XML element.
+However, when used in ='start-instance'= and ='end-instance'= XML elements, this is not a requirement.  In this case, the function
+will automatically resolve the range of instances to match the offset of a multiple of the frequency that would fall between the
+='start-instance'= and ='end-instance'= XML elements; in other words, ='start-instance'= XML element is "fastforwarded" while
+='end-instance'= XML element is "rewinded".  So, in the example below, the frequency of the "logs" dataset is 1 hour while the
+='start-instance'= XML element is =${coord:offset(-90, "MINUTE")}= (-1.5 hours).  If this were in an ='instance'= XML element, it
+would be "rewinded", but here it is effectively equivalent to =${coord:offset(-60, "MINUTE")}= or =${coord:current(-1)}= as we are
+dealing with a range.
+
+Datasets Definition file 'datasets.xml':
+
+<verbatim>
+<datasets>
+.
+  <dataset name="logs" frequency="${coord:hours(1)}"
+           initial-instance="2009-01-01T01:00Z" timezone="UTC">
+    <uri-template>hdfs://bar:8020/app/logs/${YEAR}/${MONTH}/${DAY}/${HOUR}</uri-template>
+  </dataset>
+.
+  <dataset name="stats" frequency="${coord:days(1)}"
+           initial-instance="2009-01-01T24:00Z" timezone="UTC">
+    <uri-template>hdfs://bar:8020/app/logs/${YEAR}/${MONTH}/${DAY}</uri-template>
+  </dataset>
+.
+</datasets>
+</verbatim>
+
+Coordinator application definition:
+
+<verbatim>
+   <coordinator-app name="app-coord" frequency="${coord:days(1)}"
+                    start="2009-01-01T24:00Z" end="2009-12-31T24:00Z" timezone="UTC"
+                    xmlns="uri:oozie:coordinator:0.1">
+      <datasets>
+        <include>hdfs://foo:8020/app/dataset-definitions/datasets.xml</include>
+      </datasets>
+      <input-events>
+        <data-in name="input" dataset="logs">
+          <start-instance>${coord:offset(-90, "MINUTE")}</start-instance>
+          <end-instance>${coord:offset(0, "DAY")}</end-instance>
+        </data-in>
+      </input-events>
+      <output-events>
+        <data-out name="output" dataset="stats">
+          <instance>${coord:offset(0, "DAY")}</instance>
+        </data-out>
+      </output-events>
+      <action>
+        <workflow>
+        ...
+       </workflow>
+      </action>
+   </coordinator-app>
+</verbatim>
+
+---++++ 6.6.3. coord:hoursInDay(int n) EL Function for Synchronous Datasets
 
 The =${coord:hoursInDay(int n)}= EL function returns the number of hours for the specified day, in a timezone/daylight-saving sensitive way.
 
@@ -1586,7 +1718,7 @@ For timezones observing daylight saving, on the days of DST switch, the function
 
 For timezones not observing daylight saving, it always returns =24=.
 
----++++ 6.6.3. coord:daysInMonth(int n) EL Function for Synchronous Datasets
+---++++ 6.6.4. coord:daysInMonth(int n) EL Function for Synchronous Datasets
 
 The =${coord:daysInMonth(int n)}= EL function returns the number of days for month of the specified day.
 
@@ -1644,7 +1776,7 @@ Coordinator application definition:
 
 This example is a coordinator application that runs monthly, and consumes the daily feeds for the last month.
 
----++++ 6.6.4. coord:tzOffset() EL Function for Synchronous Datasets
+---++++ 6.6.5. coord:tzOffset() EL Function for Synchronous Datasets
 
 =${coord:tzOffset()}= EL function returns the difference in *minutes* between a dataset timezone and the coordinator job timezone at the current nominal time. This EL function is useful when dealing with datasets from multiple timezones, but execute in a different timezone.
 
@@ -1663,7 +1795,7 @@ IMPORTANT: While the offset is multiples of 60 for most timezones, it can be mul
 
 Refer to section #7, 3nd use case for a detailed example.
 
----++++ 6.6.5. coord:latest(int n) EL Function for Synchronous Datasets
+---++++ 6.6.6. coord:latest(int n) EL Function for Synchronous Datasets
 
 =${coord:latest(int n)}= represents the n<sup>th</sup> latest currently available instance of a *synchronous* dataset.
 
@@ -1729,7 +1861,7 @@ Then, the dataset instances for the input events for the coordinator action will
   hdfs://bar:8020/app/logs/2009/01/10
 </verbatim>
 
----++++ 6.6.6. coord:future(int n, int limit) EL Function for Synchronous Datasets
+---++++ 6.6.7. coord:future(int n, int limit) EL Function for Synchronous Datasets
 
 =${coord:future(int n, int limit)}= represents the n<sup>th</sup> currently available future instance of a *synchronous* dataset while looking ahead for 'limit' number of instances.
 
@@ -1800,13 +1932,13 @@ Then, the dataset instances for the input events for the coordinator action will
   hdfs://bar:8020/app/logs/2009/02/07
 </verbatim>
 
----++++ 6.6.7. coord:version(int n) EL Function for Asynchronous Datasets
+---++++ 6.6.8. coord:version(int n) EL Function for Asynchronous Datasets
    * TBD
 
----++++ 6.6.8. coord:latest(int n) EL Function for Asynchronous Datasets
+---++++ 6.6.9. coord:latest(int n) EL Function for Asynchronous Datasets
    * TBD
 
----++++ 6.6.9. Dataset Instance Resolution for Instances Before the Initial Instance
+---++++ 6.6.10. Dataset Instance Resolution for Instances Before the Initial Instance
 
 When defining input events that refer to dataset instances it may be possible that the resolution of instances is out of it lower bound. This is scenario is likely to happen when the instance resolution is very close to the initial-instance. This is useful for bootstrapping the application.
 
