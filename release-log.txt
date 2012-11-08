@@ -1,4 +1,5 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
+OOZIE-1045 Parameterize <unresolved-instances> tag currently hardcoded (egashira via mona)
 OOZIE-1029 MiniMRCluster fails to start when used against YARN (rkanter via tucu)
 OOZIE-1048 Enable propagation of native libraries as a VM argument using java.library.path (venkatesh via tucu)
 OOZIE-1011 Tests from OOZIE-994 fail when run against Hadoop trunk (rkanter via tucu)

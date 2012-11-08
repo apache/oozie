@@ -294,7 +294,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
         Element outputList = eAction.getChild("output-events", eAction.getNamespace());
         if (outputList != null) {
             for (Element dEvent : (List<Element>) outputList.getChildren("data-out", eAction.getNamespace())) {
-                if (dEvent.getChild("unresolved-instances", dEvent.getNamespace()) != null) {
+                if (dEvent.getChild(CoordCommandUtils.UNRESOLVED_INST_TAG, dEvent.getNamespace()) != null) {
                     throw new CommandException(ErrorCode.E1006, "coord:latest()/future()",
                             " not permitted in output-event ");
                 }
@@ -317,11 +317,11 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
     private boolean materializeUnresolvedEvent(List<Element> eDataEvents, Date nominalTime, Date actualTime,
             Configuration conf) throws Exception {
         for (Element dEvent : eDataEvents) {
-            if (dEvent.getChild("unresolved-instances", dEvent.getNamespace()) == null) {
+            if (dEvent.getChild(CoordCommandUtils.UNRESOLVED_INST_TAG, dEvent.getNamespace()) == null) {
                 continue;
             }
             ELEvaluator eval = CoordELEvaluator.createLazyEvaluator(actualTime, nominalTime, dEvent, conf);
-            String uresolvedInstance = dEvent.getChild("unresolved-instances", dEvent.getNamespace()).getTextTrim();
+            String uresolvedInstance = dEvent.getChild(CoordCommandUtils.UNRESOLVED_INST_TAG, dEvent.getNamespace()).getTextTrim();
             String unresolvedList[] = uresolvedInstance.split(CoordELFunctions.INSTANCE_SEPARATOR);
             StringBuffer resolvedTmp = new StringBuffer();
             for (int i = 0; i < unresolvedList.length; i++) {
@@ -346,7 +346,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                 uriInstance.addContent(resolvedTmp.toString());
                 dEvent.getContent().add(1, uriInstance);
             }
-            dEvent.removeChild("unresolved-instances", dEvent.getNamespace());
+            dEvent.removeChild(CoordCommandUtils.UNRESOLVED_INST_TAG, dEvent.getNamespace());
         }
 
         return true;

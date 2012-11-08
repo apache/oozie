@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,6 +46,7 @@ public class CoordCommandUtils {
     public static int FUTURE = 2;
     public static int UNEXPECTED = -1;
     public static final String RESOLVED_UNRESOLVED_SEPARATOR = ";";
+    public static final String UNRESOLVED_INST_TAG = "unresolved-instances";
 
     /**
      * parse a function like coord:latest(n)/future() and return the 'n'.
@@ -259,7 +260,7 @@ public class CoordCommandUtils {
             dependencyList.append(urisWithDoneFlag);
         }
         if (unresolvedInstances.length() > 0) {
-            Element elemInstance = new Element("unresolved-instances", event.getNamespace());
+            Element elemInstance = new Element(UNRESOLVED_INST_TAG, event.getNamespace());
             elemInstance.addContent(unresolvedInstances.toString());
             event.getContent().add(1, elemInstance);
         }
@@ -475,7 +476,7 @@ public class CoordCommandUtils {
             resolveInstanceRange(event, instances, appInst, conf, eval);
             // Separate out the unresolved instances
             separateResolvedAndUnresolved(event, instances, dependencyList);
-            String tmpUnresolved = event.getChildTextTrim("unresolved-instances", event.getNamespace());
+            String tmpUnresolved = event.getChildTextTrim(UNRESOLVED_INST_TAG, event.getNamespace());
             if (tmpUnresolved != null) {
                 if (unresolvedList.length() > 0) {
                     unresolvedList.append(CoordELFunctions.INSTANCE_SEPARATOR);
