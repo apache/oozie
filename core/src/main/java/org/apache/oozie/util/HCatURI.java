@@ -20,18 +20,25 @@ package org.apache.oozie.util;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
+
 import org.apache.hadoop.conf.Configuration;
 
+/**
+ * Utility class to parse HCatalog URI
+ */
 public class HCatURI {
 
     public static final String PREFIX_HCAT = "oozie.service.MetaAccessorService.hcat";
     public static final String DEFAULT_SERVER = PREFIX_HCAT + ".server";
     public static final String DEFAULT_DB = PREFIX_HCAT + ".db";
     public static final String DEFAULT_TABLE = PREFIX_HCAT + ".table";
-    public static final String PARTITION_SEPARATOR = ";";
+    public static final String PARTITION_SEPARATOR = "&";
     public static final String PARTITION_KEYVAL_SEPARATOR = "=";
     public static final String PATH_SEPARATOR = "/";
+    public static final String PARTITION_PREFIX = "?";
 
     private URI uri;
     private String server;
@@ -39,10 +46,21 @@ public class HCatURI {
     private String table;
     private HashMap<String, String> partitions;
 
+    /**
+     * Constructor using given configuration
+     * @param s HCat URI String
+     * @param conf Configuration
+     * @throws URISyntaxException
+     */
     public HCatURI(String s, Configuration conf) throws URISyntaxException {
         parse(s, conf);
     }
 
+    /**
+     * Constructor using default configuration
+     * @param s HCat URI String
+     * @throws URISyntaxException
+     */
     public HCatURI(String s) throws URISyntaxException {
         this(s, null);
     }
@@ -106,50 +124,144 @@ public class HCatURI {
         }
     }
 
+    /**
+     * @return server name
+     */
     public String getServer() {
         return server;
     }
 
+    /**
+     * @param server name to set
+     */
     public void setServer(String server) {
         this.server = server;
     }
 
+    /**
+     * @return DB name
+     */
     public String getDb() {
         return db;
     }
 
+    /**
+     * @param DB name to set
+     */
     public void setDb(String db) {
         this.db = db;
     }
 
+    /**
+     * @return table name
+     */
     public String getTable() {
         return table;
     }
 
+    /**
+     * @param table name to set
+     */
     public void setTable(String table) {
         this.table = table;
     }
 
+    /**
+     * @return partitions map
+     */
     public HashMap<String, String> getPartitionMap() {
         return partitions;
     }
 
+    /**
+     * @param partitions map to set
+     */
     public void setPartitionMap(HashMap<String, String> partitions) {
         this.partitions = partitions;
     }
 
+    /**
+     * @param key partition key
+     * @return partition value
+     */
     public String getPartitionValue(String key) {
         return partitions.get(key);
     }
 
-    public String setPartition(String key, String value) {
-        return partitions.put(key, value);
+    /**
+     * @param key partition key to set
+     * @param value partition value to set
+     */
+    public void setPartition(String key, String value) {
+        partitions.put(key, value);
     }
 
+    /**
+     * @param key partition key
+     * @return if partitions map includes the key or not
+     */
     public boolean hasPartition(String key) {
         return partitions.containsKey(key);
     }
 
+    /**
+     * static method to create HCatalog URI String
+     *
+     * @param server
+     * @param db
+     * @param table
+     * @param partitions Partition Map
+     * @return
+     */
+    public static String getHCatURI(String server, String db, String table, Map<String, String> partitions) {
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("hcat://");
+        sb.append(server);
+        sb.append(PATH_SEPARATOR);
+        sb.append(db);
+        sb.append(PATH_SEPARATOR);
+        sb.append(table);
+        sb.append(PATH_SEPARATOR);
+        boolean first = true;
+        for (Entry<String, String> entry : partitions.entrySet()) {
+            if (first) {
+                sb.append(PARTITION_PREFIX);
+            }
+            else {
+                sb.append(PARTITION_SEPARATOR);
+            }
+            sb.append(entry.getKey());
+            sb.append(PARTITION_KEYVAL_SEPARATOR);
+            sb.append(entry.getValue());
+            first = false;
+        }
+        return sb.toString();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        HCatURI uri = (HCatURI) obj;
+        boolean equals = true;
+        HashMap<String, String> p = this.getPartitionMap();
+        if (this.server.equals(uri.getServer()) && this.db.equals(uri.getDb()) && this.table.equals(uri.getTable())
+                && p.size() == uri.getPartitionMap().size()) {
+            Iterator<Map.Entry<String, String>> it1 = uri.getPartitionMap().entrySet().iterator();
+            while (it1.hasNext()) {
+                Map.Entry<String, String> entry = it1.next();
+                String key = entry.getKey();
+                if (!(p.containsKey(key) && p.get(key).equals(entry.getValue()))) {
+                    equals = false;
+                }
+            }
+        }
+        else {
+            equals = false;
+        }
+        return equals;
+    }
+
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("URI: ");
