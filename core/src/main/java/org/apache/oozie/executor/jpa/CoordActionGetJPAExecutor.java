@@ -82,6 +82,7 @@ public class CoordActionGetJPAExecutor implements JPAExecutor<CoordinatorActionB
             action.setCreatedConf(a.getCreatedConf());
             action.setExternalStatus(a.getExternalStatus());
             action.setMissingDependencies(a.getMissingDependencies());
+            action.setPushMissingDependencies(a.getPushMissingDependencies());
             action.setRunConf(a.getRunConf());
             action.setTimeOut(a.getTimeOut());
             action.setTrackerUri(a.getTrackerUri());

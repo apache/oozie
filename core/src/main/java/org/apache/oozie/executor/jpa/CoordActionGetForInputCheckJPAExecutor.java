@@ -94,7 +94,10 @@ public class CoordActionGetForInputCheckJPAExecutor implements JPAExecutor<Coord
             bean.setMissingDependencies((String) arr[7]);
         }
         if (arr[8] != null) {
-            bean.setTimeOut((Integer) arr[8]);
+            bean.setPushMissingDependencies((String) arr[8]);
+        }
+        if (arr[9] != null) {
+            bean.setTimeOut((Integer) arr[9]);
         }
         return bean;
     }

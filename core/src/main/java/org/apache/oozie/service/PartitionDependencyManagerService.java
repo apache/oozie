@@ -101,6 +101,31 @@ public class PartitionDependencyManagerService implements Service {
     }
 
     /**
+     * Returns a list of partitions for an actionId. 'null' if there is nothing
+     *
+     * @param actionId
+     * @return List of partitions
+     */
+    public List<PartitionWrapper> getAvailablePartitions(String actionId) {
+        return availMap.get(actionId);
+    }
+
+    /**
+     * Remove en entry from available Map
+     *
+     * @param actionId
+     * @return true if the entry exists , otherwise false
+     */
+    public boolean removeActionFromAvailPartitions(String actionId) {
+        boolean ret = false;
+        if (availMap.containsKey(actionId)) {
+            availMap.remove(actionId);
+            ret = true;
+        }
+        return ret;
+    }
+
+ /**
      * Adding missing partition entry specified by PartitionWrapper object
      *
      * @param partition
@@ -112,27 +137,11 @@ public class PartitionDependencyManagerService implements Service {
         String prefix = PartitionWrapper.makePrefix(partition.getServerName(), partition.getDbName());
         Map<String, PartitionsGroup> tablePartitionsMap;
         String tableName = partition.getTableName();
-        PartitionsGroup missingPartitions = null;
-        WaitingActions actionsList;
         try {
             if (hcatInstanceMap.containsKey(prefix)) {
                 tablePartitionsMap = hcatInstanceMap.get(prefix);
                 if (tablePartitionsMap.containsKey(tableName)) {
-                    actionsList = _getActionsForPartition(tablePartitionsMap, tableName, missingPartitions, partition);
-                    if(missingPartitions != null) {
-                        if(actionsList != null) {
-                            // partition exists, therefore append action
-                            actionsList.addAndUpdate(actionId);
-                        }
-                        else {
-                            // new partition entry and info
-                            actionsList = new WaitingActions(actionId);
-                            missingPartitions.addPartitionAndAction(partition, actionsList);
-                        }
-                    }
-                    else {
-                        log.warn("No partition entries for table [{0}]", tableName);
-                    }
+                    addPartitionEntry(tablePartitionsMap, tableName, partition, actionId);
                 }
                 else { // new table entry
                     tablePartitionsMap = new ConcurrentHashMap<String, PartitionsGroup>();
@@ -296,7 +305,7 @@ public class PartitionDependencyManagerService implements Service {
                     return true;
                 }
                 else {
-                    log.warn("HCat Partition [{0}] not found", partition.toString());
+                    log.warn("partitionAvailable: HCat Partition [{0}] not found", partition.toString());
                 }
             }
             else {
@@ -331,6 +340,29 @@ public class PartitionDependencyManagerService implements Service {
         return partitionAvailable(partition);
     }
 
+    private void addPartitionEntry(Map<String, PartitionsGroup> tableMap, String tableName, PartitionWrapper partition,
+            String actionId) {
+        WaitingActions actionsList = null;
+        PartitionsGroup missingPartitions = tableMap.get(tableName);
+        if (missingPartitions != null && missingPartitions.getPartitionsMap().containsKey(partition)) {
+            actionsList = missingPartitions.getPartitionsMap().get(partition);
+            if (actionsList != null) {
+                // partition exists, therefore append action
+                actionsList.addAndUpdate(actionId);
+            }
+        }
+        else {
+            if (missingPartitions != null) {
+                // new partition entry and info
+                actionsList = new WaitingActions(actionId);
+                missingPartitions.addPartitionAndAction(partition, actionsList);
+            }
+            else {
+                log.warn(" missingPartitions for table [{0}]  is NULL.", tableName);
+            }
+        }
+    }
+
     private WaitingActions _getActionsForPartition(Map<String, PartitionsGroup> tableMap, String tableName,
             PartitionsGroup missingPartitions, PartitionWrapper partition) {
         WaitingActions actionsList = null;
@@ -339,7 +371,7 @@ public class PartitionDependencyManagerService implements Service {
             actionsList = missingPartitions.getPartitionsMap().get(partition);
         }
         else {
-            log.warn("HCat Partition [{0}] not found", partition.toString());
+            log.warn( " _getActionsForPartition: HCat Partition [{0}] not found", partition.toString());
         }
         return actionsList;
     }

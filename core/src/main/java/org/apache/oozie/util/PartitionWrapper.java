@@ -18,6 +18,7 @@
 
 package org.apache.oozie.util;
 
+import java.net.URISyntaxException;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -45,6 +46,10 @@ public class PartitionWrapper {
 
     public PartitionWrapper(HCatURI hcatUri) {
         this(hcatUri.getServer(), hcatUri.getDb(), hcatUri.getTable(), hcatUri.getPartitionMap());
+    }
+
+    public PartitionWrapper(String partURI) throws URISyntaxException {
+        this(new HCatURI(partURI));
     }
 
     /**
@@ -105,15 +110,7 @@ public class PartitionWrapper {
 
     @Override
     public String toString() {
-        StringBuilder partString = new StringBuilder("");
-        Iterator<Map.Entry<String, String>> it = partition.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry<String, String> partEntry = it.next();
-            partString.append(partEntry.getKey() + "=" + partEntry.getValue() + ";");
-        }
-        // adding prefix and removing the trailing ";"
-        return makePrefix(serverName, dbName) + CONCATENATOR + tableName + CONCATENATOR
-                + partString.substring(0, partString.length() - 1);
+        return HCatURI.getHCatURI(serverName, dbName, tableName, partition);
     }
 
     @Override
@@ -123,7 +120,7 @@ public class PartitionWrapper {
         Map<String, String> p = pw.getPartition();
         boolean equals = true;
         if (this.serverName.equals(pw.serverName) && this.dbName.equals(pw.dbName)
-                && this.tableName.equals(pw.tableName)) {
+                && this.tableName.equals(pw.tableName) && partition.size() == p.size()) {
             while (it1.hasNext()) {
                 String key = it1.next().getKey();
                 if (!(p.containsKey(key) && p.get(key).equals(partition.get(key)))) {

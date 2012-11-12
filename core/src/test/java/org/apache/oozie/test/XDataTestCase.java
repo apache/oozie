@@ -577,6 +577,7 @@ public abstract class XDataTestCase extends XFsTestCase {
             throw new IOException(e);
         }
         action.setLastModifiedTime(new Date());
+        action.setCreatedTime(new Date());
         action.setStatus(status);
         action.setActionXml(actionXml);
 
