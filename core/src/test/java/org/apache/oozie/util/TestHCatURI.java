@@ -232,4 +232,12 @@ public class TestHCatURI {
         assertFalse(uri1.equals(uri5));
         assertFalse(uri5.equals(uri1));
     }
+
+    @Test
+    public void testIsHCatURI() {
+        String hcatURI = "hcat://hcat.yahoo.com:5080/mydb/clicks/?region=us&timestamp=1201";
+        assertTrue(HCatURI.isHcatURI(hcatURI)); // +ve test
+        hcatURI = "hdfs://hcat.yahoo.com:5080/mydb/clicks/?region=us&timestamp=1201";
+        assertFalse(HCatURI.isHcatURI(hcatURI)); // -ve test
+    }
 }

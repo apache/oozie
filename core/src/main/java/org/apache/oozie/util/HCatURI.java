@@ -239,6 +239,21 @@ public class HCatURI {
         return sb.toString();
     }
 
+    /**
+     * Determine if any URI is Hcatalog specific URI
+     *
+     * @param hcatURI
+     * @return true if hcatalog URI otherwise false
+     */
+    public static boolean isHcatURI(String hcatURI) {
+        if (hcatURI != null && hcatURI.startsWith("hcat://")) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
     @Override
     public boolean equals(Object obj) {
         HCatURI uri = (HCatURI) obj;

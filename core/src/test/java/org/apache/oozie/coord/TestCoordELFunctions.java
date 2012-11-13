@@ -148,6 +148,69 @@ public class TestCoordELFunctions extends XTestCase {
         assertEquals("${coord:current(-3)}", CoordELFunctions.evalAndWrap(eval, expr));
     }
 
+    /**
+     * Test metaServer EL function (phase 1) which echo back the EL function itself
+     *
+     * @throws Exception
+     */
+    public void testMetaServerPh1() throws Exception {
+        init("coord-job-submit-data");
+        String expr = "${coord:metaServer('ABC')}";
+        // +ve test
+        eval.setVariable("oozie.dataname.ABC", "data-in");
+        assertEquals("${coord:metaServer('ABC')}", CoordELFunctions.evalAndWrap(eval, expr));
+        // -ve test
+        expr = "${coord:metaServer('ABCD')}";
+        try {
+            assertEquals("${coord:metaServer('ABCD')}", CoordELFunctions.evalAndWrap(eval, expr));
+            fail("should throw exception beacuse Data in is not defiend");
+        }
+        catch (Exception ex) {
+        }
+    }
+
+    /**
+     * Test metaDB EL function (phase 1) which echo back the EL function itself
+     *
+     * @throws Exception
+     */
+    public void testMetaDbPh1() throws Exception {
+        init("coord-job-submit-data");
+        String expr = "${coord:metaDb('ABC')}";
+        // +ve test
+        eval.setVariable("oozie.dataname.ABC", "data-in");
+        assertEquals("${coord:metaDb('ABC')}", CoordELFunctions.evalAndWrap(eval, expr));
+        // -ve test
+        expr = "${coord:metaDb('ABCD')}";
+        try {
+            assertEquals("${coord:metaDb('ABCD')}", CoordELFunctions.evalAndWrap(eval, expr));
+            fail("should throw exception beacuse Data in is not defiend");
+        }
+        catch (Exception ex) {
+        }
+    }
+
+    /**
+     * Test metaDB EL function (phase 1) which echo back the EL function itself
+     *
+     * @throws Exception
+     */
+    public void testMetaTablePh1() throws Exception {
+        init("coord-job-submit-data");
+        String expr = "${coord:metaTable('ABC')}";
+        // +ve test
+        eval.setVariable("oozie.dataname.ABC", "data-in");
+        assertEquals("${coord:metaTable('ABC')}", CoordELFunctions.evalAndWrap(eval, expr));
+        // -ve test
+        expr = "${coord:metaTable('ABCD')}";
+        try {
+            assertEquals("${coord:metaTable('ABCD')}", CoordELFunctions.evalAndWrap(eval, expr));
+            fail("should throw exception beacuse Data in is not defiend");
+        }
+        catch (Exception ex) {
+        }
+    }
+
     public void testDataNamesPh1() throws Exception {
         init("coord-job-submit-data");
         String expr = "${coord:dataIn('ABC')}";
@@ -375,16 +438,16 @@ public class TestCoordELFunctions extends XTestCase {
         ds.setInitInstance(DateUtils.parseDateOozieTZ("2009-01-02T00:00Z"));
         ds.setTimeZone(DateUtils.getTimeZone("America/Los_Angeles"));
         expr = "${coord:current(0)} ${coord:current(1)} ${coord:current(-1)} ${coord:current(-3)}";
-        assertEquals("2009-05-29T23:00Z 2009-05-30T23:00Z 2009-05-28T23:00Z 2009-05-26T23:00Z", CoordELFunctions
-                .evalAndWrap(eval, expr));
+        assertEquals("2009-05-29T23:00Z 2009-05-30T23:00Z 2009-05-28T23:00Z 2009-05-26T23:00Z",
+                CoordELFunctions.evalAndWrap(eval, expr));
 
         appInst.setNominalTime(DateUtils.parseDateOozieTZ("2009-05-30T00:45Z"));
         ds.setFrequency(30);
         ds.setTimeUnit(TimeUnit.MINUTE);
         ds.setInitInstance(DateUtils.parseDateOozieTZ("2009-01-08T00:00Z"));
         expr = "${coord:current(0)} ${coord:current(1)} ${coord:current(-1)} ${coord:current(-3)}";
-        assertEquals("2009-05-30T00:30Z 2009-05-30T01:00Z 2009-05-30T00:00Z 2009-05-29T23:00Z", eval.evaluate(expr,
-                                                                                                              String.class));
+        assertEquals("2009-05-30T00:30Z 2009-05-30T01:00Z 2009-05-30T00:00Z 2009-05-29T23:00Z",
+                eval.evaluate(expr, String.class));
 
         SyncCoordAction appInst = new SyncCoordAction();
         SyncCoordDataset ds = new SyncCoordDataset();
@@ -437,7 +500,7 @@ public class TestCoordELFunctions extends XTestCase {
         ds.setTimeZone(DateUtils.getTimeZone("America/Los_Angeles"));
         expr = "${coord:current(-2)} ${coord:current(-1)} ${coord:current(0)} ${coord:current(1)} ${coord:current(2)}";
         assertEquals("2009-03-06T10:00Z 2009-03-07T10:00Z 2009-03-08T09:00Z 2009-03-09T09:00Z 2009-03-10T09:00Z",
-                     CoordELFunctions.evalAndWrap(eval, expr));
+                CoordELFunctions.evalAndWrap(eval, expr));
 
         // Winter DST Transition
         appInst.setNominalTime(DateUtils.parseDateOozieTZ("2009-11-01T08:00Z"));
@@ -450,7 +513,7 @@ public class TestCoordELFunctions extends XTestCase {
         // System.out.println("AAAAA " + CoordELFunctions.evalAndWrap(eval,
         // expr));
         assertEquals("2009-10-30T08:00Z 2009-10-31T08:00Z 2009-11-01T08:00Z 2009-11-02T09:00Z 2009-11-03T09:00Z",
-                     CoordELFunctions.evalAndWrap(eval, expr));
+                CoordELFunctions.evalAndWrap(eval, expr));
 
         // EndofDay testing
         ds.setFrequency(1);
@@ -699,23 +762,32 @@ public class TestCoordELFunctions extends XTestCase {
         // Year
         expr = "${coord:offset(0, \"YEAR\")} ${coord:offset(1, \"YEAR\")} ${coord:offset(-1, \"YEAR\")}"
                 + " ${coord:offset(-3, \"YEAR\")}";
-        assertEquals("2015-01-02T00:01Z 2016-01-02T00:01Z 2014-01-02T00:01Z 2012-01-02T00:01Z", eval.evaluate(expr, String.class));
+        assertEquals("2015-01-02T00:01Z 2016-01-02T00:01Z 2014-01-02T00:01Z 2012-01-02T00:01Z",
+                eval.evaluate(expr, String.class));
         // Month
         expr = "${coord:offset(0, \"MONTH\")} ${coord:offset(12, \"MONTH\")} ${coord:offset(-12, \"MONTH\")}"
                 + " ${coord:offset(-36, \"MONTH\")}";
-        assertEquals("2015-01-02T00:01Z 2016-01-02T00:01Z 2014-01-02T00:01Z 2012-01-02T00:01Z", eval.evaluate(expr, String.class));
+        assertEquals("2015-01-02T00:01Z 2016-01-02T00:01Z 2014-01-02T00:01Z 2012-01-02T00:01Z",
+                eval.evaluate(expr, String.class));
         // Day
+        // its -1096 instead of -1095 because of DST (extra 1 day)
         expr = "${coord:offset(0, \"DAY\")} ${coord:offset(365, \"DAY\")} ${coord:offset(-365, \"DAY\")}"
-                + " ${coord:offset(-1096, \"DAY\")}";   // its -1096 instead of -1095 because of DST (extra 1 day)
-        assertEquals("2015-01-02T00:01Z 2016-01-02T00:01Z 2014-01-02T00:01Z 2012-01-02T00:01Z", eval.evaluate(expr, String.class));
+                + " ${coord:offset(-1096, \"DAY\")}";
+        assertEquals("2015-01-02T00:01Z 2016-01-02T00:01Z 2014-01-02T00:01Z 2012-01-02T00:01Z",
+                eval.evaluate(expr, String.class));
         // Hour
+        // its -26304 instead of -26280 because of DST (extra 24 hours)
         expr = "${coord:offset(0, \"HOUR\")} ${coord:offset(8760, \"HOUR\")} ${coord:offset(-8760, \"HOUR\")}"
-                + " ${coord:offset(-26304, \"HOUR\")}"; // its -26304 instead of -26280 because of DST (extra 24 hours)
-        assertEquals("2015-01-02T00:01Z 2016-01-02T00:01Z 2014-01-02T00:01Z 2012-01-02T00:01Z", eval.evaluate(expr, String.class));
+                + " ${coord:offset(-26304, \"HOUR\")}";
+
+        assertEquals("2015-01-02T00:01Z 2016-01-02T00:01Z 2014-01-02T00:01Z 2012-01-02T00:01Z",
+                eval.evaluate(expr, String.class));
         // Minute
+        // its -1578240 instead of -1576800 because of DST (extra 1440 minutes)
         expr = "${coord:offset(0, \"MINUTE\")} ${coord:offset(525600, \"MINUTE\")} ${coord:offset(-525600, \"MINUTE\")}"
-                + " ${coord:offset(-1578240, \"MINUTE\")}"; // its -1578240 instead of -1576800 because of DST (extra 1440 minutes)
-        assertEquals("2015-01-02T00:01Z 2016-01-02T00:01Z 2014-01-02T00:01Z 2012-01-02T00:01Z", eval.evaluate(expr, String.class));
+                + " ${coord:offset(-1578240, \"MINUTE\")}";
+        assertEquals("2015-01-02T00:01Z 2016-01-02T00:01Z 2014-01-02T00:01Z 2012-01-02T00:01Z",
+                eval.evaluate(expr, String.class));
 
         appInst.setNominalTime(DateUtils.parseDateOozieTZ("2015-01-02T00:45Z"));
         ds.setFrequency(1);
@@ -725,25 +797,31 @@ public class TestCoordELFunctions extends XTestCase {
         // Minute
         expr = "${coord:offset(0, \"MINUTE\")} ${coord:offset(1, \"MINUTE\")} ${coord:offset(-1, \"MINUTE\")}"
                 + " ${coord:offset(-3, \"MINUTE\")}";
-        assertEquals("2015-01-02T00:45Z 2015-01-02T00:46Z 2015-01-02T00:44Z 2015-01-02T00:42Z", eval.evaluate(expr, String.class));
+        assertEquals("2015-01-02T00:45Z 2015-01-02T00:46Z 2015-01-02T00:44Z 2015-01-02T00:42Z",
+                eval.evaluate(expr, String.class));
         // Hour
         expr = "${coord:offset(0, \"HOUR\")} ${coord:offset(1, \"HOUR\")} ${coord:offset(-1, \"HOUR\")}"
                 + " ${coord:offset(-3, \"HOUR\")}";
-        assertEquals("2015-01-02T00:45Z 2015-01-02T01:45Z 2015-01-01T23:45Z 2015-01-01T21:45Z", eval.evaluate(expr, String.class));
+        assertEquals("2015-01-02T00:45Z 2015-01-02T01:45Z 2015-01-01T23:45Z 2015-01-01T21:45Z",
+                eval.evaluate(expr, String.class));
         // Day
         expr = "${coord:offset(0, \"DAY\")} ${coord:offset(1, \"DAY\")} ${coord:offset(-1, \"DAY\")}"
                 + " ${coord:offset(-3, \"DAY\")}";
-        assertEquals("2015-01-02T00:45Z 2015-01-03T00:45Z 2015-01-01T00:45Z 2014-12-30T00:45Z", eval.evaluate(expr, String.class));
+        assertEquals("2015-01-02T00:45Z 2015-01-03T00:45Z 2015-01-01T00:45Z 2014-12-30T00:45Z",
+                eval.evaluate(expr, String.class));
         // Month
         expr = "${coord:offset(0, \"MONTH\")} ${coord:offset(1, \"MONTH\")} ${coord:offset(-1, \"MONTH\")}"
                 + " ${coord:offset(-3, \"MONTH\")}";
-        assertEquals("2015-01-02T00:45Z 2015-02-02T00:45Z 2014-12-02T00:45Z 2014-10-01T23:45Z", eval.evaluate(expr, String.class));
+        assertEquals("2015-01-02T00:45Z 2015-02-02T00:45Z 2014-12-02T00:45Z 2014-10-01T23:45Z",
+                eval.evaluate(expr, String.class));
         // Year
         expr = "${coord:offset(0, \"YEAR\")} ${coord:offset(1, \"YEAR\")} ${coord:offset(-1, \"YEAR\")}"
                 + " ${coord:offset(-3, \"YEAR\")}";
-        assertEquals("2015-01-02T00:45Z 2016-01-02T00:45Z 2014-01-02T00:45Z 2012-01-02T00:45Z", eval.evaluate(expr, String.class));
+        assertEquals("2015-01-02T00:45Z 2016-01-02T00:45Z 2014-01-02T00:45Z 2012-01-02T00:45Z",
+                eval.evaluate(expr, String.class));
 
-        // Test rewinding when the given offset isn't a multiple of the frequency
+        // Test rewinding when the given offset isn't a multiple of the
+        // frequency
         appInst.setNominalTime(DateUtils.parseDateOozieTZ("2015-01-02T00:45Z"));
         ds.setFrequency(4);
         ds.setTimeUnit(TimeUnit.HOUR);
@@ -765,7 +843,8 @@ public class TestCoordELFunctions extends XTestCase {
         try {
             CoordELFunctions.evalAndWrap(eval, expr);
             fail("eval of " + expr + " should have thrown an exception");
-        } catch(Exception e) {
+        }
+        catch (Exception e) {
             assertTrue(e.getMessage().contains("Unable to evaluate"));
         }
 
@@ -774,7 +853,8 @@ public class TestCoordELFunctions extends XTestCase {
         try {
             CoordELFunctions.evalAndWrap(eval, expr);
             fail("eval of " + expr + " should have thrown an exception");
-        } catch(Exception e) {
+        }
+        catch (Exception e) {
             assertTrue(e.getMessage().contains("Unable to evaluate"));
         }
     }
@@ -886,13 +966,52 @@ public class TestCoordELFunctions extends XTestCase {
         assertEquals("2009-09-10T23:59Z", CoordELFunctions.evalAndWrap(eval, expr));
     }
 
+    /**
+     * Test metaServer EL function (phase 3) which returns the HCat server from URI
+     *
+     * @throws Exception
+     */
+    public void testMetaServer() throws Exception {
+        init("coord-action-start", "hcat://hcat.yahoo.com:5080/mydb/clicks/?datastamp=12&region=us");
+        eval.setVariable(".datain.ABC", "hcat://hcat.yahoo.com:5080/mydb/clicks/?datastamp=12&region=us");
+        eval.setVariable(".datain.ABC.unresolved", Boolean.FALSE);
+        String expr = "${coord:metaServer('ABC')}";
+        assertEquals("hcat.yahoo.com:5080", CoordELFunctions.evalAndWrap(eval, expr));
+    }
+
+    /**
+     * Test metaDb EL function (phase 3) which returns the DB name from URI
+     *
+     * @throws Exception
+     */
+    public void testMetaDb() throws Exception {
+        init("coord-action-start", "hcat://hcat.yahoo.com:5080/mydb/clicks/?datastamp=12&region=us");
+        eval.setVariable(".datain.ABC", "hcat://hcat.yahoo.com:5080/mydb/clicks/?datastamp=12&region=us");
+        eval.setVariable(".datain.ABC.unresolved", Boolean.FALSE);
+        String expr = "${coord:metaDb('ABC')}";
+        assertEquals("mydb", CoordELFunctions.evalAndWrap(eval, expr));
+    }
+
+    /**
+     * Test metaTable EL function (phase 3) which returns the HCat table from URI
+     *
+     * @throws Exception
+     */
+    public void testMetaTable() throws Exception {
+        init("coord-action-start", "hcat://hcat.yahoo.com:5080/mydb/clicks/?datastamp=12&region=us");
+        eval.setVariable(".datain.ABC", "hcat://hcat.yahoo.com:5080/mydb/clicks/?datastamp=12&region=us");
+        eval.setVariable(".datain.ABC.unresolved", Boolean.FALSE);
+        String expr = "${coord:metaTable('ABC')}";
+        assertEquals("clicks", CoordELFunctions.evalAndWrap(eval, expr));
+    }
+
     public void testDataIn() throws Exception {
         init("coord-action-start");
         eval.setVariable(".datain.ABC", "file:///tmp/coord/US/2009/1/30,file:///tmp/coord/US/2009/1/31");
         eval.setVariable(".datain.ABC.unresolved", Boolean.FALSE);
         String expr = "${coord:dataIn('ABC')}";
-        assertEquals("file:///tmp/coord/US/2009/1/30,file:///tmp/coord/US/2009/1/31", CoordELFunctions.evalAndWrap(
-                eval, expr));
+        assertEquals("file:///tmp/coord/US/2009/1/30,file:///tmp/coord/US/2009/1/31",
+                CoordELFunctions.evalAndWrap(eval, expr));
         eval.setVariable(".datain.ABC", "file:///tmp/coord/US/2009/1/30,file:///tmp/coord/US/2009/1/31");
         eval.setVariable(".datain.ABC.unresolved", Boolean.TRUE);
         assertEquals(expr, CoordELFunctions.evalAndWrap(eval, expr));
@@ -902,8 +1021,8 @@ public class TestCoordELFunctions extends XTestCase {
         init("coord-action-start");
         eval.setVariable(".dataout.ABC", "file:///tmp/coord/US/2009/1/30,file:///tmp/coord/US/2009/1/31");
         String expr = "${coord:dataOut('ABC')}";
-        assertEquals("file:///tmp/coord/US/2009/1/30,file:///tmp/coord/US/2009/1/31", CoordELFunctions.evalAndWrap(
-                eval, expr));
+        assertEquals("file:///tmp/coord/US/2009/1/30,file:///tmp/coord/US/2009/1/31",
+                CoordELFunctions.evalAndWrap(eval, expr));
     }
 
     public void testActionId() throws Exception {
@@ -930,28 +1049,28 @@ public class TestCoordELFunctions extends XTestCase {
         String expr = "${coord:user()}";
         assertEquals("test_user", CoordELFunctions.evalAndWrap(eval, expr));
         init("coord-job-submit-instances");
-         expr = "${coord:user()}";
+        expr = "${coord:user()}";
         assertEquals("test_user", CoordELFunctions.evalAndWrap(eval, expr));
         init("coord-job-submit-data");
-         expr = "${coord:user()}";
+        expr = "${coord:user()}";
         assertEquals("test_user", CoordELFunctions.evalAndWrap(eval, expr));
         init("coord-sla-submit");
-         expr = "${coord:user()}";
+        expr = "${coord:user()}";
         assertEquals("test_user", CoordELFunctions.evalAndWrap(eval, expr));
         init("coord-action-create");
-         expr = "${coord:user()}";
+        expr = "${coord:user()}";
         assertEquals("test_user", CoordELFunctions.evalAndWrap(eval, expr));
         init("coord-action-create-inst");
-         expr = "${coord:user()}";
+        expr = "${coord:user()}";
         assertEquals("test_user", CoordELFunctions.evalAndWrap(eval, expr));
         init("coord-sla-create");
-         expr = "${coord:user()}";
+        expr = "${coord:user()}";
         assertEquals("test_user", CoordELFunctions.evalAndWrap(eval, expr));
         init("coord-action-start");
-         expr = "${coord:user()}";
+        expr = "${coord:user()}";
         assertEquals("test_user", CoordELFunctions.evalAndWrap(eval, expr));
         init("coord-action-create-inst");
-         expr = "${coord:user()}";
+        expr = "${coord:user()}";
         assertEquals("test_user", CoordELFunctions.evalAndWrap(eval, expr));
     }
 
@@ -960,6 +1079,10 @@ public class TestCoordELFunctions extends XTestCase {
      */
 
     private void init(String tag) throws Exception {
+        init(tag, "hdfs://localhost:9000/user/" + getTestUser() + "/US/${YEAR}/${MONTH}/${DAY}");
+    }
+
+    private void init(String tag, String uriTemplate) throws Exception {
         eval = Services.get().get(ELService.class).createEvaluator(tag);
         eval.setVariable(OozieClient.USER_NAME, "test_user");
         eval.setVariable(OozieClient.GROUP_NAME, "test_group");
@@ -970,7 +1093,7 @@ public class TestCoordELFunctions extends XTestCase {
         ds.setTimeUnit(TimeUnit.DAY);
         ds.setTimeZone(DateUtils.getTimeZone("America/Los_Angeles"));
         ds.setName("test");
-        ds.setUriTemplate("hdfs://localhost:9000/user/" + getTestUser() + "/US/${YEAR}/${MONTH}/${DAY}");
+        ds.setUriTemplate(uriTemplate);
         ds.setType("SYNC");
         ds.setDoneFlag("");
         appInst.setActualTime(DateUtils.parseDateOozieTZ("2009-09-10T23:59Z"));
