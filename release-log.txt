@@ -41,6 +41,8 @@ OOZIE-979 bump up trunk version to 3.4.0-SNAPSHOT (tucu)
 
 -- Oozie 3.3.0 release (unreleased)
 
+OOZIE-1058 ACL modify-job should not be hardcoded to group name(mona via mohammad)
+OOZIE-1052 HadoopAccessorService.createFileSystem throws exception in map-reduce action, failing workflow.(ryota via mohammad).
 OOZIE-1060 bump hadoop 2.X version to 2.0.2-alpha (rvs via tucu)
 OOZIE-976 add workflowgenerator into distro tarball (egashira via tucu)
 OOZIE-993 Hadoop 23 doesn't accept user defined jobtracker (virag)
