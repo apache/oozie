@@ -1,7 +1,5 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
-OOZIE-1058 ACL modify-job should not be hardcoded to group name(mona via mohammad)
-OOZIE-1052 HadoopAccessorService.createFileSystem throws exception in map-reduce action, failing workflow.(ryota via mohammad).
 OOZIE-1061 Add new EL functions to retrieve HCatalog server, DB and table name(mohammad)
 OOZIE-1056 Command to update push-based dependency (mohammad)
 OOZIE-1059 Add static method to create URI String in HCatURI(ryota via mohammad)
@@ -52,6 +50,8 @@ OOZIE-979 bump up trunk version to 3.4.0-SNAPSHOT (tucu)
 
 -- Oozie 3.3.0 release (unreleased)
 
+OOZIE-1058 ACL modify-job should not be hardcoded to group name(mona via mohammad)
+OOZIE-1052 HadoopAccessorService.createFileSystem throws exception in map-reduce action, failing workflow.(ryota via mohammad).
 OOZIE-976 add workflowgenerator into distro tarball (egashira via tucu)
 OOZIE-993 Hadoop 23 doesn't accept user defined jobtracker (virag)
 OOZIE-1013 Build failing as the license header comment is appearing before xml declaration in some files (virag)
