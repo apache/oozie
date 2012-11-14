@@ -316,8 +316,9 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
             Path p = getIdSwapPath(actionDir);
             // log.debug("Checking for newId file in: [{0}]", p);
 
-            FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, p.toUri(),
-                                                                                             new Configuration());
+            HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
+            Configuration conf = has.createJobConf(p.toUri().getAuthority());
+            FileSystem fs = has.createFileSystem(user, p.toUri(), conf);
             if (fs.exists(p)) {
                 log.debug("Hadoop Counters is null, but found newID file.");
 
