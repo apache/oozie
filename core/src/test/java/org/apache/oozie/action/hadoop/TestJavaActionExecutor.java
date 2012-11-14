@@ -301,7 +301,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
     }
 
-    protected Context createContext(String actionXml) throws Exception {
+    protected Context createContext(String actionXml, String group) throws Exception {
         JavaActionExecutor ae = new JavaActionExecutor();
 
         Path appJarPath = new Path("lib/test.jar");
@@ -319,6 +319,9 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
 
         WorkflowJobBean wf = createBaseWorkflow(protoConf, "action");
+        if(group != null) {
+            wf.setGroup(group);
+        }
         WorkflowActionBean action = (WorkflowActionBean) wf.getActions().get(0);
         action.setType(ae.getType());
         action.setConf(actionXml);
@@ -357,7 +360,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
                 "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
                 "</java>";
-        Context context = createContext(actionXml);
+        Context context = createContext(actionXml, null);
         final RunningJob runningJob = submitAction(context);
         waitFor(60 * 1000, new Predicate() {
             @Override
@@ -383,7 +386,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
                 "<arg>out</arg>" +
                 "<capture-output/>" +
                 "</java>";
-        Context context = createContext(actionXml);
+        Context context = createContext(actionXml, null);
         final RunningJob runningJob = submitAction(context);
         waitFor(60 * 1000, new Predicate() {
             @Override
@@ -414,7 +417,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
                 "<arg>id</arg>" +
                 "<capture-output/>" +
                 "</java>";
-        Context context = createContext(actionXml);
+        Context context = createContext(actionXml, null);
         final RunningJob runningJob = submitAction(context);
         waitFor(60 * 1000, new Predicate() {
             @Override
@@ -449,7 +452,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
                 "<file>" + appJarPath.toString() + "</file>" +
                 "</java>";
 
-        Context context = createContext(actionXml);
+        Context context = createContext(actionXml, null);
         final RunningJob runningJob = submitAction(context);
         ActionExecutor ae = new JavaActionExecutor();
         assertFalse(ae.isCompleted(context.getAction().getExternalStatus()));
@@ -476,7 +479,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
                 "<arg>exit0</arg>" +
                 "</java>";
 
-        Context context = createContext(actionXml);
+        Context context = createContext(actionXml, null);
         final RunningJob runningJob = submitAction(context);
         waitFor(60 * 1000, new Predicate() {
             @Override
@@ -503,7 +506,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
                 "<arg>exit1</arg>" +
                 "</java>";
 
-        Context context = createContext(actionXml);
+        Context context = createContext(actionXml, null);
         final RunningJob runningJob = submitAction(context);
         waitFor(60 * 1000, new Predicate() {
             @Override
@@ -532,7 +535,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
                 "<arg>ex</arg>" +
                 "</java>";
 
-        Context context = createContext(actionXml);
+        Context context = createContext(actionXml, null);
         final RunningJob runningJob = submitAction(context);
         waitFor(60 * 1000, new Predicate() {
             @Override
@@ -558,7 +561,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
                 "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
                 "</java>";
-        final Context context = createContext(actionXml);
+        final Context context = createContext(actionXml, null);
         final RunningJob runningJob = submitAction(context);
         assertFalse(runningJob.isComplete());
         ActionExecutor ae = new JavaActionExecutor();
@@ -583,7 +586,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
                 "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
                 "</java>";
-        final Context context = createContext(actionXml);
+        final Context context = createContext(actionXml, null);
         RunningJob runningJob = submitAction(context);
         String launcherId = context.getAction().getExternalId();
 
@@ -663,7 +666,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         Element eActionXml = XmlUtils.parseXml(actionXml);
 
-        Context context = createContext(actionXml);
+        Context context = createContext(actionXml, null);
 
         Path appPath = getAppPath();
 
@@ -736,7 +739,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
                 "</prepare>" +
                 "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
                 "</java>";
-        Context context = createContext(actionXml);
+        Context context = createContext(actionXml, null);
         final RunningJob runningJob = submitAction(context);
         waitFor(60 * 1000, new Predicate() {
             @Override
@@ -956,7 +959,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
                 "</configuration>" + "<main-class>MAIN-CLASS</main-class>" +
                 "</java>";
         Element eActionXml = XmlUtils.parseXml(actionXml);
-        Context context = createContext(actionXml);
+        Context context = createContext(actionXml, null);
         
         JavaActionExecutor ae = new JavaActionExecutor();
 
@@ -980,7 +983,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
                 "</configuration>" + "<main-class>MAIN-CLASS</main-class>" +
                 "</java>";
         eActionXml = XmlUtils.parseXml(actionXml);
-        context = createContext(actionXml);
+        context = createContext(actionXml, null);
         
         ae = new JavaActionExecutor();
 
@@ -1001,7 +1004,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
                 "</configuration>" + "<main-class>MAIN-CLASS</main-class>" +
                 "</java>";
         eActionXml = XmlUtils.parseXml(actionXml);
-        context = createContext(actionXml);
+        context = createContext(actionXml, null);
         
         ae = new JavaActionExecutor();
 
@@ -1022,7 +1025,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
                     + getNameNodeUri() + "</name-node>" + "<main-class>" + LauncherMainTester.class.getName()
                     + "</main-class>" + "</java>";
             Element eActionXml = XmlUtils.parseXml(actionXml);
-            Context context = createContext(actionXml);
+            Context context = createContext(actionXml, null);
             Path appPath = new Path("localfs://namenode:port/mydir");
             JavaActionExecutor ae = new JavaActionExecutor();
             JobConf conf = ae.createBaseHadoopConf(context, eActionXml);
@@ -1114,7 +1117,41 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertNotSame(conf.get(JavaActionExecutor.ACL_VIEW_JOB), actionConf.get(JavaActionExecutor.ACL_VIEW_JOB));
         assertNotSame(conf.get(JavaActionExecutor.ACL_MODIFY_JOB), actionConf.get(JavaActionExecutor.ACL_MODIFY_JOB));
     }
-    
+
+    public void testACLModifyJob() throws Exception {
+        // CASE 1: If user has provided modify-acl value
+        // then it should NOT be overridden by group name
+        String actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<name-node>" + getNameNodeUri() + "</name-node> <configuration>" +
+                "<property><name>mapreduce.job.acl-modify-job</name><value>MODIFIER</value></property>" +
+                "</configuration>" + "<main-class>MAIN-CLASS</main-class>" +
+                "</java>";
+
+        Context context = createContext(actionXml, "USERS");
+        RunningJob job = submitAction(context);
+        FileSystem fs = context.getAppFileSystem();
+        Configuration jobXmlConf = new XConfiguration(fs.open(new Path(job.getJobFile())));
+
+        String userModifyAcl = jobXmlConf.get(JavaActionExecutor.ACL_MODIFY_JOB); // 'MODIFIER'
+        String userGroup = context.getWorkflow().getAcl(); // 'USERS'
+        assertFalse(userGroup.equals(userModifyAcl));
+
+        // CASE 2: If user has not provided modify-acl value
+        // then it equals group name
+        actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<name-node>" + getNameNodeUri() + "</name-node> <configuration>" +
+                "</configuration>" + "<main-class>MAIN-CLASS</main-class>" +
+                "</java>";
+        context = createContext(actionXml, "USERS");
+        job = submitAction(context);
+        fs = context.getAppFileSystem();
+        jobXmlConf = new XConfiguration(fs.open(new Path(job.getJobFile())));
+
+        userModifyAcl = jobXmlConf.get(JavaActionExecutor.ACL_MODIFY_JOB);
+        userGroup = context.getWorkflow().getAcl();
+        assertTrue(userGroup.equals(userModifyAcl));
+    }
+
     public void testParseJobXmlAndConfiguration() throws Exception {
         String str = "<java>"
                 + "<job-xml>job1.xml</job-xml>"
@@ -1144,7 +1181,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         
         Configuration conf = new XConfiguration();
         assertEquals(0, conf.size());
-        JavaActionExecutor.parseJobXmlAndConfiguration(createContext("<java/>"), xml, appPath, conf);
+        JavaActionExecutor.parseJobXmlAndConfiguration(createContext("<java/>", null), xml, appPath, conf);
         assertEquals(4, conf.size());
         assertEquals("v1a", conf.get("p1"));
         assertEquals("v2", conf.get("p2"));
