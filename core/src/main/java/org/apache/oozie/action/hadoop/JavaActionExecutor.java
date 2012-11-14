@@ -670,10 +670,14 @@ public class JavaActionExecutor extends ActionExecutor {
 
             injectActionCallback(context, actionConf);
 
-            if (context.getWorkflow().getAcl() != null) {
-                // setting the group owning the Oozie job to allow anybody in that
-                // group to kill the jobs.
-                actionConf.set("mapreduce.job.acl-modify-job", context.getWorkflow().getAcl());
+            if(actionConf.get(ACL_MODIFY_JOB) == null || actionConf.get(ACL_MODIFY_JOB).trim().equals("")) {
+                // ONLY in the case where user has not given the
+                // modify-job ACL specifically
+                if (context.getWorkflow().getAcl() != null) {
+                    // setting the group owning the Oozie job to allow anybody in that
+                    // group to modify the jobs.
+                    actionConf.set(ACL_MODIFY_JOB, context.getWorkflow().getAcl());
+                }
             }
 
             // Setting the credential properties in launcher conf
