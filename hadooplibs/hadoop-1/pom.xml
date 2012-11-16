@@ -27,7 +27,7 @@
     </parent>
     <groupId>org.apache.oozie</groupId>
     <artifactId>oozie-hadoop</artifactId>
-    <version>1.0.1.oozie-3.3.0-SNAPSHOT</version>
+    <version>1.0.1.oozie-3.3.0</version>
     <description>Apache Oozie Hadoop ${project.version}</description>
     <name>Apache Oozie Hadoop ${project.version}</name>
     <packaging>jar</packaging>
