@@ -432,7 +432,7 @@ The following EL constants can be used within synchronous dataset URI templates:
 | =MONTH= | _DD_ | 2 digits representing the month of the year, January = 1 |
 | =DAY= | _DD_ | 2 digits representing the day of the month |
 | =HOUR= | _HH_ | 2 digits representing the hour of the day, in 24 hour format, 0 - 23 |
-| =MIN= | _mm_ | 2 digits reprensenting the minute of the hour, 0 - 59 |
+| =MINUTE= | _mm_ | 2 digits reprensenting the minute of the hour, 0 - 59 |
 
 *%PURPLE% Syntax: %ENDCOLOR%*
 
