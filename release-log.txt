@@ -1,4 +1,4 @@
--- Oozie 3.3.0 release (unreleased)
+-- Oozie 3.3.0 release
 
 OOZIE-1058 ACL modify-job should not be hardcoded to group name(mona via mohammad)
 OOZIE-1052 HadoopAccessorService.createFileSystem throws exception in map-reduce action, failing workflow.(ryota via mohammad).
