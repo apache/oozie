@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1072 Oozie Coordinator Doc error in Synchronous datasets
 OOZIE-1028 Add EL function to allow date ranges to be used for dataset ranges (rkanter via tucu)
 OOZIE-1048 Enable propagation of native libraries as a VM argument using java.library.path (venkatesh via tucu)
 OOZIE-959  Use API from OOZIE-906 in console (Ashish via Mohammad)
