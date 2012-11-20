@@ -277,6 +277,12 @@
                 <scope>compile</scope>
            </dependency>
 
+           <dependency>
+                <groupId>org.apache.hcatalog</groupId>
+                <artifactId>webhcat-java-client</artifactId>
+                <scope>compile</scope>
+           </dependency>
+
         <!-- For drawing runtime DAG -->
         <dependency>
             <groupId>net.sf.jung</groupId>

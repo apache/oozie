@@ -232,6 +232,7 @@ public enum ErrorCode {
     E1501(XLog.STD, "Partition Dependency Manager could not add cache entry"),
     E1502(XLog.STD, "Partition cache lookup error"),
     E1503(XLog.STD, "Error in Metadata URI [{0}]"),
+    E1504(XLog.STD, "Error in getting HCat Access [{0}]"),
 
     ETEST(XLog.STD, "THIS SHOULD HAPPEN ONLY IN TESTING, invalid job id [{0}]"),;
 
