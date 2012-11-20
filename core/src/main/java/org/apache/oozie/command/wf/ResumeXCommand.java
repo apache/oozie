@@ -17,6 +17,8 @@
  */
 package org.apache.oozie.command.wf;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -24,15 +26,22 @@ import java.util.List;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.action.control.EndActionExecutor;
+import org.apache.oozie.action.control.ForkActionExecutor;
+import org.apache.oozie.action.control.JoinActionExecutor;
+import org.apache.oozie.action.control.KillActionExecutor;
+import org.apache.oozie.action.control.StartActionExecutor;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.coord.CoordActionUpdateXCommand;
+import org.apache.oozie.command.wf.ActionXCommand.ActionExecutorContext;
 import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowJobGetActionsJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
+import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.InstrumentUtils;
@@ -79,6 +88,19 @@ public class ResumeXCommand extends WorkflowXCommand<Void> {
                     if (action.isPending()) {
                         if (action.getStatus() == WorkflowActionBean.Status.PREP
                                 || action.getStatus() == WorkflowActionBean.Status.START_MANUAL) {
+                            // When resuming a workflow that was programatically suspended (via ActionCheckXCommand) because of
+                            // a repeated transient error, we have to clean up the action dir
+                            if (!action.getType().equals(StartActionExecutor.TYPE) &&       // The control actions have invalid
+                                !action.getType().equals(ForkActionExecutor.TYPE) &&        // action dir paths because they
+                                !action.getType().equals(JoinActionExecutor.TYPE) &&        // contain ":" (colons)
+                                !action.getType().equals(KillActionExecutor.TYPE) &&
+                                !action.getType().equals(EndActionExecutor.TYPE)) {
+                                ActionExecutorContext context =
+                                        new ActionXCommand.ActionExecutorContext(workflow, action, false, false);
+                                if (context.getAppFileSystem().exists(context.getActionDir())) {
+                                    context.getAppFileSystem().delete(context.getActionDir(), true);
+                                }
+                            }
                             queue(new ActionStartXCommand(action.getId(), action.getType()));
                         }
                         else {
@@ -117,6 +139,15 @@ public class ResumeXCommand extends WorkflowXCommand<Void> {
         }
         catch (JPAExecutorException e) {
             throw new CommandException(e);
+        }
+        catch (HadoopAccessorException e) {
+            throw new CommandException(e);
+        }
+        catch (IOException e) {
+            throw new CommandException(ErrorCode.E0902, e);
+        }
+        catch (URISyntaxException e) {
+            throw new CommandException(ErrorCode.E0902, e);
         }
         finally {
             // update coordinator action
