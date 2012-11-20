@@ -240,4 +240,18 @@ public class TestHCatURI {
         hcatURI = "hdfs://hcat.yahoo.com:5080/mydb/clicks/?region=us&timestamp=1201";
         assertFalse(HCatURI.isHcatURI(hcatURI)); // -ve test
     }
+
+    @Test
+    public void testToFilter() {
+        String hcatURI = "hcat://hcat.yahoo.com:5080/mydb/clicks/?datastamp=20120230&region=us";
+        String filter = "";
+        try {
+            filter = new HCatURI(hcatURI).toFilter();
+        }
+        catch (URISyntaxException e) {
+            fail(e.getMessage());
+        }
+        assertTrue(filter.equals("datastamp='20120230' AND region='us'")
+                || filter.equals("region='us' AND datastamp='20120230'"));
+    }
 }

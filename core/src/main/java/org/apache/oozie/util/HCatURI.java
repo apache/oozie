@@ -39,6 +39,7 @@ public class HCatURI {
     public static final String PARTITION_KEYVAL_SEPARATOR = "=";
     public static final String PATH_SEPARATOR = "/";
     public static final String PARTITION_PREFIX = "?";
+    public static final String PARTITION_VALUE_QUOTE = "'";
 
     private URI uri;
     private String server;
@@ -274,6 +275,27 @@ public class HCatURI {
             equals = false;
         }
         return equals;
+    }
+
+    /**
+     * Convert the partition map to filter string. Each key value pair is
+     * separated by AND
+     *
+     * @return filter string
+     */
+    public String toFilter() {
+        StringBuilder filter = new StringBuilder();
+        for (Map.Entry<String, String> entry : partitions.entrySet()) {
+            if (filter.length() > 0) {
+                filter.append(" AND ");
+            }
+            filter.append(entry.getKey());
+            filter.append("=");
+            filter.append(PARTITION_VALUE_QUOTE);
+            filter.append(entry.getValue());
+            filter.append(PARTITION_VALUE_QUOTE);
+        }
+        return filter.toString();
     }
 
     @Override

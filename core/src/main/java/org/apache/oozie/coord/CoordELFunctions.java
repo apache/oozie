@@ -491,7 +491,31 @@ public class CoordELFunctions {
         if (unresolved != null && unresolved.booleanValue() == true) {
             return "${coord:dataIn('" + dataInName + "')}";
         }
-        return uris;
+        return handlePartitionFilter(uris);
+    }
+
+    private static String handlePartitionFilter(String uris) {
+        String[] uriList = uris.split(DIR_SEPARATOR);
+        // If HCat URI, change its to a filter, otherwise return the original
+        // uris
+        if (uriList.length > 0 && HCatURI.isHcatURI(uriList[0])) {
+            StringBuilder filter = new StringBuilder();
+            for (String uri : uriList) {
+                if (filter.length() > 0) {
+                    filter.append(" OR ");
+                }
+                try {
+                    filter.append(new HCatURI(uri).toFilter());
+                }
+                catch (URISyntaxException e) {
+                    throw new RuntimeException("Parsing exception for HCatURI " + uri + ". details: " + e);
+                }
+            }
+            return filter.toString();
+        }
+        else {
+            return uris;
+        }
     }
 
     /**
@@ -505,7 +529,7 @@ public class CoordELFunctions {
         String uris = "";
         ELEvaluator eval = ELEvaluator.getCurrent();
         uris = (String) eval.getVariable(".dataout." + dataOutName);
-        return uris;
+        return handlePartitionFilter(uris);
     }
 
     /**

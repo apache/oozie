@@ -1015,6 +1015,14 @@ public class TestCoordELFunctions extends XTestCase {
         eval.setVariable(".datain.ABC", "file:///tmp/coord/US/2009/1/30,file:///tmp/coord/US/2009/1/31");
         eval.setVariable(".datain.ABC.unresolved", Boolean.TRUE);
         assertEquals(expr, CoordELFunctions.evalAndWrap(eval, expr));
+
+        // HCat partition specific
+        eval.setVariable(".datain.ABC", "hcat://hcat.yahoo.com:5080/mydb/clicks/?datastamp=12&region=us");
+        eval.setVariable(".datain.ABC.unresolved", Boolean.FALSE);
+        expr = "${coord:dataIn('ABC')}";
+        String res = CoordELFunctions.evalAndWrap(eval, expr);
+        assertTrue(res.equals("datastamp='12' AND region='us'") || res.equals("region='us' AND datastamp='12'"));
+
     }
 
     public void testDataOut() throws Exception {
@@ -1023,6 +1031,13 @@ public class TestCoordELFunctions extends XTestCase {
         String expr = "${coord:dataOut('ABC')}";
         assertEquals("file:///tmp/coord/US/2009/1/30,file:///tmp/coord/US/2009/1/31",
                 CoordELFunctions.evalAndWrap(eval, expr));
+
+        // HCat partition specific
+        eval.setVariable(".dataout.ABC", "hcat://hcat.yahoo.com:5080/mydb/clicks/?datastamp=20120230&region=us");
+        eval.setVariable(".dataout.ABC.unresolved", Boolean.FALSE);
+        String res = CoordELFunctions.evalAndWrap(eval, expr);
+        assertTrue(res.equals("datastamp='20120230' AND region='us'")
+                || res.equals("region='us' AND datastamp='20120230'"));
     }
 
     public void testActionId() throws Exception {
