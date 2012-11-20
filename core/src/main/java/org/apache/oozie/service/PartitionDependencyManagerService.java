@@ -52,14 +52,14 @@ public class PartitionDependencyManagerService implements Service {
     private static XLog log;
 
     /*
-     * Top-level map key = concatenated identifier for hcatServer + hcatDB
-     * value = table map (key = tableName string, value = PartitionsGroup
+     * Top-level map key = concatenated identifier for hcatServer + hcatDB value
+     * = table map (key = tableName string, value = PartitionsGroup
      */
     private Map<String, Map<String, PartitionsGroup>> hcatInstanceMap;
 
     /*
-     * Map denoting actions and corresponding 'available' partitions
-     * key = coordinator actionId, value = available partitions
+     * Map denoting actions and corresponding 'available' partitions key =
+     * coordinator actionId, value = available partitions
      */
     private Map<String, List<PartitionWrapper>> availMap;
 
@@ -125,7 +125,36 @@ public class PartitionDependencyManagerService implements Service {
         return ret;
     }
 
- /**
+    /**
+     * Remove an action from missing partition map
+     *
+     * @param hcatURI
+     * @param actionId
+     * @return
+     * @throws MetadataServiceException
+     */
+    public boolean removeActionFromMissingPartitions(String hcatURI, String actionId) throws MetadataServiceException {
+        boolean ret = false;
+        HCatURI uri;
+        try {
+            uri = new HCatURI(hcatURI);
+        }
+        catch (URISyntaxException e) {
+            throw new MetadataServiceException(ErrorCode.E1503, e.getMessage());
+        }
+        PartitionWrapper partition = new PartitionWrapper(uri.getServer(), uri.getDb(), uri.getTable(),
+                uri.getPartitionMap());
+        List<String> actions = _getActionsForPartition(partition);
+        if (actions != null && actions.size() != 0) {
+            ret = actions.remove(actionId);
+        }
+        else {
+            log.info("No waiting actions in the partition [{0}], no-ops", partition);
+        }
+        return ret;
+    }
+
+    /**
      * Adding missing partition entry specified by PartitionWrapper object
      *
      * @param partition
@@ -183,14 +212,21 @@ public class PartitionDependencyManagerService implements Service {
         addMissingPartition(partition, actionId);
     }
 
+    public void addMissingPartitions(String[] hcatURIs, String actionId) throws MetadataServiceException {
+        for (String uri : hcatURIs) {
+            if (uri != null && uri.length() > 0) {
+                addMissingPartition(uri, actionId);
+            }
+        }
+    }
+
     /**
-     * Remove partition entry specified by PartitionWrapper object
-     * and cascading delete indicator
+     * Remove partition entry specified by PartitionWrapper object and cascading
+     * delete indicator
      *
      * @param partition
      * @param cascade
-     * @return true if partition was successfully removed
-     * false otherwise
+     * @return true if partition was successfully removed false otherwise
      */
     public boolean removePartition(PartitionWrapper partition, boolean cascade) {
         String prefix = PartitionWrapper.makePrefix(partition.getServerName(), partition.getDbName());
@@ -227,13 +263,12 @@ public class PartitionDependencyManagerService implements Service {
     }
 
     /**
-     * Remove partition entry specified by HCat URI and
-     * cascading delete indicator
+     * Remove partition entry specified by HCat URI and cascading delete
+     * indicator
      *
      * @param hcatURI
      * @param cascade
-     * @return true if partition was successfully removed
-     * false otherwise
+     * @return true if partition was successfully removed false otherwise
      * @throws MetadataServiceException
      */
     public boolean removePartition(String hcatURI, boolean cascade) throws MetadataServiceException {
@@ -250,12 +285,11 @@ public class PartitionDependencyManagerService implements Service {
     }
 
     /**
-     * Remove partition entry specified by HCat URI with
-     * default cascade mode - TRUE
+     * Remove partition entry specified by HCat URI with default cascade mode -
+     * TRUE
      *
      * @param hcatURI
-     * @return true if partition was successfully removed
-     * false otherwise
+     * @return true if partition was successfully removed false otherwise
      * @throws MetadataServiceException
      */
     public boolean removePartition(String hcatURI) throws MetadataServiceException {
@@ -272,59 +306,45 @@ public class PartitionDependencyManagerService implements Service {
     }
 
     /**
-     * Move partition entry specified by ParitionWrapper object
-     * from 'missing' to 'available' map
+     * Move partition entry specified by ParitionWrapper object from 'missing'
+     * to 'available' map
      *
      * @param partition
-     * @return true if partition was successfully moved to availableMap
-     * false otherwise
+     * @return true if partition was successfully moved to availableMap false
+     *         otherwise
      */
     public boolean partitionAvailable(PartitionWrapper partition) {
-        String prefix = PartitionWrapper.makePrefix(partition.getServerName(), partition.getDbName());
-        if (hcatInstanceMap.containsKey(prefix)) {
-            Map<String, PartitionsGroup> tableMap = hcatInstanceMap.get(prefix);
-            String tableName = partition.getTableName();
-            PartitionsGroup missingPartitions = null;
-            if (tableMap.containsKey(tableName)) {
-                WaitingActions actions = _getActionsForPartition(tableMap, tableName, missingPartitions, partition);
-                if(actions != null) {
-                    List<String> actionsList = actions.getActions();
-                    Iterator<String> it = actionsList.iterator();
-                    while (it.hasNext()) { // add actions into separate entries
-                        String actionId = it.next();
-                        if (availMap.containsKey(actionId)) {
-                            // actionId exists, so append partition
-                            availMap.get(actionId).add(partition);
-                        }
-                        else { // new entry
-                            availMap.put(actionId,
-                                    new CopyOnWriteArrayList<PartitionWrapper>(Arrays.asList((partition))));
-                        }
-                    }
-                    removePartition(partition, true);
-                    return true;
+
+        List<String> actionsList = _getActionsForPartition(partition);
+        if (actionsList != null) {
+            Iterator<String> it = actionsList.iterator();
+            while (it.hasNext()) { // add actions into separate entries
+                String actionId = it.next();
+                if (availMap.containsKey(actionId)) {
+                    // actionId exists, so append partition
+                    availMap.get(actionId).add(partition);
                 }
-                else {
-                    log.warn("partitionAvailable: HCat Partition [{0}] not found", partition.toString());
+                else { // new entry
+                    availMap.put(actionId, new CopyOnWriteArrayList<PartitionWrapper>(Arrays.asList((partition))));
                 }
             }
-            else {
-                log.warn("HCat table [{0}] not found", tableName);
-            }
+            removePartition(partition, true);
+            return true;
         }
         else {
-            log.warn("HCat instance [{0}] not found", prefix);
+            log.warn("No coord actions waitings for HCat Partition [{0}]", partition.toString());
         }
+
         return false;
     }
 
     /**
-     * Move partition entry specified by HCat URI from 'missing' to
-     * 'available' map
+     * Move partition entry specified by HCat URI from 'missing' to 'available'
+     * map
      *
      * @param hcatURI
-     * @return true if partition was successfully moved to availableMap
-     * false otherwise
+     * @return true if partition was successfully moved to availableMap false
+     *         otherwise
      * @throws MetadataServiceException
      */
     public boolean partitionAvailable(String hcatURI) throws MetadataServiceException {
@@ -363,17 +383,40 @@ public class PartitionDependencyManagerService implements Service {
         }
     }
 
-    private WaitingActions _getActionsForPartition(Map<String, PartitionsGroup> tableMap, String tableName,
-            PartitionsGroup missingPartitions, PartitionWrapper partition) {
-        WaitingActions actionsList = null;
-        missingPartitions = tableMap.get(tableName);
-        if (missingPartitions != null && missingPartitions.getPartitionsMap().containsKey(partition)) {
-            actionsList = missingPartitions.getPartitionsMap().get(partition);
+    private List<String> _getActionsForPartition(PartitionWrapper partition) {
+        String prefix = PartitionWrapper.makePrefix(partition.getServerName(), partition.getDbName());
+        if (hcatInstanceMap.containsKey(prefix)) {
+            Map<String, PartitionsGroup> tableMap = hcatInstanceMap.get(prefix);
+            String tableName = partition.getTableName();
+            if (tableMap.containsKey(tableName)) {
+                PartitionsGroup missingPartitions = tableMap.get(tableName);
+                if (missingPartitions != null) {
+                    if (missingPartitions.getPartitionsMap().containsKey(partition)) {
+                        WaitingActions actions = missingPartitions.getPartitionsMap().get(partition);
+                        if (actions != null) {
+                            return actions.getActions();
+                        }
+                        else {
+                            log.warn("No coord actions waitings for HCat Partition [{0}]", partition.toString());
+                        }
+                    }
+                    else {
+                        log.warn("HCat Partition [{0}] not found", partition.toString());
+                    }
+                }
+                else {
+                    log.warn("MissingPartitions not created in HCat table [{0}]", tableName);
+                }
+            }
+            else {
+                log.warn("HCat table [{0}] not found", tableName);
+            }
         }
         else {
-            log.warn( " _getActionsForPartition: HCat Partition [{0}] not found", partition.toString());
+            log.warn("HCat instance [{0}] not found", prefix);
         }
-        return actionsList;
+
+        return null;
     }
 
     private void _createPartitionMapForTable(Map<String, PartitionsGroup> tableMap, String tableName,

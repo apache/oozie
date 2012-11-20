@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1043 Add logic to register to Missing Dependency Structure in coord action materialization (ryota via mohammad)
 OOZIE-1061 Add new EL functions to retrieve HCatalog server, DB and table name(mohammad)
 OOZIE-1056 Command to update push-based dependency (mohammad)
 OOZIE-1059 Add static method to create URI String in HCatURI(ryota via mohammad)
