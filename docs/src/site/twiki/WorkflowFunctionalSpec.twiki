@@ -457,6 +457,14 @@ fork arrive to the join node.
 </workflow-app>
 </verbatim>
 
+By default, Oozie performs some validation that any forking in a workflow is valid and won't lead to any incorrect behavior or
+instability.  However, if Oozie is preventing a workflow from being submitted and you are very certain that it should work, you can
+disable forkjoin validation so that Oozie will accept the workflow.  To disable this validation just for a specific workflow, simply
+set =oozie.wf.validate.ForkJoin= to =false= in the job.properties file.  To disable this validation for all workflows, simply set
+=oozie.validate.ForkJoin= to =false= in the oozie-site.xml file.  Disabling this validation is determined by the AND of both of
+these properties, so it will be disabled if either or both are set to false and only enabled if both are set to true (or not
+specified).
+
 #ActionNodes
 ---+++ 3.2 Workflow Action Nodes
 

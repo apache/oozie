@@ -82,6 +82,7 @@ public class LiteWorkflowAppParser {
 
     private static final String KILL_MESSAGE_E = "message";
     public static final String VALIDATE_FORK_JOIN = "oozie.validate.ForkJoin";
+    public static final String WF_VALIDATE_FORK_JOIN = "oozie.wf.validate.ForkJoin";
 
     private Schema schema;
     private Class<? extends ControlNodeHandler> controlNodeHandler;
@@ -130,7 +131,7 @@ public class LiteWorkflowAppParser {
             traversed.put(app.getNode(StartNodeDef.START).getName(), VisitStatus.VISITING);
             validate(app, app.getNode(StartNodeDef.START), traversed);
             //Validate whether fork/join are in pair or not
-            if (Services.get().getConf().getBoolean(VALIDATE_FORK_JOIN, true)) {
+            if (jobConf.getBoolean(WF_VALIDATE_FORK_JOIN, true) && Services.get().getConf().getBoolean(VALIDATE_FORK_JOIN, true)) {
                 validateForkJoin(app);
             }
             return app;

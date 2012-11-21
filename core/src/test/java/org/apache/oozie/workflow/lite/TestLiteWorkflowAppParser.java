@@ -941,4 +941,75 @@ public class TestLiteWorkflowAppParser extends XTestCase {
             done = true;
         }
     }
+
+    public void testDisableWFValidateForkJoin() throws Exception {
+        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+            LiteWorkflowStoreService.LiteControlNodeHandler.class,
+            LiteWorkflowStoreService.LiteDecisionHandler.class,
+            LiteWorkflowStoreService.LiteActionHandler.class);
+
+        // oozie level default, wf level default
+        try {
+            parser.validateAndParse(IOUtils.getResourceAsReader("wf-invalid-fork.xml", -1), new Configuration());
+        }
+        catch (WorkflowException wfe) {
+            assertEquals(ErrorCode.E0730, wfe.getErrorCode());
+            assertEquals("E0730: Fork/Join not in pair", wfe.getMessage());
+        }
+
+        // oozie level default, wf level disabled
+        Configuration conf = new Configuration();
+        conf.set("oozie.wf.validate.ForkJoin", "false");
+        parser.validateAndParse(IOUtils.getResourceAsReader("wf-invalid-fork.xml", -1), conf);
+
+        // oozie level default, wf level enabled
+        conf.set("oozie.wf.validate.ForkJoin", "true");
+        try {
+            parser.validateAndParse(IOUtils.getResourceAsReader("wf-invalid-fork.xml", -1), conf);
+        }
+        catch (WorkflowException wfe) {
+            assertEquals(ErrorCode.E0730, wfe.getErrorCode());
+            assertEquals("E0730: Fork/Join not in pair", wfe.getMessage());
+        }
+
+        // oozie level disabled, wf level default
+        Services.get().destroy();
+        setSystemProperty("oozie.validate.ForkJoin", "false");
+        new Services().init();
+        parser.validateAndParse(IOUtils.getResourceAsReader("wf-invalid-fork.xml", -1), new Configuration());
+
+        // oozie level disabled, wf level disabled
+        conf.set("oozie.wf.validate.ForkJoin", "false");
+        parser.validateAndParse(IOUtils.getResourceAsReader("wf-invalid-fork.xml", -1), conf);
+
+        // oozie level disabled, wf level enabled
+        conf.set("oozie.wf.validate.ForkJoin", "true");
+        parser.validateAndParse(IOUtils.getResourceAsReader("wf-invalid-fork.xml", -1), conf);
+
+        // oozie level enabled, wf level default
+        Services.get().destroy();
+        setSystemProperty("oozie.validate.ForkJoin", "true");
+        new Services().init();
+        try {
+            parser.validateAndParse(IOUtils.getResourceAsReader("wf-invalid-fork.xml", -1), new Configuration());
+        }
+        catch (WorkflowException wfe) {
+            assertEquals(ErrorCode.E0730, wfe.getErrorCode());
+            assertEquals("E0730: Fork/Join not in pair", wfe.getMessage());
+        }
+
+        // oozie level enabled, wf level disabled
+        conf.set("oozie.wf.validate.ForkJoin", "false");
+        parser.validateAndParse(IOUtils.getResourceAsReader("wf-invalid-fork.xml", -1), conf);
+
+        // oozie level enabled, wf level enabled
+        conf.set("oozie.wf.validate.ForkJoin", "true");
+        try {
+            parser.validateAndParse(IOUtils.getResourceAsReader("wf-invalid-fork.xml", -1), new Configuration());
+        }
+        catch (WorkflowException wfe) {
+            assertEquals(ErrorCode.E0730, wfe.getErrorCode());
+            assertEquals("E0730: Fork/Join not in pair", wfe.getMessage());
+        }
+    }
 }
