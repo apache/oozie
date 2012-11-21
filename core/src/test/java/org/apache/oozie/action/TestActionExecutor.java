@@ -17,6 +17,7 @@
  */
 package org.apache.oozie.action;
 
+import java.io.EOFException;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.client.WorkflowAction;
@@ -146,5 +147,73 @@ public class TestActionExecutor extends XTestCase {
             fail();
         }
 
+        cause = new EOFException();     // not registered, but subclass of IOException
+        try {
+            throw ae.convertException(cause);
+        }
+        catch (ActionExecutorException ex) {
+            assertEquals(cause, ex.getCause());
+            assertEquals(ActionExecutorException.ErrorType.TRANSIENT, ex.getErrorType());
+            assertEquals("IO", ex.getErrorCode());
+        }
+        catch (Exception ex) {
+            fail();
+        }
+
+        Exception rootCause = new RemoteException();
+        cause = new RuntimeException(rootCause);
+        try {
+            throw ae.convertException(cause);
+        }
+        catch (ActionExecutorException ex) {
+            assertEquals(rootCause, ex.getCause());
+            assertEquals(ActionExecutorException.ErrorType.NON_TRANSIENT, ex.getErrorType());
+            assertEquals("RMI", ex.getErrorCode());
+        }
+        catch (Exception ex) {
+            fail();
+        }
+
+        rootCause = new RemoteException();
+        cause = new IOException(rootCause);
+        try {
+            throw ae.convertException(cause);
+        }
+        catch (ActionExecutorException ex) {
+            assertEquals(rootCause, ex.getCause());
+            assertEquals(ActionExecutorException.ErrorType.NON_TRANSIENT, ex.getErrorType());
+            assertEquals("RMI", ex.getErrorCode());
+        }
+        catch (Exception ex) {
+            fail();
+        }
+
+        rootCause = new IOException();
+        cause = new RemoteException("x", rootCause);
+        try {
+            throw ae.convertException(cause);
+        }
+        catch (ActionExecutorException ex) {
+            assertEquals(rootCause, ex.getCause());
+            assertEquals(ActionExecutorException.ErrorType.TRANSIENT, ex.getErrorType());
+            assertEquals("IO", ex.getErrorCode());
+        }
+        catch (Exception ex) {
+            fail();
+        }
+
+        rootCause = new EOFException();     // not registered, but subclass of IOException
+        cause = new RemoteException("x", rootCause);
+        try {
+            throw ae.convertException(cause);
+        }
+        catch (ActionExecutorException ex) {
+            assertEquals(rootCause, ex.getCause());
+            assertEquals(ActionExecutorException.ErrorType.TRANSIENT, ex.getErrorType());
+            assertEquals("IO", ex.getErrorCode());
+        }
+        catch (Exception ex) {
+            fail();
+        }
     }
 }

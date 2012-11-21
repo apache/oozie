@@ -39,6 +39,7 @@ import org.apache.oozie.command.wf.ActionXCommand.ActionExecutorContext;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.InstrumentationService;
 import org.apache.oozie.service.JPAService;
@@ -237,6 +238,239 @@ public class TestActionCheckXCommand extends XDataTestCase {
 
     }
 
+    public void testActionCheckTransientDuringLauncher() throws Exception {
+        services.destroy();
+        // Make the ActionCheckXCommand run more frequently so the test won't take as long
+        setSystemProperty("oozie.service.ActionCheckerService.action.check.interval", "10");
+        setSystemProperty("oozie.service.ActionCheckerService.action.check.delay", "20");
+        // Make the max number of retries lower so the test won't take as long
+        final int maxRetries = 2;
+        setSystemProperty("oozie.action.retries.max", Integer.toString(maxRetries));
+        services = new Services();
+        services.init();
+
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        WorkflowJobBean job0 = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
+        final String jobId = job0.getId();
+        WorkflowActionBean action0 = this.addRecordToWfActionTable(jobId, "1", WorkflowAction.Status.PREP);
+        final String actionId = action0.getId();
+        final WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(actionId);
+
+        new ActionStartXCommand(actionId, "map-reduce").call();
+        final WorkflowActionBean action1 = jpaService.execute(wfActionGetCmd);
+        String originalLauncherId = action1.getExternalId();
+
+        // At this point, the launcher job has started (but not finished)
+        // Now, shutdown the job tracker to pretend it has gone down during the launcher job
+        executeWhileJobTrackerIsShutdown(new ShutdownJobTrackerExecutable() {
+            @Override
+            public void execute() throws Exception {
+                assertEquals(0, action1.getRetries());
+                new ActionCheckXCommand(actionId).call();
+
+                waitFor(30 * 1000, new Predicate() {
+                    @Override
+                    public boolean evaluate() throws Exception {
+                        WorkflowActionBean action1a = jpaService.execute(wfActionGetCmd);
+                        return (action1a.getRetries() > 0);
+                    }
+                });
+                waitFor(180 * 1000, new Predicate() {
+                    @Override
+                    public boolean evaluate() throws Exception {
+                        WorkflowActionBean action1a = jpaService.execute(wfActionGetCmd);
+                        return (action1a.getRetries() == 0);
+                    }
+                });
+                WorkflowActionBean action1b = jpaService.execute(wfActionGetCmd);
+                assertEquals(0, action1b.getRetries());
+                assertEquals("START_MANUAL", action1b.getStatusStr());
+
+                WorkflowJobBean job1 = jpaService.execute(new WorkflowJobGetJPAExecutor(jobId));
+                assertEquals("SUSPENDED", job1.getStatusStr());
+
+                // At this point, the action has gotten a transient error, even after maxRetries tries so the workflow has been
+                // SUSPENDED
+            }
+        });
+        // Now, lets bring the job tracker back up and resume the workflow (which will restart the current action)
+        // It should now continue and finish with SUCCEEDED
+        new ResumeXCommand(jobId).call();
+        WorkflowJobBean job2 = jpaService.execute(new WorkflowJobGetJPAExecutor(jobId));
+        assertEquals("RUNNING", job2.getStatusStr());
+
+        ActionExecutorContext context = new ActionXCommand.ActionExecutorContext(job2, action1, false, false);
+        WorkflowActionBean action2 = jpaService.execute(wfActionGetCmd);
+        MapReduceActionExecutor actionExecutor = new MapReduceActionExecutor();
+        JobConf conf = actionExecutor.createBaseHadoopConf(context, XmlUtils.parseXml(action2.getConf()));
+        String user = conf.get("user.name");
+        JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, conf);
+
+        new ActionCheckXCommand(actionId).call();
+        WorkflowActionBean action3 = jpaService.execute(wfActionGetCmd);
+        String launcherId = action3.getExternalId();
+        assertFalse(originalLauncherId.equals(launcherId));
+
+        final RunningJob launcherJob = jobClient.getJob(JobID.forName(launcherId));
+
+        waitFor(120 * 1000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                return launcherJob.isComplete();
+            }
+        });
+        assertTrue(launcherJob.isSuccessful());
+        assertTrue(LauncherMapper.hasIdSwap(launcherJob));
+
+        new ActionCheckXCommand(actionId).call();
+        WorkflowActionBean action4 = jpaService.execute(wfActionGetCmd);
+        String mapperId = action4.getExternalId();
+
+        assertFalse(launcherId.equals(mapperId));
+
+        final RunningJob mrJob = jobClient.getJob(JobID.forName(mapperId));
+
+        waitFor(120 * 1000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                return mrJob.isComplete();
+            }
+        });
+        assertTrue(mrJob.isSuccessful());
+
+        new ActionCheckXCommand(actionId).call();
+        WorkflowActionBean action5 = jpaService.execute(wfActionGetCmd);
+
+        assertEquals("SUCCEEDED", action5.getExternalStatus());
+    }
+
+    public void testActionCheckTransientDuringMRAction() throws Exception {
+        services.destroy();
+        // Make the ActionCheckXCommand run more frequently so the test won't take as long
+        setSystemProperty("oozie.service.ActionCheckerService.action.check.interval", "10");
+        setSystemProperty("oozie.service.ActionCheckerService.action.check.delay", "20");
+        // Make the max number of retries lower so the test won't take as long
+        final int maxRetries = 2;
+        setSystemProperty("oozie.action.retries.max", Integer.toString(maxRetries));
+        services = new Services();
+        services.init();
+
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        WorkflowJobBean job0 = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
+        final String jobId = job0.getId();
+        WorkflowActionBean action0 = this.addRecordToWfActionTable(jobId, "1", WorkflowAction.Status.PREP);
+        final String actionId = action0.getId();
+        final WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(actionId);
+
+        new ActionStartXCommand(actionId, "map-reduce").call();
+        final WorkflowActionBean action1 = jpaService.execute(wfActionGetCmd);
+        String originalLauncherId = action1.getExternalId();
+
+        ActionExecutorContext context = new ActionXCommand.ActionExecutorContext(job0, action1, false, false);
+        MapReduceActionExecutor actionExecutor = new MapReduceActionExecutor();
+        JobConf conf = actionExecutor.createBaseHadoopConf(context, XmlUtils.parseXml(action1.getConf()));
+        String user = conf.get("user.name");
+        JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, conf);
+
+        final RunningJob launcherJob = jobClient.getJob(JobID.forName(originalLauncherId));
+
+        waitFor(120 * 1000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                return launcherJob.isComplete();
+            }
+        });
+        assertTrue(launcherJob.isSuccessful());
+        assertTrue(LauncherMapper.hasIdSwap(launcherJob));
+
+        new ActionCheckXCommand(action1.getId()).call();
+        WorkflowActionBean action2 = jpaService.execute(wfActionGetCmd);
+        String originalMapperId = action2.getExternalId();
+
+        assertFalse(originalLauncherId.equals(originalMapperId));
+
+        // At this point, the launcher job has finished and the map-reduce action has started (but not finished)
+        // Now, shutdown the job tracker to pretend it has gone down during the map-reduce job
+        executeWhileJobTrackerIsShutdown(new ShutdownJobTrackerExecutable() {
+            @Override
+            public void execute() throws Exception {
+                assertEquals(0, action1.getRetries());
+                new ActionCheckXCommand(actionId).call();
+
+                waitFor(30 * 1000, new Predicate() {
+                    @Override
+                    public boolean evaluate() throws Exception {
+                        WorkflowActionBean action1a = jpaService.execute(wfActionGetCmd);
+                        return (action1a.getRetries() > 0);
+                    }
+                });
+                waitFor(180 * 1000, new Predicate() {
+                    @Override
+                    public boolean evaluate() throws Exception {
+                        WorkflowActionBean action1a = jpaService.execute(wfActionGetCmd);
+                        return (action1a.getRetries() == 0);
+                    }
+                });
+                WorkflowActionBean action1b = jpaService.execute(wfActionGetCmd);
+                assertEquals(0, action1b.getRetries());
+                assertEquals("START_MANUAL", action1b.getStatusStr());
+
+                WorkflowJobBean job1 = jpaService.execute(new WorkflowJobGetJPAExecutor(jobId));
+                assertEquals("SUSPENDED", job1.getStatusStr());
+
+                // At this point, the action has gotten a transient error, even after maxRetries tries so the workflow has been
+                // SUSPENDED
+            }
+        });
+        // Now, lets bring the job tracker back up and resume the workflow (which will restart the current action)
+        // It should now continue and finish with SUCCEEDED
+        new ResumeXCommand(jobId).call();
+        WorkflowJobBean job2 = jpaService.execute(new WorkflowJobGetJPAExecutor(jobId));
+        assertEquals("RUNNING", job2.getStatusStr());
+
+        sleep(500);
+
+        new ActionCheckXCommand(actionId).call();
+        WorkflowActionBean action3 = jpaService.execute(wfActionGetCmd);
+        String launcherId = action3.getExternalId();
+
+        assertFalse(originalLauncherId.equals(launcherId));
+        assertFalse(originalMapperId.equals(launcherId));
+
+        final RunningJob launcherJob2 = jobClient.getJob(JobID.forName(launcherId));
+
+        waitFor(120 * 1000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                return launcherJob2.isComplete();
+            }
+        });
+        assertTrue(launcherJob2.isSuccessful());
+        assertTrue(LauncherMapper.hasIdSwap(launcherJob2));
+
+        new ActionCheckXCommand(actionId).call();
+        WorkflowActionBean action4 = jpaService.execute(wfActionGetCmd);
+        String mapperId = action4.getExternalId();
+        assertFalse(originalMapperId.equals(mapperId));
+
+        assertFalse(launcherId.equals(mapperId));
+
+        final RunningJob mrJob = jobClient.getJob(JobID.forName(mapperId));
+
+        waitFor(120 * 1000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                return mrJob.isComplete();
+            }
+        });
+        assertTrue(mrJob.isSuccessful());
+
+        new ActionCheckXCommand(actionId).call();
+        WorkflowActionBean action5 = jpaService.execute(wfActionGetCmd);
+
+        assertEquals("SUCCEEDED", action5.getExternalStatus());
+    }
+
     @Override
     protected WorkflowActionBean addRecordToWfActionTable(String wfId, String actionName, WorkflowAction.Status status) throws Exception {
         WorkflowActionBean action = createWorkflowActionSetPending(wfId, status);
@@ -281,6 +515,7 @@ public class TestActionCheckXCommand extends XDataTestCase {
         String actionXml = "<map-reduce>" +
         "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
         "<name-node>" + getNameNodeUri() + "</name-node>" +
+        "<prepare><delete path=\"" + outputDir.toString() + "\"/></prepare>" +
         "<configuration>" +
         "<property><name>mapred.mapper.class</name><value>" + MapperReducerForTest.class.getName() +
         "</value></property>" +

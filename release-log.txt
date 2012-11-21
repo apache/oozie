@@ -1,5 +1,7 @@
--- Oozie 3.3.0 release (unreleased)
+-- Oozie 3.3.0 release
 
+OOZIE-1005 Tests from OOZIE-994 use wrong condition in waitFor (rkanter via virag)
+OOZIE-994  ActionCheckXCommand does not handle failures properly(rkanter via mohammad)
 OOZIE-1058 ACL modify-job should not be hardcoded to group name(mona via mohammad)
 OOZIE-1052 HadoopAccessorService.createFileSystem throws exception in map-reduce action, failing workflow.(ryota via mohammad).
 OOZIE-1060 bump hadoop 2.X version to 2.0.2-alpha (rvs via tucu)

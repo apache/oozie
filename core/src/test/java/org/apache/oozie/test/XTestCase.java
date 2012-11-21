@@ -805,5 +805,38 @@ public abstract class XTestCase extends TestCase {
         return jobConf;
     }
 
+    /**
+     * A 'closure' used by {@link XTestCase#executeWhileJobTrackerIsShutdown} method.
+     */
+    public static interface ShutdownJobTrackerExecutable {
+
+        /**
+         * Execute some code
+         *
+         * @throws Exception thrown if the executed code throws an exception.
+         */
+        public void execute() throws Exception;
+    }
+
+    /**
+     * Execute some code, expressed via a {@link ShutdownJobTrackerExecutable}, while the JobTracker is shutdown. Once the code has
+     * finished, the JobTracker is restarted (even if an exception occurs).
+     *
+     * @param executable The ShutdownJobTrackerExecutable to execute while the JobTracker is shutdown
+     */
+    protected void executeWhileJobTrackerIsShutdown(ShutdownJobTrackerExecutable executable) {
+        mrCluster.stopJobTracker();
+        Exception ex = null;
+        try {
+            executable.execute();
+        } catch (Exception e) {
+            ex = e;
+        } finally {
+            mrCluster.startJobTracker();
+        }
+        if (ex != null) {
+            throw new RuntimeException(ex);
+        }
+    }
 }
 
