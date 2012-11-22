@@ -479,8 +479,16 @@ public class DagEngine extends BaseEngine {
         }
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.BaseEngine#dryRunSubmit(org.apache.hadoop.conf.Configuration)
+     */
     @Override
-    public String dryrunSubmit(Configuration conf, boolean startJob) throws BaseEngineException {
-        return null;
+    public String dryRunSubmit(Configuration conf) throws BaseEngineException {
+        try {
+            SubmitXCommand submit = new SubmitXCommand(true, conf, getAuthToken());
+            return submit.call();
+        } catch (CommandException ex) {
+            throw new DagEngineException(ex);
+        }
     }
 }
