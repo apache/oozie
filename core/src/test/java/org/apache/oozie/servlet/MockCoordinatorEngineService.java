@@ -98,11 +98,11 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
         }
 
         @Override
-        public String dryrunSubmit(Configuration conf, boolean startJob) throws CoordinatorEngineException {
+        public String dryRunSubmit(Configuration conf) throws CoordinatorEngineException {
             did = RestConstants.JOB_ACTION_DRYRUN;
             int idx = coordJobs.size();
             coordJobs.add(createDummyCoordinatorJob(idx, conf));
-            started.add(startJob);
+            started.add(false);
             return JOB_ID + idx;
         }
 

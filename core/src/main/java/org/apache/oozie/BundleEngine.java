@@ -88,10 +88,10 @@ public class BundleEngine extends BaseEngine {
     }
 
     /* (non-Javadoc)
-     * @see org.apache.oozie.BaseEngine#dryrunSubmit(org.apache.hadoop.conf.Configuration, boolean)
+     * @see org.apache.oozie.BaseEngine#dryRunSubmit(org.apache.hadoop.conf.Configuration)
      */
     @Override
-    public String dryrunSubmit(Configuration conf, boolean startJob) throws BundleEngineException {
+    public String dryRunSubmit(Configuration conf) throws BundleEngineException {
         BundleSubmitXCommand submit = new BundleSubmitXCommand(true, conf, getAuthToken());
         try {
             String jobId = submit.call();
