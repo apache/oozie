@@ -160,17 +160,28 @@ public class V1JobsServlet extends BaseJobsServlet {
 
         try {
             String action = request.getParameter(RestConstants.ACTION_PARAM);
-            if (action != null && !action.equals(RestConstants.JOB_ACTION_START)) {
+            if (action != null && !action.equals(RestConstants.JOB_ACTION_START)
+                    && !action.equals(RestConstants.JOB_ACTION_DRYRUN)) {
                 throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0303,
                         RestConstants.ACTION_PARAM, action);
             }
             boolean startJob = (action != null);
             String user = conf.get(OozieClient.USER_NAME);
             DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(user, getAuthToken(request));
-            String id = dagEngine.submitJob(conf, startJob);
+            String id;
+            boolean dryrun = false;
+            if (action != null) {
+                dryrun = (action.equals(RestConstants.JOB_ACTION_DRYRUN));
+            }
+            if (dryrun) {
+                id = dagEngine.dryRunSubmit(conf);
+            }
+            else {
+                id = dagEngine.submitJob(conf, startJob);
+            }
             json.put(JsonTags.JOB_ID, id);
         }
-        catch (DagEngineException ex) {
+        catch (BaseEngineException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
         }
 
@@ -202,7 +213,7 @@ public class V1JobsServlet extends BaseJobsServlet {
                 dryrun = (action.equals(RestConstants.JOB_ACTION_DRYRUN));
             }
             if (dryrun) {
-                id = coordEngine.dryrunSubmit(conf, startJob);
+                id = coordEngine.dryRunSubmit(conf);
             }
             else {
                 id = coordEngine.submitJob(conf, startJob);
@@ -240,7 +251,7 @@ public class V1JobsServlet extends BaseJobsServlet {
                 dryrun = (action.equals(RestConstants.JOB_ACTION_DRYRUN));
             }
             if (dryrun) {
-                id = bundleEngine.dryrunSubmit(conf, startJob);
+                id = bundleEngine.dryRunSubmit(conf);
             }
             else {
                 id = bundleEngine.submitJob(conf, startJob);

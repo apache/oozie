@@ -75,10 +75,28 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
     private String authToken;
     private List<JsonBean> insertList = new ArrayList<JsonBean>();
 
+    /**
+     * Constructor to create the workflow Submit Command.
+     *
+     * @param conf : Configuration for workflow job
+     * @param authToken : To be used for authentication
+     */
     public SubmitXCommand(Configuration conf, String authToken) {
         super("submit", "submit", 1);
         this.conf = ParamChecker.notNull(conf, "conf");
         this.authToken = ParamChecker.notEmpty(authToken, "authToken");
+    }
+
+    /**
+     * Constructor to create the workflow Submit Command.
+     *
+     * @param dryrun : if dryrun
+     * @param conf : Configuration for workflow job
+     * @param authToken : To be used for authentication
+     */
+    public SubmitXCommand(boolean dryrun, Configuration conf, String authToken) {
+        this(conf, authToken);
+        this.dryrun = dryrun;
     }
 
     private static final Set<String> DISALLOWED_DEFAULT_PROPERTIES = new HashSet<String>();
@@ -178,27 +196,32 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
             Element wfElem = XmlUtils.parseXml(app.getDefinition());
             ELEvaluator evalSla = createELEvaluatorForGroup(conf, "wf-sla-submit");
             String jobSlaXml = verifySlaElements(wfElem, evalSla);
-            writeSLARegistration(jobSlaXml, workflow.getId(), workflow.getUser(), workflow.getGroup(), LOG);
-            workflow.setSlaXml(jobSlaXml);
-            // System.out.println("SlaXml :"+ slaXml);
+            if (!dryrun) {
+                writeSLARegistration(jobSlaXml, workflow.getId(), workflow.getUser(), workflow.getGroup(), LOG);
+                workflow.setSlaXml(jobSlaXml);
+                // System.out.println("SlaXml :"+ slaXml);
 
-            //store.insertWorkflow(workflow);
-            insertList.add(workflow);
-            JPAService jpaService = Services.get().get(JPAService.class);
-            if (jpaService != null) {
-                try {
-                    jpaService.execute(new BulkUpdateInsertJPAExecutor(null, insertList));
+                //store.insertWorkflow(workflow);
+                insertList.add(workflow);
+                JPAService jpaService = Services.get().get(JPAService.class);
+                if (jpaService != null) {
+                    try {
+                        jpaService.execute(new BulkUpdateInsertJPAExecutor(null, insertList));
+                    }
+                    catch (JPAExecutorException je) {
+                        throw new CommandException(je);
+                    }
                 }
-                catch (JPAExecutorException je) {
-                    throw new CommandException(je);
+                else {
+                    LOG.error(ErrorCode.E0610);
+                    return null;
                 }
+
+                return workflow.getId();
             }
             else {
-                LOG.error(ErrorCode.E0610);
-                return null;
+                return "OK";
             }
-
-            return workflow.getId();
         }
         catch (WorkflowException ex) {
             throw new CommandException(ex);
