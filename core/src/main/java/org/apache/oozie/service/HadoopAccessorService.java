@@ -28,6 +28,7 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.security.token.Token;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.action.hadoop.JavaActionExecutor;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
@@ -62,6 +63,7 @@ public class HadoopAccessorService implements Service {
     public static final String KERBEROS_AUTH_ENABLED = CONF_PREFIX + "kerberos.enabled";
     public static final String KERBEROS_KEYTAB = CONF_PREFIX + "keytab.file";
     public static final String KERBEROS_PRINCIPAL = CONF_PREFIX + "kerberos.principal";
+    public static final String MR_DELEGATION_TOKEN = "oozie mr token";
 
     private static final String OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED = "oozie.HadoopAccessorService.created";
 
@@ -351,7 +353,7 @@ public class HadoopAccessorService implements Service {
         if (!conf.getBoolean(OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED, false)) {
             throw new HadoopAccessorException(ErrorCode.E0903);
         }
-        String jobTracker = conf.get("mapred.job.tracker");
+        String jobTracker = conf.get(JavaActionExecutor.HADOOP_JOB_TRACKER);
         validateJobTracker(jobTracker);
         try {
             UserGroupInformation ugi = getUGI(user);
@@ -360,8 +362,8 @@ public class HadoopAccessorService implements Service {
                     return new JobClient(conf);
                 }
             });
-            Token<DelegationTokenIdentifier> mrdt = jobClient.getDelegationToken(new Text("mr token"));
-            conf.getCredentials().addToken(new Text("mr token"), mrdt);
+            Token<DelegationTokenIdentifier> mrdt = jobClient.getDelegationToken(new Text(MR_DELEGATION_TOKEN));
+            conf.getCredentials().addToken(new Text(MR_DELEGATION_TOKEN), mrdt);
             return jobClient;
         }
         catch (InterruptedException ex) {
