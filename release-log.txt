@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1078 Help -> Documentation and Help -> Online Help should link to oozie.apache.org/ (jun via mohammad)
 OOZIE-1057 Log message for retrying to connect to the JT always says 60,000 milliseconds (jiezhou via rkanter)
 OOZIE-1080 Add a dryrun option for workflows (rkanter)
 OOZIE-1062 Create a shell example

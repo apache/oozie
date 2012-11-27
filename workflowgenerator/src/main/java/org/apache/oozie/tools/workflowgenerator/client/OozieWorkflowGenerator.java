@@ -537,8 +537,20 @@ public class OozieWorkflowGenerator implements EntryPoint {
         MenuBar helpMenu = new MenuBar(true);
         helpMenu.setAutoOpen(true);
         helpMenu.setAnimationEnabled(true);
-        helpMenu.addItem("Documentation", cmd);
-        helpMenu.addItem("Online Help", cmd);
+
+        // TODO this should point to a workflowgenerator's maven site, however there is no maven site available. (Not even in
+        // Workspace of the jenkins job at https://builds.apache.org/job/oozie-trunk-precommit-build/ws/workflowgenerator/target/)
+        // where client, for example, has target/site/apidocs
+        // The ideal place is somewhere under http://oozie.apache.org/docs/ once it is generated.
+        Command openOozieTopPageComman = new Command() {
+            @Override
+            public void execute() {
+                Window.open("http://oozie.apache.org/", "_blank", "");
+            }
+        };
+        helpMenu.addItem("Documentation", openOozieTopPageComman);
+        helpMenu.addItem("Online Help", openOozieTopPageComman);
+
         helpMenu.addItem("About", cmd);
 
         MenuBar menu = new MenuBar();
