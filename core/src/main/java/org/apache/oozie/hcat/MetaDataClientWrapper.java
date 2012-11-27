@@ -19,6 +19,7 @@ package org.apache.oozie.hcat;
 
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 
 import org.apache.hcatalog.api.HCatClient;
@@ -28,12 +29,22 @@ import org.apache.oozie.service.MetaDataAccessorException;
 import org.apache.oozie.service.MetaDataAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.HCatURI;
+import org.apache.oozie.util.XLog;
 
 /**
  * This class is a wrapper around the HCatalog client class
  */
 public class MetaDataClientWrapper {
 
+    public XLog LOG = XLog.getLog(getClass());
+    private MetaDataAccessorService mdac = null;
+
+    public MetaDataClientWrapper() {
+        mdac = Services.get().get(MetaDataAccessorService.class);
+        if (mdac == null) {
+            throw new RuntimeException("MetaDataAccessorService is not initialized. Check oozie-site.xml");
+        }
+    }
     /**
      * Query one partition.
      *
@@ -47,7 +58,7 @@ public class MetaDataClientWrapper {
      */
     public HCatPartition getOnePartition(String server, String db, String table, Map<String, String> partition,
             String user) throws MetaDataAccessorException {
-        HCatClient client = Services.get().get(MetaDataAccessorService.class).getHCatClient(server, user);
+        HCatClient client = mdac.getHCatClient(server, user);
         HCatPartition hPartition;
         try {
             hPartition = client.getPartition(db, table, partition);
@@ -90,7 +101,7 @@ public class MetaDataClientWrapper {
      */
     public List<HCatPartition> getPartitionsByFilter(String server, String db, String table, String filter, String user)
             throws MetaDataAccessorException {
-        HCatClient client = Services.get().get(MetaDataAccessorService.class).getHCatClient(server, user);
+        HCatClient client = mdac.getHCatClient(server, user);
         List<HCatPartition> hPartitions;
         try {
             hPartitions = client.listPartitionsByFilter(db, table, filter);
@@ -136,7 +147,7 @@ public class MetaDataClientWrapper {
      */
     public void dropOnePartition(String server, String db, String table, Map<String, String> partition,
             boolean ifExists, String user) throws MetaDataAccessorException {
-        HCatClient client = Services.get().get(MetaDataAccessorService.class).getHCatClient(server, user);
+        HCatClient client = mdac.getHCatClient(server, user);
         try {
             client.dropPartition(db, table, partition, ifExists);
         }
@@ -164,6 +175,28 @@ public class MetaDataClientWrapper {
         }
         dropOnePartition(uri.getServer(), uri.getDb(), uri.getTable(), uri.getPartitionMap(), ifExists, user);
         return;
+    }
+
+    /**
+     * Check the list of dependencies against HCatalog server. If any partition
+     * is already in HCatalog, this method will remove it from the list.
+     *
+     * @param pushDepList : List of push-based dependencies.
+     * @param user : end-user id
+     */
+    public void checkList(List<String> pushDepList, String user) {
+        for (ListIterator<String> iter = pushDepList.listIterator(); iter.hasNext();) {
+            String depURI = iter.next();
+            HCatPartition part = null;
+            try {
+                part = getOnePartition(depURI, user);
+                iter.remove();
+                LOG.info("Found URI " + depURI);
+            }
+            catch (MetaDataAccessorException e) {
+                LOG.info("Not found " + depURI);
+            }
+        }
     }
 
 }
