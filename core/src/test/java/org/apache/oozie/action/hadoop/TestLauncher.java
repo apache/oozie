@@ -294,4 +294,34 @@ public class TestLauncher extends XFsTestCase {
         lm.setupLauncherInfo(jobConf, "1", "1@a", actionDir, "1@a-0", actionConf, prepareBlock);
         assertTrue(jobConf.get("oozie.action.prepare.xml").equals(prepareBlock));
     }
+
+  // Test to ensure that the property value "oozie.action.prepare.xml" in the configuration of the job is properly set
+  // when there is prepare block in workflow XML
+  public void testSetupLauncherInfoHadoop2_0_2_alphaWorkaround() throws Exception {
+    Path actionDir = getFsTestCaseDir();
+    FileSystem fs = getFileSystem();
+    Path newDir = new Path(actionDir, "newDir");
+
+    // Setting up the job configuration
+    JobConf jobConf = Services.get().get(HadoopAccessorService.class).
+      createJobConf(new URI(getNameNodeUri()).getAuthority());
+    jobConf.set("user.name", getTestUser());
+    jobConf.set("fs.default.name", getNameNodeUri());
+
+    LauncherMapper lm = new LauncherMapper();
+    Configuration actionConf = new XConfiguration();
+    actionConf.set("mapreduce.job.cache.files", "a.jar,aa.jar#aa.jar");
+    lm.setupLauncherInfo(jobConf, "1", "1@a", actionDir, "1@a-0", actionConf, "");
+    assertFalse(jobConf.getBoolean("oozie.hadoop-2.0.2-alpha.workaround.for.distributed.cache", false));
+    assertEquals("a.jar,aa.jar#aa.jar", actionConf.get("mapreduce.job.cache.files"));
+
+    Services.get().getConf().setBoolean("oozie.hadoop-2.0.2-alpha.workaround.for.distributed.cache", true);
+    lm = new LauncherMapper();
+    actionConf = new XConfiguration();
+    actionConf.set("mapreduce.job.cache.files", "a.jar,aa.jar#aa.jar");
+    lm.setupLauncherInfo(jobConf, "1", "1@a", actionDir, "1@a-0", actionConf, "");
+    assertTrue(jobConf.getBoolean("oozie.hadoop-2.0.2-alpha.workaround.for.distributed.cache", false));
+    assertEquals("aa.jar#aa.jar", actionConf.get("mapreduce.job.cache.files"));
+  }
+
 }

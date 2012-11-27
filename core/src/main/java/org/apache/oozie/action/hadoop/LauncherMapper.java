@@ -33,6 +33,9 @@ import java.lang.reflect.Method;
 import java.net.URI;
 import java.security.Permission;
 import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -200,6 +203,18 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
 
         actionConf.set(OOZIE_JOB_ID, jobId);
         actionConf.set(OOZIE_ACTION_ID, actionId);
+
+        if (Services.get().getConf().getBoolean("oozie.hadoop-2.0.2-alpha.workaround.for.distributed.cache", false)) {
+          List<String> purgedEntries = new ArrayList<String>();
+          Collection<String> entries = actionConf.getStringCollection("mapreduce.job.cache.files");
+          for (String entry : entries) {
+            if (entry.contains("#")) {
+              purgedEntries.add(entry);
+            }
+          }
+          actionConf.setStrings("mapreduce.job.cache.files", purgedEntries.toArray(new String[purgedEntries.size()]));
+          launcherConf.setBoolean("oozie.hadoop-2.0.2-alpha.workaround.for.distributed.cache", true);
+        }
 
         FileSystem fs =
           Services.get().get(HadoopAccessorService.class).createFileSystem(launcherConf.get("user.name"),
@@ -398,6 +413,9 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
             }
             else {
                 String mainClass = getJobConf().get(CONF_OOZIE_ACTION_MAIN_CLASS);
+                if (getJobConf().getBoolean("oozie.hadoop-2.0.2-alpha.workaround.for.distributed.cache", false)) {
+                  System.err.println("WARNING, workaround for Hadoop 2.0.2-alpha distributed cached issue (MAPREDUCE-4820) enabled");
+                }
                 String msgPrefix = "Main class [" + mainClass + "], ";
                 int errorCode = 0;
                 Throwable errorCause = null;
