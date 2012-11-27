@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1050 Implement logic to update dependencies via push JMS message(mona via mohammad)
 OOZIE-1068 Metadata Accessor service for HCatalog(mohammad)
 OOZIE-1069 Update dataIn and dataOut EL functions to support partitions (mohammad)
 OOZIE-1043 Add logic to register to Missing Dependency Structure in coord action materialization (ryota via mohammad)

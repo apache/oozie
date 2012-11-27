@@ -23,6 +23,7 @@ import javax.jms.MessageConsumer;
 import javax.jms.MessageListener;
 
 import org.apache.oozie.service.JMSAccessorService;
+import org.apache.oozie.service.MetadataServiceException;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.XLog;
 
@@ -93,7 +94,12 @@ public class MessageReceiver implements MessageListener {
     @Override
     public synchronized void onMessage(Message msg) {
         if (msgHandler != null) {
-            msgHandler.process(msg);
+            try {
+                msgHandler.process(msg);
+            }
+            catch (MetadataServiceException e) {
+                LOG.warn("Unable to process message from bus ", e);
+            }
         }
         else {
             LOG.info("Message handler none. Unprocessed messsage " + msg);

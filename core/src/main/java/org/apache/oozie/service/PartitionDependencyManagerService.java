@@ -161,7 +161,6 @@ public class PartitionDependencyManagerService implements Service {
      * @param actionId
      * @throws MetadataServiceException
      */
-    @SuppressWarnings("unused")
     public void addMissingPartition(PartitionWrapper partition, String actionId) throws MetadataServiceException {
         String prefix = PartitionWrapper.makePrefix(partition.getServerName(), partition.getDbName());
         Map<String, PartitionsGroup> tablePartitionsMap;

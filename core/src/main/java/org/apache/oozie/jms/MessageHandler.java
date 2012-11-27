@@ -19,11 +19,14 @@ package org.apache.oozie.jms;
 
 import javax.jms.Message;
 
+import org.apache.oozie.service.MetadataServiceException;
+
 public interface MessageHandler {
     /**
      * Process a generic JMS message.
      *
      * @param msg : to be processed
+     * @throws MetadataServiceException
      */
-    public void process(Message msg);
+    public void process(Message msg) throws MetadataServiceException;
 }
