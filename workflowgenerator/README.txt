@@ -131,8 +131,8 @@ if you want to kill process, Ctrl-C in console
 
 If you have any questions/issues, please send an email to:
 
-oozie-users@incubator.apache.org
+user@oozie.apache.org
 
 Subscribe using the link:
 
-http://incubator.apache.org/oozie/MailingLists.html
+http://oozie.apache.org/mail-lists.html
