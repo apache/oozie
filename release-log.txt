@@ -1,5 +1,7 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1096 Update wfgen README.txt to have the TLP mailing list (jun aoki via rkanter)
+OOZIE-1015 HadoopAccessorService jobtracker validation should not have hardcoded conf key (mona)
 OOZIE-1078 Help -> Documentation and Help -> Online Help should link to oozie.apache.org/ (jun via mohammad)
 OOZIE-1057 Log message for retrying to connect to the JT always says 60,000 milliseconds (jiezhou via rkanter)
 OOZIE-1080 Add a dryrun option for workflows (rkanter)
@@ -26,13 +28,11 @@ OOZIE-1017 Add test to make sure old version of Xerces isn't being used (rkanter
 OOZIE-949 Allow the user to set 'mapred.job.name' (jrkinley via tucu)
 OOZIE-1009 Documentation pages should use default ports for Oozie/JT/NN (tucu)
 OOZIE-669 Deprecate oozie-start.sh, oozie-stop.sh & oozie-run.sh scripts (rkanter via tucu)
-OOZIE-1005 Tests from OOZIE-994 use wrong condition in waitFor (rkanter via virag)
 OOZIE-992 Add overall status to test-patch messages and add some color-coding for negative results (tucu)
 OOZIE-1003 TestOozieCLI.testSubmitDoAs() should disable anonymous request (tucu)
 OOZIE-1004 Oozie client needs to bundle slf4j JARs (tucu)
 OOZIE-1000 Remove Yahoo branding from docs, tests, etc (rkanter via virag)
 OOZIE-999 XLogStreamer requires log4j.appender.oozie.layout.ConversionPattern to contain a "-" (dash) or streaming logs to web UI and CLI don't work (rkanter via virag)
-OOZIE-994 ActionCheckXCommand does not handle failures properly (rkanter via virag)
 OOZIE-998 test-patch doesn't allow lines that are exactly 132 characters (rkanter via tucu)
 OOZIE-739 a coord action fails because the uri points to a namenode that is not in whitelist. the E0901 error shows in the oozie.log, but not written to the database (mona,mbattisha via virag)
 OOZIE-987 Fix minor bug in one of the uber jar tests (rkanter via tucu)
@@ -50,6 +50,9 @@ OOZIE-944 Implement Workflow Generator UI Tool (egashira via virag)
 
 -- Oozie 3.3.0 release (unreleased)
 
+OOZIE-1089 DistributedCache workaround for Hadoop 2.0.2-alpha (tucu)
+OOZIE-1005 Tests from OOZIE-994 use wrong condition in waitFor (rkanter via virag)
+OOZIE-994 ActionCheckXCommand does not handle failures properly (rkanter via virag)
 OOZIE-1058 ACL modify-job should not be hardcoded to group name(mona via mohammad)
 OOZIE-1052 HadoopAccessorService.createFileSystem throws exception in map-reduce action, failing workflow.(ryota via mohammad).
 OOZIE-1060 bump hadoop 2.X version to 2.0.2-alpha (rvs via tucu)
