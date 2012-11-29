@@ -9,6 +9,9 @@ OOZIE-1061 Add new EL functions to retrieve HCatalog server, DB and table name(m
 OOZIE-1056 Command to update push-based dependency (mohammad)
 OOZIE-1059 Add static method to create URI String in HCatURI(ryota via mohammad)
 OOZIE-1039 Implement the Missing Dependency structure for HCat partitions (mona via mohammad)
+OOZIE-1062 Create a shell example
+OOZIE-1034 Allow disabling forkjoin validation just for a specific workflow
+OOZIE-1072 Oozie Coordinator Doc error in Synchronous datasets
 OOZIE-1028 Add EL function to allow date ranges to be used for dataset ranges (rkanter via tucu)
 OOZIE-1045 Parameterize <unresolved-instances> tag currently hardcoded (egashira via mona)
 OOZIE-1029 MiniMRCluster fails to start when used against YARN (rkanter via tucu)
