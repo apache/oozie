@@ -39,10 +39,11 @@ Documentations :
 Oozie web service is bundle with the built-in details documentation.
 
 More inforamtion could be found at:
-http://incubator.apache.org/oozie/
+http://oozie.apache.org/
 
 Oozie Quick Start:
-  http://incubator.apache.org/oozie/QuickStart.html
+http://oozie.apache.org/docs/3.2.0-incubating/DG_QuickStart.html
+
 
 Supported Hadoop Versions:
 ----------------------------
@@ -53,10 +54,10 @@ This version of Oozie was primarily tested against Hadoop 0.20.205.x. This will 
 
 If you have any questions/issues, please send an email to:
 
-oozie-users@incubator.apache.org
+user@oozie.apache.org
 
 Subscribe using the link:
 
-http://incubator.apache.org/oozie/MailingLists.html
+http://oozie.apache.org/mail-lists.html
 
 
