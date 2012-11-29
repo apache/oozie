@@ -1,5 +1,9 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1096 Update wfgen README.txt to have the TLP mailing list (jun aoki via rkanter)
+OOZIE-1015 HadoopAccessorService jobtracker validation should not have hardcoded conf key (mona)
+OOZIE-1078 Help -> Documentation and Help -> Online Help should link to oozie.apache.org/ (jun via mohammad)
+OOZIE-1057 Log message for retrying to connect to the JT always says 60,000 milliseconds (jiezhou via rkanter)
 OOZIE-1080 Add a dryrun option for workflows (rkanter)
 OOZIE-1086 Command to check the missing partitions directly against HCatalog server (mohammad)
 OOZIE-1050 Implement logic to update dependencies via push JMS message(mona via mohammad)

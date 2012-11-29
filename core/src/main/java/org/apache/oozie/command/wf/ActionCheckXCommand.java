@@ -39,6 +39,7 @@ import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
+import org.apache.oozie.service.ActionCheckerService;
 import org.apache.oozie.service.ActionService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
@@ -156,6 +157,10 @@ public class ActionCheckXCommand extends ActionXCommand<Void> {
     protected Void execute() throws CommandException {
         LOG.debug("STARTED ActionCheckXCommand for wf actionId=" + actionId + " priority =" + getPriority());
 
+        long retryInterval = Services.get().getConf().getLong(ActionCheckerService.CONF_ACTION_CHECK_INTERVAL, executor
+                .getRetryInterval());
+        executor.setRetryInterval(retryInterval);
+
         ActionExecutorContext context = null;
         try {
             boolean isRetry = false;
@@ -239,4 +244,9 @@ public class ActionCheckXCommand extends ActionXCommand<Void> {
             InstrumentUtils.incrJobCounter(INSTR_FAILED_JOBS_COUNTER, 1, getInstrumentation());
         }
     }
+
+    protected long getRetryInterval() {
+        return (executor != null) ? executor.getRetryInterval() : ActionExecutor.RETRY_INTERVAL;
+    }
+
 }
