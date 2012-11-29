@@ -182,6 +182,16 @@ public abstract class BaseEngine {
      */
     public abstract String getJobIdForExternalId(String externalId) throws BaseEngineException;
 
-    public abstract String dryrunSubmit(Configuration conf, boolean startJob) throws BaseEngineException;
+    /**
+     * Dry run a job; like {@link BaseEngine#submitJob(org.apache.hadoop.conf.Configuration, boolean) but doesn't actually execute
+     * the job.
+     * <p/>
+     * It validates configuration properties.
+     *
+     * @param conf job configuration.
+     * @return the result of the dryrun
+     * @throws BaseEngineException thrown if there was a problem doing the dryrun
+     */
+    public abstract String dryRunSubmit(Configuration conf) throws BaseEngineException;
 
 }

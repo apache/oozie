@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1080 Add a dryrun option for workflows (rkanter)
 OOZIE-1086 Command to check the missing partitions directly against HCatalog server (mohammad)
 OOZIE-1050 Implement logic to update dependencies via push JMS message(mona via mohammad)
 OOZIE-1068 Metadata Accessor service for HCatalog(mohammad)

@@ -242,8 +242,8 @@ public class OozieCLI {
         Option debug = new Option(DEBUG_OPTION, false, "Use debug mode to see debugging statements on stdout");
         Option rerun = new Option(RERUN_OPTION, true,
                 "rerun a job  (coordinator requires -action or -date, bundle requires -coordinator or -date)");
-        Option dryrun = new Option(DRYRUN_OPTION, false,
-                "Supported in Oozie-2.0 or later versions ONLY - dryrun or test run a coordinator job, job is not queued");
+        Option dryrun = new Option(DRYRUN_OPTION, false, "Dryrun a workflow (since 3.4) or coordinator (since 2.0) job without"
+                + " actually executing it");
         Option start = new Option(START_OPTION, true, "start a job");
         Option suspend = new Option(SUSPEND_OPTION, true, "suspend a job");
         Option resume = new Option(RESUME_OPTION, true, "resume a job");
@@ -745,19 +745,24 @@ public class OozieCLI {
                 wc.start(commandLine.getOptionValue(START_OPTION));
             }
             else if (options.contains(DRYRUN_OPTION)) {
-                String[] dryrunStr = wc.dryrun(getConfiguration(wc, commandLine)).split("action for new instance");
-                int arraysize = dryrunStr.length;
-                System.out.println("***coordJob after parsing: ***");
-                System.out.println(dryrunStr[0]);
-                int aLen = dryrunStr.length - 1;
-                if (aLen < 0) {
-                    aLen = 0;
-                }
-                System.out.println("***total coord actions is " + aLen + " ***");
-                for (int i = 1; i <= arraysize - 1; i++) {
-                    System.out.println(RULER);
-                    System.out.println("coordAction instance: " + i + ":");
-                    System.out.println(dryrunStr[i]);
+                String dryrunStr = wc.dryrun(getConfiguration(wc, commandLine));
+                if (dryrunStr.equals("OK")) {  // workflow
+                    System.out.println("OK");
+                } else {                        // coordinator
+                    String[] dryrunStrs = dryrunStr.split("action for new instance");
+                    int arraysize = dryrunStrs.length;
+                    System.out.println("***coordJob after parsing: ***");
+                    System.out.println(dryrunStrs[0]);
+                    int aLen = dryrunStrs.length - 1;
+                    if (aLen < 0) {
+                        aLen = 0;
+                    }
+                    System.out.println("***total coord actions is " + aLen + " ***");
+                    for (int i = 1; i <= arraysize - 1; i++) {
+                        System.out.println(RULER);
+                        System.out.println("coordAction instance: " + i + ":");
+                        System.out.println(dryrunStrs[i]);
+                    }
                 }
             }
             else if (options.contains(SUSPEND_OPTION)) {

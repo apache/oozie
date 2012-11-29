@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.local.LocalOozie;
 import org.apache.oozie.client.OozieClient;
@@ -33,6 +34,7 @@ import org.apache.oozie.store.WorkflowStore;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.service.XLogService;
+import org.apache.oozie.util.IOUtils;
 
 public class TestSubmitXCommand extends XDataTestCase {
     @Override
@@ -164,6 +166,66 @@ public class TestSubmitXCommand extends XDataTestCase {
         }
         catch (CommandException ce) {
 
+        }
+    }
+
+    public void testDryrunValidXml() throws Exception {
+        Configuration conf = new XConfiguration();
+        String appPath = getTestCaseDir();
+        String appXml = IOUtils.getResourceAsString("wf-schema-valid-global.xml", -1);
+        writeToFile(appXml, appPath + "/workflow.xml");
+        conf.set(OozieClient.APP_PATH, "file://" + appPath);
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        SubmitXCommand sc = new SubmitXCommand(true, conf, "UNIT_TESTING");
+        assertEquals("OK", sc.call());
+    }
+
+    public void testDryrunInvalidXml() throws Exception {
+        Configuration conf = new XConfiguration();
+        String appPath = getTestCaseDir();
+        String appXml = IOUtils.getResourceAsString("wf-loop1-invalid.xml", -1);
+        writeToFile(appXml, appPath + "/workflow.xml");
+        conf.set(OozieClient.APP_PATH, "file://" + appPath);
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        SubmitXCommand sc = new SubmitXCommand(true, conf, "UNIT_TESTING");
+        try {
+            sc.call();
+            fail("Should have gotten E0707 because the XML has a loop");
+        } catch (CommandException ce) {
+            assertEquals(ErrorCode.E0707, ce.getErrorCode());
+            assertEquals("E0707: Loop detected at parsing, node [a]", ce.getMessage());
+        }
+
+        conf = new XConfiguration();
+        appPath = getTestCaseDir();
+        appXml = IOUtils.getResourceAsString("wf-transition-invalid.xml", -1);
+        writeToFile(appXml, appPath + "/workflow.xml");
+        conf.set(OozieClient.APP_PATH, "file://" + appPath);
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        sc = new SubmitXCommand(true, conf, "UNIT_TESTING");
+        try {
+            sc.call();
+            fail("Should have gotten E0708 because the XML has an invalid transition");
+        } catch (CommandException ce) {
+            assertEquals(ErrorCode.E0708, ce.getErrorCode());
+            assertEquals("E0708: Invalid transition, node [c] transition [f]", ce.getMessage());
+        }
+
+        conf = new XConfiguration();
+        appPath = getTestCaseDir();
+        appXml = IOUtils.getResourceAsString("wf-schema-invalid.xml", -1);
+        writeToFile(appXml, appPath + "/workflow.xml");
+        conf.set(OozieClient.APP_PATH, "file://" + appPath);
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        sc = new SubmitXCommand(true, conf, "UNIT_TESTING");
+        try {
+            sc.call();
+            fail("Should have gotten E0701 because the XML has an invalid element");
+        } catch (CommandException ce) {
+            assertEquals(ErrorCode.E0701, ce.getErrorCode());
+            assertTrue(ce.getMessage().contains("XML schema error"));
+            assertTrue(ce.getMessage().contains("starting with element 'xstart'"));
+            assertTrue(ce.getMessage().contains("'{\"uri:oozie:workflow:0.1\":start}' is expected"));
         }
     }
 
