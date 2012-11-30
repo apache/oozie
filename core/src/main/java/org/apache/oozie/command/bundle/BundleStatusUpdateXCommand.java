@@ -65,8 +65,9 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
                     + " coord job ID: " + coordjob.getId() + " coord Status " + coordjob.getStatus());
             Job.Status coordCurrentStatus = coordjob.getStatus();
             // The status of bundle action should not be updated if the bundle action is in terminal state
-            // TODO - change this once bottom up rerun is allowed to change the bundle action state
-            if (!bundleaction.isTerminalStatus()) {
+            // and coord Id is null. For e.g if Bundleaction is killed and coord Id is null, then the status of bundle
+            // should not be changed.
+            if (bundleaction.getCoordId() != null || !bundleaction.isTerminalStatus()) {
                 bundleaction.setStatus(coordCurrentStatus);
             }
             if (bundleaction.isPending()) {

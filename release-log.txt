@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1106 latest and future function do not work correctly when oozie processing timezone is non UTC (rohini via tucu)
 OOZIE-1102 Update Oozie README.txt to have the TLP mailing list and links (jaoki via rkanter)
 OOZIE-1096 Update wfgen README.txt to have the TLP mailing list (jun aoki via rkanter)
 OOZIE-1015 HadoopAccessorService jobtracker validation should not have hardcoded conf key (mona)
@@ -51,6 +52,8 @@ OOZIE-944 Implement Workflow Generator UI Tool (egashira via virag)
 
 -- Oozie 3.3.0 release (unreleased)
 
+OOZIE-1065 bundle status does not transit after rerun (virag)
+OOZIE-1064 Status value of coordinator job not reflected in bundle action and invalid transition of coordinator job (virag)
 OOZIE-1089 DistributedCache workaround for Hadoop 2.0.2-alpha (tucu)
 OOZIE-1005 Tests from OOZIE-994 use wrong condition in waitFor (rkanter via virag)
 OOZIE-994 ActionCheckXCommand does not handle failures properly (rkanter via virag)
