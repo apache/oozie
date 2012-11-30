@@ -2,13 +2,9 @@ package org.apache.oozie.command.coord;
 
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.ListIterator;
 
-import org.apache.hadoop.util.StringUtils;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
@@ -16,14 +12,12 @@ import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.coord.CoordELFunctions;
-import org.apache.oozie.executor.jpa.CoordActionGetForCheckJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionGetForInputCheckJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionUpdatePushInputCheckJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.PartitionDependencyManagerService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.util.HCatURI;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.PartitionWrapper;
 
@@ -40,7 +34,8 @@ public class CoordActionUpdatePushMissingDependency extends CoordinatorXCommand<
 
     @Override
     protected Void execute() throws CommandException {
-        // TODO: Get the list of action from Available map
+        LOG.info("STARTED for Action id [{0}]", actionId);
+       // TODO: Get the list of action from Available map
         PartitionDependencyManagerService pdms = Services.get().get(PartitionDependencyManagerService.class);
         if (pdms == null) {
             throw new CommandException(ErrorCode.E1024, "PartitionDependencyManagerService");
@@ -85,6 +80,7 @@ public class CoordActionUpdatePushMissingDependency extends CoordinatorXCommand<
                 }
             }
         }
+        LOG.info("ENDED for Action id [{0}]", actionId);
         return null;
     }
 

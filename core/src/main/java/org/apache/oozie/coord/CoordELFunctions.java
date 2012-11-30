@@ -392,7 +392,7 @@ public class CoordELFunctions {
     public static String ph3_coord_metaServer(String dataInName) {
         HCatURI hcatURI = getURI(dataInName);
         if (hcatURI != null) {
-            return hcatURI.getServer();
+            return hcatURI.getServerEndPoint();
         }
         else {
             return "";

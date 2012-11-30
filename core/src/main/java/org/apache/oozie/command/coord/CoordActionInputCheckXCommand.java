@@ -135,7 +135,8 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                 nonExistList.append(CoordCommandUtils.RESOLVED_UNRESOLVED_SEPARATOR).append(nonResolvedList);
             }
             coordAction.setMissingDependencies(nonExistList.toString());
-            if (status == true) {
+            String pushDeps = coordAction.getPushMissingDependencies();
+            if (status == true && (pushDeps == null || pushDeps.length() == 0)) {
                 coordAction.setStatus(CoordinatorAction.Status.READY);
                 // pass jobID to the CoordActionReadyXCommand
                 queue(new CoordActionReadyXCommand(coordAction.getJobId()), 100);

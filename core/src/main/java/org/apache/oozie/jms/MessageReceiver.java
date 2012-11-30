@@ -93,6 +93,7 @@ public class MessageReceiver implements MessageListener {
      */
     @Override
     public synchronized void onMessage(Message msg) {
+        LOG.trace("Received a JMS message ");
         if (msgHandler != null) {
             try {
                 msgHandler.process(msg);

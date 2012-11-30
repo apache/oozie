@@ -40,6 +40,8 @@ public class HCatURI {
     public static final String PATH_SEPARATOR = "/";
     public static final String PARTITION_PREFIX = "?";
     public static final String PARTITION_VALUE_QUOTE = "'";
+    // TODO: Over writable through oozie-site
+    public static final String DEFAULT_PROTOCOL = "thrift://";
 
     private URI uri;
     private String server;
@@ -49,6 +51,7 @@ public class HCatURI {
 
     /**
      * Constructor using given configuration
+     *
      * @param s HCat URI String
      * @param conf Configuration
      * @throws URISyntaxException
@@ -59,6 +62,7 @@ public class HCatURI {
 
     /**
      * Constructor using default configuration
+     *
      * @param s HCat URI String
      * @throws URISyntaxException
      */
@@ -126,7 +130,14 @@ public class HCatURI {
     }
 
     /**
-     * @return server name
+     * @return fully qualified server address
+     */
+    public String getServerEndPoint() {
+        return DEFAULT_PROTOCOL + server;
+    }
+
+    /**
+     * @return server host:port
      */
     public String getServer() {
         return server;
@@ -260,6 +271,7 @@ public class HCatURI {
         HCatURI uri = (HCatURI) obj;
         boolean equals = true;
         HashMap<String, String> p = this.getPartitionMap();
+
         if (this.server.equals(uri.getServer()) && this.db.equals(uri.getDb()) && this.table.equals(uri.getTable())
                 && p.size() == uri.getPartitionMap().size()) {
             Iterator<Map.Entry<String, String>> it1 = uri.getPartitionMap().entrySet().iterator();

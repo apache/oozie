@@ -37,7 +37,7 @@ public class HCatMessageHandler implements MessageHandler {
     private PartitionWrapper msgPartition;
     private static XLog log;
 
-    HCatMessageHandler() {
+    public HCatMessageHandler() {
         log = XLog.getLog(getClass());
     }
 
@@ -49,6 +49,7 @@ public class HCatMessageHandler implements MessageHandler {
      */
     @Override
     public void process(Message msg) throws MetadataServiceException {
+        log.debug("About to process the JMS message ");
         try {
             HCatEventMessage hcatMsg = MessagingUtils.getMessage(msg);
             if (hcatMsg.getEventType().equals(HCatEventMessage.EventType.ADD_PARTITION)) {
@@ -57,6 +58,7 @@ public class HCatMessageHandler implements MessageHandler {
                 String server = partMsg.getServer();
                 String db = partMsg.getDB();
                 String table = partMsg.getTable();
+                log.info("ADD event type db [{0}]  table [{1}] partitions [{3}]", db, table, partMsg.getPartitions());
                 PartitionDependencyManagerService pdms = Services.get().get(PartitionDependencyManagerService.class);
                 if (pdms != null) {
                     // message is batched. therefore iterate through partitions
@@ -83,6 +85,9 @@ public class HCatMessageHandler implements MessageHandler {
             }
             else if (hcatMsg.getEventType().equals(HCatEventMessage.EventType.DROP_TABLE)) {
                 log.info("Message is of type [{0}]", HCatEventMessage.EventType.DROP_TABLE.toString());
+            }
+            else {
+                log.info("Unknown event type [{0}] ", hcatMsg.getEventType());
             }
         }
         catch (IllegalArgumentException iae) {

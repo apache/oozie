@@ -57,7 +57,7 @@ public class MetaDataAccessorService implements Service {
         HCatClient client = null;
         try {
             UserGroupInformation ugi = UserGroupInformation.createProxyUser(user, UserGroupInformation.getLoginUser());
-            log.info("Create HCatClient for user [{0}] login_user [{1}] and server [{1}] ", user,
+            log.info("Create HCatClient for user [{0}] login_user [{1}] and server [{2}] ", user,
                     UserGroupInformation.getLoginUser(), server);
             client = ugi.doAs(new PrivilegedExceptionAction<HCatClient>() {
                 public HCatClient run() throws Exception {

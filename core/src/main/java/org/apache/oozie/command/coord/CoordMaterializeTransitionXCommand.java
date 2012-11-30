@@ -330,6 +330,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
             if (!dryrun) {
                 storeToDB(actionBean, action); // Storing to table
                 CoordCommandUtils.registerPartition(actionBean); // Register partition to PDMS
+                queue(new CoordPushDependencyCheckXCommand(actionBean.getId()));
             }
             else {
                 actionStrings.append("action for new instance");

@@ -61,6 +61,7 @@ public class MetaDataClientWrapper {
         HCatClient client = mdac.getHCatClient(server, user);
         HCatPartition hPartition;
         try {
+            LOG.debug("Calling for db [{0}] table [{1}]  partition [{2}]", db, table, partition);
             hPartition = client.getPartition(db, table, partition);
         }
         catch (Exception e) {
@@ -85,7 +86,7 @@ public class MetaDataClientWrapper {
         catch (URISyntaxException e) {
             throw new MetaDataAccessorException(ErrorCode.E1504, e);
         }
-        return getOnePartition(uri.getServer(), uri.getDb(), uri.getTable(), uri.getPartitionMap(), user);
+        return getOnePartition(uri.getServerEndPoint(), uri.getDb(), uri.getTable(), uri.getPartitionMap(), user);
     }
 
     /**
@@ -130,7 +131,7 @@ public class MetaDataClientWrapper {
         catch (URISyntaxException e) {
             throw new MetaDataAccessorException(ErrorCode.E1504, e);
         }
-        return getPartitionsByFilter(uri.getServer(), uri.getDb(), uri.getTable(), filter, user);
+        return getPartitionsByFilter(uri.getServerEndPoint(), uri.getDb(), uri.getTable(), filter, user);
     }
 
     /**
@@ -173,7 +174,7 @@ public class MetaDataClientWrapper {
         catch (Exception e) {
             throw new MetaDataAccessorException(ErrorCode.E1504, e);
         }
-        dropOnePartition(uri.getServer(), uri.getDb(), uri.getTable(), uri.getPartitionMap(), ifExists, user);
+        dropOnePartition(uri.getServerEndPoint(), uri.getDb(), uri.getTable(), uri.getPartitionMap(), ifExists, user);
         return;
     }
 

@@ -83,7 +83,7 @@ public class TestPartitionDependencyManagerService extends XDataTestCase {
         pdms.addMissingPartition(newHCatDependency, actionId);
 
         HCatURI hcatUri = new HCatURI(newHCatDependency);
-        Map<String, PartitionsGroup> tablePartitionsMap = pdms.getHCatMap().get(hcatUri.getServer() + "#" +
+        Map<String, PartitionsGroup> tablePartitionsMap = pdms.getHCatMap().get(hcatUri.getServerEndPoint() + "#" +
                                                                             hcatUri.getDb()); // clicks
         assertNotNull(tablePartitionsMap);
         assertTrue(tablePartitionsMap.containsKey("clicks"));
@@ -112,7 +112,7 @@ public class TestPartitionDependencyManagerService extends XDataTestCase {
         pdms.addMissingPartition(newHCatDependency, actionId);
 
         HCatURI hcatUri = new HCatURI(newHCatDependency);
-        Map<String, PartitionsGroup> tablePartitionsMap = pdms.getHCatMap().get(hcatUri.getServer() + "#" +
+        Map<String, PartitionsGroup> tablePartitionsMap = pdms.getHCatMap().get(hcatUri.getServerEndPoint() + "#" +
                                                                             hcatUri.getDb()); // clicks
         assertNotNull(tablePartitionsMap);
         assertTrue(tablePartitionsMap.containsKey("clicks"));
@@ -146,7 +146,7 @@ public class TestPartitionDependencyManagerService extends XDataTestCase {
         pdms.addMissingPartition(newHCatDependency, actionId);
 
         HCatURI hcatUri = new HCatURI(newHCatDependency);
-        Map<String, PartitionsGroup> tablePartitionsMap = pdms.getHCatMap().get(hcatUri.getServer() + "#" +
+        Map<String, PartitionsGroup> tablePartitionsMap = pdms.getHCatMap().get(hcatUri.getServerEndPoint() + "#" +
                                                                             hcatUri.getDb()); // clicks
         assertNotNull(tablePartitionsMap);
         assertTrue(tablePartitionsMap.containsKey("clicks"));
@@ -182,7 +182,7 @@ public class TestPartitionDependencyManagerService extends XDataTestCase {
         pdms.removeActionFromMissingPartitions(newHCatDependency2, actionId2);
 
         HCatURI hcatUri = new HCatURI(newHCatDependency1);
-        String prefix = PartitionWrapper.makePrefix(hcatUri.getServer(), hcatUri.getDb());
+        String prefix = PartitionWrapper.makePrefix(hcatUri.getServerEndPoint(), hcatUri.getDb());
         Map<String, PartitionsGroup> tablePartitionsMap = pdms.getHCatMap().get(prefix);
         PartitionsGroup missingPartitions = tablePartitionsMap.get(hcatUri.getTable());
         assertNotNull(missingPartitions);

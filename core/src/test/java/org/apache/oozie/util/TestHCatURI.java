@@ -38,7 +38,7 @@ public class TestHCatURI {
         catch (Exception ex) {
             System.err.print(ex.getMessage());
         }
-        assertEquals(uri.getServer(), "hcat.yahoo.com:5080");
+        assertEquals(uri.getServerEndPoint(), HCatURI.DEFAULT_PROTOCOL + "hcat.yahoo.com:5080");
         assertEquals(uri.getDb(), "mydb");
         assertEquals(uri.getTable(), "clicks");
         assertEquals(uri.getPartitionValue("datastamp"), "12");
@@ -62,7 +62,7 @@ public class TestHCatURI {
         catch (Exception ex) {
             System.err.println(ex.getMessage());
         }
-        assertEquals(uri.getServer(), "hcat.yahoo.com:5080");
+        assertEquals(uri.getServerEndPoint(), HCatURI.DEFAULT_PROTOCOL + "hcat.yahoo.com:5080");
         assertEquals(uri.getDb(), "mydb");
         assertEquals(uri.getTable(), "clicks");
         assertEquals(uri.getPartitionValue("datastamp"), "12");
@@ -85,7 +85,7 @@ public class TestHCatURI {
         catch (Exception ex) {
             System.err.println(ex.getMessage());
         }
-        assertEquals(uri.getServer(), "hcat.yahoo.com:5080");
+        assertEquals(uri.getServerEndPoint(), HCatURI.DEFAULT_PROTOCOL + "hcat.yahoo.com:5080");
         assertEquals(uri.getDb(), "mydb");
         assertEquals(uri.getTable(), "clicks");
         assertEquals(uri.getPartitionValue("datastamp"), "12");
@@ -108,7 +108,7 @@ public class TestHCatURI {
         catch (Exception ex) {
             System.err.println(ex.getMessage());
         }
-        assertEquals(uri.getServer(), "hcat.yahoo.com:5080");
+        assertEquals(uri.getServerEndPoint(), HCatURI.DEFAULT_PROTOCOL + "hcat.yahoo.com:5080");
         assertEquals(uri.getDb(), "mydb");
         assertEquals(uri.getTable(), "clicks");
         assertEquals(uri.getPartitionValue("datastamp"), "12");
@@ -131,7 +131,7 @@ public class TestHCatURI {
         catch (Exception ex) {
             System.err.println(ex.getMessage());
         }
-        assertEquals(uri.getServer(), "hcat.yahoo.com:5080");
+        assertEquals(uri.getServerEndPoint(), HCatURI.DEFAULT_PROTOCOL + "hcat.yahoo.com:5080");
         assertEquals(uri.getDb(), "mydb");
         assertEquals(uri.getTable(), "clicks");
         assertEquals(uri.getPartitionValue("datastamp"), "12");
