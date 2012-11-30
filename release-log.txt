@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1103 Create example using AltKerberosAuthenticationHandler (rkanter)
 OOZIE-1106 latest and future function do not work correctly when oozie processing timezone is non UTC (rohini via tucu)
 OOZIE-1102 Update Oozie README.txt to have the TLP mailing list and links (jaoki via rkanter)
 OOZIE-1096 Update wfgen README.txt to have the TLP mailing list (jun aoki via rkanter)

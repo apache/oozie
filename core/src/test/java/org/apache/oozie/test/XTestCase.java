@@ -61,6 +61,7 @@ import org.apache.oozie.store.StoreException;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
+import org.junit.Assert;
 
 /**
  * Base JUnit <code>TestCase</code> subclass used by all Oozie testcases.
@@ -253,6 +254,12 @@ public abstract class XTestCase extends TestCase {
         File source = (customOozieSite.startsWith("/"))
                       ? new File(customOozieSite) : new File(OOZIE_SRC_DIR, customOozieSite);
         source = source.getAbsoluteFile();
+        // If we can't find it, try using the class loader (useful if we're using XTestCase from outside core)
+        if (!source.exists()) {
+            source = new File(getClass().getClassLoader().getResource(oozieTestDB + "-oozie-site.xml").getPath());
+            source = source.getAbsoluteFile();
+        }
+        // If we still can't find it, then exit
         if (!source.exists()) {
             System.err.println();
             System.err.println(XLog.format("Custom configuration file for testing does no exist [{0}]",
