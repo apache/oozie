@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1095 Add HCatalog jar as resource for building (mona)
 OOZIE-1105 Resolve issues found during integration(mohammad)
 OOZIE-1096 Update wfgen README.txt to have the TLP mailing list (jun aoki via rkanter)
 OOZIE-1015 HadoopAccessorService jobtracker validation should not have hardcoded conf key (mona)

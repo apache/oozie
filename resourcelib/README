@@ -1,0 +1,13 @@
+Build instructions
+==================
+
+Oozie's ability to process JMS messages produced by HCatalog about partitions, depends on hcatalog-0.4.1 jar. This jar is packaged as a resource with this Oozie tarball, since it is not yet available via the central maven repo. Place this JAR at a suitable location and use that path in the command below
+
+Step 1: Upload the HCatalog jar to local maven cache
+
+mvn install:install-file -Dfile=<path-to-hcat-jar-file> -DgroupId=org.apache.hcatalog -DartifactId=hcatalog-core -Dversion=0.4.1 -Dpackaging=jar
+
+Step 2: Build Oozie distro with this hcatalog.version=0.4.1 (since default in POM is 0.5.0-SNAPSHOT)
+$OOZIE_HOME/bin/mkdistro.sh -Dhcatalog.version=0.4.1 -DskipTests
+
+Step 3: Follow usual instructions on Apache Oozie docs of setting up and running the Oozie server
