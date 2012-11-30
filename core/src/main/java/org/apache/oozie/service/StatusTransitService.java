@@ -286,9 +286,10 @@ public class StatusTransitService implements Service {
                         }
 
                         int nonPendingCoordActionsCount = coordActionStatusList.size();
-
-                        if ((coordJob.isDoneMaterialization() || coordStatus[0] == Job.Status.FAILED || coordStatus[0] == Job.Status.KILLED)
-                                && checkCoordTerminalStatus(coordActionStatus, nonPendingCoordActionsCount, coordStatus)) {
+                        boolean isDoneMaterialization = coordJob.isDoneMaterialization();
+                        if ((isDoneMaterialization || coordStatus[0] == Job.Status.FAILED || coordStatus[0] == Job.Status.KILLED)
+                                && checkCoordTerminalStatus(coordActionStatus, nonPendingCoordActionsCount,
+                                        coordStatus, isDoneMaterialization)) {
                             LOG.info("Set coordinator job [" + jobId + "] status to '" + coordStatus[0].toString()
                                     + "' from '" + coordJob.getStatus() + "'");
                             updateCoordJob(isPending, coordJob, coordStatus[0]);
@@ -367,7 +368,7 @@ public class StatusTransitService implements Service {
         }
 
         private boolean checkCoordTerminalStatus(HashMap<CoordinatorAction.Status, Integer> coordActionStatus,
-                int coordActionsCount, Job.Status[] coordStatus) {
+                int coordActionsCount, Job.Status[] coordStatus, boolean isDoneMaterialization) {
             boolean ret = false;
             int totalValuesSucceed = 0;
             if (coordActionStatus.containsKey(CoordinatorAction.Status.SUCCEEDED)) {
@@ -389,7 +390,7 @@ public class StatusTransitService implements Service {
 
             if (coordActionsCount == (totalValuesSucceed + totalValuesFailed + totalValuesKilled + totalValuesTimeOut)) {
                 // If all the coordinator actions are succeeded then coordinator job should be succeeded.
-                if (coordActionsCount == totalValuesSucceed) {
+                if (coordActionsCount == totalValuesSucceed && isDoneMaterialization) {
                     coordStatus[0] = Job.Status.SUCCEEDED;
                     ret = true;
                 }
