@@ -19,10 +19,12 @@ package org.apache.oozie.command.bundle;
 
 import java.util.Date;
 
+import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.Job;
+import org.apache.oozie.executor.jpa.BundleActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobInsertJPAExecutor;
@@ -97,6 +99,30 @@ public class TestBundleRerunXCommand extends XDataTestCase {
 
         job = jpaService.execute(bundleJobGetExecutor);
         assertEquals(Job.Status.RUNNING, job.getStatus());
+    }
+
+
+    /**
+     * Test : Rerun bundle job with a killed coordinator. Make sure the bundle action pending flag is reset.
+     *
+     * @throws Exception
+     */
+    public void testBundleRerunKilledCoordinator() throws Exception {
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.DONEWITHERROR, false);
+        String bundleId = job.getId();
+        addRecordToBundleActionTable(bundleId, "action1", 0, Job.Status.KILLED);
+        addRecordToCoordJobTableWithBundle(bundleId, "action1", CoordinatorJob.Status.KILLED, false, false, 1);
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+
+        new BundleRerunXCommand(bundleId, "action1", null, false, true).call();
+
+        sleep(1000);
+
+        BundleActionGetJPAExecutor bundleActionJPA = new BundleActionGetJPAExecutor(bundleId, "action1");
+        BundleActionBean ba = jpaService.execute(bundleActionJPA);
+        assertEquals(0, ba.getPending());
     }
 
     /**
