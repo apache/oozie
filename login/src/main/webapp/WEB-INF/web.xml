@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!DOCTYPE web-app PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN" "http://java.sun.com/dtd/web-app_2_3.dtd">
+
+<web-app>
+    <display-name>Oozie Login</display-name>
+
+    <servlet>
+        <servlet-name>login</servlet-name>
+        <display-name>Oozie Login</display-name>
+        <!-- Replace the following with "org.apache.oozie.servlet.login.LDAPLoginServlet" to use LDAP -->
+        <servlet-class>org.apache.oozie.servlet.login.LoginServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+
+        <!-- Uncomment to change the default values
+        <init-param>
+            <param-name>login.page.template</param-name>
+            <param-value>login-page-template.html</param-value>
+            <description>
+                Set the login page template used for both LoginServlet and LDAPLoginServlet. The file needs to be located in the
+                login/src/main/resources/ directory and should contain {0} for where error message go, {1} for where the username
+                included with a GET request goes, and {2} for where the "backurl" goes (redirects the user back to the oozie web
+                console).
+            </description>
+        </init-param>
+        -->
+        <!--
+        <init-param>
+            <param-name>ldap.provider.url</param-name>
+            <param-value>ldap://localhost:389</param-value>
+            <description>The LDAP provider URL for the LDAPLoginServlet</description>
+        </init-param>
+        <init-param>
+            <param-name>ldap.context.factory</param-name>
+            <param-value>com.sun.jndi.ldap.LdapCtxFactory</param-value>
+            <description>The LDAP context factory for the LDAPLoginServlet</description>
+        </init-param>
+        <init-param>
+            <param-name>ldap.security.authentication</param-name>
+            <param-value>simple</param-value>
+            <description>The security authentication type for the LDAPLoginServlet</description>
+        </init-param>
+        -->
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>login</servlet-name>
+        <url-pattern>/</url-pattern>
+    </servlet-mapping>
+
+</web-app>
