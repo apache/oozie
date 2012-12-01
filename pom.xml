@@ -928,5 +928,14 @@
                <hadoop.auth.version>3.0.0-SNAPSHOT</hadoop.auth.version>
             </properties>
         </profile>
+        <profile>
+            <id>loginServerExample</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <modules>
+                <module>login</module>
+            </modules>
+        </profile>
     </profiles>
 </project>

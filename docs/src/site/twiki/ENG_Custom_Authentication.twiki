@@ -19,6 +19,7 @@ The following authenticators are provided in hadoop-auth:
 
    * KerberosAuthenticationHandler   : the authenticator handler implements the Kerberos SPNEGO authentication mechanism for HTTP.
    * PseudoAuthenticationHandler     : the authenticator handler provides a pseudo authentication mechanism that accepts the user name specified as a query string parameter.
+   * AltKerberosAuthenticationHandler: the authenticator handler allows for Kerberos SPNEGO authentication for non-browsers and an alternate form of authentication for browsers.  A subclass must implement the alternate authentication (see [[ENG_Custom_Authentication#LoginServerExample][Example Login Server]])
 
 3. =org.apache.hadoop.security.authentication.server.AuthenticationFilter:= A servlet filter enables protecting web application resources with different authentication mechanisms provided by AuthenticationHandler. To enable the filter, web application resources file (ex. web.xml) needs to include the a filter class derived from =AuthenticationFilter=.
 
@@ -139,6 +140,144 @@ protected AuthenticationToken getToken(HttpServletRequest request) throws IOExce
         return null;
       }
 </verbatim>
+
+#LoginServerExample
+---++ Login Server Example
+
+---+++ Overview
+
+The Login Server Example is a web application that is an example of how to create a login server for Oozie.  It provides two example
+servlets: LoginServlet and LDAPLoginServlet.  The LoginServlet example is very primitive and simply authenticates users whose
+username and password match (e.g. user=foo and pass=foo).  The LDAPLoginServlet example can be configured against an LDAP server to
+authenticate users from that LDAP server.  Once authenticated, both example servlets write the username to a cookie that Oozie
+checks via the ExampleAltAuthenticationHandler (which uses that cookie for authentication for browsers but Kerberos otherwise).
+
+The LoginServlet and LDAPLoginServlet are run from a separate WAR file called oozie-login.war; its web.xml can be used to configure
+which servlet is used as well as some additional properties. The ExampleAltAuthenticationHandler is run as part of the Oozie server
+but is built as a separate jar: oozie-login.jar.
+
+---+++ ExampleAltAuthenticationHandler
+
+This is a subclass of the abstract AltKerberosAuthenticationHandler, which is an AuthenticationHandler that allows for a "mixed"
+mode of authentication.  When a non-browser is used, Kerberos will be used for authentication; when a browser is used, some other
+authentication method will be used.  In the case of ExampleAltAuthenticationHandler, the other authentication method is to look for
+a cookie named =oozie.web.login.auth= and create an AuthenticationToken using the value of the cookie as the username.  If the
+cookie cannot be found, it will redirect the browser to a page where the user can (presumably) login to a server that can
+authenticate the user and create the cookie.  As this is obviously a very primitive method of authentication that is not secure, it
+should NOT be used in production; it is only provided as an example of how the AltKerberosAuthenticationHandler can be used.
+
+To reiterate: %RED%ExampleAltAuthenticationHandler IS NOT SECURE -- DO NOT USE IT IN A PRODUCTION ENVIRONMENT%ENDCOLOR%
+
+To use the ExampleAltAuthenticationHandler, make at least the following two changes to your oozie-site.xml.  All of the existing
+Kerberos-related settings are still applicable (for when a non-browser is used) so make sure to configure them appropriately.
+<verbatim>
+   <property>
+        <name>oozie.authentication.type</name>
+        <value>org.apache.oozie.authentication.ExampleAltAuthenticationHandler</value>
+   </property>
+   <property>
+        <name>oozie.service.HadoopAccessorService.kerberos.enabled</name>
+        <value>true</value>
+    </property>
+</verbatim>
+Note: The ExampleAltAuthenticationHandler is included in the oozie-login.jar file and not normally included with Oozie core.
+Additionally, you can configure which user-agents AltKerberosAuthenticationHandler (and thus ExampleAltAuthenticationHandler)
+consider to be non-browsers by setting the following property in oozie-site.xml to a comma separated list.  When any of the values
+in this property are contained in the user-agent of the request, Kerberos will be used; otherwise, the alternate authentication will
+be used.
+<verbatim>
+   <property>
+        <name>alt-kerberos.non-browser.user-agents</name>
+        <value>java,curl,wget,perl</value>
+   </property>
+</verbatim>
+The above values, which are the default, will cause a user-agent such as "java" (the user-agent used by Java programs) to use
+Kerberos.  Note that this would also match with user-agents such as "java6" and "I am not a JaVa program".
+
+When the ExampleAltAuthenticationHandler cannot find the =oozie.web.login.auth= cookie, it will redirect the user to another URL,
+which can be configured by setting the following property in oozie-site.xml.  Typically, this URL should take the user to a server
+where they can login to acquire the cookie and then get redirected back to the Oozie web console (the Login Server Example does this
+and will be explained in more detail later).
+<verbatim>
+    <property>
+        <name>oozie.authentication.ExampleAltAuthenticationHandler.redirect.url</name>
+        <value>http://localhost:11000/oozie-login/?backurl={0}</value>
+    </property>
+</verbatim>
+The above value, which is the default, will cause the user to be redirected to the Login Server Example if its running in the same
+tomcat as Oozie and on the default port.  If ={0}= appears anywhere in this URL, it will be replaced by the URL of Oozie's web
+console so that the Login Server Example can know where to send the user back while staying independent of Oozie.
+
+---+++ LoginServlet
+
+This is a web servlet that gets bundled in the oozie-login.war web application.  It is a very primitive example of a login server
+implementation that is compatible with the ExampleAltAuthenticationHandler.  When users visit this servlet, they are shown a simple
+login page that allows them to enter their username and password.  It authenticates them if their username and password are the same
+(e.g. user=foo and pass=foo), which is not secure and should not be used in production; it is only provided as an example.
+
+To reiterate: %RED%LoginServlet IS NOT SECURE -- DO NOT USE IT IN A PRODUCTION ENVIRONMENT%ENDCOLOR%
+
+Sending it a GET request returns the login page; the =backurl= parameter is required (so it knows where to redirect the user back to
+once they are authenticated), but there is also an optional =username= parameter that will pre-populate the username field if given.
+
+Sending it a POST request will also return the login page, but only if an error occurs (e.g. invalid username or password).  As with
+the GET request, the =backurl= parameter is required, but now the =username= and =password= parameters are also required.  If they
+match, the LoginServlet will write the =oozie.web.login.auth= cookie containing the username and redirect the user to the =backurl=,
+which is presumably the Oozie web console.
+
+The login page can be configured to look differently by changing the following parameter in the web.xml in the oozie-login.war file
+(or in the login/src/main/webapp/WEB-INF/ directory before building it).  The file needs to be located in the
+login/src/main/resources/ directory and should contain ={0}= for where an error message can go, ={1}= for where the username
+included with a GET request will go, and ={2}= for where the =backurl= goes.
+<verbatim>
+    <init-param>
+        <param-name>login.page.template</param-name>
+        <param-value>login-page-template.html</param-value>
+    </init-param>
+</verbatim>
+The above value, which is the default, is a basic html page that has fields for the username and password and meets the previously
+stated requirements.
+
+---+++ LDAPLoginServlet
+
+This is a second web servlet that gets bundled in the oozie-login.war web application.  It inherits from the LoginServlet, so the
+previous configuration information (i.e. login.page.template) still applies to this servlet.  The only difference between the
+LDAPLoginServlet and the LoginServlet, is that the LDAPLoginServlet is configured against an LDAP server to provide the
+authentication instead of simply checking that the username and password are equal.  As before, this is not secure and should not be
+used in production; it is only provided as an example.
+
+To reiterate: %RED%LDAPLoginServlet IS NOT SECURE -- DO NOT USE IT IN A PRODUCTION ENVIRONMENT%ENDCOLOR%
+
+The oozie-login.war web application is configured to use LoginServlet by default.  To switch it to use the LDAPLoginServlet, you
+have to change the following line in the web.xml from:
+<verbatim>
+    <servlet-class>org.apache.oozie.servlet.login.LoginServlet</servlet-class>
+to:
+    <servlet-class>org.apache.oozie.servlet.login.LDAPLoginServlet</servlet-class>
+</verbatim>
+
+There are three additional parameters related to LDAP that you should configure in the web.xml:
+<verbatim>
+    <init-param>
+        <param-name>ldap.provider.url</param-name>
+        <param-value>ldap://localhost:389</param-value>
+    </init-param>
+    <init-param>
+        <param-name>ldap.context.factory</param-name>
+        <param-value>com.sun.jndi.ldap.LdapCtxFactory</param-value>
+    </init-param>
+    <init-param>
+        <param-name>ldap.security.authentication</param-name>
+        <param-value>simple</param-value>
+    </init-param>
+</verbatim>
+The ldap.provider.url is the LDAP provider URL to use, the ldap.context.factory is the LDAP context factory to use, and the
+ldap.security.authentication is the LDAP security authentication type to use.
+
+---+++ Building and Deploying
+The README.txt file in the =login= directory contains instructions on how to build and deploy the Login Server Example
+
+
 
 [[index][::Go back to Oozie Documentation Index::]]
 
