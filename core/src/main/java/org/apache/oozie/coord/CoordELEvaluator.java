@@ -224,6 +224,11 @@ public class CoordELEvaluator {
         // System.out.println("eDATA :"+ XmlUtils.prettyPrint(eData));
         Date initInstance = DateUtils.parseDateOozieTZ(eDataset.getAttributeValue("initial-instance"));
         ds.setInitInstance(initInstance);
+        String name = eDataset.getAttributeValue("name");
+        ds.setName(name);
+        String uriTemplate = eDataset.getChild("uri-template", eData.getNamespace()).getTextTrim();
+        ds.setUriTemplate(uriTemplate);
+        // ds.setTimeUnit(TimeUnit.MINUTES);
         if (eDataset.getAttributeValue("frequency") != null) {
             int frequency = Integer.parseInt(eDataset.getAttributeValue("frequency"));
             ds.setFrequency(frequency);
@@ -245,19 +250,12 @@ public class CoordELEvaluator {
             ds.setEndOfDuration(TimeUnit.valueOf(eDataset.getAttributeValue("end_of_duration")));
 
             Element doneFlagElement = eDataset.getChild("done-flag", eData.getNamespace());
-            String doneFlag = CoordUtils.getDoneFlag(doneFlagElement);
+            String doneFlag = CoordUtils.getDoneFlag(doneFlagElement, uriTemplate);
             ds.setDoneFlag(doneFlag);
         }
         else {
             ds.setType("ASYNC");
         }
-        String name = eDataset.getAttributeValue("name");
-        ds.setName(name);
-        // System.out.println(name + " VAL "+ eDataset.getChild("uri-template",
-        // eData.getNamespace()));
-        String uriTemplate = eDataset.getChild("uri-template", eData.getNamespace()).getTextTrim();
-        ds.setUriTemplate(uriTemplate);
-        // ds.setTimeUnit(TimeUnit.MINUTES);
         return ds;
     }
 

@@ -330,7 +330,6 @@ public class CoordCommandUtils {
 
         Element doneFlagElement = event.getChild("dataset", event.getNamespace()).getChild("done-flag",
                 event.getNamespace());
-        String doneFlag = CoordUtils.getDoneFlag(doneFlagElement);
 
         for (int i = 0; i < instanceList.length; i++) {
             if (instanceList[i].trim().length() == 0) {
@@ -353,6 +352,7 @@ public class CoordCommandUtils {
             String uriPath = CoordELFunctions.evalAndWrap(eval, event.getChild("dataset", event.getNamespace())
                     .getChild("uri-template", event.getNamespace()).getTextTrim());
             uris.append(uriPath);
+            String doneFlag = CoordUtils.getDoneFlag(doneFlagElement, uriPath);
             if (doneFlag.length() > 0) {
                 uriPath += "/" + doneFlag;
             }
