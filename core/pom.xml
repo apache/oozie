@@ -184,6 +184,12 @@
             <scope>compile</scope>
         </dependency>
 
+		<dependency>
+			<groupId>commons-httpclient</groupId>
+			<artifactId>commons-httpclient</artifactId>
+			<scope>compile</scope>
+		</dependency>
+
         <!--
         Oozie web-app module must exclude it.
          -->

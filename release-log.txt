@@ -66,6 +66,7 @@ OOZIE-979 bump up trunk version to 3.4.0-SNAPSHOT (tucu)
 
 -- Oozie 3.3.0 release (unreleased)
 
+OOZIE-1100 HFTP coordinator input check fails due to missing commons-httpclient.jar (ryota via virag)
 OOZIE-1058 ACL modify-job should not be hardcoded to group name(mona via mohammad)
 OOZIE-1052 HadoopAccessorService.createFileSystem throws exception in map-reduce action, failing workflow.(ryota via mohammad).
 OOZIE-976 add workflowgenerator into distro tarball (egashira via tucu)
