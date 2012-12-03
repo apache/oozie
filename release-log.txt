@@ -1,9 +1,12 @@
--- Oozie 3.3.0 release
+-- Oozie 3.3.1 (unreleased)
 
 OOZIE-1099 Pig launcher log does not show the pig job url for H23 (rohini via mona)
 OOZIE-1100 HFTP coordinator input check fails due to missing commons-httpclient.jar (ryota via virag)
 OOZIE-1065 bundle status does not transit after rerun (virag)
 OOZIE-1064 Status value of coordinator job not reflected in bundle action and invalid transition of coordinator job (virag)
+
+-- Oozie 3.3.0 release
+
 OOZIE-1089 DistributedCache workaround for Hadoop 2.0.2-alpha (tucu)
 OOZIE-1005 Tests from OOZIE-994 use wrong condition in waitFor (rkanter via virag)
 OOZIE-994  ActionCheckXCommand does not handle failures properly(rkanter via mohammad)
