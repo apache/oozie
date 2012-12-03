@@ -53,6 +53,7 @@ OOZIE-944 Implement Workflow Generator UI Tool (egashira via virag)
 
 -- Oozie 3.3.0 release (unreleased)
 
+OOZIE-1100 HFTP coordinator input check fails due to missing commons-httpclient.jar (ryota via virag)
 OOZIE-1065 bundle status does not transit after rerun (virag)
 OOZIE-1064 Status value of coordinator job not reflected in bundle action and invalid transition of coordinator job (virag)
 OOZIE-1089 DistributedCache workaround for Hadoop 2.0.2-alpha (tucu)

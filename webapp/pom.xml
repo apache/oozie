@@ -42,10 +42,6 @@
                     <artifactId>commons-cli</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>commons-httpclient</groupId>
-                    <artifactId>commons-httpclient</artifactId>
-                </exclusion>
-                <exclusion>
                     <groupId>tomcat</groupId>
                     <artifactId>jasper-compiler</artifactId>
                 </exclusion>
