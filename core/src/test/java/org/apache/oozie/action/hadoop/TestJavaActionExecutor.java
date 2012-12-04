@@ -788,8 +788,6 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         Element actionXmlconf = XmlUtils.parseXml(action.getConf());
         // action job configuration
         Configuration actionConf = ae.createBaseHadoopConf(context, actionXmlconf);
-        actionConf.set("property3", "prop3");
-        actionConf.set("value3", "val3");
 
         // Setting the credential properties in launcher conf
         HashMap<String, CredentialsProperties> credProperties = ae.setCredentialPropertyToActionConf(context,
@@ -822,6 +820,8 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         conf.set(OozieClient.APP_PATH, getNameNodeUri() + "/testPath");
         conf.set(OozieClient.LOG_TOKEN, "testToken");
         conf.set(OozieClient.USER_NAME, getTestUser());
+        conf.set("property3", "prop3");
+        conf.set("value3", "val3");
 
         WorkflowJobBean wfBean = createWorkflow(app, conf, "auth");
         wfBean.setId(wfId);
