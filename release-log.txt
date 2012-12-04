@@ -53,13 +53,15 @@ OOZIE-944 Implement Workflow Generator UI Tool (egashira via virag)
 
 -- Oozie 3.3.0 release (unreleased)
 
+OOZIE-1099 Pig launcher log does not show the pig job url for H23 (rohini via mona)
+OOZIE-1100 HFTP coordinator input check fails due to missing commons-httpclient.jar (egashira via virag)
 OOZIE-1065 bundle status does not transit after rerun (virag)
 OOZIE-1064 Status value of coordinator job not reflected in bundle action and invalid transition of coordinator job (virag)
 OOZIE-1089 DistributedCache workaround for Hadoop 2.0.2-alpha (tucu)
 OOZIE-1005 Tests from OOZIE-994 use wrong condition in waitFor (rkanter via virag)
 OOZIE-994 ActionCheckXCommand does not handle failures properly (rkanter via virag)
 OOZIE-1058 ACL modify-job should not be hardcoded to group name(mona via mohammad)
-OOZIE-1052 HadoopAccessorService.createFileSystem throws exception in map-reduce action, failing workflow.(ryota via mohammad).
+OOZIE-1052 HadoopAccessorService.createFileSystem throws exception in map-reduce action, failing workflow (egashira via mohammad)
 OOZIE-1060 bump hadoop 2.X version to 2.0.2-alpha (rvs via tucu)
 OOZIE-993 Hadoop 23 doesn't accept user defined jobtracker (virag)
 OOZIE-1013 Build failing as the license header comment is appearing before xml declaration in some files (virag)
