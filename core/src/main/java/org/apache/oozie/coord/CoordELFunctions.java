@@ -1208,6 +1208,7 @@ public class CoordELFunctions {
      * @return a new Evaluator to be used for URI-template evaluation
      */
     private static ELEvaluator getUriEvaluator(Calendar tm) {
+        tm.setTimeZone(DateUtils.getOozieProcessingTimeZone());
         ELEvaluator retEval = new ELEvaluator();
         retEval.setVariable("YEAR", tm.get(Calendar.YEAR));
         retEval.setVariable("MONTH", (tm.get(Calendar.MONTH) + 1) < 10 ? "0" + (tm.get(Calendar.MONTH) + 1) : (tm
