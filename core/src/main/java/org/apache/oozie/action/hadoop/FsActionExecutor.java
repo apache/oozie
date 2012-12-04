@@ -168,7 +168,7 @@ public class FsActionExecutor extends ActionExecutor {
                         else {
                             if (command.equals("chmod")) {
                                 Path path = getPath(commandElement, "path");
-                                boolean recursive = commandElement.getChild("recursive") != null;
+                                boolean recursive = commandElement.getChild("recursive", commandElement.getNamespace()) != null;
                                 String str = commandElement.getAttributeValue("dir-files");
                                 boolean dirFiles = (str == null) || Boolean.parseBoolean(str);
                                 String permissionsMask = commandElement.getAttributeValue("permissions").trim();
