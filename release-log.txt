@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1073 Optimize latest and future EL resolution in case of start-instance and end-instance (rohini via virag)
 OOZIE-1107 Change default done-flag from _SUCCESS to empty for Hcat (mohammad)
 OOZIE-1095 Add HCatalog jar as resource for building (mona)
 OOZIE-1105 Resolve issues found during integration(mohammad)

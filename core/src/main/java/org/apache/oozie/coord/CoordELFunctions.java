@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,6 +43,7 @@ import org.apache.oozie.service.HadoopAccessorService;
  */
 
 public class CoordELFunctions {
+    final private static XLog LOG = XLog.getLog(CoordELFunctions.class);
     final private static String DATASET = "oozie.coord.el.dataset.bean";
     final private static String COORD_ACTION = "oozie.coord.el.app.bean";
     final public static String CONFIGURATION = "oozie.coord.el.conf";
@@ -223,13 +224,64 @@ public class CoordELFunctions {
         }
     }
 
+    /**
+     * Determine the date-time in Oozie processing timezone of the future available dataset instances
+     * from start to end offsets from nominal Time but not beyond the instance specified as 'instance'.
+     * <p/>
+     * It depends on:
+     * <p/>
+     * 1. Data set frequency
+     * <p/>
+     * 2. Data set Time unit (day, month, minute)
+     * <p/>
+     * 3. Data set Time zone/DST
+     * <p/>
+     * 4. End Day/Month flag
+     * <p/>
+     * 5. Data set initial instance
+     * <p/>
+     * 6. Action Creation Time
+     * <p/>
+     * 7. Existence of dataset's directory
+     *
+     * @param start : start instance offset
+     *        <p/>
+     *        domain: start >= 0, start is integer
+     * @param end : end instance offset
+     *        <p/>
+     *        domain: end >= 0, end is integer
+     * @param instance: How many future instance it should check? value should
+     *        be >=0
+     * @return date-time in Oozie processing timezone of the instances from start to end offsets
+     *        delimited by comma.
+     *         <p/>
+     * @throws Exception
+     */
+    public static String ph3_coord_futureRange(int start, int end, int instance) throws Exception {
+        ParamChecker.checkGEZero(start, "future:n");
+        ParamChecker.checkGEZero(end, "future:n");
+        ParamChecker.checkGTZero(instance, "future:instance");
+        if (isSyncDataSet()) {// For Sync Dataset
+            return coord_futureRange_sync(start, end, instance);
+        }
+        else {
+            throw new UnsupportedOperationException("Asynchronous Dataset is not supported yet");
+        }
+    }
+
     private static String coord_future_sync(int n, int instance) throws Exception {
+        return coord_futureRange_sync(n, n, instance);
+    }
+
+    private static String coord_futureRange_sync(int startOffset, int endOffset, int instance) throws Exception {
         ELEvaluator eval = ELEvaluator.getCurrent();
         String retVal = "";
         int datasetFrequency = (int) getDSFrequency();// in minutes
         TimeUnit dsTimeUnit = getDSTimeUnit();
         int[] instCount = new int[1];
         Calendar nominalInstanceCal = getCurrentInstance(getActionCreationtime(), instCount);
+        StringBuilder resolvedInstances = new StringBuilder();
+        StringBuilder resolvedURIPaths = new StringBuilder();
         if (nominalInstanceCal != null) {
             Calendar initInstance = getInitialInstanceCal();
             nominalInstanceCal = (Calendar) initInstance.clone();
@@ -257,13 +309,19 @@ public class CoordELFunctions {
                     pathWithDoneFlag += "/" + doneFlag;
                 }
                 if (isPathAvailable(pathWithDoneFlag, user, null, conf)) {
-                    XLog.getLog(CoordELFunctions.class).debug("Found future(" + available + "): " + pathWithDoneFlag);
-                    if (available == n) {
-                        XLog.getLog(CoordELFunctions.class).debug("Found future File: " + pathWithDoneFlag);
+                    LOG.debug("Found future(" + available + "): " + pathWithDoneFlag);
+                    if (available == endOffset) {
+                        LOG.debug("Matched future(" + available + "): " + pathWithDoneFlag);
                         resolved = true;
-                        retVal = DateUtils.formatDateOozieTZ(nominalInstanceCal);
-                        eval.setVariable("resolved_path", uriPath);
+                        resolvedInstances.append(DateUtils.formatDateOozieTZ(nominalInstanceCal));
+                        resolvedURIPaths.append(uriPath);
+                        retVal = resolvedInstances.toString();
+                        eval.setVariable("resolved_path", resolvedURIPaths.toString());
                         break;
+                    } else if (available >= startOffset) {
+                        LOG.debug("Matched future(" + available + "): " + pathWithDoneFlag);
+                        resolvedInstances.append(DateUtils.formatDateOozieTZ(nominalInstanceCal)).append(INSTANCE_SEPARATOR);
+                        resolvedURIPaths.append(uriPath).append(INSTANCE_SEPARATOR);
                     }
                     available++;
                 }
@@ -279,7 +337,12 @@ public class CoordELFunctions {
                 // return unchanged future function with variable 'is_resolved'
                 // to 'false'
                 eval.setVariable("is_resolved", Boolean.FALSE);
-                retVal = "${coord:future(" + n + ", " + instance + ")}";
+                if (startOffset == endOffset) {
+                    retVal = "${coord:future(" + startOffset + ", " + instance + ")}";
+                }
+                else {
+                    retVal = "${coord:futureRange(" + startOffset + ", " + endOffset + ", " + instance + ")}";
+                }
             }
             else {
                 eval.setVariable("is_resolved", Boolean.TRUE);
@@ -657,6 +720,29 @@ public class CoordELFunctions {
     }
 
     /**
+     * Determine the date-time in Oozie processing timezone of latest available dataset instances
+     * from start to end offsets from the nominal time. <p/> It depends
+     * on: <p/> 1. Data set frequency <p/> 2. Data set Time unit (day, month, minute) <p/> 3. Data set Time zone/DST
+     * <p/> 4. End Day/Month flag <p/> 5. Data set initial instance <p/> 6. Action Creation Time <p/> 7. Existence of
+     * dataset's directory
+     *
+     * @param start :start instance offset <p/> domain: start > 0, start is integer
+     * @param end :end instance offset <p/> domain: end > 0, end is integer
+     * @return date-time in Oozie processing timezone of the instances from start to end offsets
+     *        delimited by comma. <p/> returns 'null' means start offset instance is
+     *        earlier than Initial-Instance of DS
+     * @throws Exception
+     */
+    public static String ph3_coord_latestRange(int start, int end) throws Exception {
+        if (isSyncDataSet()) {// For Sync Dataset
+            return coord_latestRange_sync(start, end);
+        }
+        else {
+            throw new UnsupportedOperationException("Asynchronous Dataset is not supported yet");
+        }
+    }
+
+    /**
      * Configure an evaluator with data set and application specific information. <p/> Helper method of associating
      * dataset and application object
      *
@@ -783,11 +869,27 @@ public class CoordELFunctions {
         return true;
     }
 
+    public static String ph1_coord_latestRange_echo(String start, String end) {
+        return echoUnResolved("latestRange", start + ", " + end);
+    }
+
+    public static String ph2_coord_latestRange_echo(String start, String end) {
+        return ph1_coord_latestRange_echo(start, end);
+    }
+
+    public static String ph1_coord_futureRange_echo(String start, String end, String instance) {
+        return echoUnResolved("futureRange", start + ", " + end + ", " + instance);
+    }
+
+    public static String ph2_coord_futureRange_echo(String start, String end, String instance) {
+        return ph1_coord_futureRange_echo(start, end, instance);
+    }
+
     public static String ph1_coord_dataIn_echo(String n) {
         ELEvaluator eval = ELEvaluator.getCurrent();
         String val = (String) eval.getVariable("oozie.dataname." + n);
         if (val == null || val.equals("data-in") == false) {
-            XLog.getLog(CoordELFunctions.class).error("data_in_name " + n + " is not valid");
+            LOG.error("data_in_name " + n + " is not valid");
             throw new RuntimeException("data_in_name " + n + " is not valid");
         }
         return echoUnResolved("dataIn", "'" + n + "'");
@@ -797,7 +899,7 @@ public class CoordELFunctions {
         ELEvaluator eval = ELEvaluator.getCurrent();
         String val = (String) eval.getVariable("oozie.dataname." + n);
         if (val == null || val.equals("data-out") == false) {
-            XLog.getLog(CoordELFunctions.class).error("data_out_name " + n + " is not valid");
+            LOG.error("data_out_name " + n + " is not valid");
             throw new RuntimeException("data_out_name " + n + " is not valid");
         }
         return echoUnResolved("dataOut", "'" + n + "'");
@@ -904,8 +1006,9 @@ public class CoordELFunctions {
         int[] instCount = new int[1];// used as pass by ref
         Calendar nominalInstanceCal = getCurrentInstance(getActionCreationtime(), instCount);
         if (nominalInstanceCal == null) {
-            XLog.getLog(CoordELFunctions.class)
-                    .warn("If the initial instance of the dataset is later than the nominal time, an empty string is returned. This means that no data is available at the current-instance specified by the user and the user could try modifying his initial-instance to an earlier time.");
+            LOG.warn("If the initial instance of the dataset is later than the nominal time, an empty string is"
+                    + " returned. This means that no data is available at the current-instance specified by the user"
+                    + " and the user could try modifying his initial-instance to an earlier time.");
             return "";
         }
         nominalInstanceCal = getInitialInstanceCal();
@@ -913,8 +1016,10 @@ public class CoordELFunctions {
         nominalInstanceCal.add(dsTimeUnit.getCalendarUnit(), datasetFrequency * absInstanceCount);
 
         if (nominalInstanceCal.getTime().compareTo(getInitialInstance()) < 0) {
-            XLog.getLog(CoordELFunctions.class)
-                    .warn("If the initial instance of the dataset is later than the current-instance specified, such as coord:current({0}) in this case, an empty string is returned. This means that no data is available at the current-instance specified by the user and the user could try modifying his initial-instance to an earlier time.", n);
+            LOG.warn("If the initial instance of the dataset is later than the current-instance specified, such as"
+                    + " coord:current({0}) in this case, an empty string is returned. This means that no data is"
+                    + " available at the current-instance specified by the user and the user could try modifying his"
+                    + " initial-instance to an earlier time.", n);
             return "";
         }
         String str = DateUtils.formatDateOozieTZ(nominalInstanceCal);
@@ -969,7 +1074,7 @@ public class CoordELFunctions {
         Calendar nominalInstanceCal = getInitialInstanceCal();
         nominalInstanceCal.add(freqUnit.getCalendarUnit(), freq * freqCount);
         if (nominalInstanceCal.getTime().compareTo(getInitialInstance()) < 0) {
-            XLog.getLog(CoordELFunctions.class).warn("If the initial instance of the dataset is later than the offset instance"
+            LOG.warn("If the initial instance of the dataset is later than the offset instance"
                     + " specified, such as coord:offset({0}, {1}) in this case, an empty string is returned. This means that no"
                     + " data is available at the offset instance specified by the user and the user could try modifying his"
                     + " initial-instance to an earlier time.", n, timeUnit);
@@ -989,9 +1094,17 @@ public class CoordELFunctions {
      * @throws Exception
      */
     private static String coord_latest_sync(int offset) throws Exception {
-        if (offset > 0) {
+        return coord_latestRange_sync(offset, offset);
+    }
+
+    private static String coord_latestRange_sync(int startOffset, int endOffset) throws Exception {
+        if (startOffset > 0) {
             throw new RuntimeException("For latest there is no meaning " + "of positive instance. n should be <=0"
-                    + offset);
+                    + startOffset);
+        }
+        if (endOffset > 0) {
+            throw new RuntimeException("For latest there is no meaning " + "of positive instance. n should be <=0"
+                    + endOffset);
         }
         ELEvaluator eval = ELEvaluator.getCurrent();
         String retVal = "";
@@ -999,6 +1112,8 @@ public class CoordELFunctions {
         TimeUnit dsTimeUnit = getDSTimeUnit();
         int[] instCount = new int[1];
         Calendar nominalInstanceCal = getCurrentInstance(getActualTime(), instCount);
+        StringBuilder resolvedInstances = new StringBuilder();
+        StringBuilder resolvedURIPaths = new StringBuilder();
         if (nominalInstanceCal != null) {
             Calendar initInstance = getInitialInstanceCal();
             SyncCoordDataset ds = (SyncCoordDataset) eval.getVariable(DATASET);
@@ -1023,13 +1138,19 @@ public class CoordELFunctions {
                     pathWithDoneFlag += "/" + doneFlag;
                 }
                 if (isPathAvailable(pathWithDoneFlag, user, null, conf)) {
-                    XLog.getLog(CoordELFunctions.class).debug("Found latest(" + available + "): " + pathWithDoneFlag);
-                    if (available == offset) {
-                        XLog.getLog(CoordELFunctions.class).debug("Found Latest File: " + pathWithDoneFlag);
+                    LOG.debug("Found latest(" + available + "): " + pathWithDoneFlag);
+                    if (available == endOffset) {
+                        LOG.debug("Matched latest(" + available + "): " + pathWithDoneFlag);
                         resolved = true;
-                        retVal = DateUtils.formatDateOozieTZ(nominalInstanceCal);
-                        eval.setVariable("resolved_path", uriPath);
+                        resolvedInstances.append(DateUtils.formatDateOozieTZ(nominalInstanceCal));
+                        resolvedURIPaths.append(uriPath);
+                        retVal = resolvedInstances.toString();
+                        eval.setVariable("resolved_path", resolvedURIPaths.toString());
                         break;
+                    } else if (available <= startOffset) {
+                        LOG.debug("Matched latest(" + available + "): " + pathWithDoneFlag);
+                        resolvedInstances.append(DateUtils.formatDateOozieTZ(nominalInstanceCal)).append(INSTANCE_SEPARATOR);
+                        resolvedURIPaths.append(uriPath).append(INSTANCE_SEPARATOR);
                     }
 
                     available--;
@@ -1045,7 +1166,12 @@ public class CoordELFunctions {
                 // return unchanged latest function with variable 'is_resolved'
                 // to 'false'
                 eval.setVariable("is_resolved", Boolean.FALSE);
-                retVal = "${coord:latest(" + offset + ")}";
+                if (startOffset == endOffset) {
+                    retVal = "${coord:latest(" + startOffset + ")}";
+                }
+                else {
+                    retVal = "${coord:latestRange(" + startOffset + "," + endOffset + ")}";
+                }
             }
             else {
                 eval.setVariable("is_resolved", Boolean.TRUE);
@@ -1451,7 +1577,7 @@ public class CoordELFunctions {
             cal = getCurrentInstance(getActionCreationtime(eval), null, eval);
         }
         if (cal == null) {
-            XLog.getLog(CoordELFunctions.class).warn("If the initial instance of the dataset is later than the nominal time, an"
+            LOG.warn("If the initial instance of the dataset is later than the nominal time, an"
                     + " empty string is returned. This means that no data is available at the offset instance specified by the user"
                     + " and the user could try modifying his or her initial-instance to an earlier time.");
             return null;
