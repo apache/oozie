@@ -789,7 +789,7 @@ public class JavaActionExecutor extends ActionExecutor {
             WorkflowAction action, Configuration actionConf) throws Exception {
         HashMap<String, CredentialsProperties> credPropertiesMap = null;
         if (context != null && action != null) {
-            credPropertiesMap = getActionCredentialsProperties(context, action, actionConf);
+            credPropertiesMap = getActionCredentialsProperties(context, action);
             if (credPropertiesMap != null) {
                 for (String key : credPropertiesMap.keySet()) {
                     CredentialsProperties prop = credPropertiesMap.get(key);
@@ -836,14 +836,14 @@ public class JavaActionExecutor extends ActionExecutor {
     }
 
     protected HashMap<String, CredentialsProperties> getActionCredentialsProperties(Context context,
-            WorkflowAction action, Configuration conf) throws Exception {
+            WorkflowAction action) throws Exception {
         HashMap<String, CredentialsProperties> props = new HashMap<String, CredentialsProperties>();
         if (context != null && action != null) {
             String credsInAction = action.getCred();
             log.debug("Get credential '" + credsInAction + "' properties for action : " + action.getId());
             String[] credNames = credsInAction.split(",");
             for (String credName : credNames) {
-                CredentialsProperties credProps = getCredProperties(context, credName, conf);
+                CredentialsProperties credProps = getCredProperties(context, credName);
                 props.put(credName, credProps);
             }
         }
@@ -854,10 +854,11 @@ public class JavaActionExecutor extends ActionExecutor {
     }
 
     @SuppressWarnings("unchecked")
-    protected CredentialsProperties getCredProperties(Context context, String credName, Configuration conf)
+    protected CredentialsProperties getCredProperties(Context context, String credName)
             throws Exception {
         CredentialsProperties credProp = null;
         String workflowXml = ((WorkflowJobBean) context.getWorkflow()).getWorkflowInstance().getApp().getDefinition();
+        XConfiguration wfjobConf = new XConfiguration(new StringReader(context.getWorkflow().getConf()));
         Element elementJob = XmlUtils.parseXml(workflowXml);
         Element credentials = elementJob.getChild("credentials", elementJob.getNamespace());
         if (credentials != null) {
@@ -872,7 +873,7 @@ public class JavaActionExecutor extends ActionExecutor {
                         String propertyName = property.getChildText("name", property.getNamespace());
                         String propertyValue = property.getChildText("value", property.getNamespace());
                         ELEvaluator eval = new ELEvaluator();
-                        for (Map.Entry<String, String> entry : conf) {
+                        for (Map.Entry<String, String> entry : wfjobConf) {
                             eval.setVariable(entry.getKey(), entry.getValue().trim());
                         }
                         propertyName = eval.evaluate(propertyName, String.class);
