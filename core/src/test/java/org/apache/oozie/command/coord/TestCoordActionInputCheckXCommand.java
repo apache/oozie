@@ -64,7 +64,7 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         services = new Services();
         services.init();
         cleanUpDBTables();
-        TZ = (getProcessingTZ().equals(DateUtils.OOZIE_PROCESSING_TIMEZONE_DEFAULT)) 
+        TZ = (getProcessingTZ().equals(DateUtils.OOZIE_PROCESSING_TIMEZONE_DEFAULT))
              ? "Z" : getProcessingTZ().substring(3);
     }
 
@@ -113,10 +113,10 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         CoordinatorActionBean action1 = addRecordToCoordActionTableForWaiting(job.getId(), 1,
                 CoordinatorAction.Status.WAITING, "coord-action-for-action-input-check.xml");
 
-        createDir(getTestCaseDir() + "/2009/29/");
-        createDir(getTestCaseDir() + "/2009/22/");
-        createDir(getTestCaseDir() + "/2009/15/");
-        createDir(getTestCaseDir() + "/2009/08/");
+        createDir(getTestCaseDir() + "/2009/01/29/");
+        createDir(getTestCaseDir() + "/2009/01/22/");
+        createDir(getTestCaseDir() + "/2009/01/15/");
+        createDir(getTestCaseDir() + "/2009/01/08/");
 
         final MyCoordActionInputCheckXCommand callable1 = new MyCoordActionInputCheckXCommand(action1.getId(), 100, "1");
         final MyCoordActionInputCheckXCommand callable2 = new MyCoordActionInputCheckXCommand(action1.getId(), 100, "2");
@@ -147,8 +147,8 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         Date endTime = DateUtils.parseDateOozieTZ("2009-02-02T23:59" + TZ);
         CoordinatorJobBean job = addRecordToCoordJobTable(jobId, startTime, endTime);
         new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
-        createDir(getTestCaseDir() + "/2009/29/");
-        createDir(getTestCaseDir() + "/2009/15/");
+        createDir(getTestCaseDir() + "/2009/01/29/");
+        createDir(getTestCaseDir() + "/2009/01/15/");
         new CoordActionInputCheckXCommand(job.getId() + "@1", job.getId()).call();
         checkCoordAction(job.getId() + "@1");
     }
@@ -164,9 +164,10 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         CoordinatorJobBean job = addRecordToCoordJobTable(jobId, startTime, endTime);
         new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
 
-        // providing some of the dataset dirs required as per coordinator specification - /2009/12, /2009/05, /2009/29, /2009/22
-        createDir(getTestCaseDir() + "/2009/12/");
-        createDir(getTestCaseDir() + "/2009/29/");
+        // providing some of the dataset dirs required as per coordinator
+        // specification - /2009/02/12, /2009/02/05, /2009/01/29, /2009/01/22
+        createDir(getTestCaseDir() + "/2009/02/12/");
+        createDir(getTestCaseDir() + "/2009/01/29/");
 
         new CoordActionInputCheckXCommand(job.getId() + "@1", job.getId()).call();
         CoordinatorActionBean action = null;
@@ -180,23 +181,96 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
 
         // Missing dependencies recorded by the coordinator action after input check
         String missDepsOrder = action.getMissingDependencies();
-        // Expected missing dependencies are /2009/05, /2009/29, and /2009/22.
+        // Expected missing dependencies are /2009/02/05, /2009/01/29, and /2009/01/22.
 
-        int index = missDepsOrder.indexOf("/2009/12");
+        int index = missDepsOrder.indexOf("/2009/02/12");
         if( index >= 0) {
             fail("Dependency should be available! current list: " + missDepsOrder);
         }
-        // Case when /2009/29 exists but checking stops since dataset synchronously expected before i.e. /2009/05 is missing
-        index = missDepsOrder.indexOf("/2009/29");
+        // Case when /2009/01/29 exists but checking stops since dataset synchronously expected before i.e. /2009/02/05 is missing
+        index = missDepsOrder.indexOf("/2009/01/29");
         if( index < 0) {
             fail("Data should have been in missing dependency list! current list: " + missDepsOrder);
         }
-        index = missDepsOrder.indexOf("/2009/05");
+        index = missDepsOrder.indexOf("/2009/02/05");
         if( index < 0) {
             fail("Data should have been in missing dependency list! current list: " + missDepsOrder);
         }
     }
 
+    public void testActionInputCheckLatest() throws Exception {
+        String jobId = "0000000-" + new Date().getTime() + "-TestCoordActionInputCheckXCommand-C";
+        Date startTime = DateUtils.parseDateOozieTZ("2009-02-15T23:59" + TZ);
+        Date endTime = DateUtils.parseDateOozieTZ("2009-02-16T23:59" + TZ);
+        CoordinatorJobBean job = addRecordToCoordJobTable(jobId, startTime, endTime, "latest");
+        new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
+
+        new CoordActionInputCheckXCommand(job.getId() + "@1", job.getId()).call();
+        CoordinatorActionBean action = null;
+        JPAService jpaService = Services.get().get(JPAService.class);
+        try {
+            action = jpaService.execute(new CoordActionGetJPAExecutor(job.getId() + "@1"));
+        }
+        catch (JPAExecutorException se) {
+            fail("Action ID " + job.getId() + "@1" + " was not stored properly in db");
+        }
+
+        assertEquals(";${coord:latestRange(-3,0)}", action.getMissingDependencies());
+
+        // providing some of the dataset dirs required as per coordinator specification with holes
+        createDir(getTestCaseDir() + "/2009/02/12/");
+        createDir(getTestCaseDir() + "/2009/02/05/");
+        createDir(getTestCaseDir() + "/2009/01/22/");
+        createDir(getTestCaseDir() + "/2009/01/08/");
+
+        new CoordActionInputCheckXCommand(job.getId() + "@1", job.getId()).call();
+        try {
+            action = jpaService.execute(new CoordActionGetJPAExecutor(job.getId() + "@1"));
+        }
+        catch (JPAExecutorException se) {
+            fail("Action ID " + job.getId() + "@1" + " was not stored properly in db");
+        }
+
+        assertEquals("", action.getMissingDependencies());
+    }
+
+    public void testActionInputCheckFuture() throws Exception {
+        String jobId = "0000000-" + new Date().getTime() + "-TestCoordActionInputCheckXCommand-C";
+        Date startTime = DateUtils.parseDateOozieTZ("2009-02-15T23:59" + TZ);
+        Date endTime = DateUtils.parseDateOozieTZ("2009-02-16T23:59" + TZ);
+        CoordinatorJobBean job = addRecordToCoordJobTable(jobId, startTime, endTime, "future");
+        new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
+
+        // providing some of the dataset dirs required as per coordinator specification with holes
+        createDir(getTestCaseDir() + "/2009/02/12/");
+        createDir(getTestCaseDir() + "/2009/02/26/");
+        createDir(getTestCaseDir() + "/2009/03/05/");
+        createDir(getTestCaseDir() + "/2009/03/26/"); //limit is 5. So this should be ignored
+
+        new CoordActionInputCheckXCommand(job.getId() + "@1", job.getId()).call();
+        CoordinatorActionBean action = null;
+        JPAService jpaService = Services.get().get(JPAService.class);
+        try {
+            action = jpaService.execute(new CoordActionGetJPAExecutor(job.getId() + "@1"));
+        }
+        catch (JPAExecutorException se) {
+            fail("Action ID " + job.getId() + "@1" + " was not stored properly in db");
+        }
+
+        assertEquals(";${coord:futureRange(0,3,'5')}", action.getMissingDependencies());
+
+        createDir(getTestCaseDir() + "/2009/03/12/");
+
+        new CoordActionInputCheckXCommand(job.getId() + "@1", job.getId()).call();
+        try {
+            action = jpaService.execute(new CoordActionGetJPAExecutor(job.getId() + "@1"));
+        }
+        catch (JPAExecutorException se) {
+            fail("Action ID " + job.getId() + "@1" + " was not stored properly in db");
+        }
+
+        assertEquals("", action.getMissingDependencies());
+    }
     /**
      * Testing a non existing namenode path
      *
@@ -302,7 +376,8 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
             CoordinatorAction.Status status, String resourceXmlName) throws Exception {
         CoordinatorActionBean action = createCoordAction(jobId, actionNum, status, resourceXmlName, 0, TZ);
         String testDir = getTestCaseDir();
-        String missDeps = "file://#testDir/2009/29/_SUCCESS#file://#testDir/2009/22/_SUCCESS#file://#testDir/2009/15/_SUCCESS#file://#testDir/2009/08/_SUCCESS";
+        String missDeps = "file://#testDir/2009/01/29/_SUCCESS#file://#testDir/2009/01/22/_SUCCESS"
+                + "#file://#testDir/2009/01/15/_SUCCESS#file://#testDir/2009/01/08/_SUCCESS";
         missDeps = missDeps.replaceAll("#testDir", testDir);
         action.setMissingDependencies(missDeps);
 
@@ -321,6 +396,11 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
     }
 
     private CoordinatorJobBean addRecordToCoordJobTable(String jobId, Date start, Date end) throws CommandException {
+        return addRecordToCoordJobTable(jobId, start, end, "current");
+    }
+
+    private CoordinatorJobBean addRecordToCoordJobTable(String jobId, Date start, Date end,
+            String dataInType) throws CommandException {
         CoordinatorJobBean coordJob = new CoordinatorJobBean();
         coordJob.setId(jobId);
         coordJob.setAppName("testApp");
@@ -359,16 +439,22 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         appXml += "<input-events>";
         appXml += "<data-in name='A' dataset='a'>";
         appXml += "<dataset name='a' frequency='7' initial-instance='2009-01-01T01:00" + TZ + "' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
-        appXml += "<uri-template>file://" + testDir + "/${YEAR}/${DAY}</uri-template>";
+        appXml += "<uri-template>file://" + testDir + "/${YEAR}/${MONTH}/${DAY}</uri-template>";
         appXml += "</dataset>";
-        appXml += "<start-instance>${coord:current(-3)}</start-instance>";
-        appXml += "<end-instance>${coord:current(0)}</end-instance>";
+        if (dataInType.equals("future")) {
+            appXml += "<start-instance>${coord:" + dataInType + "(0,5)}</start-instance>";
+            appXml += "<end-instance>${coord:" + dataInType + "(3,5)}</end-instance>";
+        }
+        else {
+            appXml += "<start-instance>${coord:" + dataInType + "(-3)}</start-instance>";
+            appXml += "<end-instance>${coord:" + dataInType + "(0)}</end-instance>";
+        }
         appXml += "</data-in>";
         appXml += "</input-events>";
         appXml += "<output-events>";
         appXml += "<data-out name='LOCAL_A' dataset='local_a'>";
         appXml += "<dataset name='local_a' frequency='7' initial-instance='2009-01-01T01:00" + TZ + "' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
-        appXml += "<uri-template>file://" + testDir + "/${YEAR}/${DAY}</uri-template>";
+        appXml += "<uri-template>file://" + testDir + "/${YEAR}/${MONTH}/${DAY}</uri-template>";
         appXml += "</dataset>";
         appXml += "<start-instance>${coord:current(-3)}</start-instance>";
         appXml += "<instance>${coord:current(0)}</instance>";
@@ -416,10 +502,10 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
             JPAService jpaService = Services.get().get(JPAService.class);
             CoordinatorActionBean action = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
             System.out.println("missingDeps " + action.getMissingDependencies() + " Xml " + action.getActionXml());
-            if (action.getMissingDependencies().indexOf("/2009/29/") >= 0) {
+            if (action.getMissingDependencies().indexOf("/2009/01/29/") >= 0) {
                 fail("directory should be resolved :" + action.getMissingDependencies());
             }
-            if (action.getMissingDependencies().indexOf("/2009/15/") < 0) {
+            if (action.getMissingDependencies().indexOf("/2009/01/15/") < 0) {
                 fail("directory should NOT be resolved :" + action.getMissingDependencies());
             }
         }
