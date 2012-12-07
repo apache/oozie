@@ -61,7 +61,7 @@ public class CoordJobGetActionIdsForDateRangeJPAExecutor implements JPAExecutor<
             return coordActionIds;
         }
         catch (Exception e) {
-            throw new JPAExecutorException(ErrorCode.E0603, e);
+            throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
         }
     }
 

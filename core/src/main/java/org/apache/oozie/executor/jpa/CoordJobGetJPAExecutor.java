@@ -59,7 +59,7 @@ public class CoordJobGetJPAExecutor implements JPAExecutor<CoordinatorJobBean> {
             cjBeans = q.getResultList();
         }
         catch (Exception e) {
-            throw new JPAExecutorException(ErrorCode.E0603, e);
+            throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
         }
         CoordinatorJobBean bean = null;
         if (cjBeans != null && cjBeans.size() > 0) {

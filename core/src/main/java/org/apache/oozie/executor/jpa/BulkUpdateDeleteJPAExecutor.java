@@ -127,7 +127,7 @@ public class BulkUpdateDeleteJPAExecutor implements JPAExecutor<Void> {
             throw je;
         }
         catch (Exception e) {
-            throw new JPAExecutorException(ErrorCode.E0603, e);
+            throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
         }
     }
 }

@@ -59,7 +59,7 @@ public class CoordActionUpdateForInputCheckJPAExecutor implements JPAExecutor<Vo
             return null;
         }
         catch (Exception e) {
-            throw new JPAExecutorException(ErrorCode.E0603, e);
+            throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
         }
     }
 

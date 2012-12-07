@@ -71,7 +71,7 @@ public class JobXCommand extends WorkflowXCommand<WorkflowJobBean> {
             throw new CommandException(ex);
         }
         catch (Exception ex) {
-            throw new CommandException(ErrorCode.E0603, ex);
+            throw new CommandException(ErrorCode.E0603, ex.getMessage(), ex);
         }
 
         return this.workflow;

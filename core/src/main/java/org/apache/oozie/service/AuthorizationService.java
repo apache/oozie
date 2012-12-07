@@ -177,7 +177,7 @@ public class AuthorizationService implements Service {
                     }
                 }
                 catch (FileNotFoundException ex) {
-                    throw new ServiceException(ErrorCode.E0160, ex);
+                    throw new ServiceException(ErrorCode.E0160, file.getAbsolutePath(), ex);
                 }
             }
             else {

@@ -33,11 +33,13 @@ public class ServletUtilities {
      */
     protected static void ValidateAppPath(String wfPath, String coordPath) throws XServletException {
         if (wfPath != null && coordPath != null) {
-            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0301, wfPath, coordPath);
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302,
+                    "multiple app paths specified, only one is allowed");
         }
         else {
             if (wfPath == null && coordPath == null) {
-                throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302);
+                throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302,
+                        "a workflow or coordinator app path is required");
             }
         }
     }
@@ -84,7 +86,7 @@ public class ServletUtilities {
      */
     protected static void ValidateLibPath(String libPath) throws XServletException {
         if (libPath == null) {
-            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302);
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "a lib path is required");
         }
     }
 }

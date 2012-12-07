@@ -61,7 +61,7 @@ public class CoordJobGetActionsNotCompletedJPAExecutor implements JPAExecutor<Li
             return actionBeansList;
         }
         catch (Exception e) {
-            throw new JPAExecutorException(ErrorCode.E0603, e);
+            throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
         }
     }
 

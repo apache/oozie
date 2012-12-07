@@ -136,7 +136,7 @@ public class Services {
             return file.getAbsolutePath();
         }
         catch (IOException ex) {
-            ServiceException sex = new ServiceException(ErrorCode.E0001, ex);
+            ServiceException sex = new ServiceException(ErrorCode.E0001, "", ex);
             XLog.getLog(getClass()).fatal(ex);
             throw sex;
         }

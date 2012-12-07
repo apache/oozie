@@ -59,7 +59,7 @@ public class CoordActionsGetByLastModifiedTimeJPAExecutor implements JPAExecutor
             return coordJobIds;
         }
         catch (Exception e) {
-            throw new JPAExecutorException(ErrorCode.E0603, e);
+            throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
         }
 
 

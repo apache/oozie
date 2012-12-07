@@ -289,12 +289,12 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         catch (IllegalArgumentException iex) {
             exceptionOccured = true;
             LOG.warn("ERROR:  ", iex);
-            throw new CommandException(ErrorCode.E1003, iex);
+            throw new CommandException(ErrorCode.E1003, iex.getMessage(), iex);
         }
         catch (Exception ex) {
             exceptionOccured = true;
             LOG.warn("ERROR:  ", ex);
-            throw new CommandException(ErrorCode.E0803, ex);
+            throw new CommandException(ErrorCode.E0803, ex.getMessage(), ex);
         }
         finally {
             if (exceptionOccured) {

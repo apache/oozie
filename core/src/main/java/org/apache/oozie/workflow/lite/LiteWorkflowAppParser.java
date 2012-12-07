@@ -521,7 +521,7 @@ public class LiteWorkflowAppParser {
         else {
             ActionExecutor ae = Services.get().get(ActionService.class).getExecutor(eActionConf.getName());
             if (ae == null) {
-                throw new WorkflowException(ErrorCode.E0723, "Unsupported action type");
+                throw new WorkflowException(ErrorCode.E0723, eActionConf.getName(), ActionService.class.getName());
             }
             if (ae.requiresNNJT) {
 

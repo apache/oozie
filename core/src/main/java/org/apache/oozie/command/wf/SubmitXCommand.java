@@ -230,7 +230,7 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
             throw new CommandException(ex);
         }
         catch (Exception ex) {
-            throw new CommandException(ErrorCode.E0803, ex);
+            throw new CommandException(ErrorCode.E0803, ex.getMessage(), ex);
         }
     }
 
@@ -266,7 +266,7 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
         }
         catch (Exception e) {
             e.printStackTrace();
-            throw new CommandException(ErrorCode.E1007, "workflow " + id, e);
+            throw new CommandException(ErrorCode.E1007, "workflow " + id, e.getMessage(), e);
         }
     }
 

@@ -120,7 +120,7 @@ public class CoordActionMaterializeCommand extends CoordinatorCommand<Void> {
             }
             catch (IOException ioe) {
                 log.warn("Configuration parse error. read from DB :" + job.getConf(), ioe);
-                throw new CommandException(ErrorCode.E1005, ioe);
+                throw new CommandException(ErrorCode.E1005, ioe.getMessage(), ioe);
             }
 
             Instrumentation.Cron cron = new Instrumentation.Cron();

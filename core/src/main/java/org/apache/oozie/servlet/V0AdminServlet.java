@@ -107,6 +107,6 @@ public class V0AdminServlet extends BaseAdminServlet {
      */
     @Override
     protected void getQueueDump(JSONObject json) throws XServletException {
-        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0301);
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0301, "cannot get queue dump");
     }
 }
