@@ -55,6 +55,7 @@ OOZIE-944 Implement Workflow Generator UI Tool (egashira via virag)
 
 -- Oozie 3.3.1 (unreleased)
 
+OOZIE-1116 Create hbaselibs module (virag)
 OOZIE-1093 recursive fs chmod does not change the leaf directory (virag)
 OOZIE-1094 credential cannot resolve variable (virag)
 OOZIE-1099 Pig launcher log does not show the pig job url for H23 (rohini via mona)
