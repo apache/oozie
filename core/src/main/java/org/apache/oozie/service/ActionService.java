@@ -86,8 +86,7 @@ public class ActionService implements Service {
         ActionExecutor executor = (ActionExecutor) ReflectionUtils.newInstance(klass, services.getConf());
         log.trace("Registering action type [{0}] class [{1}]", executor.getType(), klass);
         if (executors.containsKey(executor.getType())) {
-            throw new ServiceException(ErrorCode.E0150, XLog.format(
-                    "Action executor for action type [{0}] already registered", executor.getType()));
+            throw new ServiceException(ErrorCode.E0150, executor.getType());
         }
         ActionExecutor.enableInit();
         executor.initActionType();

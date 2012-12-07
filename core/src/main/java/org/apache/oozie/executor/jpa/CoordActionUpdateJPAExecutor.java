@@ -53,7 +53,7 @@ public class CoordActionUpdateJPAExecutor implements JPAExecutor<Void> {
             return null;
         }
         catch (Exception e) {
-            throw new JPAExecutorException(ErrorCode.E0603, e);
+            throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
         }
     }
 

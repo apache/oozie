@@ -136,7 +136,7 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
 
         @Override
         public void reRun(String jobId, Configuration conf) throws BaseEngineException {
-            throw new BaseEngineException(new XException(ErrorCode.E0301));
+            throw new BaseEngineException(new XException(ErrorCode.E0301, "invalid use of rerun"));
         }
 
         @Override

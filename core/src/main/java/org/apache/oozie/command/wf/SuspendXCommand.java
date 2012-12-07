@@ -154,7 +154,7 @@ public class SuspendXCommand extends WorkflowXCommand<Void> {
             }
         }
         catch (Exception ex) {
-            throw new CommandException(ErrorCode.E0603, ex);
+            throw new CommandException(ErrorCode.E0603, ex.getMessage(), ex);
         }
         LogUtils.setLogInfo(this.wfJobBean, logInfo);
     }
@@ -166,7 +166,7 @@ public class SuspendXCommand extends WorkflowXCommand<Void> {
     protected void eagerVerifyPrecondition() throws CommandException, PreconditionException {
         super.eagerVerifyPrecondition();
         if (this.wfJobBean.getStatus() != WorkflowJob.Status.RUNNING) {
-            throw new PreconditionException(ErrorCode.E0727, this.wfJobBean.getStatus());
+            throw new PreconditionException(ErrorCode.E0727, this.wfJobBean.getId(), this.wfJobBean.getStatus());
         }
     }
 

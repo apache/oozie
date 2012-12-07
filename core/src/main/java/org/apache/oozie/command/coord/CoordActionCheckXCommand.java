@@ -176,7 +176,10 @@ public class CoordActionCheckXCommand extends CoordinatorXCommand<Void> {
         if (coordAction.getStatus().equals(CoordinatorAction.Status.SUCCEEDED)
                 || coordAction.getStatus().equals(CoordinatorAction.Status.FAILED)
                 || coordAction.getStatus().equals(CoordinatorAction.Status.KILLED)) {
-            throw new PreconditionException(ErrorCode.E1100);
+            throw new PreconditionException(ErrorCode.E1100, "The coord action [" + actionId + "] must not have status "
+                    + CoordinatorAction.Status.SUCCEEDED.name() + ", " + CoordinatorAction.Status.FAILED.name()
+                    + ", or " + CoordinatorAction.Status.KILLED.name() + " but has status [" + coordAction.getStatus().name()
+                    + "]");
         }
     }
 }

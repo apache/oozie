@@ -75,7 +75,7 @@ public class DefinitionXCommand extends WorkflowXCommand<String> {
             return wfJob.getWorkflowInstance().getApp().getDefinition();
         }
         else {
-            throw new CommandException(ErrorCode.E0604);
+            throw new CommandException(ErrorCode.E0604, "null");
         }
     }
 

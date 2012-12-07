@@ -63,7 +63,7 @@ public class CoordJobsGetPendingJPAExecutor implements JPAExecutor<List<Coordina
             }
         }
         catch (Exception e) {
-            throw new JPAExecutorException(ErrorCode.E0603, e);
+            throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
         }
         return jobList;
     }

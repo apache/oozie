@@ -288,7 +288,8 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
     @Override
     protected void verifyPrecondition() throws PreconditionException {
         if (coordAction.getStatus() != CoordinatorAction.Status.SUBMITTED) {
-            throw new PreconditionException(ErrorCode.E1100);
+            throw new PreconditionException(ErrorCode.E1100, "The coord action [" + actionId + "] must have status "
+                    + CoordinatorAction.Status.SUBMITTED.name() + " but has status [" + coordAction.getStatus().name() + "]");
         }
     }
 }

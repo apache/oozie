@@ -66,7 +66,7 @@ public class CoordActionGetForInfoJPAExecutor implements JPAExecutor<Coordinator
                 actionObjects = q.getResultList();
             }
             catch (Exception e) {
-                throw new JPAExecutorException(ErrorCode.E0603, e);
+                throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
             }
 
             if (actionObjects != null && actionObjects.size() > 0) {
@@ -84,7 +84,7 @@ public class CoordActionGetForInfoJPAExecutor implements JPAExecutor<Coordinator
                 caBeans = q.getResultList();
             }
             catch (Exception e) {
-                throw new JPAExecutorException(ErrorCode.E0603, e);
+                throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
             }
 
             if (caBeans != null && caBeans.size() > 0) {
