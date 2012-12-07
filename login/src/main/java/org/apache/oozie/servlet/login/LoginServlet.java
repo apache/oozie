@@ -18,6 +18,7 @@
 package org.apache.oozie.servlet.login;
 
 import java.io.*;
+import java.net.URLEncoder;
 import java.text.MessageFormat;
 import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
@@ -140,13 +141,14 @@ public class LoginServlet extends HttpServlet {
     /**
      * Write the "oozie.web.login.auth" cookie containing the username.  A subclass can override this to include more information
      * into the cookie; though this will likely break compatibility with the ExampleAltAuthenticationHandler, so it would have to
-     * be extended as well.
+     * be extended as well.  It is recommended that the cookie value be URL-encoded.
      *
      * @param resp The response
      * @param username The username
+     * @throws UnsupportedEncodingException thrown when there is a problem encoding the username as the cookie value
      */
-    protected void writeCookie(HttpServletResponse resp, String username) {
-        Cookie cookie = new Cookie("oozie.web.login.auth", username);
+    protected void writeCookie(HttpServletResponse resp, String username) throws UnsupportedEncodingException {
+        Cookie cookie = new Cookie("oozie.web.login.auth", URLEncoder.encode(username, "UTF-8"));
         cookie.setPath("/");
         resp.addCookie(cookie);
     }

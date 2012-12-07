@@ -23,8 +23,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.Map;
@@ -167,7 +169,8 @@ public class TestLoginServlet extends TestCase {
         conn.setRequestMethod("POST");
         assertEquals(HttpServletResponse.SC_FOUND, conn.getResponseCode());
         String cookies = getCookies(conn);
-        assertTrue(cookies.contains("oozie.web.login.auth=foo"));
+        String username = getUsernameFromCookies(cookies);
+        assertEquals("foo", username);
     }
 
     protected String getHTML(HttpURLConnection conn) throws Exception {
@@ -188,6 +191,20 @@ public class TestLoginServlet extends TestCase {
             if (key != null && key.equals("Set-Cookie")) {
                 List<String> cookies = headers.get(key);
                 return cookies.get(0);
+            }
+        }
+        return null;
+    }
+
+    protected String getUsernameFromCookies(String cookies) throws UnsupportedEncodingException {
+        String[] cookiesSplit = cookies.split(";");
+        for (String split : cookiesSplit) {
+            if (split.startsWith("oozie.web.login.auth=")) {
+                String value = split.substring("oozie.web.login.auth=".length());
+                if (value.startsWith("\"") && value.endsWith("\"")) {
+                    value = value.substring(1, value.length() - 1);
+                }
+                return URLDecoder.decode(value, "UTF-8");
             }
         }
         return null;
