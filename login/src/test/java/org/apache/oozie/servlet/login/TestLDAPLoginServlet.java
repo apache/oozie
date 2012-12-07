@@ -152,7 +152,8 @@ public class TestLDAPLoginServlet extends AbstractServerTest {
         conn.setRequestMethod("POST");
         assertEquals(HttpServletResponse.SC_FOUND, conn.getResponseCode());
         String cookies = tls.getCookies(conn);
-        assertTrue(cookies.contains("oozie.web.login.auth=uid=admin,ou=system"));
+        String username = tls.getUsernameFromCookies(cookies);
+        assertEquals("uid=admin,ou=system", username);
     }
 
     @Override

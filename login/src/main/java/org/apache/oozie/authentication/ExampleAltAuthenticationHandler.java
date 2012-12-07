@@ -18,6 +18,8 @@
 package org.apache.oozie.authentication;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.text.MessageFormat;
 import java.util.Properties;
@@ -117,11 +119,20 @@ public class ExampleAltAuthenticationHandler extends AltKerberosAuthenticationHa
      *
      * @param authCookie The "oozie.web.login.auth" cookie
      * @return The username from the cookie or null if the cookie is null
+     * @throws UnsupportedEncodingException thrown if there's a problem decoding the cookie value
+     * @throws AuthenticationException thrown if the cookie value is only two quotes ""
      */
-    protected String getAltAuthUserName(Cookie authCookie) {
+    protected String getAltAuthUserName(Cookie authCookie) throws UnsupportedEncodingException, AuthenticationException {
         if (authCookie == null) {
             return null;
         }
-        return authCookie.getValue();
+        String username = authCookie.getValue();
+        if (username.startsWith("\"") && username.endsWith("\"")) {
+            if (username.length() == 2) {
+                throw new AuthenticationException("Unable to parse authentication cookie");
+            }
+            username = username.substring(1, username.length() - 1);
+        }
+        return URLDecoder.decode(username, "UTF-8");
     }
 }
