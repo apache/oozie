@@ -58,6 +58,9 @@ public class TestProxyUserService extends XTestCase {
         catch (Exception ex) {
             fail();
         }
+        finally {
+            services.destroy();
+        }
     }
 
     public void testWrongHost() throws Exception {
@@ -76,6 +79,9 @@ public class TestProxyUserService extends XTestCase {
         catch (Exception ex) {
             fail();
         }
+        finally {
+            services.destroy();
+        }
     }
 
     public void testWrongConfigHosts() throws Exception {
@@ -92,6 +98,9 @@ public class TestProxyUserService extends XTestCase {
         }
         catch (Exception ex) {
             fail();
+        }
+        finally {
+            services.destroy();
         }
     }
 

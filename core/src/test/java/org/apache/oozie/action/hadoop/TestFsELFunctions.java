@@ -40,10 +40,19 @@ import org.apache.oozie.util.XConfiguration;
 
 public class TestFsELFunctions extends XFsTestCase {
 
-    public void testFunctions() throws Exception {
-        Services services = new Services();
-        services.init();
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        new Services().init();
+    }
 
+    @Override
+    protected void tearDown() throws Exception {
+        Services.get().destroy();
+        super.tearDown();
+    }
+
+    public void testFunctions() throws Exception {
         String file1 = new Path(getFsTestCaseDir(), "file1").toString();
         String file2 = new Path(getFsTestCaseDir(), "file2").toString();
         String dir = new Path(getFsTestCaseDir(), "dir").toString();

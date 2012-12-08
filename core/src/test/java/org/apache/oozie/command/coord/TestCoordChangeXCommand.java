@@ -279,7 +279,8 @@ public class TestCoordChangeXCommand extends XDataTestCase {
     public void testCoordChangeStatus() throws Exception {
         Services.get().destroy();
         setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_STATES_WITHOUT_ERROR, "false");
-        new Services().init();
+        services = new Services();
+        services.init();
         Date startTime = new Date();
         Date endTime = new Date(startTime.getTime() + (20 * 60 * 1000));
 

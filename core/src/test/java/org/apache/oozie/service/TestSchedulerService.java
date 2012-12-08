@@ -26,11 +26,21 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class TestSchedulerService extends XTestCase {
 
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        new Services().init();
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        Services.get().destroy();
+        super.tearDown();
+    }
+
     public void testInstrumentation() throws Exception {
-        Services services = new Services();
-        services.init();
-        assertNotNull(services.get(SchedulerService.class));
-        SchedulerService ss = services.get(SchedulerService.class);
+        assertNotNull(Services.get().get(SchedulerService.class));
+        SchedulerService ss = Services.get().get(SchedulerService.class);
         final AtomicInteger counter = new AtomicInteger();
         ss.schedule(new Runnable() {
             public void run() {
@@ -44,7 +54,6 @@ public class TestSchedulerService extends XTestCase {
             }
         });
         assertTrue(counter.get() > 1);
-        services.destroy();
     }
 
 }

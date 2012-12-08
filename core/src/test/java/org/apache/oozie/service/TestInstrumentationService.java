@@ -21,12 +21,21 @@ import org.apache.oozie.test.XTestCase;
 
 public class TestInstrumentationService extends XTestCase {
 
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        new Services().init();
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        Services.get().destroy();
+        super.tearDown();
+    }
+
     public void testInstrumentation() throws Exception {
-        Services services = new Services();
-        services.init();
-        assertNotNull(services.get(InstrumentationService.class));
-        assertNotNull(services.get(InstrumentationService.class).get());
-        services.destroy();
+        assertNotNull(Services.get().get(InstrumentationService.class));
+        assertNotNull(Services.get().get(InstrumentationService.class).get());
     }
 
 }

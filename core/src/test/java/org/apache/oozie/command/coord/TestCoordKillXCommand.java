@@ -160,7 +160,7 @@ public class TestCoordKillXCommand extends XDataTestCase {
     public void testCoordKillForBackwardSupport() throws Exception {
         Services.get().destroy();
         setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_COORD_STATUS, "true");
-        Services services = new Services();
+        services = new Services();
         setClassesToBeExcluded(services.getConf(), excludedServices);
         services.init();
 

@@ -163,8 +163,9 @@ public class TestWorkflowKillXCommand extends XDataTestCase {
 
 
     public void testChildId() throws Exception {
+        services.destroy();
         setSystemProperty(UUIDService.CONF_GENERATOR, "counter");
-        Services services = new Services();
+        services = new Services();
         services.init();
         UUIDService uuid = services.get(UUIDService.class);
         String id = uuid.generateId(ApplicationType.WORKFLOW);
@@ -181,7 +182,6 @@ public class TestWorkflowKillXCommand extends XDataTestCase {
         childId = uuid.generateChildId(id, "a");
         assertEquals(id, uuid.getId(childId));
         assertEquals("a", uuid.getChildName(childId));
-        services.destroy();
     }
 
     /**
