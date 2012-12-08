@@ -1,5 +1,8 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1114 Some tests don't use the Services singleton properly (rkanter)
+OOZIE-1113 The cookies used in the AltKerberosAuthenticationHandler examples aren't read properly if quoted (rkanter)
+OOZIE-1101 Fix log messages that contain {0} or similar (rkanter)
 OOZIE-1073 Optimize latest and future EL resolution in case of start-instance and end-instance (rohini via virag)
 OOZIE-816 Add Support for Hadoop 1.1.1 (zhujinwei and harsh via harsh)
 OOZIE-1103 Create example using AltKerberosAuthenticationHandler (rkanter)

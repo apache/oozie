@@ -178,7 +178,7 @@ public class TestCallableQueueService extends XTestCase {
                     Thread.sleep(this.wait);
                 }
                 catch (InterruptedException exp) {
-                    throw new CommandException(ErrorCode.ETEST);
+                    throw new CommandException(ErrorCode.ETEST, "invalid_id");
                 }
                 executed = System.currentTimeMillis();
                 ;
@@ -187,11 +187,20 @@ public class TestCallableQueueService extends XTestCase {
         }
     }
 
-    public void testQueuing() throws Exception {
-        Services services = new Services();
-        services.init();
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        new Services().init();
+    }
 
-        CallableQueueService queueservice = services.get(CallableQueueService.class);
+    @Override
+    protected void tearDown() throws Exception {
+        Services.get().destroy();
+        super.tearDown();
+    }
+
+    public void testQueuing() throws Exception {
+        CallableQueueService queueservice = Services.get().get(CallableQueueService.class);
 
         final MyCallable callable = new MyCallable();
         queueservice.queue(callable);
@@ -201,16 +210,10 @@ public class TestCallableQueueService extends XTestCase {
             }
         });
         assertTrue(callable.executed != 0);
-
-        services.destroy();
-
     }
 
     public void testDelayedQueuing() throws Exception {
-        Services services = new Services();
-        services.init();
-
-        CallableQueueService queueservice = services.get(CallableQueueService.class);
+        CallableQueueService queueservice = Services.get().get(CallableQueueService.class);
 
         final MyCallable callable = new MyCallable();
         long scheduled = System.currentTimeMillis();
@@ -221,17 +224,15 @@ public class TestCallableQueueService extends XTestCase {
             }
         });
         assertTrue(callable.executed >= scheduled + 1000);
-
-        services.destroy();
     }
 
     public void testPriorityExecution() throws Exception {
         EXEC_ORDER = new AtomicLong();
+        Services.get().destroy();
         setSystemProperty(CallableQueueService.CONF_THREADS, "1");
-        Services services = new Services();
-        services.init();
+        new Services().init();
 
-        CallableQueueService queueservice = services.get(CallableQueueService.class);
+        CallableQueueService queueservice = Services.get().get(CallableQueueService.class);
 
         final MyCallable callable1 = new MyCallable(0, 200);
         final MyCallable callable2 = new MyCallable(0, 200);
@@ -257,20 +258,15 @@ public class TestCallableQueueService extends XTestCase {
         assertTrue(callableLow.executed >= 0);
         assertTrue(callableHigh.executed >= 0);
         assertTrue(callableHigh.order < callableLow.order);
-
-        services.destroy();
-
     }
 
     public void testQueueSerial() throws Exception {
         EXEC_ORDER = new AtomicLong();
-        Services services = new Services();
-        services.init();
         final MyCallable callable1 = new MyCallable(0, 10);
         final MyCallable callable2 = new MyCallable(0, 10);
         final MyCallable callable3 = new MyCallable(0, 10);
 
-        CallableQueueService queueservice = services.get(CallableQueueService.class);
+        CallableQueueService queueservice = Services.get().get(CallableQueueService.class);
 
         queueservice.queueSerial(Arrays.asList(callable1, callable2, callable3));
         waitFor(100, new Predicate() {
@@ -281,8 +277,6 @@ public class TestCallableQueueService extends XTestCase {
         assertEquals(0, callable1.order);
         assertEquals(1, callable2.order);
         assertEquals(2, callable3.order);
-
-        services.destroy();
     }
 
     public static class CLCallable implements XCallable<Void> {
@@ -357,11 +351,8 @@ public class TestCallableQueueService extends XTestCase {
     }
 
     public void testConcurrencyLimit() throws Exception {
-        Services services = new Services();
-        services.init();
-
         CLCallable.resetConcurrency();
-        final CallableQueueService queueservice = services.get(CallableQueueService.class);
+        final CallableQueueService queueservice = Services.get().get(CallableQueueService.class);
 
         for (int i = 0; i < 10; i++) {
             queueservice.queue(new CLCallable(), 10);
@@ -384,8 +375,6 @@ public class TestCallableQueueService extends XTestCase {
         System.out.println("CLCallable Concurrency :" + CLCallable.getConcurrency());
 
         assertTrue(CLCallable.getConcurrency() <= 3);
-
-        services.destroy();
     }
 
     /**
@@ -395,12 +384,12 @@ public class TestCallableQueueService extends XTestCase {
      * @throws Exception
      */
     public void testConcurrencyReachedAndChooseNextEligible() throws Exception {
+        Services.get().destroy();
         setSystemProperty(CallableQueueService.CONF_CALLABLE_NEXT_ELIGIBLE, "true");
-        Services services = new Services();
-        services.init();
+        new Services().init();
 
         CLCallable.resetConcurrency();
-        final CallableQueueService queueservice = services.get(CallableQueueService.class);
+        final CallableQueueService queueservice = Services.get().get(CallableQueueService.class);
 
         final MyCallable callable1 = new MyCallable(0, 100);
         final MyCallable callable2 = new MyCallable(0, 100);
@@ -441,14 +430,10 @@ public class TestCallableQueueService extends XTestCase {
         System.out.println("Callable callableOther executed :" + callableOther.executed);
 
         assertTrue(callableOther.executed < last);
-
-        services.destroy();
     }
 
     public void testSerialConcurrencyLimit() throws Exception {
         EXEC_ORDER = new AtomicLong();
-        Services services = new Services();
-        services.init();
         final MyCallable callable1 = new MyCallable("TestSerialConcurrencyLimit", 0, 100);
         final MyCallable callable2 = new MyCallable("TestSerialConcurrencyLimit", 0, 100);
         final MyCallable callable3 = new MyCallable("TestSerialConcurrencyLimit", 0, 100);
@@ -457,7 +442,7 @@ public class TestCallableQueueService extends XTestCase {
 
         List<MyCallable> callables = Arrays.asList(callable1, callable2, callable3, callable4, callable5);
 
-        CallableQueueService queueservice = services.get(CallableQueueService.class);
+        CallableQueueService queueservice = Services.get().get(CallableQueueService.class);
 
         String type = "SerialConcurrencyLimit";
         for (MyCallable c : callables) {
@@ -484,14 +469,10 @@ public class TestCallableQueueService extends XTestCase {
             }
         }
         assertTrue(secondBatch >= 2);
-
-        services.destroy();
     }
 
     public void testConcurrency() throws Exception {
         EXEC_ORDER = new AtomicLong();
-        Services services = new Services();
-        services.init();
         final MyCallable callable1 = new MyCallable("TestConcurrency", 0, 100);
         final MyCallable callable2 = new MyCallable("TestConcurrency", 0, 100);
         final MyCallable callable3 = new MyCallable("TestConcurrency", 0, 100);
@@ -500,7 +481,7 @@ public class TestCallableQueueService extends XTestCase {
 
         List<MyCallable> callables = Arrays.asList(callable1, callable2, callable3, callable4, callable5);
 
-        CallableQueueService queueservice = services.get(CallableQueueService.class);
+        CallableQueueService queueservice = Services.get().get(CallableQueueService.class);
 
         for (MyCallable c : callables) {
             queueservice.queue(c);
@@ -526,21 +507,17 @@ public class TestCallableQueueService extends XTestCase {
             }
         }
         assertTrue(secondBatch >= 2);
-
-        services.destroy();
     }
 
     public void testQueueUniquenessWithSameKey() throws Exception {
         EXEC_ORDER = new AtomicLong();
-        Services services = new Services();
-        services.init();
         final MyCallable callable1 = new MyCallable("QueueUniquenessWithSameKey", "QueueUniquenessWithSameKey", 0, 100);
         final MyCallable callable2 = new MyCallable("QueueUniquenessWithSameKey", "QueueUniquenessWithSameKey", 0, 100);
         final MyCallable callable3 = new MyCallable("QueueUniquenessWithSameKey", "QueueUniquenessWithSameKey", 0, 100);
 
         List<MyCallable> callables = Arrays.asList(callable1, callable2, callable3);
 
-        CallableQueueService queueservice = services.get(CallableQueueService.class);
+        CallableQueueService queueservice = Services.get().get(CallableQueueService.class);
 
         for (MyCallable c : callables) {
             queueservice.queue(c);
@@ -555,21 +532,17 @@ public class TestCallableQueueService extends XTestCase {
         assertTrue(callable1.executed != 0);
         assertTrue(callable2.executed == 0);
         assertTrue(callable3.executed == 0);
-
-        services.destroy();
     }
 
     public void testQueueUniquenessWithSameKeyInComposite() throws Exception {
         EXEC_ORDER = new AtomicLong();
-        Services services = new Services();
-        services.init();
         final MyCallable callable1 = new MyCallable("QueueUniquenessWithSameKeyInComposite", "QueueUniquenessWithSameKeyInComposite", 0, 200);
         final MyCallable callable2 = new MyCallable("QueueUniquenessWithSameKeyInComposite", "QueueUniquenessWithSameKeyInComposite", 0, 200);
         final MyCallable callable3 = new MyCallable("QueueUniquenessWithSameKeyInComposite", "QueueUniquenessWithSameKeyInComposite", 0, 200);
 
         List<MyCallable> callables = Arrays.asList(callable1, callable2, callable3);
 
-        CallableQueueService queueservice = services.get(CallableQueueService.class);
+        CallableQueueService queueservice = Services.get().get(CallableQueueService.class);
 
         String type = "QueueUniquenessWithSameKeyInComposite";
         for (MyCallable c : callables) {
@@ -585,19 +558,15 @@ public class TestCallableQueueService extends XTestCase {
         assertTrue(callable1.executed != 0);
         assertTrue(callable2.executed == 0);
         assertTrue(callable3.executed == 0);
-
-        services.destroy();
     }
 
     public void testQueueUniquenessWithSameKeyInOneComposite() throws Exception {
         EXEC_ORDER = new AtomicLong();
-        Services services = new Services();
-        services.init();
         final MyCallable callable1 = new MyCallable("QueueUniquenessWithSameKeyInOneComposite", "QueueUniquenessWithSameKeyInOneComposite", 0, 100);
         final MyCallable callable2 = new MyCallable("QueueUniquenessWithSameKeyInOneComposite", "QueueUniquenessWithSameKeyInOneComposite", 0, 100);
         final MyCallable callable3 = new MyCallable("QueueUniquenessWithSameKeyInOneComposite", "QueueUniquenessWithSameKeyInOneComposite", 0, 100);
 
-        CallableQueueService queueservice = services.get(CallableQueueService.class);
+        CallableQueueService queueservice = Services.get().get(CallableQueueService.class);
 
         queueservice.queueSerial(Arrays.asList(callable1, callable2, callable3));
 
@@ -610,21 +579,17 @@ public class TestCallableQueueService extends XTestCase {
         assertTrue(callable1.executed != 0);
         assertTrue(callable2.executed == 0);
         assertTrue(callable3.executed == 0);
-
-        services.destroy();
     }
 
     public void testQueueUniquenessWithDiffKey() throws Exception {
         EXEC_ORDER = new AtomicLong();
-        Services services = new Services();
-        services.init();
         final MyCallable callable1 = new MyCallable("QueueUniquenessWithDiffKey1", "QueueUniquenessWithDiffKey", 0, 100);
         final MyCallable callable2 = new MyCallable("QueueUniquenessWithDiffKey2", "QueueUniquenessWithDiffKey", 0, 100);
         final MyCallable callable3 = new MyCallable("QueueUniquenessWithDiffKey3", "QueueUniquenessWithDiffKey", 0, 100);
 
         List<MyCallable> callables = Arrays.asList(callable1, callable2, callable3);
 
-        CallableQueueService queueservice = services.get(CallableQueueService.class);
+        CallableQueueService queueservice = Services.get().get(CallableQueueService.class);
 
         for (MyCallable c : callables) {
             queueservice.queue(c);
@@ -639,21 +604,17 @@ public class TestCallableQueueService extends XTestCase {
         assertTrue(callable1.executed != 0);
         assertTrue(callable2.executed != 0);
         assertTrue(callable3.executed != 0);
-
-        services.destroy();
     }
 
     public void testQueueUniquenessWithDiffKeyInComposite() throws Exception {
         EXEC_ORDER = new AtomicLong();
-        Services services = new Services();
-        services.init();
         final MyCallable callable1 = new MyCallable("QueueUniquenessWithDiffKeyInComposite1", "QueueUniquenessWithDiffKeyInComposite", 0, 100);
         final MyCallable callable2 = new MyCallable("QueueUniquenessWithDiffKeyInComposite2", "QueueUniquenessWithDiffKeyInComposite", 0, 100);
         final MyCallable callable3 = new MyCallable("QueueUniquenessWithDiffKeyInComposite3", "QueueUniquenessWithDiffKeyInComposite", 0, 100);
 
         List<MyCallable> callables = Arrays.asList(callable1, callable2, callable3);
 
-        CallableQueueService queueservice = services.get(CallableQueueService.class);
+        CallableQueueService queueservice = Services.get().get(CallableQueueService.class);
 
         String type = "QueueUniquenessWithDiffKeyInComposite";
         for (MyCallable c : callables) {
@@ -669,19 +630,15 @@ public class TestCallableQueueService extends XTestCase {
         assertTrue(callable1.executed != 0);
         assertTrue(callable2.executed != 0);
         assertTrue(callable3.executed != 0);
-
-        services.destroy();
     }
 
     public void testQueueUniquenessWithDiffKeyInOneComposite() throws Exception {
         EXEC_ORDER = new AtomicLong();
-        Services services = new Services();
-        services.init();
         final MyCallable callable1 = new MyCallable("QueueUniquenessWithDiffKeyInOneComposite1", "QueueUniquenessWithDiffKeyInOneComposite", 0, 100);
         final MyCallable callable2 = new MyCallable("QueueUniquenessWithDiffKeyInOneComposite2", "QueueUniquenessWithDiffKeyInOneComposite", 0, 100);
         final MyCallable callable3 = new MyCallable("QueueUniquenessWithDiffKeyInOneComposite3", "QueueUniquenessWithDiffKeyInOneComposite", 0, 100);
 
-        CallableQueueService queueservice = services.get(CallableQueueService.class);
+        CallableQueueService queueservice = Services.get().get(CallableQueueService.class);
 
         queueservice.queueSerial(Arrays.asList(callable1, callable2, callable3));
 
@@ -694,8 +651,6 @@ public class TestCallableQueueService extends XTestCase {
         assertTrue(callable1.executed != 0);
         assertTrue(callable2.executed != 0);
         assertTrue(callable3.executed != 0);
-
-        services.destroy();
     }
 
     /**
@@ -704,12 +659,12 @@ public class TestCallableQueueService extends XTestCase {
      */
     public void testInterrupt() throws Exception {
         EXEC_ORDER = new AtomicLong();
+        Services.get().destroy();
         setSystemProperty(CallableQueueService.CONF_THREADS, "1");
         setSystemProperty(CallableQueueService.CONF_CALLABLE_INTERRUPT_TYPES, "testKill");
-        Services services = new Services();
-        services.init();
+        new Services().init();
 
-        CallableQueueService queueservice = services.get(CallableQueueService.class);
+        CallableQueueService queueservice = Services.get().get(CallableQueueService.class);
         final ExtendedXCommand initialCallable = new ExtendedXCommand("initialKey", "initialType", 2, 200,
                 "initialLockKey");
         final List<ExtendedXCommand> callables = new ArrayList<ExtendedXCommand>();
@@ -739,7 +694,6 @@ public class TestCallableQueueService extends XTestCase {
         assertTrue(initialCallable.executed > 0);
         assertTrue(intCallable.executed > 0);
         assertTrue(intCallable.executed < callables.get(5).executed);
-        services.destroy();
     }
 
     /*
@@ -749,12 +703,12 @@ public class TestCallableQueueService extends XTestCase {
      */
     public void testInterruptsWithDistinguishedLockKeys() throws Exception {
         EXEC_ORDER = new AtomicLong();
+        Services.get().destroy();
         setSystemProperty(CallableQueueService.CONF_THREADS, "1");
         setSystemProperty(CallableQueueService.CONF_CALLABLE_INTERRUPT_TYPES, "testKill");
-        Services services = new Services();
-        services.init();
+        new Services().init();
 
-        CallableQueueService queueservice = services.get(CallableQueueService.class);
+        CallableQueueService queueservice = Services.get().get(CallableQueueService.class);
 
         final ExtendedXCommand initialCallable = new ExtendedXCommand("initialKey", "initialType", 2, 200,
                 "initialLockKey");
@@ -785,8 +739,6 @@ public class TestCallableQueueService extends XTestCase {
         assertTrue(initialCallable.executed > 0);
         assertTrue(intCallable.executed > 0);
         assertTrue(intCallable.executed > callables.get(5).executed);
-
-        services.destroy();
     }
 
     /*
@@ -795,12 +747,12 @@ public class TestCallableQueueService extends XTestCase {
      */
     public void testInterruptsWithCompositeCallable() throws Exception {
         EXEC_ORDER = new AtomicLong();
+        Services.get().destroy();
         setSystemProperty(CallableQueueService.CONF_THREADS, "1");
         setSystemProperty(CallableQueueService.CONF_CALLABLE_INTERRUPT_TYPES, "testKill");
-        Services services = new Services();
-        services.init();
+        new Services().init();
 
-        CallableQueueService queueservice = services.get(CallableQueueService.class);
+        CallableQueueService queueservice = Services.get().get(CallableQueueService.class);
         final ExtendedXCommand initialCallable = new ExtendedXCommand("initialKey", "initialType", 2, 200,
                 "initialLockKey");
         final List<ExtendedXCommand> callables = new ArrayList<ExtendedXCommand>();
@@ -830,8 +782,6 @@ public class TestCallableQueueService extends XTestCase {
         for (ExtendedXCommand c : callables) {
             assertTrue(intCallable.executed < c.executed);
         }
-
-        services.destroy();
     }
 
     /*
@@ -840,12 +790,12 @@ public class TestCallableQueueService extends XTestCase {
      */
     public void testInterruptsInCompositeCallable() throws Exception {
         EXEC_ORDER = new AtomicLong();
+        Services.get().destroy();
         setSystemProperty(CallableQueueService.CONF_THREADS, "1");
         setSystemProperty(CallableQueueService.CONF_CALLABLE_INTERRUPT_TYPES, "testKill");
-        Services services = new Services();
-        services.init();
+        new Services().init();
 
-        CallableQueueService queueservice = services.get(CallableQueueService.class);
+        CallableQueueService queueservice = Services.get().get(CallableQueueService.class);
         final ExtendedXCommand initialCallable = new ExtendedXCommand("initialKey", "initialType", 2, 200,
                 "initialLockKey");
         final List<ExtendedXCommand> callables = new ArrayList<ExtendedXCommand>();
@@ -873,8 +823,6 @@ public class TestCallableQueueService extends XTestCase {
 
         assertTrue(initialCallable.executed > 0);
         assertTrue(callables.get(1).executed > callables.get(5).executed);
-
-        services.destroy();
     }
 
     /*
@@ -883,13 +831,13 @@ public class TestCallableQueueService extends XTestCase {
      */
     public void testMaxInterruptMapSize() throws Exception {
         EXEC_ORDER = new AtomicLong();
+        Services.get().destroy();
         setSystemProperty(CallableQueueService.CONF_THREADS, "1");
         setSystemProperty(CallableQueueService.CONF_CALLABLE_INTERRUPT_TYPES, "testKill");
         setSystemProperty(CallableQueueService.CONF_CALLABLE_INTERRUPT_MAP_MAX_SIZE, "0");
-        Services services = new Services();
-        services.init();
+        new Services().init();
 
-        CallableQueueService queueservice = services.get(CallableQueueService.class);
+        CallableQueueService queueservice = Services.get().get(CallableQueueService.class);
 
         final ExtendedXCommand initialCallable = new ExtendedXCommand("initialKey", "initialType", 2, 100,
                 "initialLockKey");
@@ -920,8 +868,6 @@ public class TestCallableQueueService extends XTestCase {
         assertTrue(initialCallable.executed > 0);
         assertTrue(intCallable.executed > 0);
         assertTrue(intCallable.executed > callables.get(5).executed);
-
-        services.destroy();
     }
 
 }

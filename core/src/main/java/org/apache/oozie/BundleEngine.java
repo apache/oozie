@@ -107,7 +107,7 @@ public class BundleEngine extends BaseEngine {
      */
     @Override
     public CoordinatorJob getCoordJob(String jobId) throws BundleEngineException {
-        throw new BundleEngineException(new XException(ErrorCode.E0301));
+        throw new BundleEngineException(new XException(ErrorCode.E0301, "cannot get a coordinator job from BundleEngine"));
     }
 
     public BundleJobBean getBundleJob(String jobId) throws BundleEngineException {
@@ -124,7 +124,7 @@ public class BundleEngine extends BaseEngine {
      */
     @Override
     public CoordinatorJob getCoordJob(String jobId, String filter, int start, int length) throws BundleEngineException {
-        throw new BundleEngineException(new XException(ErrorCode.E0301));
+        throw new BundleEngineException(new XException(ErrorCode.E0301, "cannot get a coordinator job from BundleEngine"));
     }
 
     /* (non-Javadoc)
@@ -147,7 +147,7 @@ public class BundleEngine extends BaseEngine {
      */
     @Override
     public WorkflowJob getJob(String jobId) throws BundleEngineException {
-        throw new BundleEngineException(new XException(ErrorCode.E0301));
+        throw new BundleEngineException(new XException(ErrorCode.E0301, "cannot get a workflow job from BundleEngine"));
     }
 
     /* (non-Javadoc)
@@ -155,7 +155,7 @@ public class BundleEngine extends BaseEngine {
      */
     @Override
     public WorkflowJob getJob(String jobId, int start, int length) throws BundleEngineException {
-        throw new BundleEngineException(new XException(ErrorCode.E0301));
+        throw new BundleEngineException(new XException(ErrorCode.E0301, "cannot get a workflow job from BundleEngine"));
     }
 
     /* (non-Javadoc)
@@ -185,7 +185,7 @@ public class BundleEngine extends BaseEngine {
     @Override
     @Deprecated
     public void reRun(String jobId, Configuration conf) throws BundleEngineException {
-        throw new BundleEngineException(new XException(ErrorCode.E0301));
+        throw new BundleEngineException(new XException(ErrorCode.E0301, "rerun"));
     }
 
     /**

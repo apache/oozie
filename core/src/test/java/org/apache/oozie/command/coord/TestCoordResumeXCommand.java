@@ -122,7 +122,8 @@ public class TestCoordResumeXCommand extends XDataTestCase {
     public void testCoordSuspendAndResumeForPrepWithBackwardCompatibility() throws Exception {
         Services.get().destroy();
         setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_COORD_STATUS, "true");
-        new Services().init();
+        services = new Services();
+        services.init();
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, false, false);
         job.setAppNamespace(SchemaService.COORDINATOR_NAMESPACE_URI_1);
         JPAService jpaService = Services.get().get(JPAService.class);

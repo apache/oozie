@@ -24,15 +24,24 @@ import org.apache.oozie.util.XLog;
 
 public class TestDagXLogInfoService extends XTestCase {
 
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        new Services().init();
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        Services.get().destroy();
+        super.tearDown();
+    }
+
     public void testLogInfo() throws Exception {
-        Services services = new Services();
-        services.init();
-        assertNotNull(services.get(DagXLogInfoService.class));
+        assertNotNull(Services.get().get(DagXLogInfoService.class));
         String prefix = XLog.Info.get().createPrefix();
         assertTrue(prefix.contains(DagXLogInfoService.TOKEN));
         assertTrue(prefix.contains(DagXLogInfoService.APP));
         assertTrue(prefix.contains(DagXLogInfoService.JOB));
         assertTrue(prefix.contains(DagXLogInfoService.ACTION));
-        services.destroy();
     }
 }

@@ -62,7 +62,7 @@ public class CoordJobGetActionsRunningJPAExecutor implements JPAExecutor<List<Co
             return actionBeansList;
         }
         catch (Exception e) {
-            throw new JPAExecutorException(ErrorCode.E0603, e);
+            throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
         }
     }
 

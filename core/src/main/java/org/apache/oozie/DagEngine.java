@@ -462,12 +462,12 @@ public class DagEngine extends BaseEngine {
 
     @Override
     public CoordinatorJob getCoordJob(String jobId) throws BaseEngineException {
-        throw new BaseEngineException(new XException(ErrorCode.E0301));
+        throw new BaseEngineException(new XException(ErrorCode.E0301, "cannot get a coordinator job from DagEngine"));
     }
 
     @Override
     public CoordinatorJob getCoordJob(String jobId, String filter, int start, int length) throws BaseEngineException {
-        throw new BaseEngineException(new XException(ErrorCode.E0301));
+        throw new BaseEngineException(new XException(ErrorCode.E0301, "cannot get a coordinator job from DagEngine"));
     }
 
     public WorkflowActionBean getWorkflowAction(String actionId) throws BaseEngineException {

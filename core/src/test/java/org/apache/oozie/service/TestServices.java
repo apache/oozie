@@ -29,15 +29,18 @@ public class TestServices extends XTestCase {
         setSystemProperty(Services.CONF_SERVICE_EXT_CLASSES, "");
         Services services = new Services();
         services.init();
-        assertNotNull(services.get(XLogService.class));
-        assertNotNull(services.get(ConfigurationService.class));
+        try {
+            assertNotNull(services.get(XLogService.class));
+            assertNotNull(services.get(ConfigurationService.class));
 
-        String shouldBe = "oozie-" + System.getProperty("user.name");
-        assertTrue(shouldBe.startsWith(services.getSystemId()));
-        assertNotNull(services.getRuntimeDir());
-        assertTrue(new File(services.getRuntimeDir()).exists());
-
-        services.destroy();
+            String shouldBe = "oozie-" + System.getProperty("user.name");
+            assertTrue(shouldBe.startsWith(services.getSystemId()));
+            assertNotNull(services.getRuntimeDir());
+            assertTrue(new File(services.getRuntimeDir()).exists());
+        }
+        finally {
+            services.destroy();
+        }
     }
 
     public static class S1 implements Service {
@@ -89,8 +92,13 @@ public class TestServices extends XTestCase {
         setSystemProperty(Services.CONF_SERVICE_CLASSES, SERVICES);
         Services services = new Services();
         services.init();
-        assertEquals(S1.class,  services.get(S1.class).getClass());
-        assertEquals(S2.class,  services.get(S2.class).getClass());
+        try {
+            assertEquals(S1.class,  services.get(S1.class).getClass());
+            assertEquals(S2.class,  services.get(S2.class).getClass());
+        }
+        finally {
+            services.destroy();
+        }
     }
 
     private static final String SERVICES_EXT = S1Ext.class.getName();
@@ -102,9 +110,14 @@ public class TestServices extends XTestCase {
         setSystemProperty(Services.CONF_SERVICE_EXT_CLASSES, SERVICES_EXT);
         Services services = new Services();
         services.init();
-        assertEquals(S1Ext.class,  services.get(S1.class).getClass());
-        assertEquals(S2.class,  services.get(S2.class).getClass());
-        assertFalse(S1.INITED_S1);
-        assertTrue(S1Ext.INITED_S1EXT);
+        try {
+            assertEquals(S1Ext.class,  services.get(S1.class).getClass());
+            assertEquals(S2.class,  services.get(S2.class).getClass());
+            assertFalse(S1.INITED_S1);
+            assertTrue(S1Ext.INITED_S1EXT);
+        }
+        finally {
+            services.destroy();
+        }
     }
 }

@@ -29,13 +29,17 @@ public class TestXLogFilter extends XTestCase {
     public void testXLogFileter() throws ServiceException {
         Services services = new Services();
         services.init();
-        XLogStreamer.Filter xf2 = new XLogStreamer.Filter();
-        xf2.constructPattern();
-        ArrayList<String> a = new ArrayList<String>();
-        a.add("2009-06-24 02:43:13,958 DEBUG");
-        a.add(" WorkflowRunnerCallable:323 - " + XLog.Info.get().createPrefix() + " test log");
-        assertEquals(true, xf2.matches(a));
-        services.destroy();
+        try {
+            XLogStreamer.Filter xf2 = new XLogStreamer.Filter();
+            xf2.constructPattern();
+            ArrayList<String> a = new ArrayList<String>();
+            a.add("2009-06-24 02:43:13,958 DEBUG");
+            a.add(" WorkflowRunnerCallable:323 - " + XLog.Info.get().createPrefix() + " test log");
+            assertEquals(true, xf2.matches(a));
+        }
+        finally {
+            services.destroy();
+        }
 
         XLogStreamer.Filter.reset();
         XLogStreamer.Filter.defineParameter("USER");

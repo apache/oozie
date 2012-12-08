@@ -116,7 +116,7 @@ public class ShellActionExecutor extends JavaActionExecutor {
         String[] varValue = pair.split("=");
         if (varValue == null || varValue.length <= 1) {
             throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "JA010",
-                    "Wrong ENV format [{0}] in <env-var> , key=value format expected " + pair);
+                    "Wrong ENV format [{0}] in <env-var> , key=value format expected ", pair);
         }
     }
 

@@ -387,7 +387,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
             }
         }
         catch (Exception e) {
-            throw new CommandException(ErrorCode.E1007, "workflow:Actions " + jobId, e);
+            throw new CommandException(ErrorCode.E1007, "workflow:Actions " + jobId, e.getMessage(), e);
         }
 
     }

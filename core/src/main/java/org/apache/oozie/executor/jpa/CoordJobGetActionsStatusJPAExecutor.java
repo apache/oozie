@@ -58,7 +58,7 @@ public class CoordJobGetActionsStatusJPAExecutor implements JPAExecutor<List<Coo
             return coordStatus;
         }
         catch (Exception e) {
-            throw new JPAExecutorException(ErrorCode.E0603, e);
+            throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
         }
     }
 }

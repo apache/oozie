@@ -83,7 +83,7 @@ public class CoordJobGetReadyActionsJPAExecutor implements JPAExecutor<List<Coor
             return actionBeans;
         }
         catch (Exception e) {
-            throw new JPAExecutorException(ErrorCode.E0603, e);
+            throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
         }
     }
 
