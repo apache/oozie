@@ -24,11 +24,21 @@ import org.apache.oozie.util.ELEvaluator;
 
 public class TestELService extends XTestCase {
 
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        new Services().init();
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        Services.get().destroy();
+        super.tearDown();
+    }
+
     public void testELForWorkflow() throws Exception {
-        Services services = new Services();
-        services.init();
-        assertNotNull(services.get(ELService.class));
-        ELEvaluator eval = services.get(ELService.class).createEvaluator("workflow");
+        assertNotNull(Services.get().get(ELService.class));
+        ELEvaluator eval = Services.get().get(ELService.class).createEvaluator("workflow");
         assertNotNull(eval.evaluate("${KB}", Long.class));
         assertNotNull(eval.evaluate("${MB}", Long.class));
         assertNotNull(eval.evaluate("${GB}", Long.class));
@@ -39,7 +49,6 @@ public class TestELService extends XTestCase {
         assertNotNull(eval.evaluate("${firstNotNull(null, 'b')}", String.class));
         assertNotNull(eval.evaluate("${timestamp()}", String.class));
         assertNotNull(eval.evaluate("${urlEncode('abc')}", String.class));
-        services.destroy();
     }
 
 }

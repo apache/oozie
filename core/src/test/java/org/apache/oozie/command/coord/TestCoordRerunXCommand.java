@@ -711,7 +711,8 @@ public class TestCoordRerunXCommand extends XDataTestCase {
     public void testCoordRerunInDoneWithError() throws Exception {
         Services.get().destroy();
         setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_STATES_WITHOUT_ERROR, "false");
-        new Services().init();
+        services = new Services();
+        services.init();
         CoordinatorJobBean job = this.addRecordToCoordJobTable(Job.Status.DONEWITHERROR, false, false);
         addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.FAILED, "coord-rerun-action1.xml", 0);
 
@@ -833,7 +834,8 @@ public class TestCoordRerunXCommand extends XDataTestCase {
     public void testCoordRerunForBackwardSupport1() throws Exception {
         Services.get().destroy();
         setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_COORD_STATUS, "true");
-        new Services().init();
+        services = new Services();
+        services.init();
 
         Date start = DateUtils.parseDateOozieTZ("2009-02-01T01:00Z");
         Date end = DateUtils.parseDateOozieTZ("2009-02-02T23:59Z");
@@ -881,7 +883,8 @@ public class TestCoordRerunXCommand extends XDataTestCase {
     public void testCoordRerunForBackwardSupport2() throws Exception {
         Services.get().destroy();
         setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_COORD_STATUS, "true");
-        new Services().init();
+        services = new Services();
+        services.init();
 
         Date start = DateUtils.parseDateOozieTZ("2009-02-01T01:00Z");
         Date end = DateUtils.parseDateOozieTZ("2009-02-02T23:59Z");
@@ -930,7 +933,8 @@ public class TestCoordRerunXCommand extends XDataTestCase {
     public void testCoordRerunForBackwardSupport3() throws Exception {
         Services.get().destroy();
         setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_COORD_STATUS, "true");
-        new Services().init();
+        services = new Services();
+        services.init();
 
         Date start = DateUtils.parseDateOozieTZ("2009-02-01T01:00Z");
         Date end = DateUtils.parseDateOozieTZ("2009-02-02T23:59Z");
