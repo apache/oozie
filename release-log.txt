@@ -1,6 +1,7 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
 OOZIE-1071 latest EL function is based on action materialization time (rohini via virag)
+OOZIE-1114 Some tests don't use the Services singleton properly (rkanter)
 OOZIE-1106 latest and future function do not work correctly when oozie processing timezone is non UTC (rohini via tucu)
 OOZIE-1073 Optimize latest and future EL resolution in case of start-instance and end-instance (rohini via virag)
 OOZIE-1107 Change default done-flag from _SUCCESS to empty for Hcat (mohammad)

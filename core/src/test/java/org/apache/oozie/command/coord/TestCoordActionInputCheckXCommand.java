@@ -395,7 +395,8 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         String[] whiteList = new String[1];
         whiteList[0] = "localhost:5330";
         setSystemProperty(HadoopAccessorService.NAME_NODE_WHITELIST, whiteList[0]);
-        new Services().init();
+        services = new Services();
+        services.init();
 
         // setting the configuration
         XConfiguration jobConf = new XConfiguration();

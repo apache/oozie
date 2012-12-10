@@ -57,6 +57,7 @@ public class TestSqlStatement extends XTestCase {
     protected void tearDown() throws Exception {
         TestSchema.dropSchema(conn);
         conn.close();
+        Services.get().destroy();
         super.tearDown();
     }
 

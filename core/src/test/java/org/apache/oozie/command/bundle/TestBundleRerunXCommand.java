@@ -108,7 +108,8 @@ public class TestBundleRerunXCommand extends XDataTestCase {
     public void testBundleRerunWithError() throws Exception {
         Services.get().destroy();
         setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_STATES_WITHOUT_ERROR, "false");
-        new Services().init();
+        services = new Services();
+        services.init();
         BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.DONEWITHERROR, false);
         this.addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.SUCCEEDED);
         this.addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.FAILED);
@@ -188,7 +189,8 @@ public class TestBundleRerunXCommand extends XDataTestCase {
         Date pauseTime = new Date(curr.getTime() - 1000);
         Services.get().destroy();
         setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_STATES_WITHOUT_ERROR, "false");
-        new Services().init();
+        services = new Services();
+        services.init();
         BundleJobBean job = this.addRecordToBundleJobTableWithPausedTime(Job.Status.PAUSEDWITHERROR, false, pauseTime);
         this.addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.FAILED);
         this.addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.PAUSED);
@@ -242,7 +244,8 @@ public class TestBundleRerunXCommand extends XDataTestCase {
     public void testBundleRerunInSuspendedWithError() throws Exception {
         Services.get().destroy();
         setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_STATES_WITHOUT_ERROR, "false");
-        new Services().init();
+        services = new Services();
+        services.init();
         BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.SUSPENDEDWITHERROR, false);
         this.addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.SUSPENDED);
         this.addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.SUSPENDEDWITHERROR);

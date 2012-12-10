@@ -23,19 +23,25 @@ import org.apache.oozie.test.XTestCase;
 
 public class TestActionService extends XTestCase {
 
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        new Services().init();
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        Services.get().destroy();
+        super.tearDown();
+    }
+
     public void testService() throws Exception {
-        Services services = new Services();
-        services.init();
-        assertNotNull(services.get(ActionService.class));
-        services.destroy();
+        assertNotNull(Services.get().get(ActionService.class));
     }
 
     public void testActions() throws Exception {
-        Services services = new Services();
-        services.init();
-        ActionService as = services.get(ActionService.class);
+        ActionService as = Services.get().get(ActionService.class);
         assertNotNull(as.getExecutor("switch"));
-        services.destroy();
     }
 
 }

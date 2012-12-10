@@ -279,6 +279,7 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
      * value
      */
     public void testExecutionStatsWithMaxStatsSizeLimit() throws Exception {
+        Services.get().destroy();
         // Set a very small value for max size of stats
         setSystemProperty(JavaActionExecutor.MAX_EXTERNAL_STATS_SIZE, new String("1"));
         new Services().init();

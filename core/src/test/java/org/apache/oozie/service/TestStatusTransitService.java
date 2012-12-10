@@ -144,7 +144,7 @@ public class TestStatusTransitService extends XDataTestCase {
     public void testCoordStatusTransitServiceNoDoneWithErrorForBackwardSupport() throws Exception {
         Services.get().destroy();
         setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_COORD_STATUS, "true");
-        Services services = new Services();
+        services = new Services();
         setClassesToBeExcluded(services.getConf(), excludedServices);
         services.init();
 
@@ -344,7 +344,7 @@ public class TestStatusTransitService extends XDataTestCase {
     public void testCoordStatusTransitServiceSuspendedWithError() throws Exception {
         Services.get().destroy();
         setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_STATES_WITHOUT_ERROR, "false");
-        Services services = new Services();
+        services = new Services();
         setClassesToBeExcluded(services.getConf(), excludedServices);
         services.init();
         String currentDatePlusMonth = XDataTestCase.getCurrentDateafterIncrementingInMonths(1);
@@ -512,7 +512,7 @@ public class TestStatusTransitService extends XDataTestCase {
     public void testCoordStatusTransitServiceBackwardSupport() throws Exception {
         Services.get().destroy();
         setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_STATES_WITHOUT_ERROR, "true");
-        Services services = new Services();
+        services = new Services();
         setClassesToBeExcluded(services.getConf(), excludedServices);
         services.init();
         String currentDatePlusMonth = XDataTestCase.getCurrentDateafterIncrementingInMonths(1);
@@ -552,7 +552,7 @@ public class TestStatusTransitService extends XDataTestCase {
     public void testCoordStatusTransitServiceRunning3() throws Exception {
         Services.get().destroy();
         setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_STATES_WITHOUT_ERROR, "false");
-        Services services = new Services();
+        services = new Services();
         setClassesToBeExcluded(services.getConf(), excludedServices);
         services.init();
         String currentDatePlusMonth = XDataTestCase.getCurrentDateafterIncrementingInMonths(1);
@@ -592,7 +592,7 @@ public class TestStatusTransitService extends XDataTestCase {
     public void testCoordStatusTransitServicePaused() throws Exception {
         Services.get().destroy();
         setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_STATES_WITHOUT_ERROR, "false");
-        Services services = new Services();
+        services = new Services();
         setClassesToBeExcluded(services.getConf(), excludedServices);
         services.init();
         String currentDatePlusMonth = XDataTestCase.getCurrentDateafterIncrementingInMonths(1);
@@ -634,7 +634,7 @@ public class TestStatusTransitService extends XDataTestCase {
     public void testCoordStatusTransitServicePausedWithError() throws Exception {
         Services.get().destroy();
         setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_STATES_WITHOUT_ERROR, "false");
-        Services services = new Services();
+        services = new Services();
         setClassesToBeExcluded(services.getConf(), excludedServices);
         services.init();
         String currentDatePlusMonth = XDataTestCase.getCurrentDateafterIncrementingInMonths(1);
@@ -1010,7 +1010,7 @@ public class TestStatusTransitService extends XDataTestCase {
     public void testBundleStatusTransitServiceRunningWithError() throws Exception {
         Services.get().destroy();
         setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_STATES_WITHOUT_ERROR, "false");
-        Services services = new Services();
+        services = new Services();
         setClassesToBeExcluded(services.getConf(), excludedServices);
         services.init();
         BundleJobBean bundleJob = this.addRecordToBundleJobTable(Job.Status.RUNNING, true);
@@ -1181,7 +1181,7 @@ public class TestStatusTransitService extends XDataTestCase {
     public void testBundleStatusTransitServiceSuspendedWithError() throws Exception {
         Services.get().destroy();
         setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_STATES_WITHOUT_ERROR, "false");
-        Services services = new Services();
+        services = new Services();
         setClassesToBeExcluded(services.getConf(), excludedServices);
         services.init();
         BundleJobBean bundleJob = this.addRecordToBundleJobTable(Job.Status.RUNNING, true);
@@ -1215,7 +1215,7 @@ public class TestStatusTransitService extends XDataTestCase {
     public void testBundleStatusTransitServicePausedWithError() throws Exception {
         Services.get().destroy();
         setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_STATES_WITHOUT_ERROR, "false");
-        Services services = new Services();
+        services = new Services();
         setClassesToBeExcluded(services.getConf(), excludedServices);
         services.init();
         BundleJobBean bundleJob = createBundleJob(Job.Status.PAUSED, true);
@@ -1251,7 +1251,7 @@ public class TestStatusTransitService extends XDataTestCase {
     public void testBundleStatusTransitServicePaused() throws Exception {
         Services.get().destroy();
         setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_STATES_WITHOUT_ERROR, "false");
-        Services services = new Services();
+        services = new Services();
         setClassesToBeExcluded(services.getConf(), excludedServices);
         services.init();
         BundleJobBean bundleJob = createBundleJob(Job.Status.PAUSEDWITHERROR, true);

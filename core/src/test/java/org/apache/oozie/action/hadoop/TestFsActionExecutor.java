@@ -85,6 +85,7 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
         }
 
         // testing schemes supported
+        Services.get().destroy();
         setSystemProperty(HadoopAccessorService.SUPPORTED_FILESYSTEMS, "hdfs,viewfs");
         new Services().init();
         try {
@@ -106,6 +107,7 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
 
     public void testFileSchemeWildcard() throws Exception {
         FsActionExecutor ae = new FsActionExecutor();
+        Services.get().destroy();
         setSystemProperty(HadoopAccessorService.SUPPORTED_FILESYSTEMS, "*");
         new Services().init();
 
@@ -148,6 +150,7 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
             assertEquals("FS001", ex.getErrorCode());	
         }
 
+        Services.get().destroy();
         setSystemProperty(HadoopAccessorService.SUPPORTED_FILESYSTEMS, null);
         new Services().init();
         try {
