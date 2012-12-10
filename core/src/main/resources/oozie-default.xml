@@ -1031,6 +1031,14 @@
         </description>
     </property>
 
+    <property>
+        <name>oozie.service.ELService.latest-el.use-current-time</name>
+        <value>false</value>
+        <description>
+            Determine whether to use the current time to determine the latest dependency or the action creation time.
+            This is for backward compatibility with older oozie behaviour.
+        </description>
+    </property>
 
     <!-- UUIDService -->
 

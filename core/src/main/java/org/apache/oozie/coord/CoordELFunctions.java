@@ -47,6 +47,7 @@ public class CoordELFunctions {
     final private static String DATASET = "oozie.coord.el.dataset.bean";
     final private static String COORD_ACTION = "oozie.coord.el.app.bean";
     final public static String CONFIGURATION = "oozie.coord.el.conf";
+    final public static String LATEST_EL_USE_CURRENT_TIME = "oozie.service.ELService.latest-el.use-current-time";
     // INSTANCE_SEPARATOR is used to separate multiple directories into one tag.
     final public static String INSTANCE_SEPARATOR = "#";
     final public static String DIR_SEPARATOR = ",";
@@ -1111,7 +1112,14 @@ public class CoordELFunctions {
         int datasetFrequency = (int) getDSFrequency();// in minutes
         TimeUnit dsTimeUnit = getDSTimeUnit();
         int[] instCount = new int[1];
-        Calendar nominalInstanceCal = getCurrentInstance(getActualTime(), instCount);
+        boolean useCurrentTime = Services.get().getConf().getBoolean(LATEST_EL_USE_CURRENT_TIME, false);
+        Calendar nominalInstanceCal;
+        if (useCurrentTime) {
+            nominalInstanceCal = getCurrentInstance(new Date(), instCount);
+        }
+        else {
+            nominalInstanceCal = getCurrentInstance(getActualTime(), instCount);
+        }
         StringBuilder resolvedInstances = new StringBuilder();
         StringBuilder resolvedURIPaths = new StringBuilder();
         if (nominalInstanceCal != null) {
@@ -1139,7 +1147,7 @@ public class CoordELFunctions {
                 }
                 if (isPathAvailable(pathWithDoneFlag, user, null, conf)) {
                     LOG.debug("Found latest(" + available + "): " + pathWithDoneFlag);
-                    if (available == endOffset) {
+                    if (available == startOffset) {
                         LOG.debug("Matched latest(" + available + "): " + pathWithDoneFlag);
                         resolved = true;
                         resolvedInstances.append(DateUtils.formatDateOozieTZ(nominalInstanceCal));
@@ -1147,7 +1155,7 @@ public class CoordELFunctions {
                         retVal = resolvedInstances.toString();
                         eval.setVariable("resolved_path", resolvedURIPaths.toString());
                         break;
-                    } else if (available <= startOffset) {
+                    } else if (available <= endOffset) {
                         LOG.debug("Matched latest(" + available + "): " + pathWithDoneFlag);
                         resolvedInstances.append(DateUtils.formatDateOozieTZ(nominalInstanceCal)).append(INSTANCE_SEPARATOR);
                         resolvedURIPaths.append(uriPath).append(INSTANCE_SEPARATOR);
