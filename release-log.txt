@@ -70,6 +70,7 @@ OOZIE-979 bump up trunk version to 3.4.0-SNAPSHOT (tucu)
 
 -- Oozie 3.3.1 (unreleased)
 
+OOZIE-1091 workflow functional spec, fs action related issues (virag)
 OOZIE-1093 recursive fs chmod does not change the leaf directory (virag)
 OOZIE-1094 credential cannot resolve variable (virag)
 OOZIE-1099 Pig launcher log does not show the pig job url for H23 (rohini via mona)

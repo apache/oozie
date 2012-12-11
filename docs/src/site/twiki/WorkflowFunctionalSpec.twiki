@@ -1064,12 +1064,15 @@ In the =move= command the =source= path must exist. The following scenarios are 
    * For the =target= path, if it is a file, then it must not already exist. 
    * However, if the =target= path is an already existing directory, the =move= action will place your =source= as a child of the =target= directory.
 
-The =chmod= command changes the permissions for the specified path. Permissions can be specified using the Unix Symbolic representation (e.g. -rwxrw-rw-) or an octal representation (755).
- When doing a =chmod= command on a directory, by default the command is applied to the directory and the files one level within the directory. To apply the =chmod= command to the directory, without affecting the files within it, the =dir-files= attribute must be set to =false=. To apply the =chmod= command recursively to all levels within a directory, put a <recursive/> element inside the <chmod> element.
+The =chmod= command changes the permissions for the specified path. Permissions can be specified using the Unix Symbolic
+representation (e.g. -rwxrw-rw-) or an octal representation (755).
+When doing a =chmod= command on a directory, by default the command is applied to the directory and the files one level
+within the directory. To apply the =chmod= command to the directory, without affecting the files within it,
+the =dir-files= attribute must be set to =false=. To apply the =chmod= command 
+recursively to all levels within a directory, put a =recursive= element inside the <chmod> element.
 
 The =touchz= command creates a zero length file in the specified path if none exists. If one already exists, then touchz will perform a touch operation.
-
-If relative paths are used it will be relative to the specified user home directory.
+Touchz works only for absolute paths.
 
 *Example:*
 
@@ -1081,7 +1084,7 @@ If relative paths are used it will be relative to the specified user home direct
             <delete path='hdfs://foo:8020/usr/tucu/temp-data'/>
             <mkdir path='archives/${wf:id()}'/>
             <move source='${jobInput}' target='archives/${wf:id()}/processed-input'/>
-            <chmod path='${jobOutput}' permissions='-rwxrw-rw-' dir-files='true'/>
+            <chmod path='${jobOutput}' permissions='-rwxrw-rw-' dir-files='true'><recursive/></chmod>
         </fs>
         <ok to="myotherjob"/>
         <error to="errorcleanup"/>
@@ -2599,6 +2602,9 @@ Example of a global element:
     </xs:complexType>
 
     <xs:complexType name="CHMOD">
+        <xs:sequence>
+            <xs:element name="recursive" type="workflow:FLAG" minOccurs="0" maxOccurs="1"></xs:element>
+        </xs:sequence>
         <xs:attribute name="path" type="xs:string" use="required"/>
         <xs:attribute name="permissions" type="xs:string" use="required"/>
         <xs:attribute name="dir-files" type="xs:string"/>
