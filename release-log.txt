@@ -1,5 +1,6 @@
 -- Oozie 3.3.1 (unreleased)
 
+OOZIE-1091 workflow functional spec, fs action related issues (virag)
 OOZIE-1116 Create hbaselibs module (virag)
 OOZIE-1093 recursive fs chmod does not change the leaf directory (virag)
 OOZIE-1094 credential cannot resolve variable (virag)
