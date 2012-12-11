@@ -60,6 +60,7 @@ OOZIE-944 Implement Workflow Generator UI Tool (egashira via virag)
 
 -- Oozie 3.3.1 (unreleased)
 
+OOZIE-1128 When a user submitting a job is not UNDEF in the request, it should use that user as the submitter (tucu)
 OOZIE-1091 workflow functional spec, fs action related issues (virag)
 OOZIE-1116 Create hbaselibs module (virag)
 OOZIE-1093 recursive fs chmod does not change the leaf directory (virag)
