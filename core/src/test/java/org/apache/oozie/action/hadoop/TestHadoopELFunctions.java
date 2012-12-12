@@ -33,6 +33,7 @@ import org.apache.oozie.workflow.lite.EndNodeDef;
 import org.apache.oozie.workflow.lite.LiteWorkflowApp;
 import org.apache.oozie.workflow.lite.LiteWorkflowInstance;
 import org.apache.oozie.workflow.lite.StartNodeDef;
+import java.util.HashMap;
 
 public class TestHadoopELFunctions extends ActionExecutorTestCase {
 
@@ -113,14 +114,52 @@ public class TestHadoopELFunctions extends ActionExecutorTestCase {
 
         String version = "0.9.0";
         String jobGraph = "job_201111300933_0004,job_201111300933_0005";
-        String job1Stats = "{\"MAP_INPUT_RECORDS\":\"33\",\"MIN_REDUCE_TIME\":\"0\",\"MULTI_STORE_COUNTERS\":{},\"ERROR_MESSAGE\":null,\"JOB_ID\":\"job_201111300933_0004\"}";
-        String job2Stats = "{\"MAP_INPUT_RECORDS\":\"37\",\"MIN_REDUCE_TIME\":\"0\",\"MULTI_STORE_COUNTERS\":{},\"ERROR_MESSAGE\":null,\"JOB_ID\":\"job_201111300933_0005\"}";
+        HashMap<String, String> job1StatusMap = new HashMap<String, String>();
+        job1StatusMap.put("\"MAP_INPUT_RECORDS\"", "\"33\"");
+        job1StatusMap.put("\"MIN_REDUCE_TIME\"", "\"0\"");
+        job1StatusMap.put("\"MULTI_STORE_COUNTERS\"", "{}");
+        job1StatusMap.put("\"ERROR_MESSAGE\"", "null");
+        job1StatusMap.put("\"JOB_ID\"", "\"job_201111300933_0004\"");
+
+        HashMap<String, String> job2StatusMap = new HashMap<String, String>();
+        job2StatusMap.put("\"MAP_INPUT_RECORDS\"", "\"37\"");
+        job2StatusMap.put("\"MIN_REDUCE_TIME\"", "\"0\"");
+        job2StatusMap.put("\"MULTI_STORE_COUNTERS\"", "{}");
+        job2StatusMap.put("\"ERROR_MESSAGE\"", "null");
+        job2StatusMap.put("\"JOB_ID\"", "\"job_201111300933_0005\"");
 
         assertEquals(ActionType.PIG.toString(), eval.evaluate("${hadoop:counters('H')['ACTION_TYPE']}", String.class));
         assertEquals(version, eval.evaluate("${hadoop:counters('H')['PIG_VERSION']}", String.class));
         assertEquals(jobGraph, eval.evaluate("${hadoop:counters('H')['JOB_GRAPH']}", String.class));
-        assertEquals(job1Stats, eval.evaluate("${hadoop:counters('H')['job_201111300933_0004']}", String.class));
-        assertEquals(job2Stats, eval.evaluate("${hadoop:counters('H')['job_201111300933_0005']}", String.class));
+
+        String[] jobStatusItems = {"\"MAP_INPUT_RECORDS\"","\"MIN_REDUCE_TIME\"","\"MULTI_STORE_COUNTERS\"","\"ERROR_MESSAGE\"",
+                "\"JOB_ID\""};
+
+        String job1StatusResult = eval.evaluate("${hadoop:counters('H')['job_201111300933_0004']}", String.class);
+        job1StatusResult = job1StatusResult.substring(job1StatusResult.indexOf('{') + 1, job1StatusResult.lastIndexOf('}'));
+        String[] job1StatusResArray = job1StatusResult.split(",");
+        HashMap<String, String> job1StatusResMap = new HashMap<String, String>();
+        for(String status: job1StatusResArray){
+                String[] tmp = status.split(":");
+                job1StatusResMap.put(tmp[0], tmp[1]);
+        }
+        for(String item: jobStatusItems){
+                assertEquals(job1StatusMap.get(item), job1StatusResMap.get(item));
+        }
+
+        String job2StatusResult = eval.evaluate("${hadoop:counters('H')['job_201111300933_0005']}", String.class);
+        job2StatusResult = job2StatusResult.substring(job2StatusResult
+                .indexOf('{') + 1, job2StatusResult.lastIndexOf('}'));
+        String[] job2StatusResArray = job2StatusResult.split(",");
+        HashMap<String, String> job2StatusResMap = new HashMap<String, String>();
+        for(String status: job2StatusResArray){
+                String[] tmp = status.split(":");
+                job2StatusResMap.put(tmp[0], tmp[1]);
+        }
+        for(String item: jobStatusItems){
+                assertEquals(job2StatusMap.get(item), job2StatusResMap.get(item));
+        }
+
         assertEquals(new Long(33),
                 eval.evaluate("${hadoop:counters('H')['job_201111300933_0004']['MAP_INPUT_RECORDS']}", Long.class));
     }
