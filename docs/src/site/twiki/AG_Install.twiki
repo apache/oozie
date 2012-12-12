@@ -374,6 +374,20 @@ shown):
   oozie.system.id=oozie-${user.name}
 </verbatim>
 
+---+++ Filesystem Configuration
+
+Oozie lets you to configure the allowed Filesystems by using the following configuration property in oozie-site.xml:
+<verbatim>
+  <property>
+    <name>oozie.service.HadoopAccessorService.supported.filesystems</name>
+    <value>hdfs</value>
+  </property>
+</verbatim>
+
+The above value, =hdfs=, which is the default, means that Oozie will only allow HDFS filesystems to be used.  Examples of other
+filesystems that Oozie is compatible with are: hdfs, hftp, webhdfs, and viewfs.  Multiple filesystems can be specified as
+comma-separated values.  Putting a * will allow any filesystem type, effectively disabling this check.
+
 ---+++ Fine Tuning an Oozie Server
 
 Refer to the [[./oozie-default.xml][oozie-default.xml]] for details.

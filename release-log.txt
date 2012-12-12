@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1129 Add documentation for configurable filesystem support (rkanter)
 OOZIE-1084 When use IBM jdk , UT TestCallbackServlet and TestHadoopELFunctions fail (zhujinwei via rkanter)
 OOZIE-1127 Missed one services.destroy() in OOZIE-1114 (rkanter)
 OOZIE-1071 latest EL function is based on action materialization time (rohini via virag)
