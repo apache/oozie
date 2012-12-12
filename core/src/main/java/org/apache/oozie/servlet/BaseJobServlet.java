@@ -106,7 +106,11 @@ public abstract class BaseJobServlet extends JsonRestServlet {
             validateContentType(request, RestConstants.XML_CONTENT_TYPE);
             Configuration conf = new XConfiguration(request.getInputStream());
             stopCron();
-            checkAuthorizationForApp(getUser(request), conf);
+            String requestUser = getUser(request);
+            if (!requestUser.equals(UNDEF)) {
+                conf.set(OozieClient.USER_NAME, requestUser);
+            }
+            BaseJobServlet.checkAuthorizationForApp(conf);
             JobUtils.normalizeAppPath(conf.get(OozieClient.USER_NAME), conf.get(OozieClient.GROUP_NAME), conf);
             reRunJob(request, response, conf);
             startCron();
@@ -145,20 +149,16 @@ public abstract class BaseJobServlet extends JsonRestServlet {
     /**
      * Validate the configuration user/group. <p/>
      *
-     * @param requestUser user in request.
      * @param conf configuration.
      * @throws XServletException thrown if the configuration does not have a property {@link
      * org.apache.oozie.client.OozieClient#USER_NAME}.
      */
-    static void checkAuthorizationForApp(String requestUser, Configuration conf) throws XServletException {
+    static void checkAuthorizationForApp(Configuration conf) throws XServletException {
         String user = conf.get(OozieClient.USER_NAME);
         String acl = ConfigUtils.getWithDeprecatedCheck(conf, OozieClient.GROUP_NAME, OozieClient.JOB_ACL, null);
         try {
             if (user == null) {
                 throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0401, OozieClient.USER_NAME);
-            }
-            if (!requestUser.equals(UNDEF) && !user.equals(requestUser)) {
-                throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0400, requestUser, user);
             }
             AuthorizationService auth = Services.get().get(AuthorizationService.class);
 

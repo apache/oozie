@@ -36,6 +36,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -175,6 +176,43 @@ public class TestJobsServlet extends DagServletTestCase {
                 obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
                 assertNull(obj.get(JsonTags.JOB_ID));
 
+                return null;
+            }
+        });
+    }
+
+    public static class V0JobsServletWithDefUser extends V0JobsServlet {
+
+        protected String getUser(HttpServletRequest request) {
+            return getTestUser2();
+        }
+    }
+
+    public void testDiffUser() throws Exception {
+        //runTest("/jobs", BaseJobsServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
+        runTest("/v0/jobs", V0JobsServletWithDefUser.class, IS_SECURITY_ENABLED, new Callable<Void>() {
+            public Void call() throws Exception {
+                MockDagEngineService.reset();
+
+                String appPath = getFsTestCaseDir().toString() + "/app";
+
+                FileSystem fs = getFileSystem();
+                Path jobXmlPath = new Path(appPath, "workflow.xml");
+                fs.create(jobXmlPath);
+
+                Configuration jobConf = new XConfiguration();
+                jobConf.set(OozieClient.USER_NAME, getTestUser());
+                jobConf.set(OozieClient.APP_PATH, appPath);
+
+                Map<String, String> params = new HashMap<String, String>();
+                URL url = createURL("", params);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
+                conn.setDoOutput(true);
+                jobConf.writeXml(conn.getOutputStream());
+                assertEquals(HttpServletResponse.SC_CREATED, conn.getResponseCode());
+                assertEquals(getTestUser2(), MockDagEngineService.user);
                 return null;
             }
         });

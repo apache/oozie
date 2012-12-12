@@ -1,5 +1,7 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1129 Add documentation for configurable filesystem support (rkanter)
+OOZIE-1084 When use IBM jdk , UT TestCallbackServlet and TestHadoopELFunctions fail (zhujinwei via rkanter)
 OOZIE-1127 Missed one services.destroy() in OOZIE-1114 (rkanter)
 OOZIE-1071 latest EL function is based on action materialization time (rohini via virag)
 OOZIE-1114 Some tests don't use the Services singleton properly (rkanter)
@@ -60,6 +62,7 @@ OOZIE-944 Implement Workflow Generator UI Tool (egashira via virag)
 
 -- Oozie 3.3.1 (unreleased)
 
+OOZIE-1128 When a user submitting a job is not UNDEF in the request, it should use that user as the submitter (tucu)
 OOZIE-1091 workflow functional spec, fs action related issues (virag)
 OOZIE-1116 Create hbaselibs module (virag)
 OOZIE-1093 recursive fs chmod does not change the leaf directory (virag)

@@ -68,7 +68,6 @@ public enum ErrorCode {
     E0308(XLog.STD, "Could not parse date range parameter [{0}]"),
 
 
-    E0400(XLog.STD, "User mismatch, request user [{0}] configuration user [{1}]"),
     E0401(XLog.STD, "Missing configuration property [{0}]"),
     E0402(XLog.STD, "Invalid callback ID [{0}]"),
     E0403(XLog.STD, "Invalid callback data, {0}"),
