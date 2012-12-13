@@ -32,10 +32,6 @@
                     <name>mapred.job.queue.name</name>
                     <value>${queueName}</value>
                 </property>
-                <property>
-                    <name>oozie.hive.defaults</name>
-                    <value>my-hive-default.xml</value>
-                </property>
             </configuration>
             <script>script.q</script>
             <param>INPUT=/user/${wf:user()}/${examplesRoot}/input-data/table</param>
