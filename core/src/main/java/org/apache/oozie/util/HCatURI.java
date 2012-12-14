@@ -40,14 +40,12 @@ public class HCatURI {
     public static final String PATH_SEPARATOR = "/";
     public static final String PARTITION_PREFIX = "?";
     public static final String PARTITION_VALUE_QUOTE = "'";
-    // TODO: Over writable through oozie-site
-    public static final String DEFAULT_PROTOCOL = "thrift://";
 
     private URI uri;
     private String server;
     private String db;
     private String table;
-    private HashMap<String, String> partitions;
+    private Map<String, String> partitions;
 
     /**
      * Constructor using given configuration
@@ -133,7 +131,7 @@ public class HCatURI {
      * @return fully qualified server address
      */
     public String getServerEndPoint() {
-        return DEFAULT_PROTOCOL + server;
+        return uri.getScheme() + "://" + server;
     }
 
     /**
@@ -181,14 +179,14 @@ public class HCatURI {
     /**
      * @return partitions map
      */
-    public HashMap<String, String> getPartitionMap() {
+    public Map<String, String> getPartitionMap() {
         return partitions;
     }
 
     /**
      * @param partitions map to set
      */
-    public void setPartitionMap(HashMap<String, String> partitions) {
+    public void setPartitionMap(Map<String, String> partitions) {
         this.partitions = partitions;
     }
 
@@ -270,7 +268,7 @@ public class HCatURI {
     public boolean equals(Object obj) {
         HCatURI uri = (HCatURI) obj;
         boolean equals = true;
-        HashMap<String, String> p = this.getPartitionMap();
+        Map<String, String> p = this.getPartitionMap();
 
         if (this.server.equals(uri.getServer()) && this.db.equals(uri.getDb()) && this.table.equals(uri.getTable())
                 && p.size() == uri.getPartitionMap().size()) {

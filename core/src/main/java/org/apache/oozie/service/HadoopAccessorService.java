@@ -80,6 +80,7 @@ public class HadoopAccessorService implements Service {
      */
     public static final String SUPPORTED_FILESYSTEMS = CONF_PREFIX + "supported.filesystems";
     private Set<String> supportedSchemes;
+    private boolean allSchemesSupported;
 
     public void init(Services services) throws ServiceException {
         init(services.getConf());
@@ -135,9 +136,9 @@ public class HadoopAccessorService implements Service {
                         throw new ServiceException(ErrorCode.E0100, getClass().getName(),
                             SUPPORTED_FILESYSTEMS + " should contain either only wildcard or explicit list, not both");
                     }
-                } else {
-                    supportedSchemes.add(scheme);
+                    allSchemesSupported = true;
                 }
+                supportedSchemes.add(scheme);
             }
         }
     }
@@ -479,13 +480,17 @@ public class HadoopAccessorService implements Service {
      */
 
     public void checkSupportedFilesystem(URI uri) throws HadoopAccessorException {
+        if (allSchemesSupported)
+            return;
         String uriScheme = uri.getScheme();
-        if(!supportedSchemes.isEmpty()) {
-            XLog.getLog(this.getClass()).debug("Checking if filesystem " + uriScheme + " is supported");
-            if (!supportedSchemes.contains(uriScheme)) {
-                throw new HadoopAccessorException(ErrorCode.E0904, uriScheme, uri.toString());
-            }
+        XLog.getLog(this.getClass()).debug("Checking if filesystem " + uriScheme + " is supported");
+        if (!supportedSchemes.contains(uriScheme)) {
+            throw new HadoopAccessorException(ErrorCode.E0904, uriScheme, uri.toString());
         }
+    }
+
+    public Set<String> getSupportedSchemes() {
+        return supportedSchemes;
     }
 
 }

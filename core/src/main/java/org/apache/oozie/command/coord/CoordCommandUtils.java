@@ -18,6 +18,7 @@
 package org.apache.oozie.command.coord;
 
 import java.io.StringReader;
+import java.net.URI;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -31,16 +32,17 @@ import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.coord.CoordELEvaluator;
 import org.apache.oozie.coord.CoordELFunctions;
-import org.apache.oozie.coord.CoordUtils;
 import org.apache.oozie.coord.CoordinatorJobException;
 import org.apache.oozie.coord.SyncCoordAction;
 import org.apache.oozie.coord.TimeUnit;
+import org.apache.oozie.dependency.DependencyType;
+import org.apache.oozie.dependency.URIHandler;
 import org.apache.oozie.service.PartitionDependencyManagerService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ELEvaluator;
-import org.apache.oozie.util.HCatURI;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
@@ -326,6 +328,7 @@ public class CoordCommandUtils {
 
         Element doneFlagElement = event.getChild("dataset", event.getNamespace()).getChild("done-flag",
                 event.getNamespace());
+        URIHandlerService uriService = Services.get().get(URIHandlerService.class);
 
         for (int i = 0; i < instanceList.length; i++) {
             if (instanceList[i].trim().length() == 0) {
@@ -348,11 +351,8 @@ public class CoordCommandUtils {
             String uriPath = CoordELFunctions.evalAndWrap(eval, event.getChild("dataset", event.getNamespace())
                     .getChild("uri-template", event.getNamespace()).getTextTrim());
             uris.append(uriPath);
-            String doneFlag = CoordUtils.getDoneFlag(doneFlagElement, uriPath);
-            if (doneFlag.length() > 0) {
-                uriPath += "/" + doneFlag;
-            }
-            urisWithDoneFlag.append(uriPath);
+            URIHandler uriHandler = uriService.getURIHandler(uriPath);
+            urisWithDoneFlag.append(uriHandler.getURIWithDoneFlag(uriPath, doneFlagElement));
         }
         return uris.toString();
     }
@@ -518,12 +518,16 @@ public class CoordCommandUtils {
         unresolvedList.put("push", new StringBuffer());
         unresolvedList.put("pull", new StringBuffer());
 
+        URIHandlerService uriService = Services.get().get(URIHandlerService.class);
+
         for (Element event : events) {
             Element uri = event.getChild("dataset", event.getNamespace())
                     .getChild("uri-template", event.getNamespace());
             String pullOrPush = "pull";
             String uriTemplate = uri.getText();
-            if (uriTemplate != null && HCatURI.isHcatURI(uriTemplate)) {
+            URI baseURI = uriService.stripPath(uriTemplate);
+            URIHandler handler = uriService.getURIHandler(baseURI);
+            if (uriTemplate != null && handler.getDependencyType(baseURI).equals(DependencyType.PUSH)) {
                 pullOrPush = "push";
             }
             StringBuilder instances = new StringBuilder();

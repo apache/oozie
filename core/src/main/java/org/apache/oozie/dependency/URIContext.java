@@ -15,30 +15,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.oozie.service;
+package org.apache.oozie.dependency;
 
-import org.apache.oozie.XException;
-import org.apache.oozie.ErrorCode;
+import org.apache.hadoop.conf.Configuration;
 
-public class HadoopAccessorException extends URIAccessorException {
+public abstract class URIContext {
 
-    /**
-     * Create an HadoopAccessor exception from a XException.
-     *
-     * @param cause the XException cause.
-     */
-    public HadoopAccessorException(XException cause) {
-        super(cause);
+    private Configuration conf;
+    private String user;
+
+    public URIContext(Configuration conf, String user) {
+        this.conf = conf;
+        this.user = user;
     }
 
-    /**
-     * Create a HadoopAccessor exception.
-     *
-     * @param errorCode error code.
-     * @param params parameters for the error code message template.
-     */
-    public HadoopAccessorException(ErrorCode errorCode, Object... params) {
-        super(errorCode, params);
+    public Configuration getConfiguration() {
+        return conf;
+    }
+
+    public String getUser() {
+        return user;
     }
 
 }

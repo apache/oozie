@@ -17,7 +17,11 @@
  */
 package org.apache.oozie.service;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.PrivilegedExceptionAction;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
@@ -33,6 +37,8 @@ public class MetaDataAccessorService implements Service {
 
     public static final String HIVE_METASTORE_URIS = "hive.metastore.uris";
     private static XLog log;
+    private Set<String> supportedSchemes;
+    private UserGroupInformationService ugiService;
 
     @Override
     public void init(Services services) throws ServiceException {
@@ -41,27 +47,51 @@ public class MetaDataAccessorService implements Service {
 
     private void init(Configuration conf) {
         log = XLog.getLog(getClass());
+        supportedSchemes = new HashSet<String>();
+        supportedSchemes.add("hcat");
+        ugiService = Services.get().get(UserGroupInformationService.class);
+    }
+
+    public Set<String> getSupportedSchemes() {
+        return supportedSchemes;
     }
 
     /**
      * Get an HCatClient object using doAs for end user
      *
-     * @param server : server end point
+     * @param uri : hcatalog access uri
      * @param user : end user id
      * @return : HCatClient
      * @throws Exception
      */
-    public HCatClient getHCatClient(String server, String user) throws MetaDataAccessorException {
-        final HiveConf conf = new HiveConf();
-        updateConf(conf, server);
+    public HCatClient getHCatClient(String uri, String user) throws MetaDataAccessorException {
+        try {
+            return getHCatClient(new URI(uri), new Configuration(), user);//TODO: Remove
+        } catch (URISyntaxException e) {
+            throw new MetaDataAccessorException(ErrorCode.E1504, e);
+        }
+    }
+
+    /**
+     * Get an HCatClient object using doAs for end user
+     *
+     * @param uri : hcatalog access uri
+     * @param user : end user id
+     * @return : HCatClient
+     * @throws Exception
+     */
+    public HCatClient getHCatClient(URI uri, Configuration conf, String user) throws MetaDataAccessorException {
+        final HiveConf hiveConf = new HiveConf(conf, this.getClass());
+        String serverURI = getMetastoreConnectURI(uri);
+        updateConf(conf, serverURI);
         HCatClient client = null;
         try {
-            UserGroupInformation ugi = UserGroupInformation.createProxyUser(user, UserGroupInformation.getLoginUser());
+            UserGroupInformation ugi = ugiService.getProxyUser(user);
             log.info("Create HCatClient for user [{0}] login_user [{1}] and server [{2}] ", user,
-                    UserGroupInformation.getLoginUser(), server);
+                    UserGroupInformation.getLoginUser(), uri);
             client = ugi.doAs(new PrivilegedExceptionAction<HCatClient>() {
                 public HCatClient run() throws Exception {
-                    return HCatClient.create(conf);
+                    return HCatClient.create(hiveConf);
                 }
             });
         }
@@ -71,14 +101,18 @@ public class MetaDataAccessorService implements Service {
         return client;
     }
 
-    private void updateConf(Configuration conf, String server) {
-        conf.set(HIVE_METASTORE_URIS, server);
-        // TODO: add more conf?
+    public String getMetastoreConnectURI(URI uri) {
+        //Hardcoding hcat to thrift mapping till support for webhcat(templeton) is added
+        String metastoreURI = "thrift://" + uri.getHost() + ":" + uri.getPort();
+        return metastoreURI;
+    }
+
+    private void updateConf(Configuration conf, String serverURI) {
+        conf.set(HIVE_METASTORE_URIS, serverURI);
     }
 
     @Override
     public void destroy() {
-        // TODO Auto-generated method stub
 
     }
 

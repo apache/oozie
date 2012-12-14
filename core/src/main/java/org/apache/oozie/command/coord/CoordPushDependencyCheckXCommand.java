@@ -19,9 +19,10 @@ package org.apache.oozie.command.coord;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.Arrays;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
@@ -34,13 +35,14 @@ import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.coord.CoordELFunctions;
-import org.apache.oozie.executor.jpa.CoordActionGetForCheckJPAExecutor;
+import org.apache.oozie.dependency.URIHandler;
 import org.apache.oozie.executor.jpa.CoordActionGetForInputCheckJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionUpdatePushInputCheckJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
-import org.apache.oozie.hcat.MetaDataClientWrapper;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.URIAccessorException;
+import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
@@ -63,10 +65,7 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
             return null;
         }
         LOG.info("Push missing dependencies .. "+ pushDeps);
-        LinkedList<String> pushDepList = new LinkedList<String>();
-        pushDepList.addAll(Arrays.asList(pushDeps.split(CoordELFunctions.DIR_SEPARATOR, -1)));
-       // List<String> pushDepList = Arrays.asList(pushDeps.split(CoordELFunctions.DIR_SEPARATOR, -1));
-        MetaDataClientWrapper mdClientWrap = new MetaDataClientWrapper();
+        String[] pushDepList = pushDeps.split(CoordELFunctions.INSTANCE_SEPARATOR, -1);
         Configuration actionConf = null;
         try {
             actionConf = new XConfiguration(new StringReader(coordAction.getRunConf()));
@@ -75,9 +74,9 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
             throw new CommandException(ErrorCode.E1307, e.getMessage(), e);
         }
         String user = ParamChecker.notEmpty(actionConf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
-        mdClientWrap.checkList(pushDepList, user);
-        if (pushDepList.size() > 0) {
-            pushDeps = StringUtils.join(pushDepList, CoordELFunctions.DIR_SEPARATOR);
+        List<String> missingDeps = getMissingDependencies(pushDepList, actionConf, user);
+        if (missingDeps.size() > 0) {
+            pushDeps = StringUtils.join(missingDeps, CoordELFunctions.INSTANCE_SEPARATOR);
             coordAction.setPushMissingDependencies(pushDeps);
             // Checking for timeout
             handleTimeout();
@@ -92,6 +91,28 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
         }
         updateCoordAction(coordAction);
         return null;
+    }
+
+    private List<String> getMissingDependencies(String[] dependencies, Configuration conf, String user)
+            throws CommandException {
+        List<String> missingDeps = new ArrayList<String>();
+        URIHandlerService uriService = Services.get().get(URIHandlerService.class);
+        for (String dependency : dependencies) {
+            try {
+                URI uri = new URI(dependency);
+                URIHandler uriHandler = uriService.getURIHandler(uri);
+                if (!uriHandler.exists(uri, conf, user)) {
+                    missingDeps.add(dependency);
+                }
+            }
+            catch (URISyntaxException e) {
+                throw new CommandException(ErrorCode.E1025, e.getMessage(), e);
+            }
+            catch (URIAccessorException e) {
+                throw new CommandException(e);
+            }
+        }
+        return missingDeps;
     }
 
     private void updateCoordAction(CoordinatorActionBean coordAction2) throws CommandException {

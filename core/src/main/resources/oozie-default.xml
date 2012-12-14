@@ -90,7 +90,10 @@
             org.apache.oozie.service.UUIDService,
             org.apache.oozie.service.ELService,
             org.apache.oozie.service.AuthorizationService,
+            org.apache.oozie.service.UserGroupInformationService,
             org.apache.oozie.service.HadoopAccessorService,
+            org.apache.oozie.service.MetaDataAccessorService,
+            org.apache.oozie.service.URIHandlerService,
             org.apache.oozie.service.MemoryLocksService,
             org.apache.oozie.service.DagXLogInfoService,
             org.apache.oozie.service.SchemaService,
@@ -1700,6 +1703,13 @@
 		</description>
 	</property>
 
+        <property>
+                <name>oozie.service.URIHandlerService.uri.handlers</name>
+                <value>org.apache.oozie.dependency.FSURIHandler</value>
+                <description>
+                        Enlist the different uri schemes supported for data availability checks.
+                </description>
+        </property>
     <!-- Oozie HTTP Notifications -->
 
     <property>

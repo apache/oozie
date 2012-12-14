@@ -17,7 +17,7 @@
  */
 package org.apache.oozie.coord;
 
-import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -26,17 +26,16 @@ import java.util.List;
 import java.util.TimeZone;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
-
 import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.dependency.URIContext;
+import org.apache.oozie.dependency.URIHandler;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.HCatURI;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
-import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.service.HadoopAccessorService;
+import org.apache.oozie.service.URIHandlerService;
 
 /**
  * This class implements the EL function related to coordinator
@@ -302,17 +301,21 @@ public class CoordELFunctions {
             String user = ParamChecker
                     .notEmpty((String) eval.getVariable(OozieClient.USER_NAME), OozieClient.USER_NAME);
             String doneFlag = ds.getDoneFlag();
+            URIHandlerService uriService = Services.get().get(URIHandlerService.class);
+            URIHandler uriHandler = null;
+            URIContext uriContext = null;
             while (instance >= checkedInstance) {
                 ELEvaluator uriEval = getUriEvaluator(nominalInstanceCal);
                 String uriPath = uriEval.evaluate(uriTemplate, String.class);
-                String pathWithDoneFlag = uriPath;
-                if (doneFlag.length() > 0) {
-                    pathWithDoneFlag += "/" + doneFlag;
+                if (uriHandler == null) {
+                    URI uri = new URI(uriPath);
+                    uriHandler = uriService.getURIHandler(uri);
+                    uriContext = uriHandler.getURIContext(uri, conf, user);
                 }
-                if (isPathAvailable(pathWithDoneFlag, user, null, conf)) {
-                    LOG.debug("Found future(" + available + "): " + pathWithDoneFlag);
+                String uriWithDoneFlag = uriHandler.getURIWithDoneFlag(uriPath, doneFlag);
+                if (uriHandler.exists(new URI(uriWithDoneFlag), uriContext)) {
                     if (available == endOffset) {
-                        LOG.debug("Matched future(" + available + "): " + pathWithDoneFlag);
+                        LOG.debug("Matched future(" + available + "): " + uriWithDoneFlag);
                         resolved = true;
                         resolvedInstances.append(DateUtils.formatDateOozieTZ(nominalInstanceCal));
                         resolvedURIPaths.append(uriPath);
@@ -320,7 +323,7 @@ public class CoordELFunctions {
                         eval.setVariable("resolved_path", resolvedURIPaths.toString());
                         break;
                     } else if (available >= startOffset) {
-                        LOG.debug("Matched future(" + available + "): " + pathWithDoneFlag);
+                        LOG.debug("Matched future(" + available + "): " + uriWithDoneFlag);
                         resolvedInstances.append(DateUtils.formatDateOozieTZ(nominalInstanceCal)).append(INSTANCE_SEPARATOR);
                         resolvedURIPaths.append(uriPath).append(INSTANCE_SEPARATOR);
                     }
@@ -1138,17 +1141,22 @@ public class CoordELFunctions {
             String user = ParamChecker
                     .notEmpty((String) eval.getVariable(OozieClient.USER_NAME), OozieClient.USER_NAME);
             String doneFlag = ds.getDoneFlag();
+            URIHandlerService uriService = Services.get().get(URIHandlerService.class);
+            URIHandler uriHandler = null;
+            URIContext uriContext = null;
             while (nominalInstanceCal.compareTo(initInstance) >= 0) {
                 ELEvaluator uriEval = getUriEvaluator(nominalInstanceCal);
                 String uriPath = uriEval.evaluate(uriTemplate, String.class);
-                String pathWithDoneFlag = uriPath;
-                if (doneFlag.length() > 0) {
-                    pathWithDoneFlag += "/" + doneFlag;
+                if (uriHandler == null) {
+                    URI uri = new URI(uriPath);
+                    uriHandler = uriService.getURIHandler(uri);
+                    uriContext = uriHandler.getURIContext(uri, conf, user);
                 }
-                if (isPathAvailable(pathWithDoneFlag, user, null, conf)) {
-                    LOG.debug("Found latest(" + available + "): " + pathWithDoneFlag);
+                String uriWithDoneFlag = uriHandler.getURIWithDoneFlag(uriPath, doneFlag);
+                if (uriHandler.exists(new URI(uriWithDoneFlag), uriContext)) {
+                    XLog.getLog(CoordELFunctions.class).debug("Found latest(" + available + "): " + uriWithDoneFlag);
                     if (available == startOffset) {
-                        LOG.debug("Matched latest(" + available + "): " + pathWithDoneFlag);
+                        LOG.debug("Matched latest(" + available + "): " + uriWithDoneFlag);
                         resolved = true;
                         resolvedInstances.append(DateUtils.formatDateOozieTZ(nominalInstanceCal));
                         resolvedURIPaths.append(uriPath);
@@ -1156,7 +1164,7 @@ public class CoordELFunctions {
                         eval.setVariable("resolved_path", resolvedURIPaths.toString());
                         break;
                     } else if (available <= endOffset) {
-                        LOG.debug("Matched latest(" + available + "): " + pathWithDoneFlag);
+                        LOG.debug("Matched latest(" + available + "): " + uriWithDoneFlag);
                         resolvedInstances.append(DateUtils.formatDateOozieTZ(nominalInstanceCal)).append(INSTANCE_SEPARATOR);
                         resolvedURIPaths.append(uriPath).append(INSTANCE_SEPARATOR);
                     }
@@ -1189,26 +1197,6 @@ public class CoordELFunctions {
             eval.setVariable("is_resolved", Boolean.FALSE);
         }
         return retVal;
-    }
-
-    // TODO : Not an efficient way. In a loop environment, we could do something
-    // outside the loop
-    /**
-     * Check whether a URI path exists
-     *
-     * @param sPath
-     * @param conf
-     * @return
-     * @throws IOException
-     */
-
-    private static boolean isPathAvailable(String sPath, String user, String group, Configuration conf)
-            throws IOException, HadoopAccessorException {
-        // sPath += "/" + END_OF_OPERATION_INDICATOR_FILE;
-        Path path = new Path(sPath);
-        HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-        Configuration fsConf = has.createJobConf(path.toUri().getAuthority());
-        return has.createFileSystem(user, path.toUri(), fsConf).exists(path);
     }
 
     /**

@@ -19,11 +19,12 @@ package org.apache.oozie.command.coord;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
@@ -34,14 +35,15 @@ import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.coord.CoordELEvaluator;
 import org.apache.oozie.coord.CoordELFunctions;
+import org.apache.oozie.dependency.URIHandler;
 import org.apache.oozie.executor.jpa.CoordActionGetForInputCheckJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
-import org.apache.oozie.service.HadoopAccessorException;
-import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.URIAccessorException;
+import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.Instrumentation;
@@ -423,15 +425,19 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
      */
     protected boolean pathExists(String sPath, Configuration actionConf) throws IOException {
         LOG.debug("checking for the file " + sPath);
-        Path path = new Path(sPath);
         String user = ParamChecker.notEmpty(actionConf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
         try {
-            HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-            Configuration fsConf = has.createJobConf(path.toUri().getAuthority());
-            return has.createFileSystem(user, path.toUri(), fsConf).exists(path);
+            URI uri = new URI(sPath);
+            URIHandlerService service = Services.get().get(URIHandlerService.class);
+            URIHandler handler = service.getURIHandler(uri);
+            return handler.exists(uri, actionConf, user);
         }
-        catch (HadoopAccessorException e) {
+        catch (URIAccessorException e) {
             coordAction.setErrorCode(e.getErrorCode().toString());
+            coordAction.setErrorMessage(e.getMessage());
+            throw new IOException(e);
+        } catch (URISyntaxException e) {
+            coordAction.setErrorCode(ErrorCode.E1025.toString());
             coordAction.setErrorMessage(e.getMessage());
             throw new IOException(e);
         }

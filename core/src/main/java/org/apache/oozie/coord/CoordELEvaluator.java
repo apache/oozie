@@ -250,7 +250,7 @@ public class CoordELEvaluator {
             ds.setEndOfDuration(TimeUnit.valueOf(eDataset.getAttributeValue("end_of_duration")));
 
             Element doneFlagElement = eDataset.getChild("done-flag", eData.getNamespace());
-            String doneFlag = CoordUtils.getDoneFlag(doneFlagElement, uriTemplate);
+            String doneFlag = CoordUtils.getDoneFlag(doneFlagElement);
             ds.setDoneFlag(doneFlag);
         }
         else {

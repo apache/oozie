@@ -20,7 +20,7 @@ package org.apache.oozie.service;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
 
-public class MetaDataAccessorException extends XException {
+public class MetaDataAccessorException extends URIAccessorException {
 
     /**
      * Create an MetaDataAccessor Exception exception from a XException.

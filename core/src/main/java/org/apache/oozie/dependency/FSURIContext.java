@@ -15,30 +15,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.oozie.service;
+package org.apache.oozie.dependency;
 
-import org.apache.oozie.XException;
-import org.apache.oozie.ErrorCode;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
 
-public class HadoopAccessorException extends URIAccessorException {
+public class FSURIContext extends URIContext {
 
-    /**
-     * Create an HadoopAccessor exception from a XException.
-     *
-     * @param cause the XException cause.
-     */
-    public HadoopAccessorException(XException cause) {
-        super(cause);
+    private FileSystem fs;
+
+    public FSURIContext(Configuration conf, String user, FileSystem fs) {
+        super(conf, user);
+        this.fs = fs;
     }
 
-    /**
-     * Create a HadoopAccessor exception.
-     *
-     * @param errorCode error code.
-     * @param params parameters for the error code message template.
-     */
-    public HadoopAccessorException(ErrorCode errorCode, Object... params) {
-        super(errorCode, params);
+    public FileSystem getFileSystem() {
+        return fs;
     }
 
 }

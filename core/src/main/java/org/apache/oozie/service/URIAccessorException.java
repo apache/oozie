@@ -17,28 +17,27 @@
  */
 package org.apache.oozie.service;
 
-import org.apache.oozie.XException;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.XException;
 
-public class HadoopAccessorException extends URIAccessorException {
+public class URIAccessorException extends XException {
 
     /**
-     * Create an HadoopAccessor exception from a XException.
+     * Create an MetaDataAccessor Exception exception from a XException.
      *
      * @param cause the XException cause.
      */
-    public HadoopAccessorException(XException cause) {
+    public URIAccessorException(XException cause) {
         super(cause);
     }
 
     /**
-     * Create a HadoopAccessor exception.
+     * Create a MetaDataAccessor exception.
      *
      * @param errorCode error code.
      * @param params parameters for the error code message template.
      */
-    public HadoopAccessorException(ErrorCode errorCode, Object... params) {
+    public URIAccessorException(ErrorCode errorCode, Object... params) {
         super(errorCode, params);
     }
-
 }

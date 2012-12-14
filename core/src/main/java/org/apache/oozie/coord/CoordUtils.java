@@ -37,24 +37,18 @@ import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.CoordActionsInDateRange;
 import org.apache.oozie.util.DateUtils;
-import org.apache.oozie.util.HCatURI;
 import org.apache.oozie.util.ParamChecker;
 import org.jdom.Element;
 
 public class CoordUtils {
     public static final String HADOOP_USER = "user.name";
 
-    public static String getDoneFlag(Element doneFlagElement, String uri) {
+    public static String getDoneFlag(Element doneFlagElement) {
         if (doneFlagElement != null) {
             return doneFlagElement.getTextTrim();
         }
         else {
-            if (HCatURI.isHcatURI(uri)) { // For HCat _SUCCESS is meaningless
-                return "";
-            }
-            else {
-                return CoordELConstants.DEFAULT_DONE_FLAG;
-            }
+            return CoordELConstants.DEFAULT_DONE_FLAG;
         }
     }
 

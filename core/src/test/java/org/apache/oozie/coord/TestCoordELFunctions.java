@@ -976,7 +976,7 @@ public class TestCoordELFunctions extends XTestCase {
         eval.setVariable(".datain.ABC", "hcat://hcat.yahoo.com:5080/mydb/clicks/?datastamp=12&region=us");
         eval.setVariable(".datain.ABC.unresolved", Boolean.FALSE);
         String expr = "${coord:metaServer('ABC')}";
-        assertEquals("hcat.yahoo.com:5080", CoordELFunctions.evalAndWrap(eval, expr));
+        assertEquals("hcat://hcat.yahoo.com:5080", CoordELFunctions.evalAndWrap(eval, expr));
     }
 
     /**

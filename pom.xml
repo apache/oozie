@@ -851,6 +851,7 @@
 
                         <!-- See 'testHive' profile in core/pom.xml and the Building doc-->
                         <exclude>**/TestHive*.java</exclude>
+                        <exclude>**/TestHCatURIHandler.java</exclude>
 
                         <!-- See 'testSqoop' profile in core/pom.xml and the Building doc-->
                         <exclude>**/TestSqoop*.java</exclude>
