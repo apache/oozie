@@ -32,4 +32,22 @@ public class KillNodeDef extends ControlNodeDef {
         super(name, message, klass, Collections.EMPTY_LIST);
     }
 
+    public static class KillNodeHandler extends NodeHandler {
+
+        public boolean enter(Context context) {
+            return true;
+        }
+
+        public String exit(Context context) {
+            context.killJob();
+            return null;
+        }
+
+        public void kill(Context context) {
+        }
+
+        public void fail(Context context) {
+        }
+    }
+
 }
