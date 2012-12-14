@@ -18,18 +18,14 @@
 package org.apache.oozie.action.hadoop;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.regex.Pattern;
@@ -39,8 +35,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.cli.CliDriver;
 
 public class HiveMain extends LauncherMain {
-    public static final String USER_HIVE_DEFAULT_FILE = "oozie-user-hive-default.xml";
-
     private static final Pattern[] HIVE_JOB_IDS_PATTERNS = {
       Pattern.compile("Ended Job = (job_\\S*)")
     };
@@ -167,6 +161,7 @@ public class HiveMain extends LauncherMain {
         System.out.println();
         System.out.println("Oozie Hive action configuration");
         System.out.println("=================================================================");
+        System.out.println();
 
         Configuration hiveConf = setUpHiveSite();
 
@@ -180,32 +175,6 @@ public class HiveMain extends LauncherMain {
         if (!new File(scriptPath).exists()) {
             throw new RuntimeException("Hive script file [" + scriptPath + "] does not exist");
         }
-
-        // check if hive-default.xml is in the classpath, if not look for oozie-user-hive-default.xml
-        // in the current directory (it will be there if the Hive action has the 'oozie.hive.defaults'
-        // property) and rename it to hive-default.xml
-        if (Thread.currentThread().getContextClassLoader().getResource("hive-default.xml") == null) {
-            File userProvidedDefault = new File(USER_HIVE_DEFAULT_FILE);
-            if (userProvidedDefault.exists()) {
-                if (!userProvidedDefault.renameTo(new File("hive-default.xml"))) {
-                    throw new RuntimeException(
-                            "Could not rename user provided Hive defaults file to 'hive-default.xml'");
-                }
-                System.out.println("Using 'hive-default.xml' defined in the Hive action");
-            }
-            else {
-                throw new RuntimeException(
-                        "Hive JAR does not bundle a 'hive-default.xml' and Hive action does not define one");
-            }
-        }
-        else {
-            System.out.println("Using 'hive-default.xml' defined in the Hive JAR");
-            File userProvidedDefault = new File(USER_HIVE_DEFAULT_FILE);
-            if (userProvidedDefault.exists()) {
-                System.out.println("WARNING: Ignoring user provided Hive defaults");
-            }
-        }
-        System.out.println();
 
         String logFile = setUpHiveLog4J(hiveConf);
 
