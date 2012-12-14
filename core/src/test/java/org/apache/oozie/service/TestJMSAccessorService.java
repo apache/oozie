@@ -17,17 +17,14 @@
  */
 package org.apache.oozie.service;
 
-import java.util.Arrays;
-
 import javax.jms.MessageConsumer;
 import javax.jms.MessageProducer;
 import javax.jms.Session;
 
 import junit.framework.Assert;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.util.StringUtils;
 import org.apache.oozie.test.XTestCase;
+import org.apache.oozie.util.HCatURI;
 
 public class TestJMSAccessorService extends XTestCase {
     private Services services;
@@ -35,13 +32,8 @@ public class TestJMSAccessorService extends XTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        services = new Services();
-        Configuration conf = services.getConf();
-        conf.set(Services.CONF_SERVICE_CLASSES,
-                StringUtils.join(",", Arrays.asList(JMSAccessorService.class.getName())));
-        conf.set(
-                JMSAccessorService.JMS_CONNECTIONS_PROPERTIES,
-                "default=java.naming.factory.initial#org.apache.activemq.jndi.ActiveMQInitialContextFactory;java.naming.provider.url#vm://localhost?broker.persistent=false,");
+        services = super.setupServicesForHCatalog();
+        setSystemProperty(PartitionDependencyManagerService.MAP_MAX_WEIGHTED_CAPACITY, "100");
         services.init();
     }
 
@@ -65,6 +57,7 @@ public class TestJMSAccessorService extends XTestCase {
         }
         finally {
             if (consumer != null) {
+                consumer.close();
                 jmsService.removeSession(JMSAccessorService.DEFAULT_SERVER_ENDPOINT, "test-topic");
             }
         }
@@ -103,5 +96,45 @@ public class TestJMSAccessorService extends XTestCase {
         JMSAccessorService.ConnectionContext conCtx = jmsService
                 .getConnectionContext(JMSAccessorService.DEFAULT_SERVER_ENDPOINT);
         assert (conCtx.getConnection() != null);
+    }
+
+    public void testSingleConsumerPerTopic() {
+
+        try {
+            // Add sample missing partitions belonging to same table
+            String partition1 = "hcat://hcat.server.com:5080/" + HCatURI.DB_PREFIX + "/mydb/" + HCatURI.TABLE_PREFIX
+                    + "/mytable/" + HCatURI.PARTITION_PREFIX + "/mypart=10";
+            String partition2 = "hcat://hcat.server.com:5080/" + HCatURI.DB_PREFIX + "/mydb/" + HCatURI.TABLE_PREFIX
+                    + "/mytable/" + HCatURI.PARTITION_PREFIX + "/mypart=20";
+
+            //Expected topic name is thus:
+            String topic = "hcat.mydb.mytable";
+
+            PartitionDependencyManagerService pdms = services.get(PartitionDependencyManagerService.class);
+
+            pdms.addMissingPartition(partition1, "action-1");
+            pdms.addMissingPartition(partition2, "action-2");
+            //this registers the message receiver
+
+            JMSAccessorService jmsService = services.get(JMSAccessorService.class);
+            String endPoint = JMSAccessorService.DEFAULT_SERVER_ENDPOINT;
+            assertNotNull(jmsService.getConnectionContext(endPoint));
+            assertNotNull(jmsService.getSession(endPoint, topic));
+
+            //check there is only *1* message consumer since topic-name for both actions was same
+            assertEquals(1, jmsService.getConnectionContext(endPoint).getTopicReceiverMap().size());
+
+            String partition3 = "hcat://hcat.server.com:5080/" + HCatURI.DB_PREFIX + "/mydb/" + HCatURI.TABLE_PREFIX
+                    + "/otherTable/" + HCatURI.PARTITION_PREFIX + "/mypart=abc";
+            pdms.addMissingPartition(partition3, "action-3");
+            // Now there should be one more consumer for the new topic
+            assertNotNull(jmsService.getSession(endPoint, "hcat.mydb.otherTable"));
+            assertEquals(2, jmsService.getConnectionContext(endPoint).getTopicReceiverMap().size());
+
+        }
+        catch (Exception e) {
+            fail("Exception encountered : " + e);
+        }
+
     }
 }

@@ -17,17 +17,12 @@
  */
 package org.apache.oozie.jms;
 
-import java.util.Arrays;
-
 import javax.jms.JMSException;
 import javax.jms.MapMessage;
 import javax.jms.Message;
 import javax.jms.ObjectMessage;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.util.StringUtils;
 import org.apache.oozie.jms.MessageReceiver;
-import org.apache.oozie.service.JMSAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XTestCase;
 
@@ -37,13 +32,7 @@ public class TestMessageReceiver extends XTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        services = new Services();
-        Configuration conf = services.getConf();
-        conf.set(Services.CONF_SERVICE_CLASSES,
-                StringUtils.join(",", Arrays.asList(JMSAccessorService.class.getName())));
-        conf.set(
-                JMSAccessorService.JMS_CONNECTIONS_PROPERTIES,
-                "default=java.naming.factory.initial#org.apache.activemq.jndi.ActiveMQInitialContextFactory;java.naming.provider.url#vm://localhost?broker.persistent=false,");
+        services = super.setupServicesForHCatalog();
         services.init();
     }
 

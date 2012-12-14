@@ -36,6 +36,7 @@ import javax.naming.NamingException;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.jms.MessageReceiver;
 import org.apache.oozie.util.XLog;
 
 /**
@@ -134,7 +135,7 @@ public class JMSAccessorService implements Service {
             ret = connSessionMap.get(endPoint);
         }
         else {
-            LOG.warn("Connection doesn't exists for end point " + endPoint);
+            LOG.error("Connection doesn't exist for end point " + endPoint);
         }
         return ret;
     }
@@ -151,6 +152,7 @@ public class JMSAccessorService implements Service {
         ConnectionContext connCtx = getConnectionContext(endPoint);
         if (connCtx != null) {
             connCtx.returnSession(topicName);
+            connCtx.removeTopicReceiver(topicName);
         }
         return;
     }
@@ -197,7 +199,7 @@ public class JMSAccessorService implements Service {
 
     @Override
     public void destroy() {
-        // TODO Auto-generated method stub
+        // TODO Remove topic sessions based on no demand
 
     }
 
@@ -254,6 +256,54 @@ public class JMSAccessorService implements Service {
         return ctx;
     }
 
+    /**
+     * Get receiver for a registered topic
+     *
+     * @param endPoint
+     * @param topicName
+     * @return MessageReceiver
+     * @throws JMSException
+     */
+    public MessageReceiver getTopicReceiver(String endPoint, String topicName) {
+        MessageReceiver recvr = null;
+        ConnectionContext connCtx = getConnectionContext(endPoint);
+        if(connCtx != null) {
+            recvr = connCtx.getTopicReceiver(topicName);
+        }
+        else {
+            LOG.info("No connection exists to endpoint: " + endPoint);
+        }
+        return recvr;
+    }
+
+    /**
+     * Get receiver for a registered topic and "default" server endpoint
+     *
+     * @param topicName
+     * @return MessageReceiver
+     * @throws JMSException
+     */
+    public MessageReceiver getTopicReceiver(String topicName) throws JMSException {
+        return getTopicReceiver(DEFAULT_SERVER_ENDPOINT, topicName);
+    }
+
+    /**
+     * Add a new listener for topic
+     * @param recvr
+     * @param endPoint
+     * @param topicName
+     * @throws ServiceException
+     */
+    public void addTopicReceiver(MessageReceiver recvr, String endPoint, String topicName) throws ServiceException {
+        ConnectionContext connCtx = getConnectionContext(endPoint);
+        if(connCtx != null) {
+            connCtx.getTopicReceiverMap().put(topicName, recvr);
+        }
+        else {
+            throw new ServiceException(ErrorCode.E1506, "Connection to endpoint:" + endPoint + " NULL. Message Consumer not added to map");
+        }
+    }
+
     @Override
     public void finalize() {
         LOG.info("Finalizing ");
@@ -274,6 +324,11 @@ public class JMSAccessorService implements Service {
     class ConnectionContext {
         Connection connection;
         HashMap<String, Session> hmSessionTopic = new HashMap<String, Session>();
+        /*
+         * Map of topic to corresponding message receiver
+         * We only need to register one receiver (consumer) per topic
+         */
+        private ConcurrentHashMap<String, MessageReceiver> topicReceiverMap = new ConcurrentHashMap<String, MessageReceiver>();
 
         public ConnectionContext(Connection conn) {
             this.connection = conn;
@@ -281,7 +336,7 @@ public class JMSAccessorService implements Service {
 
         /**
          * If there is no existing session for a specific topic name, this
-         * method creates a new session. Otherwise, return the existing seesion
+         * method creates a new session. Otherwise, return the existing session
          *
          * @param topic : Name of the topic
          * @return a new/exiting JMS session
@@ -343,7 +398,7 @@ public class JMSAccessorService implements Service {
                 hmSessionTopic.remove(topic);
             }
             else {
-                LOG.info("Topic " + topic + " does n't have any active session to close ");
+                LOG.info("Topic " + topic + " doesn't have any active session to close ");
             }
         }
 
@@ -362,6 +417,40 @@ public class JMSAccessorService implements Service {
         public void setConnection(Connection connection) {
             this.connection = connection;
         }
+
+        /**
+         * Get the listener registered for a topicName
+         * @return MessageReceiver
+         */
+        public MessageReceiver getTopicReceiver(String topicName) {
+            MessageReceiver recvr = null;
+            if(topicReceiverMap.containsKey(topicName)) {
+                recvr = topicReceiverMap.get(topicName);
+            }
+            return recvr;
+        }
+
+        /**
+         * Remove the topic -> listener mapping entry
+         *
+         * @param topicName
+         */
+        public void removeTopicReceiver(String topicName) {
+            if (topicReceiverMap.containsKey(topicName)) {
+                topicReceiverMap.remove(topicName);
+            }
+            else {
+                LOG.debug("No receiver to remove corresponding to topic: " + topicName);
+            }
+        }
+
+        /**
+         * @return the topicReceiverMap
+         */
+        public ConcurrentHashMap<String, MessageReceiver> getTopicReceiverMap() {
+            return topicReceiverMap;
+        }
+
     }
 
 }

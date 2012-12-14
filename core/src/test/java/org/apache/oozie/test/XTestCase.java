@@ -55,6 +55,8 @@ import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.HadoopAccessorService;
+import org.apache.oozie.service.JMSAccessorService;
+import org.apache.oozie.service.ServiceException;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.store.StoreException;
@@ -89,6 +91,8 @@ public abstract class XTestCase extends TestCase {
     private static final String OOZIE_TEST_PROPERTIES = "oozie.test.properties";
 
     public static float WAITFOR_RATIO = Float.parseFloat(System.getProperty("oozie.test.waitfor.ratio", "1"));
+    protected static final String localActiveMQBroker = "vm://localhost?broker.persistent=false";
+    protected static final String ActiveMQConnFactory = "org.apache.activemq.jndi.ActiveMQInitialContextFactory";
 
     static {
         try {
@@ -847,5 +851,19 @@ public abstract class XTestCase extends TestCase {
             throw new RuntimeException(ex);
         }
     }
+
+    protected Services setupServicesForHCatalog() throws ServiceException {
+        Services services = new Services();
+        Configuration conf = services.getConf();
+        conf.set(Services.CONF_SERVICE_EXT_CLASSES,
+                "org.apache.oozie.service.PartitionDependencyManagerService," +
+                "org.apache.oozie.service.JMSAccessorService," +
+                "org.apache.oozie.service.MetaDataAccessorService");
+        conf.set(JMSAccessorService.JMS_CONNECTIONS_PROPERTIES,
+                "default=java.naming.factory.initial#" + ActiveMQConnFactory + ";" +
+                "java.naming.provider.url#" + localActiveMQBroker);
+        return services;
+    }
+
 }
 

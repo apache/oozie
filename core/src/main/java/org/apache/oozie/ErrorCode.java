@@ -235,6 +235,7 @@ public enum ErrorCode {
     E1503(XLog.STD, "Error in Metadata URI [{0}]"),
     E1504(XLog.STD, "Error in getting HCat Access [{0}]"),
     E1505(XLog.STD, "Error with JMS Message, Details: [{0}]"),
+    E1506(XLog.STD, "Error in creating connection or message listener, Details: [{0}]"),
 
     ETEST(XLog.STD, "THIS SHOULD HAPPEN ONLY IN TESTING, invalid job id [{0}]"),;
 

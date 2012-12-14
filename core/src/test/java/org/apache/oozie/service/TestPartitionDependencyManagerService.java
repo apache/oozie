@@ -41,11 +41,8 @@ public class TestPartitionDependencyManagerService extends XDataTestCase {
     @Before
     protected void setUp() throws Exception {
         super.setUp();
-        setSystemProperty(PartitionDependencyManagerService.HCAT_DEFAULT_SERVER_NAME, "myhcatserver");
-        setSystemProperty(PartitionDependencyManagerService.HCAT_DEFAULT_DB_NAME, "myhcatdb");
         setSystemProperty(PartitionDependencyManagerService.MAP_MAX_WEIGHTED_CAPACITY, "100");
-        Services services = new Services();
-        addServiceToRun(services.getConf(), PartitionDependencyManagerService.class.getName());
+        Services services = super.setupServicesForHCatalog();
         services.init();
     }
 
@@ -78,7 +75,7 @@ public class TestPartitionDependencyManagerService extends XDataTestCase {
     public void testAddMissingPartition() throws MetadataServiceException, URISyntaxException {
         Services services = Services.get();
         PartitionDependencyManagerService pdms = services.get(PartitionDependencyManagerService.class);
-        String newHCatDependency = "hcat://hcat.yahoo.com:5080/mydb/clicks/?datastamp=12&region=us";
+        String newHCatDependency = "hcat://hcat.yahoo.com:5080/database/mydb/table/clicks/partition/datastamp=12,region=us";
         String actionId = "myAction";
         pdms.addMissingPartition(newHCatDependency, actionId);
 
@@ -104,10 +101,10 @@ public class TestPartitionDependencyManagerService extends XDataTestCase {
      * @throws URISyntaxException
      */
     @Test
-    public void testRemovePartition() throws MetadataServiceException, URISyntaxException {
+    public void testRemovePartition() throws Exception {
         Services services = Services.get();
         PartitionDependencyManagerService pdms = services.get(PartitionDependencyManagerService.class);
-        String newHCatDependency = "hcat://hcat.yahoo.com:5080/mydb/clicks/?datastamp=12&region=us";
+        String newHCatDependency = "hcat://hcat.yahoo.com:5080/database/mydb/table/clicks/partition/datastamp=12,region=us";
         String actionId = "myAction";
         pdms.addMissingPartition(newHCatDependency, actionId);
 
@@ -141,7 +138,7 @@ public class TestPartitionDependencyManagerService extends XDataTestCase {
     public void testAvailablePartition() throws MetadataServiceException, URISyntaxException {
         Services services = Services.get();
         PartitionDependencyManagerService pdms = services.get(PartitionDependencyManagerService.class);
-        String newHCatDependency = "hcat://hcat.yahoo.com:5080/mydb/clicks/?datastamp=12&region=us";
+        String newHCatDependency = "hcat://hcat.yahoo.com:5080/database/mydb/table/clicks/partition/datastamp=12,region=us";
         String actionId = "myAction";
         pdms.addMissingPartition(newHCatDependency, actionId);
 
@@ -172,8 +169,8 @@ public class TestPartitionDependencyManagerService extends XDataTestCase {
     public void testRemoveActionFromMissingPartition() throws MetadataServiceException, URISyntaxException {
         Services services = Services.get();
         PartitionDependencyManagerService pdms = services.get(PartitionDependencyManagerService.class);
-        String newHCatDependency1 = "hcat://hcat.yahoo.com:5080/mydb/clicks/?datastamp=12";
-        String newHCatDependency2 = "hcat://hcat.yahoo.com:5080/mydb/clicks/?datastamp=12&region=us";
+        String newHCatDependency1 = "hcat://hcat.yahoo.com:5080/database/mydb/table/clicks/partition/datastamp=12";
+        String newHCatDependency2 = "hcat://hcat.yahoo.com:5080/database/mydb/table/clicks/partition/datastamp=12,region=us";
         String actionId1 = "1";
         String actionId2 = "2";
         pdms.addMissingPartition(newHCatDependency1, actionId1);
@@ -192,4 +189,5 @@ public class TestPartitionDependencyManagerService extends XDataTestCase {
         assertTrue(actions.getActions().contains(actionId1));
         assertFalse(actions.getActions().contains(actionId2));
     }
+
 }

@@ -22,8 +22,10 @@ import javax.jms.Message;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageListener;
 
+import org.apache.oozie.ErrorCode;
 import org.apache.oozie.service.JMSAccessorService;
 import org.apache.oozie.service.MetadataServiceException;
+import org.apache.oozie.service.ServiceException;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.XLog;
 
@@ -35,6 +37,15 @@ public class MessageReceiver implements MessageListener {
     public MessageReceiver(MessageHandler handler) {
         LOG = XLog.getLog(getClass());
         this.msgHandler = handler;
+    }
+
+    /**
+     * Get the message consumer object for this message receiver
+     *
+     * @return MessageConsumer
+     */
+    public MessageConsumer getConsumer() {
+        return this.consumer;
     }
 
     /**
@@ -57,10 +68,22 @@ public class MessageReceiver implements MessageListener {
      * @throws JMSException
      */
     public void registerTopic(String endPoint, String topicName) throws JMSException {
-        consumer = Services.get().get(JMSAccessorService.class)
-                .getMessageConsumer(JMSAccessorService.DEFAULT_SERVER_ENDPOINT, topicName);
-        consumer.setMessageListener(this);
-        LOG.info(" Listener registered for end point ." + endPoint + " topic :" + topicName);
+        JMSAccessorService jas = Services.get().get(JMSAccessorService.class);
+        try {
+            consumer = jas.getMessageConsumer(endPoint, topicName);
+            if(consumer != null) {
+                consumer.setMessageListener(this);
+                LOG.info("Listener registered for end point:" + endPoint + " topic:" + topicName);
+                jas.addTopicReceiver(this, endPoint, topicName);
+            }
+            else {
+                throw new ServiceException(ErrorCode.E1506);
+            }
+        }
+        catch (ServiceException e) {
+            LOG.error("Error in registering listener for topic:" + topicName);
+            throw new JMSException(e.getMessage());
+        }
     }
 
     /**

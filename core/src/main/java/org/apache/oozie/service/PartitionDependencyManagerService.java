@@ -25,11 +25,12 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import javax.jms.JMSException;
+
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.coord.CoordActionUpdatePushMissingDependency;
 import org.apache.oozie.jms.HCatMessageHandler;
 import org.apache.oozie.jms.MessageReceiver;
@@ -40,6 +41,7 @@ import org.apache.oozie.util.PartitionWrapper;
 import org.apache.oozie.util.PartitionsGroup;
 import org.apache.oozie.util.WaitingActions;
 import org.apache.oozie.util.HCatURI;
+import org.apache.oozie.util.XCallable;
 import org.apache.oozie.util.XLog;
 
 /**
@@ -185,7 +187,7 @@ public class PartitionDependencyManagerService implements Service {
             else { // new partition from different hcat server/db
                 _addNewEntry(hcatInstanceMap, prefix, tableName, partition, actionId);
             }
-            _registerMessageReceiver(_getTopic(partition));
+            _registerMessageReceiver(partition);
         }
         catch (ClassCastException e) {
             throw new MetadataServiceException(ErrorCode.E1501, e.getCause());
@@ -201,10 +203,33 @@ public class PartitionDependencyManagerService implements Service {
         }
     }
 
-    private void _registerMessageReceiver(String topic) throws Exception {
-        MessageReceiver recvr = new MessageReceiver(new HCatMessageHandler());
-        log.debug("Registering topic :" + topic);
-        recvr.registerTopic(topic);
+    private void _registerMessageReceiver(PartitionWrapper partition) throws MetadataServiceException {
+        String topic = _getTopic(partition);
+        try {
+            MessageReceiver recvr = Services.get().get(JMSAccessorService.class).getTopicReceiver(topic);
+            //Register new listener only if topic is new. Else do nothing
+            if(recvr == null) {
+                //Registering new receiver
+                recvr = new MessageReceiver(new HCatMessageHandler());
+                log.debug("Registering to listen on topic :" + topic);
+                recvr.registerTopic(topic); //server-endpoint is obtained from partition
+            }
+        }
+        catch (JMSException e) {
+            throw new MetadataServiceException(ErrorCode.E1506, e.getCause());
+        }
+    }
+
+    private void _deregisterMessageReceiver(PartitionWrapper part) throws MetadataServiceException {
+        String topic = _getTopic(part);
+        log.debug("Deregistering receiver for topic:[" + topic + "]");
+        try {
+            MessageReceiver recvr = Services.get().get(JMSAccessorService.class).getTopicReceiver(topic);
+            recvr.unRegisterTopic(topic);
+        }
+        catch (JMSException e) {
+            throw new MetadataServiceException(ErrorCode.E1506, e.getCause());
+        }
     }
 
     private String _getTopic(PartitionWrapper partition) {
@@ -249,8 +274,9 @@ public class PartitionDependencyManagerService implements Service {
      * @param partition
      * @param cascade
      * @return true if partition was successfully removed false otherwise
+     * @throws MetadataServiceException
      */
-    public boolean removePartition(PartitionWrapper partition, boolean cascade) {
+    public boolean removePartition(PartitionWrapper partition, boolean cascade) throws MetadataServiceException {
         log.debug("Removing partition " + partition + " with  cascade :" + cascade);
         String prefix = PartitionWrapper.makePrefix(partition.getServerName(), partition.getDbName());
         if (hcatInstanceMap.containsKey(prefix)) {
@@ -267,6 +293,7 @@ public class PartitionDependencyManagerService implements Service {
                             if (tableMap.size() == 0) {
                                 hcatInstanceMap.remove(prefix);
                             }
+                            _deregisterMessageReceiver(partition);
                         }
                     }
                     return true;
@@ -333,10 +360,11 @@ public class PartitionDependencyManagerService implements Service {
      * to 'available' map
      *
      * @param partition
-     * @return true if partition was successfully moved to availableMap false
-     *         otherwise
+     * @return true if partition was successfully moved to availableMap
+     * false otherwise
+     * @throws MetadataServiceException
      */
-    public boolean partitionAvailable(PartitionWrapper partition) {
+    public boolean partitionAvailable(PartitionWrapper partition) throws MetadataServiceException {
         log.debug("Making partition [{0}] available ", partition);
         List<String> actionsList = _getActionsForPartition(partition);
         if (actionsList != null) {
@@ -351,13 +379,7 @@ public class PartitionDependencyManagerService implements Service {
                 else { // new entry
                     availMap.put(actionId, new CopyOnWriteArrayList<PartitionWrapper>(Arrays.asList((partition))));
                 }
-                // TODO : queue() implement like in Recover Service
-                try {
-                    new CoordActionUpdatePushMissingDependency(actionId).call();
-                }
-                catch (CommandException e) {
-                    log.error(e.getMessage(), e);
-                }
+                queueCallable(new CoordActionUpdatePushMissingDependency(actionId));
             }
             removePartition(partition, true);
             return true;
@@ -389,6 +411,48 @@ public class PartitionDependencyManagerService implements Service {
         PartitionWrapper partition = new PartitionWrapper(uri.getServerEndPoint(), uri.getDb(), uri.getTable(),
                 uri.getPartitionMap());
         return partitionAvailable(partition);
+    }
+
+    /**
+     * Determine if a partition entry exists in cache
+     *
+     * @param hcatURI
+     * @return true if partition exists in map, false otherwise
+     * @throws MetadataServiceException
+     */
+    public boolean containsPartition(String hcatURI) throws MetadataServiceException {
+        HCatURI uri;
+        try {
+            uri = new HCatURI(hcatURI);
+        }
+        catch (URISyntaxException e) {
+            throw new MetadataServiceException(ErrorCode.E1503, e.getMessage());
+        }
+        PartitionWrapper partition = new PartitionWrapper(uri.getServerEndPoint(), uri.getDb(), uri.getTable(),
+                uri.getPartitionMap());
+        return containsPartition(partition);
+    }
+
+    /**
+     * Determine if a partition entry exists in cache
+     *
+     * @param partition
+     * @return true if partition exists in map, false otherwise
+     */
+    public boolean containsPartition(PartitionWrapper partition) {
+        String prefix = PartitionWrapper.makePrefix(partition.getServerName(), partition.getDbName());
+        String tableName = partition.getTableName();
+        boolean result = false;
+        if (hcatInstanceMap.containsKey(prefix)) {
+            Map<String, PartitionsGroup> tableMap = hcatInstanceMap.get(prefix);
+            if (tableMap != null && tableMap.containsKey(tableName)) {
+                PartitionsGroup partitionsMap = tableMap.get(tableName);
+                if (partitionsMap != null && partitionsMap.getPartitionsMap().containsKey(partition)) {
+                    result = true;
+                }
+            }
+        }
+        return result;
     }
 
     private void addPartitionEntry(Map<String, PartitionsGroup> tableMap, String tableName, PartitionWrapper partition,
@@ -466,6 +530,16 @@ public class PartitionDependencyManagerService implements Service {
         Map<String, PartitionsGroup> tableMap = new ConcurrentHashMap<String, PartitionsGroup>();
         instanceMap.put(prefix, tableMap);
         _createPartitionMapForTable(tableMap, tableName, partition, actionId);
+    }
+
+    private void queueCallable(XCallable<?> callable) {
+        boolean ret = Services.get().get(CallableQueueService.class).queue(callable);
+        if (ret == false) {
+            XLog.getLog(getClass()).warn(
+                    "Unable to queue the callable commands for PartitionDependencyManagerService. "
+                            + "Most possibly command queue is full. Queue size is :"
+                            + Services.get().get(CallableQueueService.class).queueSize());
+        }
     }
 
 }
