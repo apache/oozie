@@ -265,12 +265,6 @@
             <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-auth</artifactId>
-            <scope>compile</scope>
-        </dependency>
-
         <!-- For drawing runtime DAG -->
         <dependency>
             <groupId>net.sf.jung</groupId>
