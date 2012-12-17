@@ -102,6 +102,10 @@ public abstract class XTestCase extends TestCase {
                 OOZIE_SRC_DIR = new File(OOZIE_SRC_DIR, "core");
             }
             if (!OOZIE_SRC_DIR.exists()) {
+                OOZIE_SRC_DIR = OOZIE_SRC_DIR.getParentFile().getParentFile();
+                OOZIE_SRC_DIR = new File(OOZIE_SRC_DIR, "core");
+            }
+            if (!OOZIE_SRC_DIR.exists()) {
                 System.err.println();
                 System.err.println("Could not determine project root directory");
                 System.err.println();

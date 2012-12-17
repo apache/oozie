@@ -92,6 +92,7 @@
         <module>client</module>
         <module>hadooplibs</module>
         <module>core</module>
+        <module>tests</module>
         <module>webapp</module>
         <module>examples</module>
         <module>docs</module>
@@ -849,9 +850,6 @@
                         -->
                         <exclude>**/TestSsh*.java</exclude>
 
-                        <!-- See 'testHive' profile in core/pom.xml and the Building doc-->
-                        <exclude>**/TestHive*.java</exclude>
-                        <exclude>**/TestHCatURIHandler.java</exclude>
 
                         <!-- See 'testSqoop' profile in core/pom.xml and the Building doc-->
                         <exclude>**/TestSqoop*.java</exclude>
