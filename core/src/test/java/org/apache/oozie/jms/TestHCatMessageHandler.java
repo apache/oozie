@@ -127,7 +127,7 @@ public class TestHCatMessageHandler extends XDataTestCase {
 
         try {
             // Define partition dependency
-            String stringDep = "hcat://hcat.yahoo.com:5080/database/mydb/table/mytbl/partition/datastamp=12,region=us";
+            String stringDep = "hcat://hcat.server.com:5080/mydb/mytbl/datastamp=12&region=us";
             HCatURI dep = new HCatURI(stringDep);
             List<Map<String, String>> partitions = new ArrayList<Map<String, String>>(1);
             partitions.add(dep.getPartitionMap());
@@ -158,10 +158,10 @@ public class TestHCatMessageHandler extends XDataTestCase {
                     .containsKey(PartitionWrapper.makePrefix(dep.getServerEndPoint(), dep.getDb())));
 
             // bunch of other partitions
-            stringDep = "hcat://hcat.yahoo.com:5080/database/mydb/table/mytbl/partition/user=joe";
+            stringDep = "hcat://hcat.server.com:5080/mydb/mytbl/user=joe";
             dep = new HCatURI(stringDep);
             pdms.addMissingPartition(new PartitionWrapper(dep), actionId);
-            stringDep = "hcat://hcat.yahoo.com:5080/database/mydb/table/mytbl/partition/part=fake";
+            stringDep = "hcat://hcat.server.com:5080/mydb/mytbl/part=fake";
             dep = new HCatURI(stringDep);
             partitions = new ArrayList<Map<String, String>>(1);
             partitions.add(dep.getPartitionMap());

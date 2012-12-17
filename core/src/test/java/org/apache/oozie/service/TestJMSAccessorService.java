@@ -24,7 +24,6 @@ import javax.jms.Session;
 import junit.framework.Assert;
 
 import org.apache.oozie.test.XTestCase;
-import org.apache.oozie.util.HCatURI;
 
 public class TestJMSAccessorService extends XTestCase {
     private Services services;
@@ -102,10 +101,8 @@ public class TestJMSAccessorService extends XTestCase {
 
         try {
             // Add sample missing partitions belonging to same table
-            String partition1 = "hcat://hcat.server.com:5080/" + HCatURI.DB_PREFIX + "/mydb/" + HCatURI.TABLE_PREFIX
-                    + "/mytable/" + HCatURI.PARTITION_PREFIX + "/mypart=10";
-            String partition2 = "hcat://hcat.server.com:5080/" + HCatURI.DB_PREFIX + "/mydb/" + HCatURI.TABLE_PREFIX
-                    + "/mytable/" + HCatURI.PARTITION_PREFIX + "/mypart=20";
+            String partition1 = "hcat://hcat.server.com:5080/mydb/mytable/mypart=10";
+            String partition2 = "hcat://hcat.server.com:5080/mydb/mytable/mypart=20";
 
             //Expected topic name is thus:
             String topic = "hcat.mydb.mytable";
@@ -124,8 +121,7 @@ public class TestJMSAccessorService extends XTestCase {
             //check there is only *1* message consumer since topic-name for both actions was same
             assertEquals(1, jmsService.getConnectionContext(endPoint).getTopicReceiverMap().size());
 
-            String partition3 = "hcat://hcat.server.com:5080/" + HCatURI.DB_PREFIX + "/mydb/" + HCatURI.TABLE_PREFIX
-                    + "/otherTable/" + HCatURI.PARTITION_PREFIX + "/mypart=abc";
+            String partition3 = "hcat://hcat.server.com:5080/mydb/otherTable/mypart=abc";
             pdms.addMissingPartition(partition3, "action-3");
             // Now there should be one more consumer for the new topic
             assertNotNull(jmsService.getSession(endPoint, "hcat.mydb.otherTable"));

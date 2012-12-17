@@ -21,8 +21,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
-
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.client.CoordinatorAction;
@@ -35,14 +33,11 @@ import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.PartitionDependencyManagerService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.test.XDataTestCase;
-import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.HCatURI;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.PartitionWrapper;
-import org.apache.oozie.util.PartitionsGroup;
 import org.apache.oozie.util.XLog;
 import org.junit.After;
 import org.junit.Before;
@@ -72,7 +67,7 @@ public class TestCoordActionUpdatePushMissingDependency extends XDataTestCase {
 
     @Test
     public void testUpdateCoordTableBasic() throws Exception {
-        String newHCatDependency = "hcat://hcat.yahoo.com:5080/mydb/clicks/?datastamp=12&region=us";
+        String newHCatDependency = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12&region=us";
 
         String actionId = addInitRecords(newHCatDependency);
         checkCoordAction(actionId, newHCatDependency, CoordinatorAction.Status.WAITING, 0);
@@ -96,10 +91,10 @@ public class TestCoordActionUpdatePushMissingDependency extends XDataTestCase {
 
     @Test
     public void testUpdateCoordTableAdvanced() throws Exception {
-        String newHCatDependency1 = "hcat://hcat.yahoo.com:5080/mydb/clicks/?datastamp=11&region=us";
-        String newHCatDependency2 = "hcat://hcat.yahoo.com:5080/mydb/clicks/?datastamp=12&region=us";
+        String newHCatDependency1 = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=11&region=us";
+        String newHCatDependency2 = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12&region=us";
 
-        String fullDeps = newHCatDependency1 + CoordELFunctions.DIR_SEPARATOR + newHCatDependency2;
+        String fullDeps = newHCatDependency1 + CoordELFunctions.INSTANCE_SEPARATOR + newHCatDependency2;
         String actionId = addInitRecords(fullDeps);
         checkCoordAction(actionId, fullDeps, CoordinatorAction.Status.WAITING, 0);
 

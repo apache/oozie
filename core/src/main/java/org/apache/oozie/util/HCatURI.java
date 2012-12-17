@@ -31,18 +31,12 @@ import org.apache.hadoop.conf.Configuration;
  */
 public class HCatURI {
 
-    public static final String PREFIX_HCAT = "oozie.service.MetaAccessorService.hcat";
-    public static final String DEFAULT_SERVER = PREFIX_HCAT + ".server";
-    public static final String DEFAULT_DB = PREFIX_HCAT + ".db";
-    public static final String DEFAULT_TABLE = PREFIX_HCAT + ".table";
     public static final String PARTITION_SEPARATOR = "&";
     public static final String PARTITION_KEYVAL_SEPARATOR = "=";
     public static final String PATH_SEPARATOR = "/";
-    public static final String PARTITION_PREFIX = "?";
     public static final String PARTITION_VALUE_QUOTE = "'";
 
     private URI uri;
-    private String server;
     private String db;
     private String table;
     private Map<String, String> partitions;
@@ -50,7 +44,7 @@ public class HCatURI {
     /**
      * Constructor using given configuration
      *
-     * @param s HCat URI String
+     * @param HCat URI String
      * @param conf Configuration
      * @throws URISyntaxException
      */
@@ -72,39 +66,37 @@ public class HCatURI {
 
         uri = new URI(s);
 
-        server = getValidConf(uri.getAuthority(), conf, DEFAULT_SERVER);
-        if (server == null) {
-            throw new URISyntaxException(uri.toString(), "HCat Server Name is missing");
+        if (uri.getAuthority() == null) {
+            throw new URISyntaxException(uri.toString(), "Server host and port are missing");
         }
 
-        String[] paths = uri.getPath().split(PATH_SEPARATOR, 4);
+        String[] paths = uri.getPath().split(PATH_SEPARATOR);
 
         if (paths.length != 4) {
-            throw new URISyntaxException(uri.toString(), "DB and Table names are not specified properly");
+            throw new URISyntaxException(uri.toString(), "URI path is not in expected format");
         }
 
-        db = getValidConf(paths[1], conf, DEFAULT_DB);
-        if (db == null) {
+        db = paths[1];
+        table = paths[2];
+        String partRaw = paths[3];
+
+        if (db == null || db.length() == 0) {
             throw new URISyntaxException(uri.toString(), "DB name is missing");
         }
-
-        table = getValidConf(paths[2], conf, DEFAULT_TABLE);
-        if (table == null) {
+        if (table == null || table.length() == 0) {
             throw new URISyntaxException(uri.toString(), "Table name is missing");
+        }
+        if (partRaw == null || partRaw.length() == 0) {
+            throw new URISyntaxException(uri.toString(), "Partition details are missing");
         }
 
         partitions = new HashMap<String, String>();
-        String partRaw = uri.getQuery();
-        if (partRaw == null || partRaw.length() == 0) {
-            throw new URISyntaxException(uri.toString(), "Partition name is missing");
-        }
-
-        String[] parts = partRaw.split(PARTITION_SEPARATOR, -1);
+        String[] parts = partRaw.split(PARTITION_SEPARATOR);
         for (String part : parts) {
             if (part == null || part.length() == 0) {
                 continue;
             }
-            String[] keyVal = part.split(PARTITION_KEYVAL_SEPARATOR, -1);
+            String[] keyVal = part.split(PARTITION_KEYVAL_SEPARATOR);
             if (keyVal.length != 2) {
                 throw new URISyntaxException(uri.toString(), "Partition key value pair is not specified properly in ("
                         + part + ")");
@@ -113,39 +105,18 @@ public class HCatURI {
         }
     }
 
-    private String getValidConf(String a, Configuration conf, String key) {
-        if (a == null || a.length() == 0) {
-            if (conf != null) {
-                return conf.get(key);
-            }
-            else {
-                return null;
-            }
-        }
-        else {
-            return a;
-        }
-    }
-
     /**
      * @return fully qualified server address
      */
     public String getServerEndPoint() {
-        return uri.getScheme() + "://" + server;
+        return uri.getScheme() + "://" + uri.getAuthority();
     }
 
     /**
      * @return server host:port
      */
     public String getServer() {
-        return server;
-    }
-
-    /**
-     * @param server name to set
-     */
-    public void setServer(String server) {
-        this.server = server;
+        return uri.getAuthority();
     }
 
     /**
@@ -156,24 +127,10 @@ public class HCatURI {
     }
 
     /**
-     * @param DB name to set
-     */
-    public void setDb(String db) {
-        this.db = db;
-    }
-
-    /**
      * @return table name
      */
     public String getTable() {
         return table;
-    }
-
-    /**
-     * @param table name to set
-     */
-    public void setTable(String table) {
-        this.table = table;
     }
 
     /**
@@ -183,12 +140,6 @@ public class HCatURI {
         return partitions;
     }
 
-    /**
-     * @param partitions map to set
-     */
-    public void setPartitionMap(Map<String, String> partitions) {
-        this.partitions = partitions;
-    }
 
     /**
      * @param key partition key
@@ -214,6 +165,10 @@ public class HCatURI {
         return partitions.containsKey(key);
     }
 
+    public static String getHCatURI(String server, String db, String table, Map<String, String> partitions) {
+        return getHCatURI("hcat", server, db, table, partitions);
+    }
+
     /**
      * static method to create HCatalog URI String
      *
@@ -223,45 +178,25 @@ public class HCatURI {
      * @param partitions Partition Map
      * @return
      */
-    public static String getHCatURI(String server, String db, String table, Map<String, String> partitions) {
+    public static String getHCatURI(String scheme, String server, String db, String table, Map<String, String> partitions) {
 
         StringBuilder sb = new StringBuilder();
-        sb.append("hcat://");
+        sb.append(scheme);
+        sb.append("://");
         sb.append(server);
         sb.append(PATH_SEPARATOR);
         sb.append(db);
         sb.append(PATH_SEPARATOR);
         sb.append(table);
         sb.append(PATH_SEPARATOR);
-        boolean first = true;
         for (Entry<String, String> entry : partitions.entrySet()) {
-            if (first) {
-                sb.append(PARTITION_PREFIX);
-            }
-            else {
-                sb.append(PARTITION_SEPARATOR);
-            }
             sb.append(entry.getKey());
             sb.append(PARTITION_KEYVAL_SEPARATOR);
             sb.append(entry.getValue());
-            first = false;
+            sb.append(PARTITION_SEPARATOR);
         }
+        sb.setLength(sb.length() - 1);
         return sb.toString();
-    }
-
-    /**
-     * Determine if any URI is Hcatalog specific URI
-     *
-     * @param hcatURI
-     * @return true if hcatalog URI otherwise false
-     */
-    public static boolean isHcatURI(String hcatURI) {
-        if (hcatURI != null && hcatURI.startsWith("hcat://")) {
-            return true;
-        }
-        else {
-            return false;
-        }
     }
 
     @Override
@@ -270,7 +205,7 @@ public class HCatURI {
         boolean equals = true;
         Map<String, String> p = this.getPartitionMap();
 
-        if (this.server.equals(uri.getServer()) && this.db.equals(uri.getDb()) && this.table.equals(uri.getTable())
+        if (this.getServer().equals(uri.getServer()) && this.db.equals(uri.getDb()) && this.table.equals(uri.getTable())
                 && p.size() == uri.getPartitionMap().size()) {
             Iterator<Map.Entry<String, String>> it1 = uri.getPartitionMap().entrySet().iterator();
             while (it1.hasNext()) {

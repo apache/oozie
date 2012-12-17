@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1111 change HCatURI to specify partitions in path instead of query parameter (rohini via virag)
 OOZIE-1108 Fix JMS message consumer to maintain single session per topic registration (mona)
 OOZIE-1075 Create general scheme handler (rohini via virag)
 OOZIE-1071 latest EL function is based on action materialization time (rohini via virag)

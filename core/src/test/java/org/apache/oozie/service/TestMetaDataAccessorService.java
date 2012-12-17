@@ -33,7 +33,7 @@ public class TestMetaDataAccessorService extends XDataTestCase {
     @Before
     protected void setUp() throws Exception {
         super.setUp();
-        setSystemProperty("hive.metastore.local", "true");
+        initializeLocalMetastoreConf();
         Services services = new Services();
         addServiceToRun(services.getConf(), MetaDataAccessorService.class.getName());
         services.init();

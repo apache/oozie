@@ -17,6 +17,7 @@
  */
 package org.apache.oozie.test;
 
+import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -32,7 +33,7 @@ import org.apache.hadoop.hive.metastore.HiveMetaStore;
 import org.apache.hadoop.hive.shims.ShimLoader;
 import org.apache.hcatalog.api.HCatAddPartitionDesc;
 import org.apache.hcatalog.api.HCatClient;
-import org.apache.hcatalog.api.HCatClient.DROP_DB_MODE;
+import org.apache.hcatalog.api.HCatClient.DropDBMode;
 import org.apache.hcatalog.api.HCatCreateDBDesc;
 import org.apache.hcatalog.api.HCatCreateTableDesc;
 import org.apache.hcatalog.data.schema.HCatFieldSchema;
@@ -85,6 +86,11 @@ public abstract class XHCatTestCase extends XFsTestCase {
 
     private void startMetastoreServer() throws Exception {
         final HiveConf serverConf = new HiveConf(hadoopConf, this.getClass());
+        serverConf.set(HiveConf.ConfVars.METASTOREWAREHOUSE.varname, new File("target/warehouse").getAbsolutePath());
+        serverConf.set(HiveConf.ConfVars.METASTORECONNECTURLKEY.varname, "jdbc:derby:target/metastore_db;create=true");
+        File derbyLogFile = new File("target/derby.log");
+        derbyLogFile.createNewFile();
+        System.setProperty("derby.stream.error.file", derbyLogFile.getPath());
         serverThread = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -115,13 +121,9 @@ public abstract class XHCatTestCase extends XFsTestCase {
     }
 
     protected URI getHCatURI(String db, String table, String partitions) throws URISyntaxException {
-        String[] parts = partitions.split(",");
         StringBuilder uri = new StringBuilder();
-        uri.append("hcat://localhost:").append(msPort).append("/").append(db).append("/").append(table).append("/?");
-        for (String partition : parts) {
-            uri.append(partition).append("&");
-        }
-        uri.deleteCharAt(uri.length() - 1);
+        uri.append("hcat://localhost:").append(msPort).append("/").append(db).append("/").append(table).append("/")
+                .append(partitions);
         return new URI(uri.toString());
     }
 
@@ -152,7 +154,7 @@ public abstract class XHCatTestCase extends XFsTestCase {
     }
 
     protected void dropDatabase(String db, boolean ifExists) throws Exception {
-        hcatClient.dropDatabase(db, ifExists, DROP_DB_MODE.CASCADE);
+        hcatClient.dropDatabase(db, ifExists, DropDBMode.CASCADE);
         List<String> dbNames = hcatClient.listDatabaseNamesByPattern(db);
         assertFalse(dbNames.contains(db));
     }
@@ -170,12 +172,12 @@ public abstract class XHCatTestCase extends XFsTestCase {
     }
 
     protected String getPartitionDir(String db, String table, String partitionSpec) throws Exception {
-        String dir = getFsTestCaseDir() + "/" + db + "/" + table +  "/" + partitionSpec.replaceAll(",", "/");
+        String dir = getFsTestCaseDir() + "/" + db + "/" + table +  "/" + partitionSpec.replaceAll("&", "/");
         return dir;
     }
 
     protected void addPartition(String db, String table, String partitionSpec, String location) throws Exception {
-        String[] parts = partitionSpec.split(",");
+        String[] parts = partitionSpec.split("&");
         Map<String, String> partitions = new HashMap<String, String>();
         for (String part : parts) {
             String[] split = part.split("=");
@@ -186,7 +188,7 @@ public abstract class XHCatTestCase extends XFsTestCase {
     }
 
     protected void dropPartition(String db, String table, String partitionSpec) throws Exception {
-        String[] parts = partitionSpec.split(",");
+        String[] parts = partitionSpec.split("&");
         Map<String, String> partitions = new HashMap<String, String>();
         for (String part : parts) {
             String[] split = part.split("=");

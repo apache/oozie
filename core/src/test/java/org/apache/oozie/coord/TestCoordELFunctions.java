@@ -972,11 +972,11 @@ public class TestCoordELFunctions extends XTestCase {
      * @throws Exception
      */
     public void testMetaServer() throws Exception {
-        init("coord-action-start", "hcat://hcat.yahoo.com:5080/mydb/clicks/?datastamp=12&region=us");
-        eval.setVariable(".datain.ABC", "hcat://hcat.yahoo.com:5080/mydb/clicks/?datastamp=12&region=us");
+        init("coord-action-start", "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12&region=us");
+        eval.setVariable(".datain.ABC", "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12&region=us");
         eval.setVariable(".datain.ABC.unresolved", Boolean.FALSE);
         String expr = "${coord:metaServer('ABC')}";
-        assertEquals("hcat://hcat.yahoo.com:5080", CoordELFunctions.evalAndWrap(eval, expr));
+        assertEquals("hcat://hcat.server.com:5080", CoordELFunctions.evalAndWrap(eval, expr));
     }
 
     /**
@@ -985,8 +985,8 @@ public class TestCoordELFunctions extends XTestCase {
      * @throws Exception
      */
     public void testMetaDb() throws Exception {
-        init("coord-action-start", "hcat://hcat.yahoo.com:5080/mydb/clicks/?datastamp=12&region=us");
-        eval.setVariable(".datain.ABC", "hcat://hcat.yahoo.com:5080/mydb/clicks/?datastamp=12&region=us");
+        init("coord-action-start", "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12&region=us");
+        eval.setVariable(".datain.ABC", "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12&region=us");
         eval.setVariable(".datain.ABC.unresolved", Boolean.FALSE);
         String expr = "${coord:metaDb('ABC')}";
         assertEquals("mydb", CoordELFunctions.evalAndWrap(eval, expr));
@@ -998,8 +998,8 @@ public class TestCoordELFunctions extends XTestCase {
      * @throws Exception
      */
     public void testMetaTable() throws Exception {
-        init("coord-action-start", "hcat://hcat.yahoo.com:5080/mydb/clicks/?datastamp=12&region=us");
-        eval.setVariable(".datain.ABC", "hcat://hcat.yahoo.com:5080/mydb/clicks/?datastamp=12&region=us");
+        init("coord-action-start", "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12&region=us");
+        eval.setVariable(".datain.ABC", "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12&region=us");
         eval.setVariable(".datain.ABC.unresolved", Boolean.FALSE);
         String expr = "${coord:metaTable('ABC')}";
         assertEquals("clicks", CoordELFunctions.evalAndWrap(eval, expr));
@@ -1017,7 +1017,7 @@ public class TestCoordELFunctions extends XTestCase {
         assertEquals(expr, CoordELFunctions.evalAndWrap(eval, expr));
 
         // HCat partition specific
-        eval.setVariable(".datain.ABC", "hcat://hcat.yahoo.com:5080/mydb/clicks/?datastamp=12&region=us");
+        eval.setVariable(".datain.ABC", "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12&region=us");
         eval.setVariable(".datain.ABC.unresolved", Boolean.FALSE);
         expr = "${coord:dataIn('ABC')}";
         String res = CoordELFunctions.evalAndWrap(eval, expr);
@@ -1033,7 +1033,7 @@ public class TestCoordELFunctions extends XTestCase {
                 CoordELFunctions.evalAndWrap(eval, expr));
 
         // HCat partition specific
-        eval.setVariable(".dataout.ABC", "hcat://hcat.yahoo.com:5080/mydb/clicks/?datastamp=20120230&region=us");
+        eval.setVariable(".dataout.ABC", "hcat://hcat.server.com:5080/mydb/clicks/datastamp=20120230&region=us");
         eval.setVariable(".dataout.ABC.unresolved", Boolean.FALSE);
         String res = CoordELFunctions.evalAndWrap(eval, expr);
         assertTrue(res.equals("datastamp='20120230' AND region='us'")

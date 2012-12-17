@@ -126,18 +126,21 @@ public class URIHandlerService implements Service {
      * @return
      * @throws URIAccessorException
      */
-    public URI stripPath(String uri) throws URIAccessorException {
+    public URI getAuthorityWithScheme(String uri) throws URIAccessorException {
         int index = uri.indexOf("://");
         if (index == -1) {
             throw new URIAccessorException(ErrorCode.E0905, uri);
         }
-        int pathIndex = uri.indexOf("/", index + 4);
         try {
+            if (uri.indexOf(":///") != -1) {
+                return new URI(uri.substring(0, index + 4));
+            }
+            int pathIndex = uri.indexOf("/", index + 4);
             if (pathIndex == -1) {
-                return new URI(uri.substring(index + 3));
+                return new URI(uri.substring(0));
             }
             else {
-                return new URI(uri.substring(index + 3, pathIndex));
+                return new URI(uri.substring(0, pathIndex));
             }
         }
         catch (URISyntaxException e) {

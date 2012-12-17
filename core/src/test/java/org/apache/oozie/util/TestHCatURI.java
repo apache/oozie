@@ -23,14 +23,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Test;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.util.HCatURI;
 
 public class TestHCatURI {
 
     @Test
     public void testHCatURIParseValidURI() {
-        String input = "hcat://hcat.yahoo.com:5080/mydb/clicks/?datastamp=12&region=us";
+        String input = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12&region=us";
         HCatURI uri = null;
         try {
             uri = new HCatURI(input);
@@ -38,134 +37,42 @@ public class TestHCatURI {
         catch (Exception ex) {
             System.err.print(ex.getMessage());
         }
-        assertEquals(uri.getServerEndPoint(), "hcat://hcat.yahoo.com:5080");
+        assertEquals(uri.getServerEndPoint(), "hcat://hcat.server.com:5080");
         assertEquals(uri.getDb(), "mydb");
         assertEquals(uri.getTable(), "clicks");
         assertEquals(uri.getPartitionValue("datastamp"), "12");
         assertEquals(uri.getPartitionValue("region"), "us");
 
-    }
-
-    @Test
-    public void testHCatURIParseWithDefaultServer() {
-
-        String input = "hcat:///mydb/clicks/?datastamp=12&region=us";
-        Configuration conf = new Configuration(false);
-        conf.set("oozie.service.MetaAccessorService.hcat.server", "hcat.yahoo.com:5080");
-        conf.set("oozie.service.MetaAccessorService.hcat.db", "mydb");
-        conf.set("oozie.service.MetaAccessorService.hcat.table", "clicks");
-
-        HCatURI uri = null;
-        try {
-            uri = new HCatURI(input, conf);
-        }
-        catch (Exception ex) {
-            System.err.println(ex.getMessage());
-        }
-        assertEquals(uri.getServerEndPoint(), "hcat://hcat.yahoo.com:5080");
-        assertEquals(uri.getDb(), "mydb");
-        assertEquals(uri.getTable(), "clicks");
-        assertEquals(uri.getPartitionValue("datastamp"), "12");
-        assertEquals(uri.getPartitionValue("region"), "us");
-    }
-
-    @Test
-    public void testHCatURIParseWithDefaultDB() {
-
-        String input = "hcat://hcat.yahoo.com:5080//clicks/?datastamp=12&region=us";
-        Configuration conf = new Configuration(false);
-        conf.set("oozie.service.MetaAccessorService.hcat.server", "hcat.yahoo.com:5080");
-        conf.set("oozie.service.MetaAccessorService.hcat.db", "mydb");
-        conf.set("oozie.service.MetaAccessorService.hcat.table", "clicks");
-
-        HCatURI uri = null;
-        try {
-            uri = new HCatURI(input, conf);
-        }
-        catch (Exception ex) {
-            System.err.println(ex.getMessage());
-        }
-        assertEquals(uri.getServerEndPoint(), "hcat://hcat.yahoo.com:5080");
-        assertEquals(uri.getDb(), "mydb");
-        assertEquals(uri.getTable(), "clicks");
-        assertEquals(uri.getPartitionValue("datastamp"), "12");
-        assertEquals(uri.getPartitionValue("region"), "us");
-    }
-
-    @Test
-    public void testHCatURIParseWithDefaultTable() {
-
-        String input = "hcat://hcat.yahoo.com:5080/mydb//?datastamp=12&region=us";
-        Configuration conf = new Configuration(false);
-        conf.set("oozie.service.MetaAccessorService.hcat.server", "hcat.yahoo.com:5080");
-        conf.set("oozie.service.MetaAccessorService.hcat.db", "mydb");
-        conf.set("oozie.service.MetaAccessorService.hcat.table", "clicks");
-
-        HCatURI uri = null;
-        try {
-            uri = new HCatURI(input, conf);
-        }
-        catch (Exception ex) {
-            System.err.println(ex.getMessage());
-        }
-        assertEquals(uri.getServerEndPoint(), "hcat://hcat.yahoo.com:5080");
-        assertEquals(uri.getDb(), "mydb");
-        assertEquals(uri.getTable(), "clicks");
-        assertEquals(uri.getPartitionValue("datastamp"), "12");
-        assertEquals(uri.getPartitionValue("region"), "us");
-    }
-
-    @Test
-    public void testHCatURIParseWithAllDefault() {
-
-        String input = "hcat://///?datastamp=12&region=us";
-        Configuration conf = new Configuration(false);
-        conf.set("oozie.service.MetaAccessorService.hcat.server", "hcat.yahoo.com:5080");
-        conf.set("oozie.service.MetaAccessorService.hcat.db", "mydb");
-        conf.set("oozie.service.MetaAccessorService.hcat.table", "clicks");
-
-        HCatURI uri = null;
-        try {
-            uri = new HCatURI(input, conf);
-        }
-        catch (Exception ex) {
-            System.err.println(ex.getMessage());
-        }
-        assertEquals(uri.getServerEndPoint(), "hcat://hcat.yahoo.com:5080");
-        assertEquals(uri.getDb(), "mydb");
-        assertEquals(uri.getTable(), "clicks");
-        assertEquals(uri.getPartitionValue("datastamp"), "12");
-        assertEquals(uri.getPartitionValue("region"), "us");
     }
 
     @Test(expected = URISyntaxException.class)
     public void testHCatURIParseInvalidURI() throws Exception {
-        String input = "hcat://hcat.yahoo.com:5080/ mydb/clicks/?datastamp=12&region=us";
-        HCatURI uri = new HCatURI(input);
+        String input = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12&region=us/invalid";
+        new HCatURI(input);
     }
 
     @Test(expected = URISyntaxException.class)
     public void testHCatURIParseInvalidPartition() throws Exception {
-        String input = "hcat://hcat.yahoo.com:5080/mydb/clicks/?datastamp";
-        HCatURI uri = new HCatURI(input);
+        String input = "hcat://hcat.server.com:5080/mydb/clicks/datastamp";
+        new HCatURI(input);
     }
 
     @Test(expected = URISyntaxException.class)
     public void testHCatURIParseServerMissing() throws Exception {
-        String input = "hcat:///mydb/clicks/?datastamp=12;region=us";
-        HCatURI uri = new HCatURI(input);
+        String input = "hcat:///mydb/clicks/datastamp=12;region=us";
+        new HCatURI(input);
     }
 
     @Test(expected = URISyntaxException.class)
     public void testHCatURIParseDBMissing() throws Exception {
-        String input = "hcat://hcat.yahoo.com:5080//clicks/?datastamp=12;region=us";
-        HCatURI uri = new HCatURI(input);
+        String input = "hcat://hcat.server.com:5080//clicks/datastamp=12;region=us";
+        new HCatURI(input);
     }
 
     @Test(expected = URISyntaxException.class)
     public void testHCatURIParseTableMissing() throws Exception {
-        String input = "hcat://hcat.yahoo.com:5080/mydb//?datastamp=12;region=us";
-        HCatURI uri = new HCatURI(input);
+        String input = "hcat://hcat.server.com:5080/mydb//datastamp=12;region=us";
+        new HCatURI(input);
     }
 
     @Test
@@ -173,13 +80,13 @@ public class TestHCatURI {
         Map<String, String> partitions = new HashMap<String, String>();
         partitions.put("datastamp", "12");
         partitions.put("region", "us");
-        String hcatUri = HCatURI.getHCatURI("hcat.yahoo.com:5080", "mydb", "clicks", partitions);
+        String hcatUri = HCatURI.getHCatURI("hcat", "hcat.server.com:5080", "mydb", "clicks", partitions);
 
         HCatURI uri1 = null;
         HCatURI uri2 = null;
         try {
             uri1 = new HCatURI(hcatUri);
-            uri2 = new HCatURI("hcat://hcat.yahoo.com:5080/mydb/clicks/?datastamp=12&region=us");
+            uri2 = new HCatURI("hcat://hcat.server.com:5080/mydb/clicks/datastamp=12&region=us");
         }
         catch (URISyntaxException e) {
             fail(e.getMessage());
@@ -193,9 +100,9 @@ public class TestHCatURI {
         HCatURI uri2 = null;
         HCatURI uri3 = null;
         try {
-            uri1 = new HCatURI("hcat://hcat.yahoo.com:5080/mydb/clicks/?datastamp=12&region=us&timestamp=1201");
-            uri2 = new HCatURI("hcat://hcat.yahoo.com:5080/mydb/clicks/?datastamp=12&region=us&timestamp=1201");
-            uri3 = new HCatURI("hcat://hcat.yahoo.com:5080/mydb/clicks/?region=us&timestamp=1201&datastamp=12");
+            uri1 = new HCatURI("hcat://hcat.server.com:5080/mydb/clicks/datastamp=12&region=us&timestamp=1201");
+            uri2 = new HCatURI("hcat://hcat.server.com:5080/mydb/clicks/datastamp=12&region=us&timestamp=1201");
+            uri3 = new HCatURI("hcat://hcat.server.com:5080/mydb/clicks/region=us&timestamp=1201&datastamp=12");
         }
         catch (URISyntaxException e) {
             fail(e.getMessage());
@@ -214,11 +121,11 @@ public class TestHCatURI {
         HCatURI uri4 = null;
         HCatURI uri5 = null;
         try {
-            uri1 = new HCatURI("hcat://hcat.yahoo.com:5080/mydb/clicks/?datastamp=12&region=us&timestamp=1201");
-            uri2 = new HCatURI("hcat://hcat.yahoo.com:5080/mydb2/clicks/?region=us&timestamp=1201&datastamp=12");
-            uri3 = new HCatURI("hcat://hcat.yahoo.com:5080/mydb/clicks2/?region=us&timestamp=1201&datastamp=12");
-            uri4 = new HCatURI("hcat://hcat.yahoo.com:5080/mydb/clicks/?region=uk&timestamp=1201&datastamp=12");
-            uri5 = new HCatURI("hcat://hcat.yahoo.com:5080/mydb/clicks/?region=us&timestamp=1201");
+            uri1 = new HCatURI("hcat://hcat.server.com:5080/mydb/clicks/datastamp=12&region=us&timestamp=1201");
+            uri2 = new HCatURI("hcat://hcat.server.com:5080/mydb2/clicks/region=us&timestamp=1201&datastamp=12");
+            uri3 = new HCatURI("hcat://hcat.server.com:5080/mydb/clicks2/region=us&timestamp=1201&datastamp=12");
+            uri4 = new HCatURI("hcat://hcat.server.com:5080/mydb/clicks/region=uk&timestamp=1201&datastamp=12");
+            uri5 = new HCatURI("hcat://hcat.server.com:5080/mydb/clicks/region=us&timestamp=1201");
         }
         catch (URISyntaxException e) {
             fail(e.getMessage());
@@ -234,16 +141,8 @@ public class TestHCatURI {
     }
 
     @Test
-    public void testIsHCatURI() {
-        String hcatURI = "hcat://hcat.yahoo.com:5080/mydb/clicks/?region=us&timestamp=1201";
-        assertTrue(HCatURI.isHcatURI(hcatURI)); // +ve test
-        hcatURI = "hdfs://hcat.yahoo.com:5080/mydb/clicks/?region=us&timestamp=1201";
-        assertFalse(HCatURI.isHcatURI(hcatURI)); // -ve test
-    }
-
-    @Test
     public void testToFilter() {
-        String hcatURI = "hcat://hcat.yahoo.com:5080/mydb/clicks/?datastamp=20120230&region=us";
+        String hcatURI = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=20120230&region=us";
         String filter = "";
         try {
             filter = new HCatURI(hcatURI).toFilter();

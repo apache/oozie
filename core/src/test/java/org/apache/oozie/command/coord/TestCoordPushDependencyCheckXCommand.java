@@ -36,6 +36,8 @@ import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.coord.CoordELFunctions;
+import org.apache.oozie.dependency.FSURIHandler;
+import org.apache.oozie.dependency.HCatURIHandler;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobInsertJPAExecutor;
@@ -43,6 +45,7 @@ import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.MetaDataAccessorService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.IOUtils;
@@ -63,9 +66,10 @@ public class TestCoordPushDependencyCheckXCommand extends XDataTestCase {
     @Before
     protected void setUp() throws Exception {
         super.setUp();
-        setSystemProperty("hive.metastore.local", isLocal);
+        initializeLocalMetastoreConf();
         services = new Services();
-        addServiceToRun(services.getConf(), MetaDataAccessorService.class.getName());
+        services.getConf().set(URIHandlerService.URI_HANDLERS,
+                FSURIHandler.class.getName() + "," + HCatURIHandler.class.getName());
         services.init();
         TZ = (getProcessingTZ().equals(DateUtils.OOZIE_PROCESSING_TIMEZONE_DEFAULT)) ? "Z" : getProcessingTZ()
                 .substring(3);
@@ -82,7 +86,7 @@ public class TestCoordPushDependencyCheckXCommand extends XDataTestCase {
         // Test for single dependency which is already in the hcat server
         String db = "default";
         String table = "tablename";
-        String newHCatDependency = "hcat://" + server + "/" + db + "/" + table + "/?dt=04/30/2012&country=usa";
+        String newHCatDependency = "hcat://" + server + "/" + db + "/" + table + "/dt=20120430&country=usa";
 
         populateTable(server, db, table);
 
@@ -100,9 +104,9 @@ public class TestCoordPushDependencyCheckXCommand extends XDataTestCase {
         // Test for two dependencies which are already in the hcat server
         String db = "default";
         String table = "tablename";
-        String newHCatDependency1 = "hcat://" + server + "/" + db + "/" + table + "/?dt=04/12/2012&country=brazil";
-        String newHCatDependency2 = "hcat://" + server + "/" + db + "/" + table + "/?dt=04/30/2012&country=usa";
-        String newHCatDependency = newHCatDependency1 + CoordELFunctions.DIR_SEPARATOR + newHCatDependency2;
+        String newHCatDependency1 = "hcat://" + server + "/" + db + "/" + table + "/dt=20120412&country=brazil";
+        String newHCatDependency2 = "hcat://" + server + "/" + db + "/" + table + "/dt=20120430&country=usa";
+        String newHCatDependency = newHCatDependency1 + CoordELFunctions.INSTANCE_SEPARATOR + newHCatDependency2;
         populateTable(server, db, table);
 
         String actionId = addInitRecords(newHCatDependency);
@@ -123,9 +127,9 @@ public class TestCoordPushDependencyCheckXCommand extends XDataTestCase {
         // be READY
         String db = "default";
         String table = "tablename";
-        String newHCatDependency1 = "hcat://" + server + "/" + db + "/" + table + "/?dt=04/30/2012&country=brazil";
-        String newHCatDependency2 = "hcat://" + server + "/" + db + "/" + table + "/?dt=04/30/2012&country=usa";
-        String newHCatDependency = newHCatDependency1 + CoordELFunctions.DIR_SEPARATOR + newHCatDependency2;
+        String newHCatDependency1 = "hcat://" + server + "/" + db + "/" + table + "/dt=20120430&country=brazil";
+        String newHCatDependency2 = "hcat://" + server + "/" + db + "/" + table + "/dt=20120430&country=usa";
+        String newHCatDependency = newHCatDependency1 + CoordELFunctions.INSTANCE_SEPARATOR + newHCatDependency2;
         populateTable(server, db, table);
 
         String actionId = addInitRecords(newHCatDependency);
@@ -136,7 +140,7 @@ public class TestCoordPushDependencyCheckXCommand extends XDataTestCase {
         checkCoordAction(actionId, newHCatDependency1, CoordinatorAction.Status.WAITING, 0);
 
         Map<String, String> partMap = new HashMap<String, String>();
-        partMap.put("dt", "04/30/2012");
+        partMap.put("dt", "20120430");
         partMap.put("country", "brazil");
         addOneRecord(server, db, table, partMap);
 
@@ -180,19 +184,19 @@ public class TestCoordPushDependencyCheckXCommand extends XDataTestCase {
     private void addRecords(String server, String dbName, String tableName) throws Exception {
         HCatClient client = services.get(MetaDataAccessorService.class).getHCatClient(server, getTestUser());
         Map<String, String> firstPtn = new HashMap<String, String>();
-        firstPtn.put("dt", "04/30/2012");
+        firstPtn.put("dt", "20120430");
         firstPtn.put("country", "usa");
         HCatAddPartitionDesc addPtn = HCatAddPartitionDesc.create(dbName, tableName, null, firstPtn).build();
         client.addPartition(addPtn);
 
         Map<String, String> secondPtn = new HashMap<String, String>();
-        secondPtn.put("dt", "04/12/2012");
+        secondPtn.put("dt", "20120412");
         secondPtn.put("country", "brazil");
         HCatAddPartitionDesc addPtn2 = HCatAddPartitionDesc.create(dbName, tableName, null, secondPtn).build();
         client.addPartition(addPtn2);
 
         Map<String, String> thirdPtn = new HashMap<String, String>();
-        thirdPtn.put("dt", "04/13/2012");
+        thirdPtn.put("dt", "20120413");
         thirdPtn.put("country", "brazil");
         HCatAddPartitionDesc addPtn3 = HCatAddPartitionDesc.create(dbName, tableName, null, thirdPtn).build();
         client.addPartition(addPtn3);

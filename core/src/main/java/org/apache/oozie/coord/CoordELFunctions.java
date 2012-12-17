@@ -523,7 +523,8 @@ public class CoordELFunctions {
             return null;
         }
         XLog.getLog(CoordELFunctions.class).info("uriTemplate [{0}] ", uriTemplate);
-        if (HCatURI.isHcatURI(uriTemplate.toString())) {
+        //TODO Deal with this using URIHandler as part of OOZIE-1123
+        if (uriTemplate.toString().startsWith("hcat://")) {
             HCatURI hcatURI;
             try {
                 hcatURI = new HCatURI(uriTemplate.toString());
@@ -565,7 +566,8 @@ public class CoordELFunctions {
         String[] uriList = uris.split(DIR_SEPARATOR);
         // If HCat URI, change its to a filter, otherwise return the original
         // uris
-        if (uriList.length > 0 && HCatURI.isHcatURI(uriList[0])) {
+        //TODO Deal with this using URIHandler as part of OOZIE-1123
+        if (uriList.length > 0 && uriList[0].toString().startsWith("hcat://")) {
             StringBuilder filter = new StringBuilder();
             for (String uri : uriList) {
                 if (filter.length() > 0) {

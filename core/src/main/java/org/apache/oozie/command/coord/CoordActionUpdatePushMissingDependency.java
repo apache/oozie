@@ -104,7 +104,7 @@ public class CoordActionUpdatePushMissingDependency extends CoordinatorXCommand<
         }
         for (PartitionWrapper missParts : missPartList) {
             if (ret.length() > 0) {
-                ret.append(CoordELFunctions.DIR_SEPARATOR);
+                ret.append(CoordELFunctions.INSTANCE_SEPARATOR);
             }
             ret.append(missParts.toString());
         }
@@ -112,7 +112,7 @@ public class CoordActionUpdatePushMissingDependency extends CoordinatorXCommand<
     }
 
     private List<PartitionWrapper> createPartitionWrapper(String missPartitions) throws CommandException {
-        String[] parts = missPartitions.split(CoordELFunctions.DIR_SEPARATOR);
+        String[] parts = missPartitions.split(CoordELFunctions.INSTANCE_SEPARATOR);
         List<PartitionWrapper> ret = new ArrayList<PartitionWrapper>();
         for (String partURI : parts) {
             try {

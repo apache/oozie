@@ -52,8 +52,8 @@ public class TestCoordCommandUtils extends XDataTestCase {
 
     public void testRegisterPartition() throws Exception {
 
-        String hcatUriStr1 = "hcat://hcatserver.com:4080/mydb/mytable/?datestamp=1234&region=us";
-        String hcatUriStr2 = "hcat://hcatserver.com:4080/mydb/mytable/?click=1234";
+        String hcatUriStr1 = "hcat://hcatserver.com:4080/mydb/mytable/datestamp=1234&region=us";
+        String hcatUriStr2 = "hcat://hcatserver.com:4080/mydb/mytable/click=1234";
         CoordinatorActionBean action1 = new CoordinatorActionBean();
         action1.setId("1");
         StringBuffer st = new StringBuffer();

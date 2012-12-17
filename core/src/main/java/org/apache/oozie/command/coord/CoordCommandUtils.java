@@ -525,7 +525,7 @@ public class CoordCommandUtils {
                     .getChild("uri-template", event.getNamespace());
             String pullOrPush = "pull";
             String uriTemplate = uri.getText();
-            URI baseURI = uriService.stripPath(uriTemplate);
+            URI baseURI = uriService.getAuthorityWithScheme(uriTemplate);
             URIHandler handler = uriService.getURIHandler(baseURI);
             if (uriTemplate != null && handler.getDependencyType(baseURI).equals(DependencyType.PUSH)) {
                 pullOrPush = "push";
