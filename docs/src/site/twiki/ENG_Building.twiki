@@ -197,15 +197,6 @@ file the following message 'SKIPPING TEST: TestPipesMain, binary 'wordcount-simp
 There are 2 testcases that use the *wordcount-simple* pipes binary, *TestPipesMain* and *TestMapReduceActionExecutor*,
 the 'SKIPPING TEST..." message would appear in the testcase log file of both testcases.
 
----+++ Testing Hive Action
-
-Because of depedencies incompatibilities between Hive 0.9.0 and Pig 0.9.0 to run Hive testcases a special profile
-must be used together with the name of the Hive testcases.
-
-<verbatim>
-$ mvn -DtestHive -Dtest=TestHiveActionExecutor,TestHiveMain
-</verbatim>
-
 ---+++ Testing Sqoop Action
 
 Apache Sqoop 1.5.0 requires functionality only available in Hadoop 0.21 and onwards. Currently, the only
@@ -215,10 +206,6 @@ purposes. *This is a temporary fix*.
 
 <verbatim>
 $ mvn -DtestSqoop -Dtest=TestSqoopActionExecutor
-</verbatim>
-
-<verbatim>
-$ mvn -DtestHive -Dtest=TestHiveActionExecutor,TestHiveMain
 </verbatim>
 
 ---++ Building an Oozie Distribution
