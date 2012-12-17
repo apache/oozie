@@ -61,7 +61,6 @@ import org.apache.oozie.store.StoreException;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
-import org.junit.Assert;
 
 /**
  * Base JUnit <code>TestCase</code> subclass used by all Oozie testcases.
@@ -94,6 +93,10 @@ public abstract class XTestCase extends TestCase {
     static {
         try {
             OOZIE_SRC_DIR = new File("core").getAbsoluteFile();
+            if (!OOZIE_SRC_DIR.exists()) {
+                OOZIE_SRC_DIR = OOZIE_SRC_DIR.getParentFile().getParentFile();
+                OOZIE_SRC_DIR = new File(OOZIE_SRC_DIR, "core");
+            }
             if (!OOZIE_SRC_DIR.exists()) {
                 OOZIE_SRC_DIR = OOZIE_SRC_DIR.getParentFile().getParentFile();
                 OOZIE_SRC_DIR = new File(OOZIE_SRC_DIR, "core");
