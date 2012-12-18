@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1126 see if checkstyle works for oozie development. (jaoki via rkanter)
 OOZIE-1124 Split pig unit tests to a separate module (rohini via virag)
 OOZIE-1087 Remove requirement of hive-default.xml from Hive action (rkanter)
 OOZIE-1129 Add documentation for configurable filesystem support (rkanter)
