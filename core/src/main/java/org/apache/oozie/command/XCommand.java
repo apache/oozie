@@ -316,6 +316,10 @@ public abstract class XCommand<T> implements XCallable<T> {
             instrumentation.incr(INSTRUMENTATION_GROUP, getName() + ".exceptions", 1);
             throw new CommandException(ErrorCode.E0607, getName(), ex.getMessage(), ex);
         }
+        catch (Error er) {
+            LOG.error("Error, ", er);
+            throw er;
+        }
         finally {
             FaultInjection.deactivate("org.apache.oozie.command.SkipCommitFaultInjection");
             callCron.stop();
