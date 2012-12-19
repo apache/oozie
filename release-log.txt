@@ -1,5 +1,8 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1139 bump up Tomcat version to 6.0.36 (tucu via rkanter)
+OOZIE-1035 Improve forkjoin validation to allow same errorTo transitions (rkanter)
+OOZIE-1137 In light of federation use actionLibPath instead of appPath (vaidya via rkanter)
 OOZIE-1126 see if checkstyle works for oozie development. (jaoki via rkanter)
 OOZIE-1124 Split pig unit tests to a separate module (rohini via virag)
 OOZIE-1087 Remove requirement of hive-default.xml from Hive action (rkanter)

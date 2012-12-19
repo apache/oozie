@@ -389,7 +389,7 @@ public class JavaActionExecutor extends ActionExecutor {
         }
     }
 
-    protected void addShareLib(Path appPath, Configuration conf, String actionShareLibName)
+    protected void addShareLib(Configuration conf, String actionShareLibName)
     throws ActionExecutorException {
         if (actionShareLibName != null) {
             try {
@@ -398,11 +398,11 @@ public class JavaActionExecutor extends ActionExecutor {
                     Path actionLibPath = new Path(systemLibPath, actionShareLibName);
                     String user = conf.get("user.name");
                     FileSystem fs =
-                        Services.get().get(HadoopAccessorService.class).createFileSystem(user, appPath.toUri(), conf);
+                        Services.get().get(HadoopAccessorService.class).createFileSystem(user, actionLibPath.toUri(), conf);
                     if (fs.exists(actionLibPath)) {
                         FileStatus[] files = fs.listStatus(actionLibPath);
                         for (FileStatus file : files) {
-                            addToCache(conf, appPath, file.getPath().toUri().getPath(), false);
+                            addToCache(conf, actionLibPath, file.getPath().toUri().getPath(), false);
                         }
                     }
                 }
@@ -482,19 +482,19 @@ public class JavaActionExecutor extends ActionExecutor {
             }
         }
 
-        addAllShareLibs(appPath, conf, context, actionXml);
+        addAllShareLibs(conf, context, actionXml);
 	}
 
     // Adds action specific share libs and common share libs
-    private void addAllShareLibs(Path appPath, Configuration conf, Context context, Element actionXml)
+    private void addAllShareLibs(Configuration conf, Context context, Element actionXml)
             throws ActionExecutorException {
         // Add action specific share libs
-        addActionShareLib(appPath, conf, context, actionXml);
+        addActionShareLib(conf, context, actionXml);
         // Add common sharelibs for Oozie
-        addShareLib(appPath, conf, JavaActionExecutor.OOZIE_COMMON_LIBDIR);
+        addShareLib(conf, JavaActionExecutor.OOZIE_COMMON_LIBDIR);
     }
 
-    private void addActionShareLib(Path appPath, Configuration conf, Context context, Element actionXml) throws ActionExecutorException {
+    private void addActionShareLib(Configuration conf, Context context, Element actionXml) throws ActionExecutorException {
         XConfiguration wfJobConf = null;
         try {
             wfJobConf = new XConfiguration(new StringReader(context.getWorkflow().getConf()));
@@ -506,7 +506,7 @@ public class JavaActionExecutor extends ActionExecutor {
         // Action sharelibs are only added if user has specified to use system libpath
         if (wfJobConf.getBoolean(OozieClient.USE_SYSTEM_LIBPATH, false)) {
             // add action specific sharelibs
-            addShareLib(appPath, conf, getShareLibName(context, actionXml, conf));
+            addShareLib(conf, getShareLibName(context, actionXml, conf));
         }
     }
 
