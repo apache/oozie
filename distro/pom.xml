@@ -88,13 +88,13 @@
                         <configuration>
                             <target>
                                 <mkdir dir="downloads"/>
-                                <get src="http://archive.apache.org/dist/tomcat/tomcat-6/v6.0.32/bin/apache-tomcat-6.0.32.tar.gz"
+                                <get src="http://archive.apache.org/dist/tomcat/tomcat-6/v${tomcat.version}/bin/apache-tomcat-${tomcat.version}.tar.gz"
                                      dest="downloads/tomcat.tar.gz" verbose="true" skipexisting="true"/>
                                 <delete dir="target/tomcat"/>
                                 <mkdir dir="target/tomcat"/>
                                 <gunzip src="downloads/tomcat.tar.gz" dest="target/tomcat/tomcat.tar"/>
                                 <untar src="target/tomcat/tomcat.tar" dest="target/tomcat"/>
-                                <move file="target/tomcat/apache-tomcat-6.0.32" tofile="target/tomcat/oozie-server"/>
+                                <move file="target/tomcat/apache-tomcat-${tomcat.version}" tofile="target/tomcat/oozie-server"/>
                                 <delete dir="target/tomcat/oozie-server/webapps"/>
                                 <mkdir dir="target/tomcat/oozie-server/webapps"/>
                                 <delete file="target/tomcat/oozie-server/conf/server.xml"/>

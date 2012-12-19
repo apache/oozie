@@ -1,5 +1,6 @@
 -- Oozie 3.3.1 (unreleased)
 
+OOZIE-1139 bump up Tomcat version to 6.0.36 (tucu via rkanter)
 OOZIE-1110 log Error that happens in XCommand to make debug easy (rohini via virag)
 OOZIE-1133 Remove hadoop-auth dependency from oozie-core (virag)
 OOZIE-1130 Upgrade from 3.2 to 3.3 failing due to change in WorkflowInstance structure (virag)
