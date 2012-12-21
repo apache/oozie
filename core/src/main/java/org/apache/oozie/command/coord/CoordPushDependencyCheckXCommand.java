@@ -143,17 +143,8 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
      * @see org.apache.oozie.command.XCommand#getEntityKey()
      */
     @Override
-    // TODO - Check whether the entityKey should be JobId or actionId
     public String getEntityKey() {
         return actionId;
-    }
-
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#getKey()
-     */
-    @Override
-    public String getKey(){
-        return getName() + "_" + actionId;
     }
 
     /*

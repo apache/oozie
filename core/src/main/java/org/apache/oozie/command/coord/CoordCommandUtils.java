@@ -37,7 +37,6 @@ import org.apache.oozie.coord.SyncCoordAction;
 import org.apache.oozie.coord.TimeUnit;
 import org.apache.oozie.dependency.DependencyType;
 import org.apache.oozie.dependency.URIHandler;
-import org.apache.oozie.service.MetadataServiceException;
 import org.apache.oozie.service.PartitionDependencyManagerService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.URIHandlerService;
@@ -284,29 +283,28 @@ public class CoordCommandUtils {
      *
      * @param event
      * @param instances
+     * @param dependencyList
      * @throws Exception
      */
-    public static StringBuffer separateResolvedAndUnresolved(Element event, StringBuilder instances)
+    public static void separateResolvedAndUnresolved(Element event, StringBuilder instances, StringBuffer dependencyList)
             throws Exception {
         StringBuilder unresolvedInstances = new StringBuilder();
         StringBuilder urisWithDoneFlag = new StringBuilder();
-        StringBuffer depList = new StringBuffer();
         String uris = createEarlyURIs(event, instances.toString(), unresolvedInstances, urisWithDoneFlag);
         if (uris.length() > 0) {
             Element uriInstance = new Element("uris", event.getNamespace());
             uriInstance.addContent(uris);
             event.getContent().add(1, uriInstance);
-            if (depList.length() > 0) {
-                depList.append(CoordELFunctions.INSTANCE_SEPARATOR);
+            if (dependencyList.length() > 0) {
+                dependencyList.append(CoordELFunctions.INSTANCE_SEPARATOR);
             }
-            depList.append(urisWithDoneFlag);
+            dependencyList.append(urisWithDoneFlag);
         }
         if (unresolvedInstances.length() > 0) {
             Element elemInstance = new Element(UNRESOLVED_INST_TAG, event.getNamespace());
             elemInstance.addContent(unresolvedInstances.toString());
             event.getContent().add(1, elemInstance);
         }
-        return depList;
     }
 
     /**
@@ -352,9 +350,8 @@ public class CoordCommandUtils {
 
             String uriPath = CoordELFunctions.evalAndWrap(eval, event.getChild("dataset", event.getNamespace())
                     .getChild("uri-template", event.getNamespace()).getTextTrim());
-            URIHandler uriHandler = uriService.getURIHandler(uriPath);
-            uriHandler.validate(uriPath);
             uris.append(uriPath);
+            URIHandler uriHandler = uriService.getURIHandler(uriPath);
             urisWithDoneFlag.append(uriHandler.getURIWithDoneFlag(uriPath, doneFlagElement));
         }
         return uris.toString();
@@ -528,6 +525,11 @@ public class CoordCommandUtils {
                     .getChild("uri-template", event.getNamespace());
             String pullOrPush = "pull";
             String uriTemplate = uri.getText();
+            URI baseURI = uriService.getAuthorityWithScheme(uriTemplate);
+            URIHandler handler = uriService.getURIHandler(baseURI);
+            if (uriTemplate != null && handler.getDependencyType(baseURI).equals(DependencyType.PUSH)) {
+                pullOrPush = "push";
+            }
             StringBuilder instances = new StringBuilder();
             ELEvaluator eval = CoordELEvaluator.createInstancesELEvaluator(event, appInst, conf);
             // Handle list of instance tag
@@ -535,13 +537,7 @@ public class CoordCommandUtils {
             // Handle start-instance and end-instance
             resolveInstanceRange(event, instances, appInst, conf, eval);
             // Separate out the unresolved instances
-            StringBuffer depList = separateResolvedAndUnresolved(event, instances);
-            URI baseURI = uriService.getAuthorityWithScheme(uriTemplate);
-            URIHandler handler = uriService.getURIHandler(baseURI);
-            if (handler.getDependencyType(baseURI).equals(DependencyType.PUSH)) {
-                pullOrPush = "push";
-            }
-            dependencyList.put(pullOrPush, depList);
+            separateResolvedAndUnresolved(event, instances, dependencyList.get(pullOrPush));
             String tmpUnresolved = event.getChildTextTrim(UNRESOLVED_INST_TAG, event.getNamespace());
             if (tmpUnresolved != null) {
                 if (unresolvedList.get(pullOrPush).length() > 0) {
@@ -588,7 +584,7 @@ public class CoordCommandUtils {
      * @param actionBean
      * @throws Exception
      */
-    public static void registerPartition(CoordinatorActionBean actionBean) throws MetadataServiceException {
+    public static void registerPartition(CoordinatorActionBean actionBean) throws Exception {
 
         String resolved = getResolvedList(actionBean.getPushMissingDependencies(), new StringBuilder(),
                 new StringBuilder());

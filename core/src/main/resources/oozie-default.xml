@@ -143,8 +143,6 @@
         identifies the HCatalog server URL. "default" is used if no endpoint is mentioned 
         in the query. If some JMS property is not defined, the system will use the property 
         defined jndi.properties. jndi.properties files is retrieved from the application classpath.
-        Mapping rules can also be provided for mapping Hcatalog server names to JMS server.
-        hcat://${1}.${2}.server.com:8020=java.naming.factory.initial#Dummy.Factory;java.naming.provider.url#tcp://broker.${2}:61616
         </description>
     </property>
 

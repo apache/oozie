@@ -17,9 +17,7 @@
  */
 package org.apache.oozie.service;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,7 +37,6 @@ import javax.naming.NamingException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.jms.MessageReceiver;
-import org.apache.oozie.util.MappingRule;
 import org.apache.oozie.util.XLog;
 
 /**
@@ -57,12 +54,9 @@ public class JMSAccessorService implements Service {
     public static final String JMS_CONNECTIONS_PROPERTIES = CONF_PREFIX + "connections";
     public static final String SESSION_OPTS = CONF_PREFIX + "jms.sessionOpts";
     public static final String DEFAULT_SERVER_ENDPOINT = "default";
-    private String defaultConnection = null;
-
 
     private static XLog LOG;
     private Configuration conf;
-    private List<MappingRule> mappingRules = null;
     ConcurrentHashMap<String, ConnectionContext> connSessionMap = new ConcurrentHashMap<String, ConnectionContext>();
     HashMap<String, Properties> hmConnProps = new HashMap<String, Properties>();
 
@@ -70,105 +64,10 @@ public class JMSAccessorService implements Service {
     public void init(Services services) throws ServiceException {
         LOG = XLog.getLog(getClass());
         conf = services.getConf();
-        initializeMappingRules();
+        parseConfiguration(conf);
+        establishConnections();
     }
 
-
-    protected void initializeMappingRules() {
-        String connectionString = conf.get(JMS_CONNECTIONS_PROPERTIES);
-        if (connectionString != null) {
-            String[] connections = connectionString.split("\\s*,\\s*");
-            mappingRules = new ArrayList<MappingRule>(connections.length);
-            for (String connection : connections) {
-                String[] values = connection.split("=", 2);
-                String key = values[0].replaceAll("^\\s+|\\s+$", "");
-                String value = values[1].replaceAll("^\\s+|\\s+$", "");
-                if (key.equals("default")) {
-                    defaultConnection = value;
-                }
-                else {
-                    mappingRules.add(new MappingRule(key, value));
-                }
-            }
-        }
-        else {
-            LOG.warn("No JMS connection defined");
-        }
-    }
-
-    /**
-     * Checks if the connection exists or not. If it doens't exists, creates a new one.
-     * Returns false if the connection cannot be established
-     * @param serverName
-     * @return
-     */
-    public boolean getOrCreateConnection(String serverName) {
-        if (!isExistsConnection(serverName)) {
-            // Get JNDI properties related to the JMS server name
-            Properties props = getJMSServerProps(serverName);
-            if (props != null) {
-                Connection conn = null;
-                try {
-                    conn = getConnection(props);
-                }
-                catch (ServiceException se) {
-                    LOG.warn("Could not create connection " + se.getErrorCode() + se.getMessage());
-                    return false;
-                }
-                LOG.info("Connection established to JMS Server for " + serverName);
-                connSessionMap.put(serverName, new ConnectionContext(conn));
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Checks whether connection to JMS server already exists
-     * @param serverName
-     * @return
-     */
-    public boolean isExistsConnection(String serverName) {
-        if (connSessionMap.containsKey(serverName)) {
-            LOG.info("Connection exists to JMS Server for " + serverName);
-            return true; // connection already exists
-        }
-        else {
-            return false;
-        }
-    }
-
-
-    protected Properties getJMSServerProps(String serverName) {
-        Properties props = null;
-        if (hmConnProps.containsKey(serverName)) {
-            props = hmConnProps.get(serverName);
-            return props;
-        }
-        String jmsServerMapping = getJMSServerMapping(serverName);
-        LOG.trace("\n JMS Server Mapping for server "+ serverName + "is " + jmsServerMapping);
-        if (jmsServerMapping == null) {
-            return null;
-        }
-        else {
-            props = getJMSPropsFromConf(jmsServerMapping);
-            if (props != null) {
-                hmConnProps.put(serverName, props);
-            }
-            return props;
-        }
-    }
-
-    protected String getJMSServerMapping(String serverName) {
-        for (MappingRule mr : mappingRules) {
-            String jmsServerMapping = mr.applyRule(serverName);
-            if (jmsServerMapping != null) {
-                return jmsServerMapping;
-            }
-        }
-        return defaultConnection;
-
-    }
     /**
      * Returns Consumer object for specific service end point and topic name
      *
@@ -258,37 +157,49 @@ public class JMSAccessorService implements Service {
         return;
     }
 
+    private void establishConnections() throws ServiceException {
+        for (String key : hmConnProps.keySet()) {
+            connSessionMap.put(key, new ConnectionContext(getConnection(hmConnProps.get(key))));
+        }
+    }
 
-    protected Properties getJMSPropsFromConf(String kVal) {
+    private void parseConfiguration(Configuration conf) {
+        String[] keyVals = conf.getStrings(JMS_CONNECTIONS_PROPERTIES, "");
+        for (String kVal : keyVals) {
+            LOG.info("Key=value " + kVal);
+            if (kVal.trim().length() > 0) {
+                addToHM(kVal);
+            }
+        }
+    }
+
+    private void addToHM(String kVal) {
+        int pos = kVal.indexOf("=");
         Properties props = new Properties();
-        String[] propArr = kVal.split(";");
-        for (String pair : propArr) {
-            String[] kV = pair.split("#");
-            if (kV.length > 1) {
-                props.put(kV[0].trim(), kV[1].trim());
+        if (pos > 0) {
+            String val = kVal.substring(pos + 1);
+            String[] propArr = val.split(";");
+            for (String pair : propArr) {
+                String[] kV = pair.split("#");
+                if (kV.length > 1) {
+                    props.put(kV[0].trim(), kV[1].trim());
+                }
+                else {
+                    LOG.info("Unformatted properties. Expected key#value : " + pair);
+                }
             }
-            else {
-                LOG.info("Unformatted properties. Expected key#value : " + pair);
-            }
+            String key = kVal.substring(0, pos);
+            LOG.info(key + ": Adding " + props);
+            hmConnProps.put(key.trim(), props);
         }
-        if (props.isEmpty()) {
-            return null;
+        else {
+            LOG.info("Unformatted properties. Expected two parts : " + kVal);
         }
-        return props;
     }
 
     @Override
     public void destroy() {
         // TODO Remove topic sessions based on no demand
-        LOG.info("Destroying JMSAccessor service ");
-        for (Entry<String, ConnectionContext> entry : connSessionMap.entrySet()) {
-            try {
-                entry.getValue().getConnection().close();
-            }
-            catch (JMSException e) {
-                LOG.warn("Unable to close the connection for " + entry.getKey(), e);
-            }
-        }
 
     }
 
@@ -300,9 +211,9 @@ public class JMSAccessorService implements Service {
     /*
      * Look up connection factory Create connection
      */
-    protected synchronized Connection getConnection(Properties props) throws ServiceException {
+    private Connection getConnection(Properties props) throws ServiceException {
 
-        Connection conn = null;
+        Connection conn;
         try {
             Context jndiContext = getJndiContext(props);
             String connFacName = (String) jndiContext.getEnvironment().get(JMS_CONNECTION_FACTORY);
@@ -321,16 +232,11 @@ public class JMSAccessorService implements Service {
             });
 
         }
-        catch (Exception e1){
-            LOG.error(e1.getMessage(), e1);
-            if (conn != null) {
-                try {
-                    conn.close();
-                }
-                catch (Exception e2) {
-                    LOG.error(e2.getMessage(), e2);
-                }
-            }
+        catch (NamingException e) {
+            throw new ServiceException(ErrorCode.E0100, getClass().getName(), e.getMessage(), e);
+        }
+        catch (JMSException e) {
+            throw new ServiceException(ErrorCode.E0100, getClass().getName(), e.getMessage(), e);
         }
         return conn;
     }
@@ -398,6 +304,18 @@ public class JMSAccessorService implements Service {
         }
     }
 
+    @Override
+    public void finalize() {
+        LOG.info("Finalizing ");
+        for (Entry<String, ConnectionContext> entry : connSessionMap.entrySet()) {
+            try {
+                entry.getValue().getConnection().close();
+            }
+            catch (JMSException e) {
+                LOG.warn("Unable to close the connection for " + entry.getKey(), e);
+            }
+        }
+    }
 
     /**
      * This class maintains a JMS connection and map of topic to Session. Only

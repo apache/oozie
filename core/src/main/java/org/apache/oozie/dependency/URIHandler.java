@@ -146,14 +146,5 @@ public abstract class URIHandler {
      */
     public abstract String getURIWithDoneFlag(String uri, String doneFlag) throws URIAccessorException;
 
-    /**
-     * Check whether the URI is valid or not
-     * @param uri
-     * @return
-     * @throws URIAccessorException
-     */
-    public abstract void validate(String uri) throws URIAccessorException;
-
     public abstract void destroy();
-
 }
