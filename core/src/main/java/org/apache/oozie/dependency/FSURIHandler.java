@@ -120,6 +120,10 @@ public class FSURIHandler extends URIHandler {
     }
 
     @Override
+    public void validate(String uri) throws URIAccessorException {
+    }
+
+    @Override
     public void destroy() {
 
     }

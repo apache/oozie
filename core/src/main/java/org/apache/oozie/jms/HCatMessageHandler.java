@@ -36,6 +36,7 @@ public class HCatMessageHandler implements MessageHandler {
 
     private PartitionWrapper msgPartition;
     private static XLog log;
+    public static final String THRIFT_SCHEME = "thrift";
 
     public HCatMessageHandler() {
         log = XLog.getLog(getClass());
@@ -56,9 +57,11 @@ public class HCatMessageHandler implements MessageHandler {
                 // Parse msg components
                 AddPartitionMessage partMsg = (AddPartitionMessage) hcatMsg;
                 String server = partMsg.getServer();
+                int index = server.indexOf("://");
+                server = server.substring(index + 3);
                 String db = partMsg.getDB();
                 String table = partMsg.getTable();
-                log.info("ADD event type db [{0}]  table [{1}] partitions [{3}]", db, table, partMsg.getPartitions());
+                log.info("ADD event type db [{0}]  table [{1}] partitions [{2}]", db, table, partMsg.getPartitions());
                 PartitionDependencyManagerService pdms = Services.get().get(PartitionDependencyManagerService.class);
                 if (pdms != null) {
                     // message is batched. therefore iterate through partitions
@@ -93,6 +96,7 @@ public class HCatMessageHandler implements MessageHandler {
         catch (IllegalArgumentException iae) {
             throw new MetadataServiceException(ErrorCode.E1505, iae);
         }
+
     }
 
 }

@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1138 Provide rule based mechanism to allow multiple hcatalog servers to connect to JMS server (virag)
 OOZIE-1124 Split pig unit tests to a separate module (rohini via virag)
 OOZIE-1111 change HCatURI to specify partitions in path instead of query parameter (rohini,ryota via virag)
 OOZIE-1108 Fix JMS message consumer to maintain single session per topic registration (mona)

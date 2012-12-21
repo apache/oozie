@@ -32,6 +32,7 @@ import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
+import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.MaterializeTransitionXCommand;
 import org.apache.oozie.command.PreconditionException;
@@ -42,6 +43,7 @@ import org.apache.oozie.executor.jpa.CoordActionsActiveCountJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
+import org.apache.oozie.service.MetadataServiceException;
 import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.DateUtils;
@@ -106,9 +108,20 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
     public void performWrites() throws CommandException {
         try {
             jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, insertList));
+            // register the partition related dependencies of actions
+            for (JsonBean actionBean : insertList) {
+                if (actionBean instanceof CoordinatorActionBean) {
+                    CoordinatorActionBean coordAction = (CoordinatorActionBean) actionBean;
+                    CoordCommandUtils.registerPartition(coordAction);
+                    queue(new CoordPushDependencyCheckXCommand(coordAction.getId()));
+                }
+            }
         }
         catch (JPAExecutorException jex) {
             throw new CommandException(jex);
+        }
+        catch (MetadataServiceException ex) {
+            LOG.warn("Error happened in registering partitions ", ex);
         }
     }
 
@@ -329,8 +342,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
 
             if (!dryrun) {
                 storeToDB(actionBean, action); // Storing to table
-                CoordCommandUtils.registerPartition(actionBean); // Register partition to PDMS
-                queue(new CoordPushDependencyCheckXCommand(actionBean.getId()));
+
             }
             else {
                 actionStrings.append("action for new instance");

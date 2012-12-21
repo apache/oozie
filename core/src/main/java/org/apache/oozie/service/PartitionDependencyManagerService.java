@@ -34,15 +34,13 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.command.coord.CoordActionUpdatePushMissingDependency;
 import org.apache.oozie.jms.HCatMessageHandler;
 import org.apache.oozie.jms.MessageReceiver;
-import org.apache.oozie.service.Service;
-import org.apache.oozie.service.ServiceException;
-import org.apache.oozie.service.Services;
+import org.apache.oozie.util.HCatURI;
 import org.apache.oozie.util.PartitionWrapper;
 import org.apache.oozie.util.PartitionsGroup;
 import org.apache.oozie.util.WaitingActions;
-import org.apache.oozie.util.HCatURI;
 import org.apache.oozie.util.XCallable;
 import org.apache.oozie.util.XLog;
+
 
 /**
  * Module that functions like a caching service to maintain partition dependency
@@ -119,21 +117,6 @@ public class PartitionDependencyManagerService implements Service {
     }
 
     /**
-     * Remove en entry from available Map
-     *
-     * @param actionId
-     * @return true if the entry exists , otherwise false
-     */
-    public boolean removeActionFromAvailPartitions(String actionId) {
-        boolean ret = false;
-        if (availMap.containsKey(actionId)) {
-            availMap.remove(actionId);
-            ret = true;
-        }
-        return ret;
-    }
-
-    /**
      * Remove an action from missing partition map
      *
      * @param hcatURI
@@ -150,7 +133,7 @@ public class PartitionDependencyManagerService implements Service {
         catch (URISyntaxException e) {
             throw new MetadataServiceException(ErrorCode.E1025, e.getMessage());
         }
-        PartitionWrapper partition = new PartitionWrapper(uri.getServerEndPoint(), uri.getDb(), uri.getTable(),
+        PartitionWrapper partition = new PartitionWrapper(uri.getServer(), uri.getDb(), uri.getTable(),
                 uri.getPartitionMap());
         List<String> actions = _getActionsForPartition(partition);
         if (actions != null && actions.size() != 0) {
@@ -169,7 +152,7 @@ public class PartitionDependencyManagerService implements Service {
      * @param actionId
      * @throws MetadataServiceException
      */
-    public void addMissingPartition(PartitionWrapper partition, String actionId) throws MetadataServiceException {
+    private void addMissingPartition(PartitionWrapper partition, String actionId) throws MetadataServiceException {
         String prefix = PartitionWrapper.makePrefix(partition.getServerName(), partition.getDbName());
         Map<String, PartitionsGroup> tablePartitionsMap;
         String tableName = partition.getTableName();
@@ -187,7 +170,7 @@ public class PartitionDependencyManagerService implements Service {
             else { // new partition from different hcat server/db
                 _addNewEntry(hcatInstanceMap, prefix, tableName, partition, actionId);
             }
-            _registerMessageReceiver(partition);
+
         }
         catch (ClassCastException e) {
             throw new MetadataServiceException(ErrorCode.E1501, e.getCause());
@@ -203,16 +186,16 @@ public class PartitionDependencyManagerService implements Service {
         }
     }
 
-    private void _registerMessageReceiver(PartitionWrapper partition) throws MetadataServiceException {
+    private void _registerMessageReceiver(PartitionWrapper partition, String serverEndPoint) throws MetadataServiceException {
         String topic = _getTopic(partition);
         try {
-            MessageReceiver recvr = Services.get().get(JMSAccessorService.class).getTopicReceiver(topic);
+            MessageReceiver recvr = Services.get().get(JMSAccessorService.class).getTopicReceiver(serverEndPoint, topic);
             //Register new listener only if topic is new. Else do nothing
             if(recvr == null) {
                 //Registering new receiver
                 recvr = new MessageReceiver(new HCatMessageHandler());
-                log.debug("Registering to listen on topic :" + topic);
-                recvr.registerTopic(topic); //server-endpoint is obtained from partition
+                log.debug("Registering to listen on topic :" + topic + "for endpoint " + serverEndPoint);
+                recvr.registerTopic(serverEndPoint, topic); //server-endpoint is obtained from partition
             }
         }
         catch (JMSException e) {
@@ -254,10 +237,12 @@ public class PartitionDependencyManagerService implements Service {
         catch (URISyntaxException e) {
             throw new MetadataServiceException(ErrorCode.E1025, e.getMessage());
         }
-        PartitionWrapper partition = new PartitionWrapper(uri.getServerEndPoint(), uri.getDb(), uri.getTable(),
+        PartitionWrapper partition = new PartitionWrapper(uri.getServer(), uri.getDb(), uri.getTable(),
                 uri.getPartitionMap());
         addMissingPartition(partition, actionId);
+        _registerMessageReceiver(partition, uri.getServerEndPoint());
     }
+
 
     public void addMissingPartitions(String[] hcatURIs, String actionId) throws MetadataServiceException {
         for (String uri : hcatURIs) {
@@ -266,6 +251,32 @@ public class PartitionDependencyManagerService implements Service {
             }
         }
     }
+
+    /** Remove available partitions for an action
+     *
+     * @param partitions
+     * @param actionId
+     * @return
+     * @throws MetadataServiceException
+     */
+    public boolean removeAvailablePartitions(List<PartitionWrapper> partitions, String actionId)
+            throws MetadataServiceException {
+        List<PartitionWrapper> availList = null;
+        if (!availMap.containsKey(actionId)) {
+            return false;
+        }
+        else {
+            availList = availMap.get(actionId);
+        }
+        if (!availList.removeAll(partitions)) {
+            return false;
+        }
+        if (availList.isEmpty()) {
+            availMap.remove(actionId);
+        }
+        return true;
+    }
+
 
     /**
      * Remove partition entry specified by PartitionWrapper object and cascading
@@ -293,7 +304,8 @@ public class PartitionDependencyManagerService implements Service {
                             if (tableMap.size() == 0) {
                                 hcatInstanceMap.remove(prefix);
                             }
-                            _deregisterMessageReceiver(partition);
+                            // TODO - do unregistering in a synchronized way
+                            //_deregisterMessageReceiver(partition);
                         }
                     }
                     return true;
@@ -329,7 +341,7 @@ public class PartitionDependencyManagerService implements Service {
         catch (URISyntaxException e) {
             throw new MetadataServiceException(ErrorCode.E1025, e.getMessage());
         }
-        PartitionWrapper partition = new PartitionWrapper(uri.getServerEndPoint(), uri.getDb(), uri.getTable(),
+        PartitionWrapper partition = new PartitionWrapper(uri.getServer(), uri.getDb(), uri.getTable(),
                 uri.getPartitionMap());
         return removePartition(partition, cascade);
     }
@@ -350,7 +362,7 @@ public class PartitionDependencyManagerService implements Service {
         catch (URISyntaxException e) {
             throw new MetadataServiceException(ErrorCode.E1025, e.getMessage());
         }
-        PartitionWrapper partition = new PartitionWrapper(uri.getServerEndPoint(), uri.getDb(), uri.getTable(),
+        PartitionWrapper partition = new PartitionWrapper(uri.getServer(), uri.getDb(), uri.getTable(),
                 uri.getPartitionMap());
         return removePartition(partition, true);
     }
@@ -408,7 +420,7 @@ public class PartitionDependencyManagerService implements Service {
         catch (URISyntaxException e) {
             throw new MetadataServiceException(ErrorCode.E1025, e.getMessage());
         }
-        PartitionWrapper partition = new PartitionWrapper(uri.getServerEndPoint(), uri.getDb(), uri.getTable(),
+        PartitionWrapper partition = new PartitionWrapper(uri.getServer(), uri.getDb(), uri.getTable(),
                 uri.getPartitionMap());
         return partitionAvailable(partition);
     }
@@ -426,12 +438,13 @@ public class PartitionDependencyManagerService implements Service {
             uri = new HCatURI(hcatURI);
         }
         catch (URISyntaxException e) {
-            throw new MetadataServiceException(ErrorCode.E1503, e.getMessage());
+            throw new MetadataServiceException(ErrorCode.E1025, e.getMessage());
         }
-        PartitionWrapper partition = new PartitionWrapper(uri.getServerEndPoint(), uri.getDb(), uri.getTable(),
+        PartitionWrapper partition = new PartitionWrapper(uri.getServer(), uri.getDb(), uri.getTable(),
                 uri.getPartitionMap());
         return containsPartition(partition);
     }
+
 
     /**
      * Determine if a partition entry exists in cache
