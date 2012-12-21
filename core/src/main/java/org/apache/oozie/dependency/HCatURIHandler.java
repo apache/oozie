@@ -32,8 +32,11 @@ import org.apache.hcatalog.api.HCatTable;
 import org.apache.hcatalog.common.HCatException;
 import org.apache.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.service.JMSAccessorService;
 import org.apache.oozie.service.MetaDataAccessorException;
 import org.apache.oozie.service.MetaDataAccessorService;
+import org.apache.oozie.service.MetadataServiceException;
+import org.apache.oozie.service.PartitionDependencyManagerService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.URIAccessorException;
 import org.apache.oozie.util.HCatURI;
@@ -61,10 +64,10 @@ public class HCatURIHandler extends URIHandler {
 
     @Override
     public DependencyType getDependencyType(URI uri) throws URIAccessorException {
-        // TODO Determine if jms server is configured for the hcat server and
-        // return poll or notify
-        return DependencyType.PUSH;
-    }
+        JMSAccessorService service = Services.get().get(JMSAccessorService.class);
+        return service.getOrCreateConnection(uri.getScheme() + "://" + uri.getAuthority()) ? DependencyType.PUSH
+                : DependencyType.PULL;
+ }
 
     @Override
     public void registerForNotification(URI uri, String actionID) throws URIAccessorException {
@@ -109,6 +112,17 @@ public class HCatURIHandler extends URIHandler {
     @Override
     public String getURIWithDoneFlag(String uri, String doneFlag) throws URIAccessorException {
         return uri;
+    }
+
+    @Override
+    public void validate (String uri) throws URIAccessorException{
+        try {
+            new HCatURI(uri);  //will fail if uri syntax is incorrect
+        }
+        catch (URISyntaxException e) {
+            throw new URIAccessorException(ErrorCode.E1025, uri, e);
+        }
+
     }
 
     @Override

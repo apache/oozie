@@ -71,13 +71,14 @@ public class MessageReceiver implements MessageListener {
         JMSAccessorService jas = Services.get().get(JMSAccessorService.class);
         try {
             consumer = jas.getMessageConsumer(endPoint, topicName);
-            if(consumer != null) {
+            if (consumer != null) {
                 consumer.setMessageListener(this);
                 LOG.info("Listener registered for end point:" + endPoint + " topic:" + topicName);
                 jas.addTopicReceiver(this, endPoint, topicName);
             }
             else {
-                throw new ServiceException(ErrorCode.E1506);
+                throw new ServiceException(ErrorCode.E1506,
+                        "Could not create consumer for the connection, connection might not exist");
             }
         }
         catch (ServiceException e) {

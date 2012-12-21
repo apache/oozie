@@ -21,6 +21,7 @@ package org.apache.oozie.coord;
 import java.util.Map;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.command.coord.CoordCommandUtils;
+import org.apache.oozie.service.JMSAccessorService;
 import org.apache.oozie.service.PartitionDependencyManagerService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
@@ -36,17 +37,16 @@ public class TestCoordCommandUtils extends XDataTestCase {
     protected void setUp() throws Exception {
 
         super.setUp();
+        services = super.setupServicesForHCatalog();
+        services.init();
         setSystemProperty(PartitionDependencyManagerService.HCAT_DEFAULT_SERVER_NAME, "myhcatserver");
         setSystemProperty(PartitionDependencyManagerService.HCAT_DEFAULT_DB_NAME, "myhcatdb");
         setSystemProperty(PartitionDependencyManagerService.MAP_MAX_WEIGHTED_CAPACITY, "100");
-        Services services = new Services();
-        addServiceToRun(services.getConf(), PartitionDependencyManagerService.class.getName());
-        services.init();
     }
 
     @Override
     protected void tearDown() throws Exception {
-        Services.get().destroy();
+        services.destroy();
         super.tearDown();
     }
 
@@ -63,6 +63,9 @@ public class TestCoordCommandUtils extends XDataTestCase {
         st.append(CoordCommandUtils.RESOLVED_UNRESOLVED_SEPARATOR);
         st.append("${coord:latest(0)}");
         action1.setPushMissingDependencies(st.toString());
+        JMSAccessorService jmsService = services.get(JMSAccessorService.class);
+        String serverEndPoint = "hcat://hcatserver.com:4080";
+        jmsService.getOrCreateConnection(serverEndPoint);
         CoordCommandUtils.registerPartition(action1);
 
         HCatURI hcatUri1 = new HCatURI(hcatUriStr1);

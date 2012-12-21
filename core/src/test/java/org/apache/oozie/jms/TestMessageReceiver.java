@@ -17,12 +17,10 @@
  */
 package org.apache.oozie.jms;
 
-import javax.jms.JMSException;
-import javax.jms.MapMessage;
 import javax.jms.Message;
-import javax.jms.ObjectMessage;
 
 import org.apache.oozie.jms.MessageReceiver;
+import org.apache.oozie.service.JMSAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XTestCase;
 
@@ -42,29 +40,24 @@ public class TestMessageReceiver extends XTestCase {
         super.tearDown();
     }
 
-    public void testMessage() throws Exception {
-        String topicName = "test-topic";
-        MessageReceiver recvr = new MessageReceiver(new MessageHandler() {
-            public void process(Message msg) {
-                if (msg instanceof ObjectMessage) {
-                    System.out.println("Object Message: " + msg);
+    public void testRegisterTopic() throws Exception {
+        try {
+            String topicName = "test-topic";
+            MessageReceiver recvr = new MessageReceiver(new MessageHandler() {
+                public void process(Message msg) {
                 }
-                else if (msg instanceof MapMessage) {
-                    System.out.println("MapMessage : " + msg);
-                }
-                else {
-                    try {
-                        System.out.println("Unexpected message type " + msg.getJMSType());
-                    }
-                    catch (JMSException e) {
-                        System.out.println("Unable to read the type " + e);
-                    }
-                }
-            }
-        });
-        recvr.registerTopic(topicName);
-        Thread.sleep(1000);
-        recvr.unRegisterTopic(topicName);
+            });
+            JMSAccessorService jmsService = services.get(JMSAccessorService.class);
+            String serverEndPoint = "hcat://hcat.server.com:5080";
+            jmsService.getOrCreateConnection(serverEndPoint);
+            recvr.registerTopic(serverEndPoint, topicName);
+            Thread.sleep(1000);
+            recvr.unRegisterTopic(serverEndPoint, topicName);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            fail("\n Unexpected exception " + e);
+        }
     }
 
 }

@@ -45,7 +45,7 @@ public class PartitionWrapper {
     }
 
     public PartitionWrapper(HCatURI hcatUri) {
-        this(hcatUri.getServerEndPoint(), hcatUri.getDb(), hcatUri.getTable(), hcatUri.getPartitionMap());
+        this(hcatUri.getServer(), hcatUri.getDb(), hcatUri.getTable(), hcatUri.getPartitionMap());
     }
 
     public PartitionWrapper(String partURI) throws URISyntaxException {

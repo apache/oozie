@@ -16,6 +16,7 @@ import org.apache.oozie.executor.jpa.CoordActionGetForInputCheckJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionUpdatePushInputCheckJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
+import org.apache.oozie.service.MetadataServiceException;
 import org.apache.oozie.service.PartitionDependencyManagerService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.LogUtils;
@@ -51,12 +52,15 @@ public class CoordActionUpdatePushMissingDependency extends CoordinatorXCommand<
         LOG.debug("Updating action Id " + actionId + " for available partition of " + availPartitionList.toString()
                 + "missing parts :" + missPartitions);
         String newMissPartitions = removePartitions(missPartitions, availPartitionList);
+        LOG.trace("In CoordActionUpdatePushMissingDependency: New missing partitions " +newMissPartitions);
+        // TODO - Check if new miss partitions are updated, then only persist, do the same in CoordInputCheck
         coordAction.setPushMissingDependencies(newMissPartitions);
         String otherDeps = coordAction.getMissingDependencies();
         if ((newMissPartitions == null || newMissPartitions.trim().length() == 0)
                 && (otherDeps == null || otherDeps.trim().length() == 0)) {
             coordAction.setStatus(CoordinatorAction.Status.READY);
             // pass jobID to the CoordActionReadyXCommand
+            LOG.trace("Queuing READY for "+actionId);
             queue(new CoordActionReadyXCommand(coordAction.getJobId()), 100);
         }
         else {
@@ -66,18 +70,19 @@ public class CoordActionUpdatePushMissingDependency extends CoordinatorXCommand<
         if (jpaService != null) {
             try {
                 jpaService.execute(new CoordActionUpdatePushInputCheckJPAExecutor(coordAction));
+                // remove available partitions for the action as the push dependencies are persisted
+                if (pdms.removeAvailablePartitions(availPartitionList, actionId)) {
+                    LOG.debug("Succesfully removed partitions for actionId: [{0}] from available Map ", actionId);
+                }
+                else {
+                    LOG.warn("Unable to remove partitions for actionId: [{0}] from available Map ", actionId);
+                }
             }
             catch (JPAExecutorException jex) {
                 throw new CommandException(ErrorCode.E1023, jex.getMessage(), jex);
             }
-            finally {
-                // remove from Available map as it is being persisted
-                if (pdms.removeActionFromAvailPartitions(actionId)) {
-                    LOG.debug("Succesfully removed actionId: [{0}] from available Map ", actionId);
-                }
-                else {
-                    LOG.warn("Unable to remove actionId: [{0}] from available Map ", actionId);
-                }
+            catch (MetadataServiceException e) {
+                throw new CommandException(ErrorCode.E0902, e.getMessage(), e);
             }
         }
         LOG.info("ENDED for Action id [{0}]", actionId);
@@ -143,6 +148,14 @@ public class CoordActionUpdatePushMissingDependency extends CoordinatorXCommand<
     @Override
     public String getEntityKey() {
         return actionId;
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.XCommand#getKey()
+     */
+    @Override
+    public String getKey(){
+        return getName() + "_" + actionId;
     }
 
     @Override

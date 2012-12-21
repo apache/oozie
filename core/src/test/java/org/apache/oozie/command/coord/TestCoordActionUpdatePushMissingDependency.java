@@ -30,6 +30,7 @@ import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.service.JMSAccessorService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.PartitionDependencyManagerService;
 import org.apache.oozie.service.Services;
@@ -45,6 +46,7 @@ import org.junit.Test;
 
 public class TestCoordActionUpdatePushMissingDependency extends XDataTestCase {
     private String TZ;
+    private Services services;
 
     @Before
     protected void setUp() throws Exception {
@@ -52,8 +54,7 @@ public class TestCoordActionUpdatePushMissingDependency extends XDataTestCase {
         setSystemProperty(PartitionDependencyManagerService.HCAT_DEFAULT_SERVER_NAME, "myhcatserver");
         setSystemProperty(PartitionDependencyManagerService.HCAT_DEFAULT_DB_NAME, "myhcatdb");
         setSystemProperty(PartitionDependencyManagerService.MAP_MAX_WEIGHTED_CAPACITY, "100");
-        Services services = new Services();
-        addServiceToRun(services.getConf(), PartitionDependencyManagerService.class.getName());
+        services = super.setupServicesForHCatalog();
         services.init();
         TZ = (getProcessingTZ().equals(DateUtils.OOZIE_PROCESSING_TIMEZONE_DEFAULT)) ? "Z" : getProcessingTZ()
                 .substring(3);
@@ -73,6 +74,9 @@ public class TestCoordActionUpdatePushMissingDependency extends XDataTestCase {
         checkCoordAction(actionId, newHCatDependency, CoordinatorAction.Status.WAITING, 0);
 
         PartitionDependencyManagerService pdms = Services.get().get(PartitionDependencyManagerService.class);
+
+        JMSAccessorService jmsService = services.get(JMSAccessorService.class);
+        jmsService.getOrCreateConnection("hcat://hcat.server.com:5080");
 
         pdms.addMissingPartition(newHCatDependency, actionId);
 
@@ -99,6 +103,9 @@ public class TestCoordActionUpdatePushMissingDependency extends XDataTestCase {
         checkCoordAction(actionId, fullDeps, CoordinatorAction.Status.WAITING, 0);
 
         PartitionDependencyManagerService pdms = Services.get().get(PartitionDependencyManagerService.class);
+
+        JMSAccessorService jmsService = services.get(JMSAccessorService.class);
+        jmsService.getOrCreateConnection("hcat://hcat.server.com:5080");
 
         pdms.addMissingPartition(newHCatDependency1, actionId);
         pdms.addMissingPartition(newHCatDependency2, actionId);
