@@ -93,7 +93,7 @@ public class CoordActionUpdatePushMissingDependency extends CoordinatorXCommand<
     private String removePartitions(String missPartitions, List<PartitionWrapper> availPartitionList)
             throws CommandException {
         if (missPartitions == null || missPartitions.length() == 0) {
-            LOG.warn("Missing dependency is empty. avaialableMap is :" + availPartitionList);
+            LOG.warn("Missing dependency from db is empty. availableMap contains :" + availPartitionList);
             return null;
         }
         List<PartitionWrapper> missPartList = createPartitionWrapper(missPartitions);
@@ -104,7 +104,7 @@ public class CoordActionUpdatePushMissingDependency extends CoordinatorXCommand<
                 LOG.debug("Removing partition " + part);
             }
             else {
-                LOG.warn("NOT found partition [{0}] into missingList: [{1}] ", part, missPartList);
+                LOG.warn("NOT found partition [{0}] in missingList: [{1}] of action: [{2}]", part, missPartList, actionId);
             }
         }
         for (PartitionWrapper missParts : missPartList) {

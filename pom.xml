@@ -286,6 +286,18 @@
             </dependency>
 
             <dependency>
+                <groupId>org.codehaus.jackson</groupId>
+                <artifactId>jackson-core-asl</artifactId>
+                <version>1.8.8</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.codehaus.jackson</groupId>
+                <artifactId>jackson-mapper-asl</artifactId>
+                <version>1.8.8</version>
+            </dependency>
+
+            <dependency>
                 <groupId>org.apache.openjpa</groupId>
                 <artifactId>openjpa-persistence</artifactId>
                 <version>2.1.0</version>

@@ -760,9 +760,13 @@
             coord:name=org.apache.oozie.coord.CoordELFunctions#ph1_coord_name_echo,
             coord:conf=org.apache.oozie.coord.CoordELFunctions#coord_conf,
             coord:user=org.apache.oozie.coord.CoordELFunctions#coord_user,
-            coord:metaServer=org.apache.oozie.coord.CoordELFunctions#ph1_coord_metaServer_echo,
-            coord:metaDb=org.apache.oozie.coord.CoordELFunctions#ph1_coord_metaDb_echo,
-            coord:metaTable=org.apache.oozie.coord.CoordELFunctions#ph1_coord_metaTable_echo
+            coord:database=org.apache.oozie.coord.HCatELFunctions#ph1_coord_database_echo,
+            coord:table=org.apache.oozie.coord.HCatELFunctions#ph1_coord_table_echo,
+            coord:dataInPartitionPigFilter=org.apache.oozie.coord.HCatELFunctions#ph1_coord_dataInPartitionPigFilter_echo,
+            coord:dataInPartitionMin=org.apache.oozie.coord.HCatELFunctions#ph1_coord_dataInPartitionMin_echo,
+            coord:dataInPartitionMax=org.apache.oozie.coord.HCatELFunctions#ph1_coord_dataInPartitionMax_echo,
+            coord:dataOutPartitions=org.apache.oozie.coord.HCatELFunctions#ph1_coord_dataOutPartitions_echo,
+            coord:dataOutPartitionValue=org.apache.oozie.coord.HCatELFunctions#ph1_coord_dataOutPartitionValue_echo
         </value>
         <description>
             EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
@@ -1016,9 +1020,13 @@
             coord:name=org.apache.oozie.coord.CoordELFunctions#ph3_coord_name,
             coord:conf=org.apache.oozie.coord.CoordELFunctions#coord_conf,
             coord:user=org.apache.oozie.coord.CoordELFunctions#coord_user,
-            coord:metaServer=org.apache.oozie.coord.CoordELFunctions#ph3_coord_metaServer,
-            coord:metaDb=org.apache.oozie.coord.CoordELFunctions#ph3_coord_metaDb,
-            coord:metaTable=org.apache.oozie.coord.CoordELFunctions#ph3_coord_metaTable
+            coord:database=org.apache.oozie.coord.HCatELFunctions#ph3_coord_database,
+            coord:table=org.apache.oozie.coord.HCatELFunctions#ph3_coord_table,
+            coord:dataInPartitionPigFilter=org.apache.oozie.coord.HCatELFunctions#ph3_coord_dataInPartitionPigFilter,
+            coord:dataInPartitionMin=org.apache.oozie.coord.HCatELFunctions#ph3_coord_dataInPartitionMin,
+            coord:dataInPartitionMax=org.apache.oozie.coord.HCatELFunctions#ph3_coord_dataInPartitionMax,
+            coord:dataOutPartitions=org.apache.oozie.coord.HCatELFunctions#ph3_coord_dataOutPartitions,
+            coord:dataOutPartitionValue=org.apache.oozie.coord.HCatELFunctions#ph3_coord_dataOutPartitionValue
         </value>
         <description>
             EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.

@@ -18,7 +18,6 @@
 package org.apache.oozie.coord;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -31,7 +30,6 @@ import org.apache.oozie.dependency.URIContext;
 import org.apache.oozie.dependency.URIHandler;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ELEvaluator;
-import org.apache.oozie.util.HCatURI;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.service.Services;
@@ -448,100 +446,6 @@ public class CoordELFunctions {
     }
 
     /**
-     * Extract the hcat server name from the URI-template associate with
-     * 'dataInName'. Caller needs to specify the EL-evaluator level variable
-     * 'oozie.coord.el.dataset.bean' with synchronous dataset object
-     * (SyncCoordDataset)
-     *
-     * @param dataInName
-     * @return server name
-     */
-    public static String ph3_coord_metaServer(String dataInName) {
-        HCatURI hcatURI = getURI(dataInName);
-        if (hcatURI != null) {
-            return hcatURI.getServerEndPoint();
-        }
-        else {
-            return "";
-        }
-    }
-
-    /**
-     * Extract the hcat DB name from the URI-template associate with
-     * 'dataInName'. Caller needs to specify the EL-evaluator level variable
-     * 'oozie.coord.el.dataset.bean' with synchronous dataset object
-     * (SyncCoordDataset)
-     *
-     * @param dataInName
-     * @return DB name
-     */
-    public static String ph3_coord_metaDb(String dataInName) {
-        HCatURI hcatURI = getURI(dataInName);
-        if (hcatURI != null) {
-            return hcatURI.getDb();
-        }
-        else {
-            return "";
-        }
-    }
-
-    /**
-     * Extract the hcat Table name from the URI-template associate with
-     * 'dataInName'. Caller needs to specify the EL-evaluator level variable
-     * 'oozie.coord.el.dataset.bean' with synchronous dataset object
-     * (SyncCoordDataset)
-     *
-     * @param dataInName
-     * @return Table name
-     */
-    public static String ph3_coord_metaTable(String dataInName) {
-        HCatURI hcatURI = getURI(dataInName);
-        if (hcatURI != null) {
-            return hcatURI.getTable();
-        }
-        else {
-            return "";
-        }
-    }
-
-    private static HCatURI getURI(String dataInName) {
-        StringBuilder uriTemplate = new StringBuilder();
-        ELEvaluator eval = ELEvaluator.getCurrent();
-        String uris = (String) eval.getVariable(".datain." + dataInName);
-        if (uris != null) {
-            String[] uri = uris.split(CoordELFunctions.DIR_SEPARATOR, -1);
-            if (uri.length == 0) {
-                XLog.getLog(CoordELFunctions.class).warn("URI is empty");
-                return null;
-            }
-            else {
-                uriTemplate.append(uri[0]);
-            }
-        }
-        else {
-            XLog.getLog(CoordELFunctions.class).warn("URI is NULL");
-            return null;
-        }
-        XLog.getLog(CoordELFunctions.class).info("uriTemplate [{0}] ", uriTemplate);
-        //TODO Deal with this using URIHandler as part of OOZIE-1123
-        if (uriTemplate.toString().startsWith("hcat://")) {
-            HCatURI hcatURI;
-            try {
-                hcatURI = new HCatURI(uriTemplate.toString());
-            }
-            catch (URISyntaxException e) {
-                XLog.getLog(CoordELFunctions.class).info("uriTemplate [{0}]. Reason [{1}]: ", uriTemplate, e);
-                throw new RuntimeException("HCat URI can't be parsed " + e);
-            }
-            return hcatURI;
-        }
-        else {
-            XLog.getLog(CoordELFunctions.class).error("Not a HCat URI template: " + uriTemplate);
-            throw new RuntimeException("Not a HCat URI template: " + uriTemplate);
-        }
-    }
-
-    /**
      * Used to specify a list of URI's that are used as input dir to the workflow job. <p/> Look for two evaluator-level
      * variables <p/> A) .datain.<DATAIN_NAME> B) .datain.<DATAIN_NAME>.unresolved <p/> A defines the current list of
      * URI. <p/> B defines whether there are any unresolved EL-function (i.e latest) <p/> If there are something
@@ -559,32 +463,7 @@ public class CoordELFunctions {
         if (unresolved != null && unresolved.booleanValue() == true) {
             return "${coord:dataIn('" + dataInName + "')}";
         }
-        return handlePartitionFilter(uris);
-    }
-
-    private static String handlePartitionFilter(String uris) {
-        String[] uriList = uris.split(DIR_SEPARATOR);
-        // If HCat URI, change its to a filter, otherwise return the original
-        // uris
-        //TODO Deal with this using URIHandler as part of OOZIE-1123
-        if (uriList.length > 0 && uriList[0].toString().startsWith("hcat://")) {
-            StringBuilder filter = new StringBuilder();
-            for (String uri : uriList) {
-                if (filter.length() > 0) {
-                    filter.append(" OR ");
-                }
-                try {
-                    filter.append(new HCatURI(uri).toFilter());
-                }
-                catch (URISyntaxException e) {
-                    throw new RuntimeException("Parsing exception for HCatURI " + uri + ". details: " + e);
-                }
-            }
-            return filter.toString();
-        }
-        else {
-            return uris;
-        }
+        return uris;
     }
 
     /**
@@ -598,7 +477,7 @@ public class CoordELFunctions {
         String uris = "";
         ELEvaluator eval = ELEvaluator.getCurrent();
         uris = (String) eval.getVariable(".dataout." + dataOutName);
-        return handlePartitionFilter(uris);
+        return uris;
     }
 
     /**
@@ -827,52 +706,6 @@ public class CoordELFunctions {
 
     public static String ph2_coord_future_echo(String n, String instance) {
         return ph1_coord_future_echo(n, instance);
-    }
-
-    /**
-     * Echo the same EL function without evaluating anything
-     *
-     * @param dataInName
-     * @return the same EL function
-     */
-    public static String ph1_coord_metaServer_echo(String dataInName) {
-        // Checking if the dataIn/dataOut is correct?
-        isValidDataIn(dataInName);
-        return echoUnResolved("metaServer", "'" + dataInName + "'");
-    }
-
-    /**
-     * Echo the same EL function without evaluating anything
-     *
-     * @param dataInName
-     * @return the same EL function
-     */
-    public static String ph1_coord_metaDb_echo(String dataInName) {
-        // Checking if the dataIn/dataOut is correct?
-        isValidDataIn(dataInName);
-        return echoUnResolved("metaDb", "'" + dataInName + "'");
-    }
-
-    /**
-     * Echo the same EL function without evaluating anything
-     *
-     * @param dataInName
-     * @return the same EL function
-     */
-    public static String ph1_coord_metaTable_echo(String dataInName) {
-        // Checking if the dataIn/dataOut is correct?
-        isValidDataIn(dataInName);
-        return echoUnResolved("metaTable", "'" + dataInName + "'");
-    }
-
-    private static boolean isValidDataIn(String dataInName) {
-        ELEvaluator eval = ELEvaluator.getCurrent();
-        String val = (String) eval.getVariable("oozie.dataname." + dataInName);
-        if (val == null || (val.equals("data-in") == false && val.equals("data-out") == false)) {
-            XLog.getLog(CoordELFunctions.class).error("dataset name " + dataInName + " is not valid. val :" + val);
-            throw new RuntimeException("data set name " + dataInName + " is not valid");
-        }
-        return true;
     }
 
     public static String ph1_coord_latestRange_echo(String start, String end) {

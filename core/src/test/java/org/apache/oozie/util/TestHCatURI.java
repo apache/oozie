@@ -150,7 +150,7 @@ public class TestHCatURI {
         catch (URISyntaxException e) {
             fail(e.getMessage());
         }
-        assertTrue(filter.equals("datastamp='20120230' AND region='us'")
-                || filter.equals("region='us' AND datastamp='20120230'"));
+        assertTrue(filter.equals("datastamp=='20120230' AND region=='us'")
+                || filter.equals("region=='us' AND datastamp=='20120230'"));
     }
 }

@@ -228,6 +228,49 @@ public class HCatURI {
      *
      * @return filter string
      */
+    public String toPigPartitionFilter() {
+        StringBuilder filter = new StringBuilder();
+        filter.append("(");
+        for (Map.Entry<String, String> entry : partitions.entrySet()) {
+            if (filter.length() > 1) {
+                filter.append(" AND ");
+            }
+            filter.append(entry.getKey());
+            filter.append("==");
+            filter.append(PARTITION_VALUE_QUOTE);
+            filter.append(entry.getValue());
+            filter.append(PARTITION_VALUE_QUOTE);
+        }
+        filter.append(")");
+        return filter.toString();
+    }
+
+    /**
+     * Get the partition as string for HCatStorer argument.
+     *
+     * @return filter string
+     */
+    public String toPartitionStringHCatStorer() {
+        StringBuilder filter = new StringBuilder();
+        filter.append("'");
+        for (Map.Entry<String, String> entry : partitions.entrySet()) {
+            if (filter.length() > 1) {
+                filter.append(",");
+            }
+            filter.append(entry.getKey());
+            filter.append("=");
+            filter.append(entry.getValue());
+        }
+        filter.append("'");
+        return filter.toString();
+    }
+
+    /**
+     * Convert the partition map to filter string. Each key value pair is
+     * separated by AND
+     *
+     * @return filter string
+     */
     public String toFilter() {
         StringBuilder filter = new StringBuilder();
         for (Map.Entry<String, String> entry : partitions.entrySet()) {

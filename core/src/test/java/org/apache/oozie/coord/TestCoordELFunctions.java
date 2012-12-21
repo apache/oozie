@@ -148,69 +148,6 @@ public class TestCoordELFunctions extends XTestCase {
         assertEquals("${coord:current(-3)}", CoordELFunctions.evalAndWrap(eval, expr));
     }
 
-    /**
-     * Test metaServer EL function (phase 1) which echo back the EL function itself
-     *
-     * @throws Exception
-     */
-    public void testMetaServerPh1() throws Exception {
-        init("coord-job-submit-data");
-        String expr = "${coord:metaServer('ABC')}";
-        // +ve test
-        eval.setVariable("oozie.dataname.ABC", "data-in");
-        assertEquals("${coord:metaServer('ABC')}", CoordELFunctions.evalAndWrap(eval, expr));
-        // -ve test
-        expr = "${coord:metaServer('ABCD')}";
-        try {
-            assertEquals("${coord:metaServer('ABCD')}", CoordELFunctions.evalAndWrap(eval, expr));
-            fail("should throw exception beacuse Data in is not defiend");
-        }
-        catch (Exception ex) {
-        }
-    }
-
-    /**
-     * Test metaDB EL function (phase 1) which echo back the EL function itself
-     *
-     * @throws Exception
-     */
-    public void testMetaDbPh1() throws Exception {
-        init("coord-job-submit-data");
-        String expr = "${coord:metaDb('ABC')}";
-        // +ve test
-        eval.setVariable("oozie.dataname.ABC", "data-in");
-        assertEquals("${coord:metaDb('ABC')}", CoordELFunctions.evalAndWrap(eval, expr));
-        // -ve test
-        expr = "${coord:metaDb('ABCD')}";
-        try {
-            assertEquals("${coord:metaDb('ABCD')}", CoordELFunctions.evalAndWrap(eval, expr));
-            fail("should throw exception beacuse Data in is not defiend");
-        }
-        catch (Exception ex) {
-        }
-    }
-
-    /**
-     * Test metaDB EL function (phase 1) which echo back the EL function itself
-     *
-     * @throws Exception
-     */
-    public void testMetaTablePh1() throws Exception {
-        init("coord-job-submit-data");
-        String expr = "${coord:metaTable('ABC')}";
-        // +ve test
-        eval.setVariable("oozie.dataname.ABC", "data-in");
-        assertEquals("${coord:metaTable('ABC')}", CoordELFunctions.evalAndWrap(eval, expr));
-        // -ve test
-        expr = "${coord:metaTable('ABCD')}";
-        try {
-            assertEquals("${coord:metaTable('ABCD')}", CoordELFunctions.evalAndWrap(eval, expr));
-            fail("should throw exception beacuse Data in is not defiend");
-        }
-        catch (Exception ex) {
-        }
-    }
-
     public void testDataNamesPh1() throws Exception {
         init("coord-job-submit-data");
         String expr = "${coord:dataIn('ABC')}";
@@ -966,45 +903,6 @@ public class TestCoordELFunctions extends XTestCase {
         assertEquals("2009-09-10T23:59Z", CoordELFunctions.evalAndWrap(eval, expr));
     }
 
-    /**
-     * Test metaServer EL function (phase 3) which returns the HCat server from URI
-     *
-     * @throws Exception
-     */
-    public void testMetaServer() throws Exception {
-        init("coord-action-start", "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12&region=us");
-        eval.setVariable(".datain.ABC", "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12&region=us");
-        eval.setVariable(".datain.ABC.unresolved", Boolean.FALSE);
-        String expr = "${coord:metaServer('ABC')}";
-        assertEquals("hcat://hcat.server.com:5080", CoordELFunctions.evalAndWrap(eval, expr));
-    }
-
-    /**
-     * Test metaDb EL function (phase 3) which returns the DB name from URI
-     *
-     * @throws Exception
-     */
-    public void testMetaDb() throws Exception {
-        init("coord-action-start", "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12&region=us");
-        eval.setVariable(".datain.ABC", "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12&region=us");
-        eval.setVariable(".datain.ABC.unresolved", Boolean.FALSE);
-        String expr = "${coord:metaDb('ABC')}";
-        assertEquals("mydb", CoordELFunctions.evalAndWrap(eval, expr));
-    }
-
-    /**
-     * Test metaTable EL function (phase 3) which returns the HCat table from URI
-     *
-     * @throws Exception
-     */
-    public void testMetaTable() throws Exception {
-        init("coord-action-start", "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12&region=us");
-        eval.setVariable(".datain.ABC", "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12&region=us");
-        eval.setVariable(".datain.ABC.unresolved", Boolean.FALSE);
-        String expr = "${coord:metaTable('ABC')}";
-        assertEquals("clicks", CoordELFunctions.evalAndWrap(eval, expr));
-    }
-
     public void testDataIn() throws Exception {
         init("coord-action-start");
         eval.setVariable(".datain.ABC", "file:///tmp/coord/US/2009/1/30,file:///tmp/coord/US/2009/1/31");
@@ -1015,14 +913,6 @@ public class TestCoordELFunctions extends XTestCase {
         eval.setVariable(".datain.ABC", "file:///tmp/coord/US/2009/1/30,file:///tmp/coord/US/2009/1/31");
         eval.setVariable(".datain.ABC.unresolved", Boolean.TRUE);
         assertEquals(expr, CoordELFunctions.evalAndWrap(eval, expr));
-
-        // HCat partition specific
-        eval.setVariable(".datain.ABC", "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12&region=us");
-        eval.setVariable(".datain.ABC.unresolved", Boolean.FALSE);
-        expr = "${coord:dataIn('ABC')}";
-        String res = CoordELFunctions.evalAndWrap(eval, expr);
-        assertTrue(res.equals("datastamp='12' AND region='us'") || res.equals("region='us' AND datastamp='12'"));
-
     }
 
     public void testDataOut() throws Exception {
@@ -1031,13 +921,6 @@ public class TestCoordELFunctions extends XTestCase {
         String expr = "${coord:dataOut('ABC')}";
         assertEquals("file:///tmp/coord/US/2009/1/30,file:///tmp/coord/US/2009/1/31",
                 CoordELFunctions.evalAndWrap(eval, expr));
-
-        // HCat partition specific
-        eval.setVariable(".dataout.ABC", "hcat://hcat.server.com:5080/mydb/clicks/datastamp=20120230&region=us");
-        eval.setVariable(".dataout.ABC.unresolved", Boolean.FALSE);
-        String res = CoordELFunctions.evalAndWrap(eval, expr);
-        assertTrue(res.equals("datastamp='20120230' AND region='us'")
-                || res.equals("region='us' AND datastamp='20120230'"));
     }
 
     public void testActionId() throws Exception {
