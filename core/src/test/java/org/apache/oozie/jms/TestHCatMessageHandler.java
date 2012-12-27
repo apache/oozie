@@ -91,7 +91,7 @@ public class TestHCatMessageHandler extends XDataTestCase {
 
         try {
             // Define partition dependency
-            String stringDep = "hcat://hcat.server.com:5080/mydb/mytbl/datastamp=12&region=us";
+            String stringDep = "hcat://hcat.server.com:5080/mydb/mytbl/datastamp=12;region=us";
             JMSAccessorService jmsService = services.get(JMSAccessorService.class);
             jmsService.getOrCreateConnection("hcat://hcat.server.com:5080");
             HCatURI dep = new HCatURI(stringDep);

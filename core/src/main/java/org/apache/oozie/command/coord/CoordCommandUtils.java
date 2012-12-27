@@ -55,7 +55,7 @@ public class CoordCommandUtils {
     public static int FUTURE = 2;
     public static int OFFSET = 3;
     public static int UNEXPECTED = -1;
-    public static final String RESOLVED_UNRESOLVED_SEPARATOR = ";";
+    public static final String RESOLVED_UNRESOLVED_SEPARATOR = "!!";
     public static final String UNRESOLVED_INST_TAG = "unresolved-instances";
 
     /**
@@ -576,7 +576,7 @@ public class CoordCommandUtils {
             }
             else {
                 resolved.append(missDepList.substring(0, index));
-                unresolved.append(missDepList.substring(index + 1));
+                unresolved.append(missDepList.substring(index + RESOLVED_UNRESOLVED_SEPARATOR.length()));
             }
         }
         return resolved.toString();

@@ -35,6 +35,7 @@ import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.util.PropertiesUtils;
 import org.apache.oozie.util.XConfiguration;
@@ -81,8 +82,8 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         classes.add(LauncherSecurityManager.class);
         classes.add(LauncherException.class);
         classes.add(LauncherMainException.class);
-        classes.add(FileSystemActions.class);
         classes.add(PrepareActionsDriver.class);
+        classes.addAll(Services.get().get(URIHandlerService.class).getURIHandlerClassesToShip());
         classes.add(ActionStats.class);
         classes.add(ActionType.class);
         classes.add(LauncherMain.class);

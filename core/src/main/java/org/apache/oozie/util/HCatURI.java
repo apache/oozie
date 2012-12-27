@@ -31,7 +31,7 @@ import org.apache.hadoop.conf.Configuration;
  */
 public class HCatURI {
 
-    public static final String PARTITION_SEPARATOR = "&";
+    public static final String PARTITION_SEPARATOR = ";";
     public static final String PARTITION_KEYVAL_SEPARATOR = "=";
     public static final String PATH_SEPARATOR = "/";
     public static final String PARTITION_VALUE_QUOTE = "'";

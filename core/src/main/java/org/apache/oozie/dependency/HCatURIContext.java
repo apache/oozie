@@ -33,4 +33,12 @@ public class HCatURIContext extends URIContext {
         return hcatClient;
     }
 
+    public void dispose() {
+        try {
+            hcatClient.close();
+        }
+        catch (Exception ignore) {
+        }
+    }
+
 }

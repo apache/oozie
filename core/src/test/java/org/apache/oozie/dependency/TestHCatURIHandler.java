@@ -19,6 +19,7 @@ package org.apache.oozie.dependency;
 
 import java.net.URI;
 
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.URIHandlerService;
@@ -27,7 +28,8 @@ import org.junit.Test;
 
 public class TestHCatURIHandler extends XHCatTestCase {
 
-    private URIHandlerService service;
+    private Services services;
+    private URIHandlerService uriService;
     private JobConf conf;
     private static final String db = "db1";
     private static final String table = "table1";
@@ -35,12 +37,17 @@ public class TestHCatURIHandler extends XHCatTestCase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        service = Services.get().get(URIHandlerService.class);
+        services = new Services();
+        services.getConf().set(URIHandlerService.URI_HANDLERS,
+                FSURIHandler.class.getName() + "," + HCatURIHandler.class.getName());
+        services.init();
         conf = createJobConf();
+        uriService = Services.get().get(URIHandlerService.class);
     }
 
     @Override
     protected void tearDown() throws Exception {
+        services.destroy();
         super.tearDown();
     }
 
@@ -48,7 +55,7 @@ public class TestHCatURIHandler extends XHCatTestCase {
         dropTable(db, table, true);
         dropDatabase(db, true);
         createDatabase(db);
-        createTable(db, table);
+        createTable(db, table, "year,month,dt,country");
     }
 
     private void dropTestTable() throws Exception {
@@ -60,23 +67,21 @@ public class TestHCatURIHandler extends XHCatTestCase {
     public void testExists() throws Exception {
         createTestTable();
 
-        String location = createPartitionDir(db, table, "year=2012&month=12&dt=02&region=us");
-        addPartition(db, table, "year=2012&month=12&dt=02&region=us", location);
+        addPartition(db, table, "year=2012;month=12;dt=02;country=us");
 
-        URI hcatURI = getHCatURI(db, table, "region=us&year=2012&month=12&dt=02");
-        URIHandler handler = service.getURIHandler(hcatURI);
+        URI hcatURI = getHCatURI(db, table, "country=us;year=2012;month=12;dt=02");
+        URIHandler handler = uriService.getURIHandler(hcatURI);
         assertTrue(handler.exists(hcatURI, conf, getTestUser()));
 
-        hcatURI = getHCatURI(db, table, "year=2012&month=12");
+        hcatURI = getHCatURI(db, table, "year=2012;month=12");
         assertTrue(handler.exists(hcatURI, conf, getTestUser()));
 
-        location = createPartitionDir(db, table, "year=2012&month=12&dt=03&region=us");
-        addPartition(db, table, "year=2012&month=12&dt=03&region=us", location);
+        addPartition(db, table, "year=2012;month=12;dt=03;country=us");
 
-        hcatURI = getHCatURI(db, table, "region=us&month=12");
+        hcatURI = getHCatURI(db, table, "country=us;month=12");
         assertTrue(handler.exists(hcatURI, conf, getTestUser()));
 
-        hcatURI = getHCatURI(db, table, "region=us");
+        hcatURI = getHCatURI(db, table, "country=us");
         assertTrue(handler.exists(hcatURI, conf, getTestUser()));
 
         hcatURI = getHCatURI(db, table, "dt=02");
@@ -85,68 +90,80 @@ public class TestHCatURIHandler extends XHCatTestCase {
         hcatURI = getHCatURI(db, table, "dt=05");
         assertFalse(handler.exists(hcatURI, conf, getTestUser()));
 
-        hcatURI = getHCatURI(db, table, "month=02&dt=02");
+        hcatURI = getHCatURI(db, table, "month=02;dt=02");
         assertFalse(handler.exists(hcatURI, conf, getTestUser()));
 
         dropTestTable();
     }
 
-    /* Uncomment after bug in hcat fixed
     @Test
     public void testDelete() throws Exception {
         createTestTable();
 
-        String location1 = getPartitionDir(db, table, "year=2012&month=12&dt=02&region=us");
-        String location2 = getPartitionDir(db, table, "year=2012&month=12&dt=03&region=us");
+        String location1 = getPartitionDir(db, table, "year=2012;month=12;dt=02;country=us");
+        String location2 = getPartitionDir(db, table, "year=2012;month=12;dt=03;country=us");
 
         createPartitionForTestDelete(true, true);
-        URI hcatURI = getHCatURI(db, table, "year=2012&month=12&dt=02&region=us");
-        URIHandler handler = service.getURIHandler(hcatURI);
+        URI hcatURI = getHCatURI(db, table, "year=2012;month=12;dt=02;country=us");
+        URIHandler handler = uriService.getURIHandler(hcatURI);
         assertTrue(handler.exists(hcatURI, conf, getTestUser()));
-        assertTrue(handler.delete(hcatURI, conf, getTestUser()));
+        handler.delete(hcatURI, conf, getTestUser());
         assertFalse(getFileSystem().exists(new Path(location1)));
+        assertTrue(getFileSystem().exists(new Path(location2)));
+        assertEquals(0, getPartitions(db, table, "year=2012;month=12;dt=02;country=us").size());
+        assertEquals(1, getPartitions(db, table, "year=2012;month=12;dt=03;country=us").size());
 
         createPartitionForTestDelete(true, false);
-        hcatURI = getHCatURI(db, table, "year=2012&month=12");
-        assertTrue(handler.delete(hcatURI, conf, getTestUser()));
+        hcatURI = getHCatURI(db, table, "year=2012;month=12");
+        handler.delete(hcatURI, conf, getTestUser());
         assertFalse(getFileSystem().exists(new Path(location1)));
         assertFalse(getFileSystem().exists(new Path(location2)));
+        assertEquals(0, getPartitions(db, table, "year=2012;month=12;dt=02;country=us").size());
+        assertEquals(0, getPartitions(db, table, "year=2012;month=12;dt=03;country=us").size());
 
         createPartitionForTestDelete(true, true);
-        hcatURI = getHCatURI(db, table, "month=12&region=us");
-        assertTrue(handler.delete(hcatURI, conf, getTestUser()));
+        hcatURI = getHCatURI(db, table, "month=12;country=us");
+        handler.delete(hcatURI, conf, getTestUser());
         assertFalse(getFileSystem().exists(new Path(location1)));
         assertFalse(getFileSystem().exists(new Path(location2)));
+        assertEquals(0, getPartitions(db, table, "year=2012;month=12;dt=02;country=us").size());
+        assertEquals(0, getPartitions(db, table, "year=2012;month=12;dt=03;country=us").size());
 
         createPartitionForTestDelete(true, true);
-        hcatURI = getHCatURI(db, table, "region=us");
-        assertTrue(handler.delete(hcatURI, conf, getTestUser()));
+        hcatURI = getHCatURI(db, table, "country=us");
+        handler.delete(hcatURI, conf, getTestUser());
         assertFalse(getFileSystem().exists(new Path(location1)));
         assertFalse(getFileSystem().exists(new Path(location2)));
+        assertEquals(0, getPartitions(db, table, "year=2012;month=12;dt=02;country=us").size());
+        assertEquals(0, getPartitions(db, table, "year=2012;month=12;dt=03;country=us").size());
 
         createPartitionForTestDelete(true, true);
         hcatURI = getHCatURI(db, table, "dt=03");
-        assertTrue(handler.delete(hcatURI, conf, getTestUser()));
+        handler.delete(hcatURI, conf, getTestUser());
+        assertTrue(getFileSystem().exists(new Path(location1)));
         assertFalse(getFileSystem().exists(new Path(location2)));
+        assertEquals(1, getPartitions(db, table, "year=2012;month=12;dt=02;country=us").size());
+        assertEquals(0, getPartitions(db, table, "year=2012;month=12;dt=03;country=us").size());
 
-        createPartitionForTestDelete(true, false);
+        createPartitionForTestDelete(false, true);
         hcatURI = getHCatURI(db, table, "dt=09");
-        assertFalse(handler.delete(hcatURI, conf, getTestUser()));
+        handler.delete(hcatURI, conf, getTestUser());
         assertTrue(getFileSystem().exists(new Path(location1)));
         assertTrue(getFileSystem().exists(new Path(location2)));
+        assertEquals(1, getPartitions(db, table, "year=2012;month=12;dt=02;country=us").size());
+        assertEquals(1, getPartitions(db, table, "year=2012;month=12;dt=03;country=us").size());
 
         dropTestTable();
     }
-    */
 
     private void createPartitionForTestDelete(boolean partition1, boolean partition2) throws Exception {
         if (partition1) {
-            String location = createPartitionDir(db, table, "year=2012&month=12&dt=03&region=us");
-            addPartition(db, table, "year=2012&month=12&dt=02&region=us", location);
+            String location = addPartition(db, table, "year=2012;month=12;dt=02;country=us");
+            assertTrue(getFileSystem().exists(new Path(location)));
         }
         if (partition2) {
-            String location = createPartitionDir(db, table, "year=2012&month=12&dt=03&region=us");
-            addPartition(db, table, "year=2012&month=12&dt=03&region=us", location);
+            String location = addPartition(db, table, "year=2012;month=12;dt=03;country=us");
+            assertTrue(getFileSystem().exists(new Path(location)));
         }
     }
 

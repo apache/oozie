@@ -60,6 +60,7 @@ import org.apache.oozie.service.ServiceException;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.store.StoreException;
+import org.apache.oozie.test.MiniHCatServer.RUNMODE;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
@@ -301,6 +302,10 @@ public abstract class XTestCase extends TestCase {
             Configuration conf = mrCluster.createJobConf();
             conf.writeXml(os);
             os.close();
+        }
+
+        if (System.getProperty("oozie.test.metastore.server", "true").equals("true")) {
+            setupHCatalogServer();;
         }
     }
 
@@ -599,6 +604,10 @@ public abstract class XTestCase extends TestCase {
                                   getOozieUser() + "/localhost") + "@" + getRealm();
     }
 
+    protected MiniHCatServer getHCatalogServer() {
+        return hcatServer;
+    }
+
     //TODO Fix this
     /**
      * Clean up database schema
@@ -682,6 +691,7 @@ public abstract class XTestCase extends TestCase {
 
     private static MiniDFSCluster dfsCluster = null;
     private static MiniMRCluster mrCluster = null;
+    private static MiniHCatServer hcatServer = null;
 
     private void setUpEmbeddedHadoop(String testCaseDir) throws Exception {
         if (dfsCluster == null && mrCluster == null) {
@@ -754,6 +764,14 @@ public abstract class XTestCase extends TestCase {
                 throw ex;
             }
             new MiniClusterShutdownMonitor().start();
+        }
+    }
+
+    private void setupHCatalogServer() throws Exception {
+        if (hcatServer == null) {
+            hcatServer = new MiniHCatServer(RUNMODE.SERVER, createJobConf());
+            hcatServer.start();
+            log.info("Metastore server started at " + hcatServer.getMetastoreURI());
         }
     }
 
@@ -861,8 +879,7 @@ public abstract class XTestCase extends TestCase {
         Configuration conf = services.getConf();
         conf.set(Services.CONF_SERVICE_EXT_CLASSES,
                 "org.apache.oozie.service.PartitionDependencyManagerService," +
-                "org.apache.oozie.service.JMSAccessorService," +
-                "org.apache.oozie.service.MetaDataAccessorService");
+                "org.apache.oozie.service.JMSAccessorService");
         conf.set(JMSAccessorService.JMS_CONNECTIONS_PROPERTIES,
                 "default=java.naming.factory.initial#" + ActiveMQConnFactory + ";" +
                 "java.naming.provider.url#" + localActiveMQBroker);

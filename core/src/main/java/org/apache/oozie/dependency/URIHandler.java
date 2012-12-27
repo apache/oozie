@@ -18,6 +18,7 @@
 package org.apache.oozie.dependency;
 
 import java.net.URI;
+import java.util.Collection;
 import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
@@ -26,7 +27,7 @@ import org.jdom.Element;
 
 public abstract class URIHandler {
 
-    public abstract void init(Configuration conf);
+    public abstract void init(Configuration conf, boolean isFrontEnd);
 
     /**
      * Get the list of uri schemes supported by this URIHandler
@@ -34,6 +35,11 @@ public abstract class URIHandler {
      * @return supported list of uri schemes
      */
     public abstract Set<String> getSupportedSchemes();
+
+    /** Get the list of dependent classes to ship to the hadoop launcher job for prepare actions
+     * @return dependent classes to ship to the hadoop job
+     */
+    public abstract Collection<Class<?>> getClassesToShip();
 
     /**
      * Get the type of dependency type of the URI. When the availability of the
@@ -73,7 +79,8 @@ public abstract class URIHandler {
      *
      * @param uri URI of the dependency
      * @param conf Configuration to access the URI
-     * @param user name of the user the URI should be accessed as
+     * @param user name of the user the URI should be accessed as. If null the
+     *        logged in user is used.
      *
      * @return <code>true</code> if the URI did not exist and was successfully
      *         created; <code>false</code> if the URI already existed
@@ -100,6 +107,8 @@ public abstract class URIHandler {
      *
      * @param uri URI of the dependency
      * @param conf Configuration to access the URI
+     * @param user name of the user the URI should be accessed as. If null the
+     *        logged in user is used.
      *
      * @return <code>true</code> if the URI exists; <code>false</code> if the
      *         URI does not exist
@@ -113,11 +122,11 @@ public abstract class URIHandler {
      *
      * @param uri URI of the dependency
      * @param conf Configuration to access the URI
-     * @param user name of the user the URI should be accessed as
+     * @param user name of the user the URI should be accessed as. If null the
+     *        logged in user is used.
      *
      * @return <code>true</code> if the URI exists and was successfully deleted;
      *         <code>false</code> if the URI does not exist
-     *
      * @throws URIAccessorException
      */
     public abstract boolean delete(URI uri, Configuration conf, String user) throws URIAccessorException;

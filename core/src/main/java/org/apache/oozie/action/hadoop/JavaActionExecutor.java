@@ -62,6 +62,7 @@ import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.servlet.CallbackServlet;
 import org.apache.oozie.util.ELEvaluator;
@@ -128,8 +129,8 @@ public class JavaActionExecutor extends ActionExecutor {
         classes.add(LauncherSecurityManager.class);
         classes.add(LauncherException.class);
         classes.add(LauncherMainException.class);
-        classes.add(FileSystemActions.class);
         classes.add(PrepareActionsDriver.class);
+        classes.addAll(Services.get().get(URIHandlerService.class).getURIHandlerClassesToShip());
         classes.add(ActionStats.class);
         classes.add(ActionType.class);
         return classes;
@@ -575,8 +576,7 @@ public class JavaActionExecutor extends ActionExecutor {
                     prepareXML);
 
             LauncherMapper.setupMainClass(launcherJobConf, getLauncherMain(launcherJobConf, actionXml));
-            LauncherMapper.setupSupportedFileSystems(
-                launcherJobConf, Services.get().getConf().get(HadoopAccessorService.SUPPORTED_FILESYSTEMS));
+            LauncherMapper.setupURIServiceConf(launcherJobConf);
             LauncherMapper.setupMaxOutputData(launcherJobConf, maxActionOutputLen);
             LauncherMapper.setupMaxExternalStatsSize(launcherJobConf, maxExternalStatsSize);
 

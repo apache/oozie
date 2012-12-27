@@ -335,6 +335,9 @@ public class CoordELFunctions {
                 checkedInstance++;
                 // DateUtils.moveToEnd(nominalInstanceCal, getDSEndOfFlag());
             }
+            if (uriContext != null) {
+                uriContext.dispose();
+            }
             if (!resolved) {
                 // return unchanged future function with variable 'is_resolved'
                 // to 'false'
@@ -1012,6 +1015,9 @@ public class CoordELFunctions {
                 instCount[0]--;
                 nominalInstanceCal.add(dsTimeUnit.getCalendarUnit(), instCount[0] * datasetFrequency);
                 // DateUtils.moveToEnd(nominalInstanceCal, getDSEndOfFlag());
+            }
+            if (uriContext != null) {
+                uriContext.dispose();
             }
             if (!resolved) {
                 // return unchanged latest function with variable 'is_resolved'

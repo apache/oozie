@@ -92,7 +92,6 @@
             org.apache.oozie.service.AuthorizationService,
             org.apache.oozie.service.UserGroupInformationService,
             org.apache.oozie.service.HadoopAccessorService,
-            org.apache.oozie.service.MetaDataAccessorService,
             org.apache.oozie.service.URIHandlerService,
             org.apache.oozie.service.MemoryLocksService,
             org.apache.oozie.service.DagXLogInfoService,

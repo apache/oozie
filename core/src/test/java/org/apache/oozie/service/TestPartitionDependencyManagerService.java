@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.oozie.ErrorCode;
 import org.apache.oozie.service.PartitionDependencyManagerService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
@@ -77,7 +76,7 @@ public class TestPartitionDependencyManagerService extends XDataTestCase {
     @Test
     public void testAddMissingPartition() throws MetadataServiceException, URISyntaxException {
         PartitionDependencyManagerService pdms = services.get(PartitionDependencyManagerService.class);
-        String newHCatDependency = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12&region=us";
+        String newHCatDependency = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12;region=us";
         JMSAccessorService jmsService = services.get(JMSAccessorService.class);
         jmsService.getOrCreateConnection("hcat://hcat.server.com:5080");
         String actionId = "myAction";
@@ -108,7 +107,7 @@ public class TestPartitionDependencyManagerService extends XDataTestCase {
     public void testRemovePartition() throws Exception {
         Services services = Services.get();
         PartitionDependencyManagerService pdms = services.get(PartitionDependencyManagerService.class);
-        String newHCatDependency = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12&region=us";
+        String newHCatDependency = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12;region=us";
         JMSAccessorService jmsService = services.get(JMSAccessorService.class);
         jmsService.getOrCreateConnection("hcat://hcat.server.com:5080");
         String actionId = "myAction";
@@ -144,7 +143,7 @@ public class TestPartitionDependencyManagerService extends XDataTestCase {
     public void testAvailablePartition() throws MetadataServiceException, URISyntaxException {
         Services services = Services.get();
         PartitionDependencyManagerService pdms = services.get(PartitionDependencyManagerService.class);
-        String newHCatDependency = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12&region=us";
+        String newHCatDependency = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12;region=us";
         JMSAccessorService jmsService = services.get(JMSAccessorService.class);
         jmsService.getOrCreateConnection("hcat://hcat.server.com:5080");
         String actionId = "myAction";
@@ -178,7 +177,7 @@ public class TestPartitionDependencyManagerService extends XDataTestCase {
         Services services = Services.get();
         PartitionDependencyManagerService pdms = services.get(PartitionDependencyManagerService.class);
         String newHCatDependency1 = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12";
-        String newHCatDependency2 = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12&region=us";
+        String newHCatDependency2 = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12;region=us";
         JMSAccessorService jmsService = services.get(JMSAccessorService.class);
         jmsService.getOrCreateConnection("hcat://hcat.server.com:5080");
         String actionId1 = "1";
@@ -211,8 +210,8 @@ public class TestPartitionDependencyManagerService extends XDataTestCase {
             Services services = Services.get();
             PartitionDependencyManagerService pdms = services.get(PartitionDependencyManagerService.class);
             String newHCatDependency1 = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12";
-            String newHCatDependency2 = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12&region=us";
-            String newHCatDependency3 = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=13&region=us";
+            String newHCatDependency2 = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12;region=us";
+            String newHCatDependency3 = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=13;region=us";
             String actionId1 = "1";
 
             HCatURI uri = new HCatURI(newHCatDependency1);

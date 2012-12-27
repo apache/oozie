@@ -219,7 +219,8 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
             fail("Action ID " + job.getId() + "@1" + " was not stored properly in db");
         }
 
-        assertEquals(";${coord:latestRange(-3,0)}", action.getMissingDependencies());
+        assertEquals(CoordCommandUtils.RESOLVED_UNRESOLVED_SEPARATOR + "${coord:latestRange(-3,0)}",
+                action.getMissingDependencies());
 
         String actionXML = action.getActionXml();
         String actionCreationTime = "2009-02-15T01:00" + TZ;
@@ -286,7 +287,8 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
             fail("Action ID " + job.getId() + "@1" + " was not stored properly in db");
         }
 
-        assertEquals(";${coord:latestRange(-3,0)}", action.getMissingDependencies());
+        assertEquals(CoordCommandUtils.RESOLVED_UNRESOLVED_SEPARATOR + "${coord:latestRange(-3,0)}",
+                action.getMissingDependencies());
 
         String actionXML = action.getActionXml();
         String actionCreationTime = "2009-02-15T01:00" + TZ;
@@ -357,7 +359,8 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
             fail("Action ID " + job.getId() + "@1" + " was not stored properly in db");
         }
 
-        assertEquals(";${coord:futureRange(0,3,'5')}", action.getMissingDependencies());
+        assertEquals(CoordCommandUtils.RESOLVED_UNRESOLVED_SEPARATOR + "${coord:futureRange(0,3,'5')}",
+                action.getMissingDependencies());
 
         createDir(getTestCaseDir() + "/2009/03/12/");
 

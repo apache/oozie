@@ -17,28 +17,31 @@
  */
 package org.apache.oozie.dependency;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashMap;
+import java.security.PrivilegedExceptionAction;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hcatalog.api.ConnectionFailureException;
 import org.apache.hcatalog.api.HCatClient;
 import org.apache.hcatalog.api.HCatPartition;
-import org.apache.hcatalog.api.HCatTable;
 import org.apache.hcatalog.common.HCatException;
-import org.apache.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.service.JMSAccessorService;
 import org.apache.oozie.service.MetaDataAccessorException;
-import org.apache.oozie.service.MetaDataAccessorService;
-import org.apache.oozie.service.MetadataServiceException;
-import org.apache.oozie.service.PartitionDependencyManagerService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.URIAccessorException;
+import org.apache.oozie.service.URIHandlerService;
+import org.apache.oozie.service.UserGroupInformationService;
 import org.apache.oozie.util.HCatURI;
 import org.apache.oozie.util.XLog;
 import org.jdom.Element;
@@ -46,20 +49,39 @@ import org.jdom.Element;
 public class HCatURIHandler extends URIHandler {
 
     private static XLog LOG = XLog.getLog(HCatURIHandler.class);
-    private MetaDataAccessorService service;
+    private boolean isFrontEnd;
+    private Set<String> supportedSchemes;
+    private UserGroupInformationService ugiService;
+    private List<Class<?>> classesToShip;
 
     public HCatURIHandler() {
-        service = Services.get().get(MetaDataAccessorService.class);
+        this.classesToShip = new ArrayList<Class<?>>();
+        classesToShip.add(HCatURIHandler.class);
+        classesToShip.add(HCatURIContext.class);
+        classesToShip.add(HCatURI.class);
+        classesToShip.add(MetaDataAccessorException.class);
+        classesToShip.add(UserGroupInformationService.class);
     }
 
     @Override
-    public void init(Configuration conf) {
-
+    public void init(Configuration conf, boolean isFrontEnd) {
+        this.isFrontEnd = isFrontEnd;
+        if (isFrontEnd) {
+            ugiService = Services.get().get(UserGroupInformationService.class);
+        }
+        supportedSchemes = new HashSet<String>();
+        String[] schemes = conf.getStrings(URIHandlerService.URI_HANDLER_SUPPORTED_SCHEMES_PREFIX
+                + this.getClass().getSimpleName() + URIHandlerService.URI_HANDLER_SUPPORTED_SCHEMES_SUFFIX, "hcat");
+        supportedSchemes.addAll(Arrays.asList(schemes));
     }
 
     @Override
     public Set<String> getSupportedSchemes() {
-        return service.getSupportedSchemes();
+        return supportedSchemes;
+    }
+
+    public Collection<Class<?>> getClassesToShip() {
+        return classesToShip;
     }
 
     @Override
@@ -76,7 +98,7 @@ public class HCatURIHandler extends URIHandler {
 
     @Override
     public URIContext getURIContext(URI uri, Configuration conf, String user) throws URIAccessorException {
-        HCatClient client = service.getHCatClient(uri, conf, user);
+        HCatClient client = getHCatClient(uri, conf, user);
         return new HCatURIContext(conf, user, client);
     }
 
@@ -89,19 +111,19 @@ public class HCatURIHandler extends URIHandler {
     @Override
     public boolean exists(URI uri, URIContext uriContext) throws URIAccessorException {
         HCatClient client = ((HCatURIContext) uriContext).getHCatClient();
-        return exists(uri, client);
+        return exists(uri, client, false);
     }
 
     @Override
     public boolean exists(URI uri, Configuration conf, String user) throws URIAccessorException {
-        HCatClient client = service.getHCatClient(uri, conf, user);
-        return exists(uri, client);
+        HCatClient client = getHCatClient(uri, conf, user);
+        return exists(uri, client, true);
     }
 
     @Override
     public boolean delete(URI uri, Configuration conf, String user) throws URIAccessorException {
-        HCatClient hCatClient = service.getHCatClient(uri, conf, user);
-        return delete(hCatClient, uri);
+        HCatClient hCatClient = getHCatClient(uri, conf, user);
+        return delete(hCatClient, uri, true);
     }
 
     @Override
@@ -130,11 +152,69 @@ public class HCatURIHandler extends URIHandler {
 
     }
 
-    private boolean exists(URI uri, HCatClient client) throws MetaDataAccessorException {
+    private HCatClient getHCatClient(URI uri, Configuration conf, String user) throws MetaDataAccessorException {
+        final HiveConf hiveConf = new HiveConf(conf, this.getClass());
+        String serverURI = getMetastoreConnectURI(uri);
+        if (!serverURI.equals("")) {
+            hiveConf.set(HiveConf.ConfVars.METASTORE_MODE.varname, "false");
+        }
+        hiveConf.set(HiveConf.ConfVars.METASTOREURIS.varname, serverURI);
+        HCatClient client = null;
+        try {
+            LOG.info("Creating HCatClient for user [{0}] login_user [{1}] and server [{2}] ", user,
+                    UserGroupInformation.getLoginUser(), serverURI);
+            if (isFrontEnd) {
+                if (user == null) {
+                    throw new MetaDataAccessorException(ErrorCode.E0902,
+                            "user has to be specified to access metastore server");
+                }
+                UserGroupInformation ugi = ugiService.getProxyUser(user);
+                client = ugi.doAs(new PrivilegedExceptionAction<HCatClient>() {
+                    public HCatClient run() throws Exception {
+                        return HCatClient.create(hiveConf);
+                    }
+                });
+            }
+            else {
+                if (user != null && !user.equals(UserGroupInformation.getLoginUser().getShortUserName())) {
+                    throw new MetaDataAccessorException(ErrorCode.E0902,
+                            "Cannot access metastore server as a different user in backend");
+                }
+                // Delegation token fetched from metastore has new Text() as service and HiveMetastoreClient
+                // looks for the same if not overriden by hive.metastore.token.signature
+                // We are good as long as HCatCredentialHelper does not change the service of the token.
+                client = HCatClient.create(hiveConf);
+            }
+        }
+        catch (HCatException e) {
+            throw new MetaDataAccessorException(ErrorCode.E1504, e);
+        }
+        catch (IOException e) {
+            throw new MetaDataAccessorException(ErrorCode.E1504, e);
+        }
+        catch (InterruptedException e) {
+            throw new MetaDataAccessorException(ErrorCode.E1504, e);
+        }
+
+        return client;
+    }
+
+    private String getMetastoreConnectURI(URI uri) {
+        // For unit tests
+        if (uri.getAuthority().equals("unittest-local")) {
+            return "";
+        }
+        // Hardcoding hcat to thrift mapping till support for webhcat(templeton)
+        // is added
+        String metastoreURI = "thrift://" + uri.getAuthority();
+        return metastoreURI;
+    }
+
+    private boolean exists(URI uri, HCatClient client, boolean closeClient) throws MetaDataAccessorException {
         try {
             HCatURI hcatURI = new HCatURI(uri.toString());
-            List<HCatPartition> partitions = client.listPartitionsByFilter(hcatURI.getDb(), hcatURI.getTable(),
-                    hcatURI.toFilter());
+            List<HCatPartition> partitions = client.getPartitions(hcatURI.getDb(), hcatURI.getTable(),
+                    hcatURI.getPartitionMap());
             if (partitions == null || partitions.isEmpty()) {
                 return false;
             }
@@ -149,35 +229,17 @@ public class HCatURIHandler extends URIHandler {
         catch (URISyntaxException e) {
             throw new MetaDataAccessorException(ErrorCode.E0902, e);
         }
+        finally {
+            closeQuietly(client, closeClient);
+        }
     }
 
-    private boolean delete(HCatClient client, URI uri) throws URIAccessorException {
+    private boolean delete(HCatClient client, URI uri, boolean closeClient) throws URIAccessorException {
         try {
             HCatURI hcatURI = new HCatURI(uri.toString());
-            List<HCatPartition> partitions = client.listPartitionsByFilter(hcatURI.getDb(), hcatURI.getTable(),
-                    hcatURI.toFilter());
-            if (partitions == null || partitions.isEmpty()) {
-                return false;
-            }
-            else {
-                // Only works if all partitions match. HCat team working on adding a dropPartitions API.
-                // client.dropPartition(hcatURI.getDb(), hcatURI.getTable(),hcatURI.getPartitionMap(), true);
-                // Tried an alternate way. But another bug. table.getPartCols() is empty.
-                // TODO: Change this code and enable tests after fix from hcat team.
-                HCatTable table = client.getTable(hcatURI.getDb(), hcatURI.getTable());
-                List<HCatFieldSchema> partCols = table.getPartCols();
-                Map<String, String> partKeyVals = new HashMap<String, String>();
-                for (HCatPartition partition : partitions) {
-                    List<String> partVals = partition.getValues();
-                    partKeyVals.clear();
-                    for (int i = 0; i < partCols.size(); i++) {
-                        partKeyVals.put(partCols.get(i).getName(), partVals.get(i));
-                    }
-                    client.dropPartition(hcatURI.getDb(), hcatURI.getTable(), partKeyVals, true);
-                }
-                LOG.info("Dropped partitions for " + uri);
-                return true;
-            }
+            client.dropPartitions(hcatURI.getDb(), hcatURI.getTable(), hcatURI.getPartitionMap(), true);
+            LOG.info("Dropped partitions for " + uri);
+            return true;
         }
         catch (ConnectionFailureException e) {
             throw new MetaDataAccessorException(ErrorCode.E1504, e);
@@ -187,6 +249,19 @@ public class HCatURIHandler extends URIHandler {
         }
         catch (URISyntaxException e) {
             throw new MetaDataAccessorException(ErrorCode.E0902, e);
+        }
+        finally {
+            closeQuietly(client, closeClient);
+        }
+    }
+
+    private void closeQuietly(HCatClient client, boolean close) {
+        if (close && client != null) {
+            try {
+                client.close();
+            }
+            catch (Exception ignore) {
+            }
         }
     }
 

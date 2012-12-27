@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,13 +43,15 @@ public class XLog implements Log {
         private static String template = "";
         private static List<String> parameterNames = new ArrayList<String>();
 
-        private static ThreadLocal<Info> tlLogInfo = new ThreadLocal<Info>() {
+        private static ThreadLocal<Info> tlLogInfo = new InfoThreadLocal();
+
+        private static class InfoThreadLocal extends ThreadLocal<Info> {
             @Override
             protected Info initialValue() {
                 return new Info();
             }
 
-        };
+        }
 
         /**
          * Define a <code>LogInfo</code> context parameter. <p/> The parameter name and its contextual value will be

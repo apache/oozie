@@ -29,7 +29,7 @@ public class TestHCatURI {
 
     @Test
     public void testHCatURIParseValidURI() {
-        String input = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12&region=us";
+        String input = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12;region=us";
         HCatURI uri = null;
         try {
             uri = new HCatURI(input);
@@ -47,7 +47,7 @@ public class TestHCatURI {
 
     @Test(expected = URISyntaxException.class)
     public void testHCatURIParseInvalidURI() throws Exception {
-        String input = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12&region=us/invalid";
+        String input = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12;region=us/invalid";
         new HCatURI(input);
     }
 
@@ -86,7 +86,7 @@ public class TestHCatURI {
         HCatURI uri2 = null;
         try {
             uri1 = new HCatURI(hcatUri);
-            uri2 = new HCatURI("hcat://hcat.server.com:5080/mydb/clicks/datastamp=12&region=us");
+            uri2 = new HCatURI("hcat://hcat.server.com:5080/mydb/clicks/datastamp=12;region=us");
         }
         catch (URISyntaxException e) {
             fail(e.getMessage());
@@ -100,9 +100,9 @@ public class TestHCatURI {
         HCatURI uri2 = null;
         HCatURI uri3 = null;
         try {
-            uri1 = new HCatURI("hcat://hcat.server.com:5080/mydb/clicks/datastamp=12&region=us&timestamp=1201");
-            uri2 = new HCatURI("hcat://hcat.server.com:5080/mydb/clicks/datastamp=12&region=us&timestamp=1201");
-            uri3 = new HCatURI("hcat://hcat.server.com:5080/mydb/clicks/region=us&timestamp=1201&datastamp=12");
+            uri1 = new HCatURI("hcat://hcat.server.com:5080/mydb/clicks/datastamp=12;region=us;timestamp=1201");
+            uri2 = new HCatURI("hcat://hcat.server.com:5080/mydb/clicks/datastamp=12;region=us;timestamp=1201");
+            uri3 = new HCatURI("hcat://hcat.server.com:5080/mydb/clicks/region=us;timestamp=1201;datastamp=12");
         }
         catch (URISyntaxException e) {
             fail(e.getMessage());
@@ -121,11 +121,11 @@ public class TestHCatURI {
         HCatURI uri4 = null;
         HCatURI uri5 = null;
         try {
-            uri1 = new HCatURI("hcat://hcat.server.com:5080/mydb/clicks/datastamp=12&region=us&timestamp=1201");
-            uri2 = new HCatURI("hcat://hcat.server.com:5080/mydb2/clicks/region=us&timestamp=1201&datastamp=12");
-            uri3 = new HCatURI("hcat://hcat.server.com:5080/mydb/clicks2/region=us&timestamp=1201&datastamp=12");
-            uri4 = new HCatURI("hcat://hcat.server.com:5080/mydb/clicks/region=uk&timestamp=1201&datastamp=12");
-            uri5 = new HCatURI("hcat://hcat.server.com:5080/mydb/clicks/region=us&timestamp=1201");
+            uri1 = new HCatURI("hcat://hcat.server.com:5080/mydb/clicks/datastamp=12;region=us;timestamp=1201");
+            uri2 = new HCatURI("hcat://hcat.server.com:5080/mydb2/clicks/region=us;timestamp=1201;datastamp=12");
+            uri3 = new HCatURI("hcat://hcat.server.com:5080/mydb/clicks2/region=us;timestamp=1201;datastamp=12");
+            uri4 = new HCatURI("hcat://hcat.server.com:5080/mydb/clicks/region=uk;timestamp=1201;datastamp=12");
+            uri5 = new HCatURI("hcat://hcat.server.com:5080/mydb/clicks/region=us;timestamp=1201");
         }
         catch (URISyntaxException e) {
             fail(e.getMessage());
@@ -142,7 +142,7 @@ public class TestHCatURI {
 
     @Test
     public void testToFilter() {
-        String hcatURI = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=20120230&region=us";
+        String hcatURI = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=20120230;region=us";
         String filter = "";
         try {
             filter = new HCatURI(hcatURI).toFilter();
@@ -150,7 +150,7 @@ public class TestHCatURI {
         catch (URISyntaxException e) {
             fail(e.getMessage());
         }
-        assertTrue(filter.equals("datastamp=='20120230' AND region=='us'")
-                || filter.equals("region=='us' AND datastamp=='20120230'"));
+        assertTrue(filter.equals("datastamp='20120230' AND region='us'")
+                || filter.equals("region='us' AND datastamp='20120230'"));
     }
 }

@@ -19,37 +19,68 @@ package org.apache.oozie.dependency;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.coord.CoordUtils;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.URIAccessorException;
+import org.apache.oozie.service.URIHandlerService;
+import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
 import org.jdom.Element;
 
 public class FSURIHandler extends URIHandler {
 
     private static XLog LOG = XLog.getLog(FSURIHandler.class);
+    private boolean isFrontEnd;
     private HadoopAccessorService service;
+    private Set<String> supportedSchemes;
+    private List<Class<?>> classesToShip;
 
     public FSURIHandler() {
-        service = Services.get().get(HadoopAccessorService.class);
+        this.classesToShip = new ArrayList<Class<?>>();
+        classesToShip.add(FSURIHandler.class);
+        classesToShip.add(FSURIContext.class);
+        classesToShip.add(HadoopAccessorService.class);
+        classesToShip.add(HadoopAccessorException.class);
+        classesToShip.add(XConfiguration.class); //Not sure why it fails in init with CNFE for this.
     }
 
     @Override
-    public void init(Configuration conf) {
-
+    public void init(Configuration conf, boolean isFrontEnd) {
+        this.isFrontEnd = isFrontEnd;
+        if (isFrontEnd) {
+            service = Services.get().get(HadoopAccessorService.class);
+            supportedSchemes = service.getSupportedSchemes();
+        }
+        if (supportedSchemes == null) {
+            supportedSchemes = new HashSet<String>();
+            String[] schemes = conf.getStrings(URIHandlerService.URI_HANDLER_SUPPORTED_SCHEMES_PREFIX
+                    + this.getClass().getSimpleName() + URIHandlerService.URI_HANDLER_SUPPORTED_SCHEMES_SUFFIX,
+                    HadoopAccessorService.DEFAULT_SUPPORTED_SCHEMES);
+            supportedSchemes.addAll(Arrays.asList(schemes));
+        }
     }
 
     @Override
     public Set<String> getSupportedSchemes() {
-        return service.getSupportedSchemes();
+        return supportedSchemes;
+    }
+
+    public Collection<Class<?>> getClassesToShip() {
+        return classesToShip;
     }
 
     @Override
@@ -129,8 +160,25 @@ public class FSURIHandler extends URIHandler {
     }
 
     private FileSystem getFileSystem(URI uri, Configuration conf, String user) throws HadoopAccessorException {
-        Configuration fsConf = service.createJobConf(uri.getAuthority());
-        return service.createFileSystem(user, uri, fsConf);
+        if (isFrontEnd) {
+            if (user == null) {
+                throw new HadoopAccessorException(ErrorCode.E0902, "user has to be specified to access FileSystem");
+            }
+            Configuration fsConf = service.createJobConf(uri.getAuthority());
+            return service.createFileSystem(user, uri, fsConf);
+        }
+        else {
+            try {
+                if (user != null && !user.equals(UserGroupInformation.getLoginUser().getShortUserName())) {
+                    throw new HadoopAccessorException(ErrorCode.E0902,
+                            "Cannot access FileSystem as a different user in backend");
+                }
+                return FileSystem.get(uri, conf);
+            }
+            catch (IOException e) {
+                throw new HadoopAccessorException(ErrorCode.E0902, e);
+            }
+        }
     }
 
     private boolean create(FileSystem fs, URI uri) throws URIAccessorException {

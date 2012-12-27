@@ -37,4 +37,7 @@ public abstract class URIContext {
         return user;
     }
 
+    public void dispose() {
+    }
+
 }

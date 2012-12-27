@@ -68,7 +68,7 @@ public class TestCoordActionUpdatePushMissingDependency extends XDataTestCase {
 
     @Test
     public void testUpdateCoordTableBasic() throws Exception {
-        String newHCatDependency = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12&region=us";
+        String newHCatDependency = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12;region=us";
 
         String actionId = addInitRecords(newHCatDependency);
         checkCoordAction(actionId, newHCatDependency, CoordinatorAction.Status.WAITING, 0);
@@ -95,8 +95,8 @@ public class TestCoordActionUpdatePushMissingDependency extends XDataTestCase {
 
     @Test
     public void testUpdateCoordTableAdvanced() throws Exception {
-        String newHCatDependency1 = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=11&region=us";
-        String newHCatDependency2 = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12&region=us";
+        String newHCatDependency1 = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=11;region=us";
+        String newHCatDependency2 = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12;region=us";
 
         String fullDeps = newHCatDependency1 + CoordELFunctions.INSTANCE_SEPARATOR + newHCatDependency2;
         String actionId = addInitRecords(fullDeps);

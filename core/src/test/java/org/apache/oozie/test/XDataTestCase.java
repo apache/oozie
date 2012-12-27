@@ -32,7 +32,6 @@ import java.util.regex.Matcher;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.CoordinatorActionBean;
@@ -81,7 +80,7 @@ import org.apache.oozie.workflow.lite.StartNodeDef;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 
-public abstract class XDataTestCase extends XFsTestCase {
+public abstract class XDataTestCase extends XHCatTestCase {
 
     protected static String slaXml = " <sla:info xmlns:sla='uri:oozie:sla:0.1'>" + " <sla:app-name>test-app</sla:app-name>"
             + " <sla:nominal-time>2009-03-06T10:00Z</sla:nominal-time>" + " <sla:should-start>5</sla:should-start>"
@@ -1268,14 +1267,6 @@ public abstract class XDataTestCase extends XFsTestCase {
         Calendar currentDate = Calendar.getInstance();
         currentDate.set(Calendar.MONTH, currentDate.get(Calendar.MONTH) + incrementMonth);
         return DateUtils.formatDateOozieTZ(currentDate);
-    }
-
-    protected void initializeLocalMetastoreConf() throws IOException {
-        setSystemProperty(HiveConf.ConfVars.METASTOREWAREHOUSE.varname, new File("target/warehouse").getAbsolutePath());
-        setSystemProperty(HiveConf.ConfVars.METASTORECONNECTURLKEY.varname, "jdbc:derby:target/metastore_db;create=true");
-        File derbyLogFile = new File("target/derby.log");
-        derbyLogFile.createNewFile();
-        setSystemProperty("derby.stream.error.file", derbyLogFile.getPath());
     }
 
 }
