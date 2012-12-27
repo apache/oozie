@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,6 +23,7 @@ import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.security.token.delegation.DelegationTokenIdentifier;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.token.Token;
 import org.apache.oozie.util.XLog;
 
@@ -52,7 +53,8 @@ public class HCatCredentialHelper {
             XLog.getLog(getClass()).debug(
                     "HCatCredentialHelper: set: User name for which token will be asked from HCat: "
                             + launcherJobConf.get(USER_NAME));
-            String tokenStrForm = client.getDelegationToken(launcherJobConf.get(USER_NAME));
+            String tokenStrForm = client.getDelegationToken(launcherJobConf.get(USER_NAME), UserGroupInformation
+                    .getLoginUser().getShortUserName());
             Token<DelegationTokenIdentifier> hcatToken = new Token<DelegationTokenIdentifier>();
             hcatToken.decodeFromUrlString(tokenStrForm);
             launcherJobConf.getCredentials().addToken(new Text("HCat Token"), hcatToken);
@@ -77,7 +79,7 @@ public class HCatCredentialHelper {
         hiveConf = new HiveConf();
         XLog.getLog(getClass()).debug("getHCatClient: Principal: " + principal + " Server: " + server);
         // specified a thrift url
-       
+
         hiveConf.set(HIVE_METASTORE_SASL_ENABLED, "true");
         hiveConf.set(HIVE_METASTORE_KERBEROS_PRINCIPAL, principal);
         hiveConf.set(HIVE_METASTORE_LOCAL, "false");
