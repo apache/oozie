@@ -978,10 +978,6 @@ public class OozieCLI {
             System.out.println(RULER);
 
             for (CoordinatorAction action : actions) {
-                String missingDep = action.getMissingDependencies();
-                if(missingDep != null && !missingDep.isEmpty()) {
-                    missingDep = missingDep.split(INSTANCE_SEPARATOR)[0];
-                }
                 System.out.println(maskIfNull(action.getId()) + VERBOSE_DELIMITER + action.getActionNumber()
                         + VERBOSE_DELIMITER + maskIfNull(action.getConsoleUrl()) + VERBOSE_DELIMITER
                         + maskIfNull(action.getErrorCode()) + VERBOSE_DELIMITER + maskIfNull(action.getErrorMessage())
@@ -991,7 +987,7 @@ public class OozieCLI {
                         + maskDate(action.getCreatedTime(), timeZoneId, verbose) + VERBOSE_DELIMITER
                         + maskDate(action.getNominalTime(), timeZoneId, verbose) + action.getStatus() + VERBOSE_DELIMITER
                         + maskDate(action.getLastModifiedTime(), timeZoneId, verbose) + VERBOSE_DELIMITER
-                        + maskIfNull(missingDep));
+                        + maskIfNull(getAllMissingDependencies(action)));
 
                 System.out.println(RULER);
             }
@@ -1053,11 +1049,7 @@ public class OozieCLI {
         System.out.println("Nominal Time         : " + maskDate(coordAction.getNominalTime(), timeZoneId, false));
         System.out.println("Status               : " + coordAction.getStatus());
         System.out.println("Last Modified        : " + maskDate(coordAction.getLastModifiedTime(), timeZoneId, false));
-        String missingDep = coordAction.getMissingDependencies();
-        if(missingDep != null && !missingDep.isEmpty()) {
-            missingDep = missingDep.split(INSTANCE_SEPARATOR)[0];
-        }
-        System.out.println("First Missing Dependency : " + maskIfNull(missingDep));
+        System.out.println("Missing Dependencies : " + maskIfNull(getAllMissingDependencies(coordAction)));
 
         System.out.println(RULER);
     }
@@ -1527,7 +1519,7 @@ public class OozieCLI {
                 Schema schema = factory.newSchema(sources.toArray(new StreamSource[sources.size()]));
                 Validator validator = schema.newValidator();
                 validator.validate(new StreamSource(new FileReader(file)));
-                System.out.println("Valid worflow-app");
+                System.out.println("Valid workflow-app");
             }
             catch (Exception ex) {
                 throw new OozieCLIException("Invalid workflow-app, " + ex.toString(), ex);
@@ -1627,4 +1619,23 @@ public class OozieCLI {
             throw new OozieCLIException(ex.toString(), ex);
         }
     }
+
+    private String getAllMissingDependencies(CoordinatorAction action) {
+        StringBuilder allDeps = new StringBuilder();
+        String missingDep = action.getMissingDependencies();
+        boolean depExists = false;
+        if (missingDep != null && !missingDep.isEmpty()) {
+            allDeps.append(missingDep.split(INSTANCE_SEPARATOR)[0]);
+            depExists = true;
+        }
+        String pushDeps = action.getPushMissingDependencies();
+        if (pushDeps != null && !pushDeps.isEmpty()) {
+            if(depExists) {
+                allDeps.append(INSTANCE_SEPARATOR);
+            }
+            allDeps.append(pushDeps);
+        }
+        return allDeps.toString();
+    }
+
 }
