@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@ import org.apache.oozie.test.XTestCase;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.io.Text;
 import org.apache.oozie.util.IOUtils;
 
 import java.io.File;
@@ -111,6 +112,16 @@ public class TestHadoopAccessorService extends XTestCase {
         }
         catch (Throwable ex) {
         }
+    }
+
+    public void testGetMRDelegationTokenRenewer() throws Exception {
+        JobConf jobConf = new JobConf();
+        assertEquals(new Text("oozie mr token"), HadoopAccessorService.getMRDelegationTokenRenewer(jobConf));
+        jobConf.set("mapreduce.jobtracker.kerberos.principal", "mapred/host.domain.com@KDC.DOMAIN.COM");
+        assertEquals(new Text("mapred"), HadoopAccessorService.getMRDelegationTokenRenewer(jobConf));
+        jobConf = new JobConf();
+        jobConf.set("yarn.resourcemanager.principal", "rm/host.domain.com@KDC.DOMAIN.COM");
+        assertEquals(new Text("rm"), HadoopAccessorService.getMRDelegationTokenRenewer(jobConf));
     }
 
 }

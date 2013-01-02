@@ -54,6 +54,8 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class HadoopAccessorService implements Service {
 
+    private static XLog LOG = XLog.getLog(HadoopAccessorService.class);
+
     public static final String CONF_PREFIX = Service.CONF_PREFIX + "HadoopAccessorService.";
     public static final String JOB_TRACKER_WHITELIST = CONF_PREFIX + "jobTracker.whitelist";
     public static final String NAME_NODE_WHITELIST = CONF_PREFIX + "nameNode.whitelist";
@@ -62,8 +64,14 @@ public class HadoopAccessorService implements Service {
     public static final String KERBEROS_AUTH_ENABLED = CONF_PREFIX + "kerberos.enabled";
     public static final String KERBEROS_KEYTAB = CONF_PREFIX + "keytab.file";
     public static final String KERBEROS_PRINCIPAL = CONF_PREFIX + "kerberos.principal";
+    public static final Text MR_TOKEN_ALIAS = new Text("oozie mr token");
 
     private static final String OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED = "oozie.HadoopAccessorService.created";
+    /** The Kerberos principal for the job tracker.*/
+    private static final String JT_PRINCIPAL = "mapreduce.jobtracker.kerberos.principal";
+    /** The Kerberos principal for the resource manager.*/
+    private static final String RM_PRINCIPAL = "yarn.resourcemanager.principal";
+    private static final Map<String, Text> mrTokenRenewers = new HashMap<String, Text>();
 
     private Set<String> jobTrackerWhitelist = new HashSet<String>();
     private Set<String> nameNodeWhitelist = new HashSet<String>();
@@ -360,8 +368,8 @@ public class HadoopAccessorService implements Service {
                     return new JobClient(conf);
                 }
             });
-            Token<DelegationTokenIdentifier> mrdt = jobClient.getDelegationToken(new Text("mr token"));
-            conf.getCredentials().addToken(new Text("mr token"), mrdt);
+            Token<DelegationTokenIdentifier> mrdt = jobClient.getDelegationToken(getMRDelegationTokenRenewer(conf));
+            conf.getCredentials().addToken(MR_TOKEN_ALIAS, mrdt);
             return jobClient;
         }
         catch (InterruptedException ex) {
@@ -445,6 +453,26 @@ public class HadoopAccessorService implements Service {
                 throw new HadoopAccessorException(error, uri);
             }
         }
+    }
+
+    public static Text getMRDelegationTokenRenewer(JobConf jobConf) {
+        // Getting renewer correctly for JT principal also though JT in hadoop 1.x does not have
+        // support for renewing/cancelling tokens
+        String servicePrincipal = jobConf.get(RM_PRINCIPAL, jobConf.get(JT_PRINCIPAL));
+        Text renewer;
+        if (servicePrincipal != null) { // secure cluster
+            renewer = mrTokenRenewers.get(servicePrincipal);
+            if (renewer == null) {
+                // Remove host and domain
+                renewer = new Text(servicePrincipal.split("[/@]")[0]);
+                LOG.info("Delegation Token Renewer for " + servicePrincipal + " is " + renewer);
+                mrTokenRenewers.put(servicePrincipal, renewer);
+            }
+        }
+        else {
+            renewer = MR_TOKEN_ALIAS; //Doesn't matter what we pass as renewer
+        }
+        return renewer;
     }
 
     public void addFileToClassPath(String user, final Path file, final Configuration conf)
