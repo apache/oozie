@@ -1,5 +1,6 @@
 -- Oozie 3.3.1 (unreleased)
 
+OOZIE-1151 HbaseCredentials doesn't use properties from the credentials module (virag)
 OOZIE-1148 Set the renewer correctly for JT/RM delegation tokens (rohini via virag)
 OOZIE-1147 HCatCredentialHelper uses the wrong API for getDelegationToken (rohini via virag)
 OOZIE-1149 Update 3.3 branch POM's to 3.3.1-SNAPSHOT (virag)

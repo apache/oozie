@@ -47,6 +47,8 @@ public class HbaseCredentials extends Credentials {
         try {
             // Create configuration using hbase-site.xml/hbase-default.xml
             Configuration hbaseConf = HBaseConfiguration.create();
+            // copy cred props to hbaseconf and override if values already exists
+            addPropsConf(props, hbaseConf);
             // copy conf from hbaseConf to jobConf without overriding the
             // already existing values of jobConf
             injectConf(hbaseConf, jobConf);
@@ -58,6 +60,12 @@ public class HbaseCredentials extends Credentials {
         catch (Exception e) {
             XLog.getLog(getClass()).warn("Exception in receiving hbase credentials", e);
             throw e;
+        }
+    }
+
+    private void addPropsConf(CredentialsProperties props, Configuration destConf) {
+        for (Map.Entry<String, String> entry : props.getProperties().entrySet()) {
+            destConf.set(entry.getKey(), entry.getValue());
         }
     }
 
