@@ -143,17 +143,17 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                 // pass jobID to the CoordActionReadyXCommand
                 queue(new CoordActionReadyXCommand(coordAction.getJobId()), 100);
             }
-            else {
-                long waitingTime = (currentTime.getTime() - Math.max(coordAction.getNominalTime().getTime(), coordAction
-                        .getCreatedTime().getTime()))
-                        / (60 * 1000);
-                int timeOut = coordAction.getTimeOut();
-                if ((timeOut >= 0) && (waitingTime > timeOut)) {
-                    queue(new CoordActionTimeOutXCommand(coordAction), 100);
+            else if (!isTimeout(currentTime)) {
+                if (status == false) {
+                    queue(new CoordActionInputCheckXCommand(coordAction.getId(), coordAction.getJobId()),
+                            getCoordInputCheckRequeueInterval());
                 }
                 else {
-                    queue(new CoordActionInputCheckXCommand(coordAction.getId(), coordAction.getJobId()), getCoordInputCheckRequeueInterval());
+                    queue(new CoordPushDependencyCheckXCommand(coordAction.getId()));
                 }
+            }
+            else {
+                queue(new CoordActionTimeOutXCommand(coordAction), 100);
             }
         }
         catch (Exception e) {
@@ -172,6 +172,18 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             }
         }
         return null;
+    }
+
+
+    private boolean isTimeout(Date currentTime) {
+        long waitingTime = (currentTime.getTime() - Math.max(coordAction.getNominalTime().getTime(), coordAction
+                .getCreatedTime().getTime()))
+                / (60 * 1000);
+        int timeOut = coordAction.getTimeOut();
+        if ((timeOut >= 0) && (waitingTime > timeOut)) {
+            return true;
+        }
+        return false;
     }
 
     /**

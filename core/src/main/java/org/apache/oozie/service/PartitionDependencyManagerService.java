@@ -146,6 +146,40 @@ public class PartitionDependencyManagerService implements Service {
     }
 
     /**
+     * Checks whether the tables exists in the Map or not
+     * @param hcatURI
+     * @return
+     * @throws MetadataServiceException
+     */
+    public boolean containsTable(String hcatURI) throws MetadataServiceException {
+        HCatURI uri;
+        try {
+            uri = new HCatURI(hcatURI);
+        }
+        catch (URISyntaxException e) {
+            throw new MetadataServiceException(ErrorCode.E1025, e.getMessage());
+        }
+        PartitionWrapper partition = new PartitionWrapper(uri.getServer(), uri.getDb(), uri.getTable(),
+                uri.getPartitionMap());
+        return containsTable(partition);
+
+    }
+
+    private boolean containsTable(PartitionWrapper partition) {
+        String prefix = PartitionWrapper.makePrefix(partition.getServerName(), partition.getDbName());
+        Map<String, PartitionsGroup> tablePartitionsMap;
+        String tableName = partition.getTableName();
+        if (hcatInstanceMap.containsKey(prefix)) {
+            tablePartitionsMap = hcatInstanceMap.get(prefix);
+            if (tablePartitionsMap.containsKey(tableName)) {
+                return true;
+            }
+        }
+        return false;
+
+    }
+
+    /**
      * Adding missing partition entry specified by PartitionWrapper object
      *
      * @param partition
@@ -445,8 +479,7 @@ public class PartitionDependencyManagerService implements Service {
         return containsPartition(partition);
     }
 
-
-    /**
+   /**
      * Determine if a partition entry exists in cache
      *
      * @param partition
@@ -474,7 +507,8 @@ public class PartitionDependencyManagerService implements Service {
         PartitionsGroup missingPartitions = tableMap.get(tableName);
         if (missingPartitions != null && missingPartitions.getPartitionsMap().containsKey(partition)) {
             actionsList = missingPartitions.getPartitionsMap().get(partition);
-            if (actionsList != null) {
+            // TODO - check whether set will be better than list
+            if (actionsList != null && !actionsList.getActions().contains(actionId)) {
                 // partition exists, therefore append action
                 actionsList.addAndUpdate(actionId);
             }

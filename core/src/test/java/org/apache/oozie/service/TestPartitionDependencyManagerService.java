@@ -199,8 +199,6 @@ public class TestPartitionDependencyManagerService extends XDataTestCase {
         assertFalse(actions.getActions().contains(actionId2));
     }
 
-
-
     /**
      * Test removal of partitions from Available map
      */
@@ -246,6 +244,27 @@ public class TestPartitionDependencyManagerService extends XDataTestCase {
             e.printStackTrace();
             fail("Unexpected exception " + e);
         }
+    }
+
+    /**
+     * Test table available from the Map
+     * @throws URISyntaxException
+     * @throws MetadataServiceException
+     */
+    @Test
+    public void testMapContainsTable() throws URISyntaxException, MetadataServiceException{
+        PartitionDependencyManagerService pdms = services.get(PartitionDependencyManagerService.class);
+        JMSAccessorService jmsService = services.get(JMSAccessorService.class);
+        jmsService.getOrCreateConnection("hcat://hcat.server.com:5080");
+        String newHCatDependency1 = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12";
+
+        // +ve test
+        pdms.addMissingPartition(newHCatDependency1, "1");
+        assertTrue(pdms.containsTable(newHCatDependency1));
+        // -ve test
+        pdms.removePartition(newHCatDependency1, true);
+        assertFalse(pdms.containsTable(newHCatDependency1));
+
     }
 
 

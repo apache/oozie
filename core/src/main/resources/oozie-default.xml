@@ -262,6 +262,15 @@
     </property>
 
     <property>
+        <name>oozie.service.RecoveryService.push.dependency.delay</name>
+        <value>60000</value>
+        <description>
+            This value determines the delay for push missing dependancy command
+            in Recovery Service
+        </description>
+    </property>
+
+    <property>
         <name>oozie.service.RecoveryService.interval</name>
         <value>60</value>
         <description>
@@ -392,6 +401,14 @@
 		</name>
 		<value>60000</value>
 		<description>Command re-queue interval for coordinator data input check (in millisecond).
+        </description>
+	</property>
+
+	<property>
+		<name>oozie.service.coord.push.check.requeue.interval
+		</name>
+		<value>600000</value>
+		<description>Command re-queue interval for push dependencies (in millisecond).
         </description>
 	</property>
 

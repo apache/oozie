@@ -321,7 +321,7 @@ public class JMSAccessorService implements Service {
             });
 
         }
-        catch (Exception e1){
+        catch (Exception e1) {
             LOG.error(e1.getMessage(), e1);
             if (conn != null) {
                 try {
@@ -331,6 +331,7 @@ public class JMSAccessorService implements Service {
                     LOG.error(e2.getMessage(), e2);
                 }
             }
+            throw new ServiceException(ErrorCode.E0100, getClass().getName(), e1.getMessage(), e1);
         }
         return conn;
     }

@@ -60,7 +60,7 @@ public class CoordActionsGetForRecoveryJPAExecutor implements JPAExecutor<List<C
             q.setParameter("lastModifiedTime", ts);
             List<Object[]> objectArrList = q.getResultList();
             for (Object[] arr : objectArrList) {
-                CoordinatorActionBean caa = getBeanForCoordinatorActionFromArray(arr);
+                CoordinatorActionBean caa = getBeanForCoordinatorActionFromArrayForRecovery(arr);
                 allActions.add(caa);
             }
 
@@ -68,7 +68,7 @@ public class CoordActionsGetForRecoveryJPAExecutor implements JPAExecutor<List<C
             q.setParameter("lastModifiedTime", ts);
             objectArrList = q.getResultList();
             for (Object[] arr : objectArrList) {
-                CoordinatorActionBean caa = getBeanForCoordinatorActionFromArray(arr);
+                CoordinatorActionBean caa = getBeanForCoordinatorActionFromArrayForWaiting(arr);
                 allActions.add(caa);
             }
 
@@ -79,7 +79,7 @@ public class CoordActionsGetForRecoveryJPAExecutor implements JPAExecutor<List<C
         }
     }
 
-    private CoordinatorActionBean getBeanForCoordinatorActionFromArray(Object[] arr) {
+    private CoordinatorActionBean getBeanForCoordinatorActionFromArrayForRecovery(Object[] arr) {
         CoordinatorActionBean bean = new CoordinatorActionBean();
         if (arr[0] != null) {
             bean.setId((String) arr[0]);
@@ -92,6 +92,27 @@ public class CoordActionsGetForRecoveryJPAExecutor implements JPAExecutor<List<C
         }
         if (arr[3] != null) {
             bean.setExternalId((String) arr[3]);
+        }
+        return bean;
+    }
+
+
+    private CoordinatorActionBean getBeanForCoordinatorActionFromArrayForWaiting(Object[] arr){
+        CoordinatorActionBean bean = new CoordinatorActionBean();
+        if (arr[0] != null) {
+            bean.setId((String) arr[0]);
+        }
+        if (arr[1] != null){
+            bean.setJobId((String) arr[1]);
+        }
+        if (arr[2] != null) {
+            bean.setStatus(CoordinatorAction.Status.valueOf((String) arr[2]));
+        }
+        if (arr[3] != null) {
+            bean.setExternalId((String) arr[3]);
+        }
+        if (arr[4] != null) {
+            bean.setPushMissingDependencies((String) arr[4]);
         }
         return bean;
     }

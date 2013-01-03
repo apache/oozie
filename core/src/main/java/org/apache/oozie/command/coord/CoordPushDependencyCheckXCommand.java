@@ -40,6 +40,7 @@ import org.apache.oozie.executor.jpa.CoordActionGetForInputCheckJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionUpdatePushInputCheckJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
+import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.URIAccessorException;
 import org.apache.oozie.service.URIHandlerService;
@@ -51,6 +52,18 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
     private String actionId;
     private JPAService jpaService = null;
     private CoordinatorActionBean coordAction = null;
+
+    /**
+     * Property name of command re-queue interval for coordinator push check in
+     * milliseconds.
+     */
+    public static final String CONF_COORD_PUSH_CHECK_REQUEUE_INTERVAL = Service.CONF_PREFIX
+            + "coord.push.check.requeue.interval";
+    /**
+     * Default re-queue interval in ms. It is applied when no value defined in
+     * the oozie configuration.
+     */
+    private final int DEFAULT_COMMAND_REQUEUE_INTERVAL = 600000;
 
     public CoordPushDependencyCheckXCommand(String actionId) {
         super("coord_push_dep_check", "coord_push_dep_check", 0);
@@ -79,7 +92,12 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
             pushDeps = StringUtils.join(missingDeps, CoordELFunctions.INSTANCE_SEPARATOR);
             coordAction.setPushMissingDependencies(pushDeps);
             // Checking for timeout
-            handleTimeout();
+            if (!isTimeout()) {
+                queue(new CoordPushDependencyCheckXCommand(coordAction.getId()), getCoordPushCheckRequeueInterval());
+            }
+            else {
+                queue(new CoordActionTimeOutXCommand(coordAction), 100);
+            }
         }
         else { // All push-based dependencies are available
             coordAction.setPushMissingDependencies("");
@@ -91,6 +109,16 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
         }
         updateCoordAction(coordAction);
         return null;
+    }
+
+    /**
+     * Return the re-queue interval for coord push dependency check
+     * @return
+     */
+    public long getCoordPushCheckRequeueInterval() {
+        long requeueInterval = Services.get().getConf().getLong(CONF_COORD_PUSH_CHECK_REQUEUE_INTERVAL,
+                DEFAULT_COMMAND_REQUEUE_INTERVAL);
+        return requeueInterval;
     }
 
     private List<String> getMissingDependencies(String[] dependencies, Configuration conf, String user)
@@ -127,14 +155,16 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
         }
     }
 
-    private void handleTimeout() {
+    // returns true if timeout command is queued
+    private boolean isTimeout() {
         long waitingTime = (new Date().getTime() - Math.max(coordAction.getNominalTime().getTime(), coordAction
                 .getCreatedTime().getTime()))
                 / (60 * 1000);
         int timeOut = coordAction.getTimeOut();
         if ((timeOut >= 0) && (waitingTime > timeOut)) {
-            queue(new CoordActionTimeOutXCommand(coordAction), 100);
+            return true;
         }
+        return false;
     }
 
     /*

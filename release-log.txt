@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1145 Modify Recovery Service to handle push missing dependencies (virag)
 OOZIE-1135 Display missing partition dependencies via job -info command on CLI (mona)
 OOZIE-1125 Prepare actions for hcat (rohini via virag)
 OOZIE-1123 EL Functions for hcatalog (mona)

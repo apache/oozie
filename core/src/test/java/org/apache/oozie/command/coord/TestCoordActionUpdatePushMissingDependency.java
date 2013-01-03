@@ -17,35 +17,24 @@
  */
 package org.apache.oozie.command.coord;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.util.Date;
 import java.util.List;
 import org.apache.oozie.CoordinatorActionBean;
-import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.client.CoordinatorAction;
-import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.coord.CoordELFunctions;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordActionInsertJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JMSAccessorService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.PartitionDependencyManagerService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
-import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.HCatURI;
-import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.PartitionWrapper;
-import org.apache.oozie.util.XLog;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 public class TestCoordActionUpdatePushMissingDependency extends XDataTestCase {
-    private String TZ;
     private Services services;
 
     @Before
@@ -56,8 +45,6 @@ public class TestCoordActionUpdatePushMissingDependency extends XDataTestCase {
         setSystemProperty(PartitionDependencyManagerService.MAP_MAX_WEIGHTED_CAPACITY, "100");
         services = super.setupServicesForHCatalog();
         services.init();
-        TZ = (getProcessingTZ().equals(DateUtils.OOZIE_PROCESSING_TIMEZONE_DEFAULT)) ? "Z" : getProcessingTZ()
-                .substring(3);
     }
 
     @After
@@ -157,71 +144,4 @@ public class TestCoordActionUpdatePushMissingDependency extends XDataTestCase {
         }
     }
 
-    private String addInitRecords(String pushMissingDependencies) throws Exception {
-        Date startTime = DateUtils.parseDateOozieTZ("2009-02-01T23:59" + TZ);
-        Date endTime = DateUtils.parseDateOozieTZ("2009-02-02T23:59" + TZ);
-        CoordinatorJobBean job = addRecordToCoordJobTableForWaiting("coord-job-for-action-input-check.xml",
-                CoordinatorJob.Status.RUNNING, startTime, endTime, false, true, 3);
-
-        CoordinatorActionBean action1 = addRecordToCoordActionTableForWaiting(job.getId(), 1,
-                CoordinatorAction.Status.WAITING, "coord-action-for-action-input-check.xml", pushMissingDependencies);
-        return action1.getId();
-    }
-
-    protected CoordinatorActionBean addRecordToCoordActionTableForWaiting(String jobId, int actionNum,
-            CoordinatorAction.Status status, String resourceXmlName, String pushMissingDependencies) throws Exception {
-        CoordinatorActionBean action = createCoordAction(jobId, actionNum, status, resourceXmlName, 0, TZ);
-        action.setPushMissingDependencies(pushMissingDependencies);
-        try {
-            JPAService jpaService = Services.get().get(JPAService.class);
-            assertNotNull(jpaService);
-            CoordActionInsertJPAExecutor coordActionInsertCmd = new CoordActionInsertJPAExecutor(action);
-            jpaService.execute(coordActionInsertCmd);
-        }
-        catch (JPAExecutorException je) {
-            je.printStackTrace();
-            fail("Unable to insert the test coord action record to table");
-            throw je;
-        }
-        return action;
-    }
-
-    protected CoordinatorJobBean addRecordToCoordJobTableForWaiting(String testFileName, CoordinatorJob.Status status,
-            Date start, Date end, boolean pending, boolean doneMatd, int lastActionNum) throws Exception {
-
-        String testDir = getTestCaseDir();
-        CoordinatorJobBean coordJob = createCoordJob(testFileName, status, start, end, pending, doneMatd, lastActionNum);
-        String appXml = getCoordJobXmlForWaiting(testFileName, testDir);
-        coordJob.setJobXml(appXml);
-
-        try {
-            JPAService jpaService = Services.get().get(JPAService.class);
-            assertNotNull(jpaService);
-            CoordJobInsertJPAExecutor coordInsertCmd = new CoordJobInsertJPAExecutor(coordJob);
-            jpaService.execute(coordInsertCmd);
-        }
-        catch (JPAExecutorException je) {
-            je.printStackTrace();
-            fail("Unable to insert the test coord job record to table");
-            throw je;
-        }
-
-        return coordJob;
-    }
-
-    protected String getCoordJobXmlForWaiting(String testFileName, String testDir) {
-        try {
-            Reader reader = IOUtils.getResourceAsReader(testFileName, -1);
-            String appXml = IOUtils.getReaderAsString(reader, -1);
-            appXml = appXml.replaceAll("#testDir", testDir);
-            return appXml;
-        }
-        catch (IOException ioe) {
-            throw new RuntimeException(XLog.format("Could not get " + testFileName, ioe));
-        }
-    }
-
-    protected String getProcessingTZ() {
-        return DateUtils.OOZIE_PROCESSING_TIMEZONE_DEFAULT;
-    }
 }
