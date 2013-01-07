@@ -398,12 +398,20 @@ public class JavaActionExecutor extends ActionExecutor {
                 if (systemLibPath != null) {
                     Path actionLibPath = new Path(systemLibPath, actionShareLibName);
                     String user = conf.get("user.name");
-                    FileSystem fs =
-                        Services.get().get(HadoopAccessorService.class).createFileSystem(user, appPath.toUri(), conf);
+                    FileSystem fs;
+                    // If the actionLibPath has a valid scheme and authority, then use them to determine the filesystem that the
+                    // sharelib resides on; otherwise, assume it resides on the same filesystem as the appPath and use the appPath
+                    // to determine the filesystem
+                    if (actionLibPath.toUri().getScheme() != null && actionLibPath.toUri().getAuthority() != null) {
+                        fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, actionLibPath.toUri(), conf);
+                    }
+                    else {
+                        fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, appPath.toUri(), conf);
+                    }
                     if (fs.exists(actionLibPath)) {
                         FileStatus[] files = fs.listStatus(actionLibPath);
                         for (FileStatus file : files) {
-                            addToCache(conf, appPath, file.getPath().toUri().getPath(), false);
+                            addToCache(conf, actionLibPath, file.getPath().toUri().getPath(), false);
                         }
                     }
                 }
@@ -495,7 +503,8 @@ public class JavaActionExecutor extends ActionExecutor {
         addShareLib(appPath, conf, JavaActionExecutor.OOZIE_COMMON_LIBDIR);
     }
 
-    private void addActionShareLib(Path appPath, Configuration conf, Context context, Element actionXml) throws ActionExecutorException {
+    private void addActionShareLib(Path appPath, Configuration conf, Context context, Element actionXml)
+            throws ActionExecutorException {
         XConfiguration wfJobConf = null;
         try {
             wfJobConf = new XConfiguration(new StringReader(context.getWorkflow().getConf()));

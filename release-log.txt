@@ -1,5 +1,8 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1144 OOZIE-1137 breaks the sharelib (rkanter)
+OOZIE-1035 Improve forkjoin validation to allow same errorTo transitions (rkanter)
+OOZIE-1137 In light of federation use actionLibPath instead of appPath (vaidya via rkanter)
 OOZIE-1102 Update Oozie README.txt to have the TLP mailing list and links (jaoki via rkanter)
 OOZIE-1103 Create example using AltKerberosAuthenticationHandler (rkanter)
 OOZIE-816 Add Support for Hadoop 1.1.1 (zhujinwei and harsh via harsh)
