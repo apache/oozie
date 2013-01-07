@@ -46,7 +46,6 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.AccessControlException;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
@@ -729,8 +728,9 @@ public class JavaActionExecutor extends ActionExecutor {
                 XLog.getLog(getClass()).debug("Submitting the job through Job Client for action " + action.getId());
 
                 // setting up propagation of the delegation token.
-                Token<DelegationTokenIdentifier> mrdt = jobClient.getDelegationToken(new Text(HadoopAccessorService.MR_DELEGATION_TOKEN));
-                launcherJobConf.getCredentials().addToken(new Text(HadoopAccessorService.MR_DELEGATION_TOKEN), mrdt);
+                Token<DelegationTokenIdentifier> mrdt = jobClient.getDelegationToken(HadoopAccessorService
+                        .getMRDelegationTokenRenewer(launcherJobConf));
+                launcherJobConf.getCredentials().addToken(HadoopAccessorService.MR_TOKEN_ALIAS, mrdt);
 
                 // insert credentials tokens to launcher job conf if needed
                 if (needInjectCredentials()) {

@@ -32,4 +32,23 @@ public class EndNodeDef extends ControlNodeDef {
         super(name, "", klass, Collections.EMPTY_LIST);
     }
 
+    public static class EndNodeHandler extends NodeHandler {
+
+        public boolean enter(Context context) {
+            return true;
+        }
+
+        public String exit(Context context) {
+            context.completeJob();
+            return null;
+        }
+
+        public void kill(Context context) {
+        }
+
+        public void fail(Context context) {
+        }
+
+    }
+
 }

@@ -67,8 +67,10 @@
         <oozie.test.config.file>${oozie.test.default.config.file}</oozie.test.config.file>
 
         <hadoop.version>1.1.1</hadoop.version>
+        <hbase.version>0.94.2</hbase.version>
 
         <hadooplib.version>${hadoop.version}.oozie-${project.version}</hadooplib.version>
+        <hbaselib.version>${hbase.version}.oozie-${project.version}</hbaselib.version>
 
         <clover.license>/home/jenkins/tools/clover/latest/lib/clover.license</clover.license>
         <!--
@@ -85,12 +87,15 @@
          <sqoop.version>1.5.0-incubating-SNAPSHOT</sqoop.version>
          <streaming.version>${hadoop.version}</streaming.version>
          <distcp.version>${hadooplib.version}</distcp.version>
-         <hbase.version>0.94.0</hbase.version>
+
+          <!-- Tomcat version -->
+          <tomcat.version>6.0.36</tomcat.version>
     </properties>
 
     <modules>
         <module>client</module>
         <module>hadooplibs</module>
+        <module>hbaselibs</module>
         <module>core</module>
         <module>tests</module>
         <module>webapp</module>
@@ -269,6 +274,12 @@
             <!-- core -->
             <dependency>
                 <groupId>org.apache.oozie</groupId>
+                <artifactId>oozie-hbase</artifactId>
+                <version>${hbaselib.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.oozie</groupId>
                 <artifactId>oozie-hadoop</artifactId>
                 <version>${hadooplib.version}</version>
             </dependency>
@@ -349,12 +360,6 @@
                 <groupId>org.apache.oozie</groupId>
                 <artifactId>oozie-hadoop-distcp</artifactId>
                 <version>${distcp.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.hbase</groupId>
-                <artifactId>hbase</artifactId>
-                <version>${hbase.version}</version>
             </dependency>
 
             <dependency>

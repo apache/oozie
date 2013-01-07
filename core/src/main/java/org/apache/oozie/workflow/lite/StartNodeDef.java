@@ -18,7 +18,9 @@
 package org.apache.oozie.workflow.lite;
 
 
+import org.apache.oozie.ErrorCode;
 import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.workflow.WorkflowException;
 
 import java.util.Arrays;
 
@@ -46,6 +48,29 @@ public class StartNodeDef extends ControlNodeDef {
      */
     public StartNodeDef(Class<? extends ControlNodeHandler> klass, String transitionTo) {
         super(START, "", klass, Arrays.asList(ParamChecker.notEmpty(transitionTo, "transitionTo")));
+    }
+
+    /**
+     * Start node handler. <p/> It does an immediate transition to the transitionTo node.
+     */
+    public static class StartNodeHandler extends NodeHandler {
+
+        public boolean enter(Context context) throws WorkflowException {
+            if (!context.getSignalValue().equals(StartNodeDef.START)) {
+                throw new WorkflowException(ErrorCode.E0715, context.getSignalValue());
+            }
+            return true;
+        }
+
+        public String exit(Context context) {
+            return context.getNodeDef().getTransitions().get(0);
+        }
+
+        public void kill(Context context) {
+        }
+
+        public void fail(Context context) {
+        }
     }
 
 }
