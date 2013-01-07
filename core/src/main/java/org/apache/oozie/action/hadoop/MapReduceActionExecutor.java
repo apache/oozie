@@ -195,7 +195,7 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
                             && (statsJsonString.getBytes().length <= getMaxExternalStatsSize())) {
                         context.setExecutionStats(statsJsonString);
                         log.debug(
-                                "Printing stats for Map-Reduce action as a JSON string : [{0}]" + statsJsonString);
+                                "Printing stats for Map-Reduce action as a JSON string : [{0}]", statsJsonString);
                     }
                 }
                 else {

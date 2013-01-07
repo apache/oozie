@@ -237,7 +237,7 @@ public abstract class Command<T, S extends Store> implements XCallable<T> {
             return result;
         }
         catch (XException ex) {
-            log.error(logMask | XLog.OPS, "XException, {0}", ex);
+            log.error(logMask | XLog.OPS, "XException, {0}", ex.getMessage(), ex);
             if (store != null) {
                 log.info(XLog.STD, "XException - connection logs from store {0}, {1}", store.getConnection(), store
                         .isClosed());
@@ -266,7 +266,7 @@ public abstract class Command<T, S extends Store> implements XCallable<T> {
             }
         }
         catch (Exception ex) {
-            log.error(logMask | XLog.OPS, "Exception, {0}", ex);
+            log.error(logMask | XLog.OPS, "Exception, {0}", ex.getMessage(), ex);
             exception = true;
             if (store != null && store.isActive()) {
                 try {
@@ -276,10 +276,10 @@ public abstract class Command<T, S extends Store> implements XCallable<T> {
                     log.warn(logMask | XLog.OPS, "openjpa error, {0}, {1}", name, rex.getMessage(), rex);
                 }
             }
-            throw new CommandException(ErrorCode.E0607, ex);
+            throw new CommandException(ErrorCode.E0607, name, ex.getMessage(), ex);
         }
         catch (Error er) {
-            log.error(logMask | XLog.OPS, "Error, {0}", er);
+            log.error(logMask | XLog.OPS, "Error, {0}", er.getMessage(), er);
             exception = true;
             if (store != null && store.isActive()) {
                 try {

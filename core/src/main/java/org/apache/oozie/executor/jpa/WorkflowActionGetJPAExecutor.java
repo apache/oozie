@@ -59,7 +59,7 @@ public class WorkflowActionGetJPAExecutor implements JPAExecutor<WorkflowActionB
             waBeans = q.getResultList();
         }
         catch (Exception e) {
-            throw new JPAExecutorException(ErrorCode.E0603, e);
+            throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
         }
         WorkflowActionBean bean = null;
         if (waBeans != null && waBeans.size() > 0) {

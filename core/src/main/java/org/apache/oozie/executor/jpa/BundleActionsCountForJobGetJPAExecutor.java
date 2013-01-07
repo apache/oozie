@@ -50,7 +50,7 @@ public class BundleActionsCountForJobGetJPAExecutor implements JPAExecutor<Integ
             return Integer.valueOf(count.intValue());
         }
         catch (Exception e) {
-            throw new JPAExecutorException(ErrorCode.E0603, e);
+            throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
         }
     }
 

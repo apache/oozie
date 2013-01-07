@@ -165,7 +165,7 @@ public abstract class SubmitHttpXCommand extends WorkflowXCommand<String> {
             throw new CommandException(ex);
         }
         catch (Exception ex) {
-            throw new CommandException(ErrorCode.E0803, ex);
+            throw new CommandException(ErrorCode.E0803, ex.getMessage(), ex);
         }
     }
 

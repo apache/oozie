@@ -24,6 +24,7 @@ import org.mortbay.jetty.servlet.Context;
 
 import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.util.Map;
 
 /**
  * An embedded servlet container for testing purposes. <p/> It provides reduced functionality, it supports only
@@ -56,9 +57,25 @@ public class EmbeddedServletContainer {
      * @param servletPath servlet path for the servlet, it should be prefixed with '/", it may contain a wild card at
      * the end.
      * @param servletClass servlet class
+     * @param initParams a mapping of init parameters for the servlet, or null
+     */
+    public void addServletEndpoint(String servletPath, Class servletClass, Map<String, String> initParams) {
+        ServletHolder s = new ServletHolder(servletClass);
+        context.addServlet(s, servletPath);
+        if (initParams != null) {
+            s.setInitParameters(initParams);
+        }
+    }
+
+    /**
+     * Add a servlet to the container.
+     *
+     * @param servletPath servlet path for the servlet, it should be prefixed with '/", it may contain a wild card at
+     * the end.
+     * @param servletClass servlet class
      */
     public void addServletEndpoint(String servletPath, Class servletClass) {
-        context.addServlet(new ServletHolder(servletClass), servletPath);
+        addServletEndpoint(servletPath, servletClass, null);
     }
 
     /**

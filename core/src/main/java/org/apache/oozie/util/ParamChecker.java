@@ -182,7 +182,7 @@ public class ParamChecker {
         }
         catch (NumberFormatException nex) {
             throw new IllegalArgumentException(XLog.format(
-                    "parameter [{0}] = [{1}]  must be an integer. Parsing error {2}", name, val, nex));
+                    "parameter [{0}] = [{1}]  must be an integer. Parsing error {2}", name, val, nex.getMessage(), nex));
         }
         return ret;
     }
@@ -223,7 +223,7 @@ public class ParamChecker {
         }
         catch (Exception ex) {
             throw new IllegalArgumentException(XLog.format("parameter [{0}] = [{1}] must be a valid TZ."
-                    + " Parsing error {2}", name, tzStr, ex));
+                    + " Parsing error {2}", name, tzStr, ex.getMessage(), ex));
         }
         return tz;
     }

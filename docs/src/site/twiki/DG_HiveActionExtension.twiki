@@ -118,10 +118,6 @@ expressions.
                     <name>mapred.compress.map.output</name>
                     <value>true</value>
                 </property>
-                <property>
-                    <name>oozie.hive.defaults</name>
-                    <value>/usr/foo/hive-0.6-default.xml</value>
-                </property>
             </configuration>
             <script>myscript.q</script>
             <param>InputDir=/home/tucu/input-data</param>
@@ -136,19 +132,8 @@ expressions.
 
 ---+++ Hive Default and Site Configuration Files
 
-All the properties defined in the =job-xml= and inline in the =configuration=
-element become the =hive-site.xml= that Hive will use.
-
-Hive (as of Hive 0.6) does not yet include a =hive-default.xml= file, it is the responsibility
-of the user to provide one. When using Oozie Hive action, the =hive-default.xml= file must be
-copied to HDFS and in the Hive action =configuration= section it must be set in the =oozie.hive.defaults=
-property. If a relative path is given, the path will be resolved within the workflow application
-directory.
-
-*NOTE:* When Hive starts bundling a =hive-default.xml= file within its JARs, Oozie will ignore
-the =hive-default.xml= file specified in the Hive action configuration.
-
-If a =hive-site.xml= file is not specified (or available in Hive JARs), the Oozie Hive action will fail.
+Hive (as of Hive 0.8) ignores a =hive-default.xml= file.  As a result, Oozie (as of Oozie 3.4) ignores the =oozie.hive.defaults=
+property that was previously required by earlier versions of Oozie for the Hive action.
 
 ---+++ Hive Action Logging
 

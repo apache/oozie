@@ -185,7 +185,7 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
         }
         catch (IOException ioe) {
             LOG.warn("Configuration parse error. read from DB :" + coordJob.getConf(), ioe);
-            throw new CommandException(ErrorCode.E1005, ioe);
+            throw new CommandException(ErrorCode.E1005, ioe.getMessage(), ioe);
         }
         String jobXml = coordJob.getJobXml();
         Element eJob = XmlUtils.parseXml(jobXml);
@@ -338,11 +338,11 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
         }
         catch (JDOMException jex) {
             isError = true;
-            throw new CommandException(ErrorCode.E0700, jex);
+            throw new CommandException(ErrorCode.E0700, jex.getMessage(), jex);
         }
         catch (Exception ex) {
             isError = true;
-            throw new CommandException(ErrorCode.E1018, ex);
+            throw new CommandException(ErrorCode.E1018, ex.getMessage(), ex);
         }
         finally{
             if(isError){

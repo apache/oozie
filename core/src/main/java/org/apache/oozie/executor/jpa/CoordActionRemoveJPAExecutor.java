@@ -52,7 +52,7 @@ public class CoordActionRemoveJPAExecutor implements JPAExecutor<Void> {
         try {
             actionsDeleted = g.executeUpdate();
         } catch (Exception e) {
-            throw new JPAExecutorException(ErrorCode.E0603, e);
+            throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
         }
 
         if (actionsDeleted == 0)

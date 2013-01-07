@@ -369,10 +369,10 @@ public class HadoopAccessorService implements Service {
             return jobClient;
         }
         catch (InterruptedException ex) {
-            throw new HadoopAccessorException(ErrorCode.E0902, ex);
+            throw new HadoopAccessorException(ErrorCode.E0902, ex.getMessage(), ex);
         }
         catch (IOException ex) {
-            throw new HadoopAccessorException(ErrorCode.E0902, ex);
+            throw new HadoopAccessorException(ErrorCode.E0902, ex.getMessage(), ex);
         }
     }
 
@@ -402,7 +402,7 @@ public class HadoopAccessorService implements Service {
                     nameNode = new URI(nameNode).getAuthority();
                 }
                 catch (URISyntaxException ex) {
-                    throw new HadoopAccessorException(ErrorCode.E0902, ex);
+                    throw new HadoopAccessorException(ErrorCode.E0902, ex.getMessage(), ex);
                 }
             }
         }
@@ -417,10 +417,10 @@ public class HadoopAccessorService implements Service {
             });
         }
         catch (InterruptedException ex) {
-            throw new HadoopAccessorException(ErrorCode.E0902, ex);
+            throw new HadoopAccessorException(ErrorCode.E0902, ex.getMessage(), ex);
         }
         catch (IOException ex) {
-            throw new HadoopAccessorException(ErrorCode.E0902, ex);
+            throw new HadoopAccessorException(ErrorCode.E0902, ex.getMessage(), ex);
         }
     }
 

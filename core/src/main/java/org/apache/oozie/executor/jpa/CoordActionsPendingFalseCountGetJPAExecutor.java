@@ -50,7 +50,7 @@ public class CoordActionsPendingFalseCountGetJPAExecutor implements JPAExecutor<
             return Integer.valueOf(count.intValue());
         }
         catch (Exception e) {
-            throw new JPAExecutorException(ErrorCode.E0603, e);
+            throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
         }
     }
 

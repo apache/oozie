@@ -68,7 +68,7 @@ public class CoordJobGetActionsForDatesJPAExecutor implements JPAExecutor<List<C
             return actionList;
         }
         catch (Exception e) {
-            throw new JPAExecutorException(ErrorCode.E0603, e);
+            throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
         }       
     }
 

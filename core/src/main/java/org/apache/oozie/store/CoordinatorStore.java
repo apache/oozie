@@ -437,7 +437,7 @@ public class CoordinatorStore extends Store {
             throw ex;
         }
         catch (SQLException ex) {
-            throw new StoreException(ErrorCode.E0603, name, ex.getMessage(), ex);
+            throw new StoreException(ErrorCode.E0611, name, ex.getMessage(), ex);
         }
         catch (Exception e) {
             throw new StoreException(ErrorCode.E0607, name, e.getMessage(), e);

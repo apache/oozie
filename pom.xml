@@ -66,7 +66,7 @@
         </oozie.test.default.config.file>
         <oozie.test.config.file>${oozie.test.default.config.file}</oozie.test.config.file>
 
-        <hadoop.version>1.0.1</hadoop.version>
+        <hadoop.version>1.1.1</hadoop.version>
 
         <hadooplib.version>${hadoop.version}.oozie-${project.version}</hadooplib.version>
 
@@ -789,6 +789,26 @@
                     <findbugsXmlWithMessages>true</findbugsXmlWithMessages>
                 </configuration>
             </plugin>
+
+            <!-- checkstyle plugin. Execute 'mvn verify' and look for checkstyle-result.xml under target folder -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>2.9.1</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <consoleOutput>true</consoleOutput>
+                            <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                            <configLocation>src/main/resources/checkstyle.xml</configLocation>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
@@ -960,6 +980,15 @@
                <hadoop.version>3.0.0-SNAPSHOT</hadoop.version>
                <hadoop.auth.version>3.0.0-SNAPSHOT</hadoop.auth.version>
             </properties>
+        </profile>
+        <profile>
+            <id>loginServerExample</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <modules>
+                <module>login</module>
+            </modules>
         </profile>
     </profiles>
 </project>

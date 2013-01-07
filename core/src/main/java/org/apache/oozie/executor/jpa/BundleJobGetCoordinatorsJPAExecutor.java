@@ -68,7 +68,7 @@ public class BundleJobGetCoordinatorsJPAExecutor implements JPAExecutor<List<Coo
             return coordJobBeans;
         }
         catch (Exception e) {
-            throw new JPAExecutorException(ErrorCode.E0603, e);
+            throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
         }
     }
 }

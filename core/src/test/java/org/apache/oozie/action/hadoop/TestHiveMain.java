@@ -111,10 +111,6 @@ public class TestHiveMain extends MainTestCase {
             assertTrue(classPathDir.exists());
             File hiveSite = new File(classPathDir, "hive-site.xml");
 
-            InputStream is = IOUtils.getResourceAsStream("user-hive-default.xml", -1);
-            os = new FileOutputStream(new File(classPathDir, "hive-default.xml"));
-            IOUtils.copyStream(is, os);
-
             File outputDataFile = new File(getTestCaseDir(), "outputdata.properties");
 
             setSystemProperty("oozie.launcher.job.id", "" + System.currentTimeMillis());

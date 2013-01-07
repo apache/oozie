@@ -67,17 +67,6 @@ public class SqoopActionExecutor extends JavaActionExecutor {
     }
 
     @Override
-    Configuration setupLauncherConf(Configuration conf, Element actionXml, Path appPath, Context context)
-            throws ActionExecutorException {
-        super.setupLauncherConf(conf, actionXml, appPath, context);
-
-        HiveActionExecutor hiveAE = new HiveActionExecutor();
-        hiveAE.setupHiveDefault(conf, appPath, actionXml);
-
-        return conf;
-    }
-
-    @Override
     @SuppressWarnings("unchecked")
     Configuration setupActionConf(Configuration actionConf, Context context, Element actionXml, Path appPath)
             throws ActionExecutorException {
@@ -179,7 +168,7 @@ public class SqoopActionExecutor extends JavaActionExecutor {
                             && (statsJsonString.getBytes().length <= getMaxExternalStatsSize())) {
                         context.setExecutionStats(statsJsonString);
                         log.debug(
-                          "Printing stats for sqoop action as a JSON string : [{0}]" + statsJsonString);
+                          "Printing stats for sqoop action as a JSON string : [{0}]", statsJsonString);
                     }
                 } else {
                     context.setVar(MapReduceActionExecutor.HADOOP_COUNTERS, "");

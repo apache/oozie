@@ -105,7 +105,8 @@ public class CoordActionTimeOutXCommand extends CoordinatorXCommand<Void> {
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
         if (actionBean.getStatus() != CoordinatorAction.Status.WAITING) {
-            throw new PreconditionException(ErrorCode.E1100);
+            throw new PreconditionException(ErrorCode.E1100, "The coord action must have status " + CoordinatorAction.Status.WAITING
+                    + " but has status [" + actionBean.getStatus() + "]");
         }
     }
 }

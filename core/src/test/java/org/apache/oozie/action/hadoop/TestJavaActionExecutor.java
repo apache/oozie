@@ -648,7 +648,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         Path rootArchive = new Path(root, "rootArchive.tar");
         getFileSystem().create(rootArchive).close();
 
-        String actionXml = "<map-reduce xmlns='uri:oozie:workflow:0.1'>" +
+        String actionXml = "<java>" +
                 "      <job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "      <name-node>" + getNameNodeUri() + "</name-node>" +
                 "      <main-class>CLASS</main-class>" +
@@ -662,7 +662,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
                 "      <file>" + rootSo1.toString() + "</file>\n" +
                 "      <archive>" + archive.toString() + "</archive>\n" +
                 "      <archive>" + rootArchive.toString() + "</archive>\n" +
-                "</map-reduce>";
+                "</java>";
 
         Element eActionXml = XmlUtils.parseXml(actionXml);
 

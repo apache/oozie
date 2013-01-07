@@ -220,7 +220,7 @@ public class SLADbOperations {
             return createSlaStatusEvent(id, stat, store, appType);
         }
         catch (Exception e) {
-            throw new CommandException(ErrorCode.E1007, " id " + id, e);
+            throw new CommandException(ErrorCode.E1007, " id " + id, e.getMessage(), e);
         }
     }
 
@@ -233,7 +233,7 @@ public class SLADbOperations {
             return createSlaStatusEvent(id, stat, appType, log);
         }
         catch (Exception e) {
-            throw new CommandException(ErrorCode.E1007, " id " + id, e);
+            throw new CommandException(ErrorCode.E1007, " id " + id, e.getMessage(), e);
         }
     }
 

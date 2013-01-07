@@ -397,6 +397,7 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         // Override the name node while list for testing purpose only.
         String[] whiteList = new String[1];
         whiteList[0] = "localhost:5330";
+        services.destroy();
         setSystemProperty(HadoopAccessorService.NAME_NODE_WHITELIST, whiteList[0]);
         services = new Services();
         services.init();

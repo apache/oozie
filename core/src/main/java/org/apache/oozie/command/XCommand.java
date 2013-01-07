@@ -314,7 +314,7 @@ public abstract class XCommand<T> implements XCallable<T> {
         catch (Exception ex) {
             LOG.error("Exception, ", ex);
             instrumentation.incr(INSTRUMENTATION_GROUP, getName() + ".exceptions", 1);
-            throw new CommandException(ErrorCode.E0607, ex);
+            throw new CommandException(ErrorCode.E0607, getName(), ex.getMessage(), ex);
         }
         finally {
             FaultInjection.deactivate("org.apache.oozie.command.SkipCommitFaultInjection");

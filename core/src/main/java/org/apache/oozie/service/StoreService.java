@@ -53,7 +53,7 @@ public class StoreService implements Service {
             }
         }
         // to do add checks for other stores - coordinator and SLA stores
-        throw new StoreException(ErrorCode.E0607, " can not get store StoreService.getStore(Class)");
+        throw new StoreException(ErrorCode.E0607, " can not get store StoreService.getStore(Class)", "");
     }
 
     /**
@@ -76,7 +76,7 @@ public class StoreService implements Service {
                 }
             }
         }
-        throw new StoreException(ErrorCode.E0607, " StoreService.getStore(Class, store)");
+        throw new StoreException(ErrorCode.E0607, " StoreService.getStore(Class, store)", "");
     }
 
     /**

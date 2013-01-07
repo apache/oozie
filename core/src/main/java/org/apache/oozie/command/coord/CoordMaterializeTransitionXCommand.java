@@ -282,7 +282,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         }
         catch (IOException ioe) {
             LOG.warn("Configuration parse error. read from DB :" + coordJob.getConf(), ioe);
-            throw new CommandException(ErrorCode.E1005, ioe);
+            throw new CommandException(ErrorCode.E1005, ioe.getMessage(), ioe);
         }
 
         String jobXml = coordJob.getJobXml();

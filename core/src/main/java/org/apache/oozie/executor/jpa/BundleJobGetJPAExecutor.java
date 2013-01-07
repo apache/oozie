@@ -59,7 +59,7 @@ public class BundleJobGetJPAExecutor implements JPAExecutor<BundleJobBean> {
             bdBeans = q.getResultList();
         }
         catch (Exception e) {
-            throw new JPAExecutorException(ErrorCode.E0603, e);
+            throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
         }
         BundleJobBean bean = null;
         if (bdBeans != null && bdBeans.size() > 0) {
