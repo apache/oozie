@@ -116,12 +116,21 @@ public class TestHadoopAccessorService extends XTestCase {
 
     public void testGetMRDelegationTokenRenewer() throws Exception {
         JobConf jobConf = new JobConf();
-        assertEquals(new Text("oozie mr token"), HadoopAccessorService.getMRDelegationTokenRenewer(jobConf));
-        jobConf.set("mapreduce.jobtracker.kerberos.principal", "mapred/host.domain.com@KDC.DOMAIN.COM");
-        assertEquals(new Text("mapred"), HadoopAccessorService.getMRDelegationTokenRenewer(jobConf));
+        assertEquals(new Text("oozie mr token"), HadoopAccessorService.getMRTokenRenewerInternal(jobConf));
+        jobConf.set("mapred.job.tracker", "localhost:50300");
+        jobConf.set("mapreduce.jobtracker.kerberos.principal", "mapred/_HOST@KDC.DOMAIN.COM");
+        assertEquals(new Text("mapred/localhost@KDC.DOMAIN.COM"),
+                HadoopAccessorService.getMRTokenRenewerInternal(jobConf));
         jobConf = new JobConf();
-        jobConf.set("yarn.resourcemanager.principal", "rm/host.domain.com@KDC.DOMAIN.COM");
-        assertEquals(new Text("rm"), HadoopAccessorService.getMRDelegationTokenRenewer(jobConf));
+        jobConf.set("mapreduce.jobtracker.address", "127.0.0.1:50300");
+        jobConf.set("mapreduce.jobtracker.kerberos.principal", "mapred/_HOST@KDC.DOMAIN.COM");
+        assertEquals(new Text("mapred/localhost@KDC.DOMAIN.COM"),
+                HadoopAccessorService.getMRTokenRenewerInternal(jobConf));
+        jobConf = new JobConf();
+        jobConf.set("yarn.resourcemanager.address", "localhost:8032");
+        jobConf.set("yarn.resourcemanager.principal", "rm/server.com@KDC.DOMAIN.COM");
+        assertEquals(new Text("rm/server.com@KDC.DOMAIN.COM"),
+                HadoopAccessorService.getMRTokenRenewerInternal(jobConf));
     }
 
 }
