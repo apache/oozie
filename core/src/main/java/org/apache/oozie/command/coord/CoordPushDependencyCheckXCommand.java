@@ -40,6 +40,7 @@ import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.coord.CoordELFunctions;
 import org.apache.oozie.dependency.URIHandler;
 import org.apache.oozie.executor.jpa.CoordActionGetForInputCheckJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionUpdateForModifiedTimeJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionUpdatePushInputCheckJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
@@ -80,6 +81,7 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
 
     @Override
     protected Void execute() throws CommandException {
+        boolean isChangeInDependency = false;
         String pushDeps = coordAction.getPushMissingDependencies();
         if (pushDeps == null || pushDeps.length() == 0) {
             LOG.info("Nothing to check. Empty push missing dependency");
@@ -101,7 +103,11 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
 
         if (missingDeps.size() > 0) {
             pushDeps = StringUtils.join(missingDeps, CoordELFunctions.INSTANCE_SEPARATOR);
-            coordAction.setPushMissingDependencies(pushDeps);
+            // only set the push missing deps if some of the deps are available
+            if (availableDepList.size() != 0) {
+                isChangeInDependency = true;
+                coordAction.setPushMissingDependencies(pushDeps);
+            }
             // Checking for timeout
             if (!isTimeout()) {
                 queue(new CoordPushDependencyCheckXCommand(coordAction.getId()),
@@ -112,6 +118,7 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
             }
         }
         else { // All push-based dependencies are available
+            isChangeInDependency = true;
             coordAction.setPushMissingDependencies("");
             if (coordAction.getMissingDependencies() == null || coordAction.getMissingDependencies().length() == 0) {
                 coordAction.setStatus(CoordinatorAction.Status.READY);
@@ -120,7 +127,7 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
             }
         }
 
-        updateCoordAction(coordAction, availableDepList);
+        updateCoordAction(coordAction, availableDepList, isChangeInDependency);
         return null;
     }
 
@@ -156,18 +163,25 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
         return missingDeps;
     }
 
-    private void updateCoordAction(CoordinatorActionBean coordAction2, List<String> availPartitionList) throws CommandException {
+    private void updateCoordAction(CoordinatorActionBean coordAction2, List<String> availPartitionList,
+            boolean isChangeInDependency) throws CommandException {
         coordAction.setLastModifiedTime(new Date());
         if (jpaService != null) {
             try {
-                jpaService.execute(new CoordActionUpdatePushInputCheckJPAExecutor(coordAction));
-                PartitionDependencyManagerService pdms = Services.get().get(PartitionDependencyManagerService.class);
-                if (pdms.removeAvailablePartitions(
-                        PartitionDependencyManagerService.createPartitionWrappers(availPartitionList), actionId)) {
-                    LOG.debug("Succesfully removed partitions for actionId: [{0}] from available Map ", actionId);
+                if (isChangeInDependency) {
+                    jpaService.execute(new CoordActionUpdatePushInputCheckJPAExecutor(coordAction));
+                    PartitionDependencyManagerService pdms = Services.get()
+                            .get(PartitionDependencyManagerService.class);
+                    if (pdms.removeAvailablePartitions(
+                            PartitionDependencyManagerService.createPartitionWrappers(availPartitionList), actionId)) {
+                        LOG.debug("Succesfully removed partitions for actionId: [{0}] from available Map ", actionId);
+                    }
+                    else {
+                        LOG.warn("Unable to remove partitions for actionId: [{0}] from available Map ", actionId);
+                    }
                 }
                 else {
-                    LOG.warn("Unable to remove partitions for actionId: [{0}] from available Map ", actionId);
+                    jpaService.execute(new CoordActionUpdateForModifiedTimeJPAExecutor(coordAction));
                 }
             }
             catch (JPAExecutorException jex) {

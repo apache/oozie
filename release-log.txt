@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1161 Remove unnecessary db updates for some of the blobs like missing_dependencies' of Coordinator Action(virag)
 OOZIE-1156 Make all the latest/future instances as pull dependences (virag)
 OOZIE-1144 OOZIE-1137 breaks the sharelib (rkanter)
 OOZIE-1035 Improve forkjoin validation to allow same errorTo transitions (rkanter)
