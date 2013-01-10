@@ -22,15 +22,18 @@ import java.io.StringReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorActionBean;
+import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
 import org.apache.oozie.client.CoordinatorAction;
+import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
@@ -38,20 +41,25 @@ import org.apache.oozie.coord.CoordELFunctions;
 import org.apache.oozie.dependency.URIHandler;
 import org.apache.oozie.executor.jpa.CoordActionGetForInputCheckJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionUpdatePushInputCheckJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
+import org.apache.oozie.service.MetadataServiceException;
+import org.apache.oozie.service.PartitionDependencyManagerService;
 import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.URIAccessorException;
 import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.util.StatusUtils;
 import org.apache.oozie.util.XConfiguration;
 
 public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> {
     private String actionId;
     private JPAService jpaService = null;
     private CoordinatorActionBean coordAction = null;
+    private CoordinatorJobBean coordJob = null;
 
     /**
      * Property name of command re-queue interval for coordinator push check in
@@ -88,12 +96,16 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
         }
         String user = ParamChecker.notEmpty(actionConf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
         List<String> missingDeps = getMissingDependencies(pushDepList, actionConf, user);
+        List<String> availableDepList = new ArrayList<String>(Arrays.asList(pushDepList));
+        availableDepList.removeAll(missingDeps);
+
         if (missingDeps.size() > 0) {
             pushDeps = StringUtils.join(missingDeps, CoordELFunctions.INSTANCE_SEPARATOR);
             coordAction.setPushMissingDependencies(pushDeps);
             // Checking for timeout
             if (!isTimeout()) {
-                queue(new CoordPushDependencyCheckXCommand(coordAction.getId()), getCoordPushCheckRequeueInterval());
+                queue(new CoordPushDependencyCheckXCommand(coordAction.getId()),
+                        getCoordPushCheckRequeueInterval());
             }
             else {
                 queue(new CoordActionTimeOutXCommand(coordAction), 100);
@@ -107,7 +119,8 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
                 queue(new CoordActionReadyXCommand(coordAction.getJobId()), 100);
             }
         }
-        updateCoordAction(coordAction);
+
+        updateCoordAction(coordAction, availableDepList);
         return null;
     }
 
@@ -143,14 +156,25 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
         return missingDeps;
     }
 
-    private void updateCoordAction(CoordinatorActionBean coordAction2) throws CommandException {
+    private void updateCoordAction(CoordinatorActionBean coordAction2, List<String> availPartitionList) throws CommandException {
         coordAction.setLastModifiedTime(new Date());
         if (jpaService != null) {
             try {
                 jpaService.execute(new CoordActionUpdatePushInputCheckJPAExecutor(coordAction));
+                PartitionDependencyManagerService pdms = Services.get().get(PartitionDependencyManagerService.class);
+                if (pdms.removeAvailablePartitions(
+                        PartitionDependencyManagerService.createPartitionWrappers(availPartitionList), actionId)) {
+                    LOG.debug("Succesfully removed partitions for actionId: [{0}] from available Map ", actionId);
+                }
+                else {
+                    LOG.warn("Unable to remove partitions for actionId: [{0}] from available Map ", actionId);
+                }
             }
             catch (JPAExecutorException jex) {
                 throw new CommandException(ErrorCode.E1023, jex.getMessage(), jex);
+            }
+            catch (MetadataServiceException e) {
+                throw new CommandException(ErrorCode.E0902, e.getMessage(), e);
             }
         }
     }
@@ -173,9 +197,8 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
      * @see org.apache.oozie.command.XCommand#getEntityKey()
      */
     @Override
-    // TODO - Check whether the entityKey should be JobId or actionId
     public String getEntityKey() {
-        return actionId;
+        return coordAction.getJobId();
     }
 
     /* (non-Javadoc)
@@ -196,18 +219,17 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
         return true;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.command.XCommand#loadState()
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.XCommand#eagerLoadState()
      */
     @Override
-    protected void loadState() throws CommandException {
+    protected void eagerLoadState() throws CommandException {
         try {
             jpaService = Services.get().get(JPAService.class);
 
             if (jpaService != null) {
                 coordAction = jpaService.execute(new CoordActionGetForInputCheckJPAExecutor(actionId));
+                coordJob = jpaService.execute(new CoordJobGetJPAExecutor(coordAction.getJobId()));
                 LogUtils.setLogInfo(coordAction, logInfo);
             }
             else {
@@ -219,6 +241,41 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
         }
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.XCommand#eagerVerifyPrecondition()
+     */
+    @Override
+    protected void eagerVerifyPrecondition() throws CommandException, PreconditionException {
+        if (coordAction.getStatus() != CoordinatorActionBean.Status.WAITING) {
+            throw new PreconditionException(ErrorCode.E1100, "[" + actionId
+                    + "]::CoordPushDependencyCheck:: Ignoring action. Should be in WAITING state, but state="
+                    + coordAction.getStatus());
+        }
+
+        // if eligible to do action input check when running with backward
+        // support is true
+        if (StatusUtils.getStatusForCoordActionInputCheck(coordJob)) {
+            return;
+        }
+
+        if (coordJob.getStatus() != Job.Status.RUNNING && coordJob.getStatus() != Job.Status.RUNNINGWITHERROR
+                && coordJob.getStatus() != Job.Status.PAUSED && coordJob.getStatus() != Job.Status.PAUSEDWITHERROR) {
+            throw new PreconditionException(ErrorCode.E1100, "[" + actionId
+                    + "]::CoordPushDependencyCheck:: Ignoring action."
+                    + " Coordinator job is not in RUNNING/RUNNINGWITHERROR/PAUSED/PAUSEDWITHERROR state, but state="
+                    + coordJob.getStatus());
+        }
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see org.apache.oozie.command.XCommand#loadState()
+     */
+    @Override
+    protected void loadState() throws CommandException {
+    }
+
     /*
      * (non-Javadoc)
      *
@@ -226,9 +283,6 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
      */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
-        if (coordAction.getStatus().equals(CoordinatorAction.Status.WAITING) == false) {
-            throw new PreconditionException(ErrorCode.E1100);
-        }
     }
 
 }

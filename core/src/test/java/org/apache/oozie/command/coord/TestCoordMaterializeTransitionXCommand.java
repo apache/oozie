@@ -22,9 +22,13 @@ import java.util.Date;
 import java.util.List;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
+import org.apache.oozie.ErrorCode;
 import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.CoordinatorJob.Timeunit;
+import org.apache.oozie.command.CommandException;
+import org.apache.oozie.dependency.FSURIHandler;
+import org.apache.oozie.dependency.HCatURIHandler;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetActionsJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
@@ -35,6 +39,7 @@ import org.apache.oozie.executor.jpa.SLAEventsGetForSeqIdJPAExecutor;
 import org.apache.oozie.local.LocalOozie;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
 
@@ -63,6 +68,48 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, false, false, 0);
         new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
         checkCoordAction(job.getId() + "@1");
+    }
+
+    public void testActionMaterForHcatalog() throws Exception {
+        services.destroy();
+        services = super.setupServicesForHCatalog();
+        services.getConf().set(URIHandlerService.URI_HANDLERS,
+                FSURIHandler.class.getName() + "," + HCatURIHandler.class.getName());
+        services.init();
+        Date startTime = DateUtils.parseDateOozieTZ("2009-03-06T010:00Z");
+        Date endTime = DateUtils.parseDateOozieTZ("2009-03-11T10:00Z");
+        CoordinatorJobBean job = addRecordToCoordJobTableForWaiting("coord-job-for-matd-hcat.xml",
+                CoordinatorJob.Status.RUNNING, startTime, endTime, false, false, 0);
+        new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
+        CoordinatorActionBean actionBean = getCoordAction(job.getId() + "@1");
+        assertEquals("file://dummyhdfs/2009/05/_SUCCESS" + CoordCommandUtils.RESOLVED_UNRESOLVED_SEPARATOR
+                + "${coord:latestRange(-1,0)}", actionBean.getMissingDependencies());
+
+        assertEquals("hcat://dummyhcat:1000/db/table/ds=2009-12", actionBean.getPushMissingDependencies());
+    }
+
+
+    public void testActionMaterForHcatalogIncorrectURI() throws Exception {
+        services.destroy();
+        services = super.setupServicesForHCatalog();
+        services.getConf().set(URIHandlerService.URI_HANDLERS,
+                FSURIHandler.class.getName() + "," + HCatURIHandler.class.getName());
+        services.init();
+        Date startTime = DateUtils.parseDateOozieTZ("2009-03-06T010:00Z");
+        Date endTime = DateUtils.parseDateOozieTZ("2009-03-11T10:00Z");
+        CoordinatorJobBean job = addRecordToCoordJobTableForWaiting("coord-job-for-matd-neg-hcat.xml",
+                CoordinatorJob.Status.RUNNING, startTime, endTime, false, false, 0);
+        try {
+            new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
+            fail("Expected Command exception but didn't catch any");
+        }
+        catch (CommandException e) {
+            e.printStackTrace();
+            assertEquals(ErrorCode.E1001, e.getErrorCode());
+        }
+        catch (Exception e) {
+            fail("Unexpected exception " + e.getMessage());
+        }
     }
 
     public void testActionMaterWithPauseTime1() throws Exception {
@@ -240,6 +287,13 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         return actionBean;
     }
 
+    private CoordinatorActionBean getCoordAction(String actionId) throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
+        CoordinatorActionBean actionBean;
+        actionBean = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
+        return actionBean;
+    }
+
     private CoordinatorJob.Status getStatus(String jobId){
         CoordinatorJob job = null;
         try {
@@ -283,5 +337,28 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
             se.printStackTrace();
             fail("Action ID " + actionId + " was not stored properly in db");
         }
+    }
+
+    private CoordinatorJobBean addRecordToCoordJobTableForWaiting(String testFileName, CoordinatorJob.Status status,
+            Date start, Date end, boolean pending, boolean doneMatd, int lastActionNum) throws Exception {
+
+        String testDir = getTestCaseDir();
+        CoordinatorJobBean coordJob = createCoordJob(testFileName, status, start, end, pending, doneMatd, lastActionNum);
+        String appXml = getCoordJobXmlForWaiting(testFileName, testDir);
+        coordJob.setJobXml(appXml);
+
+        try {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            assertNotNull(jpaService);
+            CoordJobInsertJPAExecutor coordInsertCmd = new CoordJobInsertJPAExecutor(coordJob);
+            jpaService.execute(coordInsertCmd);
+        }
+        catch (JPAExecutorException je) {
+            je.printStackTrace();
+            fail("Unable to insert the test coord job record to table");
+            throw je;
+        }
+
+        return coordJob;
     }
 }

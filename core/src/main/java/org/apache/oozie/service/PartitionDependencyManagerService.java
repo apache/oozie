@@ -18,6 +18,7 @@
 package org.apache.oozie.service;
 
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -31,6 +32,7 @@ import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.coord.CoordActionUpdatePushMissingDependency;
 import org.apache.oozie.jms.HCatMessageHandler;
 import org.apache.oozie.jms.MessageReceiver;
@@ -587,6 +589,19 @@ public class PartitionDependencyManagerService implements Service {
                             + "Most possibly command queue is full. Queue size is :"
                             + Services.get().get(CallableQueueService.class).queueSize());
         }
+    }
+
+    public static List<PartitionWrapper> createPartitionWrappers(List<String> partitions) throws CommandException {
+        List<PartitionWrapper> ret = new ArrayList<PartitionWrapper>();
+        for (String partURI : partitions) {
+            try {
+                ret.add(new PartitionWrapper(partURI));
+            }
+            catch (URISyntaxException e) {
+                throw new CommandException(ErrorCode.E1025, e);
+            }
+        }
+        return ret;
     }
 
 }

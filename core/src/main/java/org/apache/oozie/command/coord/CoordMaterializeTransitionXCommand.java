@@ -112,8 +112,10 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
             for (JsonBean actionBean : insertList) {
                 if (actionBean instanceof CoordinatorActionBean) {
                     CoordinatorActionBean coordAction = (CoordinatorActionBean) actionBean;
-                    CoordCommandUtils.registerPartition(coordAction);
-                    queue(new CoordPushDependencyCheckXCommand(coordAction.getId()));
+                    if (coordAction.getPushMissingDependencies() != null) {
+                        CoordCommandUtils.registerPartition(coordAction);
+                        queue(new CoordPushDependencyCheckXCommand(coordAction.getId()));
+                    }
                 }
             }
         }

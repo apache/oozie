@@ -6,14 +6,17 @@ import java.util.Date;
 import java.util.List;
 
 import org.apache.oozie.CoordinatorActionBean;
+import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
 import org.apache.oozie.client.CoordinatorAction;
+import org.apache.oozie.client.Job;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.coord.CoordELFunctions;
 import org.apache.oozie.executor.jpa.CoordActionGetForInputCheckJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionUpdatePushInputCheckJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.MetadataServiceException;
@@ -21,12 +24,14 @@ import org.apache.oozie.service.PartitionDependencyManagerService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.PartitionWrapper;
+import org.apache.oozie.util.StatusUtils;
 
 public class CoordActionUpdatePushMissingDependency extends CoordinatorXCommand<Void> {
 
     private String actionId;
     private JPAService jpaService = null;
     private CoordinatorActionBean coordAction = null;
+    private CoordinatorJobBean coordJob = null;
 
     public CoordActionUpdatePushMissingDependency(String actionId) {
         super("coord_action_push_md", "coord_action_push_md", 0);
@@ -158,12 +163,16 @@ public class CoordActionUpdatePushMissingDependency extends CoordinatorXCommand<
         return getName() + "_" + actionId;
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.XCommand#eagerLoadState()
+     */
     @Override
-    protected void loadState() throws CommandException {
+    protected void eagerLoadState() throws CommandException {
         try {
             jpaService = Services.get().get(JPAService.class);
             if (jpaService != null) {
                 coordAction = jpaService.execute(new CoordActionGetForInputCheckJPAExecutor(actionId));
+                coordJob = jpaService.execute(new CoordJobGetJPAExecutor(coordAction.getJobId()));
                 LogUtils.setLogInfo(coordAction, logInfo);
             }
             else {
@@ -176,14 +185,47 @@ public class CoordActionUpdatePushMissingDependency extends CoordinatorXCommand<
 
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.oozie.command.XCommand#eagerVerifyPrecondition()
+     */
     @Override
-    protected void verifyPrecondition() throws CommandException, PreconditionException {
+    protected void eagerVerifyPrecondition() throws CommandException, PreconditionException {
         if (coordAction.getStatus() != CoordinatorActionBean.Status.WAITING) {
             throw new PreconditionException(ErrorCode.E1100, "[" + actionId
-                    + "]::CoordActionInputCheck:: Ignoring action. Should be in WAITING state, but state="
+                    + "]::CoordActionUpdatePushDependency:: Ignoring action. Should be in WAITING state, but state="
                     + coordAction.getStatus());
         }
-        // TODO: check the parent coordinator job?
+        // if eligible to do action input check when running with backward
+        // support is true
+        if (StatusUtils.getStatusForCoordActionInputCheck(coordJob)) {
+            return;
+        }
+
+        if (coordJob.getStatus() != Job.Status.RUNNING && coordJob.getStatus() != Job.Status.RUNNINGWITHERROR
+                && coordJob.getStatus() != Job.Status.PAUSED && coordJob.getStatus() != Job.Status.PAUSEDWITHERROR) {
+            throw new PreconditionException(ErrorCode.E1100, "[" + actionId
+                    + "]::CoordActionUpdatePushDependency:: Ignoring action."
+                    + " Coordinator job is not in RUNNING/RUNNINGWITHERROR/PAUSED/PAUSEDWITHERROR state, but state="
+                    + coordJob.getStatus());
+        }
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see org.apache.oozie.command.XCommand#loadState()
+     */
+    @Override
+    protected void loadState() throws CommandException {
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see org.apache.oozie.command.XCommand#verifyPrecondition()
+     */
+    @Override
+    protected void verifyPrecondition() throws CommandException, PreconditionException {
     }
 
 }

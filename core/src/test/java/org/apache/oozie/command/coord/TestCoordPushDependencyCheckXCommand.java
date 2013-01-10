@@ -29,6 +29,7 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.PartitionWrapper;
+import org.apache.hadoop.conf.Configuration;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -41,8 +42,10 @@ public class TestCoordPushDependencyCheckXCommand extends XDataTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         services = new Services();
-        services.getConf().set(URIHandlerService.URI_HANDLERS,
+        Configuration conf = services.getConf();
+        conf.set(URIHandlerService.URI_HANDLERS,
                 FSURIHandler.class.getName() + "," + HCatURIHandler.class.getName());
+        conf.set(Services.CONF_SERVICE_EXT_CLASSES, "org.apache.oozie.service.PartitionDependencyManagerService");
         services.init();
         server = getMetastoreAuthority();
     }
@@ -138,7 +141,7 @@ public class TestCoordPushDependencyCheckXCommand extends XDataTestCase {
                 assertEquals(new PartitionWrapper(missDeps), new PartitionWrapper(expDeps));
             }
             else {
-                assertEquals(missDeps, expDeps);
+                assertEquals(expDeps, missDeps);
             }
             assertEquals(action.getStatus(), stat);
 

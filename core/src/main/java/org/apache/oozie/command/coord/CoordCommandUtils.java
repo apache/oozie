@@ -286,11 +286,11 @@ public class CoordCommandUtils {
      * @param instances
      * @throws Exception
      */
-    public static StringBuffer separateResolvedAndUnresolved(Element event, StringBuilder instances)
+    public static StringBuilder separateResolvedAndUnresolved(Element event, StringBuilder instances)
             throws Exception {
         StringBuilder unresolvedInstances = new StringBuilder();
         StringBuilder urisWithDoneFlag = new StringBuilder();
-        StringBuffer depList = new StringBuffer();
+        StringBuilder depList = new StringBuilder();
         String uris = createEarlyURIs(event, instances.toString(), unresolvedInstances, urisWithDoneFlag);
         if (uris.length() > 0) {
             Element uriInstance = new Element("uris", event.getNamespace());
@@ -426,28 +426,20 @@ public class CoordCommandUtils {
         appInst.setTimeZone(DateUtils.getTimeZone(eAction.getAttributeValue("timezone")));
         appInst.setEndOfDuration(TimeUnit.valueOf(eAction.getAttributeValue("end_of_duration")));
 
-        HashMap<String, StringBuffer> dependencyList = new HashMap<String, StringBuffer>();
-        StringBuffer pushDepsList = new StringBuffer();
-        StringBuffer pullDepsList = new StringBuffer();
-        dependencyList.put("push", pushDepsList);
-        dependencyList.put("pull", pullDepsList);
+        Map<String, StringBuilder> dependencyMap = new HashMap<String, StringBuilder>();
 
         Element inputList = eAction.getChild("input-events", eAction.getNamespace());
         List<Element> dataInList = null;
         if (inputList != null) {
             dataInList = inputList.getChildren("data-in", eAction.getNamespace());
-            materializeDataEvents(dataInList, appInst, conf, dependencyList);
+            dependencyMap = materializeDataEvents(dataInList, appInst, conf);
         }
 
         Element outputList = eAction.getChild("output-events", eAction.getNamespace());
         List<Element> dataOutList = null;
         if (outputList != null) {
             dataOutList = outputList.getChildren("data-out", eAction.getNamespace());
-            // no dependency checks
-            HashMap<String, StringBuffer> emptyDepsList = new HashMap<String, StringBuffer>();
-            emptyDepsList.put("pull", new StringBuffer());
-            emptyDepsList.put("push", new StringBuffer());
-            materializeDataEvents(dataOutList, appInst, conf, emptyDepsList);
+            materializeDataEvents(dataOutList, appInst, conf);
         }
 
         eAction.removeAttribute("start");
@@ -469,8 +461,14 @@ public class CoordCommandUtils {
         actionBean.setLastModifiedTime(new Date());
         actionBean.setStatus(CoordinatorAction.Status.WAITING);
         actionBean.setActionNumber(instanceCount);
-        actionBean.setMissingDependencies(dependencyList.get("pull").toString());
-        actionBean.setPushMissingDependencies(dependencyList.get("push").toString());
+        StringBuilder sbPull = dependencyMap.get("pull");
+        if (sbPull != null) {
+            actionBean.setMissingDependencies(sbPull.toString());
+        }
+        StringBuilder sbPush = dependencyMap.get("push");
+        if (sbPush != null) {
+            actionBean.setPushMissingDependencies(sbPush.toString());
+        }
         actionBean.setNominalTime(nominalTime);
         if (isSla == true) {
             actionBean.setSlaXml(XmlUtils.prettyPrint(
@@ -511,16 +509,14 @@ public class CoordCommandUtils {
      * @param conf
      * @throws Exception
      */
-    public static void materializeDataEvents(List<Element> events, SyncCoordAction appInst, Configuration conf,
-            Map<String, StringBuffer> dependencyList) throws Exception {
+    public static Map<String, StringBuilder> materializeDataEvents(List<Element> events, SyncCoordAction appInst, Configuration conf
+            ) throws Exception {
 
         if (events == null) {
-            return;
+            return null;
         }
-        HashMap<String, StringBuffer> unresolvedList = new HashMap<String, StringBuffer>();
-        unresolvedList.put("push", new StringBuffer());
-        unresolvedList.put("pull", new StringBuffer());
-
+        StringBuilder unresolvedList = new StringBuilder();
+        Map<String, StringBuilder> dependencyMap = new HashMap<String, StringBuilder>();
         URIHandlerService uriService = Services.get().get(URIHandlerService.class);
 
         for (Element event : events) {
@@ -535,29 +531,31 @@ public class CoordCommandUtils {
             // Handle start-instance and end-instance
             resolveInstanceRange(event, instances, appInst, conf, eval);
             // Separate out the unresolved instances
-            StringBuffer depList = separateResolvedAndUnresolved(event, instances);
+            StringBuilder depList = separateResolvedAndUnresolved(event, instances);
             URI baseURI = uriService.getAuthorityWithScheme(uriTemplate);
             URIHandler handler = uriService.getURIHandler(baseURI);
             if (handler.getDependencyType(baseURI).equals(DependencyType.PUSH)) {
                 pullOrPush = "push";
             }
-            dependencyList.put(pullOrPush, depList);
+            dependencyMap.put(pullOrPush, depList);
             String tmpUnresolved = event.getChildTextTrim(UNRESOLVED_INST_TAG, event.getNamespace());
             if (tmpUnresolved != null) {
-                if (unresolvedList.get(pullOrPush).length() > 0) {
-                    unresolvedList.get(pullOrPush).append(CoordELFunctions.INSTANCE_SEPARATOR);
+                if (unresolvedList.length() > 0) {
+                    unresolvedList.append(CoordELFunctions.INSTANCE_SEPARATOR);
                 }
-                unresolvedList.get(pullOrPush).append(tmpUnresolved);
+                unresolvedList.append(tmpUnresolved);
             }
         }
-        if (unresolvedList.get("push").length() > 0) {
-            dependencyList.get("push").append(RESOLVED_UNRESOLVED_SEPARATOR);
-            dependencyList.get("push").append(unresolvedList.get("push"));
+        if (unresolvedList.length() > 0) {
+            StringBuilder sb = dependencyMap.get("pull");
+            if (sb == null) {
+                dependencyMap.put("pull", new StringBuilder(RESOLVED_UNRESOLVED_SEPARATOR).append(unresolvedList));
+            }
+            else {
+                sb.append(RESOLVED_UNRESOLVED_SEPARATOR).append(unresolvedList);
+            }
         }
-        if (unresolvedList.get("pull").length() > 0) {
-            dependencyList.get("pull").append(RESOLVED_UNRESOLVED_SEPARATOR);
-            dependencyList.get("pull").append(unresolvedList.get("pull"));
-        }
+        return dependencyMap;
     }
 
     /**
@@ -589,19 +587,14 @@ public class CoordCommandUtils {
      * @throws Exception
      */
     public static void registerPartition(CoordinatorActionBean actionBean) throws MetadataServiceException {
-
-        String resolved = getResolvedList(actionBean.getPushMissingDependencies(), new StringBuilder(),
-                new StringBuilder());
-        if (resolved.length() == 0)
-            return;
-        String[] resolvedList = resolved.split(CoordELFunctions.INSTANCE_SEPARATOR, -1);
+        String missDeps = actionBean.getPushMissingDependencies();
+        String[] missDepsList = missDeps.split(CoordELFunctions.INSTANCE_SEPARATOR, -1);
         PartitionDependencyManagerService pdms = Services.get().get(PartitionDependencyManagerService.class);
 
         // always register action ID to missing partition in PDMS before
         // asking HCat to avoid corner case where JMS notification msg
         // arrives while asking HCat for existence of partition
-        if (resolvedList != null && resolvedList.length > 0) {
-            pdms.addMissingPartitions(resolvedList, actionBean.getId());
+            pdms.addMissingPartitions(missDepsList, actionBean.getId());
             // after Hcat answers, two things need to be done
             // 1. if partition exists, remove actionId from missing
             // partition in PDMS
@@ -610,10 +603,5 @@ public class CoordCommandUtils {
             // 2. if partition not exists, no-op
             // we probably delegate these tasks to other separate command,
             // so end up with queuing the new command
-        }
-        else {
-            XLog.getLog(CoordCommandUtils.class).info("no resolved push data dependency");
-        }
-
     }
 }
