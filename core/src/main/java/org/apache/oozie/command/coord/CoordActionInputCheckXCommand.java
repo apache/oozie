@@ -35,6 +35,7 @@ import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.coord.CoordELEvaluator;
 import org.apache.oozie.coord.CoordELFunctions;
 import org.apache.oozie.executor.jpa.CoordActionGetForInputCheckJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionUpdateForModifiedTimeJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.HadoopAccessorException;
@@ -111,6 +112,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
 
         StringBuilder actionXml = new StringBuilder(coordAction.getActionXml());
         Instrumentation.Cron cron = new Instrumentation.Cron();
+        boolean isChangeInDependency = false;
         try {
             Configuration actionConf = new XConfiguration(new StringReader(coordAction.getRunConf()));
             cron.start();
@@ -118,7 +120,8 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             StringBuilder nonExistList = new StringBuilder();
             StringBuilder nonResolvedList = new StringBuilder();
             String firstMissingDependency = "";
-            CoordCommandUtils.getResolvedList(coordAction.getMissingDependencies(), nonExistList, nonResolvedList);
+            String missingDeps = coordAction.getMissingDependencies();
+            CoordCommandUtils.getResolvedList(missingDeps, nonExistList, nonResolvedList);
 
             // For clarity regarding which is the missing dependency in synchronous order
             // instead of printing entire list, some of which, may be available
@@ -134,7 +137,12 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             if (nonResolvedList.length() > 0 && status == false) {
                 nonExistList.append(CoordCommandUtils.RESOLVED_UNRESOLVED_SEPARATOR).append(nonResolvedList);
             }
-            coordAction.setMissingDependencies(nonExistList.toString());
+            String nonExistListStr = nonExistList.toString();
+            if (!missingDeps.equals(nonExistListStr)) {
+                isChangeInDependency = true;
+                coordAction.setMissingDependencies(nonExistListStr);
+            }
+			coordAction.setMissingDependencies(nonExistList.toString());
             if (status == true) {
                 coordAction.setStatus(CoordinatorAction.Status.READY);
                 // pass jobID to the CoordActionReadyXCommand
@@ -161,7 +169,13 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             cron.stop();
             if(jpaService != null) {
                 try {
-                    jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionUpdateForInputCheckJPAExecutor(coordAction));
+                    if (isChangeInDependency) {
+                        jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionUpdateForInputCheckJPAExecutor(
+                                coordAction));
+                    }
+                    else {
+                        jpaService.execute(new CoordActionUpdateForModifiedTimeJPAExecutor(coordAction));
+                    }
                 }
                 catch(JPAExecutorException jex) {
                     throw new CommandException(ErrorCode.E1021, jex.getMessage(), jex);
@@ -511,6 +525,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
     /* (non-Javadoc)
      * @see org.apache.oozie.command.XCommand#eagerLoadState()
      */
+    // TODO - why loadState() is being called from eagerLoadState();
     @Override
     protected void eagerLoadState() throws CommandException {
         loadState();
