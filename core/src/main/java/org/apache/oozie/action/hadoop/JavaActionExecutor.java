@@ -478,13 +478,15 @@ public class JavaActionExecutor extends ActionExecutor {
         // files and archives defined in the action
         for (Element eProp : (List<Element>) actionXml.getChildren()) {
             if (eProp.getName().equals("file")) {
-                String path = eProp.getTextTrim();
-                addToCache(conf, appPath, path, false);
+                String[] pathes = eProp.getTextTrim().split(",");
+                for (String path : pathes) {
+                    addToCache(conf, appPath, path.trim(), false);
+                }
             }
-            else {
-                if (eProp.getName().equals("archive")) {
-                    String path = eProp.getTextTrim();
-                    addToCache(conf, appPath, path, true);
+            else if (eProp.getName().equals("archive")) {
+                String[] pathes = eProp.getTextTrim().split(",");
+                for (String path : pathes){
+                    addToCache(conf, appPath, path.trim(), true);
                 }
             }
         }
