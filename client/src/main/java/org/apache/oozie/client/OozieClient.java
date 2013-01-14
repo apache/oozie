@@ -1183,7 +1183,7 @@ public class OozieClient {
     /**
      * Return the info of the workflow jobs that match the filter.
      * <p/>
-     * It returns the first 100 jobs that match the filter.
+     * It returns the first 50 jobs that match the filter.
      *
      * @param filter job filter. Refer to the {@link OozieClient} for the filter syntax.
      * @return a list with the workflow jobs info, without node details.
