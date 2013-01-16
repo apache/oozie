@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1053 Oozie Web-console clicking on Bundle's coord jobs does not open them up (ryota via mona)
 OOZIE-1166 Print a more helpful message when ProxyUserService is configured wrong (rkanter)
 OOZIE-1136 Fix MiniOozie (rkanter)
 OOZIE-1051 Repeating Errors for workflows that were allreday Killed (rkanter)
