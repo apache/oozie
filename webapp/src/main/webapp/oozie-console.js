@@ -80,7 +80,7 @@ function checkUrl(value, metadata, record, row, col, store) {
         return "N";
     }
 }
-    
+
 function getTimeZone() {
     Ext.state.Manager.setProvider(new Ext.state.CookieProvider());
     return Ext.state.Manager.get("TimezoneId","GMT");
@@ -1048,7 +1048,6 @@ function coordJobDetailsPopup(response, request) {
 }
 
 function bundleJobDetailsPopup(response, request) {
-
 	var jobDefinitionArea = new Ext.form.TextArea({
         fieldLabel: 'Definition',
         editable: false,
@@ -1113,7 +1112,7 @@ function bundleJobDetailsPopup(response, request) {
             value: jobDetails["group"]
         }, ]
     });
-    
+
     var fs = new Ext.FormPanel({
         frame: true,
         labelAlign: 'right',
@@ -1137,7 +1136,7 @@ function bundleJobDetailsPopup(response, request) {
         }]
 
     });
-    
+
     var coord_jobs_grid = new Ext.grid.GridPanel({
         store: jobActionStatus,
         loadMask: true,
@@ -1200,10 +1199,14 @@ function bundleJobDetailsPopup(response, request) {
         height: 400,
         width: 1000,
         title: 'Coord Jobs',
-        bbar: getPagingBar(jobActionStatus)
-
+        bbar: getPagingBar(jobActionStatus),
+        listeners: {
+            cellclick: {
+                fn: showCoordJobContextMenu
+            }
+        }
     });
-    
+
     var jobDetailsTab = new Ext.TabPanel({
         activeTab: 0,
         autoHeight: true,
@@ -1213,7 +1216,7 @@ function bundleJobDetailsPopup(response, request) {
             items: fs
         }]
     });
-    
+
     jobDetailsTab.addListener("tabchange", function(panel, selectedTab) {
         if (selectedTab.title == "Bundle Job Info") {
             coord_jobs_grid.setVisible(true);
@@ -1732,25 +1735,25 @@ var timeZones_store = new Ext.data.JsonStore({
 });
 timeZones_store.proxy.conn.method = "GET";
 
+function showCoordJobContextMenu(thisGrid, rowIndex, cellIndex, e) {
+    var jobContextMenu = new Ext.menu.Menu('taskContext');
+    var coordJobId = thisGrid.store.data.items[rowIndex].data.coordJobId;
+    coordJobDetailsGridWindow(coordJobId);
+}
+
 function initConsole() {
     function showJobContextMenu(thisGrid, rowIndex, cellIndex, e) {
         var jobContextMenu = new Ext.menu.Menu('taskContext');
         var workflowId = thisGrid.store.data.items[rowIndex].data.id;
         jobDetailsGridWindow(workflowId);
     }
- 
-    function showCoordJobContextMenu(thisGrid, rowIndex, cellIndex, e) {
-        var jobContextMenu = new Ext.menu.Menu('taskContext');
-        var coordJobId = thisGrid.store.data.items[rowIndex].data.coordJobId;
-        coordJobDetailsGridWindow(coordJobId);
-    }
-    
+
     function showBundleJobContextMenu(thisGrid, rowIndex, cellIndex, e) {
         var jobContextMenu = new Ext.menu.Menu('taskContext');
         var bundleJobId = thisGrid.store.data.items[rowIndex].data.bundleJobId;
         bundleJobDetailsGridWindow(bundleJobId);
     }
-    
+
     var jobs_grid = new Ext.grid.GridPanel({
         store: jobs_store,
         loadMask: true,
@@ -1897,7 +1900,7 @@ function initConsole() {
             header: "Status",
             width: 80,
             sortable: true,
-            dataIndex: 'status'        
+            dataIndex: 'status'
 	}, {
             header: "User",
             width: 80,
@@ -1993,7 +1996,7 @@ function initConsole() {
             width: 170,
             sortable: true,
             dataIndex: 'kickoffTime'
-        }, {	
+        }, {
             header: "Created Time",
             width: 170,
             sortable: true,
@@ -2041,7 +2044,7 @@ function initConsole() {
             editable: false,
             triggerAction: 'all',
             value: currentTimezone,
-            listeners: 
+            listeners:
             { select: { fn:function(combo, value)
                 {
                     Ext.state.Manager.setProvider(new Ext.state.CookieProvider());
