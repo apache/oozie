@@ -64,11 +64,23 @@ public class ParamChecker {
      * @return the given value.
      */
     public static String notEmpty(String str, String name) {
+        return notEmpty(str, name, null);
+    }
+
+    /**
+     * Check that a string is not null and not empty. If null or emtpy throws an IllegalArgumentException.
+     *
+     * @param str value.
+     * @param name parameter name for the exception message.
+     * @param info additional information to be printed with the exception message
+     * @return the given value.
+     */
+    public static String notEmpty(String str, String name, String info) {
         if (str == null) {
-            throw new IllegalArgumentException(name + " cannot be null");
+            throw new IllegalArgumentException(name + " cannot be null" + (info == null ? "" : ", " + info));
         }
         if (str.length() == 0) {
-            throw new IllegalArgumentException(name + " cannot be empty");
+            throw new IllegalArgumentException(name + " cannot be empty" + (info == null ? "" : ", " + info));
         }
         return str;
     }
