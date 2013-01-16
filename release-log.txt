@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1171 HostnameFilter should handle hostname resolution failures and continue processing (tucu via rkanter)
 OOZIE-1053 Oozie Web-console clicking on Bundle's coord jobs does not open them up (ryota via mona)
 OOZIE-1166 Print a more helpful message when ProxyUserService is configured wrong (rkanter)
 OOZIE-1136 Fix MiniOozie (rkanter)
