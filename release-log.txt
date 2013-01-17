@@ -1,5 +1,6 @@
 -- Oozie 3.3.1 (unreleased)
 
+OOZIE-1175 Update POM version to 3.3.1 for 3.3 branch (virag)
 OOZIE-1159 Set the RM token renewer as the full service principal instead of short name (rohini via virag)
 OOZIE-1151 HbaseCredentials doesn't use properties from the credentials module (virag)
 OOZIE-1148 Set the renewer correctly for JT/RM delegation tokens (rohini via virag)
