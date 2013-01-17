@@ -1,4 +1,4 @@
--- Oozie 3.3.1 (unreleased)
+-- Oozie 3.3.1 release
 
 OOZIE-1175 Update POM version to 3.3.1 for 3.3 branch (virag)
 OOZIE-1159 Set the RM token renewer as the full service principal instead of short name (rohini via virag)
