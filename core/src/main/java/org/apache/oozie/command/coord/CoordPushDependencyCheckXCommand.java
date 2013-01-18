@@ -20,13 +20,10 @@ package org.apache.oozie.command.coord;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Map.Entry;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
@@ -37,7 +34,8 @@ import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
-import org.apache.oozie.coord.CoordELFunctions;
+import org.apache.oozie.dependency.DependencyChecker;
+import org.apache.oozie.dependency.DependencyChecker.ActionDependency;
 import org.apache.oozie.dependency.URIHandler;
 import org.apache.oozie.executor.jpa.CoordActionGetForInputCheckJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionUpdateForModifiedTimeJPAExecutor;
@@ -45,22 +43,18 @@ import org.apache.oozie.executor.jpa.CoordActionUpdatePushInputCheckJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
-import org.apache.oozie.service.MetadataServiceException;
-import org.apache.oozie.service.PartitionDependencyManagerService;
 import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.service.URIAccessorException;
 import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.util.LogUtils;
-import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.StatusUtils;
 import org.apache.oozie.util.XConfiguration;
 
 public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> {
-    private String actionId;
-    private JPAService jpaService = null;
-    private CoordinatorActionBean coordAction = null;
-    private CoordinatorJobBean coordJob = null;
+    protected String actionId;
+    protected JPAService jpaService = null;
+    protected CoordinatorActionBean coordAction = null;
+    protected CoordinatorJobBean coordJob = null;
 
     /**
      * Property name of command re-queue interval for coordinator push check in
@@ -73,22 +67,33 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
      * the oozie configuration.
      */
     private final int DEFAULT_COMMAND_REQUEUE_INTERVAL = 600000;
+    private boolean registerForNotification;
 
     public CoordPushDependencyCheckXCommand(String actionId) {
+        this(actionId, false);
+    }
+
+    public CoordPushDependencyCheckXCommand(String actionId, boolean registerForNotification) {
         super("coord_push_dep_check", "coord_push_dep_check", 0);
+        this.actionId = actionId;
+        this.registerForNotification = registerForNotification;
+    }
+
+    protected CoordPushDependencyCheckXCommand(String actionName, String actionId) {
+        super(actionName, actionName, 0);
         this.actionId = actionId;
     }
 
     @Override
     protected Void execute() throws CommandException {
-        boolean isChangeInDependency = false;
-        String pushDeps = coordAction.getPushMissingDependencies();
-        if (pushDeps == null || pushDeps.length() == 0) {
+        LOG.info("STARTED for Action id [{0}]", actionId);
+        String pushMissingDeps = coordAction.getPushMissingDependencies();
+        if (pushMissingDeps == null || pushMissingDeps.length() == 0) {
             LOG.info("Nothing to check. Empty push missing dependency");
             return null;
         }
-        LOG.info("Push missing dependencies .. "+ pushDeps);
-        String[] pushDepList = pushDeps.split(CoordELFunctions.INSTANCE_SEPARATOR, -1);
+        LOG.info("Push missing dependencies for actionID [{0}] is [{1}] ", actionId, pushMissingDeps);
+
         Configuration actionConf = null;
         try {
             actionConf = new XConfiguration(new StringReader(coordAction.getRunConf()));
@@ -96,38 +101,42 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
         catch (IOException e) {
             throw new CommandException(ErrorCode.E1307, e.getMessage(), e);
         }
-        String user = ParamChecker.notEmpty(actionConf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
-        List<String> missingDeps = getMissingDependencies(pushDepList, actionConf, user);
-        List<String> availableDepList = new ArrayList<String>(Arrays.asList(pushDepList));
-        availableDepList.removeAll(missingDeps);
 
-        if (missingDeps.size() > 0) {
-            pushDeps = StringUtils.join(missingDeps, CoordELFunctions.INSTANCE_SEPARATOR);
-            // only set the push missing deps if some of the deps are available
-            if (availableDepList.size() != 0) {
-                isChangeInDependency = true;
-                coordAction.setPushMissingDependencies(pushDeps);
+        String[] missingDepsArray = DependencyChecker.dependenciesAsArray(pushMissingDeps);
+        // Check all dependencies during materialization to avoid registering in the cache. But
+        // check only first missing one afterwards similar to CoordActionInputCheckXCommand for efficiency.
+        // listPartitions is costly.
+        ActionDependency actionDep = DependencyChecker.checkForAvailability(missingDepsArray, actionConf,
+                !registerForNotification);
+
+        boolean isChangeInDependency = true;
+        if (actionDep.getMissingDependencies().size() == 0) { // All push-based dependencies are available
+            onAllPushDependenciesAvailable();
+        }
+        else {
+            if (actionDep.getMissingDependencies().size() == missingDepsArray.length) {
+                isChangeInDependency = false;
+            }
+            else {
+                String stillMissingDeps = DependencyChecker.dependenciesAsString(actionDep.getMissingDependencies());
+                coordAction.setPushMissingDependencies(stillMissingDeps);
             }
             // Checking for timeout
             if (!isTimeout()) {
-                queue(new CoordPushDependencyCheckXCommand(coordAction.getId()),
-                        getCoordPushCheckRequeueInterval());
+                queue(new CoordPushDependencyCheckXCommand(coordAction.getId()), getCoordPushCheckRequeueInterval());
             }
             else {
                 queue(new CoordActionTimeOutXCommand(coordAction), 100);
             }
         }
-        else { // All push-based dependencies are available
-            isChangeInDependency = true;
-            coordAction.setPushMissingDependencies("");
-            if (coordAction.getMissingDependencies() == null || coordAction.getMissingDependencies().length() == 0) {
-                coordAction.setStatus(CoordinatorAction.Status.READY);
-                // pass jobID to the CoordActionReadyXCommand
-                queue(new CoordActionReadyXCommand(coordAction.getJobId()), 100);
-            }
-        }
 
-        updateCoordAction(coordAction, availableDepList, isChangeInDependency);
+        updateCoordAction(coordAction, isChangeInDependency);
+        if (registerForNotification) {
+            registerForNotification(actionDep.getMissingDependencies(), actionConf);
+        }
+        else {
+            unregisterAvailableDependencies(actionDep);
+        }
         return null;
     }
 
@@ -141,60 +150,8 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
         return requeueInterval;
     }
 
-    private List<String> getMissingDependencies(String[] dependencies, Configuration conf, String user)
-            throws CommandException {
-        List<String> missingDeps = new ArrayList<String>();
-        URIHandlerService uriService = Services.get().get(URIHandlerService.class);
-        for (String dependency : dependencies) {
-            try {
-                URI uri = new URI(dependency);
-                URIHandler uriHandler = uriService.getURIHandler(uri);
-                if (!uriHandler.exists(uri, conf, user)) {
-                    missingDeps.add(dependency);
-                }
-            }
-            catch (URISyntaxException e) {
-                throw new CommandException(ErrorCode.E1025, e.getMessage(), e);
-            }
-            catch (URIAccessorException e) {
-                throw new CommandException(e);
-            }
-        }
-        return missingDeps;
-    }
-
-    private void updateCoordAction(CoordinatorActionBean coordAction2, List<String> availPartitionList,
-            boolean isChangeInDependency) throws CommandException {
-        coordAction.setLastModifiedTime(new Date());
-        if (jpaService != null) {
-            try {
-                if (isChangeInDependency) {
-                    jpaService.execute(new CoordActionUpdatePushInputCheckJPAExecutor(coordAction));
-                    PartitionDependencyManagerService pdms = Services.get()
-                            .get(PartitionDependencyManagerService.class);
-                    if (pdms.removeAvailablePartitions(
-                            PartitionDependencyManagerService.createPartitionWrappers(availPartitionList), actionId)) {
-                        LOG.debug("Succesfully removed partitions for actionId: [{0}] from available Map ", actionId);
-                    }
-                    else {
-                        LOG.warn("Unable to remove partitions for actionId: [{0}] from available Map ", actionId);
-                    }
-                }
-                else {
-                    jpaService.execute(new CoordActionUpdateForModifiedTimeJPAExecutor(coordAction));
-                }
-            }
-            catch (JPAExecutorException jex) {
-                throw new CommandException(ErrorCode.E1023, jex.getMessage(), jex);
-            }
-            catch (MetadataServiceException e) {
-                throw new CommandException(ErrorCode.E0902, e.getMessage(), e);
-            }
-        }
-    }
-
-    // returns true if timeout command is queued
-    private boolean isTimeout() {
+    // returns true if it is time for timeout
+    protected boolean isTimeout() {
         long waitingTime = (new Date().getTime() - Math.max(coordAction.getNominalTime().getTime(), coordAction
                 .getCreatedTime().getTime()))
                 / (60 * 1000);
@@ -203,6 +160,66 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
             return true;
         }
         return false;
+    }
+
+    protected void onAllPushDependenciesAvailable() {
+        coordAction.setPushMissingDependencies("");
+        if (coordAction.getMissingDependencies() == null || coordAction.getMissingDependencies().length() == 0) {
+            coordAction.setStatus(CoordinatorAction.Status.READY);
+            // pass jobID to the CoordActionReadyXCommand
+            queue(new CoordActionReadyXCommand(coordAction.getJobId()), 100);
+        }
+    }
+
+    protected void updateCoordAction(CoordinatorActionBean coordAction, boolean isChangeInDependency)
+            throws CommandException {
+        coordAction.setLastModifiedTime(new Date());
+        if (jpaService != null) {
+            try {
+                if (isChangeInDependency) {
+                    jpaService.execute(new CoordActionUpdatePushInputCheckJPAExecutor(coordAction));
+                }
+                else {
+                    jpaService.execute(new CoordActionUpdateForModifiedTimeJPAExecutor(coordAction));
+                }
+            }
+            catch (JPAExecutorException jex) {
+                throw new CommandException(ErrorCode.E1021, jex.getMessage(), jex);
+            }
+        }
+    }
+
+    private void registerForNotification(List<String> missingDeps, Configuration actionConf) {
+        URIHandlerService uriService = Services.get().get(URIHandlerService.class);
+        String user = actionConf.get(OozieClient.USER_NAME, OozieClient.USER_NAME);
+        for (String missingDep : missingDeps) {
+            try {
+                URI missingURI = new URI(missingDep);
+                URIHandler handler = uriService.getURIHandler(missingURI);
+                handler.registerForNotification(missingURI, actionConf, user, actionId);
+                    LOG.debug("Registered uri [{0}] for actionId: [{1}] for notifications",
+                            missingURI, actionId);
+            }
+            catch (Exception e) {
+                LOG.warn("Exception while registering uri for actionId: [{0}] for notifications", actionId, e);
+            }
+        }
+    }
+
+    private void unregisterAvailableDependencies(ActionDependency actionDependency) {
+        for (Entry<URIHandler, List<URI>> entry : actionDependency.getAvailableDependencies().entrySet()) {
+            URIHandler handler = entry.getKey();
+            for (URI availableURI : entry.getValue()) {
+                if (handler.unregisterFromNotification(availableURI, actionId)) {
+                    LOG.debug("Succesfully unregistered uri [{0}] for actionId: [{1}] from notifications",
+                            availableURI, actionId);
+                }
+                else {
+                    LOG.warn("Unable to unregister uri [{0}] for actionId: [{1}] from notifications",
+                            availableURI, actionId);
+                }
+            }
+        }
     }
 
     /*

@@ -242,7 +242,7 @@ public class URIHandlerService implements Service {
             }
         }
         catch (URISyntaxException e) {
-            throw new URIAccessorException(ErrorCode.E1025, uri, e);
+            throw new URIAccessorException(ErrorCode.E0906, uri, e);
         }
     }
 

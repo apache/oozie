@@ -53,18 +53,20 @@ import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.dependency.FSURIHandler;
+import org.apache.oozie.dependency.HCatURIHandler;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.JMSAccessorService;
 import org.apache.oozie.service.ServiceException;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.test.MiniHCatServer.RUNMODE;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
-import org.junit.Assert;
 
 /**
  * Base JUnit <code>TestCase</code> subclass used by all Oozie testcases.
@@ -312,7 +314,7 @@ public abstract class XTestCase extends TestCase {
         }
 
         if (System.getProperty("oozie.test.metastore.server", "true").equals("true")) {
-            setupHCatalogServer();;
+            setupHCatalogServer();
         }
     }
 
@@ -890,6 +892,10 @@ public abstract class XTestCase extends TestCase {
         conf.set(JMSAccessorService.JMS_CONNECTIONS_PROPERTIES,
                 "default=java.naming.factory.initial#" + ActiveMQConnFactory + ";" +
                 "java.naming.provider.url#" + localActiveMQBroker);
+        conf.set(URIHandlerService.URI_HANDLERS,
+                FSURIHandler.class.getName() + "," + HCatURIHandler.class.getName());
+        setSystemProperty("java.naming.factory.initial", "org.apache.activemq.jndi.ActiveMQInitialContextFactory");
+        setSystemProperty("java.naming.provider.url", "vm://localhost?broker.persistent=false");
         return services;
     }
 

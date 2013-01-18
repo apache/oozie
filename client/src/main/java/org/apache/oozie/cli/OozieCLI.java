@@ -133,7 +133,7 @@ public class OozieCLI {
     public static final String DEBUG_OPTION = "debug";
 
     public static final String PIGFILE_OPTION = "file";
-    
+
     public static final String INFO_TIME_ZONES_OPTION = "timezones";
 
     public static final String BULK_OPTION = "bulk";
@@ -256,9 +256,9 @@ public class OozieCLI {
         Option len = new Option(LEN_OPTION, true, "number of actions (default TOTAL ACTIONS, requires -info)");
         Option filter = new Option(FILTER_OPTION, true,
                 "status=<S1>[;status=<S2>]* (All Coordinator actions satisfying any one of the status filters will be retreived. Currently, only supported for Coordinator job)");
-        Option localtime = new Option(LOCAL_TIME_OPTION, false, "use local time (same as passing your time zone to -" + 
+        Option localtime = new Option(LOCAL_TIME_OPTION, false, "use local time (same as passing your time zone to -" +
                 TIME_ZONE_OPTION + "). Overrides -" + TIME_ZONE_OPTION + " option");
-        Option timezone = new Option(TIME_ZONE_OPTION, true, 
+        Option timezone = new Option(TIME_ZONE_OPTION, true,
                 "use time zone with the specified ID (default GMT).\nSee 'oozie info -timezones' for a list");
         Option log = new Option(LOG_OPTION, true, "job log");
         Option definition = new Option(DEFINITION_OPTION, true, "job definition");
@@ -328,9 +328,9 @@ public class OozieCLI {
         Option len = new Option(LEN_OPTION, true, "number of jobs (default '100')");
         Option filter = new Option(FILTER_OPTION, true, "user=<U>\\;name=<N>\\;group=<G>\\;status=<S>\\;frequency=<F>\\;unit=<M> " +
                         "(Valid unit values are 'months', 'days', 'hours' or 'minutes'.)");
-        Option localtime = new Option(LOCAL_TIME_OPTION, false, "use local time (same as passing your time zone to -" + 
+        Option localtime = new Option(LOCAL_TIME_OPTION, false, "use local time (same as passing your time zone to -" +
                 TIME_ZONE_OPTION + "). Overrides -" + TIME_ZONE_OPTION + " option");
-        Option timezone = new Option(TIME_ZONE_OPTION, true,  
+        Option timezone = new Option(TIME_ZONE_OPTION, true,
                 "use time zone with the specified ID (default GMT).\nSee 'oozie info -timezones' for a list");
         Option verbose = new Option(VERBOSE_OPTION, false, "verbose mode");
         Option doAs = new Option(DO_AS_OPTION, true, "doAs user, impersonates as the specified user");
@@ -395,7 +395,7 @@ public class OozieCLI {
         addAuthOptions(pigOptions);
         return pigOptions;
     }
-    
+
     /**
      * Create option for command line option 'info'
      * @return info options
@@ -536,7 +536,7 @@ public class OozieCLI {
         }
         return url;
     }
-    
+
     private String getTimeZoneId(CommandLine commandLine)
     {
         if (commandLine.hasOption(LOCAL_TIME_OPTION)) {
@@ -548,7 +548,7 @@ public class OozieCLI {
         String timeZoneId = System.getenv(ENV_OOZIE_TIME_ZONE);
         if (timeZoneId != null) {
             return timeZoneId;
-        }        
+        }
         return "GMT";
     }
 
@@ -856,7 +856,7 @@ public class OozieCLI {
                     if (filter != null) {
                         throw new OozieCLIException("Filter option is currently not supported for a Bundle job");
                     }
-                    printBundleJob(wc.getBundleJobInfo(commandLine.getOptionValue(INFO_OPTION)), timeZoneId, 
+                    printBundleJob(wc.getBundleJobInfo(commandLine.getOptionValue(INFO_OPTION)), timeZoneId,
                             options.contains(VERBOSE_OPTION));
                 }
                 else if (commandLine.getOptionValue(INFO_OPTION).endsWith("-C")) {
@@ -880,7 +880,7 @@ public class OozieCLI {
                     if (filter != null) {
                         throw new OozieCLIException("Filter option is not supported for a Workflow action");
                     }
-                    printWorkflowAction(wc.getWorkflowActionInfo(commandLine.getOptionValue(INFO_OPTION)), timeZoneId, 
+                    printWorkflowAction(wc.getWorkflowActionInfo(commandLine.getOptionValue(INFO_OPTION)), timeZoneId,
                             options.contains(VERBOSE_OPTION));
                 }
                 else {
@@ -894,7 +894,7 @@ public class OozieCLI {
                     String jobtype = commandLine.getOptionValue(JOBTYPE_OPTION);
                     jobtype = (jobtype != null) ? jobtype : "wf";
                     int len = Integer.parseInt((s != null) ? s : "0");
-                    printJob(wc.getJobInfo(commandLine.getOptionValue(INFO_OPTION), start, len), timeZoneId, 
+                    printJob(wc.getJobInfo(commandLine.getOptionValue(INFO_OPTION), start, len), timeZoneId,
                             options.contains(VERBOSE_OPTION));
                 }
             }
@@ -1512,7 +1512,7 @@ public class OozieCLI {
                 sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
                         "sqoop-action-0.3.xsd")));
                 sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                        "sqoop-action-0.4.xsd"))); 
+                        "sqoop-action-0.4.xsd")));
                 sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
                         "ssh-action-0.1.xsd")));
                 SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
@@ -1564,7 +1564,7 @@ public class OozieCLI {
             throw new OozieCLIException(ex.toString(), ex);
         }
     }
-    
+
     private void infoCommand(CommandLine commandLine) throws OozieCLIException {
         for (Option option : commandLine.getOptions()) {
             String opt = option.getOpt();
@@ -1573,7 +1573,7 @@ public class OozieCLI {
             }
         }
     }
-     
+
     private void printAvailableTimeZones() {
         System.out.println("The format is \"SHORT_NAME (ID)\"\nGive the ID to the -timezone argument");
         System.out.println("GMT offsets can also be used (e.g. GMT-07:00, GMT-0700, GMT+05:30, GMT+0530)");
@@ -1633,7 +1633,7 @@ public class OozieCLI {
             if(depExists) {
                 allDeps.append(INSTANCE_SEPARATOR);
             }
-            allDeps.append(pushDeps);
+            allDeps.append(pushDeps.split(INSTANCE_SEPARATOR)[0]);
         }
         return allDeps.toString();
     }

@@ -17,13 +17,14 @@
  */
 package org.apache.oozie.service;
 
-import javax.jms.MessageConsumer;
-import javax.jms.MessageProducer;
-import javax.jms.Session;
+import java.net.URI;
 
 import junit.framework.Assert;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.jms.HCatMessageHandler;
+import org.apache.oozie.jms.MessageReceiver;
+import org.apache.oozie.service.JMSAccessorService.ConnectionContext;
 import org.apache.oozie.test.XTestCase;
 import org.junit.Test;
 
@@ -34,7 +35,6 @@ public class TestJMSAccessorService extends XTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         services = super.setupServicesForHCatalog();
-        setSystemProperty(PartitionDependencyManagerService.MAP_MAX_WEIGHTED_CAPACITY, "100");
         services.init();
     }
 
@@ -54,92 +54,57 @@ public class TestJMSAccessorService extends XTestCase {
     public void testConnection() throws Exception {
         JMSAccessorService jmsService = services.get(JMSAccessorService.class);
         // both servers should connect to default JMS server
-        assertTrue(jmsService.getOrCreateConnection("blahblah"));
-        assertTrue(jmsService.getOrCreateConnection(JMSAccessorService.DEFAULT_SERVER_ENDPOINT));
+        ConnectionContext ctxt1 = jmsService.createConnection("blahblah");
+        ConnectionContext ctxt2 = jmsService.createConnection(JMSAccessorService.DEFAULT_SERVER_ENDPOINT);
+        assertNotNull(ctxt1);
+        assertNotNull(ctxt2);
+        //assertEquals(ctxt1, ctxt2);
     }
 
     @Test
-    public void testConsumer() throws Exception {
-        JMSAccessorService jmsService = services.get(JMSAccessorService.class);
-        jmsService.getOrCreateConnection(JMSAccessorService.DEFAULT_SERVER_ENDPOINT);
-        MessageConsumer consumer = null;
-        try {
-            consumer = jmsService.getMessageConsumer(JMSAccessorService.DEFAULT_SERVER_ENDPOINT, "test-topic");
-            assertTrue(consumer != null);
-        }
-        finally {
-            if (consumer != null) {
-                consumer.close();
-                jmsService.removeSession(JMSAccessorService.DEFAULT_SERVER_ENDPOINT, "test-topic");
-            }
-        }
-    }
-
-    @Test
-    public void testProducer() throws Exception {
-        JMSAccessorService jmsService = services.get(JMSAccessorService.class);
-        jmsService.getOrCreateConnection(JMSAccessorService.DEFAULT_SERVER_ENDPOINT);
-        MessageProducer producer = null;
-        try {
-            producer = jmsService.getMessageProducer(JMSAccessorService.DEFAULT_SERVER_ENDPOINT, "test-topic");
-            assertTrue(producer != null);
-        }
-        finally {
-            if (producer != null) {
-                jmsService.removeSession(JMSAccessorService.DEFAULT_SERVER_ENDPOINT, "test-topic");
-            }
-        }
-    }
-
-    @Test
-    public void testSession() throws Exception {
-        JMSAccessorService jmsService = services.get(JMSAccessorService.class);
-        jmsService.getOrCreateConnection(JMSAccessorService.DEFAULT_SERVER_ENDPOINT);
-        Session sess = null;
-        try {
-            sess = jmsService.getSession(JMSAccessorService.DEFAULT_SERVER_ENDPOINT, "test-topic");
-            assertTrue(sess != null);
-        }
-        finally {
-            if (sess != null) {
-                jmsService.removeSession(JMSAccessorService.DEFAULT_SERVER_ENDPOINT, "test-topic");
-            }
-        }
-    }
-
-    @Test
-    public void testSingleConsumerPerTopic() {
+    public void testRegisterSingleConsumerPerTopic() {
 
         try {
             JMSAccessorService jmsService = services.get(JMSAccessorService.class);
-            String endPoint = "hcat://hcat.server.com:5080";
-            jmsService.getOrCreateConnection(endPoint);
-            // Add sample missing partitions belonging to same table
-            String partition1 = "hcat://hcat.server.com:5080/mydb/mytable/mypart=10";
-            String partition2 = "hcat://hcat.server.com:5080/mydb/mytable/mypart=20";
-
-            //Expected topic name is thus:
+            String server = "hcat.server.com:5080";
             String topic = "hcat.mydb.mytable";
 
-            PartitionDependencyManagerService pdms = services.get(PartitionDependencyManagerService.class);
+            jmsService.registerForNotification(new URI("hcat://hcat.server.com:5080/mydb/mytable/mypart=10"), topic,
+                    new HCatMessageHandler("hcat.server.com"));
 
-            pdms.addMissingPartition(partition1, "action-1");
-            pdms.addMissingPartition(partition2, "action-2");
-            //this registers the message receiver
+            MessageReceiver receiver1 = jmsService.getMessageReceiver(server, topic);
 
+            jmsService.registerForNotification(new URI("hcat://hcat.server.com:5080/mydb/mytable/mypart=11"), topic,
+                    new HCatMessageHandler("hcat.server.com"));
 
-            assertNotNull(jmsService.getConnectionContext(endPoint));
-            assertNotNull(jmsService.getSession(endPoint, topic));
+            MessageReceiver receiver2 = jmsService.getMessageReceiver(server, topic);
+            assertEquals(receiver1, receiver2);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            fail("Exception encountered : " + e);
+        }
 
-            //check there is only *1* message consumer since topic-name for both actions was same
-            assertEquals(1, jmsService.getConnectionContext(endPoint).getTopicReceiverMap().size());
+    }
 
-            String partition3 = "hcat://hcat.server.com:5080/mydb/otherTable/mypart=abc";
-            pdms.addMissingPartition(partition3, "action-3");
-            // Now there should be one more consumer for the new topic
-            assertNotNull(jmsService.getSession(endPoint, "hcat.mydb.otherTable"));
-            assertEquals(2, jmsService.getConnectionContext(endPoint).getTopicReceiverMap().size());
+    @Test
+    public void testUnRegisterTopic() {
 
+        try {
+            JMSAccessorService jmsService = services.get(JMSAccessorService.class);
+            String server = "hcat.server.com:5080";
+            String topic = "hcatalog.mydb.mytable";
+
+            jmsService.registerForNotification(new URI("hcat://hcat.server.com:5080/mydb/mytable/mypart=10"), topic,
+                    new HCatMessageHandler("hcat.server.com"));
+
+            MessageReceiver receiver1 = jmsService.getMessageReceiver(server, topic);
+            assertNotNull(receiver1);
+
+            jmsService.unregisterFromNotification(server, topic);
+
+            receiver1 = jmsService.getMessageReceiver(server, topic);
+            assertEquals(null, receiver1);
         }
         catch (Exception e) {
             e.printStackTrace();

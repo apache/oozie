@@ -43,7 +43,6 @@ import org.apache.oozie.executor.jpa.CoordActionsActiveCountJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
-import org.apache.oozie.service.MetadataServiceException;
 import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.DateUtils;
@@ -113,17 +112,14 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
                 if (actionBean instanceof CoordinatorActionBean) {
                     CoordinatorActionBean coordAction = (CoordinatorActionBean) actionBean;
                     if (coordAction.getPushMissingDependencies() != null) {
-                        CoordCommandUtils.registerPartition(coordAction);
-                        queue(new CoordPushDependencyCheckXCommand(coordAction.getId()));
+                        // TODO: Delay in catchup mode?
+                        queue(new CoordPushDependencyCheckXCommand(coordAction.getId(), true), 100);
                     }
                 }
             }
         }
         catch (JPAExecutorException jex) {
             throw new CommandException(jex);
-        }
-        catch (MetadataServiceException ex) {
-            LOG.warn("Error happened in registering partitions ", ex);
         }
     }
 

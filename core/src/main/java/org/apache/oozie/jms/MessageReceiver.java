@@ -17,30 +17,29 @@
  */
 package org.apache.oozie.jms;
 
-import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageListener;
+import javax.jms.Session;
 
-import org.apache.oozie.ErrorCode;
-import org.apache.oozie.service.JMSAccessorService;
-import org.apache.oozie.service.MetadataServiceException;
-import org.apache.oozie.service.ServiceException;
-import org.apache.oozie.service.Services;
 import org.apache.oozie.util.XLog;
 
 public class MessageReceiver implements MessageListener {
-    private MessageConsumer consumer;
-    private MessageHandler msgHandler;
-    private static XLog LOG;
 
-    public MessageReceiver(MessageHandler handler) {
-        LOG = XLog.getLog(getClass());
+    private static XLog LOG = XLog.getLog(MessageReceiver.class);
+
+    private MessageHandler msgHandler;
+    private Session session;
+    private MessageConsumer consumer;
+
+    public MessageReceiver(MessageHandler handler, Session session, MessageConsumer consumer) {
         this.msgHandler = handler;
+        this.session = session;
+        this.consumer = consumer;
     }
 
     /**
-     * Get the message consumer object for this message receiver
+     * Get the JMS message consumer object for this message receiver
      *
      * @return MessageConsumer
      */
@@ -49,65 +48,21 @@ public class MessageReceiver implements MessageListener {
     }
 
     /**
-     * Register a JMS message listener for a specific topic and default end
-     * point
+     * Get the MessageHandler that will process the message
      *
-     * @param topicName : topic name
-     * @throws JMSException
+     * @return message handler
      */
-    public void registerTopic(String topicName) throws JMSException {
-        registerTopic(JMSAccessorService.DEFAULT_SERVER_ENDPOINT, topicName);
+    public MessageHandler getMessageHandler() {
+        return msgHandler;
     }
 
     /**
-     * Register a JMS message listener for a specific topic and end point
+     * Get the JMS session for this message receiver
      *
-     * @param endPoint : Service end-point (preferably HCatalog server address)
-     *        to determine the JMS connection properties
-     * @param topicName
-     * @throws JMSException
+     * @return JMS session
      */
-    public void registerTopic(String endPoint, String topicName) throws JMSException {
-        JMSAccessorService jas = Services.get().get(JMSAccessorService.class);
-        try {
-            consumer = jas.getMessageConsumer(endPoint, topicName);
-            if (consumer != null) {
-                consumer.setMessageListener(this);
-                LOG.info("Listener registered for end point:" + endPoint + " topic:" + topicName);
-                jas.addTopicReceiver(this, endPoint, topicName);
-            }
-            else {
-                throw new ServiceException(ErrorCode.E1506,
-                        "Could not create consumer for the connection, connection might not exist");
-            }
-        }
-        catch (ServiceException e) {
-            LOG.error("Error in registering listener for topic:" + topicName);
-            throw new JMSException(e.getMessage());
-        }
-    }
-
-    /**
-     * Unregister and close an existing session with default endpoint
-     *
-     * @param topicName : name of a topic
-     * @throws JMSException
-     */
-    public void unRegisterTopic(String topicName) throws JMSException {
-        unRegisterTopic(JMSAccessorService.DEFAULT_SERVER_ENDPOINT, topicName);
-    }
-
-    /**
-     * Unregister and close an existing session with default endpoint
-     *
-     * @param endPoint : Service end-point (preferably HCatalog server address)
-     *        to determine
-     * @param topicName : name of a topic
-     * @throws JMSException
-     */
-    public void unRegisterTopic(String endPoint, String topicName) throws JMSException {
-        Services.get().get(JMSAccessorService.class).removeSession(endPoint, topicName);
-        LOG.info("Unregister endPoint :" + endPoint + " topic :" + topicName);
+    public Session getSession() {
+        return session;
     }
 
     /*
@@ -116,31 +71,9 @@ public class MessageReceiver implements MessageListener {
      * @see javax.jms.MessageListener#onMessage(javax.jms.Message)
      */
     @Override
-    public synchronized void onMessage(Message msg) {
+    public void onMessage(Message msg) {
         LOG.trace("Received a JMS message ");
-        if (msgHandler != null) {
-            try {
-                msgHandler.process(msg);
-            }
-            catch (MetadataServiceException e) {
-                LOG.warn("Unable to process message from bus ", e);
-            }
-        }
-        else {
-            LOG.info("Message handler none. Unprocessed messsage " + msg);
-        }
+        msgHandler.process(msg);
     }
 
-    @Override
-    public void finalize() {
-        // Close the session during finalizing
-        if (consumer != null) {
-            try {
-                consumer.close();
-            }
-            catch (JMSException e) {
-                LOG.warn("Unable to close the consumer ", e);
-            }
-        }
-    }
 }

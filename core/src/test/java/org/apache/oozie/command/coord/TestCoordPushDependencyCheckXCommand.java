@@ -20,16 +20,13 @@ package org.apache.oozie.command.coord;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.coord.CoordELFunctions;
-import org.apache.oozie.dependency.FSURIHandler;
-import org.apache.oozie.dependency.HCatURIHandler;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
+import org.apache.oozie.service.PartitionDependencyManagerService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.test.XDataTestCase;
-import org.apache.oozie.util.PartitionWrapper;
-import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.util.HCatURI;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -41,11 +38,7 @@ public class TestCoordPushDependencyCheckXCommand extends XDataTestCase {
     @Before
     protected void setUp() throws Exception {
         super.setUp();
-        services = new Services();
-        Configuration conf = services.getConf();
-        conf.set(URIHandlerService.URI_HANDLERS,
-                FSURIHandler.class.getName() + "," + HCatURIHandler.class.getName());
-        conf.set(Services.CONF_SERVICE_EXT_CLASSES, "org.apache.oozie.service.PartitionDependencyManagerService");
+        services = super.setupServicesForHCatalog();
         services.init();
         server = getMetastoreAuthority();
     }
@@ -66,11 +59,11 @@ public class TestCoordPushDependencyCheckXCommand extends XDataTestCase {
         populateTable(db, table);
 
         String actionId = addInitRecords(newHCatDependency);
-        checkCoordAction(actionId, newHCatDependency, CoordinatorAction.Status.WAITING, 0);
+        checkCoordAction(actionId, newHCatDependency, CoordinatorAction.Status.WAITING);
 
         new CoordPushDependencyCheckXCommand(actionId).call();
 
-        checkCoordAction(actionId, "", CoordinatorAction.Status.READY, 0);
+        checkCoordAction(actionId, "", CoordinatorAction.Status.READY);
 
     }
 
@@ -85,16 +78,49 @@ public class TestCoordPushDependencyCheckXCommand extends XDataTestCase {
         populateTable(db, table);
 
         String actionId = addInitRecords(newHCatDependency);
-        checkCoordAction(actionId, newHCatDependency, CoordinatorAction.Status.WAITING, 0);
+        checkCoordAction(actionId, newHCatDependency, CoordinatorAction.Status.WAITING);
 
         new CoordPushDependencyCheckXCommand(actionId).call();
 
-        checkCoordAction(actionId, "", CoordinatorAction.Status.READY, 0);
+        checkCoordAction(actionId, "", CoordinatorAction.Status.READY);
 
     }
 
     @Test
     public void testUpdateCoordTableMultipleDepsV2() throws Exception {
+        // Test for two dependencies : one of them is already existed in the
+        // hcat server. Other one is not.
+        // Expected to see both action in WAITING as first one is not available.
+        // Later make the other partition also available. action is expected to
+        // be READY
+        String db = "default";
+        String table = "tablename";
+        String newHCatDependency1 = "hcat://" + server + "/" + db + "/" + table + "/dt=20120430;country=brazil";
+        String newHCatDependency2 = "hcat://" + server + "/" + db + "/" + table + "/dt=20120430;country=usa";
+        String newHCatDependency = newHCatDependency1 + CoordELFunctions.INSTANCE_SEPARATOR + newHCatDependency2;
+        populateTable(db, table);
+
+        String actionId = addInitRecords(newHCatDependency);
+        checkCoordAction(actionId, newHCatDependency, CoordinatorAction.Status.WAITING);
+
+        new CoordPushDependencyCheckXCommand(actionId).call();
+
+        // Checks dependencies in order. So list does not change if first one is not available
+        checkCoordAction(actionId, newHCatDependency, CoordinatorAction.Status.WAITING);
+
+        // Make first dependency available
+        dropPartition(db, table, "dt=20120430;country=usa");
+        addPartition(db, table, "dt=20120430;country=brazil");
+        new CoordPushDependencyCheckXCommand(actionId).call();
+        checkCoordAction(actionId, newHCatDependency2, CoordinatorAction.Status.WAITING);
+
+        addPartition(db, table, "dt=20120430;country=usa");
+        new CoordPushDependencyCheckXCommand(actionId).call();
+        checkCoordAction(actionId, "", CoordinatorAction.Status.READY);
+    }
+
+    @Test
+    public void testUpdateCoordTableMultipleDepsV3() throws Exception {
         // Test for two dependencies : one of them is already existed in the
         // hcat server. Other one is not.
         // Expected to see the action in WAITING
@@ -108,17 +134,18 @@ public class TestCoordPushDependencyCheckXCommand extends XDataTestCase {
         populateTable(db, table);
 
         String actionId = addInitRecords(newHCatDependency);
-        checkCoordAction(actionId, newHCatDependency, CoordinatorAction.Status.WAITING, 0);
+        checkCoordAction(actionId, newHCatDependency, CoordinatorAction.Status.WAITING);
 
-        new CoordPushDependencyCheckXCommand(actionId).call();
+        new CoordPushDependencyCheckXCommand(actionId, true).call();
+        checkCoordAction(actionId, newHCatDependency1, CoordinatorAction.Status.WAITING);
+        PartitionDependencyManagerService pdms = Services.get().get(PartitionDependencyManagerService.class);
+        assertTrue(pdms.getWaitingActions(new HCatURI(newHCatDependency1)).contains(actionId));
 
-        checkCoordAction(actionId, newHCatDependency1, CoordinatorAction.Status.WAITING, 0);
-
+        // Make first dependency available
         addPartition(db, table, "dt=20120430;country=brazil");
-
         new CoordPushDependencyCheckXCommand(actionId).call();
-
-        checkCoordAction(actionId, "", CoordinatorAction.Status.READY, 0);
+        assertNull(pdms.getWaitingActions(new HCatURI(newHCatDependency1)));
+        checkCoordAction(actionId, "", CoordinatorAction.Status.READY);
     }
 
     private void populateTable(String db, String table) throws Exception {
@@ -131,18 +158,13 @@ public class TestCoordPushDependencyCheckXCommand extends XDataTestCase {
         addPartition(db, table, "dt=20120413;country=brazil");
     }
 
-    private CoordinatorActionBean checkCoordAction(String actionId, String expDeps, CoordinatorAction.Status stat,
-            int type) throws Exception {
+    private CoordinatorActionBean checkCoordAction(String actionId, String expDeps, CoordinatorAction.Status stat)
+            throws Exception {
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
             CoordinatorActionBean action = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
             String missDeps = action.getPushMissingDependencies();
-            if (type != 0) {
-                assertEquals(new PartitionWrapper(missDeps), new PartitionWrapper(expDeps));
-            }
-            else {
-                assertEquals(expDeps, missDeps);
-            }
+            assertEquals(expDeps, missDeps);
             assertEquals(action.getStatus(), stat);
 
             return action;

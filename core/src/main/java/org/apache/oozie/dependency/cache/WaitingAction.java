@@ -15,30 +15,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.oozie.service;
+package org.apache.oozie.dependency.cache;
 
-import org.apache.oozie.XException;
-import org.apache.oozie.ErrorCode;
+import java.io.Serializable;
 
-public class MetadataServiceException extends XException {
+public class WaitingAction implements Serializable {
 
-    /**
-     * Create an MetadataService exception from a XException.
-     *
-     * @param cause the XException cause.
-     */
-    public MetadataServiceException(XException cause) {
-        super(cause);
+    private static final long serialVersionUID = 1L;
+    private String actionID;
+    private String dependencyURI;
+
+    public WaitingAction(String actionID, String dependencyURI) {
+        this.actionID = actionID;
+        this.dependencyURI = dependencyURI;
     }
 
-    /**
-     * Create a MetadataService exception.
-     *
-     * @param errorCode error code.
-     * @param params parameters for the error code message template.
-     */
-    public MetadataServiceException(ErrorCode errorCode, Object... params) {
-        super(errorCode, params);
+    public String getActionID() {
+        return actionID;
+    }
+
+    public String getDependencyURI() {
+        return dependencyURI;
     }
 
 }

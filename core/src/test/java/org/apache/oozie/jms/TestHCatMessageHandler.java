@@ -22,16 +22,14 @@ import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.Message;
+import javax.jms.MessageProducer;
 import javax.jms.Session;
-
+import javax.jms.Topic;
 import org.apache.activemq.ActiveMQConnectionFactory;
-import org.apache.activemq.command.ActiveMQTextMessage;
 import org.apache.hcatalog.common.HCatConstants;
-import org.apache.hcatalog.messaging.AddPartitionMessage;
 import org.apache.hcatalog.messaging.HCatEventMessage;
 import org.apache.hcatalog.messaging.json.JSONAddPartitionMessage;
 import org.apache.log4j.Appender;
@@ -39,17 +37,11 @@ import org.apache.log4j.Layout;
 import org.apache.log4j.Logger;
 import org.apache.log4j.SimpleLayout;
 import org.apache.log4j.WriterAppender;
-import org.apache.oozie.CoordinatorActionBean;
-import org.apache.oozie.CoordinatorJobBean;
-import org.apache.oozie.client.CoordinatorAction;
-import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.service.JMSAccessorService;
 import org.apache.oozie.service.PartitionDependencyManagerService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.HCatURI;
-import org.apache.oozie.util.PartitionWrapper;
-import org.apache.oozie.util.PartitionsGroup;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -72,12 +64,16 @@ public class TestHCatMessageHandler extends XDataTestCase {
         services.init();
         connFac = new ActiveMQConnectionFactory(localActiveMQBroker);
         conn = connFac.createConnection();
-        session = conn.createSession(true, Session.SESSION_TRANSACTED);
+        conn.start();
+        session = conn.createSession(false, Session.AUTO_ACKNOWLEDGE);
+        cleanUpDBTables();
     }
 
     @After
     protected void tearDown() throws Exception {
         services.destroy();
+        session.close();
+        conn.close();
         super.tearDown();
     }
 
@@ -90,58 +86,65 @@ public class TestHCatMessageHandler extends XDataTestCase {
     public void testCacheUpdateByMessage() {
 
         try {
-            // Define partition dependency
-            String stringDep = "hcat://hcat.server.com:5080/mydb/mytbl/datastamp=12;region=us";
-            JMSAccessorService jmsService = services.get(JMSAccessorService.class);
-            jmsService.getOrCreateConnection("hcat://hcat.server.com:5080");
-            HCatURI dep = new HCatURI(stringDep);
-            List<Map<String, String>> partitions = new ArrayList<Map<String, String>>(1);
-            partitions.add(dep.getPartitionMap());
 
-            // Add action to DB
-            CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
-            String jobId = job.getId();
-            CoordinatorActionBean action = addRecordToCoordActionTable(jobId, 1, CoordinatorAction.Status.WAITING,
-                    "coord-action-for-action-input-check.xml", 0);
-            String actionId = action.getId();
+            String actionId1 = "1234465451";
+            String actionId2 = "1234465452";
+            String actionId3 = "1234465453";
+            String actionId4 = "1234465454";
 
             // add partition as missing
+            HCatURI dep1 = new HCatURI("hcat://hcat.server.com:5080/mydb/mytbl/dt=20120101;country=us");
+            HCatURI dep2 = new HCatURI("hcat://hcat.server.com:5080/mydb/mytbl/country=us;dt=20120101");
+            HCatURI dep3 = new HCatURI("hcat://hcat.server.com:5080/mydb/mytbl/dt=20120102;country=us");
+            HCatURI dep4 = new HCatURI("hcat://hcat.server.com:5080/mydb/mytbl/dt=20120102;country=us;state=CA");
             PartitionDependencyManagerService pdms = Services.get().get(PartitionDependencyManagerService.class);
-            pdms.addMissingPartition(stringDep, actionId);
+            pdms.addMissingDependency(dep1, actionId1);
+            pdms.addMissingDependency(dep2, actionId2);
+            pdms.addMissingDependency(dep3, actionId3);
+            pdms.addMissingDependency(dep4, actionId4);
+            assertTrue(pdms.getWaitingActions(dep1).contains(actionId1));
+            assertTrue(pdms.getWaitingActions(dep2).contains(actionId2));
+            assertTrue(pdms.getWaitingActions(dep3).contains(actionId3));
+            assertTrue(pdms.getWaitingActions(dep4).contains(actionId4));
 
             // construct message
-            JSONAddPartitionMessage jsonMsg = new JSONAddPartitionMessage("thrift://"+dep.getServer(), "", dep.getDb(),
-                    dep.getTable(), partitions, System.currentTimeMillis());
+            List<Map<String, String>> partitionsList = new ArrayList<Map<String,String>>();
+            partitionsList.add(getPartitionMap("dt=20120101;country=us;state=CA"));
+            partitionsList.add(getPartitionMap("dt=20120101;country=us;state=NY"));
+            JSONAddPartitionMessage jsonMsg = new JSONAddPartitionMessage("thrift://"+dep1.getServer(), "", dep1.getDb(),
+                    dep1.getTable(), partitionsList, System.currentTimeMillis());
             Message msg = session.createTextMessage(jsonMsg.toString());
             msg.setStringProperty(HCatConstants.HCAT_EVENT, HCatEventMessage.EventType.ADD_PARTITION.toString());
-            // process message
-            HCatMessageHandler hcatHandler = new HCatMessageHandler();
+
+            // test message processing
+            HCatMessageHandler hcatHandler = new HCatMessageHandler("hcat.server.com:5080");
             hcatHandler.process(msg);
+            assertNull(pdms.getWaitingActions(dep1));
+            assertNull(pdms.getWaitingActions(dep2));
+            assertTrue(pdms.getWaitingActions(dep3).contains(actionId3));
+            assertTrue(pdms.getWaitingActions(dep4).contains(actionId4));
 
-            //partition removed from missing cache - cascade ON
-            assertFalse(pdms.getHCatMap()
-                    .containsKey(PartitionWrapper.makePrefix(dep.getServer(), dep.getDb())));
-
-            // bunch of other partitions
-            stringDep = "hcat://hcat.server.com:5080/mydb/mytbl/user=joe";
-            pdms.addMissingPartition(stringDep, actionId);
-            stringDep = "hcat://hcat.server.com:5080/mydb/mytbl/part=fake";
-            dep = new HCatURI(stringDep);
-            partitions = new ArrayList<Map<String, String>>(1);
-            partitions.add(dep.getPartitionMap());
-
-            // negative test - message for partition that does not exist in
-            // partition dependency cache
-            jsonMsg = new JSONAddPartitionMessage("thrift://"+dep.getServer(), "", dep.getDb(), dep.getTable(), partitions,
-                    System.currentTimeMillis());
+            //test message processing through JMS notification listener
+            partitionsList.clear();
+            partitionsList.add(getPartitionMap("dt=20120102;country=us;state=CA"));
+            partitionsList.add(getPartitionMap("dt=20120102;country=us;state=NY"));
+            jsonMsg = new JSONAddPartitionMessage("thrift://"+dep1.getServer(), "", dep1.getDb(),
+                    dep1.getTable(), partitionsList, System.currentTimeMillis());
             msg = session.createTextMessage(jsonMsg.toString());
             msg.setStringProperty(HCatConstants.HCAT_EVENT, HCatEventMessage.EventType.ADD_PARTITION.toString());
+            JMSAccessorService jms = Services.get().get(JMSAccessorService.class);
+            jms.registerForNotification(dep1.getURI(), "hcat.topic1", hcatHandler);
+            Topic topic = session.createTopic("hcat.topic1");
+            MessageProducer producer = session.createProducer(topic);
+            producer.send(msg);
+            Thread.sleep(500);
 
-            hcatHandler.process(msg);
-
-            PartitionsGroup pg = pdms.getHCatMap().get(PartitionWrapper.makePrefix(dep.getServer(), dep.getDb()))
-                    .get(dep.getTable());
-            assertFalse(pg.getPartitionsMap().containsKey(new PartitionWrapper(dep)));
+            assertNull(pdms.getWaitingActions(dep3));
+            assertNull(pdms.getWaitingActions(dep4));
+            assertTrue(pdms.getAvailableDependencyURIs(actionId1).contains(dep1.getURI().toString()));
+            assertTrue(pdms.getAvailableDependencyURIs(actionId2).contains(dep2.getURI().toString()));
+            assertTrue(pdms.getAvailableDependencyURIs(actionId3).contains(dep3.getURI().toString()));
+            assertTrue(pdms.getAvailableDependencyURIs(actionId4).contains(dep4.getURI().toString()));
 
         }
         catch (Exception e) {
@@ -174,7 +177,7 @@ public class TestHCatMessageHandler extends XDataTestCase {
                 "}");
             msg.setStringProperty(HCatConstants.HCAT_EVENT, HCatEventMessage.EventType.DROP_PARTITION.toString());
 
-            HCatMessageHandler hcatHandler = new HCatMessageHandler();
+            HCatMessageHandler hcatHandler = new HCatMessageHandler("localhost");
             hcatHandler.process(msg);
             //check logs to see appropriate error message
             String logMsg = out.toString();
@@ -190,4 +193,5 @@ public class TestHCatMessageHandler extends XDataTestCase {
             fail("Exception caused " + e.getMessage());
         }
     }
+
 }

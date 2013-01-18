@@ -178,6 +178,7 @@ public enum ErrorCode {
     E0903(XLog.OPS, "Invalid JobConf, it has not been created by HadoopAccessorService"),
     E0904(XLog.STD, "Scheme [{0}] not supported in uri [{1}]"),
     E0905(XLog.STD, "Scheme not present in uri [{0}]"),
+    E0906(XLog.STD, "URI parsing error : {0}"),
 
     E1001(XLog.STD, "Could not read the coordinator job definition, {0}"),
     E1002(XLog.STD, "Invalid coordinator application URI [{0}], {1}"),
@@ -201,9 +202,6 @@ public enum ErrorCode {
     E1020(XLog.STD, "Could not kill coord job, this job either finished successfully or does not exist , [{0}]"),
     E1021(XLog.STD, "Coord Action Input Check Error: {0}"),
     E1022(XLog.STD, "Cannot delete running/completed coordinator action: [{0}]"),
-    E1023(XLog.STD, "Coord Action push Input Check Error: {0}"),
-    E1024(XLog.STD, "Service not yet initialized : {0}"),
-    E1025(XLog.STD, "URI parsing error : {0}"),
 
     E1100(XLog.STD, "Command precondition does not hold before execution, [{0}]"),
 

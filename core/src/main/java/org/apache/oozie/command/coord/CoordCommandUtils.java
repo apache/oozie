@@ -35,10 +35,9 @@ import org.apache.oozie.coord.CoordELFunctions;
 import org.apache.oozie.coord.CoordinatorJobException;
 import org.apache.oozie.coord.SyncCoordAction;
 import org.apache.oozie.coord.TimeUnit;
+import org.apache.oozie.dependency.DependencyChecker;
 import org.apache.oozie.dependency.DependencyType;
 import org.apache.oozie.dependency.URIHandler;
-import org.apache.oozie.service.MetadataServiceException;
-import org.apache.oozie.service.PartitionDependencyManagerService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.service.UUIDService;
@@ -47,7 +46,6 @@ import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
-import org.apache.oozie.util.XLog;
 
 public class CoordCommandUtils {
     public static int CURRENT = 0;
@@ -286,7 +284,7 @@ public class CoordCommandUtils {
      * @param instances
      * @throws Exception
      */
-    public static StringBuilder separateResolvedAndUnresolved(Element event, StringBuilder instances)
+    private static String separateResolvedAndUnresolved(Element event, StringBuilder instances)
             throws Exception {
         StringBuilder unresolvedInstances = new StringBuilder();
         StringBuilder urisWithDoneFlag = new StringBuilder();
@@ -306,7 +304,7 @@ public class CoordCommandUtils {
             elemInstance.addContent(unresolvedInstances.toString());
             event.getContent().add(1, elemInstance);
         }
-        return depList;
+        return depList.toString();
     }
 
     /**
@@ -426,7 +424,7 @@ public class CoordCommandUtils {
         appInst.setTimeZone(DateUtils.getTimeZone(eAction.getAttributeValue("timezone")));
         appInst.setEndOfDuration(TimeUnit.valueOf(eAction.getAttributeValue("end_of_duration")));
 
-        Map<String, StringBuilder> dependencyMap = new HashMap<String, StringBuilder>();
+        Map<String, StringBuilder> dependencyMap = null;
 
         Element inputList = eAction.getChild("input-events", eAction.getNamespace());
         List<Element> dataInList = null;
@@ -461,13 +459,15 @@ public class CoordCommandUtils {
         actionBean.setLastModifiedTime(new Date());
         actionBean.setStatus(CoordinatorAction.Status.WAITING);
         actionBean.setActionNumber(instanceCount);
-        StringBuilder sbPull = dependencyMap.get("pull");
-        if (sbPull != null) {
-            actionBean.setMissingDependencies(sbPull.toString());
-        }
-        StringBuilder sbPush = dependencyMap.get("push");
-        if (sbPush != null) {
-            actionBean.setPushMissingDependencies(sbPush.toString());
+        if (dependencyMap != null) {
+            StringBuilder sbPull = dependencyMap.get(DependencyType.PULL.name());
+            if (sbPull != null) {
+                actionBean.setMissingDependencies(sbPull.toString());
+            }
+            StringBuilder sbPush = dependencyMap.get(DependencyType.PUSH.name());
+            if (sbPush != null) {
+                actionBean.setPushMissingDependencies(sbPush.toString());
+            }
         }
         actionBean.setNominalTime(nominalTime);
         if (isSla == true) {
@@ -486,15 +486,20 @@ public class CoordCommandUtils {
         }
         else {
             String action = XmlUtils.prettyPrint(eAction).toString();
-            CoordActionInputCheckXCommand coordActionInput = new CoordActionInputCheckXCommand(actionBean.getId(),
-                    actionBean.getJobId());
             StringBuilder actionXml = new StringBuilder(action);
-            StringBuilder existList = new StringBuilder();
-            StringBuilder nonExistList = new StringBuilder();
-            StringBuilder nonResolvedList = new StringBuilder();
-            getResolvedList(actionBean.getMissingDependencies(), nonExistList, nonResolvedList);
             Configuration actionConf = new XConfiguration(new StringReader(actionBean.getRunConf()));
-            coordActionInput.checkInput(actionXml, existList, nonExistList, actionConf);
+            if (actionBean.getPushMissingDependencies() != null) {
+                DependencyChecker.checkForAvailability(actionBean.getPushMissingDependencies(), actionConf, true);
+            }
+            if (actionBean.getMissingDependencies() != null) {
+                CoordActionInputCheckXCommand coordActionInput = new CoordActionInputCheckXCommand(actionBean.getId(),
+                        actionBean.getJobId());
+                StringBuilder existList = new StringBuilder();
+                StringBuilder nonExistList = new StringBuilder();
+                StringBuilder nonResolvedList = new StringBuilder();
+                getResolvedList(actionBean.getMissingDependencies(), nonExistList, nonResolvedList);
+                coordActionInput.checkInput(actionXml, existList, nonExistList, actionConf);
+            }
             return actionXml.toString();
         }
     }
@@ -518,12 +523,10 @@ public class CoordCommandUtils {
         StringBuilder unresolvedList = new StringBuilder();
         Map<String, StringBuilder> dependencyMap = new HashMap<String, StringBuilder>();
         URIHandlerService uriService = Services.get().get(URIHandlerService.class);
+        StringBuilder pullMissingDep = null;
+        StringBuilder pushMissingDep = null;
 
         for (Element event : events) {
-            Element uri = event.getChild("dataset", event.getNamespace())
-                    .getChild("uri-template", event.getNamespace());
-            String pullOrPush = "pull";
-            String uriTemplate = uri.getText();
             StringBuilder instances = new StringBuilder();
             ELEvaluator eval = CoordELEvaluator.createInstancesELEvaluator(event, appInst, conf);
             // Handle list of instance tag
@@ -531,13 +534,23 @@ public class CoordCommandUtils {
             // Handle start-instance and end-instance
             resolveInstanceRange(event, instances, appInst, conf, eval);
             // Separate out the unresolved instances
-            StringBuilder depList = separateResolvedAndUnresolved(event, instances);
-            URI baseURI = uriService.getAuthorityWithScheme(uriTemplate);
-            URIHandler handler = uriService.getURIHandler(baseURI);
-            if (handler.getDependencyType(baseURI).equals(DependencyType.PUSH)) {
-                pullOrPush = "push";
+            String resolvedList = separateResolvedAndUnresolved(event, instances);
+            if (!resolvedList.isEmpty()) {
+                Element uri = event.getChild("dataset", event.getNamespace()).getChild("uri-template",
+                        event.getNamespace());
+                String uriTemplate = uri.getText();
+                URI baseURI = uriService.getAuthorityWithScheme(uriTemplate);
+                URIHandler handler = uriService.getURIHandler(baseURI);
+                if (handler.getDependencyType(baseURI).equals(DependencyType.PULL)) {
+                    pullMissingDep = (pullMissingDep == null) ? new StringBuilder(resolvedList) : pullMissingDep.append(
+                            CoordELFunctions.INSTANCE_SEPARATOR).append(resolvedList);
+                }
+                else {
+                    pushMissingDep = (pushMissingDep == null) ? new StringBuilder(resolvedList) : pushMissingDep.append(
+                            CoordELFunctions.INSTANCE_SEPARATOR).append(resolvedList);
+                }
             }
-            dependencyMap.put(pullOrPush, depList);
+
             String tmpUnresolved = event.getChildTextTrim(UNRESOLVED_INST_TAG, event.getNamespace());
             if (tmpUnresolved != null) {
                 if (unresolvedList.length() > 0) {
@@ -547,14 +560,13 @@ public class CoordCommandUtils {
             }
         }
         if (unresolvedList.length() > 0) {
-            StringBuilder sb = dependencyMap.get("pull");
-            if (sb == null) {
-                dependencyMap.put("pull", new StringBuilder(RESOLVED_UNRESOLVED_SEPARATOR).append(unresolvedList));
+            if (pullMissingDep == null) {
+                pullMissingDep = new StringBuilder();
             }
-            else {
-                sb.append(RESOLVED_UNRESOLVED_SEPARATOR).append(unresolvedList);
-            }
+            pullMissingDep.append(RESOLVED_UNRESOLVED_SEPARATOR).append(unresolvedList);
         }
+        dependencyMap.put(DependencyType.PULL.name(), pullMissingDep);
+        dependencyMap.put(DependencyType.PUSH.name(), pushMissingDep);
         return dependencyMap;
     }
 
@@ -580,28 +592,4 @@ public class CoordCommandUtils {
         return resolved.toString();
     }
 
-    /**
-     * Register partition to PartitionDependencyManagerService
-     *
-     * @param actionBean
-     * @throws Exception
-     */
-    public static void registerPartition(CoordinatorActionBean actionBean) throws MetadataServiceException {
-        String missDeps = actionBean.getPushMissingDependencies();
-        String[] missDepsList = missDeps.split(CoordELFunctions.INSTANCE_SEPARATOR, -1);
-        PartitionDependencyManagerService pdms = Services.get().get(PartitionDependencyManagerService.class);
-
-        // always register action ID to missing partition in PDMS before
-        // asking HCat to avoid corner case where JMS notification msg
-        // arrives while asking HCat for existence of partition
-            pdms.addMissingPartitions(missDepsList, actionBean.getId());
-            // after Hcat answers, two things need to be done
-            // 1. if partition exists, remove actionId from missing
-            // partition in PDMS
-            // --> pdms.removeActionFromMissingPartitions(uri,
-            // actionBean.getId());
-            // 2. if partition not exists, no-op
-            // we probably delegate these tasks to other separate command,
-            // so end up with queuing the new command
-    }
 }

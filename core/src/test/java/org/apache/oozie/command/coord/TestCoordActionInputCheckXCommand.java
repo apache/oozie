@@ -402,16 +402,12 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         services = new Services();
         services.init();
 
-        // setting the configuration
-        XConfiguration jobConf = new XConfiguration();
-        jobConf.set(OozieClient.USER_NAME, getTestUser());
-
         // setting the test path with nonExistDir
         Path appPath = new Path(getFsTestCaseDir(), "coord");
         String inputDir = appPath.toString() + "/coord-input/2010/07/09/01/00";
         String nonExistDir = inputDir.replaceFirst("localhost", "nonExist");
         try {
-            caicc.pathExists(nonExistDir, jobConf);
+            caicc.pathExists(nonExistDir, new XConfiguration(), getTestUser());
             fail("Should throw exception due to non-existent NN path. Therefore fail");
         }
         catch (IOException ioe) {

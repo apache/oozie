@@ -17,6 +17,7 @@
  */
 package org.apache.oozie.service;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -38,9 +39,12 @@ import javax.naming.NamingException;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.jms.MessageHandler;
 import org.apache.oozie.jms.MessageReceiver;
 import org.apache.oozie.util.MappingRule;
 import org.apache.oozie.util.XLog;
+
+import com.google.common.annotations.VisibleForTesting;
 
 /**
  * This class will 1. Create/Manage JMS connections using user configured
@@ -57,14 +61,15 @@ public class JMSAccessorService implements Service {
     public static final String JMS_CONNECTIONS_PROPERTIES = CONF_PREFIX + "connections";
     public static final String SESSION_OPTS = CONF_PREFIX + "jms.sessionOpts";
     public static final String DEFAULT_SERVER_ENDPOINT = "default";
-    private String defaultConnection = null;
-
-
+    private static final String DELIMITER = "#";
     private static XLog LOG;
+
+    private String defaultConnection = null;
     private Configuration conf;
     private List<MappingRule> mappingRules = null;
-    ConcurrentHashMap<String, ConnectionContext> connSessionMap = new ConcurrentHashMap<String, ConnectionContext>();
-    HashMap<String, Properties> hmConnProps = new HashMap<String, Properties>();
+    private ConcurrentHashMap<String, ConnectionContext> connectionMap = new ConcurrentHashMap<String, ConnectionContext>();
+    private ConcurrentHashMap<String, MessageReceiver> receiversMap = new ConcurrentHashMap<String, MessageReceiver>();
+    private HashMap<String, Properties> hmConnProps = new HashMap<String, Properties>();
 
     @Override
     public void init(Services services) throws ServiceException {
@@ -97,47 +102,107 @@ public class JMSAccessorService implements Service {
     }
 
     /**
-     * Checks if the connection exists or not. If it doens't exists, creates a new one.
-     * Returns false if the connection cannot be established
-     * @param serverName
-     * @return
+     * Determine whether a given source URI publishes JMS messages
+     *
+     * @param sourceURI URI of the publisher
+     * @return true if we have JMS mapping for the source URI, else false
      */
-    public boolean getOrCreateConnection(String serverName) {
-        if (!isExistsConnection(serverName)) {
-            // Get JNDI properties related to the JMS server name
-            Properties props = getJMSServerProps(serverName);
-            if (props != null) {
-                Connection conn = null;
-                try {
-                    conn = getConnection(props);
-                }
-                catch (ServiceException se) {
-                    LOG.warn("Could not create connection " + se.getErrorCode() + se.getMessage());
-                    return false;
-                }
-                LOG.info("Connection established to JMS Server for " + serverName);
-                connSessionMap.put(serverName, new ConnectionContext(conn));
-                return true;
-            }
-        }
-        return false;
+    public boolean isKnownPublisher(URI sourceURI) {
+        return getJMSServerMapping(sourceURI.getAuthority()) != null;
     }
 
     /**
-     * Checks whether connection to JMS server already exists
-     * @param serverName
-     * @return
+     * Register for notifications on a JMS topic from the specified publisher.
+     *
+     * @param publisherURI URI of the publisher of JMS messages. Used to determine the JMS
+     *        connection end point.
+     * @param topic Topic in which the JMS messages are published
+     * @param msgHandler Handler which will process the messages received on the topic
      */
-    public boolean isExistsConnection(String serverName) {
-        if (connSessionMap.containsKey(serverName)) {
-            LOG.info("Connection exists to JMS Server for " + serverName);
-            return true; // connection already exists
+    public void registerForNotification(URI publisherURI, String topic, MessageHandler msgHandler) {
+        try {
+            String server = publisherURI.getAuthority();
+            String key = server + DELIMITER + topic;
+            if (receiversMap.containsKey(key)) {
+                return;
+            }
+            synchronized (receiversMap) {
+                if (!receiversMap.containsKey(key)) {
+                    ConnectionContext connCtxt = createConnection(server);
+                    Session session = connCtxt.createSession();
+                    MessageConsumer consumer = connCtxt.createConsumer(session, topic);
+                    MessageReceiver receiver = new MessageReceiver(msgHandler, session, consumer);
+                    consumer.setMessageListener(receiver);
+                    LOG.info("Registered a listener for topic {0} from publisher {1}", topic, server);
+                    receiversMap.put(key, receiver);
+                }
+            }
         }
-        else {
-            return false;
+        catch (Exception e) {
+            //TODO: Exponentially backed off retry in case of connection failure.
+            LOG.warn("Connection to JMS server failed for publisher {0}", publisherURI, e);
         }
     }
 
+    /**
+     * Unregister from listening to JMS messages on a topic.
+     *
+     * @param publisherURI URI of the publisher of JMS messages. Used to determine the JMS
+     *        connection end point.
+     * @param topic Topic in which the JMS messages are published
+     */
+    public void unregisterFromNotification(URI publisherURI, String topic) {
+        unregisterFromNotification(publisherURI.getAuthority(), topic);
+    }
+
+    /**
+     * Unregister from listening to JMS messages on a topic.
+     *
+     * @param publisherAuthority host:port of the publisher of JMS messages. Used to determine the JMS
+     *        connection end point.
+     * @param topic Topic in which the JMS messages are published
+     */
+    public void unregisterFromNotification(String publisherAuthority, String topic) {
+        LOG.info("Unregistering JMS listener. Clossing session for {0} and topic {1}", publisherAuthority, topic);
+        MessageReceiver receiver = receiversMap.remove(publisherAuthority + DELIMITER + topic);
+        if (receiver != null) {
+            try {
+                receiver.getSession().close();
+            }
+            catch (JMSException e) {
+                LOG.warn("Unable to close session " + receiver.getSession(), e);
+            }
+        }
+        else {
+            LOG.warn("Received unregister for {0} and topic {1}, but no matching session", publisherAuthority, topic);
+        }
+    }
+
+    /**
+     * Determine if currently listening to JMS messages on a topic.
+     *
+     * @param publisherAuthority host:port of the publisher of JMS messages. Used to determine the JMS
+     *        connection end point.
+     * @param topic Topic in which the JMS messages are published
+     * @return true if listening to the topic, else false
+     */
+    public boolean isListeningToTopic(String publisherAuthority, String topic) {
+        return receiversMap.get(publisherAuthority + DELIMITER + topic) != null;
+    }
+
+    protected ConnectionContext createConnection(String publisherAuthority) throws ServiceException {
+        ConnectionContext connCtxt = connectionMap.get(publisherAuthority);
+        if (connCtxt == null) {
+            Properties props = getJMSServerProps(publisherAuthority);
+            if (props != null) {
+                Connection conn = getConnection(props);
+                LOG.info("Connection established to JMS Server for publisher " + publisherAuthority);
+                connCtxt = new ConnectionContext(conn);
+                connectionMap.put(publisherAuthority, connCtxt);
+            }
+        }
+        return connCtxt;
+    }
 
     protected Properties getJMSServerProps(String serverName) {
         Properties props = null;
@@ -146,7 +211,7 @@ public class JMSAccessorService implements Service {
             return props;
         }
         String jmsServerMapping = getJMSServerMapping(serverName);
-        LOG.trace("\n JMS Server Mapping for server "+ serverName + "is " + jmsServerMapping);
+        LOG.trace("\n JMS Server Mapping for publisher " + serverName + "is " + jmsServerMapping);
         if (jmsServerMapping == null) {
             return null;
         }
@@ -169,95 +234,6 @@ public class JMSAccessorService implements Service {
         return defaultConnection;
 
     }
-    /**
-     * Returns Consumer object for specific service end point and topic name
-     *
-     * @param endPoint : Service end-point (preferably HCatalog server address)
-     *        to determine the JMS connection properties
-     * @param topicName : topic to listen on
-     * @return : MessageConsumer to receive JMS message
-     * @throws JMSException
-     */
-    public MessageConsumer getMessageConsumer(String endPoint, String topicName) throws JMSException {
-        ConnectionContext connCtx = getConnectionContext(endPoint);
-        MessageConsumer ret = null;
-        if (connCtx != null) {
-            ret = connCtx.getConsumer(topicName);
-        }
-        return ret;
-    }
-
-    /**
-     * Returns Producer object for specific service end point and topic name
-     *
-     * @param endPoint : Service end-point (preferably HCatalog server address)
-     *        to determine the JMS connection properties
-     * @param topicName : topic to send message
-     * @return : MessageProducer to send JMS message
-     * @throws JMSException
-     */
-    public MessageProducer getMessageProducer(String endPoint, String topicName) throws JMSException {
-        ConnectionContext connCtx = getConnectionContext(endPoint);
-        MessageProducer ret = null;
-        if (connCtx != null) {
-            ret = connCtx.getProducer(topicName);
-        }
-        return ret;
-    }
-
-    /**
-     * Returns JMS session object for specific service end point and topic name
-     *
-     * @param endPoint : Service end-point (preferably HCatalog server address)
-     *        to determine the JMS connection properties
-     * @param topicName : topic to listen on
-     * @return : Session to send/receive JMS message
-     * @throws JMSException
-     */
-    public Session getSession(String endPoint, String topicName) throws JMSException {
-        ConnectionContext connCtx = getConnectionContext(endPoint);
-        Session ret = null;
-        if (connCtx != null) {
-            ret = connCtx.getSession(topicName);
-        }
-        return ret;
-    }
-
-    /**
-     * Returns JMS connection context object for specific service end point
-     *
-     * @param endPoint : Service end-point (preferably HCatalog server address)
-     *        to determine the JMS connection properties
-     * @return : Connection context to send/receive JMS message
-     */
-    public ConnectionContext getConnectionContext(String endPoint) {
-        ConnectionContext ret = null;
-        if (connSessionMap.containsKey(endPoint)) {
-            ret = connSessionMap.get(endPoint);
-        }
-        else {
-            LOG.error("Connection doesn't exist for end point " + endPoint);
-        }
-        return ret;
-    }
-
-    /**
-     * Remove JMS session object for specific service end point and topic name
-     *
-     * @param endPoint : Service end-point (preferably HCatalog server address)
-     *        to determine the JMS connection properties
-     * @param topicName : topic to listen on
-     * @throws JMSException
-     */
-    public void removeSession(String endPoint, String topicName) throws JMSException {
-        ConnectionContext connCtx = getConnectionContext(endPoint);
-        if (connCtx != null) {
-            connCtx.returnSession(topicName);
-            connCtx.removeTopicReceiver(topicName);
-        }
-        return;
-    }
-
 
     protected Properties getJMSPropsFromConf(String kVal) {
         Properties props = new Properties();
@@ -277,11 +253,27 @@ public class JMSAccessorService implements Service {
         return props;
     }
 
+    @VisibleForTesting
+    MessageReceiver getMessageReceiver(String publisher, String topic) {
+        return receiversMap.get(publisher + DELIMITER + topic);
+    }
+
     @Override
     public void destroy() {
-        // TODO Remove topic sessions based on no demand
         LOG.info("Destroying JMSAccessor service ");
-        for (Entry<String, ConnectionContext> entry : connSessionMap.entrySet()) {
+        LOG.info("Closing JMS sessions");
+        for (MessageReceiver receiver : receiversMap.values()) {
+            try {
+                receiver.getSession().close();
+            }
+            catch (JMSException e) {
+                LOG.warn("Unable to close session " + receiver.getSession(), e);
+            }
+        }
+        receiversMap.clear();
+
+        LOG.info("Closing JMS connections");
+        for (Entry<String, ConnectionContext> entry : connectionMap.entrySet()) {
             try {
                 entry.getValue().getConnection().close();
             }
@@ -289,7 +281,7 @@ public class JMSAccessorService implements Service {
                 LOG.warn("Unable to close the connection for " + entry.getKey(), e);
             }
         }
-
+        connectionMap.clear();
     }
 
     @Override
@@ -352,66 +344,11 @@ public class JMSAccessorService implements Service {
     }
 
     /**
-     * Get receiver for a registered topic
-     *
-     * @param endPoint
-     * @param topicName
-     * @return MessageReceiver
-     * @throws JMSException
-     */
-    public MessageReceiver getTopicReceiver(String endPoint, String topicName) {
-        MessageReceiver recvr = null;
-        ConnectionContext connCtx = getConnectionContext(endPoint);
-        if(connCtx != null) {
-            recvr = connCtx.getTopicReceiver(topicName);
-        }
-        else {
-            LOG.info("No connection exists to endpoint: " + endPoint);
-        }
-        return recvr;
-    }
-
-    /**
-     * Get receiver for a registered topic and "default" server endpoint
-     *
-     * @param topicName
-     * @return MessageReceiver
-     * @throws JMSException
-     */
-    public MessageReceiver getTopicReceiver(String topicName) throws JMSException {
-        return getTopicReceiver(DEFAULT_SERVER_ENDPOINT, topicName);
-    }
-
-    /**
-     * Add a new listener for topic
-     * @param recvr
-     * @param endPoint
-     * @param topicName
-     * @throws ServiceException
-     */
-    public void addTopicReceiver(MessageReceiver recvr, String endPoint, String topicName) throws ServiceException {
-        ConnectionContext connCtx = getConnectionContext(endPoint);
-        if(connCtx != null) {
-            connCtx.getTopicReceiverMap().put(topicName, recvr);
-        }
-        else {
-            throw new ServiceException(ErrorCode.E1506, "Connection to endpoint:" + endPoint + " NULL. Message Consumer not added to map");
-        }
-    }
-
-
-    /**
      * This class maintains a JMS connection and map of topic to Session. Only
      * one session per topic.
      */
-    class ConnectionContext {
-        Connection connection;
-        HashMap<String, Session> hmSessionTopic = new HashMap<String, Session>();
-        /*
-         * Map of topic to corresponding message receiver
-         * We only need to register one receiver (consumer) per topic
-         */
-        private ConcurrentHashMap<String, MessageReceiver> topicReceiverMap = new ConcurrentHashMap<String, MessageReceiver>();
+    public class ConnectionContext {
+        private Connection connection;
 
         public ConnectionContext(Connection conn) {
             this.connection = conn;
@@ -425,17 +362,9 @@ public class JMSAccessorService implements Service {
          * @return a new/exiting JMS session
          * @throws JMSException
          */
-        public Session getSession(String topic) throws JMSException {
-            Session ret;
-            if (hmSessionTopic.containsKey(topic)) {
-                ret = hmSessionTopic.get(topic);
-            }
-            else {
-                int sessionOpts = conf.getInt(SESSION_OPTS, Session.AUTO_ACKNOWLEDGE);
-                ret = connection.createSession(false, sessionOpts);
-                hmSessionTopic.put(topic, ret);
-            }
-            return ret;
+        public Session createSession() throws JMSException {
+            int sessionOpts = conf.getInt(SESSION_OPTS, Session.AUTO_ACKNOWLEDGE);
+            return connection.createSession(false, sessionOpts);
         }
 
         /**
@@ -446,8 +375,7 @@ public class JMSAccessorService implements Service {
          * @return MessageConsumer
          * @throws JMSException
          */
-        public MessageConsumer getConsumer(String topicName) throws JMSException {
-            Session session = getSession(topicName);
+        public MessageConsumer createConsumer(Session session, String topicName) throws JMSException {
             Topic topic = session.createTopic(topicName);
             MessageConsumer consumer = session.createConsumer(topic);
             return consumer;
@@ -461,28 +389,10 @@ public class JMSAccessorService implements Service {
          * @return MessageProducer
          * @throws JMSException
          */
-        public MessageProducer getProducer(String topicName) throws JMSException {
-            Session session = getSession(topicName);
+        public MessageProducer createProducer(Session session, String topicName) throws JMSException {
             Topic topic = session.createTopic(topicName);
             MessageProducer producer = session.createProducer(topic);
             return producer;
-        }
-
-        /**
-         * Close an existing session and remove from the Map
-         *
-         * @param topic : Name of a topic
-         * @throws JMSException
-         */
-        public void returnSession(String topic) throws JMSException {
-            if (hmSessionTopic.containsKey(topic)) {
-                Session sess = hmSessionTopic.get(topic);
-                sess.close();
-                hmSessionTopic.remove(topic);
-            }
-            else {
-                LOG.info("Topic " + topic + " doesn't have any active session to close ");
-            }
         }
 
         /**
@@ -492,46 +402,14 @@ public class JMSAccessorService implements Service {
             return connection;
         }
 
-        /**
-         * Set JMS connection
-         *
-         * @param connection
-         */
-        public void setConnection(Connection connection) {
-            this.connection = connection;
-        }
+        public void close() {
 
-        /**
-         * Get the listener registered for a topicName
-         * @return MessageReceiver
-         */
-        public MessageReceiver getTopicReceiver(String topicName) {
-            MessageReceiver recvr = null;
-            if(topicReceiverMap.containsKey(topicName)) {
-                recvr = topicReceiverMap.get(topicName);
+            try {
+                connection.close();
             }
-            return recvr;
-        }
-
-        /**
-         * Remove the topic -> listener mapping entry
-         *
-         * @param topicName
-         */
-        public void removeTopicReceiver(String topicName) {
-            if (topicReceiverMap.containsKey(topicName)) {
-                topicReceiverMap.remove(topicName);
+            catch (JMSException e) {
+                LOG.warn("Unable to close the connection " + connection, e);
             }
-            else {
-                LOG.debug("No receiver to remove corresponding to topic: " + topicName);
-            }
-        }
-
-        /**
-         * @return the topicReceiverMap
-         */
-        public ConcurrentHashMap<String, MessageReceiver> getTopicReceiverMap() {
-            return topicReceiverMap;
         }
 
     }

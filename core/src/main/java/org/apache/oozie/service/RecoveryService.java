@@ -47,7 +47,6 @@ import org.apache.oozie.command.wf.KillXCommand;
 import org.apache.oozie.command.wf.ResumeXCommand;
 import org.apache.oozie.command.wf.SignalXCommand;
 import org.apache.oozie.command.wf.SuspendXCommand;
-import org.apache.oozie.coord.CoordELFunctions;
 import org.apache.oozie.executor.jpa.BundleActionsGetWaitingOlderJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionsGetForRecoveryJPAExecutor;
@@ -62,7 +61,6 @@ import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Attribute;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 
 /**
  * The Recovery Service checks for pending actions and premater coordinator jobs older than a configured age and then
@@ -86,7 +84,7 @@ public class RecoveryService implements Service {
     /**
      * Delay for the push missing dependencies in milliseconds.
      */
-    public static final String CONF_PUSH_DEPENDENCY_DELAY = CONF_PREFIX + "push.dependency.delay";
+    public static final String CONF_PUSH_DEPENDENCY_INTERVAL = CONF_PREFIX + "push.dependency.interval";
 
     /**
      * Age of actions to queue, in seconds.
@@ -224,39 +222,14 @@ public class RecoveryService implements Service {
 
         }
 
-        private void registerPartitions(CoordinatorActionBean actionBean) throws URIAccessorException,
-                MetadataServiceException {
-            String pushDeps = actionBean.getPushMissingDependencies();
-            String[] pushDepsArr = pushDeps.split(CoordELFunctions.INSTANCE_SEPARATOR, -1);
-
-            String firstURI = pushDepsArr[0];
-            String uriWithSchemeAuthority = uriService.getAuthorityWithScheme(firstURI).toString();
-            if (jmsService.isExistsConnection(uriWithSchemeAuthority)) {
-                if (pdms.containsTable(firstURI)) {
-                    return; // assuming that all partitions are registered as
-                            // connection and table exists
-                }
-                else {
-                    for (String uri : pushDepsArr) {
-                        pdms.addMissingPartition(uri, actionBean.getId());
-                    }
-                }
-            }
-            else if (jmsService.getOrCreateConnection(uriWithSchemeAuthority)) {
-                for (String uri : pushDepsArr) {
-                    pdms.addMissingPartition(uri, actionBean.getId());
-                }
-            }
-
-        }
-
         /**
          * Recover coordinator actions that are staying in WAITING or SUBMITTED too long
          */
         private void runCoordActionRecovery() {
             XLog.Info.get().clear();
             XLog log = XLog.getLog(getClass());
-            long pushMissingDepDelay = Services.get().getConf().getLong(CONF_PUSH_DEPENDENCY_DELAY, 60000);
+            long pushMissingDepInterval = Services.get().getConf().getLong(CONF_PUSH_DEPENDENCY_INTERVAL, 200);
+            long pushMissingDepDelay = pushMissingDepInterval;
             List<CoordinatorActionBean> cactions = null;
             try {
                 cactions = jpaService.execute(new CoordActionsGetForRecoveryJPAExecutor(coordOlderThan));
@@ -274,10 +247,14 @@ public class RecoveryService implements Service {
                         queueCallable(new CoordActionInputCheckXCommand(caction.getId(), caction.getJobId()));
                         log.info("Recover a WAITING coord action and resubmit CoordActionInputCheckXCommand :"
                                 + caction.getId());
-                        queueCallable(new CoordPushDependencyCheckXCommand(caction.getId()), pushMissingDepDelay);
-                        registerPartitions(caction);
-                        log.info("Recover a WAITING coord action and resubmit CoordPushDependencyCheckX :"
-                                + caction.getId());
+                        if (caction.getPushMissingDependencies() != null
+                                && caction.getPushMissingDependencies().length() != 0) {
+                            queueCallable(new CoordPushDependencyCheckXCommand(caction.getId(), true),
+                                    pushMissingDepDelay);
+                            pushMissingDepDelay = pushMissingDepDelay + pushMissingDepInterval;
+                            log.info("Recover a WAITING coord action and resubmit CoordPushDependencyCheckX :"
+                                    + caction.getId());
+                        }
                     }
                     else if (caction.getStatus() == CoordinatorActionBean.Status.SUBMITTED) {
                         CoordinatorJobBean coordJob = jpaService

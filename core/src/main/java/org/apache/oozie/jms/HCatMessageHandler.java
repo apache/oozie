@@ -25,78 +25,50 @@ import javax.jms.Message;
 import org.apache.hcatalog.messaging.AddPartitionMessage;
 import org.apache.hcatalog.messaging.HCatEventMessage;
 import org.apache.hcatalog.messaging.jms.MessagingUtils;
-import org.apache.oozie.ErrorCode;
-import org.apache.oozie.service.MetadataServiceException;
 import org.apache.oozie.service.PartitionDependencyManagerService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.util.PartitionWrapper;
 import org.apache.oozie.util.XLog;
 
 public class HCatMessageHandler implements MessageHandler {
 
-    private PartitionWrapper msgPartition;
-    private static XLog log;
-    public static final String THRIFT_SCHEME = "thrift";
+    private static XLog LOG = XLog.getLog(HCatMessageHandler.class);
 
-    public HCatMessageHandler() {
-        log = XLog.getLog(getClass());
+    private final String server;
+    private final PartitionDependencyManagerService pdmService;
+
+    public HCatMessageHandler(String server) {
+        this.server = server;
+        this.pdmService = Services.get().get(PartitionDependencyManagerService.class);
     }
 
     /**
      * Process JMS message produced by HCat.
      *
      * @param msg : to be processed
-     * @throws MetadataServiceException
      */
     @Override
-    public void process(Message msg) throws MetadataServiceException {
-        log.debug("About to process the JMS message ");
+    public void process(Message msg) {
         try {
             HCatEventMessage hcatMsg = MessagingUtils.getMessage(msg);
             if (hcatMsg.getEventType().equals(HCatEventMessage.EventType.ADD_PARTITION)) {
                 // Parse msg components
                 AddPartitionMessage partMsg = (AddPartitionMessage) hcatMsg;
-                String server = partMsg.getServer();
-                int index = server.indexOf("://");
-                server = server.substring(index + 3);
                 String db = partMsg.getDB();
                 String table = partMsg.getTable();
-                log.info("ADD event type db [{0}]  table [{1}] partitions [{2}]", db, table, partMsg.getPartitions());
-                PartitionDependencyManagerService pdms = Services.get().get(PartitionDependencyManagerService.class);
-                if (pdms != null) {
-                    // message is batched. therefore iterate through partitions
-                    List<Map<String, String>> partitions = partMsg.getPartitions();
-                    for (int i = 0; i < partitions.size(); i++) {
-                        msgPartition = new PartitionWrapper(server, db, table, partitions.get(i));
-                        if (!pdms.partitionAvailable(msgPartition)) {
-                            log.warn(
-                                    "Partition map not updated. Message might be incorrect or partition [{0}] might be non-relevant",
-                                    msgPartition.toString());
-                        }
-                        else {
-                            log.debug("Partition [{0}] updated from missing -> available in partition map",
-                                    msgPartition.toString());
-                        }
-                    }
+                LOG.info("Partition available event: db [{0}]  table [{1}] partitions [{2}]", db, table,
+                        partMsg.getPartitions());
+                List<Map<String, String>> partitions = partMsg.getPartitions();
+                for (int i = 0; i < partitions.size(); i++) {
+                    pdmService.partitionAvailable(this.server, db, table, partitions.get(i));
                 }
-                else {
-                    log.error("Partition dependency map is NULL");
-                }
-            }
-            else if (hcatMsg.getEventType().equals(HCatEventMessage.EventType.DROP_PARTITION)) {
-                log.info("Message is of type [{0}]", HCatEventMessage.EventType.DROP_PARTITION.toString());
-            }
-            else if (hcatMsg.getEventType().equals(HCatEventMessage.EventType.DROP_TABLE)) {
-                log.info("Message is of type [{0}]", HCatEventMessage.EventType.DROP_TABLE.toString());
             }
             else {
-                log.info("Unknown event type [{0}] ", hcatMsg.getEventType());
+                LOG.debug("Ignoring message of event type [{0}] ", hcatMsg.getEventType());
             }
         }
-        catch (IllegalArgumentException iae) {
-            throw new MetadataServiceException(ErrorCode.E1505, iae);
+        catch (Exception e) {
+            LOG.warn("Error processing JMS message", e);
         }
-
     }
 
 }

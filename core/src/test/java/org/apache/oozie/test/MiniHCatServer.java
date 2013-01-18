@@ -45,6 +45,7 @@ import org.apache.hcatalog.api.HCatClient.DropDBMode;
 import org.apache.hcatalog.api.HCatCreateDBDesc;
 import org.apache.hcatalog.api.HCatCreateTableDesc;
 import org.apache.hcatalog.api.HCatPartition;
+import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hcatalog.data.schema.HCatFieldSchema.Type;
 import org.apache.oozie.util.HCatURI;
@@ -125,6 +126,7 @@ public class MiniHCatServer {
         final HiveConf serverConf = new HiveConf(hadoopConf, this.getClass());
         serverConf.setBoolVar(HiveConf.ConfVars.METASTORE_MODE, false);
         serverConf.set(HiveConf.ConfVars.METASTORECONNECTURLKEY.varname, "jdbc:derby:target/metastore_db;create=true");
+        //serverConf.set(HiveConf.ConfVars.METASTORE_EVENT_LISTENERS.varname, NotificationListener.class.getName());
         File derbyLogFile = new File("target/derby.log");
         derbyLogFile.createNewFile();
         setSystemProperty("derby.stream.error.file", derbyLogFile.getPath());
@@ -231,8 +233,11 @@ public class MiniHCatServer {
         for (String partitionCol : partitionCols.split(",")) {
             ptnCols.add(new HCatFieldSchema(partitionCol, Type.STRING, null));
         }
+        // Remove this once NotificationListener is fixed and available in HCat snapshot
+        Map<String, String> tblProps = new HashMap<String, String>();
+        tblProps.put(HCatConstants.HCAT_MSGBUS_TOPIC_NAME, "hcat." + db + "." + table);
         HCatCreateTableDesc tableDesc = HCatCreateTableDesc.create(db, table, cols).fileFormat("textfile")
-                .partCols(ptnCols).build();
+                .partCols(ptnCols).tblProps(tblProps ).build();
         hcatClient.createTable(tableDesc);
         List<String> tables = hcatClient.listTableNamesByPattern(db, "*");
         assertTrue(tables.contains(table));

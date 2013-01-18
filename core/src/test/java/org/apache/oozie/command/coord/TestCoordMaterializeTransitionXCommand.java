@@ -27,8 +27,7 @@ import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.CoordinatorJob.Timeunit;
 import org.apache.oozie.command.CommandException;
-import org.apache.oozie.dependency.FSURIHandler;
-import org.apache.oozie.dependency.HCatURIHandler;
+import org.apache.oozie.coord.CoordELFunctions;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetActionsJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
@@ -39,26 +38,21 @@ import org.apache.oozie.executor.jpa.SLAEventsGetForSeqIdJPAExecutor;
 import org.apache.oozie.local.LocalOozie;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
 
 public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
-    protected Services services;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        services = new Services();
-        services.init();
+        LocalOozie.start(); //LocalOozie does new Services().init();
         cleanUpDBTables();
-        LocalOozie.start();
     }
 
     @Override
     protected void tearDown() throws Exception {
         LocalOozie.stop();
-        services.destroy();
         super.tearDown();
     }
 
@@ -71,10 +65,8 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
     }
 
     public void testActionMaterForHcatalog() throws Exception {
-        services.destroy();
-        services = super.setupServicesForHCatalog();
-        services.getConf().set(URIHandlerService.URI_HANDLERS,
-                FSURIHandler.class.getName() + "," + HCatURIHandler.class.getName());
+        Services.get().destroy();
+        Services services = super.setupServicesForHCatalog();
         services.init();
         Date startTime = DateUtils.parseDateOozieTZ("2009-03-06T010:00Z");
         Date endTime = DateUtils.parseDateOozieTZ("2009-03-11T10:00Z");
@@ -85,15 +77,14 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         assertEquals("file://dummyhdfs/2009/05/_SUCCESS" + CoordCommandUtils.RESOLVED_UNRESOLVED_SEPARATOR
                 + "${coord:latestRange(-1,0)}", actionBean.getMissingDependencies());
 
-        assertEquals("hcat://dummyhcat:1000/db/table/ds=2009-12", actionBean.getPushMissingDependencies());
+        assertEquals("hcat://dummyhcat:1000/db1/table1/ds=2009-12" + CoordELFunctions.INSTANCE_SEPARATOR
+                + "hcat://dummyhcat:1000/db3/table3/ds=2009-05" + CoordELFunctions.INSTANCE_SEPARATOR
+                + "hcat://dummyhcat:1000/db3/table3/ds=2009-26", actionBean.getPushMissingDependencies());
     }
 
-
     public void testActionMaterForHcatalogIncorrectURI() throws Exception {
-        services.destroy();
-        services = super.setupServicesForHCatalog();
-        services.getConf().set(URIHandlerService.URI_HANDLERS,
-                FSURIHandler.class.getName() + "," + HCatURIHandler.class.getName());
+        Services.get().destroy();
+        Services services = super.setupServicesForHCatalog();
         services.init();
         Date startTime = DateUtils.parseDateOozieTZ("2009-03-06T010:00Z");
         Date endTime = DateUtils.parseDateOozieTZ("2009-03-11T10:00Z");

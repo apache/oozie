@@ -58,7 +58,17 @@ public abstract class URIHandler {
      * @param actionID The id of action which depends on the availability of the
      *        uri.
      */
-    public abstract void registerForNotification(URI uri, String actionID) throws URIAccessorException;
+    public abstract void registerForNotification(URI uri, Configuration conf, String user, String actionID)
+            throws URIAccessorException;
+
+    /**
+     * Unregister from notifications in case of a push dependency
+     * @param uri The URI to be removed from missing dependency
+     * @param actionID The id of action which was dependent on the uri.
+     *
+     * @throws URIAccessorException
+     */
+    public abstract boolean unregisterFromNotification(URI uri, String actionID);
 
     /**
      * Get the URIContext which can be used to access URI of the same scheme and

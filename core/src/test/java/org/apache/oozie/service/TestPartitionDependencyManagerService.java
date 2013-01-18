@@ -17,18 +17,15 @@
  */
 package org.apache.oozie.service;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.Collection;
 
-import org.apache.oozie.service.PartitionDependencyManagerService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.HCatURI;
-import org.apache.oozie.util.PartitionWrapper;
-import org.apache.oozie.util.PartitionsGroup;
-import org.apache.oozie.util.WaitingActions;
+import org.apache.oozie.util.XLog;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,233 +36,116 @@ import org.junit.Test;
  */
 public class TestPartitionDependencyManagerService extends XDataTestCase {
 
-    private Services services;
+    private static XLog LOG = XLog.getLog(TestPartitionDependencyManagerService.class);
+    protected Services services;
     @Before
     protected void setUp() throws Exception {
         super.setUp();
-        setSystemProperty(PartitionDependencyManagerService.MAP_MAX_WEIGHTED_CAPACITY, "100");
         services = super.setupServicesForHCatalog();
         services.init();
     }
 
     @After
     protected void tearDown() throws Exception {
-        services.destroy();
+        Services.get().destroy();
         super.tearDown();
     }
 
-    /**
-     * Test basic service startup and required structures
-     * @throws MetadataServiceException
-     */
     @Test
-    public void testBasicService() throws MetadataServiceException {
-        Services services = Services.get();
-        PartitionDependencyManagerService pdms = services.get(PartitionDependencyManagerService.class);
-        assertNotNull(pdms);
-        assertNotNull(pdms.getHCatMap());
-        assertNotNull(pdms.getAvailableMap());
+    public void testPartitionDependency() throws Exception {
+        // Test all APIs related to dependency caching
+        String actionId1 = "1234465451";
+        String actionId2 = "1234465452";
+        String actionId3 = "1234465453";
+        String actionId4 = "1234465454";
+
+        String server = "hcat.server.com:5080";
+        String db = "mydb";
+        String table = "mytbl";
+        // add partition as missing
+        HCatURI dep1 = new HCatURI("hcat://hcat.server.com:5080/mydb/mytbl/dt=20120101;country=us");
+        HCatURI dep2 = new HCatURI("hcat://hcat.server.com:5080/mydb/mytbl/country=us;dt=20120101");
+        HCatURI dep3 = new HCatURI("hcat://hcat.server.com:5080/mydb/mytbl/dt=20120102;country=us");
+        HCatURI dep4 = new HCatURI("hcat://hcat.server.com:5080/mydb/mytbl/dt=20120102;country=us;state=CA");
+        PartitionDependencyManagerService pdms = Services.get().get(PartitionDependencyManagerService.class);
+        pdms.addMissingDependency(dep1, actionId1);
+        pdms.addMissingDependency(dep2, actionId1);
+        pdms.addMissingDependency(dep2, actionId2);
+        pdms.addMissingDependency(dep2, actionId3);
+        pdms.addMissingDependency(dep3, actionId3);
+        pdms.addMissingDependency(dep4, actionId4);
+        assertTrue(pdms.getWaitingActions(dep1).contains(actionId1));
+        assertTrue(pdms.getWaitingActions(dep2).contains(actionId1));
+        assertTrue(pdms.getWaitingActions(dep2).contains(actionId2));
+        assertTrue(pdms.getWaitingActions(dep2).contains(actionId2));
+        assertTrue(pdms.getWaitingActions(dep3).contains(actionId3));
+        assertTrue(pdms.getWaitingActions(dep4).contains(actionId4));
+
+        pdms.removeMissingDependency(dep2, actionId1);
+        assertTrue(pdms.getWaitingActions(dep1).contains(actionId1));
+        assertEquals(2, pdms.getWaitingActions(dep2).size());
+        assertTrue(!pdms.getWaitingActions(dep2).contains(actionId1));
+        assertNull(pdms.getAvailableDependencyURIs(actionId1));
+
+        pdms.partitionAvailable(server, db, table, getPartitionMap("dt=20120102;country=us;state=NY"));
+        assertNull(pdms.getWaitingActions(dep3));
+        assertTrue(pdms.getAvailableDependencyURIs(actionId3).contains(dep3.getURI().toString()));
+
+        pdms.partitionAvailable(server, db, table, getPartitionMap("dt=20120102;country=us;state=CA"));
+        assertNull(pdms.getWaitingActions(dep4));
+        assertTrue(pdms.getAvailableDependencyURIs(actionId4).contains(dep4.getURI().toString()));
+
+        pdms.partitionAvailable(server, db, table, getPartitionMap("dt=20120101;country=us"));
+        assertNull(pdms.getWaitingActions(dep1));
+        assertNull(pdms.getWaitingActions(dep2));
+        assertTrue(pdms.getAvailableDependencyURIs(actionId2).contains(dep2.getURI().toString()));
+        assertTrue(pdms.getAvailableDependencyURIs(actionId3).contains(dep2.getURI().toString()));
+        assertTrue(pdms.getAvailableDependencyURIs(actionId3).contains(dep3.getURI().toString()));
+
+        pdms.removeAvailableDependencyURIs(actionId3, pdms.getAvailableDependencyURIs(actionId3));
+        assertNull(pdms.getAvailableDependencyURIs(actionId3));
     }
 
-    /**
-     * Test addition of missing partition into cache
-     *
-     * @throws MetadataServiceException
-     * @throws URISyntaxException
-     */
-    @Test
-    public void testAddMissingPartition() throws MetadataServiceException, URISyntaxException {
-        PartitionDependencyManagerService pdms = services.get(PartitionDependencyManagerService.class);
-        String newHCatDependency = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12;region=us";
-        JMSAccessorService jmsService = services.get(JMSAccessorService.class);
-        jmsService.getOrCreateConnection("hcat://hcat.server.com:5080");
-        String actionId = "myAction";
-        pdms.addMissingPartition(newHCatDependency, actionId);
-
-        HCatURI hcatUri = new HCatURI(newHCatDependency);
-        Map<String, PartitionsGroup> tablePartitionsMap = pdms.getHCatMap().get(hcatUri.getServer() + "#" +
-                                                                            hcatUri.getDb()); // clicks
-        assertNotNull(tablePartitionsMap);
-        assertTrue(tablePartitionsMap.containsKey("clicks"));
-        PartitionsGroup missingPartitions = tablePartitionsMap.get(hcatUri.getTable());
-        assertNotNull(missingPartitions);
-
-        assertEquals(missingPartitions.getPartitionsMap().keySet().iterator().next(),
-                new PartitionWrapper(hcatUri)); // datastamp=12;region=us
-        WaitingActions actions = missingPartitions.getPartitionsMap().get(new PartitionWrapper(hcatUri));
-        assertNotNull(actions);
-        assertTrue(actions.getActions().contains(actionId));
-    }
-
-    /**
-     * Test removal of partition from cache
-     *
-     * @throws MetadataServiceException
-     * @throws URISyntaxException
-     */
-    @Test
-    public void testRemovePartition() throws Exception {
-        Services services = Services.get();
-        PartitionDependencyManagerService pdms = services.get(PartitionDependencyManagerService.class);
-        String newHCatDependency = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12;region=us";
-        JMSAccessorService jmsService = services.get(JMSAccessorService.class);
-        jmsService.getOrCreateConnection("hcat://hcat.server.com:5080");
-        String actionId = "myAction";
-        pdms.addMissingPartition(newHCatDependency, actionId);
-
-        HCatURI hcatUri = new HCatURI(newHCatDependency);
-        Map<String, PartitionsGroup> tablePartitionsMap = pdms.getHCatMap().get(hcatUri.getServer() + "#" +
-                                                                            hcatUri.getDb()); // clicks
-        assertNotNull(tablePartitionsMap);
-        assertTrue(tablePartitionsMap.containsKey("clicks"));
-        PartitionsGroup missingPartitions = tablePartitionsMap.get(hcatUri.getTable());
-        assertNotNull(missingPartitions);
-
-        // remove with cascading - OFF
-        pdms.removePartition(newHCatDependency, false);
-        assertFalse(missingPartitions.getPartitionsMap().containsKey(hcatUri.getPartitionMap()));
-
-        pdms.addMissingPartition(newHCatDependency, actionId);
-        assertNotNull(missingPartitions);
-
-        // remove with cascading - ON
-        pdms.removePartition(newHCatDependency);
-        assertFalse(pdms.getHCatMap().containsKey(hcatUri.getTable()));
-    }
-
-    /**
-     * Test partition available function on cache
-     *
-     * @throws MetadataServiceException
-     * @throws URISyntaxException
-     */
-    @Test
-    public void testAvailablePartition() throws MetadataServiceException, URISyntaxException {
-        Services services = Services.get();
-        PartitionDependencyManagerService pdms = services.get(PartitionDependencyManagerService.class);
-        String newHCatDependency = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12;region=us";
-        JMSAccessorService jmsService = services.get(JMSAccessorService.class);
-        jmsService.getOrCreateConnection("hcat://hcat.server.com:5080");
-        String actionId = "myAction";
-        pdms.addMissingPartition(newHCatDependency, actionId);
-
-        HCatURI hcatUri = new HCatURI(newHCatDependency);
-        Map<String, PartitionsGroup> tablePartitionsMap = pdms.getHCatMap().get(hcatUri.getServer() + "#" +
-                                                                            hcatUri.getDb()); // clicks
-        assertNotNull(tablePartitionsMap);
-        assertTrue(tablePartitionsMap.containsKey("clicks"));
-        PartitionsGroup missingPartitions = tablePartitionsMap.get(hcatUri.getTable());
-        assertNotNull(missingPartitions);
-
-        pdms.partitionAvailable(newHCatDependency);
-        Map<String, List<PartitionWrapper>> availMap = pdms.getAvailableMap();
-        assertNotNull(availMap);
-        assertTrue(availMap.containsKey(actionId)); //found in 'available' cache
-        assertFalse(pdms.getHCatMap().containsKey(hcatUri.getTable())); //removed from 'missing' cache
-                                                                        //cascade - ON
-        assertEquals(availMap.get(actionId).get(0), new PartitionWrapper(hcatUri));
-    }
-
-    /**
-     * Test removal of action ID from missing partition
-     *
-     * @throws MetadataServiceException
-     * @throws URISyntaxException
-     */
-    @Test
-    public void testRemoveActionFromMissingPartition() throws MetadataServiceException, URISyntaxException {
-        Services services = Services.get();
-        PartitionDependencyManagerService pdms = services.get(PartitionDependencyManagerService.class);
-        String newHCatDependency1 = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12";
-        String newHCatDependency2 = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12;region=us";
-        JMSAccessorService jmsService = services.get(JMSAccessorService.class);
-        jmsService.getOrCreateConnection("hcat://hcat.server.com:5080");
-        String actionId1 = "1";
-        String actionId2 = "2";
-        pdms.addMissingPartition(newHCatDependency1, actionId1);
-        pdms.addMissingPartition(newHCatDependency2, actionId2);
-        // remove newHCatDependency2
-        pdms.removeActionFromMissingPartitions(newHCatDependency2, actionId2);
-
-        HCatURI hcatUri = new HCatURI(newHCatDependency1);
-        String prefix = PartitionWrapper.makePrefix(hcatUri.getServer(), hcatUri.getDb());
-        Map<String, PartitionsGroup> tablePartitionsMap = pdms.getHCatMap().get(prefix);
-        PartitionsGroup missingPartitions = tablePartitionsMap.get(hcatUri.getTable());
-        assertNotNull(missingPartitions);
-
-        WaitingActions actions = missingPartitions.getPartitionsMap().get(new PartitionWrapper(hcatUri));
-        assertNotNull(actions);
-        assertTrue(actions.getActions().contains(actionId1));
-        assertFalse(actions.getActions().contains(actionId2));
-    }
-
-    /**
-     * Test removal of partitions from Available map
-     */
-    @Test
-    public void testRemovePartitionsFromAvailMap() {
-        try {
-            Services services = Services.get();
-            PartitionDependencyManagerService pdms = services.get(PartitionDependencyManagerService.class);
-            String newHCatDependency1 = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12";
-            String newHCatDependency2 = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12;region=us";
-            String newHCatDependency3 = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=13;region=us";
-            String actionId1 = "1";
-
-            HCatURI uri = new HCatURI(newHCatDependency1);
-            PartitionWrapper partition1 = new PartitionWrapper(uri.getServer(), uri.getDb(), uri.getTable(),
-                    uri.getPartitionMap());
-            uri = new HCatURI(newHCatDependency2);
-            PartitionWrapper partition2 = new PartitionWrapper(uri.getServer(), uri.getDb(), uri.getTable(),
-                    uri.getPartitionMap());
-            uri = new HCatURI(newHCatDependency3);
-            PartitionWrapper partition3 = new PartitionWrapper(uri.getServer(), uri.getDb(), uri.getTable(),
-                    uri.getPartitionMap());
-
-            List<PartitionWrapper> partitionList = new ArrayList<PartitionWrapper>();
-            partitionList.add(partition1);
-            partitionList.add(partition2);
-            partitionList.add(partition3);
-
-            Map<String, List<PartitionWrapper>> availMap = pdms.getAvailableMap();
-            // Add 3 partitions to availMap for a given action
-            availMap.put(actionId1, partitionList);
-
-            List<PartitionWrapper> availPartitionList = new ArrayList<PartitionWrapper>();
-            availPartitionList.add(partition1);
-            availPartitionList.add(partition2);
-            // add two partitions to be removed
-            assertTrue(pdms.removeAvailablePartitions(availPartitionList, actionId1));
-            // check if the size of avail map reduces to 1
-            assertEquals(1, pdms.getAvailableMap().get(actionId1).size());
-
+    public void testMemoryUsageAndSpeed() throws Exception {
+        PartitionDependencyManagerService pdms = Services.get().get(PartitionDependencyManagerService.class);
+        int numItems = 60000;
+        System.gc();
+        MemoryMXBean mb = ManagementFactory.getMemoryMXBean();
+        long usedMemBeforeInsert = mb.getHeapMemoryUsage().getUsed();
+        long startTime = System.currentTimeMillis();
+        for (int i = 0; i < numItems; i++) {
+            HCatURI dep = new HCatURI("hcat://hcat.server.com:5080/mydb/mytbl/id=" + i);
+            pdms.addMissingDependency(dep, "" + i);
         }
-        catch (Exception e) {
-            e.printStackTrace();
-            fail("Unexpected exception " + e);
+        long usedMemAfterInsert = mb.getHeapMemoryUsage().getUsed();
+        long endTime = System.currentTimeMillis();
+        LOG.info("Time taken to insert " + numItems + " items is " + (endTime - startTime));
+        assertTrue((endTime - startTime) < 4000); // 2 to 4 seconds to insert 60K
+
+        LOG.info("Memory before and after insert: " + usedMemBeforeInsert + ","  + usedMemAfterInsert);
+        for (int i = 0; i < numItems; i++) {
+            verifyWaitingAction(pdms, "" + i);
         }
+        LOG.info("Time taken to retrieve " + numItems + " items is " + (System.currentTimeMillis() - endTime));
+        assertTrue((System.currentTimeMillis() - endTime) < 2000); // 1 to 2 seconds to retrieve 60K
+
+        long usedMemAfterRetrieval = mb.getHeapMemoryUsage().getUsed();
+        System.gc();
+        long usedMemAfterGC = mb.getHeapMemoryUsage().getUsed();
+
+        LOG.info("Memory before insert = " + usedMemBeforeInsert);
+        LOG.info("Memory after insert = " + usedMemAfterInsert);
+        LOG.info("Memory after retrieval = " + usedMemAfterRetrieval);
+        LOG.info("Memory after GC = " + usedMemAfterGC);
+
+        assertTrue((usedMemAfterInsert - usedMemBeforeInsert) < 45000000); //35-45MB for 60K entries
     }
 
-    /**
-     * Test table available from the Map
-     * @throws URISyntaxException
-     * @throws MetadataServiceException
-     */
-    @Test
-    public void testMapContainsTable() throws URISyntaxException, MetadataServiceException{
-        PartitionDependencyManagerService pdms = services.get(PartitionDependencyManagerService.class);
-        JMSAccessorService jmsService = services.get(JMSAccessorService.class);
-        jmsService.getOrCreateConnection("hcat://hcat.server.com:5080");
-        String newHCatDependency1 = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12";
-
-        // +ve test
-        pdms.addMissingPartition(newHCatDependency1, "1");
-        assertTrue(pdms.containsTable(newHCatDependency1));
-        // -ve test
-        pdms.removePartition(newHCatDependency1, true);
-        assertFalse(pdms.containsTable(newHCatDependency1));
-
+    protected void verifyWaitingAction(PartitionDependencyManagerService pdms, String actionID) throws URISyntaxException {
+        HCatURI dep = new HCatURI("hcat://hcat.server.com:5080/mydb/mytbl/id=" + actionID);
+        Collection<String> waitingActions = pdms.getWaitingActions(dep);
+        assertNotNull(dep.toURIString() + " is missing in cache", waitingActions);
+        assertTrue(dep.toURIString() + " is missing in cache", waitingActions.contains(actionID));
     }
-
 
 }

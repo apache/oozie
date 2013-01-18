@@ -89,7 +89,13 @@ public class FSURIHandler extends URIHandler {
     }
 
     @Override
-    public void registerForNotification(URI uri, String actionID) throws URIAccessorException {
+    public void registerForNotification(URI uri, Configuration conf, String user, String actionID)
+            throws URIAccessorException {
+        throw new UnsupportedOperationException("Notifications are not supported for " + uri.getScheme());
+    }
+
+    @Override
+    public boolean unregisterFromNotification(URI uri, String actionID) {
         throw new UnsupportedOperationException("Notifications are not supported for " + uri.getScheme());
     }
 

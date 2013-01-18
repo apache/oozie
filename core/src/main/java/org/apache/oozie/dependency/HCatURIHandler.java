@@ -24,8 +24,10 @@ import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
@@ -36,8 +38,10 @@ import org.apache.hcatalog.api.HCatClient;
 import org.apache.hcatalog.api.HCatPartition;
 import org.apache.hcatalog.common.HCatException;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.jms.HCatMessageHandler;
 import org.apache.oozie.service.JMSAccessorService;
 import org.apache.oozie.service.MetaDataAccessorException;
+import org.apache.oozie.service.PartitionDependencyManagerService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.URIAccessorException;
 import org.apache.oozie.service.URIHandlerService;
@@ -53,6 +57,8 @@ public class HCatURIHandler extends URIHandler {
     private Set<String> supportedSchemes;
     private UserGroupInformationService ugiService;
     private List<Class<?>> classesToShip;
+    private Map<String, DependencyType> dependencyTypes;
+    private Set<String> registeredTopicURIs;
 
     public HCatURIHandler() {
         this.classesToShip = new ArrayList<Class<?>>();
@@ -61,6 +67,10 @@ public class HCatURIHandler extends URIHandler {
         classesToShip.add(HCatURI.class);
         classesToShip.add(MetaDataAccessorException.class);
         classesToShip.add(UserGroupInformationService.class);
+        classesToShip.add(JMSAccessorService.class);
+        classesToShip.add(PartitionDependencyManagerService.class);
+        classesToShip.add(HCatMessageHandler.class);
+        classesToShip.add(DependencyType.class);
     }
 
     @Override
@@ -68,6 +78,8 @@ public class HCatURIHandler extends URIHandler {
         this.isFrontEnd = isFrontEnd;
         if (isFrontEnd) {
             ugiService = Services.get().get(UserGroupInformationService.class);
+            dependencyTypes = new HashMap<String, DependencyType>();
+            registeredTopicURIs = new HashSet<String>();
         }
         supportedSchemes = new HashSet<String>();
         String[] schemes = conf.getStrings(URIHandlerService.URI_HANDLER_SUPPORTED_SCHEMES_PREFIX
@@ -86,14 +98,63 @@ public class HCatURIHandler extends URIHandler {
 
     @Override
     public DependencyType getDependencyType(URI uri) throws URIAccessorException {
-        JMSAccessorService service = Services.get().get(JMSAccessorService.class);
-        return service.getOrCreateConnection(uri.getScheme() + "://" + uri.getAuthority()) ? DependencyType.PUSH
-                : DependencyType.PULL;
+        JMSAccessorService jmsService = Services.get().get(JMSAccessorService.class);
+        if (jmsService == null) {
+            return DependencyType.PULL;
+        }
+        DependencyType depType = dependencyTypes.get(uri.getAuthority());
+        if (depType == null) {
+             depType = jmsService.isKnownPublisher(uri) ? DependencyType.PUSH : DependencyType.PULL;
+             dependencyTypes.put(uri.getAuthority(), depType);
+        }
+        return depType;
  }
 
     @Override
-    public void registerForNotification(URI uri, String actionID) throws URIAccessorException {
-        // TODO Register to PDMService, if jms url is configured for the hcat server
+    public void registerForNotification(URI uri, Configuration conf, String user, String actionID) throws URIAccessorException {
+        String uriString = uri.toString();
+        String uriMinusPartition = uriString.substring(0, uriString.lastIndexOf("/"));
+        HCatURI hcatURI;
+        try {
+            hcatURI = new HCatURI(uri);
+        }
+        catch (URISyntaxException e) {
+            throw new URIAccessorException(ErrorCode.E0906, uri, e);
+        }
+        // Check cache to avoid a call to hcat server to get the topic
+        if (!registeredTopicURIs.contains(uriMinusPartition)) {
+            HCatClient client = getHCatClient(uri, conf, user);
+            try {
+                String topic = client.getMessageBusTopicName(hcatURI.getDb(), hcatURI.getTable());
+                if (topic == null) {
+                    return;
+                }
+                JMSAccessorService jmsService = Services.get().get(JMSAccessorService.class);
+                jmsService.registerForNotification(uri, topic, new HCatMessageHandler(uri.getAuthority()));
+                registeredTopicURIs.add(uriMinusPartition);
+            }
+            catch (HCatException e) {
+                throw new MetaDataAccessorException(ErrorCode.E1504, e);
+            }
+            finally {
+                closeQuietly(client, true);
+            }
+        }
+        PartitionDependencyManagerService pdmService = Services.get().get(PartitionDependencyManagerService.class);
+        pdmService.addMissingDependency(hcatURI, actionID);
+    }
+
+    @Override
+    public boolean unregisterFromNotification(URI uri, String actionID) {
+        HCatURI hcatURI;
+        try {
+            hcatURI = new HCatURI(uri);
+        }
+        catch (URISyntaxException e) {
+            throw new RuntimeException(e); //Unexpected at this point
+        }
+        PartitionDependencyManagerService pdmService = Services.get().get(PartitionDependencyManagerService.class);
+        return pdmService.removeMissingDependency(hcatURI, actionID);
     }
 
     @Override
@@ -137,12 +198,12 @@ public class HCatURIHandler extends URIHandler {
     }
 
     @Override
-    public void validate (String uri) throws URIAccessorException{
+    public void validate(String uri) throws URIAccessorException {
         try {
             new HCatURI(uri);  //will fail if uri syntax is incorrect
         }
         catch (URISyntaxException e) {
-            throw new URIAccessorException(ErrorCode.E1025, uri, e);
+            throw new URIAccessorException(ErrorCode.E0906, uri, e);
         }
 
     }

@@ -37,6 +37,7 @@ import org.apache.oozie.coord.CoordELEvaluator;
 import org.apache.oozie.coord.CoordELFunctions;
 import org.apache.oozie.dependency.URIHandler;
 import org.apache.oozie.executor.jpa.CoordActionGetForInputCheckJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionUpdateForInputCheckJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionUpdateForModifiedTimeJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
@@ -97,14 +98,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
         if (nominalTime.compareTo(currentTime) > 0) {
             queue(new CoordActionInputCheckXCommand(coordAction.getId(), coordAction.getJobId()), Math.max((nominalTime.getTime() - currentTime
                     .getTime()), getCoordInputCheckRequeueInterval()));
-            // update lastModifiedTime
-            coordAction.setLastModifiedTime(new Date());
-            try {
-                jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionUpdateForInputCheckJPAExecutor(coordAction));
-            }
-            catch (JPAExecutorException e) {
-                throw new CommandException(e);
-            }
+            updateCoordAction(coordAction, false);
             LOG.info("[" + actionId
                     + "]::ActionInputCheck:: nominal Time is newer than current time, so requeue and wait. Current="
                     + currentTime + ", nominal=" + nominalTime);
@@ -167,22 +161,8 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             throw new CommandException(ErrorCode.E1021, e.getMessage(), e);
         }
         finally {
-            coordAction.setLastModifiedTime(new Date());
             cron.stop();
-            if(jpaService != null) {
-                try {
-                    if (isChangeInDependency) {
-                        jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionUpdateForInputCheckJPAExecutor(
-                                coordAction));
-                    }
-                    else {
-                        jpaService.execute(new CoordActionUpdateForModifiedTimeJPAExecutor(coordAction));
-                    }
-                }
-                catch(JPAExecutorException jex) {
-                    throw new CommandException(ErrorCode.E1021, jex.getMessage(), jex);
-                }
-            }
+            updateCoordAction(coordAction, isChangeInDependency);
         }
         return null;
     }
@@ -197,6 +177,24 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             return true;
         }
         return false;
+    }
+
+    private void updateCoordAction(CoordinatorActionBean coordAction, boolean isChangeInDependency)
+            throws CommandException {
+        coordAction.setLastModifiedTime(new Date());
+        if (jpaService != null) {
+            try {
+                if (isChangeInDependency) {
+                    jpaService.execute(new CoordActionUpdateForInputCheckJPAExecutor(coordAction));
+                }
+                else {
+                    jpaService.execute(new CoordActionUpdateForModifiedTimeJPAExecutor(coordAction));
+                }
+            }
+            catch (JPAExecutorException jex) {
+                throw new CommandException(ErrorCode.E1021, jex.getMessage(), jex);
+            }
+        }
     }
 
     /**
@@ -423,9 +421,10 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
         nonExistList.delete(0, nonExistList.length());
         boolean allExists = true;
         String existSeparator = "", nonExistSeparator = "";
+        String user = ParamChecker.notEmpty(conf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
         for (int i = 0; i < uriList.length; i++) {
             if (allExists) {
-                allExists = pathExists(uriList[i], conf);
+                allExists = pathExists(uriList[i], conf, user);
                 LOG.info("[" + actionId + "]::ActionInputCheck:: File:" + uriList[i] + ", Exists? :" + allExists);
             }
             if (allExists) {
@@ -448,9 +447,8 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
      * @return true if path exists
      * @throws IOException thrown if unable to access the path
      */
-    protected boolean pathExists(String sPath, Configuration actionConf) throws IOException {
+    protected boolean pathExists(String sPath, Configuration actionConf, String user) throws IOException {
         LOG.debug("checking for the file " + sPath);
-        String user = ParamChecker.notEmpty(actionConf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
         try {
             URI uri = new URI(sPath);
             URIHandlerService service = Services.get().get(URIHandlerService.class);
@@ -462,7 +460,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             coordAction.setErrorMessage(e.getMessage());
             throw new IOException(e);
         } catch (URISyntaxException e) {
-            coordAction.setErrorCode(ErrorCode.E1025.toString());
+            coordAction.setErrorCode(ErrorCode.E0906.toString());
             coordAction.setErrorMessage(e.getMessage());
             throw new IOException(e);
         }

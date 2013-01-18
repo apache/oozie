@@ -262,10 +262,10 @@
     </property>
 
     <property>
-        <name>oozie.service.RecoveryService.push.dependency.delay</name>
-        <value>60000</value>
+        <name>oozie.service.RecoveryService.push.dependency.interval</name>
+        <value>200</value>
         <description>
-            This value determines the delay for push missing dependancy command
+            This value determines the delay for push missing dependency command queueing
             in Recovery Service
         </description>
     </property>

@@ -25,13 +25,9 @@ import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.Writer;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -62,7 +58,6 @@ import org.apache.oozie.dependency.FSURIHandler;
 import org.apache.oozie.dependency.HCatURIHandler;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionInsertJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionInsertJPAExecutor;
@@ -73,8 +68,8 @@ import org.apache.oozie.store.StoreException;
 import org.apache.oozie.store.WorkflowStore;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
+import org.apache.oozie.util.HCatURI;
 import org.apache.oozie.util.IOUtils;
-import org.apache.oozie.util.PartitionWrapper;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
@@ -347,70 +342,39 @@ public class TestRecoveryService extends XDataTestCase {
         services = super.setupServicesForHCatalog();
         services.getConf().set(URIHandlerService.URI_HANDLERS,
                 FSURIHandler.class.getName() + "," + HCatURIHandler.class.getName());
+        services.getConf().setLong(RecoveryService.CONF_PUSH_DEPENDENCY_INTERVAL, 1);
         services.init();
 
         String db = "default";
         String table = "tablename";
 
-        String newHCatDependency1 = "hcat://" + server + "/" + db + "/" + table + "/dt=20120412;country=brazil";
+        // dep1 is not available and dep2 is available
+        String newHCatDependency1 = "hcat://" + server + "/" + db + "/" + table + "/dt=20120430;country=brazil";
         String newHCatDependency2 = "hcat://" + server + "/" + db + "/" + table + "/dt=20120430;country=usa";
         String newHCatDependency = newHCatDependency1 + CoordELFunctions.INSTANCE_SEPARATOR + newHCatDependency2;
 
-        String actionId = addInitRecords(newHCatDependency);
-
-        CoordinatorAction ca = checkCoordActionDependencies(actionId, newHCatDependency, 0);
-        assertEquals(CoordinatorAction.Status.WAITING, ca.getStatus());
-
-        sleep(2000);
-
-        Runnable recoveryRunnable = new RecoveryRunnable(0, 1, 1);
-        recoveryRunnable.run();
-
-        sleep(2000);
-
-        PartitionDependencyManagerService pdms = services.get(PartitionDependencyManagerService.class);
         JMSAccessorService jmsService = services.get(JMSAccessorService.class);
-
-        // Recovery service should have created the partitions and JMS Connection should exist
-        assertTrue(jmsService.isExistsConnection("hcat://" + server));
-        assertTrue(pdms.containsPartition(newHCatDependency1));
-        assertTrue(pdms.containsPartition(newHCatDependency2));
-
-    }
-
-    public void testCoordActionRecoveryServiceForWaitingPushMissingDeps() throws Exception {
-        services.destroy();
-        services = new Services();
-        Configuration conf = services.getConf();
-        conf.set(URIHandlerService.URI_HANDLERS,
-                FSURIHandler.class.getName() + "," + HCatURIHandler.class.getName());
-        conf.setLong(RecoveryService.CONF_PUSH_DEPENDENCY_DELAY, 10);
-
-        services.init();
-
-        String db = "default";
-        String table = "tablename";
-
-
-        String newHCatDependency1 = "hcat://" + server + "/" + db + "/" + table + "/dt=20120412;country=brazil";
-        String newHCatDependency2 = "hcat://" + server + "/" + db + "/" + table + "/dt=20120430;country=usa";
-        String newHCatDependency = newHCatDependency1 + CoordELFunctions.INSTANCE_SEPARATOR + newHCatDependency2;
+        assertFalse(jmsService.isListeningToTopic(server, db + "." + table));
 
         populateTable(db, table);
         String actionId = addInitRecords(newHCatDependency);
-
-        CoordinatorAction ca = checkCoordActionDependencies(actionId, newHCatDependency, 0);
+        CoordinatorAction ca = checkCoordActionDependencies(actionId, newHCatDependency);
         assertEquals(CoordinatorAction.Status.WAITING, ca.getStatus());
-
-        sleep(3000);
-
+        sleep(2000);
         Runnable recoveryRunnable = new RecoveryRunnable(0, 1, 1);
         recoveryRunnable.run();
+        sleep(2000);
 
-        sleep(3000);
+        // Recovery service should have discovered newHCatDependency2 and JMS Connection should exist
+        // and newHCatDependency1 should be in PDMS waiting list
+        assertTrue(jmsService.isListeningToTopic(server, "hcat." + db + "." + table));
+        checkCoordActionDependencies(actionId, newHCatDependency1);
 
-        ca = checkCoordActionDependencies(actionId, "", 0);
-        assertFalse(ca.getStatus().equals(CoordinatorAction.Status.WAITING));
+        PartitionDependencyManagerService pdms = services.get(PartitionDependencyManagerService.class);
+        assertNull(pdms.getWaitingActions(new HCatURI(newHCatDependency2)));
+        Collection<String> waitingActions = pdms.getWaitingActions(new HCatURI(newHCatDependency1));
+        assertEquals(1, waitingActions.size());
+        assertTrue(waitingActions.contains(actionId));
     }
 
     private void populateTable(String db, String table) throws Exception {
@@ -423,20 +387,11 @@ public class TestRecoveryService extends XDataTestCase {
         addPartition(db, table, "dt=20120413;country=brazil");
     }
 
-
-    private CoordinatorActionBean checkCoordActionDependencies(String actionId, String expDeps,
-            int type) throws Exception {
+    private CoordinatorActionBean checkCoordActionDependencies(String actionId, String expDeps) throws Exception {
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
             CoordinatorActionBean action = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
-            String missDeps = action.getPushMissingDependencies();
-            if (type != 0) {
-                assertEquals(new PartitionWrapper(missDeps), new PartitionWrapper(expDeps));
-            }
-            else {
-                assertEquals(missDeps, expDeps);
-            }
-
+            assertEquals(expDeps, action.getPushMissingDependencies());
             return action;
         }
         catch (JPAExecutorException se) {

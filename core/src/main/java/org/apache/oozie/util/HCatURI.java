@@ -24,8 +24,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.hadoop.conf.Configuration;
-
 /**
  * Utility class to parse HCatalog URI
  */
@@ -42,29 +40,22 @@ public class HCatURI {
     private Map<String, String> partitions;
 
     /**
-     * Constructor using given configuration
-     *
-     * @param HCat URI String
-     * @param conf Configuration
-     * @throws URISyntaxException
-     */
-    public HCatURI(String s, Configuration conf) throws URISyntaxException {
-        parse(s, conf);
-    }
-
-    /**
      * Constructor using default configuration
      *
      * @param s HCat URI String
      * @throws URISyntaxException
      */
     public HCatURI(String s) throws URISyntaxException {
-        this(s, null);
+        this(new URI(s));
     }
 
-    private void parse(String s, Configuration conf) throws URISyntaxException {
+    public HCatURI(URI uri) throws URISyntaxException {
+        parse(uri);
+    }
 
-        uri = new URI(s);
+    private void parse(URI uri) throws URISyntaxException {
+
+        this.uri = uri;
 
         if (uri.getAuthority() == null) {
             throw new URISyntaxException(uri.toString(), "Server host and port are missing");
@@ -103,6 +94,14 @@ public class HCatURI {
             }
             partitions.put(keyVal[0], keyVal[1]);
         }
+    }
+
+    public URI getURI() {
+        return uri;
+    }
+
+    public String toURIString() {
+        return uri.toString();
     }
 
     /**

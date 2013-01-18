@@ -19,9 +19,13 @@ package org.apache.oozie.test;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hcatalog.api.HCatPartition;
+import org.apache.oozie.util.HCatURI;
 
 /**
  * Base JUnit <code>TestCase</code> subclass used by all Oozie testcases that
@@ -98,6 +102,16 @@ public abstract class XHCatTestCase extends XFsTestCase {
 
     public List<HCatPartition> getPartitions(String db, String table, String partitionSpec) throws Exception {
         return hcatServer.getPartitions(db, table, partitionSpec);
+    }
+
+    protected Map<String, String> getPartitionMap(String partitionSpec) {
+        String[] parts = partitionSpec.split(HCatURI.PARTITION_SEPARATOR);
+        Map<String, String> partitions = new HashMap<String, String>();
+        for (String part : parts) {
+            String[] split = part.split("=");
+            partitions.put(split[0], split[1]);
+        }
+        return partitions;
     }
 
 }
