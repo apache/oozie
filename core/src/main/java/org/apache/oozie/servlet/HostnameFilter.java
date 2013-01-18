@@ -28,6 +28,7 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 /**
  * Filter that resolves the requester hostname.
@@ -75,7 +76,7 @@ public class HostnameFilter implements Filter {
                     LOG.warn("Request remote address is NULL");
                     hostname = "???";
                 }
-            } catch (Exception ex) {
+            } catch (UnknownHostException ex) {
                 LOG.warn("Request remote address could not be resolved, {0}", ex.toString(), ex);
                 hostname = "???";
             }
