@@ -17,7 +17,15 @@
  */
 package org.apache.oozie.coord;
 
+import java.net.URI;
 import java.net.URISyntaxException;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.DagELFunctions;
+import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.dependency.URIHandler;
+import org.apache.oozie.service.Services;
+import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.HCatURI;
 import org.apache.oozie.util.XLog;
@@ -28,10 +36,31 @@ import org.apache.oozie.util.XLog;
 
 public class HCatELFunctions {
     private static XLog LOG = XLog.getLog(HCatELFunctions.class);
+    private static final Configuration EMPTY_CONF = new Configuration(true);
 
     enum EVENT_TYPE {
         input, output
     }
+
+    /* Workflow Parameterization EL functions */
+
+    /**
+     * Return true if partitions exists or false if not.
+     *
+     * @param uri hcatalog partition uri.
+     * @return <code>true</code> if the uri exists, <code>false</code> if it does not.
+     * @throws Exception
+     */
+    public static boolean hcat_exists(String uri) throws Exception {
+        URI hcatURI = new URI(uri);
+        URIHandlerService uriService = Services.get().get(URIHandlerService.class);
+        URIHandler handler = uriService.getURIHandler(hcatURI);
+        WorkflowJob workflow = DagELFunctions.getWorkflow();
+        String user = workflow.getUser();
+        return handler.exists(hcatURI, EMPTY_CONF, user);
+    }
+
+    /* Coord EL functions */
 
     /**
      * Echo the same EL function without evaluating anything

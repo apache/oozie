@@ -42,11 +42,6 @@ import javax.xml.parsers.ParserConfigurationException;
  */
 public class PrepareActionsDriver {
 
-    public static enum PREPARE_ACTION {
-        mkdir,
-        delete;
-    };
-
     /**
      * Method to parse the prepare XML and execute the corresponding prepare actions
      *
@@ -98,10 +93,10 @@ public class PrepareActionsDriver {
      */
     private static void execute(String operation, URI uri, URIHandler handler, Configuration conf)
             throws URIAccessorException {
-        if (operation.equals(PREPARE_ACTION.delete.name())) {
+        if (operation.equals("delete")) {
             handler.delete(uri, conf, null);
         }
-        else if (operation.equals(PREPARE_ACTION.mkdir.name())) {
+        else if (operation.equals("mkdir")) {
             handler.create(uri, conf, null);
         }
     }

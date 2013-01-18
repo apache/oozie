@@ -45,7 +45,7 @@
         <!-- to be able to run a single test case from the main project -->
         <failIfNoTests>false</failIfNoTests>
 
-        <test.timeout>3600</test.timeout>
+        <test.timeout>5400</test.timeout>
 
         <!-- platform encoding override -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

@@ -527,7 +527,8 @@
             fs:isDir=org.apache.oozie.action.hadoop.FsELFunctions#fs_isDir,
             fs:dirSize=org.apache.oozie.action.hadoop.FsELFunctions#fs_dirSize,
             fs:fileSize=org.apache.oozie.action.hadoop.FsELFunctions#fs_fileSize,
-            fs:blockSize=org.apache.oozie.action.hadoop.FsELFunctions#fs_blockSize
+            fs:blockSize=org.apache.oozie.action.hadoop.FsELFunctions#fs_blockSize,
+            hcat:exists=org.apache.oozie.coord.HCatELFunctions#hcat_exists
         </value>
         <description>
             EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.

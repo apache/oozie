@@ -132,6 +132,11 @@ schema 0.4
 
    * Opened [[https://issues.apache.org/jira/browse/HADOOP-5303][JIRA HADOOP-5303]]
 
+---+++!! 27/DEC/2012:
+
+   * Added information on dropping hcatalog table partitions in prepare block
+   * Added hcatalog EL functions section
+
 ---++ 0 Definitions
 
 *Action:* An execution/computation task (Map-Reduce job, Pig job, a shell command). It can also be referred as task or
@@ -668,9 +673,12 @@ Pipe properties can be overridden by specifying them in the =job-xml= file or =c
 </workflow-app>
 </verbatim>
 
-The =prepare= element, if present, indicates a list of path do delete before starting the job. This should be used
-exclusively for directory cleanup for the job to be executed. The delete operation will be performed in the
- =fs.default.name= filesystem.
+The =prepare= element, if present, indicates a list of paths to delete before starting the job. This should be used
+exclusively for directory cleanup or dropping of hcatalog table partitions for the job to be executed. The delete operation
+will be performed in the =fs.default.name= filesystem for hdfs URIs. The format to specify a hcatalog table partition URI is
+hcat://[metastore server]:[port]/[database name]/[table name]/[partkey1]=[value];[partkey2]=[value].
+In case of a hcatalog URI, the hive-site.xml needs to be shipped using =file= tag and the hcatalog and hive jars
+need to be placed in workflow lib directory or specified using =archive= tag.
 
 The =job-xml= element, if present, must refer to a Hadoop JobConf =job.xml= file bundled in the workflow application.
 The =job-xml= element is optional and as of schema 0.4, multiple =job-xml= elements are allowed in order to specify multiple Hadoop JobConf =job.xml= files.
@@ -814,9 +822,9 @@ The workflow job will wait until the pig job completes before continuing to the 
 The =pig= action has to be configured with the job-tracker, name-node, pig script and the necessary parameters and
 configuration to run the Pig job.
 
-A =pig= action can be configured to perform HDFS files/directories cleanup before starting the Pig job. This capability
-enables Oozie to retry a Pig job in the situation of a transient failure (Pig creates temporary directories for
-intermediate data, thus a retry without cleanup would fail).
+A =pig= action can be configured to perform HDFS files/directories cleanup or HCatalog partitions cleanup before
+starting the Pig job. This capability enables Oozie to retry a Pig job in the situation of a transient failure (Pig 
+creates temporary directories for intermediate data, thus a retry without cleanup would fail).
 
 Hadoop JobConf properties can be specified in a JobConf XML file bundled with the workflow application or they can be
 indicated inline in the =pig= action configuration.
@@ -913,8 +921,12 @@ section [#FilesAchives][Adding Files and Archives for the Job].
 </workflow-app>
 </verbatim>
 
-The =prepare= element, if present, indicates a list of path do delete before starting the job. This should be used
-exclusively for directory cleanup for the job to be executed.
+The =prepare= element, if present, indicates a list of paths to delete before starting the job. This should be used
+exclusively for directory cleanup or dropping of hcatalog table partitions for the job to be executed.
+The format to specify a hcatalog table partition URI is
+hcat://[metastore server]:[port]/[database name]/[table name]/[partkey1]=[value];[partkey2]=[value].
+In case of a hcatalog URI, the hive-site.xml needs to be shipped using =file= tag and the hcatalog and hive jars
+need to be placed in workflow lib directory or specified using =archive= tag.
 
 The =job-xml= element, if present, must refer to a Hadoop JobConf =job.xml= file bundled in the workflow application.
 The =job-xml= element is optional and as of schema 0.4, multiple =job-xml= elements are allowed in order to specify multiple Hadoop JobConf =job.xml= files.
@@ -1298,9 +1310,10 @@ To indicate an =error= action transition, the main Java class must throw an exce
 The main Java class must not call =System.exit(int n)= as this will make the =java= action to do an =error= transition
 regardless of the used exit code.
 
-A =java= action can be configured to perform HDFS files/directories cleanup before starting the Java application. This
-capability enables Oozie to retry a Java application in the situation of a transient or non-transient failure (This can
-be used to cleanup any temporary data which may have been created by the Java application in case of failure).
+A =java= action can be configured to perform HDFS files/directories cleanup or HCatalog partitions cleanup before
+starting the Java application. This capability enables Oozie to retry a Java application in the situation of a transient
+or non-transient failure (This can be used to cleanup any temporary data which may have been created by the Java
+application in case of failure).
 
 A =java= action can create a Hadoop configuration. The Hadoop configuration is made available as a local file to the
 Java application in its running directory, the file name is =oozie-action.conf.xml=. Similar to =map-reduce= and
@@ -1362,8 +1375,12 @@ be assigned to it. The queue name must be specified as a configuration property.
 </workflow-app>
 </verbatim>
 
-The =prepare= element, if present, indicates a list of path do delete before starting the Java application. This should
-be used exclusively for directory cleanup for the Java application to be executed.
+The =prepare= element, if present, indicates a list of paths to delete before starting the Java application. This should
+be used exclusively for directory cleanup or dropping of hcatalog table partitions for the Java application to be executed.
+The format to specify a hcatalog table partition URI is
+hcat://[metastore server]:[port]/[database name]/[table name]/[partkey1]=[value];[partkey2]=[value].
+In case of a hcatalog URI, the hive-site.xml needs to be shipped using =file= tag and the hcatalog and hive jars
+need to be placed in workflow lib directory or specified using =archive= tag.
 
 The =java-opts= element, if present, contains the command line parameters which are to be used to start the JVM that
 will execute the Java application. Using this element is equivalent to use the =mapred.child.java.opts= configuration
@@ -1999,6 +2016,16 @@ It returns the size in bytes of specified file. If the path is not a file, or if
 *boolean fs:blockSize(String path)*
 
 It returns the block size in bytes of specified file. If the path is not a file, or if it does not exist it returns -1.
+
+---++++ 4.2.8 HCatalog EL Functions
+
+For all the functions in this section the URI must be a hcatalog URI identifying a set of partitions in a table.
+The format to specify a hcatalog table partition URI is
+hcat://[metastore server]:[port]/[database name]/[table name]/[partkey1]=[value];[partkey2]=[value]. For example: <pre>hcat://foo:8020/mydb/mytable/region=us;dt=20121212</pre>
+
+*boolean hcat:exists(String uri)*
+
+It returns =true= or =false= based on if the partitions in the table exists or not.
 
 #WorkflowNotifications
 ---++ 5 Oozie Notifications

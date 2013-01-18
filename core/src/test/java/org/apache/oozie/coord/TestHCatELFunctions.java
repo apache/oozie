@@ -17,15 +17,30 @@
  */
 package org.apache.oozie.coord;
 
+import java.io.ByteArrayOutputStream;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.DagELFunctions;
+import org.apache.oozie.WorkflowActionBean;
+import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.dependency.FSURIHandler;
+import org.apache.oozie.dependency.HCatURIHandler;
 import org.apache.oozie.service.ELService;
+import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.test.XTestCase;
+import org.apache.oozie.service.URIHandlerService;
+import org.apache.oozie.test.XHCatTestCase;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ELEvaluator;
+import org.apache.oozie.util.XConfiguration;
+import org.apache.oozie.workflow.lite.EndNodeDef;
+import org.apache.oozie.workflow.lite.LiteWorkflowApp;
+import org.apache.oozie.workflow.lite.LiteWorkflowInstance;
+import org.apache.oozie.workflow.lite.StartNodeDef;
 import org.junit.Test;
 
-public class TestHCatELFunctions extends XTestCase {
+public class TestHCatELFunctions extends XHCatTestCase {
     ELEvaluator eval = null;
     SyncCoordAction appInst = null;
     SyncCoordDataset ds = null;
@@ -35,6 +50,8 @@ public class TestHCatELFunctions extends XTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         services = new Services();
+        services.getConf().set(URIHandlerService.URI_HANDLERS,
+                FSURIHandler.class.getName() + "," + HCatURIHandler.class.getName());
         services.init();
     }
 
@@ -42,6 +59,55 @@ public class TestHCatELFunctions extends XTestCase {
     protected void tearDown() throws Exception {
         services.destroy();
         super.tearDown();
+    }
+
+    @Test
+    public void testHCatExists() throws Exception {
+        dropTable("db1", "table1", true);
+        dropDatabase("db1", true);
+        createDatabase("db1");
+        createTable("db1", "table1", "year,month,dt,country");
+        addPartition("db1", "table1", "year=2012;month=12;dt=02;country=us");;
+
+        Configuration protoConf = new Configuration();
+        protoConf.set(OozieClient.USER_NAME, getTestUser());
+        protoConf.set("hadoop.job.ugi", getTestUser() + "," + "group");
+        Configuration conf = new XConfiguration();
+        conf.set(OozieClient.APP_PATH, "appPath");
+        conf.set(OozieClient.USER_NAME, getTestUser());
+
+        conf.set("test.dir", getTestCaseDir());
+        conf.set("partition1", getHCatURI("db1", "table1", "dt=02").toString());
+        conf.set("partition2", getHCatURI("db1", "table1", "dt=05").toString());
+
+        LiteWorkflowApp def =
+                new LiteWorkflowApp("name", "<workflow-app/>",
+                                    new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "end")).
+                    addNode(new EndNodeDef("end", LiteWorkflowStoreService.LiteControlNodeHandler.class));
+        LiteWorkflowInstance job = new LiteWorkflowInstance(def, conf, "wfId");
+
+        WorkflowJobBean wf = new WorkflowJobBean();
+        wf.setId(job.getId());
+        wf.setAppName("name");
+        wf.setAppPath("appPath");
+        wf.setUser(getTestUser());
+        wf.setGroup("group");
+        wf.setWorkflowInstance(job);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        protoConf.writeXml(baos);
+        wf.setProtoActionConf(baos.toString());
+
+        WorkflowActionBean action = new WorkflowActionBean();
+        action.setId("actionId");
+        action.setName("actionName");
+        ELEvaluator eval = Services.get().get(ELService.class).createEvaluator("workflow");
+        DagELFunctions.configureEvaluator(eval, wf, action);
+
+        assertEquals(true, (boolean) eval.evaluate("${hcat:exists(wf:conf('partition1'))}", Boolean.class));
+        assertEquals(false, (boolean) eval.evaluate("${hcat:exists(wf:conf('partition2'))}", Boolean.class));
+
+        dropTable("db1", "table1", true);
+        dropDatabase("db1", true);
     }
 
     /**

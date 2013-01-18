@@ -97,11 +97,22 @@ This document defines the functional specification for the Oozie Coordinator sys
 
 *Actual time:* The actual time indicates the time when something actually happens.
 
-*Nominal time:* The nominal time specifies the time when something should happen. In theory the nominal time and the actual time should mach, however, in practice due to delays the actual time may occur later than the nominal time.
+*Nominal time:* The nominal time specifies the time when something should happen. In theory the nominal time and the actual time should match, however, in practice due to delays the actual time may occur later than the nominal time.
 
-*Dataset:* Collection of data referred to by a logical name. A dataset normally has several instances of data and each one of them can be referred individually. Each dataset instance is represented by a unique set of URIs.
+*Dataset:* Collection of data referred to by a logical name. A dataset normally has several instances of data and each
+one of them can be referred individually. Each dataset instance is represented by a unique set of URIs. Each URI could
+be a hdfs path URI denoting the hdfs directory: hdfs://foo:8020/usr/logs/20090415 or a HCatalog partition URI
+identifying a set of table partitions: hcat://bar:8020/logsDB/logsTable/dt=20090415;region=US. HCatalog enables table
+and storage management for PIG and Hive. Note that the HCatalog metastore server would be the same as Hive metastore
+server for users just using Hive together with Hive Metastore Server and no PIG.
+The format to specify a hcatalog table partition URI is
+hcat://[metastore server]:[port]/[database name]/[table name]/[partkey1]=[value];[partkey2]=[value].
 
-*Synchronous Dataset:* Synchronous datasets instances are generated at fixed time intervals and there is a dataset instance associated with each time interval. Synchronous dataset instances are identified by their nominal time. For example, in the case of a file system based dataset, the nominal time would be somewhere in the file path of the dataset instance: =hdfs://foo:8020/usr/logs/2009/04/15/23/30= .
+*Synchronous Dataset:* Synchronous datasets instances are generated at fixed time intervals and there is a dataset
+instance associated with each time interval. Synchronous dataset instances are identified by their nominal time.
+For example, in the case of a file system based dataset, the nominal time would be somewhere in the file path of the
+dataset instance: hdfs://foo:8020/usr/logs/2009/04/15/23/30. In the case of hcatalog table partitions, the nominal time
+would be part of some partition value: hcat://bar:8020/mydb/mytable/year=2009;month=04;dt=15;region=us.
 
 *Coordinator Action:* A coordinator action is a workflow job that is started when a set of conditions are met (input dataset instances are available).
 
@@ -2277,7 +2288,6 @@ The example below illustrates a pig job triggered by a coordinator, using the EL
 ---++++ Coordinator application definition:
 
 <blockquote>
-<verbatim>
    <coordinator-app name="app-coord" frequency="${coord:days(1)}"
                     start="2009-01-01T24:00Z" end="2009-12-31T24:00Z" timezone="UTC"
                     xmlns="uri:oozie:coordinator:0.3">
@@ -2338,12 +2348,12 @@ The example below illustrates a pig job triggered by a coordinator, using the EL
        </workflow>
       </action>
    </coordinator-app>
-</verbatim>
 </blockquote>
+
 
 Parameterizing the input/output databases and tables using the corresponding EL function as shown will make them available in the pig action of the workflow 'logsprocessor-wf'.
 
-Each coordinator action will use as input events the last 5 hourly instances of the 'Click-data' dataset.The =${coord:dataInPartitionPigFilter(String name)}= function enables the coordinator application
+Each coordinator action will use as input events the last 24 hourly instances of the 'Click-data' dataset.The =${coord:dataInPartitionPigFilter(String name)}= function enables the coordinator application
 to pass the Partition Filter corresponding to all the dataset instances for the last 24 hours to the workflow job triggered by the coordinator action.
 The =${coord:dataOutPartitions(String name)}= function enables the coordinator application to pass the partition key-value string needed by the *HCatStorer* in Pig job when the workflow is triggered by the coordinator action.
 
@@ -2351,13 +2361,15 @@ The =${coord:dataOutPartitions(String name)}= function enables the coordinator a
 ---++++ Workflow definition:
 
 <blockquote>
-<verbatim>
 <workflow-app xmlns="uri:oozie:workflow:0.3" name="logsprocessor-wf">
     <start to="pig-node"/>
     <action name="pig-node">
         <pig>
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
+            <prepare>
+                <delete path="hcat://foo:11002/${OUT_DB}/${OUT_TABLE}/date=${OUT_PARTITION_VAL_DATE}"/>  
+            </prepare> 
             ...
             <script>id.pig</script>
 		    <param>HCAT_IN_DB=${IN_DB}</param>
@@ -2376,24 +2388,25 @@ The =${coord:dataOutPartitions(String name)}= function enables the coordinator a
     </kill>
     <end name="end"/>
 </workflow-app>
-</verbatim>
 </blockquote>
+
+   Ensure that the lib directory of the workflow contains the following jars with versions corresponding to
+hcatalog installation - hcatalog.jar, webhcat-java-client.jar, hive-common.jar, hive-exec.jar, hive-metastore.jar,
+hive-serde.jar, libfb303.jar, pig.jar. You can also specify the jars using =archive= tag. The jars are required
+to work with hcatalog and pig. The hive-site.xml needs to be provided using =file= tag.
 
 *Example usage in Pig:*
 
 <blockquote>
-<verbatim>
 A = load '$HCAT_IN_DB.$HCAT_IN_TABLE' using org.apache.hcatalog.pig.HCatLoader();
 B = FILTER A BY $PARTITION_FILTER;
 C = foreach B generate foo, bar;
 store C into '$HCAT_OUT_DB.$HCAT_OUT_TABLE' using org.apache.hcatalog.pig.HCatStorer('$OUTPUT_PARTITIONS');
-</verbatim>
 </blockquote>
 
 For the =2009-01-02T00:00Z= run with the given dataset instances, the above Pig script with resolved values would look like:
 
 <blockquote>
-<verbatim>
 A = load 'myInputDatabase.myInputTable' using org.apache.hcatalog.pig.HCatLoader();
 B = FILTER A BY ((datestamp==2009010101 AND region==USA) OR
     (datestamp==2009010102 AND region==USA) OR
@@ -2402,7 +2415,6 @@ B = FILTER A BY ((datestamp==2009010101 AND region==USA) OR
     (datestamp==2009010200 AND region==USA));
 C = foreach B generate foo, bar;
 store C into 'myOutputDatabase.myOutputTable' using org.apache.hcatalog.pig.HCatStorer('datestamp=20090102,region=EUR');
-</verbatim>
 </blockquote>
 
 ---++++ 6.8.4 coord:dataInPartitionMin(String name, String partition) EL function
@@ -2433,7 +2445,6 @@ The example below illustrates a pig job triggered by a coordinator, using the af
 ---++++ Coordinator application definition:
 
 <blockquote>
-<verbatim>
    <coordinator-app name="app-coord" frequency="${coord:days(1)}"
                     start="2009-01-01T24:00Z" end="2009-12-31T24:00Z" timezone="UTC"
                     xmlns="uri:oozie:coordinator:0.1">
@@ -2502,10 +2513,9 @@ The example below illustrates a pig job triggered by a coordinator, using the af
        </workflow>
       </action>
    </coordinator-app>
-</verbatim>
 </blockquote>
 
-In this example, each coordinator action will use as input events the last 5 hourly instances of the 'logs' dataset.
+In this example, each coordinator action will use as input events the last 24 hourly instances of the 'logs' dataset.
 
 For the =2009-01-02T00:00Z= run, the =${coord:dataInPartitionMin('raw-logs','datestamp')}= function will resolve to the minimum of the 5 dataset instances for partition 'datestamp'
 i.e. among 2009010101, 2009010102, ...., 2009010123, 2009010200, the minimum would be "2009010101".
@@ -2519,7 +2529,6 @@ The =${coord:dataOutPartitionValue('processed-logs','region')}= function will re
 For the workflow definition with <pig> action, refer to [[CoordinatorFunctionalSpec#HCatWorkflow][previous example]], with the following change in pig params in addition to database and table.
 
 <blockquote>
-<verbatim>
 ...
 <param>PARTITION_DATE_MIN=${DATE_MIN}</param>
 <param>PARTITION_DATE_MAX=${DATE_MAX}</param>
@@ -2527,31 +2536,26 @@ For the workflow definition with <pig> action, refer to [[CoordinatorFunctionalS
 <param>OUT_PARTITION_VAL_REGION=${OUT_PARTITION_VAL_REGION}</param>
 <param>OUT_PARTITION_VAL_DATE=${OUT_PARTITION_VAL_DATE}</param>
 ...
-</verbatim>
 </blockquote>
 
 *Example usage in Pig:*
 This illustrates another pig script which filters partitions based on range, with range limits parameterized with the EL funtions
 
 <blockquote>
-<verbatim>
 A = load '$HCAT_IN_DB.$HCAT_IN_TABLE' using org.apache.hcatalog.pig.HCatLoader();
 B = FILTER A BY datestamp >= '$PARTITION_DATE_MIN' AND datestamp < '$PARTITION_DATE_MAX' AND region=='$REGION';
 C = foreach B generate foo, bar;
 store C into '$HCAT_OUT_DB.$HCAT_OUT_TABLE' using org.apache.hcatalog.pig.HCatStorer('region=$OUT_PARTITION_VAL_REGION,datestamp=$OUT_PARTITION_VAL_DATE');
-</verbatim>
 </blockquote>
 
 For example,
 for the =2009-01-02T00:00Z= run with the given dataset instances, the above Pig script with resolved values would look like:
 
 <blockquote>
-<verbatim>
 A = load 'myInputDatabase.myInputTable' using org.apache.hcatalog.pig.HCatLoader();
 B = FILTER A BY datestamp >= '2009010101' AND datestamp < '2009010200' AND region='APAC';
 C = foreach B generate foo, bar;
 store C into 'myOutputDatabase.myOutputTable' using org.apache.hcatalog.pig.HCatStorer('region=APAC,datestamp=20090102');
-</verbatim>
 </blockquote>
 
 
