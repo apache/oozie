@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1180 Separate the connection context details from JMS Accessor service (virag)
 OOZIE-1157 EL function hcat:exists for decision making (rohini via mona)
 OOZIE-1167 Fix and rework PartitionDependency Management (rohini via virag)
 OOZIE-1053 Oozie Web-console clicking on Bundle's coord jobs does not open them up (ryota via mona)

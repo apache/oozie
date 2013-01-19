@@ -25,20 +25,16 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
-import javax.jms.ExceptionListener;
 import javax.jms.JMSException;
 import javax.jms.MessageConsumer;
-import javax.jms.MessageProducer;
 import javax.jms.Session;
-import javax.jms.Topic;
-import javax.naming.Context;
-import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.oozie.ErrorCode;
+import org.apache.hadoop.util.ReflectionUtils;
+import org.apache.oozie.jms.ConnectionContext;
+import org.apache.oozie.jms.DefaultConnectionContext;
 import org.apache.oozie.jms.MessageHandler;
 import org.apache.oozie.jms.MessageReceiver;
 import org.apache.oozie.util.MappingRule;
@@ -57,8 +53,8 @@ import com.google.common.annotations.VisibleForTesting;
  */
 public class JMSAccessorService implements Service {
     public static final String CONF_PREFIX = Service.CONF_PREFIX + "JMSAccessorService.";
-    public static final String JMS_CONNECTION_FACTORY = CONF_PREFIX + "jms.connectionFactory";
     public static final String JMS_CONNECTIONS_PROPERTIES = CONF_PREFIX + "connections";
+    public static final String JMS_CONNECTION_CONTEXT_IMPL = CONF_PREFIX +"connectioncontext.impl";
     public static final String SESSION_OPTS = CONF_PREFIX + "jms.sessionOpts";
     public static final String DEFAULT_SERVER_ENDPOINT = "default";
     private static final String DELIMITER = "#";
@@ -66,6 +62,7 @@ public class JMSAccessorService implements Service {
 
     private String defaultConnection = null;
     private Configuration conf;
+    private int sessionOpts;
     private List<MappingRule> mappingRules = null;
     private ConcurrentHashMap<String, ConnectionContext> connectionMap = new ConcurrentHashMap<String, ConnectionContext>();
     private ConcurrentHashMap<String, MessageReceiver> receiversMap = new ConcurrentHashMap<String, MessageReceiver>();
@@ -76,6 +73,7 @@ public class JMSAccessorService implements Service {
         LOG = XLog.getLog(getClass());
         conf = services.getConf();
         initializeMappingRules();
+        sessionOpts = conf.getInt(SESSION_OPTS, Session.AUTO_ACKNOWLEDGE);
     }
 
 
@@ -128,20 +126,37 @@ public class JMSAccessorService implements Service {
             }
             synchronized (receiversMap) {
                 if (!receiversMap.containsKey(key)) {
-                    ConnectionContext connCtxt = createConnection(server);
-                    Session session = connCtxt.createSession();
-                    MessageConsumer consumer = connCtxt.createConsumer(session, topic);
-                    MessageReceiver receiver = new MessageReceiver(msgHandler, session, consumer);
-                    consumer.setMessageListener(receiver);
+                    ConnectionContext connCtxt = getConnectionContext(server);
+                    if (!connCtxt.isConnectionInitialized()){
+                        Properties props = getJMSServerProps(server);
+                        if (props == null) {
+                            LOG.warn("Connection not established to JMS server for server [{0}] as JMS connection properties are not correctly defined",
+                                    server);
+                            return;
+                        }
+                        ConnectionFactory connFactory = connCtxt.createConnectionFactory(props);
+                        connCtxt.createConnection(connFactory);
+                    }
+                    MessageReceiver receiver = setupJMSReceiver(connCtxt, topic, msgHandler);
                     LOG.info("Registered a listener for topic {0} from publisher {1}", topic, server);
                     receiversMap.put(key, receiver);
                 }
             }
         }
         catch (Exception e) {
-            //TODO: Exponentially backed off retry in case of connection failure.
+            // TODO: Exponentially backed off retry in case of connection
+            // failure.
             LOG.warn("Connection to JMS server failed for publisher {0}", publisherURI, e);
         }
+    }
+
+    private MessageReceiver setupJMSReceiver(ConnectionContext connCtxt, String topic, MessageHandler msgHandler)
+            throws NamingException, JMSException {
+        Session session = connCtxt.createSession(sessionOpts);
+        MessageConsumer consumer = connCtxt.createConsumer(session, topic);
+        MessageReceiver receiver = new MessageReceiver(msgHandler, session, consumer);
+        consumer.setMessageListener(receiver);
+        return receiver;
     }
 
     /**
@@ -190,16 +205,11 @@ public class JMSAccessorService implements Service {
         return receiversMap.get(publisherAuthority + DELIMITER + topic) != null;
     }
 
-    protected ConnectionContext createConnection(String publisherAuthority) throws ServiceException {
+    protected ConnectionContext getConnectionContext(String publisherAuthority) {
         ConnectionContext connCtxt = connectionMap.get(publisherAuthority);
         if (connCtxt == null) {
-            Properties props = getJMSServerProps(publisherAuthority);
-            if (props != null) {
-                Connection conn = getConnection(props);
-                LOG.info("Connection established to JMS Server for publisher " + publisherAuthority);
-                connCtxt = new ConnectionContext(conn);
-                connectionMap.put(publisherAuthority, connCtxt);
-            }
+            connCtxt = getConnectionContextImpl();
+            connectionMap.put(publisherAuthority, connCtxt);
         }
         return connCtxt;
     }
@@ -245,6 +255,7 @@ public class JMSAccessorService implements Service {
             }
             else {
                 LOG.info("Unformatted properties. Expected key#value : " + pair);
+                return null;
             }
         }
         if (props.isEmpty()) {
@@ -274,12 +285,7 @@ public class JMSAccessorService implements Service {
 
         LOG.info("Closing JMS connections");
         for (Entry<String, ConnectionContext> entry : connectionMap.entrySet()) {
-            try {
-                entry.getValue().getConnection().close();
-            }
-            catch (JMSException e) {
-                LOG.warn("Unable to close the connection for " + entry.getKey(), e);
-            }
+                entry.getValue().close();
         }
         connectionMap.clear();
     }
@@ -289,129 +295,17 @@ public class JMSAccessorService implements Service {
         return JMSAccessorService.class;
     }
 
-    /*
-     * Look up connection factory Create connection
-     */
-    protected synchronized Connection getConnection(Properties props) throws ServiceException {
 
-        Connection conn = null;
-        try {
-            Context jndiContext = getJndiContext(props);
-            String connFacName = (String) jndiContext.getEnvironment().get(JMS_CONNECTION_FACTORY);
-            if (connFacName == null || connFacName.trim().length() == 0) {
-                connFacName = "ConnectionFactory";
-            }
-            ConnectionFactory connFac = (ConnectionFactory) jndiContext.lookup(connFacName);
-            LOG.info("Connecting with the following properties \n" + jndiContext.getEnvironment().toString());
-            conn = connFac.createConnection();
-            conn.start();
-            conn.setExceptionListener(new ExceptionListener() {
-                @Override
-                public void onException(JMSException je) {
-                    LOG.error(je);
-                }
-            });
-
+    private ConnectionContext getConnectionContextImpl() {
+        Class<?> defaultClazz = conf.getClass(JMS_CONNECTION_CONTEXT_IMPL, DefaultConnectionContext.class);
+        ConnectionContext connCtx = null;
+        if (defaultClazz == DefaultConnectionContext.class) {
+            connCtx = new DefaultConnectionContext();
         }
-        catch (Exception e1) {
-            LOG.error(e1.getMessage(), e1);
-            if (conn != null) {
-                try {
-                    conn.close();
-                }
-                catch (Exception e2) {
-                    LOG.error(e2.getMessage(), e2);
-                }
-            }
-            throw new ServiceException(ErrorCode.E0100, getClass().getName(), e1.getMessage(), e1);
+        else {
+            connCtx = (ConnectionContext) ReflectionUtils.newInstance(defaultClazz, null);
         }
-        return conn;
-    }
-
-    /*
-     * Create a JNDI API InitialContext object
-     */
-    private Context getJndiContext(Properties props) throws ServiceException {
-        Context ctx;
-        try {
-            ctx = new InitialContext(props);
-        }
-        catch (NamingException e) {
-            LOG.warn("Unable to initialize the context :", e);
-            throw new ServiceException(ErrorCode.E0100, getClass().getName(), e.getMessage(), e);
-        }
-        return ctx;
-    }
-
-    /**
-     * This class maintains a JMS connection and map of topic to Session. Only
-     * one session per topic.
-     */
-    public class ConnectionContext {
-        private Connection connection;
-
-        public ConnectionContext(Connection conn) {
-            this.connection = conn;
-        }
-
-        /**
-         * If there is no existing session for a specific topic name, this
-         * method creates a new session. Otherwise, return the existing session
-         *
-         * @param topic : Name of the topic
-         * @return a new/exiting JMS session
-         * @throws JMSException
-         */
-        public Session createSession() throws JMSException {
-            int sessionOpts = conf.getInt(SESSION_OPTS, Session.AUTO_ACKNOWLEDGE);
-            return connection.createSession(false, sessionOpts);
-        }
-
-        /**
-         * Returns a new MessageConsumer object.
-         * It is the caller responsibility to close the MessageConsumer when done
-         *
-         * @param topicName : Name of the topic
-         * @return MessageConsumer
-         * @throws JMSException
-         */
-        public MessageConsumer createConsumer(Session session, String topicName) throws JMSException {
-            Topic topic = session.createTopic(topicName);
-            MessageConsumer consumer = session.createConsumer(topic);
-            return consumer;
-        }
-
-        /**
-         * Returns a new MessageProducer object.
-         * It is the caller responsibility to close the MessageProducer when done
-         *
-         * @param topicName : Name of the topic
-         * @return MessageProducer
-         * @throws JMSException
-         */
-        public MessageProducer createProducer(Session session, String topicName) throws JMSException {
-            Topic topic = session.createTopic(topicName);
-            MessageProducer producer = session.createProducer(topic);
-            return producer;
-        }
-
-        /**
-         * @return JMS connection
-         */
-        public Connection getConnection() {
-            return connection;
-        }
-
-        public void close() {
-
-            try {
-                connection.close();
-            }
-            catch (JMSException e) {
-                LOG.warn("Unable to close the connection " + connection, e);
-            }
-        }
-
+        return connCtx;
     }
 
 }

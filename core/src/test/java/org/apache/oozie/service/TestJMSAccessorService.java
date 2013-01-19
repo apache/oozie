@@ -18,13 +18,17 @@
 package org.apache.oozie.service;
 
 import java.net.URI;
+import java.util.Properties;
+
+import javax.jms.ConnectionFactory;
 
 import junit.framework.Assert;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.jms.DefaultConnectionContext;
 import org.apache.oozie.jms.HCatMessageHandler;
 import org.apache.oozie.jms.MessageReceiver;
-import org.apache.oozie.service.JMSAccessorService.ConnectionContext;
+import org.apache.oozie.jms.ConnectionContext;
 import org.apache.oozie.test.XTestCase;
 import org.junit.Test;
 
@@ -54,11 +58,21 @@ public class TestJMSAccessorService extends XTestCase {
     public void testConnection() throws Exception {
         JMSAccessorService jmsService = services.get(JMSAccessorService.class);
         // both servers should connect to default JMS server
-        ConnectionContext ctxt1 = jmsService.createConnection("blahblah");
-        ConnectionContext ctxt2 = jmsService.createConnection(JMSAccessorService.DEFAULT_SERVER_ENDPOINT);
+        Properties props = jmsService.getJMSServerProps("blahblah");
+        ConnectionContext ctxt1 = new DefaultConnectionContext();
+        ConnectionFactory connFactory = ctxt1.createConnectionFactory(props);
+        ctxt1.createConnection(connFactory);
+        assertTrue(ctxt1.isConnectionInitialized());
+        ctxt1.close();
+        props = jmsService.getJMSServerProps(JMSAccessorService.DEFAULT_SERVER_ENDPOINT);
+        ConnectionContext ctxt2 = new DefaultConnectionContext();
+        connFactory = ctxt2.createConnectionFactory(props);
+        ctxt2.createConnection(connFactory);
+        assertTrue(ctxt2.isConnectionInitialized());
+        ctxt2.close();
+
         assertNotNull(ctxt1);
         assertNotNull(ctxt2);
-        //assertEquals(ctxt1, ctxt2);
     }
 
     @Test
@@ -146,7 +160,7 @@ public class TestJMSAccessorService extends XTestCase {
 
 
         JMSAccessorService jmsService = services.get(JMSAccessorService.class);
-        String jmsServerMapping = jmsService.getJMSServerMapping("hcat://axoniteblue-1.blue.server.com:8020");
+        String jmsServerMapping = jmsService.getJMSServerMapping("hcat://hcatserver.blue.server.com:8020");
         // rules will be applied
         assertEquals("java.naming.factory.initial#Dummy.Factory;java.naming.provider.url#tcp://broker.blue:61616", jmsServerMapping);
 
@@ -157,4 +171,31 @@ public class TestJMSAccessorService extends XTestCase {
         jmsServerMapping = jmsService.getJMSServerMapping("hcat://xyz.corp.dummy.com");
         assertEquals("java.naming.factory.initial#Dummy.Factory;java.naming.provider.url#tcp:localhost:61616", jmsServerMapping);
     }
+
+    @Test
+    public void testConnectionContext() throws ServiceException {
+        try {
+            services.destroy();
+            services = super.setupServicesForHCatalog();
+            Configuration conf = services.getConf();
+            // set the connection factory name
+            String jmsURL = "hcat://${1}.${2}.server.com:8020=java.naming.factory.initial#org.apache.activemq.jndi.ActiveMQInitialContextFactory;java.naming.provider.url#vm://localhost?broker.persistent=false;connectionFactoryNames#dynamicFactories/hcat.prod.${1}";
+            conf.set(JMSAccessorService.JMS_CONNECTIONS_PROPERTIES, jmsURL);
+            services.init();
+            JMSAccessorService jmsService = services.get(JMSAccessorService.class);
+            String jmsServerMapping = jmsService.getJMSServerMapping("hcat://hcatserver.blue.server.com:8020");
+            assertEquals(
+                    "java.naming.factory.initial#org.apache.activemq.jndi.ActiveMQInitialContextFactory;java.naming.provider.url#vm://localhost?broker.persistent=false;connectionFactoryNames#dynamicFactories/hcat.prod.hcatserver",
+                  jmsServerMapping);
+
+            ConnectionContext ctx1 = new DefaultConnectionContext();
+            Properties props = jmsService.getJMSServerProps("hcat://hcatserver.blue.server.com:8020");
+            ctx1.createConnectionFactory(props);
+            assertEquals("dynamicFactories/hcat.prod.hcatserver", ctx1.getConnectionFactoryName());
+        }
+        catch (Exception e) {
+            fail("Unexpected exception " + e);
+        }
+    }
+
 }

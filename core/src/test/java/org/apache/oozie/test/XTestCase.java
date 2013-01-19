@@ -891,7 +891,8 @@ public abstract class XTestCase extends TestCase {
                 "org.apache.oozie.service.JMSAccessorService");
         conf.set(JMSAccessorService.JMS_CONNECTIONS_PROPERTIES,
                 "default=java.naming.factory.initial#" + ActiveMQConnFactory + ";" +
-                "java.naming.provider.url#" + localActiveMQBroker);
+                "java.naming.provider.url#" + localActiveMQBroker +
+                "connectionFactoryNames#"+ "ConnectionFactory");
         conf.set(URIHandlerService.URI_HANDLERS,
                 FSURIHandler.class.getName() + "," + HCatURIHandler.class.getName());
         setSystemProperty("java.naming.factory.initial", "org.apache.activemq.jndi.ActiveMQInitialContextFactory");
