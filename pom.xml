@@ -68,9 +68,11 @@
 
         <hadoop.version>1.1.1</hadoop.version>
         <hbase.version>0.94.2</hbase.version>
+        <hcatalog.version>0.6.0-SNAPSHOT</hcatalog.version>
 
         <hadooplib.version>${hadoop.version}.oozie-${project.version}</hadooplib.version>
         <hbaselib.version>${hbase.version}.oozie-${project.version}</hbaselib.version>
+        <hcataloglib.version>${hcatalog.version}.oozie-${project.version}</hcataloglib.version>
 
         <clover.license>/home/jenkins/tools/clover/latest/lib/clover.license</clover.license>
         <!--
@@ -82,8 +84,6 @@
          <!-- Sharelib component versions -->
          <hive.version>0.9.0</hive.version>
          <pig.version>0.9.0</pig.version>
-         <webhcat.version>0.5.0-SNAPSHOT</webhcat.version>
-         <hcatalog.version>0.5.0-SNAPSHOT</hcatalog.version>
          <sqoop.version>1.5.0-incubating-SNAPSHOT</sqoop.version>
          <streaming.version>${hadoop.version}</streaming.version>
          <distcp.version>${hadooplib.version}</distcp.version>
@@ -96,6 +96,7 @@
         <module>client</module>
         <module>hadooplibs</module>
         <module>hbaselibs</module>
+        <module>hcataloglibs</module>
         <module>core</module>
         <module>tests</module>
         <module>webapp</module>
@@ -274,6 +275,12 @@
             <!-- core -->
             <dependency>
                 <groupId>org.apache.oozie</groupId>
+                <artifactId>oozie-hcatalog</artifactId>
+                <version>${hcataloglib.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.oozie</groupId>
                 <artifactId>oozie-hbase</artifactId>
                 <version>${hbaselib.version}</version>
             </dependency>
@@ -288,24 +295,6 @@
                 <groupId>org.apache.oozie</groupId>
                 <artifactId>oozie-hadoop-test</artifactId>
                 <version>${hadooplib.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.hcatalog</groupId>
-                <artifactId>hcatalog-core</artifactId>
-                <version>${hcatalog.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.codehaus.jackson</groupId>
-                <artifactId>jackson-core-asl</artifactId>
-                <version>1.8.8</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.codehaus.jackson</groupId>
-                <artifactId>jackson-mapper-asl</artifactId>
-                <version>1.8.8</version>
             </dependency>
 
             <dependency>
@@ -477,6 +466,7 @@
                 <artifactId>slf4j-log4j12</artifactId>
                 <version>1.5.8</version>
             </dependency>
+
             <dependency>
                 <groupId>org.apache.hive</groupId>
                 <artifactId>hive-builtins</artifactId>
@@ -650,12 +640,6 @@
                 <groupId>org.apache.sqoop</groupId>
                 <artifactId>sqoop</artifactId>
                 <version>${sqoop.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.hcatalog</groupId>
-                <artifactId>webhcat-java-client</artifactId>
-                <version>${webhcat.version}</version>
             </dependency>
 
             <dependency>

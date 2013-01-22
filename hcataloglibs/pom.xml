@@ -23,43 +23,35 @@
         <groupId>org.apache.oozie</groupId>
         <artifactId>oozie-main</artifactId>
         <version>3.4.0-SNAPSHOT</version>
-        <relativePath>../../pom.xml</relativePath>
     </parent>
     <groupId>org.apache.oozie</groupId>
-    <artifactId>oozie-hadoop-test</artifactId>
-    <version>2.0.0-alpha.oozie-3.4.0-SNAPSHOT</version>
-    <description>Apache Oozie Hadoop ${project.version} Test</description>
-    <name>Apache Oozie Hadoop ${project.version} Test</name>
-    <packaging>jar</packaging>
+    <artifactId>oozie-hcataloglibs</artifactId>
+    <version>3.4.0-SNAPSHOT</version>
+    <description>Apache Oozie HCatalog Libs</description>
+    <name>Apache Oozie HCatalog Libs</name>
+    <packaging>pom</packaging>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-minicluster</artifactId>
-            <version>2.0.0-alpha</version>
-            <scope>compile</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.codehaus.jackson</groupId>
-                    <artifactId>jackson-core-asl</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.codehaus.jackson</groupId>
-                    <artifactId>jackson-mapper-asl</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-    </dependencies>
+    <modules>
+        <module>hcatalog-0.6.0-SNAPSHOT</module>
+    </modules>
 
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <configuration>
                     <descriptors>
-                        <descriptor>../../src/main/assemblies/empty.xml</descriptor>
+                        <descriptor>../src/main/assemblies/hcataloglibs.xml</descriptor>
                     </descriptors>
+                    <finalName>oozie-${project.version}</finalName>
                 </configuration>
             </plugin>
         </plugins>

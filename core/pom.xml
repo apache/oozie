@@ -55,6 +55,12 @@
         </dependency>
 
         <dependency>
+             <groupId>org.apache.oozie</groupId>
+             <artifactId>oozie-hcatalog</artifactId>
+             <scope>provided</scope>
+        </dependency>
+
+        <dependency>
             <groupId>org.apache.oozie</groupId>
             <artifactId>oozie-client</artifactId>
             <scope>compile</scope>
@@ -64,12 +70,6 @@
                     <artifactId>hadoop-auth</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.hcatalog</groupId>
-            <artifactId>hcatalog-core</artifactId>
-            <scope>compile</scope>
         </dependency>
 
         <dependency>
@@ -165,12 +165,6 @@
         <dependency>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
-            <scope>compile</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.googlecode.concurrentlinkedhashmap</groupId>
-            <artifactId>concurrentlinkedhashmap-lru</artifactId>
             <scope>compile</scope>
         </dependency>
 
@@ -359,17 +353,11 @@
             <scope>test</scope>
         </dependency>
 
-           <dependency>
-                <groupId>org.apache.activemq</groupId>
-                <artifactId>activemq-all</artifactId>
-                <scope>compile</scope>
-           </dependency>
-
-           <dependency>
-                <groupId>org.apache.hcatalog</groupId>
-                <artifactId>webhcat-java-client</artifactId>
-                <scope>compile</scope>
-           </dependency>
+        <dependency>
+            <groupId>org.apache.activemq</groupId>
+            <artifactId>activemq-all</artifactId>
+            <scope>compile</scope>
+        </dependency>
 
         <!-- For drawing runtime DAG -->
         <dependency>
