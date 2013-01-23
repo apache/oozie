@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1160 Oozie web-console to display all job URLs spawned by Pig (mona)
 OOZIE-1177 HostnameFilter should only catch UnknownHostException, not Exception (rkanter)
 OOZIE-945 BundleSubmitXCommand.submit() doesn't properly remove comments (jaoki via rkanter)
 OOZIE-1171 HostnameFilter should handle hostname resolution failures and continue processing (tucu via rkanter)
