@@ -31,13 +31,15 @@ public class TestGraphGenerator extends XTestCase {
 
     public void testConstructor() {
         try {
-            GraphGenerator graphGenerator = new GraphGenerator(null, null);
-        } catch(IllegalArgumentException iae) {
+            new GraphGenerator(null, null);
+        }
+        catch (IllegalArgumentException iae) {
             Assert.assertTrue("Construction with illegal args failed as expected: " + iae.getMessage(), true);
         }
         try {
-            GraphGenerator graphGenerator1 = new GraphGenerator("<workflow></workflow>", null);
-        } catch(IllegalArgumentException iae) {
+            new GraphGenerator("<workflow></workflow>", null);
+        }
+        catch (IllegalArgumentException iae) {
             Assert.assertTrue("Construction with illegal args failed as expected: " + iae.getMessage(), true);
         }
         Assert.assertNotNull(new GraphGenerator("<workflow></workflow>", new JsonWorkflowJob()));
@@ -60,7 +62,8 @@ public class TestGraphGenerator extends XTestCase {
         try {
             GraphGenerator g = new GraphGenerator(readFile("src/test/resources/graphWF.xml"), jsonWFJob);
             g.write(new FileOutputStream(new File(png1)));
-        } catch(Exception e) {
+        }
+        catch (Exception e) {
             Assert.fail("Write PNG failed for graphWF.xml: " + e.getMessage());
         }
 
@@ -68,14 +71,16 @@ public class TestGraphGenerator extends XTestCase {
         try {
             // Check if a valid file was written
             Assert.assertNotNull(ImageIO.read(f1));
-        } catch(IOException io) {
+        }
+        catch (IOException io) {
             Assert.fail("Not a valid PNG: " + io.getMessage());
         }
 
         try {
             GraphGenerator g = new GraphGenerator(readFile("src/test/resources/graphWF.xml"), jsonWFJob, true);
             g.write(new FileOutputStream(new File(png2)));
-        } catch(Exception e) {
+        }
+        catch (Exception e) {
             Assert.fail("Write PNG failed for graphWF.xml: " + e.getMessage());
         }
 
@@ -83,7 +88,8 @@ public class TestGraphGenerator extends XTestCase {
         try {
             // Check if a valid file was written
             Assert.assertNotNull(ImageIO.read(f2));
-        } catch(IOException io) {
+        }
+        catch (IOException io) {
             Assert.fail("Not a valid PNG: " + io.getMessage());
         }
 
@@ -94,7 +100,8 @@ public class TestGraphGenerator extends XTestCase {
         try {
             GraphGenerator g = new GraphGenerator(readFile("src/test/resources/invalidGraphWF.xml"), jsonWFJob, true);
             g.write(new FileOutputStream(new File("src/test/resources/invalid.png")));
-        } catch(Exception e) {
+        }
+        catch (Exception e) {
             Assert.fail("Write PNG failed for invalidGraphWF.xml: " + e.getMessage());
         }
         new File("src/test/resources/invalid.png").delete();
@@ -102,7 +109,7 @@ public class TestGraphGenerator extends XTestCase {
 
     private static String readFile(String path) throws IOException {
         File f = new File(path);
-        System.out.println(f.getAbsolutePath());
+        System.out.println("Reading input file " + f.getAbsolutePath());
         FileInputStream stream = new FileInputStream(f);
         try {
             FileChannel fc = stream.getChannel();
