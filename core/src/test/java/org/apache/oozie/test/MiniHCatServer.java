@@ -99,7 +99,7 @@ public class MiniHCatServer {
     private void initLocalMetastoreConf() throws IOException {
         hiveConf = new HiveConf(hadoopConf, this.getClass());
         hiveConf.set(HiveConf.ConfVars.METASTOREWAREHOUSE.varname, new File("target/warehouse").getAbsolutePath());
-        hiveConf.setBoolVar(HiveConf.ConfVars.METASTORE_MODE, true); // For hive 0.9
+        hiveConf.set("hive.metastore.local", "true"); // For hive 0.9
         hiveConf.set(HiveConf.ConfVars.METASTORECONNECTURLKEY.varname, "jdbc:derby:target/metastore_db;create=true");
 
         setSystemProperty(HiveConf.ConfVars.METASTORE_MODE.varname, "true");
@@ -114,9 +114,8 @@ public class MiniHCatServer {
     private void initMetastoreServerConf() throws Exception {
 
         hiveConf = new HiveConf(hadoopConf, this.getClass());
-        hiveConf.setBoolVar(HiveConf.ConfVars.METASTORE_MODE, false); // For hive 0.9
+        hiveConf.set("hive.metastore.local", "false"); // For hive 0.9
         hiveConf.setVar(HiveConf.ConfVars.METASTOREURIS, "thrift://localhost:" + msPort);
-        hiveConf.setIntVar(HiveConf.ConfVars.METASTORETHRIFTRETRIES, 3);
         hiveConf.set(HiveConf.ConfVars.PREEXECHOOKS.varname, "");
         hiveConf.set(HiveConf.ConfVars.POSTEXECHOOKS.varname, "");
         hiveConf.set(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY.varname, "false");
@@ -124,7 +123,7 @@ public class MiniHCatServer {
 
     private void startMetastoreServer() throws Exception {
         final HiveConf serverConf = new HiveConf(hadoopConf, this.getClass());
-        serverConf.setBoolVar(HiveConf.ConfVars.METASTORE_MODE, false);
+        serverConf.set("hive.metastore.local", "false");
         serverConf.set(HiveConf.ConfVars.METASTORECONNECTURLKEY.varname, "jdbc:derby:target/metastore_db;create=true");
         //serverConf.set(HiveConf.ConfVars.METASTORE_EVENT_LISTENERS.varname, NotificationListener.class.getName());
         File derbyLogFile = new File("target/derby.log");

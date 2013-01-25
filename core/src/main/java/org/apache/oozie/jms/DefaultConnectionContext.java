@@ -60,7 +60,7 @@ public class DefaultConnectionContext implements ConnectionContext {
             connection.setExceptionListener(new ExceptionListener() {
                 @Override
                 public void onException(JMSException je) {
-                    LOG.error(je);
+                    LOG.error("Error in JMS connection", je);
                 }
             });
 

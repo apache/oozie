@@ -25,7 +25,7 @@
     <dependencySets>
         <dependencySet>
             <useProjectArtifact>false</useProjectArtifact>
-            <useTransitiveDependencies>true</useTransitiveDependencies>
+            <useTransitiveDependencies>false</useTransitiveDependencies>
             <useTransitiveFiltering>true</useTransitiveFiltering>
             <unpack>false</unpack>
             <outputDirectory>hcataloglib-${project.version}</outputDirectory>

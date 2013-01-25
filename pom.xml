@@ -68,7 +68,7 @@
 
         <hadoop.version>1.1.1</hadoop.version>
         <hbase.version>0.94.2</hbase.version>
-        <hcatalog.version>0.6.0-SNAPSHOT</hcatalog.version>
+        <hcatalog.version>0.6.0</hcatalog.version>
 
         <hadooplib.version>${hadoop.version}.oozie-${project.version}</hadooplib.version>
         <hbaselib.version>${hbase.version}.oozie-${project.version}</hbaselib.version>

@@ -115,7 +115,7 @@ public class FSURIHandler extends URIHandler {
     public boolean exists(URI uri, URIContext uriContext) throws URIAccessorException {
         try {
             FileSystem fs = ((FSURIContext) uriContext).getFileSystem();
-            return fs.exists(new Path(uri));
+            return fs.exists(getNormalizedPath(uri));
         }
         catch (IOException e) {
             throw new HadoopAccessorException(ErrorCode.E0902, e);
@@ -126,7 +126,7 @@ public class FSURIHandler extends URIHandler {
     public boolean exists(URI uri, Configuration conf, String user) throws URIAccessorException {
         try {
             FileSystem fs = getFileSystem(uri, conf, user);
-            return fs.exists(new Path(uri));
+            return fs.exists(getNormalizedPath(uri));
         }
         catch (IOException e) {
             throw new HadoopAccessorException(ErrorCode.E0902, e);
@@ -165,6 +165,11 @@ public class FSURIHandler extends URIHandler {
 
     }
 
+    private Path getNormalizedPath(URI uri) {
+        // Normalizes uri path replacing // with / in the path which users specify by mistake
+        return new Path(uri.getScheme(), uri.getAuthority(), uri.getPath());
+    }
+
     private FileSystem getFileSystem(URI uri, Configuration conf, String user) throws HadoopAccessorException {
         if (isFrontEnd) {
             if (user == null) {
@@ -188,7 +193,7 @@ public class FSURIHandler extends URIHandler {
     }
 
     private boolean create(FileSystem fs, URI uri) throws URIAccessorException {
-        Path path = new Path(uri);
+        Path path = getNormalizedPath(uri);
         try {
             if (!fs.exists(path)) {
                 boolean status = fs.mkdirs(path);
@@ -208,7 +213,7 @@ public class FSURIHandler extends URIHandler {
     }
 
     private boolean delete(FileSystem fs, URI uri) throws URIAccessorException {
-        Path path = new Path(uri);
+        Path path = getNormalizedPath(uri);
         try {
             if (fs.exists(path)) {
                 boolean status = fs.delete(path, true);

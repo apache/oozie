@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1185 Retry jms connections on failure (rohini via virag)
 OOZIE-1158 Add hcataloglib sub-module (mona)
 OOZIE-1180 Separate the connection context details from JMS Accessor service (virag)
 OOZIE-1157 EL function hcat:exists for decision making (rohini via mona)

@@ -32,7 +32,7 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>hcatalog-0.6.0-SNAPSHOT</module>
+        <module>hcatalog-0.6</module>
     </modules>
 
     <build>

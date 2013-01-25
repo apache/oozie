@@ -217,7 +217,7 @@ public class HCatURIHandler extends URIHandler {
         final HiveConf hiveConf = new HiveConf(conf, this.getClass());
         String serverURI = getMetastoreConnectURI(uri);
         if (!serverURI.equals("")) {
-            hiveConf.set(HiveConf.ConfVars.METASTORE_MODE.varname, "false");
+            hiveConf.set("hive.metastore.local", "false");
         }
         hiveConf.set(HiveConf.ConfVars.METASTOREURIS.varname, serverURI);
         HCatClient client = null;
