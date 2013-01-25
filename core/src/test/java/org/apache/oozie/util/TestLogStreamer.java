@@ -25,11 +25,9 @@ import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.zip.GZIPOutputStream;
 
 import org.apache.oozie.test.XTestCase;
-import org.apache.oozie.util.XLogStreamer;
 
 public class TestLogStreamer extends XTestCase {
 
@@ -51,7 +49,7 @@ public class TestLogStreamer extends XTestCase {
         xf.setParameter("JOB", "14-200904160239--example-forkjoinwf");
         xf.setLogLevel("DEBUG|INFO");
 
-        // This file will be included in the list of files for log retrieval, provided the modification time lies
+        // This file will be included in the list of files for log retrieval, because the modification time lies
         // between the start and end times of the job
         FileWriter fw1 = new FileWriter(getTestCaseDir() + "/oozie.log");
         StringBuilder sb1 = new StringBuilder();
@@ -61,7 +59,7 @@ public class TestLogStreamer extends XTestCase {
         fw1.write(sb1.toString());
         fw1.close();
         File f1 = new File(getTestCaseDir() + "/oozie.log");
-        f1.setLastModified(currTime - 9000);
+        f1.setLastModified(currTime - 9 * 3600000);     // 9 hours ago
 
         // This file will be included in the list of files for log retrieval, provided the modification time lies
         // between the start and end times of the job
@@ -75,7 +73,7 @@ public class TestLogStreamer extends XTestCase {
         fw2.write(sb2.toString());
         fw2.close();
         File f2 = new File(getTestCaseDir() + "/oozie.log.1");
-        f2.setLastModified(currTime - 8000);
+        f2.setLastModified(currTime - 8 * 3600000);     // 8 hours ago
 
         // This file will be included in the list of files for log retrieval, provided, the modification time lies
         // between the start and end times of the job
@@ -102,12 +100,13 @@ public class TestLogStreamer extends XTestCase {
         fwerr.write(sberr.toString());
         fwerr.close();
         File ferr = new File(getTestCaseDir() + "/testerr.log");
-        ferr.setLastModified(currTime - 8000);
+        ferr.setLastModified(currTime - 8 * 3600000);     // 8 hours ago
 
         // This GZip file would be included in list of files for log retrieval, provided, there is an overlap between
         // the two time windows i) time duration during which the GZipped log file is modified ii) time window between
         // start and end times of the job
-        String outFilename = "oozie.log-" + filenameDateFormatter.format(new Date(currTime)) + ".gz";
+        // filename date below is equivalent to floor(6 hours ago)
+        String outFilename = "oozie.log-" + filenameDateFormatter.format(new Date(currTime - 6 * 3600000)) + ".gz";
         File f = new File(getTestCaseDir() + "/" + outFilename);
         StringBuilder sb = new StringBuilder();
         sb.append("\n2009-06-24 02:43:13,958 DEBUG _L8_:323 -" + logStatement + "End workflow state change");
@@ -136,11 +135,11 @@ public class TestLogStreamer extends XTestCase {
                 + "command.WorkflowRunnerCallable] " + "released lock");
         writeToGZFile(f,sb);
 
-        // Test for the log retrieval of the job that began 10 seconds before and ended 5 seconds before current time
+        // Test for the log retrieval of the job that began 10 hours before and ended 5 hours before current time
         // respectively
         StringWriter sw = new StringWriter();
         XLogStreamer str = new XLogStreamer(xf, sw, getTestCaseDir(), "oozie.log", 1);
-        str.streamLog(new Date(currTime - 10000), new Date(currTime - 5000));
+        str.streamLog(new Date(currTime - 10 * 3600000), new Date(currTime - 5 * 3600000));
         String[] out = sw.toString().split("\n");
         // Check if the retrieved log content is of length seven lines after filtering based on time window, file name
         // pattern and parameters like JobId, Username etc. and/or based on log level like INFO, DEBUG, etc.
@@ -148,11 +147,11 @@ public class TestLogStreamer extends XTestCase {
         // Check if the lines of the log contain the expected strings
         assertEquals(true, out[0].contains("_L10_"));
         assertEquals(true, out[1].contains("_L11_"));
-        assertEquals(true, out[2].contains("_L8_"));
-        assertEquals(true, out[3].contains("_L9_"));
-        assertEquals(true, out[4].contains("_L1_"));
-        assertEquals(true, out[5].contains("_L2_"));
-        assertEquals(true, out[6].contains("_L4_"));
+        assertEquals(true, out[2].contains("_L1_"));
+        assertEquals(true, out[3].contains("_L2_"));
+        assertEquals(true, out[4].contains("_L4_"));
+        assertEquals(true, out[5].contains("_L8_"));
+        assertEquals(true, out[6].contains("_L9_"));
 
         // Test to check if the null values for startTime and endTime are translated to 0 and current time respectively
         // and corresponding log content is retrieved properly
@@ -166,11 +165,11 @@ public class TestLogStreamer extends XTestCase {
         // Check if the lines of the log contain the expected strings
         assertEquals(true, out[0].contains("_L10"));
         assertEquals(true, out[1].contains("_L11_"));
-        assertEquals(true, out[2].contains("_L8_"));
-        assertEquals(true, out[3].contains("_L9_"));
-        assertEquals(true, out[4].contains("_L1_"));
-        assertEquals(true, out[5].contains("_L2_"));
-        assertEquals(true, out[6].contains("_L4_"));
+        assertEquals(true, out[2].contains("_L1_"));
+        assertEquals(true, out[3].contains("_L2_"));
+        assertEquals(true, out[4].contains("_L4_"));
+        assertEquals(true, out[5].contains("_L8_"));
+        assertEquals(true, out[6].contains("_L9_"));
         assertEquals(true, out[7].contains("_L7_"));
     }
 

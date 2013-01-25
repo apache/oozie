@@ -133,7 +133,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
 
             ParameterVerifier.verifyParameters(conf, XmlUtils.parseXml(bundleBean.getOrigJobXml()));
             
-            XmlUtils.removeComments(this.bundleBean.getOrigJobXml().toString());
+            String jobXmlWithNoComment = XmlUtils.removeComments(this.bundleBean.getOrigJobXml().toString());
             // Resolving all variables in the job properties.
             // This ensures the Hadoop Configuration semantics is preserved.
             XConfiguration resolvedVarsConf = new XConfiguration();
@@ -142,7 +142,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
             }
             conf = resolvedVarsConf;
 
-            String resolvedJobXml = resolvedVars(bundleBean.getOrigJobXml(), conf);
+            String resolvedJobXml = resolvedVars(jobXmlWithNoComment, conf);
 
             //verify the uniqueness of coord names
             verifyCoordNameUnique(resolvedJobXml);

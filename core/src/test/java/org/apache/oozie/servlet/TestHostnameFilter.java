@@ -59,4 +59,30 @@ public class TestHostnameFilter extends TestCase {
         filter.destroy();
     }
 
+  public void testMissingHostname() throws Exception {
+    ServletRequest request = Mockito.mock(ServletRequest.class);
+    Mockito.when(request.getRemoteAddr()).thenReturn(null);
+
+    ServletResponse response = Mockito.mock(ServletResponse.class);
+
+    final AtomicBoolean invoked = new AtomicBoolean();
+
+    FilterChain chain = new FilterChain() {
+      @Override
+      public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse)
+        throws IOException, ServletException {
+        Assert.assertTrue(HostnameFilter.get().contains("???"));
+        invoked.set(true);
+      }
+    };
+
+    Filter filter = new HostnameFilter();
+    filter.init(null);
+    Assert.assertNull(HostnameFilter.get());
+    filter.doFilter(request, response, chain);
+    Assert.assertTrue(invoked.get());
+    Assert.assertNull(HostnameFilter.get());
+    filter.destroy();
+  }
+
 }

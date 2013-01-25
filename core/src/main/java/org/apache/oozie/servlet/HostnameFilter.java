@@ -18,6 +18,8 @@
 
 package org.apache.oozie.servlet;
 
+import org.apache.oozie.util.XLog;
+
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -26,11 +28,14 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 /**
  * Filter that resolves the requester hostname.
  */
 public class HostnameFilter implements Filter {
+    private static final XLog LOG = XLog.getLog(HostnameFilter.class);
+
     static final ThreadLocal<String> HOSTNAME_TL = new ThreadLocal<String>();
 
     /**
@@ -62,7 +67,19 @@ public class HostnameFilter implements Filter {
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
         throws IOException, ServletException {
         try {
-            String hostname = InetAddress.getByName(request.getRemoteAddr()).getCanonicalHostName();
+            String hostname;
+            try {
+                String address = request.getRemoteAddr();
+                if (address != null) {
+                    hostname = InetAddress.getByName(address).getCanonicalHostName();
+                } else {
+                    LOG.warn("Request remote address is NULL");
+                    hostname = "???";
+                }
+            } catch (UnknownHostException ex) {
+                LOG.warn("Request remote address could not be resolved, {0}", ex.toString(), ex);
+                hostname = "???";
+            }
             HOSTNAME_TL.set(hostname);
             chain.doFilter(request, response);
         }

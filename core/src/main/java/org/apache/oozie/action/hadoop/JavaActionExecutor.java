@@ -479,13 +479,15 @@ public class JavaActionExecutor extends ActionExecutor {
         // files and archives defined in the action
         for (Element eProp : (List<Element>) actionXml.getChildren()) {
             if (eProp.getName().equals("file")) {
-                String path = eProp.getTextTrim();
-                addToCache(conf, appPath, path, false);
+                String[] pathes = eProp.getTextTrim().split(",");
+                for (String path : pathes) {
+                    addToCache(conf, appPath, path.trim(), false);
+                }
             }
-            else {
-                if (eProp.getName().equals("archive")) {
-                    String path = eProp.getTextTrim();
-                    addToCache(conf, appPath, path, true);
+            else if (eProp.getName().equals("archive")) {
+                String[] pathes = eProp.getTextTrim().split(",");
+                for (String path : pathes){
+                    addToCache(conf, appPath, path.trim(), true);
                 }
             }
         }
@@ -1035,6 +1037,7 @@ public class JavaActionExecutor extends ActionExecutor {
                             log.warn(errorReason);
                         }
                         context.setExecutionData(FAILED_KILLED, null);
+                        setActionCompletionData(context, actionFs);
                     }
                 }
                 else {
@@ -1211,5 +1214,15 @@ public class JavaActionExecutor extends ActionExecutor {
      */
     protected String getDefaultShareLibName(Element actionXml) {
         return null;
+    }
+
+    /**
+     * Sets some data for the action on completion
+     *
+     * @param context executor context
+     * @param actionFs the FileSystem object
+     */
+    protected void setActionCompletionData(Context context, FileSystem actionFs) throws IOException,
+            HadoopAccessorException, URISyntaxException {
     }
 }

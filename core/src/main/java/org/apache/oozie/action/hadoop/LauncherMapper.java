@@ -504,13 +504,13 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
                         System.out.println();
                         System.out.println("<<< Invocation of Main class completed <<<");
                         System.out.println();
+                        handleExternalChildIDs(reporter);
                     }
                     if (errorMessage == null) {
                         File outputData = new File(System.getProperty("oozie.action.output.properties"));
-                        FileSystem fs = null;
                         if (outputData.exists()) {
                             URI actionDirUri = new Path(actionDir, ACTION_OUTPUT_PROPS).toUri();
-                            fs = FileSystem.get(actionDirUri, getJobConf());
+                            FileSystem fs = FileSystem.get(actionDirUri, getJobConf());
                             fs.copyFromLocalFile(new Path(outputData.toString()), new Path(actionDir,
                                                                                            ACTION_OUTPUT_PROPS));
                             reporter.incrCounter(COUNTER_GROUP, COUNTER_OUTPUT_DATA, 1);
@@ -531,8 +531,8 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
                             System.out.println("=======================");
                             System.out.println();
                         }
-                        handleActionStatsData(fs, reporter);
-                        handleExternalChildIDs(fs, reporter);
+                        handleActionStatsData(reporter);
+                        handleExternalChildIDs(reporter);
                         File newId = new File(System.getProperty("oozie.action.newId.properties"));
                         if (newId.exists()) {
                             Properties props = new Properties();
@@ -541,7 +541,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
                                 throw new IllegalStateException("ID swap file does not have [id] property");
                             }
                             URI actionDirUri = new Path(actionDir, ACTION_NEW_ID_PROPS).toUri();
-                            fs = FileSystem.get(actionDirUri, getJobConf());
+                            FileSystem fs = FileSystem.get(actionDirUri, getJobConf());
                             fs.copyFromLocalFile(new Path(newId.toString()), new Path(actionDir, ACTION_NEW_ID_PROPS));
                             reporter.incrCounter(COUNTER_GROUP, COUNTER_DO_ID_SWAP, 1);
 
@@ -596,7 +596,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         return jobConf;
     }
 
-    private void handleActionStatsData(FileSystem fs, Reporter reporter) throws IOException, LauncherException {
+    private void handleActionStatsData(Reporter reporter) throws IOException, LauncherException {
         File actionStatsData = new File(System.getProperty(EXTERNAL_ACTION_STATS));
         // If stats are stored by the action, then stats file should exist
         if (actionStatsData.exists()) {
@@ -611,19 +611,19 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
             }
             // copy the stats file to hdfs path which can be accessed by Oozie server
             URI actionDirUri = new Path(actionDir, ACTION_STATS_PROPS).toUri();
-            fs = FileSystem.get(actionDirUri, getJobConf());
+            FileSystem fs = FileSystem.get(actionDirUri, getJobConf());
             fs.copyFromLocalFile(new Path(actionStatsData.toString()), new Path(actionDir,
                     ACTION_STATS_PROPS));
         }
     }
 
-    private void handleExternalChildIDs(FileSystem fs, Reporter reporter) throws IOException {
+    private void handleExternalChildIDs(Reporter reporter) throws IOException {
         File externalChildIDs = new File(System.getProperty(EXTERNAL_CHILD_IDS));
         // if external ChildIDs are stored by the action, then the file should exist
         if (externalChildIDs.exists()) {
             // copy the externalChildIDs file to hdfs path which can be accessed by Oozie server
             URI actionDirUri = new Path(actionDir, ACTION_EXTERNAL_CHILD_IDS_PROPS).toUri();
-            fs = FileSystem.get(actionDirUri, getJobConf());
+            FileSystem fs = FileSystem.get(actionDirUri, getJobConf());
             fs.copyFromLocalFile(new Path(externalChildIDs.toString()), new Path(actionDir,
                     ACTION_EXTERNAL_CHILD_IDS_PROPS));
         }

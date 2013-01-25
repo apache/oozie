@@ -623,10 +623,9 @@
                                 <configuration>
                                     <includes>
                                         <include>**/XTestCase.class</include>
-                                        <include>**/XTestCase$1.class</include>
                                         <include>**/XFsTestCase.class</include>
                                         <include>**/MiniOozieTestCase.class</include>
-                                        <include>**/XTestCase$Predicate.class</include>
+                                        <include>**/XTestCase$*.class</include>
                                     </includes>
                                 </configuration>
                             </execution>
