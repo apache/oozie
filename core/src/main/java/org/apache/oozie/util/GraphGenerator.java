@@ -84,7 +84,7 @@ public class GraphGenerator {
      * Overridden to thwart finalizer attack
      */
     @Override
-    public void finalize() {
+    public final void finalize() {
         // No-op; just to avoid finalizer attack
         // as the constructor is throwing an exception
     }
@@ -258,8 +258,23 @@ public class GraphGenerator {
 
             try {
                 ImageIO.write(img, "png", out);
-            } catch (IOException ioe) {
+            }
+            catch (IOException ioe) {
                 throw new SAXException(ioe);
+            }
+            finally {
+                try {
+                    out.close(); //closing connection is imperative
+                                 //regardless of ImageIO.write throwing exception or not
+                                 //hence in finally block
+                }
+                catch (IOException e) {
+                    XLog.getLog(getClass()).trace("Exception while closing OutputStream");
+                }
+                out = null;
+                img.flush();
+                g.dispose();
+                vis.removeAll();
             }
         }
 

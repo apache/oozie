@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1186 Image load for Job DAG visualization should handle resources better (mona)
 OOZIE-1188 Typo in documentation for using login server example (rkanter)
 OOZIE-1160 Oozie web-console to display all job URLs spawned by Pig (mona)
 OOZIE-1177 HostnameFilter should only catch UnknownHostException, not Exception (rkanter)
