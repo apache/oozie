@@ -1,3 +1,7 @@
+-- Oozie 3.3.2 release (unreleased)
+
+OOZIE-1186 Image load for Job DAG visualization should handle resources better (mona)
+
 -- Oozie 3.3.1 release
 
 OOZIE-1175 Update POM version to 3.3.1 for 3.3 branch (virag)
