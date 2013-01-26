@@ -1,4 +1,4 @@
--- Oozie 3.3.2 release (unreleased)
+-- Oozie 3.3.2 (unreleased)
 
 OOZIE-1186 Image load for Job DAG visualization should handle resources better (mona)
 
@@ -26,6 +26,7 @@ OOZIE-1064 Status value of coordinator job not reflected in bundle action and in
 
 -- Oozie 3.3.0 release
 
+OOZIE-959  Use API from OOZIE-906 in console (Ashish via Mohammad)
 OOZIE-1089 DistributedCache workaround for Hadoop 2.0.2-alpha (tucu)
 OOZIE-1005 Tests from OOZIE-994 use wrong condition in waitFor (rkanter via virag)
 OOZIE-994  ActionCheckXCommand does not handle failures properly(rkanter via mohammad)
