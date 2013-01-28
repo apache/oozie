@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1172 Add documentation on how to get Java actions to authenticate properly on Kerberos-enabled clusters (rkanter)
 OOZIE-87 GH-47: Feature to supply a comma separated list of jars in an 'archive tag' of workflow (jaoki via rkanter)
 OOZIE-1188 Typo in documentation for using login server example (rkanter)
 OOZIE-1160 Oozie web-console to display all job URLs spawned by Pig (mona)
