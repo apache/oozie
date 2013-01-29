@@ -91,15 +91,6 @@ case $OP in
         -Dmaven.test.error.ignore=true -fae -Doozie.test.waitfor.ratio=3 \
         -Dtest.timeout=7200 | tee ${TEMPDIR}/${TASKNAME}.out >> $STDOUT
     exitCode=${PIPESTATUS[0]}
-    if [[ ! "${MVNPASSTHRU}" =~ "-Dtest=" || ("${MVNPASSTHRU}" =~ "TestHiveActionExecutor" || "${MVNPASSTHRU}" =~ "TestHiveMain") ]] ; then
-        # we need to do this 2nd run because Pig 0.9 and Hive 0.9 require different
-        # versions of antlr. Once we move to Pig 0.10 then we don't need this.
-        mvn test -Dtest=TestHiveActionExecutor,TestHiveMain ${MVNPASSTHRU} \
-            -PtestHive -Dmaven.test.failure.ignore=true -Dmaven.test.error.ignore=true \
-            -Doozie.test.waitfor.ratio=3 -Dtest.timeout=7200 \
-            | tee -a ${TEMPDIR}/${TASKNAME}.out >> $STDOUT
-        exitCode=`expr $exitCode + ${PIPESTATUS[0]}`
-    fi
     echo "$exitCode" >  ${TEMPDIR}/${TASKNAME}.exitCode
     ;;
   report)
