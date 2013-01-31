@@ -927,7 +927,7 @@ public abstract class XDataTestCase extends XFsTestCase {
         return jobConf;
     }
 
-    private void writeToFile(String content, Path appPath, String fileName) throws IOException {
+    protected void writeToFile(String content, Path appPath, String fileName) throws IOException {
         FileSystem fs = getFileSystem();
         Writer writer = new OutputStreamWriter(fs.create(new Path(appPath, fileName), true));
         writer.write(content);
