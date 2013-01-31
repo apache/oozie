@@ -444,6 +444,93 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         assertEquals(testedValue, effectiveValue);
     }
 
+    /**
+     * This test verifies that for a coordinator with no input dependencies
+     * action is not stuck in WAITING
+     *
+     * @throws Exception
+     */
+    public void testNoDatasetDependency() throws Exception {
+        /*
+         * create coordinator job
+         */
+        CoordinatorJobBean coordJob = new CoordinatorJobBean();
+        coordJob.setId("0000000" + new Date().getTime() + "-TestCoordActionInputCheckXCommand-C");
+        coordJob.setAppName("testApp");
+        coordJob.setAppPath("testAppPath");
+        coordJob.setStatus(CoordinatorJob.Status.RUNNING);
+        coordJob.setCreatedTime(new Date());
+        coordJob.setLastModifiedTime(new Date());
+        coordJob.setUser("testUser");
+        coordJob.setGroup("testGroup");
+        coordJob.setAuthToken("notoken");
+        coordJob.setTimeZone("UTC");
+        coordJob.setTimeUnit(Timeunit.DAY);
+        coordJob.setMatThrottling(2);
+        try {
+            coordJob.setStartTime(DateUtils.parseDateOozieTZ("2009-02-01T23:59" + TZ));
+            coordJob.setEndTime(DateUtils.parseDateOozieTZ("2009-02-02T23:59" + TZ));
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            fail("Could not set Date/time");
+        }
+        XConfiguration jobConf = new XConfiguration();
+        jobConf.set(OozieClient.USER_NAME, getTestUser());
+        String confStr = jobConf.toXmlString(false);
+        coordJob.setConf(confStr);
+        String wfXml = IOUtils.getResourceAsString("wf-no-op.xml", -1);
+        writeToFile(wfXml, getFsTestCaseDir(), "workflow.xml");
+        String appXml = "<coordinator-app xmlns='uri:oozie:coordinator:0.2' name='NAME' frequency=\"1\" start='2009-02-01T01:00"
+                + TZ + "' end='2009-02-03T23:59" + TZ + "' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
+        appXml += "<output-events>";
+        appXml += "<data-out name='LOCAL_A' dataset='local_a'>";
+        appXml += "<dataset name='local_a' frequency='7' initial-instance='2009-01-01T01:00" + TZ
+                + "' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
+        appXml += "<uri-template>file://" + getFsTestCaseDir() + "/${YEAR}/${MONTH}/${DAY}</uri-template>";
+        appXml += "</dataset>";
+        appXml += "<start-instance>${coord:current(-3)}</start-instance>";
+        appXml += "<instance>${coord:current(0)}</instance>";
+        appXml += "</data-out>";
+        appXml += "</output-events>";
+        appXml += "<action>";
+        appXml += "<workflow>";
+        appXml += "<app-path>" + getFsTestCaseDir() + "/workflow.xml</app-path>";
+        appXml += "</workflow>";
+        appXml += "</action>";
+        appXml += "</coordinator-app>";
+        coordJob.setJobXml(appXml);
+        coordJob.setLastActionNumber(0);
+        coordJob.setFrequency(1);
+        coordJob.setConcurrency(1);
+        JPAService jpaService = Services.get().get(JPAService.class);
+        if (jpaService != null) {
+            try {
+                jpaService.execute(new CoordJobInsertJPAExecutor(coordJob));
+            }
+            catch (JPAExecutorException e) {
+                throw new CommandException(e);
+            }
+        }
+        else {
+            fail("Unable to insert the test job record to table");
+        }
+        new CoordMaterializeTransitionXCommand(coordJob.getId(), 3600).call();
+        /*
+         * check coord action READY
+         */
+        new CoordActionInputCheckXCommand(coordJob.getId() + "@1", coordJob.getId()).call();
+        CoordinatorActionBean action = null;
+        try {
+            jpaService = Services.get().get(JPAService.class);
+            action = jpaService.execute(new CoordActionGetJPAExecutor(coordJob.getId() + "@1"));
+        }
+        catch (JPAExecutorException se) {
+            fail("Action ID " + coordJob.getId() + "@1" + " was not stored properly in db");
+        }
+        assertEquals(action.getStatus(), CoordinatorAction.Status.READY);
+    }
+
     protected CoordinatorJobBean addRecordToCoordJobTableForWaiting(String testFileName, CoordinatorJob.Status status,
             Date start, Date end, boolean pending, boolean doneMatd, int lastActionNum) throws Exception {
 

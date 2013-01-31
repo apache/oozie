@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1179 coord action in WAITING when no definition of dataset in coord job xml (mona)
 OOZIE-1188 Typo in documentation for using login server example (rkanter)
 OOZIE-1177 HostnameFilter should only catch UnknownHostException, not Exception (rkanter)
 OOZIE-945 BundleSubmitXCommand.submit() doesn't properly remove comments (jaoki via rkanter)

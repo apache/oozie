@@ -1101,13 +1101,6 @@ public class TestCoordRerunXCommand extends XDataTestCase {
         return conf;
     }
 
-    private void writeToFile(String content, Path appPath, String fileName) throws IOException {
-        FileSystem fs = getFileSystem();
-        Writer writer = new OutputStreamWriter(fs.create(new Path(appPath, fileName), true));
-        writer.write(content);
-        writer.close();
-    }
-
     @SuppressWarnings("unchecked")
     private String[] getActionXmlUrls(Element eAction, String user, String group) {
         Element outputList = eAction.getChild("input-events", eAction.getNamespace());

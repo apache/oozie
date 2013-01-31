@@ -18,8 +18,6 @@
 package org.apache.oozie.executor.jpa;
 
 import java.sql.Timestamp;
-import java.util.List;
-
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
