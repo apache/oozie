@@ -144,7 +144,6 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                 isChangeInDependency = true;
                 coordAction.setMissingDependencies(nonExistListStr);
             }
-			coordAction.setMissingDependencies(nonExistList.toString());
             if (status == true) {
                 coordAction.setStatus(CoordinatorAction.Status.READY);
                 // pass jobID to the CoordActionReadyXCommand
