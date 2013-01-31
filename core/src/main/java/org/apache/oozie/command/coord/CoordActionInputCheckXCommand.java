@@ -35,6 +35,7 @@ import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.coord.CoordELEvaluator;
 import org.apache.oozie.coord.CoordELFunctions;
 import org.apache.oozie.executor.jpa.CoordActionGetForInputCheckJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionUpdateForInputCheckJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionUpdateForModifiedTimeJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
@@ -98,7 +99,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             // update lastModifiedTime
             coordAction.setLastModifiedTime(new Date());
             try {
-                jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionUpdateForInputCheckJPAExecutor(coordAction));
+                jpaService.execute(new CoordActionUpdateForInputCheckJPAExecutor(coordAction));
             }
             catch (JPAExecutorException e) {
                 throw new CommandException(e);
@@ -138,7 +139,8 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                 nonExistList.append(CoordCommandUtils.RESOLVED_UNRESOLVED_SEPARATOR).append(nonResolvedList);
             }
             String nonExistListStr = nonExistList.toString();
-            if (!missingDeps.equals(nonExistListStr)) {
+            if (!nonExistListStr.equals(missingDeps) || missingDeps.isEmpty()) {
+                // missingDeps empty means action should become READY
                 isChangeInDependency = true;
                 coordAction.setMissingDependencies(nonExistListStr);
             }
@@ -170,8 +172,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             if(jpaService != null) {
                 try {
                     if (isChangeInDependency) {
-                        jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionUpdateForInputCheckJPAExecutor(
-                                coordAction));
+                        jpaService.execute(new CoordActionUpdateForInputCheckJPAExecutor(coordAction));
                     }
                     else {
                         jpaService.execute(new CoordActionUpdateForModifiedTimeJPAExecutor(coordAction));
