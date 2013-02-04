@@ -1,5 +1,6 @@
 -- Oozie 3.3.2 (unreleased)
 
+OOZIE-1011 Tests from OOZIE-994 fail when run against Hadoop trunk (rkanter via tucu)
 OOZIE-1027 XTestCase.delete() can cause tests to fail if it runs into a dangling symlink (rkanter via tucu)
 OOZIE-1027 Command line mr does not support NN/JT parameters properly (Mona via Mohammad)
 OOZIE-1020 BulkJPAExecutor handling date-time value incorrectly.(Mona via Mohammad)
