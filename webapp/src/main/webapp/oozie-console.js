@@ -852,7 +852,6 @@ function coordJobDetailsPopup(response, request) {
         height: 400,
         width: 1000,
         title: 'Actions',
-        bbar: getPagingBar(jobActionStatus),
         listeners: {
             cellclick: {
                 fn: showWorkflowPopup
