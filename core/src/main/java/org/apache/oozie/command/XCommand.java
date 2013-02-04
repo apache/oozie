@@ -291,7 +291,7 @@ public abstract class XCommand<T> implements XCallable<T> {
                 return ret;
             }
             finally {
-                if (isLockRequired()) {
+                if (isLockRequired() && !this.inInterruptMode()) {
                     releaseLock();
                 }
             }

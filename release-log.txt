@@ -1,5 +1,6 @@
 -- Oozie 3.3.2 (unreleased)
 
+OOZIE-1051 Repeating Errors for workflows that were allreday Killed (rkanter)
 OOZIE-1140 TestLogStreamer.testStreamLog fails when its started within the first 4 seconds after the hour (rkanter)
 OOZIE-1153 comma separated list in <archive> and <file> for JavaActionExecutor. (jaoki via tucu)
 OOZIE-1161 Remove unnecessary db updates for some of the blobs like missing_dependencies' of Coordinator Action (virag)
