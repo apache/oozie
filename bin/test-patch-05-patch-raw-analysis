@@ -78,25 +78,25 @@ checkNoAuthors() {
   if [[ ${authorTags} != 0 ]] ; then
     REPORT+=("{color:red}-1{color} the patch seems to contain ${authorTags} line(s) with @author tags")
   else
-    REPORT+=("{color:green}+1{code} the patch does not introduce any @author tags")
+    REPORT+=("{color:green}+1{color} the patch does not introduce any @author tags")
   fi
 }
 ###############################################################################
 checkNoTabs() {
   tabs=`grep "^+ " ${PATCHFILE} | grep -c -P "\t"`
   if [[ ${tabs} != 0 ]] ; then
-    REPORT+=("{color:red}-1{code} the patch contains ${tabs} line(s) with tabs")
+    REPORT+=("{color:red}-1{color} the patch contains ${tabs} line(s) with tabs")
   else
-    REPORT+=("{color:green}+1{code} the patch does not introduce any tabs")
+    REPORT+=("{color:green}+1{color} the patch does not introduce any tabs")
   fi
 }
 ###############################################################################
 checkNoTrailingSpaces() {
   trailingSpaces=`grep "^+ " ${PATCHFILE} | grep -c -e " $"`
   if [[ ${trailingSpaces} != 0 ]] ; then
-    REPORT+=("{color:red}-1{code} the patch contains ${trailingSpaces} line(s) with trailing spaces")
+    REPORT+=("{color:red}-1{color} the patch contains ${trailingSpaces} line(s) with trailing spaces")
   else
-    REPORT+=("{color:green}+1{code} the patch does not introduce any trailing spaces")
+    REPORT+=("{color:green}+1{color} the patch does not introduce any trailing spaces")
   fi
 }
 ###############################################################################
@@ -104,20 +104,20 @@ checkLinesLength() {
   # We check for > 133 to account for the "+" sign
   longLines=`grep "^+ " ${PATCHFILE} | awk 'BEGIN{count=0}{if ( length > 133 ) { count=count+1} }END{ print count}'`
   if [[ ${longLines} != 0 ]] ; then
-    REPORT+=("{color:red}-1{code} the patch contains ${longLines} line(s) longer than 132 characters")
+    REPORT+=("{color:red}-1{color} the patch contains ${longLines} line(s) longer than 132 characters")
   else
-    REPORT+=("{color:green}+1{code} the patch does not introduce any line longer than 132")
+    REPORT+=("{color:green}+1{color} the patch does not introduce any line longer than 132")
   fi
 }
 ###############################################################################
 checkForTestcases() {
   testcases=`grep -c -i -e '^+++.*/test' ${PATCHFILE}`
   if [[ ${testcases} == 0 ]] ; then
-    REPORT+=("{color:red}-1{code} the patch does not add/modify any testcase")
+    REPORT+=("{color:red}-1{color} the patch does not add/modify any testcase")
     #reverting for summary +1 calculation
     testcases=1
   else
-    REPORT+=("{color:green}+1{code} the patch does adds/modifies ${testcases} testcase(s)")
+    REPORT+=("{color:green}+1{color} the patch does adds/modifies ${testcases} testcase(s)")
     #reverting for summary +1 calculation
     testcases=0
   fi
@@ -140,12 +140,12 @@ case $OP in
     checkForTestcases
     total=`expr $authorTags + $tabs + $trailingSpaces + $longLines + $testcases`
     if [[ $total == 0 ]] ; then
-      echo "{color:green}+1{code} ${TASKNAME}" >> $SUMMARYFILE
+      echo "{color:green}+1{color} ${TASKNAME}" >> $SUMMARYFILE
     else
-      echo "{color:red}-1{code} ${TASKNAME}" >> $SUMMARYFILE
+      echo "{color:red}-1{color} ${TASKNAME}" >> $SUMMARYFILE
     fi
     for line in "${REPORT[@]}" ; do
-      echo "    ${line}" >> $SUMMARYFILE
+      echo ".    ${line}" >> $SUMMARYFILE
     done
     ;;
 esac

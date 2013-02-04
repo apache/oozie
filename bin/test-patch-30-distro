@@ -94,11 +94,11 @@ case $OP in
   report)
     exitCode=`cat ${TEMPDIR}/${TASKNAME}.exitCode`
     if [[ "$exitCode" != "0" ]] ; then
-      echo "{color:red}-1{code} ${TASKNAME}" >> $SUMMARYFILE
-      echo "    {color:red}-1{code} distro tarball fails with the patch" >> $SUMMARYFILE
+      echo "{color:red}-1{color} ${TASKNAME}" >> $SUMMARYFILE
+      echo ".    {color:red}-1{color} distro tarball fails with the patch" >> $SUMMARYFILE
          else
-      echo "{color:green}+1{code} ${TASKNAME}" >> $SUMMARYFILE
-      echo "    {color:green}+1{code} distro tarball builds with the patch " >> $SUMMARYFILE
+      echo "{color:green}+1{color} ${TASKNAME}" >> $SUMMARYFILE
+      echo ".    {color:green}+1{color} distro tarball builds with the patch " >> $SUMMARYFILE
     fi
     ;;
 esac
