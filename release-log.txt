@@ -1,5 +1,6 @@
 -- Oozie 3.3.2 (unreleased)
 
+OOZIE-87 GH-47: Feature to supply a comma separated list of jars in an 'archive tag' of workflow (jaoki via rkanter)
 OOZIE-1160 Oozie web-console to display all job URLs spawned by Pig (mona)
 OOZIE-1177 HostnameFilter should only catch UnknownHostException, not Exception (rkanter)
 OOZIE-945 BundleSubmitXCommand.submit() doesn't properly remove comments (jaoki via rkanter)
