@@ -2062,6 +2062,29 @@ map-reduce and pig jobs =classpath= and =LD_PATH=.
 Additional JAR files and native libraries not present in the application 'lib/' directory can be specified in
 map-reduce and pig actions with the 'file' element (refer to the map-reduce and pig documentation).
 
+For Map-Reduce jobs (not including streaming or pipes), additional jar files can also be included via an uber jar. An uber jar is a
+jar file that contains additional jar files within a "lib" folder. To let Oozie know about an uber jar, simply specify it with
+the =oozie.mapreduce.uber.jar= configuration property and Oozie will tell Hadoop MapReduce that it is an uber jar. The ability to
+specify an uber jar is governed by the =oozie.action.mapreduce.uber.jar.enable= property in =oozie-site.xml=. See
+[[AG_Install#UberJar][Oozie Install]] for more information.
+
+<verbatim>
+<action name="mr-node">
+    <map-reduce>
+        <job-tracker>${jobTracker}</job-tracker>
+        <name-node>${nameNode}</name-node>
+        <configuration>
+            <property>
+                <name>oozie.mapreduce.uber.jar</name>
+                <value>${nameNode}/user/${wf:user()}/my-uber-jar.jar</value>
+            </property>
+        </configuration>
+    </map-reduce>
+    <ok to="end"/>
+    <error to="fail"/>
+</action>
+</verbatim>
+
 The =config-default.xml= file defines, if any, default values for the workflow job parameters. This file must be in
 the Hadoop Configuration XML format. EL expressions are not supported and =user.name= property cannot be specified in
 this file.
