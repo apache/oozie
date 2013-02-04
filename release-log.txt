@@ -1,4 +1,4 @@
--- Oozie 3.3.2 (unreleased)
+-- Oozie 3.3.2 release
 
 OOZIE-1179 coord action in WAITING when no definition of dataset in coord job xml (mona)
 OOZIE-1194 test-patch shouldn't run the testHive profile because it not longer exists (rkanter)
