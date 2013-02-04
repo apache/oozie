@@ -910,6 +910,16 @@
                 </plugins>
             </build>
         </profile>
+        <profile>
+            <id>hadoop-3</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+               <hadoop.version>3.0.0-SNAPSHOT</hadoop.version>
+               <hadoop.auth.version>3.0.0-SNAPSHOT</hadoop.auth.version>
+            </properties>
+        </profile>
     </profiles>
 
 </project>
