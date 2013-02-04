@@ -40,6 +40,7 @@ import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
+import org.apache.oozie.service.ActionCheckerService;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.InstrumentationService;
 import org.apache.oozie.service.JPAService;
@@ -477,6 +478,28 @@ public class TestActionCheckXCommand extends XDataTestCase {
         WorkflowActionBean action5 = jpaService.execute(wfActionGetCmd);
 
         assertEquals("SUCCEEDED", action5.getExternalStatus());
+    }
+
+    /**
+     * This test case verifies if getRetryInterval picks up the
+     * overridden value.
+     *
+     * @throws Exception
+     */
+    public void testCheckInterval() throws Exception {
+        long testedValue = 10;
+        Services.get().getConf().setLong(ActionCheckerService.CONF_ACTION_CHECK_INTERVAL,
+                testedValue);
+
+        WorkflowJobBean job0 = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
+        final String jobId = job0.getId();
+        WorkflowActionBean action0 = this.addRecordToWfActionTable(jobId, "1", WorkflowAction.Status.RUNNING);
+        final String actionId = action0.getId();
+
+        ActionCheckXCommand checkCommand = new ActionCheckXCommand(actionId);
+        checkCommand.call();
+        long effectiveValue = checkCommand.getRetryInterval();
+        assertEquals(testedValue, effectiveValue);
     }
 
     @Override
