@@ -365,7 +365,7 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
 
     @Override
     public String toString() {
-        return MessageFormat.format("Coornidator application id[{0}] status[{1}]", getId(), getStatus());
+        return MessageFormat.format("Coordinator application id[{0}] status[{1}]", getId(), getStatus());
     }
 
     public void setActions(List<? extends JsonCoordinatorAction> nodes) {
