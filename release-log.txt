@@ -1,5 +1,6 @@
 -- Oozie 3.3.2 (unreleased)
 
+OOZIE-977 NotificationXCommand (job.notification queue entry) should set a timeout in the HTTP connections it makes (tucu)
 OOZIE-654 Provide a way to use 'uber' jars with Oozie MR actions (rkanter via tucu)
 OOZIE-1186 Image load for Job DAG visualization should handle resources better (mona)
 

@@ -1660,6 +1660,20 @@
 		</description>
 	</property>
 
+    <!-- Oozie HTTP Notifications -->
+    
+    <property>
+        <name>oozie.notification.url.connection.timeout</name>
+        <value>10000</value>
+        <description>
+            Defines the timeout, in milliseconds, for Oozie HTTP notification callbacks. Oozie does
+            HTTP notifications for workflow jobs which set the 'oozie.wf.action.notification.url',
+            'oozie.wf.worklfow.notification.url' and/or 'oozie.coord.action.notification.url'
+            properties in their job.properties. Refer to section '5 Oozie Notifications' in the
+            Workflow specification for details.
+        </description>
+    </property>
+
     <!-- Enable Distributed Cache workaround for Hadoop 2.0.2-alpha (MAPREDUCE-4820) -->
     <property>
         <name>oozie.hadoop-2.0.2-alpha.workaround.for.distributed.cache</name>
@@ -1673,4 +1687,5 @@
             job from the launcher.
         </description>
     </property>
+
 </configuration>
