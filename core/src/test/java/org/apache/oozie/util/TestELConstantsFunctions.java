@@ -53,6 +53,19 @@ public class TestELConstantsFunctions extends XTestCase {
         assertEquals("acd", ELConstantsFunctions.replaceAll("abcbcd", "bcb", null));
     }
 
+    public void testAppendAll() {
+        assertEquals("/a/b/ADD,/c/b/ADD,/c/d/ADD", ELConstantsFunctions.appendAll("/a/b/,/c/b/,/c/d/", "ADD", ","));
+        assertEquals("/a/b/ADD", ELConstantsFunctions.appendAll("/a/b/", "ADD", ","));
+        assertEquals(" /a/b/  ADD,/c/b/ ADD, /c/d/ ADD", ELConstantsFunctions.appendAll(" /a/b/  ,/c/b/ , /c/d/ ",
+                "ADD", ","));
+        assertEquals("/a/b/ADD", ELConstantsFunctions.appendAll("/a/b/", "ADD", ","));
+        assertEquals(null, ELConstantsFunctions.appendAll(null, "ADD", ","));
+        assertEquals("/a/b/,/c/b/,/c/d/", ELConstantsFunctions.appendAll("/a/b/,/c/b/,/c/d/", null, ","));
+        assertEquals("/a/b/,/c/b/,/c/d/", ELConstantsFunctions.appendAll("/a/b/,/c/b/,/c/d/", "ADD", null));
+        assertEquals("ADDaADDbADD", ELConstantsFunctions.appendAll("ab", "ADD", ""));
+        assertEquals("/a/b/ADD,/c/b/ADD,/c/d/ADD", ELConstantsFunctions.appendAll("/a/b/,/c/b/,/c/d/", "ADD", ","));
+    }
+
     public void testTimestamp() throws Exception {
         String s = ELConstantsFunctions.timestamp();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
