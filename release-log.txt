@@ -1,5 +1,6 @@
 -- Oozie 3.3.2 (unreleased)
 
+OOZIE-1194 test-patch shouldn't run the testHive profile because it not longer exists (rkanter)
 OOZIE-1193 upgrade jython to 2.5.3 for Pig in Oozie due to jython 2.5.0 legal issues (bowenzhangusa via rkanter)
 OOZIE-1172 Add documentation on how to get Java actions to authenticate properly on Kerberos-enabled clusters (rkanter)
 OOZIE-87 GH-47: Feature to supply a comma separated list of jars in an 'archive tag' of workflow (jaoki via rkanter)
