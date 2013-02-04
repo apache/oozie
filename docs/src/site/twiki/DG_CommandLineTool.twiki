@@ -169,7 +169,7 @@ supported in Oozie 3.0 or later.
 Example:
 
 <verbatim>
-$ oozie job -oozie http://localhost:8080/oozie -config job.properties -submit
+$ oozie job -oozie http://localhost:11000/oozie -config job.properties -submit
 .
 job: 14-20090525161321-oozie-joe
 </verbatim>
@@ -189,7 +189,7 @@ The job will be created, but it will not be started, it will be in =PREP= status
 Example:
 
 <verbatim>
-$ oozie job -oozie http://localhost:8080/oozie -start 14-20090525161321-oozie-joe
+$ oozie job -oozie http://localhost:11000/oozie -start 14-20090525161321-oozie-joe
 </verbatim>
 
 The =start= option starts a previously submitted workflow job, coordinator job or bundle job that is in =PREP= status.
@@ -202,7 +202,7 @@ bundle job will be in =RUNNING=status.
 Example:
 
 <verbatim>
-$ oozie job -oozie http://localhost:8080/oozie -config job.properties -run
+$ oozie job -oozie http://localhost:11000/oozie -config job.properties -run
 .
 job: 15-20090525161321-oozie-joe
 </verbatim>
@@ -224,7 +224,7 @@ The job will be created and it will started, the job will be in =RUNNING= status
 Example:
 
 <verbatim>
-$ oozie job -oozie http://localhost:8080/oozie -suspend 14-20090525161321-oozie-joe
+$ oozie job -oozie http://localhost:11000/oozie -suspend 14-20090525161321-oozie-joe
 </verbatim>
 
 The =suspend= option suspends a workflow job in =RUNNING= status.
@@ -240,7 +240,7 @@ When the bundle job is suspended, running coordinators will be suspended. If the
 Example:
 
 <verbatim>
-$ oozie job -oozie http://localhost:8080/oozie -resume 14-20090525161321-oozie-joe
+$ oozie job -oozie http://localhost:11000/oozie -resume 14-20090525161321-oozie-joe
 </verbatim>
 
 The =resume= option resumes a workflow job in =SUSPENDED= status.
@@ -262,7 +262,7 @@ When the bundle job is resumed, suspended coordinators will resume running. If t
 Example:
 
 <verbatim>
-$ oozie job -oozie http://localhost:8080/oozie -kill 14-20090525161321-oozie-joe
+$ oozie job -oozie http://localhost:11000/oozie -kill 14-20090525161321-oozie-joe
 </verbatim>
 
 The =kill= option kills a workflow job in =PREP=, =SUSPENDED= or =RUNNING= status and a coordinator/bundle job in
@@ -275,7 +275,7 @@ After the command is executed the job will be in =KILLED= status.
 Example:
 
 <verbatim>
-$ oozie job -oozie http://localhost:8080/oozie -change 14-20090525161321-oozie-joe -value endtime=2011-12-01T05:00Z\;concurrency=100\;2011-10-01T05:00Z
+$ oozie job -oozie http://localhost:11000/oozie -change 14-20090525161321-oozie-joe -value endtime=2011-12-01T05:00Z\;concurrency=100\;2011-10-01T05:00Z
 </verbatim>
 
 The =change= option changes a coordinator job that is not in =KILLED= status.
@@ -296,7 +296,7 @@ After the command is executed the job's end time, concurrency or pause time shou
 Example:
 
 <verbatim>
-$ oozie job -oozie http://localhost:8080/oozie -change 14-20090525161321-oozie-joe -value pausetime=2011-12-01T05:00Z
+$ oozie job -oozie http://localhost:11000/oozie -change 14-20090525161321-oozie-joe -value pausetime=2011-12-01T05:00Z
 </verbatim>
 
 The =change= option changes a bundle job that is not in =KILLED= status.
@@ -313,7 +313,7 @@ After the command is executed the job's pause time should be changed.
 Example:
 
 <verbatim>
-$ oozie job -oozie http://localhost:8080/oozie -config job.properties -rerun 14-20090525161321-oozie-joe
+$ oozie job -oozie http://localhost:11000/oozie -config job.properties -rerun 14-20090525161321-oozie-joe
 </verbatim>
 
 The =rerun= option reruns a completed ( =SUCCCEDED=, =FAILED= or =KILLED= ) job skipping the specified nodes.
@@ -369,11 +369,11 @@ After the command is executed the rerun coordiator action will be in =WAITING= s
 Example:
 
 <verbatim>
-$ oozie job -oozie http://localhost:8080/oozie -info 14-20090525161321-oozie-joe
+$ oozie job -oozie http://localhost:11000/oozie -info 14-20090525161321-oozie-joe
 .
 .----------------------------------------------------------------------------------------------------------------------------------------------------------------
 Workflow Name :  map-reduce-wf
-App Path      :  hdfs://localhost:9000/user/joe/workflows/map-reduce
+App Path      :  hdfs://localhost:8020/user/joe/workflows/map-reduce
 Status        :  SUCCEEDED
 Run           :  0
 User          :  joe
@@ -406,7 +406,7 @@ Currently, the filter option can be used only with an =info= option on Coordinat
 An example below shows how the =verbose= option can be used to gather action statistics information for a job:
 
 <verbatim>
-$ oozie job -oozie http://localhost:8080/oozie -info 0000001-111219170928042-oozie-para-W@mr-node -verbose
+$ oozie job -oozie http://localhost:11000/oozie -info 0000001-111219170928042-oozie-para-W@mr-node -verbose
 ID : 0000001-111219170928042-oozie-para-W@mr-node
 ------------------------------------------------------------------------------------------------------------------------------------
 Console URL       : http://localhost:50030/jobdetails.jsp?jobid=job_201112191708_0006
@@ -416,7 +416,7 @@ External ID       : job_201112191708_0006
 External Status   : SUCCEEDED
 Name              : mr-node
 Retries           : 0
-Tracker URI       : localhost:9001
+Tracker URI       : localhost:8021
 Type              : map-reduce
 Started           : 2011-12-20 01:12
 Status            : OK
@@ -435,7 +435,7 @@ Note that the user can turn on/off External Stats by specifying the property _oo
 Example:
 
 <verbatim>
-$ oozie job -oozie http://localhost:8080/oozie -definition 14-20090525161321-oozie-joe
+$ oozie job -oozie http://localhost:11000/oozie -definition 14-20090525161321-oozie-joe
 
 <workflow-app xmlns="uri:oozie:workflow:0.2" name="sm3-segment-2413">
 	<start to="p0"/>
@@ -452,7 +452,7 @@ Example:
 
 <verbatim>
 
-$ oozie job -oozie http://localhost:8080/oozie -log 14-20090525161321-oozie-joe
+$ oozie job -oozie http://localhost:11000/oozie -log 14-20090525161321-oozie-joe
 
 </verbatim>
 
@@ -474,14 +474,14 @@ Example:
 
 <verbatim>
 
-$ oozie job -oozie http://localhost:8080/oozie job -dryrun -config job.properties
+$ oozie job -oozie http://localhost:11000/oozie job -dryrun -config job.properties
 ***coordJob after parsing: ***
 <coordinator-app xmlns="uri:oozie:coordinator:0.1" name="sla_coord" frequency="20"
 start="2009-03-06T010:00Z" end="2009-03-20T11:00Z" timezone="America/Los_Angeles">
   <output-events>
     <data-out name="Output" dataset="DayLogs">
       <dataset name="DayLogs" frequency="1440" initial-instance="2009-01-01T00:00Z" timezone="UTC" freq_timeunit="MINUTE" end_of_duration="NONE">
-        <uri-template>hdfs://localhost:9000/user/angeloh/coord_examples/${YEAR}/${MONTH}/${DAY}</uri-template>
+        <uri-template>hdfs://localhost:8020/user/angeloh/coord_examples/${YEAR}/${MONTH}/${DAY}</uri-template>
       </dataset>
       <instance>${coord:current(0)}</instance>
     </data-out>
@@ -498,9 +498,9 @@ coordAction instance: 1:
 start="2009-03-06T010:00Z" end="2009-03-20T11:00Z" timezone="America/Los_Angeles">
   <output-events>
     <data-out name="Output" dataset="DayLogs">
-      <uris>hdfs://localhost:9000/user/angeloh/coord_examples/2009/03/06</uris>
+      <uris>hdfs://localhost:8020/user/angeloh/coord_examples/2009/03/06</uris>
       <dataset name="DayLogs" frequency="1440" initial-instance="2009-01-01T00:00Z" timezone="UTC" freq_timeunit="MINUTE" end_of_duration="NONE">
-        <uri-template>hdfs://localhost:9000/user/angeloh/coord_examples/${YEAR}/${MONTH}/${DAY}</uri-template>
+        <uri-template>hdfs://localhost:8020/user/angeloh/coord_examples/${YEAR}/${MONTH}/${DAY}</uri-template>
       </dataset>
     </data-out>
   </output-events>
@@ -526,7 +526,7 @@ specified path must be an HDFS path.
 Example:
 
 <verbatim>
-$ oozie jobs -oozie http://localhost:8080/oozie -localtime -len 2 -fliter status=RUNNING
+$ oozie jobs -oozie http://localhost:11000/oozie -localtime -len 2 -fliter status=RUNNING
 .
 Job Id                          Workflow Name         Status     Run  User      Group     Created                Started                 Ended
 .----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -567,7 +567,7 @@ name. Multiple values must be specified as different name value pairs.
 Example:
 
 <verbatim>
-$ oozie jobs -oozie http://localhost:8080/oozie -jobtype coordinator
+$ oozie jobs -oozie http://localhost:11000/oozie -jobtype coordinator
 .
 Job ID                                                                                   App Name               Status      Freq Unit                    Started                 Next Materialized
 .----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -586,7 +586,7 @@ The =jobtype= option specified the job type to display, default value is 'wf'. T
 Example:
 
 <verbatim>
-$ oozie jobs -oozie http://localhost:8080/oozie -jobtype bundle
+$ oozie jobs -oozie http://localhost:11000/oozie -jobtype bundle
 Job ID                                   Bundle Name    Status    Kickoff             Created             User         Group
 ------------------------------------------------------------------------------------------------------------------------------------
 0000027-110322105610515-oozie-chao-B     BUNDLE-TEST    RUNNING   2012-01-15 00:24    2011-03-22 18:07    joe        users
@@ -606,7 +606,7 @@ The =jobtype= option specified the job type to display, default value is 'wf'. T
 Example:
 
 <verbatim>
-$ oozie admin -oozie http://localhost:8080/oozie -status
+$ oozie admin -oozie http://localhost:11000/oozie -status
 .
 Safemode: OFF
 </verbatim>
@@ -620,7 +620,7 @@ It returns the current status of the Oozie system.
 Example:
 
 <verbatim>
-$ oozie admin -oozie http://localhost:8080/oozie -systemmode [NORMAL|NOWEBSERVICE|SAFEMODE]
+$ oozie admin -oozie http://localhost:11000/oozie -systemmode [NORMAL|NOWEBSERVICE|SAFEMODE]
 .
 Safemode: ON
 </verbatim>
@@ -632,7 +632,7 @@ It returns the current status of the Oozie system.
 Example:
 
 <verbatim>
-$ oozie admin -oozie http://localhost:8080/oozie -version
+$ oozie admin -oozie http://localhost:11000/oozie -version
 .
 Oozie server build version: 2.0.2.1-0.20.1.3092118008--
 </verbatim>
@@ -646,7 +646,7 @@ It returns the Oozie server build version.
 Example:
 
 <verbatim>
-$ oozie admin -oozie http://localhost:8080/oozie -queuedump
+$ oozie admin -oozie http://localhost:11000/oozie -queuedump
 
 [Server Queue Dump]:
 (coord_action_start,1),(coord_action_start,1),(coord_action_start,1)
@@ -683,7 +683,7 @@ It performs an XML Schema validation on the specified workflow XML file.
 Example:
 
 <verbatim>
-$ oozie sla -oozie http://localhost:8080/oozie -len 1
+$ oozie sla -oozie http://localhost:11000/oozie -len 1
 .
 <sla-message>
    <event>
@@ -712,15 +712,15 @@ The return message is XML format that can be easily consumed by SLA users.
 Example:
 
 <verbatim>
-$ oozie pig -oozie http://localhost:8080/oozie -file pigScriptFile -config job.properties -X -param_file params
+$ oozie pig -oozie http://localhost:11000/oozie -file pigScriptFile -config job.properties -X -param_file params
 .
 job: 14-20090525161321-oozie-joe-W
 .
 $cat job.properties
-fs.default.name=hdfs://localhost:9000
+fs.default.name=hdfs://localhost:8020
 mapreduce.jobtracker.kerberos.principal=ccc
 dfs.namenode.kerberos.principal=ddd
-oozie.libpath=hdfs://localhost:9000/user/oozie/pig/lib/
+oozie.libpath=hdfs://localhost:8020/user/oozie/pig/lib/
 </verbatim>
 
 The parameters for the job must be provided in a Java Properties file (.properties). jobtracker, namenode, libpath must be
@@ -766,7 +766,7 @@ and =jobs= sub-commands
 Example:
 
 <verbatim>
-$ oozie mapreduce -oozie http://localhost:8080/oozie -config job.properties
+$ oozie mapreduce -oozie http://localhost:11000/oozie -config job.properties
 </verbatim>
 
 The parameters must be in the Java Properties file (.properties). This file must be specified for a map-reduce job.

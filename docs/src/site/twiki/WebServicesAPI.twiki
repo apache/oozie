@@ -369,7 +369,7 @@ Content-Type: application/xml;charset=UTF-8
     </property>
     <property>
         <name>oozie.wf.application.path</name>
-        <value>hdfs://foo:9000/user/bansalm/myapp/</value>
+        <value>hdfs://foo:8020/user/bansalm/myapp/</value>
     </property>
     ...
 </configuration>
@@ -437,7 +437,7 @@ Content-Type: application/xml;charset=UTF-8
     </property>
     <property>
         <name>oozie.wf.application.path</name>
-        <value>hdfs://foo:9000/user/tucu/myapp/</value>
+        <value>hdfs://foo:8020/user/tucu/myapp/</value>
     </property>
     <property>
         <name>oozie.wf.rerun.skip.nodes</name>
@@ -529,7 +529,7 @@ Content-Type: application/json;charset=UTF-8
       status: "OK",
       externalId: "job-123-200903101010",
       externalStatus: "SUCCEEDED",
-      trackerUri: "foo:9001",
+      trackerUri: "foo:8021",
       consoleUrl: "http://foo:50040/jobdetailshistory.jsp?jobId=...",
       transition: "reporter",
       data: null,

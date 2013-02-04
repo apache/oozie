@@ -135,10 +135,10 @@ testcases.
 *oozie.test.hadoop.minicluster*= : indicates if Hadoop minicluster should be started for testcases, default value 'true'
 
 *oozie.test.job.tracker*= : indicates the URI of the JobTracker when using a Hadoop cluster for testing, default value
-'localhost:9001'
+'localhost:8021'
 
 *oozie.test.name.node*= : indicates the URI of the NameNode when using a Hadoop cluster for testing, default value
-'hdfs://localhost:9000'
+'hdfs://localhost:8020'
 
 *oozie.test.hadoop.security*= : indicates the type of Hadoop authentication for testing, valid values are 'simple' or
 'kerberos, default value 'simple'

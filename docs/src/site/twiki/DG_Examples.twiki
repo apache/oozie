@@ -29,7 +29,7 @@ For the Streaming and Pig example, the [[DG_QuickStart#OozieShareLib][Oozie Shar
 
 Add Oozie =bin/= to the environment PATH.
 
-The examples assume the JobTracker is =localhost:9001= and the NameNode is =hdfs://localhost:9000=. If the actual
+The examples assume the JobTracker is =localhost:8021= and the NameNode is =hdfs://localhost:8020=. If the actual
 values are different, the job properties files in the examples directory must be edited to the correct values.
 
 The example applications are under the examples/app directory, one directory per example. The directory contains the
@@ -45,7 +45,7 @@ The examples create output under the =examples/output-data/${EXAMPLE_NAME}= dire
 *How to run an example application:*
 
 <verbatim>
-$ oozie job -oozie http://localhost:8080/oozie -config examples/apps/map-reduce/job.properties -run
+$ oozie job -oozie http://localhost:11000/oozie -config examples/apps/map-reduce/job.properties -run
 .
 job: 14-20090525161321-oozie-tucu
 </verbatim>
@@ -53,11 +53,11 @@ job: 14-20090525161321-oozie-tucu
 Check the workflow job status:
 
 <verbatim>
-$ oozie job -oozie http://localhost:8080/oozie -info 14-20090525161321-oozie-tucu
+$ oozie job -oozie http://localhost:11000/oozie -info 14-20090525161321-oozie-tucu
 .
 .----------------------------------------------------------------------------------------------------------------------------------------------------------------
 Workflow Name :  map-reduce-wf
-App Path      :  hdfs://localhost:9000/user/tucu/examples/apps/map-reduce
+App Path      :  hdfs://localhost:8020/user/tucu/examples/apps/map-reduce
 Status        :  SUCCEEDED
 Run           :  0
 User          :  tucu
@@ -73,13 +73,13 @@ mr-node                 map-reduce  OK         end         job_200904281535_0254
 .----------------------------------------------------------------------------------------------------------------------------------------------------------------
 </verbatim>
 
-To check the workflow job status via the Oozie web console, with a browser go to =http://localhost:8080/oozie=.
+To check the workflow job status via the Oozie web console, with a browser go to =http://localhost:11000/oozie=.
 
 To avoid having to provide the =-oozie= option with the Oozie URL with every =oozie= command, set =OOZIE_URL= env 
 variable to the Oozie URL in the shell environment. For example:
 
 <verbatim>
-$ export OOZIE_URL="http://localhost:8080/oozie"
+$ export OOZIE_URL="http://localhost:11000/oozie"
 $
 $ oozie job -info 14-20090525161321-oozie-tucu
 </verbatim>
@@ -101,14 +101,14 @@ import java.util.Properties;
     ...
 .
     // get a OozieClient for local Oozie
-    OozieClient wc = new OozieClient("http://bar:8080/oozie");
+    OozieClient wc = new OozieClient("http://bar:11000/oozie");
 .
     // create a workflow job configuration and set the workflow application path
     Properties conf = wc.createConfiguration();
-    conf.setProperty(OozieClient.APP_PATH, "hdfs://foo:9000/usr/tucu/my-wf-app");
+    conf.setProperty(OozieClient.APP_PATH, "hdfs://foo:8020/usr/tucu/my-wf-app");
 .
     // setting workflow parameters
-    conf.setProperty("jobTracker", "foo:9001");
+    conf.setProperty("jobTracker", "foo:8021");
     conf.setProperty("inputDir", "/usr/tucu/inputdir");
     conf.setProperty("outputDir", "/usr/tucu/outputdir");
     ...
@@ -156,10 +156,10 @@ import java.util.Properties;
 .
     // create a workflow job configuration and set the workflow application path
     Properties conf = wc.createConfiguration();
-    conf.setProperty(OozieClient.APP_PATH, "hdfs://foo:9000/usr/tucu/my-wf-app");
+    conf.setProperty(OozieClient.APP_PATH, "hdfs://foo:8020/usr/tucu/my-wf-app");
 .
     // setting workflow parameters
-    conf.setProperty("jobTracker", "foo:9001");
+    conf.setProperty("jobTracker", "foo:8021");
     conf.setProperty("inputDir", "/usr/tucu/inputdir");
     conf.setProperty("outputDir", "/usr/tucu/outputdir");
     ...

@@ -436,8 +436,8 @@ fork arrive to the join node.
     </fork>
     <action name="firstparallejob">
         <map-reduce>
-            <job-tracker>foo:9001</job-tracker>
-            <name-node>bar:9000</name-node>
+            <job-tracker>foo:8021</job-tracker>
+            <name-node>bar:8020</name-node>
             <job-xml>job1.xml</job-xml>
         </map-reduce>
         <ok to="joining"/>
@@ -445,8 +445,8 @@ fork arrive to the join node.
     </action>
     <action name="secondparalleljob">
         <map-reduce>
-            <job-tracker>foo:9001</job-tracker>
-            <name-node>bar:9000</name-node>
+            <job-tracker>foo:8021</job-tracker>
+            <name-node>bar:8020</name-node>
             <job-xml>job2.xml</job-xml>
         </map-reduce>
         <ok to="joining"/>
@@ -685,10 +685,10 @@ The =mapper= and =reducer= process for streaming jobs, should specify the execut
     ...
     <action name="myfirstHadoopJob">
         <map-reduce>
-            <job-tracker>foo:9001</job-tracker>
-            <name-node>bar:9000</name-node>
+            <job-tracker>foo:8021</job-tracker>
+            <name-node>bar:8020</name-node>
             <prepare>
-                <delete path="hdfs://foo:9000/usr/tucu/output-data"/>
+                <delete path="hdfs://foo:8020/usr/tucu/output-data"/>
             </prepare>
             <job-xml>/myfirstjob.xml</job-xml>
             <configuration>
@@ -727,8 +727,8 @@ the workflow job configuration when creating the workflow job.
     ...
     <action name="firstjob">
         <map-reduce>
-            <job-tracker>foo:9001</job-tracker>
-            <name-node>bar:9000</name-node>
+            <job-tracker>foo:8021</job-tracker>
+            <name-node>bar:8020</name-node>
             <prepare>
                 <delete path="${output}"/>
             </prepare>
@@ -768,8 +768,8 @@ the workflow job configuration when creating the workflow job.
     ...
     <action name="firstjob">
         <map-reduce>
-            <job-tracker>foo:9001</job-tracker>
-            <name-node>bar:9000</name-node>
+            <job-tracker>foo:8021</job-tracker>
+            <name-node>bar:8020</name-node>
             <prepare>
                 <delete path="${output}"/>
             </prepare>
@@ -942,8 +942,8 @@ All the above elements can be parameterized (templatized) using EL expressions.
     ...
     <action name="myfirstpigjob">
         <pig>
-            <job-tracker>foo:9001</job-tracker>
-            <name-node>bar:9000</name-node>
+            <job-tracker>foo:8021</job-tracker>
+            <name-node>bar:8020</name-node>
             <prepare>
                 <delete path="${jobOutput}"/>
             </prepare>
@@ -978,8 +978,8 @@ All the above elements can be parameterized (templatized) using EL expressions.
     ...
     <action name="myfirstpigjob">
         <pig>
-            <job-tracker>foo:9001</job-tracker>
-            <name-node>bar:9000</name-node>
+            <job-tracker>foo:8021</job-tracker>
+            <name-node>bar:8020</name-node>
             <prepare>
                 <delete path="${jobOutput}"/>
             </prepare>
@@ -1073,7 +1073,7 @@ Touchz works only for absolute paths.
     ...
     <action name="hdfscommands">
          <fs>
-            <delete path='hdfs://foo:9000/usr/tucu/temp-data'/>
+            <delete path='hdfs://foo:8020/usr/tucu/temp-data'/>
             <mkdir path='archives/${wf:id()}'/>
             <move source='${jobInput}' target='archives/${wf:id()}/processed-input'/>
             <chmod path='${jobOutput}' permissions='-rwxrw-rw-' dir-files='true'><recursive/></chmod>
@@ -1106,7 +1106,7 @@ by any =job-xml= elements.
     ...
     <action name="hdfscommands">
         <fs>
-           <name-node>hdfs://foo:9000</name-node>
+           <name-node>hdfs://foo:8020</name-node>
            <job-xml>fs-info.xml</job-xml>
            <configuration>
              <property>
@@ -1186,7 +1186,7 @@ The configuration of the =ssh= action can be parameterized (templatized) using E
             <host>foo@bar.com<host>
             <command>uploaddata</command>
             <args>jdbc:derby://bar.com:1527/myDB</args>
-            <args>hdfs://foobar.com:9000/usr/tucu/myData</args>
+            <args>hdfs://foobar.com:8020/usr/tucu/myData</args>
         </ssh>
         <ok to="myotherjob"/>
         <error to="errorcleanup"/>
@@ -1196,7 +1196,7 @@ The configuration of the =ssh= action can be parameterized (templatized) using E
 </verbatim>
 
 In the above example, the =uploaddata= shell command is executed with two arguments, =jdbc:derby://foo.com:1527/myDB=
-and =hdfs://foobar.com:9000/usr/tucu/myData=.
+and =hdfs://foobar.com:8020/usr/tucu/myData=.
 
 The =uploaddata= shell must be available in the remote host and available in the command path.
 
@@ -1268,7 +1268,7 @@ The configuration of the =sub-workflow= action can be parameterized (templatized
 </verbatim>
 
 In the above example, the workflow definition with the name =child-wf= will be run on the Oozie instance at
- =.http://myhost:8080/oozie=. The specified workflow application must be already deployed on the target Oozie instance.
+ =.http://myhost:11000/oozie=. The specified workflow application must be already deployed on the target Oozie instance.
 
 A configuration parameter =input.dir= is being passed as job property to the child workflow job.
 
@@ -1373,8 +1373,8 @@ All the above elements can be parameterized (templatized) using EL expressions.
     ...
     <action name="myfirstjavajob">
         <java>
-            <job-tracker>foo:9001</job-tracker>
-            <name-node>bar:9000</name-node>
+            <job-tracker>foo:8021</job-tracker>
+            <name-node>bar:8020</name-node>
             <prepare>
                 <delete path="${jobOutput}"/>
             </prepare>
@@ -1968,7 +1968,7 @@ An example is shown below.
 
 ---++++ 4.2.7 HDFS EL Functions
 
-For all the functions in this section the path must include the FS URI. For example =hdfs://foo:9000/user/tucu=.
+For all the functions in this section the path must include the FS URI. For example =hdfs://foo:8020/user/tucu=.
 
 *boolean fs:exists(String path)*
 
