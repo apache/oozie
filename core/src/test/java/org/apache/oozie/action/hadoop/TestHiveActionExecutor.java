@@ -116,10 +116,6 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
         "<name>oozie.hive.log.level</name>" +
         "<value>DEBUG</value>" +
         "</property>" +
-        "<property>" +
-        "<name>oozie.hive.defaults</name>" +
-        "<value>user-hive-default.xml</value>" +
-        "</property>" +
         "</configuration>" +
         "<script>" + HIVE_SCRIPT_FILENAME + "</script>" +
         "</hive>";
@@ -139,10 +135,6 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
         Writer dataWriter = new OutputStreamWriter(fs.create(new Path(inputDir, DATA_FILENAME)));
         dataWriter.write(SAMPLE_DATA_TEXT);
         dataWriter.close();
-
-        InputStream is = IOUtils.getResourceAsStream("user-hive-default.xml", -1);
-        OutputStream os = fs.create(new Path(getAppPath(), "user-hive-default.xml"));
-        IOUtils.copyStream(is, os);
 
         Context context = createContext(getActionXml());
         final RunningJob launcherJob = submitAction(context);

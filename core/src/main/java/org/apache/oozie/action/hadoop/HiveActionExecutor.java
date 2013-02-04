@@ -19,21 +19,17 @@ package org.apache.oozie.action.hadoop;
 
 import static org.apache.oozie.action.hadoop.LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS;
 
-import java.io.StringReader;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.WorkflowAction;
-import org.apache.oozie.util.XConfiguration;
-import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.Namespace;
 
 public class HiveActionExecutor extends JavaActionExecutor {
-    private static final String OOZIE_HIVE_DEFAULTS = "oozie.hive.defaults";
 
     public HiveActionExecutor() {
         super("hive");
@@ -53,38 +49,12 @@ public class HiveActionExecutor extends JavaActionExecutor {
         return launcherConf.get(CONF_OOZIE_ACTION_MAIN_CLASS, HiveMain.class.getName());
     }
 
-    public Configuration setupHiveDefault(Configuration conf, Path appPath, Element actionXml)
-            throws ActionExecutorException {
-        try {
-            //Setting up hive-default.xml file if specified by the Hive action
-            Element actionConf = actionXml.getChild("configuration", actionXml.getNamespace());
-            if (actionConf != null) {
-                String strConf = XmlUtils.prettyPrint(actionConf).toString();
-                XConfiguration inlineConf = new XConfiguration(new StringReader(strConf));
-                if (inlineConf.get(OOZIE_HIVE_DEFAULTS) != null) {
-                    Path hiveDefaults = new Path(inlineConf.get(OOZIE_HIVE_DEFAULTS));
-                    // hive-default.xml will be softlinked to the working dir which is in the launcher CP.
-                    // the softlink is done as 'oozie-user-hive-default.xml' and Oozie HiveMain class will
-                    // check if the Hive being used has a hive-default.xml or not, if not it will rename
-                    // it as hive-default.xml before invoking hive
-                    addToCache(conf, appPath, hiveDefaults + "#" + HiveMain.USER_HIVE_DEFAULT_FILE, false);
-                }
-            }
-            return conf;
-        }
-        catch (Exception ex) {
-            throw convertException(ex);
-        }
-    }
-
     @Override
     protected Configuration setupLauncherConf(Configuration conf, Element actionXml, Path appPath, Context context)
             throws ActionExecutorException {
         try {
             super.setupLauncherConf(conf, actionXml, appPath, context);
             Namespace ns = actionXml.getNamespace();
-
-            setupHiveDefault(conf, appPath, actionXml);
 
             String script = actionXml.getChild("script", ns).getTextTrim();
             String scriptName = new Path(script).getName();
