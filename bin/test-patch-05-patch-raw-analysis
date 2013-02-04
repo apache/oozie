@@ -101,7 +101,8 @@ checkNoTrailingSpaces() {
 }
 ###############################################################################
 checkLinesLength() {
-  longLines=`grep "^+ " ${PATCHFILE} | awk 'BEGIN{count=0}{if ( length > 132 ) { count=count+1} }END{ print count}'`
+  # We check for > 133 to account for the "+" sign
+  longLines=`grep "^+ " ${PATCHFILE} | awk 'BEGIN{count=0}{if ( length > 133 ) { count=count+1} }END{ print count}'`
   if [[ ${longLines} != 0 ]] ; then
     REPORT+=("-1 the patch contains ${longLines} line(s) longer than 132 characters")
   else
