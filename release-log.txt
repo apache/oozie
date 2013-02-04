@@ -1,5 +1,6 @@
 -- Oozie 3.3.2 (unreleased)
 
+OOZIE-1166 Print a more helpful message when ProxyUserService is configured wrong (rkanter)
 OOZIE-1136 Fix MiniOozie (rkanter)
 OOZIE-1051 Repeating Errors for workflows that were allreday Killed (rkanter)
 OOZIE-1140 TestLogStreamer.testStreamLog fails when its started within the first 4 seconds after the hour (rkanter)

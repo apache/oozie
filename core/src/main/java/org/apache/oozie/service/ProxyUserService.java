@@ -128,8 +128,14 @@ public class ProxyUserService implements Service {
      */
     public void validate(String proxyUser, String proxyHost, String doAsUser) throws IOException,
         AccessControlException {
-        ParamChecker.notEmpty(proxyUser, "proxyUser");
-        ParamChecker.notEmpty(proxyHost, "proxyHost");
+        ParamChecker.notEmpty(proxyUser, "proxyUser",
+                "If you're attempting to use user-impersonation via a proxy user, please make sure that "
+                + "oozie.service.ProxyUserService.proxyuser.#USER#.hosts and "
+                + "oozie.service.ProxyUserService.proxyuser.#USER#.groups are configured correctly");
+        ParamChecker.notEmpty(proxyHost, "proxyHost",
+                "If you're attempting to use user-impersonation via a proxy user, please make sure that "
+                + "oozie.service.ProxyUserService.proxyuser." + proxyUser + ".hosts and "
+                + "oozie.service.ProxyUserService.proxyuser." + proxyUser + ".groups are configured correctly");
         ParamChecker.notEmpty(doAsUser, "doAsUser");
         LOG.debug("Authorization check proxyuser [{0}] host [{1}] doAs [{2}]",
                   new Object[]{proxyUser, proxyHost, doAsUser});
