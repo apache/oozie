@@ -246,7 +246,7 @@ function jobDetailsPopup(response, request) {
     var appName = jobDetails["appName"];
     var jobActionStatus = new Ext.data.JsonStore({
         data: jobDetails["actions"],
-        fields: ['id', 'name', 'type', 'startTime', 'retries', 'consoleUrl', 'endTime', 'externalId', 'status', 'trackerUri', 'workflowId', 'errorCode', 'errorMessage', 'conf', 'transition', 'externalStatus']
+        fields: ['id', 'name', 'type', 'startTime', 'retries', 'consoleUrl', 'endTime', 'externalId', 'status', 'trackerUri', 'workflowId', 'errorCode', 'errorMessage', 'conf', 'transition', 'externalStatus', 'externalChildIDs']
     });
 
     var formFieldSet = new Ext.form.FieldSet({
@@ -492,8 +492,8 @@ function jobDetailsPopup(response, request) {
                     width: 400,
                     value: actionStatus["trackerUri"]
 
-                }, ]
-            });
+                }
+            ]});
             var detail = new Ext.FormPanel({
                 frame: true,
                 labelAlign: 'right',
@@ -501,6 +501,8 @@ function jobDetailsPopup(response, request) {
                 width: 540,
                 items: [formFieldSet]
             });
+            var urlUnit = new Ext.FormPanel();
+            populateUrlUnit(actionStatus, urlUnit);
             var win = new Ext.Window({
                 title: 'Action (Name: ' + actionStatus["name"] + '/JobId: ' + workflowId + ')',
                 closable: true,
@@ -525,13 +527,76 @@ function jobDetailsPopup(response, request) {
                             autoScroll: true,
                             value: actionStatus["conf"]
                         })
-                    }, ]
+                    }, {
+                        title: 'Child Job URLs',
+                        autoScroll: true,
+                        frame: true,
+                        labelAlign: 'right',
+                        labelWidth: 70,
+                        items: urlUnit
+                    }],
+                    tbar: [{
+                        text: "&nbsp;&nbsp;&nbsp;",
+                        icon: 'ext-2.2/resources/images/default/grid/refresh.gif',
+                        handler: function() {
+                            refreshActionDetails(workflowId+"@"+actionStatus["name"], detail, urlUnit);
+                        }
+                    }]
                 })]
             });
             win.setPosition(50, 50);
             win.show();
         }
     }
+
+	function populateUrlUnit(actionStatus, urlUnit) {
+		var consoleUrl = actionStatus["consoleUrl"];
+        var externalChildIDs = actionStatus["externalChildIDs"];
+		if(undefined !== consoleUrl && null !== consoleUrl && undefined !== externalChildIDs && null !== externalChildIDs) {
+	        var urlPrefix = consoleUrl.trim().split(/_/)[0];
+            //externalChildIds is a comma-separated string of each child job ID.
+            //Create URL list by appending jobID portion after stripping "job"
+            var jobIds = externalChildIDs.split(/,/);
+            var count = 1;
+            jobIds.forEach(function(jobId) {
+                jobId = jobId.trim().split(/job/)[1];
+		        var jobUrl = new Ext.form.TriggerField({
+			        fieldLabel: 'Child Job ' + count,
+			        editable: false,
+			        name: 'childJobURLs',
+			        width: 400,
+			        value: urlPrefix + jobId,
+			        triggerClass: 'x-form-search-trigger',
+			        onTriggerClick: function() {
+			            window.open(urlPrefix + jobId);
+			        }
+	            });
+	            if(jobId != undefined) {
+                    urlUnit.add(jobUrl);
+	                count++;
+	            }
+	        });
+        } else {
+            var note = new Ext.form.TextField({
+                fieldLabel: 'Child Job',
+                value: 'n/a'
+            });
+            urlUnit.add(note);
+        }
+	}
+
+    function refreshActionDetails(actionId, detail, urlUnit) {
+        Ext.Ajax.request({
+            url: getOozieBase() + 'job/' + actionId + "?timezone=" + getTimeZone(),
+            success: function(response, request) {
+                var results = eval("(" + response.responseText + ")");
+                detail.getForm().setValues(results);
+                urlUnit.getForm().setValues(results);
+                populateUrlUnit(results, urlUnit);
+            }
+        });
+    }
+
     var dagImg = new Ext.ux.Image({
                 id: 'dagImage',
                 url: getOozieBase() + 'job/' + workflowId + "?show=graph",
@@ -701,7 +766,7 @@ function coordJobDetailsPopup(response, request) {
     var appName = jobDetails["coordJobName"];
     var jobActionStatus = new Ext.data.JsonStore({
         data: jobDetails["actions"],
-        fields: ['id', 'name', 'type', 'createdConf', 'runConf', 'actionNumber', 'createdTime', 'externalId', 'lastModifiedTime', 'nominalTime', 'status', 'missingDependencies', 'externalStatus', 'trackerUri', 'consoleUrl', 'errorCode', 'errorMessage', 'actions']
+        fields: ['id', 'name', 'type', 'createdConf', 'runConf', 'actionNumber', 'createdTime', 'externalId', 'lastModifiedTime', 'nominalTime', 'status', 'missingDependencies', 'externalStatus', 'trackerUri', 'consoleUrl', 'errorCode', 'errorMessage', 'actions', 'externalChildIDs']
 
     });
 

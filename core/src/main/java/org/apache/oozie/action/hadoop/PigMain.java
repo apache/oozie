@@ -281,6 +281,12 @@ public class PigMain extends LauncherMain {
         if (pigRunnerExists) {
             System.out.println("Run pig script using PigRunner.run() for Pig version 0.8+");
             PigStats stats = PigRunner.run(args, null);
+            String jobIds = getHadoopJobIds(stats);
+            if (jobIds != null && !jobIds.isEmpty()) {
+                System.out.println("Hadoop Job IDs executed by Pig: " + jobIds);
+                File f = new File(System.getProperty(EXTERNAL_CHILD_IDS));
+                writeExternalData(jobIds, f);
+            }
             // isSuccessful is the API from 0.9 supported by both PigStats and
             // EmbeddedPigStats
             if (!stats.isSuccessful()) {
@@ -294,12 +300,6 @@ public class PigMain extends LauncherMain {
                 // return
                 if (resetSecurityManager) {
                     return;
-                }
-                String jobIds = getHadoopJobIds(stats);
-                if (jobIds != null) {
-                    System.out.println(" Hadoop Job IDs executed by Pig: " + jobIds);
-                    File f = new File(System.getProperty(EXTERNAL_CHILD_IDS));
-                    writeExternalData(jobIds, f);
                 }
                 // Retrieve stats only if user has specified in workflow
                 // configuration

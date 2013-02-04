@@ -1037,6 +1037,7 @@ public class JavaActionExecutor extends ActionExecutor {
                             log.warn(errorReason);
                         }
                         context.setExecutionData(FAILED_KILLED, null);
+                        setActionCompletionData(context, actionFs);
                     }
                 }
                 else {
@@ -1213,5 +1214,15 @@ public class JavaActionExecutor extends ActionExecutor {
      */
     protected String getDefaultShareLibName(Element actionXml) {
         return null;
+    }
+
+    /**
+     * Sets some data for the action on completion
+     *
+     * @param context executor context
+     * @param actionFs the FileSystem object
+     */
+    protected void setActionCompletionData(Context context, FileSystem actionFs) throws IOException,
+            HadoopAccessorException, URISyntaxException {
     }
 }
