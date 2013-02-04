@@ -1,5 +1,6 @@
 -- Oozie 3.3.2 (unreleased)
 
+OOZIE-949 Allow the user to set 'mapred.job.name' (jrkinley via tucu)
 OOZIE-1009 Documentation pages should use default ports for Oozie/JT/NN (tucu)
 OOZIE-992 Add overall status to test-patch messages and add some color-coding for negative results (tucu)
 OOZIE-1003 TestOozieCLI.testSubmitDoAs() should disable anonymous request (tucu)
