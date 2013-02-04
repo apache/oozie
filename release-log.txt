@@ -1,5 +1,6 @@
 -- Oozie 3.3.2 (unreleased)
 
+OOZIE-1153 comma separated list in <archive> and <file> for JavaActionExecutor. (jaoki via tucu)
 OOZIE-1161 Remove unnecessary db updates for some of the blobs like missing_dependencies' of Coordinator Action (virag)
 OOZIE-1164 typo in toString() method for org.apache.oozie.client.rest.JsonCoordinatorJob.java (bowenzhangusa via rkanter)
 OOZIE-1152 Unit test for JavaActionExecutor has a wrong action XML (jaoki via harsh)
