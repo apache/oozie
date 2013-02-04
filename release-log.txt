@@ -1,5 +1,6 @@
 -- Oozie 3.3.2 (unreleased)
 
+OOZIE-1127 Missed one services.destroy() in OOZIE-1114 (rkanter)
 OOZIE-1071 latest EL function is based on action materialization time (rohini via virag)
 OOZIE-1114 Some tests don't use the Services singleton properly (rkanter)
 OOZIE-1101 Fix log messages that contain {0} or similar (rkanter)
