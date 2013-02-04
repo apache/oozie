@@ -1,5 +1,6 @@
 -- Oozie 3.3.2 (unreleased)
 
+OOZIE-1048 Enable propagation of native libraries as a VM argument using java.library.path (venkatesh via tucu)
 OOZIE-1014 Coordinator action failure error not propagated (mona)
 OOZIE-1029 MiniMRCluster fails to start when used against YARN (rkanter via tucu)
 OOZIE-1011 Tests from OOZIE-994 fail when run against Hadoop trunk (rkanter via tucu)
