@@ -159,7 +159,7 @@ public class XLogStreamer {
                 sb.append("(.*)");
             }
             else {
-                sb.append("(.* - ");
+                sb.append("(.* ");
                 for (int i = 0; i < parameters.size(); i++) {
                     sb.append(parameters.get(i) + "\\[");
                     sb.append(filterParams.get(parameters.get(i)) + "\\] ");

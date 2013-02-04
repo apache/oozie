@@ -33,7 +33,7 @@ import org.apache.oozie.util.XLogStreamer;
 
 public class TestLogStreamer extends XTestCase {
 
-    static String logStatement = " - USER[oozie] GROUP[-] TOKEN[-] APP[-] "
+    static String logStatement = " USER[oozie] GROUP[-] TOKEN[-] APP[-] "
                 + "JOB[14-200904160239--example-forkjoinwf] ACTION[-] ";
 
     private final static SimpleDateFormat filenameDateFormatter = new SimpleDateFormat("yyyy-MM-dd-HH");
@@ -55,8 +55,8 @@ public class TestLogStreamer extends XTestCase {
         // between the start and end times of the job
         FileWriter fw1 = new FileWriter(getTestCaseDir() + "/oozie.log");
         StringBuilder sb1 = new StringBuilder();
-        sb1.append("2009-06-24 02:43:13,958 DEBUG _L1_:323" + logStatement + "End workflow state change");
-        sb1.append("\n2009-06-24 02:43:13,961 INFO _L2_:317" + logStatement
+        sb1.append("2009-06-24 02:43:13,958 DEBUG _L1_:323 -" + logStatement + "End workflow state change");
+        sb1.append("\n2009-06-24 02:43:13,961 INFO _L2_:317 -" + logStatement
                 + "[org.apache.oozie.core.command.WorkflowRunnerCallable] " + "released lock");
         fw1.write(sb1.toString());
         fw1.close();
@@ -67,10 +67,10 @@ public class TestLogStreamer extends XTestCase {
         // between the start and end times of the job
         FileWriter fw2 = new FileWriter(getTestCaseDir() + "/oozie.log.1");
         StringBuilder sb2 = new StringBuilder();
-        sb2.append("\n2009-06-24 02:43:13,986 WARN _L3_:539" + logStatement + "Use GenericOptionsParser for parsing " + "the "
+        sb2.append("\n2009-06-24 02:43:13,986 WARN _L3_:539 -" + logStatement + "Use GenericOptionsParser for parsing " + "the "
                 + "arguments. " + "\n" + "_L3A_Applications "
                 + "should implement Tool for the same. \n_L3B_Multi line test");
-        sb2.append("\n2009-06-24 02:43:14,431 INFO _L4_:661" + logStatement + "No job jar file set. User classes "
+        sb2.append("\n2009-06-24 02:43:14,431 INFO _L4_:661 -" + logStatement + "No job jar file set. User classes "
                 + "may not be found. " + "See JobConf(Class) or JobConf#setJar(String).");
         fw2.write(sb2.toString());
         fw2.close();
@@ -85,7 +85,7 @@ public class TestLogStreamer extends XTestCase {
                 + "ACTION[-] Released Lock");
         sb3.append("\n2009-06-24 02:43:19,344 DEBUG _L6_:323 - USER[oozie] GROUP[oozie] TOKEN[MYtoken] APP[-] JOB[-] "
                 + "ACTION[-] Number of pending signals to check [0]");
-        sb3.append("\n2009-06-24 02:43:29,151 DEBUG _L7_:323" + logStatement + "Number of pending actions [0] ");
+        sb3.append("\n2009-06-24 02:43:29,151 DEBUG _L7_:323 -" + logStatement + "Number of pending actions [0] ");
         fw3.write(sb3.toString());
         fw3.close();
         File f3 = new File(getTestCaseDir() + "/oozie.log.2");
@@ -96,8 +96,8 @@ public class TestLogStreamer extends XTestCase {
         // "oozie.log"
         FileWriter fwerr = new FileWriter(getTestCaseDir() + "/testerr.log");
         StringBuilder sberr = new StringBuilder();
-        sberr.append("2009-06-24 02:43:13,958 WARN _L1_:323" + logStatement + "End workflow state change");
-        sberr.append("\n2009-06-24 02:43:13,961 INFO _L2_:317" + logStatement
+        sberr.append("2009-06-24 02:43:13,958 WARN _L1_:323 -" + logStatement + "End workflow state change");
+        sberr.append("\n2009-06-24 02:43:13,961 INFO _L2_:317 -" + logStatement
                 + "[org.apache.oozie.core.command.WorkflowRunnerCallable] " + "released lock");
         fwerr.write(sberr.toString());
         fwerr.close();
@@ -110,8 +110,8 @@ public class TestLogStreamer extends XTestCase {
         String outFilename = "oozie.log-" + filenameDateFormatter.format(new Date(currTime)) + ".gz";
         File f = new File(getTestCaseDir() + "/" + outFilename);
         StringBuilder sb = new StringBuilder();
-        sb.append("\n2009-06-24 02:43:13,958 DEBUG _L8_:323" + logStatement + "End workflow state change");
-        sb.append("\n2009-06-24 02:43:13,961 INFO _L9_:317" + logStatement + "[org.apache.oozie.core."
+        sb.append("\n2009-06-24 02:43:13,958 DEBUG _L8_:323 -" + logStatement + "End workflow state change");
+        sb.append("\n2009-06-24 02:43:13,961 INFO _L9_:317 -" + logStatement + "[org.apache.oozie.core."
                 + "command.WorkflowRunnerCallable] " + "released lock");
         writeToGZFile(f,sb);
 
@@ -120,8 +120,8 @@ public class TestLogStreamer extends XTestCase {
         f = new File(getTestCaseDir() + "/" + outFilename);
         // Generate and write log content to the GZip file
         sb = new StringBuilder();
-        sb.append("\n2009-06-24 02:43:13,958 DEBUG _L10_:323" + logStatement + "End workflow state change");
-        sb.append("\n2009-06-24 02:43:13,961 INFO _L11_:317" + logStatement + "[org.apache.oozie.core."
+        sb.append("\n2009-06-24 02:43:13,958 DEBUG _L10_:323 -" + logStatement + "End workflow state change");
+        sb.append("\n2009-06-24 02:43:13,961 INFO _L11_:317 -" + logStatement + "[org.apache.oozie.core."
                 + "command.WorkflowRunnerCallable] " + "released lock");
         writeToGZFile(f,sb);
 
@@ -131,8 +131,8 @@ public class TestLogStreamer extends XTestCase {
         f = new File(getTestCaseDir() + "/" + outFilename);
         // Generate and write log content to the GZip file
         sb = new StringBuilder();
-        sb.append("\n2009-06-24 02:43:13,958 DEBUG _L12_:323" + logStatement + "End workflow state change");
-        sb.append("\n2009-06-24 02:43:13,961 INFO _L13_:317" + logStatement + "[org.apache.oozie.core."
+        sb.append("\n2009-06-24 02:43:13,958 DEBUG _L12_:323 -" + logStatement + "End workflow state change");
+        sb.append("\n2009-06-24 02:43:13,961 INFO _L13_:317 -" + logStatement + "[org.apache.oozie.core."
                 + "command.WorkflowRunnerCallable] " + "released lock");
         writeToGZFile(f,sb);
 
@@ -192,27 +192,27 @@ public class TestLogStreamer extends XTestCase {
         String outFilename = "oozie.log-2012-04-24-19.gz";
         File f = new File(getTestCaseDir() + "/" + outFilename);
         StringBuilder logLines = new StringBuilder();
-        logLines.append("\n2012-04-24 19:43:13,958 DEBUG _L19_:323" + logStatement);
+        logLines.append("\n2012-04-24 19:43:13,958 DEBUG _L19_:323 -" + logStatement);
         writeToGZFile(f,logLines);
 
         outFilename = "oozie.log-2012-04-24-20.gz";
         f = new File(getTestCaseDir() + "/" + outFilename);
         logLines = new StringBuilder();
-        logLines.append("\n2012-04-24 20:43:13,958 DEBUG _L20_:323" + logStatement);
+        logLines.append("\n2012-04-24 20:43:13,958 DEBUG _L20_:323 -" + logStatement);
         writeToGZFile(f,logLines);
 
         outFilename = "oozie.log-2012-04-24-21.gz";
         f = new File(getTestCaseDir() + "/" + outFilename);
         logLines = new StringBuilder();
-        logLines.append("\n2012-04-24 21:43:13,958 DEBUG _L21_:323" + logStatement);
+        logLines.append("\n2012-04-24 21:43:13,958 DEBUG _L21_:323 -" + logStatement);
         writeToGZFile(f,logLines);
 
         // This file will be always included in the list of files for log retrieval, provided the modification time lies
         // between the start and end times of the job
         FileWriter fw1 = new FileWriter(getTestCaseDir() + "/oozie.log");
         StringBuilder sb1 = new StringBuilder();
-        sb1.append("\n2012-04-24 22:43:13,958 DEBUG _L22_:323" + logStatement);
-        sb1.append("\n2012-04-24 22:43:13,961 INFO _L23_:317" + logStatement
+        sb1.append("\n2012-04-24 22:43:13,958 DEBUG _L22_:323 -" + logStatement);
+        sb1.append("\n2012-04-24 22:43:13,961 INFO _L23_:317 -" + logStatement
                 + "[org.apache.oozie.core.command.WorkflowRunnerCallable] " + "released lock");
         fw1.write(sb1.toString());
         fw1.close();
@@ -238,6 +238,53 @@ public class TestLogStreamer extends XTestCase {
         // from oozie.log
         assertEquals(true, out[3].contains("_L22_"));
         assertEquals(true, out[4].contains("_L23_"));
+    }
+
+    public void testStreamLogNoDash() throws IOException {
+        long currTime = System.currentTimeMillis();
+        XLogStreamer.Filter.reset();
+        XLogStreamer.Filter.defineParameter("USER");
+        XLogStreamer.Filter.defineParameter("GROUP");
+        XLogStreamer.Filter.defineParameter("TOKEN");
+        XLogStreamer.Filter.defineParameter("APP");
+        XLogStreamer.Filter.defineParameter("JOB");
+        XLogStreamer.Filter.defineParameter("ACTION");
+        XLogStreamer.Filter xf = new XLogStreamer.Filter();
+        xf.setParameter("JOB", "14-200904160239--example-forkjoinwf");
+        xf.setLogLevel("DEBUG|INFO");
+
+        // Previously, a dash ("-") was always required somewhere in a line in order for that line to pass the filter; this test
+        // checks that this condition is no longer required
+        FileWriter fw1 = new FileWriter(getTestCaseDir() + "/oozie.log");
+        StringBuilder sb1 = new StringBuilder();
+        sb1.append("2009-06-24 02:43:13,958 DEBUG _L1_:323 -" + logStatement + "End workflow state change\n");
+        sb1.append("2009-06-24 02:43:13,958 DEBUG _L2_:323 +" + logStatement + "End workflow state change\n");
+        sb1.append("2009-06-24 02:43:13,958 DEBUG _L3_:323" + logStatement + "End workflow state change\n");
+        sb1.append("2009-06-24 02:43:13,958 DEBUG _L4_:323 ABC" + logStatement + "End workflow state change\n");
+        sb1.append("2009-06-24 02:43:13,958 DEBUG _L5_:323 !@#$%^&*() blah blah" + logStatement + "End workflow state change\n");
+        sb1.append("2009-06-24 02:43:13,958 WARN _L6_:323 -" + logStatement + "End workflow state change\n");
+        sb1.append("2009-06-24 02:43:13,958 WARN _L7_:323 +" + logStatement + "End workflow state change\n");
+        sb1.append("2009-06-24 02:43:13,958 WARN _L8_:323" + logStatement + "End workflow state change\n");
+        sb1.append("2009-06-24 02:43:13,958 WARN _L9_:323 ABC" + logStatement + "End workflow state change\n");
+        sb1.append("2009-06-24 02:43:13,958 WARN _L10_:323 !@#$%^&*() blah blah" + logStatement + "End workflow state change\n");
+        fw1.write(sb1.toString());
+        fw1.close();
+        File f1 = new File(getTestCaseDir() + "/oozie.log");
+        f1.setLastModified(currTime);
+
+        StringWriter sw = new StringWriter();
+        XLogStreamer str = new XLogStreamer(xf, sw, getTestCaseDir(), "oozie.log", 1);
+        str.streamLog(new Date(currTime - 5000), new Date(currTime + 5000));
+        String[] out = sw.toString().split("\n");
+        // Check if the retrieved log content is of length five lines after filtering; we expect the first five lines because the
+        // filtering shouldn't care whether or not there is a dash while the last five lines don't pass the normal filtering
+        assertEquals(5, out.length);
+        // Check if the lines of the log contain the expected strings
+        assertEquals(true, out[0].contains("_L1_"));
+        assertEquals(true, out[1].contains("_L2_"));
+        assertEquals(true, out[2].contains("_L3_"));
+        assertEquals(true, out[3].contains("_L4_"));
+        assertEquals(true, out[4].contains("_L5_"));
     }
 
     private void writeToGZFile(File f, StringBuilder sbr) throws IOException {
