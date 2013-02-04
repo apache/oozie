@@ -1691,6 +1691,7 @@ not completed yet.
 
 ---++++ 4.2.5 Hadoop EL Functions
 
+#HadoopCountersEL
 *Map < String, Map < String, Long > > hadoop:counters(String node)*
 
 It returns the counters for a job submitted by a Hadoop action node. It returns =0= if the if the Hadoop job has not

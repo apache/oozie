@@ -1,5 +1,6 @@
 -- Oozie 3.3.2 (unreleased)
 
+OOZIE-1012 Sqoop jobs are unable to utilize Hadoop Counters (jarcec via virag)
 OOZIE-986 Oozie client shell script should use consistent naming for java options (stevenwillis via tucu)
 OOZIE-1018 Display coord job start time, end time, pause time, concurrency in job -info (mona via tucu)
 OOZIE-1016 Tests that use junit assert or fail in a new thread report success when they are actually failing (rkanter via tucu)

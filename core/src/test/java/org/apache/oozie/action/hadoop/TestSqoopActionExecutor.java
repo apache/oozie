@@ -175,8 +175,14 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
         assertTrue(launcherId.equals(context.getAction().getExternalId()));
         assertEquals("SUCCEEDED", context.getAction().getExternalStatus());
         assertNotNull(context.getAction().getData());
+        assertNotNull(context.getAction().getExternalChildIDs());
         ae.end(context, context.getAction());
         assertEquals(WorkflowAction.Status.OK, context.getAction().getStatus());
+
+        String hadoopCounters = context.getVar(MapReduceActionExecutor.HADOOP_COUNTERS);
+        assertNotNull(hadoopCounters);
+        assertFalse(hadoopCounters.isEmpty());
+
         FileSystem fs = getFileSystem();
         BufferedReader br = new BufferedReader(new InputStreamReader(fs.open(new Path(getSqoopOutputDir(), "part-m-00000"))));
         int count = 0;
@@ -216,8 +222,14 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
         assertTrue(launcherId.equals(context.getAction().getExternalId()));
         assertEquals("SUCCEEDED", context.getAction().getExternalStatus());
         assertNotNull(context.getAction().getData());
+        assertNotNull(context.getAction().getExternalChildIDs());
         ae.end(context, context.getAction());
         assertEquals(WorkflowAction.Status.OK, context.getAction().getStatus());
+
+        String hadoopCounters = context.getVar(MapReduceActionExecutor.HADOOP_COUNTERS);
+        assertNotNull(hadoopCounters);
+        assertFalse(hadoopCounters.isEmpty());
+
         FileSystem fs = getFileSystem();
         FileStatus[] parts = fs.listStatus(new Path(getSqoopOutputDir()), new PathFilter() {
             @Override
