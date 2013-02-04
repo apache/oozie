@@ -1,5 +1,6 @@
 -- Oozie 3.3.2 (unreleased)
 
+OOZIE-1018 Display coord job start time, end time, pause time, concurrency in job -info (mona via tucu)
 OOZIE-1016 Tests that use junit assert or fail in a new thread report success when they are actually failing (rkanter via tucu)
 OOZIE-1017 Add test to make sure old version of Xerces isn't being used (rkanter via tucu)
 OOZIE-949 Allow the user to set 'mapred.job.name' (jrkinley via tucu)
