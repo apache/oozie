@@ -1,5 +1,6 @@
 -- Oozie 3.3.2 (unreleased)
 
+OOZIE-1137 In light of federation use actionLibPath instead of appPath (vaidya via rkanter)
 OOZIE-1126 see if checkstyle works for oozie development. (jaoki via rkanter)
 OOZIE-1124 Split pig unit tests to a separate module (rohini via virag)
 OOZIE-1087 Remove requirement of hive-default.xml from Hive action (rkanter)
