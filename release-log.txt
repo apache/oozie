@@ -1,5 +1,6 @@
 -- Oozie 3.3.2 (unreleased)
 
+OOZIE-1000 Remove Yahoo branding from docs, tests, etc (rkanter via virag)
 OOZIE-999 XLogStreamer requires log4j.appender.oozie.layout.ConversionPattern to contain a "-" (dash) or streaming logs to web UI and CLI don't work (rkanter via virag)
 OOZIE-998 test-patch doesn't allow lines that are exactly 132 characters (rkanter via tucu)
 OOZIE-739 a coord action fails because the uri points to a namenode that is not in whitelist. the E0901 error shows in the oozie.log, but not written to the database (mona,mbattisha via virag)

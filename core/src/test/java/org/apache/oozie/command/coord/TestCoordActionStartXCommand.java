@@ -225,9 +225,9 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
                 + " <sla:nominal-time>2009-03-06T10:00Z</sla:nominal-time>" + " <sla:should-start>5</sla:should-start>"
                 + " <sla:should-end>120</sla:should-end>"
                 + " <sla:notification-msg>Notifying User for nominal time : 2009-03-06T10:00Z </sla:notification-msg>"
-                + " <sla:alert-contact>abc@yahoo.com</sla:alert-contact>"
-                + " <sla:dev-contact>abc@yahoo.com</sla:dev-contact>"
-                + " <sla:qa-contact>abc@yahoo.com</sla:qa-contact>" + " <sla:se-contact>abc@yahoo.com</sla:se-contact>"
+                + " <sla:alert-contact>abc@example.com</sla:alert-contact>"
+                + " <sla:dev-contact>abc@example.com</sla:dev-contact>"
+                + " <sla:qa-contact>abc@example.com</sla:qa-contact>" + " <sla:se-contact>abc@example.com</sla:se-contact>"
                 + "</sla:info>";
         actionXml += slaXml;
         actionXml += "</action>";
@@ -255,9 +255,9 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
                 + " <sla:app-name>test-app</sla:app-name>" + " <sla:nominal-time>2009-03-06T10:00Z</sla:nominal-time>"
                 + " <sla:should-start>5</sla:should-start>" + " <sla:should-end>${2 * HOURS}</sla:should-end>"
                 + " <sla:notification-msg>Notifying User for nominal time : 2009-03-06T10:00Z </sla:notification-msg>"
-                + " <sla:alert-contact>abc@yahoo.com</sla:alert-contact>"
-                + " <sla:dev-contact>abc@yahoo.com</sla:dev-contact>"
-                + " <sla:qa-contact>abc@yahoo.com</sla:qa-contact>" + " <sla:se-contact>abc@yahoo.com</sla:se-contact>"
+                + " <sla:alert-contact>abc@example.com</sla:alert-contact>"
+                + " <sla:dev-contact>abc@example.com</sla:dev-contact>"
+                + " <sla:qa-contact>abc@example.com</sla:qa-contact>" + " <sla:se-contact>abc@example.com</sla:se-contact>"
                 + "</sla:info>";
         content += "<end name='end' />" + slaXml2 + "</workflow-app>";
         writeToFile(content, appPath);

@@ -22,9 +22,6 @@ The Maven command (mvn) must be in the command path.
 
 To generate the documentation, Oozie uses a patched Doxia plugin for Maven with improved twiki support.
 
-This plugin is available from [[http://yahoo.github.com/maven/repository][Yahoo GitHub Maven repository]] and
-it is automatically downloaded by Maven when building Oozie.
-
 The source of the modified plugin is available in the Oozie GitHub repository, in the =ydoxia= branch.
 
 To build and install it locally run the following command in the =ydoxia= branch:
