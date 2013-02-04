@@ -1,5 +1,6 @@
 -- Oozie 3.3.2 (unreleased)
 
+OOZIE-988 Improve verification of TestJavaActionExecutor.testLibFileArchives (rkanter via tucu)
 OOZIE-973 Allow Oozie to run against Hadoop trunk branch (rkanter via tucu)
 OOZIE-984 Allow EL Functions in Coordinator timeout (rkanter via tucu)
 OOZIE-972 Provide  EL function to append a string in each substring of another string separated by delimiter (kamrul via virag)
