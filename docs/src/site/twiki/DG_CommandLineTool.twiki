@@ -34,8 +34,7 @@ usage:
                 -date <arg>           coordinator/bundle rerun on action dates (requires -rerun)
                 -definition <arg>     job definition
                 -doas <arg>           doAs user, impersonates as the specified user
-                -dryrun               Supported in Oozie-2.0 or later versions ONLY - dryrun or test
-                                      run a coordinator job, job is not queued
+                -dryrun               Dryrun a workflow (since 3.4) or coordinator (since 2.0) job without actually executing it
                 -info <arg>           info of a job
                 -kill <arg>           kill a job
                 -len <arg>            number of actions (default TOTAL ACTIONS, requires -info)
@@ -474,7 +473,7 @@ Example:
 
 <verbatim>
 
-$ oozie job -oozie http://localhost:11000/oozie job -dryrun -config job.properties
+$ oozie job -oozie http://localhost:11000/oozie -dryrun -config job.properties
 ***coordJob after parsing: ***
 <coordinator-app xmlns="uri:oozie:coordinator:0.1" name="sla_coord" frequency="20"
 start="2009-03-06T010:00Z" end="2009-03-20T11:00Z" timezone="America/Los_Angeles">
@@ -518,6 +517,30 @@ Configuration file (.xml). This file must be specified with the <code>-config</c
 
 The coordinator application path must be specified in the file with the =oozie.coord.application.path= property. The
 specified path must be an HDFS path.
+
+---+++ Dryrun of Workflow Job
+
+* This feature is only supported in Oozie 3.4 or later.
+
+Example:
+
+<verbatim>
+
+$ oozie job -oozie http://localhost:11000/oozie -dryrun -config job.properties
+OK
+
+</verbatim>
+
+The =dryrun= option tests running a workflow job with given job properties and does not create the job.
+
+The parameters for the job must be provided in a file, either a Java Properties file (.properties) or a Hadoop XML
+Configuration file (.xml). This file must be specified with the <code>-config</code> option.
+
+The workflow application path must be specified in the file with the =oozie.wf.application.path= property. The
+specified path must be an HDFS path.
+
+If the workflow is accepted (i.e. Oozie is able to successfully read and parse it), it will return ="OK"=; otherwise, it will return
+an error message describing why it was rejected.
 
 ---++ Jobs Operations
 
