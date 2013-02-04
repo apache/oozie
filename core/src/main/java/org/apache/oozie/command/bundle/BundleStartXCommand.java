@@ -209,7 +209,7 @@ public class BundleStartXCommand extends StartTransitionXCommand {
                 }
             }
             catch (JDOMException jex) {
-                throw new CommandException(ErrorCode.E1301, jex);
+                throw new CommandException(ErrorCode.E1301, jex.getMessage(), jex);
             }
 
             // if there is no coordinator for this bundle, failed it.
@@ -275,7 +275,7 @@ public class BundleStartXCommand extends StartTransitionXCommand {
                 updateBundleAction();
             }
             catch (JDOMException jex) {
-                throw new CommandException(ErrorCode.E1301, jex);
+                throw new CommandException(ErrorCode.E1301, jex.getMessage(), jex);
             }
             catch (JPAExecutorException je) {
                 throw new CommandException(je);

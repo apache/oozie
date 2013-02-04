@@ -62,7 +62,7 @@ public class CoordActionGetForInputCheckJPAExecutor implements JPAExecutor<Coord
             return caBean;
         }
         catch (Exception e) {
-            throw new JPAExecutorException(ErrorCode.E0603, e);
+            throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
         }
 
     }

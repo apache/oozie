@@ -178,7 +178,7 @@ public class TestCallableQueueService extends XTestCase {
                     Thread.sleep(this.wait);
                 }
                 catch (InterruptedException exp) {
-                    throw new CommandException(ErrorCode.ETEST);
+                    throw new CommandException(ErrorCode.ETEST, "invalid_id");
                 }
                 executed = System.currentTimeMillis();
                 ;

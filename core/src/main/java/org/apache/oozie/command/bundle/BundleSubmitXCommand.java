@@ -253,11 +253,11 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
         }
         catch (IllegalArgumentException iex) {
             LOG.warn("IllegalArgumentException:  ", iex);
-            throw new CommandException(ErrorCode.E1310, iex);
+            throw new CommandException(ErrorCode.E1310, iex.getMessage(), iex);
         }
         catch (Exception ex) {
             LOG.warn("Exception:  ", ex);
-            throw new CommandException(ErrorCode.E1310, ex);
+            throw new CommandException(ErrorCode.E1310, ex.getMessage(), ex);
         }
     }
 
@@ -509,7 +509,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
             }
         }
         catch (JDOMException jex) {
-            throw new CommandException(ErrorCode.E1301, jex);
+            throw new CommandException(ErrorCode.E1301, jex.getMessage(), jex);
         }
 
         return null;

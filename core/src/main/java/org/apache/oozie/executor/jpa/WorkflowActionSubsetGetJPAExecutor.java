@@ -74,7 +74,7 @@ public class WorkflowActionSubsetGetJPAExecutor implements JPAExecutor<List<Work
             }
         }
         catch (Exception e) {
-            throw new JPAExecutorException(ErrorCode.E0605, e);
+            throw new JPAExecutorException(ErrorCode.E0605, "null", e);
         }
         return actionList;
     }

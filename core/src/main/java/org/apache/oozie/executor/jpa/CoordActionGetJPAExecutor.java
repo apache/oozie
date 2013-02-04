@@ -59,7 +59,7 @@ public class CoordActionGetJPAExecutor implements JPAExecutor<CoordinatorActionB
             caBeans = q.getResultList();
         }
         catch (Exception e) {
-            throw new JPAExecutorException(ErrorCode.E0603, e);
+            throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
         }
         CoordinatorActionBean bean = null;
         if (caBeans != null && caBeans.size() > 0) {

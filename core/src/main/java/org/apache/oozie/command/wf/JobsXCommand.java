@@ -69,7 +69,7 @@ public class JobsXCommand extends WorkflowXCommand<WorkflowsInfo> {
             return this.workflows;
         }
         catch (Exception ex) {
-            throw new CommandException(ErrorCode.E0603, ex);
+            throw new CommandException(ErrorCode.E0603, ex.getMessage(), ex);
         }
     }
 

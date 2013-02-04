@@ -57,7 +57,7 @@ public class BundleJobsGetUnpausedJPAExecutor implements JPAExecutor<List<Bundle
             }
         }
         catch (Exception e) {
-            throw new JPAExecutorException(ErrorCode.E0603, e);
+            throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
         }
         return jobList;
     }

@@ -284,7 +284,7 @@ public class V1JobServlet extends BaseJobServlet {
                         sK).write(response.getOutputStream());
             }
             catch (Exception e) {
-                throw new XServletException(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, ErrorCode.E0307, e);
+                throw new XServletException(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, ErrorCode.E0307, e.getMessage(), e);
             }
         }
         else {

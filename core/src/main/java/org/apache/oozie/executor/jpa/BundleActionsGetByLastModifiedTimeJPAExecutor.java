@@ -52,7 +52,7 @@ public class BundleActionsGetByLastModifiedTimeJPAExecutor implements JPAExecuto
             baBeans = q.getResultList();
         }
         catch (Exception e) {
-            throw new JPAExecutorException(ErrorCode.E0603, e);
+            throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
         }
 
         return baBeans;

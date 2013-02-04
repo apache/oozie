@@ -62,16 +62,13 @@ public class LiteWorkflowApp implements Writable, WorkflowApp {
     public LiteWorkflowApp addNode(NodeDef node) throws WorkflowException {
         ParamChecker.notNull(node, "node");
         if (complete) {
-            throw new WorkflowException(ErrorCode.E0704,
-                                        XLog.format("Definition [{0}] already complete", name));
+            throw new WorkflowException(ErrorCode.E0704, name);
         }
         if (nodesMap.containsKey(node.getName())) {
-            throw new WorkflowException(ErrorCode.E0705,
-                                        XLog.format("Node [{0}] already defined", node.getName()));
+            throw new WorkflowException(ErrorCode.E0705, node.getName());
         }
         if (node.getTransitions().contains(node.getName())) {
-            throw new WorkflowException(ErrorCode.E0706,
-                                        XLog.format("Node [{0}] cannot transition to itself", node.getName()));
+            throw new WorkflowException(ErrorCode.E0706, node.getName());
         }
         nodesMap.put(node.getName(), node);
         if (node instanceof EndNodeDef) {

@@ -70,7 +70,7 @@ public class WfEndXCommand extends WorkflowXCommand<Void> {
         }
         catch (Exception e) {
             LOG.error("Unable to delete WF temp dir of wf id :" + job.getId(), e);
-            throw new CommandException(ErrorCode.E0819);
+            throw new CommandException(ErrorCode.E0819, job.getId(), e);
         }
 
     }

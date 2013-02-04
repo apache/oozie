@@ -63,7 +63,7 @@ public class BundleJobsGetForPurgeJPAExecutor implements JPAExecutor<List<Bundle
             bundleJobs = jobQ.getResultList();
         }
         catch (Exception e) {
-            throw new JPAExecutorException(ErrorCode.E0603, e);
+            throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
         }
         return bundleJobs;
     }

@@ -144,10 +144,10 @@ public class ResumeXCommand extends WorkflowXCommand<Void> {
             throw new CommandException(e);
         }
         catch (IOException e) {
-            throw new CommandException(ErrorCode.E0902, e);
+            throw new CommandException(ErrorCode.E0902, e.getMessage(), e);
         }
         catch (URISyntaxException e) {
-            throw new CommandException(ErrorCode.E0902, e);
+            throw new CommandException(ErrorCode.E0902, e.getMessage(), e);
         }
         finally {
             // update coordinator action

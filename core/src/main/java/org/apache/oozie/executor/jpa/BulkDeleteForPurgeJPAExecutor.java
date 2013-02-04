@@ -106,7 +106,7 @@ public class BulkDeleteForPurgeJPAExecutor implements JPAExecutor<Integer> {
             }
         }
         catch (Exception e) {
-            throw new JPAExecutorException(ErrorCode.E0603, e);
+            throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
         }
         return actionsDeleted;
     }

@@ -93,7 +93,7 @@ public class BulkJPAExecutor implements JPAExecutor<BulkResponseInfo> {
             return bulk;
         }
         catch (Exception e) {
-            throw new JPAExecutorException(ErrorCode.E0603, e);
+            throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
         }
     }
 

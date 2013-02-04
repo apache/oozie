@@ -193,7 +193,7 @@ public class CoordinatorEngine extends BaseEngine {
     @Override
     @Deprecated
     public void reRun(String jobId, Configuration conf) throws BaseEngineException {
-        throw new BaseEngineException(new XException(ErrorCode.E0301));
+        throw new BaseEngineException(new XException(ErrorCode.E0301, "invalid use of rerun"));
     }
 
     /**
@@ -235,7 +235,7 @@ public class CoordinatorEngine extends BaseEngine {
     @Override
     @Deprecated
     public void start(String jobId) throws BaseEngineException {
-        throw new BaseEngineException(new XException(ErrorCode.E0301));
+        throw new BaseEngineException(new XException(ErrorCode.E0301, "invalid use of start"));
     }
 
     /*
@@ -285,14 +285,18 @@ public class CoordinatorEngine extends BaseEngine {
                         int end;
                         try {
                             start = Integer.parseInt(range[0].trim());
-                            end = Integer.parseInt(range[1].trim());
-                            if (start > end) {
-                                throw new CommandException(ErrorCode.E0302, "format is wrong for action's range '" + s
-                                        + "'");
-                            }
+                        } catch (NumberFormatException ne) {
+                            throw new CommandException(ErrorCode.E0302, "could not parse " + range[0].trim() + "into an integer",
+                                    ne);
                         }
-                        catch (NumberFormatException ne) {
-                            throw new CommandException(ErrorCode.E0302, ne);
+                        try {
+                            end = Integer.parseInt(range[1].trim());
+                        } catch (NumberFormatException ne) {
+                            throw new CommandException(ErrorCode.E0302, "could not parse " + range[1].trim() + "into an integer",
+                                    ne);
+                        }
+                        if (start > end) {
+                            throw new CommandException(ErrorCode.E0302, "format is wrong for action's range '" + s + "'");
                         }
                         for (int i = start; i <= end; i++) {
                             actions.add(jobId + "@" + i);
@@ -416,7 +420,7 @@ public class CoordinatorEngine extends BaseEngine {
      */
     @Override
     public WorkflowJob getJob(String jobId) throws BaseEngineException {
-        throw new BaseEngineException(new XException(ErrorCode.E0301));
+        throw new BaseEngineException(new XException(ErrorCode.E0301, "cannot get a workflow job from CoordinatorEngine"));
     }
 
     /*
@@ -426,7 +430,7 @@ public class CoordinatorEngine extends BaseEngine {
      */
     @Override
     public WorkflowJob getJob(String jobId, int start, int length) throws BaseEngineException {
-        throw new BaseEngineException(new XException(ErrorCode.E0301));
+        throw new BaseEngineException(new XException(ErrorCode.E0301, "cannot get a workflow job from CoordinatorEngine"));
     }
 
     private static final Set<String> FILTER_NAMES = new HashSet<String>();

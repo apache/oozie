@@ -104,7 +104,7 @@ public class CoordUtils {
                     }
                 }
                 catch (ParseException e) {
-                    throw new CommandException(ErrorCode.E0302, e);
+                    throw new CommandException(ErrorCode.E0302, s.trim(), e);
                 }
                 catch (JPAExecutorException e) {
                     throw new CommandException(e);
@@ -146,17 +146,20 @@ public class CoordUtils {
                 }
                 int start;
                 int end;
+                //Get the starting and ending action numbers
                 try {
-                    //Get the starting and ending action numbers
                     start = Integer.parseInt(range[0].trim());
-                    end = Integer.parseInt(range[1].trim());
-                    if (start > end) {
-                        throw new CommandException(ErrorCode.E0302, "format is wrong for action's range '" + s
-                                + "', starting action number of the range should be less than ending action number, an example will be 1-4");
-                    }
+                } catch (NumberFormatException ne) {
+                    throw new CommandException(ErrorCode.E0302, "could not parse " + range[0].trim() + "into an integer", ne);
                 }
-                catch (NumberFormatException ne) {
-                    throw new CommandException(ErrorCode.E0302, ne);
+                try {
+                    end = Integer.parseInt(range[1].trim());
+                } catch (NumberFormatException ne) {
+                    throw new CommandException(ErrorCode.E0302, "could not parse " + range[1].trim() + "into an integer", ne);
+                }
+                if (start > end) {
+                    throw new CommandException(ErrorCode.E0302, "format is wrong for action's range '" + s + "', starting action"
+                            + "number of the range should be less than ending action number, an example will be 1-4");
                 }
                 // Add the actionIds
                 for (int i = start; i <= end; i++) {

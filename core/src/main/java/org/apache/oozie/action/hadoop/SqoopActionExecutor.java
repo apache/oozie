@@ -179,7 +179,7 @@ public class SqoopActionExecutor extends JavaActionExecutor {
                             && (statsJsonString.getBytes().length <= getMaxExternalStatsSize())) {
                         context.setExecutionStats(statsJsonString);
                         log.debug(
-                          "Printing stats for sqoop action as a JSON string : [{0}]" + statsJsonString);
+                          "Printing stats for sqoop action as a JSON string : [{0}]", statsJsonString);
                     }
                 } else {
                     context.setVar(MapReduceActionExecutor.HADOOP_COUNTERS, "");

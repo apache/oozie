@@ -73,7 +73,7 @@ public class WorkflowInfoWithActionsSubsetGetJPAExecutor implements JPAExecutor<
                 throw (JPAExecutorException) ex;
             }
             else {
-                throw new JPAExecutorException(ErrorCode.E0603, ex);
+                throw new JPAExecutorException(ErrorCode.E0603, ex.getMessage(), ex);
             }
         }
 
