@@ -36,6 +36,18 @@ import java.util.UUID;
 public class TestCommand extends XTestCase {
     private static List<String> EXECUTED = Collections.synchronizedList(new ArrayList<String>());
 
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        new Services().init();
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        Services.get().destroy();
+        super.tearDown();
+    }
+
     private static class DummyXCallable implements XCallable<Void> {
         private String name;
         private String key = null;
@@ -140,9 +152,6 @@ public class TestCommand extends XTestCase {
     }
 
     public void testDagCommand() throws Exception {
-        Services services = new Services();
-        services.init();
-
         XLog.Info.get().clear();
         XLog.Info.get().setParameter(DagXLogInfoService.JOB, "job");
         XLog.Info.get().setParameter(DagXLogInfoService.ACTION, "action");
@@ -191,9 +200,6 @@ public class TestCommand extends XTestCase {
 
         assertEquals(1, EXECUTED.size());
         assertEquals(Arrays.asList("ex"), EXECUTED);
-
-
-        services.destroy();
     }
 
     /**

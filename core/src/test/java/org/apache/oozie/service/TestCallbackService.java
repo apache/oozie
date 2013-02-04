@@ -23,18 +23,25 @@ import org.apache.oozie.test.XTestCase;
 
 public class TestCallbackService extends XTestCase {
 
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        new Services().init();
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        Services.get().destroy();
+        super.tearDown();
+    }
+
     public void testService() throws Exception {
-        Services services = new Services();
-        services.init();
-        CallbackService cs = services.get(CallbackService.class);
+        CallbackService cs = Services.get().get(CallbackService.class);
         assertNotNull(cs);
-        services.destroy();
     }
 
     public void testCallbacks() throws Exception {
-        Services services = new Services();
-        services.init();
-        CallbackService cs = services.get(CallbackService.class);
+        CallbackService cs = Services.get().get(CallbackService.class);
         assertNotNull(cs);
         String callback = cs.createCallBackUrl("a", "@STATUS");
         assertTrue(callback.contains("http://"));
@@ -43,7 +50,6 @@ public class TestCallbackService extends XTestCase {
         callback = callback.replace("@STATUS", "OK");
         assertEquals("a", cs.getActionId(callback));
         assertEquals("OK", cs.getExternalStatus(callback));
-        services.destroy();
     }
 
 }

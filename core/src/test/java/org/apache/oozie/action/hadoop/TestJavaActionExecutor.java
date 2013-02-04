@@ -1029,6 +1029,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
             Path appPath = new Path("localfs://namenode:port/mydir");
             JavaActionExecutor ae = new JavaActionExecutor();
             JobConf conf = ae.createBaseHadoopConf(context, eActionXml);
+            Services.get().destroy();
             setSystemProperty(HadoopAccessorService.SUPPORTED_FILESYSTEMS, "hdfs,viewfs");
             new Services().init();
             ae.setupActionConf(conf, context, eActionXml, appPath);

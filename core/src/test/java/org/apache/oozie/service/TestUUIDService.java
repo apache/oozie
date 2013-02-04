@@ -49,36 +49,48 @@ public class TestUUIDService extends XTestCase {
         setSystemProperty(UUIDService.CONF_GENERATOR, "counter");
         Services services = new Services();
         services.init();
-        UUIDService uuid = services.get(UUIDService.class);
-        String id = uuid.generateId(ApplicationType.WORKFLOW);
-        assertTrue(id.startsWith("0000000-"));
-        for (int i = 0; i < 1000; i++) {
-            id = uuid.generateId(ApplicationType.WORKFLOW);
+        try {
+            UUIDService uuid = services.get(UUIDService.class);
+            String id = uuid.generateId(ApplicationType.WORKFLOW);
+            assertTrue(id.startsWith("0000000-"));
+            for (int i = 0; i < 1000; i++) {
+                id = uuid.generateId(ApplicationType.WORKFLOW);
+            }
+            assertTrue(id.startsWith("0001000-"));
         }
-        assertTrue(id.startsWith("0001000-"));
-        services.destroy();
+        finally {
+            services.destroy();
+        }
     }
 
     public void testChildId() throws Exception {
         setSystemProperty(UUIDService.CONF_GENERATOR, "counter");
         Services services = new Services();
         services.init();
-        UUIDService uuid = services.get(UUIDService.class);
-        String id = uuid.generateId(ApplicationType.WORKFLOW);
-        String childId = uuid.generateChildId(id, "a");
-        assertEquals(id, uuid.getId(childId));
-        assertEquals("a", uuid.getChildName(childId));
-        services.destroy();
+        try {
+            UUIDService uuid = services.get(UUIDService.class);
+            String id = uuid.generateId(ApplicationType.WORKFLOW);
+            String childId = uuid.generateChildId(id, "a");
+            assertEquals(id, uuid.getId(childId));
+            assertEquals("a", uuid.getChildName(childId));
+        }
+        finally {
+            services.destroy();
+        }
 
         setSystemProperty(UUIDService.CONF_GENERATOR, "random");
         services = new Services();
         services.init();
-        uuid = services.get(UUIDService.class);
-        id = uuid.generateId(ApplicationType.WORKFLOW);
-        childId = uuid.generateChildId(id, "a");
-        assertEquals(id, uuid.getId(childId));
-        assertEquals("a", uuid.getChildName(childId));
-        services.destroy();
+        try {
+            UUIDService uuid = services.get(UUIDService.class);
+            String id = uuid.generateId(ApplicationType.WORKFLOW);
+            String childId = uuid.generateChildId(id, "a");
+            assertEquals(id, uuid.getId(childId));
+            assertEquals("a", uuid.getChildName(childId));
+        }
+        finally {
+            services.destroy();
+        }
     }
 
 }

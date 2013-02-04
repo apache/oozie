@@ -138,7 +138,9 @@ public class TestLiteWorkflowAppService extends XTestCase {
         catch (Exception ex) {
             //nop
         }
-        services.destroy();
+        finally {
+            services.destroy();
+        }
     }
 
     public void testSchema() throws Exception {

@@ -57,6 +57,9 @@ public class TestGroupsService extends XTestCase {
         catch (Exception ex) {
             fail(ex.toString());
         }
+        finally {
+            services.destroy();
+        }
     }
 
 }

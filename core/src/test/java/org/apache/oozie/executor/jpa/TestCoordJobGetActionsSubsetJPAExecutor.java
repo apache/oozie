@@ -159,22 +159,19 @@ public class TestCoordJobGetActionsSubsetJPAExecutor extends XDataTestCase {
     }
 
     public void testGetActionAllColumns() throws Exception{
+        services.destroy();
         setSystemProperty(CoordActionGetForInfoJPAExecutor.COORD_GET_ALL_COLS_FOR_ACTION, "true");
-        new Services().init();
-        try {
-            int actionNum = 1;
-            String slaXml = "slaXml";
-            String resourceXmlName = "coord-action-get.xml";
-            CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
-            CoordinatorActionBean action = createCoordAction(job.getId(), actionNum, CoordinatorAction.Status.WAITING,
-                    resourceXmlName, 0);
-            action.setSlaXml(slaXml);
-            insertRecordCoordAction(action);
-            _testGetForInfoAllActions(job.getId(), slaXml, 1, 1);
-        }
-        finally {
-            Services.get().destroy();
-        }
+        services = new Services();
+        services.init();
+        int actionNum = 1;
+        String slaXml = "slaXml";
+        String resourceXmlName = "coord-action-get.xml";
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
+        CoordinatorActionBean action = createCoordAction(job.getId(), actionNum, CoordinatorAction.Status.WAITING,
+                resourceXmlName, 0);
+        action.setSlaXml(slaXml);
+        insertRecordCoordAction(action);
+        _testGetForInfoAllActions(job.getId(), slaXml, 1, 1);
     }
 
     private void _testGetForInfoAllActions(String jobId, String slaXml, int start, int len) throws Exception {

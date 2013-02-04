@@ -123,22 +123,18 @@ public class TestCoordActionGetForInfoJPAExecutor extends XDataTestCase {
     }
 
     public void testCoordActionGetAllColumns() throws Exception {
+        services.destroy();
         setSystemProperty(CoordActionGetForInfoJPAExecutor.COORD_GET_ALL_COLS_FOR_ACTION, "true");
-        new Services().init();
-        try {
-            String resourceXmlName = "coord-action-get.xml";
-            CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
-            CoordinatorActionBean action = createCoordAction(job.getId(), 1, CoordinatorAction.Status.WAITING,
-                    resourceXmlName, 0);
-            String slaXml = "slaXml";
-            action.setSlaXml(slaXml);
-            // Insert the action
-            insertRecordCoordAction(action);
-            _testGetForInfoAllActions(action.getId(), slaXml);
-        }
-        finally {
-            Services.get().destroy();
-        }
+        services = new Services();
+        services.init();
+        String resourceXmlName = "coord-action-get.xml";
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
+        CoordinatorActionBean action = createCoordAction(job.getId(), 1, CoordinatorAction.Status.WAITING, resourceXmlName, 0);
+        String slaXml = "slaXml";
+        action.setSlaXml(slaXml);
+        // Insert the action
+        insertRecordCoordAction(action);
+        _testGetForInfoAllActions(action.getId(), slaXml);
     }
 
     private void _testGetForInfoAllActions(String actionId, String slaXml) throws Exception{

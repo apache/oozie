@@ -21,10 +21,20 @@ import org.apache.oozie.test.XTestCase;
 
 public class TestMemoryLocksService extends XTestCase {
 
-    public void testService() throws Exception {
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
         new Services().init();
-        assertNotNull(Services.get().get(MemoryLocksService.class));
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
         Services.get().destroy();
+        super.tearDown();
+    }
+
+    public void testService() throws Exception {
+        assertNotNull(Services.get().get(MemoryLocksService.class));
     }
 
 }
