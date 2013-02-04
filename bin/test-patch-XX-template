@@ -84,7 +84,7 @@ case $OP in
   post)
     ;;
   report)
-    echo "+1 ${TASKNAME}" >> $SUMMARYFILE
+    echo "{color:green}+1{code} ${TASKNAME}" >> $SUMMARYFILE
     ;;
 esac
 
