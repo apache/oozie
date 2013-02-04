@@ -1,5 +1,6 @@
 -- Oozie 3.3.2 (unreleased)
 
+OOZIE-987 Fix minor bug in one of the uber jar tests (rkanter via tucu)
 OOZIE-988 Improve verification of TestJavaActionExecutor.testLibFileArchives (rkanter via tucu)
 OOZIE-973 Allow Oozie to run against Hadoop trunk branch (rkanter via tucu)
 OOZIE-984 Allow EL Functions in Coordinator timeout (rkanter via tucu)

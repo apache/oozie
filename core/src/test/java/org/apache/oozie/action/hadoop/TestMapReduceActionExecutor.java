@@ -172,7 +172,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
             actionXml = createUberJarActionXML(getNameNodeUri() + "/app/job.jar", "");
             conf = ae.createBaseHadoopConf(context, actionXml);
             ae.setupActionConf(conf, context, actionXml, getFsTestCaseDir());
-            assertEquals(getNameNodeUri() + "/app/job.jar", conf.get("oozie.mapreduce.uber.jar"));
+            fail("ActionExecutorException expected because uber jars are disabled");
         } catch (ActionExecutorException aee) {
             assertEquals("MR003", aee.getErrorCode());
             assertEquals(ActionExecutorException.ErrorType.ERROR, aee.getErrorType());
