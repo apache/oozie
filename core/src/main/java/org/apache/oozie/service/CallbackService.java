@@ -62,8 +62,8 @@ public class CallbackService implements Service {
     }
 
     private static final String ID_PARAM = "id=";
-    private static final String STATUS_PARAM = "&status=";
-    private static final String CALL_BACK_QUERY_STRING = "{0}?" + ID_PARAM + "{1}" + STATUS_PARAM + "{2}&";
+    private static final String STATUS_PARAM = "status=";
+    private static final String CALL_BACK_QUERY_STRING = "{0}?" + ID_PARAM + "{1}" + "&" + STATUS_PARAM + "{2}&";
 
     /**
      * Create a callback URL.
