@@ -381,13 +381,19 @@ postPatchRun
 createReports
 echo "" >> ${SUMMARYFILE}
 echo "----------------------------" >> ${SUMMARYFILE}
-MINUSONES=`grep -c "\-1" ${SUMMARYFILE}`
+MINUSONES=`grep -c "\}\-1" ${SUMMARYFILE}`
 if [[ $MINUSONES == 0 ]]; then
   echo "{color:green}Overall result: Good!, no -1s{color}" >> ${SUMMARYFILE}
 else
   echo "{color:red}Overall result: Please check the reported -1(s){color}" >> ${SUMMARYFILE}
 fi
 echo "" >> ${SUMMARYFILE}
+WARNINGS=`grep -c "\}WARNING" ${SUMMARYFILE}`
+if [[ $WARNINGS != 0 ]]; then
+  echo "{color:red}There is at least one warning, please check{color}" >> ${SUMMARYFILE}
+fi
+echo "" >> ${SUMMARYFILE}
+
 
 if [ ! -z "${JIRAISSUE}" ]; then
   echo "The full output of the test-patch run is available at"  >> ${SUMMARYFILE}
