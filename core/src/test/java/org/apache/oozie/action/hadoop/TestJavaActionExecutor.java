@@ -1019,6 +1019,52 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertTrue(cacheFilesStr.contains(jar3Path.toString()));
     }
 
+    public void testAddShareLibSchemeAndAuthority() throws Exception {
+        JavaActionExecutor ae = new JavaActionExecutor() {
+            @Override
+            protected String getDefaultShareLibName(Element actionXml) {
+                return "java-action-executor";
+            }
+        };
+        String actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+                + getNameNodeUri() + "</name-node>" + "<main-class>" + LauncherMainTester.class.getName()
+                + "</main-class>" + "</java>";
+        Element eActionXml = XmlUtils.parseXml(actionXml);
+        Context context = createContext(actionXml, null);
+
+        // Set sharelib to a relative path (i.e. no scheme nor authority)
+        Services.get().destroy();
+        setSystemProperty(WorkflowAppService.SYSTEM_LIB_PATH, "/user/" + getOozieUser() + "/share/");
+        new Services().init();
+        Path appPath = getAppPath();
+        JobConf conf = ae.createBaseHadoopConf(context, eActionXml);
+        // The next line should not throw an Exception because it will get the scheme and authority from the appPath, and not the
+        // sharelib path because it doesn't have a scheme or authority
+        ae.addShareLib(appPath, conf, "java-action-executor");
+
+        appPath = new Path("foo://bar:1234/blah");
+        conf = ae.createBaseHadoopConf(context, eActionXml);
+        // The next line should throw an Exception because it will get the scheme and authority from the appPath, which is obviously
+        // invalid, and not the sharelib path because it doesn't have a scheme or authority
+        try {
+            ae.addShareLib(appPath, conf, "java-action-executor");
+        }
+        catch (ActionExecutorException aee) {
+            assertEquals("E0902", aee.getErrorCode());
+            assertTrue(aee.getMessage().contains("[No FileSystem for scheme: foo]"));
+        }
+
+        // Set sharelib to a full path (i.e. include scheme and authority)
+        Services.get().destroy();
+        setSystemProperty(WorkflowAppService.SYSTEM_LIB_PATH, getNameNodeUri() + "/user/" + getOozieUser() + "/share/");
+        new Services().init();
+        appPath = new Path("foo://bar:1234/blah");
+        conf = ae.createBaseHadoopConf(context, eActionXml);
+        // The next line should not throw an Exception because it will get the scheme and authority from the sharelib path (and not
+        // from the obviously invalid appPath)
+        ae.addShareLib(appPath, conf, "java-action-executor");
+    }
+
     public void testFilesystemScheme() throws Exception {
         try {
             String actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
