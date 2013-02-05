@@ -23,6 +23,7 @@ import java.util.Properties;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.apache.hadoop.security.authentication.client.AuthenticationException;
 import org.apache.hadoop.security.authentication.server.AuthenticationToken;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XTestCase;
@@ -96,5 +97,44 @@ public class TestExampleAltAuthenticationHandler extends XTestCase {
         assertEquals("someUser", token.getUserName());
         assertEquals("someUser", token.getName());
         assertEquals("alt-kerberos", token.getType());
+    }
+
+    // Some browsers or server implementations will quote cookie values, so test that behavior by repeating testAuthenticateCookie()
+    // but with "\"someUser\"" instead of "someUser"
+    public void testAuthenticateCookieQuoted() throws Exception {
+        HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
+        HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
+
+        // A User-Agent without "java" in it is considered to be a browser
+        Mockito.when(request.getHeader("User-Agent")).thenReturn("Some Browser");
+
+        // We need the request to return the auth cookie
+        Cookie[] cookies = {new Cookie("some.other.cookie", "someValue"),
+                            new Cookie("oozie.web.login.auth", "\"someUser\"")};
+        Mockito.when(request.getCookies()).thenReturn(cookies);
+
+        AuthenticationToken token = handler.authenticate(request, response);
+        assertEquals("someUser", token.getUserName());
+        assertEquals("someUser", token.getName());
+        assertEquals("alt-kerberos", token.getType());
+    }
+
+    public void testAuthenticateCookieQuotedInvalid() throws Exception {
+        HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
+        HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
+
+        // A User-Agent without "java" in it is considered to be a browser
+        Mockito.when(request.getHeader("User-Agent")).thenReturn("Some Browser");
+
+        // We need the request to return the auth cookie
+        Cookie[] cookies = {new Cookie("some.other.cookie", "someValue"),
+                            new Cookie("oozie.web.login.auth", "\"\"")};
+        Mockito.when(request.getCookies()).thenReturn(cookies);
+
+        try {
+            handler.authenticate(request, response);
+        } catch(AuthenticationException ae) {
+            assertEquals("Unable to parse authentication cookie", ae.getMessage());
+        }
     }
 }

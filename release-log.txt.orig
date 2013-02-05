@@ -1,5 +1,6 @@
 -- Oozie 3.3.2 (unreleased)
 
+OOZIE-1103 Create example using AltKerberosAuthenticationHandler (rkanter)
 OOZIE-1206 Add license headers to TestCoordActionNotificationXCommand.java and TestNotificationXCommand.java in branch-3.3 (rkanter)
 OOZIE-1179 coord action in WAITING when no definition of dataset in coord job xml (mona)
 OOZIE-1194 test-patch shouldn't run the testHive profile because it not longer exists (rkanter)
