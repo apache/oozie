@@ -187,7 +187,7 @@ in this property are contained in the user-agent of the request, Kerberos will b
 be used.
 <verbatim>
    <property>
-        <name>alt-kerberos.non-browser.user-agents</name>
+        <name>oozie.authentication.alt-kerberos.non-browser.user-agents</name>
         <value>java,curl,wget,perl</value>
    </property>
 </verbatim>
