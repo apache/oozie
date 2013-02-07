@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1196 HCat EL functions for database and table should be modified (mona)
 OOZIE-1210 Rework uri handling for Prepare actions and jms server mapping (rohini via virag)
 OOZIE-1179 coord action in WAITING when no definition of dataset in coord job xml (mona)
 OOZIE-1188 Typo in documentation for using login server example (rkanter)
