@@ -1332,6 +1332,15 @@ The =capture-output= element can be used to propagate values back into Oozie con
 EL-functions. This needs to be written out as a java properties format file. The filename is obtained via a System 
 property specified by the constant =JavaMainMapper.OOZIE_JAVA_MAIN_CAPTURE_OUTPUT_FILE=
 
+*IMPORTANT:* In order for a Java action to succeed on a secure cluster, it must propagate the Hadoop delegation token like in the
+following code snippet (this is benign on non-secure clusters):
+<verbatim>
+// propagate delegation related props from launcher job to MR job
+if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
+    jobConf.set("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
+}
+</verbatim>
+
 *IMPORTANT:* Because the Java application is run from within a Map-Reduce job, from Hadoop 0.20. onwards a queue must
 be assigned to it. The queue name must be specified as a configuration property.
 
