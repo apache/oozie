@@ -132,6 +132,8 @@ updateJira() {
 ###############################################################################
 cleanupAndExit() {
   updateJira
+  echo "test-patch exit code: $1"
+  echo
   exit $1
 }
 ###############################################################################
@@ -407,5 +409,5 @@ cat ${SUMMARYFILE} | sed -e 's/{color}//' -e 's/{color:green}//' -e 's/{color:re
 
 cat ${SUMMARYFILETXT}
 
-grep "\-1" ${SUMMARYFILE} &> /dev/null
-cleanupAndExit `expr $? = 0`
+grep "^+1 Overall result" ${SUMMARYFILETXT} &> /dev/null
+cleanupAndExit "$?"
