@@ -18,6 +18,7 @@
 package org.apache.oozie.action.hadoop;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.mapred.JobConf;
@@ -46,6 +47,7 @@ import java.io.FileOutputStream;
 import java.io.Writer;
 import java.io.OutputStreamWriter;
 import java.io.StringReader;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -894,4 +896,115 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         e.addContent(new Element("streaming"));
         assertEquals("mapreduce-streaming", ae.getDefaultShareLibName(e));
     }
+
+    /**
+     * https://issues.apache.org/jira/browse/OOZIE-87
+     * This test covers map-reduce action
+     * @throws Exception
+     */
+    public void testCommaSeparatedFilesAndArchives() throws Exception {
+        Path root = new Path(getFsTestCaseDir(), "root");
+
+        Path jar = new Path("jar.jar");
+        getFileSystem().create(new Path(getAppPath(), jar)).close();
+        Path rootJar = new Path(root, "rootJar.jar");
+        getFileSystem().create(rootJar).close();
+
+        Path file = new Path("file");
+        getFileSystem().create(new Path(getAppPath(), file)).close();
+        Path rootFile = new Path(root, "rootFile");
+        getFileSystem().create(rootFile).close();
+
+        Path so = new Path("soFile.so");
+        getFileSystem().create(new Path(getAppPath(), so)).close();
+        Path rootSo = new Path(root, "rootSoFile.so");
+        getFileSystem().create(rootSo).close();
+
+        Path so1 = new Path("soFile.so.1");
+        getFileSystem().create(new Path(getAppPath(), so1)).close();
+        Path rootSo1 = new Path(root, "rootSoFile.so.1");
+        getFileSystem().create(rootSo1).close();
+
+        Path archive = new Path("archive.tar");
+        getFileSystem().create(new Path(getAppPath(), archive)).close();
+        Path rootArchive = new Path(root, "rootArchive.tar");
+        getFileSystem().create(rootArchive).close();
+
+        String actionXml = "<map-reduce>" +
+                "      <job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "      <name-node>" + getNameNodeUri() + "</name-node>" +
+                "      <main-class>CLASS</main-class>" +
+                "      <file>" + jar.toString() +
+                            "," + rootJar.toString() +
+                            "," + file.toString() +
+                            ", " + rootFile.toString() + // with leading and trailing spaces
+                            "  ," + so.toString() +
+                            "," + rootSo.toString() +
+                            "," + so1.toString() +
+                            "," + rootSo1.toString() + "</file>\n" +
+                "      <archive>" + archive.toString() + ", "
+                            + rootArchive.toString() + " </archive>\n" + // with leading and trailing spaces
+                "</map-reduce>";
+
+        Element eActionXml = XmlUtils.parseXml(actionXml);
+
+        Context context = createContext("map-reduce", actionXml);
+
+        Path appPath = getAppPath();
+
+        MapReduceActionExecutor ae = new MapReduceActionExecutor();
+
+        Configuration jobConf = ae.createBaseHadoopConf(context, eActionXml);
+        ae.setupActionConf(jobConf, context, eActionXml, appPath);
+        ae.setLibFilesArchives(context, eActionXml, appPath, jobConf);
+
+
+        assertTrue(DistributedCache.getSymlink(jobConf));
+
+        Path[] filesInClasspath = DistributedCache.getFileClassPaths(jobConf);
+        for (Path p : new Path[]{new Path(getAppPath(), jar), rootJar}) {
+            boolean found = false;
+            for (Path c : filesInClasspath) {
+                if (!found && p.toUri().getPath().equals(c.toUri().getPath())) {
+                    found = true;
+                }
+            }
+            assertTrue("file " + p.toUri().getPath() + " not found in classpath", found);
+        }
+        for (Path p : new Path[]{new Path(getAppPath(), file), rootFile, new Path(getAppPath(), so), rootSo,
+                                new Path(getAppPath(), so1), rootSo1}) {
+            boolean found = false;
+            for (Path c : filesInClasspath) {
+                if (!found && p.toUri().getPath().equals(c.toUri().getPath())) {
+                    found = true;
+                }
+            }
+            assertFalse("file " + p.toUri().getPath() + " found in classpath", found);
+        }
+
+        URI[] filesInCache = DistributedCache.getCacheFiles(jobConf);
+        for (Path p : new Path[]{new Path(getAppPath(), jar), rootJar, new Path(getAppPath(), file), rootFile,
+                                new Path(getAppPath(), so), rootSo, new Path(getAppPath(), so1), rootSo1}) {
+            boolean found = false;
+            for (URI c : filesInCache) {
+                if (!found && p.toUri().getPath().equals(c.getPath())) {
+                    found = true;
+                }
+            }
+            assertTrue("file " + p.toUri().getPath() + " not found in cache", found);
+        }
+
+        URI[] archivesInCache = DistributedCache.getCacheArchives(jobConf);
+        for (Path p : new Path[]{new Path(getAppPath(), archive), rootArchive}) {
+            boolean found = false;
+            for (URI c : archivesInCache) {
+                if (!found && p.toUri().getPath().equals(c.getPath())) {
+                    found = true;
+                }
+            }
+            assertTrue("archive " + p.toUri().getPath() + " not found in cache", found);
+        }
+    }
+
+
 }
