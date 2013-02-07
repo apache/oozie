@@ -18,57 +18,83 @@
 package org.apache.oozie.dependency;
 
 import java.net.URI;
-import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.oozie.service.URIAccessorException;
-import org.jdom.Element;
+import org.apache.oozie.action.hadoop.LauncherURIHandler;
 
-public abstract class URIHandler {
+public interface URIHandler {
 
-    public abstract void init(Configuration conf, boolean isFrontEnd);
+    /**
+     * Type of the dependency. PULL dependencies are those whose availability is determined by
+     * polling and PUSH dependencies are those whose availability is known from notifications
+     */
+    public enum DependencyType {
+        PULL,
+        PUSH;
+    }
+
+    /**
+     * Initialize the URIHandler
+     *
+     * @param conf Configuration for initialization
+     */
+    public void init(Configuration conf);
 
     /**
      * Get the list of uri schemes supported by this URIHandler
      *
      * @return supported list of uri schemes
      */
-    public abstract Set<String> getSupportedSchemes();
-
-    /** Get the list of dependent classes to ship to the hadoop launcher job for prepare actions
-     * @return dependent classes to ship to the hadoop job
-     */
-    public abstract Collection<Class<?>> getClassesToShip();
+    public Set<String> getSupportedSchemes();
 
     /**
-     * Get the type of dependency type of the URI. When the availability of the
+     * Get the URIHandler that will be used to handle the supported schemes in launcher
+     *
+     * @return LauncherURIHandler that handles URI in the launcher
+     */
+    public Class<? extends LauncherURIHandler> getLauncherURIHandlerClass();
+
+    /**
+     * Get list of classes to ship to launcher for LauncherURIHandler
+     *
+     * @return list of classes to ship to launcher
+     */
+    public List<Class<?>> getClassesForLauncher();
+
+    /**
+     * Get the dependency type of the URI. When the availability of the
      * URI is to be determined by polling the type is DependencyType.PULL, and
      * when the availability is received through notifications from a external
      * entity like a JMS server the type is DependencyType.PUSH
      *
      * @return dependency type of URI
      */
-    public abstract DependencyType getDependencyType(URI uri) throws URIAccessorException;
+    public DependencyType getDependencyType(URI uri) throws URIHandlerException;
 
     /**
      * Register for notifications in case of a push dependency
      *
-     * @param uri The URI to check for availability
-     * @param actionID The id of action which depends on the availability of the
-     *        uri.
+     * @param uri  The URI to check for availability
+     * @param conf Configuration to access the URI
+     * @param user name of the user the URI should be accessed as
+     * @param actionID The id of action which depends on the availability of the uri
+     *
+     * @throws URIHandlerException
      */
-    public abstract void registerForNotification(URI uri, Configuration conf, String user, String actionID)
-            throws URIAccessorException;
+    public void registerForNotification(URI uri, Configuration conf, String user, String actionID)
+            throws URIHandlerException;
 
     /**
      * Unregister from notifications in case of a push dependency
+     *
      * @param uri The URI to be removed from missing dependency
      * @param actionID The id of action which was dependent on the uri.
      *
-     * @throws URIAccessorException
+     * @throws URIHandlerException
      */
-    public abstract boolean unregisterFromNotification(URI uri, String actionID);
+    public boolean unregisterFromNotification(URI uri, String actionID);
 
     /**
      * Get the URIContext which can be used to access URI of the same scheme and
@@ -80,24 +106,9 @@ public abstract class URIHandler {
      *
      * @return Context to access URIs with same scheme and host
      *
-     * @throws URIAccessorException
+     * @throws URIHandlerException
      */
-    public abstract URIContext getURIContext(URI uri, Configuration conf, String user) throws URIAccessorException;
-
-    /**
-     * Create the resource identified by the URI
-     *
-     * @param uri URI of the dependency
-     * @param conf Configuration to access the URI
-     * @param user name of the user the URI should be accessed as. If null the
-     *        logged in user is used.
-     *
-     * @return <code>true</code> if the URI did not exist and was successfully
-     *         created; <code>false</code> if the URI already existed
-     *
-     * @throws URIAccessorException
-     */
-    public abstract boolean create(URI uri, Configuration conf, String user) throws URIAccessorException;
+    public URIContext getURIContext(URI uri, Configuration conf, String user) throws URIHandlerException;
 
     /**
      * Check if the dependency identified by the URI is available
@@ -108,9 +119,9 @@ public abstract class URIHandler {
      * @return <code>true</code> if the URI exists; <code>false</code> if the
      *         URI does not exist
      *
-     * @throws URIAccessorException
+     * @throws URIHandlerException
      */
-    public abstract boolean exists(URI uri, URIContext uriContext) throws URIAccessorException;
+    public boolean exists(URI uri, URIContext uriContext) throws URIHandlerException;
 
     /**
      * Check if the dependency identified by the URI is available
@@ -123,23 +134,9 @@ public abstract class URIHandler {
      * @return <code>true</code> if the URI exists; <code>false</code> if the
      *         URI does not exist
      *
-     * @throws URIAccessorException
+     * @throws URIHandlerException
      */
-    public abstract boolean exists(URI uri, Configuration conf, String user) throws URIAccessorException;
-
-    /**
-     * Delete the resource identified by the URI
-     *
-     * @param uri URI of the dependency
-     * @param conf Configuration to access the URI
-     * @param user name of the user the URI should be accessed as. If null the
-     *        logged in user is used.
-     *
-     * @return <code>true</code> if the URI exists and was successfully deleted;
-     *         <code>false</code> if the URI does not exist
-     * @throws URIAccessorException
-     */
-    public abstract boolean delete(URI uri, Configuration conf, String user) throws URIAccessorException;
+    public boolean exists(URI uri, Configuration conf, String user) throws URIHandlerException;
 
     /**
      * Get the URI based on the done flag
@@ -149,30 +146,21 @@ public abstract class URIHandler {
      *
      * @return the final URI with the doneFlag incorporated
      *
-     * @throws URIAccessorException
+     * @throws URIHandlerException
      */
-    public abstract String getURIWithDoneFlag(String uri, Element doneFlagElement) throws URIAccessorException;
-
-    /**
-     * Get the URI based on the done flag
-     *
-     * @param uri URI of the dependency
-     * @param doneFlag flag that determines URI availability
-     *
-     * @return the final URI with the doneFlag incorporated
-     *
-     * @throws URIAccessorException
-     */
-    public abstract String getURIWithDoneFlag(String uri, String doneFlag) throws URIAccessorException;
+    public String getURIWithDoneFlag(String uri, String doneFlag) throws URIHandlerException;
 
     /**
      * Check whether the URI is valid or not
      * @param uri
      * @return
-     * @throws URIAccessorException
+     * @throws URIHandlerException
      */
-    public abstract void validate(String uri) throws URIAccessorException;
+    public void validate(String uri) throws URIHandlerException;
 
-    public abstract void destroy();
+    /**
+     * Destroy the URIHandler
+     */
+    public void destroy();
 
 }

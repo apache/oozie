@@ -19,8 +19,9 @@ package org.apache.oozie.service;
 
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
+import org.apache.oozie.dependency.URIHandlerException;
 
-public class MetaDataAccessorException extends URIAccessorException {
+public class MetaDataAccessorException extends URIHandlerException {
 
     /**
      * Create an MetaDataAccessor Exception exception from a XException.

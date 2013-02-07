@@ -43,15 +43,13 @@ public class XLog implements Log {
         private static String template = "";
         private static List<String> parameterNames = new ArrayList<String>();
 
-        private static ThreadLocal<Info> tlLogInfo = new InfoThreadLocal();
-
-        private static class InfoThreadLocal extends ThreadLocal<Info> {
+        private static ThreadLocal<Info> tlLogInfo = new ThreadLocal<Info>() {
             @Override
             protected Info initialValue() {
                 return new Info();
             }
 
-        }
+        };
 
         /**
          * Define a <code>LogInfo</code> context parameter. <p/> The parameter name and its contextual value will be

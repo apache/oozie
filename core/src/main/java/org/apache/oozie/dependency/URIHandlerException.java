@@ -15,29 +15,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.oozie.service;
+package org.apache.oozie.dependency;
 
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
 
-public class URIAccessorException extends XException {
+public class URIHandlerException extends XException {
 
     /**
-     * Create an MetaDataAccessor Exception exception from a XException.
+     * Create an URIHandlerException Exception exception from a XException.
      *
      * @param cause the XException cause.
      */
-    public URIAccessorException(XException cause) {
+    public URIHandlerException(XException cause) {
         super(cause);
     }
 
     /**
-     * Create a MetaDataAccessor exception.
+     * Create a URIHandlerException exception.
      *
      * @param errorCode error code.
      * @param params parameters for the error code message template.
      */
-    public URIAccessorException(ErrorCode errorCode, Object... params) {
+    public URIHandlerException(ErrorCode errorCode, Object... params) {
         super(errorCode, params);
     }
 }

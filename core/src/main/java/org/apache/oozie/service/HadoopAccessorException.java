@@ -19,8 +19,9 @@ package org.apache.oozie.service;
 
 import org.apache.oozie.XException;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.dependency.URIHandlerException;
 
-public class HadoopAccessorException extends URIAccessorException {
+public class HadoopAccessorException extends URIHandlerException {
 
     /**
      * Create an HadoopAccessor exception from a XException.

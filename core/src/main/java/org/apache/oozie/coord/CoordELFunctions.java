@@ -336,7 +336,7 @@ public class CoordELFunctions {
                 // DateUtils.moveToEnd(nominalInstanceCal, getDSEndOfFlag());
             }
             if (uriContext != null) {
-                uriContext.dispose();
+                uriContext.destroy();
             }
             if (!resolved) {
                 // return unchanged future function with variable 'is_resolved'
@@ -1017,7 +1017,7 @@ public class CoordELFunctions {
                 // DateUtils.moveToEnd(nominalInstanceCal, getDSEndOfFlag());
             }
             if (uriContext != null) {
-                uriContext.dispose();
+                uriContext.destroy();
             }
             if (!resolved) {
                 // return unchanged latest function with variable 'is_resolved'

@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -139,7 +139,7 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
     public JSONObject toJSONObject() {
         return toJSONObject("GMT");
     }
-    
+
     @SuppressWarnings("unchecked")
     public JSONObject toJSONObject(String timeZoneId) {
         JSONObject json = new JSONObject();
@@ -156,7 +156,7 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
         json.put(JsonTags.COORDINATOR_JOB_CONCURRENCY, getConcurrency());
         json.put(JsonTags.COORDINATOR_JOB_TIMEOUT, getTimeout());
         json.put(JsonTags.COORDINATOR_JOB_LAST_ACTION_TIME, JsonUtils.formatDateRfc822(getLastActionTime(), timeZoneId));
-        json.put(JsonTags.COORDINATOR_JOB_NEXT_MATERIALIZED_TIME, 
+        json.put(JsonTags.COORDINATOR_JOB_NEXT_MATERIALIZED_TIME,
                 JsonUtils.formatDateRfc822(getNextMaterializedTime(), timeZoneId));
         json.put(JsonTags.COORDINATOR_JOB_START_TIME, JsonUtils.formatDateRfc822(getStartTime(), timeZoneId));
         json.put(JsonTags.COORDINATOR_JOB_END_TIME, JsonUtils.formatDateRfc822(getEndTime(), timeZoneId));
@@ -365,7 +365,7 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
 
     @Override
     public String toString() {
-        return MessageFormat.format("Coornidator application id[{0}] status[{1}]", getId(), getStatus());
+        return MessageFormat.format("Coordinator application id[{0}] status[{1}]", getId(), getStatus());
     }
 
     public void setActions(List<? extends JsonCoordinatorAction> nodes) {
@@ -405,8 +405,6 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
 
     /**
      * Set pending to true
-     *
-     * @param pending set pending to true
      */
     public void setPending() {
         this.pending = 1;
@@ -414,8 +412,6 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
 
     /**
      * Set pending to false
-     *
-     * @param pending set pending to false
      */
     public void resetPending() {
         this.pending = 0;

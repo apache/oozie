@@ -24,20 +24,36 @@ public abstract class URIContext {
     private Configuration conf;
     private String user;
 
+    /**
+     * Create a URIContext that can be used to access a URI
+     * @param conf Configuration to access the URI
+     * @param user name of the user the URI should be accessed as
+     */
     public URIContext(Configuration conf, String user) {
         this.conf = conf;
         this.user = user;
     }
 
+    /**
+     * Get the Configuration to access the URI
+     * @return Configuration to access the URI
+     */
     public Configuration getConfiguration() {
         return conf;
     }
 
+    /**
+     * Get the name of the user the URI will be accessed as
+     * @return the user name the URI will be accessed as
+     */
     public String getUser() {
         return user;
     }
 
-    public void dispose() {
+    /**
+     * Destroy the URIContext
+     */
+    public void destroy() {
     }
 
 }

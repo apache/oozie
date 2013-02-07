@@ -64,7 +64,7 @@ public class TestHCatPrepareActions extends XHCatTestCase {
                 + "</prepare>";
 
         JobConf conf = createJobConf();
-        LauncherMapper.setupURIServiceConf(conf);
+        LauncherMapper.setupLauncherURIHandlerConf(conf);
         PrepareActionsDriver.doOperations(prepareXML, conf);
         FileSystem fs = getFileSystem();
         assertFalse(fs.exists(new Path(part1)));

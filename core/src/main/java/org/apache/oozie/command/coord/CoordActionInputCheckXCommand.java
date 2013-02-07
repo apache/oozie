@@ -36,6 +36,7 @@ import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.coord.CoordELEvaluator;
 import org.apache.oozie.coord.CoordELFunctions;
 import org.apache.oozie.dependency.URIHandler;
+import org.apache.oozie.dependency.URIHandlerException;
 import org.apache.oozie.executor.jpa.CoordActionGetForInputCheckJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionUpdateForInputCheckJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionUpdateForModifiedTimeJPAExecutor;
@@ -44,7 +45,6 @@ import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.service.URIAccessorException;
 import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ELEvaluator;
@@ -134,8 +134,8 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                 nonExistList.append(CoordCommandUtils.RESOLVED_UNRESOLVED_SEPARATOR).append(nonResolvedList);
             }
             String nonExistListStr = nonExistList.toString();
-            if (!nonExistListStr.equals(missingDeps) || missingDeps.isEmpty()) {
-                // missingDeps empty means action should become READY
+            if (!nonExistListStr.equals(missingDeps)) {
+                // missingDeps null means action should become READY
                 isChangeInDependency = true;
                 coordAction.setMissingDependencies(nonExistListStr);
             }
@@ -155,7 +155,13 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                 }
             }
             else {
-                queue(new CoordActionTimeOutXCommand(coordAction), 100);
+                if (!nonExistListStr.isEmpty() && pushDeps == null || pushDeps.length() == 0) {
+                    queue(new CoordActionTimeOutXCommand(coordAction), 100);
+                }
+                else {
+                    // Let CoordPushDependencyCheckXCommand queue the timeout
+                    queue(new CoordPushDependencyCheckXCommand(coordAction.getId()));
+                }
             }
         }
         catch (Exception e) {
@@ -174,10 +180,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                 .getCreatedTime().getTime()))
                 / (60 * 1000);
         int timeOut = coordAction.getTimeOut();
-        if ((timeOut >= 0) && (waitingTime > timeOut)) {
-            return true;
-        }
-        return false;
+        return (timeOut >= 0) && (waitingTime > timeOut);
     }
 
     private void updateCoordAction(CoordinatorActionBean coordAction, boolean isChangeInDependency)
@@ -456,7 +459,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             URIHandler handler = service.getURIHandler(uri);
             return handler.exists(uri, actionConf, user);
         }
-        catch (URIAccessorException e) {
+        catch (URIHandlerException e) {
             coordAction.setErrorCode(e.getErrorCode().toString());
             coordAction.setErrorMessage(e.getMessage());
             throw new IOException(e);

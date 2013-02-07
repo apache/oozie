@@ -19,25 +19,41 @@ package org.apache.oozie.dependency;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hcatalog.api.HCatClient;
+import org.apache.oozie.util.XLog;
 
 public class HCatURIContext extends URIContext {
 
+    private static XLog LOG = XLog.getLog(HCatURIContext.class);
     private HCatClient hcatClient;
 
+    /**
+     * Create a HCatURIContext that can be used to access a hcat URI
+     *
+     * @param conf Configuration to access the URI
+     * @param user name of the user the URI should be accessed as
+     * @param hcatClient HCatClient to talk to hcatalog server
+     */
     public HCatURIContext(Configuration conf, String user, HCatClient hcatClient) {
         super(conf, user);
         this.hcatClient = hcatClient;
     }
 
+    /**
+     * Get the HCatClient to talk to hcatalog server
+     *
+     * @return HCatClient to talk to hcatalog server
+     */
     public HCatClient getHCatClient() {
         return hcatClient;
     }
 
-    public void dispose() {
+    @Override
+    public void destroy() {
         try {
             hcatClient.close();
         }
         catch (Exception ignore) {
+            LOG.warn("Error closing hcat client", ignore);
         }
     }
 

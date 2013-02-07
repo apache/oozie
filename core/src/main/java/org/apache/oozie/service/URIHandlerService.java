@@ -19,24 +19,20 @@ package org.apache.oozie.service;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Stack;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.XException;
+import org.apache.oozie.action.hadoop.LauncherURIHandler;
+import org.apache.oozie.action.hadoop.LauncherURIHandlerFactory;
 import org.apache.oozie.dependency.FSURIHandler;
-import org.apache.oozie.dependency.URIContext;
 import org.apache.oozie.dependency.URIHandler;
-import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.dependency.URIHandlerException;
 import org.apache.oozie.util.XLog;
 
 public class URIHandlerService implements Service {
@@ -48,31 +44,29 @@ public class URIHandlerService implements Service {
     public static final String URI_HANDLER_SUPPORTED_SCHEMES_SUFFIX = ".supported.schemes";
 
     private static XLog LOG = XLog.getLog(URIHandlerService.class);
-    private Configuration conf;
-    private Configuration backendConf;
+    private Configuration launcherConf;
+    private Set<Class<?>> launcherClassesToShip;
     private Map<String, URIHandler> cache;
-    private Set<Class<?>> classesToShip;
     private URIHandler defaultHandler;
 
     @Override
     public void init(Services services) throws ServiceException {
         try {
-            init(services.getConf(), true);
+            init(services.getConf());
         }
         catch (Exception e) {
             throw new ServiceException(ErrorCode.E0902, e);
         }
     }
 
-    public void init(Configuration conf, boolean isFrontEnd) throws ClassNotFoundException {
-        this.conf = conf;
+    private void init(Configuration conf) throws ClassNotFoundException {
         cache = new HashMap<String, URIHandler>();
 
         String[] classes = conf.getStrings(URI_HANDLERS, FSURIHandler.class.getName());
         for (String classname : classes) {
             Class<?> clazz = Class.forName(classname);
             URIHandler uriHandler = (URIHandler) ReflectionUtils.newInstance(clazz, null);
-            uriHandler.init(conf, isFrontEnd);
+            uriHandler.init(conf);
             for (String scheme : uriHandler.getSupportedSchemes()) {
                 cache.put(scheme, uriHandler);
             }
@@ -81,77 +75,53 @@ public class URIHandlerService implements Service {
         Class<?> defaultClass = conf.getClass(URI_HANDLER_DEFAULT, null);
         defaultHandler = (defaultClass == null) ? new FSURIHandler() : (URIHandler) ReflectionUtils.newInstance(
                 defaultClass, null);
-        defaultHandler.init(conf, isFrontEnd);
+        defaultHandler.init(conf);
         for (String scheme : defaultHandler.getSupportedSchemes()) {
             cache.put(scheme, defaultHandler);
         }
 
-        if (isFrontEnd) {
-            initClassesToShip();
-            initURIServiceBackendConf();
-        }
+        initLauncherClassesToShip();
+        initLauncherURIHandlerConf();
 
         LOG.info("Loaded urihandlers {0}", Arrays.toString(classes));
         LOG.info("Loaded default urihandler {0}", defaultHandler.getClass().getName());
     }
 
     /**
-     * Initialize classes that need to be shipped for using URIHandlerService in the launcher job
+     * Initialize classes that need to be shipped for using LauncherURIHandler in the launcher job
      */
-    private void initClassesToShip(){
-        classesToShip = new HashSet<Class<?>>();
-        classesToShip.add(Service.class);
-        classesToShip.add(ServiceException.class);
-        classesToShip.add(URIHandlerService.class);
-        classesToShip.add(URIHandler.class);
-        classesToShip.add(URIContext.class);
-        classesToShip.add(ErrorCode.class);
-        classesToShip.add(XException.class);
-        classesToShip.add(URIAccessorException.class);
-        // XLog, XLog$Level, XLog$Info, XLog$Info$InfoThreadLocal. Could not find a way to
-        // get anonymous inner classes. So created InfoThreadLocal class.
-        classesToShip.addAll(getDeclaredClasses(XLog.class));
-        classesToShip.add(ParamChecker.class);
-
+    private void initLauncherClassesToShip(){
+        launcherClassesToShip = new HashSet<Class<?>>();
+        launcherClassesToShip.add(LauncherURIHandlerFactory.class);
+        launcherClassesToShip.add(LauncherURIHandler.class);
         for (URIHandler handler : cache.values()) {
-            classesToShip.add(handler.getClass());
-            classesToShip.addAll(handler.getClassesToShip());
+            launcherClassesToShip.add(handler.getLauncherURIHandlerClass());
+            List<Class<?>> classes = handler.getClassesForLauncher();
+            if (classes != null) {
+                launcherClassesToShip.addAll(classes);
+            }
         }
+        launcherClassesToShip.add(defaultHandler.getLauncherURIHandlerClass());
     }
 
     /**
-     * Initialize configuration required for using URIHandlerService in the launcher job
+     * Initialize configuration required for using LauncherURIHandler in the launcher job
      */
-    private void initURIServiceBackendConf() {
-        backendConf = new Configuration(false);
-        String handlersConf = conf.get(URI_HANDLERS);
-        if (handlersConf != null) {
-            backendConf.set(URI_HANDLERS, handlersConf);
-        }
-        String defaultHandlerConf = conf.get(URI_HANDLER_DEFAULT);
-        if (defaultHandlerConf != null) {
-            backendConf.set(URI_HANDLER_DEFAULT, defaultHandlerConf);
-        }
+    private void initLauncherURIHandlerConf() {
+        launcherConf = new Configuration(false);
 
         for (URIHandler handler : cache.values()) {
-            String schemeConf = URI_HANDLER_SUPPORTED_SCHEMES_PREFIX + handler.getClass().getSimpleName()
-                    + URI_HANDLER_SUPPORTED_SCHEMES_SUFFIX;
-            backendConf.set(schemeConf, collectionToString(handler.getSupportedSchemes()));
+            for (String scheme : handler.getSupportedSchemes()) {
+                String schemeConf = LauncherURIHandlerFactory.CONF_LAUNCHER_URIHANDLER_SCHEME_PREFIX + scheme;
+                launcherConf.set(schemeConf, handler.getLauncherURIHandlerClass().getName());
+            }
+        }
+
+        for (String scheme : defaultHandler.getSupportedSchemes()) {
+            String schemeConf = LauncherURIHandlerFactory.CONF_LAUNCHER_URIHANDLER_SCHEME_PREFIX + scheme;
+            launcherConf.set(schemeConf, defaultHandler.getLauncherURIHandlerClass().getName());
         }
     }
-
-    private String collectionToString(Collection<String> strs) {
-        if (strs.size() == 0) {
-            return "";
-        }
-        StringBuilder sbuf = new StringBuilder();
-        for (String str : strs) {
-            sbuf.append(str);
-            sbuf.append(",");
-        }
-        sbuf.setLength(sbuf.length() - 1);
-        return sbuf.toString();
-      }
 
     @Override
     public void destroy() {
@@ -172,35 +142,35 @@ public class URIHandlerService implements Service {
      * Return the classes to be shipped to the launcher
      * @return the set of classes to be shipped to the launcher
      */
-    public Set<Class<?>> getURIHandlerClassesToShip() {
-        return classesToShip;
+    public Set<Class<?>> getClassesForLauncher() {
+        return launcherClassesToShip;
     }
 
     /**
-     * Return the configuration required to instantiate URIHandlerService in the launcher
+     * Return the configuration required to use LauncherURIHandler in the launcher
      * @return configuration
      */
-    public Configuration getURIHandlerServiceConfig() {
-        return backendConf;
+    public Configuration getLauncherConfig() {
+        return launcherConf;
     }
 
-    public URIHandler getURIHandler(String uri) throws URIAccessorException {
+    public URIHandler getURIHandler(String uri) throws URIHandlerException {
         try {
             return getURIHandler(new URI(uri));
         }
         catch (URISyntaxException e) {
-            throw new URIAccessorException(ErrorCode.E0902, e);
+            throw new URIHandlerException(ErrorCode.E0902, e);
         }
     }
 
-    public URIHandler getURIHandler(URI uri) throws URIAccessorException {
+    public URIHandler getURIHandler(URI uri) throws URIHandlerException {
         return getURIHandler(uri, false);
     }
 
-    public URIHandler getURIHandler(URI uri, boolean validateURI) throws URIAccessorException {
+    public URIHandler getURIHandler(URI uri, boolean validateURI) throws URIHandlerException {
         if (uri.getScheme() == null) {
             if (validateURI) {
-                throw new URIAccessorException(ErrorCode.E0905, uri);
+                throw new URIHandlerException(ErrorCode.E0905, uri);
             }
             else {
                 return defaultHandler;
@@ -211,7 +181,7 @@ public class URIHandlerService implements Service {
             if (handler == null) {
                 handler = cache.get("*");
                 if (handler == null) {
-                    throw new URIAccessorException(ErrorCode.E0904, uri.getScheme(), uri.toString());
+                    throw new URIHandlerException(ErrorCode.E0904, uri.getScheme(), uri.toString());
                 }
             }
             return handler;
@@ -220,14 +190,14 @@ public class URIHandlerService implements Service {
 
     /**
      * Get the URI with scheme://host:port removing the path
-     * @param uri
-     * @return
-     * @throws URIAccessorException
+     * @param uri uri template
+     * @return URI with authority and scheme
+     * @throws URIHandlerException
      */
-    public URI getAuthorityWithScheme(String uri) throws URIAccessorException {
+    public URI getAuthorityWithScheme(String uri) throws URIHandlerException {
         int index = uri.indexOf("://");
         if (index == -1) {
-            throw new URIAccessorException(ErrorCode.E0905, uri);
+            throw new URIHandlerException(ErrorCode.E0905, uri);
         }
         try {
             if (uri.indexOf(":///") != -1) {
@@ -242,22 +212,8 @@ public class URIHandlerService implements Service {
             }
         }
         catch (URISyntaxException e) {
-            throw new URIAccessorException(ErrorCode.E0906, uri, e);
+            throw new URIHandlerException(ErrorCode.E0906, uri, e);
         }
-    }
-
-    private Collection<Class<?>> getDeclaredClasses(Class<?> clazz) {
-        List<Class<?>> classes = new ArrayList<Class<?>>();
-        Stack<Class<?>> stack = new Stack<Class<?>>();
-        stack.push(clazz);
-        do {
-          clazz = stack.pop();
-          classes.add(clazz);
-          for (Class<?> dclazz : clazz.getDeclaredClasses()) {
-              stack.push(dclazz);
-          }
-        } while (!stack.isEmpty());
-        return classes;
     }
 
 }

@@ -15,9 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.oozie.dependency;
-
-import java.net.URI;
+package org.apache.oozie.action.hadoop;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobConf;
@@ -26,18 +24,19 @@ import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.test.XFsTestCase;
 import org.junit.Test;
 
-public class TestFSURIHandler extends XFsTestCase {
+public class TestLauncherFSURIHandler extends XFsTestCase {
 
     private Services services = null;
-    private URIHandlerService uriService;
     private JobConf conf;
+    private LauncherURIHandlerFactory uriHandlerFactory;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
         services = new Services();
         services.init();
-        uriService = services.get(URIHandlerService.class);
+        URIHandlerService uriService = services.get(URIHandlerService.class);
+        uriHandlerFactory = new LauncherURIHandlerFactory(uriService.getLauncherConfig());
         conf = createJobConf();
     }
 
@@ -48,17 +47,20 @@ public class TestFSURIHandler extends XFsTestCase {
     }
 
     @Test
-    public void testExists() throws Exception {
-        Path path1 = new Path(getFsTestCaseDir() + "/2012/12/02/");
-        Path path2 = new Path(getFsTestCaseDir() + "/2012/12/12/");
-        getFileSystem().mkdirs(path1);
-        URIHandler handler = uriService.getURIHandler(path1.toUri());
-        assertTrue(handler.exists(path1.toUri(), conf, getTestUser()));
-        assertFalse(handler.exists(path2.toUri(), conf, getTestUser()));
-        // Try without the scheme.
-        handler = uriService.getURIHandler(path1.toUri(), false);
-        assertTrue(handler.exists(new URI(path1.toUri().getPath()), conf, getTestUser()));
+    public void testCreate() throws Exception {
+        Path path = new Path(getFsTestCaseDir() + "/2012/12/02/");
+        LauncherURIHandler handler = uriHandlerFactory.getURIHandler(path.toUri());
+        assertTrue(handler.create(path.toUri(), conf));
+        assertTrue(getFileSystem().exists(path));
+    }
 
+    @Test
+    public void testDelete() throws Exception {
+        Path path = new Path(getFsTestCaseDir() + "/2012/12/02/");
+        LauncherURIHandler handler = uriHandlerFactory.getURIHandler(path.toUri());
+        getFileSystem().mkdirs(path);
+        assertTrue(handler.delete(path.toUri(), conf));
+        assertFalse(getFileSystem().exists(path));
     }
 
 }

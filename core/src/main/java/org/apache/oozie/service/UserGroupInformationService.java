@@ -25,11 +25,10 @@ import org.apache.hadoop.security.UserGroupInformation;
 
 public class UserGroupInformationService implements Service {
 
-    private ConcurrentMap<String, UserGroupInformation> cache;
+    private ConcurrentMap<String, UserGroupInformation> cache = new ConcurrentHashMap<String, UserGroupInformation>();
 
     @Override
     public void init(Services services) throws ServiceException {
-       cache = new ConcurrentHashMap<String, UserGroupInformation>();
     }
 
     @Override

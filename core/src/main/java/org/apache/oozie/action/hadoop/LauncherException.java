@@ -15,33 +15,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.oozie.dependency;
+package org.apache.oozie.action.hadoop;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-
-public class FSURIContext extends URIContext {
-
-    private FileSystem fs;
+public class LauncherException extends Exception {
 
     /**
-     * Create a FSURIContext that can be used to access a filesystem URI
+     * Constructs an <code>LauncherException</code> with the
+     * specified detail message.
      *
-     * @param conf Configuration to access the URI
-     * @param user name of the user the URI should be accessed as
-     * @param fs FileSystem to access
+     * @param message   the detail message.
      */
-    public FSURIContext(Configuration conf, String user, FileSystem fs) {
-        super(conf, user);
-        this.fs = fs;
+    LauncherException(String message) {
+        super(message);
     }
 
     /**
-     * Get the FileSystem to access the URI
-     * @return FileSystem to access the URI
+     * Constructs a new exception with the specified detail message and cause.
+     *
+     * @param message the detail message
+     * @param cause the cause exception
      */
-    public FileSystem getFileSystem() {
-        return fs;
+    LauncherException(String message, Throwable cause) {
+        super(message, cause);
     }
-
 }

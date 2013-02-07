@@ -27,7 +27,7 @@ import org.apache.oozie.util.XLog;
 public class JMSExceptionListener implements ExceptionListener {
 
     private static XLog LOG = XLog.getLog(JMSExceptionListener.class);
-    private String jmsConnectString;
+    private JMSConnectionInfo connInfo;
     private ConnectionContext connCtxt;
 
     /**
@@ -36,17 +36,17 @@ public class JMSExceptionListener implements ExceptionListener {
      * @param jmsConnectString  The connect string specifiying parameters for JMS connection
      * @param connCtxt  The actual connection on which this listener will be registered
      */
-    public JMSExceptionListener(String jmsConnectString, ConnectionContext connCtxt) {
-        this.jmsConnectString = jmsConnectString;
+    public JMSExceptionListener(JMSConnectionInfo connInfo, ConnectionContext connCtxt) {
+        this.connInfo = connInfo;
         this.connCtxt = connCtxt;
     }
 
     @Override
     public void onException(JMSException exception) {
-        LOG.warn("Received JMSException for connection [{0}]. Reestablishing connection", jmsConnectString, exception);
+        LOG.warn("Received JMSException for [{0}]. Reestablishing connection", connInfo, exception);
         connCtxt.close();
         JMSAccessorService jmsService = Services.get().get(JMSAccessorService.class);
-        jmsService.reestablishConnection(jmsConnectString);
+        jmsService.reestablishConnection(connInfo);
     }
 
 }

@@ -29,6 +29,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.service.HCatAccessorService;
+import org.apache.oozie.service.Services;
 import org.apache.oozie.util.HCatURI;
 import org.apache.oozie.util.XLog;
 
@@ -42,7 +44,7 @@ public class SimpleHCatDependencyCache implements HCatDependencyCache {
      * value (us;20120101;CA) - Collection of waiting actions (actionID and original hcat uri as
      * string).
      */
-    private Map<String, Map<String, Map<String, Collection<WaitingAction>>>> missingDeps;
+    private ConcurrentMap<String, ConcurrentMap<String, Map<String, Collection<WaitingAction>>>> missingDeps;
 
     /**
      * Map of actionIDs and collection of available URIs
@@ -50,12 +52,11 @@ public class SimpleHCatDependencyCache implements HCatDependencyCache {
     private ConcurrentMap<String, Collection<String>> availableDeps;
 
     // TODO:
-    // Synchronization for missingDeps. Currently if removed, depend on CoordPushDependencyCheck
     // Gather and print stats on cache hits and misses.
 
     @Override
     public void init(Configuration conf) {
-        missingDeps = new ConcurrentHashMap<String, Map<String, Map<String, Collection<WaitingAction>>>>();
+        missingDeps = new ConcurrentHashMap<String, ConcurrentMap<String, Map<String, Collection<WaitingAction>>>>();
         availableDeps = new ConcurrentHashMap<String, Collection<String>>();
     }
 
@@ -67,22 +68,29 @@ public class SimpleHCatDependencyCache implements HCatDependencyCache {
         String partKey = sortedPKV.getPartKeys();
         // Partition values seperated by ;. For eg: 20120101;US;CA
         String partVal = sortedPKV.getPartVals();
-        Map<String, Map<String, Collection<WaitingAction>>> partKeyPatterns = missingDeps.get(tableKey);
+        ConcurrentMap<String, Map<String, Collection<WaitingAction>>> partKeyPatterns = missingDeps.get(tableKey);
         if (partKeyPatterns == null) {
-            partKeyPatterns = new HashMap<String, Map<String, Collection<WaitingAction>>>();
-            missingDeps.put(tableKey, partKeyPatterns);
+            partKeyPatterns = new ConcurrentHashMap<String, Map<String, Collection<WaitingAction>>>();
+            ConcurrentMap<String, Map<String, Collection<WaitingAction>>> existingMap = missingDeps.putIfAbsent(
+                    tableKey, partKeyPatterns);
+            if (existingMap != null) {
+                partKeyPatterns = existingMap;
+            }
         }
-        Map<String, Collection<WaitingAction>> partValues = partKeyPatterns.get(partKey);
-        if (partValues == null) {
-            partValues = new HashMap<String, Collection<WaitingAction>>();
-            partKeyPatterns.put(partKey, partValues);
+        synchronized (partKeyPatterns) {
+            missingDeps.put(tableKey, partKeyPatterns); // To handle race condition with removal of partKeyPatterns
+            Map<String, Collection<WaitingAction>> partValues = partKeyPatterns.get(partKey);
+            if (partValues == null) {
+                partValues = new HashMap<String, Collection<WaitingAction>>();
+                partKeyPatterns.put(partKey, partValues);
+            }
+            Collection<WaitingAction> waitingActions = partValues.get(partVal);
+            if (waitingActions == null) {
+                waitingActions = new ArrayList<WaitingAction>();
+                partValues.put(partVal, waitingActions);
+            }
+            waitingActions.add(new WaitingAction(actionID, hcatURI.toURIString()));
         }
-        Collection<WaitingAction> waitingActions = partValues.get(partVal);
-        if (waitingActions == null) {
-            waitingActions = new ArrayList<WaitingAction>();
-            partValues.put(partVal, waitingActions);
-        }
-        waitingActions.add(new WaitingAction(actionID, hcatURI.toURIString()));
     }
 
     @Override
@@ -97,39 +105,44 @@ public class SimpleHCatDependencyCache implements HCatDependencyCache {
                     hcatURI.toURIString(), actionID);
             return false;
         }
-        Map<String, Collection<WaitingAction>> partValues = partKeyPatterns.get(partKey);
-        if (partValues == null) {
-            LOG.debug("Remove missing dependency - Missing partition pattern - uri={0}, actionID={1}",
-                    hcatURI.toURIString(), actionID);
-            return false;
-        }
-        Collection<WaitingAction> waitingActions = partValues.get(partVal);
-        if (waitingActions == null) {
-            LOG.debug("Remove missing dependency - Missing partition value - uri={0}, actionID={1}",
-                    hcatURI.toURIString(), actionID);
-            return false;
-        }
-        WaitingAction wAction = null;
-        for (WaitingAction action : waitingActions) {
-            if (action.getActionID().equals(actionID)) {
-                wAction = action;
+        synchronized(partKeyPatterns) {
+            Map<String, Collection<WaitingAction>> partValues = partKeyPatterns.get(partKey);
+            if (partValues == null) {
+                LOG.debug("Remove missing dependency - Missing partition pattern - uri={0}, actionID={1}",
+                        hcatURI.toURIString(), actionID);
+                return false;
             }
-        }
-        boolean removed = waitingActions.remove(wAction);
-        if (!removed) {
-            LOG.debug("Remove missing dependency - Missing action ID - uri={0}, actionID={1}",
-                    hcatURI.toURIString(), actionID);
-        }
-        if (waitingActions.isEmpty()) {
-            partValues.remove(partVal);
-            if (partValues.isEmpty()) {
-                partKeyPatterns.remove(partKey);
+            Collection<WaitingAction> waitingActions = partValues.get(partVal);
+            if (waitingActions == null) {
+                LOG.debug("Remove missing dependency - Missing partition value - uri={0}, actionID={1}",
+                        hcatURI.toURIString(), actionID);
+                return false;
             }
-            if (partKeyPatterns.isEmpty()) {
-                missingDeps.remove(tableKey);
+            WaitingAction wAction = null;
+            for (WaitingAction action : waitingActions) {
+                if (action.getActionID().equals(actionID)) {
+                    wAction = action;
+                }
             }
+            boolean removed = waitingActions.remove(wAction);
+            if (!removed) {
+                LOG.debug("Remove missing dependency - Missing action ID - uri={0}, actionID={1}",
+                        hcatURI.toURIString(), actionID);
+            }
+            if (waitingActions.isEmpty()) {
+                partValues.remove(partVal);
+                if (partValues.isEmpty()) {
+                    partKeyPatterns.remove(partKey);
+                }
+                if (partKeyPatterns.isEmpty()) {
+                    missingDeps.remove(tableKey);
+                    // Close JMS session. Stop listening on topic
+                    HCatAccessorService hcatService = Services.get().get(HCatAccessorService.class);
+                    hcatService.unregisterFromNotification(hcatURI);
+                }
+            }
+            return removed;
         }
-        return removed;
     }
 
     @Override
@@ -173,49 +186,53 @@ public class SimpleHCatDependencyCache implements HCatDependencyCache {
         Collection<String> actionsWithAvailDep = new HashSet<String>();
         List<String> partKeysToRemove = new ArrayList<String>();
         StringBuilder partValSB = new StringBuilder();
-        // If partition patterns are date, date;country and date;country;state,
-        // construct the partition values for each pattern from the available partitions map and for
-        // the matching value in the dependency map, get the waiting actions.
-        for (Entry<String, Map<String, Collection<WaitingAction>>> entry : partKeyPatterns.entrySet()) {
-            String[] partKeys = entry.getKey().split(DELIMITER);
-            partValSB.setLength(0);
-            for (String key : partKeys) {
-                partValSB.append(partitions.get(key)).append(DELIMITER);
-            }
-            partValSB.setLength(partValSB.length() - 1);
+        synchronized (partKeyPatterns) {
+            // If partition patterns are date, date;country and date;country;state,
+            // construct the partition values for each pattern from the available partitions map and
+            // for the matching value in the dependency map, get the waiting actions.
+            for (Entry<String, Map<String, Collection<WaitingAction>>> entry : partKeyPatterns.entrySet()) {
+                String[] partKeys = entry.getKey().split(DELIMITER);
+                partValSB.setLength(0);
+                for (String key : partKeys) {
+                    partValSB.append(partitions.get(key)).append(DELIMITER);
+                }
+                partValSB.setLength(partValSB.length() - 1);
 
-            Map<String, Collection<WaitingAction>> partValues = entry.getValue();
-            String partVal = partValSB.toString();
-            Collection<WaitingAction> wActions = entry.getValue().get(partVal);
-            if (wActions == null)
-                continue;
-            for (WaitingAction wAction : wActions) {
-                String actionID = wAction.getActionID();
-                actionsWithAvailDep.add(actionID);
-                Collection<String> depURIs = availableDeps.get(actionID);
-                if (depURIs == null) {
-                    depURIs = new ArrayList<String>();
-                    Collection<String> existing = availableDeps.putIfAbsent(actionID, depURIs);
-                    if (existing != null) {
-                        depURIs = existing;
+                Map<String, Collection<WaitingAction>> partValues = entry.getValue();
+                String partVal = partValSB.toString();
+                Collection<WaitingAction> wActions = entry.getValue().get(partVal);
+                if (wActions == null)
+                    continue;
+                for (WaitingAction wAction : wActions) {
+                    String actionID = wAction.getActionID();
+                    actionsWithAvailDep.add(actionID);
+                    Collection<String> depURIs = availableDeps.get(actionID);
+                    if (depURIs == null) {
+                        depURIs = new ArrayList<String>();
+                        Collection<String> existing = availableDeps.putIfAbsent(actionID, depURIs);
+                        if (existing != null) {
+                            depURIs = existing;
+                        }
+                    }
+                    synchronized (depURIs) {
+                        depURIs.add(wAction.getDependencyURI());
+                        availableDeps.put(actionID, depURIs);
                     }
                 }
-                synchronized (depURIs) {
-                    depURIs.add(wAction.getDependencyURI());
-                    availableDeps.put(actionID, depURIs);
+                partValues.remove(partVal);
+                if (partValues.isEmpty()) {
+                    partKeysToRemove.add(entry.getKey());
                 }
             }
-            partValues.remove(partVal);
-            if (partValues.isEmpty()) {
-                partKeysToRemove.add(entry.getKey());
+            for (String partKey : partKeysToRemove) {
+                partKeyPatterns.remove(partKey);
             }
-        }
-        for (String partKey : partKeysToRemove) {
-            partKeyPatterns.remove(partKey);
-        }
-        if (partKeyPatterns.isEmpty()) {
-            missingDeps.remove(tableKey);
-            // TODO: Close JMS session. Stop listening on topic
+            if (partKeyPatterns.isEmpty()) {
+                missingDeps.remove(tableKey);
+                // Close JMS session. Stop listening on topic
+                HCatAccessorService hcatService = Services.get().get(HCatAccessorService.class);
+                hcatService.unregisterFromNotification(server, db, table);
+            }
         }
         return actionsWithAvailDep;
     }

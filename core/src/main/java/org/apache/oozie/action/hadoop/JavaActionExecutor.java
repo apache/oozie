@@ -129,7 +129,7 @@ public class JavaActionExecutor extends ActionExecutor {
         classes.add(LauncherException.class);
         classes.add(LauncherMainException.class);
         classes.add(PrepareActionsDriver.class);
-        classes.addAll(Services.get().get(URIHandlerService.class).getURIHandlerClassesToShip());
+        classes.addAll(Services.get().get(URIHandlerService.class).getClassesForLauncher());
         classes.add(ActionStats.class);
         classes.add(ActionType.class);
         return classes;
@@ -586,7 +586,7 @@ public class JavaActionExecutor extends ActionExecutor {
                     prepareXML);
 
             LauncherMapper.setupMainClass(launcherJobConf, getLauncherMain(launcherJobConf, actionXml));
-            LauncherMapper.setupURIServiceConf(launcherJobConf);
+            LauncherMapper.setupLauncherURIHandlerConf(launcherJobConf);
             LauncherMapper.setupMaxOutputData(launcherJobConf, maxActionOutputLen);
             LauncherMapper.setupMaxExternalStatsSize(launcherJobConf, maxExternalStatsSize);
 

@@ -32,12 +32,13 @@ import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.coord.CoordELEvaluator;
 import org.apache.oozie.coord.CoordELFunctions;
+import org.apache.oozie.coord.CoordUtils;
 import org.apache.oozie.coord.CoordinatorJobException;
 import org.apache.oozie.coord.SyncCoordAction;
 import org.apache.oozie.coord.TimeUnit;
 import org.apache.oozie.dependency.DependencyChecker;
-import org.apache.oozie.dependency.DependencyType;
 import org.apache.oozie.dependency.URIHandler;
+import org.apache.oozie.dependency.URIHandler.DependencyType;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.service.UUIDService;
@@ -353,7 +354,7 @@ public class CoordCommandUtils {
             URIHandler uriHandler = uriService.getURIHandler(uriPath);
             uriHandler.validate(uriPath);
             uris.append(uriPath);
-            urisWithDoneFlag.append(uriHandler.getURIWithDoneFlag(uriPath, doneFlagElement));
+            urisWithDoneFlag.append(uriHandler.getURIWithDoneFlag(uriPath, CoordUtils.getDoneFlag(doneFlagElement)));
         }
         return uris.toString();
     }

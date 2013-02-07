@@ -22,6 +22,7 @@ import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.coord.CoordELFunctions;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.service.HCatAccessorService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.PartitionDependencyManagerService;
 import org.apache.oozie.service.Services;
@@ -88,7 +89,7 @@ public class TestCoordPushDependencyCheckXCommand extends XDataTestCase {
 
     @Test
     public void testUpdateCoordTableMultipleDepsV2() throws Exception {
-        // Test for two dependencies : one of them is already existed in the
+        // Test for two dependencies : one of them is already existing in the
         // hcat server. Other one is not.
         // Expected to see both action in WAITING as first one is not available.
         // Later make the other partition also available. action is expected to
@@ -121,7 +122,7 @@ public class TestCoordPushDependencyCheckXCommand extends XDataTestCase {
 
     @Test
     public void testUpdateCoordTableMultipleDepsV3() throws Exception {
-        // Test for two dependencies : one of them is already existed in the
+        // Test for two dependencies : one of them is already existing in the
         // hcat server. Other one is not.
         // Expected to see the action in WAITING
         // Later make the other partition also available. action is expected to
@@ -140,12 +141,15 @@ public class TestCoordPushDependencyCheckXCommand extends XDataTestCase {
         checkCoordAction(actionId, newHCatDependency1, CoordinatorAction.Status.WAITING);
         PartitionDependencyManagerService pdms = Services.get().get(PartitionDependencyManagerService.class);
         assertTrue(pdms.getWaitingActions(new HCatURI(newHCatDependency1)).contains(actionId));
+        HCatAccessorService hcatService = Services.get().get(HCatAccessorService.class);
+        assertTrue(hcatService.isRegisteredForNotification(new HCatURI(newHCatDependency1)));
 
         // Make first dependency available
         addPartition(db, table, "dt=20120430;country=brazil");
         new CoordPushDependencyCheckXCommand(actionId).call();
         assertNull(pdms.getWaitingActions(new HCatURI(newHCatDependency1)));
         checkCoordAction(actionId, "", CoordinatorAction.Status.READY);
+        assertFalse(hcatService.isRegisteredForNotification(new HCatURI(newHCatDependency1)));
     }
 
     private void populateTable(String db, String table) throws Exception {

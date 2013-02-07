@@ -40,7 +40,7 @@ public class DefaultConnectionContext implements ConnectionContext {
     private static XLog LOG = XLog.getLog(ConnectionContext.class);
 
     @Override
-    public ConnectionFactory createConnectionFactory(Properties props) throws NamingException {
+    public void createConnection(Properties props) throws NamingException, JMSException {
         Context jndiContext = new InitialContext(props);
         connectionFactoryName = (String) jndiContext.getEnvironment().get("connectionFactoryNames");
         if (connectionFactoryName == null || connectionFactoryName.trim().length() == 0) {
@@ -48,14 +48,8 @@ public class DefaultConnectionContext implements ConnectionContext {
         }
         ConnectionFactory connectionFactory = (ConnectionFactory) jndiContext.lookup(connectionFactoryName);
         LOG.info("Connecting with the following properties \n" + jndiContext.getEnvironment().toString());
-        return connectionFactory;
-
-    }
-
-    @Override
-    public void createConnection(ConnectionFactory connFactory) throws JMSException {
         try {
-            connection = connFactory.createConnection();
+            connection = connectionFactory.createConnection();
             connection.start();
             connection.setExceptionListener(new ExceptionListener() {
                 @Override
@@ -79,9 +73,10 @@ public class DefaultConnectionContext implements ConnectionContext {
         }
     }
 
+
     @Override
     public boolean isConnectionInitialized() {
-        return (connection != null) ? true : false;
+        return connection != null;
     }
 
     @Override
@@ -106,16 +101,6 @@ public class DefaultConnectionContext implements ConnectionContext {
         Topic topic = session.createTopic(topicName);
         MessageProducer producer = session.createProducer(topic);
         return producer;
-    }
-
-    @Override
-    public Connection getConnection() {
-        return connection;
-    }
-
-    @Override
-    public String getConnectionFactoryName() {
-        return connectionFactoryName;
     }
 
     @Override

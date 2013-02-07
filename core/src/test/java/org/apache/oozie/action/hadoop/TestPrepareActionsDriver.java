@@ -18,11 +18,11 @@
 package org.apache.oozie.action.hadoop;
 
 import java.io.IOException;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XFsTestCase;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.mapred.JobConf;
 
 public class TestPrepareActionsDriver extends XFsTestCase {
 
@@ -50,7 +50,9 @@ public class TestPrepareActionsDriver extends XFsTestCase {
             fs.delete(newDir, true);
         }
 
-        PrepareActionsDriver.doOperations(prepareXML, new Configuration());
+        JobConf conf = createJobConf();
+        LauncherMapper.setupLauncherURIHandlerConf(conf);
+        PrepareActionsDriver.doOperations(prepareXML, conf);
         assertTrue(fs.exists(actionDir));
     }
 
@@ -68,7 +70,9 @@ public class TestPrepareActionsDriver extends XFsTestCase {
 
         try {
             prepareXML = "prepare>" + "<mkdir path='" + newDir + "'/>" + "</prepare>";
-            PrepareActionsDriver.doOperations(prepareXML, new Configuration());
+            JobConf conf = createJobConf();
+            LauncherMapper.setupLauncherURIHandlerConf(conf);
+            PrepareActionsDriver.doOperations(prepareXML, conf);
             fail("Expected to catch an exception but did not encounter any");
         } catch (LauncherException le) {
             assertEquals(le.getCause().getClass(), org.xml.sax.SAXParseException.class);

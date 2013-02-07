@@ -26,7 +26,6 @@ import org.apache.oozie.command.coord.CoordActionUpdatePushMissingDependency;
 import org.apache.oozie.dependency.cache.HCatDependencyCache;
 import org.apache.oozie.dependency.cache.SimpleHCatDependencyCache;
 import org.apache.oozie.util.HCatURI;
-import org.apache.oozie.util.XCallable;
 import org.apache.oozie.util.XLog;
 
 /**
@@ -110,7 +109,14 @@ public class PartitionDependencyManagerService implements Service {
                 partitions);
         if (actionsWithAvailableDep != null) {
             for (String actionID : actionsWithAvailableDep) {
-                queueCallable(new CoordActionUpdatePushMissingDependency(actionID), 100);
+                boolean ret = Services.get().get(CallableQueueService.class)
+                        .queue(new CoordActionUpdatePushMissingDependency(actionID), 100);
+                if (ret == false) {
+                    XLog.getLog(getClass()).warn(
+                            "Unable to queue the callable commands for PartitionDependencyManagerService for actionID "
+                                    + actionID + ".Most possibly command queue is full. Queue size is :"
+                                    + Services.get().get(CallableQueueService.class).queueSize());
+                }
             }
         }
     }
@@ -134,16 +140,6 @@ public class PartitionDependencyManagerService implements Service {
      */
     public void removeAvailableDependencyURIs(String actionID, Collection<String> dependencyURIs) {
         dependencyCache.removeAvailableDependencyURIs(actionID, dependencyURIs);
-    }
-
-    private void queueCallable(XCallable<?> callable, int delay) {
-        boolean ret = Services.get().get(CallableQueueService.class).queue(callable, delay);
-        if (ret == false) {
-            XLog.getLog(getClass()).warn(
-                    "Unable to queue the callable commands for PartitionDependencyManagerService. "
-                            + "Most possibly command queue is full. Queue size is :"
-                            + Services.get().get(CallableQueueService.class).queueSize());
-        }
     }
 
 }

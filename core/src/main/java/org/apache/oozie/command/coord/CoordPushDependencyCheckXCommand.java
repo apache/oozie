@@ -22,8 +22,6 @@ import java.io.StringReader;
 import java.net.URI;
 import java.util.Date;
 import java.util.List;
-import java.util.Map.Entry;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
@@ -35,7 +33,7 @@ import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.dependency.DependencyChecker;
-import org.apache.oozie.dependency.DependencyChecker.ActionDependency;
+import org.apache.oozie.dependency.ActionDependency;
 import org.apache.oozie.dependency.URIHandler;
 import org.apache.oozie.executor.jpa.CoordActionGetForInputCheckJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionUpdateForModifiedTimeJPAExecutor;
@@ -110,6 +108,7 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
                 !registerForNotification);
 
         boolean isChangeInDependency = true;
+        boolean timeout = false;
         if (actionDep.getMissingDependencies().size() == 0) { // All push-based dependencies are available
             onAllPushDependenciesAvailable();
         }
@@ -122,11 +121,12 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
                 coordAction.setPushMissingDependencies(stillMissingDeps);
             }
             // Checking for timeout
-            if (!isTimeout()) {
-                queue(new CoordPushDependencyCheckXCommand(coordAction.getId()), getCoordPushCheckRequeueInterval());
+            timeout = isTimeout();
+            if (timeout) {
+                queue(new CoordActionTimeOutXCommand(coordAction), 100);
             }
             else {
-                queue(new CoordActionTimeOutXCommand(coordAction), 100);
+                queue(new CoordPushDependencyCheckXCommand(coordAction.getId()), getCoordPushCheckRequeueInterval());
             }
         }
 
@@ -136,6 +136,9 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
         }
         else {
             unregisterAvailableDependencies(actionDep);
+        }
+        if (timeout) {
+            unregisterMissingDependencies(actionDep.getMissingDependencies());
         }
         return null;
     }
@@ -156,10 +159,7 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
                 .getCreatedTime().getTime()))
                 / (60 * 1000);
         int timeOut = coordAction.getTimeOut();
-        if ((timeOut >= 0) && (waitingTime > timeOut)) {
-            return true;
-        }
-        return false;
+        return (timeOut >= 0) && (waitingTime > timeOut);
     }
 
     protected void onAllPushDependenciesAvailable() {
@@ -207,52 +207,62 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
     }
 
     private void unregisterAvailableDependencies(ActionDependency actionDependency) {
-        for (Entry<URIHandler, List<URI>> entry : actionDependency.getAvailableDependencies().entrySet()) {
-            URIHandler handler = entry.getKey();
-            for (URI availableURI : entry.getValue()) {
+        URIHandlerService uriService = Services.get().get(URIHandlerService.class);
+        for (String availableDep : actionDependency.getAvailableDependencies()) {
+            try {
+                URI availableURI = new URI(availableDep);
+                URIHandler handler = uriService.getURIHandler(availableURI);
                 if (handler.unregisterFromNotification(availableURI, actionId)) {
-                    LOG.debug("Succesfully unregistered uri [{0}] for actionId: [{1}] from notifications",
+                    LOG.debug("Successfully unregistered uri [{0}] for actionId: [{1}] from notifications",
                             availableURI, actionId);
                 }
                 else {
-                    LOG.warn("Unable to unregister uri [{0}] for actionId: [{1}] from notifications",
-                            availableURI, actionId);
+                    LOG.warn("Unable to unregister uri [{0}] for actionId: [{1}] from notifications", availableURI,
+                            actionId);
                 }
+            }
+            catch (Exception e) {
+                LOG.warn("Exception while unregistering uri for actionId: [{0}] for notifications", actionId, e);
             }
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.command.XCommand#getEntityKey()
-     */
+    private void unregisterMissingDependencies(List<String> missingDeps) {
+        URIHandlerService uriService = Services.get().get(URIHandlerService.class);
+        for (String missingDep : missingDeps) {
+            try {
+                URI missingURI = new URI(missingDep);
+                URIHandler handler = uriService.getURIHandler(missingURI);
+                if (handler.unregisterFromNotification(missingURI, actionId)) {
+                    LOG.debug("Successfully unregistered uri [{0}] for actionId: [{1}] from notifications", missingURI,
+                            actionId);
+                }
+                else {
+                    LOG.warn("Unable to unregister uri [{0}] for actionId: [{1}] from notifications", missingURI,
+                            actionId);
+                }
+            }
+            catch (Exception e) {
+                LOG.warn("Exception while registering uri for actionId: [{0}] for notifications", actionId, e);
+            }
+        }
+    }
+
     @Override
     public String getEntityKey() {
         return coordAction.getJobId();
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#getKey()
-     */
     @Override
     public String getKey(){
         return getName() + "_" + actionId;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.command.XCommand#isLockRequired()
-     */
     @Override
     protected boolean isLockRequired() {
         return true;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#eagerLoadState()
-     */
     @Override
     protected void eagerLoadState() throws CommandException {
         try {
@@ -272,9 +282,6 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#eagerVerifyPrecondition()
-     */
     @Override
     protected void eagerVerifyPrecondition() throws CommandException, PreconditionException {
         if (coordAction.getStatus() != CoordinatorActionBean.Status.WAITING) {
@@ -298,20 +305,10 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.command.XCommand#loadState()
-     */
     @Override
     protected void loadState() throws CommandException {
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.command.XCommand#verifyPrecondition()
-     */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
     }

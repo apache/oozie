@@ -25,6 +25,7 @@ import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.Writer;
+import java.net.URI;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -353,8 +354,10 @@ public class TestRecoveryService extends XDataTestCase {
         String newHCatDependency2 = "hcat://" + server + "/" + db + "/" + table + "/dt=20120430;country=usa";
         String newHCatDependency = newHCatDependency1 + CoordELFunctions.INSTANCE_SEPARATOR + newHCatDependency2;
 
+        HCatAccessorService hcatService = services.get(HCatAccessorService.class);
         JMSAccessorService jmsService = services.get(JMSAccessorService.class);
-        assertFalse(jmsService.isListeningToTopic(server, db + "." + table));
+        assertFalse(jmsService.isListeningToTopic(hcatService.getJMSConnectionInfo(new URI(newHCatDependency1)), db
+                + "." + table));
 
         populateTable(db, table);
         String actionId = addInitRecords(newHCatDependency);
@@ -367,7 +370,8 @@ public class TestRecoveryService extends XDataTestCase {
 
         // Recovery service should have discovered newHCatDependency2 and JMS Connection should exist
         // and newHCatDependency1 should be in PDMS waiting list
-        assertTrue(jmsService.isListeningToTopic(server, "hcat." + db + "." + table));
+        assertTrue(jmsService.isListeningToTopic(hcatService.getJMSConnectionInfo(new URI(newHCatDependency2)), "hcat."
+                + db + "." + table));
         checkCoordActionDependencies(actionId, newHCatDependency1);
 
         PartitionDependencyManagerService pdms = services.get(PartitionDependencyManagerService.class);

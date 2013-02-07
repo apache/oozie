@@ -45,7 +45,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * The HadoopAccessorService returns HadoopAccessor instances configured to work on behalf of a user-group. <p/> The
@@ -80,7 +79,7 @@ public class HadoopAccessorService implements Service {
     private Map<String, File> actionConfigDirs = new HashMap<String, File>();
     private Map<String, Map<String, XConfiguration>> actionConfigs = new HashMap<String, Map<String, XConfiguration>>();
 
-    private ConcurrentMap<String, UserGroupInformation> userUgiMap;
+    private UserGroupInformationService ugiService;
 
     /**
      * Supported filesystem schemes for namespace federation
@@ -91,6 +90,7 @@ public class HadoopAccessorService implements Service {
     private boolean allSchemesSupported;
 
     public void init(Services services) throws ServiceException {
+        this.ugiService = services.get(UserGroupInformationService.class);
         init(services.getConf());
     }
 
@@ -128,7 +128,9 @@ public class HadoopAccessorService implements Service {
             UserGroupInformation.setConfiguration(ugiConf);
         }
 
-        userUgiMap = new ConcurrentHashMap<String, UserGroupInformation>();
+        if (ugiService == null) { //for testing purposes, see XFsTestCase
+            this.ugiService = new UserGroupInformationService();
+        }
 
         loadHadoopConfigs(conf);
         preLoadActionConfigs(conf);
@@ -264,13 +266,7 @@ public class HadoopAccessorService implements Service {
     }
 
     private UserGroupInformation getUGI(String user) throws IOException {
-        UserGroupInformation ugi = userUgiMap.get(user);
-        if (ugi == null) {
-            // taking care of a race condition, the latest UGI will be discarded
-            ugi = UserGroupInformation.createProxyUser(user, UserGroupInformation.getLoginUser());
-            userUgiMap.putIfAbsent(user, ugi);
-        }
-        return ugi;
+        return ugiService.getProxyUser(user);
     }
 
     /**

@@ -90,7 +90,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         classes.add(LauncherException.class);
         classes.add(LauncherMainException.class);
         classes.add(PrepareActionsDriver.class);
-        classes.addAll(Services.get().get(URIHandlerService.class).getURIHandlerClassesToShip());
+        classes.addAll(Services.get().get(URIHandlerService.class).getClassesForLauncher());
         classes.add(ActionStats.class);
         classes.add(ActionType.class);
         classes.add(LauncherMain.class);

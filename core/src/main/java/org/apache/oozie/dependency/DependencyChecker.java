@@ -20,10 +20,7 @@ package org.apache.oozie.dependency;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
@@ -31,7 +28,6 @@ import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.coord.CoordELFunctions;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.service.URIAccessorException;
 import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
@@ -92,63 +88,40 @@ public class DependencyChecker {
             boolean stopOnFirstMissing) throws CommandException {
         String user = ParamChecker.notEmpty(actionConf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
         List<String> missingDeps = new ArrayList<String>();
-        Map<URIHandler, List<URI>> availableDeps = new HashMap<URIHandler, List<URI>>();
+        List<String> availableDeps = new ArrayList<String>();
         URIHandlerService uriService = Services.get().get(URIHandlerService.class);
-        int index = 0;
-        for (;index < missingDependencies.length; index++) {
-            String dependency = missingDependencies[index];
-            try {
-                URI uri = new URI(dependency);
-                URIHandler uriHandler = uriService.getURIHandler(uri);
-                LOG.debug("Checking for the availability of {0} ", dependency);
-                if (uriHandler.exists(uri, actionConf, user)) {
-                    List<URI> availableURIs = availableDeps.get(uriHandler);
-                    if (availableURIs == null) {
-                        availableURIs = new ArrayList<URI>();
-                        availableDeps.put(uriHandler, availableURIs);
+        boolean continueChecking = true;
+        try {
+            for (int index = 0; index < missingDependencies.length; index++) {
+                if (continueChecking) {
+                    String dependency = missingDependencies[index];
+
+                    URI uri = new URI(dependency);
+                    URIHandler uriHandler = uriService.getURIHandler(uri);
+                    LOG.debug("Checking for the availability of [{0}] ", dependency);
+                    if (uriHandler.exists(uri, actionConf, user)) {
+                        LOG.debug("Dependency [{0}] is available", dependency);
+                        availableDeps.add(dependency);
                     }
-                    availableURIs.add(uri);
+                    else {
+                        missingDeps.add(dependency);
+                        if (stopOnFirstMissing) {
+                            continueChecking = false;
+                        }
+                    }
+
                 }
                 else {
-                    missingDeps.add(dependency);
-                    if (stopOnFirstMissing) {
-                        index++;
-                        break;
-                    }
+                    missingDeps.add(missingDependencies[index]);
                 }
             }
-            catch (URISyntaxException e) {
-                throw new CommandException(ErrorCode.E0906, e.getMessage(), e);
-            }
-            catch (URIAccessorException e) {
-                throw new CommandException(e);
-            }
         }
-        if (stopOnFirstMissing) {
-            for (;index < missingDependencies.length; index++) {
-                missingDeps.add(missingDependencies[index]);
-            }
+        catch (URISyntaxException e) {
+            throw new CommandException(ErrorCode.E0906, e.getMessage(), e);
+        }
+        catch (URIHandlerException e) {
+            throw new CommandException(e);
         }
         return new ActionDependency(missingDeps, availableDeps);
     }
-
-    public static class ActionDependency {
-        private List<String> missingDependencies;
-        private Map<URIHandler, List<URI>> availableDependencies;
-
-        public ActionDependency(List<String> missingDependencies, Map<URIHandler, List<URI>> availableDependencies) {
-            this.missingDependencies = missingDependencies;
-            this.availableDependencies = availableDependencies;
-        }
-
-        public List<String> getMissingDependencies() {
-            return missingDependencies;
-        }
-
-        public Map<URIHandler, List<URI>> getAvailableDependencies() {
-            return availableDependencies;
-        }
-
-    }
-
 }

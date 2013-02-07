@@ -17,13 +17,11 @@
  */
 package org.apache.oozie.service;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import javax.jms.JMSException;
@@ -33,10 +31,10 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.oozie.jms.ConnectionContext;
 import org.apache.oozie.jms.DefaultConnectionContext;
+import org.apache.oozie.jms.JMSConnectionInfo;
 import org.apache.oozie.jms.JMSExceptionListener;
 import org.apache.oozie.jms.MessageHandler;
 import org.apache.oozie.jms.MessageReceiver;
-import org.apache.oozie.util.MappingRule;
 import org.apache.oozie.util.XLog;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -51,132 +49,75 @@ import com.google.common.annotations.VisibleForTesting;
  */
 public class JMSAccessorService implements Service {
     public static final String CONF_PREFIX = Service.CONF_PREFIX + "JMSAccessorService.";
-    public static final String JMS_CONNECTIONS_PROPERTIES = CONF_PREFIX + "connections";
     public static final String JMS_CONNECTION_CONTEXT_IMPL = CONF_PREFIX + "connectioncontext.impl";
     public static final String SESSION_OPTS = CONF_PREFIX + "jms.sessionOpts";
     public static final String CONF_RETRY_INITIAL_DELAY = CONF_PREFIX + "retry.initial.delay";
     public static final String CONF_RETRY_MULTIPLIER = CONF_PREFIX + "retry.multiplier";
     public static final String CONF_RETRY_MAX_ATTEMPTS = CONF_PREFIX + "retry.max.attempts";
-    public static final String DEFAULT_SERVER_ENDPOINT = "default";
     private static XLog LOG;
 
-    private String defaultConnectString = null;
     private Configuration conf;
     private int sessionOpts;
     private int retryInitialDelay;
     private int retryMultiplier;
     private int retryMaxAttempts;
-    private List<MappingRule> mappingRules = null;
 
     /**
-     * Map of publisher(host:port) to JMS connect string
+     * Map of JMS connection info to established JMS Connection
      */
-    private Map<String, String> publisherConnectStringMap = new HashMap<String, String>();
+    private ConcurrentMap<JMSConnectionInfo, ConnectionContext> connectionMap = new ConcurrentHashMap<JMSConnectionInfo, ConnectionContext>();
     /**
-     * Map of JMS connect string to established JMS Connection
+     * Map of JMS connection info to topic names to MessageReceiver
      */
-    private ConcurrentMap<String, ConnectionContext> connectionMap = new ConcurrentHashMap<String, ConnectionContext>();
-    /**
-     * Map of publisher(host:port) to topic names to MessageReceiver
-     */
-    private ConcurrentMap<String, Map<String, MessageReceiver>> receiversMap = new ConcurrentHashMap<String, Map<String, MessageReceiver>>();
+    private ConcurrentMap<JMSConnectionInfo, Map<String, MessageReceiver>> receiversMap = new ConcurrentHashMap<JMSConnectionInfo, Map<String, MessageReceiver>>();
 
     /**
-     * Map of JMS connect string to last connection attempt time
+     * Map of JMS connection info to connection retry information
      */
-    private Map<String, ConnectionAttempt> retryConnectionsMap = new HashMap<String, ConnectionAttempt>();
-
-    /**
-     * Map of publisher(host:port) to topic names that need to be registered for listening to the
-     * MessageHandler that process message of the topic.
-     */
-    private Map<String, Map<String, MessageHandler>> retryTopicsMap = new HashMap<String, Map<String, MessageHandler>>();
+    private Map<JMSConnectionInfo, ConnectionRetryInfo> retryConnectionsMap = new HashMap<JMSConnectionInfo, ConnectionRetryInfo>();
 
     @Override
     public void init(Services services) throws ServiceException {
         LOG = XLog.getLog(getClass());
         conf = services.getConf();
-        initializeMappingRules();
         sessionOpts = conf.getInt(SESSION_OPTS, Session.AUTO_ACKNOWLEDGE);
         retryInitialDelay = conf.getInt(CONF_RETRY_INITIAL_DELAY, 60); // initial delay in seconds
         retryMultiplier = conf.getInt(CONF_RETRY_MULTIPLIER, 2);
         retryMaxAttempts = conf.getInt(CONF_RETRY_MAX_ATTEMPTS, 10);
     }
 
-    protected void initializeMappingRules() {
-        String connectionString = conf.get(JMS_CONNECTIONS_PROPERTIES);
-        if (connectionString != null) {
-            String[] connections = connectionString.split("\\s*,\\s*");
-            mappingRules = new ArrayList<MappingRule>(connections.length);
-            for (String connection : connections) {
-                String[] values = connection.split("=", 2);
-                String key = values[0].replaceAll("^\\s+|\\s+$", "");
-                String value = values[1].replaceAll("^\\s+|\\s+$", "");
-                if (key.equals("default")) {
-                    defaultConnectString = value;
-                }
-                else {
-                    mappingRules.add(new MappingRule(key, value));
-                }
-            }
-        }
-        else {
-            LOG.warn("No JMS connection defined");
-        }
-    }
-
     /**
-     * Determine whether a given source URI publishes JMS messages
+     * Register for notifications on a JMS topic.
      *
-     * @param sourceURI URI of the publisher
-     * @return true if we have JMS mapping for the source URI, else false
-     */
-    public boolean isKnownPublisher(URI sourceURI) {
-        if (publisherConnectStringMap.containsKey(sourceURI.getAuthority())) {
-            return true;
-        }
-        else {
-            return getJMSServerConnectString(sourceURI.getAuthority()) != null;
-        }
-    }
-
-    /**
-     * Register for notifications on a JMS topic from the specified publisher.
-     *
-     * @param publisherURI URI of the publisher of JMS messages. Used to determine the JMS
-     *        connection end point.
+     * @param connInfo Information to connect to a JMS compliant messaging service.
      * @param topic Topic in which the JMS messages are published
      * @param msgHandler Handler which will process the messages received on the topic
      */
-    public void registerForNotification(URI publisherURI, String topic, MessageHandler msgHandler) {
-        String publisherAuthority = publisherURI.getAuthority();
-        if (isTopicInRetryList(publisherAuthority, topic)) {
+    public void registerForNotification(JMSConnectionInfo connInfo, String topic, MessageHandler msgHandler) {
+        if (isTopicInRetryList(connInfo, topic)) {
             return;
         }
-        if (isConnectionInRetryList(publisherAuthority)) {
-            queueTopicForRetry(publisherAuthority, topic, msgHandler);
+        if (isConnectionInRetryList(connInfo)) {
+            queueTopicForRetry(connInfo, topic, msgHandler);
             return;
         }
-        Map<String, MessageReceiver> topicsMap = getReceiversTopicsMap(publisherAuthority);
+        Map<String, MessageReceiver> topicsMap = getReceiversTopicsMap(connInfo);
         if (topicsMap.containsKey(topic)) {
             return;
         }
         synchronized (topicsMap) {
             if (!topicsMap.containsKey(topic)) {
-                String jmsConnectString = getJMSServerConnectString(publisherAuthority);
-                ConnectionContext connCtxt = createConnectionContext(jmsConnectString);
+                ConnectionContext connCtxt = createConnectionContext(connInfo);
                 if (connCtxt == null) {
-                    queueTopicForRetry(publisherAuthority, topic, msgHandler);
-                    queueConnectionForRetry(jmsConnectString);
+                    queueTopicForRetry(connInfo, topic, msgHandler);
                     return;
                 }
-                MessageReceiver receiver = registerForTopic(connCtxt, publisherAuthority, topic, msgHandler);
+                MessageReceiver receiver = registerForTopic(connInfo, connCtxt, topic, msgHandler);
                 if (receiver == null) {
-                    queueTopicForRetry(publisherAuthority, topic, msgHandler);
-                    queueConnectionForRetry(jmsConnectString);
+                    queueTopicForRetry(connInfo, topic, msgHandler);
                 }
                 else {
-                    LOG.info("Registered a listener for topic {0} from publisher {1}", topic, publisherAuthority);
+                    LOG.info("Registered a listener for topic {0} on {1}", topic, connInfo);
                     topicsMap.put(topic, receiver);
                 }
             }
@@ -186,18 +127,17 @@ public class JMSAccessorService implements Service {
     /**
      * Unregister from listening to JMS messages on a topic.
      *
-     * @param publisherAuthority host:port of the publisher of JMS messages. Used to determine the
-     *        JMS connection end point.
+     * @param connInfo Information to connect to the JMS compliant messaging service.
      * @param topic Topic in which the JMS messages are published
      */
-    public void unregisterFromNotification(String publisherAuthority, String topic) {
-        LOG.info("Unregistering JMS listener. Clossing session for {0} and topic {1}", publisherAuthority, topic);
+    public void unregisterFromNotification(JMSConnectionInfo connInfo, String topic) {
+        LOG.info("Unregistering JMS listener. Clossing session for {0} and topic {1}", connInfo, topic);
 
-        if (isTopicInRetryList(publisherAuthority, topic)) {
-            removeTopicFromRetryList(publisherAuthority, topic);
+        if (isTopicInRetryList(connInfo, topic)) {
+            removeTopicFromRetryList(connInfo, topic);
         }
         else {
-            Map<String, MessageReceiver> topicsMap = receiversMap.get(publisherAuthority);
+            Map<String, MessageReceiver> topicsMap = receiversMap.get(connInfo);
             MessageReceiver receiver = topicsMap.remove(topic);
             if (receiver != null) {
                 try {
@@ -209,20 +149,20 @@ public class JMSAccessorService implements Service {
             }
             else {
                 LOG.warn(
-                        "Received request to unregister from topic [{0}] from publisher [{1}], but no matching session.",
-                        topic, publisherAuthority);
+                        "Received request to unregister from topic [{0}] on [{1}], but no matching session.",
+                        topic, connInfo);
             }
             if (topicsMap.isEmpty()) {
-                receiversMap.remove(publisherAuthority);
+                receiversMap.remove(connInfo);
             }
         }
     }
 
-    private Map<String, MessageReceiver> getReceiversTopicsMap(String publisherAuthority) {
-        Map<String, MessageReceiver> topicsMap = receiversMap.get(publisherAuthority);
+    private Map<String, MessageReceiver> getReceiversTopicsMap(JMSConnectionInfo connInfo) {
+        Map<String, MessageReceiver> topicsMap = receiversMap.get(connInfo);
         if (topicsMap == null) {
             topicsMap = new HashMap<String, MessageReceiver>();
-            Map<String, MessageReceiver> exists = receiversMap.putIfAbsent(publisherAuthority, topicsMap);
+            Map<String, MessageReceiver> exists = receiversMap.putIfAbsent(connInfo, topicsMap);
             if (exists != null) {
                 topicsMap = exists;
             }
@@ -233,66 +173,68 @@ public class JMSAccessorService implements Service {
     /**
      * Determine if currently listening to JMS messages on a topic.
      *
-     * @param publisherAuthority host:port of the publisher of JMS messages. Used to determine the
-     *        JMS connection end point.
+     * @param connInfo Information to connect to the JMS compliant messaging service.
      * @param topic Topic in which the JMS messages are published
      * @return true if listening to the topic, else false
      */
     @VisibleForTesting
-    boolean isListeningToTopic(String publisherAuthority, String topic) {
-        Map<String, MessageReceiver> topicsMap = receiversMap.get(publisherAuthority);
+    boolean isListeningToTopic(JMSConnectionInfo connInfo, String topic) {
+        Map<String, MessageReceiver> topicsMap = receiversMap.get(connInfo);
         return (topicsMap != null && topicsMap.containsKey(topic));
     }
 
     @VisibleForTesting
-    boolean isConnectionInRetryList(String publisherAuthority) {
-        String jmsConnectString = getJMSServerConnectString(publisherAuthority);
-        return retryConnectionsMap.containsKey(jmsConnectString);
+    boolean isConnectionInRetryList(JMSConnectionInfo connInfo) {
+        return retryConnectionsMap.containsKey(connInfo);
     }
 
     @VisibleForTesting
-    boolean isTopicInRetryList(String publisherAuthority, String topic) {
-        Map<String, MessageHandler> topicsMap = retryTopicsMap.get(publisherAuthority);
-        return topicsMap != null && topicsMap.containsKey(topic);
+    boolean isTopicInRetryList(JMSConnectionInfo connInfo, String topic) {
+        ConnectionRetryInfo connRetryInfo = retryConnectionsMap.get(connInfo);
+        if (connRetryInfo == null) {
+            return false;
+        }
+        else {
+            Map<String, MessageHandler> topicsMap = connRetryInfo.getTopicsToRetry();
+            return topicsMap.containsKey(topic);
+        }
     }
 
     // For unit testing
     @VisibleForTesting
-    int getNumConnectionAttempts(String publisherAuthority) {
-        String jmsConnectString = getJMSServerConnectString(publisherAuthority);
-        return retryConnectionsMap.get(jmsConnectString).getNumAttempt();
+    int getNumConnectionAttempts(JMSConnectionInfo connInfo) {
+        return retryConnectionsMap.get(connInfo).getNumAttempt();
     }
 
-    private void queueConnectionForRetry(String jmsConnectString) {
-        if (!retryConnectionsMap.containsKey(jmsConnectString)) {
-            LOG.info("Queueing connection {0} for retry", jmsConnectString);
-            retryConnectionsMap.put(jmsConnectString, new ConnectionAttempt(0, retryInitialDelay));
-            scheduleRetry(jmsConnectString, retryInitialDelay);
+    private ConnectionRetryInfo queueConnectionForRetry(JMSConnectionInfo connInfo) {
+        ConnectionRetryInfo connRetryInfo = retryConnectionsMap.get(connInfo);
+        if (connRetryInfo == null) {
+            LOG.info("Queueing connection {0} for retry", connInfo);
+            connRetryInfo = new ConnectionRetryInfo(0, retryInitialDelay);
+            retryConnectionsMap.put(connInfo, connRetryInfo);
+            scheduleRetry(connInfo, retryInitialDelay);
         }
+        return connRetryInfo;
     }
 
-    private void queueTopicForRetry(String publisherAuthority, String topic, MessageHandler msgHandler) {
-        LOG.info("Queueing topic {0} from publisher {1} for retry", topic, publisherAuthority);
-        Map<String, MessageHandler> topicsMap = retryTopicsMap.get(publisherAuthority);
-        if (topicsMap == null) {
-            topicsMap = new HashMap<String, MessageHandler>();
-            retryTopicsMap.put(publisherAuthority, topicsMap);
-        }
+    private ConnectionRetryInfo queueTopicForRetry(JMSConnectionInfo connInfo, String topic, MessageHandler msgHandler) {
+        LOG.info("Queueing topic {0} for {1} for retry", topic, connInfo);
+        ConnectionRetryInfo connRetryInfo = queueConnectionForRetry(connInfo);
+        Map<String, MessageHandler> topicsMap = connRetryInfo.getTopicsToRetry();
         topicsMap.put(topic, msgHandler);
+        return connRetryInfo;
     }
 
-    private void removeTopicFromRetryList(String publisherAuthority, String topic) {
-        LOG.info("Removing topic {0} from publisher {1} from retry list", topic, publisherAuthority);
-        Map<String, MessageHandler> topicsMap = retryTopicsMap.get(publisherAuthority);
-        if (topicsMap != null) {
+    private void removeTopicFromRetryList(JMSConnectionInfo connInfo, String topic) {
+        LOG.info("Removing topic {0} from {1} from retry list", topic, connInfo);
+        ConnectionRetryInfo connRetryInfo = retryConnectionsMap.get(connInfo);
+        if (connRetryInfo != null) {
+            Map<String, MessageHandler> topicsMap = connRetryInfo.getTopicsToRetry();
             topicsMap.remove(topic);
-            if (topicsMap.isEmpty()) {
-                retryTopicsMap.remove(publisherAuthority);
-            }
         }
     }
 
-    private MessageReceiver registerForTopic(ConnectionContext connCtxt, String publisherAuthority, String topic,
+    private MessageReceiver registerForTopic(JMSConnectionInfo connInfo, ConnectionContext connCtxt, String topic,
             MessageHandler msgHandler) {
         try {
             Session session = connCtxt.createSession(sessionOpts);
@@ -302,69 +244,27 @@ public class JMSAccessorService implements Service {
             return receiver;
         }
         catch (JMSException e) {
-            LOG.warn("Error while registering to listen to topic {0} from publisher {1}", topic, publisherAuthority, e);
+            LOG.warn("Error while registering to listen to topic {0} from {1}", topic, connInfo, e);
             return null;
         }
     }
 
-    protected ConnectionContext createConnectionContext(String jmsConnectString) {
-        ConnectionContext connCtxt = connectionMap.get(jmsConnectString);
+    protected ConnectionContext createConnectionContext(JMSConnectionInfo connInfo) {
+        ConnectionContext connCtxt = connectionMap.get(connInfo);
         if (connCtxt == null) {
-            Properties props = getJMSPropsFromConf(jmsConnectString);
-            if (props != null) {
-                try {
-                    connCtxt = getConnectionContextImpl();
-                    connCtxt.createConnection(connCtxt.createConnectionFactory(props));
-                    connCtxt.setExceptionListener(new JMSExceptionListener(jmsConnectString, connCtxt));
-                    connectionMap.put(jmsConnectString, connCtxt);
-                    LOG.info("Connection established to JMS Server for [{0}]", jmsConnectString);
-                }
-                catch (Exception e) {
-                    LOG.warn("Exception while establishing connection to JMS Server for [{0}]", jmsConnectString, e);
-                    return null;
-                }
+            try {
+                connCtxt = getConnectionContextImpl();
+                connCtxt.createConnection(connInfo.getJNDIProperties());
+                connCtxt.setExceptionListener(new JMSExceptionListener(connInfo, connCtxt));
+                connectionMap.put(connInfo, connCtxt);
+                LOG.info("Connection established to JMS Server for [{0}]", connInfo);
             }
-            else {
-                LOG.warn("JMS connection string is not configured properly - [{0}]", jmsConnectString);
-            }
-        }
-        return connCtxt;
-    }
-
-    protected String getJMSServerConnectString(String publisherAuthority) {
-        if (publisherConnectStringMap.containsKey(publisherAuthority)) {
-            return publisherConnectStringMap.get(publisherAuthority);
-        }
-        else {
-            for (MappingRule mr : mappingRules) {
-                String jmsConnectString = mr.applyRule(publisherAuthority);
-                if (jmsConnectString != null) {
-                    publisherConnectStringMap.put(publisherAuthority, jmsConnectString);
-                    return jmsConnectString;
-                }
-            }
-            publisherConnectStringMap.put(publisherAuthority, defaultConnectString);
-            return defaultConnectString;
-        }
-    }
-
-    protected Properties getJMSPropsFromConf(String jmsConnectString) {
-        Properties props = new Properties();
-        String[] propArr = jmsConnectString.split(";");
-        for (String pair : propArr) {
-            String[] kV = pair.split("#");
-            if (kV.length > 1) {
-                props.put(kV[0].trim(), kV[1].trim());
-            }
-            else {
-                LOG.warn("Unformatted properties. Expected key#value : " + pair);
+            catch (Exception e) {
+                LOG.warn("Exception while establishing connection to JMS Server for [{0}]", connInfo, e);
                 return null;
             }
         }
-        if (props.isEmpty()) {
-            return null;
-        }
-        return props;
+        return connCtxt;
     }
 
     private ConnectionContext getConnectionContextImpl() {
@@ -380,8 +280,8 @@ public class JMSAccessorService implements Service {
     }
 
     @VisibleForTesting
-    MessageReceiver getMessageReceiver(String publisher, String topic) {
-        Map<String, MessageReceiver> topicsMap = receiversMap.get(publisher);
+    MessageReceiver getMessageReceiver(JMSConnectionInfo connInfo, String topic) {
+        Map<String, MessageReceiver> topicsMap = receiversMap.get(connInfo);
         if (topicsMap != null) {
             return topicsMap.get(topic);
         }
@@ -405,8 +305,8 @@ public class JMSAccessorService implements Service {
         receiversMap.clear();
 
         LOG.info("Closing JMS connections");
-        for (Entry<String, ConnectionContext> entry : connectionMap.entrySet()) {
-            entry.getValue().close();
+        for (ConnectionContext conn : connectionMap.values()) {
+            conn.close();
         }
         connectionMap.clear();
     }
@@ -417,117 +317,102 @@ public class JMSAccessorService implements Service {
     }
 
     /**
-     * Reestablish connection for the given JMS connect string
-     * @param jmsConnectString JMS connect string
+     * Reestablish connection for the given JMS connect information
+     * @param connInfo JMS connection info
      */
-    public void reestablishConnection(String jmsConnectString) {
-        connectionMap.remove(jmsConnectString);
-        queueConnectionForRetry(jmsConnectString);
-        for (Entry<String, String> entry : publisherConnectStringMap.entrySet()) {
-            if (entry.getValue().equals(jmsConnectString)) {
-                String publisherAuthority = entry.getKey();
-                Map<String, MessageReceiver> topicsMap = receiversMap.remove(publisherAuthority);
-                if (topicsMap != null) {
-                    Map<String, MessageHandler> retryTopics = retryTopicsMap.get(publisherAuthority);
-                    if (retryTopics == null) {
-                        retryTopics = new HashMap<String, MessageHandler>();
-                        retryTopicsMap.put(publisherAuthority, retryTopics);
-                    }
-                    for (Entry<String, MessageReceiver> topicEntry : topicsMap.entrySet()) {
-                        MessageReceiver receiver = topicEntry.getValue();
-                        retryTopics.put(topicEntry.getKey(), receiver.getMessageHandler());
-                        try {
-                            receiver.getSession().close();
-                        }
-                        catch (JMSException e) {
-                            LOG.warn("Unable to close session " + receiver.getSession(), e);
-                        }
-                    }
+    public void reestablishConnection(JMSConnectionInfo connInfo) {
+        connectionMap.remove(connInfo);
+        // Queue the connection and topics for retry
+        ConnectionRetryInfo connRetryInfo = queueConnectionForRetry(connInfo);
+        Map<String, MessageReceiver> listeningTopicsMap = receiversMap.remove(connInfo);
+        if (listeningTopicsMap != null) {
+            Map<String, MessageHandler> retryTopicsMap = connRetryInfo.getTopicsToRetry();
+            for (Entry<String, MessageReceiver> topicEntry : listeningTopicsMap.entrySet()) {
+                MessageReceiver receiver = topicEntry.getValue();
+                retryTopicsMap.put(topicEntry.getKey(), receiver.getMessageHandler());
+                try {
+                    receiver.getSession().close();
+                }
+                catch (JMSException e) {
+                    LOG.warn("Unable to close session " + receiver.getSession(), e);
                 }
             }
         }
     }
 
-    private void scheduleRetry(String jmsConnectString, long delay) {
-        LOG.info("Scheduling retry of connection [{0}] in [{1}] seconds", jmsConnectString, delay);
-        JMSRetryRunnable runnable = new JMSRetryRunnable(jmsConnectString);
+    private void scheduleRetry(JMSConnectionInfo connInfo, long delay) {
+        LOG.info("Scheduling retry of connection [{0}] in [{1}] seconds", connInfo, delay);
+        JMSRetryRunnable runnable = new JMSRetryRunnable(connInfo);
         SchedulerService scheduler = Services.get().get(SchedulerService.class);
         scheduler.schedule(runnable, delay, SchedulerService.Unit.SEC);
     }
 
     @VisibleForTesting
-    boolean retryConnection(String jmsConnectString) {
-        ConnectionAttempt attempt = retryConnectionsMap.get(jmsConnectString);
-        if (attempt.getNumAttempt() >= retryMaxAttempts) {
-            LOG.info("Not attempting jms connection [{0}] again. Reached max attempts [{1}]", jmsConnectString,
-                    retryMaxAttempts);
+    boolean retryConnection(JMSConnectionInfo connInfo) {
+        ConnectionRetryInfo connRetryInfo = retryConnectionsMap.get(connInfo);
+        if (connRetryInfo.getNumAttempt() >= retryMaxAttempts) {
+            LOG.info("Not attempting connection [{0}] again. Reached max attempts [{1}]", connInfo, retryMaxAttempts);
             return false;
         }
-        LOG.info("Attempting retry of connection [{0}]", jmsConnectString);
-        attempt.setNumAttempt(attempt.getNumAttempt() + 1);
-        attempt.setNextDelay(attempt.getNextDelay() * retryMultiplier);
-        ConnectionContext connCtxt = createConnectionContext(jmsConnectString);
-        boolean removeRetryConnection = true;
+        LOG.info("Attempting retry of connection [{0}]", connInfo);
+        connRetryInfo.setNumAttempt(connRetryInfo.getNumAttempt() + 1);
+        connRetryInfo.setNextDelay(connRetryInfo.getNextDelay() * retryMultiplier);
+        ConnectionContext connCtxt = createConnectionContext(connInfo);
+        boolean shouldRetry = false;
         if (connCtxt == null) {
-            removeRetryConnection = false;
+            shouldRetry = true;
         }
         else {
-            for (Entry<String, String> entry : publisherConnectStringMap.entrySet()) {
-                if (entry.getValue().equals(jmsConnectString)) {
-                    String publisherAuthority = entry.getKey();
-                    Map<String, MessageHandler> retryTopics = retryTopicsMap.get(publisherAuthority);
-                    if (retryTopics != null) {
-                        List<String> topicsToRemoveList = new ArrayList<String>();
-                        // For each topic in the retry list, try to register for the topic
-                        for (Entry<String, MessageHandler> topicEntry : retryTopics.entrySet()) {
-                            String topic = topicEntry.getKey();
-                            Map<String, MessageReceiver> topicsMap = getReceiversTopicsMap(publisherAuthority);
-                            if (topicsMap.containsKey(topic)) {
-                                continue;
-                            }
-                            synchronized (topicsMap) {
-                                if (!topicsMap.containsKey(topic)) {
-                                    MessageReceiver receiver = registerForTopic(connCtxt, publisherAuthority, topic,
-                                            topicEntry.getValue());
-                                    if (receiver == null) {
-                                        queueTopicForRetry(publisherAuthority, topic, topicEntry.getValue());
-                                        removeRetryConnection = false;
-                                    }
-                                    else {
-                                        topicsMap.put(topic, receiver);
-                                        topicsToRemoveList.add(topic);
-                                        LOG.info("Registered a listener for topic {0} from publisher {1}", topic,
-                                                publisherAuthority);
-                                    }
-                                }
-                            }
+            Map<String, MessageHandler> retryTopicsMap = connRetryInfo.getTopicsToRetry();
+            Map<String, MessageReceiver> listeningTopicsMap = getReceiversTopicsMap(connInfo);
+            List<String> topicsToRemoveList = new ArrayList<String>();
+            // For each topic in the retry list, try to register the MessageHandler for that topic
+            for (Entry<String, MessageHandler> topicEntry : retryTopicsMap.entrySet()) {
+                String topic = topicEntry.getKey();
+                if (listeningTopicsMap.containsKey(topic)) {
+                    continue;
+                }
+                synchronized (listeningTopicsMap) {
+                    if (!listeningTopicsMap.containsKey(topic)) {
+                        MessageReceiver receiver = registerForTopic(connInfo, connCtxt, topic, topicEntry.getValue());
+                        if (receiver == null) {
+                            LOG.warn("Failed to register a listener for topic {0} on {1}", topic, connInfo);
                         }
-                        for (String topic : topicsToRemoveList) {
-                            retryTopics.remove(topic);
+                        else {
+                            listeningTopicsMap.put(topic, receiver);
+                            topicsToRemoveList.add(topic);
+                            LOG.info("Registered a listener for topic {0} on {1}", topic, connInfo);
                         }
-                    }
-                    if (retryTopics.isEmpty()) {
-                        retryTopicsMap.remove(publisherAuthority);
                     }
                 }
             }
+            for (String topic : topicsToRemoveList) {
+                retryTopicsMap.remove(topic);
+            }
+            if (retryTopicsMap.isEmpty()) {
+                shouldRetry = false;
+            }
         }
-        if (removeRetryConnection) {
-            retryConnectionsMap.remove(jmsConnectString);
+
+        if (shouldRetry) {
+            scheduleRetry(connInfo, connRetryInfo.getNextDelay());
         }
         else {
-            scheduleRetry(jmsConnectString, attempt.getNextDelay());
+            retryConnectionsMap.remove(connInfo);
         }
         return true;
     }
 
-    private static class ConnectionAttempt {
+    private static class ConnectionRetryInfo {
         private int numAttempt;
         private int nextDelay;
+        private boolean retryConnection;
+        private Map<String, MessageHandler> retryTopicsMap;
 
-        public ConnectionAttempt(int numAttempt, int nextDelay) {
+        public ConnectionRetryInfo(int numAttempt, int nextDelay) {
             this.numAttempt = numAttempt;
             this.nextDelay = nextDelay;
+            this.retryTopicsMap = new HashMap<String, MessageHandler>();
         }
 
         public int getNumAttempt() {
@@ -546,23 +431,35 @@ public class JMSAccessorService implements Service {
             this.nextDelay = nextDelay;
         }
 
+        public Map<String, MessageHandler> getTopicsToRetry() {
+            return retryTopicsMap;
+        }
+
+        public boolean shouldRetryConnection() {
+            return retryConnection;
+        }
+
+        public void setRetryConnection(boolean retryConnection) {
+            this.retryConnection = retryConnection;
+        }
+
     }
 
     public class JMSRetryRunnable implements Runnable {
 
-        private String jmsConnectString;
+        private JMSConnectionInfo connInfo;
 
-        public JMSRetryRunnable(String jmsConnectString) {
-            this.jmsConnectString = jmsConnectString;
+        public JMSRetryRunnable(JMSConnectionInfo connInfo) {
+            this.connInfo = connInfo;
         }
 
-        public String getJmsConnectString() {
-            return jmsConnectString;
+        public JMSConnectionInfo getJMSConnectionInfo() {
+            return connInfo;
         }
 
         @Override
         public void run() {
-            retryConnection(jmsConnectString);
+            retryConnection(connInfo);
         }
 
     }

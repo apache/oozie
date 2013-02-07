@@ -56,8 +56,10 @@ import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.dependency.FSURIHandler;
 import org.apache.oozie.dependency.HCatURIHandler;
 import org.apache.oozie.service.ConfigurationService;
+import org.apache.oozie.service.HCatAccessorService;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.JMSAccessorService;
+import org.apache.oozie.service.PartitionDependencyManagerService;
 import org.apache.oozie.service.ServiceException;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.URIHandlerService;
@@ -887,9 +889,10 @@ public abstract class XTestCase extends TestCase {
         Services services = new Services();
         Configuration conf = services.getConf();
         conf.set(Services.CONF_SERVICE_EXT_CLASSES,
-                "org.apache.oozie.service.PartitionDependencyManagerService," +
-                "org.apache.oozie.service.JMSAccessorService");
-        conf.set(JMSAccessorService.JMS_CONNECTIONS_PROPERTIES,
+                JMSAccessorService.class.getName() + "," +
+                PartitionDependencyManagerService.class.getName() + "," +
+                HCatAccessorService.class.getName());
+        conf.set(HCatAccessorService.JMS_CONNECTIONS_PROPERTIES,
                 "default=java.naming.factory.initial#" + ActiveMQConnFactory + ";" +
                 "java.naming.provider.url#" + localActiveMQBroker +
                 "connectionFactoryNames#"+ "ConnectionFactory");

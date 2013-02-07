@@ -19,59 +19,30 @@ package org.apache.oozie.dependency;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.coord.CoordUtils;
+import org.apache.oozie.action.hadoop.FSLauncherURIHandler;
+import org.apache.oozie.action.hadoop.LauncherURIHandler;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.service.URIAccessorException;
-import org.apache.oozie.service.URIHandlerService;
-import org.apache.oozie.util.XConfiguration;
-import org.apache.oozie.util.XLog;
-import org.jdom.Element;
 
-public class FSURIHandler extends URIHandler {
+public class FSURIHandler implements URIHandler {
 
-    private static XLog LOG = XLog.getLog(FSURIHandler.class);
-    private boolean isFrontEnd;
     private HadoopAccessorService service;
     private Set<String> supportedSchemes;
     private List<Class<?>> classesToShip;
 
-    public FSURIHandler() {
-        this.classesToShip = new ArrayList<Class<?>>();
-        classesToShip.add(FSURIHandler.class);
-        classesToShip.add(FSURIContext.class);
-        classesToShip.add(HadoopAccessorService.class);
-        classesToShip.add(HadoopAccessorException.class);
-        classesToShip.add(XConfiguration.class); //Not sure why it fails in init with CNFE for this.
-    }
-
     @Override
-    public void init(Configuration conf, boolean isFrontEnd) {
-        this.isFrontEnd = isFrontEnd;
-        if (isFrontEnd) {
-            service = Services.get().get(HadoopAccessorService.class);
-            supportedSchemes = service.getSupportedSchemes();
-        }
-        if (supportedSchemes == null) {
-            supportedSchemes = new HashSet<String>();
-            String[] schemes = conf.getStrings(URIHandlerService.URI_HANDLER_SUPPORTED_SCHEMES_PREFIX
-                    + this.getClass().getSimpleName() + URIHandlerService.URI_HANDLER_SUPPORTED_SCHEMES_SUFFIX,
-                    HadoopAccessorService.DEFAULT_SUPPORTED_SCHEMES);
-            supportedSchemes.addAll(Arrays.asList(schemes));
-        }
+    public void init(Configuration conf) {
+        service = Services.get().get(HadoopAccessorService.class);
+        supportedSchemes = service.getSupportedSchemes();
+        classesToShip = new FSLauncherURIHandler().getClassesForLauncher();
     }
 
     @Override
@@ -79,18 +50,24 @@ public class FSURIHandler extends URIHandler {
         return supportedSchemes;
     }
 
-    public Collection<Class<?>> getClassesToShip() {
+    @Override
+    public Class<? extends LauncherURIHandler> getLauncherURIHandlerClass() {
+        return FSLauncherURIHandler.class;
+    }
+
+    @Override
+    public List<Class<?>> getClassesForLauncher() {
         return classesToShip;
     }
 
     @Override
-    public DependencyType getDependencyType(URI uri) throws URIAccessorException {
+    public DependencyType getDependencyType(URI uri) throws URIHandlerException {
         return DependencyType.PULL;
     }
 
     @Override
     public void registerForNotification(URI uri, Configuration conf, String user, String actionID)
-            throws URIAccessorException {
+            throws URIHandlerException {
         throw new UnsupportedOperationException("Notifications are not supported for " + uri.getScheme());
     }
 
@@ -100,19 +77,13 @@ public class FSURIHandler extends URIHandler {
     }
 
     @Override
-    public URIContext getURIContext(URI uri, Configuration conf, String user) throws URIAccessorException {
+    public URIContext getURIContext(URI uri, Configuration conf, String user) throws URIHandlerException {
         FileSystem fs = getFileSystem(uri, conf, user);
         return new FSURIContext(conf, user, fs);
     }
 
     @Override
-    public boolean create(URI uri, Configuration conf, String user) throws URIAccessorException {
-        FileSystem fs = getFileSystem(uri, conf, user);
-        return create(fs, uri);
-    }
-
-    @Override
-    public boolean exists(URI uri, URIContext uriContext) throws URIAccessorException {
+    public boolean exists(URI uri, URIContext uriContext) throws URIHandlerException {
         try {
             FileSystem fs = ((FSURIContext) uriContext).getFileSystem();
             return fs.exists(getNormalizedPath(uri));
@@ -123,7 +94,7 @@ public class FSURIHandler extends URIHandler {
     }
 
     @Override
-    public boolean exists(URI uri, Configuration conf, String user) throws URIAccessorException {
+    public boolean exists(URI uri, Configuration conf, String user) throws URIHandlerException {
         try {
             FileSystem fs = getFileSystem(uri, conf, user);
             return fs.exists(getNormalizedPath(uri));
@@ -134,14 +105,7 @@ public class FSURIHandler extends URIHandler {
     }
 
     @Override
-    public boolean delete(URI uri, Configuration conf, String user) throws URIAccessorException {
-        FileSystem fs = getFileSystem(uri, conf, user);
-        return delete(fs, uri);
-    }
-
-    @Override
-    public String getURIWithDoneFlag(String uri, Element doneFlagElement) throws URIAccessorException {
-        String doneFlag = CoordUtils.getDoneFlag(doneFlagElement);
+    public String getURIWithDoneFlag(String uri, String doneFlag) throws URIHandlerException {
         if (doneFlag.length() > 0) {
             uri += "/" + doneFlag;
         }
@@ -149,15 +113,7 @@ public class FSURIHandler extends URIHandler {
     }
 
     @Override
-    public String getURIWithDoneFlag(String uri, String doneFlag) throws URIAccessorException {
-        if (doneFlag.length() > 0) {
-            uri += "/" + doneFlag;
-        }
-        return uri;
-    }
-
-    @Override
-    public void validate(String uri) throws URIAccessorException {
+    public void validate(String uri) throws URIHandlerException {
     }
 
     @Override
@@ -171,65 +127,11 @@ public class FSURIHandler extends URIHandler {
     }
 
     private FileSystem getFileSystem(URI uri, Configuration conf, String user) throws HadoopAccessorException {
-        if (isFrontEnd) {
-            if (user == null) {
-                throw new HadoopAccessorException(ErrorCode.E0902, "user has to be specified to access FileSystem");
-            }
-            Configuration fsConf = service.createJobConf(uri.getAuthority());
-            return service.createFileSystem(user, uri, fsConf);
+        if (user == null) {
+            throw new HadoopAccessorException(ErrorCode.E0902, "user has to be specified to access FileSystem");
         }
-        else {
-            try {
-                if (user != null && !user.equals(UserGroupInformation.getLoginUser().getShortUserName())) {
-                    throw new HadoopAccessorException(ErrorCode.E0902,
-                            "Cannot access FileSystem as a different user in backend");
-                }
-                return FileSystem.get(uri, conf);
-            }
-            catch (IOException e) {
-                throw new HadoopAccessorException(ErrorCode.E0902, e);
-            }
-        }
-    }
-
-    private boolean create(FileSystem fs, URI uri) throws URIAccessorException {
-        Path path = getNormalizedPath(uri);
-        try {
-            if (!fs.exists(path)) {
-                boolean status = fs.mkdirs(path);
-                if (status) {
-                    LOG.info("Creating directory at {0} succeeded.", path);
-                }
-                else {
-                    LOG.info("Creating directory at {0} failed.", path);
-                }
-                return status;
-            }
-        }
-        catch (IOException e) {
-            throw new HadoopAccessorException(ErrorCode.E0902, e);
-        }
-        return false;
-    }
-
-    private boolean delete(FileSystem fs, URI uri) throws URIAccessorException {
-        Path path = getNormalizedPath(uri);
-        try {
-            if (fs.exists(path)) {
-                boolean status = fs.delete(path, true);
-                if (status) {
-                    LOG.info("Deletion of path {0} succeeded.", path);
-                }
-                else {
-                    LOG.info("Deletion of path {0} failed.", path);
-                }
-                return status;
-            }
-        }
-        catch (IOException e) {
-            throw new HadoopAccessorException(ErrorCode.E0902, e);
-        }
-        return false;
+        Configuration fsConf = service.createJobConf(uri.getAuthority());
+        return service.createFileSystem(user, uri, fsConf);
     }
 
 }

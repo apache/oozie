@@ -119,10 +119,6 @@ public class RecoveryService implements Service {
         private List<XCallable<?>> delayedCallables;
         private StringBuilder msg = null;
         private JPAService jpaService = null;
-        URIHandlerService uriService = Services.get().get(URIHandlerService.class);
-        JMSAccessorService jmsService = Services.get().get(JMSAccessorService.class);
-        PartitionDependencyManagerService pdms = Services.get().get(PartitionDependencyManagerService.class);
-
 
         public RecoveryRunnable(long olderThan, long coordOlderThan,long bundleOlderThan) {
             this.olderThan = olderThan;

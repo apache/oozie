@@ -24,9 +24,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.oozie.dependency.URIHandler;
-import org.apache.oozie.service.URIAccessorException;
-import org.apache.oozie.service.URIHandlerService;
 import org.xml.sax.SAXException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -55,8 +52,7 @@ public class PrepareActionsDriver {
 
             // Get the list of child nodes, basically, each one corresponding to a separate action
             NodeList nl = doc.getDocumentElement().getChildNodes();
-            URIHandlerService service = new URIHandlerService();
-            service.init(conf, false);
+            LauncherURIHandlerFactory factory = new LauncherURIHandlerFactory(conf);
 
             for (int i = 0; i < nl.getLength(); ++i) {
                 Node n = nl.item(i);
@@ -66,7 +62,7 @@ public class PrepareActionsDriver {
                 }
                 String path = n.getAttributes().getNamedItem("path").getNodeValue().trim();
                 URI uri = new URI(path);
-                URIHandler handler = service.getURIHandler(uri, true);
+                LauncherURIHandler handler = factory.getURIHandler(uri);
                 execute(operation, uri, handler, conf);
             }
         } catch (IOException ioe) {
@@ -77,10 +73,6 @@ public class PrepareActionsDriver {
             throw new LauncherException(pce.getMessage(), pce);
         } catch (URISyntaxException use) {
             throw new LauncherException(use.getMessage(), use);
-        } catch (URIAccessorException uae) {
-            throw new LauncherException(uae.getMessage(), uae);
-        } catch (ClassNotFoundException cnfe) {
-            throw new LauncherException(cnfe.getMessage(), cnfe);
         }
     }
 
@@ -89,15 +81,14 @@ public class PrepareActionsDriver {
      *
      * @param n Child node of the prepare XML
      * @throws LauncherException
-     * @throws URIAccessorException
      */
-    private static void execute(String operation, URI uri, URIHandler handler, Configuration conf)
-            throws URIAccessorException {
+    private static void execute(String operation, URI uri, LauncherURIHandler handler, Configuration conf)
+            throws LauncherException {
         if (operation.equals("delete")) {
-            handler.delete(uri, conf, null);
+            handler.delete(uri, conf);
         }
         else if (operation.equals("mkdir")) {
-            handler.create(uri, conf, null);
+            handler.create(uri, conf);
         }
     }
 

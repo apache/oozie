@@ -19,8 +19,6 @@ package org.apache.oozie.jms;
 
 import java.util.Properties;
 
-import javax.jms.Connection;
-import javax.jms.ConnectionFactory;
 import javax.jms.ExceptionListener;
 import javax.jms.JMSException;
 import javax.jms.MessageConsumer;
@@ -34,19 +32,11 @@ import javax.naming.NamingException;
 public interface ConnectionContext {
 
     /**
-     * Create connection factory using properties
+     * Create connection using properties
      * @param props the properties used for creating jndi context
-     * @return
-     * @throws NamingException
-     */
-    public ConnectionFactory createConnectionFactory(Properties props) throws NamingException;
-
-    /**
-     * Create connection using connection Factory
-     * @param connFactory
      * @throws JMSException
      */
-    public void createConnection(ConnectionFactory connFactory) throws JMSException;
+    public void createConnection(Properties props) throws NamingException, JMSException;
 
     /**
     * Set the exception Listener
@@ -85,18 +75,6 @@ public interface ConnectionContext {
      * @throws JMSException
      */
     public MessageProducer createProducer(Session session, String topicName) throws JMSException;
-
-    /**
-     * Retrieves the connection for this connection context
-     * @return
-     */
-    public Connection getConnection();
-
-    /**
-     * Retrieves the conneciton factory name for this context
-     * @return
-     */
-    public String getConnectionFactoryName();
 
     /**
      * Closes the connection

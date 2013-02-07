@@ -22,7 +22,6 @@ import static org.junit.Assert.assertEquals;
 import java.net.URI;
 
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.service.URIAccessorException;
 import org.apache.oozie.service.URIHandlerService;
 import org.junit.Assert;
 import org.junit.Test;
@@ -47,7 +46,7 @@ public class TestURIHandlerService {
             uri = uriService.getAuthorityWithScheme("/tmp/file");
             Assert.fail();
         }
-        catch (URIAccessorException e) {
+        catch (URIHandlerException e) {
             assertEquals(ErrorCode.E0905, e.getErrorCode());
         }
     }

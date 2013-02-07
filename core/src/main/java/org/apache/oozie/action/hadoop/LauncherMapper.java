@@ -150,8 +150,8 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         launcherConf.set(CONF_OOZIE_ACTION_MAIN_CLASS, javaMainClass);
     }
 
-    public static void setupURIServiceConf(Configuration launcherConf) {
-        for(Entry<String, String> entry : Services.get().get(URIHandlerService.class).getURIHandlerServiceConfig()) {
+    public static void setupLauncherURIHandlerConf(Configuration launcherConf) {
+        for(Entry<String, String> entry : Services.get().get(URIHandlerService.class).getLauncherConfig()) {
             launcherConf.set(entry.getKey(), entry.getValue());
         }
     }
@@ -800,16 +800,5 @@ class LauncherSecurityManager extends SecurityManager {
     public static void reset() {
         exitInvoked = false;
         exitCode = 0;
-    }
-}
-
-class LauncherException extends Exception {
-
-    LauncherException(String message) {
-        super(message);
-    }
-
-    LauncherException(String message, Throwable cause) {
-        super(message, cause);
     }
 }

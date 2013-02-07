@@ -17,7 +17,24 @@
  */
 package org.apache.oozie.dependency;
 
-public enum DependencyType {
-    PULL,
-    PUSH;
+import java.util.List;
+
+public class ActionDependency {
+
+    private List<String> missingDependencies;
+    private List<String> availableDependencies;
+
+    ActionDependency(List<String> missingDependencies, List<String> availableDependencies) {
+        this.missingDependencies = missingDependencies;
+        this.availableDependencies = availableDependencies;
+    }
+
+    public List<String> getMissingDependencies() {
+        return missingDependencies;
+    }
+
+    public List<String> getAvailableDependencies() {
+        return availableDependencies;
+    }
+
 }

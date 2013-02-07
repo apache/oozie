@@ -58,7 +58,7 @@ public class TestFSPrepareActions extends XFsTestCase {
         String prepareXML = "<prepare>" + "<delete path='" + newDir + "'/>" + "</prepare>";
 
         JobConf conf = createJobConf();
-        LauncherMapper.setupURIServiceConf(conf);
+        LauncherMapper.setupLauncherURIHandlerConf(conf);
         PrepareActionsDriver.doOperations(prepareXML, conf);
         assertFalse(fs.exists(newDir));
     }
@@ -77,7 +77,7 @@ public class TestFSPrepareActions extends XFsTestCase {
         String prepareXML = "<prepare>" + "<mkdir path='" + newDir + "'/>" + "</prepare>";
 
         JobConf conf = createJobConf();
-        LauncherMapper.setupURIServiceConf(conf);
+        LauncherMapper.setupLauncherURIHandlerConf(conf);
         PrepareActionsDriver.doOperations(prepareXML, conf);
         assertTrue(fs.exists(newDir));
     }
@@ -96,12 +96,12 @@ public class TestFSPrepareActions extends XFsTestCase {
 
         try {
             JobConf conf = createJobConf();
-            LauncherMapper.setupURIServiceConf(conf);
+            LauncherMapper.setupLauncherURIHandlerConf(conf);
             PrepareActionsDriver.doOperations(prepareXML, conf);
             fail("Expected to catch an exception but did not encounter any");
         } catch (LauncherException le) {
             Path path = new Path(n.getAttributes().getNamedItem("path").getNodeValue().trim());
-            assertEquals("E0904: Scheme [hftp] not supported in uri [" + path + "]" , le.getMessage());
+            assertEquals("Scheme hftp not supported in uri " + path, le.getMessage());
         } catch(Exception ex){
             fail("Expected a LauncherException but received an Exception");
         }
@@ -126,12 +126,12 @@ public class TestFSPrepareActions extends XFsTestCase {
 
         try {
             JobConf conf = createJobConf();
-            LauncherMapper.setupURIServiceConf(conf);
+            LauncherMapper.setupLauncherURIHandlerConf(conf);
             PrepareActionsDriver.doOperations(prepareXML, conf);
             fail("Expected to catch an exception but did not encounter any");
         } catch (LauncherException le) {
             Path path = new Path(n.getAttributes().getNamedItem("path").getNodeValue().trim());
-            assertEquals("E0905: Scheme not present in uri [" + path + "]", le.getMessage());
+            assertEquals("Scheme not present in uri " + path, le.getMessage());
         } catch(Exception ex) {
             fail("Expected a LauncherException but received an Exception");
         }
