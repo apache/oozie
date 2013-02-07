@@ -45,27 +45,27 @@
             <configuration>
                 <property>
                     <name>DB</name>
-                    <value>${coord:database('input', 'input')}</value>
+                    <value>${coord:databaseIn('input')}</value>
                 </property>
                 <property>
                     <name>TABLE</name>
-                    <value>${coord:table('input', 'input')}</value>
+                    <value>${coord:tableIn('input')}</value>
                 </property>
                 <property>
                     <name>FILTER</name>
-                    <value>${coord:dataInPartitionFilter('input')}</value>
+                    <value>${coord:dataInPartitionFilter('input', 'pig')}</value>
                 </property>
                 <property>
                     <name>OUTPUT_PARTITION</name>
-                    <value>${coord:dataOutPartition('output')}</value>
+                    <value>${coord:dataOutPartitions('output')}</value>
                 </property>
                 <property>
                     <name>OUTPUT_DB</name>
-                    <value>${coord:database('output', 'output')}</value>
+                    <value>${coord:databaseOut('output')}</value>
                 </property>
                 <property>
                     <name>OUTPUT_TABLE</name>
-                    <value>${coord:table('output', 'output')}</value>
+                    <value>${coord:tableOut('output')}</value>
                 </property>
             </configuration>
         </workflow>

@@ -225,17 +225,20 @@ public class HCatURI {
      * Convert the partition map to filter string. Each key value pair is
      * separated by AND
      *
+     * @param type pig/java/mr/hive
      * @return filter string
      */
-    public String toPigPartitionFilter() {
+    public String toPartitionFilter(String type) {
         StringBuilder filter = new StringBuilder();
+        String comparator = null;
         filter.append("(");
+        comparator = type.equalsIgnoreCase("pig") ? "==" : "=";
         for (Map.Entry<String, String> entry : partitions.entrySet()) {
             if (filter.length() > 1) {
                 filter.append(" AND ");
             }
             filter.append(entry.getKey());
-            filter.append("==");
+            filter.append(comparator);
             filter.append(PARTITION_VALUE_QUOTE);
             filter.append(entry.getValue());
             filter.append(PARTITION_VALUE_QUOTE);
@@ -249,7 +252,7 @@ public class HCatURI {
      *
      * @return filter string
      */
-    public String toPartitionStringHCatStorer() {
+    public String toPartitionString() {
         StringBuilder filter = new StringBuilder();
         filter.append("'");
         for (Map.Entry<String, String> entry : partitions.entrySet()) {
@@ -261,27 +264,6 @@ public class HCatURI {
             filter.append(entry.getValue());
         }
         filter.append("'");
-        return filter.toString();
-    }
-
-    /**
-     * Convert the partition map to filter string. Each key value pair is
-     * separated by AND
-     *
-     * @return filter string
-     */
-    public String toFilter() {
-        StringBuilder filter = new StringBuilder();
-        for (Map.Entry<String, String> entry : partitions.entrySet()) {
-            if (filter.length() > 0) {
-                filter.append(" AND ");
-            }
-            filter.append(entry.getKey());
-            filter.append("=");
-            filter.append(PARTITION_VALUE_QUOTE);
-            filter.append(entry.getValue());
-            filter.append(PARTITION_VALUE_QUOTE);
-        }
         return filter.toString();
     }
 

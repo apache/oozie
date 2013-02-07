@@ -38,7 +38,7 @@ public class HCatELFunctions {
     private static XLog LOG = XLog.getLog(HCatELFunctions.class);
     private static final Configuration EMPTY_CONF = new Configuration(true);
 
-    enum EVENT_TYPE {
+    enum EventType {
         input, output
     }
 
@@ -68,22 +68,34 @@ public class HCatELFunctions {
      * @param dataInName
      * @return the same EL function
      */
-    public static String ph1_coord_database_echo(String dataName, String type) {
-        // Checking if the dataIn/dataOut is correct?
+    public static String ph1_coord_databaseIn_echo(String dataName) {
+        // Checking if the dataIn is correct?
         isValidDataEvent(dataName);
-        return echoUnResolved("database", "'" + dataName + "', '" + type + "'");
+        return echoUnResolved("databaseIn", "'" + dataName + "'");
     }
 
-    public static String ph1_coord_table_echo(String dataName, String type) {
-        // Checking if the dataIn/dataOut is correct?
+    public static String ph1_coord_databaseOut_echo(String dataName) {
+        // Checking if the dataOut is correct?
         isValidDataEvent(dataName);
-        return echoUnResolved("table", "'" + dataName + "', '" + type + "'");
+        return echoUnResolved("databaseOut", "'" + dataName + "'");
     }
 
-    public static String ph1_coord_dataInPartitionPigFilter_echo(String dataInName) {
+    public static String ph1_coord_tableIn_echo(String dataName) {
+        // Checking if the dataIn is correct?
+        isValidDataEvent(dataName);
+        return echoUnResolved("tableIn", "'" + dataName + "'");
+    }
+
+    public static String ph1_coord_tableOut_echo(String dataName) {
+        // Checking if the dataOut is correct?
+        isValidDataEvent(dataName);
+        return echoUnResolved("tableOut", "'" + dataName + "'");
+    }
+
+    public static String ph1_coord_dataInPartitionFilter_echo(String dataInName, String type) {
         // Checking if the dataIn/dataOut is correct?
         isValidDataEvent(dataInName);
-        return echoUnResolved("dataInPartitionPigFilter", "'" + dataInName + "'");
+        return echoUnResolved("dataInPartitionFilter", "'" + dataInName + "', '" + type + "'");
     }
 
     public static String ph1_coord_dataInPartitionMin_echo(String dataInName, String partition) {
@@ -119,8 +131,27 @@ public class HCatELFunctions {
      * @param dataInName
      * @return DB name
      */
-    public static String ph3_coord_database(String dataName, String type) {
-        HCatURI hcatURI = getURIFromResolved(dataName, type);
+    public static String ph3_coord_databaseIn(String dataName) {
+        HCatURI hcatURI = getURIFromResolved(dataName, EventType.input);
+        if (hcatURI != null) {
+            return hcatURI.getDb();
+        }
+        else {
+            return "";
+        }
+    }
+
+    /**
+     * Extract the hcat DB name from the URI-template associate with
+     * 'dataOutName'. Caller needs to specify the EL-evaluator level variable
+     * 'oozie.coord.el.dataset.bean' with synchronous dataset object
+     * (SyncCoordDataset)
+     *
+     * @param dataOutName
+     * @return DB name
+     */
+    public static String ph3_coord_databaseOut(String dataName) {
+        HCatURI hcatURI = getURIFromResolved(dataName, EventType.output);
         if (hcatURI != null) {
             return hcatURI.getDb();
         }
@@ -138,8 +169,27 @@ public class HCatELFunctions {
      * @param dataInName
      * @return Table name
      */
-    public static String ph3_coord_table(String dataName, String type) {
-        HCatURI hcatURI = getURIFromResolved(dataName, type);
+    public static String ph3_coord_tableIn(String dataName) {
+        HCatURI hcatURI = getURIFromResolved(dataName, EventType.input);
+        if (hcatURI != null) {
+            return hcatURI.getTable();
+        }
+        else {
+            return "";
+        }
+    }
+
+    /**
+     * Extract the hcat Table name from the URI-template associate with
+     * 'dataOutName'. Caller needs to specify the EL-evaluator level variable
+     * 'oozie.coord.el.dataset.bean' with synchronous dataset object
+     * (SyncCoordDataset)
+     *
+     * @param dataOutName
+     * @return Table name
+     */
+    public static String ph3_coord_tableOut(String dataName) {
+        HCatURI hcatURI = getURIFromResolved(dataName, EventType.output);
         if (hcatURI != null) {
             return hcatURI.getTable();
         }
@@ -155,15 +205,16 @@ public class HCatELFunctions {
      * unresolved, this function will echo back the original function <p/> otherwise it sends the partition filter.
      *
      * @param dataInName : Datain name
+     * @param type : for action type - pig, MR or hive
      */
-    public static String ph3_coord_dataInPartitionPigFilter(String dataInName) {
+    public static String ph3_coord_dataInPartitionFilter(String dataInName, String type) {
         ELEvaluator eval = ELEvaluator.getCurrent();
         String uris = (String) eval.getVariable(".datain." + dataInName);
         Boolean unresolved = (Boolean) eval.getVariable(".datain." + dataInName + ".unresolved");
         if (unresolved != null && unresolved.booleanValue() == true) {
-            return "${coord:dataInPartitionPigFilter('" + dataInName + "')}";
+            return "${coord:dataInPartitionFilter('" + dataInName + "', '" + type + "')}";
         }
-        return createPartitionFilter(uris);
+        return createPartitionFilter(uris, type);
     }
 
     /**
@@ -205,10 +256,10 @@ public class HCatELFunctions {
         String uri = (String) eval.getVariable(".dataout." + dataOutName);
         Boolean unresolved = (Boolean) eval.getVariable(".dataout." + dataOutName + ".unresolved");
         if (unresolved != null && unresolved.booleanValue() == true) {
-            return "${coord:dataOutPartition('" + dataOutName + "')}";
+            return "${coord:dataOutPartitions('" + dataOutName + "')}";
         }
         try {
-            return new HCatURI(uri).toPartitionStringHCatStorer();
+            return new HCatURI(uri).toPartitionString();
         }
         catch (URISyntaxException e) {
             throw new RuntimeException("Parsing exception for HCatURI " + uri + ". details: " + e);
@@ -229,7 +280,7 @@ public class HCatELFunctions {
         String uris = (String) eval.getVariable(".datain." + dataInName);
         Boolean unresolved = (Boolean) eval.getVariable(".datain." + dataInName + ".unresolved");
         if (unresolved != null && unresolved.booleanValue() == true) {
-            return "${coord:dataInPartitionMin('" + dataInName + "')}";
+            return "${coord:dataInPartitionMin('" + dataInName + "', '" + partitionName + "')}";
         }
         String minPartition = null;
         if (uris != null) {
@@ -274,7 +325,7 @@ public class HCatELFunctions {
         String uris = (String) eval.getVariable(".datain." + dataInName);
         Boolean unresolved = (Boolean) eval.getVariable(".datain." + dataInName + ".unresolved");
         if (unresolved != null && unresolved.booleanValue() == true) {
-            return "${coord:dataInPartitionMin('" + dataInName + "')}";
+            return "${coord:dataInPartitionMin('" + dataInName + "', '" + partitionName + "')}";
         }
         String maxPartition = null;
         if (uris != null) {
@@ -304,7 +355,7 @@ public class HCatELFunctions {
         return maxPartition;
     }
 
-    private static String createPartitionFilter(String uris) {
+    private static String createPartitionFilter(String uris, String type) {
         String[] uriList = uris.split(CoordELFunctions.DIR_SEPARATOR);
         StringBuilder filter = new StringBuilder("");
         if (uriList.length > 0) {
@@ -313,7 +364,7 @@ public class HCatELFunctions {
                     filter.append(" OR ");
                 }
                 try {
-                    filter.append(new HCatURI(uri).toPigPartitionFilter());
+                    filter.append(new HCatURI(uri).toPartitionFilter(type));
                 }
                 catch (URISyntaxException e) {
                     throw new RuntimeException("Parsing exception for HCatURI " + uri + ". details: " + e);
@@ -323,11 +374,11 @@ public class HCatELFunctions {
         return filter.toString();
     }
 
-    private static HCatURI getURIFromResolved(String dataInName, String type) {
+    private static HCatURI getURIFromResolved(String dataInName, EventType type) {
         StringBuilder uriTemplate = new StringBuilder();
         ELEvaluator eval = ELEvaluator.getCurrent();
         String uris;
-        if(type.equals(EVENT_TYPE.input.toString())) {
+        if(type == EventType.input) {
             uris = (String) eval.getVariable(".datain." + dataInName);
         }
         else { //type=output

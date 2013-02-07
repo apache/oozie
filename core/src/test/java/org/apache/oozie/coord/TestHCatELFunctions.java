@@ -67,7 +67,7 @@ public class TestHCatELFunctions extends XHCatTestCase {
         dropDatabase("db1", true);
         createDatabase("db1");
         createTable("db1", "table1", "year,month,dt,country");
-        addPartition("db1", "table1", "year=2012;month=12;dt=02;country=us");;
+        addPartition("db1", "table1", "year=2012;month=12;dt=02;country=us");
 
         Configuration protoConf = new Configuration();
         protoConf.set(OozieClient.USER_NAME, getTestUser());
@@ -80,10 +80,9 @@ public class TestHCatELFunctions extends XHCatTestCase {
         conf.set("partition1", getHCatURI("db1", "table1", "dt=02").toString());
         conf.set("partition2", getHCatURI("db1", "table1", "dt=05").toString());
 
-        LiteWorkflowApp def =
-                new LiteWorkflowApp("name", "<workflow-app/>",
-                                    new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "end")).
-                    addNode(new EndNodeDef("end", LiteWorkflowStoreService.LiteControlNodeHandler.class));
+        LiteWorkflowApp def = new LiteWorkflowApp("name", "<workflow-app/>", new StartNodeDef(
+                LiteWorkflowStoreService.LiteControlNodeHandler.class, "end")).addNode(new EndNodeDef("end",
+                LiteWorkflowStoreService.LiteControlNodeHandler.class));
         LiteWorkflowInstance job = new LiteWorkflowInstance(def, conf, "wfId");
 
         WorkflowJobBean wf = new WorkflowJobBean();
@@ -111,84 +110,114 @@ public class TestHCatELFunctions extends XHCatTestCase {
     }
 
     /**
-     * Test HCat database EL function (phase 1) which echo back the EL function
-     * itself
+     * Test HCat databaseIn and databaseOut EL functions (phase 1) which echo
+     * back the EL function itself
      *
      * @throws Exception
      */
     @Test
     public void testDatabasePh1() throws Exception {
         init("coord-job-submit-data");
-        String expr = "${coord:database('ABC', 'input')}";
+        /*
+         * databaseIn
+         */
+        String expr = "${coord:databaseIn('ABC')}";
         // +ve test
         eval.setVariable("oozie.dataname.ABC", "data-in");
-        assertEquals("${coord:database('ABC', 'input')}", CoordELFunctions.evalAndWrap(eval, expr));
+        assertEquals("${coord:databaseIn('ABC')}", CoordELFunctions.evalAndWrap(eval, expr));
         // -ve test
-        expr = "${coord:database('ABCD', 'input')}";
+        expr = "${coord:databaseIn('ABCD')}";
         try {
-            assertEquals("${coord:database('ABCD', 'input')}", CoordELFunctions.evalAndWrap(eval, expr));
-            fail("should throw exception beacuse Data in is not defiend");
+            assertEquals("${coord:databaseIn('ABCD')}", CoordELFunctions.evalAndWrap(eval, expr));
+            fail("should throw exception because Data-in ABCD is not defiend");
         }
         catch (Exception ex) {
         }
-        expr = "${coord:database('ABC', 'output')}";
+        /*
+         * databaseOut
+         */
+        expr = "${coord:databaseOut('ABC')}";
+        // +ve test
         eval.setVariable("oozie.dataname.ABC", "data-out");
-        assertEquals("${coord:database('ABC', 'output')}", CoordELFunctions.evalAndWrap(eval, expr));
+        assertEquals("${coord:databaseOut('ABC')}", CoordELFunctions.evalAndWrap(eval, expr));
+        // -ve test
+        expr = "${coord:databaseOut('ABCD')}";
+        try {
+            assertEquals("${coord:databaseOut('ABCD')}", CoordELFunctions.evalAndWrap(eval, expr));
+            fail("should throw exception because Data-out ABCD is not defiend");
+        }
+        catch (Exception ex) {
+        }
     }
 
     /**
-     * Test HCat table EL function (phase 1) which echo back the EL function
-     * itself
+     * Test HCat tableIn and tableOut EL functions (phase 1) which echo back the
+     * EL function itself
      *
      * @throws Exception
      */
     @Test
     public void testTablePh1() throws Exception {
         init("coord-job-submit-data");
-        String expr = "${coord:table('ABC', 'input')}";
+        /*
+         * tableIn
+         */
+        String expr = "${coord:tableIn('ABC')}";
         // +ve test
         eval.setVariable("oozie.dataname.ABC", "data-in");
-        assertEquals("${coord:table('ABC', 'input')}", CoordELFunctions.evalAndWrap(eval, expr));
+        assertEquals("${coord:tableIn('ABC')}", CoordELFunctions.evalAndWrap(eval, expr));
         // -ve test
-        expr = "${coord:table('ABCD', 'input')}";
+        expr = "${coord:tableIn('ABCD')}";
         try {
-            assertEquals("${coord:table('ABCD', 'input')}", CoordELFunctions.evalAndWrap(eval, expr));
-            fail("should throw exception beacuse Data in is not defiend");
+            assertEquals("${coord:tableIn('ABCD')}", CoordELFunctions.evalAndWrap(eval, expr));
+            fail("should throw exception because Data-in ABCD is not defiend");
         }
         catch (Exception ex) {
         }
-        expr = "${coord:table('ABC', 'output')}";
+        /*
+         * tableOut
+         */
+        expr = "${coord:tableOut('ABC')}";
         // +ve test
         eval.setVariable("oozie.dataname.ABC", "data-out");
-        assertEquals("${coord:table('ABC', 'output')}", CoordELFunctions.evalAndWrap(eval, expr));
+        assertEquals("${coord:tableOut('ABC')}", CoordELFunctions.evalAndWrap(eval, expr));
+        // -ve test
+        expr = "${coord:tableOut('ABCD')}";
+        try {
+            assertEquals("${coord:tableOut('ABCD')}", CoordELFunctions.evalAndWrap(eval, expr));
+            fail("should throw exception because Data-out ABCD is not defiend");
+        }
+        catch (Exception ex) {
+        }
     }
 
     /**
-     * Test HCat dataInPartitionPigFilter EL function (phase 1) which echo back the
-     * EL function itself
+     * Test HCat dataInPartitionPigFilter EL function (phase 1) which echo back
+     * the EL function itself
      *
      * @throws Exception
      */
     @Test
-    public void testdataInPartitionPigFilterPh1() throws Exception {
+    public void testdataInPartitionFilterPh1() throws Exception {
         init("coord-job-submit-data");
-        String expr = "${coord:dataInPartitionPigFilter('ABC')}";
+        String expr = "${coord:dataInPartitionFilter('ABC', 'pig')}";
         // +ve test
         eval.setVariable("oozie.dataname.ABC", "data-in");
-        assertEquals("${coord:dataInPartitionPigFilter('ABC')}", CoordELFunctions.evalAndWrap(eval, expr));
+        assertEquals("${coord:dataInPartitionFilter('ABC', 'pig')}", CoordELFunctions.evalAndWrap(eval, expr));
         // -ve test
-        expr = "${coord:dataInPartitionPigFilter('ABCD')}";
+        expr = "${coord:dataInPartitionFilter('ABCD')}";
+        eval.setVariable("oozie.dataname.ABCD", "data-in");
         try {
-            assertEquals("${coord:dataInPartitionPigFilter('ABCD')}", CoordELFunctions.evalAndWrap(eval, expr));
-            fail("should throw exception beacuse Data in is not defiend");
+            assertEquals("${coord:dataInPartitionFilter('ABCD')}", CoordELFunctions.evalAndWrap(eval, expr));
+            fail("should throw exception because dataInPartitionFilter() requires 2 parameters");
         }
         catch (Exception ex) {
         }
     }
 
     /**
-     * Test HCat dataInPartitionMin EL function (phase 1) which echo back the
-     * EL function itself
+     * Test HCat dataInPartitionMin EL function (phase 1) which echo back the EL
+     * function itself
      *
      * @throws Exception
      */
@@ -211,8 +240,8 @@ public class TestHCatELFunctions extends XHCatTestCase {
     }
 
     /**
-     * Test HCat dataInPartitionMax EL function (phase 1) which echo back the
-     * EL function itself
+     * Test HCat dataInPartitionMax EL function (phase 1) which echo back the EL
+     * function itself
      *
      * @throws Exception
      */
@@ -235,8 +264,8 @@ public class TestHCatELFunctions extends XHCatTestCase {
     }
 
     /**
-     * Test HCat dataOutPartition EL function (phase 1) which echo back the
-     * EL function itself
+     * Test HCat dataOutPartition EL function (phase 1) which echo back the EL
+     * function itself
      *
      * @throws Exception
      */
@@ -251,7 +280,7 @@ public class TestHCatELFunctions extends XHCatTestCase {
         expr = "${coord:dataOutPartitions('ABCD')}";
         try {
             assertEquals("${coord:dataOutPartitions('ABCD')}", CoordELFunctions.evalAndWrap(eval, expr));
-            fail("should throw exception beacuse Data in is not defiend");
+            fail("should throw exception because Data-in is not defiend");
         }
         catch (Exception ex) {
         }
@@ -282,7 +311,8 @@ public class TestHCatELFunctions extends XHCatTestCase {
     }
 
     /**
-     * Test database EL function (phase 3) which returns the DB name from URI
+     * Test databaseIn and databaseOut EL functions (phase 3) which returns the
+     * DB name from URI
      *
      * @throws Exception
      */
@@ -291,17 +321,17 @@ public class TestHCatELFunctions extends XHCatTestCase {
         init("coord-action-start", "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12;region=us");
         eval.setVariable(".datain.ABC", "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12;region=us");
         eval.setVariable(".datain.ABC.unresolved", Boolean.FALSE);
-        String expr = "${coord:database('ABC', 'input')}";
+        String expr = "${coord:databaseIn('ABC')}";
         assertEquals("mydb", CoordELFunctions.evalAndWrap(eval, expr));
 
         eval.setVariable(".dataout.ABC", "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12;region=us");
         eval.setVariable(".dataout.ABC.unresolved", Boolean.FALSE);
-        expr = "${coord:database('ABC', 'output')}";
+        expr = "${coord:databaseOut('ABC')}";
         assertEquals("mydb", CoordELFunctions.evalAndWrap(eval, expr));
     }
 
     /**
-     * Test HCat table EL function (phase 3) which returns the HCat table from
+     * Test HCat tableIn and tableOut EL functions (phase 3) which returns the HCat table from
      * URI
      *
      * @throws Exception
@@ -311,12 +341,12 @@ public class TestHCatELFunctions extends XHCatTestCase {
         init("coord-action-start", "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12;region=us");
         eval.setVariable(".datain.ABC", "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12;region=us");
         eval.setVariable(".datain.ABC.unresolved", Boolean.FALSE);
-        String expr = "${coord:table('ABC', 'input')}";
+        String expr = "${coord:tableIn('ABC')}";
         assertEquals("clicks", CoordELFunctions.evalAndWrap(eval, expr));
 
         eval.setVariable(".dataout.ABC", "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12;region=us");
         eval.setVariable(".dataout.ABC.unresolved", Boolean.FALSE);
-        expr = "${coord:table('ABC', 'output')}";
+        expr = "${coord:tableOut('ABC')}";
         assertEquals("clicks", CoordELFunctions.evalAndWrap(eval, expr));
     }
 
@@ -327,27 +357,39 @@ public class TestHCatELFunctions extends XHCatTestCase {
      * @throws Exception
      */
     @Test
-    public void testdataInPartitionPigFilter() throws Exception {
+    public void testdataInPartitionFilter() throws Exception {
         init("coord-action-start");
         eval.setVariable(".datain.ABC", "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12;region=us");
         eval.setVariable(".datain.ABC.unresolved", Boolean.FALSE);
-        String expr = "${coord:dataInPartitionPigFilter('ABC')}";
+        /*
+         * type=pig
+         */
+        String expr = "${coord:dataInPartitionFilter('ABC', 'pig')}";
         String res = CoordELFunctions.evalAndWrap(eval, expr);
         assertTrue(res.equals("(datastamp=='12' AND region=='us')") || res.equals("(region=='us' AND datastamp=='12')"));
 
         eval.setVariable(".datain.ABC", "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12;region=us,"
                 + "hcat://hcat.server.com:5080/mydb/clicks/datastamp=13;region=us");
         eval.setVariable(".datain.ABC.unresolved", Boolean.FALSE);
-        expr = "${coord:dataInPartitionPigFilter('ABC')}";
+        expr = "${coord:dataInPartitionFilter('ABC', 'pig')}";
         res = CoordELFunctions.evalAndWrap(eval, expr);
         assertTrue(res.equals("(datastamp=='12' AND region=='us') OR (datastamp=='13' AND region=='us')")
                 || res.equals("(datastamp=='12' AND region=='us') OR (region=='us' AND datastamp=='13')")
                 || res.equals("(region=='us' AND datastamp=='12') OR (datastamp=='13' AND region=='us')")
                 || res.equals("(region=='us' AND datastamp=='12') OR (region=='us' AND datastamp=='13')"));
+
+        /*
+         * type=java
+         */
+        eval.setVariable(".datain.ABC", "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12;region=us");
+        eval.setVariable(".datain.ABC.unresolved", Boolean.FALSE);
+        expr = "${coord:dataInPartitionFilter('ABC', 'java')}";
+        res = CoordELFunctions.evalAndWrap(eval, expr);
+        assertTrue(res.equals("(datastamp='12' AND region='us')") || res.equals("(region='us' AND datastamp='12')"));
     }
 
     /**
-     * Test dataOutPartition EL function (phase 3) which returns the partition
+     * Test dataOutPartitionsPig EL function (phase 3) which returns the partition
      * to be used as output to store data into
      *
      * @throws Exception
@@ -359,8 +401,7 @@ public class TestHCatELFunctions extends XHCatTestCase {
         eval.setVariable(".dataout.ABC", "hcat://hcat.server.com:5080/mydb/clicks/datastamp=20120230;region=us");
         eval.setVariable(".dataout.ABC.unresolved", Boolean.FALSE);
         String res = CoordELFunctions.evalAndWrap(eval, expr);
-        assertTrue(res.equals("'datastamp=20120230,region=us'")
-                || res.equals("'region=us,datastamp=20120230'"));
+        assertTrue(res.equals("'datastamp=20120230,region=us'") || res.equals("'region=us,datastamp=20120230'"));
     }
 
     /**
@@ -428,8 +469,8 @@ public class TestHCatELFunctions extends XHCatTestCase {
 
     private void init(String tag, String uriTemplate) throws Exception {
         eval = Services.get().get(ELService.class).createEvaluator(tag);
-        eval.setVariable(OozieClient.USER_NAME, "test_user");
-        eval.setVariable(OozieClient.GROUP_NAME, "test_group");
+        eval.setVariable(OozieClient.USER_NAME, getTestUser());
+        eval.setVariable(OozieClient.GROUP_NAME, getTestGroup());
         appInst = new SyncCoordAction();
         ds = new SyncCoordDataset();
         ds.setFrequency(1);

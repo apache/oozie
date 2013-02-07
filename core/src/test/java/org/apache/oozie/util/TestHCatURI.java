@@ -145,12 +145,12 @@ public class TestHCatURI {
         String hcatURI = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=20120230;region=us";
         String filter = "";
         try {
-            filter = new HCatURI(hcatURI).toFilter();
+            filter = new HCatURI(hcatURI).toPartitionFilter("java");
         }
         catch (URISyntaxException e) {
             fail(e.getMessage());
         }
-        assertTrue(filter.equals("datastamp='20120230' AND region='us'")
-                || filter.equals("region='us' AND datastamp='20120230'"));
+        assertTrue(filter.equals("(datastamp='20120230' AND region='us')")
+                || filter.equals("(region='us' AND datastamp='20120230')"));
     }
 }

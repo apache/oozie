@@ -100,19 +100,13 @@ This document defines the functional specification for the Oozie Coordinator sys
 *Nominal time:* The nominal time specifies the time when something should happen. In theory the nominal time and the actual time should match, however, in practice due to delays the actual time may occur later than the nominal time.
 
 *Dataset:* Collection of data referred to by a logical name. A dataset normally has several instances of data and each
-one of them can be referred individually. Each dataset instance is represented by a unique set of URIs. Each URI could
-be a hdfs path URI denoting the hdfs directory: hdfs://foo:8020/usr/logs/20090415 or a HCatalog partition URI
-identifying a set of table partitions: hcat://bar:8020/logsDB/logsTable/dt=20090415;region=US. HCatalog enables table
-and storage management for PIG and Hive. Note that the HCatalog metastore server would be the same as Hive metastore
-server for users just using Hive together with Hive Metastore Server and no PIG.
-The format to specify a hcatalog table partition URI is
-hcat://[metastore server]:[port]/[database name]/[table name]/[partkey1]=[value];[partkey2]=[value].
+one of them can be referred individually. Each dataset instance is represented by a unique set of URIs.
 
 *Synchronous Dataset:* Synchronous datasets instances are generated at fixed time intervals and there is a dataset
 instance associated with each time interval. Synchronous dataset instances are identified by their nominal time.
-For example, in the case of a file system based dataset, the nominal time would be somewhere in the file path of the
-dataset instance: hdfs://foo:8020/usr/logs/2009/04/15/23/30. In the case of hcatalog table partitions, the nominal time
-would be part of some partition value: hcat://bar:8020/mydb/mytable/year=2009;month=04;dt=15;region=us.
+For example, in the case of a HDFS based dataset, the nominal time would be somewhere in the file path of the
+dataset instance: hdfs://foo:8020/usr/logs/2009/04/15/23/30. In the case of HCatalog table partitions, the nominal time
+would be part of some partition values: hcat://bar:8020/mydb/mytable/year=2009;month=04;dt=15;region=us.
 
 *Coordinator Action:* A coordinator action is a workflow job that is started when a set of conditions are met (input dataset instances are available).
 
@@ -587,11 +581,29 @@ The dataset resolves to the following URIs with fixed values for the finer preci
   ...
 </verbatim>
 
+---+++ 5.2. Dataset URI-Template types
 
----+++ 5.2. Asynchronous Datasets
+Each dataset URI could be a HDFS path URI denoting a HDFS directory: hdfs://foo:8020/usr/logs/20090415 or a
+HCatalog partition URI identifying a set of table partitions: hcat://bar:8020/logsDB/logsTable/dt=20090415;region=US.
+
+HCatalog enables table and storage management for Pig, Hive and MapReduce. The format to specify a HCatalog table partition URI is
+hcat://[metastore server]:[port]/[database name]/[table name]/[partkey1]=[value];[partkey2]=[value];...
+
+For example,
+<verbatim>
+  <dataset name="logs" frequency="${coord:days(1)}"
+           initial-instance="2009-02-15T08:15Z" timezone="America/Los_Angeles">
+    <uri-template>
+      hcat://myhcatmetastore:9080/database1/table1/myfirstpartitionkey=myfirstvalue;mysecondpartitionkey=mysecondvalue
+    </uri-template>
+    <done-flag></done-flag>
+  </dataset>
+</verbatim>
+
+---+++ 5.3. Asynchronous Datasets
    * TBD
 
----+++ 5.3. Dataset Definitions
+---+++ 5.4. Dataset Definitions
 
 Dataset definitions are grouped in XML files.
 *IMPORTANT:* Please note that if an XML namespace version is specified for the coordinator-app element in the coordinator.xml file, no namespace needs to be defined separately for the datasets element (even if the dataset is defined in a separate file). Specifying it at multiple places might result in xml errors while submitting the coordinator job.
@@ -2003,7 +2015,7 @@ The =${coord:dataIn(String name)}= EL function resolves to all the URIs for the 
 
 The =${coord:dataIn(String name)}= is commonly used to pass the URIs of dataset instances that will be consumed by a workflow job triggered by a coordinator action.
 
-*%GREEN% Example: %ENDCOLOR%*
+*%GREEN% Example: %ENDCOLOR%*:
 
 Coordinator application definition:
 
@@ -2061,18 +2073,18 @@ The =${coord:dataOut(String name)}= EL function resolves to all the URIs for the
 
 The =${coord:dataOut(String name)}= is commonly used to pass the URIs of a dataset instance that will be produced by a workflow job triggered by a coordinator action.
 
-*%GREEN% Example: %ENDCOLOR%*
+*%GREEN% Example: %ENDCOLOR%*:
 
 Datasets Definition file 'datasets.xml'
 
 <verbatim>
 <datasets>
-
+.
   <dataset name="hourlyLogs" frequency="${coord:hours(1)}"
            initial-instance="2009-01-01T01:00Z" timezone="UTC">
     <uri-template>hdfs://bar:8020/app/logs/${YEAR}/${MONTH}/${DAY}/${HOUR}</uri-template>
   </dataset>
-
+.
   <dataset name="dailyLogs" frequency="${coord:days(1)}"
            initial-instance="2009-01-01T24:00Z" timezone="UTC">
     <uri-template>hdfs://bar:8020/app/daily-logs/${YEAR}/${MONTH}/${DAY}</uri-template>
@@ -2138,7 +2150,7 @@ The nominal times is always the coordinator job start datetime plus a multiple o
 
 This is, when the coordinator action was created based on driver event. For synchronous coordinator applications this would be every tick of the frequency.
 
-*%GREEN% Example: %ENDCOLOR%*
+*%GREEN% Example: %ENDCOLOR%*:
 
 Coordinator application definition:
 
@@ -2194,7 +2206,7 @@ When the coordinator action is created based on driver event, the current time i
 actual time is less than the nominal time if coordinator job is in running in current mode. If job is running
 as catch-up mode (job's start time is in the past), the actual time is greater than the nominal time.
 
-*%GREEN% Example: %ENDCOLOR%*
+*%GREEN% Example: %ENDCOLOR%*:
 
 Coordinator application definition:
 
@@ -2241,45 +2253,61 @@ If coordinator job was started at 2011-05-01, then actions' actualTime is
 
 The =coord:user()= function returns the user that started the coordinator job.
 
----+++ 6.8 Parameterization of HCatalog data instances in Coordinator Actions (since Oozie 4.x)
+---+++ 6.8 Using HCatalog data instances in Coordinator Applications (since Oozie 4.x)
 
-This section describes the different EL functions that work with HCatalog data dependencies, in order to parameterize them for the coordinator actions running workflows.
+This section describes the different EL functions that work with HCatalog data dependencies, in order to write
+Coordinator applications that use HCatalog data dependencies.
 
----++++ 6.8.1 coord:database(String name, String type) EL function
+---++++ 6.8.1 coord:databaseIn(String name), coord:databaseOut(String name) EL function
 
-The =${coord:database(String name, String type)}= is used to pass the database name of HCat dataset instances that will be consumed by a workflow job triggered by a coordinator action.
+The functions =${coord:databaseIn(String name}= and =${coord:databaseOut(String name}= are used to pass the database
+name of HCat dataset instances, input and output respectively, that will be consumed by a workflow job triggered
+by a coordinator action.
 
-The =${coord:database(String name, String type)}= EL function takes two arguments - name of the dataset, and type of event ('input' or 'output').
-It gives as string the 'database' name from the dataset passed as argument. If the dataset is from input-events, the second argument should be
-'input' and similarly if from output-events, it should be 'output'.
-
-Refer to the [[CoordinatorFunctionalSpec#HCatPigExampleOne][Example]] below for usage.
-
----++++ 6.8.2 coord:table(String name, String type) EL function
-
-The =${coord:table(String name, String type)}= is used to pass the table name of HCat dataset instances that will be consumed by a workflow job triggered by a coordinator action.
-
-The =${coord:table(String name, String type)}= EL function takes two arguments - name of the dataset, and type of event ('input' or 'output').
-It gives as string the 'table' name from the dataset passed as argument. If the dataset belongs to input-events, the second argument should be
-'input' and similarly if belonging to output-events, it should be 'output'.
+These functions take as argument - name of the dataset and give as string the 'database' name of that dataset.
+If dataset belongs to 'input-events', use =${coord:databaseIn(String name}=, else if it belongs to 'output-events',
+use =${coord:databaseOut(String name}=.
 
 Refer to the [[CoordinatorFunctionalSpec#HCatPigExampleOne][Example]] below for usage.
 
----++++ 6.8.3 coord:dataInPartitionPigFilter(String name) EL function
+---++++ 6.8.2 coord:tableIn(String name), coord:tableOut(String name) EL function
 
-The =${coord:dataInPartitionPigFilter(String name)}= EL function resolves to a filter clause in pig scripts to filter all the partitions corresponding to the dataset instances specified in an input event dataset section.
-The filter clause from the EL function is to be passed as a parameter to the Pig action in a workflow which would be triggered by the coordinator action.
+The functions =${coord:tableIn(String name}= and =${coord:tableOut(String name}= are used to pass the table
+name of HCat dataset instances, input and output respectively, that will be consumed by a workflow job triggered
+by a coordinator action.
 
-In the filter clause string given by ${coord:dataInPartitionPigFilter()}, there is double "==" between key and value - specific to how Pig job accepts partition filter to be given to HCatLoader.
-Therefore this EL function is named specific to the Pig case.
+These functions take as argument - name of the dataset and give as string the 'table' name of that dataset.
+If dataset belongs to 'input-events', use =${coord:tableIn(String name}=, else if it belongs to 'output-events',
+use =${coord:tableOut(String name}=.
+
+Refer to the [[CoordinatorFunctionalSpec#HCatPigExampleOne][Example]] below for usage.
+
+---++++ 6.8.3 coord:dataInPartitionFilter(String name, String type) EL function
+
+The =${coord:dataInPartitionFilter(String name, String type)}= EL function resolves to a filter clause to filter
+all the partitions corresponding to the dataset instances specified in an input event dataset section. This EL function
+takes two arguments - the name of the input dataset, and the type of the workflow action which will be consuming this filter.
+There are 3 types - 'pig', 'hive' and 'java'. This filter clause from the EL function is to be passed as a parameter in the
+respective action in the workflow.
+
+The evaluated value of the filter clause will vary based on the action type passed to the EL function. In case of pig,
+the filter will have "==" as the equality operator in the condition. In case of hive and java, the filter will have "="
+as the equality operator in the condition. The type java is for java actions, which use HCatInputFormat directly and
+launch jobs. The filter clause in that case can be used to construct the InputJobInfo in
+=HCatInputFormat.setInput(Job job, InputJobInfo inputJobInfo)=.
 
 Refer to the [[CoordinatorFunctionalSpec#HCatPigExampleOne][Example]] below for usage.
 
 ---++++ 6.8.4 coord:dataOutPartitions(String name) EL function
 
-The =${coord:dataOutPartitions(String name)}= EL function resolves to a comma-separated list of partition key-value pairs for the output-event dataset. This can be passed as an argument to HCatStorer in pig scripts.
+The =${coord:dataOutPartitions(String name)}= EL function resolves to a comma-separated list of partition key-value
+pairs for the output-event dataset. This can be passed as an argument to HCatStorer in Pig scripts or in case of
+java actions that directly use HCatOutputFormat and launch jobs, the partitions list can be parsed to construct
+partition values map for OutputJobInfo in =HcatOutputFormat.setOutput(Job job, OutputJobInfo outputJobInfo)=.
 
-The example below illustrates a pig job triggered by a coordinator, using the EL functions for HCat database, table, input partitions pig filter and output partitions. The example takes as input previous day's hourly data to produce aggregated daily output.
+The example below illustrates a pig job triggered by a coordinator, using the EL functions for HCat database, table,
+input partitions filter and output partitions. The example takes as input previous day's hourly data to produce
+aggregated daily output.
 
 
 *%GREEN% Example: %ENDCOLOR%*
@@ -2322,23 +2350,23 @@ The example below illustrates a pig job triggered by a coordinator, using the EL
           <configuration>
             <property>
               <name>IN_DB</name>
-              <value>${coord:database('raw-logs', 'input')}</value>
+              <value>${coord:databaseIn('Click-data')}</value>
             </property>
             <property>
               <name>IN_TABLE</name>
-              <value>${coord:table('raw-logs', 'input')}</value>
+              <value>${coord:tableIn('raw-logs')}</value>
             </property>
             <property>
               <name>FILTER</name>
-              <value>${coord:dataInPartitionPigFilter('raw-logs')}</value>
+              <value>${coord:dataInPartitionFilter('raw-logs', 'pig')}</value>
             </property>
             <property>
               <name>OUT_DB</name>
-              <value>${coord:database('processed-logs', 'output')}</value>
+              <value>${coord:databaseOut('processed-logs')}</value>
             </property>
             <property>
               <name>OUT_TABLE</name>
-              <value>${coord:table('processed-logs', 'output')}</value>
+              <value>${coord:tableOut('processed-logs')}</value>
             </property>
             <property>
               <name>OUT_PARTITIONS</name>
@@ -2351,25 +2379,41 @@ The example below illustrates a pig job triggered by a coordinator, using the EL
 </blockquote>
 
 
-Parameterizing the input/output databases and tables using the corresponding EL function as shown will make them available in the pig action of the workflow 'logsprocessor-wf'.
+Parameterizing the input/output databases and tables using the corresponding EL function as shown will make them
+available in the pig action of the workflow 'logsprocessor-wf'.
 
-Each coordinator action will use as input events the last 24 hourly instances of the 'Click-data' dataset.The =${coord:dataInPartitionPigFilter(String name)}= function enables the coordinator application
-to pass the Partition Filter corresponding to all the dataset instances for the last 24 hours to the workflow job triggered by the coordinator action.
-The =${coord:dataOutPartitions(String name)}= function enables the coordinator application to pass the partition key-value string needed by the *HCatStorer* in Pig job when the workflow is triggered by the coordinator action.
+Each coordinator action will use as input events the last 24 hourly instances of the 'Click-data' dataset.
+The =${coord:dataInPartitionFilter(String name, String type)}= function enables the coordinator application to pass the
+Partition Filter corresponding to all the dataset instances for the last 24 hours to the workflow job triggered
+by the coordinator action. The =${coord:dataOutPartitions(String name)}= function enables the coordinator application
+to pass the partition key-value string needed by the *HCatStorer* in Pig job when the workflow is triggered by the
+coordinator action.
 
 #HCatWorkflow
 ---++++ Workflow definition:
 
 <blockquote>
 <workflow-app xmlns="uri:oozie:workflow:0.3" name="logsprocessor-wf">
+    <credentials>
+      <credential name='hcatauth' type='hcat'>
+        <property>
+          <name>hcat.metastore.uri</name>
+          <value>${HCAT_URI}</value>
+        <property>
+        </property>
+          <name>hcat.metastore.principal</name>
+          <value>${HCAT_PRINCIPAL}</value>
+        <property>
+      </credential>
+    </credentials>
     <start to="pig-node"/>
-    <action name="pig-node">
+    <action name="pig-node" cred="hcatauth">
         <pig>
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
             <prepare>
-                <delete path="hcat://foo:11002/${OUT_DB}/${OUT_TABLE}/date=${OUT_PARTITION_VAL_DATE}"/>  
-            </prepare> 
+                <delete path="hcat://foo:11002/${OUT_DB}/${OUT_TABLE}/date=${OUT_PARTITION_VAL_DATE}"/>
+            </prepare>
             ...
             <script>id.pig</script>
 		    <param>HCAT_IN_DB=${IN_DB}</param>
@@ -2390,10 +2434,10 @@ The =${coord:dataOutPartitions(String name)}= function enables the coordinator a
 </workflow-app>
 </blockquote>
 
-   Ensure that the lib directory of the workflow contains the following jars with versions corresponding to
-hcatalog installation - hcatalog.jar, webhcat-java-client.jar, hive-common.jar, hive-exec.jar, hive-metastore.jar,
-hive-serde.jar, libfb303.jar, pig.jar. You can also specify the jars using =archive= tag. The jars are required
-to work with hcatalog and pig. The hive-site.xml needs to be provided using =file= tag.
+Ensure that the following jars are in classpath, with versions corresponding to hcatalog installation:
+hcatalog-core.jar, webhcat-java-client.jar, hive-common.jar, hive-exec.jar, hive-metastore.jar, hive-serde.jar,
+libfb303.jar and pig.jar. You can also specify the jars using =archive= tag. The hive-site.xml needs to be
+provided using =file= tag.
 
 *Example usage in Pig:*
 
@@ -2404,7 +2448,8 @@ C = foreach B generate foo, bar;
 store C into '$HCAT_OUT_DB.$HCAT_OUT_TABLE' using org.apache.hcatalog.pig.HCatStorer('$OUTPUT_PARTITIONS');
 </blockquote>
 
-For the =2009-01-02T00:00Z= run with the given dataset instances, the above Pig script with resolved values would look like:
+For the =2009-01-02T00:00Z= run with the given dataset instances, the above Pig script with resolved values would look
+like:
 
 <blockquote>
 A = load 'myInputDatabase.myInputTable' using org.apache.hcatalog.pig.HCatLoader();
@@ -2419,25 +2464,32 @@ store C into 'myOutputDatabase.myOutputTable' using org.apache.hcatalog.pig.HCat
 
 ---++++ 6.8.4 coord:dataInPartitionMin(String name, String partition) EL function
 
-The =${coord:dataInPartitionMin(String name, String partition)}= EL function resolves to the *minimum* value of the specified partition for all the dataset instances specified in an input event dataset section.
-It can be used to do range based filtering of partitions in pig scripts together with [[CoordinatorFunctionalSpec#DataInPartitionMax][dataInPartitionMax]] EL function.
+The =${coord:dataInPartitionMin(String name, String partition)}= EL function resolves to the *minimum* value of the
+specified partition for all the dataset instances specified in an input event dataset section. It can be used to do
+range based filtering of partitions in pig scripts together
+with [[CoordinatorFunctionalSpec#DataInPartitionMax][dataInPartitionMax]] EL function.
 
 Refer to the [[CoordinatorFunctionalSpec#HCatPigExampleTwo][Example]] below for usage.
 
 #DataInPartitionMax
 ---++++ 6.8.5 coord:dataInPartitionMax(String name, String partition) EL function
 
-The =${coord:dataInPartitionMax(String name, String partition)}= EL function resolves to the *maximum* value of the specified partition for all the dataset instances specified in an input event dataset section.
-It is a better practice to use =dataInPartitionMin= and =dataInPartitionMax= to form a range filter wherever possible instead of =datainPartitionPigFilter= as it will be more efficient for filtering.
+The =${coord:dataInPartitionMax(String name, String partition)}= EL function resolves to the *maximum* value of the
+specified partition for all the dataset instances specified in an input event dataset section. It is a better practice
+to use =dataInPartitionMin= and =dataInPartitionMax= to form a range filter wherever possible instead
+of =datainPartitionPigFilter= as it will be more efficient for filtering.
 
 Refer to the [[CoordinatorFunctionalSpec#HCatPigExampleTwo][Example]] below for usage.
 
 ---++++ 6.8.7 coord:dataOutPartitionValue(String name, String partition) EL function
 
-The =${coord:dataOutPartitionValue(String name, String partition)}= EL function resolves to value of the specified partition for the output-event dataset; that will be consumed by a workflow job, e.g Pig job triggered by a coordinator action.
-This is another convenience function to use a single partition-key's value if required, in addition to dataoutPartitions and either one can be used.
+The =${coord:dataOutPartitionValue(String name, String partition)}= EL function resolves to value of the specified
+partition for the output-event dataset; that will be consumed by a workflow job, e.g Pig job triggered by a
+coordinator action. This is another convenience function to use a single partition-key's value if required, in
+addition to =dataoutPartitionsPig()= and either one can be used.
 
-The example below illustrates a pig job triggered by a coordinator, using the aforementioned EL functions for input partition max/min values, output partition value, and database and table.
+The example below illustrates a pig job triggered by a coordinator, using the aforementioned EL functions for input
+partition max/min values, output partition value, and database and table.
 
 *%GREEN% Example: %ENDCOLOR%*
 
@@ -2479,11 +2531,11 @@ The example below illustrates a pig job triggered by a coordinator, using the af
           <configuration>
             <property>
               <name>IN_DB</name>
-              <value>${coord:database('raw-logs', 'input')}</value>
+              <value>${coord:databaseIn('raw-logs')}</value>
             </property>
             <property>
               <name>IN_TABLE</name>
-              <value>${coord:table('raw-logs', 'input')}</value>
+              <value>${coord:tableIn('raw-logs')}</value>
             </property>
             <property>
               <name>DATE_MIN</name>
@@ -2495,11 +2547,11 @@ The example below illustrates a pig job triggered by a coordinator, using the af
             </property>
             <property>
               <name>OUT_DB</name>
-              <value>${coord:database('processed-logs', 'output')}</value>
+              <value>${coord:databaseOut('processed-logs')}</value>
             </property>
             <property>
               <name>OUT_TABLE</name>
-              <value>${coord:table('processed-logs', 'output')}</value>
+              <value>${coord:tableOut('processed-logs')}</value>
             </property>
             <property>
               <name>OUT_PARTITION_VAL_REGION</name>
@@ -2517,16 +2569,21 @@ The example below illustrates a pig job triggered by a coordinator, using the af
 
 In this example, each coordinator action will use as input events the last 24 hourly instances of the 'logs' dataset.
 
-For the =2009-01-02T00:00Z= run, the =${coord:dataInPartitionMin('raw-logs','datestamp')}= function will resolve to the minimum of the 5 dataset instances for partition 'datestamp'
-i.e. among 2009010101, 2009010102, ...., 2009010123, 2009010200, the minimum would be "2009010101".
+For the =2009-01-02T00:00Z= run, the =${coord:dataInPartitionMin('raw-logs','datestamp')}= function will resolve to
+the minimum of the 5 dataset instances for partition 'datestamp'
+i.e. among 2009010101, 2009010102, ...., 2009010123,  2009010200, the minimum would be "2009010101".
 
-Similarly, the =${coord:dataInPartitionMax('raw-logs','datestamp')}= function will resolve to the maximum of the 5 dataset instances for partition 'datestamp'
+Similarly, the =${coord:dataInPartitionMax('raw-logs','datestamp')}= function will resolve to the maximum of the 5
+dataset instances for partition 'datestamp'
 i.e. among 2009010120, 2009010121, ...., 2009010123, 2009010200, the maximum would be "2009010200".
 
-Finally, the =${coord:dataOutPartitionValue(String name, String partition)}= function enables the coordinator application to pass a specified partition's value string needed by the HCatStorer in Pig job.
-The =${coord:dataOutPartitionValue('processed-logs','region')}= function will resolve to: "${region}" and =${coord:dataOutPartitionValue('processed-logs','datestamp')}= function will resolve to: "20090102".
+Finally, the =${coord:dataOutPartitionValue(String name, String partition)}= function enables the coordinator
+application to pass a specified partition's value string needed by the HCatStorer in Pig job.
+The =${coord:dataOutPartitionValue('processed-logs','region')}= function will resolve to: "${region}"
+and =${coord:dataOutPartitionValue('processed-logs','datestamp')}= function will resolve to: "20090102".
 
-For the workflow definition with <pig> action, refer to [[CoordinatorFunctionalSpec#HCatWorkflow][previous example]], with the following change in pig params in addition to database and table.
+For the workflow definition with <pig> action, refer to [[CoordinatorFunctionalSpec#HCatWorkflow][previous example]],
+with the following change in pig params in addition to database and table.
 
 <blockquote>
 ...
@@ -2539,7 +2596,8 @@ For the workflow definition with <pig> action, refer to [[CoordinatorFunctionalS
 </blockquote>
 
 *Example usage in Pig:*
-This illustrates another pig script which filters partitions based on range, with range limits parameterized with the EL funtions
+This illustrates another pig script which filters partitions based on range, with range limits parameterized with the
+EL funtions
 
 <blockquote>
 A = load '$HCAT_IN_DB.$HCAT_IN_TABLE' using org.apache.hcatalog.pig.HCatLoader();
@@ -2569,7 +2627,7 @@ The =${coord:dateOffset(String baseDate, int instance, String timeUnit)}= EL fun
 
 For example, if baseDate is '2009-01-01T00:00Z', instance is '2' and timeUnit is 'MONTH', the return date will be '2009-03-01T00:00Z'. If baseDate is '2009-01-01T00:00Z', instance is '1' and timeUnit is 'YEAR', the return date will be '2010-01-01T00:00Z'.
 
-*%GREEN% Example: %ENDCOLOR%*
+*%GREEN% Example: %ENDCOLOR%*:
 
 
 <verbatim>
@@ -2615,7 +2673,7 @@ For timezones that don't observe day light saving time, handling timezones offse
 
 For these timezones, dataset and application definitions, it suffices to express datetimes taking into account the timezone offset.
 
-*%GREEN% Example: %ENDCOLOR%*
+*%GREEN% Example: %ENDCOLOR%*:
 
 Coordinator application definition: A daily coordinator job for India timezone (+05:30) that consumes 24 hourly dataset instances from the previous day starting at the beginning of 2009 for a full year.
 
@@ -2864,7 +2922,7 @@ The coordinator application definition HDFS path must be specified in the 'oozie
 All the coordinator job properties, the HDFS path for the coordinator application, the 'user.name' and 'oozie.job.acl'
 must be submitted to the Oozie coordinator engine using an XML configuration file (Hadoop XML configuration file).
 
-*%GREEN% Example: %ENDCOLOR%*
+*%GREEN% Example: %ENDCOLOR%*:
 
 <verbatim>
 <?xml version="1.0" encoding="UTF-8"?>
