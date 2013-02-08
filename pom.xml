@@ -101,6 +101,7 @@
         <module>docs</module>
         <module>sharelib</module>
         <module>tools</module>
+        <module>minitest</module>
         <module>distro</module>
     </modules>
 

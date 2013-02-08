@@ -1,5 +1,6 @@
 -- Oozie 3.3.2 (unreleased)
 
+OOZIE-1170 Update minitest module (MiniOozie) to use main pom as its parent (jaoki via rkanter)
 OOZIE-1188 Typo in documentation for using login server example (rkanter)
 OOZIE-1113 The cookies used in the AltKerberosAuthenticationHandler examples aren't read properly if quoted (rkanter)
 OOZIE-1103 Create example using AltKerberosAuthenticationHandler (rkanter)
