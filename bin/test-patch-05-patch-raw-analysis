@@ -74,7 +74,7 @@ parseArgs() {
 }
 ###############################################################################
 checkNoAuthors() {
-  authorTags=`grep "^+ " ${PATCHFILE} | grep -c -i -e ".*\*.* @author"`
+  authorTags=`grep "^+" ${PATCHFILE} | grep -v "^+++" | grep -c -i -e ".*\*.* @author"`
   if [[ ${authorTags} != 0 ]] ; then
     REPORT+=("{color:red}-1{color} the patch seems to contain ${authorTags} line(s) with @author tags")
   else
@@ -83,7 +83,7 @@ checkNoAuthors() {
 }
 ###############################################################################
 checkNoTabs() {
-  tabs=`grep "^+ " ${PATCHFILE} | grep -c -P "\t"`
+  tabs=`grep "^+" ${PATCHFILE} | grep -v "^+++" | grep -c $'\t'`
   if [[ ${tabs} != 0 ]] ; then
     REPORT+=("{color:red}-1{color} the patch contains ${tabs} line(s) with tabs")
   else
@@ -92,7 +92,7 @@ checkNoTabs() {
 }
 ###############################################################################
 checkNoTrailingSpaces() {
-  trailingSpaces=`grep "^+ " ${PATCHFILE} | grep -c -e " $"`
+  trailingSpaces=`grep "^+" ${PATCHFILE} | grep -v "^+++" | grep -c -e " $"`
   if [[ ${trailingSpaces} != 0 ]] ; then
     REPORT+=("{color:red}-1{color} the patch contains ${trailingSpaces} line(s) with trailing spaces")
   else
@@ -102,7 +102,7 @@ checkNoTrailingSpaces() {
 ###############################################################################
 checkLinesLength() {
   # We check for > 133 to account for the "+" sign
-  longLines=`grep "^+ " ${PATCHFILE} | awk 'BEGIN{count=0}{if ( length > 133 ) { count=count+1} }END{ print count}'`
+  longLines=`grep "^+" ${PATCHFILE} | grep -v "^+++" | awk 'BEGIN{count=0}{if ( length > 133 ) { count=count+1} }END{ print count}'`
   if [[ ${longLines} != 0 ]] ; then
     REPORT+=("{color:red}-1{color} the patch contains ${longLines} line(s) longer than 132 characters")
   else
