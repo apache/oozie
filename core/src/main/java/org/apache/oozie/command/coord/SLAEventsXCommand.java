@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,6 +27,7 @@ import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.XCommand;
 import org.apache.oozie.executor.jpa.SLAEventsGetForSeqIdJPAExecutor;
 import org.apache.oozie.service.JPAService;
+import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
 
 /**
@@ -39,10 +40,14 @@ public class SLAEventsXCommand extends XCommand<List<SLAEventBean>> {
     private int maxNoEvents = 100; // Default
     private long lastSeqId = -1;
 
+    public static final String SLA_DEFAULT_MAXEVENTS = Service.CONF_PREFIX + "sla.default.maxevents";
+
     public SLAEventsXCommand(long seqId, int maxNoEvnts) {
         super("SLAEventsXCommand", "SLAEventsXCommand", 1);
         this.seqId = seqId;
-        this.maxNoEvents = maxNoEvnts;
+        int sysMax = Services.get().getConf().getInt(SLA_DEFAULT_MAXEVENTS, 1000);
+        this.maxNoEvents = maxNoEvnts > sysMax ? sysMax : maxNoEvnts;
+
     }
 
     /* (non-Javadoc)
