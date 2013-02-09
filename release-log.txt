@@ -1,6 +1,7 @@
 
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1187 reduce memory usage of SLA query (invoked by CLI command) to avoid OOM (egashira via virag) 
 OOZIE-1096 Update wfgen README.txt to have the TLP mailing list (jun aoki via rkanter)
 OOZIE-809 MySQL TEXT columns should be MEDIUMTEXT (rkanter via tucu)
 OOZIE-669 Deprecate oozie-start.sh, oozie-stop.sh & oozie-run.sh scripts (rkanter via tucu)
@@ -125,6 +126,7 @@ OOZIE-654 Provide a way to use 'uber' jars with Oozie MR actions (rkanter via tu
 -- Oozie 3.3.1 (unreleased)
 
 OOZIE-1151 HbaseCredentials doesn't use properties from the credentials module (virag)
+OOZIE-1159 Set the RM token renewer as the full service principal instead of short name (rohini via virag)
 OOZIE-1148 Set the renewer correctly for JT/RM delegation tokens (rohini via virag)
 OOZIE-1147 HCatCredentialHelper uses the wrong API for getDelegationToken (rohini via virag)
 OOZIE-1149 Update 3.3 branch POM's to 3.3.1-SNAPSHOT (virag)
@@ -147,6 +149,7 @@ OOZIE-1100 HFTP coordinator input check fails due to missing commons-httpclient.
 
 OOZIE-1058 ACL modify-job should not be hardcoded to group name(mona via mohammad)
 OOZIE-1052 HadoopAccessorService.createFileSystem throws exception in map-reduce action, failing workflow (egashira via mohammad)
+OOZIE-1089 DistributedCache workaround for Hadoop 2.0.2-alpha (tucu)
 OOZIE-993 Hadoop 23 doesn't accept user defined jobtracker (virag)
 OOZIE-1005 Tests from OOZIE-994 use wrong condition in waitFor (rkanter via virag)
 OOZIE-994  ActionCheckXCommand does not handle failures properly (rkanter via virag)

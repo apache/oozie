@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,9 +42,9 @@ import org.json.simple.JSONObject;
 
 @Entity
 @NamedQueries({
+        @NamedQuery(name = "GET_SLA_EVENT_NEWER_SEQ_LIMITED", query = "select OBJECT(w) from SLAEventBean w where w.event_id > :id order by w.event_id"),
+        @NamedQuery(name = "GET_SLA_EVENTS", query = "select OBJECT(w) from SLAEventBean w") })
 
-    @NamedQuery(name = "GET_SLA_EVENT_NEWER_SEQ_LIMITED", query = "select OBJECT(w) from SLAEventBean w where w.event_id > :id order by w.event_id"),
-    @NamedQuery(name = "GET_SLA_EVENTS", query = "select OBJECT(w) from SLAEventBean w")})
 public class SLAEventBean extends JsonSLAEvent implements Writable {
 
     @Basic
@@ -180,8 +180,7 @@ public class SLAEventBean extends JsonSLAEvent implements Writable {
 
     @Override
     public String toString() {
-        return MessageFormat.format("Event id[{0}] status[{1}]", getEvent_id(),
-                                    getJobStatus());
+        return MessageFormat.format("Event id[{0}] status[{1}]", getEvent_id(), getJobStatus());
     }
 
     /**
@@ -233,7 +232,6 @@ public class SLAEventBean extends JsonSLAEvent implements Writable {
         eReg.addContent(createATagElement("sequence-id", String.valueOf(getEvent_id())));
         Element e = new Element("registration");
         e.addContent(createATagElement("sla-id", getSlaId()));
-        //e.addContent(createATagElement("sla-id", String.valueOf(getSlaId())));
         e.addContent(createATagElement("app-type", getAppType().toString()));
         e.addContent(createATagElement("app-name", getAppName()));
         e.addContent(createATagElement("user", getUser()));
@@ -268,10 +266,11 @@ public class SLAEventBean extends JsonSLAEvent implements Writable {
         eStat.addContent(createATagElement("sequence-id", String.valueOf(getEvent_id())));
         Element e = new Element("status");
         e.addContent(createATagElement("sla-id", getSlaId()));
-        e.addContent(createATagElement("status-timestamp",
-                                       getDateString(getStatusTimestamp())));
+        e.addContent(createATagElement("status-timestamp", getDateString(getStatusTimestamp())));
         e.addContent(createATagElement("job-status", getJobStatus().toString()));
         e.addContent(createATagElement("job-data", getJobData()));
+        e.addContent(createATagElement("user", getUser()));
+        e.addContent(createATagElement("group", getGroupName()));
         eStat.addContent(e);
         return eStat;
     }

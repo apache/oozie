@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,10 +44,11 @@ public class TestSLAEventsGetJPAExecutor extends XDataTestCase {
     }
 
     public void testSLAEventsGetForSeqId() throws Exception {
-        final String wfId = "0000000-" + new Date().getTime() + "-TestSLAEventsGetJPAExecutor-W";
-        addRecordToSLAEventTable(wfId, Status.CREATED);
-        addRecordToSLAEventTable(wfId, Status.STARTED);
-        addRecordToSLAEventTable(wfId, Status.SUCCEEDED);
+        Date current = new Date();
+        final String wfId = "0000000-" + current.getTime() + "-TestSLAEventsGetJPAExecutor-W";
+        addRecordToSLAEventTable(wfId, Status.CREATED, current);
+        addRecordToSLAEventTable(wfId, Status.STARTED, current);
+        addRecordToSLAEventTable(wfId, Status.SUCCEEDED, current);
         _testGetSLAEventsForSeqId(wfId);
     }
 

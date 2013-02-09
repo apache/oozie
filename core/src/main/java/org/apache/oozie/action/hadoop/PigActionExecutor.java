@@ -174,10 +174,7 @@ public class PigActionExecutor extends JavaActionExecutor {
     protected void setActionCompletionData(Context context, FileSystem fs) throws HadoopAccessorException, IOException,
             URISyntaxException {
         String data = getExternalChildIDs(context, fs);
-        if (data != null && !data.isEmpty()) {
-            context.setExternalChildIDs(data);
-            XLog.getLog(getClass()).info(XLog.STD, "Hadoop Jobs launched : [{0}]", data);
-        }
+        context.setExternalChildIDs(data);
     }
 
     private String getExternalChildIDs(Context context, FileSystem actionFs) throws IOException,
@@ -186,6 +183,7 @@ public class PigActionExecutor extends JavaActionExecutor {
         String externalIDs = null;
         if (actionFs.exists(actionOutput)) {
             externalIDs = getDataFromPath(actionOutput, actionFs);
+            XLog.getLog(getClass()).info(XLog.STD, "Hadoop Jobs launched : [{0}]", externalIDs);
         }
         return externalIDs;
     }

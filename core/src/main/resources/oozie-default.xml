@@ -1768,4 +1768,18 @@
     </property>
 
 
+    <!-- Enable Distributed Cache workaround for Hadoop 2.0.2-alpha (MAPREDUCE-4820) -->
+    <property>
+        <name>oozie.hadoop-2.0.2-alpha.workaround.for.distributed.cache</name>
+        <value>false</value>
+        <description>
+            Due to a bug in Hadoop 2.0.2-alpha, MAPREDUCE-4820, launcher jobs fail to set
+            the distributed cache for the action job because the local JARs are implicitly
+            included triggering a duplicate check.
+            This flag removes the distributed cache files for the action as they'll be
+            included from the local JARs of the JobClient (MRApps) submitting the action
+            job from the launcher.
+        </description>
+    </property>
+
 </configuration>

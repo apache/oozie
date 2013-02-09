@@ -363,7 +363,7 @@ public class OozieCLI {
     protected Options createSlaOptions() {
         Option oozie = new Option(OOZIE_OPTION, true, "Oozie URL");
         Option start = new Option(OFFSET_OPTION, true, "start offset (default '0')");
-        Option len = new Option(LEN_OPTION, true, "number of results (default '100')");
+        Option len = new Option(LEN_OPTION, true, "number of results (default '100', max '1000')");
         start.setType(Integer.class);
         len.setType(Integer.class);
         Options slaOptions = new Options();

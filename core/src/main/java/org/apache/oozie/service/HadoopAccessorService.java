@@ -24,6 +24,8 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.security.token.delegation.DelegationTokenIdentifier;
+import org.apache.hadoop.net.NetUtils;
+import org.apache.hadoop.security.SecurityUtil;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.security.token.Token;
@@ -71,6 +73,9 @@ public class HadoopAccessorService implements Service {
     private static final String JT_PRINCIPAL = "mapreduce.jobtracker.kerberos.principal";
     /** The Kerberos principal for the resource manager.*/
     private static final String RM_PRINCIPAL = "yarn.resourcemanager.principal";
+    private static final String HADOOP_JOB_TRACKER = "mapred.job.tracker";
+    private static final String HADOOP_JOB_TRACKER_2 = "mapreduce.jobtracker.address";
+    private static final String HADOOP_YARN_RM = "yarn.resourcemanager.address";
     private static final Map<String, Text> mrTokenRenewers = new HashMap<String, Text>();
 
     private Set<String> jobTrackerWhitelist = new HashSet<String>();
@@ -454,7 +459,17 @@ public class HadoopAccessorService implements Service {
         }
     }
 
-    public static Text getMRDelegationTokenRenewer(JobConf jobConf) {
+    public static Text getMRDelegationTokenRenewer(JobConf jobConf) throws IOException {
+        if (UserGroupInformation.isSecurityEnabled()) { // secure cluster
+            return getMRTokenRenewerInternal(jobConf);
+        }
+        else {
+            return MR_TOKEN_ALIAS; //Doesn't matter what we pass as renewer
+        }
+    }
+
+    // Package private for unit test purposes
+    static Text getMRTokenRenewerInternal(JobConf jobConf) throws IOException {
         // Getting renewer correctly for JT principal also though JT in hadoop 1.x does not have
         // support for renewing/cancelling tokens
         String servicePrincipal = jobConf.get(RM_PRINCIPAL, jobConf.get(JT_PRINCIPAL));
@@ -462,9 +477,15 @@ public class HadoopAccessorService implements Service {
         if (servicePrincipal != null) { // secure cluster
             renewer = mrTokenRenewers.get(servicePrincipal);
             if (renewer == null) {
-                // Remove host and domain
-                renewer = new Text(servicePrincipal.split("[/@]")[0]);
-                LOG.info("Delegation Token Renewer for " + servicePrincipal + " is " + renewer);
+                // Mimic org.apache.hadoop.mapred.Master.getMasterPrincipal()
+                String target = jobConf.get(HADOOP_YARN_RM, jobConf.get(HADOOP_JOB_TRACKER_2));
+                if (target == null) {
+                    target = jobConf.get(HADOOP_JOB_TRACKER);
+                }
+                String addr = NetUtils.createSocketAddr(target).getHostName();
+                renewer = new Text(SecurityUtil.getServerPrincipal(servicePrincipal, addr));
+                LOG.info("Delegation Token Renewer details: Principal=" + servicePrincipal + ",Target=" + target
+                        + ",Renewer=" + renewer);
                 mrTokenRenewers.put(servicePrincipal, renewer);
             }
         }
