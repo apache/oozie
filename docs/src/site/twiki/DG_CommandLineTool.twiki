@@ -87,7 +87,7 @@ usage:
 .
       oozie sla <OPTIONS> : sla operations (Supported in Oozie-2.0 or later)
                 -auth <arg>           select authentication type [SIMPLE|KERBEROS]
-                -len <arg>            number of results (default '100')
+                -len <arg>            number of results (default '100', max limited by oozie server setting which defaults to '1000')
                 -offset <arg>         start offset (default '0')
                 -oozie <arg>          Oozie URL
 .
@@ -699,34 +699,95 @@ It performs an XML Schema validation on the specified workflow XML file.
 
 ---++ SLA Operations
 
----+++ Getting the records of SLA events
+---+++ Getting a list of SLA events
 
 * This feature is only supported in Oozie 2.0 or later.
 
 Example:
 
 <verbatim>
-$ oozie sla -oozie http://localhost:11000/oozie -len 1
+$ oozie sla -oozie http://localhost:11000/oozie -len 3
 .
 <sla-message>
-   <event>
-    <sequence-id>1091</sequence-id>
+  <event>
+    <sequence-id>1</sequence-id>
+    <registration>
+      <sla-id>0000000-130130150445097-oozie-joe-C@1</sla-id>
+      <app-type>COORDINATOR_ACTION</app-type>
+      <app-name>aggregator-sla-app</app-name>
+      <user>joe</user>
+      <group />
+      <parent-sla-id>null</parent-sla-id>
+      <expected-start>2013-01-30T23:00Z</expected-start>
+      <expected-end>2013-01-30T23:30Z</expected-end>
+      <status-timestamp>2013-02-08T18:51Z</status-timestamp>
+      <notification-msg>Notifying User for 2013-01-30T23:00Z nominal time</notification-msg>
+      <alert-contact>www@yahoo.com</alert-contact>
+      <dev-contact>abc@yahoo.com</dev-contact>
+      <qa-contact>abc@yahoo.com</qa-contact>
+      <se-contact>abc@yahoo.com</se-contact>
+      <alert-percentage>80</alert-percentage>
+      <alert-frequency>LAST_HOUR</alert-frequency>
+      <upstream-apps />
+      <job-status>CREATED</job-status>
+      <job-data />
+    </registration>
+  </event>
+  <event>
+    <sequence-id>2</sequence-id>
     <status>
-      <sla-id>0000004-100521225917912-oozie-wrkf-C@1</sla-id>
-      <status-timestamp>2010-05-22T00:41Z</status-timestamp>
+      <sla-id>0000000-130130150445097-oozie-joe-C@1</sla-id>
+      <status-timestamp>2013-01-30T23:05Z</status-timestamp>
       <job-status>STARTED</job-status>
       <job-data />
     </status>
   </event>
-  <last-sequence-id>1091</last-sequence-id>
+  <event>
+    <sequence-id>3</sequence-id>
+    <status>
+      <sla-id>0000000-130130150445097-oozie-joe-C@1</sla-id>
+      <status-timestamp>2013-01-30T23:30Z</status-timestamp>
+      <job-status>SUCCEEDED</job-status>
+      <job-data />
+    </status>
+  </event>
+  <last-sequence-id>3</last-sequence-id>
 </sla-message>
 
 </verbatim>
 
-The =offset= and =len= option specified the offset and number of sla events to display, default values are =1= and =100=
-respectively.
+The =offset= and =len= option specified the offset and number of sla events to display, default values are =1= and =100= respectively.
+
+The =offset= corresponds to sequence ID of an event.
+
+The max value of =len= limited by oozie server setting which defaults to '1000'. To get more than =1000= events, it is necessary to iterate based on the number of records you want.
 
 The return message is XML format that can be easily consumed by SLA users.
+
+
+---+++ Getting the SLA event with particular sequenceID
+
+* This feature is only supported in Oozie 2.0 or later.
+
+Example:  Get the SLA event with sequenceID = 3  (Note that offset corresponds to sequence ID)
+
+<verbatim>
+$ oozie sla -oozie http://localhost:11000/oozie -offset 2 -len 1
+.
+<sla-message>
+  <event>
+    <sequence-id>3</sequence-id>
+    <status>
+      <sla-id>0000000-130130150445097-oozie-joe-C@1</sla-id>
+      <status-timestamp>2013-01-30T23:05Z</status-timestamp>
+      <job-status>SUCCEEDED</job-status>
+      <job-data />
+    </status>
+  </event>
+  <last-sequence-id>3</last-sequence-id>
+</sla-message>
+
+</verbatim>
 
 ---++ Pig Operations
 
