@@ -948,7 +948,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
             for (Element e : (List<Element>) datasets.getChildren("dataset", datasets.getNamespace())) {
                 String dsName = e.getAttributeValue("name");
                 if (dsList.contains(dsName)) {// Override with this DS
-                    // Remove old DS
+                    // Remove duplicate
                     removeDataSet(allDataSets, dsName);
                 }
                 else {
@@ -1017,6 +1017,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         for (Element eDataset : (List<Element>) eDatasets.getChildren("dataset", eDatasets.getNamespace())) {
             if (eDataset.getAttributeValue("name").equals(name)) {
                 eDataset.detach();
+                return;
             }
         }
         throw new RuntimeException("undefined dataset: " + name);
