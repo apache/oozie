@@ -46,7 +46,6 @@ import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
-import org.apache.oozie.action.hadoop.ActionExecutorTestCase.Context;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
@@ -67,6 +66,8 @@ import org.apache.oozie.workflow.lite.EndNodeDef;
 import org.apache.oozie.workflow.lite.LiteWorkflowApp;
 import org.apache.oozie.workflow.lite.StartNodeDef;
 import org.jdom.Element;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
@@ -76,6 +77,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         setSystemProperty("oozie.service.ActionService.executor.classes", JavaActionExecutor.class.getName());
         setSystemProperty("oozie.service.HadoopAccessorService.action.configurations",
                           "*=hadoop-conf," + getJobTrackerUri() + "=action-conf");
+        setSystemProperty(WorkflowAppService.SYSTEM_LIB_PATH, getFsTestCaseDir() + "/systemlib");
         new File(getTestCaseConfDir(), "action-conf").mkdir();
         InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("test-action-config.xml");
         OutputStream os = new FileOutputStream(new File(getTestCaseConfDir() + "/action-conf", "java.xml"));
@@ -317,7 +319,6 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         XConfiguration protoConf = new XConfiguration();
         protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
         protoConf.setStrings(WorkflowAppService.APP_LIB_PATH_LIST, appJarPath.toString(), appSoPath.toString());
-
 
         WorkflowJobBean wf = createBaseWorkflow(protoConf, "action");
         if(group != null) {
@@ -983,20 +984,24 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         Configuration actionConf = new XConfiguration();
 
-        assertEquals("java-action-executor", ae.getShareLibName(context, new Element("java"), actionConf));
+        Assert.assertArrayEquals(new String[] { "java-action-executor" },
+                ae.getShareLibNames(context, new Element("java"), actionConf));
 
         Services.get().getConf().set("oozie.action.sharelib.for.java", "java-oozie-conf");
-        assertEquals("java-oozie-conf", ae.getShareLibName(context, new Element("java"), actionConf));
+        Assert.assertArrayEquals(new String[] { "java-oozie-conf" },
+                ae.getShareLibNames(context, new Element("java"), actionConf));
 
         jobConf = "<configuration>" + "<property>"
                + "<name>oozie.action.sharelib.for.java</name>"
                + "<value>java-job-conf</value>" + "</property>"
                + "</configuration>";
         wfBean.setConf(jobConf);
-        assertEquals("java-job-conf", ae.getShareLibName(context, new Element("java"), actionConf));
+        Assert.assertArrayEquals(new String[] { "java-job-conf" },
+                ae.getShareLibNames(context, new Element("java"), actionConf));
 
         actionConf.set("oozie.action.sharelib.for.java", "java-action-conf");
-        assertEquals("java-action-conf", ae.getShareLibName(context, new Element("java"), actionConf));
+        Assert.assertArrayEquals(new String[] { "java-action-conf" },
+                ae.getShareLibNames(context, new Element("java"), actionConf));
     }
 
     public void testJavaOpts() throws Exception {
@@ -1128,6 +1133,85 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertTrue(cacheFilesStr.contains(jar3Path.toString()));
     }
 
+    @Test
+    public void testAddActionShareLib() throws Exception {
+        Path systemLibPath = new Path(getFsTestCaseDir(), "systemlib");
+        Path javaShareLibPath = new Path(systemLibPath, "java");
+        getFileSystem().mkdirs(javaShareLibPath);
+        Path jar1Path = new Path(javaShareLibPath, "jar1.jar");
+        getFileSystem().create(jar1Path).close();
+        Path jar2Path = new Path(javaShareLibPath, "jar2.jar");
+        getFileSystem().create(jar2Path).close();
+
+        Path hcatShareLibPath = new Path(systemLibPath, "hcat");
+        getFileSystem().mkdirs(hcatShareLibPath);
+        Path jar3Path = new Path(hcatShareLibPath, "jar3.jar");
+        getFileSystem().create(jar3Path).close();
+        Path jar4Path = new Path(hcatShareLibPath, "jar4.jar");
+        getFileSystem().create(jar4Path).close();
+
+        Path otherShareLibPath = new Path(systemLibPath, "other");
+        getFileSystem().mkdirs(otherShareLibPath);
+        Path jar5Path = new Path(otherShareLibPath, "jar5.jar");
+        getFileSystem().create(jar5Path).close();
+
+        String actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<name-node>" + getNameNodeUri() + "</name-node>" +
+                "<job-xml>job.xml</job-xml>" + "<job-xml>job2.xml</job-xml>" +
+                "<main-class>MAIN-CLASS</main-class>" +
+                "</java>";
+        Element eActionXml = XmlUtils.parseXml(actionXml);
+        Context context = createContext(actionXml, null);
+
+        // Test oozie server action sharelib setting
+        WorkflowJobBean workflow = (WorkflowJobBean) context.getWorkflow();
+        XConfiguration wfConf = new XConfiguration();
+        wfConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
+        wfConf.set(OozieClient.APP_PATH, new Path(getAppPath(), "workflow.xml").toString());
+        wfConf.setBoolean(OozieClient.USE_SYSTEM_LIBPATH, true);
+        workflow.setConf(XmlUtils.prettyPrint(wfConf).toString());
+
+        Services.get().getConf().set("oozie.action.sharelib.for.java", "java,hcat");
+
+        JavaActionExecutor ae = new JavaActionExecutor();
+
+        Configuration jobConf = ae.createBaseHadoopConf(context, eActionXml);
+        ae.setupLauncherConf(jobConf, eActionXml, getAppPath(), context);
+        ae.setLibFilesArchives(context, eActionXml, getAppPath(), jobConf);
+
+        URI[] cacheFiles = DistributedCache.getCacheFiles(jobConf);
+        String cacheFilesStr = Arrays.toString(cacheFiles);
+        assertTrue(cacheFilesStr.contains(jar1Path.toString()));
+        assertTrue(cacheFilesStr.contains(jar2Path.toString()));
+        assertTrue(cacheFilesStr.contains(jar3Path.toString()));
+        assertTrue(cacheFilesStr.contains(jar4Path.toString()));
+
+        // Test per workflow action sharelib setting
+        workflow = (WorkflowJobBean) context.getWorkflow();
+        wfConf = new XConfiguration();
+        wfConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
+        wfConf.set(OozieClient.APP_PATH, new Path(getAppPath(), "workflow.xml").toString());
+        wfConf.setBoolean(OozieClient.USE_SYSTEM_LIBPATH, true);
+        wfConf.set("oozie.action.sharelib.for.java", "other,hcat");
+        workflow.setConf(XmlUtils.prettyPrint(wfConf).toString());
+
+        Services.get().getConf().set("oozie.action.sharelib.for.java", "java");
+        ae = new JavaActionExecutor();
+
+        jobConf = ae.createBaseHadoopConf(context, eActionXml);
+        ae.setupLauncherConf(jobConf, eActionXml, getAppPath(), context);
+        ae.setLibFilesArchives(context, eActionXml, getAppPath(), jobConf);
+
+        cacheFiles = DistributedCache.getCacheFiles(jobConf);
+        cacheFilesStr = Arrays.toString(cacheFiles);
+        // The oozie server setting should have been overridden by workflow setting
+        assertFalse(cacheFilesStr.contains(jar1Path.toString()));
+        assertFalse(cacheFilesStr.contains(jar2Path.toString()));
+        assertTrue(cacheFilesStr.contains(jar3Path.toString()));
+        assertTrue(cacheFilesStr.contains(jar4Path.toString()));
+        assertTrue(cacheFilesStr.contains(jar5Path.toString()));
+    }
+
     public void testAddShareLibSchemeAndAuthority() throws Exception {
         JavaActionExecutor ae = new JavaActionExecutor() {
             @Override
@@ -1149,14 +1233,14 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         JobConf conf = ae.createBaseHadoopConf(context, eActionXml);
         // The next line should not throw an Exception because it will get the scheme and authority from the appPath, and not the
         // sharelib path because it doesn't have a scheme or authority
-        ae.addShareLib(appPath, conf, "java-action-executor");
+        ae.addShareLib(appPath, conf, new String[]{"java-action-executor"});
 
         appPath = new Path("foo://bar:1234/blah");
         conf = ae.createBaseHadoopConf(context, eActionXml);
         // The next line should throw an Exception because it will get the scheme and authority from the appPath, which is obviously
         // invalid, and not the sharelib path because it doesn't have a scheme or authority
         try {
-            ae.addShareLib(appPath, conf, "java-action-executor");
+            ae.addShareLib(appPath, conf, new String[]{"java-action-executor"});
         }
         catch (ActionExecutorException aee) {
             assertEquals("E0902", aee.getErrorCode());
@@ -1171,7 +1255,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         conf = ae.createBaseHadoopConf(context, eActionXml);
         // The next line should not throw an Exception because it will get the scheme and authority from the sharelib path (and not
         // from the obviously invalid appPath)
-        ae.addShareLib(appPath, conf, "java-action-executor");
+        ae.addShareLib(appPath, conf, new String[]{"java-action-executor"});
     }
 
     public void testFilesystemScheme() throws Exception {

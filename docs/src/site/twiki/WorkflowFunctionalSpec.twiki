@@ -2289,7 +2289,8 @@ and Mapreduce Streaming share library direcotry is =share/library/mapreduce-stre
 
 Oozie bundles a share library for specific versions of streaming, pig, hive, sqoop, distcp actions. These versions
 of streaming, pig, hive, sqoop and distcp have been tested and verified to work correctly with the version of Oozie
-that includes them.
+that includes them. Oozie also bundles a separate share library for hcatalog, which can be used with pig, hive and java
+actions.
 
 In addition, Oozie provides a mechanism to override the action share library JARs to allow using an alternate version
 of of the action JARs.
@@ -2297,13 +2298,17 @@ of of the action JARs.
 This mechanism enables Oozie administrators to patch share library JARs, to include alternate versios of the share
 libraries, to provide acess to more than one version at the same time.
 
-The sharelibrary override is supported at server level and at job level. The share library name is resolved using
-the following precedence order:
+The share library override is supported at server level and at job level. The share library directory names are resolved
+using the following precedence order:
 
    *  action.sharelib.for.#ACTIONTYPE# in the action configuration
    *  action.sharelib.for.#ACTIONTYPE# in the job configuration
    *  action.sharelib.for.#ACTIONTYPE# in the oozie server configuration
    *  action's =ActionExecutor getDefaultShareLibName()= method
+
+More than one share library directory name can be specified for an action by using a comma separated list. For example:
+When using HCatLoader and HCatStorer in pig, =action.sharelib.for.pig= can be set to =pig,hcatalog= to include both pig
+and hcatalog jars.
 
 ---++ 18 User-Retry for Workflow Actions (since Oozie 3.1)
 

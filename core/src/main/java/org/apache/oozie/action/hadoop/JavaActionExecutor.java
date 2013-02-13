@@ -389,39 +389,44 @@ public class JavaActionExecutor extends ActionExecutor {
         }
     }
 
-    protected void addShareLib(Path appPath, Configuration conf, String actionShareLibName)
-    throws ActionExecutorException {
-        if (actionShareLibName != null) {
-            try {
-                Path systemLibPath = Services.get().get(WorkflowAppService.class).getSystemLibPath();
-                if (systemLibPath != null) {
-                    Path actionLibPath = new Path(systemLibPath, actionShareLibName);
-                    String user = conf.get("user.name");
-                    FileSystem fs;
-                    // If the actionLibPath has a valid scheme and authority, then use them to determine the filesystem that the
-                    // sharelib resides on; otherwise, assume it resides on the same filesystem as the appPath and use the appPath
-                    // to determine the filesystem
-                    if (actionLibPath.toUri().getScheme() != null && actionLibPath.toUri().getAuthority() != null) {
-                        fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, actionLibPath.toUri(), conf);
-                    }
-                    else {
-                        fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, appPath.toUri(), conf);
-                    }
-                    if (fs.exists(actionLibPath)) {
-                        FileStatus[] files = fs.listStatus(actionLibPath);
-                        for (FileStatus file : files) {
-                            addToCache(conf, actionLibPath, file.getPath().toUri().getPath(), false);
+    protected void addShareLib(Path appPath, Configuration conf, String[] actionShareLibNames)
+            throws ActionExecutorException {
+        if (actionShareLibNames != null) {
+            for (String actionShareLibName : actionShareLibNames) {
+                try {
+                    Path systemLibPath = Services.get().get(WorkflowAppService.class).getSystemLibPath();
+                    if (systemLibPath != null) {
+                        Path actionLibPath = new Path(systemLibPath, actionShareLibName.trim());
+                        String user = conf.get("user.name");
+                        FileSystem fs;
+                        // If the actionLibPath has a valid scheme and authority, then use them to
+                        // determine the filesystem that the sharelib resides on; otherwise, assume
+                        // it resides on the same filesystem as the appPath and use the appPath to
+                        // determine the filesystem
+                        if (actionLibPath.toUri().getScheme() != null && actionLibPath.toUri().getAuthority() != null) {
+                            fs = Services.get().get(HadoopAccessorService.class)
+                                    .createFileSystem(user, actionLibPath.toUri(), conf);
+                        }
+                        else {
+                            fs = Services.get().get(HadoopAccessorService.class)
+                                    .createFileSystem(user, appPath.toUri(), conf);
+                        }
+                        if (fs.exists(actionLibPath)) {
+                            FileStatus[] files = fs.listStatus(actionLibPath);
+                            for (FileStatus file : files) {
+                                addToCache(conf, actionLibPath, file.getPath().toUri().getPath(), false);
+                            }
                         }
                     }
                 }
-            }
-            catch (HadoopAccessorException ex){
-                throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED,
-                        ex.getErrorCode().toString(), ex.getMessage());
-            }
-            catch (IOException ex){
-                throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED,
-                        "It should never happen", ex.getMessage());
+                catch (HadoopAccessorException ex) {
+                    throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, ex.getErrorCode()
+                            .toString(), ex.getMessage());
+                }
+                catch (IOException ex) {
+                    throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED,
+                            "It should never happen", ex.getMessage());
+                }
             }
         }
     }
@@ -501,7 +506,7 @@ public class JavaActionExecutor extends ActionExecutor {
         // Add action specific share libs
         addActionShareLib(appPath, conf, context, actionXml);
         // Add common sharelibs for Oozie
-        addShareLib(appPath, conf, JavaActionExecutor.OOZIE_COMMON_LIBDIR);
+        addShareLib(appPath, conf, new String[]{JavaActionExecutor.OOZIE_COMMON_LIBDIR});
     }
 
     private void addActionShareLib(Path appPath, Configuration conf, Context context, Element actionXml)
@@ -517,7 +522,7 @@ public class JavaActionExecutor extends ActionExecutor {
         // Action sharelibs are only added if user has specified to use system libpath
         if (wfJobConf.getBoolean(OozieClient.USE_SYSTEM_LIBPATH, false)) {
             // add action specific sharelibs
-            addShareLib(appPath, conf, getShareLibName(context, actionXml, conf));
+            addShareLib(appPath, conf, getShareLibNames(context, actionXml, conf));
         }
     }
 
@@ -1161,14 +1166,15 @@ public class JavaActionExecutor extends ActionExecutor {
 
 
     /**
-     * Return the sharelib name for the action.
+     * Return the sharelib names for the action.
      * <p/>
-     * If <code>NULL</code> or emtpy, it means that the action does not use the action
+     * If <code>NULL</code> or empty, it means that the action does not use the action
      * sharelib.
      * <p/>
      * If a non-empty string, i.e. <code>foo</code>, it means the action uses the
-     * action sharelib subdirectory <code>foo</code> and all JARs in the sharelib
-     * <code>foo</code> directory will be in the action classpath.
+     * action sharelib sub-directory <code>foo</code> and all JARs in the sharelib
+     * <code>foo</code> directory will be in the action classpath. Multiple sharelib
+     * sub-directories can be specified as a comma separated list.
      * <p/>
      * The resolution is done using the following precedence order:
      * <ul>
@@ -1181,18 +1187,22 @@ public class JavaActionExecutor extends ActionExecutor {
      *
      * @param context executor context.
      * @param actionXml
-     *@param conf action configuration.  @return the action sharelib name.
+     * @param conf action configuration.
+     * @return the action sharelib names.
      */
-    protected String getShareLibName(Context context, Element actionXml, Configuration conf) {
-        String name = conf.get(ACTION_SHARELIB_FOR + getType());
-        if (name == null) {
+    protected String[] getShareLibNames(Context context, Element actionXml, Configuration conf) {
+        String[] names = conf.getStrings(ACTION_SHARELIB_FOR + getType());
+        if (names == null || names.length == 0) {
             try {
                 XConfiguration jobConf = new XConfiguration(new StringReader(context.getWorkflow().getConf()));
-                name = jobConf.get(ACTION_SHARELIB_FOR + getType());
-                if (name == null) {
-                    name = Services.get().getConf().get(ACTION_SHARELIB_FOR + getType());
-                    if (name == null) {
-                        name = getDefaultShareLibName(actionXml);
+                names = jobConf.getStrings(ACTION_SHARELIB_FOR + getType());
+                if (names == null || names.length == 0) {
+                    names = Services.get().getConf().getStrings(ACTION_SHARELIB_FOR + getType());
+                    if (names == null || names.length == 0) {
+                        String name = getDefaultShareLibName(actionXml);
+                        if (name != null) {
+                            names = new String[] { name };
+                        }
                     }
                 }
             }
@@ -1200,7 +1210,7 @@ public class JavaActionExecutor extends ActionExecutor {
                 throw new RuntimeException("It cannot happen, " + ex.toString(), ex);
             }
         }
-        return name;
+        return names;
     }
 
     private final static String ACTION_SHARELIB_FOR = "oozie.action.sharelib.for.";
