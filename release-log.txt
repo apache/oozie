@@ -14,6 +14,7 @@ OOZIE-944 Implement Workflow Generator UI Tool (egashira via virag)
 
 -- Oozie 3.3.2 unreleased 
 
+OOZIE-1221 mvn install failing in Oozie-Mini module (jaoki via virag)
 OOZIE-1170 Update minitest module (MiniOozie) to use main pom as its parent (jaoki via rkanter)
 OOZIE-1196 HCat EL functions for database and table should be modified (mona)
 OOZIE-1210 Rework uri handling for Prepare actions and jms server mapping (rohini via virag)
