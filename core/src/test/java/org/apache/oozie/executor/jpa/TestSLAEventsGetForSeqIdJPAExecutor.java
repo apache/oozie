@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.apache.oozie.SLAEventBean;
+import org.apache.oozie.client.SLAEvent;
 import org.apache.oozie.client.SLAEvent.Status;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
@@ -44,14 +45,15 @@ public class TestSLAEventsGetForSeqIdJPAExecutor extends XDataTestCase {
     }
 
     public void testSLAEventsGetForSeqId() throws Exception {
-        final String wfId = "0000000-" + new Date().getTime() + "-TestSLAEventsGetForSeqIdJPAExecutor-W";
-        addRecordToSLAEventTable(wfId, Status.CREATED);
-        addRecordToSLAEventTable(wfId, Status.STARTED);
-        addRecordToSLAEventTable(wfId, Status.SUCCEEDED);
-        _testGetSLAEventsForSeqId(wfId);
+        Date current = new Date();
+        final String wfId = "0000000-" + current.getTime() + "-TestSLAEventsGetForSeqIdJPAExecutor-W";
+        addRecordToSLAEventTable(wfId, Status.CREATED, current);
+        addRecordToSLAEventTable(wfId, Status.STARTED, current);
+        addRecordToSLAEventTable(wfId, Status.SUCCEEDED, current);
+        _testGetSLAEventsForSeqId(wfId, current);
     }
 
-    private void _testGetSLAEventsForSeqId(String jobId) throws Exception {
+    private void _testGetSLAEventsForSeqId(String jobId, Date current) throws Exception {
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
 
@@ -64,6 +66,12 @@ public class TestSLAEventsGetForSeqIdJPAExecutor extends XDataTestCase {
         List<SLAEventBean> list = jpaService.execute(slaEventsGetCmd);
         assertNotNull(list);
         assertEquals(2, list.size());
-    }
 
+        SLAEventBean seBean = list.get(0);
+        assertEquals(seBean.getSlaId(), jobId);
+        assertEquals(seBean.getUser(), getTestUser());
+        assertEquals(seBean.getGroupName(), getTestGroup());
+        assertEquals(seBean.getJobStatus(), Status.STARTED);
+        assertEquals(seBean.getStatusTimestamp().getTime(), current.getTime());
+    }
 }

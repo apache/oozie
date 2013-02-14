@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,11 @@ import javax.persistence.Query;
 
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.SLAEventBean;
+import org.apache.oozie.command.CommandException;
+import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.executor.jpa.SLAEventsGetForSeqIdJPAExecutor;
 import org.apache.oozie.service.InstrumentationService;
+import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.ParamChecker;
@@ -66,7 +70,8 @@ public class SLAStore extends Store {
     }
 
     /**
-     * Get a list of SLA Events newer than a specific sequence with limit clause.
+     * Get a list of SLA Events newer than a specific sequence with limit
+     * clause.
      *
      * @param seqId sequence id
      * @return List of SLA Events
@@ -80,24 +85,34 @@ public class SLAStore extends Store {
         lastSeqId[0] = seqId;
 
         List<SLAEventBean> seBeans = (List<SLAEventBean>) doOperation("getSLAEventListNewerSeqLimited",
-                                                                      new Callable<List<SLAEventBean>>() {
+                new Callable<List<SLAEventBean>>() {
 
-                                                                          public List<SLAEventBean> call() throws StoreException {
+                    public List<SLAEventBean> call() throws StoreException, JPAExecutorException {
 
-                                                                              List<SLAEventBean> seBeans;
-                                                                              try {
-                                                                                  Query q = entityManager.createNamedQuery("GET_SLA_EVENT_NEWER_SEQ_LIMITED");
-                                                                                  q.setParameter("id", seqId);
-                                                                                  // q.setFirstResult(0);
-                                                                                  q.setMaxResults(limitLen);
-                                                                                  seBeans = q.getResultList();
-                                                                              }
-                                                                              catch (IllegalStateException e) {
-                                                                                  throw new StoreException(ErrorCode.E0601, e.getMessage(), e);
-                                                                              }
-                                                                              return seBeans;
-                                                                          }
-                                                                      });
+                        List<SLAEventBean> seBeans;
+                        try {
+
+                            JPAService jpaService = Services.get().get(JPAService.class);
+                            List<SLAEventBean> slaEventList = null;
+                            long lastSeqId[] = new long[1];
+                            if (jpaService != null) {
+                                seBeans = jpaService.execute(new SLAEventsGetForSeqIdJPAExecutor(seqId, limitLen,
+                                        lastSeqId));
+                            }
+                            else {
+                                throw new StoreException(ErrorCode.E0610);
+                            }
+
+                        }
+                        catch (IllegalStateException e) {
+                            throw new StoreException(ErrorCode.E0601, e.getMessage(), e);
+                        }
+                        catch (JPAExecutorException e) {
+                            throw new JPAExecutorException(ErrorCode.E0610, e.getMessage(), e);
+                        }
+                        return seBeans;
+                    }
+                });
         List<SLAEventBean> eventList = new ArrayList<SLAEventBean>();
         for (SLAEventBean j : seBeans) {
             lastSeqId[0] = Math.max(lastSeqId[0], j.getEvent_id());
