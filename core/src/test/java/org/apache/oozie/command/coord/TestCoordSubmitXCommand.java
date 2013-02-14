@@ -24,6 +24,7 @@ import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.net.URI;
+import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.BundleJobBean;
@@ -39,6 +40,9 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
+import org.apache.oozie.util.XmlUtils;
+import org.jdom.Element;
+import org.jdom.Namespace;
 
 public class TestCoordSubmitXCommand extends XDataTestCase {
 
@@ -777,6 +781,142 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
                 fail("Unexpected failure - " + cx.getMessage());
             }
         }
+    }
+
+    /**
+     * Basic submit with include file
+     * @throws Exception
+     */
+    public void testBasicSubmitWithIncludeFile() throws Exception {
+        Configuration conf = new XConfiguration();
+        final String includePath = "file://" + getTestCaseDir() + File.separator + "include1.xml";
+        final String URI_TEMPLATE_INCLUDE_XML = "file:///tmp/include_xml/workflows/${YEAR}/${DAY}";
+        final String URI_TEMPLATE_COORD_XML = "file:///tmp/coord_xml/workflows/${YEAR}/${DAY}";
+        String includeXml =
+            "<datasets> "
+                + "<dataset name=\"A\" frequency=\"${coord:days(7)}\" initial-instance=\"2009-02-01T01:00Z\" timezone=\"UTC\">"
+                    + "<uri-template>" + URI_TEMPLATE_INCLUDE_XML + "</uri-template>"
+                + "</dataset> "
+            + "</datasets>";
+        writeToFile(includeXml, includePath);
+
+        String appPath = "file://" + getTestCaseDir() + File.separator + "coordinator.xml";
+        String appXml =
+            "<coordinator-app name=\"${appName}-foo\" frequency=\"${coord:days(1)}\" start=\"2009-02-01T01:00Z\" "
+                + "end=\"2009-02-03T23:59Z\" timezone=\"UTC\" xmlns=\"uri:oozie:coordinator:0.2\">"
+            + "<controls> "
+                + "<execution>LIFO</execution>"
+            + "</controls>"
+            + "<datasets> "
+                + "<include>" + includePath + "</include>"
+                + "<dataset name=\"B\" frequency=\"${coord:days(7)}\" initial-instance=\"2009-02-01T01:00Z\" timezone=\"UTC\">"
+                    + "<uri-template>" + URI_TEMPLATE_COORD_XML + "</uri-template>"
+                + "</dataset> "
+            + "</datasets>"
+            + " <input-events> "
+                + "<data-in name=\"inputA\" dataset=\"A\"> <instance>${coord:latest(0)}</instance> </data-in>  "
+                + "<data-in name=\"inputB\" dataset=\"B\"> <instance>${coord:latest(0)}</instance> </data-in>  "
+            + "</input-events> "
+            + "<action>"
+                + "<workflow>"
+                    + "<app-path>hdfs:///tmp/workflows/</app-path> "
+                    + "<configuration>"
+                        + "<property> <name>inputA</name> <value>${coord:dataIn('inputB')}</value> </property> "
+                    + "</configuration>"
+                + "</workflow>"
+            + "</action>"
+            + " </coordinator-app>";
+        writeToFile(appXml, appPath);
+        conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        conf.set("appName", "var-app-name");
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+        String jobId = sc.call();
+
+        assertEquals(jobId.substring(jobId.length() - 2), "-C");
+        CoordinatorJobBean job = checkCoordJobs(jobId);
+        assertNotNull(job);
+        Element processedJobXml = XmlUtils.parseXml(job.getJobXml());
+
+        Namespace namespace = processedJobXml.getNamespace();
+        @SuppressWarnings("unchecked")
+        List<Element> datainElements = processedJobXml.getChild("input-events", namespace).getChildren("data-in", namespace);
+        assertTrue("<data-in> should be 2. One from coordinator.xml and the other from the include file"
+                , datainElements.size() == 2);
+
+        assertEquals(URI_TEMPLATE_INCLUDE_XML
+                , datainElements.get(0).getChild("dataset", namespace).getChildText("uri-template", namespace));
+        assertEquals(URI_TEMPLATE_COORD_XML
+                , datainElements.get(1).getChild("dataset", namespace).getChildText("uri-template", namespace));
+    }
+
+    /**
+     * https://issues.apache.org/jira/browse/OOZIE-1211
+     * If a datasets include file has a dataset name as in one defined in coordinator.xml,
+     * the one in coordinator.xml should be honored.
+     * http://oozie.apache.org/docs/3.3.1/CoordinatorFunctionalSpec.html#a10.1.1._Dataset_Names_Collision_Resolution
+     *
+     * @throws Exception
+     */
+    public void testDuplicateDatasetNameInIncludeFile() throws Exception {
+        Configuration conf = new XConfiguration();
+        final String includePath = "file://" + getTestCaseDir() + File.separator + "include1.xml";
+        final String URI_TEMPLATE_INCLUDE_XML = "file:///tmp/include_xml/workflows/${YEAR}/${DAY}";
+        final String URI_TEMPLATE_COORD_XML = "file:///tmp/coord_xml/workflows/${YEAR}/${DAY}";
+        String includeXml =
+            "<datasets> "
+                + "<dataset name=\"B\" frequency=\"${coord:days(7)}\" initial-instance=\"2009-02-01T01:00Z\" timezone=\"UTC\">"
+                    + "<uri-template>" + URI_TEMPLATE_INCLUDE_XML + "</uri-template>"
+                + "</dataset> "
+            + "</datasets>";
+        writeToFile(includeXml, includePath);
+
+        String appPath = "file://" + getTestCaseDir() + File.separator + "coordinator.xml";
+        String appXml =
+            "<coordinator-app name=\"${appName}-foo\" frequency=\"${coord:days(1)}\" start=\"2009-02-01T01:00Z\" "
+                + "end=\"2009-02-03T23:59Z\" timezone=\"UTC\" xmlns=\"uri:oozie:coordinator:0.2\">"
+            + "<controls> "
+                + "<execution>LIFO</execution>"
+            + "</controls>"
+            + "<datasets> "
+                + "<include>" + includePath + "</include>"
+                + "<dataset name=\"B\" frequency=\"${coord:days(7)}\" initial-instance=\"2009-02-01T01:00Z\" timezone=\"UTC\">"
+                    + "<uri-template>" + URI_TEMPLATE_COORD_XML + "</uri-template>"
+                + "</dataset> "
+            + "</datasets>"
+            + " <input-events> "
+                + "<data-in name=\"inputB\" dataset=\"B\"> <instance>${coord:latest(0)}</instance> </data-in>  "
+            + "</input-events> "
+            + "<action>"
+                + "<workflow>"
+                    + "<app-path>hdfs:///tmp/workflows/</app-path> "
+                    + "<configuration>"
+                        + "<property> <name>inputB</name> <value>${coord:dataIn('inputB')}</value> </property> "
+                    + "</configuration>"
+                + "</workflow>"
+            + "</action>"
+            + " </coordinator-app>";
+        writeToFile(appXml, appPath);
+        conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        conf.set("appName", "var-app-name");
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+        String jobId = sc.call();
+
+        assertEquals(jobId.substring(jobId.length() - 2), "-C");
+        CoordinatorJobBean job = checkCoordJobs(jobId);
+        assertNotNull(job);
+        Element processedJobXml = XmlUtils.parseXml(job.getJobXml());
+
+        Namespace namespace = processedJobXml.getNamespace();
+        @SuppressWarnings("unchecked")
+        List<Element> datasetElements = processedJobXml.getChild("input-events", namespace).getChild("data-in", namespace)
+                .getChildren("dataset", namespace);
+        assertTrue("<dataset> should not be duplicate", datasetElements.size() == 1);
+
+        assertEquals(URI_TEMPLATE_COORD_XML, datasetElements.get(0).getChildText("uri-template", namespace));
+        assertFalse("<uri-template> should not contain one from the include file"
+                , job.getJobXml().contains(URI_TEMPLATE_INCLUDE_XML));
     }
 
     private void _testConfigDefaults(boolean withDefaults) throws Exception {
