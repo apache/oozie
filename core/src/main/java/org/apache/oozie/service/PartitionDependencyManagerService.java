@@ -23,8 +23,8 @@ import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.oozie.command.coord.CoordActionUpdatePushMissingDependency;
-import org.apache.oozie.dependency.cache.HCatDependencyCache;
-import org.apache.oozie.dependency.cache.SimpleHCatDependencyCache;
+import org.apache.oozie.dependency.hcat.HCatDependencyCache;
+import org.apache.oozie.dependency.hcat.SimpleHCatDependencyCache;
 import org.apache.oozie.util.HCatURI;
 import org.apache.oozie.util.XLog;
 

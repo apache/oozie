@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.oozie.jms.HCatMessageHandler;
+import org.apache.oozie.dependency.hcat.HCatMessageHandler;
 import org.apache.oozie.jms.JMSConnectionInfo;
 import org.apache.oozie.util.HCatURI;
 import org.apache.oozie.util.MappingRule;

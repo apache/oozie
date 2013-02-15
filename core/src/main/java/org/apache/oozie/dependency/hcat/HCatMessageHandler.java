@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.oozie.jms;
+package org.apache.oozie.dependency.hcat;
 
 import java.util.List;
 import java.util.Map;
@@ -25,6 +25,7 @@ import javax.jms.Message;
 import org.apache.hcatalog.messaging.AddPartitionMessage;
 import org.apache.hcatalog.messaging.HCatEventMessage;
 import org.apache.hcatalog.messaging.jms.MessagingUtils;
+import org.apache.oozie.jms.MessageHandler;
 import org.apache.oozie.service.PartitionDependencyManagerService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.XLog;

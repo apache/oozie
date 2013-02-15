@@ -22,12 +22,14 @@ import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.Message;
 import javax.jms.MessageProducer;
 import javax.jms.Session;
 import javax.jms.Topic;
+
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.messaging.HCatEventMessage;
@@ -37,6 +39,7 @@ import org.apache.log4j.Layout;
 import org.apache.log4j.Logger;
 import org.apache.log4j.SimpleLayout;
 import org.apache.log4j.WriterAppender;
+import org.apache.oozie.dependency.hcat.HCatMessageHandler;
 import org.apache.oozie.service.HCatAccessorService;
 import org.apache.oozie.service.PartitionDependencyManagerService;
 import org.apache.oozie.service.Services;

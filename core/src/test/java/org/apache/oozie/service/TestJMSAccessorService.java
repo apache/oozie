@@ -25,10 +25,10 @@ import javax.jms.Session;
 
 import org.apache.activemq.broker.BrokerService;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.oozie.jms.DefaultConnectionContext;
-import org.apache.oozie.jms.HCatMessageHandler;
-import org.apache.oozie.jms.JMSConnectionInfo;
+import org.apache.oozie.dependency.hcat.HCatMessageHandler;
 import org.apache.oozie.jms.ConnectionContext;
+import org.apache.oozie.jms.DefaultConnectionContext;
+import org.apache.oozie.jms.JMSConnectionInfo;
 import org.apache.oozie.jms.MessageReceiver;
 import org.apache.oozie.test.XTestCase;
 import org.junit.Test;
