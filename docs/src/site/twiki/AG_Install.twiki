@@ -54,11 +54,23 @@ The =oozie-setup.sh= script options are:
 
 <verbatim>
 Usage  : oozie-setup.sh <OPTIONS>"
-         [-extjs EXTJS_PATH] (expanded or ZIP, to enable the Oozie webconsole)"
-         [-hadoop HADOOP_VERSION HADOOP_PATH] (Hadoop version [0.20.1|0.20.2|0.20.104|0.20.200]"
-                                               and Hadoop install dir)"
-         [-jars JARS_PATH] (multiple JAR path separated by ':')"
-         (without options does default setup, without the Oozie webconsole)"
+         prepare-war [-hadoop HADOOP_VERSION HADOOP_PATH] [-extjs EXTJS_PATH] [-jars JARS_PATH]"
+                     (prepare-war is to prepare war files for oozie)"
+                     (Hadoop version [0.20.1|0.20.2|0.20.104|0.20.200|0.23.x|2.x] and Hadoop install dir)"
+                     (EXTJS_PATH is expanded or ZIP, to enable the Oozie webconsole)"
+                     (JARS_PATH is multiple JAR path separated by ':')"
+         sharelib create -fs FS_URI [-locallib SHARED_LIBRARY] (create sharelib for oozie,"
+                                                               FS_URI is the fs.default.name"
+                                                               for hdfs uri; SHARED_LIBRARY, path to the"
+                                                               Oozie sharelib to install, it can be a tarball"
+                                                               or an expanded version of it. If ommited,"
+                                                               the Oozie sharelib tarball from the Oozie"
+                                                               installation directory will be used)"
+                                                               (action failes if sharelib is already installed"
+                                                               in HDFS)"
+         sharelib upgrade -fs FS_URI [-locallib SHARED_LIBRARY] (upgrade existing sharelib, fails if there"
+                                                                 is no existing sharelib installed in HDFS)"
+         (without options prints usage information)"
 </verbatim>
 
 If a directory =libext/= is present in Oozie installation directory, the =oozie-setup.sh= script

@@ -19,12 +19,24 @@
 
 function printUsage() {
   echo
-  echo " Usage  : oozie-setup.sh <OPTIONS>"
-  echo "          [-extjs EXTJS_PATH] (expanded or ZIP, to enable the Oozie webconsole)"
-  echo "          [-hadoop HADOOP_VERSION HADOOP_PATH] (Hadoop version [0.20.1|0.20.2|0.20.104|0.20.200|0.23.x|2.x]"
-  echo "                                                and Hadoop install dir)"
-  echo "          [-jars JARS_PATH] (multiple JAR path separated by ':')"
-  echo "          (without options does default setup, without the Oozie webconsole)"
+  echo " Usage  : oozie-setup.sh <Command and OPTIONS>"
+  echo "          prepare-war [-hadoop HADOOP_VERSION HADOOP_PATH] [-extjs EXTJS_PATH] [-jars JARS_PATH]"
+  echo "                      (prepare-war is to prepare war files for oozie)"
+  echo "                      (Hadoop version [0.20.1|0.20.2|0.20.104|0.20.200|0.23.x|2.x] and Hadoop install dir)"
+  echo "                      (EXTJS_PATH is expanded or ZIP, to enable the Oozie webconsole)"
+  echo "                      (JARS_PATH is multiple JAR path separated by ':')"
+  echo "          sharelib create -fs FS_URI [-locallib SHARED_LIBRARY] (create sharelib for oozie,"
+  echo "                                                                FS_URI is the fs.default.name"
+  echo "                                                                for hdfs uri; SHARED_LIBRARY, path to the"
+  echo "                                                                Oozie sharelib to install, it can be a tarball"
+  echo "                                                                or an expanded version of it. If ommited,"
+  echo "                                                                the Oozie sharelib tarball from the Oozie"
+  echo "                                                                installation directory will be used)"
+  echo "                                                                (action failes if sharelib is already installed"
+  echo "                                                                in HDFS)"
+  echo "          sharelib upgrade -fs FS_URI [-locallib SHARED_LIBRARY] (upgrade existing sharelib, fails if there"
+  echo "                                                                  is no existing sharelib installed in HDFS)"
+  echo "          (without options prints this usage information)"
   echo
   echo " EXTJS can be downloaded from http://www.extjs.com/learn/Ext_Version_Archives"
   echo
@@ -55,13 +67,33 @@ extjsHome=""
 jarsPath=""
 hadoopVersion=""
 hadoopPath=""
+prepareWar=""
 inputWar="${OOZIE_HOME}/oozie.war"
 outputWar="${CATALINA_BASE}/webapps/oozie.war"
 outputWarExpanded="${CATALINA_BASE}/webapps/oozie"
 
 while [ $# -gt 0 ]
 do
-  if [ "$1" = "-extjs" ]; then
+  if [ "$1" = "sharelib" ]; then
+    shift
+    OOZIEFSCLI_OPTS="-Doozie.home.dir=${OOZIE_HOME}";
+    OOZIEFSCLI_OPTS="${OOZIEFSCLI_OPTS} -Doozie.config.dir=${OOZIE_CONFIG}";
+    OOZIEFSCLI_OPTS="${OOZIEFSCLI_OPTS} -Doozie.log.dir=${OOZIE_LOG}";
+    OOZIEFSCLI_OPTS="${OOZIEFSCLI_OPTS} -Doozie.data.dir=${OOZIE_DATA}";
+    OOZIEFSCLI_OPTS="${OOZIEFSCLI_OPTS} -Dderby.stream.error.file=${OOZIE_LOG}/derby.log"
+
+    OOZIECPPATH=""
+    OOZIECPPATH=${BASEDIR}/libtools/'*':${BASEDIR}/libext/'*'
+
+    if test -z ${JAVA_HOME}; then
+      JAVA_BIN=java
+    else
+      JAVA_BIN=${JAVA_HOME}/bin/java
+    fi
+
+    ${JAVA_BIN} ${OOZIEFSCLI_OPTS} -cp ${OOZIECPPATH} org.apache.oozie.tools.OozieSharelibCLI "${@}"
+    exit 0
+  elif [ "$1" = "-extjs" ]; then
     shift
     if [ $# -eq 0 ]; then
       echo
@@ -102,6 +134,8 @@ do
     shift
     hadoopPath=$1
     addHadoopJars=true
+  elif [ "$1" = "prepare-war" ]; then
+    prepareWar=true
   else
     printUsage
     exit -1
@@ -116,49 +150,48 @@ if [ -e "${CATALINA_PID}" ]; then
   exit -1
 fi
 
-if [ -e "${outputWar}" ]; then
-  chmod -f u+w ${outputWar}
-  rm -rf ${outputWar}
-fi
-rm -rf ${outputWarExpanded}
-
 echo
 
-# Adding extension JARs
-
-libext=${OOZIE_HOME}/libext
-if [ -d "${libext}" ]; then
-  if [ `ls ${libext} | grep \.jar\$ | wc -c` != 0 ]; then
-    for i in "${libext}/"*.jar; do
-      echo "INFO: Adding extension: $i"
-      jarsPath="${jarsPath}:$i"
-      addJars="true"
-    done
-  fi
-  if [ -f "${libext}/ext-2.2.zip" ]; then
-    extjsHome=${libext}/ext-2.2.zip
-    addExtjs=true
-  fi
-# find war files (e.g., workflowgenerator) under /libext and deploy
-  if [ `ls ${libext} | grep \.war\$ | wc -c` != 0 ]; then
-    for i in "${libext}/"*.war; do
-      echo "INFO: Deploying extention: $i"
-      cp $i ${CATALINA_BASE}/webapps/
-    done
-  fi
-fi
-
-if [ "${addExtjs}" == "" ]; then
-  echo "INFO: Oozie webconsole disabled, ExtJS library not specified"
-fi
-
-if [ "${addExtjs}${addJars}${addHadoopJars}" == "" ]; then
-  echo "INFO: Doing default installation"
-  cp ${inputWar} ${outputWar}
+if [ "${addExtjs}${addJars}${addHadoopJars}${prepareWar}" == "" ]; then
+  echo "no arguments given"
+  printUsage
+  exit -1
 else
+  if [ -e "${outputWar}" ]; then
+      chmod -f u+w ${outputWar}
+      rm -rf ${outputWar}
+  fi
+  rm -rf ${outputWarExpanded}
+
+  # Adding extension JARs
+
+  libext=${OOZIE_HOME}/libext
+  if [ -d "${libext}" ]; then
+    if [ `ls ${libext} | grep \.jar\$ | wc -c` != 0 ]; then
+      for i in "${libext}/"*.jar; do
+        echo "INFO: Adding extension: $i"
+        jarsPath="${jarsPath}:$i"
+        addJars="true"
+      done
+    fi
+    if [ -f "${libext}/ext-2.2.zip" ]; then
+      extjsHome=${libext}/ext-2.2.zip
+      addExtjs=true
+    fi
+  # find war files (e.g., workflowgenerator) under /libext and deploy
+    if [ `ls ${libext} | grep \.war\$ | wc -c` != 0 ]; then
+      for i in "${libext}/"*.war; do
+        echo "INFO: Deploying extention: $i"
+        cp $i ${CATALINA_BASE}/webapps/
+      done
+    fi
+  fi
+
   OPTIONS=""
   if [ "${addExtjs}" != "" ]; then
     OPTIONS="-extjs ${extjsHome}"
+  else
+    echo "INFO: Oozie webconsole disabled, ExtJS library not specified"
   fi
   if [ "${addJars}" != "" ]; then
     OPTIONS="${OPTIONS} -jars ${jarsPath}"
@@ -172,9 +205,11 @@ else
   if [ "$?" != "0" ]; then
     exit -1
   fi
+
+  echo
+
+  echo "INFO: Oozie is ready to be started"
+
+  echo
+
 fi
-
-echo "INFO: Oozie is ready to be started"
-
-echo
-
