@@ -59,23 +59,20 @@ usage:
                 -verbose              verbose mode
 .
       oozie jobs <OPTIONS> : jobs status
-                 -auth <arg>           select authentication type [SIMPLE|KERBEROS]
-                 -doas <arg>           doAs user, impersonates as the specified user.
-                 -filter <arg>    user=<U>;name=<N>;group=<G>;status=<S>;...
-                 -jobtype <arg>   job type ('Supported in Oozie-2.0 or later versions ONLY -
-                                  coordinator' or 'wf' (default))
-                 -len <arg>       number of jobs (default '100')
-                 -localtime       use local time (same as passing your time zone to -timezone).
-                                  Overrides -timezone option
-                 -offset <arg>    jobs offset (default '1')
-                 -oozie <arg>     Oozie URL
-                 -timezone <arg>  use time zone with the specified ID (default GMT).
-                                  See 'oozie info -timezones' for a list
-                 -verbose         verbose mode
+                 -auth <arg>          select authentication type [SIMPLE|KERBEROS]
+                 -doas <arg>          doAs user, impersonates as the specified user.
+                 -filter <arg>        user=<U>;name=<N>;group=<G>;status=<S>;...
+                 -jobtype <arg>       job type ('Supported in Oozie-2.0 or later versions ONLY - coordinator' or 'wf' (default))
+                 -len <arg>           number of jobs (default '100')
+                 -localtime           use local time (same as passing your time zone to -timezone). Overrides -timezone option
+                 -offset <arg>        jobs offset (default '1')
+                 -oozie <arg>         Oozie URL
+                 -timezone <arg>      use time zone with the specified ID (default GMT). See 'oozie info -timezones' for a list
+                 -verbose             verbose mode
 .
       oozie admin <OPTIONS> : admin operations
-                  -auth <arg>           select authentication type [SIMPLE|KERBEROS]
-                  -doas <arg>           doAs user, impersonates as the specified user.
+                  -auth <arg>         select authentication type [SIMPLE|KERBEROS]
+                  -doas <arg>         doAs user, impersonates as the specified user.
                   -oozie <arg>        Oozie URL
                   -queuedump          show Oozie server queue elements
                   -status             show the current system status
@@ -90,6 +87,7 @@ usage:
                 -len <arg>            number of results (default '100', max limited by oozie server setting which defaults to '1000')
                 -offset <arg>         start offset (default '0')
                 -oozie <arg>          Oozie URL
+                -filter <arg>         jobid=<JobID/ActionID>\;appname=<Application Name>
 .
       oozie pig <OPTIONS> -X <ARGS> : submit a pig job, everything after '-X' are pass-through parameters to pig
                 -auth <arg>           select authentication type [SIMPLE|KERBEROS]
@@ -788,6 +786,59 @@ $ oozie sla -oozie http://localhost:11000/oozie -offset 2 -len 1
 </sla-message>
 
 </verbatim>
+
+
+---+++ Getting information about SLA events using filter
+
+* This feature is only supported in Oozie 2.0 or later.
+
+Example:
+
+<verbatim>
+
+$ oozie sla -filter jobid=0000000-130130150445097-oozie-joe-C@1\;appname=aggregator-sla-app -len 1 -oozie http://localhost:11000/oozie
+
+<sla-message>
+  <event>
+    <sequence-id>1</sequence-id>
+    <registration>
+      <sla-id>0000000-130130150445097-oozie-joe-C@1</sla-id>
+      <app-type>COORDINATOR_ACTION</app-type>
+      <app-name>aggregator-sla-app</app-name>
+      <user>joe</user>
+      <group />
+      <parent-sla-id>null</parent-sla-id>
+      <expected-start>2010-01-01T02:00Z</expected-start>
+      <expected-end>2010-01-01T03:00Z</expected-end>
+      <status-timestamp>2013-01-30T23:05Z</status-timestamp>
+      <notification-msg>Notifying User for 2010-01-01T01:00Z nominal time</notification-msg>
+      <alert-contact>www@yahoo.com</alert-contact>
+      <dev-contact>abc@yahoo.com</dev-contact>
+      <qa-contact>abc@yahoo.com</qa-contact>
+      <se-contact>abc@yahoo.com</se-contact>
+      <alert-percentage>80</alert-percentage>
+      <alert-frequency>LAST_HOUR</alert-frequency>
+      <upstream-apps />
+      <job-status>CREATED</job-status>
+      <job-data />
+    </registration>
+  </event>
+</sla-message>
+
+</verbatim>
+
+A filter can be specified after all options.
+
+The =filter=option syntax is: <code>[NAME=VALUE][\;NAME=VALUE]*</code>. Note <code>\</code> before semi-colon is for escape.
+
+Valid filter names are:
+
+   * jobid: workflow action/job id, coordinator action/job id
+   * appname: the coordinator/workflow application name
+
+The query will do an AND among all the filter names. The query will do an OR among all the filter values for the same
+name. Multiple values must be specified as different name value pairs.
+
 
 ---++ Pig Operations
 
