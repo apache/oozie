@@ -37,8 +37,11 @@ import java.io.Reader;
 import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -57,8 +60,13 @@ public abstract class WorkflowAppService implements Service {
 
     public static final String CONFG_MAX_WF_LENGTH = CONF_PREFIX + "WorkflowDefinitionMaxLength";
 
+    public static final String OOZIE_SUBWORKFLOW_CLASSPATH_INHERITANCE = "oozie.subworkflow.classpath.inheritance";
+
+    public static final String OOZIE_WF_SUBWORKFLOW_CLASSPATH_INHERITANCE = "oozie.wf.subworkflow.classpath.inheritance";
+
     private Path systemLibPath;
     private long maxWFLength;
+    private boolean oozieSubWfCPInheritance;
 
     /**
      * Initialize the workflow application service.
@@ -74,6 +82,8 @@ public abstract class WorkflowAppService implements Service {
         }
 
         maxWFLength = conf.getInt(CONFG_MAX_WF_LENGTH, 100000);
+
+        oozieSubWfCPInheritance = conf.getBoolean(OOZIE_SUBWORKFLOW_CLASSPATH_INHERITANCE, false);
     }
 
     /**
@@ -192,6 +202,30 @@ public abstract class WorkflowAppService implements Service {
                         Collection<String> libFilePaths = getLibFiles(fs, libPath);
                         filePaths.addAll(libFilePaths);
                     }
+                }
+            }
+
+            // Check if a subworkflow should inherit the libs from the parent WF
+            // OOZIE_WF_SUBWORKFLOW_CLASSPATH_INHERITANCE has priority over OOZIE_SUBWORKFLOW_CLASSPATH_INHERITANCE from oozie-site
+            // If OOZIE_WF_SUBWORKFLOW_CLASSPATH_INHERITANCE isn't specified, we use OOZIE_SUBWORKFLOW_CLASSPATH_INHERITANCE
+            if (jobConf.getBoolean(OOZIE_WF_SUBWORKFLOW_CLASSPATH_INHERITANCE, oozieSubWfCPInheritance)) {
+                // Keep any libs from a parent workflow that might already be in APP_LIB_PATH_LIST and also remove duplicates
+                String[] parentFilePaths = jobConf.getStrings(APP_LIB_PATH_LIST);
+                if (parentFilePaths != null && parentFilePaths.length > 0) {
+                    String[] filePathsNames = filePaths.toArray(new String[filePaths.size()]);
+                    for (int i = 0; i < filePathsNames.length; i++) {
+                        Path p = new Path(filePathsNames[i]);
+                        filePathsNames[i] = p.getName();
+                    }
+                    Arrays.sort(filePathsNames);
+                    List<String> nonDuplicateParentFilePaths = new ArrayList<String>();
+                    for (String parentFilePath : parentFilePaths) {
+                        Path p = new Path(parentFilePath);
+                        if (Arrays.binarySearch(filePathsNames, p.getName()) < 0) {
+                            nonDuplicateParentFilePaths.add(parentFilePath);
+                        }
+                    }
+                    filePaths.addAll(nonDuplicateParentFilePaths);
                 }
             }
 

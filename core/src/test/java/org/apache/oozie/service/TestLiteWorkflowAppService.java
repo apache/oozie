@@ -35,10 +35,12 @@ import java.io.FileWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import junit.framework.Assert;
+import org.apache.hadoop.fs.Path;
 import org.apache.oozie.workflow.lite.StartNodeDef;
 
 public class TestLiteWorkflowAppService extends XTestCase {
@@ -452,46 +454,191 @@ public class TestLiteWorkflowAppService extends XTestCase {
         }
     }
 
-    public void testCreateprotoConfWithSubWorkflow_CheckSubworkflowLibInClasspath() throws Exception {
-        // When subworkflow has non-empty lib directory, APP_LIB_PATH_LIST for
-        // subworkflow should maintain its corresponding libraries in path
+    private static String[] parentLibs1 = {"parent1.jar", "parent2.jar"};
+    private static String[] childLibs1 = {"child1.jar", "child2.so"};
+    private static String[] parentLibs2 = {"parent1.jar", "parent2.jar"};
+    private static String[] childLibs2 = {};;
+    private static String[] parentLibs3 = {};;
+    private static String[] childLibs3 = {"child1.jar", "child2.so"};;
+    private static String[] parentLibs4 = {};;
+    private static String[] childLibs4 = {};;
+    private static String[] parentLibs5 = {"parent1.jar", "parent2.jar", "same.jar"};;
+    private static String[] childLibs5 = {"child1.jar", "same.jar", "child2.so"};;
+
+    public void testCreateProtoConfWithSubWorkflowLib1() throws Exception {
+        String inherit = "true";
+        String inheritWF = null;
+
+        String[] expectedLibs1 = {"parent1.jar", "parent2.jar", "child1.jar", "child2.so"};
+        checkSubworkflowLibHelper(inherit, inheritWF, 1, parentLibs1, childLibs1, expectedLibs1);
+
+        String[] expectedLibs2 = {"parent1.jar", "parent2.jar"};
+        checkSubworkflowLibHelper(inherit, inheritWF, 2, parentLibs2, childLibs2, expectedLibs2);
+
+        String[] expectedLibs3 = {"child1.jar", "child2.so"};
+        checkSubworkflowLibHelper(inherit, inheritWF, 3, parentLibs3, childLibs3, expectedLibs3);
+
+        String[] expectedLibs4 = {};
+        checkSubworkflowLibHelper(inherit, inheritWF, 4, parentLibs4, childLibs4, expectedLibs4);
+
+        String[] expectedLibs5 = {"parent1.jar", "parent2.jar", "child1.jar", "child2.so", "same.jar"};
+        checkSubworkflowLibHelper(inherit, inheritWF, 5, parentLibs5, childLibs5, expectedLibs5);
+    }
+
+    public void testCreateProtoConfWithSubWorkflowLib2() throws Exception {
+        String inherit = "false";
+        String inheritWF = null;
+
+        String[] expectedLibs1 = {"child1.jar", "child2.so"};
+        checkSubworkflowLibHelper(inherit, inheritWF, 1, parentLibs1, childLibs1, expectedLibs1);
+
+        String[] expectedLibs2 = {};
+        checkSubworkflowLibHelper(inherit, inheritWF, 2, parentLibs2, childLibs2, expectedLibs2);
+
+        String[] expectedLibs3 = {"child1.jar", "child2.so"};
+        checkSubworkflowLibHelper(inherit, inheritWF, 3, parentLibs3, childLibs3, expectedLibs3);
+
+        String[] expectedLibs4 = {};
+        checkSubworkflowLibHelper(inherit, inheritWF, 4, parentLibs4, childLibs4, expectedLibs4);
+
+        String[] expectedLibs5 = {"child1.jar", "child2.so", "same.jar"};
+        checkSubworkflowLibHelper(inherit, inheritWF, 5, parentLibs5, childLibs5, expectedLibs5);
+    }
+
+    public void testCreateProtoConfWithSubWorkflowLib3() throws Exception {
+        String inherit = "true";
+        String inheritWF = "true";
+
+        String[] expectedLibs1 = {"parent1.jar", "parent2.jar", "child1.jar", "child2.so"};
+        checkSubworkflowLibHelper(inherit, inheritWF, 1, parentLibs1, childLibs1, expectedLibs1);
+
+        String[] expectedLibs2 = {"parent1.jar", "parent2.jar"};
+        checkSubworkflowLibHelper(inherit, inheritWF, 2, parentLibs2, childLibs2, expectedLibs2);
+
+        String[] expectedLibs3 = {"child1.jar", "child2.so"};
+        checkSubworkflowLibHelper(inherit, inheritWF, 3, parentLibs3, childLibs3, expectedLibs3);
+
+        String[] expectedLibs4 = {};
+        checkSubworkflowLibHelper(inherit, inheritWF, 4, parentLibs4, childLibs4, expectedLibs4);
+
+        String[] expectedLibs5 = {"parent1.jar", "parent2.jar", "child1.jar", "child2.so", "same.jar"};
+        checkSubworkflowLibHelper(inherit, inheritWF, 5, parentLibs5, childLibs5, expectedLibs5);
+    }
+
+    public void testCreateProtoConfWithSubWorkflowLib4() throws Exception {
+        String inherit = "false";
+        String inheritWF = "true";
+
+        String[] expectedLibs1 = {"parent1.jar", "parent2.jar", "child1.jar", "child2.so"};
+        checkSubworkflowLibHelper(inherit, inheritWF, 1, parentLibs1, childLibs1, expectedLibs1);
+
+        String[] expectedLibs2 = {"parent1.jar", "parent2.jar"};
+        checkSubworkflowLibHelper(inherit, inheritWF, 2, parentLibs2, childLibs2, expectedLibs2);
+
+        String[] expectedLibs3 = {"child1.jar", "child2.so"};
+        checkSubworkflowLibHelper(inherit, inheritWF, 3, parentLibs3, childLibs3, expectedLibs3);
+
+        String[] expectedLibs4 = {};
+        checkSubworkflowLibHelper(inherit, inheritWF, 4, parentLibs4, childLibs4, expectedLibs4);
+
+        String[] expectedLibs5 = {"parent1.jar", "parent2.jar", "child1.jar", "child2.so", "same.jar"};
+        checkSubworkflowLibHelper(inherit, inheritWF, 5, parentLibs5, childLibs5, expectedLibs5);
+    }
+
+    public void testCreateProtoConfWithSubWorkflowLib5() throws Exception {
+        String inherit = "true";
+        String inheritWF = "false";
+
+        String[] expectedLibs1 = {"child1.jar", "child2.so"};
+        checkSubworkflowLibHelper(inherit, inheritWF, 1, parentLibs1, childLibs1, expectedLibs1);
+
+        String[] expectedLibs2 = {};
+        checkSubworkflowLibHelper(inherit, inheritWF, 2, parentLibs2, childLibs2, expectedLibs2);
+
+        String[] expectedLibs3 = {"child1.jar", "child2.so"};
+        checkSubworkflowLibHelper(inherit, inheritWF, 3, parentLibs3, childLibs3, expectedLibs3);
+
+        String[] expectedLibs4 = {};
+        checkSubworkflowLibHelper(inherit, inheritWF, 4, parentLibs4, childLibs4, expectedLibs4);
+
+        String[] expectedLibs5 = {"child1.jar", "child2.so", "same.jar"};
+        checkSubworkflowLibHelper(inherit, inheritWF, 5, parentLibs5, childLibs5, expectedLibs5);
+    }
+
+    public void testCreateProtoConfWithSubWorkflowLib6() throws Exception {
+        String inherit = "false";
+        String inheritWF = "false";
+
+        String[] expectedLibs1 = {"child1.jar", "child2.so"};
+        checkSubworkflowLibHelper(inherit, inheritWF, 1, parentLibs1, childLibs1, expectedLibs1);
+
+        String[] expectedLibs2 = {};
+        checkSubworkflowLibHelper(inherit, inheritWF, 2, parentLibs2, childLibs2, expectedLibs2);
+
+        String[] expectedLibs3 = {"child1.jar", "child2.so"};
+        checkSubworkflowLibHelper(inherit, inheritWF, 3, parentLibs3, childLibs3, expectedLibs3);
+
+        String[] expectedLibs4 = {};
+        checkSubworkflowLibHelper(inherit, inheritWF, 4, parentLibs4, childLibs4, expectedLibs4);
+
+        String[] expectedLibs5 = {"child1.jar", "child2.so", "same.jar"};
+        checkSubworkflowLibHelper(inherit, inheritWF, 5, parentLibs5, childLibs5, expectedLibs5);
+    }
+
+    public void checkSubworkflowLibHelper(String inherit, String inheritWF, int unique, String[] parentLibs, String[] childLibs,
+            String[] expectedLibs) throws Exception {
         Services services = new Services();
         try {
+            services.getConf().set("oozie.subworkflow.classpath.inheritance", inherit);
             services.init();
             Reader reader = IOUtils.getResourceAsReader("wf-schema-valid.xml", -1);
-            Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
+            String childWFDir = createTestCaseSubDir("child-wf-" + unique);
+            Writer writer = new FileWriter(childWFDir + File.separator + "workflow.xml");
             IOUtils.copyCharStream(reader, writer);
 
-            createTestCaseSubDir("lib");
-            writer = new FileWriter(getTestCaseDir() + "/lib/childdependency1.jar");
-            writer.write("bla bla");
-            writer.close();
-            writer = new FileWriter(getTestCaseDir() + "/lib/childdependency2.so");
-            writer.write("bla bla");
-            writer.close();
             WorkflowAppService wps = Services.get().get(WorkflowAppService.class);
             Configuration jobConf = new XConfiguration();
-            jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
+            jobConf.set(OozieClient.APP_PATH, "file://" + childWFDir + File.separator + "workflow.xml");
             jobConf.set(OozieClient.USER_NAME, getTestUser());
-            jobConf.set(WorkflowAppService.APP_LIB_PATH_LIST, "parentdependency1.jar");
+            if (inheritWF != null) {
+                jobConf.set("oozie.wf.subworkflow.classpath.inheritance", inheritWF);
+            }
+
+            String childLibDir = createTestCaseSubDir("child-wf-" + unique + File.separator + "lib");
+            for (String childLib : childLibs) {
+                writer = new FileWriter(childLibDir + File.separator + childLib);
+                writer.write("bla bla");
+                writer.close();
+            }
+            String parentWFDir = createTestCaseSubDir("parent-wf-" + unique);
+            String parentLibDir = createTestCaseSubDir("parent-wf-" + unique + File.separator + "lib");
+            String[] parentLibsFullPaths = new String[parentLibs.length];
+            for (int i = 0; i < parentLibs.length; i++) {
+                parentLibsFullPaths[i] = parentLibDir + File.separator + parentLibs[i];
+                writer = new FileWriter(parentLibsFullPaths[i]);
+                writer.write("bla bla");
+                writer.close();
+            }
+            // Set the parent libs
+            jobConf.setStrings(WorkflowAppService.APP_LIB_PATH_LIST, parentLibsFullPaths);
 
             Configuration protoConf = wps.createProtoActionConf(jobConf, "authToken", true);
             assertEquals(getTestUser(), protoConf.get(OozieClient.USER_NAME));
 
-            assertEquals(2, protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST).length);
-            String f1 = protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST)[0];
-            String f2 = protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST)[1];
-            String ref1 = "file://" + getTestCaseDir() + "/lib/childdependency1.jar";
-            String ref2 = "file://" + getTestCaseDir() + "/lib/childdependency2.so";
-            List<String> expected = new ArrayList<String>();
-            expected.add(ref1);
-            expected.add(ref2);
-            List<String> found = new ArrayList<String>();
-            found.add(f1);
-            found.add(f2);
-            Collections.sort(found);
-            Collections.sort(expected);
-            assertEquals(expected, found);
+            String[] foundLibs = protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST);
+            if (expectedLibs.length > 0) {
+                assertEquals(expectedLibs.length, foundLibs.length);
+                for (int i = 0; i < foundLibs.length; i++) {
+                    Path p = new Path(foundLibs[i]);
+                    foundLibs[i] = p.getName();
+                }
+                Arrays.sort(expectedLibs);
+                Arrays.sort(foundLibs);
+                assertEquals(Arrays.toString(expectedLibs), Arrays.toString(foundLibs));
+            }
+            else {
+                assertEquals(null, foundLibs);
+            }
         }
         finally {
             services.destroy();
