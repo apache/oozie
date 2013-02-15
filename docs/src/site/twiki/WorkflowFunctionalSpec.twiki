@@ -1292,6 +1292,12 @@ In the above example, the workflow definition with the name =child-wf= will be r
 
 A configuration parameter =input.dir= is being passed as job property to the child workflow job.
 
+The subworkflow can inherit the lib jars from the parent workflow by setting =oozie.subworkflow.classpath.inheritance= to true
+in oozie-site.xml or on a per-job basis by setting =oozie.wf.subworkflow.classpath.inheritance= to true in a job.properties file.
+If both are specified, =oozie.wf.subworkflow.classpath.inheritance= has priority.  If the subworkflow and the parent have
+conflicting jars, the subworkflow's jar has priority.  By default, =oozie.wf.subworkflow.classpath.inheritance= is set to false.
+
+
 #JavaAction
 ---++++ 3.2.7 Java Action
 
