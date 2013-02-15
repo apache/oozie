@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1189 add filter option to specify JobID and AppName in SLA CLI command (egashira via mona)
 OOZIE-1054 Create script to properly upload sharelib to HDFS (bowenzhangusa via tucu)
 OOZIE-1096 Update wfgen README.txt to have the TLP mailing list (jun aoki via rkanter)
 OOZIE-1015 HadoopAccessorService jobtracker validation should not have hardcoded conf key (mona)
