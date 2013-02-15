@@ -17,6 +17,7 @@ OOZIE-944 Implement Workflow Generator UI Tool (egashira via virag)
 
 -- Oozie 3.3.2 unreleased 
 
+OOZIE-1184 Demo example job.properties has an unused parameter (udai via rkanter)
 OOZIE-1221 mvn install failing in Oozie-Mini module (jaoki via virag)
 OOZIE-1170 Update minitest module (MiniOozie) to use main pom as its parent (jaoki via rkanter)
 OOZIE-1196 HCat EL functions for database and table should be modified (mona)
