@@ -358,17 +358,20 @@ public class OozieCLI {
 
     /**
      * Create option for command line option 'sla'
+     *
      * @return sla options
      */
     protected Options createSlaOptions() {
         Option oozie = new Option(OOZIE_OPTION, true, "Oozie URL");
         Option start = new Option(OFFSET_OPTION, true, "start offset (default '0')");
         Option len = new Option(LEN_OPTION, true, "number of results (default '100', max '1000')");
+        Option filter = new Option(FILTER_OPTION, true, "filter of SLA events");
         start.setType(Integer.class);
         len.setType(Integer.class);
         Options slaOptions = new Options();
         slaOptions.addOption(start);
         slaOptions.addOption(len);
+        slaOptions.addOption(filter);
         slaOptions.addOption(oozie);
         addAuthOptions(slaOptions);
         return slaOptions;
@@ -1314,12 +1317,19 @@ public class OozieCLI {
 
     private void slaCommand(CommandLine commandLine) throws IOException, OozieCLIException {
         XOozieClient wc = createXOozieClient(commandLine);
+        List<String> options = new ArrayList<String>();
+        for (Option option : commandLine.getOptions()) {
+            options.add(option.getOpt());
+        }
+
         String s = commandLine.getOptionValue(OFFSET_OPTION);
         int start = Integer.parseInt((s != null) ? s : "0");
         s = commandLine.getOptionValue(LEN_OPTION);
         int len = Integer.parseInt((s != null) ? s : "100");
+        String filter = commandLine.getOptionValue(FILTER_OPTION);
+
         try {
-            wc.getSlaInfo(start, len);
+            wc.getSlaInfo(start, len, filter);
         }
         catch (OozieClientException ex) {
             throw new OozieCLIException(ex.toString(), ex);

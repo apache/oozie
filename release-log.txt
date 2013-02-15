@@ -1,6 +1,6 @@
-
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1189 add filter option to specify JobID and AppName in SLA CLI command (egashira via mona)
 OOZIE-1197 Create a hcat sharelib which can be included in pig, hive and java actions (mona,rohini via virag)
 OOZIE-1211 oozie does not support duplicated dataset (jaoki via virag)
 OOZIE-1187 reduce memory usage of SLA query (invoked by CLI command) to avoid OOM (egashira via virag) 
