@@ -990,7 +990,7 @@ public class OozieCLI {
                         + maskDate(action.getCreatedTime(), timeZoneId, verbose) + VERBOSE_DELIMITER
                         + maskDate(action.getNominalTime(), timeZoneId, verbose) + action.getStatus() + VERBOSE_DELIMITER
                         + maskDate(action.getLastModifiedTime(), timeZoneId, verbose) + VERBOSE_DELIMITER
-                        + maskIfNull(getAllMissingDependencies(action)));
+                        + maskIfNull(getFirstMissingDependencies(action)));
 
                 System.out.println(RULER);
             }
@@ -1052,7 +1052,7 @@ public class OozieCLI {
         System.out.println("Nominal Time         : " + maskDate(coordAction.getNominalTime(), timeZoneId, false));
         System.out.println("Status               : " + coordAction.getStatus());
         System.out.println("Last Modified        : " + maskDate(coordAction.getLastModifiedTime(), timeZoneId, false));
-        System.out.println("Missing Dependencies : " + maskIfNull(getAllMissingDependencies(coordAction)));
+        System.out.println("First Missing Dependency : " + maskIfNull(getFirstMissingDependencies(coordAction)));
 
         System.out.println(RULER);
     }
@@ -1630,7 +1630,7 @@ public class OozieCLI {
         }
     }
 
-    private String getAllMissingDependencies(CoordinatorAction action) {
+    private String getFirstMissingDependencies(CoordinatorAction action) {
         StringBuilder allDeps = new StringBuilder();
         String missingDep = action.getMissingDependencies();
         boolean depExists = false;

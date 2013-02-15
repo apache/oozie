@@ -26,7 +26,7 @@ import java.util.TimeZone;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.OozieClient;
-import org.apache.oozie.dependency.URIContext;
+import org.apache.oozie.dependency.URIHandler.Context;
 import org.apache.oozie.dependency.URIHandler;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ELEvaluator;
@@ -301,42 +301,48 @@ public class CoordELFunctions {
             String doneFlag = ds.getDoneFlag();
             URIHandlerService uriService = Services.get().get(URIHandlerService.class);
             URIHandler uriHandler = null;
-            URIContext uriContext = null;
-            while (instance >= checkedInstance) {
-                ELEvaluator uriEval = getUriEvaluator(nominalInstanceCal);
-                String uriPath = uriEval.evaluate(uriTemplate, String.class);
-                if (uriHandler == null) {
-                    URI uri = new URI(uriPath);
-                    uriHandler = uriService.getURIHandler(uri);
-                    uriContext = uriHandler.getURIContext(uri, conf, user);
-                }
-                String uriWithDoneFlag = uriHandler.getURIWithDoneFlag(uriPath, doneFlag);
-                if (uriHandler.exists(new URI(uriWithDoneFlag), uriContext)) {
-                    if (available == endOffset) {
-                        LOG.debug("Matched future(" + available + "): " + uriWithDoneFlag);
-                        resolved = true;
-                        resolvedInstances.append(DateUtils.formatDateOozieTZ(nominalInstanceCal));
-                        resolvedURIPaths.append(uriPath);
-                        retVal = resolvedInstances.toString();
-                        eval.setVariable("resolved_path", resolvedURIPaths.toString());
-                        break;
-                    } else if (available >= startOffset) {
-                        LOG.debug("Matched future(" + available + "): " + uriWithDoneFlag);
-                        resolvedInstances.append(DateUtils.formatDateOozieTZ(nominalInstanceCal)).append(INSTANCE_SEPARATOR);
-                        resolvedURIPaths.append(uriPath).append(INSTANCE_SEPARATOR);
+            Context uriContext = null;
+            try {
+                while (instance >= checkedInstance) {
+                    ELEvaluator uriEval = getUriEvaluator(nominalInstanceCal);
+                    String uriPath = uriEval.evaluate(uriTemplate, String.class);
+                    if (uriHandler == null) {
+                        URI uri = new URI(uriPath);
+                        uriHandler = uriService.getURIHandler(uri);
+                        uriContext = uriHandler.getContext(uri, conf, user);
                     }
-                    available++;
+                    String uriWithDoneFlag = uriHandler.getURIWithDoneFlag(uriPath, doneFlag);
+                    if (uriHandler.exists(new URI(uriWithDoneFlag), uriContext)) {
+                        if (available == endOffset) {
+                            LOG.debug("Matched future(" + available + "): " + uriWithDoneFlag);
+                            resolved = true;
+                            resolvedInstances.append(DateUtils.formatDateOozieTZ(nominalInstanceCal));
+                            resolvedURIPaths.append(uriPath);
+                            retVal = resolvedInstances.toString();
+                            eval.setVariable("resolved_path", resolvedURIPaths.toString());
+                            break;
+                        }
+                        else if (available >= startOffset) {
+                            LOG.debug("Matched future(" + available + "): " + uriWithDoneFlag);
+                            resolvedInstances.append(DateUtils.formatDateOozieTZ(nominalInstanceCal)).append(
+                                    INSTANCE_SEPARATOR);
+                            resolvedURIPaths.append(uriPath).append(INSTANCE_SEPARATOR);
+                        }
+                        available++;
+                    }
+                    // nominalInstanceCal.add(dsTimeUnit.getCalendarUnit(),
+                    // -datasetFrequency);
+                    nominalInstanceCal = (Calendar) initInstance.clone();
+                    instCount[0]++;
+                    nominalInstanceCal.add(dsTimeUnit.getCalendarUnit(), instCount[0] * datasetFrequency);
+                    checkedInstance++;
+                    // DateUtils.moveToEnd(nominalInstanceCal, getDSEndOfFlag());
                 }
-                // nominalInstanceCal.add(dsTimeUnit.getCalendarUnit(),
-                // -datasetFrequency);
-                nominalInstanceCal = (Calendar) initInstance.clone();
-                instCount[0]++;
-                nominalInstanceCal.add(dsTimeUnit.getCalendarUnit(), instCount[0] * datasetFrequency);
-                checkedInstance++;
-                // DateUtils.moveToEnd(nominalInstanceCal, getDSEndOfFlag());
             }
-            if (uriContext != null) {
-                uriContext.destroy();
+            finally {
+                if (uriContext != null) {
+                    uriContext.destroy();
+                }
             }
             if (!resolved) {
                 // return unchanged future function with variable 'is_resolved'
@@ -981,43 +987,50 @@ public class CoordELFunctions {
             String doneFlag = ds.getDoneFlag();
             URIHandlerService uriService = Services.get().get(URIHandlerService.class);
             URIHandler uriHandler = null;
-            URIContext uriContext = null;
-            while (nominalInstanceCal.compareTo(initInstance) >= 0) {
-                ELEvaluator uriEval = getUriEvaluator(nominalInstanceCal);
-                String uriPath = uriEval.evaluate(uriTemplate, String.class);
-                if (uriHandler == null) {
-                    URI uri = new URI(uriPath);
-                    uriHandler = uriService.getURIHandler(uri);
-                    uriContext = uriHandler.getURIContext(uri, conf, user);
-                }
-                String uriWithDoneFlag = uriHandler.getURIWithDoneFlag(uriPath, doneFlag);
-                if (uriHandler.exists(new URI(uriWithDoneFlag), uriContext)) {
-                    XLog.getLog(CoordELFunctions.class).debug("Found latest(" + available + "): " + uriWithDoneFlag);
-                    if (available == startOffset) {
-                        LOG.debug("Matched latest(" + available + "): " + uriWithDoneFlag);
-                        resolved = true;
-                        resolvedInstances.append(DateUtils.formatDateOozieTZ(nominalInstanceCal));
-                        resolvedURIPaths.append(uriPath);
-                        retVal = resolvedInstances.toString();
-                        eval.setVariable("resolved_path", resolvedURIPaths.toString());
-                        break;
-                    } else if (available <= endOffset) {
-                        LOG.debug("Matched latest(" + available + "): " + uriWithDoneFlag);
-                        resolvedInstances.append(DateUtils.formatDateOozieTZ(nominalInstanceCal)).append(INSTANCE_SEPARATOR);
-                        resolvedURIPaths.append(uriPath).append(INSTANCE_SEPARATOR);
+            Context uriContext = null;
+            try {
+                while (nominalInstanceCal.compareTo(initInstance) >= 0) {
+                    ELEvaluator uriEval = getUriEvaluator(nominalInstanceCal);
+                    String uriPath = uriEval.evaluate(uriTemplate, String.class);
+                    if (uriHandler == null) {
+                        URI uri = new URI(uriPath);
+                        uriHandler = uriService.getURIHandler(uri);
+                        uriContext = uriHandler.getContext(uri, conf, user);
                     }
+                    String uriWithDoneFlag = uriHandler.getURIWithDoneFlag(uriPath, doneFlag);
+                    if (uriHandler.exists(new URI(uriWithDoneFlag), uriContext)) {
+                        XLog.getLog(CoordELFunctions.class)
+                                .debug("Found latest(" + available + "): " + uriWithDoneFlag);
+                        if (available == startOffset) {
+                            LOG.debug("Matched latest(" + available + "): " + uriWithDoneFlag);
+                            resolved = true;
+                            resolvedInstances.append(DateUtils.formatDateOozieTZ(nominalInstanceCal));
+                            resolvedURIPaths.append(uriPath);
+                            retVal = resolvedInstances.toString();
+                            eval.setVariable("resolved_path", resolvedURIPaths.toString());
+                            break;
+                        }
+                        else if (available <= endOffset) {
+                            LOG.debug("Matched latest(" + available + "): " + uriWithDoneFlag);
+                            resolvedInstances.append(DateUtils.formatDateOozieTZ(nominalInstanceCal)).append(
+                                    INSTANCE_SEPARATOR);
+                            resolvedURIPaths.append(uriPath).append(INSTANCE_SEPARATOR);
+                        }
 
-                    available--;
+                        available--;
+                    }
+                    // nominalInstanceCal.add(dsTimeUnit.getCalendarUnit(),
+                    // -datasetFrequency);
+                    nominalInstanceCal = (Calendar) initInstance.clone();
+                    instCount[0]--;
+                    nominalInstanceCal.add(dsTimeUnit.getCalendarUnit(), instCount[0] * datasetFrequency);
+                    // DateUtils.moveToEnd(nominalInstanceCal, getDSEndOfFlag());
                 }
-                // nominalInstanceCal.add(dsTimeUnit.getCalendarUnit(),
-                // -datasetFrequency);
-                nominalInstanceCal = (Calendar) initInstance.clone();
-                instCount[0]--;
-                nominalInstanceCal.add(dsTimeUnit.getCalendarUnit(), instCount[0] * datasetFrequency);
-                // DateUtils.moveToEnd(nominalInstanceCal, getDSEndOfFlag());
             }
-            if (uriContext != null) {
-                uriContext.destroy();
+            finally {
+                if (uriContext != null) {
+                    uriContext.destroy();
+                }
             }
             if (!resolved) {
                 // return unchanged latest function with variable 'is_resolved'

@@ -2462,7 +2462,7 @@ C = foreach B generate foo, bar;
 store C into 'myOutputDatabase.myOutputTable' using org.apache.hcatalog.pig.HCatStorer('datestamp=20090102,region=EUR');
 </blockquote>
 
----++++ 6.8.4 coord:dataInPartitionMin(String name, String partition) EL function
+---++++ 6.8.5 coord:dataInPartitionMin(String name, String partition) EL function
 
 The =${coord:dataInPartitionMin(String name, String partition)}= EL function resolves to the *minimum* value of the
 specified partition for all the dataset instances specified in an input event dataset section. It can be used to do
@@ -2472,7 +2472,7 @@ with [[CoordinatorFunctionalSpec#DataInPartitionMax][dataInPartitionMax]] EL fun
 Refer to the [[CoordinatorFunctionalSpec#HCatPigExampleTwo][Example]] below for usage.
 
 #DataInPartitionMax
----++++ 6.8.5 coord:dataInPartitionMax(String name, String partition) EL function
+---++++ 6.8.6 coord:dataInPartitionMax(String name, String partition) EL function
 
 The =${coord:dataInPartitionMax(String name, String partition)}= EL function resolves to the *maximum* value of the
 specified partition for all the dataset instances specified in an input event dataset section. It is a better practice
@@ -2504,13 +2504,13 @@ partition max/min values, output partition value, and database and table.
         <dataset name="Click-data" frequency="${coord:hours(1)}"
                  initial-instance="2009-01-01T01:00Z" timezone="UTC">
           <uri-template>
-             hcat://foo:11002/myInputDatabase/myInputTable/datestamp=${YEAR}${MONTH}${DAY}${HOUR};region=${region}
+             hcat://foo:11002/myInputDatabase/myInputTable/datestamp=${YEAR}${MONTH}${DAY}${HOUR};region=USA
           </uri-template>
         </dataset>
         <dataset name="Stats" frequency="${coord:days(1)}"
                  initial-instance="2009-01-01T01:00Z" timezone="UTC">
           <uri-template>
-             hcat://foo:11002/myOutputDatabase/myOutputTable/datestamp=${YEAR}${MONTH}${DAY};region=${region}
+             hcat://foo:11002/myOutputDatabase/myOutputTable/datestamp=${YEAR}${MONTH}${DAY};region=USA
           </uri-template>
         </dataset>
       </datasets>

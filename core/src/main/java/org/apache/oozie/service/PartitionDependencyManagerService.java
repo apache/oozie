@@ -138,8 +138,8 @@ public class PartitionDependencyManagerService implements Service {
      * @param dependencyURIs set of dependency URIs
      * @return true if successful, else false
      */
-    public void removeAvailableDependencyURIs(String actionID, Collection<String> dependencyURIs) {
-        dependencyCache.removeAvailableDependencyURIs(actionID, dependencyURIs);
+    public boolean removeAvailableDependencyURIs(String actionID, Collection<String> dependencyURIs) {
+        return dependencyCache.removeAvailableDependencyURIs(actionID, dependencyURIs);
     }
 
 }

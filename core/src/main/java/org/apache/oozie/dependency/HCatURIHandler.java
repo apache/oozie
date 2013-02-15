@@ -39,7 +39,7 @@ import org.apache.oozie.action.hadoop.HCatLauncherURIHandler;
 import org.apache.oozie.action.hadoop.LauncherURIHandler;
 import org.apache.oozie.jms.HCatMessageHandler;
 import org.apache.oozie.service.HCatAccessorService;
-import org.apache.oozie.service.MetaDataAccessorException;
+import org.apache.oozie.service.HCatAccessorException;
 import org.apache.oozie.service.PartitionDependencyManagerService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.URIHandlerService;
@@ -115,7 +115,7 @@ public class HCatURIHandler implements URIHandler {
                 hcatService.registerForNotification(hcatURI, topic, new HCatMessageHandler(uri.getAuthority()));
             }
             catch (HCatException e) {
-                throw new MetaDataAccessorException(ErrorCode.E1504, e);
+                throw new HCatAccessorException(ErrorCode.E1501, e);
             }
             finally {
                 closeQuietly(client, true);
@@ -139,14 +139,14 @@ public class HCatURIHandler implements URIHandler {
     }
 
     @Override
-    public URIContext getURIContext(URI uri, Configuration conf, String user) throws URIHandlerException {
+    public Context getContext(URI uri, Configuration conf, String user) throws URIHandlerException {
         HCatClient client = getHCatClient(uri, conf, user);
-        return new HCatURIContext(conf, user, client);
+        return new HCatContext(conf, user, client);
     }
 
     @Override
-    public boolean exists(URI uri, URIContext uriContext) throws URIHandlerException {
-        HCatClient client = ((HCatURIContext) uriContext).getHCatClient();
+    public boolean exists(URI uri, Context context) throws URIHandlerException {
+        HCatClient client = ((HCatContext) context).getHCatClient();
         return exists(uri, client, false);
     }
 
@@ -177,7 +177,7 @@ public class HCatURIHandler implements URIHandler {
 
     }
 
-    private HCatClient getHCatClient(URI uri, Configuration conf, String user) throws MetaDataAccessorException {
+    private HCatClient getHCatClient(URI uri, Configuration conf, String user) throws HCatAccessorException {
         final HiveConf hiveConf = new HiveConf(conf, this.getClass());
         String serverURI = getMetastoreConnectURI(uri);
         if (!serverURI.equals("")) {
@@ -203,10 +203,10 @@ public class HCatURIHandler implements URIHandler {
             return HCatClient.create(hiveConf);
         }
         catch (HCatException e) {
-            throw new MetaDataAccessorException(ErrorCode.E1504, e);
+            throw new HCatAccessorException(ErrorCode.E1501, e);
         }
         catch (IOException e) {
-            throw new MetaDataAccessorException(ErrorCode.E1504, e);
+            throw new HCatAccessorException(ErrorCode.E1501, e);
         }
 
     }
@@ -225,7 +225,7 @@ public class HCatURIHandler implements URIHandler {
         return metastoreURI;
     }
 
-    private boolean exists(URI uri, HCatClient client, boolean closeClient) throws MetaDataAccessorException {
+    private boolean exists(URI uri, HCatClient client, boolean closeClient) throws HCatAccessorException {
         try {
             HCatURI hcatURI = new HCatURI(uri.toString());
             List<HCatPartition> partitions = client.getPartitions(hcatURI.getDb(), hcatURI.getTable(),
@@ -233,13 +233,13 @@ public class HCatURIHandler implements URIHandler {
             return (partitions != null && !partitions.isEmpty());
         }
         catch (ConnectionFailureException e) {
-            throw new MetaDataAccessorException(ErrorCode.E1504, e);
+            throw new HCatAccessorException(ErrorCode.E1501, e);
         }
         catch (HCatException e) {
-            throw new MetaDataAccessorException(ErrorCode.E0902, e);
+            throw new HCatAccessorException(ErrorCode.E0902, e);
         }
         catch (URISyntaxException e) {
-            throw new MetaDataAccessorException(ErrorCode.E0902, e);
+            throw new HCatAccessorException(ErrorCode.E0902, e);
         }
         finally {
             closeQuietly(client, closeClient);
@@ -255,6 +255,44 @@ public class HCatURIHandler implements URIHandler {
                 LOG.warn("Error closing hcat client", ignore);
             }
         }
+    }
+
+    static class HCatContext extends Context {
+
+        private static XLog LOG = XLog.getLog(HCatContext.class);
+        private HCatClient hcatClient;
+
+        /**
+         * Create a HCatContext that can be used to access a hcat URI
+         *
+         * @param conf Configuration to access the URI
+         * @param user name of the user the URI should be accessed as
+         * @param hcatClient HCatClient to talk to hcatalog server
+         */
+        public HCatContext(Configuration conf, String user, HCatClient hcatClient) {
+            super(conf, user);
+            this.hcatClient = hcatClient;
+        }
+
+        /**
+         * Get the HCatClient to talk to hcatalog server
+         *
+         * @return HCatClient to talk to hcatalog server
+         */
+        public HCatClient getHCatClient() {
+            return hcatClient;
+        }
+
+        @Override
+        public void destroy() {
+            try {
+                hcatClient.close();
+            }
+            catch (Exception ignore) {
+                LOG.warn("Error closing hcat client", ignore);
+            }
+        }
+
     }
 
 }

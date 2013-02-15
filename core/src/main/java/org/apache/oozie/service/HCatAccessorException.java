@@ -21,24 +21,24 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
 import org.apache.oozie.dependency.URIHandlerException;
 
-public class MetaDataAccessorException extends URIHandlerException {
+public class HCatAccessorException extends URIHandlerException {
 
     /**
-     * Create an MetaDataAccessor Exception exception from a XException.
+     * Create an HCatAccessorException exception from a XException.
      *
      * @param cause the XException cause.
      */
-    public MetaDataAccessorException(XException cause) {
+    public HCatAccessorException(XException cause) {
         super(cause);
     }
 
     /**
-     * Create a MetaDataAccessor exception.
+     * Create a HCatAccessorException exception.
      *
      * @param errorCode error code.
      * @param params parameters for the error code message template.
      */
-    public MetaDataAccessorException(ErrorCode errorCode, Object... params) {
+    public HCatAccessorException(ErrorCode errorCode, Object... params) {
         super(errorCode, params);
     }
 }

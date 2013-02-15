@@ -67,7 +67,7 @@ public class TestCoordActionUpdatePushMissingDependency extends XDataTestCase {
         new CoordActionUpdatePushMissingDependency(actionId).call();
 
         checkCoordAction(actionId, "", CoordinatorAction.Status.READY);
-
+        assertNull(pdms.getAvailableDependencyURIs(actionId));
     }
 
     @Test
@@ -100,13 +100,13 @@ public class TestCoordActionUpdatePushMissingDependency extends XDataTestCase {
         pdms.partitionAvailable("hcat.server.com:5080", "mydb", "clicks",
                 getPartitionMap("src=search;datastamp=11;region=us"));
         availableURIs = pdms.getAvailableDependencyURIs(actionId);
-        assertEquals(2, availableURIs.size());
+        assertEquals(1, availableURIs.size());
         assertTrue(availableURIs.contains(newHCatDependency1));
-        assertTrue(availableURIs.contains(newHCatDependency2));
 
         new CoordActionUpdatePushMissingDependency(actionId).call();
 
         checkCoordAction(actionId, "", CoordinatorAction.Status.READY);
+        assertNull(pdms.getAvailableDependencyURIs(actionId));
 
     }
 

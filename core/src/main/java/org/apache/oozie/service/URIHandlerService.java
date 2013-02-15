@@ -64,7 +64,7 @@ public class URIHandlerService implements Service {
 
         String[] classes = conf.getStrings(URI_HANDLERS, FSURIHandler.class.getName());
         for (String classname : classes) {
-            Class<?> clazz = Class.forName(classname);
+            Class<?> clazz = Class.forName(classname.trim());
             URIHandler uriHandler = (URIHandler) ReflectionUtils.newInstance(clazz, null);
             uriHandler.init(conf);
             for (String scheme : uriHandler.getSupportedSchemes()) {

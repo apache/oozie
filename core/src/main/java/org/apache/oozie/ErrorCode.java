@@ -232,12 +232,7 @@ public enum ErrorCode {
 
     E1400(XLog.STD, "doAs (proxyuser) failure"),
 
-    E1501(XLog.STD, "Partition Dependency Manager could not add cache entry"),
-    E1502(XLog.STD, "Partition cache lookup error"),
-    E1503(XLog.STD, "Error in Metadata URI [{0}]"),  //TODO - Error code not used, replace this
-    E1504(XLog.STD, "Error in getting HCat Access [{0}]"),
-    E1505(XLog.STD, "Error with JMS Message, Details: [{0}]"),
-    E1506(XLog.STD, "Error in creating connection or message listener, Details: [{0}]"),
+    E1501(XLog.STD, "Error in getting HCat Access [{0}]"),
 
     ETEST(XLog.STD, "THIS SHOULD HAPPEN ONLY IN TESTING, invalid job id [{0}]"),;
 

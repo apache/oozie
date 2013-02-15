@@ -21,8 +21,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.jms.HCatMessageHandler;
 import org.apache.oozie.jms.JMSConnectionInfo;
@@ -46,6 +49,10 @@ public class HCatAccessorService implements Service {
      */
     private Map<String, JMSConnectionInfo> publisherJMSConnInfoMap;
     /**
+     * List of non publishers(host:port)
+     */
+    private Set<String> nonJMSPublishers;
+    /**
      * Mapping of table to the topic name for the table
      */
     private Map<String, String> registeredTopicsMap;
@@ -56,6 +63,7 @@ public class HCatAccessorService implements Service {
         conf = services.getConf();
         this.jmsService = services.get(JMSAccessorService.class);
         initializeMappingRules();
+        this.nonJMSPublishers = new HashSet<String>();
         this.publisherJMSConnInfoMap = new HashMap<String, JMSConnectionInfo>();
         this.registeredTopicsMap = new HashMap<String, String>();
     }
@@ -88,11 +96,12 @@ public class HCatAccessorService implements Service {
      * @return true if we have JMS connection information for the source URI, else false
      */
     public boolean isKnownPublisher(URI sourceURI) {
-        if (publisherJMSConnInfoMap.containsKey(sourceURI.getAuthority())) {
+        if (nonJMSPublishers.contains(sourceURI.getAuthority())) {
             return true;
         }
         else {
-            return getJMSConnectionInfo(sourceURI) != null;
+            JMSConnectionInfo connInfo = publisherJMSConnInfoMap.get(sourceURI.getAuthority());
+            return connInfo == null ? (getJMSConnectionInfo(sourceURI) != null) : true;
         }
     }
 
@@ -105,22 +114,33 @@ public class HCatAccessorService implements Service {
      */
     public JMSConnectionInfo getJMSConnectionInfo(URI publisherURI) {
         String publisherAuthority = publisherURI.getAuthority();
+        JMSConnectionInfo connInfo = null;
         if (publisherJMSConnInfoMap.containsKey(publisherAuthority)) {
-            return publisherJMSConnInfoMap.get(publisherAuthority);
+            connInfo = publisherJMSConnInfoMap.get(publisherAuthority);
         }
         else {
             String schemeWithAuthority = publisherURI.getScheme() + "://" + publisherAuthority;
             for (MappingRule mr : mappingRules) {
                 String jndiPropertiesString = mr.applyRule(schemeWithAuthority);
                 if (jndiPropertiesString != null) {
-                    JMSConnectionInfo connInfo = new JMSConnectionInfo(jndiPropertiesString);
+                    connInfo = new JMSConnectionInfo(jndiPropertiesString);
                     publisherJMSConnInfoMap.put(publisherAuthority, connInfo);
-                    return connInfo;
+                    LOG.info("Adding hcat server [{0}] to the list of JMS publishers", schemeWithAuthority);
+                    break;
                 }
             }
-            publisherJMSConnInfoMap.put(publisherAuthority, defaultJMSConnInfo);
-            return defaultJMSConnInfo;
+            if (connInfo == null && defaultJMSConnInfo != null) {
+                connInfo = defaultJMSConnInfo;
+                publisherJMSConnInfoMap.put(publisherAuthority, defaultJMSConnInfo);
+                LOG.info("Adding hcat server [{0}] to the list of JMS publishers", schemeWithAuthority);
+            }
+            else {
+                nonJMSPublishers.add(publisherAuthority);
+                LOG.info("Adding hcat server [{0}] to the list of non JMS publishers", schemeWithAuthority);
+            }
+
         }
+        return connInfo;
     }
 
     /**
@@ -130,8 +150,7 @@ public class HCatAccessorService implements Service {
      * @return true if registered to a JMS topic for the table in the given hcatURI
      */
     public boolean isRegisteredForNotification(HCatURI hcatURI) {
-        return registeredTopicsMap.containsKey(hcatURI.getURI().getAuthority() + DELIMITER + hcatURI.getDb()
-                + DELIMITER + hcatURI.getTable());
+        return registeredTopicsMap.containsKey(getKeyForRegisteredTopicsMap(hcatURI));
     }
 
     /**
@@ -145,12 +164,11 @@ public class HCatAccessorService implements Service {
         JMSConnectionInfo connInfo = getJMSConnectionInfo(hcatURI.getURI());
         jmsService.registerForNotification(connInfo, topic, msgHandler);
         registeredTopicsMap.put(
-                hcatURI.getURI().getAuthority() + DELIMITER + hcatURI.getDb() + DELIMITER + hcatURI.getTable(), topic);
+                getKeyForRegisteredTopicsMap(hcatURI), topic);
     }
 
     public void unregisterFromNotification(HCatURI hcatURI) {
-        String topic = registeredTopicsMap.remove(hcatURI.getURI().getAuthority() + DELIMITER + hcatURI.getDb()
-                + DELIMITER + hcatURI.getTable());
+        String topic = registeredTopicsMap.remove(getKeyForRegisteredTopicsMap(hcatURI));
         if (topic != null) {
             JMSConnectionInfo connInfo = getJMSConnectionInfo(hcatURI.getURI());
             jmsService.unregisterFromNotification(connInfo, topic);
@@ -169,6 +187,11 @@ public class HCatAccessorService implements Service {
                 LOG.warn("Error unregistering from notification for topic [{0}]. Hcat table=[{1}]", topic, key, e);
             }
         }
+    }
+
+    private String getKeyForRegisteredTopicsMap(HCatURI hcatURI) {
+        return hcatURI.getURI().getAuthority() + DELIMITER + hcatURI.getDb()
+                + DELIMITER + hcatURI.getTable();
     }
 
     @Override

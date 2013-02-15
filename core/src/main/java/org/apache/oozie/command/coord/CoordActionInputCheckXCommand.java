@@ -165,6 +165,9 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             }
         }
         catch (Exception e) {
+            if (isTimeout(currentTime)) {
+                queue(new CoordActionTimeOutXCommand(coordAction), 100);
+            }
             throw new CommandException(ErrorCode.E1021, e.getMessage(), e);
         }
         finally {

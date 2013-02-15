@@ -75,7 +75,7 @@ public class HCatLauncherURIHandler implements LauncherURIHandler {
         }
         hiveConf.set(HiveConf.ConfVars.METASTOREURIS.varname, serverURI);
         try {
-            System.out.println("Creating HCatClient for user=" + UserGroupInformation.getLoginUser() + " and server="
+            System.out.println("Creating HCatClient for user=" + UserGroupInformation.getCurrentUser() + " and server="
                     + serverURI);
             // Delegation token fetched from metastore has new Text() as service and
             // HiveMetastoreClient looks for the same if not overriden by hive.metastore.token.signature

@@ -84,61 +84,72 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
 
     @Override
     protected Void execute() throws CommandException {
-        LOG.info("STARTED for Action id [{0}]", actionId);
         String pushMissingDeps = coordAction.getPushMissingDependencies();
         if (pushMissingDeps == null || pushMissingDeps.length() == 0) {
             LOG.info("Nothing to check. Empty push missing dependency");
-            return null;
-        }
-        LOG.info("Push missing dependencies for actionID [{0}] is [{1}] ", actionId, pushMissingDeps);
-
-        Configuration actionConf = null;
-        try {
-            actionConf = new XConfiguration(new StringReader(coordAction.getRunConf()));
-        }
-        catch (IOException e) {
-            throw new CommandException(ErrorCode.E1307, e.getMessage(), e);
-        }
-
-        String[] missingDepsArray = DependencyChecker.dependenciesAsArray(pushMissingDeps);
-        // Check all dependencies during materialization to avoid registering in the cache. But
-        // check only first missing one afterwards similar to CoordActionInputCheckXCommand for efficiency.
-        // listPartitions is costly.
-        ActionDependency actionDep = DependencyChecker.checkForAvailability(missingDepsArray, actionConf,
-                !registerForNotification);
-
-        boolean isChangeInDependency = true;
-        boolean timeout = false;
-        if (actionDep.getMissingDependencies().size() == 0) { // All push-based dependencies are available
-            onAllPushDependenciesAvailable();
         }
         else {
-            if (actionDep.getMissingDependencies().size() == missingDepsArray.length) {
-                isChangeInDependency = false;
-            }
-            else {
-                String stillMissingDeps = DependencyChecker.dependenciesAsString(actionDep.getMissingDependencies());
-                coordAction.setPushMissingDependencies(stillMissingDeps);
-            }
-            // Checking for timeout
-            timeout = isTimeout();
-            if (timeout) {
-                queue(new CoordActionTimeOutXCommand(coordAction), 100);
-            }
-            else {
-                queue(new CoordPushDependencyCheckXCommand(coordAction.getId()), getCoordPushCheckRequeueInterval());
-            }
-        }
+            LOG.info("Push missing dependencies for actionID [{0}] is [{1}] ", actionId, pushMissingDeps);
 
-        updateCoordAction(coordAction, isChangeInDependency);
-        if (registerForNotification) {
-            registerForNotification(actionDep.getMissingDependencies(), actionConf);
-        }
-        else {
-            unregisterAvailableDependencies(actionDep);
-        }
-        if (timeout) {
-            unregisterMissingDependencies(actionDep.getMissingDependencies());
+            try {
+                Configuration actionConf = null;
+                try {
+                    actionConf = new XConfiguration(new StringReader(coordAction.getRunConf()));
+                }
+                catch (IOException e) {
+                    throw new CommandException(ErrorCode.E1307, e.getMessage(), e);
+                }
+
+                String[] missingDepsArray = DependencyChecker.dependenciesAsArray(pushMissingDeps);
+                // Check all dependencies during materialization to avoid registering in the cache.
+                // But check only first missing one afterwards similar to
+                // CoordActionInputCheckXCommand for efficiency. listPartitions is costly.
+                ActionDependency actionDep = DependencyChecker.checkForAvailability(missingDepsArray, actionConf,
+                        !registerForNotification);
+
+                boolean isChangeInDependency = true;
+                boolean timeout = false;
+                if (actionDep.getMissingDependencies().size() == 0) {
+                    // All push-based dependencies are available
+                    onAllPushDependenciesAvailable();
+                }
+                else {
+                    if (actionDep.getMissingDependencies().size() == missingDepsArray.length) {
+                        isChangeInDependency = false;
+                    }
+                    else {
+                        String stillMissingDeps = DependencyChecker.dependenciesAsString(actionDep
+                                .getMissingDependencies());
+                        coordAction.setPushMissingDependencies(stillMissingDeps);
+                    }
+                    // Checking for timeout
+                    timeout = isTimeout();
+                    if (timeout) {
+                        queue(new CoordActionTimeOutXCommand(coordAction), 100);
+                    }
+                    else {
+                        queue(new CoordPushDependencyCheckXCommand(coordAction.getId()),
+                                getCoordPushCheckRequeueInterval());
+                    }
+                }
+
+                updateCoordAction(coordAction, isChangeInDependency);
+                if (registerForNotification) {
+                    registerForNotification(actionDep.getMissingDependencies(), actionConf);
+                }
+                else {
+                    unregisterAvailableDependencies(actionDep);
+                }
+                if (timeout) {
+                    unregisterMissingDependencies(actionDep.getMissingDependencies());
+                }
+            }
+            catch (Exception e) {
+                if (isTimeout()) {
+                    queue(new CoordActionTimeOutXCommand(coordAction), 100);
+                }
+                throw new CommandException(ErrorCode.E1021, e.getMessage(), e);
+            }
         }
         return null;
     }
@@ -153,7 +164,11 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
         return requeueInterval;
     }
 
-    // returns true if it is time for timeout
+    /**
+     * Returns true if timeout period has been reached
+     *
+     * @return true if it is time for timeout else false
+     */
     protected boolean isTimeout() {
         long waitingTime = (new Date().getTime() - Math.max(coordAction.getNominalTime().getTime(), coordAction
                 .getCreatedTime().getTime()))
@@ -165,9 +180,19 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
     protected void onAllPushDependenciesAvailable() {
         coordAction.setPushMissingDependencies("");
         if (coordAction.getMissingDependencies() == null || coordAction.getMissingDependencies().length() == 0) {
-            coordAction.setStatus(CoordinatorAction.Status.READY);
-            // pass jobID to the CoordActionReadyXCommand
-            queue(new CoordActionReadyXCommand(coordAction.getJobId()), 100);
+            Date nominalTime = coordAction.getNominalTime();
+            Date currentTime = new Date();
+            // The action should become READY only if current time > nominal time;
+            // CoordActionInputCheckXCommand will take care of moving it to READY when it is nominal time.
+            if (nominalTime.compareTo(currentTime) > 0) {
+                LOG.info("[" + actionId + "]::ActionInputCheck:: nominal Time is newer than current time. Current="
+                        + currentTime + ", nominal=" + nominalTime);
+            }
+            else {
+                coordAction.setStatus(CoordinatorAction.Status.READY);
+                // pass jobID to the CoordActionReadyXCommand
+                queue(new CoordActionReadyXCommand(coordAction.getJobId()), 100);
+            }
         }
     }
 
@@ -307,10 +332,12 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
 
     @Override
     protected void loadState() throws CommandException {
+        eagerLoadState();
     }
 
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
+        eagerVerifyPrecondition();
     }
 
 }

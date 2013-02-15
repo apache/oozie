@@ -40,12 +40,12 @@ import org.apache.oozie.util.XLog;
 import com.google.common.annotations.VisibleForTesting;
 
 /**
- * This class will 1. Create/Manage JMS connections using user configured properties 2.
- * Create/Manage session for specific connection/topic. 3. Provide a way to create a subscriber and
- * publisher 4. Pure JMS complian (implementation independent but primarily tested against Apace
- * ActiveMQ) For connection property, it reads property from oozie-site.xml. Since it supports
- * multiple connections, each property will be grouped with fixed tag. the caller will use the tag
- * to accees the connection/session/subscriber/producer.
+ * This class will <ul>
+ * <li> Create/Manage JMS connections using user configured JNDI properties. </li>
+ * <li> Create/Manage session for specific connection/topic and reconnects on failures. </li>
+ * <li> Provide a way to create a subscriber and publisher </li>
+ * <li> Pure JMS compliant (implementation independent but primarily tested against Apache ActiveMQ). </li>
+ * </ul>
  */
 public class JMSAccessorService implements Service {
     public static final String CONF_PREFIX = Service.CONF_PREFIX + "JMSAccessorService.";
@@ -94,31 +94,30 @@ public class JMSAccessorService implements Service {
      * @param msgHandler Handler which will process the messages received on the topic
      */
     public void registerForNotification(JMSConnectionInfo connInfo, String topic, MessageHandler msgHandler) {
-        if (isTopicInRetryList(connInfo, topic)) {
-            return;
-        }
-        if (isConnectionInRetryList(connInfo)) {
-            queueTopicForRetry(connInfo, topic, msgHandler);
-            return;
-        }
-        Map<String, MessageReceiver> topicsMap = getReceiversTopicsMap(connInfo);
-        if (topicsMap.containsKey(topic)) {
-            return;
-        }
-        synchronized (topicsMap) {
-            if (!topicsMap.containsKey(topic)) {
-                ConnectionContext connCtxt = createConnectionContext(connInfo);
-                if (connCtxt == null) {
-                    queueTopicForRetry(connInfo, topic, msgHandler);
-                    return;
-                }
-                MessageReceiver receiver = registerForTopic(connInfo, connCtxt, topic, msgHandler);
-                if (receiver == null) {
-                    queueTopicForRetry(connInfo, topic, msgHandler);
-                }
-                else {
-                    LOG.info("Registered a listener for topic {0} on {1}", topic, connInfo);
-                    topicsMap.put(topic, receiver);
+        if (!isTopicInRetryList(connInfo, topic)) {
+            if (isConnectionInRetryList(connInfo)) {
+                queueTopicForRetry(connInfo, topic, msgHandler);
+            }
+            else {
+                Map<String, MessageReceiver> topicsMap = getReceiversTopicsMap(connInfo);
+                if (!topicsMap.containsKey(topic)) {
+                    synchronized (topicsMap) {
+                        if (!topicsMap.containsKey(topic)) {
+                            ConnectionContext connCtxt = createConnectionContext(connInfo);
+                            if (connCtxt == null) {
+                                queueTopicForRetry(connInfo, topic, msgHandler);
+                                return;
+                            }
+                            MessageReceiver receiver = registerForTopic(connInfo, connCtxt, topic, msgHandler);
+                            if (receiver == null) {
+                                queueTopicForRetry(connInfo, topic, msgHandler);
+                            }
+                            else {
+                                LOG.info("Registered a listener for topic {0} on {1}", topic, connInfo);
+                                topicsMap.put(topic, receiver);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -138,22 +137,26 @@ public class JMSAccessorService implements Service {
         }
         else {
             Map<String, MessageReceiver> topicsMap = receiversMap.get(connInfo);
-            MessageReceiver receiver = topicsMap.remove(topic);
-            if (receiver != null) {
-                try {
-                    receiver.getSession().close();
+            if (topicsMap != null) {
+                MessageReceiver receiver = null;
+                synchronized (topicsMap) {
+                    receiver = topicsMap.remove(topic);
+                    if (topicsMap.isEmpty()) {
+                        receiversMap.remove(connInfo);
+                    }
                 }
-                catch (JMSException e) {
-                    LOG.warn("Unable to close session " + receiver.getSession(), e);
+                if (receiver != null) {
+                    try {
+                        receiver.getSession().close();
+                    }
+                    catch (JMSException e) {
+                        LOG.warn("Unable to close session " + receiver.getSession(), e);
+                    }
                 }
-            }
-            else {
-                LOG.warn(
-                        "Received request to unregister from topic [{0}] on [{1}], but no matching session.",
-                        topic, connInfo);
-            }
-            if (topicsMap.isEmpty()) {
-                receiversMap.remove(connInfo);
+                else {
+                    LOG.warn("Received request to unregister from topic [{0}] on [{1}], but no matching session.",
+                            topic, connInfo);
+                }
             }
         }
     }
@@ -406,7 +409,6 @@ public class JMSAccessorService implements Service {
     private static class ConnectionRetryInfo {
         private int numAttempt;
         private int nextDelay;
-        private boolean retryConnection;
         private Map<String, MessageHandler> retryTopicsMap;
 
         public ConnectionRetryInfo(int numAttempt, int nextDelay) {
@@ -433,14 +435,6 @@ public class JMSAccessorService implements Service {
 
         public Map<String, MessageHandler> getTopicsToRetry() {
             return retryTopicsMap;
-        }
-
-        public boolean shouldRetryConnection() {
-            return retryConnection;
-        }
-
-        public void setRetryConnection(boolean retryConnection) {
-            this.retryConnection = retryConnection;
         }
 
     }

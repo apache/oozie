@@ -33,8 +33,8 @@ public class JMSExceptionListener implements ExceptionListener {
     /**
      * Create ExceptionLister for a JMS Connection
      *
-     * @param jmsConnectString  The connect string specifiying parameters for JMS connection
-     * @param connCtxt  The actual connection on which this listener will be registered
+     * @param connInfo Information to connect to the JMS compliant messaging service
+     * @param connCtxt The actual connection on which this listener will be registered
      */
     public JMSExceptionListener(JMSConnectionInfo connInfo, ConnectionContext connCtxt) {
         this.connInfo = connInfo;

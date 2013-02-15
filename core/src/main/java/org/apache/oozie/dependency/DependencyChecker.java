@@ -98,12 +98,13 @@ public class DependencyChecker {
 
                     URI uri = new URI(dependency);
                     URIHandler uriHandler = uriService.getURIHandler(uri);
-                    LOG.debug("Checking for the availability of [{0}] ", dependency);
+                    LOG.debug("Checking for the availability of dependency [{0}] ", dependency);
                     if (uriHandler.exists(uri, actionConf, user)) {
                         LOG.debug("Dependency [{0}] is available", dependency);
                         availableDeps.add(dependency);
                     }
                     else {
+                        LOG.debug("Dependency [{0}] is missing", dependency);
                         missingDeps.add(dependency);
                         if (stopOnFirstMissing) {
                             continueChecking = false;

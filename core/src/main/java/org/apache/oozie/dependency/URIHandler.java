@@ -97,7 +97,7 @@ public interface URIHandler {
     public boolean unregisterFromNotification(URI uri, String actionID);
 
     /**
-     * Get the URIContext which can be used to access URI of the same scheme and
+     * Get the Context which can be used to access URI of the same scheme and
      * host
      *
      * @param uri URI which identifies the scheme and host
@@ -108,20 +108,20 @@ public interface URIHandler {
      *
      * @throws URIHandlerException
      */
-    public URIContext getURIContext(URI uri, Configuration conf, String user) throws URIHandlerException;
+    public Context getContext(URI uri, Configuration conf, String user) throws URIHandlerException;
 
     /**
      * Check if the dependency identified by the URI is available
      *
      * @param uri URI of the dependency
-     * @param uriContext Context to access the URI
+     * @param context Context to access the URI
      *
      * @return <code>true</code> if the URI exists; <code>false</code> if the
      *         URI does not exist
      *
      * @throws URIHandlerException
      */
-    public boolean exists(URI uri, URIContext uriContext) throws URIHandlerException;
+    public boolean exists(URI uri, Context context) throws URIHandlerException;
 
     /**
      * Check if the dependency identified by the URI is available
@@ -162,5 +162,45 @@ public interface URIHandler {
      * Destroy the URIHandler
      */
     public void destroy();
+
+    public static abstract class Context {
+
+        private Configuration conf;
+        private String user;
+
+        /**
+         * Create a Context that can be used to access a URI
+         *
+         * @param conf Configuration to access the URI
+         * @param user name of the user the URI should be accessed as
+         */
+        public Context(Configuration conf, String user) {
+            this.conf = conf;
+            this.user = user;
+        }
+
+        /**
+         * Get the Configuration to access the URI
+         * @return Configuration to access the URI
+         */
+        public Configuration getConfiguration() {
+            return conf;
+        }
+
+        /**
+         * Get the name of the user the URI will be accessed as
+         * @return the user name the URI will be accessed as
+         */
+        public String getUser() {
+            return user;
+        }
+
+        /**
+         * Destroy the Context
+         */
+        public void destroy() {
+        }
+
+    }
 
 }

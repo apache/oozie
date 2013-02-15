@@ -20,7 +20,6 @@ package org.apache.oozie.util;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -199,26 +198,20 @@ public class HCatURI {
     }
 
     @Override
-    public boolean equals(Object obj) {
-        HCatURI uri = (HCatURI) obj;
-        boolean equals = true;
-        Map<String, String> p = this.getPartitionMap();
+    public int hashCode() {
+        return (uri == null) ? 0 : uri.hashCode();
+    }
 
-        if (this.getServer().equals(uri.getServer()) && this.db.equals(uri.getDb()) && this.table.equals(uri.getTable())
-                && p.size() == uri.getPartitionMap().size()) {
-            Iterator<Map.Entry<String, String>> it1 = uri.getPartitionMap().entrySet().iterator();
-            while (it1.hasNext()) {
-                Map.Entry<String, String> entry = it1.next();
-                String key = entry.getKey();
-                if (!(p.containsKey(key) && p.get(key).equals(entry.getValue()))) {
-                    equals = false;
-                }
-            }
-        }
-        else {
-            equals = false;
-        }
-        return equals;
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        HCatURI other = (HCatURI) obj;
+        return uri.equals(other.uri);
     }
 
     /**

@@ -19,7 +19,7 @@ package org.apache.oozie.util;
 
 import static org.junit.Assert.*;
 import java.net.URISyntaxException;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.junit.Test;
@@ -77,40 +77,27 @@ public class TestHCatURI {
 
     @Test
     public void testGetHCatUri() {
-        Map<String, String> partitions = new HashMap<String, String>();
+        Map<String, String> partitions = new LinkedHashMap<String, String>();
         partitions.put("datastamp", "12");
         partitions.put("region", "us");
         String hcatUri = HCatURI.getHCatURI("hcat", "hcat.server.com:5080", "mydb", "clicks", partitions);
 
-        HCatURI uri1 = null;
-        HCatURI uri2 = null;
-        try {
-            uri1 = new HCatURI(hcatUri);
-            uri2 = new HCatURI("hcat://hcat.server.com:5080/mydb/clicks/datastamp=12;region=us");
-        }
-        catch (URISyntaxException e) {
-            fail(e.getMessage());
-        }
-        assertTrue(uri1.equals(uri2));
+        assertEquals("hcat://hcat.server.com:5080/mydb/clicks/datastamp=12;region=us", hcatUri);
     }
 
     @Test
     public void testEqualsPositive() {
         HCatURI uri1 = null;
         HCatURI uri2 = null;
-        HCatURI uri3 = null;
         try {
             uri1 = new HCatURI("hcat://hcat.server.com:5080/mydb/clicks/datastamp=12;region=us;timestamp=1201");
             uri2 = new HCatURI("hcat://hcat.server.com:5080/mydb/clicks/datastamp=12;region=us;timestamp=1201");
-            uri3 = new HCatURI("hcat://hcat.server.com:5080/mydb/clicks/region=us;timestamp=1201;datastamp=12");
         }
         catch (URISyntaxException e) {
             fail(e.getMessage());
         }
-        assertTrue(uri1.equals(uri2));
-        assertTrue(uri2.equals(uri1));
-        assertTrue(uri1.equals(uri3));
-        assertTrue(uri3.equals(uri1));
+
+        assertEquals(uri1, uri2);
     }
 
     @Test

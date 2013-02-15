@@ -77,15 +77,15 @@ public class FSURIHandler implements URIHandler {
     }
 
     @Override
-    public URIContext getURIContext(URI uri, Configuration conf, String user) throws URIHandlerException {
+    public Context getContext(URI uri, Configuration conf, String user) throws URIHandlerException {
         FileSystem fs = getFileSystem(uri, conf, user);
-        return new FSURIContext(conf, user, fs);
+        return new FSContext(conf, user, fs);
     }
 
     @Override
-    public boolean exists(URI uri, URIContext uriContext) throws URIHandlerException {
+    public boolean exists(URI uri, Context context) throws URIHandlerException {
         try {
-            FileSystem fs = ((FSURIContext) uriContext).getFileSystem();
+            FileSystem fs = ((FSContext) context).getFileSystem();
             return fs.exists(getNormalizedPath(uri));
         }
         catch (IOException e) {
@@ -132,6 +132,31 @@ public class FSURIHandler implements URIHandler {
         }
         Configuration fsConf = service.createJobConf(uri.getAuthority());
         return service.createFileSystem(user, uri, fsConf);
+    }
+
+    static class FSContext extends Context {
+
+        private FileSystem fs;
+
+        /**
+         * Create a FSContext that can be used to access a filesystem URI
+         *
+         * @param conf Configuration to access the URI
+         * @param user name of the user the URI should be accessed as
+         * @param fs FileSystem to access
+         */
+        public FSContext(Configuration conf, String user, FileSystem fs) {
+            super(conf, user);
+            this.fs = fs;
+        }
+
+        /**
+         * Get the FileSystem to access the URI
+         * @return FileSystem to access the URI
+         */
+        public FileSystem getFileSystem() {
+            return fs;
+        }
     }
 
 }

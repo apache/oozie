@@ -102,7 +102,7 @@ public class TestPartitionDependencyManagerService extends XDataTestCase {
         assertTrue(pdms.getAvailableDependencyURIs(actionId3).contains(dep2.getURI().toString()));
         assertTrue(pdms.getAvailableDependencyURIs(actionId3).contains(dep3.getURI().toString()));
 
-        pdms.removeAvailableDependencyURIs(actionId3, pdms.getAvailableDependencyURIs(actionId3));
+        assertTrue(pdms.removeAvailableDependencyURIs(actionId3, pdms.getAvailableDependencyURIs(actionId3)));
         assertNull(pdms.getAvailableDependencyURIs(actionId3));
     }
 

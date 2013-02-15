@@ -239,7 +239,12 @@ public class SimpleHCatDependencyCache implements HCatDependencyCache {
 
     @Override
     public Collection<String> getAvailableDependencyURIs(String actionID) {
-        return availableDeps.get(actionID);
+        Collection<String> available = availableDeps.get(actionID);
+        if (available !=  null) {
+            // Return a copy
+            available = new ArrayList<String>(available);
+        }
+        return available;
     }
 
     @Override
