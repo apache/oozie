@@ -528,10 +528,14 @@ public class HadoopAccessorService implements Service {
         if (allSchemesSupported)
             return;
         String uriScheme = uri.getScheme();
-        XLog.getLog(this.getClass()).debug("Checking if filesystem " + uriScheme + " is supported");
-        if (!supportedSchemes.contains(uriScheme)) {
-            throw new HadoopAccessorException(ErrorCode.E0904, uriScheme, uri.toString());
-        }
+        if (uriScheme != null) {    // skip the check if no scheme is given
+            if(!supportedSchemes.isEmpty()) {
+                XLog.getLog(this.getClass()).debug("Checking if filesystem " + uriScheme + " is supported");
+                if (!supportedSchemes.contains(uriScheme)) {
+                    throw new HadoopAccessorException(ErrorCode.E0904, uriScheme, uri.toString());
+                }
+             }
+         }        
     }
 
     public Set<String> getSupportedSchemes() {

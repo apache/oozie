@@ -29,6 +29,8 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.ErrorCode;
 
 public class TestHadoopAccessorService extends XTestCase {
 
@@ -131,6 +133,36 @@ public class TestHadoopAccessorService extends XTestCase {
         jobConf.set("yarn.resourcemanager.principal", "rm/server.com@KDC.DOMAIN.COM");
         assertEquals(new Text("rm/server.com@KDC.DOMAIN.COM"),
                 HadoopAccessorService.getMRTokenRenewerInternal(jobConf));
+    }
+
+    public void testCheckSupportedFilesystem() throws Exception {
+        Configuration hConf = Services.get().getConf();
+
+        // Only allow hdfs and foo schemes
+        HadoopAccessorService has = new HadoopAccessorService();
+        hConf.set("oozie.service.HadoopAccessorService.supported.filesystems", "hdfs,foo");
+        has.init(hConf);
+        has.checkSupportedFilesystem(new URI("hdfs://localhost:1234/blah"));
+        has.checkSupportedFilesystem(new URI("foo://localhost:1234/blah"));
+        try {
+            has.checkSupportedFilesystem(new URI("file://localhost:1234/blah"));
+            fail("Should have thrown an exception because 'file' scheme isn't allowed");
+        }
+        catch (HadoopAccessorException hae) {
+            assertEquals(ErrorCode.E0904, hae.getErrorCode());
+        }
+        // giving no scheme should skip the check
+        has.checkSupportedFilesystem(new URI("/blah"));
+
+        // allow all schemes
+        has = new HadoopAccessorService();
+        hConf.set("oozie.service.HadoopAccessorService.supported.filesystems", "*");
+        has.init(hConf);
+        has.checkSupportedFilesystem(new URI("hdfs://localhost:1234/blah"));
+        has.checkSupportedFilesystem(new URI("foo://localhost:1234/blah"));
+        has.checkSupportedFilesystem(new URI("file://localhost:1234/blah"));
+        // giving no scheme should skip the check
+        has.checkSupportedFilesystem(new URI("/blah"));
     }
 
 }
