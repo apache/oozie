@@ -180,7 +180,9 @@ public class SimpleHCatDependencyCache implements HCatDependencyCache {
         Map<String, Map<String, Collection<WaitingAction>>> partKeyPatterns = missingDeps.get(tableKey);
         if (partKeyPatterns == null) {
             LOG.warn("Got partition available notification for " + tableKey
-                    + ". Unexpected and should not be listening to topic. ");
+                    + ". Unexpected and should not be listening to topic. Unregistering topic");
+            HCatAccessorService hcatService = Services.get().get(HCatAccessorService.class);
+            hcatService.unregisterFromNotification(server,db, table);
             return null;
         }
         Collection<String> actionsWithAvailDep = new HashSet<String>();

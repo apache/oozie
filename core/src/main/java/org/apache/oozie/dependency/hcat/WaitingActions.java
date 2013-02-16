@@ -18,32 +18,32 @@
 package org.apache.oozie.dependency.hcat;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
 
-public class WaitingAction implements Serializable {
+public class WaitingActions implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private String actionID;
-    private String dependencyURI;
+    private ArrayList<WaitingAction> waitingActions;
 
-    public WaitingAction(String actionID, String dependencyURI) {
-        this.actionID = actionID;
-        this.dependencyURI = dependencyURI;
+    public WaitingActions() {
+        waitingActions = new ArrayList<WaitingAction>();
     }
 
     /**
-     * Get the action id
-     * @return action id
+     * Get the list of waiting actions
+     * @return waiting actions
      */
-    public String getActionID() {
-        return actionID;
+    public Collection<WaitingAction> getWaitingActions() {
+        return waitingActions;
     }
 
     /**
-     * Get the dependency uri
-     * @return dependency uri
+     * Add a waiting action
+     * @param waitingAction waiting action
      */
-    public String getDependencyURI() {
-        return dependencyURI;
+    public void add(WaitingAction waitingAction) {
+        waitingActions.add(waitingAction);
     }
 
 }

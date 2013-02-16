@@ -341,6 +341,12 @@
             </dependency>
 
             <dependency>
+                <groupId>net.sf.ehcache</groupId>
+                <artifactId>ehcache-core</artifactId>
+                <version>2.6.3</version>
+            </dependency>
+
+            <dependency>
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-streaming</artifactId>
                 <version>${streaming.version}</version>

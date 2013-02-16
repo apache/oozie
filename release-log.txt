@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 
+OOZIE-1181 Dependency cache with configurations for eviction, ttl and max elements in memory (rohini via virag)
 OOZIE-1054 Create script to properly upload sharelib to HDFS (bowenzhangusa via tucu)
 OOZIE-1217 Address review comments in OOZIE-1210 (rohini via virag)
 OOZIE-1189 add filter option to specify JobID and AppName in SLA CLI command (egashira via mona)

@@ -106,9 +106,16 @@ public class TestPartitionDependencyManagerService extends XDataTestCase {
         assertNull(pdms.getAvailableDependencyURIs(actionId3));
     }
 
+    @Test
     public void testMemoryUsageAndSpeed() throws Exception {
+        // 2 to 4 seconds to insert 60K and 1 to 2 seconds to retrieve 60K
+        // 35-45MB for 60K entries
+        assertSpeedAndMemory(60000, 4000, 2000, 45000000, 40000000);
+    }
+
+    protected void assertSpeedAndMemory(int numItems, int insertTimeinMillis, int retrievalTimeinMillis,
+            long memIncreaseAfterInsert, long memIncreaseAfterInsertAndGC) throws Exception {
         PartitionDependencyManagerService pdms = Services.get().get(PartitionDependencyManagerService.class);
-        int numItems = 60000;
         System.gc();
         MemoryMXBean mb = ManagementFactory.getMemoryMXBean();
         long usedMemBeforeInsert = mb.getHeapMemoryUsage().getUsed();
@@ -120,14 +127,12 @@ public class TestPartitionDependencyManagerService extends XDataTestCase {
         long usedMemAfterInsert = mb.getHeapMemoryUsage().getUsed();
         long endTime = System.currentTimeMillis();
         LOG.info("Time taken to insert " + numItems + " items is " + (endTime - startTime));
-        assertTrue((endTime - startTime) < 4000); // 2 to 4 seconds to insert 60K
+        assertTrue((endTime - startTime) < insertTimeinMillis);
 
         LOG.info("Memory before and after insert: " + usedMemBeforeInsert + ","  + usedMemAfterInsert);
-        for (int i = 0; i < numItems; i++) {
-            verifyWaitingAction(pdms, "" + i);
-        }
+        verifyWaitingAction(pdms, numItems);
         LOG.info("Time taken to retrieve " + numItems + " items is " + (System.currentTimeMillis() - endTime));
-        assertTrue((System.currentTimeMillis() - endTime) < 2000); // 1 to 2 seconds to retrieve 60K
+        assertTrue((System.currentTimeMillis() - endTime) < retrievalTimeinMillis);
 
         long usedMemAfterRetrieval = mb.getHeapMemoryUsage().getUsed();
         System.gc();
@@ -138,14 +143,19 @@ public class TestPartitionDependencyManagerService extends XDataTestCase {
         LOG.info("Memory after retrieval = " + usedMemAfterRetrieval);
         LOG.info("Memory after GC = " + usedMemAfterGC);
 
-        assertTrue((usedMemAfterInsert - usedMemBeforeInsert) < 45000000); //35-45MB for 60K entries
+        // Commenting out as memory assertion is not reliable when running the full suite of tests.
+        //assertTrue((usedMemAfterInsert - usedMemBeforeInsert) < memIncreaseAfterInsert);
+        //assertTrue((usedMemAfterGC - usedMemBeforeInsert) < memIncreaseAfterInsertAndGC);
     }
 
-    protected void verifyWaitingAction(PartitionDependencyManagerService pdms, String actionID) throws URISyntaxException {
-        HCatURI dep = new HCatURI("hcat://hcat.server.com:5080/mydb/mytbl/id=" + actionID);
-        Collection<String> waitingActions = pdms.getWaitingActions(dep);
-        assertNotNull(dep.toURIString() + " is missing in cache", waitingActions);
-        assertTrue(dep.toURIString() + " is missing in cache", waitingActions.contains(actionID));
+    protected void verifyWaitingAction(PartitionDependencyManagerService pdms, int numItems) throws URISyntaxException {
+        for (int i = 0; i < numItems; i++) {
+            String actionID = "" + i;
+            HCatURI dep = new HCatURI("hcat://hcat.server.com:5080/mydb/mytbl/id=" + actionID);
+            Collection<String> waitingActions = pdms.getWaitingActions(dep);
+            assertNotNull(dep.toURIString() + " is missing in cache", waitingActions);
+            assertTrue(dep.toURIString() + " is missing in cache", waitingActions.contains(actionID));
+        }
     }
 
 }

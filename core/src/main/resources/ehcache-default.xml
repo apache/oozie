@@ -1,0 +1,10 @@
+<ehcache>
+    <!--  http://svn.codehaus.org/sonar/tags/1.1/sonar-commons/src/main/resources/ehcache.xml -->
+    <diskStore path="java.io.tmpdir"/>
+    <!--  Evict cache entry after 2 days (timeToLiveSeconds) -->
+    <!--  Note: overflowToDisk=true does not work well with timeToIdleSeconds or timeToLiveSeconds.
+          Returns null even for unexpired entries -->
+    <cache name="dependency-default" maxElementsInMemory="60000" eternal="false"
+        overflowToDisk="false" timeToIdleSeconds="0" timeToLiveSeconds="172800"
+        diskPersistent="false" diskExpiryThreadIntervalSeconds="1200" />
+</ehcache>
