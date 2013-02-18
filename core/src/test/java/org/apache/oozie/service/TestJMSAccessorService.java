@@ -124,13 +124,15 @@ public class TestJMSAccessorService extends XTestCase {
             services = super.setupServicesForHCatalog();
             Configuration conf = services.getConf();
             // set the connection factory name
-            String jmsURL = "hcat://${1}.${2}.server.com:8020=java.naming.factory.initial#org.apache.activemq.jndi.ActiveMQInitialContextFactory;java.naming.provider.url#vm://localhost?broker.persistent=false;connectionFactoryNames#dynamicFactories/hcat.prod.${1}";
+            String jmsURL = "hcat://${1}.${2}.server.com:8020=java.naming.factory.initial#org.apache.activemq.jndi.ActiveMQInitialContextFactory" +
+            		";java.naming.provider.url#vm://localhost?broker.persistent=false;connectionFactoryNames#dynamicFactories/hcat.prod.${1}";
             conf.set(HCatAccessorService.JMS_CONNECTIONS_PROPERTIES, jmsURL);
             services.init();
             HCatAccessorService hcatService = services.get(HCatAccessorService.class);
             JMSConnectionInfo connInfo = hcatService.getJMSConnectionInfo(new URI("hcat://hcatserver.blue.server.com:8020"));
             assertEquals(
-                    "java.naming.factory.initial#org.apache.activemq.jndi.ActiveMQInitialContextFactory;java.naming.provider.url#vm://localhost?broker.persistent=false;connectionFactoryNames#dynamicFactories/hcat.prod.hcatserver",
+                    "java.naming.factory.initial#org.apache.activemq.jndi.ActiveMQInitialContextFactory;java.naming.provider.url#" +
+                    "vm://localhost?broker.persistent=false;connectionFactoryNames#dynamicFactories/hcat.prod.hcatserver",
                     connInfo.getJNDIPropertiesString());
 
             ConnectionContext ctx1 = new DefaultConnectionContext();
