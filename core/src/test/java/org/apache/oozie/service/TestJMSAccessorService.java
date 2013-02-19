@@ -124,7 +124,8 @@ public class TestJMSAccessorService extends XTestCase {
             services = super.setupServicesForHCatalog();
             Configuration conf = services.getConf();
             // set the connection factory name
-            String jmsURL = "hcat://${1}.${2}.server.com:8020=java.naming.factory.initial#org.apache.activemq.jndi.ActiveMQInitialContextFactory" +
+            String jmsURL = "hcat://${1}.${2}.server.com:8020=java.naming.factory.initial#" +
+                    "org.apache.activemq.jndi.ActiveMQInitialContextFactory" +
                     ";java.naming.provider.url#vm://localhost?broker.persistent=false;connectionFactoryNames#dynamicFactories/hcat.prod.${1}";
             conf.set(HCatAccessorService.JMS_CONNECTIONS_PROPERTIES, jmsURL);
             services.init();

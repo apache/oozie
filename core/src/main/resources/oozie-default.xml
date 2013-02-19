@@ -416,15 +416,15 @@
         </description>
 	</property>
 
-	<property>
-		<name>oozie.service.coord.push.check.requeue.interval
-		</name>
-		<value>600000</value>
-		<description>Command re-queue interval for push dependencies (in millisecond).
+    <property>
+        <name>oozie.service.coord.push.check.requeue.interval
+        </name>
+        <value>600000</value>
+        <description>Command re-queue interval for push dependencies (in millisecond).
         </description>
-	</property>
+    </property>
 
-	<property>
+    <property>
 		<name>oozie.service.coord.default.concurrency
 		</name>
 		<value>1</value>
