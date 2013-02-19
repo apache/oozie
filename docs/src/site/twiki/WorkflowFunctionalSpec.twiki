@@ -823,7 +823,7 @@ The =pig= action has to be configured with the job-tracker, name-node, pig scrip
 configuration to run the Pig job.
 
 A =pig= action can be configured to perform HDFS files/directories cleanup or HCatalog partitions cleanup before
-starting the Pig job. This capability enables Oozie to retry a Pig job in the situation of a transient failure (Pig 
+starting the Pig job. This capability enables Oozie to retry a Pig job in the situation of a transient failure (Pig
 creates temporary directories for intermediate data, thus a retry without cleanup would fail).
 
 Hadoop JobConf properties can be specified in a JobConf XML file bundled with the workflow application or they can be

@@ -32,13 +32,13 @@
                 </property>
             </configuration>
             <script>id.pig</script>
-	    <param>DB=${DB}</param>
-	    <param>TABLE=${TABLE}</param>
-	    <param>FILTER=${FILTER}</param>
+        <param>DB=${DB}</param>
+        <param>TABLE=${TABLE}</param>
+        <param>FILTER=${FILTER}</param>
             <param>OUTPUT_DB=${OUTPUT_DB}</param>
             <param>OUTPUT_TABLE=${OUTPUT_TABLE}</param>
             <param>OUTPUT_PARTITION=${OUTPUT_PARTITION}</param>
-	    <file>lib/hive-site.xml</file>
+        <file>lib/hive-site.xml</file>
         </pig>
         <ok to="end"/>
         <error to="fail"/>

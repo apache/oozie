@@ -16,32 +16,32 @@
   limitations under the License.
 -->
 <coordinator-app xmlns='uri:oozie:coordinator:0.2' name='NAME'
-	frequency="1" start='2009-02-01T01:00Z' end='2009-02-03T23:59Z'
-	timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>
-	<controls>
-		<timeout>10</timeout>
-		<concurrency>2</concurrency>
-		<execution>LIFO</execution>
-	</controls>
-	<input-events>
-		<data-in name='A' dataset='a'>
-			<dataset name='a' frequency='7' initial-instance='2009-01-01T01:00Z'
-				timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>
-				<uri-template>hcat://dummyhcat:1000/table/ds=${YEAR}/${DAY};region=us
-				</uri-template>
-			</dataset>
-			<instance>${coord:current(-3)}</instance>
-		</data-in>
-	</input-events>
-	<action>
-		<workflow>
-			<app-path>hdfs:///tmp/workflows/</app-path>
-			<configuration>
-				<property>
-					<name>inputA</name>
-					<value>${coord:dataIn('A')}</value>
-				</property>
-			</configuration>
-		</workflow>
-	</action>
+    frequency="1" start='2009-02-01T01:00Z' end='2009-02-03T23:59Z'
+    timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>
+    <controls>
+        <timeout>10</timeout>
+        <concurrency>2</concurrency>
+        <execution>LIFO</execution>
+    </controls>
+    <input-events>
+    <data-in name='A' dataset='a'>
+        <dataset name='a' frequency='7' initial-instance='2009-01-01T01:00Z'
+         timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>
+        <uri-template>hcat://dummyhcat:1000/table/ds=${YEAR}/${DAY};region=us
+        </uri-template>
+        </dataset>
+        <instance>${coord:current(-3)}</instance>
+    </data-in>
+    </input-events>
+    <action>
+        <workflow>
+        <app-path>hdfs:///tmp/workflows/</app-path>
+        <configuration>
+            <property>
+            <name>inputA</name>
+            <value>${coord:dataIn('A')}</value>
+            </property>
+        </configuration>
+        </workflow>
+     </action>
 </coordinator-app>

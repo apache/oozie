@@ -20,11 +20,11 @@
     <datasets>
         <dataset name="raw-logs" frequency="${coord:minutes(20)}" initial-instance="2010-01-01T00:00Z" timezone="UTC">
             <uri-template>${hcatNode}/${db}/${table}/ds=${YEAR}-${MONTH}-${DAY};region=${region}</uri-template>
-	    <done-flag></done-flag>
+        <done-flag></done-flag>
         </dataset>
         <dataset name="processed-logs" frequency="${coord:minutes(20)}" initial-instance="2010-01-01T00:00Z" timezone="UTC">
             <uri-template>${hcatNode}/${db}/${outputtable}/ds=${dataOut};region=${region}</uri-template>
-	    <done-flag></done-flag>
+        <done-flag></done-flag>
         </dataset>
     </datasets>
 

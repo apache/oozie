@@ -2416,13 +2416,13 @@ coordinator action.
             </prepare>
             ...
             <script>id.pig</script>
-		    <param>HCAT_IN_DB=${IN_DB}</param>
+            <param>HCAT_IN_DB=${IN_DB}</param>
             <param>HCAT_IN_TABLE=${IN_TABLE}</param>
             <param>HCAT_OUT_DB=${OUT_DB}</param>
             <param>HCAT_OUT_TABLE=${OUT_TABLE}</param>
             <param>PARTITION_FILTER=${FILTER}</param>
             <param>OUTPUT_PARTITIONS=${OUT_PARTITIONS}</param>
-	    <file>lib/hive-site.xml</file>
+        <file>lib/hive-site.xml</file>
         </pig>
         <ok to="end"/>
         <error to="fail"/>

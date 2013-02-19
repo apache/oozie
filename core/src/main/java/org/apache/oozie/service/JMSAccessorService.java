@@ -65,12 +65,12 @@ public class JMSAccessorService implements Service {
     /**
      * Map of JMS connection info to established JMS Connection
      */
-    private ConcurrentMap<JMSConnectionInfo, ConnectionContext> connectionMap = 
+    private ConcurrentMap<JMSConnectionInfo, ConnectionContext> connectionMap =
             new ConcurrentHashMap<JMSConnectionInfo, ConnectionContext>();
     /**
      * Map of JMS connection info to topic names to MessageReceiver
      */
-    private ConcurrentMap<JMSConnectionInfo, Map<String, MessageReceiver>> receiversMap = 
+    private ConcurrentMap<JMSConnectionInfo, Map<String, MessageReceiver>> receiversMap =
             new ConcurrentHashMap<JMSConnectionInfo, Map<String, MessageReceiver>>();
 
     /**

@@ -535,7 +535,7 @@ public class HadoopAccessorService implements Service {
                     throw new HadoopAccessorException(ErrorCode.E0904, uriScheme, uri.toString());
                 }
              }
-         }        
+         }
     }
 
     public Set<String> getSupportedSchemes() {

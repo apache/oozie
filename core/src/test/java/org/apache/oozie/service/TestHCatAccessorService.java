@@ -46,9 +46,9 @@ public class TestHCatAccessorService extends XTestCase {
         services = super.setupServicesForHCatalog();
         Configuration conf = services.getConf();
         String server2 = "hcat://${1}.${2}.server.com:8020=java.naming.factory.initial#Dummy.Factory;" +
-        		"java.naming.provider.url#tcp://broker.${2}:61616";
+                "java.naming.provider.url#tcp://broker.${2}:61616";
         String server3 = "hcat://xyz.corp.dummy.com=java.naming.factory.initial#Dummy.Factory;" +
-        		"java.naming.provider.url#tcp:localhost:61616";
+                "java.naming.provider.url#tcp:localhost:61616";
 
         String jmsConnectionURL = server2 + "," + server3;
         conf.set(HCatAccessorService.JMS_CONNECTIONS_PROPERTIES, jmsConnectionURL);
@@ -72,11 +72,11 @@ public class TestHCatAccessorService extends XTestCase {
         services = super.setupServicesForHCatalog();
         Configuration conf = services.getConf();
         String server1 = "default=java.naming.factory.initial#org.apache.activemq.jndi.ActiveMQInitialContextFactory;" +
-        		"java.naming.provider.url#vm://localhost?broker.persistent=false";
+                "java.naming.provider.url#vm://localhost?broker.persistent=false";
         String server2 = "hcat://${1}.${2}.server.com:8020=java.naming.factory.initial#Dummy.Factory;" +
-        		"java.naming.provider.url#tcp://broker.${2}:61616";
+                "java.naming.provider.url#tcp://broker.${2}:61616";
         String server3 = "hcat://xyz.corp.dummy.com=java.naming.factory.initial#Dummy.Factory;" +
-        		"java.naming.provider.url#tcp:localhost:61616";
+                "java.naming.provider.url#tcp:localhost:61616";
 
         String jmsConnectionURL = server1 + "," + server2 + "," + server3;
         conf.set(HCatAccessorService.JMS_CONNECTIONS_PROPERTIES, jmsConnectionURL);
