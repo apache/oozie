@@ -1,5 +1,6 @@
 -- Oozie 3.4.0 release (trunk - unreleased)
 OOZIE-561 Integrate Oozie with HCatalog
+    OOZIE-1181 Dependency cache with configurations for eviction, ttl and max elements in memory (rohini via virag)
     OOZIE-1217 Address review comments in OOZIE-1210 (rohini via virag)
     OOZIE-1197 Create a hcat sharelib which can be included in pig, hive and java actions (mona,rohini via virag)
     OOZIE-1196 HCat EL functions for database and table should be modified (mona)
@@ -35,7 +36,7 @@ OOZIE-561 Integrate Oozie with HCatalog
     OOZIE-1036 Utility class to parse HCat URI (Ryota via Mohammad)
     OOZIE-1033 Generic utility class to register/unregister a JMS message handler(Mohammad)
     OOZIE-1032 Create JMSService used for any JMS compliant product (Mohammad)
-    OOZIE-1045 Parameterize <unresolved-instances> tag currently hardcoded (egashira via mona)
+OOZIE-1045 Parameterize <unresolved-instances> tag currently hardcoded (egashira via mona)
 OOZIE-1189 add filter option to specify JobID and AppName in SLA CLI command (egashira via mona)
 OOZIE-1054 Create script to properly upload sharelib to HDFS (bowenzhangusa via tucu)
 OOZIE-1096 Update wfgen README.txt to have the TLP mailing list (jun aoki via rkanter)
