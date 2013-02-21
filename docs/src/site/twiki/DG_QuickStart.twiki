@@ -63,7 +63,7 @@ The ExtJS library is optional (only required for the Oozie web-console to work)
 and =oozie-stop.sh=) run only under the Unix user that owns the Oozie installation directory,
 if necessary use =sudo -u OOZIE_USER= when invoking the scripts.
 
-As of Oozie 3.4.0, use of =oozie-start.sh=, =oozie-run.sh=, and =oozie-stop.sh= has
+As of Oozie 3.3.2, use of =oozie-start.sh=, =oozie-run.sh=, and =oozie-stop.sh= has
 been deprecated and will print a warning. The =oozied.sh= script should be used
 instead; passing it =start=, =run=, or =stop= as an argument will perform the
 behaviors of =oozie-start.sh=, =oozie-run.sh=, and =oozie-stop.sh= respectively.
