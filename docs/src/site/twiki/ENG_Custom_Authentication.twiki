@@ -238,10 +238,27 @@ included with a GET request will go, and ={2}= for where the =backurl= goes.
 The above value, which is the default, is a basic html page that has fields for the username and password and meets the previously
 stated requirements.
 
+The =oozie.web.login.auth= cookie will expire 3 minutes after being given to the user.  Once the user has been redirected back to
+the Oozie web console and given the AuthenticationToken, the =oozie.web.login.auth= cookie is no longer used.  If the
+AuthenticationToken expires but the user still has a valid =oozie.web.login.auth= cookie, the ExampleAltAuthenticationHandler will
+simply give out a new AuthenticationToken; the desired behavior is that the user is bounced back to the oozie-login.war server to
+re-authenticate, hence the very short lifetime of the =oozie.web.login.auth= cookie.  However, the expiration time of the cookie
+is configurable by changing the following parameter in the web.xml in the oozie-login.war file (or in the
+login/src/main/webapp/WEB-INF/ directory before building it).  It is given in seconds.  A positive value indicates that the cookie
+will expire after that many seconds have passed; make sure this value is high enough to allow the user to be forwarded to the
+backurl before the cookie expires.  A negative value indicates that the cookie will be deleted when the browser exits.
+<verbatim>
+    <init-param>
+        <param-name>login.auth.cookie.expire.time</param-name>
+        <param-value>180</param-value>
+    </init-param>
+</verbatim>
+The above value, which is the default, is the number of seconds in 3 minutes.
+
 ---+++ LDAPLoginServlet
 
 This is a second web servlet that gets bundled in the oozie-login.war web application.  It inherits from the LoginServlet, so the
-previous configuration information (i.e. login.page.template) still applies to this servlet.  The only difference between the
+previous configuration information (e.g. login.page.template) still applies to this servlet.  The only difference between the
 LDAPLoginServlet and the LoginServlet, is that the LDAPLoginServlet is configured against an LDAP server to provide the
 authentication instead of simply checking that the username and password are equal.  As before, this is not secure and should not be
 used in production; it is only provided as an example.
@@ -252,7 +269,9 @@ The oozie-login.war web application is configured to use LoginServlet by default
 have to change the following line in the web.xml from:
 <verbatim>
     <servlet-class>org.apache.oozie.servlet.login.LoginServlet</servlet-class>
+</verbatim>
 to:
+<verbatim>
     <servlet-class>org.apache.oozie.servlet.login.LDAPLoginServlet</servlet-class>
 </verbatim>
 

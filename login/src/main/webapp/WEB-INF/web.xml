@@ -39,6 +39,17 @@
                 console).
             </description>
         </init-param>
+        <init-param>
+            <param-name>login.auth.cookie.expire.time</param-name>
+            <param-value>180</param-value>
+            <description>
+                Constant for the configuration property that indicates the expiration time (or max age) of the
+                "oozie.web.login.auth" cookie.  It is given in seconds.  A positive value indicates that the cookie will expire
+                after that many seconds have passed; make sure this value is high enough to allow the user to be forwarded to the
+                backurl before the cookie expires.  A negative value indicates that the cookie will be deleted when the browser
+                exits.
+            </description>
+        </init-param>
         -->
         <!--
         <init-param>
