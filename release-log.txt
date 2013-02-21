@@ -5,7 +5,6 @@ OOZIE-1054 Create script to properly upload sharelib to HDFS (bowenzhangusa via 
 OOZIE-1096 Update wfgen README.txt to have the TLP mailing list (jun aoki via rkanter)
 OOZIE-1015 HadoopAccessorService jobtracker validation should not have hardcoded conf key (mona)
 OOZIE-1078 Help -> Documentation and Help -> Online Help should link to oozie.apache.org/ (jun via mohammad)
-OOZIE-669 Deprecate oozie-start.sh, oozie-stop.sh & oozie-run.sh scripts (rkanter via tucu)
 OOZIE-809 MySQL TEXT columns should be MEDIUMTEXT (rkanter via tucu)
 OOZIE-979 bump up trunk version to 3.4.0-SNAPSHOT (tucu)
 OOZIE-1007 Add license headers to all files don't have them  (egashira via tucu)
@@ -14,6 +13,7 @@ OOZIE-944 Implement Workflow Generator UI Tool (egashira via virag)
 
 -- Oozie 3.3.2 (unreleased)
 
+OOZIE-669 Deprecate oozie-start.sh, oozie-stop.sh & oozie-run.sh scripts (rkanter via tucu)
 OOZIE-1219 The timezone cookie should never expire (rkanter)
 OOZIE-1220 Make the login example cookie expire (rkanter)
 OOZIE-1227 In a coordinator, specifying the <app-path> without a namenode causes it to fail (rkanter)
