@@ -78,10 +78,10 @@ import org.apache.hadoop.security.token.TokenIdentifier;
 public class JavaActionExecutor extends ActionExecutor {
 
     private static final String HADOOP_USER = "user.name";
-    private static final String HADOOP_JOB_TRACKER = "mapred.job.tracker";
-    private static final String HADOOP_JOB_TRACKER_2 = "mapreduce.jobtracker.address";
-    private static final String HADOOP_YARN_RM = "yarn.resourcemanager.address";
-    private static final String HADOOP_NAME_NODE = "fs.default.name";
+    public static final String HADOOP_JOB_TRACKER = "mapred.job.tracker";
+    public static final String HADOOP_JOB_TRACKER_2 = "mapreduce.jobtracker.address";
+    public static final String HADOOP_YARN_RM = "yarn.resourcemanager.address";
+    public static final String HADOOP_NAME_NODE = "fs.default.name";
     private static final String HADOOP_JOB_NAME = "mapred.job.name";
     public static final String OOZIE_COMMON_LIBDIR = "oozie";
     public static final int MAX_EXTERNAL_STATS_SIZE_DEFAULT = Integer.MAX_VALUE;
@@ -721,7 +721,7 @@ public class JavaActionExecutor extends ActionExecutor {
             if (alreadyRunning && !isUserRetry) {
                 runningJob = jobClient.getJob(JobID.forName(launcherId));
                 if (runningJob == null) {
-                    String jobTracker = launcherJobConf.get("mapred.job.tracker");
+                    String jobTracker = launcherJobConf.get(HADOOP_JOB_TRACKER);
                     throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "JA017",
                             "unknown job [{0}@{1}], cannot recover", launcherId, jobTracker);
                 }

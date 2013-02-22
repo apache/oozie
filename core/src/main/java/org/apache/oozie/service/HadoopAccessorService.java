@@ -30,6 +30,7 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.security.token.Token;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.action.hadoop.JavaActionExecutor;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
@@ -364,7 +365,7 @@ public class HadoopAccessorService implements Service {
         if (!conf.getBoolean(OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED, false)) {
             throw new HadoopAccessorException(ErrorCode.E0903);
         }
-        String jobTracker = conf.get("mapred.job.tracker");
+        String jobTracker = conf.get(JavaActionExecutor.HADOOP_JOB_TRACKER);
         validateJobTracker(jobTracker);
         try {
             UserGroupInformation ugi = getUGI(user);
