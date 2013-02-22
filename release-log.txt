@@ -1,5 +1,6 @@
 -- Oozie 3.3.2 (unreleased)
 
+OOZIE-1054 Create script to properly upload sharelib to HDFS (bowenzhangusa via tucu)
 OOZIE-1015 HadoopAccessorService jobtracker validation should not have hardcoded conf key (mona)
 OOZIE-669 Deprecate oozie-start.sh, oozie-stop.sh & oozie-run.sh scripts (rkanter via tucu)
 OOZIE-1219 The timezone cookie should never expire (rkanter)

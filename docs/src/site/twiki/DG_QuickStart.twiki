@@ -76,10 +76,19 @@ required Hadoop JARs from such version in the *libext/* directory.
 
 If using the ExtJS library copy the ZIP file to the *libext/* directory.
 
+A "sharelib create|upgrade -fs fs_default_name [-locallib sharelib]" command is available when running oozie-setup.sh
+for uploading new or upgrading existing sharelib into hdfs where the first argument is the default fs name
+and the second argument is the Oozie sharelib to install, it can be a tarball or the expanded version of it.
+If the second argument is omitted, the Oozie sharelib tarball from the Oozie installation directory will be used.
+
+"prepare-war" command is for creating war files for oozie.
+
 Run the =oozie-setup.sh= script to configure Oozie with all the components added to the *libext/* directory.
 
 <verbatim>
-$ bin/oozie-setup.sh
+$ bin/oozie-setup.sh prepare-war [-jars <PATHS>] [-extjs <PATH>]
+                     sharelib create -fs <FS_URI> [-locallib <PATH>]
+                     sharelib upgrade -fs <FS_URI> [-locallib <PATH>]
 </verbatim>
 
 Create the Oozie DB using the 'ooziedb.sh' command line tool:
