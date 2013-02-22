@@ -667,9 +667,21 @@ public abstract class XDataTestCase extends XFsTestCase {
      * @throws Exception thrown if unable to create sla bean
      */
     protected void addRecordToSLAEventTable(String slaId, SLAEvent.Status status, Date today) throws Exception {
+        addRecordToSLAEventTable(slaId, "app-name", status, today);
+    }
+
+    /**
+     * Insert sla event for testing.
+     *
+     * @param slaId sla id
+     * @param slaId app name
+     * @param status sla status
+     * @throws Exception thrown if unable to create sla bean
+     */
+    protected void addRecordToSLAEventTable(String slaId, String appName, SLAEvent.Status status, Date today) throws Exception {
         SLAEventBean sla = new SLAEventBean();
         sla.setSlaId(slaId);
-        sla.setAppName("app-name");
+        sla.setAppName(appName);
         sla.setParentClientId("parent-client-id");
         sla.setParentSlaId("parent-sla-id");
         sla.setExpectedStart(today);
@@ -700,6 +712,8 @@ public abstract class XDataTestCase extends XFsTestCase {
             throw je;
         }
     }
+
+
 
     /**
      * Insert bundle job for testing.

@@ -126,6 +126,10 @@ public class OozieClient {
 
     public static final String FILTER_UNIT = "unit";
 
+    public static final String FILTER_JOBID = "jobid";
+
+    public static final String FILTER_APPNAME = "appname";
+
     public static final String CHANGE_VALUE_ENDTIME = "endtime";
 
     public static final String CHANGE_VALUE_PAUSETIME = "pausetime";
@@ -1200,15 +1204,16 @@ public class OozieClient {
      * @param len number of results
      * @throws OozieClientException
      */
-    public void getSlaInfo(int start, int len) throws OozieClientException {
-        new SlaInfo(start, len).call();
+    public void getSlaInfo(int start, int len, String filter) throws OozieClientException {
+        new SlaInfo(start, len, filter).call();
     }
 
     private class SlaInfo extends ClientCallable<Void> {
 
-        SlaInfo(int start, int len) {
+        SlaInfo(int start, int len, String filter) {
             super("GET", RestConstants.SLA, "", prepareParams(RestConstants.SLA_GT_SEQUENCE_ID,
-                    Integer.toString(start), RestConstants.MAX_EVENTS, Integer.toString(len)));
+                    Integer.toString(start), RestConstants.MAX_EVENTS, Integer.toString(len),
+                    RestConstants.JOBS_FILTER_PARAM, filter));
         }
 
         @Override
