@@ -1,4 +1,5 @@
--- Oozie 3.4.0 release (trunk - unreleased)
+-- Oozie 4.0.0 release (trunk - unreleased)
+OOZIE-1237 Bump up trunk to 4.0.0-SNAPSHOT (virag)
 OOZIE-561 Integrate Oozie with HCatalog
     OOZIE-1181 Dependency cache with configurations for eviction, ttl and max elements in memory (rohini via virag)
     OOZIE-1217 Address review comments in OOZIE-1210 (rohini via virag)
