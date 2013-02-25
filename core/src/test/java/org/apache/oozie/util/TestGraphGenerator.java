@@ -109,6 +109,7 @@ public class TestGraphGenerator extends XTestCase {
 
     private static String readFile(String path) throws IOException {
         File f = new File(path);
+        System.out.println("Reading input file " + f.getAbsolutePath());
         FileInputStream stream = new FileInputStream(f);
         try {
             FileChannel fc = stream.getChannel();

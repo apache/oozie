@@ -47,7 +47,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * The HadoopAccessorService returns HadoopAccessor instances configured to work on behalf of a user-group. <p/> The
@@ -85,15 +84,18 @@ public class HadoopAccessorService implements Service {
     private Map<String, File> actionConfigDirs = new HashMap<String, File>();
     private Map<String, Map<String, XConfiguration>> actionConfigs = new HashMap<String, Map<String, XConfiguration>>();
 
-    private ConcurrentMap<String, UserGroupInformation> userUgiMap;
+    private UserGroupInformationService ugiService;
 
     /**
      * Supported filesystem schemes for namespace federation
      */
     public static final String SUPPORTED_FILESYSTEMS = CONF_PREFIX + "supported.filesystems";
+    public static final String[] DEFAULT_SUPPORTED_SCHEMES = new String[]{"hdfs","hftp","webhdfs"};
     private Set<String> supportedSchemes;
+    private boolean allSchemesSupported;
 
     public void init(Services services) throws ServiceException {
+        this.ugiService = services.get(UserGroupInformationService.class);
         init(services.getConf());
     }
 
@@ -131,13 +133,15 @@ public class HadoopAccessorService implements Service {
             UserGroupInformation.setConfiguration(ugiConf);
         }
 
-        userUgiMap = new ConcurrentHashMap<String, UserGroupInformation>();
+        if (ugiService == null) { //for testing purposes, see XFsTestCase
+            this.ugiService = new UserGroupInformationService();
+        }
 
         loadHadoopConfigs(conf);
         preLoadActionConfigs(conf);
 
         supportedSchemes = new HashSet<String>();
-        String[] schemesFromConf = conf.getStrings(SUPPORTED_FILESYSTEMS, new String[]{"hdfs","hftp","webhdfs"});
+        String[] schemesFromConf = conf.getStrings(SUPPORTED_FILESYSTEMS, DEFAULT_SUPPORTED_SCHEMES);
         if(schemesFromConf != null) {
             for (String scheme: schemesFromConf) {
                 scheme = scheme.trim();
@@ -147,9 +151,9 @@ public class HadoopAccessorService implements Service {
                         throw new ServiceException(ErrorCode.E0100, getClass().getName(),
                             SUPPORTED_FILESYSTEMS + " should contain either only wildcard or explicit list, not both");
                     }
-                } else {
-                    supportedSchemes.add(scheme);
+                    allSchemesSupported = true;
                 }
+                supportedSchemes.add(scheme);
             }
         }
     }
@@ -267,13 +271,7 @@ public class HadoopAccessorService implements Service {
     }
 
     private UserGroupInformation getUGI(String user) throws IOException {
-        UserGroupInformation ugi = userUgiMap.get(user);
-        if (ugi == null) {
-            // taking care of a race condition, the latest UGI will be discarded
-            ugi = UserGroupInformation.createProxyUser(user, UserGroupInformation.getLoginUser());
-            userUgiMap.putIfAbsent(user, ugi);
-        }
-        return ugi;
+        return ugiService.getProxyUser(user);
     }
 
     /**
@@ -527,6 +525,8 @@ public class HadoopAccessorService implements Service {
      */
 
     public void checkSupportedFilesystem(URI uri) throws HadoopAccessorException {
+        if (allSchemesSupported)
+            return;
         String uriScheme = uri.getScheme();
         if (uriScheme != null) {    // skip the check if no scheme is given
             if(!supportedSchemes.isEmpty()) {
@@ -534,8 +534,12 @@ public class HadoopAccessorService implements Service {
                 if (!supportedSchemes.contains(uriScheme)) {
                     throw new HadoopAccessorException(ErrorCode.E0904, uriScheme, uri.toString());
                 }
-            }
-        }
+             }
+         }
+    }
+
+    public Set<String> getSupportedSchemes() {
+        return supportedSchemes;
     }
 
 }

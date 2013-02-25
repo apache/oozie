@@ -1,0 +1,39 @@
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<ehcache>
+    <!--  http://svn.codehaus.org/sonar/tags/1.1/sonar-commons/src/main/resources/ehcache.xml -->
+    <diskStore path="target"/>
+    <cache name="testspilltodisk" maxElementsInMemory="20000" eternal="false"
+        overflowToDisk="true" timeToIdleSeconds="500" timeToLiveSeconds="0"
+        diskPersistent="false" diskExpiryThreadIntervalSeconds="120" />
+    <cache name="testnospilltodisk" maxElementsInMemory="0" eternal="false"
+        overflowToDisk="false" timeToIdleSeconds="500" timeToLiveSeconds="0"
+        diskPersistent="false" diskExpiryThreadIntervalSeconds="120" />
+    <!--  Note: overflowToDisk=true does not work well with timeToIdleSeconds or timeToLiveSeconds.
+          Returns null even for unexpired entries. If maxElementsInMemory="5" and overflowToDisk="true"
+          testevictionontimetoidle and testevictionontimetolive  tests will fail -->
+    <cache name="testevictionontimetoidle" maxElementsInMemory="0" eternal="false"
+        overflowToDisk="false" timeToIdleSeconds="1" timeToLiveSeconds="0"
+        diskPersistent="false" diskExpiryThreadIntervalSeconds="120" />
+    <cache name="testevictionontimetolive" maxElementsInMemory="0" eternal="false"
+        overflowToDisk="false" timeToIdleSeconds="0" timeToLiveSeconds="1"
+        diskPersistent="false" diskExpiryThreadIntervalSeconds="120" />
+    <cache name="testmaxelementsinmemory" maxElementsInMemory="500" eternal="false"
+        overflowToDisk="false" timeToIdleSeconds="0" timeToLiveSeconds="0"
+        diskPersistent="false" diskExpiryThreadIntervalSeconds="120" />
+</ehcache>

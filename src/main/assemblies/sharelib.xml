@@ -55,6 +55,10 @@
            <directory>${basedir}/distcp/target/partial-sharelib</directory>
            <outputDirectory>/</outputDirectory>
        </fileSet>
+       <fileSet>
+           <directory>${basedir}/hcatalog/target/partial-sharelib</directory>
+           <outputDirectory>/</outputDirectory>
+       </fileSet>
     </fileSets>
 
 </assembly>

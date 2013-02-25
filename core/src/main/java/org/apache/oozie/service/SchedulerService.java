@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -172,6 +172,39 @@ public class SchedulerService implements Service {
         if (!scheduler.isShutdown()) {
             scheduler.scheduleWithFixedDelay(r, delay * unit.getMillis(), interval * unit.getMillis(),
                                                  TimeUnit.MILLISECONDS);
+        }
+        else {
+            log.warn("Scheduler shutting down, ignoring scheduling of [{0}]", runnable.getClass());
+        }
+    }
+
+    /**
+     * Schedule a Runnable for execution.
+     *
+     * @param runnable Runnable to schedule for execution.
+     * @param delay the time from now to delay execution.
+     * @param unit scheduling unit.
+     */
+    public void schedule(final Runnable runnable, long delay, Unit unit) {
+        log.trace("Scheduling runnable [{0}], delay [{1}] in [{2}]",
+                  runnable.getClass(), delay, unit);
+        Runnable r = new Runnable() {
+            public void run() {
+                if (Services.get().getSystemMode() == SYSTEM_MODE.SAFEMODE) {
+                    log.trace("schedule[run/Runnable] System is in SAFEMODE. Therefore nothing will run");
+                    return;
+                }
+                try {
+                    runnable.run();
+                }
+                catch (Exception ex) {
+                    log.warn("Error executing runnable [{0}], {1}", runnable.getClass().getSimpleName(),
+                             ex.getMessage(), ex);
+                }
+            }
+        };
+        if (!scheduler.isShutdown()) {
+            scheduler.schedule(r, delay * unit.getMillis(), TimeUnit.MILLISECONDS);
         }
         else {
             log.warn("Scheduler shutting down, ignoring scheduling of [{0}]", runnable.getClass());

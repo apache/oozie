@@ -19,6 +19,7 @@ package org.apache.oozie.action.hadoop;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.oozie.test.MiniHCatServer;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
 import java.io.File;
@@ -122,6 +123,8 @@ public class TestHiveMain extends MainTestCase {
                 os = new FileOutputStream(hiveSite);
                 jobConf.writeXml(os);
                 os.close();
+                MiniHCatServer.resetDefaultDBCreation();
+                MiniHCatServer.resetHiveConfStaticVariables();
                 HiveMain.main(null);
             }
             catch (SecurityException ex) {
@@ -139,6 +142,7 @@ public class TestHiveMain extends MainTestCase {
             finally {
                 System.setProperty("user.name", user);
                 hiveSite.delete();
+                MiniHCatServer.resetHiveConfStaticVariables();
             }
 
             assertTrue(outputDataFile.exists());

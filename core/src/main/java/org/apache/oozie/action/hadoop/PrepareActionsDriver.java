@@ -20,12 +20,13 @@ package org.apache.oozie.action.hadoop;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collection;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.oozie.service.HadoopAccessorService;
 import org.xml.sax.SAXException;
 import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -44,27 +45,25 @@ public class PrepareActionsDriver {
      * @param prepareXML Prepare XML block in string format
      * @throws LauncherException
      */
-    static void doOperations(Collection<String> supportedFileSystems, String prepareXML) throws LauncherException {
+    static void doOperations(String prepareXML, Configuration conf) throws LauncherException {
         try {
             Document doc = getDocumentFromXML(prepareXML);
             doc.getDocumentElement().normalize();
 
             // Get the list of child nodes, basically, each one corresponding to a separate action
             NodeList nl = doc.getDocumentElement().getChildNodes();
-            FileSystemActions fsActions = new FileSystemActions(supportedFileSystems);
+            LauncherURIHandlerFactory factory = new LauncherURIHandlerFactory(conf);
 
             for (int i = 0; i < nl.getLength(); ++i) {
-                String commandType = "";
-                /* Logic to find the command type goes here
-                commandType = ..........;
-                */
-                // As of now, the available prepare action is of type hdfs. Hence, assigning the value directly
-                commandType = "hdfs";
-                if (commandType.equalsIgnoreCase("hdfs")) {
-                    fsActions.execute(nl.item(i));
-                } /*else if(commandType.equalsIgnoreCase("hcat")) {     //Other command types go here
-                    hCatActions.execute(nl.item(i));
-                  }*/
+                Node n = nl.item(i);
+                String operation = n.getNodeName();
+                if (n.getAttributes() == null || n.getAttributes().getNamedItem("path") == null) {
+                    continue;
+                }
+                String path = n.getAttributes().getNamedItem("path").getNodeValue().trim();
+                URI uri = new URI(path);
+                LauncherURIHandler handler = factory.getURIHandler(uri);
+                execute(operation, uri, handler, conf);
             }
         } catch (IOException ioe) {
             throw new LauncherException(ioe.getMessage(), ioe);
@@ -72,6 +71,24 @@ public class PrepareActionsDriver {
             throw new LauncherException(saxe.getMessage(), saxe);
         } catch (ParserConfigurationException pce) {
             throw new LauncherException(pce.getMessage(), pce);
+        } catch (URISyntaxException use) {
+            throw new LauncherException(use.getMessage(), use);
+        }
+    }
+
+    /**
+     * Method to execute the prepare actions based on the command
+     *
+     * @param n Child node of the prepare XML
+     * @throws LauncherException
+     */
+    private static void execute(String operation, URI uri, LauncherURIHandler handler, Configuration conf)
+            throws LauncherException {
+        if (operation.equals("delete")) {
+            handler.delete(uri, conf);
+        }
+        else if (operation.equals("mkdir")) {
+            handler.create(uri, conf);
         }
     }
 
@@ -83,4 +100,5 @@ public class PrepareActionsDriver {
         InputStream is = new ByteArrayInputStream(prepareXML.getBytes("UTF-8"));
         return docBuilder.parse(is);
     }
+
 }

@@ -32,6 +32,7 @@ import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
+import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.MaterializeTransitionXCommand;
 import org.apache.oozie.command.PreconditionException;
@@ -106,6 +107,16 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
     public void performWrites() throws CommandException {
         try {
             jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, insertList));
+            // register the partition related dependencies of actions
+            for (JsonBean actionBean : insertList) {
+                if (actionBean instanceof CoordinatorActionBean) {
+                    CoordinatorActionBean coordAction = (CoordinatorActionBean) actionBean;
+                    if (coordAction.getPushMissingDependencies() != null) {
+                        // TODO: Delay in catchup mode?
+                        queue(new CoordPushDependencyCheckXCommand(coordAction.getId(), true), 100);
+                    }
+                }
+            }
         }
         catch (JPAExecutorException jex) {
             throw new CommandException(jex);
@@ -329,6 +340,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
 
             if (!dryrun) {
                 storeToDB(actionBean, action); // Storing to table
+
             }
             else {
                 actionStrings.append("action for new instance");
