@@ -33,13 +33,14 @@ import java.lang.reflect.Method;
 import java.net.URI;
 import java.security.Permission;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -53,12 +54,12 @@ import org.apache.hadoop.mapred.RunningJob;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.util.XLog;
 
 public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, Runnable {
 
     public static final String CONF_OOZIE_ACTION_MAIN_CLASS = "oozie.launcher.action.main.class";
-    public static final String CONF_OOZIE_ACTION_SUPPORTED_FILESYSTEMS = "oozie.launcher.action.supported.filesystems";
 
     public static final String CONF_OOZIE_ACTION_MAX_OUTPUT_DATA = "oozie.action.max.output.data";
 
@@ -152,8 +153,10 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         launcherConf.set(CONF_OOZIE_ACTION_MAIN_CLASS, javaMainClass);
     }
 
-    public static void setupSupportedFileSystems(Configuration launcherConf, String supportedFileSystems) {
-        launcherConf.set(CONF_OOZIE_ACTION_SUPPORTED_FILESYSTEMS, supportedFileSystems);
+    public static void setupLauncherURIHandlerConf(Configuration launcherConf) {
+        for(Entry<String, String> entry : Services.get().get(URIHandlerService.class).getLauncherConfig()) {
+            launcherConf.set(entry.getKey(), entry.getValue());
+        }
     }
 
     public static void setupMainArguments(Configuration launcherConf, String[] args) {
@@ -547,6 +550,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
                             System.out.println();
                         }
                         handleActionStatsData(reporter);
+                        handleExternalChildIDs(reporter);
                         File newId = new File(System.getProperty("oozie.action.newId.properties"));
                         if (newId.exists()) {
                             Properties props = new Properties();
@@ -665,8 +669,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         String prepareXML = getJobConf().get(ACTION_PREPARE_XML);
         if (prepareXML != null) {
              if (!prepareXML.equals("")) {
-                 PrepareActionsDriver.doOperations(
-                     getJobConf().getStringCollection(CONF_OOZIE_ACTION_SUPPORTED_FILESYSTEMS), prepareXML);
+                 PrepareActionsDriver.doOperations(prepareXML, getJobConf());
              } else {
                  System.out.println("There are no prepare actions to execute.");
              }
@@ -815,16 +818,5 @@ class LauncherSecurityManager extends SecurityManager {
     public static void reset() {
         exitInvoked = false;
         exitCode = 0;
-    }
-}
-
-class LauncherException extends Exception {
-
-    LauncherException(String message) {
-        super(message);
-    }
-
-    LauncherException(String message, Throwable cause) {
-        super(message, cause);
     }
 }

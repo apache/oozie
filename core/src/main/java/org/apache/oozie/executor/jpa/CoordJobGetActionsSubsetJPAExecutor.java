@@ -17,7 +17,6 @@
  */
 package org.apache.oozie.executor.jpa;
 
-import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -137,6 +136,7 @@ public class CoordJobGetActionsSubsetJPAExecutor implements JPAExecutor<List<Coo
             action.setCreatedConf(a.getCreatedConf());
             action.setExternalStatus(a.getExternalStatus());
             action.setMissingDependencies(a.getMissingDependencies());
+            action.setPushMissingDependencies(a.getPushMissingDependencies());
             action.setRunConf(a.getRunConf());
             action.setTimeOut(a.getTimeOut());
             action.setTrackerUri(a.getTrackerUri());
@@ -198,7 +198,10 @@ public class CoordJobGetActionsSubsetJPAExecutor implements JPAExecutor<List<Coo
             bean.setMissingDependencies((String) arr[13]);
         }
         if (arr[14] != null) {
-            bean.setTimeOut((Integer) arr[14]);
+            bean.setPushMissingDependencies((String) arr[14]);
+        }
+        if (arr[15] != null) {
+            bean.setTimeOut((Integer) arr[15]);
         }
         return bean;
 

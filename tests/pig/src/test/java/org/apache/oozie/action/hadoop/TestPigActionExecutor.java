@@ -29,6 +29,7 @@ import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.action.hadoop.ActionExecutorTestCase.Context;
 import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.HadoopAccessorService;
@@ -70,6 +71,12 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
             "store B into '$OUT' USING PigStorage();\n";
 
     @Override
+    protected void setUp() throws Exception {
+        System.setProperty("oozie.test.metastore.server", "false");
+        super.setUp();
+    }
+
+    @Override
     protected void setSystemProps() throws Exception {
         super.setSystemProps();
         setSystemProperty("oozie.service.ActionService.executor.classes", PigActionExecutor.class.getName());
@@ -93,8 +100,8 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         classes.add(LauncherSecurityManager.class);
         classes.add(LauncherException.class);
         classes.add(LauncherMainException.class);
-        classes.add(FileSystemActions.class);
         classes.add(PrepareActionsDriver.class);
+        classes.addAll(Services.get().get(URIHandlerService.class).getClassesForLauncher());
         classes.add(ActionStats.class);
         classes.add(ActionType.class);
         classes.add(LauncherMain.class);

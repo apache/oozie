@@ -33,6 +33,7 @@
 
     <modules>
         <module>streaming</module>
+        <module>hcatalog</module>
         <module>pig</module>
         <module>hive</module>
         <module>sqoop</module>

@@ -53,11 +53,19 @@ import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.dependency.FSURIHandler;
+import org.apache.oozie.dependency.HCatURIHandler;
 import org.apache.oozie.service.ConfigurationService;
+import org.apache.oozie.service.HCatAccessorService;
 import org.apache.oozie.service.HadoopAccessorService;
+import org.apache.oozie.service.JMSAccessorService;
+import org.apache.oozie.service.PartitionDependencyManagerService;
+import org.apache.oozie.service.ServiceException;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.store.StoreException;
+import org.apache.oozie.test.MiniHCatServer.RUNMODE;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
@@ -89,6 +97,8 @@ public abstract class XTestCase extends TestCase {
     private static final String OOZIE_TEST_PROPERTIES = "oozie.test.properties";
 
     public static float WAITFOR_RATIO = Float.parseFloat(System.getProperty("oozie.test.waitfor.ratio", "1"));
+    protected static final String localActiveMQBroker = "vm://localhost?broker.persistent=false";
+    protected static final String ActiveMQConnFactory = "org.apache.activemq.jndi.ActiveMQInitialContextFactory";
 
     static {
         try {
@@ -303,6 +313,10 @@ public abstract class XTestCase extends TestCase {
             Configuration conf = mrCluster.createJobConf();
             conf.writeXml(os);
             os.close();
+        }
+
+        if (System.getProperty("oozie.test.metastore.server", "true").equals("true")) {
+            setupHCatalogServer();
         }
     }
 
@@ -601,6 +615,10 @@ public abstract class XTestCase extends TestCase {
                                   getOozieUser() + "/localhost") + "@" + getRealm();
     }
 
+    protected MiniHCatServer getHCatalogServer() {
+        return hcatServer;
+    }
+
     //TODO Fix this
     /**
      * Clean up database schema
@@ -684,6 +702,7 @@ public abstract class XTestCase extends TestCase {
 
     private static MiniDFSCluster dfsCluster = null;
     private static MiniMRCluster mrCluster = null;
+    private static MiniHCatServer hcatServer = null;
 
     private void setUpEmbeddedHadoop(String testCaseDir) throws Exception {
         if (dfsCluster == null && mrCluster == null) {
@@ -756,6 +775,14 @@ public abstract class XTestCase extends TestCase {
                 throw ex;
             }
             new MiniClusterShutdownMonitor().start();
+        }
+    }
+
+    private void setupHCatalogServer() throws Exception {
+        if (hcatServer == null) {
+            hcatServer = new MiniHCatServer(RUNMODE.SERVER, createJobConf());
+            hcatServer.start();
+            log.info("Metastore server started at " + hcatServer.getMetastoreURI());
         }
     }
 
@@ -857,5 +884,24 @@ public abstract class XTestCase extends TestCase {
             throw new RuntimeException(ex);
         }
     }
+
+    protected Services setupServicesForHCatalog() throws ServiceException {
+        Services services = new Services();
+        Configuration conf = services.getConf();
+        conf.set(Services.CONF_SERVICE_EXT_CLASSES,
+                JMSAccessorService.class.getName() + "," +
+                PartitionDependencyManagerService.class.getName() + "," +
+                HCatAccessorService.class.getName());
+        conf.set(HCatAccessorService.JMS_CONNECTIONS_PROPERTIES,
+                "default=java.naming.factory.initial#" + ActiveMQConnFactory + ";" +
+                "java.naming.provider.url#" + localActiveMQBroker +
+                "connectionFactoryNames#"+ "ConnectionFactory");
+        conf.set(URIHandlerService.URI_HANDLERS,
+                FSURIHandler.class.getName() + "," + HCatURIHandler.class.getName());
+        setSystemProperty("java.naming.factory.initial", "org.apache.activemq.jndi.ActiveMQInitialContextFactory");
+        setSystemProperty("java.naming.provider.url", "vm://localhost?broker.persistent=false");
+        return services;
+    }
+
 }
 

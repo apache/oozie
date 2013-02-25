@@ -109,6 +109,7 @@ public class CoordActionGetForInfoJPAExecutor implements JPAExecutor<Coordinator
             action.setCreatedConf(a.getCreatedConf());
             action.setExternalStatus(a.getExternalStatus());
             action.setMissingDependencies(a.getMissingDependencies());
+            action.setPushMissingDependencies(a.getPushMissingDependencies());
             action.setRunConf(a.getRunConf());
             action.setTimeOut(a.getTimeOut());
             action.setTrackerUri(a.getTrackerUri());
@@ -170,6 +171,9 @@ public class CoordActionGetForInfoJPAExecutor implements JPAExecutor<Coordinator
         }
         if (arr[13] != null) {
             bean.setMissingDependencies((String) arr[13]);
+        }
+        if (arr[14] != null) {
+            bean.setPushMissingDependencies((String) arr[14]);
         }
         return bean;
     }

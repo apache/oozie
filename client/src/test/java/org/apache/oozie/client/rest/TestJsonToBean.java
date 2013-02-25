@@ -181,6 +181,7 @@ public class TestJsonToBean extends TestCase {
         json.put(JsonTags.COORDINATOR_ACTION_RUNTIME_CONF, "e");
         json.put(JsonTags.COORDINATOR_ACTION_LAST_MODIFIED_TIME, LAST_MODIFIED);
         json.put(JsonTags.COORDINATOR_ACTION_MISSING_DEPS, "f");
+        json.put(JsonTags.COORDINATOR_ACTION_PUSH_MISSING_DEPS, "ff");
         json.put(JsonTags.COORDINATOR_ACTION_EXTERNAL_STATUS, "g");
         json.put(JsonTags.COORDINATOR_ACTION_TRACKER_URI, "h");
         json.put(JsonTags.COORDINATOR_ACTION_CONSOLE_URL, "i");
@@ -217,6 +218,7 @@ public class TestJsonToBean extends TestCase {
         assertEquals("e", action.getRunConf());
         assertEquals(JsonUtils.parseDateRfc822(LAST_MODIFIED), action.getLastModifiedTime());
         assertEquals("f", action.getMissingDependencies());
+        assertEquals("ff", action.getPushMissingDependencies());
         assertEquals("g", action.getExternalStatus());
         assertEquals("h", action.getTrackerUri());
         assertEquals("i", action.getConsoleUrl());

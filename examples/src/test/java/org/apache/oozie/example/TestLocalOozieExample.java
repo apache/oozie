@@ -17,8 +17,6 @@
  */
 package org.apache.oozie.example;
 
-import junit.framework.TestCase;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XFsTestCase;
@@ -35,6 +33,7 @@ public class TestLocalOozieExample extends XFsTestCase {
 
     @Override
     protected void setUp() throws Exception {
+        System.setProperty("oozie.test.metastore.server", "false");
         super.setUp();
         oozieLocalLog = System.getProperty("oozielocal.log");
         System.setProperty("oozielocal.log", getTestCaseDir()+"/oozielocal.log");

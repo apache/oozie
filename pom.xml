@@ -45,7 +45,7 @@
         <!-- to be able to run a single test case from the main project -->
         <failIfNoTests>false</failIfNoTests>
 
-        <test.timeout>3600</test.timeout>
+        <test.timeout>5400</test.timeout>
 
         <!-- platform encoding override -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -68,9 +68,11 @@
 
         <hadoop.version>1.1.1</hadoop.version>
         <hbase.version>0.94.2</hbase.version>
+        <hcatalog.version>0.6.0</hcatalog.version>
 
         <hadooplib.version>${hadoop.version}.oozie-${project.version}</hadooplib.version>
         <hbaselib.version>${hbase.version}.oozie-${project.version}</hbaselib.version>
+        <hcataloglib.version>${hcatalog.version}.oozie-${project.version}</hcataloglib.version>
 
         <clover.license>/home/jenkins/tools/clover/latest/lib/clover.license</clover.license>
         <!--
@@ -94,6 +96,7 @@
         <module>client</module>
         <module>hadooplibs</module>
         <module>hbaselibs</module>
+        <module>hcataloglibs</module>
         <module>core</module>
         <module>tests</module>
         <module>webapp</module>
@@ -267,11 +270,17 @@
           <dependency>
               <groupId>org.slf4j</groupId>
               <artifactId>slf4j-simple</artifactId>
-              <version>1.5.8</version>
+              <version>1.6.6</version>
           </dependency>
 
             <!-- core -->
-             <dependency>
+            <dependency>
+                <groupId>org.apache.oozie</groupId>
+                <artifactId>oozie-hcatalog</artifactId>
+                <version>${hcataloglib.version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>org.apache.oozie</groupId>
                 <artifactId>oozie-hbase</artifactId>
                 <version>${hbaselib.version}</version>
@@ -329,6 +338,12 @@
                 <groupId>commons-codec</groupId>
                 <artifactId>commons-codec</artifactId>
                 <version>1.4</version>
+            </dependency>
+
+            <dependency>
+                <groupId>net.sf.ehcache</groupId>
+                <artifactId>ehcache-core</artifactId>
+                <version>2.6.3</version>
             </dependency>
 
             <dependency>
@@ -451,18 +466,37 @@
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
-                <version>1.5.8</version>
+                <version>1.6.6</version>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-log4j12</artifactId>
-                <version>1.5.8</version>
+                <version>1.6.6</version>
             </dependency>
+
             <dependency>
                 <groupId>org.apache.hive</groupId>
                 <artifactId>hive-builtins</artifactId>
                 <version>${hive.version}</version>
             </dependency>
+
+           <dependency>
+                <groupId>org.apache.activemq</groupId>
+                <artifactId>activemq-client</artifactId>
+                <version>5.8.0</version>
+           </dependency>
+
+           <dependency>
+                <groupId>org.apache.activemq</groupId>
+                <artifactId>activemq-broker</artifactId>
+                <version>5.8.0</version>
+           </dependency>
+
+           <dependency>
+                <groupId>org.apache.activemq</groupId>
+                <artifactId>activemq-kahadb-store</artifactId>
+                <version>5.8.0</version>
+           </dependency>
 
             <dependency>
                 <groupId>commons-logging</groupId>
@@ -849,6 +883,7 @@
                              to test the SSH action
                         -->
                         <exclude>**/TestSsh*.java</exclude>
+
 
                         <!-- See 'testSqoop' profile in core/pom.xml and the Building doc-->
                         <exclude>**/TestSqoop*.java</exclude>

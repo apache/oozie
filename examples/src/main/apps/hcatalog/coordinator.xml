@@ -1,0 +1,73 @@
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<coordinator-app name="cron-coord" frequency="${coord:minutes(10)}" start="${start}" end="${end}" timezone="UTC"
+                 xmlns="uri:oozie:coordinator:0.2">
+    <datasets>
+        <dataset name="raw-logs" frequency="${coord:minutes(20)}" initial-instance="2010-01-01T00:00Z" timezone="UTC">
+            <uri-template>${hcatNode}/${db}/${table}/ds=${YEAR}-${MONTH}-${DAY};region=${region}</uri-template>
+        <done-flag></done-flag>
+        </dataset>
+        <dataset name="processed-logs" frequency="${coord:minutes(20)}" initial-instance="2010-01-01T00:00Z" timezone="UTC">
+            <uri-template>${hcatNode}/${db}/${outputtable}/ds=${dataOut};region=${region}</uri-template>
+        <done-flag></done-flag>
+        </dataset>
+    </datasets>
+
+    <input-events>
+        <data-in name="input" dataset="raw-logs">
+            <instance>${coord:current(0)}</instance>
+        </data-in>
+    </input-events>
+    <output-events>
+        <data-out name="output" dataset="processed-logs">
+            <instance>${coord:current(0)}</instance>
+        </data-out>
+    </output-events>
+
+        <action>
+        <workflow>
+            <app-path>${workflowAppUri}</app-path>
+            <configuration>
+                <property>
+                    <name>DB</name>
+                    <value>${coord:databaseIn('input')}</value>
+                </property>
+                <property>
+                    <name>TABLE</name>
+                    <value>${coord:tableIn('input')}</value>
+                </property>
+                <property>
+                    <name>FILTER</name>
+                    <value>${coord:dataInPartitionFilter('input', 'pig')}</value>
+                </property>
+                <property>
+                    <name>OUTPUT_PARTITION</name>
+                    <value>${coord:dataOutPartitions('output')}</value>
+                </property>
+                <property>
+                    <name>OUTPUT_DB</name>
+                    <value>${coord:databaseOut('output')}</value>
+                </property>
+                <property>
+                    <name>OUTPUT_TABLE</name>
+                    <value>${coord:tableOut('output')}</value>
+                </property>
+            </configuration>
+        </workflow>
+    </action>
+</coordinator-app>

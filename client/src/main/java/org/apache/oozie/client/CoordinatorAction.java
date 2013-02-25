@@ -105,12 +105,20 @@ public interface CoordinatorAction {
     Status getStatus();
 
     /**
-     * Return the missing dependencies for the particular action
+     * Return the PULL-based (directory based) missing dependencies for the
+     * particular action
      *
      * @return the missing dependencies for the particular action
      */
     String getMissingDependencies();
 
+    /**
+     * Return the PUSH-based (e.d HCatalog partition-based ) missing
+     * dependencies for the particular action
+     *
+     * @return the missing dependencies for the particular action
+     */
+    String getPushMissingDependencies();
 
     /**
      * Return the external status of the application instance.
