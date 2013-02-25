@@ -23,12 +23,12 @@
     <parent>
         <groupId>org.apache.oozie</groupId>
         <artifactId>oozie-main</artifactId>
-        <version>3.4.0-SNAPSHOT</version>
+        <version>4.0.0-SNAPSHOT</version>
     </parent>
 
     <groupId>org.apache.oozie.test</groupId>
     <artifactId>oozie-mini</artifactId>
-    <version>3.4.0-SNAPSHOT</version>
+    <version>4.0.0-SNAPSHOT</version>
     <description>Apache Oozie MiniOozie</description>
     <name>Apache Oozie MiniOozie</name>
 

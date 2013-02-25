@@ -1,5 +1,6 @@
--- Oozie 3.4.0 release (trunk - unreleased)
+-- Oozie 4.0.0 release (trunk - unreleased)
 
+OOZIE-1237 Bump up trunk to 4.0.0-SNAPSHOT (virag)
 OOZIE-1096 Update wfgen README.txt to have the TLP mailing list (jun aoki via rkanter)
 OOZIE-1078 Help -> Documentation and Help -> Online Help should link to oozie.apache.org/ (jun via mohammad)
 OOZIE-809 MySQL TEXT columns should be MEDIUMTEXT (rkanter via tucu)
