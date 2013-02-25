@@ -26,6 +26,7 @@ public class TestJsonCoordinatorAction extends TestCase {
     static String CREATE_TIME = "Sat, 05 Sep 2009 00:00:00 GMT";
     static String LAST_MODIFIED_TIME = "Sat, 05 Sep 2009 00:00:00 GMT";
     static String missingDependencies = "a:a, a/a, a//a";
+    static String pushMissingDependencies = "hcat://a/b/c/d/f, hcat://1/2/3/4/5";
 
     static JsonCoordinatorAction createAppAction() {
         JsonCoordinatorAction app = new JsonCoordinatorAction();
@@ -40,6 +41,7 @@ public class TestJsonCoordinatorAction extends TestCase {
         app.setStatus(CoordinatorAction.Status.WAITING);
         app.setConsoleUrl("http://consoleurl:8080");
         app.setMissingDependencies(missingDependencies);
+        app.setPushMissingDependencies(pushMissingDependencies);
         return app;
     }
 
@@ -56,6 +58,7 @@ public class TestJsonCoordinatorAction extends TestCase {
         assertEquals(CoordinatorAction.Status.WAITING, app.getStatus());
         assertEquals("http://consoleurl:8080", app.getConsoleUrl());
         assertEquals(missingDependencies, app.getMissingDependencies());
+        assertEquals(pushMissingDependencies, app.getPushMissingDependencies());
 
     }
 

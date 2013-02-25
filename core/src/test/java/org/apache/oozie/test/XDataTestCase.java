@@ -80,7 +80,7 @@ import org.apache.oozie.workflow.lite.StartNodeDef;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 
-public abstract class XDataTestCase extends XFsTestCase {
+public abstract class XDataTestCase extends XHCatTestCase {
 
     protected static String slaXml = " <sla:info xmlns:sla='uri:oozie:sla:0.1'>"
             + " <sla:app-name>test-app</sla:app-name>" + " <sla:nominal-time>2009-03-06T10:00Z</sla:nominal-time>"
@@ -578,6 +578,7 @@ public abstract class XDataTestCase extends XFsTestCase {
             throw new IOException(e);
         }
         action.setLastModifiedTime(new Date());
+        action.setCreatedTime(new Date());
         action.setStatus(status);
         action.setActionXml(actionXml);
 
@@ -1198,6 +1199,18 @@ public abstract class XDataTestCase extends XFsTestCase {
         conf.set(Services.CONF_SERVICE_CLASSES, new String(builder));
     }
 
+   /**
+    * Add a particular service class to be run in addition to default ones
+    * @param conf
+    * @param serviceName
+    */
+   protected void addServiceToRun(Configuration conf, String serviceName) {
+       String classes = conf.get(Services.CONF_SERVICE_CLASSES);
+       StringBuilder builder = new StringBuilder(classes);
+       builder.append("," + serviceName);
+       conf.set(Services.CONF_SERVICE_CLASSES, new String(builder));
+   }
+
     /**
      * Adds the db records for the Bulk Monitor tests
      */
@@ -1270,4 +1283,65 @@ public abstract class XDataTestCase extends XFsTestCase {
         return DateUtils.formatDateOozieTZ(currentDate);
     }
 
+    protected String addInitRecords(String pushMissingDependencies) throws Exception {
+        CoordinatorJobBean job = addRecordToCoordJobTableForWaiting("coord-job-for-action-input-check.xml",
+                CoordinatorJob.Status.RUNNING, false, true);
+
+        CoordinatorActionBean action1 = addRecordToCoordActionTableForWaiting(job.getId(), 1,
+                CoordinatorAction.Status.WAITING, "coord-action-for-action-input-check.xml", pushMissingDependencies);
+        return action1.getId();
+    }
+
+    protected CoordinatorActionBean addRecordToCoordActionTableForWaiting(String jobId, int actionNum,
+            CoordinatorAction.Status status, String resourceXmlName, String pushMissingDependencies) throws Exception {
+        CoordinatorActionBean action = createCoordAction(jobId, actionNum, status, resourceXmlName, 0);
+        action.setPushMissingDependencies(pushMissingDependencies);
+        try {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            assertNotNull(jpaService);
+            CoordActionInsertJPAExecutor coordActionInsertCmd = new CoordActionInsertJPAExecutor(action);
+            jpaService.execute(coordActionInsertCmd);
+        }
+        catch (JPAExecutorException je) {
+            je.printStackTrace();
+            fail("Unable to insert the test coord action record to table");
+            throw je;
+        }
+        return action;
+    }
+
+    protected CoordinatorJobBean addRecordToCoordJobTableForWaiting(String testFileName, CoordinatorJob.Status status,
+             boolean pending, boolean doneMatd) throws Exception {
+
+        String testDir = getTestCaseDir();
+        CoordinatorJobBean coordJob = createCoordJob(status, pending, doneMatd);
+        String appXml = getCoordJobXmlForWaiting(testFileName, testDir);
+        coordJob.setJobXml(appXml);
+
+        try {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            assertNotNull(jpaService);
+            CoordJobInsertJPAExecutor coordInsertCmd = new CoordJobInsertJPAExecutor(coordJob);
+            jpaService.execute(coordInsertCmd);
+        }
+        catch (JPAExecutorException je) {
+            je.printStackTrace();
+            fail("Unable to insert the test coord job record to table");
+            throw je;
+        }
+
+        return coordJob;
+    }
+
+    protected String getCoordJobXmlForWaiting(String testFileName, String testDir) {
+        try {
+            Reader reader = IOUtils.getResourceAsReader(testFileName, -1);
+            String appXml = IOUtils.getReaderAsString(reader, -1);
+            appXml = appXml.replaceAll("#testDir", testDir);
+            return appXml;
+        }
+        catch (IOException ioe) {
+            throw new RuntimeException(XLog.format("Could not get " + testFileName, ioe));
+        }
+    }
 }

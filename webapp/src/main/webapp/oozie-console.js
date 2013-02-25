@@ -2112,9 +2112,7 @@ function initConsole() {
             listeners:
             { select: { fn:function(combo, value)
                 {
-                    Ext.state.Manager.setProvider(new Ext.state.CookieProvider({
-                        expires: new Date(new Date().getTime()+315569259747) // about 10 years from now!
-                    }));
+                    Ext.state.Manager.setProvider(new Ext.state.CookieProvider());
                     Ext.state.Manager.set("TimezoneId",this.value);
                 }
             }}

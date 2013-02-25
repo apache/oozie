@@ -177,6 +177,8 @@ public enum ErrorCode {
     E0902(XLog.OPS, "Exception occured: [{0}]"),
     E0903(XLog.OPS, "Invalid JobConf, it has not been created by HadoopAccessorService"),
     E0904(XLog.STD, "Scheme [{0}] not supported in uri [{1}]"),
+    E0905(XLog.STD, "Scheme not present in uri [{0}]"),
+    E0906(XLog.STD, "URI parsing error : {0}"),
 
     E1001(XLog.STD, "Could not read the coordinator job definition, {0}"),
     E1002(XLog.STD, "Invalid coordinator application URI [{0}], {1}"),
@@ -229,6 +231,8 @@ public enum ErrorCode {
     E1319(XLog.STD, "Invalid bundle coord job namespace, [{0}]"),
 
     E1400(XLog.STD, "doAs (proxyuser) failure"),
+
+    E1501(XLog.STD, "Error in getting HCat Access [{0}]"),
 
     ETEST(XLog.STD, "THIS SHOULD HAPPEN ONLY IN TESTING, invalid job id [{0}]"),;
 

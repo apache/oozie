@@ -89,6 +89,10 @@ public class JsonCoordinatorAction implements CoordinatorAction, JsonBean {
     @Lob
     private String missingDependencies;
 
+    @Column(name = "push_missing_dependencies")
+    @Lob
+    private String pushMissingDependencies;
+
     @Basic
     @Column(name = "external_status")
     private String externalStatus;
@@ -142,6 +146,7 @@ public class JsonCoordinatorAction implements CoordinatorAction, JsonBean {
         // json.put(JsonTags.COORDINATOR_ACTION_END_TIME, JsonUtils
         // .formatDateRfc822(endTime), timeZoneId);
         json.put(JsonTags.COORDINATOR_ACTION_MISSING_DEPS, missingDependencies);
+        json.put(JsonTags.COORDINATOR_ACTION_PUSH_MISSING_DEPS, pushMissingDependencies);
         json.put(JsonTags.COORDINATOR_ACTION_EXTERNAL_STATUS, externalStatus);
         json.put(JsonTags.COORDINATOR_ACTION_TRACKER_URI, trackerUri);
         json.put(JsonTags.COORDINATOR_ACTION_CONSOLE_URL, consoleUrl);
@@ -238,6 +243,14 @@ public class JsonCoordinatorAction implements CoordinatorAction, JsonBean {
 
     public String getMissingDependencies() {
         return missingDependencies;
+    }
+
+    public String getPushMissingDependencies() {
+        return pushMissingDependencies;
+    }
+
+    public void setPushMissingDependencies(String pushMissingDependencies) {
+        this.pushMissingDependencies = pushMissingDependencies;
     }
 
     public String getExternalStatus() {

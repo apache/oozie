@@ -22,11 +22,11 @@
     <parent>
         <groupId>org.apache.oozie</groupId>
         <artifactId>oozie-main</artifactId>
-        <version>3.4.0-SNAPSHOT</version>
+        <version>4.0.0-SNAPSHOT</version>
     </parent>
     <groupId>org.apache.oozie</groupId>
     <artifactId>oozie-core</artifactId>
-    <version>3.4.0-SNAPSHOT</version>
+    <version>4.0.0-SNAPSHOT</version>
     <description>Apache Oozie Core</description>
     <name>Apache Oozie Core</name>
     <packaging>jar</packaging>
@@ -49,9 +49,15 @@
         </dependency>
 
         <dependency>
-            <groupId>org.apache.oozie</groupId>
-            <artifactId>oozie-hbase</artifactId>
-            <scope>provided</scope>
+             <groupId>org.apache.oozie</groupId>
+             <artifactId>oozie-hbase</artifactId>
+             <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+             <groupId>org.apache.oozie</groupId>
+             <artifactId>oozie-hcatalog</artifactId>
+             <scope>provided</scope>
         </dependency>
 
         <dependency>
@@ -99,6 +105,12 @@
         <dependency>
             <groupId>commons-lang</groupId>
             <artifactId>commons-lang</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>net.sf.ehcache</groupId>
+            <artifactId>ehcache-core</artifactId>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>
@@ -344,6 +356,24 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-all</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.activemq</groupId>
+            <artifactId>activemq-client</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.activemq</groupId>
+            <artifactId>activemq-broker</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.activemq</groupId>
+            <artifactId>activemq-kahadb-store</artifactId>
             <scope>test</scope>
         </dependency>
 
