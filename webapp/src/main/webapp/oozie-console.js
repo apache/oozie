@@ -1272,6 +1272,16 @@ function bundleJobDetailsPopup(response, request) {
         }
     });
 
+    var jobLogArea = new Ext.form.TextArea({
+        fieldLabel: 'Logs',
+        editable: false,
+        name: 'logs',
+        width: 1010,
+        height: 400,
+        autoScroll: true,
+        emptyText: "Loading..."
+    });
+
     var jobDetailsTab = new Ext.TabPanel({
         activeTab: 0,
         autoHeight: true,
@@ -1279,22 +1289,65 @@ function bundleJobDetailsPopup(response, request) {
         items: [ {
             title: 'Bundle Job Info',
             items: fs
-        }]
-    });
+        },{
+           title: 'Bundle Job Definition',
+	   		 items: jobDefinitionArea
+	    },{
+            title: 'Bundle Job Configuration',
+             items: new Ext.form.TextArea({
+              fieldLabel: 'Configuration',
+              editable: false,
+              name: 'config',
+                width: 1010,
+                height: 430,
+                autoScroll: true,
+                value: jobDetails["conf"]
+             })
+	      },{
+           title: 'Bundle Job Log',
+	   		 items: jobLogArea,
+             tbar: [ {
+                text: "&nbsp;&nbsp;&nbsp;",
+                icon: 'ext-2.2/resources/images/default/grid/refresh.gif',
+                handler: function() {
+                    fetchLogs(bundleJobId);
+                }
+            }]
+	    }]
+     });
 
     jobDetailsTab.addListener("tabchange", function(panel, selectedTab) {
         if (selectedTab.title == "Bundle Job Info") {
             coord_jobs_grid.setVisible(true);
             return;
         }
-        //if (selectedTab.title == 'Job Log') {
-        //    fetchLogs(workflowId);
-        //}
-        //else if (selectedTab.title == 'Job Definition') {
-        //    fetchDefinition(workflowId);
-        //}
+        else if (selectedTab.title == 'Bundle Job Log') {
+            fetchLogs(bundleJobId);
+        }
+        else if (selectedTab.title == 'Bundle Job Definition') {
+            fetchDefinition(bundleJobId);
+        }
         coord_jobs_grid.setVisible(false);
     });
+
+    function fetchDefinition(bundleJobId) {
+        Ext.Ajax.request({
+            url: getOozieBase() + 'job/' + bundleJobId + "?show=definition",
+            success: function(response, request) {
+                jobDefinitionArea.setRawValue(response.responseText);
+            }
+        });
+    }
+
+	function fetchLogs(bundleJobId) {
+        Ext.Ajax.request({
+            url: getOozieBase() + 'job/' + bundleJobId + "?show=log",
+            success: function(response, request) {
+                jobLogArea.setRawValue(response.responseText);
+            }
+
+        });
+    }
 
     var win = new Ext.Window({
         title: 'Job (Name: ' + bundleJobName + '/bundleJobId: ' + bundleJobId + ')',
@@ -1328,8 +1381,6 @@ function coordJobDetailsGridWindow(coordJobId) {
          */
         url: getOozieBase() + 'job/' + coordJobId + "?timezone=" + getTimeZone(),
         success: coordJobDetailsPopup
-        // success: alert("succeeded " + response),
-        // failure: alert("Coordinator PopUP did not work" + coordJobId),
     });
 }
 
