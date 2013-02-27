@@ -44,6 +44,16 @@ public class LoginServlet extends HttpServlet {
     private static final String LOGIN_PAGE_TEMPLATE_DEFAULT = "login-page-template.html";
     private String loginPageTemplate;
 
+    /**
+     * Constant for the configuration property that indicates the expiration time (or max age) of the "oozie.web.login.auth" cookie.
+     * It is given in seconds.  A positive value indicates that the cookie will expire after that many seconds have passed; make
+     * sure this value is high enough to allow the user to be forwarded to the backurl before the cookie expires.  A negative value
+     * indicates that the cookie will be deleted when the browser exits.
+     */
+    public static final String LOGIN_AUTH_COOKIE_EXPIRE_TIME = "login.auth.cookie.expire.time";
+    private static final int LOGIN_AUTH_COOKIE_EXPIRE_TIME_DEFAULT = 180;   // 3 minutes
+    private int loginAuthCookieExpireTime;
+
     private static final String USERNAME = "username";
     private static final String PASSWORD = "password";
     private static final String BACKURL = "backurl";
@@ -71,6 +81,20 @@ public class LoginServlet extends HttpServlet {
             loginPageTemplate = sb.toString();
         } catch (IOException ex) {
             throw new ServletException("Could not read resource [" + loginPageTemplateName + "]");
+        }
+
+        // Read in the cookie expiration time
+        String cookieExpireTime = getInitParameter(LOGIN_AUTH_COOKIE_EXPIRE_TIME);
+        if (cookieExpireTime == null) {
+            loginAuthCookieExpireTime = LOGIN_AUTH_COOKIE_EXPIRE_TIME_DEFAULT;
+        }
+        else {
+            try {
+                loginAuthCookieExpireTime = Integer.parseInt(cookieExpireTime);
+            }
+            catch (NumberFormatException nfe) {
+                throw new ServletException(LOGIN_AUTH_COOKIE_EXPIRE_TIME + " must be a valid integer", nfe);
+            }
         }
     }
 
@@ -150,6 +174,7 @@ public class LoginServlet extends HttpServlet {
     protected void writeCookie(HttpServletResponse resp, String username) throws UnsupportedEncodingException {
         Cookie cookie = new Cookie("oozie.web.login.auth", URLEncoder.encode(username, "UTF-8"));
         cookie.setPath("/");
+        cookie.setMaxAge(loginAuthCookieExpireTime);
         resp.addCookie(cookie);
     }
 }
