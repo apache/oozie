@@ -17,8 +17,12 @@
  */
 package org.apache.oozie.command.coord;
 
+import java.util.List;
+
 import org.apache.oozie.CoordinatorActionBean;
+import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.client.CoordinatorAction;
+import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.coord.CoordELFunctions;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
@@ -28,6 +32,8 @@ import org.apache.oozie.service.PartitionDependencyManagerService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.HCatURI;
+import org.apache.oozie.util.XmlUtils;
+import org.jdom.Element;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -119,6 +125,43 @@ public class TestCoordPushDependencyCheckXCommand extends XDataTestCase {
         new CoordPushDependencyCheckXCommand(actionId).call();
         checkCoordAction(actionId, "", CoordinatorAction.Status.READY);
     }
+
+
+    @Test
+    public void testResolveCoordConfiguration() throws Exception {
+        String db = "default";
+        String table = "tablename";
+        String newHCatDependency1 = "hcat://" + server + "/" + db + "/" + table + "/dt=20120412;country=brazil";
+        String newHCatDependency2 = "hcat://" + server + "/" + db + "/" + table + "/dt=20120430;country=usa";
+        String newHCatDependency = newHCatDependency1 + CoordELFunctions.INSTANCE_SEPARATOR + newHCatDependency2;
+        populateTable(db, table);
+
+        CoordinatorJobBean job = addRecordToCoordJobTableForWaiting("coord-job-for-action-input-check.xml",
+                CoordinatorJob.Status.RUNNING, false, true);
+
+        CoordinatorActionBean action1 = addRecordToCoordActionTableForWaiting(job.getId(), 1,
+                CoordinatorAction.Status.WAITING, "coord-action-for-action-push-check.xml", newHCatDependency);
+
+        String actionId = action1.getId();
+        checkCoordAction(actionId, newHCatDependency, CoordinatorAction.Status.WAITING);
+
+        new CoordPushDependencyCheckXCommand(actionId).call();
+
+        CoordinatorActionBean caBean = checkCoordAction(actionId, "", CoordinatorAction.Status.READY);
+        Element eAction = XmlUtils.parseXml(caBean.getActionXml());
+        Element configElem = eAction.getChild("action", eAction.getNamespace())
+                .getChild("workflow", eAction.getNamespace()).getChild("configuration", eAction.getNamespace());
+        List<?> elementList = configElem.getChildren("property", configElem.getNamespace());
+        Element e1 = (Element) elementList.get(0);
+        Element e2 = (Element) elementList.get(1);
+        assertEquals(
+                "hcat://dummyhcat:1000/db1/table1/ds=/2009-29,hcat://dummyhcat:1000/db1/table1/ds=/2009-29," +
+                "hcat://dummyhcat:1000/db1/table1/ds=/2009-29",
+                e1.getChild("value", e1.getNamespace()).getValue());
+        assertEquals("hcat://dummyhcat:1000/db1/table1/ds=/2009-29", e2.getChild("value", e1.getNamespace()).getValue());
+
+    }
+
 
     @Test
     public void testUpdateCoordTableMultipleDepsV3() throws Exception {
