@@ -32,6 +32,7 @@ import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.coord.CoordELEvaluator;
 import org.apache.oozie.dependency.DependencyChecker;
 import org.apache.oozie.dependency.ActionDependency;
 import org.apache.oozie.dependency.URIHandler;
@@ -44,9 +45,12 @@ import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.URIHandlerService;
+import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.StatusUtils;
 import org.apache.oozie.util.XConfiguration;
+import org.apache.oozie.util.XmlUtils;
+import org.jdom.Element;
 
 public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> {
     protected String actionId;
@@ -177,7 +181,7 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
         return (timeOut >= 0) && (waitingTime > timeOut);
     }
 
-    protected void onAllPushDependenciesAvailable() {
+    protected void onAllPushDependenciesAvailable() throws CommandException {
         coordAction.setPushMissingDependencies("");
         if (coordAction.getMissingDependencies() == null || coordAction.getMissingDependencies().length() == 0) {
             Date nominalTime = coordAction.getNominalTime();
@@ -189,10 +193,26 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
                         + currentTime + ", nominal=" + nominalTime);
             }
             else {
+                String actionXml = resolveCoordConfiguration();
+                coordAction.setActionXml(actionXml);
                 coordAction.setStatus(CoordinatorAction.Status.READY);
                 // pass jobID to the CoordActionReadyXCommand
                 queue(new CoordActionReadyXCommand(coordAction.getJobId()), 100);
             }
+        }
+    }
+
+    private String resolveCoordConfiguration() throws CommandException {
+        try {
+            Configuration actionConf = new XConfiguration(new StringReader(coordAction.getRunConf()));
+            StringBuilder actionXml = new StringBuilder(coordAction.getActionXml());
+            String newActionXml = CoordActionInputCheckXCommand.resolveCoordConfiguration(actionXml, actionConf,
+                    actionId);
+            actionXml.replace(0, actionXml.length(), newActionXml);
+            return actionXml.toString();
+        }
+        catch (Exception e) {
+            throw new CommandException(ErrorCode.E1021, e.getMessage(), e);
         }
     }
 
