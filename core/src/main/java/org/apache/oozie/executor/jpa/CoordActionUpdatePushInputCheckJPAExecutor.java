@@ -53,6 +53,7 @@ public class CoordActionUpdatePushInputCheckJPAExecutor implements JPAExecutor<V
             q.setParameter("id", coordAction.getId());
             q.setParameter("status", coordAction.getStatus().toString());
             q.setParameter("lastModifiedTime", new Date());
+            q.setParameter("actionXml", coordAction.getActionXml());
             q.setParameter("pushMissingDependencies", coordAction.getPushMissingDependencies());
             q.executeUpdate();
             // Since the return type is Void, we have to return null

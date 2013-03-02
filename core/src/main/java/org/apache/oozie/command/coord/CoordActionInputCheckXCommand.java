@@ -53,6 +53,7 @@ import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.StatusUtils;
 import org.apache.oozie.util.XConfiguration;
+import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
 
@@ -141,6 +142,9 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             }
             String pushDeps = coordAction.getPushMissingDependencies();
             if (status == true && (pushDeps == null || pushDeps.length() == 0)) {
+                String newActionXml = resolveCoordConfiguration(actionXml, actionConf, actionId);
+                actionXml.replace(0, actionXml.length(), newActionXml);
+                coordAction.setActionXml(actionXml.toString());
                 coordAction.setStatus(CoordinatorAction.Status.READY);
                 // pass jobID to the CoordActionReadyXCommand
                 queue(new CoordActionReadyXCommand(coordAction.getJobId()), 100);
@@ -177,6 +181,13 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
         return null;
     }
 
+
+    static String resolveCoordConfiguration(StringBuilder actionXml, Configuration actionConf, String actionId) throws Exception {
+        Element eAction = XmlUtils.parseXml(actionXml.toString());
+        ELEvaluator eval = CoordELEvaluator.createDataEvaluator(eAction, actionConf, actionId);
+        materializeDataProperties(eAction, actionConf, eval);
+        return XmlUtils.prettyPrint(eAction).toString();
+    }
 
     private boolean isTimeout(Date currentTime) {
         long waitingTime = (currentTime.getTime() - Math.max(coordAction.getNominalTime().getTime(), coordAction
@@ -236,8 +247,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             LOG.debug("[" + actionId + "]::ActionInputCheck:: Checking Latest/future");
             allExist = checkUnresolvedInstances(eAction, conf);
         }
-        if (allExist == true) {
-            materializeDataProperties(eAction, conf);
+        if (allExist) {
             actionXml.replace(0, actionXml.length(), XmlUtils.prettyPrint(eAction).toString());
         }
         return allExist;
@@ -253,8 +263,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
      * @update modify 'Action' element with appropriate list of files.
      */
     @SuppressWarnings("unchecked")
-    private void materializeDataProperties(Element eAction, Configuration conf) throws Exception {
-        ELEvaluator eval = CoordELEvaluator.createDataEvaluator(eAction, conf, actionId);
+    static void materializeDataProperties(Element eAction, Configuration conf, ELEvaluator eval) throws Exception {
         Element configElem = eAction.getChild("action", eAction.getNamespace()).getChild("workflow",
                 eAction.getNamespace()).getChild("configuration", eAction.getNamespace());
         if (configElem != null) {
@@ -272,7 +281,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
      * @param eval el functions evaluator
      * @throws Exception thrown if unable to resolve tag value
      */
-    private void resolveTagContents(String tagName, Element elem, ELEvaluator eval) throws Exception {
+    private static void resolveTagContents(String tagName, Element elem, ELEvaluator eval) throws Exception {
         if (elem == null) {
             return;
         }
@@ -283,7 +292,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             tagElem.addContent(updated);
         }
         else {
-            LOG.warn(" Value NOT FOUND " + tagName);
+            XLog.getLog(CoordActionInputCheckXCommand.class).warn(" Value NOT FOUND " + tagName);
         }
     }
 

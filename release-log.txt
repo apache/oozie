@@ -4,6 +4,7 @@ OOZIE-1239 Bump up trunk to 4.1.0-SNAPSHOT (virag)
 
 -- Oozie 4.0.0 (unreleased)
 
+OOZIE-1238 CoordPushCheck doesn't evaluate the configuration section which is propogated to workflow (virag)
 OOZIE-1203 Oozie web-console to display Bundle job definition, configuration and log tabs (mona)
 OOZIE-1237 Bump up trunk to 4.0.0-SNAPSHOT (virag)
 OOZIE-561 Integrate Oozie with HCatalog

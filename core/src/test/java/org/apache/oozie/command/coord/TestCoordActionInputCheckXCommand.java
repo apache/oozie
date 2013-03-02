@@ -49,6 +49,8 @@ import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
+import org.apache.oozie.util.XmlUtils;
+import org.jdom.Element;
 
 public class TestCoordActionInputCheckXCommand extends XDataTestCase {
     protected Services services;
@@ -442,6 +444,43 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         long effectiveValue = caicc.getCoordInputCheckRequeueInterval();
         // Verify if two values are same.
         assertEquals(testedValue, effectiveValue);
+    }
+
+    public void testResolveCoordConfiguration() {
+        try {
+            CoordinatorJobBean job = addRecordToCoordJobTableForWaiting("coord-job-for-action-input-check.xml",
+                    CoordinatorJob.Status.RUNNING, false, true);
+
+            CoordinatorActionBean action = addRecordToCoordActionTableForWaiting(job.getId(), 1,
+                    CoordinatorAction.Status.WAITING, "coord-action-for-action-input-check.xml");
+
+            createDir(getTestCaseDir() + "/2009/01/29/");
+            createDir(getTestCaseDir() + "/2009/01/22/");
+            createDir(getTestCaseDir() + "/2009/01/15/");
+            createDir(getTestCaseDir() + "/2009/01/08/");
+            sleep(3000);
+            new CoordActionInputCheckXCommand(action.getId(), job.getId()).call();
+            sleep(3000);
+            final JPAService jpaService = Services.get().get(JPAService.class);
+            CoordActionGetJPAExecutor coordGetCmd = new CoordActionGetJPAExecutor(action.getId());
+            CoordinatorActionBean caBean = jpaService.execute(coordGetCmd);
+
+            Element eAction = XmlUtils.parseXml(caBean.getActionXml());
+            Element configElem = eAction.getChild("action", eAction.getNamespace())
+                    .getChild("workflow", eAction.getNamespace()).getChild("configuration", eAction.getNamespace());
+            List<?> elementList = configElem.getChildren("property", configElem.getNamespace());
+            Element e1 = (Element) elementList.get(0);
+            Element e2 = (Element) elementList.get(1);
+            assertEquals(
+                    "file://,testDir/2009/29,file://,testDir/2009/22,file://,testDir/2009/15,file://,testDir/2009/08",
+                    e1.getChild("value", e1.getNamespace()).getValue());
+            assertEquals("file://,testDir/2009/29", e2.getChild("value", e1.getNamespace()).getValue());
+
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            fail("Unexpected exception");
+        }
     }
 
     /**
