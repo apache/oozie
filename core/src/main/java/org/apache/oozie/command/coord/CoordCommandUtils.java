@@ -227,13 +227,9 @@ public class CoordCommandUtils {
                 }
                 if (funcType == CURRENT) {
                     // Everything could be resolved NOW. no latest() ELs
-                    for (int i = endIndex; i >= startIndex; i--) {
-                        String matInstance = materializeInstance(event, "${coord:current(" + i + ")}", appInst, conf,
-                                eval);
-                        if (matInstance == null || matInstance.length() == 0) {
-                            // Earlier than dataset's initial instance
-                            break;
-                        }
+                    String matInstance = materializeInstance(event, "${coord:currentRange(" + startIndex + ","
+                            + endIndex + ")}", appInst, conf, eval);
+                    if (matInstance != null && !matInstance.isEmpty()) {
                         if (instances.length() > 0) {
                             instances.append(CoordELFunctions.INSTANCE_SEPARATOR);
                         }
