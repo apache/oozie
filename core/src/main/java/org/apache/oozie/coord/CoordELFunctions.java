@@ -330,8 +330,7 @@ public class CoordELFunctions {
                         }
                         available++;
                     }
-                    // nominalInstanceCal.add(dsTimeUnit.getCalendarUnit(),
-                    // -datasetFrequency);
+                    // nominalInstanceCal.add(dsTimeUnit.getCalendarUnit(), datasetFrequency);
                     nominalInstanceCal = (Calendar) initInstance.clone();
                     instCount[0]++;
                     nominalInstanceCal.add(dsTimeUnit.getCalendarUnit(), instCount[0] * datasetFrequency);
@@ -510,6 +509,31 @@ public class CoordELFunctions {
     }
 
     /**
+     * Determine the date-time in Oozie processing timezone of current dataset instances
+     * from start to end offsets from the nominal time. <p/> It depends
+     * on: <p/> 1. Data set frequency <p/> 2. Data set Time unit (day, month, minute) <p/> 3. Data set Time zone/DST
+     * <p/> 4. End Day/Month flag <p/> 5. Data set initial instance <p/> 6. Action Creation Time
+     *
+     * @param start :start instance offset <p/> domain: start <= 0, start is integer
+     * @param end :end instance offset <p/> domain: end <= 0, end is integer
+     * @return date-time in Oozie processing timezone of the instances from start to end offsets
+     *        delimited by comma. <p/> If the current instance time of the dataset based on the Action Creation Time
+     *        is earlier than the Initial-Instance of DS an empty string is returned.
+     *        If an instance within the range is earlier than Initial-Instance of DS that instance is ignored
+     * @throws Exception
+     */
+    public static String ph2_coord_currentRange(int start, int end) throws Exception {
+        ParamChecker.checkLEZero(start, "current:n");
+        ParamChecker.checkLEZero(end, "current:n");
+        if (isSyncDataSet()) { // For Sync Dataset
+            return coord_currentRange_sync(start, end);
+        }
+        else {
+            throw new UnsupportedOperationException("Asynchronous Dataset is not supported yet");
+        }
+    }
+
+    /**
      * Determine the date-time in Oozie processing timezone of the given offset from the dataset effective nominal time. <p/> It
      * depends on: <p> 1. Data set frequency <p/> 2. Data set Time Unit <p/> 3. Data set Time zone/DST
      * <p/> 4. Data set initial instance <p/> 5. Action Creation Time
@@ -596,15 +620,13 @@ public class CoordELFunctions {
      * <p/> 4. End Day/Month flag <p/> 5. Data set initial instance <p/> 6. Action Creation Time <p/> 7. Existence of
      * dataset's directory
      *
-     * @param n :instance count <p/> domain: n > 0, n is integer
+     * @param n :instance count <p/> domain: n <= 0, n is integer
      * @return date-time in Oozie processing timezone of the n-th instance <p/> returns 'null' means n-th instance is
      * earlier than Initial-Instance of DS
      * @throws Exception
      */
     public static String ph3_coord_latest(int n) throws Exception {
-        if (n > 0) {
-            throw new IllegalArgumentException("paramter should be <= 0 but it is " + n);
-        }
+        ParamChecker.checkLEZero(n, "latest:n");
         if (isSyncDataSet()) {// For Sync Dataset
             return coord_latest_sync(n);
         }
@@ -620,14 +642,16 @@ public class CoordELFunctions {
      * <p/> 4. End Day/Month flag <p/> 5. Data set initial instance <p/> 6. Action Creation Time <p/> 7. Existence of
      * dataset's directory
      *
-     * @param start :start instance offset <p/> domain: start > 0, start is integer
-     * @param end :end instance offset <p/> domain: end > 0, end is integer
+     * @param start :start instance offset <p/> domain: start <= 0, start is integer
+     * @param end :end instance offset <p/> domain: end <= 0, end is integer
      * @return date-time in Oozie processing timezone of the instances from start to end offsets
      *        delimited by comma. <p/> returns 'null' means start offset instance is
      *        earlier than Initial-Instance of DS
      * @throws Exception
      */
     public static String ph3_coord_latestRange(int start, int end) throws Exception {
+        ParamChecker.checkLEZero(start, "latest:n");
+        ParamChecker.checkLEZero(end, "latest:n");
         if (isSyncDataSet()) {// For Sync Dataset
             return coord_latestRange_sync(start, end);
         }
@@ -680,12 +704,20 @@ public class CoordELFunctions {
         return echoUnResolved("current", n);
     }
 
+    public static String ph1_coord_currentRange_echo(String start, String end) {
+        return echoUnResolved("currentRange", start + ", " + end);
+    }
+
     public static String ph1_coord_offset_echo(String n, String timeUnit) {
         return echoUnResolved("offset", n + " , " + timeUnit);
     }
 
     public static String ph2_coord_current_echo(String n) {
         return echoUnResolved("current", n);
+    }
+
+    public static String ph2_coord_currentRange_echo(String start, String end) {
+        return echoUnResolved("currentRange", start + ", " + end);
     }
 
     public static String ph2_coord_offset_echo(String n, String timeUnit) {
@@ -849,29 +881,49 @@ public class CoordELFunctions {
      * @throws Exception
      */
     private static String coord_current_sync(int n) throws Exception {
+        return coord_currentRange_sync(n, n);
+    }
+
+    private static String coord_currentRange_sync(int start, int end) throws Exception {
         int datasetFrequency = getDSFrequency();// in minutes
         TimeUnit dsTimeUnit = getDSTimeUnit();
         int[] instCount = new int[1];// used as pass by ref
         Calendar nominalInstanceCal = getCurrentInstance(getActionCreationtime(), instCount);
+        StringBuilder instanceList = new StringBuilder();
         if (nominalInstanceCal == null) {
             LOG.warn("If the initial instance of the dataset is later than the nominal time, an empty string is"
                     + " returned. This means that no data is available at the current-instance specified by the user"
                     + " and the user could try modifying his initial-instance to an earlier time.");
             return "";
+        } else {
+            Calendar initInstance = getInitialInstanceCal();
+            instCount[0] = instCount[0] + end;
+            // Add in the reverse order - newest instance first.
+            for (int i = end; i >= start; i--) {
+                // Tried to avoid the clone. But subtracting datasetFrequency gives different results than multiplying
+                // and Spring DST transition test in TestCoordELfunctions.testCurrent() fails
+                //nominalInstanceCal.add(dsTimeUnit.getCalendarUnit(), -datasetFrequency);
+                nominalInstanceCal = (Calendar) initInstance.clone();
+                nominalInstanceCal.add(dsTimeUnit.getCalendarUnit(), instCount[0] * datasetFrequency);
+                instCount[0]--;
+                if (nominalInstanceCal.compareTo(initInstance) < 0) {
+                    LOG.warn("If the initial instance of the dataset is later than the current-instance specified,"
+                            + " such as coord:current({0}) in this case, an empty string is returned. This means that"
+                            + " no data is available at the current-instance specified by the user and the user could"
+                            + " try modifying his initial-instance to an earlier time.", start);
+                    break;
+                }
+                else {
+                    instanceList.append(DateUtils.formatDateOozieTZ(nominalInstanceCal));
+                    instanceList.append(CoordELFunctions.INSTANCE_SEPARATOR);
+                }
+            }
         }
-        nominalInstanceCal = getInitialInstanceCal();
-        int absInstanceCount = instCount[0] + n;
-        nominalInstanceCal.add(dsTimeUnit.getCalendarUnit(), datasetFrequency * absInstanceCount);
 
-        if (nominalInstanceCal.getTime().compareTo(getInitialInstance()) < 0) {
-            LOG.warn("If the initial instance of the dataset is later than the current-instance specified, such as"
-                    + " coord:current({0}) in this case, an empty string is returned. This means that no data is"
-                    + " available at the current-instance specified by the user and the user could try modifying his"
-                    + " initial-instance to an earlier time.", n);
-            return "";
+        if (instanceList.length() > 0) {
+            instanceList.setLength(instanceList.length() - CoordELFunctions.INSTANCE_SEPARATOR.length());
         }
-        String str = DateUtils.formatDateOozieTZ(nominalInstanceCal);
-        return str;
+        return instanceList.toString();
     }
 
     /**
@@ -946,14 +998,6 @@ public class CoordELFunctions {
     }
 
     private static String coord_latestRange_sync(int startOffset, int endOffset) throws Exception {
-        if (startOffset > 0) {
-            throw new RuntimeException("For latest there is no meaning " + "of positive instance. n should be <=0"
-                    + startOffset);
-        }
-        if (endOffset > 0) {
-            throw new RuntimeException("For latest there is no meaning " + "of positive instance. n should be <=0"
-                    + endOffset);
-        }
         ELEvaluator eval = ELEvaluator.getCurrent();
         String retVal = "";
         int datasetFrequency = (int) getDSFrequency();// in minutes
@@ -1019,8 +1063,7 @@ public class CoordELFunctions {
 
                         available--;
                     }
-                    // nominalInstanceCal.add(dsTimeUnit.getCalendarUnit(),
-                    // -datasetFrequency);
+                    // nominalInstanceCal.add(dsTimeUnit.getCalendarUnit(), -datasetFrequency);
                     nominalInstanceCal = (Calendar) initInstance.clone();
                     instCount[0]--;
                     nominalInstanceCal.add(dsTimeUnit.getCalendarUnit(), instCount[0] * datasetFrequency);
