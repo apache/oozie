@@ -1,5 +1,6 @@
 -- Oozie 4.0.0 (unreleased)
 
+OOZIE-1247 CoordActionInputCheck shouldn't queue CoordPushInputCheck (rohini via virag)
 OOZIE-1235 CoordPushCheck doesn't evaluate the configuration section which is propogated to workflow (virag)
 OOZIE-1203 Oozie web-console to display Bundle job definition, configuration and log tabs (mona)
 OOZIE-1237 Bump up trunk to 4.0.0-SNAPSHOT (virag)
