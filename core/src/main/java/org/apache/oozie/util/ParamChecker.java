@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -176,6 +176,21 @@ public class ParamChecker {
         if (value < 0) {
             throw new IllegalArgumentException(XLog.format(
                     "parameter [{0}] = [{1}] must be greater than or equals zero", name, value));
+        }
+        return value;
+    }
+
+    /**
+     * Check whether the value is less than or equal to 0.
+     *
+     * @param value : value to test
+     * @param name : Name of the parameter
+     * @return If the value is <= 0, return the value. Otherwise throw IllegalArgumentException
+     */
+    public static int checkLEZero(int value, String name) {
+        if (value > 0) {
+            throw new IllegalArgumentException(XLog.format(
+                    "parameter [{0}] = [{1}] must be less than or equal to zero", name, value));
         }
         return value;
     }

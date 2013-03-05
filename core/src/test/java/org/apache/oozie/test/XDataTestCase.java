@@ -58,6 +58,7 @@ import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.SLAEventInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobInsertJPAExecutor;
+import org.apache.oozie.service.CoordinatorStoreService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.Services;
@@ -65,6 +66,7 @@ import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.service.WorkflowStoreService;
 import org.apache.oozie.service.UUIDService.ApplicationType;
+import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
@@ -581,6 +583,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
         action.setCreatedTime(new Date());
         action.setStatus(status);
         action.setActionXml(actionXml);
+        action.setTimeOut(10);
 
         Configuration conf = getCoordConf(appPath);
         action.setCreatedConf(XmlUtils.prettyPrint(conf).toString());
@@ -1284,17 +1287,26 @@ public abstract class XDataTestCase extends XHCatTestCase {
     }
 
     protected String addInitRecords(String pushMissingDependencies) throws Exception {
+        return addInitRecords(null, pushMissingDependencies, "Z");
+    }
+
+    protected String addInitRecords(String missingDependencies, String pushMissingDependencies, String oozieTimeZoneMask)
+            throws Exception {
         CoordinatorJobBean job = addRecordToCoordJobTableForWaiting("coord-job-for-action-input-check.xml",
                 CoordinatorJob.Status.RUNNING, false, true);
 
-        CoordinatorActionBean action1 = addRecordToCoordActionTableForWaiting(job.getId(), 1,
-                CoordinatorAction.Status.WAITING, "coord-action-for-action-input-check.xml", pushMissingDependencies);
-        return action1.getId();
+        CoordinatorActionBean action = addRecordToCoordActionTableForWaiting(job.getId(), 1,
+                CoordinatorAction.Status.WAITING, "coord-action-for-action-input-check.xml", missingDependencies,
+                pushMissingDependencies, oozieTimeZoneMask);
+        return action.getId();
     }
 
     protected CoordinatorActionBean addRecordToCoordActionTableForWaiting(String jobId, int actionNum,
-            CoordinatorAction.Status status, String resourceXmlName, String pushMissingDependencies) throws Exception {
-        CoordinatorActionBean action = createCoordAction(jobId, actionNum, status, resourceXmlName, 0);
+            CoordinatorAction.Status status, String resourceXmlName, String missingDependencies,
+            String pushMissingDependencies, String oozieTimeZoneMask) throws Exception {
+        CoordinatorActionBean action = createCoordAction(jobId, actionNum, status, resourceXmlName, 0,
+                oozieTimeZoneMask);
+        action.setMissingDependencies(missingDependencies);
         action.setPushMissingDependencies(pushMissingDependencies);
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
@@ -1343,5 +1355,14 @@ public abstract class XDataTestCase extends XHCatTestCase {
         catch (IOException ioe) {
             throw new RuntimeException(XLog.format("Could not get " + testFileName, ioe));
         }
+    }
+
+    protected void setCoordActionCreationTime(String actionId, long actionCreationTime) throws Exception {
+        CoordinatorStore store = Services.get().get(CoordinatorStoreService.class).create();
+        CoordinatorActionBean action = store.getCoordinatorAction(actionId, false);
+        action.setCreatedTime(new Date(actionCreationTime));
+        store.beginTrx();
+        store.updateCoordinatorAction(action);
+        store.commitTrx();
     }
 }
