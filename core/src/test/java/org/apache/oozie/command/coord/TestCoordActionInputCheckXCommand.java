@@ -51,6 +51,7 @@ import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
+import org.junit.Test;
 
 public class TestCoordActionInputCheckXCommand extends XDataTestCase {
     protected Services services;
@@ -570,6 +571,46 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         assertEquals(action.getStatus(), CoordinatorAction.Status.READY);
     }
 
+    @Test
+    public void testTimeout() throws Exception {
+        String missingDeps = "hdfs:///dirx/filex";
+        String actionId = addInitRecords(missingDeps, null, TZ);
+        new CoordActionInputCheckXCommand(actionId, actionId.substring(0, actionId.indexOf("@"))).call();
+        // Timeout is 10 mins. Change action creation time to before 12 min to make the action
+        // timeout.
+        long timeOutCreationTime = System.currentTimeMillis() - (12 * 60 * 1000);
+        setCoordActionCreationTime(actionId, timeOutCreationTime);
+        new CoordActionInputCheckXCommand(actionId, actionId.substring(0, actionId.indexOf("@"))).call();
+        Thread.sleep(100);
+        checkCoordAction(actionId, missingDeps, CoordinatorAction.Status.TIMEDOUT);
+    }
+
+    @Test
+    public void testTimeoutWithException() throws Exception {
+        String missingDeps = "nofs:///dirx/filex";
+        String actionId = addInitRecords(missingDeps, null, TZ);
+        try {
+            new CoordActionInputCheckXCommand(actionId, actionId.substring(0, actionId.indexOf("@"))).call();
+            fail();
+        }
+        catch (Exception e) {
+            assertTrue(e.getMessage().contains("No FileSystem for scheme"));
+        }
+        // Timeout is 10 mins. Change action created time to before 12 min to make the action
+        // timeout.
+        long timeOutCreationTime = System.currentTimeMillis() - (12 * 60 * 1000);
+        setCoordActionCreationTime(actionId, timeOutCreationTime);
+        try {
+            new CoordActionInputCheckXCommand(actionId, actionId.substring(0, actionId.indexOf("@"))).call();
+            fail();
+        }
+        catch (Exception e) {
+            assertTrue(e.getMessage().contains("No FileSystem for scheme"));
+        }
+        Thread.sleep(100);
+        checkCoordAction(actionId, missingDeps, CoordinatorAction.Status.TIMEDOUT);
+    }
+
     protected CoordinatorJobBean addRecordToCoordJobTableForWaiting(String testFileName, CoordinatorJob.Status status,
             Date start, Date end, boolean pending, boolean doneMatd, int lastActionNum) throws Exception {
 
@@ -744,6 +785,22 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         }
         catch (JPAExecutorException se) {
             fail("Action ID " + actionId + " was not stored properly in db");
+        }
+    }
+
+    private CoordinatorActionBean checkCoordAction(String actionId, String expDeps, CoordinatorAction.Status stat)
+            throws Exception {
+        try {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            CoordinatorActionBean action = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
+            String missDeps = action.getMissingDependencies();
+            assertEquals(expDeps, missDeps);
+            assertEquals(stat, action.getStatus());
+
+            return action;
+        }
+        catch (JPAExecutorException se) {
+            throw new Exception("Action ID " + actionId + " was not stored properly in db");
         }
     }
 

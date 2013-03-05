@@ -97,7 +97,7 @@ public class TestCoordPushDependencyCheckXCommand extends XDataTestCase {
     public void testUpdateCoordTableMultipleDepsV2() throws Exception {
         // Test for two dependencies : one of them is already existing in the
         // hcat server. Other one is not.
-        // Expected to see both action in WAITING as first one is not available.
+        // Expected to see both action in WAITING as first one is not available and we only check for first.
         // Later make the other partition also available. action is expected to
         // be READY
         String db = "default";
@@ -110,6 +110,7 @@ public class TestCoordPushDependencyCheckXCommand extends XDataTestCase {
         String actionId = addInitRecords(newHCatDependency);
         checkCoordAction(actionId, newHCatDependency, CoordinatorAction.Status.WAITING);
 
+        // Checks only for first missing dependency
         new CoordPushDependencyCheckXCommand(actionId).call();
 
         // Checks dependencies in order. So list does not change if first one is not available
@@ -126,6 +127,39 @@ public class TestCoordPushDependencyCheckXCommand extends XDataTestCase {
         checkCoordAction(actionId, "", CoordinatorAction.Status.READY);
     }
 
+    @Test
+    public void testUpdateCoordTableMultipleDepsV3() throws Exception {
+        // Test for two dependencies : one of them is already existing in the
+        // hcat server. Other one is not.
+        // Expected to see only first action in WAITING as we check for all dependencies.
+        // Later make the other partition also available. action is expected to
+        // be READY
+        String db = "default";
+        String table = "tablename";
+        String newHCatDependency1 = "hcat://" + server + "/" + db + "/" + table + "/dt=20120430;country=brazil";
+        String newHCatDependency2 = "hcat://" + server + "/" + db + "/" + table + "/dt=20120430;country=usa";
+        String newHCatDependency = newHCatDependency1 + CoordELFunctions.INSTANCE_SEPARATOR + newHCatDependency2;
+        populateTable(db, table);
+
+        String actionId = addInitRecords(newHCatDependency);
+        checkCoordAction(actionId, newHCatDependency, CoordinatorAction.Status.WAITING);
+
+        // Checks for all missing dependencies
+        new CoordPushDependencyCheckXCommand(actionId, true).call();
+        checkCoordAction(actionId, newHCatDependency1, CoordinatorAction.Status.WAITING);
+        PartitionDependencyManagerService pdms = Services.get().get(PartitionDependencyManagerService.class);
+        HCatAccessorService hcatService = Services.get().get(HCatAccessorService.class);
+        assertTrue(pdms.getWaitingActions(new HCatURI(newHCatDependency1)).contains(actionId));
+        assertTrue(hcatService.isRegisteredForNotification(new HCatURI(newHCatDependency1)));
+        assertNull(pdms.getWaitingActions(new HCatURI(newHCatDependency2)));
+
+        // Make first dependency available
+        addPartition(db, table, "dt=20120430;country=brazil");
+        new CoordPushDependencyCheckXCommand(actionId).call();
+        checkCoordAction(actionId, "", CoordinatorAction.Status.READY);
+        assertNull(pdms.getWaitingActions(new HCatURI(newHCatDependency1)));
+        assertFalse(hcatService.isRegisteredForNotification(new HCatURI(newHCatDependency1)));
+    }
 
     @Test
     public void testResolveCoordConfiguration() throws Exception {
@@ -139,10 +173,11 @@ public class TestCoordPushDependencyCheckXCommand extends XDataTestCase {
         CoordinatorJobBean job = addRecordToCoordJobTableForWaiting("coord-job-for-action-input-check.xml",
                 CoordinatorJob.Status.RUNNING, false, true);
 
-        CoordinatorActionBean action1 = addRecordToCoordActionTableForWaiting(job.getId(), 1,
-                CoordinatorAction.Status.WAITING, "coord-action-for-action-push-check.xml", newHCatDependency);
+        CoordinatorActionBean action = addRecordToCoordActionTableForWaiting(job.getId(), 1,
+                CoordinatorAction.Status.WAITING, "coord-action-for-action-push-check.xml", null, newHCatDependency,
+                "Z");
 
-        String actionId = action1.getId();
+        String actionId = action.getId();
         checkCoordAction(actionId, newHCatDependency, CoordinatorAction.Status.WAITING);
 
         new CoordPushDependencyCheckXCommand(actionId).call();
@@ -162,14 +197,8 @@ public class TestCoordPushDependencyCheckXCommand extends XDataTestCase {
 
     }
 
-
     @Test
-    public void testUpdateCoordTableMultipleDepsV3() throws Exception {
-        // Test for two dependencies : one of them is already existing in the
-        // hcat server. Other one is not.
-        // Expected to see the action in WAITING
-        // Later make the other partition also available. action is expected to
-        // be READY
+    public void testTimeOut() throws Exception {
         String db = "default";
         String table = "tablename";
         String newHCatDependency1 = "hcat://" + server + "/" + db + "/" + table + "/dt=20120430;country=brazil";
@@ -179,19 +208,99 @@ public class TestCoordPushDependencyCheckXCommand extends XDataTestCase {
 
         String actionId = addInitRecords(newHCatDependency);
         checkCoordAction(actionId, newHCatDependency, CoordinatorAction.Status.WAITING);
-
         new CoordPushDependencyCheckXCommand(actionId, true).call();
         checkCoordAction(actionId, newHCatDependency1, CoordinatorAction.Status.WAITING);
         PartitionDependencyManagerService pdms = Services.get().get(PartitionDependencyManagerService.class);
-        assertTrue(pdms.getWaitingActions(new HCatURI(newHCatDependency1)).contains(actionId));
         HCatAccessorService hcatService = Services.get().get(HCatAccessorService.class);
+        assertTrue(pdms.getWaitingActions(new HCatURI(newHCatDependency1)).contains(actionId));
         assertTrue(hcatService.isRegisteredForNotification(new HCatURI(newHCatDependency1)));
 
-        // Make first dependency available
-        addPartition(db, table, "dt=20120430;country=brazil");
+        // Timeout is 10 mins. Change action created time to before 12 min to make the action
+        // timeout.
+        long timeOutCreationTime = System.currentTimeMillis() - (12 * 60 * 1000);
+        setCoordActionCreationTime(actionId, timeOutCreationTime);
         new CoordPushDependencyCheckXCommand(actionId).call();
+        Thread.sleep(100);
+        // Check for timeout status and unregistered missing dependencies
+        checkCoordAction(actionId, newHCatDependency1, CoordinatorAction.Status.TIMEDOUT);
         assertNull(pdms.getWaitingActions(new HCatURI(newHCatDependency1)));
-        checkCoordAction(actionId, "", CoordinatorAction.Status.READY);
+        assertFalse(hcatService.isRegisteredForNotification(new HCatURI(newHCatDependency1)));
+
+    }
+
+    @Test
+    public void testTimeOutWithException1() throws Exception {
+        // Test timeout when missing dependencies are from a non existing table
+        String newHCatDependency1 = "hcat://" + server + "/nodb/notable/dt=20120430;country=brazil";
+        String newHCatDependency2 = "hcat://" + server + "/nodb/notable/dt=20120430;country=usa";
+        String newHCatDependency = newHCatDependency1 + CoordELFunctions.INSTANCE_SEPARATOR + newHCatDependency2;
+
+        String actionId = addInitRecords(newHCatDependency);
+        checkCoordAction(actionId, newHCatDependency, CoordinatorAction.Status.WAITING);
+        try {
+            new CoordPushDependencyCheckXCommand(actionId, true).call();
+            fail();
+        }
+        catch (Exception e) {
+            assertTrue(e.getMessage().contains("NoSuchObjectException"));
+        }
+        checkCoordAction(actionId, newHCatDependency, CoordinatorAction.Status.WAITING);
+        PartitionDependencyManagerService pdms = Services.get().get(PartitionDependencyManagerService.class);
+        HCatAccessorService hcatService = Services.get().get(HCatAccessorService.class);
+        assertNull(pdms.getWaitingActions(new HCatURI(newHCatDependency1)));
+        assertFalse(hcatService.isRegisteredForNotification(new HCatURI(newHCatDependency1)));
+
+        // Timeout is 10 mins. Change action created time to before 12 min to make the action
+        // timeout.
+        long timeOutCreationTime = System.currentTimeMillis() - (12 * 60 * 1000);
+        setCoordActionCreationTime(actionId, timeOutCreationTime);
+        try {
+            new CoordPushDependencyCheckXCommand(actionId).call();
+            fail();
+        }
+        catch (Exception e) {
+            assertTrue(e.getMessage().contains("NoSuchObjectException"));
+        }
+        Thread.sleep(100);
+        // Check for timeout status and unregistered missing dependencies
+        checkCoordAction(actionId, newHCatDependency, CoordinatorAction.Status.TIMEDOUT);
+    }
+
+    @Test
+    public void testTimeOutWithException2() throws Exception {
+        // Test timeout when table containing missing dependencies is dropped in between
+        String db = "default";
+        String table = "tablename";
+        String newHCatDependency1 = "hcat://" + server + "/" + db + "/" + table + "/dt=20120430;country=brazil";
+        String newHCatDependency2 = "hcat://" + server + "/" + db + "/" + table + "/dt=20120430;country=usa";
+        String newHCatDependency = newHCatDependency1 + CoordELFunctions.INSTANCE_SEPARATOR + newHCatDependency2;
+        populateTable(db, table);
+
+        String actionId = addInitRecords(newHCatDependency);
+        checkCoordAction(actionId, newHCatDependency, CoordinatorAction.Status.WAITING);
+        new CoordPushDependencyCheckXCommand(actionId, true).call();
+        checkCoordAction(actionId, newHCatDependency1, CoordinatorAction.Status.WAITING);
+        PartitionDependencyManagerService pdms = Services.get().get(PartitionDependencyManagerService.class);
+        HCatAccessorService hcatService = Services.get().get(HCatAccessorService.class);
+        assertTrue(pdms.getWaitingActions(new HCatURI(newHCatDependency1)).contains(actionId));
+        assertTrue(hcatService.isRegisteredForNotification(new HCatURI(newHCatDependency1)));
+
+        // Timeout is 10 mins. Change action created time to before 12 min to make the action
+        // timeout.
+        long timeOutCreationTime = System.currentTimeMillis() - (12 * 60 * 1000);
+        setCoordActionCreationTime(actionId, timeOutCreationTime);
+        dropTable(db, table, true);
+        try {
+            new CoordPushDependencyCheckXCommand(actionId).call();
+            fail();
+        }
+        catch (Exception e) {
+            assertTrue(e.getMessage().contains("NoSuchObjectException"));
+        }
+        Thread.sleep(100);
+        // Check for timeout status and unregistered missing dependencies
+        checkCoordAction(actionId, newHCatDependency1, CoordinatorAction.Status.TIMEDOUT);
+        assertNull(pdms.getWaitingActions(new HCatURI(newHCatDependency1)));
         assertFalse(hcatService.isRegisteredForNotification(new HCatURI(newHCatDependency1)));
     }
 
@@ -212,7 +321,7 @@ public class TestCoordPushDependencyCheckXCommand extends XDataTestCase {
             CoordinatorActionBean action = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
             String missDeps = action.getPushMissingDependencies();
             assertEquals(expDeps, missDeps);
-            assertEquals(action.getStatus(), stat);
+            assertEquals(stat, action.getStatus());
 
             return action;
         }

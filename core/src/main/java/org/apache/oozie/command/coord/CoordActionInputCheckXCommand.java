@@ -42,6 +42,7 @@ import org.apache.oozie.executor.jpa.CoordActionUpdateForInputCheckJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionUpdateForModifiedTimeJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.service.CallableQueueService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
@@ -157,7 +158,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             }
             else {
                 if (!nonExistListStr.isEmpty() && pushDeps == null || pushDeps.length() == 0) {
-                    queue(new CoordActionTimeOutXCommand(coordAction), 100);
+                    queue(new CoordActionTimeOutXCommand(coordAction));
                 }
                 else {
                     // Let CoordPushDependencyCheckXCommand queue the timeout
@@ -167,7 +168,9 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
         }
         catch (Exception e) {
             if (isTimeout(currentTime)) {
-                queue(new CoordActionTimeOutXCommand(coordAction), 100);
+                LOG.debug("Queueing timeout command");
+                // XCommand.queue() will not work when there is a Exception
+                Services.get().get(CallableQueueService.class).queue(new CoordActionTimeOutXCommand(coordAction));
             }
             throw new CommandException(ErrorCode.E1021, e.getMessage(), e);
         }

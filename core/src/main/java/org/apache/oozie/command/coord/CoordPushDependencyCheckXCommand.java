@@ -20,6 +20,7 @@ package org.apache.oozie.command.coord;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import org.apache.hadoop.conf.Configuration;
@@ -32,7 +33,6 @@ import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
-import org.apache.oozie.coord.CoordELEvaluator;
 import org.apache.oozie.dependency.DependencyChecker;
 import org.apache.oozie.dependency.ActionDependency;
 import org.apache.oozie.dependency.URIHandler;
@@ -41,16 +41,14 @@ import org.apache.oozie.executor.jpa.CoordActionUpdateForModifiedTimeJPAExecutor
 import org.apache.oozie.executor.jpa.CoordActionUpdatePushInputCheckJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.service.CallableQueueService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.URIHandlerService;
-import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.StatusUtils;
 import org.apache.oozie.util.XConfiguration;
-import org.apache.oozie.util.XmlUtils;
-import org.jdom.Element;
 
 public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> {
     protected String actionId;
@@ -93,7 +91,9 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
             LOG.info("Nothing to check. Empty push missing dependency");
         }
         else {
-            LOG.info("Push missing dependencies for actionID [{0}] is [{1}] ", actionId, pushMissingDeps);
+            String[] missingDepsArray = DependencyChecker.dependenciesAsArray(pushMissingDeps);
+            LOG.info("First Push missing dependency for actionID [{0}] is [{1}] ", actionId, missingDepsArray[0]);
+            LOG.trace("Push missing dependencies for actionID [{0}] is [{1}] ", actionId, pushMissingDeps);
 
             try {
                 Configuration actionConf = null;
@@ -104,7 +104,6 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
                     throw new CommandException(ErrorCode.E1307, e.getMessage(), e);
                 }
 
-                String[] missingDepsArray = DependencyChecker.dependenciesAsArray(pushMissingDeps);
                 // Check all dependencies during materialization to avoid registering in the cache.
                 // But check only first missing one afterwards similar to
                 // CoordActionInputCheckXCommand for efficiency. listPartitions is costly.
@@ -129,7 +128,7 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
                     // Checking for timeout
                     timeout = isTimeout();
                     if (timeout) {
-                        queue(new CoordActionTimeOutXCommand(coordAction), 100);
+                        queue(new CoordActionTimeOutXCommand(coordAction));
                     }
                     else {
                         queue(new CoordPushDependencyCheckXCommand(coordAction.getId()),
@@ -150,7 +149,10 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
             }
             catch (Exception e) {
                 if (isTimeout()) {
-                    queue(new CoordActionTimeOutXCommand(coordAction), 100);
+                    LOG.debug("Queueing timeout command");
+                    // XCommand.queue() will not work when there is a Exception
+                    Services.get().get(CallableQueueService.class).queue(new CoordActionTimeOutXCommand(coordAction));
+                    unregisterMissingDependencies(Arrays.asList(missingDepsArray));
                 }
                 throw new CommandException(ErrorCode.E1021, e.getMessage(), e);
             }
