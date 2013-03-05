@@ -154,9 +154,6 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                     queue(new CoordActionInputCheckXCommand(coordAction.getId(), coordAction.getJobId()),
                             getCoordInputCheckRequeueInterval());
                 }
-                else {
-                    queue(new CoordPushDependencyCheckXCommand(coordAction.getId()));
-                }
             }
             else {
                 if (!nonExistListStr.isEmpty() && pushDeps == null || pushDeps.length() == 0) {
