@@ -1,5 +1,6 @@
 -- Oozie 4.0.0 (unreleased)
 
+OOZIE-1218 Create a HCatalog Integration Guide (rohini via virag)
 OOZIE-1250 Coord action timeout not happening when there is a exception (rohini via mona)
 OOZIE-1207 Optimize current EL resolution in case of start-instance and end-instance (rohini via mona)
 OOZIE-1247 CoordActionInputCheck shouldn't queue CoordPushInputCheck (rohini via virag)
