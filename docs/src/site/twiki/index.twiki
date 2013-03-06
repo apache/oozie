@@ -44,6 +44,7 @@ Enough reading already? Follow the steps in [[DG_QuickStart][Oozie Quick Start]]
    * [[http://java.sun.com/j2ee/1.4/docs/tutorial/doc/JSPIntro7.html#wp77280][EL Expression Language Quick Reference]]
    * [[DG_CommandLineTool][Command Line Tool]]
    * [[DG_WorkflowReRun][Workflow Re-runs Explained]]
+   * [[DG_HCatalogIntegration][HCatalog Integration Explained]]
 
    * [[./client/apidocs/index.html][Oozie Client Javadocs]]
    * [[./core/apidocs/index.html][Oozie Core Javadocs]]
