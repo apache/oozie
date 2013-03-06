@@ -34,8 +34,6 @@ import org.apache.oozie.util.XLog;
 
 public class DependencyChecker {
 
-    private static XLog LOG = XLog.getLog(DependencyChecker.class);
-
     /**
      * Return a string of missing dependencies concatenated by CoordELFunctions.INSTANCE_SEPARATOR
      *
@@ -86,6 +84,7 @@ public class DependencyChecker {
      */
     public static ActionDependency checkForAvailability(String[] missingDependencies, Configuration actionConf,
             boolean stopOnFirstMissing) throws CommandException {
+        final XLog LOG = XLog.getLog(DependencyChecker.class); //OOZIE-1251. Don't initialize as static variable.
         String user = ParamChecker.notEmpty(actionConf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
         List<String> missingDeps = new ArrayList<String>();
         List<String> availableDeps = new ArrayList<String>();
