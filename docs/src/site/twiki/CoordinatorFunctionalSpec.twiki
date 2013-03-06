@@ -2313,7 +2313,8 @@ aggregated daily output.
 *%GREEN% Example: %ENDCOLOR%*
 
 #HCatPigExampleOne
----++++ Coordinator application definition:
+
+*Coordinator application definition:*
 
 <blockquote>
    <coordinator-app name="app-coord" frequency="${coord:days(1)}"
@@ -2390,7 +2391,8 @@ to pass the partition key-value string needed by the *HCatStorer* in Pig job whe
 coordinator action.
 
 #HCatWorkflow
----++++ Workflow definition:
+
+*Workflow definition:*
 
 <blockquote>
 <workflow-app xmlns="uri:oozie:workflow:0.3" name="logsprocessor-wf">
@@ -2494,7 +2496,8 @@ partition max/min values, output partition value, and database and table.
 *%GREEN% Example: %ENDCOLOR%*
 
 #HCatPigExampleTwo
----++++ Coordinator application definition:
+
+*Coordinator application definition:*
 
 <blockquote>
    <coordinator-app name="app-coord" frequency="${coord:days(1)}"

@@ -133,7 +133,7 @@
 
  <!-- HCatAccessorService -->
    <property>
-        <name>oozie.service.HCatAccessorService.connections</name>
+        <name>oozie.service.HCatAccessorService.jmsconnections</name>
         <value>
         default=java.naming.factory.initial#org.apache.activemq.jndi.ActiveMQInitialContextFactory;java.naming.provider.url#tcp://localhost:61616;connectionFactoryNames#ConnectionFactory
         </value>
@@ -142,7 +142,7 @@
         identifies the HCatalog server URL. "default" is used if no endpoint is mentioned
         in the query. If some JMS property is not defined, the system will use the property
         defined jndi.properties. jndi.properties files is retrieved from the application classpath.
-        Mapping rules can also be provided for mapping Hcatalog server names to JMS server.
+        Mapping rules can also be provided for mapping Hcatalog servers to corresponding JMS providers.
         hcat://${1}.${2}.server.com:8020=java.naming.factory.initial#Dummy.Factory;java.naming.provider.url#tcp://broker.${2}:61616
         </description>
     </property>
@@ -1753,7 +1753,7 @@
                 <name>oozie.service.URIHandlerService.uri.handlers</name>
                 <value>org.apache.oozie.dependency.FSURIHandler</value>
                 <description>
-                        Enlist the different uri schemes supported for data availability checks.
+                        Enlist the different uri handlers supported for data availability checks.
                 </description>
         </property>
     <!-- Oozie HTTP Notifications -->
