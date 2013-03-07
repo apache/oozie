@@ -40,7 +40,6 @@ import org.apache.oozie.service.URIHandlerService;
  */
 
 public class CoordELFunctions {
-    final private static XLog LOG = XLog.getLog(CoordELFunctions.class);
     final private static String DATASET = "oozie.coord.el.dataset.bean";
     final private static String COORD_ACTION = "oozie.coord.el.app.bean";
     final public static String CONFIGURATION = "oozie.coord.el.conf";
@@ -272,6 +271,8 @@ public class CoordELFunctions {
     }
 
     private static String coord_futureRange_sync(int startOffset, int endOffset, int instance) throws Exception {
+        final XLog LOG = XLog.getLog(CoordELFunctions.class);
+        final Thread currentThread = Thread.currentThread();
         ELEvaluator eval = ELEvaluator.getCurrent();
         String retVal = "";
         int datasetFrequency = (int) getDSFrequency();// in minutes
@@ -303,7 +304,7 @@ public class CoordELFunctions {
             URIHandler uriHandler = null;
             Context uriContext = null;
             try {
-                while (instance >= checkedInstance) {
+                while (instance >= checkedInstance && !currentThread.isInterrupted()) {
                     ELEvaluator uriEval = getUriEvaluator(nominalInstanceCal);
                     String uriPath = uriEval.evaluate(uriTemplate, String.class);
                     if (uriHandler == null) {
@@ -769,7 +770,7 @@ public class CoordELFunctions {
         ELEvaluator eval = ELEvaluator.getCurrent();
         String val = (String) eval.getVariable("oozie.dataname." + n);
         if (val == null || val.equals("data-in") == false) {
-            LOG.error("data_in_name " + n + " is not valid");
+            XLog.getLog(CoordELFunctions.class).error("data_in_name " + n + " is not valid");
             throw new RuntimeException("data_in_name " + n + " is not valid");
         }
         return echoUnResolved("dataIn", "'" + n + "'");
@@ -779,7 +780,7 @@ public class CoordELFunctions {
         ELEvaluator eval = ELEvaluator.getCurrent();
         String val = (String) eval.getVariable("oozie.dataname." + n);
         if (val == null || val.equals("data-out") == false) {
-            LOG.error("data_out_name " + n + " is not valid");
+            XLog.getLog(CoordELFunctions.class).error("data_out_name " + n + " is not valid");
             throw new RuntimeException("data_out_name " + n + " is not valid");
         }
         return echoUnResolved("dataOut", "'" + n + "'");
@@ -885,6 +886,7 @@ public class CoordELFunctions {
     }
 
     private static String coord_currentRange_sync(int start, int end) throws Exception {
+        final XLog LOG = XLog.getLog(CoordELFunctions.class);
         int datasetFrequency = getDSFrequency();// in minutes
         TimeUnit dsTimeUnit = getDSTimeUnit();
         int[] instCount = new int[1];// used as pass by ref
@@ -974,7 +976,7 @@ public class CoordELFunctions {
         Calendar nominalInstanceCal = getInitialInstanceCal();
         nominalInstanceCal.add(freqUnit.getCalendarUnit(), freq * freqCount);
         if (nominalInstanceCal.getTime().compareTo(getInitialInstance()) < 0) {
-            LOG.warn("If the initial instance of the dataset is later than the offset instance"
+            XLog.getLog(CoordELFunctions.class).warn("If the initial instance of the dataset is later than the offset instance"
                     + " specified, such as coord:offset({0}, {1}) in this case, an empty string is returned. This means that no"
                     + " data is available at the offset instance specified by the user and the user could try modifying his"
                     + " initial-instance to an earlier time.", n, timeUnit);
@@ -998,6 +1000,8 @@ public class CoordELFunctions {
     }
 
     private static String coord_latestRange_sync(int startOffset, int endOffset) throws Exception {
+        final XLog LOG = XLog.getLog(CoordELFunctions.class);
+        final Thread currentThread = Thread.currentThread();
         ELEvaluator eval = ELEvaluator.getCurrent();
         String retVal = "";
         int datasetFrequency = (int) getDSFrequency();// in minutes
@@ -1033,7 +1037,7 @@ public class CoordELFunctions {
             URIHandler uriHandler = null;
             Context uriContext = null;
             try {
-                while (nominalInstanceCal.compareTo(initInstance) >= 0) {
+                while (nominalInstanceCal.compareTo(initInstance) >= 0 && !currentThread.isInterrupted()) {
                     ELEvaluator uriEval = getUriEvaluator(nominalInstanceCal);
                     String uriPath = uriEval.evaluate(uriTemplate, String.class);
                     if (uriHandler == null) {
@@ -1471,7 +1475,7 @@ public class CoordELFunctions {
             cal = getCurrentInstance(getActionCreationtime(eval), null, eval);
         }
         if (cal == null) {
-            LOG.warn("If the initial instance of the dataset is later than the nominal time, an"
+            XLog.getLog(CoordELFunctions.class).warn("If the initial instance of the dataset is later than the nominal time, an"
                     + " empty string is returned. This means that no data is available at the offset instance specified by the user"
                     + " and the user could try modifying his or her initial-instance to an earlier time.");
             return null;

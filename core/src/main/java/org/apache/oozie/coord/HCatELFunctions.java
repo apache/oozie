@@ -35,7 +35,6 @@ import org.apache.oozie.util.XLog;
  */
 
 public class HCatELFunctions {
-    private static XLog LOG = XLog.getLog(HCatELFunctions.class);
     private static final Configuration EMPTY_CONF = new Configuration(true);
 
     enum EventType {
@@ -238,7 +237,7 @@ public class HCatELFunctions {
             return hcatUri.getPartitionValue(partitionName);
         }
         catch(URISyntaxException urie) {
-            LOG.warn("Exception with uriTemplate [{0}]. Reason [{1}]: ", uri, urie);
+            XLog.getLog(HCatELFunctions.class).warn("Exception with uriTemplate [{0}]. Reason [{1}]: ", uri, urie);
             throw new RuntimeException("HCat URI can't be parsed " + urie);
         }
     }
@@ -305,7 +304,7 @@ public class HCatELFunctions {
             }
         }
         else {
-            LOG.warn("URI is null");
+            XLog.getLog(HCatELFunctions.class).warn("URI is null");
             return null;
         }
         return minPartition;
@@ -349,7 +348,7 @@ public class HCatELFunctions {
             }
         }
         else {
-            LOG.warn("URI is null");
+            XLog.getLog(HCatELFunctions.class).warn("URI is null");
             return null;
         }
         return maxPartition;
@@ -375,6 +374,7 @@ public class HCatELFunctions {
     }
 
     private static HCatURI getURIFromResolved(String dataInName, EventType type) {
+        final XLog LOG = XLog.getLog(HCatELFunctions.class);
         StringBuilder uriTemplate = new StringBuilder();
         ELEvaluator eval = ELEvaluator.getCurrent();
         String uris;
@@ -408,7 +408,7 @@ public class HCatELFunctions {
         ELEvaluator eval = ELEvaluator.getCurrent();
         String val = (String) eval.getVariable("oozie.dataname." + dataInName);
         if (val == null || (val.equals("data-in") == false && val.equals("data-out") == false)) {
-            LOG.error("dataset name " + dataInName + " is not valid. val :" + val);
+            XLog.getLog(HCatELFunctions.class).error("dataset name " + dataInName + " is not valid. val :" + val);
             throw new RuntimeException("data set name " + dataInName + " is not valid");
         }
         return true;

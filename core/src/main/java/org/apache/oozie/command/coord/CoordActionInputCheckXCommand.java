@@ -130,6 +130,13 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                     + nonResolvedList.toString());
             // Updating the list of data dependencies that are available and those that are yet not
             boolean status = checkInput(actionXml, existList, nonExistList, actionConf);
+            String pushDeps = coordAction.getPushMissingDependencies();
+            // Resolve latest/future only when all current missingDependencies and
+            // pushMissingDependencies are met
+            if (status) {
+                status = (pushDeps == null || pushDeps.length() == 0) ? checkUnResolvedInput(actionXml, actionConf)
+                        : false;
+            }
             coordAction.setLastModifiedTime(currentTime);
             coordAction.setActionXml(actionXml.toString());
             if (nonResolvedList.length() > 0 && status == false) {
@@ -141,8 +148,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                 isChangeInDependency = true;
                 coordAction.setMissingDependencies(nonExistListStr);
             }
-            String pushDeps = coordAction.getPushMissingDependencies();
-            if (status == true && (pushDeps == null || pushDeps.length() == 0)) {
+            if (status) {
                 String newActionXml = resolveCoordConfiguration(actionXml, actionConf, actionId);
                 actionXml.replace(0, actionXml.length(), newActionXml);
                 coordAction.setActionXml(actionXml.toString());
@@ -242,11 +248,13 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
     protected boolean checkInput(StringBuilder actionXml, StringBuilder existList, StringBuilder nonExistList,
             Configuration conf) throws Exception {
         Element eAction = XmlUtils.parseXml(actionXml.toString());
-        boolean allExist = checkResolvedUris(eAction, existList, nonExistList, conf);
-        if (allExist) {
-            LOG.debug("[" + actionId + "]::ActionInputCheck:: Checking Latest/future");
-            allExist = checkUnresolvedInstances(eAction, conf);
-        }
+        return checkResolvedUris(eAction, existList, nonExistList, conf);
+    }
+
+    private boolean checkUnResolvedInput(StringBuilder actionXml, Configuration conf) throws Exception {
+        Element eAction = XmlUtils.parseXml(actionXml.toString());
+        LOG.debug("[" + actionId + "]::ActionInputCheck:: Checking Latest/future");
+        boolean allExist = checkUnresolvedInstances(eAction, conf);
         if (allExist) {
             actionXml.replace(0, actionXml.length(), XmlUtils.prettyPrint(eAction).toString());
         }

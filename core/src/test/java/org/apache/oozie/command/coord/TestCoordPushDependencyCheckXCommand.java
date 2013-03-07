@@ -17,13 +17,20 @@
  */
 package org.apache.oozie.command.coord;
 
+import java.io.ByteArrayOutputStream;
 import java.util.List;
 
+import org.apache.log4j.Appender;
+import org.apache.log4j.Layout;
+import org.apache.log4j.Logger;
+import org.apache.log4j.SimpleLayout;
+import org.apache.log4j.WriterAppender;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.coord.CoordELFunctions;
+import org.apache.oozie.dependency.DependencyChecker;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.HCatAccessorService;
@@ -302,6 +309,29 @@ public class TestCoordPushDependencyCheckXCommand extends XDataTestCase {
         checkCoordAction(actionId, newHCatDependency1, CoordinatorAction.Status.TIMEDOUT);
         assertNull(pdms.getWaitingActions(new HCatURI(newHCatDependency1)));
         assertFalse(hcatService.isRegisteredForNotification(new HCatURI(newHCatDependency1)));
+    }
+
+    @Test
+    public void testLogMessagePrefix() throws Exception {
+        Logger logger = Logger.getLogger(DependencyChecker.class);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        Layout layout = new SimpleLayout();
+        Appender appender = new WriterAppender(layout, out);
+        logger.addAppender(appender);
+
+        String db = "default";
+        String table = "tablename";
+        populateTable(db, table);
+
+        String newHCatDependency = "hcat://" + server + "/" + db + "/" + table + "/dt=20120430;country=brazil";
+        String actionId1 = addInitRecords(newHCatDependency);
+        new CoordPushDependencyCheckXCommand(actionId1).call();
+        assertTrue(out.toString().contains("ACTION[" + actionId1 + "]"));
+        out.reset();
+        String actionId2 = addInitRecords(newHCatDependency);
+        new CoordPushDependencyCheckXCommand(actionId2).call();
+        assertFalse(out.toString().contains("ACTION[" + actionId1 + "]"));
+        assertTrue(out.toString().contains("ACTION[" + actionId2 + "]"));
     }
 
     private void populateTable(String db, String table) throws Exception {
