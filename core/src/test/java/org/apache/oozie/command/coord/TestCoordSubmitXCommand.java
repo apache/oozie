@@ -481,7 +481,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
                 + " <sla:app-name>test-app</sla:app-name>"
                 + " <sla:nominal-time>${coord:nominalTime()}</sla:nominal-time>"
                 + " <sla:should-start>${5 * MINUTES}</sla:should-start>"
-                + " <sla:should-end>${2 * HOURS}</sla:should-end>"
+                + " <sla:should-end>${ SLA_OFFSET * HOURS}</sla:should-end>"
                 + " <sla:notification-msg>Notifying User for ${coord:nominalTime()} nominal time </sla:notification-msg>"
                 + " <sla:alert-contact>abc@example.com</sla:alert-contact>"
                 + " <sla:dev-contact>abc@example.com</sla:dev-contact>"
@@ -492,6 +492,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         writeToFile(appXml, appPath);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
+        conf.set("SLA_OFFSET", "10");
         CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
         String jobId = sc.call();
 
