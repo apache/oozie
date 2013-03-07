@@ -4,6 +4,7 @@ OOZIE-1239 Bump up trunk to 4.1.0-SNAPSHOT (virag)
 
 -- Oozie 4.0.0 (unreleased)
 
+OOZIE-1255 latest/future check for hcat can cause shutdown to hang (rohini via virag)
 OOZIE-1253 latest() gets resolved before all push dependencies are resolved (rohini via virag)
 OOZIE-1251 Log messages for DependencyChecker class show wrong jobid and actionid (rohini via mona)
 OOZIE-1218 Create a HCatalog Integration Guide (rohini via virag)
