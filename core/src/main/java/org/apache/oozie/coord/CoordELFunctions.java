@@ -272,6 +272,7 @@ public class CoordELFunctions {
 
     private static String coord_futureRange_sync(int startOffset, int endOffset, int instance) throws Exception {
         final XLog LOG = XLog.getLog(CoordELFunctions.class);
+        final Thread currentThread = Thread.currentThread();
         ELEvaluator eval = ELEvaluator.getCurrent();
         String retVal = "";
         int datasetFrequency = (int) getDSFrequency();// in minutes
@@ -303,7 +304,7 @@ public class CoordELFunctions {
             URIHandler uriHandler = null;
             Context uriContext = null;
             try {
-                while (instance >= checkedInstance) {
+                while (instance >= checkedInstance && !currentThread.isInterrupted()) {
                     ELEvaluator uriEval = getUriEvaluator(nominalInstanceCal);
                     String uriPath = uriEval.evaluate(uriTemplate, String.class);
                     if (uriHandler == null) {
@@ -1000,6 +1001,7 @@ public class CoordELFunctions {
 
     private static String coord_latestRange_sync(int startOffset, int endOffset) throws Exception {
         final XLog LOG = XLog.getLog(CoordELFunctions.class);
+        final Thread currentThread = Thread.currentThread();
         ELEvaluator eval = ELEvaluator.getCurrent();
         String retVal = "";
         int datasetFrequency = (int) getDSFrequency();// in minutes
@@ -1035,7 +1037,7 @@ public class CoordELFunctions {
             URIHandler uriHandler = null;
             Context uriContext = null;
             try {
-                while (nominalInstanceCal.compareTo(initInstance) >= 0) {
+                while (nominalInstanceCal.compareTo(initInstance) >= 0 && !currentThread.isInterrupted()) {
                     ELEvaluator uriEval = getUriEvaluator(nominalInstanceCal);
                     String uriPath = uriEval.evaluate(uriTemplate, String.class);
                     if (uriHandler == null) {
