@@ -20,11 +20,12 @@
 function printUsage() {
   echo
   echo " Usage  : oozie-setup.sh <Command and OPTIONS>"
-  echo "          prepare-war [-hadoop HADOOP_VERSION HADOOP_PATH] [-extjs EXTJS_PATH] [-jars JARS_PATH]"
+  echo "          prepare-war [-hadoop HADOOP_VERSION HADOOP_PATH] [-extjs EXTJS_PATH] [-jars JARS_PATH] [-secure]"
   echo "                      (prepare-war is to prepare war files for oozie)"
   echo "                      (Hadoop version [0.20.1|0.20.2|0.20.104|0.20.200|0.23.x|2.x] and Hadoop install dir)"
   echo "                      (EXTJS_PATH is expanded or ZIP, to enable the Oozie webconsole)"
   echo "                      (JARS_PATH is multiple JAR path separated by ':')"
+  echo "                      (-secure will configure the war file to use HTTPS (SSL))"
   echo "          sharelib create -fs FS_URI [-locallib SHARED_LIBRARY] (create sharelib for oozie,"
   echo "                                                                FS_URI is the fs.default.name"
   echo "                                                                for hdfs uri; SHARED_LIBRARY, path to the"
@@ -71,6 +72,7 @@ prepareWar=""
 inputWar="${OOZIE_HOME}/oozie.war"
 outputWar="${CATALINA_BASE}/webapps/oozie.war"
 outputWarExpanded="${CATALINA_BASE}/webapps/oozie"
+secure=""
 
 while [ $# -gt 0 ]
 do
@@ -134,6 +136,9 @@ do
     shift
     hadoopPath=$1
     addHadoopJars=true
+  elif [ "$1" = "-secure" ]; then
+    shift
+    secure=true
   elif [ "$1" = "prepare-war" ]; then
     prepareWar=true
   else
@@ -198,6 +203,9 @@ else
   fi
   if [ "${addHadoopJars}" != "" ]; then
     OPTIONS="${OPTIONS} -hadoop ${hadoopVersion} ${hadoopPath}"
+  fi
+  if [ "${secure}" != "" ]; then
+    OPTIONS="${OPTIONS} -secure"
   fi
 
   ${OOZIE_HOME}/bin/addtowar.sh -inputwar ${inputWar} -outputwar ${outputWar} ${OPTIONS}

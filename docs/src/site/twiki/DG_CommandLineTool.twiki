@@ -34,7 +34,7 @@ usage:
                 -date <arg>           coordinator/bundle rerun on action dates (requires -rerun)
                 -definition <arg>     job definition
                 -doas <arg>           doAs user, impersonates as the specified user
-                -dryrun               Dryrun a workflow (since 3.4) or coordinator (since 2.0) job without actually executing it
+                -dryrun               Dryrun a workflow (since 3.3.2) or coordinator (since 2.0) job without actually executing it
                 -info <arg>           info of a job
                 -kill <arg>           kill a job
                 -len <arg>            number of actions (default TOTAL ACTIONS, requires -info)
@@ -518,7 +518,7 @@ specified path must be an HDFS path.
 
 ---+++ Dryrun of Workflow Job
 
-* This feature is only supported in Oozie 3.4 or later.
+* This feature is only supported in Oozie 3.3.2 or later.
 
 Example:
 
