@@ -132,6 +132,7 @@ function printUsage() {
   echo "          [-hadoopJarsSNAPSHOT] (if Hadoop jars version on system is SNAPSHOT)"
   echo "          [-extjs EXTJS_PATH] (expanded or ZIP)"
   echo "          [-jars JARS_PATH] (multiple JAR path separated by ':')"
+  echo "          [-secure]"
   echo
 }
 
@@ -153,6 +154,8 @@ extjsHome=""
 jarsPath=""
 inputWar=""
 outputWar=""
+secure=false
+secureConfigsDir="${OOZIE_CONFIG}/ssl"
 
 while [ $# -gt 0 ]
 do
@@ -221,6 +224,9 @@ do
       exit -1
     fi
     outputWar=$1
+  elif [ "$1" = "-secure" ]; then
+    shift
+    secure=true
   fi
     shift
 done
@@ -254,6 +260,17 @@ if [ "${addJars}" = "true" ]; then
     do
       checkFileExists ${jarPath}
     done
+fi
+
+if [ "${secure}" = "true" ]; then
+  checkFileExists ${secureConfigsDir}/ssl-server.xml
+  checkFileExists ${secureConfigsDir}/ssl-web.xml
+  echo
+  echo "Using SSL (HTTPS)"
+  echo
+else
+  checkFileExists ${secureConfigsDir}/server.xml
+  checkFileExists ${secureConfigsDir}/web.xml
 fi
 
 #Unpacking original war
@@ -330,6 +347,16 @@ if [ "${addJars}" = "true" ]; then
   done
 fi
 
+if [ "${secure}" = "true" ]; then
+  #Inject the SSL version of web.xml in oozie war
+  cp ${secureConfigsDir}/ssl-web.xml ${tmpWarDir}/WEB-INF/web.xml
+  checkExec "injecting secure web.xml file into staging"
+else
+  #Inject the regular version of web.xml in oozie war
+  cp ${secureConfigsDir}/web.xml ${tmpWarDir}/WEB-INF/web.xml
+  checkExec "injecting regular web.xml file into staging"
+fi
+
 #Creating new Oozie WAR
 currentDir=`pwd`
 cd ${tmpWarDir}
@@ -344,5 +371,16 @@ checkExec "copying new Oozie WAR"
 echo 
 echo "New Oozie WAR file with added '${components}' at ${outputWar}"
 echo
+
+if [ "${secure}" = "true" ]; then
+  #Inject the SSL version of server.xml in oozie-server
+  cp ${secureConfigsDir}/ssl-server.xml ${secureConfigsDir}/../../oozie-server/conf/server.xml
+  checkExec "injecting secure server.xml file into oozie-server"
+else
+  #Inject the regular version of server.xml in oozie-server
+  cp ${secureConfigsDir}/server.xml ${secureConfigsDir}/../../oozie-server/conf/server.xml
+  checkExec "injecting regular server.xml file into oozie-server"
+fi
+
 cleanUp
 exit 0
