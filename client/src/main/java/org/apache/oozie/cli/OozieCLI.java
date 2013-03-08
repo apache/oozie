@@ -242,7 +242,7 @@ public class OozieCLI {
         Option debug = new Option(DEBUG_OPTION, false, "Use debug mode to see debugging statements on stdout");
         Option rerun = new Option(RERUN_OPTION, true,
                 "rerun a job  (coordinator requires -action or -date, bundle requires -coordinator or -date)");
-        Option dryrun = new Option(DRYRUN_OPTION, false, "Dryrun a workflow (since 3.4) or coordinator (since 2.0) job without"
+        Option dryrun = new Option(DRYRUN_OPTION, false, "Dryrun a workflow (since 3.3.2) or coordinator (since 2.0) job without"
                 + " actually executing it");
         Option start = new Option(START_OPTION, true, "start a job");
         Option suspend = new Option(SUSPEND_OPTION, true, "suspend a job");
