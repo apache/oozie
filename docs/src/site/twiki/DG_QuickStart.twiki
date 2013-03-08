@@ -86,10 +86,13 @@ If the second argument is omitted, the Oozie sharelib tarball from the Oozie ins
 Run the =oozie-setup.sh= script to configure Oozie with all the components added to the *libext/* directory.
 
 <verbatim>
-$ bin/oozie-setup.sh prepare-war [-jars <PATHS>] [-extjs <PATH>]
+$ bin/oozie-setup.sh prepare-war [-jars <PATHS>] [-extjs <PATH>] [-secure]
                      sharelib create -fs <FS_URI> [-locallib <PATH>]
                      sharelib upgrade -fs <FS_URI> [-locallib <PATH>]
 </verbatim>
+
+The =-secure= option will configure Oozie to use HTTP (SSL); refer to
+[[AG_Install#Setting_Up_Oozie_with_HTTPS_SSL][Setting Up Oozie with HTTPS (SSL)]] for more details.
 
 Create the Oozie DB using the 'ooziedb.sh' command line tool:
 
