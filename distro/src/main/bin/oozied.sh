@@ -46,8 +46,8 @@ source ${BASEDIR}/bin/oozie-sys.sh
 CATALINA=${OOZIE_CATALINA_HOME:-${BASEDIR}/oozie-server}/bin/catalina.sh
 
 setup_catalina_opts() {
-  # The Java System property 'oozie.http.port' it is not used by Oozie,
-  # it is used in Tomcat's server.xml configuration file
+  # The Java System properties 'oozie.http.port' and 'oozie.https.port' are not
+  # used by Oozie, they are used in Tomcat's server.xml configuration file
   #
   echo "Using   CATALINA_OPTS:       ${CATALINA_OPTS}"
 
@@ -64,7 +64,10 @@ setup_catalina_opts() {
   catalina_opts="${catalina_opts} -Doozie.http.hostname=${OOZIE_HTTP_HOSTNAME}";
   catalina_opts="${catalina_opts} -Doozie.admin.port=${OOZIE_ADMIN_PORT}";
   catalina_opts="${catalina_opts} -Doozie.http.port=${OOZIE_HTTP_PORT}";
+  catalina_opts="${catalina_opts} -Doozie.https.port=${OOZIE_HTTPS_PORT}";
   catalina_opts="${catalina_opts} -Doozie.base.url=${OOZIE_BASE_URL}";
+  catalina_opts="${catalina_opts} -Doozie.https.keystore.file=${OOZIE_HTTPS_KEYSTORE_FILE}";
+  catalina_opts="${catalina_opts} -Doozie.https.keystore.pass=${OOZIE_HTTPS_KEYSTORE_PASS}";
 
   # add required native libraries such as compression codecs
   catalina_opts="${catalina_opts} -Djava.library.path=${JAVA_LIBRARY_PATH}";

@@ -181,6 +181,13 @@ else
   print "Using   OOZIE_ADMIN_PORT:     ${OOZIE_ADMIN_PORT}"
 fi
 
+if [ "${OOZIE_HTTPS_PORT}" = "" ]; then
+  export OOZIE_HTTPS_PORT=11443
+  print "Setting OOZIE_HTTPS_PORT:     ${OOZIE_HTTPS_PORT}"
+else
+  print "Using   OOZIE_HTTPS_PORT:     ${OOZIE_HTTPS_PORT}"
+fi
+
 if [ "${OOZIE_BASE_URL}" = "" ]; then
   export OOZIE_BASE_URL="http://${OOZIE_HTTP_HOSTNAME}:${OOZIE_HTTP_PORT}/oozie"
   print "Setting OOZIE_BASE_URL:      ${OOZIE_BASE_URL}"
@@ -193,6 +200,20 @@ if [ "${CATALINA_BASE}" = "" ]; then
   print "Setting CATALINA_BASE:       ${CATALINA_BASE}"
 else
   print "Using   CATALINA_BASE:       ${CATALINA_BASE}"
+fi
+
+if [ "${OOZIE_HTTPS_KEYSTORE_FILE}" = "" ]; then
+  export OOZIE_HTTPS_KEYSTORE_FILE=${HOME}/.keystore
+  print "Setting OOZIE_HTTPS_KEYSTORE_FILE:     ${OOZIE_HTTPS_KEYSTORE_FILE}"
+else
+  print "Using   OOZIE_HTTPS_KEYSTORE_FILE:     ${OOZIE_HTTPS_KEYSTORE_FILE}"
+fi
+
+if [ "${OOZIE_HTTPS_KEYSTORE_PASS}" = "" ]; then
+  export OOZIE_HTTPS_KEYSTORE_PASS=password
+  print "Setting OOZIE_HTTPS_KEYSTORE_PASS:     ${OOZIE_HTTPS_KEYSTORE_PASS}"
+else
+  print "Using   OOZIE_HTTPS_KEYSTORE_PASS:     ${OOZIE_HTTPS_KEYSTORE_PASS}"
 fi
 
 if [ "${CATALINA_OUT}" = "" ]; then
