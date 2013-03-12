@@ -29,16 +29,22 @@ import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.coord.CoordELFunctions;
+import org.apache.oozie.dependency.FSURIHandler;
+import org.apache.oozie.dependency.HCatURIHandler;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobUpdateJPAExecutor;
 import org.apache.oozie.service.CallableQueueService;
 import org.apache.oozie.service.JPAService;
+import org.apache.oozie.service.PartitionDependencyManagerService;
 import org.apache.oozie.service.SchemaService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.StatusTransitService;
+import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
+import org.apache.oozie.util.HCatURI;
 import org.apache.oozie.workflow.WorkflowInstance;
 
 public class TestCoordKillXCommand extends XDataTestCase {
@@ -331,6 +337,55 @@ public class TestCoordKillXCommand extends XDataTestCase {
         assertTrue(callable1.executed != 0);
         assertTrue(callable2.executed == 0);
         assertTrue(callable3.executed == 0);
+    }
+
+
+    public void testCoordKillRemovePushMissingDeps() throws Exception {
+        try {
+            services.destroy();
+            services = super.setupServicesForHCatalog();
+            services.init();
+            String db = "default";
+            String table = "tablename";
+            String server = "hcatserver";
+            String newHCatDependency1 = "hcat://" + server + "/" + db + "/" + table + "/dt=20120430;country=brazil";
+            String newHCatDependency2 = "hcat://" + server + "/" + db + "/" + table + "/dt=20120430;country=usa";
+            String pushMissingDeps = newHCatDependency1 + CoordELFunctions.INSTANCE_SEPARATOR + newHCatDependency2;
+            PartitionDependencyManagerService pdms = Services.get().get(PartitionDependencyManagerService.class);
+
+            CoordinatorJobBean job = addRecordToCoordJobTableForWaiting("coord-job-for-action-input-check.xml",
+                    CoordinatorJob.Status.RUNNING, false, true);
+
+            CoordinatorActionBean action1 = addRecordToCoordActionTableForWaiting(job.getId(), 1,
+                    CoordinatorAction.Status.WAITING, "coord-action-for-action-input-check.xml", null, pushMissingDeps,
+                    "Z");
+
+            String newHCatDependency3 = "hcat://" + server + "/" + db + "/" + table + "/dt=20120430;country=russia";
+            CoordinatorActionBean action2 = addRecordToCoordActionTableForWaiting(job.getId(), 2,
+                    CoordinatorAction.Status.WAITING, "coord-action-for-action-input-check.xml", null,
+                    newHCatDependency3, "Z");
+
+            HCatURI hcatURI1, hcatURI2, hcatURI3;
+            hcatURI1 = new HCatURI(newHCatDependency1);
+            hcatURI2 = new HCatURI(newHCatDependency2);
+            hcatURI3 = new HCatURI(newHCatDependency3);
+
+            pdms.addMissingDependency(hcatURI1, action1.getId());
+            pdms.addMissingDependency(hcatURI2, action1.getId());
+            pdms.addMissingDependency(hcatURI3, action2.getId());
+            assertTrue(pdms.getWaitingActions(new HCatURI(newHCatDependency1)).contains(action1.getId()));
+            assertTrue(pdms.getWaitingActions(new HCatURI(newHCatDependency2)).contains(action1.getId()));
+            assertTrue(pdms.getWaitingActions(new HCatURI(newHCatDependency3)).contains(action2.getId()));
+            new CoordKillXCommand(job.getId()).call();
+            assertNull(pdms.getWaitingActions(new HCatURI(newHCatDependency1)));
+            assertNull(pdms.getWaitingActions(new HCatURI(newHCatDependency2)));
+            assertNull(pdms.getWaitingActions(new HCatURI(newHCatDependency3)));
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            fail(e.getMessage());
+        }
+
     }
 
 }
