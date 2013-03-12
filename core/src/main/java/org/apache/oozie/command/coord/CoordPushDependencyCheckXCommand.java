@@ -49,6 +49,7 @@ import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.StatusUtils;
 import org.apache.oozie.util.XConfiguration;
+import org.apache.oozie.util.XLog;
 
 public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> {
     protected String actionId;
@@ -144,7 +145,7 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
                     unregisterAvailableDependencies(actionDep);
                 }
                 if (timeout) {
-                    unregisterMissingDependencies(actionDep.getMissingDependencies());
+                    unregisterMissingDependencies(actionDep.getMissingDependencies(), actionId);
                 }
             }
             catch (Exception e) {
@@ -152,7 +153,7 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
                     LOG.debug("Queueing timeout command");
                     // XCommand.queue() will not work when there is a Exception
                     Services.get().get(CallableQueueService.class).queue(new CoordActionTimeOutXCommand(coordAction));
-                    unregisterMissingDependencies(Arrays.asList(missingDepsArray));
+                    unregisterMissingDependencies(Arrays.asList(missingDepsArray), actionId);
                 }
                 throw new CommandException(ErrorCode.E1021, e.getMessage(), e);
             }
@@ -274,7 +275,8 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
         }
     }
 
-    private void unregisterMissingDependencies(List<String> missingDeps) {
+    public static void unregisterMissingDependencies(List<String> missingDeps, String actionId) {
+        final XLog LOG = XLog.getLog(CoordPushDependencyCheckXCommand.class);
         URIHandlerService uriService = Services.get().get(URIHandlerService.class);
         for (String missingDep : missingDeps) {
             try {

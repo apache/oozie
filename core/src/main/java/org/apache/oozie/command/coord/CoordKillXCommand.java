@@ -28,6 +28,7 @@ import org.apache.oozie.command.wf.KillXCommand;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.KillTransitionXCommand;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.dependency.DependencyChecker;
 import org.apache.oozie.executor.jpa.BulkUpdateInsertForCoordActionStatusJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetActionsNotCompletedJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
@@ -38,6 +39,7 @@ import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.StatusUtils;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -131,6 +133,11 @@ public class CoordKillXCommand extends KillTransitionXCommand {
                     updateCoordAction(action, false);
                     LOG.debug("Killed coord action = [{0}], current status = [{1}], pending = [{2}]",
                             action.getId(), action.getStatus(), action.getPending());
+                }
+                String pushMissingDeps = action.getPushMissingDependencies();
+                if (pushMissingDeps != null) {
+                    CoordPushDependencyCheckXCommand.unregisterMissingDependencies(
+                            Arrays.asList(DependencyChecker.dependenciesAsArray(pushMissingDeps)), action.getId());
                 }
             }
         }

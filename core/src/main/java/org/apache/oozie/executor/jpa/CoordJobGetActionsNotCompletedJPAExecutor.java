@@ -90,6 +90,9 @@ public class CoordJobGetActionsNotCompletedJPAExecutor implements JPAExecutor<Li
         if (arr[3] != null) {
             bean.setExternalId((String) arr[3]);
         }
+        if (arr[4] != null) {
+            bean.setPushMissingDependencies((String) arr[4]);
+        }
         return bean;
     }
 
