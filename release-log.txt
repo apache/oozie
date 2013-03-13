@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1245 Add ability to automatically suspend workflow at specified actions (rkanter)
 OOZIE-894 support for hive in Oozie CLI (bowenzhangusa via tucu)
 OOZIE-1239 Bump up trunk to 4.1.0-SNAPSHOT (virag)
 
