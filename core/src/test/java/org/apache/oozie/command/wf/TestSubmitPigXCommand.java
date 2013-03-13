@@ -97,7 +97,7 @@ public class TestSubmitPigXCommand extends XFsTestCase {
         sb.append("<error to=\"fail\" />");
         sb.append("</action>");
         sb.append("<kill name=\"fail\">");
-        sb.append("<message>Pig failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>");
+        sb.append("<message>pig failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>");
         sb.append("</kill>");
         sb.append("<end name=\"end\" />");
         sb.append("</workflow-app>");
@@ -148,7 +148,7 @@ public class TestSubmitPigXCommand extends XFsTestCase {
         sb.append("<error to=\"fail\" />");
         sb.append("</action>");
         sb.append("<kill name=\"fail\">");
-        sb.append("<message>Pig failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>");
+        sb.append("<message>pig failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>");
         sb.append("</kill>");
         sb.append("<end name=\"end\" />");
         sb.append("</workflow-app>");
