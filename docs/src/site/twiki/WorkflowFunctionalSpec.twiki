@@ -2367,6 +2367,21 @@ Example of a global element:
 ...
 </verbatim>
 
+---++ 20 Suspend On Nodes
+
+Specifying =oozie.suspend.on.nodes= in a job.properties file lets users specify a list of actions that will cause Oozie to
+automatically suspend the workflow upon reaching any of those actions; like breakpoints in a debugger. To continue running the
+workflow, the user simply uses the
+[[DG_CommandLineTool#Resuming_a_Workflow_Coordinator_or_Bundle_Job][-resume command from the Oozie CLI]]. Specifying a * will
+cause Oozie to suspend the workflow on all nodes.
+
+For example:
+<verbatim>
+oozie.suspend.on.nodes=mr-node,my-pig-action,my-fork
+</verbatim>
+Specifying the above in a job.properties file will cause Oozie to suspend the workflow when any of those three actions are about
+to be executed.
+
 
 ---++ Appendixes
 
