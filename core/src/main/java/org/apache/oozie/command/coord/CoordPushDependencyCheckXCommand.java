@@ -93,8 +93,11 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
         }
         else {
             String[] missingDepsArray = DependencyChecker.dependenciesAsArray(pushMissingDeps);
-            LOG.info("First Push missing dependency for actionID [{0}] is [{1}] ", actionId, missingDepsArray[0]);
-            LOG.trace("Push missing dependencies for actionID [{0}] is [{1}] ", actionId, pushMissingDeps);
+            LOG.info("First Push missing dependency is [{0}] ", missingDepsArray[0]);
+            LOG.trace("Push missing dependencies are [{0}] ", pushMissingDeps);
+            if (registerForNotification) {
+                LOG.debug("Register for notifications is true");
+            }
 
             try {
                 Configuration actionConf = null;
@@ -142,7 +145,7 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
                     registerForNotification(actionDep.getMissingDependencies(), actionConf);
                 }
                 else {
-                    unregisterAvailableDependencies(actionDep);
+                    unregisterAvailableDependencies(actionDep.getAvailableDependencies());
                 }
                 if (timeout) {
                     unregisterMissingDependencies(actionDep.getMissingDependencies(), actionId);
@@ -203,6 +206,12 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
                 queue(new CoordActionReadyXCommand(coordAction.getJobId()), 100);
             }
         }
+        else if (isTimeout()) {
+            // If it is timeout and all push dependencies are available but still some unresolved
+            // missing dependencies queue CoordActionInputCheckXCommand now. Else it will have to
+            // wait till RecoveryService kicks in
+            queue(new CoordActionInputCheckXCommand(coordAction.getId(), coordAction.getJobId()));
+        }
     }
 
     private String resolveCoordConfiguration() throws CommandException {
@@ -245,32 +254,29 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
                 URI missingURI = new URI(missingDep);
                 URIHandler handler = uriService.getURIHandler(missingURI);
                 handler.registerForNotification(missingURI, actionConf, user, actionId);
-                    LOG.debug("Registered uri [{0}] for actionId: [{1}] for notifications",
-                            missingURI, actionId);
+                    LOG.debug("Registered uri [{0}] for notifications", missingURI);
             }
             catch (Exception e) {
-                LOG.warn("Exception while registering uri for actionId: [{0}] for notifications", actionId, e);
+                LOG.warn("Exception while registering uri [{0}] for notifications", missingDep, e);
             }
         }
     }
 
-    private void unregisterAvailableDependencies(ActionDependency actionDependency) {
+    private void unregisterAvailableDependencies(List<String> availableDeps) {
         URIHandlerService uriService = Services.get().get(URIHandlerService.class);
-        for (String availableDep : actionDependency.getAvailableDependencies()) {
+        for (String availableDep : availableDeps) {
             try {
                 URI availableURI = new URI(availableDep);
                 URIHandler handler = uriService.getURIHandler(availableURI);
                 if (handler.unregisterFromNotification(availableURI, actionId)) {
-                    LOG.debug("Successfully unregistered uri [{0}] for actionId: [{1}] from notifications",
-                            availableURI, actionId);
+                    LOG.debug("Successfully unregistered uri [{0}] from notifications", availableURI);
                 }
                 else {
-                    LOG.warn("Unable to unregister uri [{0}] for actionId: [{1}] from notifications", availableURI,
-                            actionId);
+                    LOG.warn("Unable to unregister uri [{0}] from notifications", availableURI);
                 }
             }
             catch (Exception e) {
-                LOG.warn("Exception while unregistering uri for actionId: [{0}] for notifications", actionId, e);
+                LOG.warn("Exception while unregistering uri [{0}] from notifications", availableDep, e);
             }
         }
     }
@@ -283,16 +289,14 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
                 URI missingURI = new URI(missingDep);
                 URIHandler handler = uriService.getURIHandler(missingURI);
                 if (handler.unregisterFromNotification(missingURI, actionId)) {
-                    LOG.debug("Successfully unregistered uri [{0}] for actionId: [{1}] from notifications", missingURI,
-                            actionId);
+                    LOG.debug("Successfully unregistered uri [{0}] from notifications", missingURI);
                 }
                 else {
-                    LOG.warn("Unable to unregister uri [{0}] for actionId: [{1}] from notifications", missingURI,
-                            actionId);
+                    LOG.warn("Unable to unregister uri [{0}] from notifications", missingURI);
                 }
             }
             catch (Exception e) {
-                LOG.warn("Exception while registering uri for actionId: [{0}] for notifications", actionId, e);
+                LOG.warn("Exception while unregistering uri [{0}] from notifications", missingDep, e);
             }
         }
     }

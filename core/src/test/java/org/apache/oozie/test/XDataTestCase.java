@@ -52,13 +52,14 @@ import org.apache.oozie.client.CoordinatorJob.Execution;
 import org.apache.oozie.client.CoordinatorJob.Timeunit;
 import org.apache.oozie.executor.jpa.BundleActionInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.SLAEventInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobInsertJPAExecutor;
-import org.apache.oozie.service.CoordinatorStoreService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.Services;
@@ -66,7 +67,6 @@ import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.service.WorkflowStoreService;
 import org.apache.oozie.service.UUIDService.ApplicationType;
-import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
@@ -1358,11 +1358,16 @@ public abstract class XDataTestCase extends XHCatTestCase {
     }
 
     protected void setCoordActionCreationTime(String actionId, long actionCreationTime) throws Exception {
-        CoordinatorStore store = Services.get().get(CoordinatorStoreService.class).create();
-        CoordinatorActionBean action = store.getCoordinatorAction(actionId, false);
+        JPAService jpaService = Services.get().get(JPAService.class);
+        CoordinatorActionBean action = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
         action.setCreatedTime(new Date(actionCreationTime));
-        store.beginTrx();
-        store.updateCoordinatorAction(action);
-        store.commitTrx();
+        jpaService.execute(new CoordActionUpdateJPAExecutor(action));
+    }
+
+    protected void setMissingDependencies(String actionId, String missingDependencies) throws Exception {
+        JPAService jpaService = Services.get().get(JPAService.class);
+        CoordinatorActionBean action = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
+        action.setMissingDependencies(missingDependencies);
+        jpaService.execute(new CoordActionUpdateJPAExecutor(action));
     }
 }
