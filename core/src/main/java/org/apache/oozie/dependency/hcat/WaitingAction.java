@@ -46,4 +46,26 @@ public class WaitingAction implements Serializable {
         return dependencyURI;
     }
 
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = prime + ((actionID == null) ? 0 : actionID.hashCode());
+        result = prime * result + ((dependencyURI == null) ? 0 : dependencyURI.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        WaitingAction other = (WaitingAction) obj;
+        return actionID.equals(other.actionID) && dependencyURI.equals(other.dependencyURI);
+    }
+
+    @Override
+    public String toString() {
+        return "WaitingAction [actionID=" + actionID + ", dependencyURI=" + dependencyURI + "]";
+    }
 }

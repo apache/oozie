@@ -86,7 +86,7 @@ public class SimpleHCatDependencyCache implements HCatDependencyCache {
             }
             Collection<WaitingAction> waitingActions = partValues.get(partVal);
             if (waitingActions == null) {
-                waitingActions = new ArrayList<WaitingAction>();
+                waitingActions = new HashSet<WaitingAction>();
                 partValues.put(partVal, waitingActions);
             }
             waitingActions.add(new WaitingAction(actionID, hcatURI.toURIString()));
@@ -101,32 +101,26 @@ public class SimpleHCatDependencyCache implements HCatDependencyCache {
         String partVal = sortedPKV.getPartVals();
         Map<String, Map<String, Collection<WaitingAction>>> partKeyPatterns = missingDeps.get(tableKey);
         if (partKeyPatterns == null) {
-            LOG.debug("Remove missing dependency - Missing table entry - uri={0}, actionID={1}",
+            LOG.warn("Remove missing dependency - Missing table entry - uri={0}, actionID={1}",
                     hcatURI.toURIString(), actionID);
             return false;
         }
         synchronized(partKeyPatterns) {
             Map<String, Collection<WaitingAction>> partValues = partKeyPatterns.get(partKey);
             if (partValues == null) {
-                LOG.debug("Remove missing dependency - Missing partition pattern - uri={0}, actionID={1}",
+                LOG.warn("Remove missing dependency - Missing partition pattern - uri={0}, actionID={1}",
                         hcatURI.toURIString(), actionID);
                 return false;
             }
             Collection<WaitingAction> waitingActions = partValues.get(partVal);
             if (waitingActions == null) {
-                LOG.debug("Remove missing dependency - Missing partition value - uri={0}, actionID={1}",
+                LOG.warn("Remove missing dependency - Missing partition value - uri={0}, actionID={1}",
                         hcatURI.toURIString(), actionID);
                 return false;
             }
-            WaitingAction wAction = null;
-            for (WaitingAction action : waitingActions) {
-                if (action.getActionID().equals(actionID)) {
-                    wAction = action;
-                }
-            }
-            boolean removed = waitingActions.remove(wAction);
+            boolean removed = waitingActions.remove(new WaitingAction(actionID, hcatURI.toURIString()));
             if (!removed) {
-                LOG.debug("Remove missing dependency - Missing action ID - uri={0}, actionID={1}",
+                LOG.warn("Remove missing dependency - Missing action ID - uri={0}, actionID={1}",
                         hcatURI.toURIString(), actionID);
             }
             if (waitingActions.isEmpty()) {
@@ -182,7 +176,7 @@ public class SimpleHCatDependencyCache implements HCatDependencyCache {
             LOG.warn("Got partition available notification for " + tableKey
                     + ". Unexpected and should not be listening to topic. Unregistering topic");
             HCatAccessorService hcatService = Services.get().get(HCatAccessorService.class);
-            hcatService.unregisterFromNotification(server,db, table);
+            hcatService.unregisterFromNotification(server, db, table);
             return null;
         }
         Collection<String> actionsWithAvailDep = new HashSet<String>();

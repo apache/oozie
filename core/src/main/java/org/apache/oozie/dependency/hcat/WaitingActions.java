@@ -18,16 +18,16 @@
 package org.apache.oozie.dependency.hcat;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 
 public class WaitingActions implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private ArrayList<WaitingAction> waitingActions;
+    private Collection<WaitingAction> waitingActions;
 
     public WaitingActions() {
-        waitingActions = new ArrayList<WaitingAction>();
+        waitingActions = new HashSet<WaitingAction>();
     }
 
     /**

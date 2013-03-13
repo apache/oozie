@@ -236,6 +236,43 @@ public class TestCoordPushDependencyCheckXCommand extends XDataTestCase {
     }
 
     @Test
+    public void testTimeOutWithUnresolvedMissingDependencies() throws Exception {
+        String db = "default";
+        String table = "tablename";
+        String newHCatDependency1 = "hcat://" + server + "/" + db + "/" + table + "/dt=20120430;country=brazil";
+        String newHCatDependency2 = "hcat://" + server + "/" + db + "/" + table + "/dt=20120430;country=usa";
+        String newHCatDependency3 = "hcat://" + server + "/" + db + "/" + table + "/dt=20120430;country=uk";
+        String newHCatDependency = newHCatDependency1 + CoordELFunctions.INSTANCE_SEPARATOR + newHCatDependency2;
+        populateTable(db, table);
+
+        String actionId = addInitRecords(newHCatDependency);
+        checkCoordAction(actionId, newHCatDependency, CoordinatorAction.Status.WAITING);
+        new CoordPushDependencyCheckXCommand(actionId, true).call();
+        checkCoordAction(actionId, newHCatDependency1, CoordinatorAction.Status.WAITING);
+        PartitionDependencyManagerService pdms = Services.get().get(PartitionDependencyManagerService.class);
+        HCatAccessorService hcatService = Services.get().get(HCatAccessorService.class);
+        assertTrue(pdms.getWaitingActions(new HCatURI(newHCatDependency1)).contains(actionId));
+        assertTrue(hcatService.isRegisteredForNotification(new HCatURI(newHCatDependency1)));
+
+        // Timeout is 10 mins. Change action created time to before 12 min to make the action
+        // timeout.
+        long timeOutCreationTime = System.currentTimeMillis() - (12 * 60 * 1000);
+        setCoordActionCreationTime(actionId, timeOutCreationTime);
+        // Set some missing dependency. Instead of latest or future just setting a current one for testing as
+        // we are only interested in ensuring CoordActionInputCheckXCommand is run
+        setMissingDependencies(actionId, newHCatDependency + CoordELFunctions.INSTANCE_SEPARATOR + newHCatDependency3);
+        addPartition(db, table, "dt=20120430;country=brazil");
+        checkDependencies(actionId, newHCatDependency + CoordELFunctions.INSTANCE_SEPARATOR + newHCatDependency3,
+                newHCatDependency1);
+        new CoordPushDependencyCheckXCommand(actionId).call();
+        Thread.sleep(300);
+
+        checkDependencies(actionId, newHCatDependency3, "");
+        assertNull(pdms.getWaitingActions(new HCatURI(newHCatDependency1)));
+        assertFalse(hcatService.isRegisteredForNotification(new HCatURI(newHCatDependency1)));
+    }
+
+    @Test
     public void testTimeOutWithException1() throws Exception {
         // Test timeout when missing dependencies are from a non existing table
         String newHCatDependency1 = "hcat://" + server + "/nodb/notable/dt=20120430;country=brazil";
@@ -353,6 +390,20 @@ public class TestCoordPushDependencyCheckXCommand extends XDataTestCase {
             assertEquals(expDeps, missDeps);
             assertEquals(stat, action.getStatus());
 
+            return action;
+        }
+        catch (JPAExecutorException se) {
+            throw new Exception("Action ID " + actionId + " was not stored properly in db");
+        }
+    }
+
+    private CoordinatorActionBean checkDependencies(String actionId, String expDeps, String expPushDeps)
+            throws Exception {
+        try {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            CoordinatorActionBean action = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
+            assertEquals(expDeps, action.getMissingDependencies());
+            assertEquals(expPushDeps, action.getPushMissingDependencies());
             return action;
         }
         catch (JPAExecutorException se) {
