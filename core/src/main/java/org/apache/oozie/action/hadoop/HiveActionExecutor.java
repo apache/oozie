@@ -25,11 +25,12 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.client.XOozieClient;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.Namespace;
 
-public class HiveActionExecutor extends JavaActionExecutor {
+public class HiveActionExecutor extends ScriptLanguageActionExecutor {
 
     public HiveActionExecutor() {
         super("hive");
@@ -38,8 +39,6 @@ public class HiveActionExecutor extends JavaActionExecutor {
     @Override
     protected List<Class> getLauncherClasses() {
         List<Class> classes = super.getLauncherClasses();
-        classes.add(LauncherMain.class);
-        classes.add(MapReduceMain.class);
         classes.add(HiveMain.class);
         return classes;
     }
@@ -47,23 +46,6 @@ public class HiveActionExecutor extends JavaActionExecutor {
     @Override
     protected String getLauncherMain(Configuration launcherConf, Element actionXml) {
         return launcherConf.get(CONF_OOZIE_ACTION_MAIN_CLASS, HiveMain.class.getName());
-    }
-
-    @Override
-    protected Configuration setupLauncherConf(Configuration conf, Element actionXml, Path appPath, Context context)
-            throws ActionExecutorException {
-        try {
-            super.setupLauncherConf(conf, actionXml, appPath, context);
-            Namespace ns = actionXml.getNamespace();
-
-            String script = actionXml.getChild("script", ns).getTextTrim();
-            String scriptName = new Path(script).getName();
-            addToCache(conf, appPath, script + "#" + scriptName, false);
-            return conf;
-        }
-        catch (Exception ex) {
-            throw convertException(ex);
-        }
     }
 
     @Override
@@ -75,7 +57,11 @@ public class HiveActionExecutor extends JavaActionExecutor {
         Namespace ns = actionXml.getNamespace();
         String script = actionXml.getChild("script", ns).getTextTrim();
         String scriptName = new Path(script).getName();
-        addToCache(conf, appPath, script + "#" + scriptName, false);
+        String hiveScriptContent = context.getProtoActionConf().get(XOozieClient.HIVE_SCRIPT);
+
+        if (hiveScriptContent == null){
+            addToCache(conf, appPath, script + "#" + scriptName, false);
+        }
 
         List<Element> params = (List<Element>) actionXml.getChildren("param", ns);
         String[] strParams = new String[params.size()];
@@ -101,6 +87,10 @@ public class HiveActionExecutor extends JavaActionExecutor {
     @Override
     protected String getDefaultShareLibName(Element actionXml) {
         return "hive";
+    }
+
+    protected String getScriptName() {
+        return XOozieClient.HIVE_SCRIPT;
     }
 
 }

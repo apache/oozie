@@ -19,7 +19,6 @@ package org.apache.oozie.action.hadoop;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.oozie.action.ActionExecutorException;
@@ -39,7 +38,7 @@ import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.util.List;
 
-public class PigActionExecutor extends JavaActionExecutor {
+public class PigActionExecutor extends ScriptLanguageActionExecutor {
 
     public PigActionExecutor() {
         super("pig");
@@ -48,8 +47,6 @@ public class PigActionExecutor extends JavaActionExecutor {
     @Override
     protected List<Class> getLauncherClasses() {
         List<Class> classes = super.getLauncherClasses();
-        classes.add(LauncherMain.class);
-        classes.add(MapReduceMain.class);
         classes.add(PigMain.class);
         classes.add(OoziePigStats.class);
         return classes;
@@ -63,50 +60,6 @@ public class PigActionExecutor extends JavaActionExecutor {
 
     @Override
     void injectActionCallback(Context context, Configuration launcherConf) {
-    }
-
-    @Override
-    protected Configuration setupLauncherConf(Configuration conf, Element actionXml, Path appPath, Context context)
-            throws ActionExecutorException {
-        super.setupLauncherConf(conf, actionXml, appPath, context);
-        Namespace ns = actionXml.getNamespace();
-        String script = actionXml.getChild("script", ns).getTextTrim();
-        String pigName = new Path(script).getName();
-        String pigScriptContent = context.getProtoActionConf().get(XOozieClient.PIG_SCRIPT);
-
-        Path pigScriptFile = null;
-        if (pigScriptContent != null) { // Create pig script on hdfs if this is
-            // an http submission pig job;
-            FSDataOutputStream dos = null;
-            try {
-                Path actionPath = context.getActionDir();
-                pigScriptFile = new Path(actionPath, script);
-                FileSystem fs = context.getAppFileSystem();
-                dos = fs.create(pigScriptFile);
-                dos.writeBytes(pigScriptContent);
-
-                addToCache(conf, actionPath, script + "#" + pigName, false);
-            }
-            catch (Exception ex) {
-                throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FAILED_OPERATION", XLog
-                        .format("Not able to write pig script file {0} on hdfs", pigScriptFile), ex);
-            }
-            finally {
-                try {
-                    if (dos != null) {
-                        dos.close();
-                    }
-                }
-                catch (IOException ex) {
-                    XLog.getLog(getClass()).error("Error: " + ex.getMessage());
-                }
-            }
-        }
-        else {
-            addToCache(conf, appPath, script + "#" + pigName, false);
-        }
-
-        return conf;
     }
 
     @Override
@@ -214,6 +167,10 @@ public class PigActionExecutor extends JavaActionExecutor {
     @Override
     protected String getDefaultShareLibName(Element actionXml) {
         return "pig";
+    }
+
+    protected String getScriptName() {
+        return XOozieClient.PIG_SCRIPT;
     }
 
 }

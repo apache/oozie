@@ -34,6 +34,7 @@ import org.apache.oozie.command.wf.KillXCommand;
 import org.apache.oozie.command.wf.ReRunXCommand;
 import org.apache.oozie.command.wf.ResumeXCommand;
 import org.apache.oozie.command.wf.StartXCommand;
+import org.apache.oozie.command.wf.SubmitHiveXCommand;
 import org.apache.oozie.command.wf.SubmitHttpXCommand;
 import org.apache.oozie.command.wf.SubmitMRXCommand;
 import org.apache.oozie.command.wf.SubmitPigXCommand;
@@ -138,6 +139,9 @@ public class DagEngine extends BaseEngine {
             }
             else if (jobType.equals("mapreduce")) {
                 submit = new SubmitMRXCommand(conf, getAuthToken());
+            }
+            else if (jobType.equals("hive")) {
+                submit = new SubmitHiveXCommand(conf, getAuthToken());
             }
 
             jobId = submit.call();
