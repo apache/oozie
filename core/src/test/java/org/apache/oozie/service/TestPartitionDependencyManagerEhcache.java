@@ -112,18 +112,18 @@ public class TestPartitionDependencyManagerEhcache extends TestPartitionDependen
             HCatURI dep = new HCatURI("hcat://hcat.server.com:5080/mydb/mytbl/id=" + i);
             pdms.addMissingDependency(dep, "" + i);
         }
-        // First 500 should have been evicted. But it is LRU and the next 100 removed is between 350 and 650.
-        for (int i = 0; i < 350; i++) {
+        // First 500 should have been evicted. But it is LRU and the last 200 removed is between 300 and 700.
+        for (int i = 0; i < 300; i++) {
             assertNull(pdms.getWaitingActions(new HCatURI("hcat://hcat.server.com:5080/mydb/mytbl/id=" + "" + i)));
         }
         int evicted = 0;
-        for (int i = 350; i < 650; i++) {
+        for (int i = 300; i < 700; i++) {
             if (pdms.getWaitingActions(new HCatURI("hcat://hcat.server.com:5080/mydb/mytbl/id=" + "" + i)) == null) {
                 evicted++;
             }
         }
-        assertEquals(150, evicted);
-        for (int i = 650; i < 1000; i++) {
+        assertEquals(200, evicted);
+        for (int i = 700; i < 1000; i++) {
             String actionID = "" + i;
             HCatURI dep = new HCatURI("hcat://hcat.server.com:5080/mydb/mytbl/id=" + actionID);
             Collection<String> waitingActions = pdms.getWaitingActions(dep);

@@ -43,14 +43,14 @@ public class CoordActionUpdatePushMissingDependency extends CoordPushDependencyC
             PartitionDependencyManagerService pdms = Services.get().get(PartitionDependencyManagerService.class);
             Collection<String> availDepList = pdms.getAvailableDependencyURIs(actionId);
             if (availDepList == null || availDepList.size() == 0) {
-                LOG.info("There are no available dependencies for action ID: [{0}]", actionId);
+                LOG.info("There are no available dependencies");
                 if (isTimeout()) { // Poll and check as one last try
                     queue(new CoordPushDependencyCheckXCommand(coordAction.getId()), 100);
                 }
             }
             else {
-                LOG.debug("Updating action ID [{0}] with available uris=[{1}] where missing uris=[{2}]", actionId,
-                        availDepList.toString(), pushMissingDeps);
+                LOG.debug("Updating with available uris=[{0}] where missing uris=[{1}]", availDepList.toString(),
+                        pushMissingDeps);
 
                 String[] missingDepsArray = DependencyChecker.dependenciesAsArray(pushMissingDeps);
                 List<String> stillMissingDepsList = new ArrayList<String>(Arrays.asList(missingDepsArray));
@@ -82,12 +82,10 @@ public class CoordActionUpdatePushMissingDependency extends CoordPushDependencyC
 
     private void removeAvailableDependencies(PartitionDependencyManagerService pdms, Collection<String> availDepList) {
         if (pdms.removeAvailableDependencyURIs(actionId, availDepList)) {
-            LOG.debug("Successfully removed uris [{0}] for actionId: [{1}] from available list",
-                    availDepList.toString(), actionId);
+            LOG.debug("Successfully removed uris [{0}] from available list", availDepList.toString());
         }
         else {
-            LOG.warn("Failed to remove uris [{0}] for actionId: [{1}] from available list", availDepList.toString(),
-                    actionId);
+            LOG.warn("Failed to remove uris [{0}] from available list", availDepList.toString(), actionId);
         }
     }
 
