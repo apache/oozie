@@ -48,7 +48,6 @@ import org.apache.oozie.util.XLog;
 
 public class HCatURIHandler implements URIHandler {
 
-    private static XLog LOG = XLog.getLog(HCatURIHandler.class);
     private Set<String> supportedSchemes;
     private Map<String, DependencyType> dependencyTypes;
     private List<Class<?>> classesToShip;
@@ -185,7 +184,8 @@ public class HCatURIHandler implements URIHandler {
         }
         hiveConf.set(HiveConf.ConfVars.METASTOREURIS.varname, serverURI);
         try {
-            LOG.info("Creating HCatClient for user [{0}] login_user [{1}] and server [{2}] ", user,
+            XLog.getLog(HCatURIHandler.class).info(
+                    "Creating HCatClient for user [{0}] login_user [{1}] and server [{2}] ", user,
                     UserGroupInformation.getLoginUser(), serverURI);
 
             // HiveMetastoreClient (hive 0.9) currently does not work if UGI has doAs
@@ -252,14 +252,13 @@ public class HCatURIHandler implements URIHandler {
                 client.close();
             }
             catch (Exception ignore) {
-                LOG.warn("Error closing hcat client", ignore);
+                XLog.getLog(HCatURIHandler.class).warn("Error closing hcat client", ignore);
             }
         }
     }
 
     static class HCatContext extends Context {
 
-        private static XLog LOG = XLog.getLog(HCatContext.class);
         private HCatClient hcatClient;
 
         /**
@@ -289,7 +288,7 @@ public class HCatURIHandler implements URIHandler {
                 hcatClient.close();
             }
             catch (Exception ignore) {
-                LOG.warn("Error closing hcat client", ignore);
+                XLog.getLog(HCatContext.class).warn("Error closing hcat client", ignore);
             }
         }
 
