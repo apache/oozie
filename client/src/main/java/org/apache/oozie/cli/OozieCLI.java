@@ -88,6 +88,7 @@ public class OozieCLI {
     public static final String VALIDATE_CMD = "validate";
     public static final String SLA_CMD = "sla";
     public static final String PIG_CMD = "pig";
+    public static final String HIVE_CMD = "hive";
     public static final String MR_CMD = "mapreduce";
     public static final String INFO_CMD = "info";
 
@@ -132,7 +133,7 @@ public class OozieCLI {
     public static final String VERBOSE_DELIMITER = "\t";
     public static final String DEBUG_OPTION = "debug";
 
-    public static final String PIGFILE_OPTION = "file";
+    public static final String SCRIPTFILE_OPTION = "file";
 
     public static final String INFO_TIME_ZONES_OPTION = "timezones";
 
@@ -378,25 +379,25 @@ public class OozieCLI {
     }
 
     /**
-     * Create option for command line option 'pig'
-     * @return pig options
+     * Create option for command line option 'pig' or 'hive'
+     * @return pig or hive options
      */
     @SuppressWarnings("static-access")
-    protected Options createPigOptions() {
+    protected Options createScriptLanguageOptions(String jobType) {
         Option oozie = new Option(OOZIE_OPTION, true, "Oozie URL");
         Option config = new Option(CONFIG_OPTION, true, "job configuration file '.properties'");
-        Option pigFile = new Option(PIGFILE_OPTION, true, "Pig script");
+        Option file = new Option(SCRIPTFILE_OPTION, true, jobType + " script");
         Option property = OptionBuilder.withArgName("property=value").hasArgs(2).withValueSeparator().withDescription(
                 "set/override value for given property").create("D");
         Option doAs = new Option(DO_AS_OPTION, true, "doAs user, impersonates as the specified user");
-        Options pigOptions = new Options();
-        pigOptions.addOption(oozie);
-        pigOptions.addOption(doAs);
-        pigOptions.addOption(config);
-        pigOptions.addOption(property);
-        pigOptions.addOption(pigFile);
-        addAuthOptions(pigOptions);
-        return pigOptions;
+        Options Options = new Options();
+        Options.addOption(oozie);
+        Options.addOption(doAs);
+        Options.addOption(config);
+        Options.addOption(property);
+        Options.addOption(file);
+        addAuthOptions(Options);
+        return Options;
     }
 
     /**
@@ -455,7 +456,9 @@ public class OozieCLI {
         parser.addCommand(VALIDATE_CMD, "", "validate a workflow XML file", new Options(), true);
         parser.addCommand(SLA_CMD, "", "sla operations (Supported in Oozie-2.0 or later)", createSlaOptions(), false);
         parser.addCommand(PIG_CMD, "-X ", "submit a pig job, everything after '-X' are pass-through parameters to pig",
-                createPigOptions(), true);
+                createScriptLanguageOptions(PIG_CMD), true);
+        parser.addCommand(HIVE_CMD, "-X ", "submit a hive job, everything after '-X' are pass-through parameters to hive",
+                createScriptLanguageOptions(HIVE_CMD), true);
         parser.addCommand(INFO_CMD, "", "get more detailed info about specific topics", createInfoOptions(), false);
         parser.addCommand(MR_CMD, "", "submit a mapreduce job", createMROptions(), false);
 
@@ -519,7 +522,10 @@ public class OozieCLI {
             slaCommand(command.getCommandLine());
         }
         else if (command.getName().equals(PIG_CMD)) {
-            pigCommand(command.getCommandLine());
+            scriptLanguageCommand(command.getCommandLine(), PIG_CMD);
+        }
+        else if (command.getName().equals(HIVE_CMD)) {
+            scriptLanguageCommand(command.getCommandLine(), HIVE_CMD);
         }
         else if (command.getName().equals(INFO_CMD)) {
             infoCommand(command.getCommandLine());
@@ -1540,14 +1546,14 @@ public class OozieCLI {
         }
     }
 
-    private void pigCommand(CommandLine commandLine) throws IOException, OozieCLIException {
-        List<String> pigArgs = commandLine.getArgList();
-        if (pigArgs.size() > 0) {
+    private void scriptLanguageCommand(CommandLine commandLine, String jobType) throws IOException, OozieCLIException {
+        List<String> Args = commandLine.getArgList();
+        if (Args.size() > 0) {
             // checking is a pigArgs starts with -X (because CLIParser cannot check this)
-            if (!pigArgs.get(0).equals("-X")) {
-                throw new OozieCLIException("Unrecognized option: " + pigArgs.get(0) + " Expecting -X");
+            if (!Args.get(0).equals("-X")) {
+                throw new OozieCLIException("Unrecognized option: " + Args.get(0) + " Expecting -X");
             }
-            pigArgs.remove(0);
+            Args.remove(0);
         }
 
         List<String> options = new ArrayList<String>();
@@ -1555,7 +1561,7 @@ public class OozieCLI {
             options.add(option.getOpt());
         }
 
-        if (!options.contains(PIGFILE_OPTION)) {
+        if (!options.contains(SCRIPTFILE_OPTION)) {
             throw new OozieCLIException("Need to specify -file <scriptfile>");
         }
 
@@ -1567,8 +1573,8 @@ public class OozieCLI {
         try {
             XOozieClient wc = createXOozieClient(commandLine);
             Properties conf = getConfiguration(wc, commandLine);
-            String script = commandLine.getOptionValue(PIGFILE_OPTION);
-            System.out.println(JOB_ID_PREFIX + wc.submitPig(conf, script, pigArgs.toArray(new String[pigArgs.size()])));
+            String script = commandLine.getOptionValue(SCRIPTFILE_OPTION);
+            System.out.println(JOB_ID_PREFIX + wc.submitScriptLanguage(conf, script, Args.toArray(new String[Args.size()]), jobType));
         }
         catch (OozieClientException ex) {
             throw new OozieCLIException(ex.toString(), ex);

@@ -67,7 +67,37 @@ public class TestWorkflowXClient extends DagServletTestCase {
                 writer.write("a = load 'input.txt';\n dump a;");
                 writer.close();
                 assertEquals(MockDagEngineService.JOB_ID + wfCount + MockDagEngineService.JOB_ID_END,
-                             wc.submitPig(conf, pigScriptFile, null));
+                             wc.submitScriptLanguage(conf, pigScriptFile, null, "pig"));
+
+                assertTrue(MockDagEngineService.started.get(wfCount));
+                return null;
+            }
+        });
+    }
+
+    public void testSubmitHive() throws Exception {
+        runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED, new Callable<Void>() {
+            public Void call() throws Exception {
+                String oozieUrl = getContextURL();
+                int wfCount = MockDagEngineService.INIT_WF_COUNT;
+                XOozieClient wc = new XOozieClient(oozieUrl);
+                Properties conf = wc.createConfiguration();
+                Path libPath = new Path(getFsTestCaseDir(), "lib");
+                getFileSystem().mkdirs(libPath);
+                System.out.println(libPath.toString());
+                conf.setProperty(OozieClient.LIBPATH, libPath.toString());
+                conf.setProperty(XOozieClient.JT, "localhost:9001");
+                conf.setProperty(XOozieClient.NN, "hdfs://localhost:9000");
+
+
+
+                String hiveScriptFile = getTestCaseDir() + "/test";
+                System.out.println(hiveScriptFile);
+                BufferedWriter writer = new BufferedWriter(new FileWriter(hiveScriptFile));
+                writer.write("CREATE EXTERNAL TABLE test (a INT);");
+                writer.close();
+                assertEquals(MockDagEngineService.JOB_ID + wfCount + MockDagEngineService.JOB_ID_END,
+                        wc.submitScriptLanguage(conf, hiveScriptFile, null, "hive"));
 
                 assertTrue(MockDagEngineService.started.get(wfCount));
                 return null;

@@ -18,7 +18,9 @@
 package org.apache.oozie.servlet;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -39,7 +41,9 @@ import org.apache.oozie.DagEngineException;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.WorkflowsInfo;
+import org.apache.oozie.cli.OozieCLI;
 import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.client.XOozieClient;
 import org.apache.oozie.client.rest.BulkResponseImpl;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.RestConstants;
@@ -54,6 +58,11 @@ import org.json.simple.JSONObject;
 public class V1JobsServlet extends BaseJobsServlet {
 
     private static final String INSTRUMENTATION_NAME = "v1jobs";
+    private static final Set<String> httpJobType = new HashSet<String>(){{
+        this.add(OozieCLI.HIVE_CMD);
+        this.add(OozieCLI.PIG_CMD);
+        this.add(OozieCLI.MR_CMD);
+    }};
 
     public V1JobsServlet() {
         super(INSTRUMENTATION_NAME);
@@ -87,7 +96,7 @@ public class V1JobsServlet extends BaseJobsServlet {
             }
         }
         else { // This is a http submission job
-            if (jobType.equals("pig") || jobType.equals("mapreduce")) {
+            if (httpJobType.contains(jobType)) {
                 json = submitHttpJob(request, conf, jobType);
             }
             else {
