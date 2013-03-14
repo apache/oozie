@@ -23,6 +23,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.action.oozie.SubWorkflowActionExecutor;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.WorkflowStoreService;
@@ -189,6 +190,10 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
             workflow.setAuthToken(authToken);
             workflow.setWorkflowInstance(wfInstance);
             workflow.setExternalId(conf.get(OozieClient.EXTERNAL_ID));
+            // Set parent id if it doesn't already have one (for subworkflows)
+            if (workflow.getParentId() == null) {
+                workflow.setParentId(conf.get(SubWorkflowActionExecutor.PARENT_ID));
+            }
 
             LogUtils.setLogInfo(workflow, logInfo);
             LOG = XLog.resetPrefix(LOG);

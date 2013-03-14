@@ -47,6 +47,7 @@ import java.util.HashSet;
 public class SubWorkflowActionExecutor extends ActionExecutor {
     public static final String ACTION_TYPE = "sub-workflow";
     public static final String LOCAL = "local";
+    public static final String PARENT_ID = "oozie.wf.parent.id";
 
     private static final Set<String> DISALLOWED_DEFAULT_PROPERTIES = new HashSet<String>();
 
@@ -115,6 +116,10 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
         conf.set(OozieClient.EXTERNAL_ID, externalId);
     }
 
+    protected void injectParent(String parentId, Configuration conf) {
+        conf.set(PARENT_ID, parentId);
+    }
+
     protected String checkIfRunning(OozieClient oozieClient, String extId) throws OozieClientException {
         String jobId = oozieClient.getJobId(extId);
         if (jobId.equals("")) {
@@ -156,6 +161,7 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
                 injectInline(eConf.getChild("configuration", ns), subWorkflowConf);
                 injectCallback(context, subWorkflowConf);
                 injectRecovery(extId, subWorkflowConf);
+                injectParent(context.getWorkflow().getId(), subWorkflowConf);
 
                 //TODO: this has to be refactored later to be done in a single place for REST calls and this
                 JobUtils.normalizeAppPath(context.getWorkflow().getUser(), context.getWorkflow().getGroup(),
