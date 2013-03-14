@@ -115,6 +115,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
 
         assertEquals(WorkflowAction.Status.OK, action.getStatus());
 
+        assertEquals(workflow.getId(), oozieClient.getJobInfo(action.getExternalId()).getParentId());
     }
 
     public void testSubWorkflowRecovery() throws Exception {
@@ -149,6 +150,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
             }
         });
         String extId = action.getExternalId();
+        assertEquals(workflow.getId(), oozieClient.getJobInfo(extId).getParentId());
         assertEquals(WorkflowJob.Status.SUCCEEDED, oozieClient.getJobInfo(extId).getStatus());
         WorkflowActionBean action1 = new WorkflowActionBean();
         action1.setId(action.getId());
@@ -164,6 +166,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
                 "</sub-workflow>");
         subWorkflow.start(new Context(workflow, action1), action1);
         assertEquals(extId, action1.getExternalId());
+        assertEquals(workflow.getId(), oozieClient.getJobInfo(extId).getParentId());
         subWorkflow.check(new Context(workflow, action1), action1);
         assertEquals(WorkflowAction.Status.DONE, action1.getStatus());
         subWorkflow.end(new Context(workflow, action1), action1);
