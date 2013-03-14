@@ -1,0 +1,72 @@
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<workflow-app xmlns="uri:oozie:workflow:0.4" name="wf-suspendpoints">
+    <start to="action1"/>
+    <action name="action1">
+        <fs>
+        </fs>
+        <ok to="action2"/>
+        <error to="kill"/>
+    </action>
+    <action name="action2">
+        <fs>
+        </fs>
+        <ok to="decision1"/>
+        <error to="kill"/>
+    </action>
+    <decision name="decision1">
+        <switch>
+            <case to="action3">true</case>
+            <default to="kill"/>
+        </switch>
+    </decision>
+    <action name="action3">
+        <fs>
+        </fs>
+        <ok to="fork1"/>
+        <error to="kill"/>
+    </action>
+    <fork name="fork1">
+        <path start="action4a"/>
+        <path start="action4b"/>
+        <path start="action4c"/>
+    </fork>
+    <action name="action4a">
+        <fs>
+        </fs>
+        <ok to="join1"/>
+        <error to="kill"/>
+    </action>
+    <action name="action4b">
+        <fs>
+        </fs>
+        <ok to="join1"/>
+        <error to="kill"/>
+    </action>
+    <action name="action4c">
+        <fs>
+        </fs>
+        <ok to="join1"/>
+        <error to="kill"/>
+    </action>
+    <join name="join1" to="end"/>
+    <kill name="kill">
+        <message>killed</message>
+    </kill>
+    <end name="end"/>
+</workflow-app>

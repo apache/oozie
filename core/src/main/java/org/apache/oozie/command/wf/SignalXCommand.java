@@ -17,6 +17,7 @@
  */
 package org.apache.oozie.command.wf;
 
+import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
@@ -60,6 +61,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import org.apache.oozie.client.OozieClient;
 
 public class SignalXCommand extends WorkflowXCommand<Void> {
 
@@ -288,6 +290,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                         queue(new SignalXCommand(jobId, oldAction.getId()));
                     }
                     else {
+                        checkForSuspendNode(newAction);
                         newAction.setPending();
                         String actionSlaXml = getActionSLAXml(newAction.getName(), workflowInstance.getApp()
                                 .getDefinition(), wfJob.getConf());
@@ -390,6 +393,32 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
             throw new CommandException(ErrorCode.E1007, "workflow:Actions " + jobId, e.getMessage(), e);
         }
 
+    }
+
+    private void checkForSuspendNode(WorkflowActionBean newAction) {
+        try {
+            XConfiguration wfjobConf = new XConfiguration(new StringReader(wfJob.getConf()));
+            String[] values = wfjobConf.getTrimmedStrings(OozieClient.OOZIE_SUSPEND_ON_NODES);
+            if (values != null) {
+                if (values.length == 1 && values[0].equals("*")) {
+                    LOG.info("Reached suspend node at [{0}], suspending workflow [{1}]", newAction.getName(), wfJob.getId());
+                    queue(new SuspendXCommand(jobId));
+                }
+                else {
+                    for (String suspendPoint : values) {
+                        if (suspendPoint.equals(newAction.getName())) {
+                            LOG.info("Reached suspend node at [{0}], suspending workflow [{1}]", newAction.getName(),
+                                    wfJob.getId());
+                            queue(new SuspendXCommand(jobId));
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        catch (IOException ex) {
+            LOG.warn("Error reading " + OozieClient.OOZIE_SUSPEND_ON_NODES + ", ignoring [{0}]", ex.getMessage());
+        }
     }
 
 }

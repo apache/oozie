@@ -140,6 +140,8 @@ public class OozieClient {
 
     public static final String USE_SYSTEM_LIBPATH = "oozie.use.system.libpath";
 
+    public static final String OOZIE_SUSPEND_ON_NODES = "oozie.suspend.on.nodes";
+
     public static enum SYSTEM_MODE {
         NORMAL, NOWEBSERVICE, SAFEMODE
     };
