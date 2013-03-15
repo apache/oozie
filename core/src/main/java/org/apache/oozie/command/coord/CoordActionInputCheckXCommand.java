@@ -251,7 +251,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
         return checkResolvedUris(eAction, existList, nonExistList, conf);
     }
 
-    private boolean checkUnResolvedInput(StringBuilder actionXml, Configuration conf) throws Exception {
+    protected boolean checkUnResolvedInput(StringBuilder actionXml, Configuration conf) throws Exception {
         Element eAction = XmlUtils.parseXml(actionXml.toString());
         LOG.debug("[" + actionId + "]::ActionInputCheck:: Checking Latest/future");
         boolean allExist = checkUnresolvedInstances(eAction, conf);
