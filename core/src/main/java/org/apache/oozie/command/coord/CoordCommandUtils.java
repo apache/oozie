@@ -36,6 +36,7 @@ import org.apache.oozie.coord.CoordUtils;
 import org.apache.oozie.coord.CoordinatorJobException;
 import org.apache.oozie.coord.SyncCoordAction;
 import org.apache.oozie.coord.TimeUnit;
+import org.apache.oozie.dependency.ActionDependency;
 import org.apache.oozie.dependency.DependencyChecker;
 import org.apache.oozie.dependency.URIHandler;
 import org.apache.oozie.dependency.URIHandler.DependencyType;
@@ -482,23 +483,52 @@ public class CoordCommandUtils {
             return XmlUtils.prettyPrint(eAction).toString();
         }
         else {
-            String action = XmlUtils.prettyPrint(eAction).toString();
-            StringBuilder actionXml = new StringBuilder(action);
-            Configuration actionConf = new XConfiguration(new StringReader(actionBean.getRunConf()));
-            if (actionBean.getPushMissingDependencies() != null) {
-                DependencyChecker.checkForAvailability(actionBean.getPushMissingDependencies(), actionConf, true);
-            }
-            if (actionBean.getMissingDependencies() != null) {
-                CoordActionInputCheckXCommand coordActionInput = new CoordActionInputCheckXCommand(actionBean.getId(),
-                        actionBean.getJobId());
-                StringBuilder existList = new StringBuilder();
-                StringBuilder nonExistList = new StringBuilder();
-                StringBuilder nonResolvedList = new StringBuilder();
-                getResolvedList(actionBean.getMissingDependencies(), nonExistList, nonResolvedList);
-                coordActionInput.checkInput(actionXml, existList, nonExistList, actionConf);
-            }
-            return actionXml.toString();
+            return dryRunCoord(eAction, actionBean);
         }
+    }
+
+    /**
+     * @param eAction the actionXml related element
+     * @param actionBean the coordinator action bean
+     * @return
+     * @throws Exception
+     */
+    static String dryRunCoord(Element eAction, CoordinatorActionBean actionBean) throws Exception {
+        String action = XmlUtils.prettyPrint(eAction).toString();
+        StringBuilder actionXml = new StringBuilder(action);
+        Configuration actionConf = new XConfiguration(new StringReader(actionBean.getRunConf()));
+
+        boolean isPushDepAvailable = true;
+        if (actionBean.getPushMissingDependencies() != null) {
+            ActionDependency actionDep = DependencyChecker.checkForAvailability(
+                    actionBean.getPushMissingDependencies(), actionConf, true);
+            if (actionDep.getMissingDependencies().size() != 0) {
+                isPushDepAvailable = false;
+            }
+
+        }
+        boolean isPullDepAvailable = true;
+        CoordActionInputCheckXCommand coordActionInput = new CoordActionInputCheckXCommand(actionBean.getId(),
+                actionBean.getJobId());
+        if (actionBean.getMissingDependencies() != null) {
+            StringBuilder existList = new StringBuilder();
+            StringBuilder nonExistList = new StringBuilder();
+            StringBuilder nonResolvedList = new StringBuilder();
+            getResolvedList(actionBean.getMissingDependencies(), nonExistList, nonResolvedList);
+            isPullDepAvailable = coordActionInput.checkInput(actionXml, existList, nonExistList, actionConf);
+        }
+
+        if (isPullDepAvailable && isPushDepAvailable) {
+            // Check for latest/future
+            boolean isLatestFutureDepAvailable = coordActionInput.checkUnResolvedInput(actionXml, actionConf);
+            if (isLatestFutureDepAvailable) {
+                String newActionXml = CoordActionInputCheckXCommand.resolveCoordConfiguration(actionXml, actionConf,
+                        actionBean.getId());
+                actionXml.replace(0, actionXml.length(), newActionXml);
+            }
+        }
+
+        return actionXml.toString();
     }
 
     /**

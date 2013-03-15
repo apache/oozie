@@ -7,6 +7,7 @@ OOZIE-1239 Bump up trunk to 4.1.0-SNAPSHOT (virag)
 
 -- Oozie 4.0.0 (unreleased)
 
+OOZIE-1267 Dryrun option for push missing deps (virag)
 OOZIE-1263 Fix few HCat dependency check issues (rohini via virag)
 OOZIE-1261 Registered push dependencies are not removed on Coord Kill command (virag)
 OOZIE-1191 add examples of coordinator with SLA tag inserted (ryota via mona)
