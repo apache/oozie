@@ -427,8 +427,12 @@ public class RecoveryService implements Service {
         Configuration conf = services.getConf();
         Runnable recoveryRunnable = new RecoveryRunnable(conf.getInt(CONF_WF_ACTIONS_OLDER_THAN, 120), conf.getInt(
                 CONF_COORD_OLDER_THAN, 600),conf.getInt(CONF_BUNDLE_OLDER_THAN, 600));
-        services.get(SchedulerService.class).schedule(recoveryRunnable, 10, conf.getInt(CONF_SERVICE_INTERVAL, 600),
+        services.get(SchedulerService.class).schedule(recoveryRunnable, 10, getRecoveryServiceInterval(conf),
                                                       SchedulerService.Unit.SEC);
+    }
+
+    public int getRecoveryServiceInterval(Configuration conf){
+        return conf.getInt(CONF_SERVICE_INTERVAL, 600);
     }
 
     /**
