@@ -1,5 +1,6 @@
 -- Oozie 4.0.0 (unreleased)
 
+OOZIE-1269 Exception in push dependency check when there is also a pull dependency leaves it in waiting till timeout (rohini via virag)
 OOZIE-1267 Dryrun option for push missing deps (virag)
 OOZIE-1263 Fix few HCat dependency check issues (rohini via virag)
 OOZIE-1261 Registered push dependencies are not removed on Coord Kill command (virag)
