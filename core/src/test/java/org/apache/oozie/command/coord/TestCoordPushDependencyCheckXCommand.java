@@ -33,9 +33,11 @@ import org.apache.oozie.coord.CoordELFunctions;
 import org.apache.oozie.dependency.DependencyChecker;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.service.CallableQueueService;
 import org.apache.oozie.service.HCatAccessorService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.PartitionDependencyManagerService;
+import org.apache.oozie.service.RecoveryService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.HCatURI;
@@ -346,6 +348,43 @@ public class TestCoordPushDependencyCheckXCommand extends XDataTestCase {
         checkCoordAction(actionId, newHCatDependency1, CoordinatorAction.Status.TIMEDOUT);
         assertNull(pdms.getWaitingActions(new HCatURI(newHCatDependency1)));
         assertFalse(hcatService.isRegisteredForNotification(new HCatURI(newHCatDependency1)));
+    }
+
+    @Test
+    public void testRequeueOnException() throws Exception {
+        Services.get().getConf().setInt(RecoveryService.CONF_SERVICE_INTERVAL, 6000);
+        // Test timeout when table containing missing dependencies is dropped in between
+        String newHCatDependency1 = "hcat://" + server + "/nodb/notable/dt=20120430;country=brazil";
+        String newHCatDependency2 = "hcat://" + server + "/nodb/notable/dt=20120430;country=usa";
+        String newHCatDependency = newHCatDependency1 + CoordELFunctions.INSTANCE_SEPARATOR + newHCatDependency2;
+
+        String actionId = addInitRecords(newHCatDependency);
+        checkCoordAction(actionId, newHCatDependency, CoordinatorAction.Status.WAITING);
+        try {
+            new CoordPushDependencyCheckXCommand(actionId, true).call();
+            fail();
+        }
+        catch (Exception e) {
+            assertTrue(e.getMessage().contains("NoSuchObjectException"));
+        }
+        // Nothing should be queued as there are no pull dependencies
+        CallableQueueService callableQueueService = Services.get().get(CallableQueueService.class);
+        assertEquals(0, callableQueueService.getQueueDump().size());
+
+        setMissingDependencies(actionId, newHCatDependency1);
+        try {
+            new CoordPushDependencyCheckXCommand(actionId, true).call();
+            fail();
+        }
+        catch (Exception e) {
+            assertTrue(e.getMessage().contains("NoSuchObjectException"));
+        }
+        // Should be requeued at the recovery service interval
+        final List<String> queueDump = callableQueueService.getQueueDump();
+        assertEquals(1, callableQueueService.getQueueDump().size());
+        // Delay should be something like delay=5999999. Ignore last digit
+        assertTrue(queueDump.get(0).contains("delay=599999"));
+        assertTrue(queueDump.get(0).contains(CoordPushDependencyCheckXCommand.class.getName()));
     }
 
     @Test

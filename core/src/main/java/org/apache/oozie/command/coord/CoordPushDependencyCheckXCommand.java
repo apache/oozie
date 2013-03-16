@@ -43,6 +43,7 @@ import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.CallableQueueService;
 import org.apache.oozie.service.JPAService;
+import org.apache.oozie.service.RecoveryService;
 import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.URIHandlerService;
@@ -152,11 +153,20 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
                 }
             }
             catch (Exception e) {
+                final CallableQueueService callableQueueService = Services.get().get(CallableQueueService.class);
                 if (isTimeout()) {
                     LOG.debug("Queueing timeout command");
                     // XCommand.queue() will not work when there is a Exception
-                    Services.get().get(CallableQueueService.class).queue(new CoordActionTimeOutXCommand(coordAction));
+                    callableQueueService.queue(new CoordActionTimeOutXCommand(coordAction));
                     unregisterMissingDependencies(Arrays.asList(missingDepsArray), actionId);
+                }
+                else if (coordAction.getMissingDependencies() != null
+                        && coordAction.getMissingDependencies().length() > 0) {
+                    // Queue again on exception as RecoveryService will not queue this again with
+                    // the action being updated regularly by CoordActionInputCheckXCommand
+                    final RecoveryService recoveryService = Services.get().get(RecoveryService.class);
+                    callableQueueService.queue(new CoordPushDependencyCheckXCommand(coordAction.getId()),
+                            recoveryService.getRecoveryServiceInterval(Services.get().getConf()) * 1000);
                 }
                 throw new CommandException(ErrorCode.E1021, e.getMessage(), e);
             }
