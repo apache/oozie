@@ -1,6 +1,5 @@
 -- Oozie 4.0.0 (unreleased)
 
-OOZIE-1208 Oozie web-console when displaying Coord Job Log for an action gives Format Error (rohini via mona)
 OOZIE-1270 Querying job directly does not pop correct information for coordinator and bundle (rohini via virag)
 OOZIE-1269 Exception in push dependency check when there is also a pull dependency leaves it in waiting till timeout (rohini via virag)
 OOZIE-1267 Dryrun option for push missing deps (virag)
@@ -67,6 +66,7 @@ OOZIE-944 Implement Workflow Generator UI Tool (egashira via virag)
 
 -- Oozie 3.3.2 (unreleased)
 
+OOZIE-1208 Oozie web-console when displaying Coord Job Log for an action gives Format Error (rohini via mona)
 OOZIE-1189 add filter option to specify JobID and AppName in SLA CLI command (egashira via mona)
 OOZIE-1054 Create script to properly upload sharelib to HDFS (bowenzhangusa via tucu)
 OOZIE-1015 HadoopAccessorService jobtracker validation should not have hardcoded conf key (mona)
