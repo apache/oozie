@@ -46,6 +46,15 @@ is =http://${OOZIE_HTTP_HOSTNAME}:${OOZIE_HTTP_PORT}/oozie=.
 owner of the Oozie installation directory matches the user invoking the script. The default
 value is undefined and interpreted as a =false=.
 
+If Oozie is configured to use HTTPS (SSL), then the following environment variables are also used:
+
+*OOZIE_HTTPS_PORT* : The port Oozie server runs when using HTTPS. Default value =11443=.
+
+*OOZIE_HTTPS_KEYSTORE_FILE* : The location of the keystore file containing the certificate information.
+Default value =${HOME}/.keystore= (i.e. the home dir of the Oozie user).
+
+*OOZIE_HTTPS_KEYSTORE_PASS* : The password of the keystore file. Default value =password=.
+
 ---++ Oozie Server Setup
 
 The =oozie-setup.sh= script prepares the embedded Tomcat server to run Oozie.
@@ -54,11 +63,12 @@ The =oozie-setup.sh= script options are:
 
 <verbatim>
 Usage  : oozie-setup.sh <OPTIONS>"
-         prepare-war [-hadoop HADOOP_VERSION HADOOP_PATH] [-extjs EXTJS_PATH] [-jars JARS_PATH]"
+         prepare-war [-hadoop HADOOP_VERSION HADOOP_PATH] [-extjs EXTJS_PATH] [-jars JARS_PATH] [-secure]"
                      (prepare-war is to prepare war files for oozie)"
                      (Hadoop version [0.20.1|0.20.2|0.20.104|0.20.200|0.23.x|2.x] and Hadoop install dir)"
                      (EXTJS_PATH is expanded or ZIP, to enable the Oozie webconsole)"
                      (JARS_PATH is multiple JAR path separated by ':')"
+                     (-secure will configure the war file to use HTTPS (SSL))"
          sharelib create -fs FS_URI [-locallib SHARED_LIBRARY] (create sharelib for oozie,"
                                                                FS_URI is the fs.default.name"
                                                                for hdfs uri; SHARED_LIBRARY, path to the"
@@ -504,6 +514,93 @@ If there is a JMS provider configured for a HCatalog Server, then oozie polls HC
 in =oozie.service.coord.push.check.requeue.interval= as a fallback.
 The defaults for =oozie.service.coord.input.check.requeue.interval= and =oozie.service.coord.push.check.requeue.interval=
 are 1 minute and 10 minutes respectively.
+
+---+++ Setting Up Oozie with HTTPS (SSL)
+
+*IMPORTANT*:
+The default HTTPS configuration will cause all Oozie URLs to use HTTPS except for the JobTracker callback URLs. This is to simply
+configuration (no changes needed outside of Oozie), but this is okay because Oozie doesn't inherently trust the callbacks anyway;
+they are used as hints.
+
+The related environment variables are explained at [[AG_Install#Environment_Setup][Environment Setup]].
+
+You can use either a certificate from a Certificate Authority or a Self-Signed Certificate.  Using a self-signed certificate
+requires some additional configuration on each Oozie client machine.
+
+---++++To use a Self-Signed Certificate
+There are many ways to create a Self-Signed Certificate, this is just one way.  We will be using the keytool program, which is
+included with your JRE. If its not on your path, you should be able to find it in $JAVA_HOME/bin.
+
+1. Run the following command (as the Oozie user) to create a keystore file:
+<verbatim>
+keytool -genkey -alias tomcat -keyalg RSA
+</verbatim>
+The keystore file will be named =.keystore= and located in the Oozie user's home directory.
+
+2. Run the following command (as the Oozie user); you will be asked a series of questions in an interactive prompt.
+<verbatim>
+keytool -genkey -alias tomcat -keyalg RSA
+</verbatim>
+The password you enter for "keystore password" and "key password for <tomcat>" must be the same; Oozie is configued to use
+"password" by default. If you want to use a password other than "password", you will need to change the =OOZIE_HTTPS_KEYSTORE_PASS=
+environment variable.
+The answer to "What is your first and last name?" (i.e. "CN") must be the hostname of the machine where the Oozie Server will be
+running.
+
+3. Run the following command (as the Oozie user) to export a certificate file from the keystore file:
+<verbatim>
+keytool -exportcert -alias tomcat -file path/to/where/I/want/my/certificate.cert
+</verbatim>
+
+---++++To use a Certificate from a Certificate Authority
+
+1. You will need to make a request to a Certificate Authority in order to obtain a proper Certificate; please consult a Certificate
+Authority on this procedure.
+
+2. Once you have your .cert file, run the following command (as the Oozie user) to create a keystore file from your certificate:
+<verbatim>
+keytool -import -alias tomcat -file path/to/certificate.cert
+</verbatim>
+The keystore file will be named =.keystore= and located in the Oozie user's home directory.
+
+---++++Configure the Oozie Server to use SSL (HTTPS)
+
+1. Make sure the Oozie server isn't running
+
+2. Run the following command (as the Oozie user):
+<verbatim>
+oozie-setup.sh prepare-war -secure
+</verbatim>
+This will configure Oozie to use HTTPS instead of HTTP.  To revert back to HTTP, simply rerun the command without =-secure=.
+
+3. Start the Oozie server
+
+---++++Configure the Oozie Client to connect using SSL (HTTPS)
+
+The first two steps are only necessary if you are using a Self-Signed Certificate; the third is required either way.
+Also, these steps must be done on every machine where you intend to use the Oozie Client.
+
+1. Copy or download the .cert file onto the client machine
+
+2. Run the following command (as root) to import the certificate into the JRE's keystore. This will allow any Java program,
+including the Oozie client, to connect to the Oozie Server using your self-signed certificate.
+<verbatim>
+sudo keytool -import -alias tomcat -file path/to/certificate.cert -keystore ${JRE_cacerts}
+</verbatim>
+Where ${JRE_cacerts} is the path to the JRE's certs file.  It's location may differ depending on the Operating System, but its
+typically called cacerts and located at ${JAVA_HOME}/lib/security/cacerts but may be under a different directory in ${JAVA_HOME}
+(you may want to create a backup copy of this file first). The default password is =changeit=.
+
+3. When using the Oozie Client, you will need to use https://oozie.server.hostname:11443/oozie instead of
+http://oozie.server.hostname:11000/oozie -- Java will not automatically redirect from the http address to the https address.
+
+---++++Connect to the Oozie Web UI using SSL (HTTPS)
+
+1. Use https://oozie.server.hostname:11443/oozie
+though most browsers should automatically redirect you if you use http://oozie.server.hostname:11000/oozie
+
+*IMPORTANT*: If using a Self-Signed Certificate, your browser will warn you that it can't verify the certificate or something
+similar. You will probably have to add your certificate as an exception.
 
 ---+++ Fine Tuning an Oozie Server
 

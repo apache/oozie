@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!DOCTYPE web-app PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN" "http://java.sun.com/dtd/web-app_2_3.dtd">
+
+<web-app>
+    <display-name>OOZIE</display-name>
+
+    <!-- Listeners -->
+    <listener>
+        <listener-class>org.apache.oozie.servlet.ServicesLoader</listener-class>
+    </listener>
+
+    <!-- Servlets -->
+    <servlet>
+        <servlet-name>versions</servlet-name>
+        <display-name>WS API for Workflow Instances</display-name>
+        <servlet-class>org.apache.oozie.servlet.VersionServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet>
+        <servlet-name>v0admin</servlet-name>
+        <display-name>Oozie admin</display-name>
+        <servlet-class>org.apache.oozie.servlet.V0AdminServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet>
+        <servlet-name>v1admin</servlet-name>
+        <display-name>Oozie admin</display-name>
+        <servlet-class>org.apache.oozie.servlet.V1AdminServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet>
+        <servlet-name>callback</servlet-name>
+        <display-name>Callback Notification</display-name>
+        <servlet-class>org.apache.oozie.servlet.CallbackServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet>
+        <servlet-name>v0jobs</servlet-name>
+        <display-name>WS API for Workflow Jobs</display-name>
+        <servlet-class>org.apache.oozie.servlet.V0JobsServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet>
+        <servlet-name>v1jobs</servlet-name>
+        <display-name>WS API for Workflow Jobs</display-name>
+        <servlet-class>org.apache.oozie.servlet.V1JobsServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet>
+        <servlet-name>v0job</servlet-name>
+        <display-name>WS API for a specific Workflow Job</display-name>
+        <servlet-class>org.apache.oozie.servlet.V0JobServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet>
+        <servlet-name>v1job</servlet-name>
+        <display-name>WS API for a specific Workflow Job</display-name>
+        <servlet-class>org.apache.oozie.servlet.V1JobServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet>
+        <servlet-name>sla-event</servlet-name>
+        <display-name>WS API for specific SLA Events</display-name>
+        <servlet-class>org.apache.oozie.servlet.SLAServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <!-- servlet-mapping -->
+    <servlet-mapping>
+        <servlet-name>versions</servlet-name>
+        <url-pattern>/versions</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>v0admin</servlet-name>
+        <url-pattern>/v0/admin/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>v1admin</servlet-name>
+        <url-pattern>/v1/admin/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>callback</servlet-name>
+        <url-pattern>/callback/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>v0jobs</servlet-name>
+        <url-pattern>/v0/jobs</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>v1jobs</servlet-name>
+        <url-pattern>/v1/jobs</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>v0job</servlet-name>
+        <url-pattern>/v0/job/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>v1job</servlet-name>
+        <url-pattern>/v1/job/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>sla-event</servlet-name>
+        <url-pattern>/v1/sla/*</url-pattern>
+    </servlet-mapping>
+
+    <!-- welcome-file -->
+    <welcome-file-list>
+        <welcome-file>index.html</welcome-file>
+    </welcome-file-list>
+
+    <filter>
+        <filter-name>hostnameFilter</filter-name>
+        <filter-class>org.apache.oozie.servlet.HostnameFilter</filter-class>
+    </filter>
+
+    <filter>
+        <filter-name>authenticationfilter</filter-name>
+        <filter-class>org.apache.oozie.servlet.AuthFilter</filter-class>
+    </filter>
+
+    <filter-mapping>
+        <filter-name>hostnameFilter</filter-name>
+        <url-pattern>*</url-pattern>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>authenticationfilter</filter-name>
+        <url-pattern>/versions/*</url-pattern>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>authenticationfilter</filter-name>
+        <url-pattern>/v0/*</url-pattern>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>authenticationfilter</filter-name>
+        <url-pattern>/v1/*</url-pattern>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>authenticationfilter</filter-name>
+        <url-pattern>/index.html</url-pattern>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>authenticationfilter</filter-name>
+        <url-pattern>*.js</url-pattern>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>authenticationfilter</filter-name>
+        <url-pattern>/ext-2.2/*</url-pattern>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>authenticationfilter</filter-name>
+        <url-pattern>/docs/*</url-pattern>
+    </filter-mapping>
+
+    <!-- Require SSL (HTTPS) for everything except callbacks -->
+    <security-constraint>
+        <web-resource-collection>
+            <web-resource-name>Callback</web-resource-name>
+            <url-pattern>/callback/*</url-pattern>
+        </web-resource-collection>
+        <user-data-constraint>
+            <transport-guarantee>NONE</transport-guarantee>
+        </user-data-constraint>
+    </security-constraint>
+    <security-constraint>
+        <web-resource-collection>
+            <web-resource-name>Oozie Resources</web-resource-name>
+            <url-pattern>/*</url-pattern>
+        </web-resource-collection>
+        <user-data-constraint>
+            <transport-guarantee>CONFIDENTIAL</transport-guarantee>
+        </user-data-constraint>
+    </security-constraint>
+
+</web-app>

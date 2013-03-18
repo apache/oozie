@@ -66,6 +66,8 @@ OOZIE-944 Implement Workflow Generator UI Tool (egashira via virag)
 
 -- Oozie 3.3.2 (unreleased)
 
+OOZIE-1233 Add ability to configure Oozie to use HTTPS (SSL) (rkanter)
+OOZIE-1242 Dryrun option for workflows mentions version 3.4 when it should be 3.3.2 (rkanter)
 OOZIE-1208 Oozie web-console when displaying Coord Job Log for an action gives Format Error (rohini via mona)
 OOZIE-1189 add filter option to specify JobID and AppName in SLA CLI command (egashira via mona)
 OOZIE-1054 Create script to properly upload sharelib to HDFS (bowenzhangusa via tucu)
