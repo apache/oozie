@@ -105,6 +105,7 @@ The =addtowar.sh= script options are:
           [-hadoop HADOOP_VERSION HADOOP_PATH]
           [-extjs EXTJS_PATH]
           [-jars JARS_PATH] (multiple JAR path separated by ':')
+          [-secureWeb WEB_XML_PATH] (path to secure web.xml)
 </verbatim>
 
 The original =oozie.war= file is in the Oozie server installation directory.

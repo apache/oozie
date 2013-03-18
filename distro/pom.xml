@@ -101,6 +101,10 @@
                                 <copy file="src/main/tomcat/server.xml" toDir="target/tomcat/oozie-server/conf"/>
                                 <copy file="src/main/tomcat/logging.properties"
                                       toDir="target/tomcat/oozie-server/conf"/>
+                                <mkdir dir="target/tomcat/oozie-server/conf/ssl"/>
+                                <copy file="src/main/tomcat/server.xml" toDir="target/tomcat/oozie-server/conf/ssl"/>
+                                <copy file="src/main/tomcat/ssl-server.xml" toDir="target/tomcat/oozie-server/conf/ssl"/>
+                                <copy file="src/main/tomcat/ssl-web.xml" toDir="target/tomcat/oozie-server/conf/ssl"/>
                                 <copy todir="target/tomcat/oozie-server/webapps/ROOT">
                                     <fileset dir="src/main/tomcat/ROOT"/>
                                 </copy>
