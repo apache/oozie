@@ -73,6 +73,7 @@ inputWar="${OOZIE_HOME}/oozie.war"
 outputWar="${CATALINA_BASE}/webapps/oozie.war"
 outputWarExpanded="${CATALINA_BASE}/webapps/oozie"
 secure=""
+secureConfigsDir="${CATALINA_BASE}/conf/ssl"
 
 while [ $# -gt 0 ]
 do
@@ -205,7 +206,13 @@ else
     OPTIONS="${OPTIONS} -hadoop ${hadoopVersion} ${hadoopPath}"
   fi
   if [ "${secure}" != "" ]; then
-    OPTIONS="${OPTIONS} -secure"
+    OPTIONS="${OPTIONS} -secureWeb ${secureConfigsDir}/ssl-web.xml"
+    #Use the SSL version of server.xml in oozie-server
+    cp ${secureConfigsDir}/ssl-server.xml ${CATALINA_BASE}/conf/server.xml
+    echo "INFO: Using secure server.xml"
+  else
+    #Use the regular version of server.xml in oozie-server
+    cp ${secureConfigsDir}/server.xml ${CATALINA_BASE}/conf/server.xml
   fi
 
   ${OOZIE_HOME}/bin/addtowar.sh -inputwar ${inputWar} -outputwar ${outputWar} ${OPTIONS}
