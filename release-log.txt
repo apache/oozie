@@ -8,7 +8,6 @@ OOZIE-1239 Bump up trunk to 4.1.0-SNAPSHOT (virag)
 -- Oozie 4.0.0 (unreleased)
 
 OOZIE-1270 Querying job directly does not pop correct information for coordinator and bundle (rohini via virag)
-OOZIE-1208 Oozie web-console when displaying Coord Job Log for an action gives Format Error (rohini via mona)
 OOZIE-1269 Exception in push dependency check when there is also a pull dependency leaves it in waiting till timeout (rohini via virag)
 OOZIE-1267 Dryrun option for push missing deps (virag)
 OOZIE-1263 Fix few HCat dependency check issues (rohini via virag)
@@ -74,6 +73,7 @@ OOZIE-944 Implement Workflow Generator UI Tool (egashira via virag)
 
 -- Oozie 3.3.2 (unreleased)
 
+OOZIE-1208 Oozie web-console when displaying Coord Job Log for an action gives Format Error (rohini via mona)
 OOZIE-1233 Add ability to configure Oozie to use HTTPS (SSL) (rkanter)
 OOZIE-1242 Dryrun option for workflows mentions version 3.4 when it should be 3.3.2 (rkanter)
 OOZIE-1189 add filter option to specify JobID and AppName in SLA CLI command (egashira via mona)
