@@ -86,6 +86,13 @@ function getTimeZone() {
     return Ext.state.Manager.get("TimezoneId","GMT");
 }
 
+if ( !String.prototype.endsWith ) {
+    String.prototype.endsWith = function(pattern) {
+        var d = this.length - pattern.length;
+        return d >= 0 && this.lastIndexOf(pattern) === d;
+    };
+}
+
 // Makes a tree node from an XML
 function treeNodeFromXml(XmlEl) {
     var t = ((XmlEl.nodeType == 3) ? XmlEl.nodeValue : XmlEl.tagName);
@@ -2188,7 +2195,17 @@ function initConsole() {
     // viewCoordJobs.execute();
     var jobId = getReqParam("job");
     if (jobId != "") {
-        jobDetailsGridWindow(jobId);
+        if (jobId.endsWith("-C")) {
+            coordJobDetailsGridWindow(jobId);
+        }
+        else if (jobId.endsWith("-B")) {
+            bundleJobDetailsGridWindow(jobId);
+        }
+        else
+        {
+            jobDetailsGridWindow(jobId);
+        }
+
     }
 }
 // now the on ready function
