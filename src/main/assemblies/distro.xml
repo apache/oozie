@@ -165,23 +165,5 @@
             <outputDirectory>/</outputDirectory>
             <fileMode>0444</fileMode>
         </file>
-        <!-- Oozie SSL (HTTPS) server.xml -->
-        <file>
-            <source>${basedir}/../distro/src/main/tomcat/ssl-server.xml</source>
-            <outputDirectory>/conf/ssl</outputDirectory>
-        </file>
-        <file>
-            <source>${basedir}/../distro/src/main/tomcat/server.xml</source>
-            <outputDirectory>/conf/ssl</outputDirectory>
-        </file>
-        <!-- Oozie SSL (HTTPS) web.xml -->
-        <file>
-            <source>${basedir}/../webapp/src/main/webapp/WEB-INF/ssl-web.xml</source>
-            <outputDirectory>/conf/ssl</outputDirectory>
-        </file>
-        <file>
-            <source>${basedir}/../webapp/src/main/webapp/WEB-INF/web.xml</source>
-            <outputDirectory>/conf/ssl</outputDirectory>
-        </file>
     </files>
 </assembly>
