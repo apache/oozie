@@ -1,5 +1,6 @@
 -- Oozie 3.3.2 (unreleased)
 
+OOZIE-1208 Oozie web-console when displaying Coord Job Log for an action gives Format Error (rohini via mona)
 OOZIE-1233 Add ability to configure Oozie to use HTTPS (SSL) (rkanter)
 OOZIE-1242 Dryrun option for workflows mentions version 3.4 when it should be 3.3.2 (rkanter)
 OOZIE-1189 add filter option to specify JobID and AppName in SLA CLI command (egashira via mona)

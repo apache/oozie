@@ -734,6 +734,7 @@ function coordJobDetailsPopup(response, request) {
 	else {
             Ext.Ajax.request({
                 url: getOozieBase() + 'job/' + coordJobId + "?show=log&type=action&scope="+actionsList,
+                timeout: 300000,
                 success: function(response, request) {
 		    processAndDisplayLog(response.responseText);
                 },
