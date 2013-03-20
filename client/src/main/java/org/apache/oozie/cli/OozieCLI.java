@@ -365,7 +365,7 @@ public class OozieCLI {
         Option oozie = new Option(OOZIE_OPTION, true, "Oozie URL");
         Option start = new Option(OFFSET_OPTION, true, "start offset (default '0')");
         Option len = new Option(LEN_OPTION, true, "number of results (default '100', max '1000')");
-        Option filter = new Option(FILTER_OPTION, true, "filter of SLA events");
+        Option filter = new Option(FILTER_OPTION, true, "filter of SLA events. e.g., jobid=<J>\\;appname=<A>");
         start.setType(Integer.class);
         len.setType(Integer.class);
         Options slaOptions = new Options();
