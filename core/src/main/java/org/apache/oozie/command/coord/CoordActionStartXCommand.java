@@ -266,7 +266,7 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
 
     @Override
     protected void loadState() throws CommandException {
-
+        eagerLoadState();
     }
 
     @Override
@@ -291,5 +291,10 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
             throw new PreconditionException(ErrorCode.E1100, "The coord action [" + actionId + "] must have status "
                     + CoordinatorAction.Status.SUBMITTED.name() + " but has status [" + coordAction.getStatus().name() + "]");
         }
+    }
+
+    @Override
+    public String getKey(){
+        return getName() + "_" + actionId;
     }
 }

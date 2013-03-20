@@ -7,6 +7,7 @@ OOZIE-1239 Bump up trunk to 4.1.0-SNAPSHOT (virag)
 
 -- Oozie 4.0.0 (unreleased)
 
+OOZIE-1272 Two workflow jobs mapped to a single coordinator action (ryota via virag)
 OOZIE-1274 change recovery service interval to make it consistent with oozie-default.xml (ryota via virag)
 OOZIE-1246 appname need to be persisted on SLA event table by SLA status event (ryota via virag)
 OOZIE-1270 Querying job directly does not pop correct information for coordinator and bundle (rohini via virag)
