@@ -133,7 +133,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             String pushDeps = coordAction.getPushMissingDependencies();
             // Resolve latest/future only when all current missingDependencies and
             // pushMissingDependencies are met
-            if (status) {
+            if (status && nonResolvedList.length() > 0) {
                 status = (pushDeps == null || pushDeps.length() == 0) ? checkUnResolvedInput(actionXml, actionConf)
                         : false;
             }
@@ -148,7 +148,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                 isChangeInDependency = true;
                 coordAction.setMissingDependencies(nonExistListStr);
             }
-            if (status) {
+            if (status && (pushDeps == null || pushDeps.length() == 0)) {
                 String newActionXml = resolveCoordConfiguration(actionXml, actionConf, actionId);
                 actionXml.replace(0, actionXml.length(), newActionXml);
                 coordAction.setActionXml(actionXml.toString());
