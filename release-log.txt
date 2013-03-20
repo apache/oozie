@@ -77,6 +77,7 @@ OOZIE-944 Implement Workflow Generator UI Tool (egashira via virag)
 
 -- Oozie 3.3.2 (unreleased)
 
+OOZIE-1132 update quick start docs with build instructions (rkanter)
 OOZIE-1268 Configuring Oozie to use SSL doesn't work if addtowar.sh is invoked directly (rkanter)
 OOZIE-1208 Oozie web-console when displaying Coord Job Log for an action gives Format Error (rohini via mona)
 OOZIE-1233 Add ability to configure Oozie to use HTTPS (SSL) (rkanter)

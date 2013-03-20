@@ -8,7 +8,47 @@ These instructions install and run Oozie using an embedded Tomcat server and an 
 
 For detailed install and configuration instructions refer to [[AG_Install][Oozie Install]].
 
----++ System Requirements
+%TOC%
+
+---++ Building Oozie
+
+---+++ System Requirements:
+   * Unix box (tested on Mac OS X and Linux)
+   * Java JDK 1.6+
+   * Maven 3.0.1+
+   * Hadoop 0.20.2+
+   * Pig 0.7+
+
+JDK commands (java, javac) must be in the command path.
+
+The Maven command (mvn) must be in the command path.
+
+---+++ Building Oozie
+
+Download a source distribution of Oozie from the "Releases" drop down menu on the [[http://oozie.apache.org][Oozie site]].
+
+Expand the source distribution =tar.gz= and change directories into it.
+
+The simplest way to build Oozie is to run the =mkdistro.sh= script:
+<verbatim>
+$ bin/mkdistro.sh
+</verbatim>
+
+If you'd like to skip all of the tests, which can take some time:
+<verbatim>
+$ bin/mkdistro.sh -DskipTests
+</verbatim>
+Running =mkdistro.sh= will create the binary distribution of Oozie.
+
+*IMPORTANT:* By default it builds against Hadoop 1.1.1. It's possible to build against Hadoop 2.x versions as well, but it is
+strongly recommend to use a [[http://bigtop.apache.org][Bigtop]] distribution if using Hadoop 2.x because the Oozie sharelibs built
+from the tarball distribution will not work with it.
+
+More details on building Oozie can be found on the [[ENG_Building][Building Oozie]] page.
+
+---++ Server Installation
+
+---+++ System Requirements
 
    * Unix (tested in Linux and Mac OS X)
    * Java 1.6+
@@ -19,11 +59,11 @@ For detailed install and configuration instructions refer to [[AG_Install][Oozie
 
 The Java 1.6+ =bin= directory should be in the command path.
 
----++ Server Installation
+---+++ Server Installation
 
 *IMPORTANT:* Oozie ignores any set value for =OOZIE_HOME=, Oozie computes its home automatically.
 
-   * Download or build an Oozie binary distribution
+   * Build an Oozie binary distribution
    * Download a Hadoop binary distribution
    * Download ExtJS library (it must be version 2.2)
 
@@ -141,6 +181,15 @@ Using a browser go to the [[http://localhost:11000/oozie][Oozie web console]], O
 Refer to the [[DG_Examples][Running the Examples]] document for details on running the examples.
 
 ---++ Client Installation
+
+---+++ System Requirements
+
+   * Unix (tested in Linux and Mac OS X)
+   * Java 1.6+
+
+The Java 1.6+ =bin= directory should be in the command path.
+
+---+++ Client Installation
 
 Copy and expand the =oozie-client= TAR.GZ file bundled with the distribution. Add the =bin/= directory to the =PATH=.
 

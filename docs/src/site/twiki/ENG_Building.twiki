@@ -235,6 +235,8 @@ If none of these parameters are specified, the defaults are
    * -Dhadoop.auth.version		: *2.0.0-alpha*
    * -Dpig.version				: *0.9.0*
 
+*IMPORTANT:* It is strongly recommend to use a [[http://bigtop.apache.org][Bigtop]] distribution if using Hadoop 2.x because the
+Oozie sharelibs built from the tarball distribution will not work with it.
 
 The following properties should be specified when building a release:
 
