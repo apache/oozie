@@ -432,7 +432,7 @@ public class RecoveryService implements Service {
     }
 
     public int getRecoveryServiceInterval(Configuration conf){
-        return conf.getInt(CONF_SERVICE_INTERVAL, 600);
+        return conf.getInt(CONF_SERVICE_INTERVAL, 60);
     }
 
     /**
