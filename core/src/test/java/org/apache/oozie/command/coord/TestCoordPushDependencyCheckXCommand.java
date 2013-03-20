@@ -358,7 +358,14 @@ public class TestCoordPushDependencyCheckXCommand extends XDataTestCase {
         String newHCatDependency2 = "hcat://" + server + "/nodb/notable/dt=20120430;country=usa";
         String newHCatDependency = newHCatDependency1 + CoordELFunctions.INSTANCE_SEPARATOR + newHCatDependency2;
 
-        String actionId = addInitRecords(newHCatDependency);
+
+        CoordinatorJobBean job = addRecordToCoordJobTableForWaiting("coord-job-for-action-input-check.xml",
+                CoordinatorJob.Status.RUNNING, false, true);
+
+        CoordinatorActionBean action = addRecordToCoordActionTableForWaiting(job.getId(), 1,
+                CoordinatorAction.Status.WAITING, "coord-action-for-action-input-check.xml", null,
+                newHCatDependency, "Z");
+        String actionId = action.getId();
         checkCoordAction(actionId, newHCatDependency, CoordinatorAction.Status.WAITING);
         try {
             new CoordPushDependencyCheckXCommand(actionId, true).call();
@@ -369,6 +376,12 @@ public class TestCoordPushDependencyCheckXCommand extends XDataTestCase {
         }
         // Nothing should be queued as there are no pull dependencies
         CallableQueueService callableQueueService = Services.get().get(CallableQueueService.class);
+        assertEquals(0, callableQueueService.getQueueDump().size());
+
+        // Nothing should be queued as there are no pull missing dependencies
+        // but only push missing deps are there
+        new CoordActionInputCheckXCommand(actionId, job.getId()).call();
+        callableQueueService = Services.get().get(CallableQueueService.class);
         assertEquals(0, callableQueueService.getQueueDump().size());
 
         setMissingDependencies(actionId, newHCatDependency1);
