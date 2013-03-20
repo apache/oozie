@@ -271,6 +271,7 @@ public class SLAEventBean extends JsonSLAEvent implements Writable {
         e.addContent(createATagElement("job-data", getJobData()));
         e.addContent(createATagElement("user", getUser()));
         e.addContent(createATagElement("group", getGroupName()));
+        e.addContent(createATagElement("app-name", getAppName()));
         eStat.addContent(e);
         return eStat;
     }
