@@ -7,6 +7,7 @@ OOZIE-1239 Bump up trunk to 4.1.0-SNAPSHOT (virag)
 
 -- Oozie 4.0.0 (unreleased)
 
+OOZIE-1246 appname need to be persisted on SLA event table by SLA status event (ryota via virag)
 OOZIE-1270 Querying job directly does not pop correct information for coordinator and bundle (rohini via virag)
 OOZIE-1269 Exception in push dependency check when there is also a pull dependency leaves it in waiting till timeout (rohini via virag)
 OOZIE-1267 Dryrun option for push missing deps (virag)
