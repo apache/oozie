@@ -1,5 +1,6 @@
 -- Oozie 3.3.2 (unreleased)
 
+OOZIE-1279 Remove SNAPSHOT from version numbers in branch-3.3 for 3.3.2 release (rkanter)
 OOZIE-1132 update quick start docs with build instructions (rkanter)
 OOZIE-1268 Configuring Oozie to use SSL doesn't work if addtowar.sh is invoked directly (rkanter)
 OOZIE-1208 Oozie web-console when displaying Coord Job Log for an action gives Format Error (rohini via mona)

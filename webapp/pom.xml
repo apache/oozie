@@ -22,11 +22,11 @@
     <parent>
         <groupId>org.apache.oozie</groupId>
         <artifactId>oozie-main</artifactId>
-        <version>3.3.2-SNAPSHOT</version>
+        <version>3.3.2</version>
     </parent>
     <groupId>org.apache.oozie</groupId>
     <artifactId>oozie-webapp</artifactId>
-    <version>3.3.2-SNAPSHOT</version>
+    <version>3.3.2</version>
     <description>Apache Oozie WebApp</description>
     <name>Apache Oozie WebApp</name>
     <packaging>war</packaging>
