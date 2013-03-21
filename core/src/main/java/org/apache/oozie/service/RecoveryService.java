@@ -245,7 +245,7 @@ public class RecoveryService implements Service {
                                 + caction.getId());
                         if (caction.getPushMissingDependencies() != null
                                 && caction.getPushMissingDependencies().length() != 0) {
-                            queueCallable(new CoordPushDependencyCheckXCommand(caction.getId(), true),
+                            queueCallable(new CoordPushDependencyCheckXCommand(caction.getId(), true, true),
                                     pushMissingDepDelay);
                             pushMissingDepDelay = pushMissingDepDelay + pushMissingDepInterval;
                             log.info("Recover a WAITING coord action and resubmit CoordPushDependencyCheckX :"
