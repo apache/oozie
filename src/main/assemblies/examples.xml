@@ -109,6 +109,10 @@
         </file>
         <file>
             <source>${basedir}/target/${artifact.artifactId}-${artifact.version}.jar</source>
+            <outputDirectory>/examples/apps/datelist-java-main/lib</outputDirectory>
+        </file>
+        <file>
+            <source>${basedir}/target/${artifact.artifactId}-${artifact.version}.jar</source>
             <outputDirectory>/examples/apps/map-reduce/lib</outputDirectory>
         </file> 
     </files>
