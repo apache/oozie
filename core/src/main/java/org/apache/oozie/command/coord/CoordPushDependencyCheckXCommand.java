@@ -70,15 +70,22 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
      */
     private final int DEFAULT_COMMAND_REQUEUE_INTERVAL = 600000;
     private boolean registerForNotification;
+    private boolean removeAvailDependencies;
 
     public CoordPushDependencyCheckXCommand(String actionId) {
-        this(actionId, false);
+        this(actionId, false, true);
     }
 
     public CoordPushDependencyCheckXCommand(String actionId, boolean registerForNotification) {
+        this(actionId, registerForNotification, !registerForNotification);
+    }
+
+    public CoordPushDependencyCheckXCommand(String actionId, boolean registerForNotification,
+            boolean removeAvailDependencies) {
         super("coord_push_dep_check", "coord_push_dep_check", 0);
         this.actionId = actionId;
         this.registerForNotification = registerForNotification;
+        this.removeAvailDependencies = removeAvailDependencies;
     }
 
     protected CoordPushDependencyCheckXCommand(String actionName, String actionId) {
@@ -145,7 +152,7 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
                 if (registerForNotification) {
                     registerForNotification(actionDep.getMissingDependencies(), actionConf);
                 }
-                else {
+                if (removeAvailDependencies) {
                     unregisterAvailableDependencies(actionDep.getAvailableDependencies());
                 }
                 if (timeout) {
@@ -164,8 +171,9 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
                         && coordAction.getMissingDependencies().length() > 0) {
                     // Queue again on exception as RecoveryService will not queue this again with
                     // the action being updated regularly by CoordActionInputCheckXCommand
-                    callableQueueService.queue(new CoordPushDependencyCheckXCommand(coordAction.getId()), Services
-                            .get().getConf().getInt(RecoveryService.CONF_COORD_OLDER_THAN, 600) * 1000);
+                    callableQueueService.queue(new CoordPushDependencyCheckXCommand(coordAction.getId(),
+                            registerForNotification, removeAvailDependencies),
+                            Services.get().getConf().getInt(RecoveryService.CONF_COORD_OLDER_THAN, 600) * 1000);
                 }
                 throw new CommandException(ErrorCode.E1021, e.getMessage(), e);
             }

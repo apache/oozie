@@ -356,6 +356,7 @@ public class TestRecoveryService extends XDataTestCase {
 
         HCatAccessorService hcatService = services.get(HCatAccessorService.class);
         JMSAccessorService jmsService = services.get(JMSAccessorService.class);
+        PartitionDependencyManagerService pdms = services.get(PartitionDependencyManagerService.class);
         assertFalse(jmsService.isListeningToTopic(hcatService.getJMSConnectionInfo(new URI(newHCatDependency1)), db
                 + "." + table));
 
@@ -363,6 +364,10 @@ public class TestRecoveryService extends XDataTestCase {
         String actionId = addInitRecords(newHCatDependency);
         CoordinatorAction ca = checkCoordActionDependencies(actionId, newHCatDependency);
         assertEquals(CoordinatorAction.Status.WAITING, ca.getStatus());
+        // Register the missing dependencies to PDMS assuming CoordPushDependencyCheckCommand did this.
+        pdms.addMissingDependency(new HCatURI(newHCatDependency1), actionId);
+        pdms.addMissingDependency(new HCatURI(newHCatDependency2), actionId);
+
         sleep(2000);
         Runnable recoveryRunnable = new RecoveryRunnable(0, 1, 1);
         recoveryRunnable.run();
@@ -374,7 +379,6 @@ public class TestRecoveryService extends XDataTestCase {
                 + db + "." + table));
         checkCoordActionDependencies(actionId, newHCatDependency1);
 
-        PartitionDependencyManagerService pdms = services.get(PartitionDependencyManagerService.class);
         assertNull(pdms.getWaitingActions(new HCatURI(newHCatDependency2)));
         Collection<String> waitingActions = pdms.getWaitingActions(new HCatURI(newHCatDependency1));
         assertEquals(1, waitingActions.size());

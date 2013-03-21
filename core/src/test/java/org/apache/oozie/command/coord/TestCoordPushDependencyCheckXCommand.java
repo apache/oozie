@@ -395,9 +395,10 @@ public class TestCoordPushDependencyCheckXCommand extends XDataTestCase {
         // Should be requeued at the recovery service interval
         final List<String> queueDump = callableQueueService.getQueueDump();
         assertEquals(1, callableQueueService.getQueueDump().size());
-        // Delay should be something like delay=5999999. Ignore last digit
-        assertTrue(queueDump.get(0).contains("delay=599999"));
         assertTrue(queueDump.get(0).contains(CoordPushDependencyCheckXCommand.class.getName()));
+        log.info("Queue dump is " + queueDump.toString());
+        // Delay should be something like delay=599999. Ignore last three digits
+        assertTrue(queueDump.get(0).matches("delay=599[0-9]{3}, .*"));
     }
 
     @Test
