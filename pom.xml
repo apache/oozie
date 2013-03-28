@@ -74,7 +74,7 @@
         <hbaselib.version>${hbase.version}.oozie-${project.version}</hbaselib.version>
         <hcataloglib.version>${hcatalog.version}.oozie-${project.version}</hcataloglib.version>
 
-        <clover.license>/home/jenkins/tools/clover/latest/lib/clover.license</clover.license>
+        <clover.license>${user.home}/.clover.license</clover.license>
         <!--
         This is required while we support a a pre 0.23 version of Hadoop which does not have
         the hadoop-auth artifact. After we phase-out pre 0.23 we can get rid of this property.
