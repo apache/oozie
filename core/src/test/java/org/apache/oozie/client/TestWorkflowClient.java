@@ -374,4 +374,36 @@ public class TestWorkflowClient extends DagServletTestCase {
             }
         });
     }
+    public void testJobInformation() throws Exception {
+        runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED, new Callable<Void>() {
+            public Void call() throws Exception {
+                String oozieUrl = getContextURL();
+                OozieClient wc = new OozieClient(oozieUrl);
+                assertEquals(RestConstants.JOB_SHOW_LOG, wc.getJobLog(MockDagEngineService.JOB_ID + "1" + MockDagEngineService.JOB_ID_END));
+                
+                WorkflowAction wfAction =  wc.getWorkflowActionInfo(MockDagEngineService.JOB_ID + "1" + MockDagEngineService.JOB_ID_END);
+                
+                assertEquals(MockDagEngineService.JOB_ID + "1" + MockDagEngineService.JOB_ID_END, wfAction.getId());
+                CoordinatorJob job =wc.getCoordJobInfo(MockDagEngineService.JOB_ID + "1" + MockDagEngineService.JOB_ID_END);
+                
+                assertEquals("group", job.getAcl());
+                assertEquals("SUCCEEDED", job.getStatus().toString());
+                assertEquals("user", job.getUser());
+                
+                BundleJob bundleJob=   wc.getBundleJobInfo(MockDagEngineService.JOB_ID + "1" + MockDagEngineService.JOB_ID_END);
+//                assertEquals("group", bundleJob.getAcl());
+                assertEquals("SUCCEEDED", bundleJob.getStatus().toString());
+                assertEquals("user", bundleJob.getUser());
+                
+                CoordinatorAction action = wc.getCoordActionInfo(MockDagEngineService.JOB_ID + "1" + MockDagEngineService.JOB_ID_END);
+                assertEquals(0, action.getActionNumber());
+                assertEquals("SUCCEEDED", action.getStatus().toString());
+                assertEquals(MockDagEngineService.JOB_ID + "1" + MockDagEngineService.JOB_ID_END, action.getId());
+
+                assertEquals(0, wc.getBulkInfo(null, 0, 10).size());
+                
+                return null;
+            }
+        });
+    }
 }
