@@ -717,7 +717,6 @@
                 <artifactId>xercesImpl</artifactId>
                 <version>2.10.0</version>
             </dependency>
-
         </dependencies>
     </dependencyManagement>
 
@@ -727,12 +726,17 @@
             <artifactId>clover</artifactId>
             <version>3.1.7</version>
         </dependency>
+            <dependency>
+                <groupId>org.apache.maven.surefire</groupId>
+                <artifactId>surefire-junit47</artifactId>
+                <version>2.12.3-GD-02</version>
+            </dependency>
     </dependencies>
 
     <build>
         <pluginManagement>
-            	<plugins>
-	            <plugin>
+            <plugins>
+	              <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-enforcer-plugin</artifactId>
                     <version>1.0</version>
