@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1291 TestHadoopAccessorService.testGetMRDelegationTokenRenewer fails against Yarn (rkanter)
 OOZIE-1278 oozie example datelist-java-main has job property typo and has no lib directory for examples.jar (bowenzhangusa via rkanter)
 OOZIE-1264 The "parent" property of a subworkflow should be the ID of the parent workflow (rkanter)
 OOZIE-1245 Add ability to automatically suspend workflow at specified actions (rkanter)
