@@ -809,6 +809,11 @@
                     <artifactId>maven-dependency-plugin</artifactId>
                     <version>2.4</version>
                 </plugin>
+                <plugin>
+                    <groupId>com.atlassian.maven.plugins</groupId>
+                    <artifactId>maven-clover2-plugin</artifactId>
+                    <version>3.0.5</version>
+                </plugin>
             </plugins>
         </pluginManagement>
 
