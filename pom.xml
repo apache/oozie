@@ -748,6 +748,11 @@
                     <version>2.12.3-GD-02</version>
                 </plugin>
                 <plugin>
+                    <groupId>org.apache.maven.surefire</groupId>
+                    <artifactId>surefire-junit47</artifactId>
+                    <version>2.12.3-GD-02</version>
+                </plugin>
+                <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
                     <version>2.3.1</version>
