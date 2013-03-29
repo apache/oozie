@@ -86,6 +86,8 @@ public class TestWorkflowXClient extends DagServletTestCase {
                 getFileSystem().mkdirs(libPath);
                 System.out.println(libPath.toString());
                 conf.setProperty(OozieClient.LIBPATH, libPath.toString());
+                wc.setLib(conf, libPath.toString());
+                assertEquals(libPath.toString(),conf.get(OozieClient.LIBPATH));
                 conf.setProperty(XOozieClient.JT, "localhost:9001");
                 conf.setProperty(XOozieClient.NN, "hdfs://localhost:9000");
 
@@ -126,5 +128,29 @@ public class TestWorkflowXClient extends DagServletTestCase {
                 return null;
             }
         });
+    }
+    
+    public void testSomeMethods(){
+        String oozieUrl = getContextURL();
+        XOozieClient wc = new XOozieClient(oozieUrl);
+        Properties conf = wc.createConfiguration();
+        try{
+        	wc.addFile(conf, null);
+        }catch(IllegalArgumentException e){
+        	assertEquals("file cannot be null or empty", e.getMessage());
+        }
+        wc.addFile(conf, "file1");
+        wc.addFile(conf, "file2");
+        assertEquals("file1,file2", conf.get(XOozieClient.FILES));
+        // test archive
+        try{
+        	wc.addArchive(conf, null);
+        }catch(IllegalArgumentException e){
+        	assertEquals("file cannot be null or empty", e.getMessage());
+        }
+        wc.addFile(conf, "archive1");
+        wc.addFile(conf, "archive2");
+        assertEquals("archive1,archive2", conf.get(XOozieClient.ARCHIVES));
+        
     }
 }

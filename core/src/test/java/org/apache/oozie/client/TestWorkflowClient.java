@@ -379,28 +379,36 @@ public class TestWorkflowClient extends DagServletTestCase {
             public Void call() throws Exception {
                 String oozieUrl = getContextURL();
                 OozieClient wc = new OozieClient(oozieUrl);
-                assertEquals(RestConstants.JOB_SHOW_LOG, wc.getJobLog(MockDagEngineService.JOB_ID + "1" + MockDagEngineService.JOB_ID_END));
+                String jobId=MockDagEngineService.JOB_ID + "1" + MockDagEngineService.JOB_ID_END;
+                assertEquals(RestConstants.JOB_SHOW_LOG, wc.getJobLog(jobId));
                 
-                WorkflowAction wfAction =  wc.getWorkflowActionInfo(MockDagEngineService.JOB_ID + "1" + MockDagEngineService.JOB_ID_END);
+                WorkflowAction wfAction =  wc.getWorkflowActionInfo(jobId);
                 
-                assertEquals(MockDagEngineService.JOB_ID + "1" + MockDagEngineService.JOB_ID_END, wfAction.getId());
-                CoordinatorJob job =wc.getCoordJobInfo(MockDagEngineService.JOB_ID + "1" + MockDagEngineService.JOB_ID_END);
+                assertEquals(jobId, wfAction.getId());
+                CoordinatorJob job =wc.getCoordJobInfo(jobId);
                 
                 assertEquals("group", job.getAcl());
                 assertEquals("SUCCEEDED", job.getStatus().toString());
                 assertEquals("user", job.getUser());
                 
-                BundleJob bundleJob=   wc.getBundleJobInfo(MockDagEngineService.JOB_ID + "1" + MockDagEngineService.JOB_ID_END);
+                BundleJob bundleJob=   wc.getBundleJobInfo(jobId);
 //                assertEquals("group", bundleJob.getAcl());
                 assertEquals("SUCCEEDED", bundleJob.getStatus().toString());
                 assertEquals("user", bundleJob.getUser());
                 
-                CoordinatorAction action = wc.getCoordActionInfo(MockDagEngineService.JOB_ID + "1" + MockDagEngineService.JOB_ID_END);
+                CoordinatorAction action = wc.getCoordActionInfo(jobId);
                 assertEquals(0, action.getActionNumber());
                 assertEquals("SUCCEEDED", action.getStatus().toString());
-                assertEquals(MockDagEngineService.JOB_ID + "1" + MockDagEngineService.JOB_ID_END, action.getId());
+                assertEquals(jobId, action.getId());
+
 
                 assertEquals(0, wc.getBulkInfo(null, 0, 10).size());
+                
+                List<BundleJob> jobs=  wc.getBundleJobsInfo("status=SUCCEEDED", 0, 10);
+                assertEquals(4, jobs.size());
+                assertEquals("SUCCEEDED", jobs.get(1).getStatus().toString());
+                
+               Object o= wc.reRunBundle(jobId, "coordScope", "dateScope", true, true);
                 
                 return null;
             }
