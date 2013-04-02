@@ -720,13 +720,13 @@
         </dependencies>
     </dependencyManagement>
 
-    <!-- <dependencies>
+     <dependencies>
         <dependency>
             <groupId>com.cenqua.clover</groupId>
             <artifactId>clover</artifactId>
             <version>3.1.7</version>
         </dependency>
-    </dependencies> -->
+    </dependencies>
 
     <build>
         <pluginManagement>
