@@ -82,7 +82,7 @@ with the subject and body both containing the workflow ID after substitution.
 
 <verbatim>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns:hive="uri:oozie:email-action:0.1" elementFormDefault="qualified"
+           xmlns:email="uri:oozie:email-action:0.1" elementFormDefault="qualified"
            targetNamespace="uri:oozie:email-action:0.1">
 .
     <xs:element name="email" type="email:ACTION"/>

@@ -17,36 +17,11 @@
  */
 package org.apache.oozie.action.ssh;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.oozie.WorkflowActionBean;
-import org.apache.oozie.WorkflowJobBean;
-import org.apache.oozie.action.ActionExecutor;
-import org.apache.oozie.action.ActionExecutorException;
-import org.apache.oozie.client.OozieClient;
-import org.apache.oozie.client.WorkflowAction.Status;
-import org.apache.oozie.client.WorkflowJob;
-import org.apache.oozie.service.CallbackService;
-import org.apache.oozie.service.Services;
-import org.apache.oozie.service.UUIDService;
-import org.apache.oozie.service.UUIDService.ApplicationType;
-import org.apache.oozie.service.WorkflowAppService;
-import org.apache.oozie.test.XFsTestCase;
-import org.apache.oozie.util.ELEvaluator;
-import org.apache.oozie.util.PropertiesUtils;
-import org.apache.oozie.util.XConfiguration;
-
-import java.io.IOException;
-import java.io.StringReader;
-import java.net.URISyntaxException;
-import java.util.Properties;
-
 public class TestSshActionExecutorAsExtension extends TestSshActionExecutor {
 
     @Override
     protected String getActionXMLSchema() {
-        return "uri:oozie:ssh-action:0.1";
+        return "uri:oozie:ssh-action:0.2";
     }
 
 }
