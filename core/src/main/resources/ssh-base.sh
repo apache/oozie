@@ -35,6 +35,13 @@ fi
 #    exit 127
 #fi
 
-cmnd="$dir/ssh-wrapper.sh ${*}"
-${cmnd} </dev/null >/dev/null 2>&1 &
-echo $!
+preserveArgs=${1}
+if [ $preserveArgs == "PRESERVE_ARGS" ]
+then
+    $dir/ssh-wrapper.sh "${@}" </dev/null >/dev/null 2>&1 &
+    echo $!
+else
+    cmnd="$dir/ssh-wrapper.sh ${*}"
+    ${cmnd} </dev/null >/dev/null 2>&1 &
+    echo $!
+fi
