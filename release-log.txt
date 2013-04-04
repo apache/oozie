@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1205 If the JobTracker is restarted during a Fork, Oozie doesn't fail all of the currently running actions (rkanter)
 OOZIE-1286 SSH Action does not properly handle arguments that have spaces (rkanter)
 OOZIE-1300 [Doc] Error in the the email action XML schema (harsh)
 OOZIE-1288 Improve docs around -D arguments support in the Oozie CLI's pig subcommand (harsh)

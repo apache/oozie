@@ -44,7 +44,6 @@ import org.apache.oozie.service.ActionService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
-import org.apache.oozie.util.InstrumentUtils;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.XLog;
@@ -202,7 +201,7 @@ public class ActionCheckXCommand extends ActionXCommand<Void> {
 
             switch (ex.getErrorType()) {
                 case FAILED:
-                    failAction(wfJob, wfAction);
+                    failJob(context, wfAction);
                     break;
                 case ERROR:
                     handleUserRetry(wfAction);
@@ -233,16 +232,6 @@ public class ActionCheckXCommand extends ActionXCommand<Void> {
 
         LOG.debug("ENDED ActionCheckXCommand for wf actionId=" + actionId + ", jobId=" + jobId);
         return null;
-    }
-
-    private void failAction(WorkflowJobBean workflow, WorkflowActionBean action) throws CommandException {
-        if (!handleUserRetry(action)) {
-            LOG.warn("Failing Job [{0}] due to failed action [{1}]", workflow.getId(), action.getId());
-            action.resetPending();
-            action.setStatus(Status.FAILED);
-            workflow.setStatus(WorkflowJob.Status.FAILED);
-            InstrumentUtils.incrJobCounter(INSTR_FAILED_JOBS_COUNTER, 1, getInstrumentation());
-        }
     }
 
     protected long getRetryInterval() {
