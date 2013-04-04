@@ -844,10 +844,16 @@ name. Multiple values must be specified as different name value pairs.
 
 ---+++ Submitting a pig job through HTTP
 
+Syntax:
+
+<verbatim>
+$ oozie pig -file PIG-SCRIPT -config OOZIE-CONFIG [-X [-Dkey=value opts for Launcher/Job configuration] [Other opts to pass to Pig]]
+</verbatim>
+
 Example:
 
 <verbatim>
-$ oozie pig -oozie http://localhost:11000/oozie -file pigScriptFile -config job.properties -X -param_file params
+$ oozie pig -oozie http://localhost:11000/oozie -file pigScriptFile -config job.properties -X -Dmapred.job.queue.name=UserQueue -param_file params
 .
 job: 14-20090525161321-oozie-joe-W
 .
@@ -859,7 +865,7 @@ oozie.libpath=hdfs://localhost:8020/user/oozie/pig/lib/
 </verbatim>
 
 The parameters for the job must be provided in a Java Properties file (.properties). jobtracker, namenode, libpath must be
-specified in this file. pigScriptFile is a local file. All jar files (including pig jar file) and all other files needed by the pig job (e.g., parameter file in above example) need to be uploaded onto HDFS under libpath beforehand. The workflow.xml will be created in Oozie server internally. Users can get the workflow.xml from console or command line(-definition). Everything after -X will be pass through parameters to pig.
+specified in this file. pigScriptFile is a local file. All jar files (including pig jar file) and all other files needed by the pig job (e.g., parameter file in above example) need to be uploaded onto HDFS under libpath beforehand. The workflow.xml will be created in Oozie server internally. Users can get the workflow.xml from console or command line(-definition). Everything after -X (optional) will be considered as configurable parameters for the generated workflow. The -D options passed after the -X will be defined into the generated workflow's <code><configuration> elements</code> (and make it to the Pig's used configuration) while the rest of the opts will be passed as-is to the invoked Pig program.
 
 The job will be created and run right away.
 
