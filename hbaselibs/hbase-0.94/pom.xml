@@ -22,12 +22,12 @@
     <parent>
         <groupId>org.apache.oozie</groupId>
         <artifactId>oozie-main</artifactId>
-        <version>3.3.2</version>
+        <version>3.3.3-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
     <groupId>org.apache.oozie</groupId>
     <artifactId>oozie-hbase</artifactId>
-    <version>0.94.2.oozie-3.3.2</version>
+    <version>0.94.2.oozie-3.3.3-SNAPSHOT</version>
     <description>Apache Oozie Hbase ${project.version}</description>
     <name>Apache Oozie Hbase ${project.version}</name>
     <packaging>jar</packaging>

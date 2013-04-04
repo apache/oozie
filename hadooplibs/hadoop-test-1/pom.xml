@@ -22,12 +22,12 @@
     <parent>
         <groupId>org.apache.oozie</groupId>
         <artifactId>oozie-main</artifactId>
-        <version>3.3.2</version>
+        <version>3.3.3-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
     <groupId>org.apache.oozie</groupId>
     <artifactId>oozie-hadoop-test</artifactId>
-    <version>1.1.1.oozie-3.3.2</version>
+    <version>1.1.1.oozie-3.3.3-SNAPSHOT</version>
     <description>Apache Oozie Hadoop ${project.version} Test</description>
     <name>Apache Oozie Hadoop ${project.version} Test</name>
     <packaging>jar</packaging>
