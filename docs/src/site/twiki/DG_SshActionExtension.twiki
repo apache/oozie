@@ -53,7 +53,10 @@ tot =true=.
 The =command= element indicates the shell command to execute.
 
 The =args= element, if present, contains parameters to be passed to the shell command. If more than one =args= element
-is present they are concatenated in order.
+is present they are concatenated in order. When an =args= element contains a space, even when quoted, it will be considered as
+separate arguments (i.e. "Hello World" becomes "Hello" and "World").  Starting with ssh schema 0.2, you can use the =arg= element
+(note that this is different than the =args= element) to specify arguments that have a space in them (i.e. "Hello World" is
+preserved as "Hello World").  You can use either =args= elements, =arg= elements, or neither; but not both in the same action.
 
 If the =capture-output= element is present, it indicates Oozie to capture output of the STDOUT of the ssh command
 execution. The ssh command output must be in Java Properties file format and it must not exceed 2KB. From within the
@@ -91,6 +94,34 @@ The output of the command will be ignored because the =capture-output= element i
 ---++ Appendix, Ssh XML-Schema
 
 ---+++ AE.A Appendix A, Ssh XML-Schema
+
+---++++ Ssh Action Schema Version 0.2
+
+<verbatim>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:ssh="uri:oozie:ssh-action:0.2" elementFormDefault="qualified"
+           targetNamespace="uri:oozie:ssh-action:0.2">
+.
+    <xs:element name="ssh" type="ssh:ACTION"/>
+.
+    <xs:complexType name="ACTION">
+        <xs:sequence>
+            <xs:element name="host" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="command" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:choice>
+              <xs:element name="args" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+              <xs:element name="arg" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:choice>
+            <xs:element name="capture-output" type="ssh:FLAG" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+.
+    <xs:complexType name="FLAG"/>
+.
+</xs:schema>
+</verbatim>
+
+---++++ Ssh Action Schema Version 0.1
 
 <verbatim>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
