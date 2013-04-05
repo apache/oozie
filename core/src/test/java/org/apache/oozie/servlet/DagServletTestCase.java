@@ -61,7 +61,7 @@ public abstract class DagServletTestCase extends XFsTestCase {
     }
 
     @SuppressWarnings("unchecked")
-	protected void runTest(String servletPath, Class<Object> servletClass, boolean securityEnabled, Callable<Void> assertions)
+	protected void runTest(String servletPath, Class<V0JobServlet> servletClass, boolean securityEnabled, Callable<Void> assertions)
             throws Exception {
         runTest(new String[]{servletPath}, new Class[]{servletClass}, securityEnabled, assertions);
     }
