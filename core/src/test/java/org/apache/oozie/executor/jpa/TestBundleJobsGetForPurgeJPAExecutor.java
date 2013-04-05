@@ -17,6 +17,9 @@
  */
 package org.apache.oozie.executor.jpa;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -50,22 +53,24 @@ public class TestBundleJobsGetForPurgeJPAExecutor extends XDataTestCase {
         super.tearDown();
     }
 
-    public void testBundleJobsGetForPurgeJPAExecutor() throws Exception {
-        this.addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateOozieTZ("2011-01-01T01:00Z"));
-
-        _testBundleJobsForPurge(10, 1);
-
-        this.addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateOozieTZ("2011-01-02T01:00Z"));
-        _testBundleJobsForPurge(10, 2);
-    }
-
-    private void _testBundleJobsForPurge(int olderThan, int expected) throws Exception {
+    public void testBundleJobsGetForPurgeJPAExecutorTooMany() throws Exception {
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
 
-        BundleJobsGetForPurgeJPAExecutor executor = new BundleJobsGetForPurgeJPAExecutor(olderThan, 50);
-        List<BundleJobBean> jobList = jpaService.execute(executor);
-        assertEquals(expected, jobList.size());
+        BundleJobBean job1 = this.addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateOozieTZ("2011-01-01T01:00Z"));
+        BundleJobBean job2 = this.addRecordToBundleJobTable(Job.Status.FAILED, DateUtils.parseDateOozieTZ("2011-01-01T01:00Z"));
+        BundleJobBean job3 = this.addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateOozieTZ("2011-01-01T01:00Z"));
+        BundleJobBean job4 = this.addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateOozieTZ("2011-01-01T01:00Z"));
+        BundleJobBean job5 = this.addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateOozieTZ("2011-01-01T01:00Z"));
+
+        List<String> list = new ArrayList<String>();
+        // Get the first 3
+        list.addAll(jpaService.execute(new BundleJobsGetForPurgeJPAExecutor(1, 3)));
+        assertEquals(3, list.size());
+        // Get the next 3 (though there's only 2 more)
+        list.addAll(jpaService.execute(new BundleJobsGetForPurgeJPAExecutor(1, 3, 3)));
+        assertEquals(5, list.size());
+        checkBundles(list, job1.getId(), job2.getId(), job3.getId(), job4.getId(), job5.getId());
     }
 
     protected BundleJobBean addRecordToBundleJobTable(Job.Status jobStatus, Date lastModifiedTime) throws Exception {
@@ -85,4 +90,13 @@ public class TestBundleJobsGetForPurgeJPAExecutor extends XDataTestCase {
         return bundle;
     }
 
+    private void checkBundles(List<String> bundles, String... bundleJobIDs) {
+        assertEquals(bundleJobIDs.length, bundles.size());
+        Arrays.sort(bundleJobIDs);
+        Collections.sort(bundles);
+
+        for (int i = 0; i < bundleJobIDs.length; i++) {
+            assertEquals(bundleJobIDs[i], bundles.get(i));
+        }
+    }
 }
