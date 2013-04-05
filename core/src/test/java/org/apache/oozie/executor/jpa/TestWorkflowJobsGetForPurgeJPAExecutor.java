@@ -18,6 +18,9 @@
 package org.apache.oozie.executor.jpa;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
@@ -54,19 +57,40 @@ public class TestWorkflowJobsGetForPurgeJPAExecutor extends XDataTestCase {
         super.tearDown();
     }
 
-    public void testWfJobsGetForPurge() throws Exception {
-        addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
-        addRecordToWfJobTable(WorkflowJob.Status.FAILED, WorkflowInstance.Status.FAILED);
-        _testGetJobsForPurge(1, 20);
-    }
-
-    private void _testGetJobsForPurge(long olderThanDays, int limit) throws Exception {
+    public void testWfJobsGetForPurgeWithParent() throws Exception {
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
-        WorkflowJobsGetForPurgeJPAExecutor wfJobsForPurgeExe = new WorkflowJobsGetForPurgeJPAExecutor(olderThanDays, limit);
-        List<WorkflowJobBean> list = jpaService.execute(wfJobsForPurgeExe);
-        assertNotNull(list);
-        assertEquals(2, list.size());
+
+        WorkflowJobBean job1 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
+        WorkflowJobBean job2 = addRecordToWfJobTable(WorkflowJob.Status.FAILED, WorkflowInstance.Status.FAILED);
+        WorkflowJobBean job3 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
+        job3.setParentId(job1.getId());
+        jpaService.execute(new WorkflowJobUpdateJPAExecutor(job3));
+
+        List<String> list = new ArrayList<String>();
+        list.addAll(jpaService.execute(new WorkflowJobsGetForPurgeJPAExecutor(1, 20)));
+        // job3 shouldn't be in the list because it has a parent
+        checkWorkflows(list, job1.getId(), job2.getId());
+    }
+
+    public void testWfJobsGetForPurgeTooMany() throws Exception {
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+
+        WorkflowJobBean job1 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
+        WorkflowJobBean job2 = addRecordToWfJobTable(WorkflowJob.Status.FAILED, WorkflowInstance.Status.FAILED);
+        WorkflowJobBean job3 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
+        WorkflowJobBean job4 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
+        WorkflowJobBean job5 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
+
+        List<String> list = new ArrayList<String>();
+        // Get the first 3
+        list.addAll(jpaService.execute(new WorkflowJobsGetForPurgeJPAExecutor(1, 3)));
+        assertEquals(3, list.size());
+        // Get the next 3 (though there's only 2 more)
+        list.addAll(jpaService.execute(new WorkflowJobsGetForPurgeJPAExecutor(1, 3, 3)));
+        assertEquals(5, list.size());
+        checkWorkflows(list, job1.getId(), job2.getId(), job3.getId(), job4.getId(), job5.getId());
     }
 
     @Override
@@ -100,4 +124,13 @@ public class TestWorkflowJobsGetForPurgeJPAExecutor extends XDataTestCase {
         return wfBean;
     }
 
+    private void checkWorkflows(List<String> wfs, String... wfJobIDs) {
+        assertEquals(wfJobIDs.length, wfs.size());
+        Arrays.sort(wfJobIDs);
+        Collections.sort(wfs);
+
+        for (int i = 0; i < wfJobIDs.length; i++) {
+            assertEquals(wfJobIDs[i], wfs.get(i));
+        }
+    }
 }
