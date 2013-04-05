@@ -17,6 +17,9 @@
  */
 package org.apache.oozie.client;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Callable;
@@ -27,6 +30,7 @@ import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.servlet.DagServletTestCase;
 import org.apache.oozie.servlet.MockDagEngineService;
+import org.apache.oozie.servlet.SLAServlet;
 import org.apache.oozie.servlet.V0JobServlet;
 import org.apache.oozie.servlet.V0JobsServlet;
 import org.apache.oozie.servlet.V1AdminServlet;
@@ -46,7 +50,7 @@ public class TestWorkflowClient extends DagServletTestCase {
 	    VERSION + "/job/*", VERSION + "/admin/*", VERSION + "/sla/*" };
 	static final Class[] SERVLET_CLASSES = { HeaderTestingVersionServlet.class,
 	    V0JobsServlet.class, V0JobServlet.class, V1AdminServlet.class,
-	    V0JobsServlet.class };
+	    SLAServlet.class };
 
 	protected void setUp() throws Exception {
 		super.setUp();
@@ -72,11 +76,23 @@ public class TestWorkflowClient extends DagServletTestCase {
 				    String oozieUrl = getContextURL();
 				    OozieClient wc = new OozieClient(oozieUrl);
 				    wc.setHeader("header", "test");
+				    assertEquals("test", wc.getHeader("header"));
+				    assertEquals("test", wc.getHeaders().get("header"));
+
+				    boolean found = false;
+				    for (Iterator<String> headers= wc.getHeaderNames(); headers.hasNext();) {
+	            if("header".equals(headers.next())){
+	            	found=true;
+	            }
+            }
+				    assertTrue("headers does not tontaints header!",found);
 				    wc.validateWSVersion();
 				    assertTrue(HeaderTestingVersionServlet.OOZIE_HEADERS
 				        .containsKey("header"));
 				    assertTrue(HeaderTestingVersionServlet.OOZIE_HEADERS
 				        .containsValue("test"));
+				    wc.removeHeader("header");
+				    assertNull( wc.getHeader("header"));
 				    return null;
 			    }
 		    });
@@ -443,25 +459,30 @@ public class TestWorkflowClient extends DagServletTestCase {
 				    assertEquals(0, action.getActionNumber());
 				    assertEquals("SUCCEEDED", action.getStatus().toString());
 				    assertEquals(jobId, action.getId());
-
+				    
 				    assertEquals(0, wc.getBulkInfo(null, 0, 10).size());
 
 				    List<BundleJob> jobs = wc.getBundleJobsInfo("status=SUCCEEDED", 0,
 				        10);
 				    assertEquals(4, jobs.size());
+				    
 				    assertEquals("SUCCEEDED", jobs.get(1).getStatus().toString());
-
+				    
+				    // the method reRunBundle does nothing.  
 				    wc.reRunBundle(jobId, "coordScope", "dateScope", true, true);
-				    assertEquals("SUCCEEDED", bundleJob.getStatus().toString());
-
-				    try {
-					    wc.getSlaInfo(0, 10, null);
-					    fail("this sampler already registred. Should be exception");
-				    } catch (Throwable e) {
-					    assertEquals(
-					        "HTTP error code: 500 : Sampler group=[webservices] name=[v0jobs] already defined",
-					        e.toString());
+				    
+				    PrintStream oldStream=System.out;
+				    ByteArrayOutputStream data= new ByteArrayOutputStream();
+				    System.setOut(new PrintStream(data));
+				    try{
+					   wc.getSlaInfo(0, 10, null);
+				    }finally{
+				    	System.setOut(oldStream);
 				    }
+				    assertTrue(data.toString().contains("<sla-message>"));
+				    assertTrue(data.toString().contains("<last-sequence-id>0</last-sequence-id>"));
+				    assertTrue(data.toString().contains("</sla-message>"));
+				    
 				    return null;
 			    }
 		    });

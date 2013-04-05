@@ -192,5 +192,27 @@ public class TestAuthFilterAuthOozieClient extends XTestCase {
         String newCache = IOUtils.getReaderAsString(new FileReader(AuthOozieClient.AUTH_TOKEN_CACHE_FILE), -1);
         assertEquals(currentCache, newCache);
     }
+//----------------
+    
+    public void testClientAuthMethod() throws Exception {
+      
+      runTest(new Callable<Void>() {
+          public Void call() throws Exception {
+              String oozieUrl = getContextURL();
+              String[] args = new String[]{"admin", "-status", "-oozie", oozieUrl,"-auth","SIMPLE"};
+              assertEquals(0, new OozieCLI().run(args));
+              return null;
+          }
+      });
+      runTest(new Callable<Void>() {
+        public Void call() throws Exception {
+            String oozieUrl = getContextURL();
+            String[] args = new String[]{"admin", "-status", "-oozie", oozieUrl,"-auth","fake"};
+            assertEquals(-1, new OozieCLI().run(args));
+            return null;
+        }
+    });
 
+     
+  }
 }
