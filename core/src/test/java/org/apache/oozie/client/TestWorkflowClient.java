@@ -17,8 +17,14 @@
  */
 package org.apache.oozie.client;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
@@ -34,6 +40,10 @@ import org.apache.oozie.servlet.SLAServlet;
 import org.apache.oozie.servlet.V0JobServlet;
 import org.apache.oozie.servlet.V0JobsServlet;
 import org.apache.oozie.servlet.V1AdminServlet;
+import org.json.simple.JSONArray;
+
+import static org.mockito.Mockito.*;
+
 
 public class TestWorkflowClient extends DagServletTestCase {
 
@@ -80,19 +90,20 @@ public class TestWorkflowClient extends DagServletTestCase {
 				    assertEquals("test", wc.getHeaders().get("header"));
 
 				    boolean found = false;
-				    for (Iterator<String> headers= wc.getHeaderNames(); headers.hasNext();) {
-	            if("header".equals(headers.next())){
-	            	found=true;
-	            }
-            }
-				    assertTrue("headers does not tontaints header!",found);
+				    for (Iterator<String> headers = wc.getHeaderNames(); headers
+				        .hasNext();) {
+					    if ("header".equals(headers.next())) {
+						    found = true;
+					    }
+				    }
+				    assertTrue("headers does not tontaints header!", found);
 				    wc.validateWSVersion();
 				    assertTrue(HeaderTestingVersionServlet.OOZIE_HEADERS
 				        .containsKey("header"));
 				    assertTrue(HeaderTestingVersionServlet.OOZIE_HEADERS
 				        .containsValue("test"));
 				    wc.removeHeader("header");
-				    assertNull( wc.getHeader("header"));
+				    assertNull(wc.getHeader("header"));
 				    return null;
 			    }
 		    });
@@ -108,6 +119,14 @@ public class TestWorkflowClient extends DagServletTestCase {
 				    assertEquals(oozieUrl,
 				        wc.getOozieUrl().substring(0, wc.getOozieUrl().length() - 1));
 				    assertTrue(wc.getProtocolUrl().startsWith(wc.getOozieUrl() + "v"));
+				    
+				    try{
+					    wc = new OozieClientForTest(oozieUrl);
+					    wc.getProtocolUrl();
+					    fail("wrong version should run throw exception");
+				    }catch(OozieClientException e){
+				    	assertEquals("UNSUPPORTED_VERSION : Supported version [1] or less, Unsupported versions[-11-10]", e.toString());
+				    }
 				    return null;
 			    }
 		    });
@@ -428,9 +447,6 @@ public class TestWorkflowClient extends DagServletTestCase {
 		    });
 	}
 
-	
-
-	
 	public void testJobInformation() throws Exception {
 		runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED,
 		    new Callable<Void>() {
@@ -459,32 +475,57 @@ public class TestWorkflowClient extends DagServletTestCase {
 				    assertEquals(0, action.getActionNumber());
 				    assertEquals("SUCCEEDED", action.getStatus().toString());
 				    assertEquals(jobId, action.getId());
-				    
+
 				    assertEquals(0, wc.getBulkInfo(null, 0, 10).size());
 
 				    List<BundleJob> jobs = wc.getBundleJobsInfo("status=SUCCEEDED", 0,
 				        10);
 				    assertEquals(4, jobs.size());
-				    
+
 				    assertEquals("SUCCEEDED", jobs.get(1).getStatus().toString());
-				    
-				    // the method reRunBundle does nothing.  
+
+				    // the method reRunBundle does nothing.
 				    wc.reRunBundle(jobId, "coordScope", "dateScope", true, true);
-				    
-				    PrintStream oldStream=System.out;
-				    ByteArrayOutputStream data= new ByteArrayOutputStream();
+
+				    PrintStream oldStream = System.out;
+				    ByteArrayOutputStream data = new ByteArrayOutputStream();
 				    System.setOut(new PrintStream(data));
-				    try{
-					   wc.getSlaInfo(0, 10, null);
-				    }finally{
-				    	System.setOut(oldStream);
+				    try {
+					    wc.getSlaInfo(0, 10, null);
+				    } finally {
+					    System.setOut(oldStream);
 				    }
 				    assertTrue(data.toString().contains("<sla-message>"));
-				    assertTrue(data.toString().contains("<last-sequence-id>0</last-sequence-id>"));
+				    assertTrue(data.toString().contains(
+				        "<last-sequence-id>0</last-sequence-id>"));
 				    assertTrue(data.toString().contains("</sla-message>"));
-				    
+
 				    return null;
 			    }
 		    });
+	}
+	private class OozieClientForTest extends OozieClient{
+
+		public OozieClientForTest(String oozieUrl) {
+	    super(oozieUrl);
+    }
+
+		@Override
+    protected HttpURLConnection createConnection(URL url, String method)
+        throws IOException, OozieClientException {
+			HttpURLConnection result =mock(HttpURLConnection.class);
+			when(result.getResponseCode()).thenReturn(HttpURLConnection.HTTP_OK);
+			
+		  JSONArray versions = new JSONArray();
+      versions.add(-11);
+      versions.add(-10);
+      Writer writer= new StringWriter();
+      versions.writeJSONString(writer);
+      writer.flush();
+			
+			when(result.getInputStream()).thenReturn(new ByteArrayInputStream(writer.toString().getBytes()));
+	    return result;
+    }
+		
 	}
 }
