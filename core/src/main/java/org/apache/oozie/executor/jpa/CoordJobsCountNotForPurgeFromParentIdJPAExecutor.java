@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,6 @@
 package org.apache.oozie.executor.jpa;
 
 import java.sql.Timestamp;
-import java.util.List;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -26,23 +25,17 @@ import javax.persistence.Query;
 import org.apache.oozie.ErrorCode;
 
 /**
- * Load the list of completed WorkflowJob for purge ready.
+ * Count the number of Coordinator children of a parent bundle that are not ready to be purged
  */
-public class WorkflowJobsGetForPurgeJPAExecutor implements JPAExecutor<List<String>> {
+public class CoordJobsCountNotForPurgeFromParentIdJPAExecutor implements JPAExecutor<Long> {
 
     private static final long DAY_IN_MS = 24 * 60 * 60 * 1000;
     private long olderThanDays;
-    private int limit;
-    private int offset;
+    private String parentId;
 
-    public WorkflowJobsGetForPurgeJPAExecutor(long olderThanDays, int limit) {
-        this(olderThanDays, 0, limit);
-    }
-
-    public WorkflowJobsGetForPurgeJPAExecutor(long olderThanDays, int offset, int limit) {
+    public CoordJobsCountNotForPurgeFromParentIdJPAExecutor(long olderThanDays, String parentId) {
         this.olderThanDays = olderThanDays;
-        this.offset = offset;
-        this.limit = limit;
+        this.parentId = parentId;
     }
 
     /* (non-Javadoc)
@@ -50,7 +43,7 @@ public class WorkflowJobsGetForPurgeJPAExecutor implements JPAExecutor<List<Stri
      */
     @Override
     public String getName() {
-        return "WorkflowJobsGetForPurgeJPAExecutor";
+        return "CoordChildrenCountNotForPurgeJPAExecutor";
     }
 
     /* (non-Javadoc)
@@ -58,20 +51,19 @@ public class WorkflowJobsGetForPurgeJPAExecutor implements JPAExecutor<List<Stri
      */
     @Override
     @SuppressWarnings("unchecked")
-    public List<String> execute(EntityManager em) throws JPAExecutorException {
-        List<String> workflows = null;
+    public Long execute(EntityManager em) throws JPAExecutorException {
+        Long count = 0L;
         try {
-            Timestamp maxEndTime = new Timestamp(System.currentTimeMillis() - (olderThanDays * DAY_IN_MS));
-            Query jobQ = em.createNamedQuery("GET_COMPLETED_WORKFLOWS_WITH_NO_PARENT_OLDER_THAN");
-            jobQ.setParameter("endTime", maxEndTime);
-            jobQ.setMaxResults(limit);
-            jobQ.setFirstResult(offset);
-            workflows = jobQ.getResultList();
+            Timestamp lastModTm = new Timestamp(System.currentTimeMillis() - (olderThanDays * DAY_IN_MS));
+            Query jobQ = em.createNamedQuery("GET_COORD_COUNT_WITH_PARENT_ID_NOT_READY_FOR_PURGE");
+            jobQ.setParameter("parentId", parentId);
+            jobQ.setParameter("lastModTime", lastModTm);
+            count = (Long) jobQ.getSingleResult();
         }
         catch (Exception e) {
             throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
         }
-        return workflows;
+        return count;
     }
 
 }

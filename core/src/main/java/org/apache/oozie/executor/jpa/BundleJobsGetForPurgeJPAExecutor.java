@@ -23,20 +23,25 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
-import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.ErrorCode;
 
 /**
  * Load the list of completed BundleJob for purge ready.
  */
-public class BundleJobsGetForPurgeJPAExecutor implements JPAExecutor<List<BundleJobBean>> {
+public class BundleJobsGetForPurgeJPAExecutor implements JPAExecutor<List<String>> {
 
     private static final long DAY_IN_MS = 24 * 60 * 60 * 1000;
     private long olderThanDays;
     private int limit;
+    private int offset;
 
     public BundleJobsGetForPurgeJPAExecutor(long olderThanDays, int limit) {
+        this(olderThanDays, 0, limit);
+    }
+
+    public BundleJobsGetForPurgeJPAExecutor(long olderThanDays, int offset, int limit) {
         this.olderThanDays = olderThanDays;
+        this.offset = offset;
         this.limit = limit;
     }
 
@@ -53,13 +58,14 @@ public class BundleJobsGetForPurgeJPAExecutor implements JPAExecutor<List<Bundle
      */
     @Override
     @SuppressWarnings("unchecked")
-    public List<BundleJobBean> execute(EntityManager em) throws JPAExecutorException {
-        List<BundleJobBean> bundleJobs = null;
+    public List<String> execute(EntityManager em) throws JPAExecutorException {
+        List<String> bundleJobs = null;
         try {
             Timestamp lastModTm = new Timestamp(System.currentTimeMillis() - (olderThanDays * DAY_IN_MS));
             Query jobQ = em.createNamedQuery("GET_COMPLETED_BUNDLE_JOBS_OLDER_THAN");
             jobQ.setParameter("lastModTime", lastModTm);
             jobQ.setMaxResults(limit);
+            jobQ.setFirstResult(offset);
             bundleJobs = jobQ.getResultList();
         }
         catch (Exception e) {
