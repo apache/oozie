@@ -36,7 +36,6 @@ import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.executor.jpa.CoordActionGetForExternalIdJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordActionUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionsGetForJobJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 import org.apache.oozie.service.ActionService;
@@ -385,16 +384,14 @@ public class TestActionErrors extends XDataTestCase {
         conf.set("external-status", "ok");
         conf.set("error", errorType);
 
-        JPAService jpaService = Services.get().get(JPAService.class);
-        CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
+        final String jobId = engine.submitJob(conf, false);
+
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        final CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
         CoordinatorActionBean coordAction = addRecordToCoordActionTable(coordJob.getId(), 1,
-                CoordinatorAction.Status.RUNNING, "coord-action-get.xml", "wfId", "RUNNING", 0);
+                CoordinatorAction.Status.RUNNING, "coord-action-get.xml", jobId, "RUNNING", 0);
 
-        final String jobId = engine.submitJob(conf, true);
-
-        coordAction.setExternalId(jobId);
-        CoordActionUpdateJPAExecutor coordActionUpdateExecutor = new CoordActionUpdateJPAExecutor(coordAction);
-        jpaService.execute(coordActionUpdateExecutor);
+        engine.start(jobId);
 
         waitFor(5000, new Predicate() {
             public boolean evaluate() throws Exception {
@@ -416,6 +413,13 @@ public class TestActionErrors extends XDataTestCase {
         assertFalse(action.getPending());
 
         assertEquals (WorkflowJob.Status.SUSPENDED, job.getStatus());
+
+        waitFor(5000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                CoordinatorActionBean coordAction2 = jpaService.execute(new CoordActionGetForExternalIdJPAExecutor(jobId));
+                return coordAction2.getStatus().equals(CoordinatorAction.Status.SUSPENDED);
+            }
+        });
 
         coordAction = jpaService.execute(new CoordActionGetForExternalIdJPAExecutor(jobId));
         assertEquals (CoordinatorAction.Status.SUSPENDED, coordAction.getStatus());

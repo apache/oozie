@@ -19,6 +19,9 @@ package org.apache.oozie.executor.jpa;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
@@ -61,22 +64,51 @@ public class TestCoordJobsGetForPurgeJPAExecutor extends XFsTestCase {
         super.tearDown();
     }
 
-    public void testCoordJobsGetForPurgeJPAExecutor() throws Exception {
-        String jobId = "00000-" + new Date().getTime() + "-TestCoordJobsGetForPurgeJPAExecutor-C";
-        insertJob(jobId, CoordinatorJob.Status.SUCCEEDED, DateUtils.parseDateOozieTZ("2011-01-01T01:00Z"));
-        _testCoordJobsForPurge(10, 1);
-    }
-
-    private void _testCoordJobsForPurge(int olderThan, int expected) throws Exception {
+    public void testCoordJobsGetForPurgeJPAExecutorWithParent() throws Exception {
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
 
-        CoordJobsGetForPurgeJPAExecutor executor = new CoordJobsGetForPurgeJPAExecutor(olderThan, 50);
-        List<CoordinatorJobBean> jobList = jpaService.execute(executor);
-        assertEquals(expected, jobList.size());
+        String jobId1 = "00001-" + new Date().getTime() + "-TestCoordJobsGetForPurgeJPAExecutor-C";
+        insertJob(jobId1, CoordinatorJob.Status.SUCCEEDED, DateUtils.parseDateOozieTZ("2011-01-01T01:00Z"));
+        String jobId2 = "00002-" + new Date().getTime() + "-TestCoordJobsGetForPurgeJPAExecutor-C";
+        CoordinatorJobBean job2 = insertJob(jobId2, CoordinatorJob.Status.SUCCEEDED,
+                DateUtils.parseDateOozieTZ("2011-01-01T01:00Z"));
+        job2.setBundleId("some_bundle_parent_id");
+        jpaService.execute(new CoordJobUpdateJPAExecutor(job2));
+
+        CoordJobsGetForPurgeJPAExecutor executor = new CoordJobsGetForPurgeJPAExecutor(10, 50);
+        List<String> jobList = jpaService.execute(executor);
+        // job2 shouldn't be in the list because it has a parent
+        assertEquals(1, jobList.size());
+        assertEquals(jobId1, jobList.get(0));
     }
 
-    private void insertJob(String jobId, CoordinatorJob.Status status, Date d) throws Exception {
+    public void testCoordJobsGetForPurgeJPAExecutorTooMany() throws Exception {
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+
+        String jobId1 = "00001-" + new Date().getTime() + "-TestCoordJobsGetForPurgeJPAExecutor-C";
+        insertJob(jobId1, CoordinatorJob.Status.SUCCEEDED, DateUtils.parseDateOozieTZ("2011-01-01T01:00Z"));
+        String jobId2 = "00002-" + new Date().getTime() + "-TestCoordJobsGetForPurgeJPAExecutor-C";
+        insertJob(jobId2, CoordinatorJob.Status.SUCCEEDED, DateUtils.parseDateOozieTZ("2011-01-01T01:00Z"));
+        String jobId3 = "00003-" + new Date().getTime() + "-TestCoordJobsGetForPurgeJPAExecutor-C";
+        insertJob(jobId3, CoordinatorJob.Status.SUCCEEDED, DateUtils.parseDateOozieTZ("2011-01-01T01:00Z"));
+        String jobId4 = "00004-" + new Date().getTime() + "-TestCoordJobsGetForPurgeJPAExecutor-C";
+        insertJob(jobId4, CoordinatorJob.Status.SUCCEEDED, DateUtils.parseDateOozieTZ("2011-01-01T01:00Z"));
+        String jobId5 = "00005-" + new Date().getTime() + "-TestCoordJobsGetForPurgeJPAExecutor-C";
+        insertJob(jobId5, CoordinatorJob.Status.SUCCEEDED, DateUtils.parseDateOozieTZ("2011-01-01T01:00Z"));
+
+        List<String> list = new ArrayList<String>();
+        // Get the first 3
+        list.addAll(jpaService.execute(new CoordJobsGetForPurgeJPAExecutor(1, 3)));
+        assertEquals(3, list.size());
+        // Get the next 3 (though there's only 2 more)
+        list.addAll(jpaService.execute(new CoordJobsGetForPurgeJPAExecutor(1, 3, 3)));
+        assertEquals(5, list.size());
+        checkCoordinators(list, jobId1, jobId2, jobId3, jobId4, jobId5);
+    }
+
+    private CoordinatorJobBean insertJob(String jobId, CoordinatorJob.Status status, Date d) throws Exception {
         Path appPath = new Path(getFsTestCaseDir(), "coord");
         String appXml = getCoordJobXml(appPath);
 
@@ -120,6 +152,7 @@ public class TestCoordJobsGetForPurgeJPAExecutor extends XFsTestCase {
             fail("Unable to insert the test job record to table");
             throw ce;
         }
+        return coordJob;
     }
 
     private String getCoordJobXml(Path appPath) {
@@ -151,5 +184,15 @@ public class TestCoordJobsGetForPurgeJPAExecutor extends XFsTestCase {
         conf.setProperty("user.name", getTestUser());
 
         return conf;
+    }
+
+    private void checkCoordinators(List<String> coords, String... coordJobIDs) {
+        assertEquals(coordJobIDs.length, coords.size());
+        Arrays.sort(coordJobIDs);
+        Collections.sort(coords);
+
+        for (int i = 0; i < coordJobIDs.length; i++) {
+            assertEquals(coordJobIDs[i], coords.get(i));
+        }
     }
 }

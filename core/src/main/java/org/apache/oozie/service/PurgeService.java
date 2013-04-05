@@ -18,13 +18,7 @@
 package org.apache.oozie.service;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.oozie.command.bundle.BundlePurgeXCommand;
-import org.apache.oozie.command.coord.CoordPurgeXCommand;
-import org.apache.oozie.command.wf.PurgeXCommand;
-import org.apache.oozie.service.CallableQueueService;
-import org.apache.oozie.service.SchedulerService;
-import org.apache.oozie.service.Service;
-import org.apache.oozie.service.Services;
+import org.apache.oozie.command.PurgeXCommand;
 
 /**
  * The PurgeService schedules purging of completed jobs and associated action older than a specified age for workflow, coordinator and bundle.
@@ -49,22 +43,21 @@ public class PurgeService implements Service {
      * remove completed jobs and associated actions older than the configured age for workflow, coordinator and bundle.
      */
     static class PurgeRunnable implements Runnable {
-        private int olderThan;
+        private int wfOlderThan;
         private int coordOlderThan;
         private int bundleOlderThan;
         private int limit;
 
-        public PurgeRunnable(int olderThan, int coordOlderThan, int bundleOlderThan, int limit) {
-            this.olderThan = olderThan;
+        public PurgeRunnable(int wfOlderThan, int coordOlderThan, int bundleOlderThan, int limit) {
+            this.wfOlderThan = wfOlderThan;
             this.coordOlderThan = coordOlderThan;
             this.bundleOlderThan = bundleOlderThan;
             this.limit = limit;
         }
 
         public void run() {
-                Services.get().get(CallableQueueService.class).queue(new PurgeXCommand(olderThan, limit));
-                Services.get().get(CallableQueueService.class).queue(new CoordPurgeXCommand(coordOlderThan, limit));
-                Services.get().get(CallableQueueService.class).queue(new BundlePurgeXCommand(bundleOlderThan, limit));
+                Services.get().get(CallableQueueService.class).queue(
+                        new PurgeXCommand(wfOlderThan, coordOlderThan, bundleOlderThan, limit));
         }
 
     }
