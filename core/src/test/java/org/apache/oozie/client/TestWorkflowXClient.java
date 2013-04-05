@@ -18,6 +18,7 @@
 package org.apache.oozie.client;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.util.Properties;
 import java.util.concurrent.Callable;
@@ -119,8 +120,9 @@ public class TestWorkflowXClient extends DagServletTestCase {
 				    XOozieClient wc = new XOozieClient(oozieUrl);
 				    Properties conf = wc.createConfiguration();
 				    Path libPath = new Path(getFsTestCaseDir(), "lib");
-				    getFileSystem().mkdirs(libPath);
-
+				    
+				   				    getFileSystem().mkdirs(libPath);
+				    
 				    // try to submit without JT and NN
 				    try {
 					    wc.submitMapReduce(conf);
@@ -149,6 +151,19 @@ public class TestWorkflowXClient extends DagServletTestCase {
 					        excepion.toString());
 				    }
 
+				    File tmp=new File("target");
+				    int startPositpon=libPath.toString().indexOf(tmp.getAbsolutePath());
+				    String localpath=libPath.toString().substring(startPositpon);
+				    
+				    conf.setProperty(OozieClient.LIBPATH, localpath.substring(1));
+				    	
+				    try{
+				    	wc.submitMapReduce(conf);
+				    	fail("lib path can not be relative");
+				    }catch(RuntimeException e){
+				    	assertEquals("java.lang.RuntimeException: libpath should be absolute", e.toString());
+				    }
+				    	
 				    conf.setProperty(OozieClient.LIBPATH, libPath.toString());
 
 				    assertEquals(MockDagEngineService.JOB_ID + wfCount
