@@ -48,7 +48,7 @@ public class TestWorkflowClient extends DagServletTestCase {
 	static final String[] END_POINTS = { "/versions", VERSION + "/jobs",
 	    VERSION + "/job/*", VERSION + "/admin/*", VERSION + "/sla/*" };
 	@SuppressWarnings("rawtypes")
-  static final Class[] SERVLET_CLASSES = { HeaderTestingVersionServlet.class,
+	static final Class[] SERVLET_CLASSES = { HeaderTestingVersionServlet.class,
 	    V0JobsServlet.class, V0JobServlet.class, V1AdminServlet.class,
 	    SLAServlet.class };
 
@@ -57,18 +57,19 @@ public class TestWorkflowClient extends DagServletTestCase {
 		MockDagEngineService.reset();
 	}
 
-  // UNCOMMENT TO QUICKLY RUN THE WS WITH MOCK engine
-  //  public void testRunning() throws Exception {
-  //    runTest(END_POINTS, SERVLET_CLASSES, new Callable<Void>() {
-  //       public Void call() throws Exception {
-  //         Thread.sleep(Long.MAX_VALUE);
-  //           return null;
-  //        }
-  //    });
-  //  }
-/**
- * Test methods for  headers manipulation
- */
+	// UNCOMMENT TO QUICKLY RUN THE WS WITH MOCK engine
+//	public void testRunning() throws Exception {
+//		runTest(END_POINTS, SERVLET_CLASSES, new Callable<Void>() {
+//			public Void call() throws Exception {
+//				Thread.sleep(Long.MAX_VALUE);
+//				return null;
+//			}
+//		});
+//	}
+
+	/**
+	 * Test methods for headers manipulation
+	 */
 	public void testHeaders() throws Exception {
 		runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED,
 		    new Callable<Void>() {
@@ -553,8 +554,8 @@ public class TestWorkflowClient extends DagServletTestCase {
 			super(oozieUrl);
 		}
 
-    @SuppressWarnings("unchecked")
-    @Override
+		@SuppressWarnings("unchecked")
+		@Override
 		protected HttpURLConnection createConnection(URL url, String method)
 		    throws IOException, OozieClientException {
 			HttpURLConnection result = mock(HttpURLConnection.class);
