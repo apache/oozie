@@ -17,12 +17,14 @@
  */
 package org.apache.oozie.client;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.io.StringWriter;
-import java.io.Writer;
+import org.apache.hadoop.fs.Path;
+import org.apache.oozie.BuildInfo;
+import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
+import org.apache.oozie.client.rest.RestConstants;
+import org.apache.oozie.servlet.*;
+import org.json.simple.JSONArray;
+
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Iterator;
@@ -30,20 +32,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
-import org.apache.hadoop.fs.Path;
-import org.apache.oozie.BuildInfo;
-import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
-import org.apache.oozie.client.rest.RestConstants;
-import org.apache.oozie.servlet.DagServletTestCase;
-import org.apache.oozie.servlet.MockDagEngineService;
-import org.apache.oozie.servlet.SLAServlet;
-import org.apache.oozie.servlet.V0JobServlet;
-import org.apache.oozie.servlet.V0JobsServlet;
-import org.apache.oozie.servlet.V1AdminServlet;
-import org.json.simple.JSONArray;
-
 import static org.mockito.Mockito.*;
-
 
 public class TestWorkflowClient extends DagServletTestCase {
 
@@ -58,7 +47,8 @@ public class TestWorkflowClient extends DagServletTestCase {
 	static final String VERSION = "/v" + OozieClient.WS_PROTOCOL_VERSION;
 	static final String[] END_POINTS = { "/versions", VERSION + "/jobs",
 	    VERSION + "/job/*", VERSION + "/admin/*", VERSION + "/sla/*" };
-	static final Class[] SERVLET_CLASSES = { HeaderTestingVersionServlet.class,
+	@SuppressWarnings("rawtypes")
+  static final Class[] SERVLET_CLASSES = { HeaderTestingVersionServlet.class,
 	    V0JobsServlet.class, V0JobServlet.class, V1AdminServlet.class,
 	    SLAServlet.class };
 
@@ -67,17 +57,18 @@ public class TestWorkflowClient extends DagServletTestCase {
 		MockDagEngineService.reset();
 	}
 
-	// UNCOMMENT TO QUICKLY RUN THE WS WITH MOCK engine
-	// public void testRunning() throws Exception {
-	// runTest(END_POINTS, SERVLET_CLASSES, new Callable<Void>() {
-	// public Void call() throws Exception {
-	// Thread.sleep(Long.MAX_VALUE);
-	// return null;
-	// }
-	// });
-	//
-	// }
-
+  // UNCOMMENT TO QUICKLY RUN THE WS WITH MOCK engine
+  //  public void testRunning() throws Exception {
+  //    runTest(END_POINTS, SERVLET_CLASSES, new Callable<Void>() {
+  //       public Void call() throws Exception {
+  //         Thread.sleep(Long.MAX_VALUE);
+  //           return null;
+  //        }
+  //    });
+  //  }
+/**
+ * Test methods for  headers manipulation
+ */
 	public void testHeaders() throws Exception {
 		runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED,
 		    new Callable<Void>() {
@@ -119,13 +110,15 @@ public class TestWorkflowClient extends DagServletTestCase {
 				    assertEquals(oozieUrl,
 				        wc.getOozieUrl().substring(0, wc.getOozieUrl().length() - 1));
 				    assertTrue(wc.getProtocolUrl().startsWith(wc.getOozieUrl() + "v"));
-				    
-				    try{
+
+				    try {
 					    wc = new OozieClientForTest(oozieUrl);
 					    wc.getProtocolUrl();
 					    fail("wrong version should run throw exception");
-				    }catch(OozieClientException e){
-				    	assertEquals("UNSUPPORTED_VERSION : Supported version [1] or less, Unsupported versions[-11-10]", e.toString());
+				    } catch (OozieClientException e) {
+					    assertEquals(
+					        "UNSUPPORTED_VERSION : Supported version [1] or less, Unsupported versions[-11-10]",
+					        e.toString());
 				    }
 				    return null;
 			    }
@@ -447,6 +440,9 @@ public class TestWorkflowClient extends DagServletTestCase {
 		    });
 	}
 
+	/**
+	 * Test client's methods getWorkflowActionInfo and getBundleJobInfo
+	 */
 	public void testJobInformation() throws Exception {
 		runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED,
 		    new Callable<Void>() {
@@ -467,9 +463,30 @@ public class TestWorkflowClient extends DagServletTestCase {
 				    assertEquals("user", job.getUser());
 
 				    BundleJob bundleJob = wc.getBundleJobInfo(jobId);
-				    // assertEquals("group", bundleJob.getAcl());
 				    assertEquals("SUCCEEDED", bundleJob.getStatus().toString());
 				    assertEquals("user", bundleJob.getUser());
+
+				    return null;
+			    }
+		    });
+	}
+
+	/**
+	 * Test client's methods getCoordActionInfo and reRunBundle.
+	 */
+	public void testJobActionInfo() throws Exception {
+		runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED,
+		    new Callable<Void>() {
+			    public Void call() throws Exception {
+				    String oozieUrl = getContextURL();
+				    OozieClient wc = new OozieClient(oozieUrl);
+				    String jobId = MockDagEngineService.JOB_ID + "1"
+				        + MockDagEngineService.JOB_ID_END;
+				    assertEquals(RestConstants.JOB_SHOW_LOG, wc.getJobLog(jobId));
+
+				    WorkflowAction wfAction = wc.getWorkflowActionInfo(jobId);
+
+				    assertEquals(jobId, wfAction.getId());
 
 				    CoordinatorAction action = wc.getCoordActionInfo(jobId);
 				    assertEquals(0, action.getActionNumber());
@@ -486,6 +503,28 @@ public class TestWorkflowClient extends DagServletTestCase {
 
 				    // the method reRunBundle does nothing.
 				    wc.reRunBundle(jobId, "coordScope", "dateScope", true, true);
+
+				    return null;
+			    }
+		    });
+	}
+
+	/**
+	 * Test SlaServlet and client's method getSlaInfo
+	 */
+	public void testSla() throws Exception {
+		runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED,
+		    new Callable<Void>() {
+			    public Void call() throws Exception {
+				    String oozieUrl = getContextURL();
+				    OozieClient wc = new OozieClient(oozieUrl);
+				    String jobId = MockDagEngineService.JOB_ID + "1"
+				        + MockDagEngineService.JOB_ID_END;
+				    assertEquals(RestConstants.JOB_SHOW_LOG, wc.getJobLog(jobId));
+
+				    WorkflowAction wfAction = wc.getWorkflowActionInfo(jobId);
+
+				    assertEquals(jobId, wfAction.getId());
 
 				    PrintStream oldStream = System.out;
 				    ByteArrayOutputStream data = new ByteArrayOutputStream();
@@ -504,28 +543,34 @@ public class TestWorkflowClient extends DagServletTestCase {
 			    }
 		    });
 	}
-	private class OozieClientForTest extends OozieClient{
+
+	/**
+	 * Fake class for test reaction on a bad version
+	 */
+	private class OozieClientForTest extends OozieClient {
 
 		public OozieClientForTest(String oozieUrl) {
-	    super(oozieUrl);
-    }
+			super(oozieUrl);
+		}
 
-		@Override
-    protected HttpURLConnection createConnection(URL url, String method)
-        throws IOException, OozieClientException {
-			HttpURLConnection result =mock(HttpURLConnection.class);
+    @SuppressWarnings("unchecked")
+    @Override
+		protected HttpURLConnection createConnection(URL url, String method)
+		    throws IOException, OozieClientException {
+			HttpURLConnection result = mock(HttpURLConnection.class);
 			when(result.getResponseCode()).thenReturn(HttpURLConnection.HTTP_OK);
-			
-		  JSONArray versions = new JSONArray();
-      versions.add(-11);
-      versions.add(-10);
-      Writer writer= new StringWriter();
-      versions.writeJSONString(writer);
-      writer.flush();
-			
-			when(result.getInputStream()).thenReturn(new ByteArrayInputStream(writer.toString().getBytes()));
-	    return result;
-    }
-		
+
+			JSONArray versions = new JSONArray();
+			versions.add(-11);
+			versions.add(-10);
+			Writer writer = new StringWriter();
+			versions.writeJSONString(writer);
+			writer.flush();
+
+			when(result.getInputStream()).thenReturn(
+			    new ByteArrayInputStream(writer.toString().getBytes()));
+			return result;
+		}
+
 	}
 }

@@ -24,7 +24,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.DagEngine;
 import org.apache.oozie.DagEngineException;
 import org.apache.oozie.ErrorCode;
@@ -50,7 +49,7 @@ public class V0JobsServlet extends BaseJobsServlet {
      * v0 service implementation to submit a workflow job
      */
     @Override
-    protected JSONObject submitJob(HttpServletRequest request, Configuration conf) throws XServletException, IOException {
+    protected JSONObject submitJob(HttpServletRequest request, Configuration  conf) throws XServletException, IOException {
 
         JSONObject json = new JSONObject();
 

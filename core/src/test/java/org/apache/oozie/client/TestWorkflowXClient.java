@@ -17,17 +17,17 @@
  */
 package org.apache.oozie.client;
 
+import org.apache.hadoop.fs.Path;
+import org.apache.oozie.servlet.DagServletTestCase;
+import org.apache.oozie.servlet.MockDagEngineService;
+import org.apache.oozie.servlet.V1AdminServlet;
+import org.apache.oozie.servlet.V1JobsServlet;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.util.Properties;
 import java.util.concurrent.Callable;
-
-import org.apache.hadoop.fs.Path;
-import org.apache.oozie.servlet.DagServletTestCase;
-import org.apache.oozie.servlet.MockDagEngineService;
-import org.apache.oozie.servlet.V1JobsServlet;
-import org.apache.oozie.servlet.V1AdminServlet;
 
 public class TestWorkflowXClient extends DagServletTestCase {
 
@@ -118,56 +118,56 @@ public class TestWorkflowXClient extends DagServletTestCase {
 				    String oozieUrl = getContextURL();
 				    int wfCount = MockDagEngineService.INIT_WF_COUNT;
 				    XOozieClient wc = new XOozieClient(oozieUrl);
-				    Properties conf = wc.createConfiguration();
+				    Properties configuration = wc.createConfiguration();
 				    Path libPath = new Path(getFsTestCaseDir(), "lib");
 				    
 				   				    getFileSystem().mkdirs(libPath);
 				    
 				    // try to submit without JT and NN
 				    try {
-					    wc.submitMapReduce(conf);
+					    wc.submitMapReduce(configuration);
 					    fail("submit client without JT should throuhg exception");
-				    } catch (RuntimeException excepion) {
+				    } catch (RuntimeException exception) {
 					    assertEquals(
-					        "java.lang.RuntimeException: jobtracker is not specified in conf",
-					        excepion.toString());
+                      "java.lang.RuntimeException: jobtracker is not specified in conf",
+                      exception.toString());
 				    }
-				    conf.setProperty(XOozieClient.JT, "localhost:9001");
+				    configuration.setProperty(XOozieClient.JT, "localhost:9001");
 				    try {
-					    wc.submitMapReduce(conf);
+					    wc.submitMapReduce(configuration);
 					    fail("submit client without NN should throuhg exception");
-				    } catch (RuntimeException excepion) {
+				    } catch (RuntimeException exception) {
 					    assertEquals(
-					        "java.lang.RuntimeException: namenode is not specified in conf",
-					        excepion.toString());
+                      "java.lang.RuntimeException: namenode is not specified in conf",
+                      exception.toString());
 				    }
-				    conf.setProperty(XOozieClient.NN, "hdfs://localhost:9000");
+				    configuration.setProperty(XOozieClient.NN, "hdfs://localhost:9000");
 				    try {
-					    wc.submitMapReduce(conf);
+					    wc.submitMapReduce(configuration);
 					    fail("submit client without LIBPATH should throuhg exception");
-				    } catch (RuntimeException excepion) {
+				    } catch (RuntimeException exception) {
 					    assertEquals(
-					        "java.lang.RuntimeException: libpath is not specified in conf",
-					        excepion.toString());
+                      "java.lang.RuntimeException: libpath is not specified in conf",
+                      exception.toString());
 				    }
 
 				    File tmp=new File("target");
-				    int startPositpon=libPath.toString().indexOf(tmp.getAbsolutePath());
-				    String localpath=libPath.toString().substring(startPositpon);
+				    int startPosition=libPath.toString().indexOf(tmp.getAbsolutePath());
+				    String localPath=libPath.toString().substring(startPosition);
 				    
-				    conf.setProperty(OozieClient.LIBPATH, localpath.substring(1));
+				    configuration.setProperty(OozieClient.LIBPATH, localPath.substring(1));
 				    	
 				    try{
-				    	wc.submitMapReduce(conf);
+				    	wc.submitMapReduce(configuration);
 				    	fail("lib path can not be relative");
 				    }catch(RuntimeException e){
 				    	assertEquals("java.lang.RuntimeException: libpath should be absolute", e.toString());
 				    }
 				    	
-				    conf.setProperty(OozieClient.LIBPATH, libPath.toString());
+				    configuration.setProperty(OozieClient.LIBPATH, libPath.toString());
 
 				    assertEquals(MockDagEngineService.JOB_ID + wfCount
-				        + MockDagEngineService.JOB_ID_END, wc.submitMapReduce(conf));
+				        + MockDagEngineService.JOB_ID_END, wc.submitMapReduce(configuration));
 
 				    assertTrue(MockDagEngineService.started.get(wfCount));
 				    return null;
@@ -175,6 +175,9 @@ public class TestWorkflowXClient extends DagServletTestCase {
 		    });
 	}
 
+  /**
+   *  Test some simple clint's methods
+   */
 	public void testSomeMethods() throws Exception {
 		
 		runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED,
@@ -182,24 +185,24 @@ public class TestWorkflowXClient extends DagServletTestCase {
 			    public Void call() throws Exception {
 			  		String oozieUrl = getContextURL();
 			  		XOozieClient wc = new XOozieClient(oozieUrl);
-			  		Properties conf = wc.createConfiguration();
+			  		Properties configuration = wc.createConfiguration();
 			  		try {
-			  			wc.addFile(conf, null);
+			  			wc.addFile(configuration, null);
 			  		} catch (IllegalArgumentException e) {
 			  			assertEquals("file cannot be null or empty", e.getMessage());
 			  		}
-			  		wc.addFile(conf, "file1");
-			  		wc.addFile(conf, "file2");
-			  		assertEquals("file1,file2", conf.get(XOozieClient.FILES));
+			  		wc.addFile(configuration, "file1");
+			  		wc.addFile(configuration, "file2");
+			  		assertEquals("file1,file2", configuration.get(XOozieClient.FILES));
 			  		// test archive
 			  		try {
-			  			wc.addArchive(conf, null);
+			  			wc.addArchive(configuration, null);
 			  		} catch (IllegalArgumentException e) {
 			  			assertEquals("file cannot be null or empty", e.getMessage());
 			  		}
-			  		wc.addArchive(conf, "archive1");
-			  		wc.addArchive(conf, "archive2");
-			  		assertEquals("archive1,archive2", conf.get(XOozieClient.ARCHIVES));
+			  		wc.addArchive(configuration, "archive1");
+			  		wc.addArchive(configuration, "archive2");
+			  		assertEquals("archive1,archive2", configuration.get(XOozieClient.ARCHIVES));
 
 				    return null;
 			    }
