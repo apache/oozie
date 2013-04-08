@@ -42,182 +42,179 @@ import java.util.concurrent.Callable;
  *
  */
 public class TestAuthFilterAuthOozieClient extends XTestCase {
-	private EmbeddedServletContainer container;
+    private EmbeddedServletContainer container;
 
-	protected String getContextURL() {
-		return container.getContextURL();
-	}
+    protected String getContextURL() {
+        return container.getContextURL();
+    }
 
-	protected URL createURL(String servletPath, String resource,
-	    Map<String, String> parameters) throws Exception {
-		StringBuilder sb = new StringBuilder();
-		sb.append(container.getServletURL(servletPath));
-		if (resource != null && resource.length() > 0) {
-			sb.append("/").append(resource);
-		}
-		if (parameters.size() > 0) {
-			String separator = "?";
-			for (Map.Entry<String, String> param : parameters.entrySet()) {
-				sb.append(separator).append(URLEncoder.encode(param.getKey(), "UTF-8"))
-				    .append("=").append(URLEncoder.encode(param.getValue(), "UTF-8"));
-				separator = "&";
-			}
-		}
-		return new URL(sb.toString());
-	}
+    protected URL createURL(String servletPath, String resource, Map<String, String> parameters) throws Exception {
+        StringBuilder sb = new StringBuilder();
+        sb.append(container.getServletURL(servletPath));
+        if (resource != null && resource.length() > 0) {
+            sb.append("/").append(resource);
+        }
+        if (parameters.size() > 0) {
+            String separator = "?";
+            for (Map.Entry<String, String> param : parameters.entrySet()) {
+                sb.append(separator).append(URLEncoder.encode(param.getKey(), "UTF-8")).append("=")
+                        .append(URLEncoder.encode(param.getValue(), "UTF-8"));
+                separator = "&";
+            }
+        }
+        return new URL(sb.toString());
+    }
 
-	protected void runTest(Callable<Void> assertions) throws Exception {
-		Services services = new Services();
-		try {
-			services.init();
-			Services.get().setService(ForTestAuthorizationService.class);
-			Services.get().setService(ForTestWorkflowStoreService.class);
-			Services.get().setService(MockDagEngineService.class);
-			Services.get().setService(MockCoordinatorEngineService.class);
-			container = new EmbeddedServletContainer("oozie");
-			container.addServletEndpoint("/versions",
-			    HeaderTestingVersionServlet.class);
-			String version = "/v" + XOozieClient.WS_PROTOCOL_VERSION;
-			container.addServletEndpoint(version + "/admin/*", V1AdminServlet.class);
-			container.addFilter("*", HostnameFilter.class);
-			container.addFilter("/*", AuthFilter.class);
-			container.start();
-			assertions.call();
-		} finally {
-			if (container != null) {
-				container.stop();
-			}
-			services.destroy();
-			container = null;
-		}
-	}
+    protected void runTest(Callable<Void> assertions) throws Exception {
+        Services services = new Services();
+        try {
+            services.init();
+            Services.get().setService(ForTestAuthorizationService.class);
+            Services.get().setService(ForTestWorkflowStoreService.class);
+            Services.get().setService(MockDagEngineService.class);
+            Services.get().setService(MockCoordinatorEngineService.class);
+            container = new EmbeddedServletContainer("oozie");
+            container.addServletEndpoint("/versions", HeaderTestingVersionServlet.class);
+            String version = "/v" + XOozieClient.WS_PROTOCOL_VERSION;
+            container.addServletEndpoint(version + "/admin/*", V1AdminServlet.class);
+            container.addFilter("*", HostnameFilter.class);
+            container.addFilter("/*", AuthFilter.class);
+            container.start();
+            assertions.call();
+        }
+        finally {
+            if (container != null) {
+                container.stop();
+            }
+            services.destroy();
+            container = null;
+        }
+    }
 
-	public static class Authenticator4Test extends PseudoAuthenticator {
+    public static class Authenticator4Test extends PseudoAuthenticator {
 
-		private static boolean USED = false;
+        private static boolean USED = false;
 
-		@Override
-		public void authenticate(URL url, AuthenticatedURL.Token token)
-		    throws IOException, AuthenticationException {
-			USED = true;
-			super.authenticate(url, token);
-		}
-	}
+        @Override
+        public void authenticate(URL url, AuthenticatedURL.Token token) throws IOException, AuthenticationException {
+            USED = true;
+            super.authenticate(url, token);
+        }
+    }
 
-	public void testClientWithAnonymous() throws Exception {
-		setSystemProperty("oozie.authentication.simple.anonymous.allowed", "true");
-		runTest(new Callable<Void>() {
-			public Void call() throws Exception {
-				String oozieUrl = getContextURL();
-				String[] args = new String[] { "admin", "-status", "-oozie", oozieUrl };
-				assertEquals(0, new OozieCLI().run(args));
-				return null;
-			}
-		});
-	}
+    public void testClientWithAnonymous() throws Exception {
+        setSystemProperty("oozie.authentication.simple.anonymous.allowed", "true");
+        runTest(new Callable<Void>() {
+            public Void call() throws Exception {
+                String oozieUrl = getContextURL();
+                String[] args = new String[]{"admin", "-status", "-oozie", oozieUrl};
+                assertEquals(0, new OozieCLI().run(args));
+                return null;
+            }
+        });
+    }
 
-	public void testClientWithoutAnonymous() throws Exception {
-		setSystemProperty("oozie.authentication.simple.anonymous.allowed", "false");
-		runTest(new Callable<Void>() {
-			public Void call() throws Exception {
-				String oozieUrl = getContextURL();
-				String[] args = new String[] { "admin", "-status", "-oozie", oozieUrl };
-				assertEquals(0, new OozieCLI().run(args));
-				return null;
-			}
-		});
-	}
+    public void testClientWithoutAnonymous() throws Exception {
+        setSystemProperty("oozie.authentication.simple.anonymous.allowed", "false");
+        runTest(new Callable<Void>() {
+            public Void call() throws Exception {
+                String oozieUrl = getContextURL();
+                String[] args = new String[]{"admin", "-status", "-oozie", oozieUrl};
+                assertEquals(0, new OozieCLI().run(args));
+                return null;
+            }
+        });
+    }
 
-	public void testClientWithCustomAuthenticator() throws Exception {
-		setSystemProperty("authenticator.class", Authenticator4Test.class.getName());
-		setSystemProperty("oozie.authentication.simple.anonymous.allowed", "false");
-		Authenticator4Test.USED = false;
-		runTest(new Callable<Void>() {
-			public Void call() throws Exception {
-				String oozieUrl = getContextURL();
-				String[] args = new String[] { "admin", "-status", "-oozie", oozieUrl };
-				assertEquals(0, new OozieCLI().run(args));
-				return null;
-			}
-		});
-		assertTrue(Authenticator4Test.USED);
-	}
+    public void testClientWithCustomAuthenticator() throws Exception {
+        setSystemProperty("authenticator.class", Authenticator4Test.class.getName());
+        setSystemProperty("oozie.authentication.simple.anonymous.allowed", "false");
+        Authenticator4Test.USED = false;
+        runTest(new Callable<Void>() {
+            public Void call() throws Exception {
+                String oozieUrl = getContextURL();
+                String[] args = new String[]{"admin", "-status", "-oozie", oozieUrl};
+                assertEquals(0, new OozieCLI().run(args));
+                return null;
+            }
+        });
+        assertTrue(Authenticator4Test.USED);
+    }
 
-	public void testClientAuthTokenCache() throws Exception {
-		// not using cache
-		setSystemProperty("oozie.authentication.simple.anonymous.allowed", "false");
-		AuthOozieClient.AUTH_TOKEN_CACHE_FILE.delete();
-		assertFalse(AuthOozieClient.AUTH_TOKEN_CACHE_FILE.exists());
-		runTest(new Callable<Void>() {
-			public Void call() throws Exception {
-				String oozieUrl = getContextURL();
-				String[] args = new String[] { "admin", "-status", "-oozie", oozieUrl };
-				assertEquals(0, new OozieCLI().run(args));
-				return null;
-			}
-		});
-		assertFalse(AuthOozieClient.AUTH_TOKEN_CACHE_FILE.exists());
 
-		// using cache
-		setSystemProperty("oozie.auth.token.cache", "true");
-		setSystemProperty("oozie.authentication.simple.anonymous.allowed", "false");
-		setSystemProperty("oozie.authentication.signature.secret", "secret");
-		AuthOozieClient.AUTH_TOKEN_CACHE_FILE.delete();
-		assertFalse(AuthOozieClient.AUTH_TOKEN_CACHE_FILE.exists());
-		runTest(new Callable<Void>() {
-			public Void call() throws Exception {
-				String oozieUrl = getContextURL();
-				String[] args = new String[] { "admin", "-status", "-oozie", oozieUrl };
-				assertEquals(0, new OozieCLI().run(args));
-				return null;
-			}
-		});
-		assertTrue(AuthOozieClient.AUTH_TOKEN_CACHE_FILE.exists());
-		String currentCache = IOUtils.getReaderAsString(new FileReader(
-		    AuthOozieClient.AUTH_TOKEN_CACHE_FILE), -1);
+    public void testClientAuthTokenCache() throws Exception {
+        //not using cache
+        setSystemProperty("oozie.authentication.simple.anonymous.allowed", "false");
+        AuthOozieClient.AUTH_TOKEN_CACHE_FILE.delete();
+        assertFalse(AuthOozieClient.AUTH_TOKEN_CACHE_FILE.exists());
+        runTest(new Callable<Void>() {
+            public Void call() throws Exception {
+                String oozieUrl = getContextURL();
+                String[] args = new String[]{"admin", "-status", "-oozie", oozieUrl};
+                assertEquals(0, new OozieCLI().run(args));
+                return null;
+            }
+        });
+        assertFalse(AuthOozieClient.AUTH_TOKEN_CACHE_FILE.exists());
 
-		// re-using cache
-		setSystemProperty("oozie.auth.token.cache", "true");
-		setSystemProperty("oozie.authentication.simple.anonymous.allowed", "false");
-		setSystemProperty("oozie.authentication.signature.secret", "secret");
-		runTest(new Callable<Void>() {
-			public Void call() throws Exception {
-				String oozieUrl = getContextURL();
-				String[] args = new String[] { "admin", "-status", "-oozie", oozieUrl };
-				assertEquals(0, new OozieCLI().run(args));
-				return null;
-			}
-		});
-		assertTrue(AuthOozieClient.AUTH_TOKEN_CACHE_FILE.exists());
-		String newCache = IOUtils.getReaderAsString(new FileReader(
-		    AuthOozieClient.AUTH_TOKEN_CACHE_FILE), -1);
-		assertEquals(currentCache, newCache);
-	}
+        //using cache
+        setSystemProperty("oozie.auth.token.cache", "true");
+        setSystemProperty("oozie.authentication.simple.anonymous.allowed", "false");
+        setSystemProperty("oozie.authentication.signature.secret", "secret");
+        AuthOozieClient.AUTH_TOKEN_CACHE_FILE.delete();
+        assertFalse(AuthOozieClient.AUTH_TOKEN_CACHE_FILE.exists());
+        runTest(new Callable<Void>() {
+            public Void call() throws Exception {
+                String oozieUrl = getContextURL();
+                String[] args = new String[]{"admin", "-status", "-oozie", oozieUrl};
+                assertEquals(0, new OozieCLI().run(args));
+                return null;
+            }
+        });
+        assertTrue(AuthOozieClient.AUTH_TOKEN_CACHE_FILE.exists());
+        String currentCache = IOUtils.getReaderAsString(new FileReader(AuthOozieClient.AUTH_TOKEN_CACHE_FILE), -1);
 
-	/**
-	 * Test authentication
-	 */
-	public void testClientAuthMethod() throws Exception {
+        //re-using cache
+        setSystemProperty("oozie.auth.token.cache", "true");
+        setSystemProperty("oozie.authentication.simple.anonymous.allowed", "false");
+        setSystemProperty("oozie.authentication.signature.secret", "secret");
+        runTest(new Callable<Void>() {
+            public Void call() throws Exception {
+                String oozieUrl = getContextURL();
+                String[] args = new String[]{"admin", "-status", "-oozie", oozieUrl};
+                assertEquals(0, new OozieCLI().run(args));
+                return null;
+            }
+        });
+        assertTrue(AuthOozieClient.AUTH_TOKEN_CACHE_FILE.exists());
+        String newCache = IOUtils.getReaderAsString(new FileReader(AuthOozieClient.AUTH_TOKEN_CACHE_FILE), -1);
+        assertEquals(currentCache, newCache);
+    }
 
-		runTest(new Callable<Void>() {
-			public Void call() throws Exception {
-				String oozieUrl = getContextURL();
-				String[] args = new String[] { "admin", "-status", "-oozie", oozieUrl,
-				    "-auth", "SIMPLE" };
-				assertEquals(0, new OozieCLI().run(args));
-				return null;
-			}
-		});
-		// bad method
-		runTest(new Callable<Void>() {
-			public Void call() throws Exception {
-				String oozieUrl = getContextURL();
-				String[] args = new String[] { "admin", "-status", "-oozie", oozieUrl,
-				    "-auth", "fake" };
-				assertEquals(-1, new OozieCLI().run(args));
-				return null;
-			}
-		});
+    /**
+     * Test authentication
+     */
+    public void testClientAuthMethod() throws Exception {
 
-	}
+        runTest(new Callable<Void>() {
+            public Void call() throws Exception {
+                String oozieUrl = getContextURL();
+                String[] args = new String[] { "admin", "-status", "-oozie",
+                        oozieUrl, "-auth", "SIMPLE" };
+                assertEquals(0, new OozieCLI().run(args));
+                return null;
+            }
+        });
+        // bad method
+        runTest(new Callable<Void>() {
+            public Void call() throws Exception {
+                String oozieUrl = getContextURL();
+                String[] args = new String[] { "admin", "-status", "-oozie",
+                        oozieUrl, "-auth", "fake" };
+                assertEquals(-1, new OozieCLI().run(args));
+                return null;
+            }
+        });
+
+    }
 }
