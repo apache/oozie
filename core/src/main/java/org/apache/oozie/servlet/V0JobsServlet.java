@@ -48,6 +48,7 @@ public class V0JobsServlet extends BaseJobsServlet {
     /**
      * v0 service implementation to submit a workflow job
      */
+    @SuppressWarnings("unchecked")
     @Override
     protected JSONObject submitJob(HttpServletRequest request, Configuration conf) throws XServletException, IOException {
 
@@ -93,6 +94,7 @@ public class V0JobsServlet extends BaseJobsServlet {
      * v0 service implementation to get a list of workflows, with filtering or interested windows embedded in the
      * request object
      */
+    @SuppressWarnings("unchecked")
     @Override
     protected JSONObject getJobs(HttpServletRequest request) throws XServletException, IOException {
         JSONObject json = new JSONObject();
@@ -108,6 +110,7 @@ public class V0JobsServlet extends BaseJobsServlet {
             .getDagEngine(getUser(request), getAuthToken(request));
             WorkflowsInfo jobs = dagEngine.getJobs(filter, start, len);
             List<WorkflowJobBean> jsonWorkflows = jobs.getWorkflows();
+            json.put(JsonTags.BUNDLE_JOBS, WorkflowJobBean.toJSONArray(jsonWorkflows, "GMT"));
             json.put(JsonTags.WORKFLOWS_JOBS, WorkflowJobBean.toJSONArray(jsonWorkflows, "GMT"));
             json.put(JsonTags.WORKFLOWS_TOTAL, jobs.getTotal());
             json.put(JsonTags.WORKFLOWS_OFFSET, jobs.getStart());

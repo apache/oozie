@@ -17,16 +17,17 @@
  */
 package org.apache.oozie.client;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.util.Properties;
-import java.util.concurrent.Callable;
-
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.servlet.DagServletTestCase;
 import org.apache.oozie.servlet.MockDagEngineService;
-import org.apache.oozie.servlet.V1JobsServlet;
 import org.apache.oozie.servlet.V1AdminServlet;
+import org.apache.oozie.servlet.V1JobsServlet;
+
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.util.Properties;
+import java.util.concurrent.Callable;
 
 public class TestWorkflowXClient extends DagServletTestCase {
 
@@ -38,9 +39,11 @@ public class TestWorkflowXClient extends DagServletTestCase {
 
     private static final boolean IS_SECURITY_ENABLED = false;
     static final String VERSION = "/v" + OozieClient.WS_PROTOCOL_VERSION;
-    static final String[] END_POINTS = { "/versions", VERSION + "/jobs", VERSION + "/admin/*" };
-    static final Class[] SERVLET_CLASSES = { HeaderTestingVersionServlet.class, V1JobsServlet.class,
-            V1AdminServlet.class };
+    static final String[] END_POINTS = { "/versions", VERSION + "/jobs",
+            VERSION + "/admin/*" };
+    @SuppressWarnings("rawtypes")
+    static final Class[] SERVLET_CLASSES = { HeaderTestingVersionServlet.class,
+            V1JobsServlet.class, V1AdminServlet.class };
 
     protected void setUp() throws Exception {
         super.setUp();
@@ -104,27 +107,115 @@ public class TestWorkflowXClient extends DagServletTestCase {
             }
         });
     }
-
+    
     public void testSubmitMR() throws Exception {
-        runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED, new Callable<Void>() {
-            public Void call() throws Exception {
-                String oozieUrl = getContextURL();
-                int wfCount = MockDagEngineService.INIT_WF_COUNT;
-                XOozieClient wc = new XOozieClient(oozieUrl);
-                Properties conf = wc.createConfiguration();
-                Path libPath = new Path(getFsTestCaseDir(), "lib");
-                getFileSystem().mkdirs(libPath);
-                conf.setProperty(OozieClient.LIBPATH, libPath.toString());
-                conf.setProperty(XOozieClient.JT, "localhost:9001");
-                conf.setProperty(XOozieClient.NN, "hdfs://localhost:9000");
+        runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED,
+                new Callable<Void>() {
+                    public Void call() throws Exception {
+                        String oozieUrl = getContextURL();
+                        int wfCount = MockDagEngineService.INIT_WF_COUNT;
+                        XOozieClient wc = new XOozieClient(oozieUrl);
+                        Properties configuration = wc.createConfiguration();
+                        Path libPath = new Path(getFsTestCaseDir(), "lib");
 
+                        getFileSystem().mkdirs(libPath);
 
-                assertEquals(MockDagEngineService.JOB_ID + wfCount + MockDagEngineService.JOB_ID_END,
-                             wc.submitMapReduce(conf));
+                        // try to submit without JT and NN
+                        try {
+                            wc.submitMapReduce(configuration);
+                            fail("submit client without JT should throuhg exception");
+                        } catch (RuntimeException exception) {
+                            assertEquals(
+                                    "java.lang.RuntimeException: jobtracker is not specified in conf",
+                                    exception.toString());
+                        }
+                        configuration.setProperty(XOozieClient.JT,
+                                "localhost:9001");
+                        try {
+                            wc.submitMapReduce(configuration);
+                            fail("submit client without NN should throuhg exception");
+                        } catch (RuntimeException exception) {
+                            assertEquals(
+                                    "java.lang.RuntimeException: namenode is not specified in conf",
+                                    exception.toString());
+                        }
+                        configuration.setProperty(XOozieClient.NN,
+                                "hdfs://localhost:9000");
+                        try {
+                            wc.submitMapReduce(configuration);
+                            fail("submit client without LIBPATH should throuhg exception");
+                        } catch (RuntimeException exception) {
+                            assertEquals(
+                                    "java.lang.RuntimeException: libpath is not specified in conf",
+                                    exception.toString());
+                        }
 
-                assertTrue(MockDagEngineService.started.get(wfCount));
-                return null;
-            }
-        });
+                        File tmp = new File("target");
+                        int startPosition = libPath.toString().indexOf(
+                                tmp.getAbsolutePath());
+                        String localPath = libPath.toString().substring(
+                                startPosition);
+
+                        configuration.setProperty(OozieClient.LIBPATH,
+                                localPath.substring(1));
+
+                        try {
+                            wc.submitMapReduce(configuration);
+                            fail("lib path can not be relative");
+                        } catch (RuntimeException e) {
+                            assertEquals(
+                                    "java.lang.RuntimeException: libpath should be absolute",
+                                    e.toString());
+                        }
+
+                        configuration.setProperty(OozieClient.LIBPATH,
+                                libPath.toString());
+
+                        assertEquals(MockDagEngineService.JOB_ID + wfCount
+                                + MockDagEngineService.JOB_ID_END,
+                                wc.submitMapReduce(configuration));
+
+                        assertTrue(MockDagEngineService.started.get(wfCount));
+                        return null;
+                    }
+                });
+    }
+
+    /**
+     * Test some simple clint's methods
+     */
+    public void testSomeMethods() throws Exception {
+
+        runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED,
+                new Callable<Void>() {
+                    public Void call() throws Exception {
+                        String oozieUrl = getContextURL();
+                        XOozieClient wc = new XOozieClient(oozieUrl);
+                        Properties configuration = wc.createConfiguration();
+                        try {
+                            wc.addFile(configuration, null);
+                        } catch (IllegalArgumentException e) {
+                            assertEquals("file cannot be null or empty",
+                                    e.getMessage());
+                        }
+                        wc.addFile(configuration, "file1");
+                        wc.addFile(configuration, "file2");
+                        assertEquals("file1,file2",
+                                configuration.get(XOozieClient.FILES));
+                        // test archive
+                        try {
+                            wc.addArchive(configuration, null);
+                        } catch (IllegalArgumentException e) {
+                            assertEquals("file cannot be null or empty",
+                                    e.getMessage());
+                        }
+                        wc.addArchive(configuration, "archive1");
+                        wc.addArchive(configuration, "archive2");
+                        assertEquals("archive1,archive2",
+                                configuration.get(XOozieClient.ARCHIVES));
+
+                        return null;
+                    }
+                });
     }
 }

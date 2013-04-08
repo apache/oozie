@@ -74,7 +74,7 @@
         <hbaselib.version>${hbase.version}.oozie-${project.version}</hbaselib.version>
         <hcataloglib.version>${hcatalog.version}.oozie-${project.version}</hcataloglib.version>
 
-        <clover.license>/home/jenkins/tools/clover/latest/lib/clover.license</clover.license>
+        <clover.license>${user.home}/.clover.license</clover.license>
         <!--
         This is required while we support a a pre 0.23 version of Hadoop which does not have
         the hadoop-auth artifact. After we phase-out pre 0.23 we can get rid of this property.
@@ -152,6 +152,22 @@
                 <enabled>false</enabled>
             </snapshots>
         </repository>
+        <repository>
+          <id>aws-nexus</id>
+          <name>aws-nexus-repo</name>
+          <releases>
+            <enabled>true</enabled>
+            <updatePolicy>always</updatePolicy>
+            <checksumPolicy>warn</checksumPolicy>
+          </releases>
+          <snapshots>
+            <enabled>true</enabled>
+            <updatePolicy>always</updatePolicy>
+            <checksumPolicy>fail</checksumPolicy>
+          </snapshots>
+          <url>http://ec2-54-235-46-104.compute-1.amazonaws.com:8081/nexus/content/repositories/releases</url>
+          <layout>default</layout>
+        </repository>
     </repositories>
 
     <pluginRepositories>
@@ -162,6 +178,22 @@
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
+        </pluginRepository>
+        <pluginRepository>
+          <id>aws-nexus</id>
+          <name>aws-nexus-plugins-repo</name>
+          <releases>
+            <enabled>true</enabled>
+            <updatePolicy>always</updatePolicy>
+            <checksumPolicy>warn</checksumPolicy>
+          </releases>
+          <snapshots>
+            <enabled>true</enabled>
+            <updatePolicy>always</updatePolicy>
+            <checksumPolicy>fail</checksumPolicy>
+          </snapshots>
+          <url>http://ec2-54-235-46-104.compute-1.amazonaws.com:8081/nexus/content/repositories/releases</url>
+          <layout>default</layout>
         </pluginRepository>
     </pluginRepositories>
 
@@ -685,14 +717,21 @@
                 <artifactId>xercesImpl</artifactId>
                 <version>2.10.0</version>
             </dependency>
-
         </dependencies>
     </dependencyManagement>
 
+     <dependencies>
+        <dependency>
+            <groupId>com.cenqua.clover</groupId>
+            <artifactId>clover</artifactId>
+            <version>3.1.7</version>
+        </dependency>
+    </dependencies>
+
     <build>
         <pluginManagement>
-            	<plugins>
-	            <plugin>
+            <plugins>
+	              <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-enforcer-plugin</artifactId>
                     <version>1.0</version>
@@ -705,7 +744,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>2.12</version>
+                    <version>2.12.3-GD-02</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -780,6 +819,10 @@
                     <licenseLocation>${clover.license}</licenseLocation>
                     <generateXml>true</generateXml>
                     <generateHtml>true</generateHtml>
+                     <excludes>
+                    	<exclude>**/oozie/store/*.java</exclude>
+                    	<exclude>**/oozie/example/*.java</exclude>
+                    </excludes>
                 </configuration>
             </plugin>
             <plugin>
@@ -866,7 +909,7 @@
                 <configuration>
                     <forkMode>${oozie.test.forkMode}</forkMode>
                     <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
-                    <argLine>-Xmx1024m -da -XX:MaxPermSize=512m</argLine>
+                    <argLine>-Xmx1024m -da -XX:MaxPermSize=512m -Dsecurity-deny-system-exit=true</argLine>
                     <systemPropertyVariables>
                         <oozie.test.db.host>${oozie.test.db.host}</oozie.test.db.host>
                         <oozie.test.config.file>${oozie.test.config.file}</oozie.test.config.file>
