@@ -884,10 +884,6 @@
                         -->
                         <exclude>**/TestSsh*.java</exclude>
 
-
-                        <!-- See 'testSqoop' profile in core/pom.xml and the Building doc-->
-                        <exclude>**/TestSqoop*.java</exclude>
-
                         <!-- Explictly use -Dtest=TestMapReduceActionExecutorUberJar to test the uber jar functionality.
                              Requires at least Hadoop 1.2.0 or 2.2.0.
                         -->

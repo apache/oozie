@@ -577,7 +577,6 @@
                                 <exclude>**/TestRerun.java</exclude>
                                 <exclude>**/TestCallableQueueService.java</exclude>
                                 <exclude>**/TestSsh*.java</exclude>
-                                <exclude>**/TestSqoop*.java</exclude>
                                 <exclude>**/TestActionErrors.java</exclude>
                                 <exclude>**/TestJavaActionExecutor.java</exclude>
                                 <exclude>**/TestLauncher.java</exclude>
@@ -690,34 +689,6 @@
                     <artifactId>ojdbc6</artifactId>
                 </dependency>
             </dependencies>
-        </profile>
-
-        <!-- Forcing Hadoop 0.20.2-cdh3u2 version because Sqoop    -->
-        <!-- uses Hadoop API that is avail 0.21 onwards and the    -->
-        <!-- Hadoop CDH version is the only stable version that    -->
-        <!-- currently has such API (SQOOP-384) and published      -->
-        <!-- in public Maven repos. This is a temporary fix        -->
-        <profile>
-            <id>testSqoop</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-                <property>
-                    <name>testSqoop</name>
-                </property>
-            </activation>
-            <properties>
-                <hadoop.version>0.20.2-cdh3u2</hadoop.version>
-            </properties>
-            <repositories>
-                <repository>
-                    <id>cdh.releases.repo</id>
-                    <url>https://repository.cloudera.com/content/groups/cdh-releases-rcs</url>
-                    <name>CDH Releases Repository</name>
-                    <snapshots>
-                        <enabled>false</enabled>
-                    </snapshots>
-                </repository>
-            </repositories>
         </profile>
     </profiles>
 
