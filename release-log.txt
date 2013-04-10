@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1209 Event generation and handling for workflow and coordinator (mona)
 OOZIE-1118 improve logic of purge service (rkanter)
 OOZIE-1205 If the JobTracker is restarted during a Fork, Oozie doesn't fail all of the currently running actions (rkanter)
 OOZIE-1286 SSH Action does not properly handle arguments that have spaces (rkanter)

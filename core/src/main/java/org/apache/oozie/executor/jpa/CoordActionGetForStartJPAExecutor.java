@@ -17,12 +17,15 @@
  */
 package org.apache.oozie.executor.jpa;
 
+import java.sql.Timestamp;
+
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.CoordinatorAction;
+import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ParamChecker;
 
 /**
@@ -94,6 +97,12 @@ public class CoordActionGetForStartJPAExecutor implements JPAExecutor<Coordinato
         }
         if (arr[9] != null) {
             bean.setErrorCode((String) arr[9]);
+        }
+        if (arr[10] != null){
+            bean.setNominalTime(DateUtils.toDate((Timestamp) arr[10]));
+        }
+        if (arr[11] != null){
+            bean.setCreatedTime(DateUtils.toDate((Timestamp) arr[11]));
         }
         return bean;
     }

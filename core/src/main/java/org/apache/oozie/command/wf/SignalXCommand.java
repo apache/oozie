@@ -37,6 +37,7 @@ import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 import org.apache.oozie.service.ELService;
+import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.SchemaService;
 import org.apache.oozie.service.Services;
@@ -311,6 +312,14 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
             updateList.add(wfJob);
             // call JPAExecutor to do the bulk writes
             jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, insertList));
+            if (EventHandlerService.isEventsConfigured()) {
+                if (wfAction != null) {
+                    generateEvent(wfJob, wfAction.getErrorCode(), wfAction.getErrorMessage());
+                }
+                else {
+                    generateEvent(wfJob, null, null);
+                }
+            }
         }
         catch (JPAExecutorException je) {
             throw new CommandException(je);

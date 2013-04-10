@@ -1785,4 +1785,46 @@
         </description>
     </property>
 
+    <property>
+        <name>oozie.service.EventHandlerService.app.types</name>
+        <value>workflow_job, coordinator_action</value>
+        <description>
+            The app-types among workflow/coordinator/bundle job/action for which
+            for which events system is enabled.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.EventHandlerService.event.queue</name>
+        <value>org.apache.oozie.event.MemoryEventQueue</value>
+        <description>
+            The implementation for EventQueue in use by the EventHandlerService.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.EventHandlerService.queue.size</name>
+        <value>10000</value>
+        <description>
+            Maximum number of events to be contained in the event queue.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.EventHandlerService.worker.interval</name>
+        <value>60</value>
+        <description>
+            The default interval (seconds) at which the worker threads will be scheduled to run
+            and process events.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.EventHandlerService.batch.size</name>
+        <value>10</value>
+        <description>
+            The batch size for batched draining per thread from the event queue.
+        </description>
+    </property>
+
 </configuration>

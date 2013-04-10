@@ -27,6 +27,7 @@ import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.executor.jpa.CoordActionGetForTimeoutJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.LogUtils;
@@ -37,12 +38,15 @@ import org.apache.oozie.util.ParamChecker;
  */
 public class CoordActionTimeOutXCommand extends CoordinatorXCommand<Void> {
     private CoordinatorActionBean actionBean;
+    private String user;
+    private String appName;
     private JPAService jpaService = null;
 
-    public CoordActionTimeOutXCommand(CoordinatorActionBean actionBean) {
+    public CoordActionTimeOutXCommand(CoordinatorActionBean actionBean, String user, String appName) {
         super("coord_action_timeout", "coord_action_timeout", 1);
-        ParamChecker.notNull(actionBean, "ActionBean");
-        this.actionBean = actionBean;
+        this.actionBean = ParamChecker.notNull(actionBean, "ActionBean");
+        this.user = ParamChecker.notEmpty(user, "user");
+        this.appName = ParamChecker.notEmpty(appName, "appName");
     }
 
     /* (non-Javadoc)
@@ -52,10 +56,13 @@ public class CoordActionTimeOutXCommand extends CoordinatorXCommand<Void> {
     protected Void execute() throws CommandException {
         if (actionBean.getStatus() == CoordinatorAction.Status.WAITING) {
             actionBean.setStatus(CoordinatorAction.Status.TIMEDOUT);
-            queue(new CoordActionNotificationXCommand(actionBean), 100);
-            actionBean.setLastModifiedTime(new Date());
             try {
+                queue(new CoordActionNotificationXCommand(actionBean), 100);
+                actionBean.setLastModifiedTime(new Date());
                 jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionUpdateStatusJPAExecutor(actionBean));
+                if (EventHandlerService.isEventsConfigured()) {
+                    generateEvent(actionBean, user, appName);
+                }
             }
             catch (JPAExecutorException e) {
                 throw new CommandException(e);

@@ -33,6 +33,7 @@ import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionRetryManualGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
+import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.InstrumentUtils;
@@ -100,6 +101,9 @@ public class SuspendXCommand extends WorkflowXCommand<Void> {
             workflow.setWorkflowInstance(wfInstance);
 
             setPendingFalseForActions(jpaService, id, actionId, updateList);
+            if (EventHandlerService.isEventsConfigured()) {
+                generateEvent(workflow);
+            }
         }
     }
 

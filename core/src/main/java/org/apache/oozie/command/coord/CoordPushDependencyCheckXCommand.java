@@ -42,6 +42,7 @@ import org.apache.oozie.executor.jpa.CoordActionUpdatePushInputCheckJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.CallableQueueService;
+import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.RecoveryService;
 import org.apache.oozie.service.Service;
@@ -140,7 +141,7 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
                     // Checking for timeout
                     timeout = isTimeout();
                     if (timeout) {
-                        queue(new CoordActionTimeOutXCommand(coordAction));
+                        queue(new CoordActionTimeOutXCommand(coordAction, coordJob.getUser(), coordJob.getAppName()));
                     }
                     else {
                         queue(new CoordPushDependencyCheckXCommand(coordAction.getId()),
@@ -164,7 +165,7 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
                 if (isTimeout()) {
                     LOG.debug("Queueing timeout command");
                     // XCommand.queue() will not work when there is a Exception
-                    callableQueueService.queue(new CoordActionTimeOutXCommand(coordAction));
+                    callableQueueService.queue(new CoordActionTimeOutXCommand(coordAction, coordJob.getUser(), coordJob.getAppName()));
                     unregisterMissingDependencies(Arrays.asList(missingDepsArray), actionId);
                 }
                 else if (coordAction.getMissingDependencies() != null
@@ -252,6 +253,11 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
             try {
                 if (isChangeInDependency) {
                     jpaService.execute(new CoordActionUpdatePushInputCheckJPAExecutor(coordAction));
+                    if (EventHandlerService.isEventsConfigured()
+                            && coordAction.getStatus() != CoordinatorAction.Status.READY) {
+                        //since event is not to be generated unless action RUNNING via StartX
+                        generateEvent(coordAction, coordJob.getUser(), coordJob.getAppName());
+                    }
                 }
                 else {
                     jpaService.execute(new CoordActionUpdateForModifiedTimeJPAExecutor(coordAction));

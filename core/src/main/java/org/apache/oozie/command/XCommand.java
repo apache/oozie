@@ -21,6 +21,7 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.FaultInjection;
 import org.apache.oozie.XException;
 import org.apache.oozie.service.CallableQueueService;
+import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.InstrumentationService;
 import org.apache.oozie.service.MemoryLocksService;
 import org.apache.oozie.service.Services;
@@ -77,6 +78,7 @@ public abstract class XCommand<T> implements XCallable<T> {
     protected Instrumentation instrumentation;
 
     protected XLog.Info logInfo;
+    protected static EventHandlerService eventService;
 
     /**
      * Create a command.
@@ -93,6 +95,7 @@ public abstract class XCommand<T> implements XCallable<T> {
         createdTime = System.currentTimeMillis();
         logInfo = new XLog.Info();
         instrumentation = Services.get().get(InstrumentationService.class).get();
+        eventService = Services.get().get(EventHandlerService.class);
     }
 
     /**

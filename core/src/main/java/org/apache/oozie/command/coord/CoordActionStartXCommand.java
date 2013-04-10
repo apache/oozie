@@ -30,6 +30,7 @@ import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.service.DagEngineService;
+import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.JobUtils;
@@ -43,6 +44,7 @@ import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.client.SLAEvent.Status;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.executor.jpa.BulkUpdateInsertForCoordActionStartJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 import org.jdom.Element;
@@ -65,6 +67,7 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
     private final XLog log = getLog();
     private String actionId = null;
     private String user = null;
+    private String appName = null;
     private String authToken = null;
     private CoordinatorActionBean coordAction = null;
     private JPAService jpaService = null;
@@ -72,11 +75,12 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
     private List<JsonBean> updateList = new ArrayList<JsonBean>();
     private List<JsonBean> insertList = new ArrayList<JsonBean>();
 
-    public CoordActionStartXCommand(String id, String user, String token, String jobId) {
+    public CoordActionStartXCommand(String id, String user, String appName, String token, String jobId) {
         //super("coord_action_start", "coord_action_start", 1, XLog.OPS);
         super("coord_action_start", "coord_action_start", 1);
         this.actionId = ParamChecker.notEmpty(id, "id");
         this.user = ParamChecker.notEmpty(user, "user");
+        this.appName = ParamChecker.notEmpty(appName, "appName");
         this.authToken = ParamChecker.notEmpty(token, "token");
         this.jobId = jobId;
     }
@@ -190,6 +194,9 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
                     updateList.add(coordAction);
                     try {
                         jpaService.execute(new BulkUpdateInsertForCoordActionStartJPAExecutor(updateList, insertList));
+                        if (EventHandlerService.isEventsConfigured()) {
+                            generateEvent(coordAction, user, appName);
+                        }
                     }
                     catch (JPAExecutorException je) {
                         throw new CommandException(je);
@@ -243,6 +250,9 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
                     try {
                         // call JPAExecutor to do the bulk writes
                         jpaService.execute(new BulkUpdateInsertForCoordActionStartJPAExecutor(updateList, insertList));
+                        if (EventHandlerService.isEventsConfigured()) {
+                            generateEvent(coordAction, user, appName);
+                        }
                     }
                     catch (JPAExecutorException je) {
                         throw new CommandException(je);
