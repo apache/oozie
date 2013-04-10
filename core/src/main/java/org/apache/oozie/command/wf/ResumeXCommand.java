@@ -41,6 +41,7 @@ import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowJobGetActionsJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
+import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
@@ -73,7 +74,6 @@ public class ResumeXCommand extends WorkflowXCommand<Void> {
                 ((LiteWorkflowInstance) wfInstance).setStatus(WorkflowInstance.Status.RUNNING);
                 workflow.setWorkflowInstance(wfInstance);
                 workflow.setStatus(WorkflowJob.Status.RUNNING);
-
 
                 //for (WorkflowActionBean action : store.getActionsForWorkflow(id, false)) {
                 for (WorkflowActionBean action : jpaService.execute(new WorkflowJobGetActionsJPAExecutor(id))) {
@@ -130,6 +130,9 @@ public class ResumeXCommand extends WorkflowXCommand<Void> {
                 workflow.setLastModifiedTime(new Date());
                 updateList.add(workflow);
                 jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, null));
+                if (EventHandlerService.isEventsConfigured()) {
+                    generateEvent(workflow);
+                }
                 queue(new NotificationXCommand(workflow));
             }
             return null;

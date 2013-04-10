@@ -42,6 +42,7 @@ import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionsActiveCountJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
@@ -111,6 +112,9 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
             for (JsonBean actionBean : insertList) {
                 if (actionBean instanceof CoordinatorActionBean) {
                     CoordinatorActionBean coordAction = (CoordinatorActionBean) actionBean;
+                    if (EventHandlerService.isEventsConfigured()) {
+                        CoordinatorXCommand.generateEvent(coordAction, coordJob.getUser(), coordJob.getAppName());
+                    }
                     if (coordAction.getPushMissingDependencies() != null) {
                         // TODO: Delay in catchup mode?
                         queue(new CoordPushDependencyCheckXCommand(coordAction.getId(), true), 100);
@@ -259,7 +263,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
             coordJob.resetPending();
         }
         catch (Exception e) {
-            LOG.error("Excepion thrown :", e);
+            LOG.error("Exception thrown :", e);
             throw new CommandException(ErrorCode.E1001, e.getMessage(), e);
         }
         cron.stop();

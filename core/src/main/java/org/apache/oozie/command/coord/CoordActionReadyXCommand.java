@@ -109,7 +109,8 @@ public class CoordActionReadyXCommand extends CoordinatorXCommand<Void> {
                 // change state of action to SUBMITTED
                 action.setStatus(CoordinatorAction.Status.SUBMITTED);
                 // queue action to start action
-                queue(new CoordActionStartXCommand(action.getId(), user, authToken, action.getJobId()), 100);
+                queue(new CoordActionStartXCommand(action.getId(), user, coordJob.getAppName(), authToken,
+                        action.getJobId()), 100);
                 try {
                     jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionUpdateStatusJPAExecutor(action));
                 }

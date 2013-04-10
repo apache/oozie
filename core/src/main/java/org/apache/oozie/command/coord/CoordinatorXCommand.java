@@ -17,7 +17,14 @@
  */
 package org.apache.oozie.command.coord;
 
+import org.apache.oozie.CoordinatorActionBean;
+import org.apache.oozie.CoordinatorJobBean;
+import org.apache.oozie.client.event.Event.AppType;
 import org.apache.oozie.command.XCommand;
+import org.apache.oozie.coord.CoordELFunctions;
+import org.apache.oozie.event.CoordinatorActionEvent;
+import org.apache.oozie.event.CoordinatorJobEvent;
+import org.apache.oozie.util.ParamChecker;
 
 /**
  * Abstract coordinator command class derived from XCommand
@@ -45,6 +52,40 @@ public abstract class CoordinatorXCommand<T> extends XCommand<T> {
      */
     public CoordinatorXCommand(String name, String type, int priority, boolean dryrun) {
         super(name, type, priority, dryrun);
+    }
+
+    protected static void generateEvent(CoordinatorActionBean coordAction, String user, String appName) {
+        if (eventService.checkSupportedApptype(AppType.COORDINATOR_ACTION.name())) {
+            ParamChecker.notNull(coordAction, "coordAction");
+            ParamChecker.notNull(user, "user");
+            ParamChecker.notNull(appName, "appName");
+            String missDep = coordAction.getMissingDependencies();
+            if (missDep != null && missDep.length() > 0) {
+                missDep = missDep.split(CoordELFunctions.INSTANCE_SEPARATOR)[0];
+            }
+            String pushMissDep = coordAction.getPushMissingDependencies();
+            if (pushMissDep != null && pushMissDep.length() > 0) {
+                pushMissDep = pushMissDep.split(CoordELFunctions.INSTANCE_SEPARATOR)[0];
+            }
+            String deps = missDep == null ? (pushMissDep == null ? null : pushMissDep) : (pushMissDep == null ? missDep
+                    : missDep + CoordELFunctions.INSTANCE_SEPARATOR + pushMissDep);
+            CoordinatorActionEvent event = new CoordinatorActionEvent(coordAction.getId(), coordAction.getJobId(),
+                    coordAction.getStatus(), user, appName, coordAction.getNominalTime(), coordAction.getCreatedTime(),
+                    deps);
+            event.setErrorCode(coordAction.getErrorCode());
+            event.setErrorMessage(coordAction.getErrorMessage());
+            eventService.queueEvent(event);
+        }
+    }
+
+    protected void generateEvent(CoordinatorJobBean coordJob) {
+        if (eventService.checkSupportedApptype(AppType.COORDINATOR_JOB.name())) {
+            ParamChecker.notNull(coordJob, "coordJob");
+            CoordinatorJobEvent event = new CoordinatorJobEvent(coordJob.getId(), coordJob.getBundleId(),
+                    coordJob.getStatus(), coordJob.getUser(), coordJob.getAppName(), coordJob.getStartTime(),
+                    coordJob.getEndTime());
+            eventService.queueEvent(event);
+        }
     }
 
 }

@@ -21,6 +21,9 @@ import java.util.Date;
 
 /**
  * Bean that represents a SLA event
+ * @deprecated This interface has been deprecated by the interface
+ * SLAEvent in oozie.client.event package which works with the
+ * new SLA Calculator system OOZIE-1244
  */
 public interface SLAEvent {
 

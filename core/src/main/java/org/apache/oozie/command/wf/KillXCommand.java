@@ -33,6 +33,7 @@ import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionsGetForJobJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
+import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.workflow.WorkflowException;
@@ -155,6 +156,9 @@ public class KillXCommand extends WorkflowXCommand<Void> {
             wfJob.setLastModifiedTime(new Date());
             updateList.add(wfJob);
             jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, insertList));
+            if (EventHandlerService.isEventsConfigured()) {
+                generateEvent(wfJob, null, null);
+            }
             queue(new NotificationXCommand(wfJob));
         }
         catch (JPAExecutorException e) {

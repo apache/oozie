@@ -256,7 +256,7 @@ public class RecoveryService implements Service {
                         CoordinatorJobBean coordJob = jpaService
                                 .execute(new CoordJobGetJPAExecutor(caction.getJobId()));
                         queueCallable(new CoordActionStartXCommand(caction.getId(), coordJob.getUser(),
-                                coordJob.getAuthToken(), caction.getJobId()));
+                                coordJob.getAppName(), coordJob.getAuthToken(), caction.getJobId()));
 
                         log.info("Recover a SUBMITTED coord action and resubmit CoordActionStartCommand :"
                                 + caction.getId());

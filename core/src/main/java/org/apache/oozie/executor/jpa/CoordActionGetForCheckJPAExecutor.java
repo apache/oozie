@@ -90,6 +90,12 @@ public class CoordActionGetForCheckJPAExecutor implements JPAExecutor<Coordinato
         if (arr[6] != null){
             bean.setSlaXml((String) arr[6]);
         }
+        if (arr[7] != null){
+            bean.setNominalTime(DateUtils.toDate((Timestamp) arr[7]));
+        }
+        if (arr[8] != null){
+            bean.setCreatedTime(DateUtils.toDate((Timestamp) arr[8]));
+        }
         return bean;
     }
 }

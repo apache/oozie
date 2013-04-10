@@ -17,7 +17,13 @@
  */
 package org.apache.oozie.command.wf;
 
+import org.apache.oozie.WorkflowActionBean;
+import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.client.event.Event.AppType;
 import org.apache.oozie.command.XCommand;
+import org.apache.oozie.event.WorkflowActionEvent;
+import org.apache.oozie.event.WorkflowJobEvent;
+import org.apache.oozie.util.ParamChecker;
 
 /**
  * Abstract coordinator command class derived from XCommand
@@ -46,6 +52,32 @@ public abstract class WorkflowXCommand<T> extends XCommand<T> {
      */
     public WorkflowXCommand(String name, String type, int priority, boolean dryrun) {
         super(name, type, priority, dryrun);
+    }
+
+    protected static void generateEvent(WorkflowJobBean wfJob, String errorCode, String errorMsg) {
+        if (eventService.checkSupportedApptype(AppType.WORKFLOW_JOB.name())) {
+            ParamChecker.notNull(wfJob, "wfJob");
+            WorkflowJobEvent event = new WorkflowJobEvent(wfJob.getId(), wfJob.getParentId(), wfJob.getStatus(),
+                    wfJob.getUser(), wfJob.getAppName(), wfJob.getStartTime(), wfJob.getEndTime());
+            event.setErrorCode(errorCode);
+            event.setErrorMessage(errorMsg);
+            eventService.queueEvent(event);
+        }
+    }
+
+    protected static void generateEvent(WorkflowJobBean wfJob) {
+        generateEvent(wfJob, null, null);
+    }
+
+    protected void generateEvent(WorkflowActionBean wfAction, String wfUser) {
+        if (eventService.checkSupportedApptype(AppType.WORKFLOW_ACTION.name())) {
+            ParamChecker.notNull(wfAction, "wfAction");
+            WorkflowActionEvent event = new WorkflowActionEvent(wfAction.getId(), wfAction.getJobId(),
+                    wfAction.getStatus(), wfUser, wfAction.getName(), wfAction.getStartTime(), wfAction.getEndTime());
+            event.setErrorCode(wfAction.getErrorCode());
+            event.setErrorMessage(wfAction.getErrorMessage());
+            eventService.queueEvent(event);
+        }
     }
 
 }
