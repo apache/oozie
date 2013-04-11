@@ -46,6 +46,8 @@ import org.jdom.Namespace;
 public class SqoopActionExecutor extends JavaActionExecutor {
 
   public static final String OOZIE_ACTION_EXTERNAL_STATS_WRITE = "oozie.action.external.stats.write";
+  private static final String SQOOP_MAIN_CLASS_NAME = "org.apache.oozie.action.hadoop.SqoopMain";
+  static final String SQOOP_ARGS = "oozie.sqoop.args";
 
     public SqoopActionExecutor() {
         super("sqoop");
@@ -56,14 +58,12 @@ public class SqoopActionExecutor extends JavaActionExecutor {
         List<Class> classes = super.getLauncherClasses();
         classes.add(LauncherMain.class);
         classes.add(MapReduceMain.class);
-        classes.add(HiveMain.class);
-        classes.add(SqoopMain.class);
         return classes;
     }
 
     @Override
     protected String getLauncherMain(Configuration launcherConf, Element actionXml) {
-        return launcherConf.get(LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS, SqoopMain.class.getName());
+        return launcherConf.get(LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS, SQOOP_MAIN_CLASS_NAME);
     }
 
     @Override
@@ -103,8 +103,12 @@ public class SqoopActionExecutor extends JavaActionExecutor {
             }
         }
 
-        SqoopMain.setSqoopCommand(actionConf, args);
+        setSqoopCommand(actionConf, args);
         return actionConf;
+    }
+
+    private void setSqoopCommand(Configuration conf, String[] args) {
+        MapReduceMain.setStrings(conf, SQOOP_ARGS, args);
     }
 
     /**

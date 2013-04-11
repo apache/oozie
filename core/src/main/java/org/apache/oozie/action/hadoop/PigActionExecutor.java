@@ -40,22 +40,18 @@ import java.util.List;
 
 public class PigActionExecutor extends ScriptLanguageActionExecutor {
 
+    private static final String PIG_MAIN_CLASS_NAME = "org.apache.oozie.action.hadoop.PigMain";
+    static final String PIG_SCRIPT = "oozie.pig.script";
+    static final String PIG_PARAMS = "oozie.pig.params";
+    static final String PIG_ARGS = "oozie.pig.args";
+
     public PigActionExecutor() {
         super("pig");
     }
 
     @Override
-    protected List<Class> getLauncherClasses() {
-        List<Class> classes = super.getLauncherClasses();
-        classes.add(PigMain.class);
-        classes.add(OoziePigStats.class);
-        return classes;
-    }
-
-
-    @Override
     protected String getLauncherMain(Configuration launcherConf, Element actionXml) {
-        return launcherConf.get(LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS, PigMain.class.getName());
+        return launcherConf.get(LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS, PIG_MAIN_CLASS_NAME);
     }
 
     @Override
@@ -85,9 +81,16 @@ public class PigActionExecutor extends ScriptLanguageActionExecutor {
                 strArgs[i] = eArgs.get(i).getTextTrim();
             }
         }
-        PigMain.setPigScript(actionConf, pigName, strParams, strArgs);
+        setPigScript(actionConf, pigName, strParams, strArgs);
         return actionConf;
     }
+
+    public static void setPigScript(Configuration conf, String script, String[] params, String[] args) {
+        conf.set(PIG_SCRIPT, script);
+        MapReduceMain.setStrings(conf, PIG_PARAMS, params);
+        MapReduceMain.setStrings(conf, PIG_ARGS, args);
+    }
+
 
     @Override
     protected boolean getCaptureOutput(WorkflowAction action) throws JDOMException {
