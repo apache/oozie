@@ -24,7 +24,7 @@
 
     <dependencySets>
         <dependencySet>
-            <useProjectArtifact>false</useProjectArtifact>
+            <useProjectArtifact>true</useProjectArtifact>
             <outputDirectory>/share/lib/${sharelib.action.postfix}</outputDirectory>
             <unpack>false</unpack>
             <useTransitiveDependencies>true</useTransitiveDependencies>

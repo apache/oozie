@@ -76,11 +76,6 @@ public class TestMapReduceActionExecutorUberJar extends TestMapReduceActionExecu
     }
 
     @Override
-    public void testStreaming() throws Exception {
-        // skip test
-    }
-
-    @Override
     public void testPipes() throws Exception {
         // skip test
     }

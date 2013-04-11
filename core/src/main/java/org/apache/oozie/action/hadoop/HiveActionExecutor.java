@@ -32,20 +32,17 @@ import org.jdom.Namespace;
 
 public class HiveActionExecutor extends ScriptLanguageActionExecutor {
 
+    private static final String HIVE_MAIN_CLASS_NAME = "org.apache.oozie.action.hadoop.HiveMain";
+    static final String HIVE_SCRIPT = "oozie.hive.script";
+    static final String HIVE_PARAMS = "oozie.hive.params";
+
     public HiveActionExecutor() {
         super("hive");
     }
 
     @Override
-    protected List<Class> getLauncherClasses() {
-        List<Class> classes = super.getLauncherClasses();
-        classes.add(HiveMain.class);
-        return classes;
-    }
-
-    @Override
     protected String getLauncherMain(Configuration launcherConf, Element actionXml) {
-        return launcherConf.get(CONF_OOZIE_ACTION_MAIN_CLASS, HiveMain.class.getName());
+        return launcherConf.get(CONF_OOZIE_ACTION_MAIN_CLASS, HIVE_MAIN_CLASS_NAME);
     }
 
     @Override
@@ -69,8 +66,13 @@ public class HiveActionExecutor extends ScriptLanguageActionExecutor {
             strParams[i] = params.get(i).getTextTrim();
         }
 
-        HiveMain.setHiveScript(conf, scriptName, strParams);
+        setHiveScript(conf, scriptName, strParams);
         return conf;
+    }
+
+    public static void setHiveScript(Configuration conf, String script, String[] params) {
+        conf.set(HIVE_SCRIPT, script);
+        MapReduceMain.setStrings(conf, HIVE_PARAMS, params);
     }
 
     @Override

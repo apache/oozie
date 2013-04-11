@@ -78,7 +78,6 @@ public class TestMapReduceActionError extends ActionExecutorTestCase {
         classes.add(ActionType.class);
         classes.add(LauncherMain.class);
         classes.add(MapReduceMain.class);
-        classes.add(StreamingMain.class);
         classes.add(PipesMain.class);
         assertEquals(classes, ae.getLauncherClasses());
 

@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1311 Refactor action Main classes into sharelibs (rkanter)
 OOZIE-897 remove special build handling for sqoop testcase (rkanter)
 OOZIE-1209 Event generation and handling for workflow and coordinator (mona)
 OOZIE-1118 improve logic of purge service (rkanter)

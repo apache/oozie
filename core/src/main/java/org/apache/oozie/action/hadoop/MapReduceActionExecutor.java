@@ -45,6 +45,7 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
     public static final String HADOOP_COUNTERS = "hadoop.counters";
     public static final String OOZIE_MAPREDUCE_UBER_JAR = "oozie.mapreduce.uber.jar";
     public static final String OOZIE_MAPREDUCE_UBER_JAR_ENABLE = "oozie.action.mapreduce.uber.jar.enable";
+    private static final String STREAMING_MAIN_CLASS_NAME = "org.apache.oozie.action.hadoop.StreamingMain";
     private XLog log = XLog.getLog(getClass());
 
     public MapReduceActionExecutor() {
@@ -56,7 +57,6 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
         List<Class> classes = super.getLauncherClasses();
         classes.add(LauncherMain.class);
         classes.add(MapReduceMain.class);
-        classes.add(StreamingMain.class);
         classes.add(PipesMain.class);
         return classes;
     }
@@ -66,7 +66,7 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
         String mainClass;
         Namespace ns = actionXml.getNamespace();
         if (actionXml.getChild("streaming", ns) != null) {
-            mainClass = launcherConf.get(LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS, StreamingMain.class.getName());
+            mainClass = launcherConf.get(LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS, STREAMING_MAIN_CLASS_NAME);
         }
         else {
             if (actionXml.getChild("pipes", ns) != null) {
@@ -107,7 +107,7 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
             for (int i = 0; i < list.size(); i++) {
                 env[i] = list.get(i).getTextTrim();
             }
-            StreamingMain.setStreaming(actionConf, mapper, reducer, recordReader, recordReaderMapping, env);
+            setStreaming(actionConf, mapper, reducer, recordReader, recordReaderMapping, env);
         }
         else {
             if (actionXml.getChild("pipes", ns) != null) {
@@ -292,4 +292,20 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
         }
         return launcherJobConf;
     }
+
+    public static void setStreaming(Configuration conf, String mapper, String reducer, String recordReader,
+                                    String[] recordReaderMapping, String[] env) {
+        if (mapper != null) {
+            conf.set("oozie.streaming.mapper", mapper);
+        }
+        if (reducer != null) {
+            conf.set("oozie.streaming.reducer", reducer);
+        }
+        if (recordReader != null) {
+            conf.set("oozie.streaming.record-reader", recordReader);
+        }
+        MapReduceMain.setStrings(conf, "oozie.streaming.record-reader-mapping", recordReaderMapping);
+        MapReduceMain.setStrings(conf, "oozie.streaming.env", env);
+    }
+
 }

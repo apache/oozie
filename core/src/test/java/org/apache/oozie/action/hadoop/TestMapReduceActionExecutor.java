@@ -25,7 +25,6 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.mapred.JobID;
-import org.apache.hadoop.streaming.StreamJob;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowAction;
@@ -97,7 +96,6 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         classes.add(ActionType.class);
         classes.add(LauncherMain.class);
         classes.add(MapReduceMain.class);
-        classes.add(StreamingMain.class);
         classes.add(PipesMain.class);
         assertEquals(classes, ae.getLauncherClasses());
 
@@ -301,7 +299,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         return runningJob;
     }
 
-    private String _testSubmit(String name, String actionXml) throws Exception {
+    protected String _testSubmit(String name, String actionXml) throws Exception {
 
         Context context = createContext(name, actionXml);
         final RunningJob launcherJob = submitAction(context);
@@ -567,37 +565,6 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         } finally {
             serv.getConf().setBoolean("oozie.action.mapreduce.uber.jar.enable", originalUberJarDisabled);
         }
-    }
-
-    protected XConfiguration getStreamingConfig(String inputDir, String outputDir) {
-        XConfiguration conf = new XConfiguration();
-        conf.set("mapred.input.dir", inputDir);
-        conf.set("mapred.output.dir", outputDir);
-        return conf;
-    }
-
-    public void testStreaming() throws Exception {
-        FileSystem fs = getFileSystem();
-        Path streamingJar = new Path(getFsTestCaseDir(), "jar/hadoop-streaming.jar");
-
-        InputStream is = new FileInputStream(ClassUtils.findContainingJar(StreamJob.class));
-        OutputStream os = fs.create(new Path(getAppPath(), streamingJar));
-        IOUtils.copyStream(is, os);
-
-        Path inputDir = new Path(getFsTestCaseDir(), "input");
-        Path outputDir = new Path(getFsTestCaseDir(), "output");
-
-        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
-        w.write("dummy\n");
-        w.write("dummy\n");
-        w.close();
-
-        String actionXml = "<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
-                + getNameNodeUri() + "</name-node>" + "      <streaming>" + "        <mapper>cat</mapper>"
-                + "        <reducer>wc</reducer>" + "      </streaming>"
-                + getStreamingConfig(inputDir.toString(), outputDir.toString()).toXmlString(false) + "<file>"
-                + streamingJar + "</file>" + "</map-reduce>";
-        _testSubmit("streaming", actionXml);
     }
 
     protected XConfiguration getPipesConfig(String inputDir, String outputDir) {

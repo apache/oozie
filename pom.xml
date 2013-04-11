@@ -98,7 +98,6 @@
         <module>hbaselibs</module>
         <module>hcataloglibs</module>
         <module>core</module>
-        <module>tests</module>
         <module>webapp</module>
         <module>examples</module>
         <module>docs</module>
