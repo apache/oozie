@@ -23,60 +23,39 @@
         <groupId>org.apache.oozie</groupId>
         <artifactId>oozie-main</artifactId>
         <version>4.1.0-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
     <groupId>org.apache.oozie</groupId>
-    <artifactId>oozie-hadooplibs</artifactId>
-    <version>4.1.0-SNAPSHOT</version>
-    <description>Apache Oozie Hadoop Libs</description>
-    <name>Apache Oozie Hadoop Libs</name>
-    <packaging>pom</packaging>
+    <artifactId>oozie-hadoop</artifactId>
+    <version>0.23.6.oozie-4.1.0-SNAPSHOT</version>
+    <description>Apache Oozie Hadoop ${project.version}</description>
+    <name>Apache Oozie Hadoop ${project.version}</name>
+    <packaging>jar</packaging>
 
-    <modules>
-        <module>hadoop-1</module>
-        <module>hadoop-distcp-1</module>
-        <module>hadoop-test-1</module>
-        <module>hadoop-2</module>
-        <module>hadoop-test-2</module>
-        <module>hadoop-distcp-2</module>
-        <module>hadoop-0.23</module>
-        <module>hadoop-test-0.23</module>
-        <module>hadoop-distcp-0.23</module>
-    </modules>
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-client</artifactId>
+            <version>0.23.6</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
 
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-deploy-plugin</artifactId>
-                <configuration>
-                    <skip>true</skip>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <configuration>
                     <descriptors>
-                        <descriptor>../src/main/assemblies/hadooplibs.xml</descriptor>
+                        <descriptor>../../src/main/assemblies/hadooplib.xml</descriptor>
                     </descriptors>
-                    <finalName>oozie-${project.version}</finalName>
-                </configuration>
+                    <finalName>hadooplibs</finalName>
+                    <appendAssemblyId>false</appendAssemblyId>
+                 </configuration>
             </plugin>
         </plugins>
     </build>
 
-    <profiles>
-        <profile>
-            <id>hadoop-3</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-            </activation>
-            <modules>
-                <module>hadoop-3</module>
-                <module>hadoop-test-3</module>
-                <module>hadoop-distcp-3</module>
-            </modules>
-        </profile>
-    </profiles>
 </project>
 
