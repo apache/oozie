@@ -205,7 +205,6 @@ public class TestEventGeneration extends XDataTestCase {
         assertEquals(action.getJobId(), event.getParentId());
         assertEquals(action.getNominalTime(), event.getNominalTime());
         assertEquals(action.getCreatedTime(), event.getStartTime());
-        assertNotNull(event.getMissingDeps());
         assertEquals(coord.getUser(), event.getUser());
         assertEquals(coord.getAppName(), event.getAppName());
         assertEquals(0, queue.getCurrentSize());

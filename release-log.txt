@@ -1,5 +1,7 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1317 TestEventGeneration.testCoordinatorActionEvent fails (mona)
+OOZIE-1292 Add Hadoop 0.23 Poms in hadooplibs to enable a build/tests against branch 0.23 (mona)
 OOZIE-1320 Tests for sharelib actions fail with ClassNotFoundException against Hadoop 2 (rkanter)
 OOZIE-1311 Refactor action Main classes into sharelibs (rkanter)
 OOZIE-897 remove special build handling for sqoop testcase (rkanter)
