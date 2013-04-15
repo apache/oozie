@@ -21,6 +21,7 @@ OOZIE-1239 Bump up trunk to 4.1.0-SNAPSHOT (virag)
 
 -- Oozie 4.0.0 (unreleased)
 
+OOZIE-1323 HTTPS docs lists the same step twice for creating a self-signed certificate (rkanter)
 OOZIE-1280 CoordPushDependencyCheck queued by Recovery Services doesn't remove dependencies from cache (rohini via virag)
 OOZIE-1277 CoordActionInputCheck requeues itself even if only push missing dependencies exist (virag)
 OOZIE-1272 Two workflow jobs mapped to a single coordinator action (ryota via virag)

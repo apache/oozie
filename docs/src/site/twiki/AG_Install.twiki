@@ -532,13 +532,8 @@ requires some additional configuration on each Oozie client machine.
 There are many ways to create a Self-Signed Certificate, this is just one way.  We will be using the keytool program, which is
 included with your JRE. If its not on your path, you should be able to find it in $JAVA_HOME/bin.
 
-1. Run the following command (as the Oozie user) to create a keystore file:
-<verbatim>
-keytool -genkey -alias tomcat -keyalg RSA
-</verbatim>
-The keystore file will be named =.keystore= and located in the Oozie user's home directory.
-
-2. Run the following command (as the Oozie user); you will be asked a series of questions in an interactive prompt.
+1. Run the following command (as the Oozie user); you will be asked a series of questions in an interactive prompt.  It will create
+the keystore file, which will be named =.keystore= and located in the Oozie user's home directory.
 <verbatim>
 keytool -genkey -alias tomcat -keyalg RSA
 </verbatim>
@@ -548,7 +543,7 @@ environment variable.
 The answer to "What is your first and last name?" (i.e. "CN") must be the hostname of the machine where the Oozie Server will be
 running.
 
-3. Run the following command (as the Oozie user) to export a certificate file from the keystore file:
+2. Run the following command (as the Oozie user) to export a certificate file from the keystore file:
 <verbatim>
 keytool -exportcert -alias tomcat -file path/to/where/I/want/my/certificate.cert
 </verbatim>
