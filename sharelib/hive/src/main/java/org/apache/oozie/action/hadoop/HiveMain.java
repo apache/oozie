@@ -238,6 +238,7 @@ public class HiveMain extends LauncherMain {
         catch (SecurityException ex) {
             if (LauncherSecurityManager.getExitInvoked()) {
                 if (LauncherSecurityManager.getExitCode() != 0) {
+                    writeExternalChildIDs(logFile);
                     throw ex;
                 }
             }
@@ -253,6 +254,24 @@ public class HiveMain extends LauncherMain {
         os.close();
         System.out.println(" Hadoop Job IDs executed by Hive: " + jobIds.getProperty(HADOOP_JOBS));
         System.out.println();
+    }
+
+    private void writeExternalChildIDs(String logFile) {
+        // harvesting and recording Hadoop Job IDs
+        try {
+            Properties jobIds = getHadoopJobIds(logFile, HIVE_JOB_IDS_PATTERNS);
+            File file = new File(System.getProperty(LauncherMapper.EXTERNAL_CHILD_IDS));
+            final String hadoopJobIDs = jobIds.getProperty(HADOOP_JOBS);
+            OutputStream os = new FileOutputStream(file);
+            os.write(hadoopJobIDs.getBytes());
+            os.close();
+            System.out.println(" Hadoop Job IDs executed by Hive: " + hadoopJobIDs);
+            System.out.println();
+        }
+        catch (Exception e) {
+            System.out.println("WARN: Error getting Hadoop Job IDs executed by Hive");
+            e.printStackTrace(System.out);
+        }
     }
 
     private void runHive(String[] args) throws Exception {
