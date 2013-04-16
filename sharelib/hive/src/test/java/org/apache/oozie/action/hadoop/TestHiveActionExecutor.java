@@ -158,6 +158,7 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
         Properties outputData = new Properties();
         outputData.load(new StringReader(context.getAction().getData()));
         assertTrue(outputData.containsKey(LauncherMain.HADOOP_JOBS));
+        assertEquals(outputData.get(LauncherMain.HADOOP_JOBS), context.getExternalChildIDs());
         //while this works in a real cluster, it does not with miniMR
         //assertTrue(outputData.getProperty(LauncherMain.HADOOP_JOBS).trim().length() > 0);
 
