@@ -1,5 +1,6 @@
 -- Oozie 4.0.0 (unreleased)
 
+OOZIE-1150 DB upgrade scripts for hcat changes (ryota via virag)
 OOZIE-1323 HTTPS docs lists the same step twice for creating a self-signed certificate (rkanter)
 OOZIE-1292 Add Hadoop 0.23 Poms in hadooplibs to enable a build/tests against branch 0.23 (mona)
 OOZIE-1280 CoordPushDependencyCheck queued by Recovery Services doesn't remove dependencies from cache (rohini via virag)

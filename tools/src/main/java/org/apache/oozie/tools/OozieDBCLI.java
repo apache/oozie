@@ -30,8 +30,10 @@ import org.apache.oozie.service.Services;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
+import java.sql.Clob;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -50,7 +52,7 @@ public class OozieDBCLI {
     public static final String POST_UPGRADE_CMD = "postupgrade";
     public static final String SQL_FILE_OPT = "sqlfile";
     public static final String RUN_OPT = "run";
-    public static final String SQL_MEDIUM_TEXT_OPT = "mysqlmediumtext";
+    private final static String DB_VERSION = "2";
 
     public static final String[] HELP_INFO = {
         "",
@@ -68,17 +70,12 @@ public class OozieDBCLI {
         used = false;
     }
 
-    protected Options createUpgradeOptions(boolean showUseSQLMediumTextOption) {
+    protected Options createUpgradeOptions() {
         Option sqlfile = new Option(SQL_FILE_OPT, true, "Generate SQL script instead creating/upgrading the DB schema");
         Option run = new Option(RUN_OPT, false, "Confirm the DB schema creation/upgrade");
         Options options = new Options();
         options.addOption(sqlfile);
         options.addOption(run);
-        if (showUseSQLMediumTextOption) {
-            Option SQLMediumText = new Option(SQL_MEDIUM_TEXT_OPT, false, "Use MEDIUMTEXT instead of TEXT for column sizes in"
-                    + " MySQL");
-            options.addOption(SQLMediumText);
-        }
         return options;
     }
 
@@ -91,9 +88,9 @@ public class OozieDBCLI {
         CLIParser parser = new CLIParser("ooziedb.sh", HELP_INFO);
         parser.addCommand(HELP_CMD, "", "display usage for all commands or specified command", new Options(), false);
         parser.addCommand(VERSION_CMD, "", "show Oozie DB version information", new Options(), false);
-        parser.addCommand(CREATE_CMD, "", "create Oozie DB schema", createUpgradeOptions(false), false);
-        parser.addCommand(UPGRADE_CMD, "", "upgrade Oozie DB", createUpgradeOptions(true), false);
-        parser.addCommand(POST_UPGRADE_CMD, "", "post upgrade Oozie DB", createUpgradeOptions(false), false);
+        parser.addCommand(CREATE_CMD, "", "create Oozie DB schema", createUpgradeOptions(), false);
+        parser.addCommand(UPGRADE_CMD, "", "upgrade Oozie DB", createUpgradeOptions(), false);
+        parser.addCommand(POST_UPGRADE_CMD, "", "post upgrade Oozie DB", createUpgradeOptions(), false);
 
         try {
             System.out.println();
@@ -118,12 +115,7 @@ public class OozieDBCLI {
                     createDB(sqlFile, run);
                 }
                 if (command.getName().equals(UPGRADE_CMD)) {
-                    boolean useSQLMediumText = commandLine.hasOption(SQL_MEDIUM_TEXT_OPT);
-                    if (useSQLMediumText && !getDBVendor().equals("mysql")) {
-                        throw new Exception("ERROR: " + SQL_MEDIUM_TEXT_OPT + " option used but database vender is "
-                                + getDBVendor());
-                    }
-                    upgradeDB(sqlFile, run, useSQLMediumText);
+                    upgradeDB(sqlFile, run);
                 }
                 if (command.getName().equals(POST_UPGRADE_CMD)) {
                     postUpgradeDB(sqlFile, run);
@@ -190,48 +182,85 @@ public class OozieDBCLI {
         System.out.println();
     }
 
-    private void upgradeDB(String sqlFile, boolean run, boolean useSQLMediumText) throws Exception {
-        // placeholder for later versions, to handle upgrades based on the OOZIE_SYS table.
-        upgradeDBTo32(sqlFile,  run, useSQLMediumText);
-    }
-
-    private void upgradeDBTo32(String sqlFile, boolean run, boolean useSQLMediumText) throws Exception {
+    private void upgradeDB(String sqlFile, boolean run) throws Exception {
         validateConnection();
         validateDBSchema(true);
         verifyDBState();
-        if (verifyOozieSysTable(false, false)) {    // If the DB has already been upgraded
-            if (useSQLMediumText) {                 // If MySQL MEDIUMTEXT option is specified
-                System.out.println("Oozie DB has already been upgraded; only applying MySQL MEDIUMTEXT upgrade");
-                verifySQLMediumText(false);         // If we've already done the MEDIUMTEXT tweaks, then it will throw an exception
+
+        if (!verifyOozieSysTable(false, false)) { // If OOZIE_SYS table doesn't exist (pre 3.2)
+            upgradeDBTo40(sqlFile, run, false);
+        }
+        else {
+            String ver = getOozieDBVersion().trim();
+            if (ver.equals("1")) { // if db.version equals to 1 (after 3.2+), need to upgrade
+                upgradeDBTo40(sqlFile, run, true);
             }
-            else {
+            else if (ver.equals(DB_VERSION)) { // if db.version equals to 2, it's already upgraded
                 throw new Exception("Oozie DB has already been upgraded");
             }
         }
-        else {                                      // The DB has not already been upgraded
-            createUpgradeDB(sqlFile, run, false);
-            createOozieSysTable(sqlFile, run);
-            postUpgradeTasks(sqlFile, run, false);
-            ddlTweaks(sqlFile, run);
-        }
-        // If we get here, then either we've just finished upgrading the DB and we need to aply the MEDIUMTEXT tweaks OR
-        // we've previously upgraded the DB, the user has specified the MySQL MEDIUMTEXT option, and it hasn't previously been done
-        doSQLMediumTextTweaks(sqlFile, run);
-        setSQLMediumTextFlag(sqlFile, run);
 
         if (run) {
             System.out.println();
-            System.out.println("Oozie DB has been upgraded to Oozie version '" +
-                               BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_VERSION) + "'");
+            System.out.println("Oozie DB has been upgraded to Oozie version '"
+                    + BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_VERSION) + "'");
         }
         System.out.println();
     }
 
-    private void postUpgradeDB(String sqlFile, boolean run) throws Exception {
-        postUpgradeDBTo32(sqlFile, run);
+    private void upgradeDBTo40(String sqlFile, boolean run, boolean fromVerOne) throws Exception {
+        createUpgradeDB(sqlFile, run, false);
+        if (fromVerOne) {
+            upgradeOozieDBVersion(sqlFile, run);
+        }
+        else {
+            createOozieSysTable(sqlFile, run);
+        }
+        postUpgradeTasks(sqlFile, run, false);
+        ddlTweaks(sqlFile, run);
+        if (!fromVerOne || verifySQLMediumText()) {
+            doSQLMediumTextTweaks(sqlFile, run);
+            setSQLMediumTextFlag(sqlFile, run);
+        }
     }
 
-    private void postUpgradeDBTo32(String sqlFile, boolean run) throws Exception {
+    private final static String UPDATE_DB_VERSION =
+            "update OOZIE_SYS set data='" + DB_VERSION + "' where name='db.version'";
+    private final static String UPDATE_OOZIE_VERSION =
+            "update OOZIE_SYS set data='" + BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_VERSION)
+            + "' where name='oozie.version'";
+
+    private void upgradeOozieDBVersion(String sqlFile, boolean run) throws Exception {
+        PrintWriter writer = new PrintWriter(new FileWriter(sqlFile, true));
+        writer.println();
+        writer.println(UPDATE_DB_VERSION);
+        writer.println(UPDATE_OOZIE_VERSION);
+        writer.close();
+        System.out.println("Update db.version in OOZIE_SYS table to " + DB_VERSION);
+        if (run) {
+            Connection conn = createConnection();
+            try {
+                conn.setAutoCommit(true);
+                Statement st = conn.createStatement();
+                st.executeUpdate(UPDATE_DB_VERSION);
+                st.executeUpdate(UPDATE_OOZIE_VERSION);
+                st.close();
+            }
+            catch (Exception ex) {
+                throw new Exception("Could not upgrade db.version in OOZIE_SYS table: " + ex.toString(), ex);
+            }
+            finally {
+                conn.close();
+            }
+        }
+        System.out.println("DONE");
+    }
+
+    private void postUpgradeDB(String sqlFile, boolean run) throws Exception {
+        postUpgradeDBTo40(sqlFile, run);
+    }
+
+    private void postUpgradeDBTo40(String sqlFile, boolean run) throws Exception {
         validateConnection();
         validateDBSchema(true);
         verifyOozieSysTable(true);
@@ -255,7 +284,7 @@ public class OozieDBCLI {
         "update COORD_JOBS set status = 'RUNNING', PENDING = 1 " +
         "where id in ( " +
         "select job_id from COORD_ACTIONS where job_id in ( " +
-        "select id from COORD_JOBS where status = 'SUCCEEDED') and(status != 'FAILED' and " +
+        "select id from COORD_JOBS where status = 'SUCCEEDED') and (status != 'FAILED' and " +
         "status != 'SUCCEEDED' and status != 'KILLED' and status != 'TIMEDOUT') )";
 
     private static final String COORD_JOBS_STATUS_2 =
@@ -273,6 +302,9 @@ public class OozieDBCLI {
         vendor = vendor.substring(0, vendor.indexOf(":"));
         return vendor;
     }
+
+    private final static String UPDATE_DELIMITER_VER_TWO =
+            "UPDATE COORD_ACTIONS SET MISSING_DEPENDENCIES = REPLACE(MISSING_DEPENDENCIES,';','!!')";
 
     private void postUpgradeTasks(String sqlFile, boolean run, boolean force) throws Exception {
         PrintWriter writer = new PrintWriter(new FileWriter(sqlFile, true));
@@ -320,12 +352,55 @@ public class OozieDBCLI {
                 System.out.println("         Oozie will be able to run jobs started before the upgrade,");
                 System.out.println("         although those jobs may show different status names in their actions");
             }
+            if (!getDBVendor().equals("derby")) {
+                writer.println(UPDATE_DELIMITER_VER_TWO + ";");
+                System.out.println("Post-upgrade MISSING_DEPENDENCIES column");
+                if (run) {
+                    Statement st = conn.createStatement();
+                    st.executeUpdate(UPDATE_DELIMITER_VER_TWO);
+                    st.close();
+                }
+            }
+            else {
+                System.out.println("Post-upgrade MISSING_DEPENDENCIES column in Derby");
+                replaceForDerby(";", "!!");
+            }
+            System.out.println("DONE");
             writer.close();
         }
         finally {
             if (run) {
                 conn.close();
             }
+        }
+    }
+
+    private static final String COORD_ACTION_ID_DEPS = "SELECT ID, MISSING_DEPENDENCIES FROM COORD_ACTIONS";
+
+    private void replaceForDerby(String oldStr, String newStr) throws Exception {
+        Connection connRead = createConnection();
+        try {
+            connRead.setAutoCommit(false);
+            Statement st = connRead.createStatement();
+            // set fetch size to limit number of rows into memory for large table
+            st.setFetchSize(100);
+            ResultSet rs = st.executeQuery(COORD_ACTION_ID_DEPS);
+            while (rs.next()) {
+                String id = rs.getString(1);
+                Clob clob = rs.getClob(2);
+                String clobStr = clob.getSubString(1, (int) clob.length());
+                clob.setString(1, clobStr.replace(oldStr, newStr));
+                PreparedStatement prepStmt = connRead
+                        .prepareStatement("UPDATE COORD_ACTIONS SET MISSING_DEPENDENCIES=? WHERE ID=?");
+                prepStmt.setString(1, clob.getSubString(1, (int) clob.length()));
+                prepStmt.setString(2, id);
+                prepStmt.execute();
+                prepStmt.close();
+            }
+        }
+        finally {
+            connRead.commit();
+            connRead.close();
         }
     }
 
@@ -532,22 +607,26 @@ public class OozieDBCLI {
         return tableExists;
     }
 
-    private final static String DB_VERSION = "1";
-    
     private final static String GET_OOZIE_DB_VERSION = "select data from OOZIE_SYS where name = 'db.version'";
 
     private void verifyOozieDBVersion() throws Exception {
         System.out.println("Verify Oozie DB version");
+        String version = getOozieDBVersion();
+        if (!DB_VERSION.equals(version.trim())) {
+            throw new Exception("ERROR: Expected Oozie DB version '" + DB_VERSION + "', found '" + version.trim() + "'");
+        }
+        System.out.println("DONE");
+    }
+
+    private String getOozieDBVersion() throws Exception {
+        String version;
+        System.out.println("Get Oozie DB version");
         Connection conn = createConnection();
         try {
             Statement st = conn.createStatement();
             ResultSet rs = st.executeQuery(GET_OOZIE_DB_VERSION);
             if (rs.next()) {
-                String version = rs.getString(1);
-                if (!DB_VERSION.equals(version.trim())) {
-                    throw new Exception("ERROR: Expected Oozie DB version '" +
-                                        DB_VERSION + "', found '" + version.trim() + "'");
-                }
+                version = rs.getString(1);
             }
             else {
                 throw new Exception("ERROR: Could not find Oozie DB 'db.version' in OOZIE_SYS table");
@@ -562,13 +641,15 @@ public class OozieDBCLI {
             conn.close();
         }
         System.out.println("DONE");
+        return version;
     }
 
     private final static String GET_USE_MYSQL_MEDIUMTEXT = "select data from OOZIE_SYS where name = 'mysql.mediumtext'";
 
-    private void verifySQLMediumText(boolean exists) throws Exception {
+    private boolean verifySQLMediumText() throws Exception {
+        boolean ret = false;
         if (getDBVendor().equals("mysql")) {
-            System.out.println((exists) ? "Check MySQL MEDIUMTEXT flag exists" : "Check MySQL MEDIUMTEXT flag does not exist");
+            System.out.println("Check MySQL MEDIUMTEXT flag exists");
             String flag = null;
             Connection conn = createConnection();
             try {
@@ -585,17 +666,12 @@ public class OozieDBCLI {
             finally {
                 conn.close();
             }
-            if (exists && flag == null) {
-                throw new Exception("ERROR: Could not find MySQL MEDIUMTEXT flag 'mysql.mediumtext' in OOZIE_SYS table");
-            }
-            if (exists && !flag.equals("true")) {
-                throw new Exception("ERROR: Expected MySQL MEDIUMTEXT flag 'mysql.mediumtext' to be 'true', found '" + flag + "'");
-            }
-            if (!exists && flag != null) {
-                throw new Exception("ERROR: Expected MySQL MEDIUMTEXT flag 'mysql.mediumtext' to not exist, found '" + flag + "'");
+            if (flag == null) {
+                ret = true;
             }
             System.out.println("DONE");
         }
+        return ret;
     }
 
     private final static String CREATE_OOZIE_SYS =
