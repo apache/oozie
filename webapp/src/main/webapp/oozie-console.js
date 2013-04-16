@@ -533,13 +533,6 @@ function jobDetailsPopup(response, request) {
                             autoScroll: true,
                             value: actionStatus["conf"]
                         })
-                    }, {
-                        title: 'Child Job URLs',
-                        autoScroll: true,
-                        frame: true,
-                        labelAlign: 'right',
-                        labelWidth: 70,
-                        items: urlUnit
                     }],
                     tbar: [{
                         text: "&nbsp;&nbsp;&nbsp;",
@@ -550,6 +543,20 @@ function jobDetailsPopup(response, request) {
                     }]
                 })]
             });
+            
+            // Tab to show list of child Job URLs for pig action
+            var childJobsItem = {
+				title : 'Child Job URLs',
+				autoScroll : true,
+				frame : true,
+				labelAlign : 'right',
+				labelWidth : 70,
+				items : urlUnit
+			};
+            if (actionStatus.type == "pig") {
+				var tabPanel = win.items.get(0);
+				tabPanel.add(childJobsItem);
+			}
             win.setPosition(50, 50);
             win.show();
         }
