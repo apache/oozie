@@ -38,6 +38,7 @@ public class DefaultConnectionContext implements ConnectionContext {
     protected Connection connection;
     protected String connectionFactoryName;
     private static XLog LOG = XLog.getLog(ConnectionContext.class);
+    private int sessionOpts;
 
     @Override
     public void createConnection(Properties props) throws NamingException, JMSException {
@@ -72,7 +73,6 @@ public class DefaultConnectionContext implements ConnectionContext {
             throw e1;
         }
     }
-
 
     @Override
     public boolean isConnectionInitialized() {
@@ -111,6 +111,31 @@ public class DefaultConnectionContext implements ConnectionContext {
         catch (JMSException e) {
             LOG.warn("Unable to close the connection " + connection, e);
         }
+    }
+
+    private final ThreadLocal<Session> th =  new ThreadLocal<Session>() {
+        protected Session initialValue() {
+            try {
+                return connection.createSession(false, sessionOpts);
+            }
+            catch (JMSException e) {
+                throw new RuntimeException("Session couldn't be created", e);
+            }
+        }
+    };
+
+    @Override
+    public ThreadLocal<Session> createThreadLocalSession(final int sessionOpts) {
+       this.sessionOpts = sessionOpts;
+       return th;
+    }
+
+
+    @Override
+    public MessageConsumer createConsumer(Session session, String topicName, String selector) throws JMSException {
+        Topic topic = session.createTopic(topicName);
+        MessageConsumer consumer = session.createConsumer(topic, selector);
+        return consumer;
     }
 
 }

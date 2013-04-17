@@ -40,129 +40,33 @@ public abstract class JobEventListener {
     public abstract void destroy();
 
     /**
-     * On workflow job transition to start state
+     * On workflow job transition
      * @param WorkflowJobEvent
      */
-    public abstract void onWorkflowJobStart(WorkflowJobEvent wje);
+    public abstract void onWorkflowJobEvent(WorkflowJobEvent wje);
 
     /**
-     * On workflow job transition to success state
-     * @param WorkflowJobEvent
-     */
-    public abstract void onWorkflowJobSuccess(WorkflowJobEvent wje);
-
-    /**
-     * On workflow job transition to failure state
-     * @param WorkflowJobEvent
-     */
-    public abstract void onWorkflowJobFailure(WorkflowJobEvent wje);
-
-    /**
-     * On workflow job transition to suspend state
-     * @param WorkflowJobEvent
-     */
-    public abstract void onWorkflowJobSuspend(WorkflowJobEvent wje);
-
-    /**
-     * On workflow action transition to start state
+     * On workflow action transition
      * @param WorkflowActionEvent
      */
-    public abstract void onWorkflowActionStart(WorkflowActionEvent wae);
+    public abstract void onWorkflowActionEvent(WorkflowActionEvent wae);
 
     /**
-     * On workflow action transition to success state
-     * @param WorkflowActionEvent
-     */
-    public abstract void onWorkflowActionSuccess(WorkflowActionEvent wae);
-
-    /**
-     * On workflow action transition to failure state
-     * @param WorkflowActionEvent
-     */
-    public abstract void onWorkflowActionFailure(WorkflowActionEvent wae);
-
-    /**
-     * On workflow action transition to suspend state
-     * @param WorkflowActionEvent
-     */
-    public abstract void onWorkflowActionSuspend(WorkflowActionEvent wae);
-
-    /**
-     * On coord job transition to start state
+     * On coordinator job transition
      * @param CoordinatorJobEvent
      */
-    public abstract void onCoordinatorJobStart(CoordinatorJobEvent wje);
+    public abstract void onCoordinatorJobEvent(CoordinatorJobEvent wje);
 
     /**
-     * On coord job transition to success state
-     * @param CoordinatorJobEvent
-     */
-    public abstract void onCoordinatorJobSuccess(CoordinatorJobEvent wje);
-
-    /**
-     * On coord job transition to failure state
-     * @param CoordinatorJobEvent
-     */
-    public abstract void onCoordinatorJobFailure(CoordinatorJobEvent wje);
-
-    /**
-     * On coord job transition to suspend state
-     * @param CoordinatorJobEvent
-     */
-    public abstract void onCoordinatorJobSuspend(CoordinatorJobEvent wje);
-
-    /**
-     * On coord action transition to waiting state
+     * On coordinator action transition
      * @param CoordinatorActionEvent
      */
-    public abstract void onCoordinatorActionWaiting(CoordinatorActionEvent wae);
+    public abstract void onCoordinatorActionEvent(CoordinatorActionEvent wae);
 
     /**
-     * On coord action transition to start state
-     * @param CoordinatorActionEvent
-     */
-    public abstract void onCoordinatorActionStart(CoordinatorActionEvent wae);
-
-    /**
-     * On coord action transition to success state
-     * @param CoordinatorActionEvent
-     */
-    public abstract void onCoordinatorActionSuccess(CoordinatorActionEvent wae);
-
-    /**
-     * On coord action transition to failure state
-     * @param CoordinatorActionEvent
-     */
-    public abstract void onCoordinatorActionFailure(CoordinatorActionEvent wae);
-
-    /**
-     * On coord action transition to suspend state
-     * @param CoordinatorActionEvent
-     */
-    public abstract void onCoordinatorActionSuspend(CoordinatorActionEvent wae);
-
-    /**
-     * On bundle job transition to start state
+     * On bundle job transition
      * @param BundleJobEvent
      */
-    public abstract void onBundleJobStart(BundleJobEvent wje);
-
-    /**
-     * On bundle job transition to success state
-     * @param BundleJobEvent
-     */
-    public abstract void onBundleJobSuccess(BundleJobEvent wje);
-
-    /**
-     * On bundle job transition to failure state
-     * @param BundleJobEvent
-     */
-    public abstract void onBundleJobFailure(BundleJobEvent wje);
-
-    /**
-     * On bundle job transition to suspend state
-     * @param BundleJobEvent
-     */
-    public abstract void onBundleJobSuspend(BundleJobEvent wje);
+    public abstract void onBundleJobEvent(BundleJobEvent wje);
 
 }

@@ -23,6 +23,9 @@ import java.io.Writer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.client.rest.JMSConnectionInfoBean;
+import org.apache.oozie.command.CommandException;
+import org.apache.oozie.command.JMSInfoXCommand;
 
 public abstract class BaseEngine {
     public static final String USE_XCOMMAND = "oozie.useXCommand";
@@ -193,5 +196,21 @@ public abstract class BaseEngine {
      * @throws BaseEngineException thrown if there was a problem doing the dryrun
      */
     public abstract String dryRunSubmit(Configuration conf) throws BaseEngineException;
+
+    /**
+     * Return the jms info about a job.
+     *
+     * @param jobId job Id.
+     * @return the JMS info bean
+     * @throws DagEngineException thrown if the jms info could not be obtained.
+     */
+    public JMSConnectionInfoBean getJMSConnectionInfo(String jobId) throws DagEngineException {
+        try {
+                return new JMSInfoXCommand(jobId).call();
+        }
+        catch (CommandException ex) {
+            throw new DagEngineException(ex);
+        }
+    }
 
 }

@@ -105,7 +105,7 @@ public class EventHandlerService implements Service {
     }
 
     private void initEventListeners(Configuration conf) {
-        Class<?>[] listenerClass = (Class<?>[]) conf.getClasses(CONF_LISTENERS);
+        Class<?>[] listenerClass = (Class<?>[]) conf.getClasses(CONF_LISTENERS, org.apache.oozie.jms.JMSJobEventListener.class);
         for (int i = 0; i < listenerClass.length; i++) {
             Object listener = null;
             try {
@@ -170,7 +170,6 @@ public class EventHandlerService implements Service {
                 }
             }
         }
-        eventsConfigured = false;
     }
 
     @Override
@@ -231,19 +230,19 @@ public class EventHandlerService implements Service {
             JobEventListener el = (JobEventListener) iter.next();
             switch (event.getAppType()) {
                 case WORKFLOW_JOB:
-                    onWorkflowJobEvent(event, el);
+                    el.onWorkflowJobEvent((WorkflowJobEvent)event);
                     break;
                 case WORKFLOW_ACTION:
-                    onWorkflowActionEvent(event, el);
+                    el.onWorkflowActionEvent((WorkflowActionEvent)event);
                     break;
                 case COORDINATOR_JOB:
-                    onCoordinatorJobEvent(event, el);
+                    el.onCoordinatorJobEvent((CoordinatorJobEvent)event);
                     break;
                 case COORDINATOR_ACTION:
-                    onCoordinatorActionEvent(event, el);
+                    el.onCoordinatorActionEvent((CoordinatorActionEvent)event);
                     break;
                 case BUNDLE_JOB:
-                    onBundleJobEvent(event, el);
+                    el.onBundleJobEvent((BundleJobEvent)event);
                     break;
                 default:
                     XLog.getLog(EventHandlerService.class).info("Undefined Job Event app-type - {0}",
@@ -276,107 +275,6 @@ public class EventHandlerService implements Service {
                     XLog.getLog(EventHandlerService.class).info("Undefined SLA event type - {0}", event.getEventType());
             }
         }
-
-        private void onWorkflowJobEvent(JobEvent event, JobEventListener el) {
-            switch (event.getEventStatus()) {
-                case STARTED:
-                    el.onWorkflowJobStart((WorkflowJobEvent) event);
-                    break;
-                case SUCCESS:
-                    el.onWorkflowJobSuccess((WorkflowJobEvent) event);
-                    break;
-                case FAILURE:
-                    el.onWorkflowJobFailure((WorkflowJobEvent) event);
-                    break;
-                case SUSPEND:
-                    el.onWorkflowJobSuspend((WorkflowJobEvent) event);
-                    break;
-                default:
-                    XLog.getLog(EventHandlerService.class).info("Undefined WF Job event-status - {0}",
-                            event.getEventStatus());
-            }
-        }
-
-        private void onWorkflowActionEvent(JobEvent event, JobEventListener el) {
-            switch (event.getEventStatus()) {
-                case STARTED:
-                    el.onWorkflowActionStart((WorkflowActionEvent) event);
-                    break;
-                case SUCCESS:
-                    el.onWorkflowActionSuccess((WorkflowActionEvent) event);
-                    break;
-                case FAILURE:
-                    el.onWorkflowActionFailure((WorkflowActionEvent) event);
-                    break;
-                default:
-                    XLog.getLog(EventHandlerService.class).info("Undefined WF action event-status - {0}",
-                            event.getEventStatus());
-            }
-        }
-
-        private void onCoordinatorJobEvent(JobEvent event, JobEventListener el) {
-            switch (event.getEventStatus()) {
-                case STARTED:
-                    el.onCoordinatorJobStart((CoordinatorJobEvent) event);
-                    break;
-                case SUCCESS:
-                    el.onCoordinatorJobSuccess((CoordinatorJobEvent) event);
-                    break;
-                case FAILURE:
-                    el.onCoordinatorJobFailure((CoordinatorJobEvent) event);
-                    break;
-                case SUSPEND:
-                    el.onCoordinatorJobSuspend((CoordinatorJobEvent) event);
-                    break;
-                default:
-                    XLog.getLog(EventHandlerService.class).info("Undefined Coord Job event-status - {0}",
-                            event.getEventStatus());
-            }
-        }
-
-        private void onCoordinatorActionEvent(JobEvent event, JobEventListener el) {
-            switch (event.getEventStatus()) {
-                case WAITING:
-                    el.onCoordinatorActionWaiting((CoordinatorActionEvent) event);
-                    break;
-                case STARTED:
-                    el.onCoordinatorActionStart((CoordinatorActionEvent) event);
-                    break;
-                case SUCCESS:
-                    el.onCoordinatorActionSuccess((CoordinatorActionEvent) event);
-                    break;
-                case FAILURE:
-                    el.onCoordinatorActionFailure((CoordinatorActionEvent) event);
-                    break;
-                case SUSPEND:
-                    el.onCoordinatorActionSuspend((CoordinatorActionEvent) event);
-                    break;
-                default:
-                    XLog.getLog(EventHandlerService.class).info("Undefined Coord action event-status - {0}",
-                            event.getEventStatus());
-            }
-        }
-
-        private void onBundleJobEvent(JobEvent event, JobEventListener el) {
-            switch (event.getEventStatus()) {
-                case STARTED:
-                    el.onBundleJobStart((BundleJobEvent) event);
-                    break;
-                case SUCCESS:
-                    el.onBundleJobSuccess((BundleJobEvent) event);
-                    break;
-                case FAILURE:
-                    el.onBundleJobFailure((BundleJobEvent) event);
-                    break;
-                case SUSPEND:
-                    el.onBundleJobSuspend((BundleJobEvent) event);
-                    break;
-                default:
-                    XLog.getLog(EventHandlerService.class).info("Undefined Bundle Job event-type - {0}",
-                            event.getEventStatus());
-            }
-        }
-
     }
 
 }

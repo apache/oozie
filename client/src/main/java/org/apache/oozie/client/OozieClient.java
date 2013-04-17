@@ -667,6 +667,27 @@ public class OozieClient {
         }
     }
 
+
+    private class JMSInfo extends ClientCallable<JMSConnectionInfo> {
+
+        JMSInfo(String jobId) {
+            super("GET", RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.JOB_SHOW_PARAM,
+                    RestConstants.JOB_SHOW_JMS_INFO));
+        }
+
+        protected JMSConnectionInfo call(HttpURLConnection conn) throws IOException, OozieClientException {
+            if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
+                Reader reader = new InputStreamReader(conn.getInputStream());
+                JSONObject json = (JSONObject) JSONValue.parse(reader);
+                return JsonToBean.createJMSConnectionInfo(json);
+            }
+            else {
+                handleError(conn);
+            }
+            return null;
+        }
+    }
+
     private class WorkflowActionInfo extends ClientCallable<WorkflowAction> {
         WorkflowActionInfo(String actionId) {
             super("GET", RestConstants.JOB, notEmpty(actionId, "id"), prepareParams(RestConstants.JOB_SHOW_PARAM,
@@ -696,6 +717,16 @@ public class OozieClient {
      */
     public WorkflowJob getJobInfo(String jobId) throws OozieClientException {
         return getJobInfo(jobId, 0, 0);
+    }
+
+    /**
+     * Get the JMS Connection info
+     * @param jobId
+     * @return JMSConnectionInfo object
+     * @throws OozieClientException
+     */
+    public JMSConnectionInfo getJMSConnectionInfo(String jobId) throws OozieClientException {
+        return new JMSInfo(jobId).call();
     }
 
     /**

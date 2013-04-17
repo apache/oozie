@@ -145,6 +145,34 @@
         Mapping rules can also be provided for mapping Hcatalog servers to corresponding JMS providers.
         hcat://${1}.${2}.server.com:8020=java.naming.factory.initial#Dummy.Factory;java.naming.provider.url#tcp://broker.${2}:61616
         </description>
+   </property>
+
+    <!-- TopicService -->
+
+   <property>
+        <name>oozie.service.JMSTopicService.topic.name</name>
+        <value>
+        default=${username}
+        </value>
+        <description>
+        Other topic options are ${jobid} or a fixed string.
+        A fixed string can also be specified as topic for a particular job type.
+        For e.g To have a fixed string topic for workflows, coordinators and bundles,
+        specify in the following comma-separated format: {jobtype1}={some_string1}, {jobtype2}={some_string2}
+        where job type can be WORKFLOW, COORDINATOR or BUNDLE
+        E.g Following defines topic for workflow job, workflow action, coordinator job, coordinator action,
+        bundle job and bundle action
+        WORKFLOW=workflow,
+        COORDINATOR=coordinator,
+        BUNDLE={jobId}
+        For jobs with no defined topic, default topic will be ${username}
+        </description>
+    </property>
+
+    <!-- JMS Producer connection -->
+    <property>
+        <name>oozie.jms.producer.notification.connection</name>
+        <value>java.naming.factory.initial#org.apache.activemq.jndi.ActiveMQInitialContextFactory;java.naming.provider.url#tcp://localhost:61616;connectionFactoryNames#ConnectionFactory</value>
     </property>
 
  <!-- JMSAccessorService -->
@@ -1367,7 +1395,7 @@
         <name>oozie.service.StatusTransitService.backward.support.for.coord.status</name>
         <value>false</value>
         <description>
-            true, if coordinator job submits using 'uri:oozie:coordinator:0.1' namespace and wants to keep Oozie 2.x status transit.
+            true, if coordinator job submits using 'uri:oozie:coordinator:0.1' and wants to keep Oozie 2.x status transit.
             if set true,
             1. SUCCEEDED state in coordinator job means materialization done.
             2. No DONEWITHERROR state in coordinator job
@@ -1800,6 +1828,11 @@
         <description>
             The implementation for EventQueue in use by the EventHandlerService.
         </description>
+    </property>
+
+    <property>
+        <name>oozie.service.EventHandlerService.event.listeners</name>
+        <value>org.apache.oozie.jms.JMSJobEventListener</value>
     </property>
 
     <property>
