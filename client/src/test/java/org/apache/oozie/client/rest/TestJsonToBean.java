@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,12 +20,15 @@ package org.apache.oozie.client.rest;
 import junit.framework.TestCase;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
+import org.apache.oozie.client.JMSConnectionInfo;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 
 import java.util.List;
+import java.util.Properties;
 
 public class TestJsonToBean extends TestCase {
 
@@ -310,6 +313,27 @@ public class TestJsonToBean extends TestCase {
         assertEquals(2, list.size());
         assertEquals("cj1", list.get(0).getId());
         assertEquals("cj2", list.get(1).getId());
+    }
+
+
+    private JSONObject createJMSInfoJSONObject(){
+        JSONObject json = new JSONObject();
+        json.put(JsonTags.JMS_TOPIC_NAME, "topic");
+        Properties props = new Properties();
+        props.put("k1", "v1");
+        props.put("k2", "v2");
+        json.put(JsonTags.JMS_JNDI_PROPERTIES, JSONValue.toJSONString(props));
+        return json;
+    }
+
+    public void testParseJMSInfo() {
+        JSONObject json = createJMSInfoJSONObject();
+        JMSConnectionInfo jmsDetails = JsonToBean.createJMSConnectionInfo(json);
+        assertEquals("topic", jmsDetails.getTopicName());
+        Properties jmsProps = jmsDetails.getJNDIProperties();
+        assertNotNull(jmsDetails.getJNDIProperties());
+        assertEquals("v1", jmsProps.get("k1"));
+
     }
 
 }

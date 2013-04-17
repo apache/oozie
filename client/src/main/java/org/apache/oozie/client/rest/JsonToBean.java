@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,10 +21,12 @@ import org.apache.oozie.client.BulkResponse;
 import org.apache.oozie.client.BundleJob;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
+import org.apache.oozie.client.JMSConnectionInfo;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -34,6 +36,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Properties;
+import java.util.Set;
 
 /**
  * JSON to bean converter for {@link WorkflowAction}, {@link WorkflowJob}, {@link CoordinatorAction}
@@ -65,6 +70,7 @@ public class JsonToBean {
     private static final Map<String, Property> COORD_ACTION = new HashMap<String, Property>();
     private static final Map<String, Property> BUNDLE_JOB = new HashMap<String, Property>();
     private static final Map<String, Property> BULK_RESPONSE = new HashMap<String, Property>();
+    private static final Map<String, Property> JMS_CONNECTION_INFO = new HashMap<String, Property>();
 
     static {
         WF_ACTION.put("getId", new Property(JsonTags.WORKFLOW_ACTION_ID, String.class));
@@ -178,6 +184,8 @@ public class JsonToBean {
         BULK_RESPONSE.put("getCoordinator", new Property(JsonTags.BULK_RESPONSE_COORDINATOR, CoordinatorJob.class, true));
         BULK_RESPONSE.put("getAction", new Property(JsonTags.BULK_RESPONSE_ACTION, CoordinatorAction.class, true));
 
+        JMS_CONNECTION_INFO.put("getTopicName", new Property(JsonTags.JMS_TOPIC_NAME, String.class));
+        JMS_CONNECTION_INFO.put("getJNDIProperties", new Property(JsonTags.JMS_JNDI_PROPERTIES, Properties.class));
     }
 
     /**
@@ -214,6 +222,7 @@ public class JsonToBean {
                 else if (prop.type == CoordinatorJob.class) {
                     return createCoordinatorJobList((JSONArray) json.get(prop.label));
                 }
+
                 else {
                     throw new RuntimeException("Unsupported list type : " + prop.type.getSimpleName());
                 }
@@ -242,6 +251,15 @@ public class JsonToBean {
             }
             else if (type == WorkflowAction.class) {
                 return createWorkflowAction((JSONObject) obj);
+            }
+            else if (type == Properties.class){
+                JSONObject jsonMap = (JSONObject)JSONValue.parse((String)obj);
+                Properties props = new Properties();
+                Set<Map.Entry> entrySet = jsonMap.entrySet();
+                for (Map.Entry jsonEntry: entrySet){
+                    props.put(jsonEntry.getKey(), jsonEntry.getValue());
+                }
+                return props;
             }
             else {
                 throw new RuntimeException("Unsupported type : " + type.getSimpleName());
@@ -337,6 +355,18 @@ public class JsonToBean {
         return (CoordinatorJob) Proxy.newProxyInstance(JsonToBean.class.getClassLoader(),
                                                        new Class[]{CoordinatorJob.class},
                                                        new JsonInvocationHandler(COORD_JOB, json));
+    }
+
+
+    /**
+     * Creates a JMSInfo bean from a JSON object.
+     *
+     * @param json json object.
+     * @return a coordinator job bean populated with the JSON object values.
+     */
+    public static JMSConnectionInfo createJMSConnectionInfo(JSONObject json) {
+        return (JMSConnectionInfo) Proxy.newProxyInstance(JsonToBean.class.getClassLoader(),
+                new Class[] { JMSConnectionInfo.class }, new JsonInvocationHandler(JMS_CONNECTION_INFO, json));
     }
 
     /**

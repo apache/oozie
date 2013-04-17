@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,11 +30,13 @@ import org.apache.oozie.DagEngineException;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowsInfo;
 import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.client.rest.JMSConnectionInfoBean;
 import org.apache.oozie.client.rest.JsonWorkflowAction;
 import org.apache.oozie.client.rest.JsonWorkflowJob;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.service.DagEngineService;
 import org.apache.oozie.util.XmlUtils;
+import org.json.simple.JSONValue;
 
 public class MockDagEngineService extends DagEngineService {
     public static final String JOB_ID = "job-";
@@ -176,6 +178,12 @@ public class MockDagEngineService extends DagEngineService {
         }
 
         @Override
+        public JMSConnectionInfoBean getJMSConnectionInfo(String jobId) throws DagEngineException {
+            did = RestConstants.JOB_SHOW_JMS_INFO;
+            return createDummyJMSConnectionInfo();
+        }
+
+        @Override
         public String getDefinition(String jobId) throws DagEngineException {
             did = RestConstants.JOB_SHOW_DEFINITION;
             int idx = validateWorkflowIdx(jobId);
@@ -225,6 +233,16 @@ public class MockDagEngineService extends DagEngineService {
 
             return idx;
         }
+    }
+
+    private static JMSConnectionInfoBean createDummyJMSConnectionInfo() {
+        JMSConnectionInfoBean jmsBean = new JMSConnectionInfoBean();
+        Properties jmsProps = new Properties();
+        jmsProps.setProperty("k1", "v1");
+        jmsProps.setProperty("k2", "v2");
+        jmsBean.setJNDIProperties(jmsProps);
+        jmsBean.setTopicName("topic");
+        return jmsBean;
     }
 
     private static WorkflowJob createDummyWorkflow(int idx) {

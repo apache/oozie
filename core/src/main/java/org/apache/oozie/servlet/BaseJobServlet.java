@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -235,6 +235,14 @@ public abstract class BaseJobServlet extends JsonRestServlet {
             startCron();
             sendJsonResponse(response, HttpServletResponse.SC_OK, job, timeZoneId);
         }
+
+        else if (show.equals(RestConstants.JOB_SHOW_JMS_INFO)){
+            stopCron();
+            JsonBean jmsBean = getJMSConnectionInfo (request, response);
+            startCron();
+            sendJsonResponse(response, HttpServletResponse.SC_OK, jmsBean, timeZoneId);
+        }
+
         else if (show.equals(RestConstants.JOB_SHOW_LOG)) {
             response.setContentType(TEXT_UTF8);
             streamJobLog(request, response);
@@ -370,5 +378,16 @@ public abstract class BaseJobServlet extends JsonRestServlet {
      * @throws IOException
      */
     abstract void streamJobGraph(HttpServletRequest request, HttpServletResponse response)
+            throws XServletException, IOException;
+
+
+    /**
+     * abstract method to get JMS connection details for a job
+     * @param request
+     * @param response
+     * @throws XServletException
+     * @throws IOException
+     */
+    abstract JsonBean getJMSConnectionInfo(HttpServletRequest request, HttpServletResponse response)
             throws XServletException, IOException;
 }

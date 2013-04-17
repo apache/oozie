@@ -33,13 +33,14 @@ import org.apache.oozie.test.XDataTestCase;
 
 public class TestEventHandlerService extends XDataTestCase {
 
-    StringBuilder output = new StringBuilder();
+    static StringBuilder output = new StringBuilder();
 
     protected void setUp() throws Exception {
         super.setUp();
         Services services = new Services();
         Configuration conf = services.getConf();
         conf.set(Services.CONF_SERVICE_EXT_CLASSES, "org.apache.oozie.service.EventHandlerService");
+        conf.setClass(EventHandlerService.CONF_LISTENERS, DummyJobEventListener.class, JobEventListener.class);
         services.init();
     }
 
@@ -59,8 +60,6 @@ public class TestEventHandlerService extends XDataTestCase {
 
     public void testEventListener() throws Exception {
         EventHandlerService ehs = _testEventHandlerService();
-        ehs.addEventListener(new DummyJobEventListener());
-
         /*
          * Workflow Job events
          */
@@ -68,25 +67,25 @@ public class TestEventHandlerService extends XDataTestCase {
                 "myapp", null, null);
         ehs.queueEvent(event);
         ehs.new EventWorker().run();
-        assertTrue(output.toString().contains("Workflow Job STARTED"));
+        assertTrue(output.toString().contains("Workflow Job event STARTED"));
         output.setLength(0);
 
         event.setStatus(WorkflowJob.Status.SUSPENDED);
         ehs.queueEvent(event);
         ehs.new EventWorker().run();
-        assertTrue(output.toString().contains("Workflow Job SUSPEND"));
+        assertTrue(output.toString().contains("Workflow Job event SUSPEND"));
         output.setLength(0);
 
         event.setStatus(WorkflowJob.Status.SUCCEEDED);
         ehs.queueEvent(event);
         ehs.new EventWorker().run();
-        assertTrue(output.toString().contains("Workflow Job SUCCESS"));
+        assertTrue(output.toString().contains("Workflow Job event SUCCESS"));
         output.setLength(0);
 
         event.setStatus(WorkflowJob.Status.KILLED);
         ehs.queueEvent(event);
         ehs.new EventWorker().run();
-        assertTrue(output.toString().contains("Workflow Job FAILURE"));
+        assertTrue(output.toString().contains("Workflow Job event FAILURE"));
         output.setLength(0);
 
         /*
@@ -96,37 +95,37 @@ public class TestEventHandlerService extends XDataTestCase {
                 CoordinatorAction.Status.WAITING, getTestUser(), "myapp", null, null, null);
         ehs.queueEvent(event2);
         ehs.new EventWorker().run();
-        assertTrue(output.toString().contains("Coord Action WAITING"));
+        assertTrue(output.toString().contains("Coord Action event WAITING"));
         output.setLength(0);
 
         event2.setStatus(CoordinatorAction.Status.RUNNING);
         ehs.queueEvent(event2);
         ehs.new EventWorker().run();
-        assertTrue(output.toString().contains("Coord Action START"));
+        assertTrue(output.toString().contains("Coord Action event STARTED"));
         output.setLength(0);
 
         event2.setStatus(CoordinatorAction.Status.SUSPENDED);
         ehs.queueEvent(event2);
         ehs.new EventWorker().run();
-        assertTrue(output.toString().contains("Coord Action SUSPEND"));
+        assertTrue(output.toString().contains("Coord Action event SUSPEND"));
         output.setLength(0);
 
         event2.setStatus(CoordinatorAction.Status.SUCCEEDED);
         ehs.queueEvent(event2);
         ehs.new EventWorker().run();
-        assertTrue(output.toString().contains("Coord Action SUCCESS"));
+        assertTrue(output.toString().contains("Coord Action event SUCCESS"));
         output.setLength(0);
 
         event2.setStatus(CoordinatorAction.Status.TIMEDOUT);
         ehs.queueEvent(event2);
         ehs.new EventWorker().run();
-        assertTrue(output.toString().contains("Coord Action FAILURE"));
+        assertTrue(output.toString().contains("Coord Action event FAILURE"));
         output.setLength(0);
 
         event2.setStatus(CoordinatorAction.Status.KILLED);
         ehs.queueEvent(event2);
         ehs.new EventWorker().run();
-        assertTrue(output.toString().contains("Coord Action FAILURE"));
+        assertTrue(output.toString().contains("Coord Action event FAILURE"));
         output.setLength(0);
     }
 
@@ -137,152 +136,40 @@ public class TestEventHandlerService extends XDataTestCase {
         return ehs;
     }
 
-    class DummyJobEventListener extends JobEventListener {
+    static class DummyJobEventListener extends JobEventListener {
 
         @Override
-        public void onWorkflowJobStart(WorkflowJobEvent wje) {
+        public void onWorkflowJobEvent(WorkflowJobEvent wje) {
             if (wje != null) {
-                output.append("Dummy Workflow Job STARTED");
+                output.append("Dummy Workflow Job event " + wje.getEventStatus());
             }
         }
 
         @Override
-        public void onWorkflowJobSuccess(WorkflowJobEvent wje) {
-            if (wje != null) {
-                output.append("Dummy Workflow Job SUCCESS");
-            }
-        }
-
-        @Override
-        public void onWorkflowJobFailure(WorkflowJobEvent wje) {
-            if (wje != null) {
-                output.append("Dummy Workflow Job FAILURE");
-            }
-        }
-
-        @Override
-        public void onWorkflowJobSuspend(WorkflowJobEvent wje) {
-            if (wje != null) {
-                output.append("Dummy Workflow Job SUSPEND");
-            }
-        }
-
-        @Override
-        public void onWorkflowActionStart(WorkflowActionEvent wae) {
+        public void onWorkflowActionEvent(WorkflowActionEvent wae) {
             if (wae != null) {
-                output.append("Dummy Workflow Action START");
+                output.append("Dummy Workflow Action event "+ wae.getEventStatus());
             }
         }
 
         @Override
-        public void onWorkflowActionSuccess(WorkflowActionEvent wae) {
-            if (wae != null) {
-                output.append("Dummy Workflow Action SUCCESS");
-            }
-        }
-
-        @Override
-        public void onWorkflowActionFailure(WorkflowActionEvent wae) {
-            if (wae != null) {
-                output.append("Dummy Workflow Action FAILURE");
-            }
-        }
-
-        @Override
-        public void onWorkflowActionSuspend(WorkflowActionEvent wae) {
-            if (wae != null) {
-                output.append("Dummy Workflow Action SUSPEND");
-            }
-        }
-
-        @Override
-        public void onCoordinatorJobStart(CoordinatorJobEvent cje) {
+        public void onCoordinatorJobEvent(CoordinatorJobEvent cje) {
             if (cje != null) {
-                output.append("Dummy Coord Job START");
+                output.append("Dummy Coord Job event "+cje.getEventStatus());
             }
         }
 
         @Override
-        public void onCoordinatorJobSuccess(CoordinatorJobEvent cje) {
-            if (cje != null) {
-                output.append("Dummy Coord Job SUCCESS");
-            }
-        }
-
-        @Override
-        public void onCoordinatorJobFailure(CoordinatorJobEvent cje) {
-            if (cje != null) {
-                output.append("Dummy Coord Job FAILURE");
-            }
-        }
-
-        @Override
-        public void onCoordinatorJobSuspend(CoordinatorJobEvent cje) {
-            if (cje != null) {
-                output.append("Dummy Coord Job SUSPEND");
-            }
-        }
-
-        @Override
-        public void onCoordinatorActionWaiting(CoordinatorActionEvent cae) {
+        public void onCoordinatorActionEvent(CoordinatorActionEvent cae) {
             if (cae != null) {
-                output.append("Dummy Coord Action WAITING");
+                output.append("Dummy Coord Action event "+cae.getEventStatus());
             }
         }
 
         @Override
-        public void onCoordinatorActionStart(CoordinatorActionEvent cae) {
-            if (cae != null) {
-                output.append("Dummy Coord Action START");
-            }
-        }
-
-        @Override
-        public void onCoordinatorActionSuccess(CoordinatorActionEvent cae) {
-            if (cae != null) {
-                output.append("Dummy Coord Action SUCCESS");
-            }
-        }
-
-        @Override
-        public void onCoordinatorActionFailure(CoordinatorActionEvent cae) {
-            if (cae != null) {
-                output.append("Dummy Coord Action FAILURE");
-            }
-        }
-
-        @Override
-        public void onCoordinatorActionSuspend(CoordinatorActionEvent cae) {
-            if (cae != null) {
-                output.append("Dummy Coord Action SUSPEND");
-            }
-        }
-
-        @Override
-        public void onBundleJobStart(BundleJobEvent bje) {
+        public void onBundleJobEvent(BundleJobEvent bje) {
             if (bje != null) {
-                output.append("Dummy Bundle Job START");
-            }
-        }
-
-        @Override
-        public void onBundleJobSuccess(BundleJobEvent bje) {
-            if (bje != null) {
-                output.append("Dummy Bundle Job SUCCESS");
-            }
-        }
-
-        @Override
-        public void onBundleJobFailure(BundleJobEvent bje) {
-            if (bje != null) {
-                output.append("Dummy Bundle Job FAILURE");
-            }
-        }
-
-        @Override
-        public void onBundleJobSuspend(BundleJobEvent bje) {
-            if (bje != null) {
-                output.append("Dummy Bundle Job SUSPEND");
+                output.append("Dummy Bundle Job event "+bje.getEventStatus());
             }
         }
 

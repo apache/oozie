@@ -20,6 +20,8 @@ package org.apache.oozie.event;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.service.EventHandlerService;
+import org.apache.oozie.service.JMSAccessorService;
+import org.apache.oozie.service.JMSTopicService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
 
@@ -28,16 +30,21 @@ import org.apache.oozie.test.XDataTestCase;
  */
 public class TestEventQueue extends XDataTestCase {
 
+    private Services services;
+
     protected void setUp() throws Exception {
         super.setUp();
-        Services services = new Services();
+        services = new Services();
         Configuration conf = services.getConf();
-        conf.set(Services.CONF_SERVICE_EXT_CLASSES, "org.apache.oozie.service.EventHandlerService");
+        conf.set(Services.CONF_SERVICE_EXT_CLASSES,
+                JMSAccessorService.class.getName() + "," + JMSTopicService.class.getName() + ","
+                        + EventHandlerService.class.getName());
+        conf.setInt(EventHandlerService.CONF_BATCH_SIZE, 3);
         services.init();
     }
 
     protected void tearDown() throws Exception {
-        Services.get().destroy();
+        services.destroy();
         super.tearDown();
     }
 
@@ -50,13 +57,7 @@ public class TestEventQueue extends XDataTestCase {
     }
 
     public void testQueueOperations() throws Exception {
-        Services services = Services.get();
-        Configuration conf = services.getConf();
-
-        // set smaller batch size for the events queue
-        conf.setInt(EventHandlerService.CONF_BATCH_SIZE, 3);
         EventHandlerService ehs = Services.get().get(EventHandlerService.class);
-        ehs.init(services);
         EventQueue eventQ = ehs.getEventQueue();
         assertEquals(eventQ.getCurrentSize(), 0);
         assertEquals(eventQ.getBatchSize(), 3);

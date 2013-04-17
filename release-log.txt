@@ -1,5 +1,7 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1235 Client API for retrieving topic and jms connection related details (virag)
+OOZIE-1234 JMS Event Listeners for publishing notifications related to workflow and coordinator (virag)
 OOZIE-1281  Hiveaction should populate externalChildIDs (rohini via virag)
 OOZIE-1322 show child job URL tab selectively for pig action (ryota via mona)
 OOZIE-1307 Cover package org.apache.oozie.action.ssh with unit tests (vbondarev via rkanter)

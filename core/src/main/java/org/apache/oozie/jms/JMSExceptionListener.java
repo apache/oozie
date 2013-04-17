@@ -29,6 +29,7 @@ public class JMSExceptionListener implements ExceptionListener {
     private static XLog LOG = XLog.getLog(JMSExceptionListener.class);
     private JMSConnectionInfo connInfo;
     private ConnectionContext connCtxt;
+    private boolean retry;
 
     /**
      * Create ExceptionLister for a JMS Connection
@@ -36,17 +37,21 @@ public class JMSExceptionListener implements ExceptionListener {
      * @param connInfo Information to connect to the JMS compliant messaging service
      * @param connCtxt The actual connection on which this listener will be registered
      */
-    public JMSExceptionListener(JMSConnectionInfo connInfo, ConnectionContext connCtxt) {
+    public JMSExceptionListener(JMSConnectionInfo connInfo, ConnectionContext connCtxt, boolean retry) {
         this.connInfo = connInfo;
         this.connCtxt = connCtxt;
+        this.retry = retry;
     }
 
     @Override
     public void onException(JMSException exception) {
-        LOG.warn("Received JMSException for [{0}]. Reestablishing connection", connInfo, exception);
+        LOG.warn("Received JMSException for [{0}]", connInfo, exception);
         connCtxt.close();
         JMSAccessorService jmsService = Services.get().get(JMSAccessorService.class);
-        jmsService.reestablishConnection(connInfo);
+        jmsService.removeConnInfo(connInfo);
+        if (retry) {
+            jmsService.reestablishConnection(connInfo);
+        }
     }
 
 }

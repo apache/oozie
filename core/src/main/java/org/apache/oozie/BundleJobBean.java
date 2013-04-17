@@ -76,7 +76,9 @@ import org.apache.openjpa.persistence.jdbc.Index;
                 "c.id, c.appName, c.status FROM CoordinatorActionBean a, CoordinatorJobBean c " +
                 "WHERE a.jobId = c.id AND c.bundleId = :bundleId ORDER BY a.jobId, a.createdTimestamp"),
 
-        @NamedQuery(name = "BULK_MONITOR_COUNT_QUERY", query = "SELECT COUNT(a) FROM CoordinatorActionBean a, CoordinatorJobBean c") })
+        @NamedQuery(name = "BULK_MONITOR_COUNT_QUERY", query = "SELECT COUNT(a) FROM CoordinatorActionBean a, CoordinatorJobBean c"),
+
+        @NamedQuery(name = "GET_BUNDLE_JOB_FOR_USER", query = "select w.user from BundleJobBean w where w.id = :id") })
 public class BundleJobBean extends JsonBundleJob implements Writable {
 
     @Basic

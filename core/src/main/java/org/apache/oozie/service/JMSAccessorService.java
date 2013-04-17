@@ -54,6 +54,7 @@ public class JMSAccessorService implements Service {
     public static final String CONF_RETRY_INITIAL_DELAY = CONF_PREFIX + "retry.initial.delay";
     public static final String CONF_RETRY_MULTIPLIER = CONF_PREFIX + "retry.multiplier";
     public static final String CONF_RETRY_MAX_ATTEMPTS = CONF_PREFIX + "retry.max.attempts";
+    public static final String JMS_PRODUCER_CONNECTION_INFO_IMPL = CONF_PREFIX + "jms.producer.connection.info.impl";
     private static XLog LOG;
 
     private Configuration conf;
@@ -105,7 +106,7 @@ public class JMSAccessorService implements Service {
                 if (!topicsMap.containsKey(topic)) {
                     synchronized (topicsMap) {
                         if (!topicsMap.containsKey(topic)) {
-                            ConnectionContext connCtxt = createConnectionContext(connInfo);
+                            ConnectionContext connCtxt = createConnectionContext(connInfo, true);
                             if (connCtxt == null) {
                                 queueTopicForRetry(connInfo, topic, msgHandler);
                                 return;
@@ -254,13 +255,13 @@ public class JMSAccessorService implements Service {
         }
     }
 
-    protected ConnectionContext createConnectionContext(JMSConnectionInfo connInfo) {
+    public ConnectionContext createConnectionContext(JMSConnectionInfo connInfo, boolean retry) {
         ConnectionContext connCtxt = connectionMap.get(connInfo);
         if (connCtxt == null) {
             try {
                 connCtxt = getConnectionContextImpl();
                 connCtxt.createConnection(connInfo.getJNDIProperties());
-                connCtxt.setExceptionListener(new JMSExceptionListener(connInfo, connCtxt));
+                connCtxt.setExceptionListener(new JMSExceptionListener(connInfo, connCtxt, retry));
                 connectionMap.put(connInfo, connCtxt);
                 LOG.info("Connection established to JMS Server for [{0}]", connInfo);
             }
@@ -321,12 +322,15 @@ public class JMSAccessorService implements Service {
         return JMSAccessorService.class;
     }
 
+    public void removeConnInfo(JMSConnectionInfo connInfo){
+        connectionMap.remove(connInfo);
+    }
+
     /**
      * Reestablish connection for the given JMS connect information
      * @param connInfo JMS connection info
      */
     public void reestablishConnection(JMSConnectionInfo connInfo) {
-        connectionMap.remove(connInfo);
         // Queue the connection and topics for retry
         ConnectionRetryInfo connRetryInfo = queueConnectionForRetry(connInfo);
         Map<String, MessageReceiver> listeningTopicsMap = receiversMap.remove(connInfo);
@@ -362,7 +366,7 @@ public class JMSAccessorService implements Service {
         LOG.info("Attempting retry of connection [{0}]", connInfo);
         connRetryInfo.setNumAttempt(connRetryInfo.getNumAttempt() + 1);
         connRetryInfo.setNextDelay(connRetryInfo.getNextDelay() * retryMultiplier);
-        ConnectionContext connCtxt = createConnectionContext(connInfo);
+        ConnectionContext connCtxt = createConnectionContext(connInfo, true);
         boolean shouldRetry = false;
         if (connCtxt == null) {
             shouldRetry = true;

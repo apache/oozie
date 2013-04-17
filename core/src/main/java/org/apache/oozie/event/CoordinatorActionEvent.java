@@ -110,7 +110,7 @@ public class CoordinatorActionEvent extends JobEvent {
     }
 
     public void setErrorMessage(String msg) {
-        errorCode = msg;
+        errorMessage = msg;
     }
 
 }
