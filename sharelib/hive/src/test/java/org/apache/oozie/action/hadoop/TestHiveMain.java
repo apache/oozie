@@ -104,7 +104,7 @@ public class TestHiveMain extends MainTestCase {
             os.close();
 
             //needed in the testcase classpath
-            URL url = Thread.currentThread().getContextClassLoader().getResource("PigMain.txt");
+            URL url = Thread.currentThread().getContextClassLoader().getResource("HiveMain.txt");
             File classPathDir = new File(url.getPath()).getParentFile();
             assertTrue(classPathDir.exists());
             File hiveSite = new File(classPathDir, "hive-site.xml");
