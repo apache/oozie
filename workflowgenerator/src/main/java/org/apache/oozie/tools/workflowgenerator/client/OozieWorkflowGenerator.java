@@ -61,6 +61,8 @@ import com.google.gwt.user.client.ui.*;
  */
 public class OozieWorkflowGenerator implements EntryPoint {
 
+    private static final int ZINDEX_FRONT_OF_GRID = 10;
+
     private PickupDragController dragController;
     private OozieDiagramController controller;
     private Panel propPanel;
@@ -551,7 +553,44 @@ public class OozieWorkflowGenerator implements EntryPoint {
         helpMenu.addItem("Documentation", openOozieTopPageComman);
         helpMenu.addItem("Online Help", openOozieTopPageComman);
 
-        helpMenu.addItem("About", cmd);
+
+        Command aboutCommand = new Command() {
+            @Override
+            public void execute() {
+                // Dialogbox
+                final DialogBox d = new DialogBox(false, true);
+                d.setGlassEnabled(true);
+                d.setText("About Oozie Workflow Generator");
+                d.center();
+
+                // Set this to workaround the grid z-index issue https://issues.apache.org/jira/browse/OOZIE-1081
+                d.getElement().getStyle().setZIndex(ZINDEX_FRONT_OF_GRID);
+
+                // About text
+                VerticalPanel vpanel = new VerticalPanel();
+                vpanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
+                vpanel.setSpacing(10);
+                vpanel.setWidth("150");
+                vpanel.add(new Label("Oozie Workflow Generator"));
+                vpanel.add(new Label("Version 3.4.0-SNAPSHOT")); // TODO how to get a version number from pom?
+
+                // OK button to close
+                Button ok = new Button("OK");
+                ok.addClickHandler(new ClickHandler(){
+                    @Override
+                    public void onClick(ClickEvent event) {
+                        d.hide();
+                    }
+
+                });
+
+                vpanel.add(ok);
+                d.setWidget(vpanel);
+                d.show();
+
+            }
+        };
+        helpMenu.addItem("About", aboutCommand);
 
         MenuBar menu = new MenuBar();
         menu.addItem("File", fileMenu);
