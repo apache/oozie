@@ -121,14 +121,19 @@ for uploading new or upgrading existing sharelib into hdfs where the first argum
 and the second argument is the Oozie sharelib to install, it can be a tarball or the expanded version of it.
 If the second argument is omitted, the Oozie sharelib tarball from the Oozie installation directory will be used.
 
-"prepare-war" command is for creating war files for oozie.
+"prepare-war [-d directory]" command is for creating war files for oozie with an optional alternative directory other
+than libext.
+
+db create|upgrade|postupgrade -run [-sqlfile <FILE>] command is for create, upgrade or postupgrade oozie db with an
+optional sql file
 
 Run the =oozie-setup.sh= script to configure Oozie with all the components added to the *libext/* directory.
 
 <verbatim>
-$ bin/oozie-setup.sh prepare-war [-jars <PATHS>] [-extjs <PATH>] [-secure]
+$ bin/oozie-setup.sh prepare-war [-d directory] [-secure]
                      sharelib create -fs <FS_URI> [-locallib <PATH>]
                      sharelib upgrade -fs <FS_URI> [-locallib <PATH>]
+                     db create|upgrade|postupgrade -run [-sqlfile <FILE>]
 </verbatim>
 
 The =-secure= option will configure Oozie to use HTTP (SSL); refer to

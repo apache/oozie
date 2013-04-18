@@ -63,12 +63,8 @@ The =oozie-setup.sh= script options are:
 
 <verbatim>
 Usage  : oozie-setup.sh <OPTIONS>"
-         prepare-war [-hadoop HADOOP_VERSION HADOOP_PATH] [-extjs EXTJS_PATH] [-jars JARS_PATH] [-secure]"
-                     (prepare-war is to prepare war files for oozie)"
-                     (Hadoop version [0.20.1|0.20.2|0.20.104|0.20.200|0.23.x|2.x] and Hadoop install dir)"
-                     (EXTJS_PATH is expanded or ZIP, to enable the Oozie webconsole)"
-                     (JARS_PATH is multiple JAR path separated by ':')"
-                     (-secure will configure the war file to use HTTPS (SSL))"
+         prepare-war [-d directory] [-secure] (-d identifies an alternative directory for processing jars"
+                                              -secure will configure the war file to use HTTPS (SSL))"
          sharelib create -fs FS_URI [-locallib SHARED_LIBRARY] (create sharelib for oozie,"
                                                                FS_URI is the fs.default.name"
                                                                for hdfs uri; SHARED_LIBRARY, path to the"
@@ -80,6 +76,8 @@ Usage  : oozie-setup.sh <OPTIONS>"
                                                                in HDFS)"
          sharelib upgrade -fs FS_URI [-locallib SHARED_LIBRARY] (upgrade existing sharelib, fails if there"
                                                                  is no existing sharelib installed in HDFS)"
+         db create|upgrade|postupgrade -run [-sqlfile <FILE>] (create, upgrade or postupgrade oozie db with an"
+                                                               optional sql file)"
          (without options prints usage information)"
 </verbatim>
 
