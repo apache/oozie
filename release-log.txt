@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1326 sharelib tests failing saying error on fork after OOZIE-1311 refactor (rohini via rkanter)
 OOZIE-1235 Client API for retrieving topic and jms connection related details (virag)
 OOZIE-1234 JMS Event Listeners for publishing notifications related to workflow and coordinator (virag)
 OOZIE-1281  Hiveaction should populate externalChildIDs (rohini via virag)
