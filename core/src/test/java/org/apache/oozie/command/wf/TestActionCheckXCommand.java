@@ -245,13 +245,12 @@ public class TestActionCheckXCommand extends XDataTestCase {
             return;
         }
         services.destroy();
-        // Make the ActionCheckXCommand run more frequently so the test won't take as long
-        setSystemProperty("oozie.service.ActionCheckerService.action.check.interval", "10");
-        setSystemProperty("oozie.service.ActionCheckerService.action.check.delay", "20");
         // Make the max number of retries lower so the test won't take as long
         final int maxRetries = 2;
         setSystemProperty("oozie.action.retries.max", Integer.toString(maxRetries));
         services = new Services();
+        // Disable ActionCheckerService so it doesn't interfere by triggering any extra ActionCheckXCommands
+        setClassesToBeExcluded(services.getConf(), new String[]{"org.apache.oozie.service.ActionCheckerService"});
         services.init();
 
         final JPAService jpaService = Services.get().get(JPAService.class);
@@ -355,13 +354,12 @@ public class TestActionCheckXCommand extends XDataTestCase {
             return;
         }
         services.destroy();
-        // Make the ActionCheckXCommand run more frequently so the test won't take as long
-        setSystemProperty("oozie.service.ActionCheckerService.action.check.interval", "10");
-        setSystemProperty("oozie.service.ActionCheckerService.action.check.delay", "20");
         // Make the max number of retries lower so the test won't take as long
         final int maxRetries = 2;
         setSystemProperty("oozie.action.retries.max", Integer.toString(maxRetries));
         services = new Services();
+        // Disable ActionCheckerService so it doesn't interfere by triggering any extra ActionCheckXCommands
+        setClassesToBeExcluded(services.getConf(), new String[]{"org.apache.oozie.service.ActionCheckerService"});
         services.init();
 
         final JPAService jpaService = Services.get().get(JPAService.class);
