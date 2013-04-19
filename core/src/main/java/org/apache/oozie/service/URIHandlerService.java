@@ -196,10 +196,11 @@ public class URIHandlerService implements Service {
      */
     public URI getAuthorityWithScheme(String uri) throws URIHandlerException {
         int index = uri.indexOf("://");
-        if (index == -1) {
-            throw new URIHandlerException(ErrorCode.E0905, uri);
-        }
         try {
+            if (index == -1) {
+                LOG.trace("Relative path for uri-template "+uri);
+                return new URI("/");
+            }
             if (uri.indexOf(":///") != -1) {
                 return new URI(uri.substring(0, index + 4));
             }

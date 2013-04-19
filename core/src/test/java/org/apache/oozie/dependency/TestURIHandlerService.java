@@ -17,16 +17,30 @@
  */
 package org.apache.oozie.dependency;
 
-import static org.junit.Assert.assertEquals;
-
 import java.net.URI;
 
-import org.apache.oozie.ErrorCode;
+import org.apache.oozie.service.Services;
 import org.apache.oozie.service.URIHandlerService;
-import org.junit.Assert;
+import org.apache.oozie.test.XTestCase;
 import org.junit.Test;
 
-public class TestURIHandlerService {
+public class TestURIHandlerService extends XTestCase {
+
+    private Services services;
+
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        services = new Services();
+        services.init();
+
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        services.destroy();
+        super.tearDown();
+    }
 
     @Test
     public void testGetAuthorityWithScheme() throws Exception {
@@ -41,14 +55,16 @@ public class TestURIHandlerService {
         assertEquals("hdfs:///", uri.toString());
         uri = uriService.getAuthorityWithScheme("hdfs:///tmp/file");
         assertEquals("hdfs:///", uri.toString());
+        uri = uriService.getAuthorityWithScheme("/tmp/file");
+        assertEquals("/", uri.toString());
+    }
 
-        try {
-            uri = uriService.getAuthorityWithScheme("/tmp/file");
-            Assert.fail();
-        }
-        catch (URIHandlerException e) {
-            assertEquals(ErrorCode.E0905, e.getErrorCode());
-        }
+    @Test
+    public void testGetURIHandler() throws Exception {
+        URIHandlerService uriService = services.get(URIHandlerService.class);
+        URI uri = uriService.getAuthorityWithScheme("/tmp/file");
+        URIHandler uriHandler = uriService.getURIHandler(uri);
+        assertTrue(uriHandler instanceof FSURIHandler);
     }
 
 }
