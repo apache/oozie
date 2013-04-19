@@ -103,6 +103,14 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         }
     }
 
+    public void testActionMaterForHcatalogRelativePath() throws Exception {
+        Date startTime = DateUtils.parseDateOozieTZ("2009-03-06T010:00Z");
+        Date endTime = DateUtils.parseDateOozieTZ("2009-03-11T10:00Z");
+        CoordinatorJobBean job = addRecordToCoordJobTableForWaiting("coord-job-for-matd-relative.xml",
+                CoordinatorJob.Status.RUNNING, startTime, endTime, false, false, 0);
+        new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
+    }
+
     public void testActionMaterWithPauseTime1() throws Exception {
         Date startTime = DateUtils.parseDateOozieTZ("2009-03-06T10:00Z");
         Date endTime = DateUtils.parseDateOozieTZ("2009-03-06T10:14Z");
