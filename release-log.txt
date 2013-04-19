@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1224 web console user interface improvements (matthew ropp via mona)
 OOZIE-1083 WFGEN Help -> About dialog box (jaoki via tucu)
 OOZIE-670 Merge addtowar and oozie-setup scripts into one (bowenzhangusa via tucu)
 OOZIE-1326 sharelib tests failing saying error on fork after OOZIE-1311 refactor (rohini via rkanter)
@@ -29,7 +30,6 @@ OOZIE-1239 Bump up trunk to 4.1.0-SNAPSHOT (virag)
 -- Oozie 4.0.0 (unreleased)
 
 OOZIE-1331 URIHandlerService not allowing relative path for URI's (virag)
-OOZIE-1224 web console user interface improvements (matthew ropp via mona)
 OOZIE-1332 Flakey test TestActionCheckXCommand.testActionCheckTransientDuringMRAction (rkanter)
 OOZIE-1150 DB upgrade scripts for hcat changes (ryota via virag)
 OOZIE-1323 HTTPS docs lists the same step twice for creating a self-signed certificate (rkanter)
