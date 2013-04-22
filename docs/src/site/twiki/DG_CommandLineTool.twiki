@@ -61,7 +61,7 @@ usage:
       oozie jobs <OPTIONS> : jobs status
                  -auth <arg>          select authentication type [SIMPLE|KERBEROS]
                  -doas <arg>          doAs user, impersonates as the specified user.
-                 -filter <arg>        user=<U>;name=<N>;group=<G>;status=<S>;...
+                 -filter <arg>        user=<U>\;name=<N>\;group=<G>\;status=<S>\;...
                  -jobtype <arg>       job type ('Supported in Oozie-2.0 or later versions ONLY - coordinator' or 'wf' (default))
                  -len <arg>           number of jobs (default '100')
                  -localtime           use local time (same as passing your time zone to -timezone). Overrides -timezone option
@@ -396,8 +396,11 @@ The =localtime= option displays times in local time, if not specified times are 
 The =verbose= option gives more detailed information for all the actions, if checking for workflow job or coordinator job.
 
 The =filter= option can be used to filter coordinator actions based on their status.
-The filter option syntax is: <code>[status=VALUE][;status=VALUE]*</code>.
-Multiple values must be specified as different name value pairs. When multiple filters are specified, all Coordinator actions that satisfy any one of the filters will be retrieved. (The query will do an OR among all the filter values for the status)
+The filter option syntax is: <code>[status=VALUE][\;status=VALUE]*</code>.
+(Note escape <code>\</code> needed before semicolon to specify multiple names for filter in shell)
+Multiple values must be specified as different name value pairs. When multiple filters are specified,
+all Coordinator actions that satisfy any one of the filters will be retrieved.
+(The query will do an OR among all the filter values for the status)
 Currently, the filter option can be used only with an =info= option on Coordinator job.
 
 An example below shows how the =verbose= option can be used to gather action statistics information for a job:
