@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1333 Some testcases related to EventHandlerService are failing in a transient way (virag)
 OOZIE-1316 fix coverage org.apache.oozie.action.hadoop (aleksgor via rkanter)
 OOZIE-1224 web console user interface improvements (matthew ropp via mona)
 OOZIE-1083 WFGEN Help -> About dialog box (jaoki via tucu)

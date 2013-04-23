@@ -62,7 +62,7 @@ public class EventHandlerService implements Service {
     private static EventQueue eventQueue;
     private int queueMaxSize;
     private XLog LOG;
-    private static Map<MessageType, List<?>> listenerMap = new HashMap<MessageType, List<?>>();
+    private Map<MessageType, List<?>> listenerMap = new HashMap<MessageType, List<?>>();
     private Set<String> apptypes;
     private static int batchSize;
     private static boolean eventsConfigured = false;
@@ -159,6 +159,7 @@ public class EventHandlerService implements Service {
 
     @Override
     public void destroy() {
+        eventsConfigured=false;
         for (MessageType type : listenerMap.keySet()) {
             Iterator<?> iter = listenerMap.get(type).iterator();
             while (iter.hasNext()) {
