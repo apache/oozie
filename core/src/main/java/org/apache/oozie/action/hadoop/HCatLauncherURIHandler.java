@@ -22,6 +22,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map.Entry;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
@@ -68,7 +69,12 @@ public class HCatLauncherURIHandler implements LauncherURIHandler {
     }
 
     private HCatClient getHCatClient(URI uri, Configuration conf) throws LauncherException {
-        final HiveConf hiveConf = new HiveConf(conf, this.getClass());
+        // Do not use the constructor public HiveConf(Configuration other, Class<?> cls)
+        // It overwrites the values in conf with default values
+        final HiveConf hiveConf = new HiveConf();
+        for (Entry<String, String> entry : conf) {
+            hiveConf.set(entry.getKey(), entry.getValue());
+        }
         String serverURI = getMetastoreConnectURI(uri);
         if (!serverURI.equals("")) {
             hiveConf.set("hive.metastore.local", "false");
