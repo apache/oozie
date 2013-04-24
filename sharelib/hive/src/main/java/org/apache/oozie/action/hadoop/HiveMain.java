@@ -23,6 +23,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +34,7 @@ import java.util.regex.Pattern;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.cli.CliDriver;
+import org.apache.hadoop.hive.conf.HiveConf;
 
 public class HiveMain extends LauncherMain {
     private static final Pattern[] HIVE_JOB_IDS_PATTERNS = {
@@ -152,6 +154,14 @@ public class HiveMain extends LauncherMain {
         System.out.flush();
         System.out.println("------------------------");
         System.out.println();
+
+        // Reset the hiveSiteURL static variable as we just created hive-site.xml.
+        // If prepare block had a drop partition it would have been initialized to null.
+        Field declaredField = HiveConf.class.getDeclaredField("hiveSiteURL");
+        if (declaredField != null) {
+            declaredField.setAccessible(true);
+            declaredField.set(null, HiveConf.class.getClassLoader().getResource("hive-site.xml"));
+        }
         return hiveConf;
     }
 
