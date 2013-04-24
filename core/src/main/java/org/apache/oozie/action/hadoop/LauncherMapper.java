@@ -669,7 +669,10 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         String prepareXML = getJobConf().get(ACTION_PREPARE_XML);
         if (prepareXML != null) {
              if (!prepareXML.equals("")) {
-                 PrepareActionsDriver.doOperations(prepareXML, getJobConf());
+                 Configuration actionConf = new Configuration(getJobConf());
+                 String actionXml = System.getProperty("oozie.action.conf.xml");
+                 actionConf.addResource(new Path("file:///", actionXml));
+                 PrepareActionsDriver.doOperations(prepareXML, actionConf);
              } else {
                  System.out.println("There are no prepare actions to execute.");
              }

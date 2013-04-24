@@ -31,6 +31,7 @@ OOZIE-1239 Bump up trunk to 4.1.0-SNAPSHOT (virag)
 
 -- Oozie 4.0.0 (unreleased)
 
+OOZIE-1146 FileSystem used by prepare sections should use the configuration of the action (rohini via virag)
 OOZIE-1215 add note of using escape for oozie jobs filters in doc (egashira via rkanter)
 OOZIE-1331 URIHandlerService not allowing relative path for URI's (virag)
 OOZIE-1332 Flakey test TestActionCheckXCommand.testActionCheckTransientDuringMRAction (rkanter)

@@ -847,6 +847,16 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
                 "<mkdir path='" + mkdir + "'/>" +
                 "<delete path='" + delete + "'/>" +
                 "</prepare>" +
+                "<configuration>" +
+                "<property>" +
+                "<name>dfs.umaskmode</name>" +
+                "<value>026</value>" +
+                "</property>" +
+                "<property>" +
+                "<name>fs.hdfs.impl.disable.cache</name>" +
+                "<value>true</value>" +
+                "</property>" +
+                "</configuration>" +
                 "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
                 "</java>";
         Context context = createContext(actionXml, null);
@@ -867,6 +877,8 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertEquals(WorkflowAction.Status.OK, context.getAction().getStatus());
 
         assertTrue(fs.exists(mkdir));
+        // Check if the action configuration is applied in the prepare block
+        assertEquals("rwxr-x--x", fs.getFileStatus(mkdir).getPermission().toString());
         assertFalse(fs.exists(delete));
     }
 
