@@ -51,8 +51,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * The HadoopAccessorService returns HadoopAccessor instances configured to work on behalf of a user-group. <p/> The
  * default accessor used is the base accessor which just injects the UGI into the configuration instance used to
- * create/obtain JobClient and ileSystem instances. <p/> The HadoopAccess class to use can be configured in the
- * <code>oozie-site.xml</code> using the <code>oozie.service.HadoopAccessorService.accessor.class</code> property.
+ * create/obtain JobClient and FileSystem instances.
  */
 public class HadoopAccessorService implements Service {
 
@@ -68,14 +67,14 @@ public class HadoopAccessorService implements Service {
     public static final String KERBEROS_PRINCIPAL = CONF_PREFIX + "kerberos.principal";
     public static final Text MR_TOKEN_ALIAS = new Text("oozie mr token");
 
-    private static final String OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED = "oozie.HadoopAccessorService.created";
+    protected static final String OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED = "oozie.HadoopAccessorService.created";
     /** The Kerberos principal for the job tracker.*/
-    private static final String JT_PRINCIPAL = "mapreduce.jobtracker.kerberos.principal";
+    protected static final String JT_PRINCIPAL = "mapreduce.jobtracker.kerberos.principal";
     /** The Kerberos principal for the resource manager.*/
-    private static final String RM_PRINCIPAL = "yarn.resourcemanager.principal";
-    private static final String HADOOP_JOB_TRACKER = "mapred.job.tracker";
-    private static final String HADOOP_JOB_TRACKER_2 = "mapreduce.jobtracker.address";
-    private static final String HADOOP_YARN_RM = "yarn.resourcemanager.address";
+    protected static final String RM_PRINCIPAL = "yarn.resourcemanager.principal";
+    protected static final String HADOOP_JOB_TRACKER = "mapred.job.tracker";
+    protected static final String HADOOP_JOB_TRACKER_2 = "mapreduce.jobtracker.address";
+    protected static final String HADOOP_YARN_RM = "yarn.resourcemanager.address";
     private static final Map<String, Text> mrTokenRenewers = new HashMap<String, Text>();
 
     private Set<String> jobTrackerWhitelist = new HashSet<String>();
@@ -459,7 +458,7 @@ public class HadoopAccessorService implements Service {
         }
     }
 
-    public static Text getMRDelegationTokenRenewer(JobConf jobConf) throws IOException {
+    public Text getMRDelegationTokenRenewer(JobConf jobConf) throws IOException {
         if (UserGroupInformation.isSecurityEnabled()) { // secure cluster
             return getMRTokenRenewerInternal(jobConf);
         }
@@ -469,7 +468,7 @@ public class HadoopAccessorService implements Service {
     }
 
     // Package private for unit test purposes
-    static Text getMRTokenRenewerInternal(JobConf jobConf) throws IOException {
+    Text getMRTokenRenewerInternal(JobConf jobConf) throws IOException {
         // Getting renewer correctly for JT principal also though JT in hadoop 1.x does not have
         // support for renewing/cancelling tokens
         String servicePrincipal = jobConf.get(RM_PRINCIPAL, jobConf.get(JT_PRINCIPAL));
