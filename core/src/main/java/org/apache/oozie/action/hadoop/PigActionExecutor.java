@@ -41,6 +41,7 @@ import java.util.List;
 public class PigActionExecutor extends ScriptLanguageActionExecutor {
 
     private static final String PIG_MAIN_CLASS_NAME = "org.apache.oozie.action.hadoop.PigMain";
+    private static final String OOZIE_PIG_STATS = "org.apache.oozie.action.hadoop.OoziePigStats";
     static final String PIG_SCRIPT = "oozie.pig.script";
     static final String PIG_PARAMS = "oozie.pig.params";
     static final String PIG_ARGS = "oozie.pig.args";
@@ -48,6 +49,22 @@ public class PigActionExecutor extends ScriptLanguageActionExecutor {
     public PigActionExecutor() {
         super("pig");
     }
+
+    @Override
+    protected List<Class> getLauncherClasses() {
+        List<Class> classes = super.getLauncherClasses();
+        try {
+            classes.add(Class.forName(PIG_MAIN_CLASS_NAME));
+            classes.add(Class.forName(OOZIE_PIG_STATS));
+        }
+        catch (ClassNotFoundException e) {
+          //TODO - A temporary fix as pig class is in pig sharelib
+            // - Change this to RuntimeException when classes are refactored
+            log.error("PigMain class not found " +e);
+        }
+        return classes;
+    }
+
 
     @Override
     protected String getLauncherMain(Configuration launcherConf, Element actionXml) {

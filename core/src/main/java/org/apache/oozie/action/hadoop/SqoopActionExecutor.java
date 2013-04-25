@@ -58,6 +58,12 @@ public class SqoopActionExecutor extends JavaActionExecutor {
         List<Class> classes = super.getLauncherClasses();
         classes.add(LauncherMain.class);
         classes.add(MapReduceMain.class);
+        try {
+            classes.add(Class.forName(SQOOP_MAIN_CLASS_NAME));
+        }
+        catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
         return classes;
     }
 

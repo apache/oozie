@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,6 +58,14 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
         classes.add(LauncherMain.class);
         classes.add(MapReduceMain.class);
         classes.add(PipesMain.class);
+        try {
+            classes.add(Class.forName(STREAMING_MAIN_CLASS_NAME));
+        }
+        catch (ClassNotFoundException e) {
+            //TODO - A temporary fix as streaming class in streaming sharelib
+            // - Change this to RuntimeException when classes are refactored
+            log.error("Streaming class not found " +e);
+        }
         return classes;
     }
 

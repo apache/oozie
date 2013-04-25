@@ -89,6 +89,30 @@
             <type>war</type>
             <scope>compile</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.apache.oozie</groupId>
+            <artifactId>oozie-sharelib-pig</artifactId>
+            <scope>compile</scope>
+         </dependency>
+
+         <dependency>
+            <groupId>org.apache.oozie</groupId>
+            <artifactId>oozie-sharelib-hive</artifactId>
+            <scope>compile</scope>
+         </dependency>
+
+         <dependency>
+            <groupId>org.apache.oozie</groupId>
+            <artifactId>oozie-sharelib-sqoop</artifactId>
+            <scope>compile</scope>
+         </dependency>
+
+          <dependency>
+            <groupId>org.apache.oozie</groupId>
+            <artifactId>oozie-sharelib-streaming</artifactId>
+            <scope>compile</scope>
+         </dependency>
     </dependencies>
 
     <build>
