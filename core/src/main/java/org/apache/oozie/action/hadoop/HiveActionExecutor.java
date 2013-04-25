@@ -52,6 +52,20 @@ public class HiveActionExecutor extends ScriptLanguageActionExecutor {
     }
 
     @Override
+    protected List<Class> getLauncherClasses() {
+        List<Class> classes = super.getLauncherClasses();
+        try {
+            classes.add(Class.forName(HIVE_MAIN_CLASS_NAME));
+        }
+        catch (ClassNotFoundException e) {
+            //TODO - A temporary fix as hive class is in hive sharelib
+            // - Change this to RuntimeException when classes are refactored
+            log.error("HiveMain class not found " +e);
+	}
+        return classes;
+    }
+
+    @Override
     protected String getLauncherMain(Configuration launcherConf, Element actionXml) {
         return launcherConf.get(CONF_OOZIE_ACTION_MAIN_CLASS, HIVE_MAIN_CLASS_NAME);
     }

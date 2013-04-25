@@ -106,6 +106,8 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         classes.add(ActionType.class);
         classes.add(LauncherMain.class);
         classes.add(MapReduceMain.class);
+        classes.add(PigMain.class);
+        classes.add(OoziePigStats.class);
         assertEquals(classes, ae.getLauncherClasses());
 
         Element actionXml = XmlUtils.parseXml("<pig>" +
