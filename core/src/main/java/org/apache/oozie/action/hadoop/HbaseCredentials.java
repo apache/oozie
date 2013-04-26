@@ -17,6 +17,7 @@
  */
 package org.apache.oozie.action.hadoop;
 
+import java.io.IOException;
 import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
@@ -45,22 +46,30 @@ public class HbaseCredentials extends Credentials {
     @Override
     public void addtoJobConf(JobConf jobConf, CredentialsProperties props, Context context) throws Exception {
         try {
-            // Create configuration using hbase-site.xml/hbase-default.xml
-            Configuration hbaseConf = HBaseConfiguration.create();
-            // copy cred props to hbaseconf and override if values already exists
-            addPropsConf(props, hbaseConf);
-            // copy conf from hbaseConf to jobConf without overriding the
-            // already existing values of jobConf
-            injectConf(hbaseConf, jobConf);
-            String user = context.getWorkflow().getUser();
-            UserGroupInformation ugi =  UserGroupInformation.createProxyUser(user, UserGroupInformation.getLoginUser());
-            User u = User.create(ugi);
-            u.obtainAuthTokenForJob(jobConf);
+            copyHbaseConfToJobConf(jobConf, props);
+            obtainToken(jobConf, context);
         }
         catch (Exception e) {
             XLog.getLog(getClass()).warn("Exception in receiving hbase credentials", e);
             throw e;
         }
+    }
+
+    void copyHbaseConfToJobConf(JobConf jobConf, CredentialsProperties props) {
+        // Create configuration using hbase-site.xml/hbase-default.xml
+        Configuration hbaseConf = HBaseConfiguration.create();
+        // copy cred props to hbaseconf and override if values already exists
+        addPropsConf(props, hbaseConf);
+        // copy conf from hbaseConf to jobConf without overriding the
+        // already existing values of jobConf
+        injectConf(hbaseConf, jobConf);
+    }
+
+    private void obtainToken(JobConf jobConf, Context context) throws IOException, InterruptedException {
+        String user = context.getWorkflow().getUser();
+        UserGroupInformation ugi =  UserGroupInformation.createProxyUser(user, UserGroupInformation.getLoginUser());
+        User u = User.create(ugi);
+        u.obtainAuthTokenForJob(jobConf);
     }
 
     private void addPropsConf(CredentialsProperties props, Configuration destConf) {
