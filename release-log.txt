@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1346 Modularize hbase credentials to separate the populating of jobconf and obtaining token for job (virag)
 OOZIE-1341 Have Action Main classes in Oozie webapp (virag)
 OOZIE-1337 HadoopAccessorService has two static methods so you can't override them with another implementation (rkanter)
 OOZIE-1333 Some testcases related to EventHandlerService are failing in a transient way (virag)

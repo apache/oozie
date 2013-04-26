@@ -18,9 +18,6 @@
 package org.apache.oozie.action.hadoop;
 
 import org.apache.hadoop.mapred.JobConf;
-import org.apache.oozie.WorkflowActionBean;
-import org.apache.oozie.WorkflowJobBean;
-import org.apache.oozie.action.hadoop.Credentials;
 import org.apache.oozie.action.hadoop.CredentialsProperties;
 
 /**
@@ -32,20 +29,9 @@ public class TestCredentials extends ActionExecutorTestCase {
     public void testHbaseCredentials() {
         CredentialsProperties prop = new CredentialsProperties("dummyName", "dummyType");
         prop.getProperties().put("hbase.zookeeper.quorum", "dummyHost");
-        Credentials hb = new HbaseCredentials();
-        WorkflowJobBean wfBean = new WorkflowJobBean();
-        wfBean.setUser("dummyUser");
+        HbaseCredentials hb = new HbaseCredentials();
         JobConf jc = new JobConf(false);
-        try {
-            hb.addtoJobConf(jc, prop, new Context(wfBean, new WorkflowActionBean()));
-        }
-        catch (Exception e) {
-            // Change this when security related classes are available from
-            // hbase maven repo
-            if (!(e.getCause() instanceof ClassNotFoundException)) {
-                fail("unexpected exception " + e.getMessage());
-            }
-        }
+        hb.copyHbaseConfToJobConf(jc,prop);
         assertEquals("dummyHost", jc.get("hbase.zookeeper.quorum"));
     }
 
