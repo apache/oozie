@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1351 Oozie jobs with state PAUSEDWITHERROR should change to SUSPENDEDWITHERROR state when suspended (bowenzhangusa via virag)
 OOZIE-1346 Modularize hbase credentials to separate the populating of jobconf and obtaining token for job (virag)
 OOZIE-1341 Have Action Main classes in Oozie webapp (virag)
 OOZIE-1337 HadoopAccessorService has two static methods so you can't override them with another implementation (rkanter)

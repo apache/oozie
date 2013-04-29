@@ -223,7 +223,7 @@ public class CoordSuspendXCommand extends SuspendTransitionXCommand {
         else if (coordJob.getStatus() == Job.Status.RUNNING) {
             coordJob.setStatus(Job.Status.SUSPENDED);
         }
-        else if (coordJob.getStatus() == Job.Status.RUNNINGWITHERROR) {
+        else if (coordJob.getStatus() == Job.Status.RUNNINGWITHERROR || coordJob.getStatus() == Job.Status.PAUSEDWITHERROR) {
             coordJob.setStatus(Job.Status.SUSPENDEDWITHERROR);
         }
         else if (coordJob.getStatus() == Job.Status.PAUSED) {
