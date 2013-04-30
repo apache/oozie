@@ -215,6 +215,12 @@ public abstract class XTestCase extends TestCase {
     public static final String TEST_GROUP_PROP = "oozie.test.group";
 
     /**
+     * System property that specifies the test groiup used by the tests.
+     * The default value of this property is <tt>testg</tt>.
+     */
+    public static final String TEST_GROUP_PROP2 = "oozie.test.group2";
+
+    /**
      * System property that specifies the wait time, in seconds, between testcases before
      * triggering a shutdown. The default value is 10 sec.
      */
@@ -409,6 +415,15 @@ public abstract class XTestCase extends TestCase {
      */
     protected static String getTestGroup() {
         return System.getProperty(TEST_GROUP_PROP, "testg");
+    }
+
+    /**
+     * Return the alternate test group.
+     *
+     * @return the test group.
+     */
+    protected static String getTestGroup2() {
+        return System.getProperty(TEST_GROUP_PROP, "testg2");
     }
 
     /**
@@ -739,7 +754,7 @@ public abstract class XTestCase extends TestCase {
             conf.set("mapred.tasktracker.map.tasks.maximum", "4");
             conf.set("mapred.tasktracker.reduce.tasks.maximum", "4");
 
-            String [] userGroups = new String[] { getTestGroup() };
+            String[] userGroups = new String[] { getTestGroup(), getTestGroup2() };
             UserGroupInformation.createUserForTesting(oozieUser, userGroups);
             UserGroupInformation.createUserForTesting(getTestUser(), userGroups);
             UserGroupInformation.createUserForTesting(getTestUser2(), userGroups);
