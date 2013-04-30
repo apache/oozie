@@ -1024,7 +1024,7 @@ All the above elements can be parameterized (templatized) using EL expressions.
 ---++++ 3.2.4 Fs (HDFS) action
 
 The =fs= action allows to manipulate files and directories in HDFS from a workflow application. The supported commands
-are =move=, =delete= and =mkdir=.
+are =move=, =delete=, =mkdir=, =chmod=, =touchz= and =chgrp=.
 
 The FS commands are executed synchronously from within the FS action, the workflow job will wait until the specified
 file commands are completed before continuing to the next action.
@@ -1055,6 +1055,8 @@ executed. Thus there is less chance of an error occurring while the =fs= action 
             <chmod path='[PATH]' permissions='[PERMISSIONS]' dir-files='false' />
             ...
             <touchz path='[PATH]' />
+            ...
+            <chmod path='[PATH]' group='[GROUP]' dir-files='false' />
         </fs>
         <ok to="[NODE-NAME]"/>
         <error to="[NODE-NAME]"/>
@@ -1086,6 +1088,12 @@ recursively to all levels within a directory, put a =recursive= element inside t
 The =touchz= command creates a zero length file in the specified path if none exists. If one already exists, then touchz will perform a touch operation.
 Touchz works only for absolute paths.
 
+The =chgrp= command changes the group for the specified path.
+When doing a =chgrp= command on a directory, by default the command is applied to the directory and the files one level
+within the directory. To apply the =chgrp= command to the directory, without affecting the files within it,
+the =dir-files= attribute must be set to =false=.
+To apply the =chgrp= command recursively to all levels within a directory, put a =recursive= element inside the <chgrp> element.
+
 *Example:*
 
 <verbatim>
@@ -1097,6 +1105,7 @@ Touchz works only for absolute paths.
             <mkdir path='archives/${wf:id()}'/>
             <move source='${jobInput}' target='archives/${wf:id()}/processed-input'/>
             <chmod path='${jobOutput}' permissions='-rwxrw-rw-' dir-files='true'><recursive/></chmod>
+            <chgrp path='${jobOutput}' group='testgroup' dir-files='true'><recursive/></chgrp>
         </fs>
         <ok to="myotherjob"/>
         <error to="errorcleanup"/>

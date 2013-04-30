@@ -1,6 +1,7 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
-OOZIE-1329 fix coverage org.apache.oozie.tools (agorshkov)
+OOZIE-1297 Add chgrp in FS action (ryota via virag)
+OOZIE-1329 fix coverage org.apache.oozie.tools (agorshkov via virag)
 OOZIE-1351 Oozie jobs with state PAUSEDWITHERROR should change to SUSPENDEDWITHERROR state when suspended (bowenzhangusa via virag)
 OOZIE-1346 Modularize hbase credentials to separate the populating of jobconf and obtaining token for job (virag)
 OOZIE-1341 Have Action Main classes in Oozie webapp (virag)
