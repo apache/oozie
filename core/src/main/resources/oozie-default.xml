@@ -1424,6 +1424,19 @@
             The frequency in seconds at which the PauseTransitService will run.
         </description>
     </property>
+
+    <!-- JavaActionExecutor -->
+    <!-- This is common to the subclasses of action executors for Java (e.g. map-reduce, pig, hive, java, etc) -->
+
+    <property>
+        <name>oozie.action.launcher.mapreduce.job.ubertask.enable</name>
+        <value>true</value>
+        <description>
+            Enables Uber Mode for the launcher job in YARN/Hadoop 2 (no effect in Hadoop 1).
+            Setting oozie.launcher.mapreduce.job.ubertask.enable in a an action's configuration section overrides this for that
+            action.
+        </description>
+    </property>
     
     <!-- HadoopActionExecutor -->
     <!-- This is common to the subclasses action executors for map-reduce and pig -->

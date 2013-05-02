@@ -90,6 +90,7 @@ public class JavaActionExecutor extends ActionExecutor {
     public final static String MAX_EXTERNAL_STATS_SIZE = "oozie.external.stats.max.size";
     public static final String ACL_VIEW_JOB = "mapreduce.job.acl-view-job";
     public static final String ACL_MODIFY_JOB = "mapreduce.job.acl-modify-job";
+    private static final String HADOOP_YARN_UBER_MODE = "mapreduce.job.ubertask.enable";
     private static int maxActionOutputLen;
     private static int maxExternalStatsSize;
 
@@ -239,6 +240,7 @@ public class JavaActionExecutor extends ActionExecutor {
                 XConfiguration actionDefaultConf = has.createActionDefaultConf(conf.get(HADOOP_JOB_TRACKER), getType());
                 injectLauncherProperties(actionDefaultConf, launcherConf);
                 injectLauncherProperties(inlineConf, launcherConf);
+                injectLauncherUseUberMode(launcherConf);
                 checkForDisallowedProps(launcherConf, "launcher configuration");
                 XConfiguration.copy(launcherConf, conf);
             }
@@ -246,6 +248,15 @@ public class JavaActionExecutor extends ActionExecutor {
         }
         catch (IOException ex) {
             throw convertException(ex);
+        }
+    }
+
+    void injectLauncherUseUberMode(Configuration launcherConf) {
+        // Set Uber Mode for the launcher (YARN only, ignored by MR1) if not set by action conf and not disabled in oozie-site
+        if (launcherConf.get(HADOOP_YARN_UBER_MODE) == null) {
+            if (getOozieConf().getBoolean("oozie.action.launcher.mapreduce.job.ubertask.enable", true)) {
+                launcherConf.setBoolean(HADOOP_YARN_UBER_MODE, true);
+            }
         }
     }
 
