@@ -34,6 +34,7 @@ import org.apache.oozie.servlet.MockDagEngineService;
 import org.apache.oozie.servlet.V1AdminServlet;
 import org.apache.oozie.servlet.V1JobServlet;
 import org.apache.oozie.servlet.V1JobsServlet;
+import org.apache.oozie.servlet.V2JobServlet;
 import org.apache.oozie.util.XConfiguration;
 
 //hardcoding options instead using constants on purpose, to detect changes to option names if any and correct docs.
@@ -44,6 +45,7 @@ public class TestOozieCLI extends DagServletTestCase {
         new V1JobServlet();
         new V1JobsServlet();
         new V1AdminServlet();
+        new V2JobServlet();
     }
 
     static final boolean IS_SECURITY_ENABLED = false;
@@ -51,7 +53,7 @@ public class TestOozieCLI extends DagServletTestCase {
     static final String[] END_POINTS = {"/versions", VERSION + "/jobs", VERSION + "/job/*", VERSION + "/admin/*"};
     static final Class[] SERVLET_CLASSES =
  { HeaderTestingVersionServlet.class, V1JobsServlet.class, V1JobServlet.class,
-            V1AdminServlet.class };
+            V1AdminServlet.class, V2JobServlet.class };
 
     @Override
     protected void setUp() throws Exception {
@@ -512,7 +514,7 @@ public class TestOozieCLI extends DagServletTestCase {
                 assertEquals(0, new OozieCLI().run(args));
                 assertEquals(RestConstants.JOB_SHOW_INFO, MockDagEngineService.did);
 
-                args = new String[]{"job", "-timezone", "PST", "-oozie", oozieUrl, "-info", 
+                args = new String[]{"job", "-timezone", "PST", "-oozie", oozieUrl, "-info",
                     MockDagEngineService.JOB_ID + "1" + MockDagEngineService.JOB_ID_END};
                 assertEquals(0, new OozieCLI().run(args));
                 assertEquals(RestConstants.JOB_SHOW_INFO, MockDagEngineService.did);
@@ -544,14 +546,14 @@ public class TestOozieCLI extends DagServletTestCase {
                 assertEquals(0, new OozieCLI().run(args));
                 assertEquals(RestConstants.JOBS_FILTER_PARAM, MockDagEngineService.did);
                 
-                args = new String[]{"jobs", "-timezone", "PST", "-len", "3", "-offset", "2", "-oozie", oozieUrl, 
+                args = new String[]{"jobs", "-timezone", "PST", "-len", "3", "-offset", "2", "-oozie", oozieUrl,
                     "-filter", "name=x"};
                 assertEquals(0, new OozieCLI().run(args));
                 assertEquals(RestConstants.JOBS_FILTER_PARAM, MockDagEngineService.did);
                 
                 args = new String[]{"jobs", "-jobtype", "coord",  "-filter", "status=FAILED", "-oozie", oozieUrl};
                 assertEquals(0, new OozieCLI().run(args));
-                assertEquals(RestConstants.JOBS_FILTER_PARAM, MockDagEngineService.did);                
+                assertEquals(RestConstants.JOBS_FILTER_PARAM, MockDagEngineService.did);
                 return null;
             }
         });

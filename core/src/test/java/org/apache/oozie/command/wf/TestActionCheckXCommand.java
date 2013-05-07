@@ -220,10 +220,11 @@ public class TestActionCheckXCommand extends XDataTestCase {
         new ActionCheckXCommand(action.getId()).call();
         action = jpaService.execute(wfActionGetCmd);
         String mapperId = action.getExternalId();
+        String childId = action.getExternalChildIDs();
 
-        assertFalse(launcherId.equals(mapperId));
+        assertTrue(launcherId.equals(mapperId));
 
-        final RunningJob mrJob = jobClient.getJob(JobID.forName(mapperId));
+        final RunningJob mrJob = jobClient.getJob(JobID.forName(childId));
 
         waitFor(120 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
@@ -329,10 +330,11 @@ public class TestActionCheckXCommand extends XDataTestCase {
         new ActionCheckXCommand(actionId).call();
         WorkflowActionBean action4 = jpaService.execute(wfActionGetCmd);
         String mapperId = action4.getExternalId();
+        String childId = action4.getExternalChildIDs();
 
-        assertFalse(launcherId.equals(mapperId));
+        assertTrue(launcherId.equals(mapperId));
 
-        final RunningJob mrJob = jobClient.getJob(JobID.forName(mapperId));
+        final RunningJob mrJob = jobClient.getJob(JobID.forName(childId));
 
         waitFor(120 * 1000, new Predicate() {
             @Override
@@ -392,7 +394,7 @@ public class TestActionCheckXCommand extends XDataTestCase {
 
         new ActionCheckXCommand(action1.getId()).call();
         WorkflowActionBean action2 = jpaService.execute(wfActionGetCmd);
-        String originalMapperId = action2.getExternalId();
+        String originalMapperId = action2.getExternalChildIDs();
 
         assertFalse(originalLauncherId.equals(originalMapperId));
 
@@ -442,7 +444,6 @@ public class TestActionCheckXCommand extends XDataTestCase {
         String launcherId = action3.getExternalId();
 
         assertFalse(originalLauncherId.equals(launcherId));
-        assertFalse(originalMapperId.equals(launcherId));
 
         final RunningJob launcherJob2 = jobClient.getJob(JobID.forName(launcherId));
 
@@ -452,15 +453,14 @@ public class TestActionCheckXCommand extends XDataTestCase {
                 return launcherJob2.isComplete();
             }
         });
+
         assertTrue(launcherJob2.isSuccessful());
         assertTrue(LauncherMapper.hasIdSwap(launcherJob2));
 
         new ActionCheckXCommand(actionId).call();
         WorkflowActionBean action4 = jpaService.execute(wfActionGetCmd);
-        String mapperId = action4.getExternalId();
+        String mapperId = action4.getExternalChildIDs();
         assertFalse(originalMapperId.equals(mapperId));
-
-        assertFalse(launcherId.equals(mapperId));
 
         final RunningJob mrJob = jobClient.getJob(JobID.forName(mapperId));
 

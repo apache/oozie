@@ -77,7 +77,9 @@ public class OozieClient {
 
     public static final long WS_PROTOCOL_VERSION_0 = 0;
 
-    public static final long WS_PROTOCOL_VERSION = 1;
+    public static final long WS_PROTOCOL_VERSION_1 = 1;
+
+    public static final long WS_PROTOCOL_VERSION = 2; // pointer to current version
 
     public static final String USER_NAME = "user.name";
 
@@ -252,9 +254,10 @@ public class OozieClient {
                     if (array == null) {
                         throw new OozieClientException("HTTP error", "no response message");
                     }
-                    if (!array.contains(WS_PROTOCOL_VERSION) && !array.contains(WS_PROTOCOL_VERSION_0)) {
+                    if (!array.contains(WS_PROTOCOL_VERSION) && !array.contains(WS_PROTOCOL_VERSION_1)
+                            && !array.contains(WS_PROTOCOL_VERSION_0)) {
                         StringBuilder msg = new StringBuilder();
-                        msg.append("Supported version [").append(WS_PROTOCOL_VERSION).append(
+                        msg.append("Supported version [").append(WS_PROTOCOL_VERSION_1).append(
                                 "] or less, Unsupported versions[");
                         String separator = "";
                         for (Object version : array) {
@@ -265,6 +268,9 @@ public class OozieClient {
                     }
                     if (array.contains(WS_PROTOCOL_VERSION)) {
                         protocolUrl = baseUrl + "v" + WS_PROTOCOL_VERSION + "/";
+                    }
+                    else if (array.contains(WS_PROTOCOL_VERSION_1)) {
+                        protocolUrl = baseUrl + "v" + WS_PROTOCOL_VERSION_1 + "/";
                     }
                     else {
                         if (array.contains(WS_PROTOCOL_VERSION_0)) {

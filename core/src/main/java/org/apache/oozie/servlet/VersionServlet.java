@@ -46,6 +46,7 @@ public class VersionServlet extends JsonRestServlet {
             throws ServletException, IOException {
         JSONArray versions = new JSONArray();
         versions.add(OozieClient.WS_PROTOCOL_VERSION_0);
+        versions.add(OozieClient.WS_PROTOCOL_VERSION_1);
         versions.add(OozieClient.WS_PROTOCOL_VERSION);
         sendJsonResponse(response, HttpServletResponse.SC_OK, versions);
     }

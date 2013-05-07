@@ -24,6 +24,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.*;
+import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.rest.*;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.coord.CoordRerunXCommand;
@@ -44,6 +46,10 @@ public class V1JobServlet extends BaseJobServlet {
 
     public V1JobServlet() {
         super(INSTRUMENTATION_NAME);
+    }
+
+    protected V1JobServlet(String instrumentation_name){
+        super(instrumentation_name);
     }
 
     /*
@@ -664,7 +670,22 @@ public class V1JobServlet extends BaseJobServlet {
      * @return JsonBean WorkflowJobBean
      * @throws XServletException
      */
-    private JsonBean getWorkflowJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
+    protected JsonBean getWorkflowJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
+        JsonBean jobBean = getWorkflowJobBean(request, response);
+        // for backward compatibility (OOZIE-1231)
+        swapMRActionID((WorkflowJob)jobBean);
+        return jobBean;
+    }
+
+    /**
+     * Get workflow job
+     *
+     * @param request servlet request
+     * @param response servlet response
+     * @return JsonBean WorkflowJobBean
+     * @throws XServletException
+     */
+    protected JsonBean getWorkflowJobBean(HttpServletRequest request, HttpServletResponse response) throws XServletException {
         JsonBean jobBean = null;
         String jobId = getResourceName(request);
         String startStr = request.getParameter(RestConstants.OFFSET_PARAM);
@@ -681,8 +702,39 @@ public class V1JobServlet extends BaseJobServlet {
         catch (DagEngineException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
         }
-
         return jobBean;
+    }
+
+    private void swapMRActionID(WorkflowJob wjBean) {
+        List<WorkflowAction> actions = wjBean.getActions();
+        if (actions != null) {
+            for (WorkflowAction wa : actions) {
+                swapMRActionID(wa);
+            }
+        }
+    }
+
+    private void swapMRActionID(WorkflowAction waBean) {
+        if (waBean.getType().equals("map-reduce")) {
+            String childId = waBean.getExternalChildIDs();
+            if (childId != null && !childId.equals("")) {
+                String consoleBase = getConsoleBase(waBean.getConsoleUrl());
+                ((WorkflowActionBean) waBean).setConsoleUrl(consoleBase + childId);
+                ((WorkflowActionBean) waBean).setExternalId(childId);
+                ((WorkflowActionBean) waBean).setExternalChildIDs("");
+            }
+        }
+    }
+
+    private String getConsoleBase(String url) {
+        String consoleBase = null;
+        if (url.indexOf("application") != -1) {
+            consoleBase = url.split("application_[0-9]+_[0-9]+")[0];
+        }
+        else {
+            consoleBase = url.split("job_[0-9]+_[0-9]+")[0];
+        }
+        return consoleBase;
     }
 
     protected JsonBean getJMSConnectionInfo(HttpServletRequest request, HttpServletResponse response) throws XServletException{
@@ -707,7 +759,16 @@ public class V1JobServlet extends BaseJobServlet {
      * @return JsonBean WorkflowActionBean
      * @throws XServletException
      */
-    private JsonBean getWorkflowAction(HttpServletRequest request, HttpServletResponse response)
+    protected JsonBean getWorkflowAction(HttpServletRequest request, HttpServletResponse response)
+            throws XServletException {
+
+        JsonBean actionBean = getWorkflowActionBean(request, response);
+        // for backward compatibility (OOZIE-1231)
+        swapMRActionID((WorkflowAction)actionBean);
+        return actionBean;
+    }
+
+    protected JsonBean getWorkflowActionBean(HttpServletRequest request, HttpServletResponse response)
             throws XServletException {
         DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
                 getAuthToken(request));
@@ -720,7 +781,6 @@ public class V1JobServlet extends BaseJobServlet {
         catch (BaseEngineException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
         }
-
         return actionBean;
     }
 

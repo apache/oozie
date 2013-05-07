@@ -897,6 +897,86 @@ Content-Type: application/json;charset=UTF-8
 }
 </verbatim>
 
+---++ Oozie Web Services API, V2 (Workflow , Coordinator And Bundle)
+
+The Oozie Web Services API is a HTTP REST JSON API.
+
+All responses are in =UTF-8=.
+
+Assuming Oozie is runing at =OOZIE_URL=, the following web services end points are supported:
+
+   * <OOZIE_URL>/versions
+   * <OOZIE_URL>/v2/admin
+   * <OOZIE_URL>/v2/job
+   * <OOZIE_URL>/v2/jobs
+
+Please note that v1 and v2 are almost identical.
+Only difference is the JSON format of Job Information API (*/job) particularly for map-reduce action.
+No change for other actions.
+
+In v1, externalId and consoleUrl point to spawned child job ID, and exteranlChildIDs is null in map-reduce action.
+In v2, externalId and consoleUrl point to launcher job ID, and exteranlChildIDs is spawned child job ID in map-reduce action.
+
+v2/admin, v2/jobs remain the same with v1/admin, v1/jobs
+
+---+++ Job and Jobs End-Points
+
+---++++ Job Information
+
+A HTTP GET request retrieves the job information.
+
+*Request:*
+
+<verbatim>
+GET /oozie/v2/job/job-3?show=info&timezone=GMT
+</verbatim>
+
+*Response for a workflow job:*
+
+<verbatim>
+HTTP/1.1 200 OK
+Content-Type: application/json;charset=UTF-8
+.
+{
+**jobType: "workflow",
+  id: "0-200905191240-oozie-W",
+  appName: "indexer-workflow",
+  appPath: "hdfs://user/bansalm/indexer.wf",
+  externalId: "0-200905191230-oozie-pepe",
+  user: "bansalm",
+  group: "other",
+  status: "RUNNING",
+  conf: "<configuration> ... </configuration>",
+  createdTime: "Thu, 01 Jan 2009 00:00:00 GMT",
+  startTime: "Fri, 02 Jan 2009 00:00:00 GMT",
+  endTime: null,
+  run: 0,
+  actions: [
+    {
+      id: "0-200905191240-oozie-W@indexer",
+      name: "indexer",
+      type: "map-reduce",
+      conf: "<configuration> ...</configuration>",
+      startTime: "Thu, 01 Jan 2009 00:00:00 GMT",
+      endTime: "Fri, 02 Jan 2009 00:00:00 GMT",
+      status: "OK",
+      externalId: "job-123-200903101010",
+      externalStatus: "SUCCEEDED",
+      trackerUri: "foo:8021",
+      consoleUrl: "http://foo:50040/jobdetailshistory.jsp?jobId=job-123-200903101010",
+      transition: "reporter",
+      data: null,
+      stats: null,
+      externalChildIDs: "job-123-200903101011"
+      errorCode: null,
+      errorMessage: null,
+      retries: 0
+    },
+    ...
+  ]
+}
+</verbatim>
+
 </noautolink>
 
 

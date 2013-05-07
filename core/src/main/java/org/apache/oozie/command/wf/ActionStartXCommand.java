@@ -32,6 +32,7 @@ import org.apache.oozie.XException;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.action.control.ControlNodeActionExecutor;
+import org.apache.oozie.action.hadoop.MapReduceActionExecutor;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
@@ -158,10 +159,12 @@ public class ActionStartXCommand extends ActionXCommand<Void> {
             if (wfAction.getStatus() == WorkflowActionBean.Status.START_RETRY
                     || wfAction.getStatus() == WorkflowActionBean.Status.START_MANUAL) {
                 isRetry = true;
+                prepareForRetry(wfAction);
             }
             boolean isUserRetry = false;
             if (wfAction.getStatus() == WorkflowActionBean.Status.USER_RETRY) {
                 isUserRetry = true;
+                prepareForRetry(wfAction);
             }
             context = new ActionXCommand.ActionExecutorContext(wfJob, wfAction, isRetry, isUserRetry);
             boolean caught = false;
@@ -339,6 +342,13 @@ public class ActionStartXCommand extends ActionXCommand<Void> {
     @Override
     public String getKey(){
         return getName() + "_" + actionId;
+    }
+
+    private void prepareForRetry(WorkflowActionBean wfAction) {
+        if (wfAction.getType().equals("map-reduce")) {
+            // need to delete child job id of original run
+            wfAction.setExternalChildIDs("");
+        }
     }
 
 }
