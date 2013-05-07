@@ -38,6 +38,7 @@ OOZIE-1239 Bump up trunk to 4.1.0-SNAPSHOT (virag)
 
 -- Oozie 4.0.0 (unreleased)
 
+OOZIE-1350 Improve client debug output information (rkanter)
 OOZIE-1343 Sqoop sharelib should have hsqldb jar (rkanter)
 OOZIE-1344 We should use Sqoop 1.4.3 instead of 1.5.0-incubating-SNAPSHOT (rkanter)
 OOZIE-1146 FileSystem used by prepare sections should use the configuration of the action (rohini via virag)

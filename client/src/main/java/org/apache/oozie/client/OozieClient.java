@@ -416,7 +416,7 @@ public class OozieClient {
                 URL url = createURL(collection, resource, params);
                 if (validateCommand(url.toString())) {
                     if (getDebugMode() > 0) {
-                        System.out.println("Connection URL:[" + url + "]");
+                        System.out.println(method + " " + url);
                     }
                     HttpURLConnection conn = createConnection(url, method);
                     return call(conn);
@@ -490,6 +490,11 @@ public class OozieClient {
             TransformerFactory transFactory = TransformerFactory.newInstance();
             Transformer transformer = transFactory.newTransformer();
             transformer.transform(source, result);
+            if (getDebugMode() > 0) {
+                result = new StreamResult(System.out);
+                transformer.transform(source, result);
+                System.out.println();
+            }
         }
         catch (Exception e) {
             throw new IOException(e);

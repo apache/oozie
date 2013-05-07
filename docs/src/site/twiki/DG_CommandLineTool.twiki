@@ -156,6 +156,11 @@ the <code>-timezone TIME_ZONE_ID</code> option.  If neither option is given, Ooz
 variable and uses it if set.  If neither option is given and the environment variable is not set, or if Oozie is given an invalid 
 time zone, it will use GMT.
 
+---+++ Debug Mode
+
+If you export <code>OOZIE_DEBUG=1</code> then the Oozie CLI will output the Web Services API details used by any commands you
+execute. This is useful for debugging purposes to or see how the Oozie CLI works with the WS API.
+
 ---++ Job Operations
 
 ---+++ Submitting a Workflow, Coordinator or Bundle Job
