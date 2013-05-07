@@ -30,6 +30,9 @@ import org.apache.oozie.servlet.MockDagEngineService;
 import org.apache.oozie.servlet.V0JobServlet;
 import org.apache.oozie.servlet.V0JobsServlet;
 import org.apache.oozie.servlet.V1AdminServlet;
+import org.apache.oozie.servlet.V1JobServlet;
+import org.apache.oozie.servlet.V1JobsServlet;
+import org.apache.oozie.servlet.V2JobServlet;
 
 public class TestWorkflowClient extends DagServletTestCase {
 
@@ -37,14 +40,17 @@ public class TestWorkflowClient extends DagServletTestCase {
         new HeaderTestingVersionServlet();
         new V0JobServlet();
         new V0JobsServlet();
+        new V1JobsServlet();
         new V1AdminServlet();
+        new V1JobServlet();
+        new V2JobServlet();
     }
 
     private static final boolean IS_SECURITY_ENABLED = false;
     static final String VERSION = "/v" + OozieClient.WS_PROTOCOL_VERSION;
     static final String[] END_POINTS = {"/versions", VERSION + "/jobs", VERSION + "/job/*", VERSION + "/admin/*"};
     static final Class[] SERVLET_CLASSES = {HeaderTestingVersionServlet.class, V0JobsServlet.class,
-            V0JobServlet.class, V1AdminServlet.class};
+            V0JobServlet.class, V1AdminServlet.class, V1JobServlet.class, V2JobServlet.class, V1JobsServlet.class};
 
     protected void setUp() throws Exception {
         super.setUp();

@@ -316,13 +316,13 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
 
         MapReduceActionExecutor ae = new MapReduceActionExecutor();
         ae.check(context, context.getAction());
-        assertFalse(launcherId.equals(context.getAction().getExternalId()));
+        assertTrue(launcherId.equals(context.getAction().getExternalId()));
 
         JobConf conf = ae.createBaseHadoopConf(context, XmlUtils.parseXml(actionXml));
         String user = conf.get("user.name");
         String group = conf.get("group.name");
         JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, conf);
-        final RunningJob mrJob = jobClient.getJob(JobID.forName(context.getAction().getExternalId()));
+        final RunningJob mrJob = jobClient.getJob(JobID.forName(context.getAction().getExternalChildIDs()));
 
         waitFor(120 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
@@ -343,8 +343,8 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         String counters = context.getVar("hadoop.counters");
         assertTrue(counters.contains("Counter"));
 
-        //External Child IDs will always be null in case of MR action.
-        assertNull(context.getExternalChildIDs());
+        //External Child IDs used to be null, but after 4.0, become Non-Null in case of MR action.
+        assertNotNull(context.getExternalChildIDs());
 
         return mrJob.getID().toString();
     }
@@ -365,13 +365,13 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
 
         MapReduceActionExecutor ae = new MapReduceActionExecutor();
         ae.check(context, context.getAction());
-        assertFalse(launcherId.equals(context.getAction().getExternalId()));
+        assertTrue(launcherId.equals(context.getAction().getExternalId()));
 
         JobConf conf = ae.createBaseHadoopConf(context, XmlUtils.parseXml(actionXml));
         String user = conf.get("user.name");
         String group = conf.get("group.name");
         JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, conf);
-        final RunningJob mrJob = jobClient.getJob(JobID.forName(context.getAction().getExternalId()));
+        final RunningJob mrJob = jobClient.getJob(JobID.forName(context.getAction().getExternalChildIDs()));
 
         waitFor(120 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
@@ -657,13 +657,13 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
 
         MapReduceActionExecutor ae = new MapReduceActionExecutor();
         ae.check(context, context.getAction());
-        assertFalse(launcherId.equals(context.getAction().getExternalId()));
+        assertTrue(launcherId.equals(context.getAction().getExternalId()));
 
         JobConf conf = ae.createBaseHadoopConf(context, XmlUtils.parseXml(actionXml));
         String user = conf.get("user.name");
         String group = conf.get("group.name");
         JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, conf);
-        final RunningJob mrJob = jobClient.getJob(JobID.forName(context.getAction().getExternalId()));
+        final RunningJob mrJob = jobClient.getJob(JobID.forName(context.getAction().getExternalChildIDs()));
 
         waitFor(120 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
@@ -684,8 +684,8 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         assertTrue(context.getExecutionStats().contains("ACTION_TYPE"));
         assertTrue(context.getExecutionStats().contains("Counter"));
 
-        // External Child IDs will always be null in case of MR action.
-        assertNull(context.getExternalChildIDs());
+        // External Child IDs used to be null, but after 4.0, become Non-Null in case of MR action.
+        assertNotNull(context.getExternalChildIDs());
 
         // hadoop.counters will always be set in case of MR action.
         assertNotNull(context.getVar("hadoop.counters"));
@@ -732,13 +732,13 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
 
         MapReduceActionExecutor ae = new MapReduceActionExecutor();
         ae.check(context, context.getAction());
-        assertFalse(launcherId.equals(context.getAction().getExternalId()));
+        assertTrue(launcherId.equals(context.getAction().getExternalId()));
 
         JobConf conf = ae.createBaseHadoopConf(context, XmlUtils.parseXml(actionXml));
         String user = conf.get("user.name");
         String group = conf.get("group.name");
         JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, conf);
-        final RunningJob mrJob = jobClient.getJob(JobID.forName(context.getAction().getExternalId()));
+        final RunningJob mrJob = jobClient.getJob(JobID.forName(context.getAction().getExternalChildIDs()));
 
         waitFor(120 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
@@ -757,8 +757,8 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         // Assert for stats info stored in the context.
         assertNull(context.getExecutionStats());
 
-        // External Child IDs will always be null in case of MR action.
-        assertNull(context.getExternalChildIDs());
+        // External Child IDs used to be null, but after 4.0, become Non-Null in case of MR action.
+        assertNotNull(context.getExternalChildIDs());
 
         // hadoop.counters will always be set in case of MR action.
         assertNotNull(context.getVar("hadoop.counters"));
@@ -816,7 +816,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
 
         MapReduceActionExecutor ae = new MapReduceActionExecutor();
         ae.check(context, context.getAction());
-        assertFalse(launcherId.equals(context.getAction().getExternalId()));
+        assertTrue(launcherId.equals(context.getAction().getExternalId()));
 
         JobConf conf = ae.createBaseHadoopConf(context,
                 XmlUtils.parseXml(actionXml));
@@ -825,7 +825,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         JobClient jobClient = Services.get().get(HadoopAccessorService.class)
                 .createJobClient(user, conf);
         final RunningJob mrJob = jobClient.getJob(JobID.forName(context
-                .getAction().getExternalId()));
+                .getAction().getExternalChildIDs()));
 
         waitFor(120 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
@@ -848,8 +848,8 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         // Assert for stats info stored in the context.
         assertNull(context.getExecutionStats());
 
-        // External Child IDs will always be null in case of MR action.
-        assertNull(context.getExternalChildIDs());
+        // External Child IDs used to be null, but after 4.0, become Non-Null in case of MR action.
+        assertNotNull(context.getExternalChildIDs());
 
         // hadoop.counters will always be set in case of MR action.
         assertNotNull(context.getVar("hadoop.counters"));

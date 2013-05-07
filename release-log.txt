@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1231 Provide access to launcher job URL from web console when using Map Reduce action (ryota via virag)
 OOZIE-1335 The launcher job should use uber mode in Hadoop 2 by default (rkanter)
 OOZIE-1297 Add chgrp in FS action (ryota via virag)
 OOZIE-1329 fix coverage org.apache.oozie.tools (agorshkov via virag)

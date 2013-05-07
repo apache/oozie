@@ -32,7 +32,7 @@ var oozie_host = "";
 var flattenedObject;
 
 function getOozieClientVersion() {
-    return 1;
+    return 2;
 }
 
 function getOozieVersionsUrl() {
@@ -546,17 +546,17 @@ function jobDetailsPopup(response, request) {
             
             // Tab to show list of child Job URLs for pig action
             var childJobsItem = {
-				title : 'Child Job URLs',
-				autoScroll : true,
-				frame : true,
-				labelAlign : 'right',
-				labelWidth : 70,
-				items : urlUnit
-			};
-            if (actionStatus.type == "pig" || actionStatus.type == "hive") {
-				var tabPanel = win.items.get(0);
-				tabPanel.add(childJobsItem);
-			}
+                title : 'Child Job URLs',
+                autoScroll : true,
+                frame : true,
+                labelAlign : 'right',
+                labelWidth : 70,
+                items : urlUnit
+            };
+            if (actionStatus.type == "pig" || actionStatus.type == "hive" || actionStatus.type == "map-reduce") {
+                var tabPanel = win.items.get(0);
+                tabPanel.add(childJobsItem);
+            }
             win.setPosition(50, 50);
             win.show();
         }

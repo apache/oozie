@@ -29,6 +29,7 @@ import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
+import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.service.Services;
@@ -316,4 +317,20 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
         MapReduceMain.setStrings(conf, "oozie.streaming.env", env);
     }
 
+    @Override
+    protected RunningJob getRunningJob(Context context, WorkflowAction action, JobClient jobClient) throws Exception{
+
+        RunningJob runningJob;
+        String launcherJobId = action.getExternalId();
+        String childJobId = action.getExternalChildIDs();
+
+        if (childJobId != null && childJobId.length() > 0) {
+            runningJob = jobClient.getJob(JobID.forName(childJobId));
+        }
+        else {
+            runningJob = jobClient.getJob(JobID.forName(launcherJobId));
+        }
+
+        return runningJob;
+    }
 }

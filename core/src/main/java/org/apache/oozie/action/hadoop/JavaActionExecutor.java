@@ -973,6 +973,11 @@ public class JavaActionExecutor extends ActionExecutor {
         return Services.get().get(HadoopAccessorService.class).createJobClient(user, jobConf);
     }
 
+    protected RunningJob getRunningJob(Context context, WorkflowAction action, JobClient jobClient) throws Exception{
+        RunningJob runningJob = jobClient.getJob(JobID.forName(action.getExternalId()));
+        return runningJob;
+    }
+
     @Override
     public void check(Context context, WorkflowAction action) throws ActionExecutorException {
         JobClient jobClient = null;
@@ -982,7 +987,7 @@ public class JavaActionExecutor extends ActionExecutor {
             FileSystem actionFs = context.getAppFileSystem();
             JobConf jobConf = createBaseHadoopConf(context, actionXml);
             jobClient = createJobClient(context, jobConf);
-            RunningJob runningJob = jobClient.getJob(JobID.forName(action.getExternalId()));
+            RunningJob runningJob = getRunningJob(context, action, jobClient);
             if (runningJob == null) {
                 context.setExternalStatus(FAILED);
                 context.setExecutionData(FAILED, null);
@@ -1011,7 +1016,7 @@ public class JavaActionExecutor extends ActionExecutor {
                                 action.getId());
                     }
 
-                    context.setStartData(newId, action.getTrackerUri(), runningJob.getTrackingURL());
+                    context.setExternalChildIDs(newId);
                     XLog.getLog(getClass()).info(XLog.STD, "External ID swap, old ID [{0}] new ID [{1}]", launcherId,
                             newId);
                 }

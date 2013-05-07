@@ -84,6 +84,13 @@
     </servlet>
 
     <servlet>
+        <servlet-name>v2job</servlet-name>
+        <display-name>WS API for a specific Workflow Job</display-name>
+        <servlet-class>org.apache.oozie.servlet.V2JobServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet>
         <servlet-name>sla-event</servlet-name>
         <display-name>WS API for specific SLA Events</display-name>
         <servlet-class>org.apache.oozie.servlet.SLAServlet</servlet-class>
@@ -107,6 +114,11 @@
     </servlet-mapping>
 
     <servlet-mapping>
+        <servlet-name>v1admin</servlet-name>
+        <url-pattern>/v2/admin/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
         <servlet-name>callback</servlet-name>
         <url-pattern>/callback/*</url-pattern>
     </servlet-mapping>
@@ -122,6 +134,11 @@
     </servlet-mapping>
 
     <servlet-mapping>
+        <servlet-name>v1jobs</servlet-name>
+        <url-pattern>/v2/jobs</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
         <servlet-name>v0job</servlet-name>
         <url-pattern>/v0/job/*</url-pattern>
     </servlet-mapping>
@@ -132,8 +149,18 @@
     </servlet-mapping>
 
     <servlet-mapping>
+        <servlet-name>v2job</servlet-name>
+        <url-pattern>/v2/job/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
         <servlet-name>sla-event</servlet-name>
         <url-pattern>/v1/sla/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>sla-event</servlet-name>
+        <url-pattern>/v2/sla/*</url-pattern>
     </servlet-mapping>
 
     <!-- welcome-file -->
