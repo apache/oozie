@@ -178,12 +178,6 @@ public class MockDagEngineService extends DagEngineService {
         }
 
         @Override
-        public JMSConnectionInfoBean getJMSConnectionInfo(String jobId) throws DagEngineException {
-            did = RestConstants.JOB_SHOW_JMS_INFO;
-            return createDummyJMSConnectionInfo();
-        }
-
-        @Override
         public String getDefinition(String jobId) throws DagEngineException {
             did = RestConstants.JOB_SHOW_DEFINITION;
             int idx = validateWorkflowIdx(jobId);
@@ -241,7 +235,7 @@ public class MockDagEngineService extends DagEngineService {
         jmsProps.setProperty("k1", "v1");
         jmsProps.setProperty("k2", "v2");
         jmsBean.setJNDIProperties(jmsProps);
-        jmsBean.setTopicName("topic");
+        jmsBean.setTopicPrefix("topicPrefix");
         return jmsBean;
     }
 

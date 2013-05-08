@@ -235,6 +235,7 @@ public enum ErrorCode {
     E1501(XLog.STD, "Error in getting HCat Access [{0}]"),
 
     E1601(XLog.STD, "Cannot retrieve JMS connection info [{0}]"),
+    E1602(XLog.STD, "Cannot retrieve Topic name [{0}]"),
 
     ETEST(XLog.STD, "THIS SHOULD HAPPEN ONLY IN TESTING, invalid job id [{0}]"),;
 

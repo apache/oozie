@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,6 +34,7 @@ import org.apache.oozie.servlet.MockDagEngineService;
 import org.apache.oozie.servlet.V1AdminServlet;
 import org.apache.oozie.servlet.V1JobServlet;
 import org.apache.oozie.servlet.V1JobsServlet;
+import org.apache.oozie.servlet.V2AdminServlet;
 import org.apache.oozie.servlet.V2JobServlet;
 import org.apache.oozie.util.XConfiguration;
 
@@ -45,15 +46,15 @@ public class TestOozieCLI extends DagServletTestCase {
         new V1JobServlet();
         new V1JobsServlet();
         new V1AdminServlet();
+        new V2AdminServlet();
         new V2JobServlet();
     }
 
     static final boolean IS_SECURITY_ENABLED = false;
     static final String VERSION = "/v" + OozieClient.WS_PROTOCOL_VERSION;
     static final String[] END_POINTS = {"/versions", VERSION + "/jobs", VERSION + "/job/*", VERSION + "/admin/*"};
-    static final Class[] SERVLET_CLASSES =
- { HeaderTestingVersionServlet.class, V1JobsServlet.class, V1JobServlet.class,
-            V1AdminServlet.class, V2JobServlet.class };
+    static final Class[] SERVLET_CLASSES = { HeaderTestingVersionServlet.class, V1JobsServlet.class,
+            V1JobServlet.class, V1AdminServlet.class, V2JobServlet.class, V2AdminServlet.class };
 
     @Override
     protected void setUp() throws Exception {
@@ -300,7 +301,7 @@ public class TestOozieCLI extends DagServletTestCase {
 
     /**
      * Check if "-debug" option is accepted at CLI with job run command
-     * 
+     *
      * @throws Exception
      */
     public void testRunWithDebug() throws Exception {
@@ -518,12 +519,12 @@ public class TestOozieCLI extends DagServletTestCase {
                     MockDagEngineService.JOB_ID + "1" + MockDagEngineService.JOB_ID_END};
                 assertEquals(0, new OozieCLI().run(args));
                 assertEquals(RestConstants.JOB_SHOW_INFO, MockDagEngineService.did);
-                
+
                 args = new String[]{"job", "-oozie", oozieUrl, "-info", MockDagEngineService.JOB_ID + "2" +
                     MockDagEngineService.JOB_ID_END};
                 assertEquals(0, new OozieCLI().run(args));
                 assertEquals(RestConstants.JOB_SHOW_INFO, MockDagEngineService.did);
-                
+
                 args = new String[]{"job", "-oozie", oozieUrl, "-info",
                         MockDagEngineService.JOB_ID + (MockDagEngineService.workflows.size() + 1)};
                 assertEquals(-1, new OozieCLI().run(args));
@@ -545,12 +546,12 @@ public class TestOozieCLI extends DagServletTestCase {
                         "name=x"};
                 assertEquals(0, new OozieCLI().run(args));
                 assertEquals(RestConstants.JOBS_FILTER_PARAM, MockDagEngineService.did);
-                
+
                 args = new String[]{"jobs", "-timezone", "PST", "-len", "3", "-offset", "2", "-oozie", oozieUrl,
                     "-filter", "name=x"};
                 assertEquals(0, new OozieCLI().run(args));
                 assertEquals(RestConstants.JOBS_FILTER_PARAM, MockDagEngineService.did);
-                
+
                 args = new String[]{"jobs", "-jobtype", "coord",  "-filter", "status=FAILED", "-oozie", oozieUrl};
                 assertEquals(0, new OozieCLI().run(args));
                 assertEquals(RestConstants.JOBS_FILTER_PARAM, MockDagEngineService.did);
@@ -711,7 +712,7 @@ public class TestOozieCLI extends DagServletTestCase {
             }
         });
     }
-    
+
     public void testInfo() throws Exception {
         String[] args = new String[]{"info"};
         assertEquals(0, new OozieCLI().run(args));

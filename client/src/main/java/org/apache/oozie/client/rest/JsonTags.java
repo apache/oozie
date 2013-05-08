@@ -196,7 +196,10 @@ public interface JsonTags {
     public static final String TIME_ZOME_DISPLAY_NAME = "timezoneDisplayName";
     public static final String TIME_ZONE_ID = "timezoneId";
 
-    public static final String JMS_TOPIC_NAME = "jmsTopic";
+    public static final String JMS_TOPIC_PATTERN = "jmsTopicPattern";
     public static final String JMS_JNDI_PROPERTIES = "jmsJNDIProps";
+    public static final String JMS_TOPIC_PREFIX = "jmsTopicPrefix";
+
+    public static final String JMS_TOPIC_NAME = "jmsTopicName";
 
 }

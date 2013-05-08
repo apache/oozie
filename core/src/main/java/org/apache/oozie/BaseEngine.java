@@ -23,9 +23,9 @@ import java.io.Writer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.WorkflowJob;
-import org.apache.oozie.client.rest.JMSConnectionInfoBean;
-import org.apache.oozie.command.CommandException;
-import org.apache.oozie.command.JMSInfoXCommand;
+import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.service.JMSTopicService;
+import org.apache.oozie.service.Services;
 
 public abstract class BaseEngine {
     public static final String USE_XCOMMAND = "oozie.useXCommand";
@@ -197,19 +197,28 @@ public abstract class BaseEngine {
      */
     public abstract String dryRunSubmit(Configuration conf) throws BaseEngineException;
 
+
     /**
-     * Return the jms info about a job.
+     * Return the jms topic name for the job.
      *
      * @param jobId job Id.
-     * @return the JMS info bean
+     * @return String the topic name
      * @throws DagEngineException thrown if the jms info could not be obtained.
      */
-    public JMSConnectionInfoBean getJMSConnectionInfo(String jobId) throws DagEngineException {
-        try {
-                return new JMSInfoXCommand(jobId).call();
+    public String getJMSTopicName(String jobId) throws DagEngineException {
+        JMSTopicService jmsTopicService = Services.get().get(JMSTopicService.class);
+        if (jmsTopicService != null) {
+            try {
+                return jmsTopicService.getTopic(jobId);
+            }
+            catch (JPAExecutorException e) {
+               throw new DagEngineException(ErrorCode.E1602, e);
+            }
         }
-        catch (CommandException ex) {
-            throw new DagEngineException(ex);
+        else {
+            throw new DagEngineException(ErrorCode.E1602,
+                    "JMSTopicService is not initialized. JMS notification"
+                            + "may not be enabled");
         }
     }
 

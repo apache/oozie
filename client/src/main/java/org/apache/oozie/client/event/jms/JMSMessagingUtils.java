@@ -31,40 +31,52 @@ import org.apache.oozie.client.event.message.EventMessage;
  * Client utility to convert JMS message to EventMessage object
  */
 public class JMSMessagingUtils {
-
     private static final String DESERIALIZER_PROP = "oozie.msg.deserializer.";
+    private static MessageDeserializer deserializer;
+    private static Properties jmsDeserializerInfo;
+    private static final String CLIENT_PROPERTIES = "oozie_client.properties";
+
+    static {
+        InputStream is = JMSMessagingUtils.class.getClassLoader().getResourceAsStream(CLIENT_PROPERTIES);
+        if (is == null) {
+            System.out.println("Using default JSON Deserializer");
+            deserializer = new JSONMessageDeserializer();
+        }
+        else {
+            jmsDeserializerInfo = new Properties();
+            try {
+                jmsDeserializerInfo.load(is);
+                is.close();
+            }
+            catch (IOException ioe) {
+                throw new RuntimeException("I/O error occured for " + CLIENT_PROPERTIES, ioe);
+            }
+        }
+
+    }
 
     /**
      * Constructs the EventMessage object from JMS message
      *
+     * @param <T>
      * @param msg the JMS message
      * @return the EventMessage
      * @throws IOException
      * @throws JMSException
      */
-    public static EventMessage getEventMessage(Message msg) throws IOException, JMSException {
+    public static <T extends EventMessage> T getEventMessage(Message msg) throws IOException, JMSException {
         if (msg == null) {
             throw new IllegalArgumentException("Could not extract EventMessage as JMS message is null");
         }
-        TextMessage textMessage = (TextMessage) msg;
-        String msgFormat = msg.getStringProperty(JMSHeaderConstants.MESSAGE_FORMAT);
-
-        Properties jmsDeserializerInfo = new Properties();
-        InputStream is = JMSMessagingUtils.class.getClassLoader().getResourceAsStream("oozie_client.properties");
-
-        if (is == null) {
-            System.out.println("Using default deserializer");
-            return new JSONMessageDeserializer().getEventMessage(textMessage);
+        if (deserializer == null) {
+            String msgFormat = msg.getStringProperty(JMSHeaderConstants.MESSAGE_FORMAT);
+            deserializer = getDeserializer(msgFormat);
         }
-        else {
-            jmsDeserializerInfo.load(is);
-            MessageDeserializer deserializer = getDeserializer((String) jmsDeserializerInfo.get(DESERIALIZER_PROP
-                    + msgFormat));
-            return deserializer.getEventMessage(textMessage);
-        }
+        return deserializer.getEventMessage(msg);
     }
 
-    private static MessageDeserializer getDeserializer(String deserializerString) {
+    private static MessageDeserializer getDeserializer(String msgFormat) throws IOException {
+        String deserializerString = (String) jmsDeserializerInfo.get(DESERIALIZER_PROP + msgFormat);
         if (deserializerString == null) {
             return new JSONMessageDeserializer();
         }

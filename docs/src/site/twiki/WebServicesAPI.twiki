@@ -910,14 +910,32 @@ Assuming Oozie is runing at =OOZIE_URL=, the following web services end points a
    * <OOZIE_URL>/v2/job
    * <OOZIE_URL>/v2/jobs
 
-Please note that v1 and v2 are almost identical.
-Only difference is the JSON format of Job Information API (*/job) particularly for map-reduce action.
-No change for other actions.
+*Changes in v2 job API:*
 
+There is a difference in the JSON format of Job Information API (*/job) particularly for map-reduce action.
+No change for other actions.
 In v1, externalId and consoleUrl point to spawned child job ID, and exteranlChildIDs is null in map-reduce action.
 In v2, externalId and consoleUrl point to launcher job ID, and exteranlChildIDs is spawned child job ID in map-reduce action.
 
-v2/admin, v2/jobs remain the same with v1/admin, v1/jobs
+v2 supports retrieving of JMS topic on which job notifications are sent
+
+*REST API URL:*
+
+<verbatim>
+GET http://localhost:11000/oozie/v2/job/0000002-130507145349661-oozie-vira-W?show=jmstopic
+</verbatim>
+
+*Changes in v2 admin API:*
+
+v2 adds support for retrieving JMS connection information related to JMS notifications.
+
+*REST API URL:*
+
+<verbatim>
+GET http://localhost:11000/oozie/v2/admin/jmsinfo
+</verbatim>
+
+v2/jobs remain the same as v1/jobs
 
 ---+++ Job and Jobs End-Points
 

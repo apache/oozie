@@ -89,7 +89,7 @@ public class TestJMSJobEventListener extends XTestCase {
             wfEventListener.onWorkflowJobEvent(wfe);
             TextMessage message = (TextMessage) consumer.receive(5000);
             assertFalse(message.getText().contains("endTime"));
-            WorkflowJobMessage wfStartMessage = (WorkflowJobMessage) JMSMessagingUtils.getEventMessage(message);
+            WorkflowJobMessage wfStartMessage = JMSMessagingUtils.getEventMessage(message);
             assertEquals(WorkflowJob.Status.RUNNING, wfStartMessage.getStatus());
             assertEquals(startDate, wfStartMessage.getStartTime());
             assertEquals("wfId1", wfStartMessage.getId());
@@ -122,7 +122,7 @@ public class TestJMSJobEventListener extends XTestCase {
             MessageConsumer consumer = jmsContext.createConsumer(session, wfEventListener.getTopic(wfe));
             wfEventListener.onWorkflowJobEvent(wfe);
             TextMessage message = (TextMessage) consumer.receive(5000);
-            WorkflowJobMessage wfSuccMessage = (WorkflowJobMessage) JMSMessagingUtils.getEventMessage(message);
+            WorkflowJobMessage wfSuccMessage = JMSMessagingUtils.getEventMessage(message);
             assertEquals(WorkflowJob.Status.SUCCEEDED, wfSuccMessage.getStatus());
             assertEquals(startDate, wfSuccMessage.getStartTime());
             assertEquals(endDate, wfSuccMessage.getEndTime());
@@ -158,7 +158,7 @@ public class TestJMSJobEventListener extends XTestCase {
             MessageConsumer consumer = jmsContext.createConsumer(session, wfEventListener.getTopic(wfe));
             wfEventListener.onWorkflowJobEvent(wfe);
             TextMessage message = (TextMessage) consumer.receive(5000);
-            WorkflowJobMessage wfFailMessage = (WorkflowJobMessage) JMSMessagingUtils.getEventMessage(message);
+            WorkflowJobMessage wfFailMessage = JMSMessagingUtils.getEventMessage(message);
             assertEquals(WorkflowJob.Status.FAILED, wfFailMessage.getStatus());
             assertEquals(startDate, wfFailMessage.getStartTime());
             assertEquals(endDate, wfFailMessage.getEndTime());
@@ -193,7 +193,7 @@ public class TestJMSJobEventListener extends XTestCase {
             wfEventListener.onWorkflowJobEvent(wfe);
             TextMessage message = (TextMessage) consumer.receive(5000);
             assertFalse(message.getText().contains("endTime"));
-            WorkflowJobMessage wfFailMessage = (WorkflowJobMessage) JMSMessagingUtils.getEventMessage(message);
+            WorkflowJobMessage wfFailMessage = JMSMessagingUtils.getEventMessage(message);
             assertEquals(WorkflowJob.Status.SUSPENDED, wfFailMessage.getStatus());
             assertEquals(startDate, wfFailMessage.getStartTime());
             assertEquals("wfId1", wfFailMessage.getId());
@@ -226,7 +226,7 @@ public class TestJMSJobEventListener extends XTestCase {
             MessageConsumer consumer = jmsContext.createConsumer(session, wfEventListener.getTopic(wfe), selector);
             wfEventListener.onWorkflowJobEvent(wfe);
             TextMessage message = (TextMessage) consumer.receive(5000);
-            WorkflowJobMessage wfFailMessage = (WorkflowJobMessage) JMSMessagingUtils.getEventMessage(message);
+            WorkflowJobMessage wfFailMessage = JMSMessagingUtils.getEventMessage(message);
             Assert.assertEquals(WorkflowJob.Status.FAILED, wfFailMessage.getStatus());
             assertEquals("user_1", wfFailMessage.getUser());
             assertEquals(MessageType.JOB, wfFailMessage.getMessageType());
@@ -276,7 +276,7 @@ public class TestJMSJobEventListener extends XTestCase {
             MessageConsumer consumer = jmsContext.createConsumer(session, wfEventListener.getTopic(wfe), selector);
             wfEventListener.onWorkflowJobEvent(wfe);
             TextMessage message = (TextMessage) consumer.receive(5000);
-            WorkflowJobMessage wfFailMessage = (WorkflowJobMessage) JMSMessagingUtils.getEventMessage(message);
+            WorkflowJobMessage wfFailMessage = JMSMessagingUtils.getEventMessage(message);
             Assert.assertEquals(WorkflowJob.Status.FAILED, wfFailMessage.getStatus());
             assertEquals("user1", wfFailMessage.getUser());
             assertEquals(MessageType.JOB, wfFailMessage.getMessageType());
@@ -303,7 +303,7 @@ public class TestJMSJobEventListener extends XTestCase {
             MessageConsumer consumer = jmsContext.createConsumer(session, wfEventListener.getTopic(wfe), selector);
             wfEventListener.onWorkflowJobEvent(wfe);
             TextMessage message = (TextMessage) consumer.receive(5000);
-            WorkflowJobMessage wfFailMessage = (WorkflowJobMessage) JMSMessagingUtils.getEventMessage(message);
+            WorkflowJobMessage wfFailMessage = JMSMessagingUtils.getEventMessage(message);
             Assert.assertEquals(WorkflowJob.Status.FAILED, wfFailMessage.getStatus());
             assertEquals("user1", wfFailMessage.getUser());
             assertEquals(MessageType.JOB, wfFailMessage.getMessageType());
@@ -339,8 +339,7 @@ public class TestJMSJobEventListener extends XTestCase {
             assertNotNull(jmsContext);
             broker.stop();
             jmsContext = getConnectionContext();
-            // Exception Listener should have removed the conn context from
-            // connection map
+            // Exception Listener should have removed the old conn context
             assertNull(jmsContext);
             broker = new BrokerService();
             broker.addConnector(brokerURl);
@@ -381,7 +380,7 @@ public class TestJMSJobEventListener extends XTestCase {
             assertFalse(message.getText().contains("endTime"));
             assertFalse(message.getText().contains("errorCode"));
             assertFalse(message.getText().contains("errorMessage"));
-            CoordinatorActionMessage coordActionWaitingMessage = (CoordinatorActionMessage) JMSMessagingUtils
+            CoordinatorActionMessage coordActionWaitingMessage = JMSMessagingUtils
                     .getEventMessage(message);
             assertEquals(CoordinatorAction.Status.WAITING, coordActionWaitingMessage.getStatus());
             assertEquals(startDate, coordActionWaitingMessage.getStartTime());
@@ -419,7 +418,7 @@ public class TestJMSJobEventListener extends XTestCase {
             assertFalse(message.getText().contains("errorCode"));
             assertFalse(message.getText().contains("errorMessage"));
             assertFalse(message.getText().contains("missingDependency"));
-            CoordinatorActionMessage coordActionStartMessage = (CoordinatorActionMessage) JMSMessagingUtils
+            CoordinatorActionMessage coordActionStartMessage = JMSMessagingUtils
                     .getEventMessage(message);
             assertEquals(CoordinatorAction.Status.RUNNING, coordActionStartMessage.getStatus());
             assertEquals(startDate, coordActionStartMessage.getStartTime());
@@ -456,7 +455,7 @@ public class TestJMSJobEventListener extends XTestCase {
             assertFalse(message.getText().contains("errorCode"));
             assertFalse(message.getText().contains("errorMessage"));
             assertFalse(message.getText().contains("missingDependency"));
-            CoordinatorActionMessage coordActionSuccessMessage = (CoordinatorActionMessage) JMSMessagingUtils
+            CoordinatorActionMessage coordActionSuccessMessage = JMSMessagingUtils
                     .getEventMessage(message);
             assertEquals(CoordinatorAction.Status.SUCCEEDED, coordActionSuccessMessage.getStatus());
             assertEquals(startDate, coordActionSuccessMessage.getStartTime());
@@ -494,7 +493,7 @@ public class TestJMSJobEventListener extends XTestCase {
             coordEventListener.onCoordinatorActionEvent(cae);
             TextMessage message = (TextMessage) consumer.receive(5000);
             assertFalse(message.getText().contains("missingDependency"));
-            CoordinatorActionMessage coordActionFailMessage = (CoordinatorActionMessage) JMSMessagingUtils
+            CoordinatorActionMessage coordActionFailMessage = JMSMessagingUtils
                     .getEventMessage(message);
             assertEquals(CoordinatorAction.Status.FAILED, coordActionFailMessage.getStatus());
             assertEquals(startDate, coordActionFailMessage.getStartTime());
@@ -530,7 +529,7 @@ public class TestJMSJobEventListener extends XTestCase {
             MessageConsumer consumer = jmsContext.createConsumer(session, coordEventListener.getTopic(cae), selector);
             coordEventListener.onCoordinatorActionEvent(cae);
             TextMessage message = (TextMessage) consumer.receive(5000);
-            CoordinatorActionMessage coordActionFailMessage = (CoordinatorActionMessage) JMSMessagingUtils
+            CoordinatorActionMessage coordActionFailMessage = JMSMessagingUtils
                     .getEventMessage(message);
             Assert.assertEquals(CoordinatorAction.Status.FAILED, coordActionFailMessage.getStatus());
             assertEquals("user1", coordActionFailMessage.getUser());
@@ -571,7 +570,7 @@ public class TestJMSJobEventListener extends XTestCase {
         String jmsProps = conf.get(JMSJobEventListener.JMS_CONNECTION_PROPERTIES);
         JMSConnectionInfo connInfo = new JMSConnectionInfo(jmsProps);
         JMSAccessorService jmsService = Services.get().get(JMSAccessorService.class);
-        ConnectionContext jmsContext = jmsService.createConnectionContext(connInfo, false);
+        ConnectionContext jmsContext = jmsService.createProducerConnectionContext(connInfo);
         return jmsContext;
 
     }

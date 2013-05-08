@@ -211,7 +211,8 @@ public class V0JobServlet extends BaseJobServlet {
     }
 
     @Override
-    protected JsonBean getJMSConnectionInfo(HttpServletRequest request, HttpServletResponse response)
-            throws XServletException, IOException {
-        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0306);}
+    protected String getJMSTopicName(HttpServletRequest request, HttpServletResponse response) throws XServletException,
+            IOException {
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0306);
+    }
 }

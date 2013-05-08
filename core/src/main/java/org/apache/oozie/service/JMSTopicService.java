@@ -21,9 +21,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.client.event.Event;
+import org.apache.oozie.client.event.Event.AppType;
 import org.apache.oozie.event.CoordinatorActionEvent;
 import org.apache.oozie.event.WorkflowJobEvent;
 import org.apache.oozie.executor.jpa.BundleJobGetForUserJPAExecutor;
@@ -31,6 +34,7 @@ import org.apache.oozie.executor.jpa.CoordinatorJobGetForUserJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowJobGetForUserJPAExecutor;
 import org.apache.oozie.util.XLog;
+
 
 /**
  * JMS Topic service to retrieve topic names from events or job id
@@ -250,6 +254,30 @@ public class JMSTopicService implements Service {
             topicName = jobId;
         }
         return topicName;
+    }
+
+    public Properties getTopicPatternProperties() {
+        Properties props = new Properties();
+        String wfTopic = topicMap.get(JobType.WORKFLOW.value);
+        wfTopic = (wfTopic != null) ? wfTopic : defaultTopicName;
+        props.put(AppType.WORKFLOW_JOB, wfTopic);
+        props.put(AppType.WORKFLOW_ACTION, wfTopic);
+
+        String coordTopic = topicMap.get(JobType.COORDINATOR.value);
+        coordTopic = (coordTopic != null) ? coordTopic : defaultTopicName;
+        props.put(AppType.COORDINATOR_JOB, coordTopic);
+        props.put(AppType.COORDINATOR_ACTION, coordTopic);
+
+        String bundleTopic = topicMap.get(JobType.BUNDLE.value);
+        bundleTopic = (bundleTopic != null) ? bundleTopic : defaultTopicName;
+        props.put(AppType.BUNDLE_JOB, bundleTopic);
+        props.put(AppType.BUNDLE_ACTION, bundleTopic);
+
+        return props;
+    }
+
+    public String getTopicPrefix() {
+        return topicPrefix;
     }
 
     @Override

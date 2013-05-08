@@ -30,7 +30,7 @@ import org.apache.oozie.service.Services;
 public class MessageFactory {
 
     public static final String OOZIE_MESSAGE_FORMAT = Services.get().getConf().get("message.format", "json");
-    public static final String OOZIE_MESSAGE_SERIALIZE = "oozie.message.serialize.";
+    public static final String OOZIE_MESSAGE_SERIALIZE = "oozie.jms.serialize.";
 
     private static class MessageSerializerHolder {
         private static String messageSerializerInstance = Services

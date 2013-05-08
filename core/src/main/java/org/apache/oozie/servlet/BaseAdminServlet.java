@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,6 +26,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.oozie.BuildInfo;
+import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.service.AuthorizationException;
@@ -73,6 +74,18 @@ public abstract class BaseAdminServlet extends JsonRestServlet {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0301, resourceName);
         }*/
     }
+
+
+    /**
+     * Get JMS connection Info
+     * @param request
+     * @param response
+     * @throws XServletException
+     * @throws IOException
+     */
+    abstract JsonBean getJMSConnectionInfo(HttpServletRequest request, HttpServletResponse response)
+            throws XServletException, IOException;
+
 
     /**
      * Return safemode state, instrumentation, configuration, osEnv or
@@ -123,7 +136,15 @@ public abstract class BaseAdminServlet extends JsonRestServlet {
             json.put(JsonTags.AVAILABLE_TIME_ZONES, availableTimeZonesToJsonArray());
             sendJsonResponse(response, HttpServletResponse.SC_OK, json);
         }
+        else if (resource.equals(RestConstants.ADMIN_JMS_INFO)) {
+            String timeZoneId = request.getParameter(RestConstants.TIME_ZONE_PARAM) == null ? "GMT" : request
+                    .getParameter(RestConstants.TIME_ZONE_PARAM);
+            JsonBean jmsBean = getJMSConnectionInfo(request, response);
+            sendJsonResponse(response, HttpServletResponse.SC_OK, jmsBean, timeZoneId);
+        }
+
     }
+
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException,
@@ -182,7 +203,7 @@ public abstract class BaseAdminServlet extends JsonRestServlet {
             throws XServletException;
 
     protected abstract void getQueueDump(JSONObject json) throws XServletException;
-    
+
     private static final JSONArray GMTOffsetTimeZones = new JSONArray();
     static {
         prepareGMTOffsetTimeZones();

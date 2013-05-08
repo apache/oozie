@@ -21,8 +21,6 @@ import org.apache.oozie.client.event.message.CoordinatorActionMessage;
 import org.apache.oozie.client.event.message.EventMessage;
 import org.apache.oozie.client.event.message.WorkflowJobMessage;
 import org.apache.oozie.client.event.Event;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.DeserializationConfig;
 import javax.jms.Message;
 import javax.jms.TextMessage;
 import javax.jms.JMSException;
@@ -31,11 +29,6 @@ import javax.jms.JMSException;
  * Class to deserialize the jms message to java object
  */
 public abstract class MessageDeserializer {
-    static ObjectMapper mapper = new ObjectMapper(); // Thread-safe.
-
-    static {
-        mapper.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    }
 
     /**
      * Constructs the event message from JMS message
@@ -44,9 +37,10 @@ public abstract class MessageDeserializer {
      * @return EventMessage
      * @throws JMSException
      */
-    public EventMessage getEventMessage(Message message) throws JMSException {
-        String appTypeString = message.getStringProperty(JMSHeaderConstants.APP_TYPE);
-        String messageBody = ((TextMessage) message).getText();
+    public <T extends EventMessage> T getEventMessage(Message message) throws JMSException {
+        TextMessage textMessage = (TextMessage) message;
+        String appTypeString = textMessage.getStringProperty(JMSHeaderConstants.APP_TYPE);
+        String messageBody = textMessage.getText();
 
         if (appTypeString == null || appTypeString.isEmpty() || messageBody == null || messageBody.isEmpty()) {
             throw new IllegalArgumentException("Could not extract OozieEventMessage. "
@@ -56,11 +50,11 @@ public abstract class MessageDeserializer {
         switch (Event.AppType.valueOf(appTypeString)) {
             case WORKFLOW_JOB:
                 WorkflowJobMessage wfJobMsg = getDeserializedObject(messageBody, WorkflowJobMessage.class);
-                return setPropertiesForObject(wfJobMsg, message);
+                return setProperties(wfJobMsg, textMessage);
             case COORDINATOR_ACTION:
                 CoordinatorActionMessage caActionMsg = getDeserializedObject(messageBody,
                         CoordinatorActionMessage.class);
-                return setPropertiesForObject(caActionMsg, message);
+                return setProperties(caActionMsg, textMessage);
             default:
                 throw new UnsupportedOperationException("Conversion of " + appTypeString
                         + " to Event message is not supported");
@@ -78,7 +72,7 @@ public abstract class MessageDeserializer {
      * @return WorkflowJobMessage
      * @throws JMSException
      */
-    public abstract WorkflowJobMessage setPropertiesForObject(WorkflowJobMessage wfJobMessage, Message message)
+    protected abstract <T extends EventMessage> T setProperties(WorkflowJobMessage wfJobMessage, Message message)
             throws JMSException;
 
     /**
@@ -89,7 +83,7 @@ public abstract class MessageDeserializer {
      * @return CoordinatorActionMessage
      * @throws JMSException
      */
-    public abstract CoordinatorActionMessage setPropertiesForObject(CoordinatorActionMessage coordActionMessage,
+    protected abstract <T extends EventMessage> T setProperties(CoordinatorActionMessage coordActionMessage,
             Message message) throws JMSException;
 
 }

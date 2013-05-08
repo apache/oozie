@@ -17,10 +17,16 @@
  */
 package org.apache.oozie.servlet;
 
+import java.io.IOException;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.oozie.DagEngine;
+import org.apache.oozie.DagEngineException;
 import org.apache.oozie.client.rest.JsonBean;
+import org.apache.oozie.service.DagEngineService;
+import org.apache.oozie.service.Services;
 
 @SuppressWarnings("serial")
 public class V2JobServlet extends V1JobServlet {
@@ -41,5 +47,22 @@ public class V2JobServlet extends V1JobServlet {
     protected JsonBean getWorkflowAction(HttpServletRequest request, HttpServletResponse response) throws XServletException {
         JsonBean actionBean = super.getWorkflowActionBean(request, response);
         return actionBean;
+    }
+
+
+    @Override
+    protected String getJMSTopicName(HttpServletRequest request, HttpServletResponse response) throws XServletException,
+            IOException {
+        String topicName;
+        String jobId = getResourceName(request);
+        DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
+                getAuthToken(request));
+        try {
+            topicName = dagEngine.getJMSTopicName(jobId);
+        }
+        catch (DagEngineException ex) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
+        }
+        return topicName;
     }
 }

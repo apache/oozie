@@ -19,17 +19,28 @@ package org.apache.oozie.client.event.jms;
 
 import javax.jms.JMSException;
 import javax.jms.Message;
+import javax.jms.TextMessage;
 
+import org.apache.oozie.client.event.Event;
 import org.apache.oozie.client.event.Event.AppType;
 import org.apache.oozie.client.event.JobEvent.EventStatus;
 import org.apache.oozie.client.event.Event.MessageType;
 import org.apache.oozie.client.event.message.CoordinatorActionMessage;
+import org.apache.oozie.client.event.message.EventMessage;
 import org.apache.oozie.client.event.message.WorkflowJobMessage;
+import org.codehaus.jackson.map.DeserializationConfig;
+import org.codehaus.jackson.map.ObjectMapper;
 
 /**
  * Message deserializer to convert from JSON to java object
  */
 public class JSONMessageDeserializer extends MessageDeserializer {
+
+    static ObjectMapper mapper = new ObjectMapper(); // Thread-safe.
+
+    static {
+        mapper.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    }
 
     @Override
     public <T> T getDeserializedObject(String messageBody, Class<T> clazz) {
@@ -42,8 +53,9 @@ public class JSONMessageDeserializer extends MessageDeserializer {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public WorkflowJobMessage setPropertiesForObject(WorkflowJobMessage workflowJobMsg, Message message)
+    public  WorkflowJobMessage  setProperties(WorkflowJobMessage workflowJobMsg, Message message)
             throws JMSException {
         workflowJobMsg.setAppType(AppType.valueOf(message.getStringProperty(JMSHeaderConstants.APP_TYPE)));
         workflowJobMsg.setMessageType(MessageType.valueOf(message.getStringProperty(JMSHeaderConstants.MESSAGE_TYPE)));
@@ -54,8 +66,9 @@ public class JSONMessageDeserializer extends MessageDeserializer {
 
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public CoordinatorActionMessage setPropertiesForObject(CoordinatorActionMessage coordActionMsg, Message message)
+    public CoordinatorActionMessage setProperties(CoordinatorActionMessage coordActionMsg, Message message)
             throws JMSException {
         coordActionMsg.setAppType(AppType.valueOf(message.getStringProperty(JMSHeaderConstants.APP_TYPE)));
         coordActionMsg.setMessageType(MessageType.valueOf(message.getStringProperty(JMSHeaderConstants.MESSAGE_TYPE)));

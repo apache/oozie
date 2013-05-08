@@ -151,5 +151,7 @@ public interface RestConstants {
 
     public static final String ADMIN_TIME_ZONES_RESOURCE = "available-timezones";
 
-    public static final String JOB_SHOW_JMS_INFO = "jmsinfo";
+    public static final String ADMIN_JMS_INFO = "jmsinfo";
+
+    public static final String JOB_SHOW_JMS_TOPIC = "jmstopic";
 }

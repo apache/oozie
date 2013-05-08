@@ -30,6 +30,7 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.XOozieClient;
 import org.apache.oozie.client.rest.JsonBean;
+import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.service.AuthorizationException;
 import org.apache.oozie.service.AuthorizationService;
@@ -236,11 +237,13 @@ public abstract class BaseJobServlet extends JsonRestServlet {
             sendJsonResponse(response, HttpServletResponse.SC_OK, job, timeZoneId);
         }
 
-        else if (show.equals(RestConstants.JOB_SHOW_JMS_INFO)){
+        else if (show.equals(RestConstants.JOB_SHOW_JMS_TOPIC)) {
             stopCron();
-            JsonBean jmsBean = getJMSConnectionInfo (request, response);
+            String jmsTopicName = getJMSTopicName(request, response);
+            JSONObject json = new JSONObject();
+            json.put(JsonTags.JMS_TOPIC_NAME, jmsTopicName);
             startCron();
-            sendJsonResponse(response, HttpServletResponse.SC_OK, jmsBean, timeZoneId);
+            sendJsonResponse(response, HttpServletResponse.SC_OK, json);
         }
 
         else if (show.equals(RestConstants.JOB_SHOW_LOG)) {
@@ -380,14 +383,13 @@ public abstract class BaseJobServlet extends JsonRestServlet {
     abstract void streamJobGraph(HttpServletRequest request, HttpServletResponse response)
             throws XServletException, IOException;
 
-
     /**
-     * abstract method to get JMS connection details for a job
+     * abstract method to get JMS topic name for a job
      * @param request
      * @param response
      * @throws XServletException
      * @throws IOException
      */
-    abstract JsonBean getJMSConnectionInfo(HttpServletRequest request, HttpServletResponse response)
+    abstract String getJMSTopicName(HttpServletRequest request, HttpServletResponse response)
             throws XServletException, IOException;
 }

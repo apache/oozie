@@ -19,30 +19,24 @@ package org.apache.oozie.client.rest;
 
 import java.util.Properties;
 
-import org.apache.oozie.client.JMSConnectionInfo;
+import org.apache.oozie.client.JMSConnectionInfoWrapper;
+import org.apache.oozie.client.rest.JsonTags;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 /**
  * JMS connection info bean representing the JMS related information for a job
  *
  */
-public class JMSConnectionInfoBean implements JMSConnectionInfo, JsonBean {
+public class JMSConnectionInfoBean implements JsonBean, JMSConnectionInfoWrapper {
 
     private Properties JNDIProperties;
-    private String topicName;
+    private String topicPrefix;
+    private Properties topicProperties;
 
 
     @Override
     public JSONObject toJSONObject() {
         return toJSONObject("GMT");
-    }
-
-    /**
-     * Set the topic name
-     * @param topicName
-     */
-    public void setTopicName(String topicName) {
-        this.topicName = topicName;
     }
 
     /**
@@ -53,12 +47,6 @@ public class JMSConnectionInfoBean implements JMSConnectionInfo, JsonBean {
         this.JNDIProperties = JNDIProperties;
     }
 
-    @Override
-    public String getTopicName() {
-        return topicName;
-    }
-
-    @Override
     public Properties getJNDIProperties() {
         return JNDIProperties;
     }
@@ -68,8 +56,35 @@ public class JMSConnectionInfoBean implements JMSConnectionInfo, JsonBean {
     public JSONObject toJSONObject(String timeZoneId) {
         JSONObject json = new JSONObject();
         json.put(JsonTags.JMS_JNDI_PROPERTIES, JSONValue.toJSONString(JNDIProperties));
-        json.put(JsonTags.JMS_TOPIC_NAME, topicName);
+        json.put(JsonTags.JMS_TOPIC_PATTERN, JSONValue.toJSONString(topicProperties));
+        json.put(JsonTags.JMS_TOPIC_PREFIX, topicPrefix);
         return json;
+    }
+
+    @Override
+    public String getTopicPrefix() {
+       return topicPrefix;
+    }
+
+    /**
+     * Sets the topic prefix
+     * @param topicPrefix
+     */
+    public void setTopicPrefix(String topicPrefix) {
+        this.topicPrefix = topicPrefix;
+    }
+
+    /**
+     * Set the topic pattern properties
+     * @param topicProperties
+     */
+    public void setTopicPatternProperties(Properties topicProperties) {
+        this.topicProperties = topicProperties;
+    }
+
+    @Override
+    public Properties getTopicPatternProperties() {
+        return topicProperties;
     }
 
 }
