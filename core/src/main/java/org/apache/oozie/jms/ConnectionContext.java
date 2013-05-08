@@ -100,7 +100,7 @@ public interface ConnectionContext {
      * @return
      * @throws JMSException
      */
-    public ThreadLocal<Session> createThreadLocalSession(final int sessionOpts);
+    public Session createThreadLocalSession(final int sessionOpts) throws JMSException;
 
     /**
      * Closes the connection

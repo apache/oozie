@@ -185,7 +185,7 @@ public class JobMessage extends EventMessage {
      *
      * @param properties the jms selector key value pair
      */
-    public void setMessageProperties(Map<String, String> properties) {
+    void setMessageProperties(Map<String, String> properties) {
         jmsMessageProperties = properties;
     }
 

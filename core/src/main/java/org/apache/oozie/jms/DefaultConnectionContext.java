@@ -38,7 +38,6 @@ public class DefaultConnectionContext implements ConnectionContext {
     protected Connection connection;
     protected String connectionFactoryName;
     private static XLog LOG = XLog.getLog(ConnectionContext.class);
-    private int sessionOpts;
 
     @Override
     public void createConnection(Properties props) throws NamingException, JMSException {
@@ -58,7 +57,6 @@ public class DefaultConnectionContext implements ConnectionContext {
                     LOG.error("Error in JMS connection", je);
                 }
             });
-
         }
         catch (JMSException e1) {
             LOG.error(e1.getMessage(), e1);
@@ -68,6 +66,9 @@ public class DefaultConnectionContext implements ConnectionContext {
                 }
                 catch (Exception e2) {
                     LOG.error(e2.getMessage(), e2);
+                }
+                finally {
+                    connection = null;
                 }
             }
             throw e1;
@@ -86,6 +87,9 @@ public class DefaultConnectionContext implements ConnectionContext {
 
     @Override
     public Session createSession(int sessionOpts) throws JMSException {
+        if (connection == null) {
+            throw new JMSException ("Connection is not initialized");
+        }
         return connection.createSession(false, sessionOpts);
     }
 
@@ -105,31 +109,33 @@ public class DefaultConnectionContext implements ConnectionContext {
 
     @Override
     public void close() {
-        try {
-            connection.close();
-        }
-        catch (JMSException e) {
-            LOG.warn("Unable to close the connection " + connection, e);
-        }
-    }
-
-    private final ThreadLocal<Session> th =  new ThreadLocal<Session>() {
-        protected Session initialValue() {
+        if (connection != null) {
             try {
-                return connection.createSession(false, sessionOpts);
+                connection.close();
             }
             catch (JMSException e) {
-                throw new RuntimeException("Session couldn't be created", e);
+                LOG.warn("Unable to close the connection " + connection, e);
+            }
+            finally {
+                connection = null;
             }
         }
-    };
-
-    @Override
-    public ThreadLocal<Session> createThreadLocalSession(final int sessionOpts) {
-       this.sessionOpts = sessionOpts;
-       return th;
+        th = null;
     }
 
+    private ThreadLocal<Session> th = new ThreadLocal<Session>();
+
+    @Override
+    public Session createThreadLocalSession(final int sessionOpts) throws JMSException {
+        Session session = th.get();
+        if (session != null) {
+            return session;
+        }
+        th.remove();
+        session = createSession(sessionOpts);
+        th.set(session);
+        return session;
+    }
 
     @Override
     public MessageConsumer createConsumer(Session session, String topicName, String selector) throws JMSException {

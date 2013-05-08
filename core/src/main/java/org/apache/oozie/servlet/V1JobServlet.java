@@ -737,20 +737,6 @@ public class V1JobServlet extends BaseJobServlet {
         return consoleBase;
     }
 
-    protected JsonBean getJMSConnectionInfo(HttpServletRequest request, HttpServletResponse response) throws XServletException{
-        JsonBean jmsBean = null;
-        String jobId = getResourceName(request);
-        DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
-                getAuthToken(request));
-        try {
-            jmsBean = (JsonBean) dagEngine.getJMSConnectionInfo(jobId);
-        }
-        catch (DagEngineException ex) {
-            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
-        }
-        return jmsBean;
-    }
-
     /**
      * Get wf action info
      *
@@ -1009,4 +995,11 @@ public class V1JobServlet extends BaseJobServlet {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
         }
     }
+
+    @Override
+    protected String getJMSTopicName(HttpServletRequest request, HttpServletResponse response) throws XServletException,
+            IOException {
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v1");
+    }
+
 }

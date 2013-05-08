@@ -41,7 +41,8 @@ public interface Event {
         WORKFLOW_ACTION,
         COORDINATOR_JOB,
         COORDINATOR_ACTION,
-        BUNDLE_JOB
+        BUNDLE_JOB,
+        BUNDLE_ACTION
     }
 
     /**

@@ -47,9 +47,8 @@ public class JMSExceptionListener implements ExceptionListener {
     public void onException(JMSException exception) {
         LOG.warn("Received JMSException for [{0}]", connInfo, exception);
         connCtxt.close();
-        JMSAccessorService jmsService = Services.get().get(JMSAccessorService.class);
-        jmsService.removeConnInfo(connInfo);
         if (retry) {
+            JMSAccessorService jmsService = Services.get().get(JMSAccessorService.class);
             jmsService.reestablishConnection(connInfo);
         }
     }

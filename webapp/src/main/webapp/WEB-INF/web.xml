@@ -49,6 +49,13 @@
     </servlet>
 
     <servlet>
+        <servlet-name>v2admin</servlet-name>
+        <display-name>Oozie admin</display-name>
+        <servlet-class>org.apache.oozie.servlet.V2AdminServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet>
         <servlet-name>callback</servlet-name>
         <display-name>Callback Notification</display-name>
         <servlet-class>org.apache.oozie.servlet.CallbackServlet</servlet-class>
@@ -114,7 +121,7 @@
     </servlet-mapping>
 
     <servlet-mapping>
-        <servlet-name>v1admin</servlet-name>
+        <servlet-name>v2admin</servlet-name>
         <url-pattern>/v2/admin/*</url-pattern>
     </servlet-mapping>
 

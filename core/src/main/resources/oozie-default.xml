@@ -164,14 +164,14 @@
         bundle job and bundle action
         WORKFLOW=workflow,
         COORDINATOR=coordinator,
-        BUNDLE={jobId}
+        BUNDLE=${jobId}
         For jobs with no defined topic, default topic will be ${username}
         </description>
     </property>
 
     <!-- JMS Producer connection -->
     <property>
-        <name>oozie.jms.producer.notification.connection</name>
+        <name>oozie.jms.producer.connection.properties</name>
         <value>java.naming.factory.initial#org.apache.activemq.jndi.ActiveMQInitialContextFactory;java.naming.provider.url#tcp://localhost:61616;connectionFactoryNames#ConnectionFactory</value>
     </property>
 

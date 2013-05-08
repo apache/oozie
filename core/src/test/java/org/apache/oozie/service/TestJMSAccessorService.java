@@ -56,10 +56,10 @@ public class TestJMSAccessorService extends XTestCase {
         JMSAccessorService jmsService = services.get(JMSAccessorService.class);
         // both servers should connect to default JMS server
         JMSConnectionInfo connInfo = hcatService.getJMSConnectionInfo(new URI("hcat://hcatserver.blue.server.com:8020"));
-        ConnectionContext ctxt1 = jmsService.createConnectionContext(connInfo, true);
+        ConnectionContext ctxt1 = jmsService.createConnectionContext(connInfo);
         assertTrue(ctxt1.isConnectionInitialized());
         JMSConnectionInfo connInfo1 = hcatService.getJMSConnectionInfo(new URI("http://unknown:80"));
-        ConnectionContext ctxt2 = jmsService.createConnectionContext(connInfo1, true);
+        ConnectionContext ctxt2 = jmsService.createConnectionContext(connInfo1);
         assertTrue(ctxt2.isConnectionInitialized());
         assertEquals(ctxt1, ctxt2);
         ctxt1.close();
@@ -213,13 +213,13 @@ public class TestJMSAccessorService extends XTestCase {
         assertTrue(jmsService.isListeningToTopic(connInfo, topic));
         assertFalse(jmsService.isConnectionInRetryList(connInfo));
         assertFalse(jmsService.isTopicInRetryList(connInfo, topic));
-        ConnectionContext connCtxt = jmsService.createConnectionContext(connInfo, true);
+        ConnectionContext connCtxt = jmsService.createConnectionContext(connInfo);
         broker.stop();
         try {
             connCtxt.createSession(Session.AUTO_ACKNOWLEDGE);
             fail("Exception expected");
         }
-        catch (JMSException e) {
+        catch (Exception e) {
             Thread.sleep(100);
             assertFalse(jmsService.isListeningToTopic(connInfo, topic));
             assertTrue(jmsService.isConnectionInRetryList(connInfo));

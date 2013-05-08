@@ -22,8 +22,10 @@ import org.apache.oozie.client.BundleJob;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.JMSConnectionInfo;
+import org.apache.oozie.client.JMSConnectionInfoWrapper;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.client.event.Event.AppType;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -184,8 +186,9 @@ public class JsonToBean {
         BULK_RESPONSE.put("getCoordinator", new Property(JsonTags.BULK_RESPONSE_COORDINATOR, CoordinatorJob.class, true));
         BULK_RESPONSE.put("getAction", new Property(JsonTags.BULK_RESPONSE_ACTION, CoordinatorAction.class, true));
 
-        JMS_CONNECTION_INFO.put("getTopicName", new Property(JsonTags.JMS_TOPIC_NAME, String.class));
+        JMS_CONNECTION_INFO.put("getTopicPatternProperties", new Property(JsonTags.JMS_TOPIC_PATTERN, Properties.class));
         JMS_CONNECTION_INFO.put("getJNDIProperties", new Property(JsonTags.JMS_JNDI_PROPERTIES, Properties.class));
+        JMS_CONNECTION_INFO.put("getTopicPrefix", new Property(JsonTags.JMS_TOPIC_PREFIX, String.class));
     }
 
     /**
@@ -365,8 +368,26 @@ public class JsonToBean {
      * @return a coordinator job bean populated with the JSON object values.
      */
     public static JMSConnectionInfo createJMSConnectionInfo(JSONObject json) {
-        return (JMSConnectionInfo) Proxy.newProxyInstance(JsonToBean.class.getClassLoader(),
-                new Class[] { JMSConnectionInfo.class }, new JsonInvocationHandler(JMS_CONNECTION_INFO, json));
+        final JMSConnectionInfoWrapper jmsInfo = (JMSConnectionInfoWrapper) Proxy.newProxyInstance(
+                JsonToBean.class.getClassLoader(), new Class[] { JMSConnectionInfoWrapper.class },
+                new JsonInvocationHandler(JMS_CONNECTION_INFO, json));
+
+        return new JMSConnectionInfo() {
+            @Override
+            public String getTopicPrefix() {
+                return jmsInfo.getTopicPrefix();
+            }
+
+            @Override
+            public String getTopicPattern(AppType appType) {
+                return (String)jmsInfo.getTopicPatternProperties().get(appType.name());
+            }
+
+            @Override
+            public Properties getJNDIProperties() {
+                return jmsInfo.getJNDIProperties();
+            }
+        };
     }
 
     /**

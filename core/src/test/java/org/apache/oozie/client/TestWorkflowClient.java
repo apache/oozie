@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,6 +32,7 @@ import org.apache.oozie.servlet.V0JobsServlet;
 import org.apache.oozie.servlet.V1AdminServlet;
 import org.apache.oozie.servlet.V1JobServlet;
 import org.apache.oozie.servlet.V1JobsServlet;
+import org.apache.oozie.servlet.V2AdminServlet;
 import org.apache.oozie.servlet.V2JobServlet;
 
 public class TestWorkflowClient extends DagServletTestCase {
@@ -44,13 +45,15 @@ public class TestWorkflowClient extends DagServletTestCase {
         new V1AdminServlet();
         new V1JobServlet();
         new V2JobServlet();
+        new V2AdminServlet();
     }
 
     private static final boolean IS_SECURITY_ENABLED = false;
     static final String VERSION = "/v" + OozieClient.WS_PROTOCOL_VERSION;
     static final String[] END_POINTS = {"/versions", VERSION + "/jobs", VERSION + "/job/*", VERSION + "/admin/*"};
-    static final Class[] SERVLET_CLASSES = {HeaderTestingVersionServlet.class, V0JobsServlet.class,
-            V0JobServlet.class, V1AdminServlet.class, V1JobServlet.class, V2JobServlet.class, V1JobsServlet.class};
+    static final Class[] SERVLET_CLASSES = { HeaderTestingVersionServlet.class, V0JobsServlet.class,
+            V0JobServlet.class, V1AdminServlet.class, V2AdminServlet.class, V1JobServlet.class, V2JobServlet.class,
+            V1JobsServlet.class };
 
     protected void setUp() throws Exception {
         super.setUp();

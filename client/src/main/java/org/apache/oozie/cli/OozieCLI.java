@@ -111,7 +111,6 @@ public class OozieCLI {
     public static final String ACTION_OPTION = "action";
     public static final String DEFINITION_OPTION = "definition";
     public static final String CONFIG_CONTENT_OPTION = "configcontent";
-    public static final String JMS_INFO_OPTION = "jmsinfo";
 
     public static final String DO_AS_OPTION = "doas";
 
@@ -255,7 +254,6 @@ public class OozieCLI {
         Option changeValue = new Option(CHANGE_VALUE_OPTION, true,
                 "new endtime/concurrency/pausetime value for changing a coordinator job");
         Option info = new Option(INFO_OPTION, true, "info of a job");
-        Option jmsInfo = new Option (JMS_INFO_OPTION, true, "JMS Topic name and JNDI connection string for a job");
         Option offset = new Option(OFFSET_OPTION, true, "job info offset of actions (default '1', requires -info)");
         Option len = new Option(LEN_OPTION, true, "number of actions (default TOTAL ACTIONS, requires -info)");
         Option filter = new Option(FILTER_OPTION, true,
@@ -292,7 +290,6 @@ public class OozieCLI {
         actions.addOption(kill);
         actions.addOption(change);
         actions.addOption(info);
-        actions.addOption(jmsInfo);
         actions.addOption(rerun);
         actions.addOption(log);
         actions.addOption(definition);
@@ -751,9 +748,6 @@ public class OozieCLI {
         }
 
         try {
-            if (options.contains(JMS_INFO_OPTION)) {
-                printJMSInfo(wc.getJMSConnectionInfo(commandLine.getOptionValue(JMS_INFO_OPTION)));
-            }
             if (options.contains(SUBMIT_OPTION)) {
                 System.out.println(JOB_ID_PREFIX + wc.submit(getConfiguration(wc, commandLine)));
             }
@@ -1084,10 +1078,6 @@ public class OozieCLI {
         }
     }
 
-    private void printJMSInfo (JMSConnectionInfo jmsInfo) {
-        System.out.println("Topic Name         : " + jmsInfo.getTopicName());
-        System.out.println("JNDI Properties    : " + jmsInfo.getJNDIProperties());
-    }
 
     private void printWorkflowAction(WorkflowAction action, String timeZoneId, boolean verbose) {
         System.out.println("ID : " + maskIfNull(action.getId()));

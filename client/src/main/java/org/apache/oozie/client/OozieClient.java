@@ -257,7 +257,7 @@ public class OozieClient {
                     if (!array.contains(WS_PROTOCOL_VERSION) && !array.contains(WS_PROTOCOL_VERSION_1)
                             && !array.contains(WS_PROTOCOL_VERSION_0)) {
                         StringBuilder msg = new StringBuilder();
-                        msg.append("Supported version [").append(WS_PROTOCOL_VERSION_1).append(
+                        msg.append("Supported version [").append(WS_PROTOCOL_VERSION).append(
                                 "] or less, Unsupported versions[");
                         String separator = "";
                         for (Object version : array) {
@@ -681,9 +681,8 @@ public class OozieClient {
 
     private class JMSInfo extends ClientCallable<JMSConnectionInfo> {
 
-        JMSInfo(String jobId) {
-            super("GET", RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.JOB_SHOW_PARAM,
-                    RestConstants.JOB_SHOW_JMS_INFO));
+        JMSInfo() {
+            super("GET", RestConstants.ADMIN, RestConstants.ADMIN_JMS_INFO, prepareParams());
         }
 
         protected JMSConnectionInfo call(HttpURLConnection conn) throws IOException, OozieClientException {
@@ -732,12 +731,11 @@ public class OozieClient {
 
     /**
      * Get the JMS Connection info
-     * @param jobId
      * @return JMSConnectionInfo object
      * @throws OozieClientException
      */
-    public JMSConnectionInfo getJMSConnectionInfo(String jobId) throws OozieClientException {
-        return new JMSInfo(jobId).call();
+    public JMSConnectionInfo getJMSConnectionInfo() throws OozieClientException {
+        return new JMSInfo().call();
     }
 
     /**
@@ -796,6 +794,36 @@ public class OozieClient {
 
         JobLog(String jobId, String logRetrievalType, String logRetrievalScope, PrintStream ps) {
             super(jobId, logRetrievalType, logRetrievalScope, RestConstants.JOB_SHOW_LOG, ps);
+        }
+    }
+
+    /**
+     * Gets the JMS topic name for a particular job
+     * @param jobId given jobId
+     * @return the JMS topic name
+     * @throws OozieClientException
+     */
+    public String getJMSTopicName(String jobId) throws OozieClientException {
+        return new JMSTopic(jobId).call();
+    }
+
+    private class JMSTopic extends ClientCallable<String> {
+
+        JMSTopic(String jobId) {
+            super("GET", RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.JOB_SHOW_PARAM,
+                    RestConstants.JOB_SHOW_JMS_TOPIC));
+        }
+
+        protected String call(HttpURLConnection conn) throws IOException, OozieClientException {
+            if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
+                Reader reader = new InputStreamReader(conn.getInputStream());
+                JSONObject json = (JSONObject) JSONValue.parse(reader);
+                return (String) json.get(JsonTags.JMS_TOPIC_NAME);
+            }
+            else {
+                handleError(conn);
+            }
+            return null;
         }
     }
 

@@ -17,6 +17,7 @@
  */
 package org.apache.oozie.jms;
 
+import javax.jms.JMSException;
 import javax.jms.Session;
 
 import org.apache.hadoop.conf.Configuration;
@@ -54,11 +55,11 @@ public class TestDefaultConnectionContext extends XTestCase {
     }
 
     @Test
-    public void testThreadLocalSession() {
+    public void testThreadLocalSession() throws JMSException {
         String jmsProps = services.getConf().get(JMSJobEventListener.JMS_CONNECTION_PROPERTIES);
         JMSConnectionInfo connInfo = new JMSConnectionInfo(jmsProps);
         ConnectionContext jmsContext = Services.get().get(JMSAccessorService.class)
-                .createConnectionContext(connInfo, false);
+                .createConnectionContext(connInfo);
         Thread th = new Thread(new SessionThread(jmsContext));
         th.start();
         try {
@@ -69,25 +70,17 @@ public class TestDefaultConnectionContext extends XTestCase {
         }
         assertEquals(session1, session2);
 
-        ThreadLocal<Session> threadLocal1 = jmsContext.createThreadLocalSession(Session.AUTO_ACKNOWLEDGE);
-        Session session3 = threadLocal1.get();
-        ThreadLocal<Session> threadLocal2 = jmsContext.createThreadLocalSession(Session.AUTO_ACKNOWLEDGE);
-        Session session4 = threadLocal2.get();
+        Session session3 = jmsContext.createThreadLocalSession(Session.AUTO_ACKNOWLEDGE);
+        Session session4 = jmsContext.createThreadLocalSession(Session.AUTO_ACKNOWLEDGE);
         // As session3 and session4 are created by same threads, they should be
         // equal
         assertTrue(session3.equals(session4));
         // As session1 and session3 are created by diff threads, they shoudn't
         // be equal
         assertFalse(session1.equals(session3));
-        threadLocal1.remove();
-        ThreadLocal<Session> threadLocal3 = jmsContext.createThreadLocalSession(Session.AUTO_ACKNOWLEDGE);
-        Session session5 = threadLocal3.get();
-        assertFalse(session3.equals(session5));
-
     }
 
     class SessionThread implements Runnable {
-
         private ConnectionContext connContext;
 
         SessionThread(ConnectionContext connContext) {
@@ -96,10 +89,14 @@ public class TestDefaultConnectionContext extends XTestCase {
 
         @Override
         public void run() {
-            ThreadLocal<Session> th1 = connContext.createThreadLocalSession(Session.AUTO_ACKNOWLEDGE);
-            session1 = th1.get();
-            ThreadLocal<Session> th2 = connContext.createThreadLocalSession(Session.AUTO_ACKNOWLEDGE);
-            session2 = th2.get();
+            try {
+                session1 = connContext.createThreadLocalSession(Session.AUTO_ACKNOWLEDGE);
+                session2 = connContext.createThreadLocalSession(Session.AUTO_ACKNOWLEDGE);
+            }
+            catch (JMSException e) {
+                e.printStackTrace();
+            }
+
         }
 
     }

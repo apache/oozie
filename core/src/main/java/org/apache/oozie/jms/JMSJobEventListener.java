@@ -20,6 +20,7 @@ package org.apache.oozie.jms;
 import java.util.Map;
 
 import javax.jms.DeliveryMode;
+import javax.jms.JMSException;
 import javax.jms.MessageProducer;
 import javax.jms.Session;
 import javax.jms.TextMessage;
@@ -50,7 +51,7 @@ public class JMSJobEventListener extends JobEventListener {
     private JMSAccessorService jmsService = Services.get().get(JMSAccessorService.class);
     private JMSTopicService jmsTopicService = Services.get().get(JMSTopicService.class);
     private JMSConnectionInfo connInfo;
-    public static final String JMS_CONNECTION_PROPERTIES = "oozie.jms.producer.notification.connection";
+    public static final String JMS_CONNECTION_PROPERTIES = "oozie.jms.producer.connection.properties";
     public static final String JMS_SESSION_OPTS = "oozie.jms.producer.session.opts";
     public static final String JMS_DELIVERY_MODE = "oozie.jms.delivery.mode";
     public static final String JMS_EXPIRATION_DATE = "oozie.jms.expiration.date";
@@ -75,27 +76,24 @@ public class JMSJobEventListener extends JobEventListener {
 
     protected void sendMessage(Map<String, String> messageProperties, String messageBody, String topicName,
             String messageFormat) {
-        jmsContext = jmsService.createConnectionContext(connInfo, false);
-        ThreadLocal<Session> threadLocal = null;
-        try {
-            threadLocal = jmsContext.createThreadLocalSession(jmsSessionOpts);
-            Session session = threadLocal.get();
-            TextMessage textMessage = session.createTextMessage(messageBody);
-            for (Map.Entry<String, String> property : messageProperties.entrySet()) {
-                textMessage.setStringProperty(property.getKey(), property.getValue());
+        jmsContext = jmsService.createProducerConnectionContext(connInfo);
+        if (jmsContext != null) {
+            try {
+                Session session = jmsContext.createThreadLocalSession(jmsSessionOpts);
+                TextMessage textMessage = session.createTextMessage(messageBody);
+                for (Map.Entry<String, String> property : messageProperties.entrySet()) {
+                    textMessage.setStringProperty(property.getKey(), property.getValue());
+                }
+                textMessage.setStringProperty(JMSHeaderConstants.MESSAGE_FORMAT, messageFormat);
+                LOG.trace("Event related JMS message [{0}]", textMessage.toString());
+                MessageProducer producer = jmsContext.createProducer(session, topicName);
+                producer.setDeliveryMode(jmsDeliveryMode);
+                producer.setTimeToLive(jmsExpirationDate);
+                producer.send(textMessage);
+                producer.close();
             }
-            textMessage.setStringProperty(JMSHeaderConstants.MESSAGE_FORMAT, messageFormat);
-            LOG.trace("Event related JMS message [{0}]", textMessage.getText());
-            MessageProducer producer = jmsContext.createProducer(session, topicName);
-            producer.setDeliveryMode(jmsDeliveryMode);
-            producer.setTimeToLive(jmsExpirationDate);
-            producer.send(textMessage);
-            producer.close();
-        }
-        catch (Exception jmse) {
-            LOG.error("Exception happened while sending event related jms message", jmse);
-            if (threadLocal != null) {
-                threadLocal.remove();
+            catch (JMSException jmse) {
+                LOG.error("Exception happened while sending event related jms message", jmse);
             }
         }
 
@@ -104,17 +102,17 @@ public class JMSJobEventListener extends JobEventListener {
     @Override
     public void onWorkflowJobEvent(WorkflowJobEvent event) {
         WorkflowJobMessage wfJobMessage = MessageFactory.createWorkflowJobMessage(event);
-        serializeAndSendJMSMessage(wfJobMessage, getTopic(event));
+        serializeJMSMessage(wfJobMessage, getTopic(event));
 
     }
 
     @Override
     public void onCoordinatorActionEvent(CoordinatorActionEvent event) {
         CoordinatorActionMessage coordActionMessage = MessageFactory.createCoordinatorActionMessage(event);
-        serializeAndSendJMSMessage(coordActionMessage, getTopic(event));
+        serializeJMSMessage(coordActionMessage, getTopic(event));
     }
 
-    private void serializeAndSendJMSMessage(JobMessage jobMessage, String topicName) {
+    private void serializeJMSMessage(JobMessage jobMessage, String topicName) {
         MessageSerializer serializer = MessageFactory.getMessageSerializer();
         String messageBody = serializer.getSerializedObject(jobMessage);
         sendMessage(jobMessage.getMessageProperties(), messageBody, topicName, serializer.getMessageFormat());
@@ -140,27 +138,18 @@ public class JMSJobEventListener extends JobEventListener {
 
     @Override
     public void onWorkflowActionEvent(WorkflowActionEvent wae) {
-        LOG.warn("Sending jms message related to workflow action is not supported");
     }
 
     @Override
     public void onCoordinatorJobEvent(CoordinatorJobEvent wje) {
-        LOG.warn("Sending jms message related to coordinator job is not supported");
     }
 
     @Override
     public void onBundleJobEvent(BundleJobEvent wje) {
-        LOG.warn("Sending jms message related to bundle job is not supported");
     }
 
     @Override
     public void destroy() {
-        if (jmsContext != null) {
-            LOG.debug("Closing JMS connection");
-            jmsContext.close();
-            jmsService.removeConnInfo(connInfo);
-        }
-
-    }
+}
 
 }

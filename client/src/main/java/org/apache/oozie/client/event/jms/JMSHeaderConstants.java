@@ -23,11 +23,11 @@ package org.apache.oozie.client.event.jms;
  */
 public final class JMSHeaderConstants {
     // JMS Application specific properties for selectors
-    public static final String EVENT_STATUS = "EVENT_STATUS";
-    public static final String APP_NAME = "APP_NAME";
-    public static final String USER = "USER";
-    public static final String MESSAGE_TYPE = "MESSAGE_TYPE";
-    public static final String APP_TYPE = "APP_TYPE";
+    public static final String EVENT_STATUS = "eventStatus";
+    public static final String APP_NAME = "appName";
+    public static final String USER = "user";
+    public static final String MESSAGE_TYPE = "msgType";
+    public static final String APP_TYPE = "appType";
     // JMS Header property
-    public static final String MESSAGE_FORMAT = "MESSAGE_FORMAT";
+    public static final String MESSAGE_FORMAT = "msgFormat";
 }
