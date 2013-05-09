@@ -295,6 +295,27 @@ public class TestLauncher extends XFsTestCase {
         assertTrue(jobConf.get("oozie.action.prepare.xml").equals(prepareBlock));
     }
 
+    public void testSetupMainClass() throws Exception {
+        Configuration conf = new Configuration(false);
+        LauncherMapper.setupMainClass(conf, "");
+        assertNull(conf.get("oozie.launcher.action.main.class"));
+
+        conf = new Configuration(false);
+        LauncherMapper.setupMainClass(conf, "org.blah.myclass1");
+        assertEquals(conf.get("oozie.launcher.action.main.class"), "org.blah.myclass1");
+
+        conf = new Configuration(false);
+        conf.set("oozie.launcher.action.main.class", "org.blah.myclass2");
+        LauncherMapper.setupMainClass(conf, "");
+        assertEquals(conf.get("oozie.launcher.action.main.class"), "org.blah.myclass2");
+
+        // the passed argument (myclass1) should have priority
+        conf = new Configuration(false);
+        conf.set("oozie.launcher.action.main.class", "org.blah.myclass2");
+        LauncherMapper.setupMainClass(conf, "org.blah.myclass1");
+        assertEquals(conf.get("oozie.launcher.action.main.class"), "org.blah.myclass1");
+    }
+
   // Test to ensure that the property value "oozie.action.prepare.xml" in the configuration of the job is properly set
   // when there is prepare block in workflow XML
   public void testSetupLauncherInfoHadoop2_0_2_alphaWorkaround() throws Exception {

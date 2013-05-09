@@ -150,7 +150,11 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
     }
 
     public static void setupMainClass(Configuration launcherConf, String javaMainClass) {
-        launcherConf.set(CONF_OOZIE_ACTION_MAIN_CLASS, javaMainClass);
+        // Only set the javaMainClass if its not null or empty string (should be the case except for java action), this way the user
+        // can override the action's main class via <configuration> property
+        if (javaMainClass != null && !javaMainClass.equals("")) {
+            launcherConf.set(CONF_OOZIE_ACTION_MAIN_CLASS, javaMainClass);
+        }
     }
 
     public static void setupLauncherURIHandlerConf(Configuration launcherConf) {
