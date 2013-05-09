@@ -68,7 +68,7 @@ import org.apache.openjpa.persistence.jdbc.Index;
 
         @NamedQuery(name = "GET_COMPLETED_BUNDLE_JOBS_OLDER_THAN", query = "select w.id from BundleJobBean w where ( w.status = 'SUCCEEDED' OR w.status = 'FAILED' OR w.status = 'KILLED' OR w.status = 'DONEWITHERROR') AND w.lastModifiedTimestamp <= :lastModTime order by w.lastModifiedTimestamp"),
 
-        @NamedQuery(name = "BULK_MONITOR_BUNDLE_QUERY", query = "SELECT b.id, b.status FROM BundleJobBean b WHERE b.appName = :appName"),
+        @NamedQuery(name = "BULK_MONITOR_BUNDLE_QUERY", query = "SELECT b.id, b.status, b.user FROM BundleJobBean b WHERE b.appName = :appName"),
 
         // Join query
         @NamedQuery(name = "BULK_MONITOR_ACTIONS_QUERY", query = "SELECT a.id, a.actionNumber, a.errorCode, a.errorMessage, a.externalId, " +

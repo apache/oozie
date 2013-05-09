@@ -294,6 +294,9 @@ public class BulkJPAExecutor implements JPAExecutor<BulkResponseInfo> {
         if (barr[1] != null) {
             bean.setStatus(BundleJob.Status.valueOf((String) barr[1]));
         }
+        if (barr[2] != null) {
+            bean.setUser((String) barr[2]);
+        }
         return bean;
     }
 
