@@ -1445,6 +1445,25 @@ All the above elements can be parameterized (templatized) using EL expressions.
 </workflow-app>
 </verbatim>
 
+---+++++ 3.2.7.1 Overriding an action's Main class
+
+This feature is useful for developers to change the Main classes without having to recompile or redeploy Oozie.
+
+For most actions (not just the Java action), you can override the Main class it uses by specifying the following =configuration=
+property and making sure that your class is included in the workflow's classpath.  If you specify this in the Java action,
+the main-class element has priority.
+
+<verbatim>
+<property>
+   <name>oozie.launcher.action.main.class</name>
+   <value>org.my.CustomMain</value>
+</property>
+</verbatim>
+
+*Note:* Most actions typically pass information to their corresponding Main in specific ways; you should look at the action's
+existing Main to see how it works before creating your own.  In fact, its probably simplest to just subclass the existing Main and
+add/modify/overwrite any behavior you want to change.
+
 #WorkflowParameterization
 ---++ 4 Parameterization of Workflows
 
