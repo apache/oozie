@@ -80,25 +80,6 @@ public class BulkResponseImpl implements BulkResponse, JsonBean {
         json.put(JsonTags.BULK_RESPONSE_COORDINATOR, coordinator.toJSONObject());
         json.put(JsonTags.BULK_RESPONSE_ACTION, action.toJSONObject());
 
-        json.put(JsonTags.BUNDLE_JOB_NAME, bundle.getAppName());
-        json.put(JsonTags.BUNDLE_JOB_ID, bundle.getId());
-        json.put(JsonTags.BUNDLE_JOB_STATUS, bundle.getStatus().toString());
-
-        json.put(JsonTags.COORDINATOR_JOB_NAME, coordinator.getAppName());
-        json.put(JsonTags.COORDINATOR_JOB_STATUS, coordinator.getStatus().toString());
-
-        json.put(JsonTags.COORDINATOR_ACTION_ID, action.getId());
-        json.put(JsonTags.COORDINATOR_JOB_ID, action.getJobId());
-        json.put(JsonTags.COORDINATOR_ACTION_NUMBER, action.getActionNumber());
-        json.put(JsonTags.COORDINATOR_ACTION_EXTERNALID, action.getExternalId());
-        json.put(JsonTags.COORDINATOR_ACTION_STATUS, action.getStatus().toString());
-        json.put(JsonTags.COORDINATOR_ACTION_EXTERNAL_STATUS, action.getExternalStatus());
-        json.put(JsonTags.COORDINATOR_ACTION_ERROR_CODE, action.getErrorCode());
-        json.put(JsonTags.COORDINATOR_ACTION_ERROR_MESSAGE, action.getErrorMessage());
-        json.put(JsonTags.COORDINATOR_ACTION_CREATED_TIME, action.getCreatedTime().toString());
-        json.put(JsonTags.COORDINATOR_ACTION_NOMINAL_TIME, action.getNominalTime().toString());
-        json.put(JsonTags.COORDINATOR_ACTION_MISSING_DEPS, action.getMissingDependencies());
-
         return json;
     }
 

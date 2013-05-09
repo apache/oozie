@@ -43,7 +43,6 @@ import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.WorkflowsInfo;
 import org.apache.oozie.cli.OozieCLI;
 import org.apache.oozie.client.OozieClient;
-import org.apache.oozie.client.XOozieClient;
 import org.apache.oozie.client.rest.BulkResponseImpl;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.RestConstants;
@@ -416,9 +415,9 @@ public class V1JobsServlet extends BaseJobsServlet {
             BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request),
                     getAuthToken(request));
             BulkResponseInfo bulkResponse = bundleEngine.getBulkJobs(bulkFilter, start, len);
-            List<BulkResponseImpl> jsonResponse = bulkResponse.getResponses();
+            List<BulkResponseImpl> responsesToJson = bulkResponse.getResponses();
 
-            json.put(JsonTags.BULK_RESPONSES, BulkResponseImpl.toJSONArray(jsonResponse, timeZoneId));
+            json.put(JsonTags.BULK_RESPONSES, BulkResponseImpl.toJSONArray(responsesToJson, timeZoneId));
             json.put(JsonTags.BULK_RESPONSE_TOTAL, bulkResponse.getTotal());
             json.put(JsonTags.BULK_RESPONSE_OFFSET, bulkResponse.getStart());
             json.put(JsonTags.BULK_RESPONSE_LEN, bulkResponse.getLen());

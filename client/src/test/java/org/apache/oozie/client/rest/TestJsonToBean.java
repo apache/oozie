@@ -17,20 +17,22 @@
  */
 package org.apache.oozie.client.rest;
 
+import java.util.List;
+import java.util.Properties;
+
 import junit.framework.TestCase;
+
+import org.apache.oozie.client.BulkResponse;
+import org.apache.oozie.client.BundleJob;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.JMSConnectionInfo;
-import org.apache.oozie.client.JMSConnectionInfoWrapper;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.event.Event;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
-
-import java.util.List;
-import java.util.Properties;
 
 public class TestJsonToBean extends TestCase {
 
@@ -345,6 +347,87 @@ public class TestJsonToBean extends TestCase {
         assertEquals("v1", jmsProps.get("k1"));
         assertEquals("v2", jmsProps.get("k2"));
 
+    }
+
+    @SuppressWarnings("unchecked")
+    private JSONObject createJsonBulkResponse() {
+        JSONObject bulk = new JSONObject();
+        JSONObject bundle = new JSONObject();
+        JSONObject coord = createJsonCoordinatorJob();
+        JSONObject action = createJsonCoordinatorAction();
+
+        bundle.put(JsonTags.BUNDLE_JOB_NAME, "bundle-app");
+        bundle.put(JsonTags.BUNDLE_JOB_ID, "bundle-id");
+        bundle.put(JsonTags.BUNDLE_JOB_STATUS, BundleJob.Status.RUNNING.name());
+        coord.put(JsonTags.COORDINATOR_JOB_NAME, "coord-app");
+        coord.put(JsonTags.COORDINATOR_JOB_STATUS, CoordinatorJob.Status.SUSPENDED.name());
+        action.put(JsonTags.COORDINATOR_ACTION_ID, "action-id");
+        action.put(JsonTags.COORDINATOR_JOB_ID, "coord-id");
+        action.put(JsonTags.COORDINATOR_ACTION_NUMBER, (long)1);
+        action.put(JsonTags.COORDINATOR_ACTION_EXTERNALID, "action-externalId");
+        action.put(JsonTags.COORDINATOR_ACTION_STATUS, CoordinatorAction.Status.FAILED.name());
+        action.put(JsonTags.COORDINATOR_ACTION_EXTERNAL_STATUS, "action-externalStatus");
+        action.put(JsonTags.COORDINATOR_ACTION_ERROR_CODE, "action-errorCode");
+        action.put(JsonTags.COORDINATOR_ACTION_ERROR_MESSAGE, "action-errorMessage");
+        action.put(JsonTags.COORDINATOR_ACTION_CREATED_TIME, CREATED_TIME);
+        action.put(JsonTags.COORDINATOR_ACTION_NOMINAL_TIME, NOMINAL_TIME);
+        action.put(JsonTags.COORDINATOR_ACTION_MISSING_DEPS, "action-missingDeps");
+
+        bulk.put(JsonTags.BULK_RESPONSE_BUNDLE, bundle);
+        bulk.put(JsonTags.BULK_RESPONSE_COORDINATOR, coord);
+        bulk.put(JsonTags.BULK_RESPONSE_ACTION, action);
+        return bulk;
+    }
+
+    @SuppressWarnings("unchecked")
+    private JSONArray createJsonBulkResponseList() {
+        JSONObject json1 = createJsonBulkResponse();
+        JSONObject coord1 = (JSONObject) json1.get(JsonTags.BULK_RESPONSE_COORDINATOR);
+        coord1.put(JsonTags.COORDINATOR_JOB_ID, "cj1");
+        JSONObject json2 = createJsonBulkResponse();
+        JSONObject coord2 = (JSONObject) json2.get(JsonTags.BULK_RESPONSE_COORDINATOR);
+        coord2.put(JsonTags.COORDINATOR_JOB_ID, "cj2");
+        JSONArray array = new JSONArray();
+        array.add(json1);
+        array.add(json2);
+        return array;
+    }
+
+    public void testParseBulkResponse() {
+        JSONObject json = createJsonBulkResponse();
+
+        BundleJob bulkBundle = JsonToBean.createBundleJob((JSONObject) json.get(JsonTags.BULK_RESPONSE_BUNDLE));
+        CoordinatorJob bulkCoord = JsonToBean.createCoordinatorJob((JSONObject) json.get(JsonTags.BULK_RESPONSE_COORDINATOR));
+        CoordinatorAction bulkAction = JsonToBean.createCoordinatorAction((JSONObject) json.get(JsonTags.BULK_RESPONSE_ACTION));
+
+        assertNotNull(bulkBundle);
+        assertNotNull(bulkCoord);
+        assertNotNull(bulkAction);
+        assertEquals("bundle-app", bulkBundle.getAppName());
+        assertEquals("bundle-id", bulkBundle.getId());
+        assertEquals(BundleJob.Status.RUNNING, bulkBundle.getStatus());
+        assertEquals("coord-app", bulkCoord.getAppName());
+        assertEquals(CoordinatorJob.Status.SUSPENDED, bulkCoord.getStatus());
+        assertEquals("action-id", bulkAction.getId());
+        assertEquals("coord-id", bulkAction.getJobId());
+        assertEquals(1, bulkAction.getActionNumber());
+        assertEquals("action-externalId", bulkAction.getExternalId());
+        assertEquals(CoordinatorAction.Status.FAILED, bulkAction.getStatus());
+        assertEquals("action-externalStatus", bulkAction.getExternalStatus());
+        assertEquals("action-errorCode", bulkAction.getErrorCode());
+        assertEquals("action-errorMessage", bulkAction.getErrorMessage());
+        assertEquals(JsonUtils.parseDateRfc822(CREATED_TIME), bulkAction.getCreatedTime());
+        assertEquals(JsonUtils.parseDateRfc822(NOMINAL_TIME), bulkAction.getNominalTime());
+        assertEquals("action-missingDeps", bulkAction.getMissingDependencies());
+    }
+
+    public void testParseBulkResponseList() {
+        JSONArray array = createJsonBulkResponseList();
+        List<BulkResponse> list = JsonToBean.createBulkResponseList(array);
+
+        assertEquals(2, list.size());
+        assertEquals("cj1", list.get(0).getCoordinator().getId());
+        assertEquals("cj2", list.get(1).getCoordinator().getId());
     }
 
 }

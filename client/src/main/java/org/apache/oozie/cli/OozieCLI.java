@@ -1112,7 +1112,7 @@ public class OozieCLI {
 
     private static final String WORKFLOW_ACTION_FORMATTER = "%-78s%-10s%-23s%-11s%-10s";
     private static final String COORD_ACTION_FORMATTER = "%-43s%-10s%-37s%-10s%-21s%-21s";
-    private static final String BULK_RESPONSE_FORMATTER = "%-41s%-41s%-37s%-37s%-13s%-21s%-24s";
+    private static final String BULK_RESPONSE_FORMATTER = "%-13s%-38s%-13s%-41s%-10s%-38s%-21s%-38s";
 
     private void printJob(WorkflowJob job, String timeZoneId, boolean verbose) throws IOException {
         System.out.println("Job ID : " + maskIfNull(job.getId()));
@@ -1199,7 +1199,7 @@ public class OozieCLI {
 
         try {
             if (bulkFilterString != null) {
-                printBulkJobs(wc.getBulkInfo(bulkFilterString, start, len), timeZoneId);
+                printBulkJobs(wc.getBulkInfo(bulkFilterString, start, len), timeZoneId, commandLine.hasOption(VERBOSE_OPTION));
             }
             else if (jobtype.toLowerCase().contains("wf")) {
                 printJobs(wc.getJobsInfo(filter, start, len), timeZoneId, commandLine.hasOption(VERBOSE_OPTION));
@@ -1263,17 +1263,40 @@ public class OozieCLI {
         }
     }
 
-    private void printBulkJobs(List<BulkResponse> jobs, String timeZoneId) throws IOException {
+    private void printBulkJobs(List<BulkResponse> jobs, String timeZoneId, boolean verbose) throws IOException {
         if (jobs != null && jobs.size() > 0) {
-            System.out.println(String.format(BULK_RESPONSE_FORMATTER, "Bundle Name", "Coordinator Name",
-                    "Coord Action ID", "External ID", "Status", "Created Time", "Error Message"));
-
             for (BulkResponse response : jobs) {
-                System.out.println(String.format(BULK_RESPONSE_FORMATTER, maskIfNull((response.getBundle()).getAppName()),
-                        maskIfNull((response.getCoordinator()).getAppName()), maskIfNull((response.getAction()).getId()),
-                        maskIfNull((response.getAction()).getExternalId()), (response.getAction()).getStatus(),
-                        maskDate((response.getAction()).getCreatedTime(), timeZoneId, false), (response.getAction()).getErrorMessage()));
-                System.out.println(RULER);
+                BundleJob bundle = response.getBundle();
+                CoordinatorJob coord = response.getCoordinator();
+                CoordinatorAction action = response.getAction();
+                if (verbose) {
+                    System.out.println();
+                    System.out.println("Bundle Name : " + maskIfNull(bundle.getAppName()));
+
+                    System.out.println(RULER);
+
+                    System.out.println("Bundle ID        : " + maskIfNull(bundle.getId()));
+                    System.out.println("Coordinator Name : " + maskIfNull(coord.getAppName()));
+                    System.out.println("Coord Action ID  : " + maskIfNull(action.getId()));
+                    System.out.println("Action Status    : " + action.getStatus());
+                    System.out.println("External ID      : " + maskIfNull(action.getExternalId()));
+                    System.out.println("Created Time     : " + maskDate(action.getCreatedTime(), timeZoneId, false));
+                    System.out.println("User             : " + maskIfNull(bundle.getUser()));
+                    System.out.println("Error Message    : " + maskIfNull(action.getErrorMessage()));
+                    System.out.println(RULER);
+                }
+                else {
+                    System.out.println(String.format(BULK_RESPONSE_FORMATTER, "Bundle Name", "Bundle ID", "Coord Name",
+                            "Coord Action ID", "Status", "External ID", "Created Time", "Error Message"));
+                    System.out.println(RULER);
+                    System.out
+                            .println(String.format(BULK_RESPONSE_FORMATTER, maskIfNull(bundle.getAppName()),
+                                    maskIfNull(bundle.getId()), maskIfNull(coord.getAppName()),
+                                    maskIfNull(action.getId()), action.getStatus(), maskIfNull(action.getExternalId()),
+                                    maskDate(action.getCreatedTime(), timeZoneId, false),
+                                    maskIfNull(action.getErrorMessage())));
+                    System.out.println(RULER);
+                }
             }
         }
         else {
