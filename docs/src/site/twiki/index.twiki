@@ -58,6 +58,7 @@ Enough reading already? Follow the steps in [[DG_QuickStart][Oozie Quick Start]]
    * [[DG_HiveActionExtension][Hive Action]]
    * [[DG_SqoopActionExtension][Sqoop Action]]
    * [[DG_SshActionExtension][Ssh Action]]
+   * [[DG_DistCpActionExtension][DistCp Action]]
    * [[DG_CustomActionExecutor][Writing a Custom Action Executor]]
 
 ---++ Administrator Documentation

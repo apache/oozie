@@ -75,6 +75,8 @@ Expand the Oozie distribution =tar.gz=.
 
 Expand the Hadoop distribution =tar.gz= (as the Oozie Unix user).
 
+#HadoopProxyUser
+
 *NOTE:* Configure the Hadoop cluster with proxyuser for the Oozie process.
 
 The following two properties are required in Hadoop core-site.xml:

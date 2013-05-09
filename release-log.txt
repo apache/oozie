@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-611 distcp action does not have documentation (rkanter)
 OOZIE-1318 Action Main classes should be overridable via action configuration settings (rkanter)
 OOZIE-1347 Additions to JMS topic API (virag)
 OOZIE-1231 Provide access to launcher job URL from web console when using Map Reduce action (ryota via virag)
