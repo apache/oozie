@@ -89,16 +89,33 @@ usage:
                 -oozie <arg>          Oozie URL
                 -filter <arg>         jobid=<JobID/ActionID>\;appname=<Application Name>
 .
-      oozie pig <OPTIONS> -X <ARGS> : submit a pig job, everything after '-X' are pass-through parameters to pig
+      oozie pig <OPTIONS> -X <ARGS> : submit a pig job, everything after '-X' are pass-through parameters to pig, any '-D' arguments after '-X' are put in <configuration>
                 -auth <arg>           select authentication type [SIMPLE|KERBEROS]
                 -doas <arg>           doAs user, impersonates as the specified user.
                 -config <arg>         job configuration file '.properties'
                 -D <property=value>   set/override value for given property
                 -file <arg>           Pig script
                 -oozie <arg>          Oozie URL
+                -P <property=value>   set parameters for script
+.
+      oozie hive <OPTIONS> -X<ARGS> : submit a hive job, everything after '-X' are pass-through parameters to hive, any '-D' arguments after '-X' are put in <configuration>
+                 -auth <arg>           select authentication type [SIMPLE|KERBEROS]
+                 -config <arg>         job configuration file '.properties'
+                 -D <property=value>   set/override value for given property
+                 -doas <arg>           doAs user, impersonates as the specified user
+                 -file <arg>           hive script
+                 -oozie <arg>          Oozie URL
+                 -P <property=value>   set parameters for script
 .
       oozie info <OPTIONS> : get more detailed info about specific topics
                 -timezones   display a list of available time zones
+.
+      oozie mapreduce <OPTIONS> : submit a mapreduce job
+                      -auth <arg>           select authentication type [SIMPLE|KERBEROS]
+                      -config <arg>         job configuration file '.properties'
+                      -D <property=value>   set/override value for given property
+                      -doas <arg>           doAs user, impersonates as the specified user
+                      -oozie <arg>          Oozie URL
 </verbatim>
 
 ---++ Common CLI Options
@@ -917,13 +934,13 @@ name. Multiple values must be specified as different name value pairs.
 Syntax:
 
 <verbatim>
-$ oozie pig -file PIG-SCRIPT -config OOZIE-CONFIG [-X [-Dkey=value opts for Launcher/Job configuration] [Other opts to pass to Pig]]
+$ oozie pig -file PIG-SCRIPT -config OOZIE-CONFIG [-Dkey=value] [-Pkey=value] [-X [-Dkey=value opts for Launcher/Job configuration] [Other opts to pass to Pig]]
 </verbatim>
 
 Example:
 
 <verbatim>
-$ oozie pig -oozie http://localhost:11000/oozie -file pigScriptFile -config job.properties -X -Dmapred.job.queue.name=UserQueue -param_file params
+$ oozie pig -file pigScriptFile -config job.properties -Dfs.default.name=hdfs://localhost:8020 -PINPUT=/user/me/in -POUTPUT=/user/me/out -X -Dmapred.job.queue.name=UserQueue -param_file params
 .
 job: 14-20090525161321-oozie-joe-W
 .
@@ -935,7 +952,47 @@ oozie.libpath=hdfs://localhost:8020/user/oozie/pig/lib/
 </verbatim>
 
 The parameters for the job must be provided in a Java Properties file (.properties). jobtracker, namenode, libpath must be
-specified in this file. pigScriptFile is a local file. All jar files (including pig jar file) and all other files needed by the pig job (e.g., parameter file in above example) need to be uploaded onto HDFS under libpath beforehand. The workflow.xml will be created in Oozie server internally. Users can get the workflow.xml from console or command line(-definition). Everything after -X (optional) will be considered as configurable parameters for the generated workflow. The -D options passed after the -X will be defined into the generated workflow's <code><configuration> elements</code> (and make it to the Pig's used configuration) while the rest of the opts will be passed as-is to the invoked Pig program.
+specified in this file. pigScriptFile is a local file. All jar files (including pig jar file) and all other files needed by the pig
+job (e.g., parameter file in above example) need to be uploaded onto HDFS under libpath beforehand. In addition to a parameter file,
+specifying script parameters can be done via -Pkey=value. The workflow.xml will be created in Oozie server internally. Users can get
+the workflow.xml from console or command line(-definition). The -D options passed after the -X will be placed into the generated
+workflow's <code><configuration> elements</code> (and make it to the configuration used by Pig); any other opts after -X will be
+passed as-is to the invoked Pig program.
+Multiple -D and -P arguments can be specified.
+
+The job will be created and run right away.
+
+---++ Hive Operations
+
+---+++ Submitting a hive job through HTTP
+
+Syntax:
+
+<verbatim>
+$ oozie hive -file HIVE-SCRIPT -config OOZIE-CONFIG [-Dkey=value] [-Pkey=value] [-X [-Dkey=value opts for Launcher/Job configuration] [Other opts to pass to Hive]]
+</verbatim>
+
+Example:
+
+<verbatim>
+$ oozie hive -file hiveScriptFile -config job.properties -Dfs.default.name=hdfs://localhost:8020 -PINPUT=/user/me/in -POUTPUT=/user/me/out -X -Dmapred.job.queue.name=UserQueue -v
+.
+job: 14-20090525161321-oozie-joe-W
+.
+$cat job.properties
+fs.default.name=hdfs://localhost:8020
+mapreduce.jobtracker.kerberos.principal=ccc
+dfs.namenode.kerberos.principal=ddd
+oozie.libpath=hdfs://localhost:8020/user/oozie/hive/lib/
+</verbatim>
+
+The parameters for the job must be provided in a Java Properties file (.properties). jobtracker, namenode, libpath must be
+specified in this file. hiveScriptFile is a local file. All jar files (including hive jar file) and all other files needed by the
+hive job need to be uploaded onto HDFS under libpath beforehand. Specifying script parameters can be done via -Pkey=value. The
+workflow.xml will be created in Oozie server internally. Users can get the workflow.xml from console or command line(-definition).
+The -D options passed after the -X will be placed into the generated workflow's <code><configuration> elements</code> (and make it
+to the configuration used by Hive); any other opts after -X will be passed as-is to the invoked Hive program.
+Multiple -D and -P arguments can be specified.
 
 The job will be created and run right away.
 
@@ -981,7 +1038,8 @@ $ oozie mapreduce -oozie http://localhost:11000/oozie -config job.properties
 </verbatim>
 
 The parameters must be in the Java Properties file (.properties). This file must be specified for a map-reduce job.
-The properties file must specify the =mapred.mapper.class=, =mapred.reducer.class=, =mapred.input.dir=, =mapred.output.dir=, =oozie.libpath= properties.
+The properties file must specify the =mapred.mapper.class=, =mapred.reducer.class=, =mapred.input.dir=, =mapred.output.dir=,
+=oozie.libpath=, =mapred.job.tracker=, and =fs.default.name= properties.
 
 The map-reduce job will be created and submitted. All jar files and all other files needed by the mapreduce job need to be uploaded onto HDFS under libpath beforehand. The workflow.xml will be created in Oozie server internally. Users can get the workflow.xml from console or command line(-definition).
 
