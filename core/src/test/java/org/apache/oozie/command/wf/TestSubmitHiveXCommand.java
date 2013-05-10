@@ -54,6 +54,8 @@ public class TestSubmitHiveXCommand extends XFsTestCase {
         String hiveArgsStr = "-a aaa -b bbb -c ccc -M -Da=aaa -Db=bbb -param input=abc";
         String[] args = hiveArgsStr.split(" ");
         MapReduceMain.setStrings(conf, XOozieClient.HIVE_OPTIONS, args);
+        String[] params = new String[]{"INPUT=/some/path", "OUTPUT=/some/other/path", "abc=xyz"};
+        MapReduceMain.setStrings(conf, XOozieClient.HIVE_SCRIPT_PARAMS, params);
 
         SubmitHiveXCommand submitHiveCmd = new SubmitHiveXCommand(conf, "token");
         String xml = submitHiveCmd.getWorkflowXml(conf);
@@ -64,7 +66,7 @@ public class TestSubmitHiveXCommand extends XFsTestCase {
         sb.append("<workflow-app xmlns=\"uri:oozie:workflow:0.2\" name=\"oozie-hive\">");
         sb.append("<start to=\"hive1\" />");
         sb.append("<action name=\"hive1\">");
-        sb.append("<hive xmlns=\"uri:oozie:hive-action:0.2\">");
+        sb.append("<hive xmlns=\"uri:oozie:hive-action:0.5\">");
         sb.append("<job-tracker>jobtracker</job-tracker>");
         sb.append("<name-node>namenode</name-node>");
         sb.append("<configuration>");
@@ -78,6 +80,9 @@ public class TestSubmitHiveXCommand extends XFsTestCase {
         sb.append("</property>");
         sb.append("</configuration>");
         sb.append("<script>dummy.hive</script>");
+        sb.append("<param>INPUT=/some/path</param>");
+        sb.append("<param>OUTPUT=/some/other/path</param>");
+        sb.append("<param>abc=xyz</param>");
         sb.append("<argument>-a</argument>");
         sb.append("<argument>aaa</argument>");
         sb.append("<argument>-b</argument>");

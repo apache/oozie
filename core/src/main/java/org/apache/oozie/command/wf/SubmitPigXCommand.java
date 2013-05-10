@@ -32,4 +32,8 @@ public class SubmitPigXCommand extends SubmitScriptLanguageXCommand {
     protected String getOptions(){
         return XOozieClient.PIG_OPTIONS;
     }
+
+    protected String getScriptParamters() {
+        return XOozieClient.PIG_SCRIPT_PARAMS;
+    }
 }

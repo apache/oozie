@@ -119,12 +119,12 @@ public class DagEngine extends BaseEngine {
     }
 
     /**
-     * Submit a pig/mapreduce job through HTTP.
+     * Submit a pig/hive/mapreduce job through HTTP.
      * <p/>
      * It validates configuration properties.
      *
      * @param conf job configuration.
-     * @param jobType job type - can be "pig" or "mapreduce".
+     * @param jobType job type - can be "pig", "hive, or "mapreduce".
      * @return the job Id.
      * @throws DagEngineException thrown if the job could not be created.
      */

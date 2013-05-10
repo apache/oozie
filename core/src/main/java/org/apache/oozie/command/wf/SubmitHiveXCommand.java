@@ -21,13 +21,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.XOozieClient;
 import org.jdom.Namespace;
 
-/**
- * Created with IntelliJ IDEA.
- * User: bzhang
- * Date: 12/26/12
- * Time: 2:49 PM
- * To change this template use File | Settings | File Templates.
- */
 public class SubmitHiveXCommand extends SubmitScriptLanguageXCommand {
     public SubmitHiveXCommand(Configuration conf, String authToken) {
         super("submitHive", "submitHive", conf, authToken);
@@ -41,7 +34,11 @@ public class SubmitHiveXCommand extends SubmitScriptLanguageXCommand {
         return XOozieClient.HIVE_OPTIONS;
     }
 
+    protected String getScriptParamters() {
+        return XOozieClient.HIVE_SCRIPT_PARAMS;
+    }
+
     protected Namespace getSectionNamespace(){
-        return Namespace.getNamespace("uri:oozie:hive-action:0.2");
+        return Namespace.getNamespace("uri:oozie:hive-action:0.5");
     }
 }
