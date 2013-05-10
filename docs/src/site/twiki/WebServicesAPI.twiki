@@ -6,7 +6,7 @@
 
 %TOC%
 
----++ Oozie Web Services API, V1 (Workflow , Coordinator And Bundle)
+---++ Oozie Web Services API, V1 (Workflow, Coordinator, And Bundle)
 
 The Oozie Web Services API is a HTTP REST JSON API.
 
@@ -18,6 +18,11 @@ Assuming Oozie is runing at =OOZIE_URL=, the following web services end points a
    * <OOZIE_URL>/v1/admin
    * <OOZIE_URL>/v1/job
    * <OOZIE_URL>/v1/jobs
+
+Documentation on the API is below; in some cases, looking at the corresponding command in the
+[[DG_CommandLineTool][Command Line Documentation]] page will provide additional details and examples.  Most of the functionality
+offered by the Oozie CLI is using the WS API. If you export <code>OOZIE_DEBUG</code> then the Oozie CLI will output the WS API
+details used by any commands you execute. This is useful for debugging purposes to or see how the Oozie CLI works with the WS API.
 
 ---+++ Versions End-Point
 
@@ -70,15 +75,15 @@ GET /oozie/v1/admin/status
 HTTP/1.1 200 OK
 Content-Type: application/json;charset=UTF-8
 .
-{"safeMode":false}
+{"systemMode":NORMAL}
 </verbatim>
 
-With a HTTP PUT request it is possible to bring in and out hte system from safemode.
+With a HTTP PUT request it is possible to change the system status between =NORMAL=, =NOWEBSERVICE=, and =SAFEMODE=.
 
 *Request:*
 
 <verbatim>
-PUT /oozie/v1/admin/status?safemode=true
+PUT /oozie/v1/admin/status?systemmode=SAFEMODE
 </verbatim>
 
 *Response:*
@@ -337,15 +342,28 @@ Content-Type: application/json;charset=UTF-8
 }
 </verbatim>
 
+---++++ Queue Dump
+
+A HTTP GET request returns the queue dump of the Oozie system.  This is an administrator debugging feature.
+
+*Request:*
+
+<verbatim>
+
+GET /oozie/v1/admin/queue-dump
+</verbatim>
+
 ---+++ Job and Jobs End-Points
 
 _Modified in Oozie v1 WS API_
 
-These endpoints is for submitting, managing and retrieving information of workflow and coordinator jobs.
+These endpoints are for submitting, managing and retrieving information of workflow, coordinator, and bundle jobs.
 
 ---++++ Job Submission
 
-A HTTP POST request with an XML configuration as payload creates a job.
+---++++ Standard Job Submission
+
+An HTTP POST request with an XML configuration as payload creates a job.
 
 The type of job is determined by the presence of one of the following 3 properties:
 
@@ -395,9 +413,266 @@ happens.
 A coordinator job will remain in =PREP= status until it's triggered, in which case it will change to =RUNNING= status.
 The 'action=start' parameter is not valid for coordinator jobs.
 
+---++++ Proxy MapReduce Job Submission
+
+You can submit a Workflow that contains a single MapReduce action without writing a workflow.xml. Any required Jars or other files
+must already exist in HDFS.
+
+The following properties are required; any additional parameters needed by the MapReduce job can also be specified here:
+   * =fs.default.name=: The NameNode
+   * =mapred.job.tracker=: The JobTracker
+   * =mapred.mapper.class=: The map-task classname
+   * =mapred.reducer.class=: The reducer-task classname
+   * =mapred.input.dir=: The map-task input directory
+   * =mapred.output.dir=: The reduce-task output directory
+   * =user.name=: The username of the user submitting the job
+   * =oozie.libpath=: A directory in HDFS that contains necessary Jars for your job
+   * =oozie.proxysubmission=: Must be set to =true=
+
+*Request:*
+
+<verbatim>
+POST /oozie/v1/jobs?jobtype=mapreduce
+Content-Type: application/xml;charset=UTF-8
+.
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <property>
+        <name>fs.default.name</name>
+        <value>hdfs://localhost:8020</value>
+    </property>
+    <property>
+        <name>mapred.job.tracker</name>
+        <value>localhost:8021</value>
+    </property>
+    <property>
+        <name>mapred.mapper.class</name>
+        <value>org.apache.oozie.example.SampleMapper</value>
+    </property>
+    <property>
+        <name>mapred.reducer.class</name>
+        <value>org.apache.oozie.example.SampleReducer</value>
+    </property>
+    <property>
+        <name>mapred.input.dir</name>
+        <value>hdfs://localhost:8020/user/rkanter/examples/input-data/text</value>
+    </property>
+    <property>
+        <name>mapred.output.dir</name>
+        <value>hdfs://localhost:8020/user/rkanter/examples/output-data/map-reduce</value>
+    </property>
+    <property>
+        <name>user.name</name>
+        <value>rkanter</value>
+    </property>
+    <property>
+        <name>oozie.libpath</name>
+        <value>hdfs://localhost:8020/user/rkanter/examples/apps/map-reduce/lib</value>
+    </property>
+    <property>
+        <name>oozie.proxysubmission</name>
+        <value>true</value>
+    </property>
+</configuration>
+</verbatim>
+
+*Response:*
+
+<verbatim>
+HTTP/1.1 201 CREATED
+Content-Type: application/json;charset=UTF-8
+.
+{
+  id: "job-3"
+}
+</verbatim>
+
+---++++ Proxy Pig Job Submission
+
+You can submit a Workflow that contains a single Pig action without writing a workflow.xml.  Any requred Jars or other files must
+already exist in HDFS.
+
+The following properties are required:
+   * =fs.default.name=: The NameNode
+   * =mapred.job.tracker=: The JobTracker
+   * =user.name=: The username of the user submitting the job
+   * =oozie.pig.script=: Contains the pig script you want to run (the actual script, not a file path)
+   * =oozie.libpath=: A directory in HDFS that contains necessary Jars for your job
+   * =oozie.proxysubmission=: Must be set to =true=
+
+The following properties are optional:
+   * =oozie.pig.script.params.size=: The number of parameters you'll be passing to Pig
+   * =oozie.pig.script.params.n=: A parameter (variable definition for the script) in 'key=value' format, the 'n' should be an integer starting with 0 to indicate the parameter number
+   * =oozie.pig.options.size=: The number of options you'll be passing to Pig
+   * =oozie.pig.options.n=: An argument to pass to Pig, the 'n' should be an integer starting with 0 to indicate the option number
+
+The =oozie.pig.options.n= parameters are sent directly to Pig without any modification unless they start with =-D=, in which case
+they are put into the <code><configuration></code> element of the action.
+
+In addition to passing parameters to Pig with =oozie.pig.script.params.n=, you can also create a properties file on HDFS and
+reference it with the =-param_file= option in =oozie.pig.script.options.n=; both are shown in the following example.
+
+<verbatim>
+$ hadoop fs -cat /user/rkanter/pig_params.properties
+INPUT=/user/rkanter/examples/input-data/text
+</verbatim>
+
+*Request:*
+
+<verbatim>
+POST /oozie/v1/jobs?jobtype=pig
+Content-Type: application/xml;charset=UTF-8
+.
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <property>
+        <name>fs.default.name</name>
+        <value>hdfs://localhost:8020</value>
+    </property>
+    <property>
+        <name>mapred.job.tracker</name>
+        <value>localhost:8021</value>
+    </property>
+    <property>
+        <name>user.name</name>
+        <value>rkanter</value>
+    </property>
+    <property>
+        <name>oozie.pig.script</name>
+        <value>
+            A = load '$INPUT' using PigStorage(':');
+            B = foreach A generate $0 as id;
+            store B into '$OUTPUT' USING PigStorage();
+        </value>
+    </property>
+    <property>
+        <name>oozie.pig.script.params.size</name>
+        <value>1</value>
+    </property>
+    <property>
+        <name>oozie.pig.script.params.0</name>
+        <value>OUTPUT=/user/rkanter/examples/output-data/pig</value>
+    </property>
+    <property>
+        <name>oozie.pig.options.size</name>
+        <value>2</value>
+    </property>
+    <property>
+        <name>oozie.pig.options.0</name>
+        <value>-param_file</value>
+    </property>
+    <property>
+        <name>oozie.pig.options.1</name>
+        <value>hdfs://localhost:8020/user/rkanter/pig_params.properties</value>
+    </property>
+    <property>
+        <name>oozie.libpath</name>
+        <value>hdfs://localhost:8020/user/rkanter/share/lib/pig</value>
+    </property>
+    <property>
+        <name>oozie.proxysubmission</name>
+        <value>true</value>
+    </property>
+</configuration>
+</verbatim>
+
+*Response:*
+
+<verbatim>
+HTTP/1.1 201 CREATED
+Content-Type: application/json;charset=UTF-8
+.
+{
+  id: "job-3"
+}
+</verbatim>
+
+---++++ Proxy Hive Job Submission
+
+You can submit a Workflow that contains a single Hive action without writing a workflow.xml.  Any requred Jars or other files must
+already exist in HDFS.
+
+The following properties are required:
+   * =fs.default.name=: The NameNode
+   * =mapred.job.tracker=: The JobTracker
+   * =user.name=: The username of the user submitting the job
+   * =oozie.hive.script=: Contains the hive script you want to run (the actual script, not a file path)
+   * =oozie.libpath=: A directory in HDFS that contains necessary Jars for your job
+   * =oozie.proxysubmission=: Must be set to =true=
+
+The following properties are optional:
+   * =oozie.hive.script.params.size=: The number of parameters you'll be passing to Hive
+   * =oozie.hive.script.params.n=: A parameter (variable definition for the script) in 'key=value' format, the 'n' should be an integer starting with 0 to indicate the parameter number
+   * =oozie.hive.options.size=: The number of options you'll be passing to Pig
+   * =oozie.hive.options.n=: An argument to pass to Hive, the 'n' should be an integer starting with 0 to indicate the option number
+
+The =oozie.hive.options.n= parameters are sent directly to Hive without any modification unless they start with =-D=, in which case
+they are put into the <code><configuration></code> element of the action.
+
+*Request:*
+
+<verbatim>
+POST /oozie/v1/jobs?jobtype=hive
+Content-Type: application/xml;charset=UTF-8
+.
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <property>
+        <name>fs.default.name</name>
+        <value>hdfs://localhost:8020</value>
+    </property>
+    <property>
+        <name>mapred.job.tracker</name>
+        <value>localhost:8021</value>
+    </property>
+    <property>
+        <name>user.name</name>
+        <value>rkanter</value>
+    </property>
+    <property>
+        <name>oozie.hive.script</name>
+        <value>
+            CREATE EXTERNAL TABLE test (a INT) STORED AS TEXTFILE LOCATION '${INPUT}';
+            INSERT OVERWRITE DIRECTORY '${OUTPUT}' SELECT * FROM test;
+        </value>
+    </property>
+    <property>
+        <name>oozie.hive.script.params.size</name>
+        <value>2</value>
+    </property>
+    <property>
+        <name>oozie.hive.script.params.0</name>
+        <value>OUTPUT=/user/rkanter/examples/output-data/hive</value>
+    </property>
+    <property>
+        <name>oozie.hive.script.params.1</name>
+        <value>INPUT=/user/rkanter/examples/input-data/table</value>
+    </property>
+    <property>
+        <name>oozie.libpath</name>
+        <value>hdfs://localhost:8020/user/rkanter/share/lib/hive</value>
+    </property>
+    <property>
+        <name>oozie.proxysubmission</name>
+        <value>true</value>
+    </property>
+</configuration>
+</verbatim>
+
+*Response:*
+
+<verbatim>
+HTTP/1.1 201 CREATED
+Content-Type: application/json;charset=UTF-8
+.
+{
+  id: "job-3"
+}
+</verbatim>
+
 ---++++ Managing a Job
 
-A HTTP PUT request starts, suspends, resumes or kills a job.
+A HTTP PUT request starts, suspends, resumes, kills, or dryruns a job.
 
 *Request:*
 
@@ -411,7 +686,9 @@ PUT /oozie/v1/job/job-3?action=start
 HTTP/1.1 200 OK
 </verbatim>
 
-Valid values for the 'action' parameter are 'start', 'suspend', 'resume' and 'kill' and 'rerun'.
+Valid values for the 'action' parameter are 'start', 'suspend', 'resume', 'kill', 'dryrun', 'rerun', and 'change'.
+
+Rerunning and changing a job require additional parameters, and are described below:
 
 ---+++++  Re-Runing a Workflow Job
 
@@ -455,30 +732,111 @@ HTTP/1.1 200 OK
 
 ---+++++ Re-Runing a coordinator job
 
-A coordinator job in =RUNNING= =SUCCEEDED=, =KILLED= or =FAILED= status can be partially rerun by
-specifying the coordinator actions to re-execute. The actions to execute can be specified in a
-closed action number range (start-action to end-action) or in a closed datetime range (start-datetime 
-to end-datetime). All the actions to rerun must have run already.
+A coordinator job in =RUNNING= =SUCCEEDED=, =KILLED= or =FAILED= status can be partially rerun by specifying the coordinator actions
+to re-execute.
 
-A rerun request is done with a HTTP PUT request with a =rerun= action and type of rerun.
+A rerun request is done with an HTTP PUT request with a =coord-rerun= =action=.
 
-The type of rerun can be =exact= or =current=.
+The =type= of the rerun can be =date= or =action=.
 
-An =exact= rerun will take the action XML resolved for the previous run (with all latest and version instances fixed) and it will run using the exact same dataset instances for everything.
+The =scope= of the rerun depends on the type:
+* =date=: a comma-separated list of date ranges. Each date range element is specified with dates separated by =::=
+* =action=: a comma-separated list of action ranges. Each action range is specified with two action numbers separated by =-=
 
-A =current= rerun will take the action XML resolved for the action creation and it will resolve to the current values.
+The =refresh= parameter can be =true= or =false= to specify if the user wants to refresh an action's input and output events.
+
+The =nocleanp= paramter can be =true= or =false= to specify is the user wants to cleanup output events for the rerun actions.
 
 *Request:*
 
 <verbatim>
-PUT /oozie/v1/job/job-3?action=rerun&type=exact&start-action=4&end-action=10
+PUT /oozie/v1/job/job-3?action=coord-rerun&type=action&scope=1-2&refresh=false&nocleanup=false
 .
 </verbatim>
 
 or 
 
 <verbatim>
-PUT /oozie/v1/job/job-3?action=rerun&type=current&start-time=2009-02-01T00:10Z&end-time=2009-03-01T00:10Z
+PUT /oozie/v1/job/job-3?action=coord-rerun&type=date2009-02-01T00:10Z::2009-03-01T00:10Z&scope=&refresh=false&nocleanup=false
+.
+</verbatim>
+
+*Response:*
+
+<verbatim>
+HTTP/1.1 200 OK
+</verbatim>
+
+---+++++ Re-Runing a bundle job
+
+A coordinator job in =RUNNING= =SUCCEEDED=, =KILLED= or =FAILED= status can be partially rerun by specifying the coordinators to
+re-execute.
+
+A rerun request is done with an HTTP PUT request with a =bundle-rerun= =action=.
+
+A comma separated list of coordinator job names (not IDs) can be specified in the =coord-scope= parameter.
+
+The =date-scope= parameter is a comma-separated list of date ranges. Each date range element is specified with dates separated
+by =::=. If empty or not included, Oozie will figure this out for you
+
+The =refresh= parameter can be =true= or =false= to specify if the user wants to refresh the coordinator's input and output events.
+
+The =nocleanp= paramter can be =true= or =false= to specify is the user wants to cleanup output events for the rerun coordinators.
+
+*Request:*
+
+<verbatim>
+PUT /oozie/v1/job/job-3?action=bundle-rerun&coord-scope=coord-1&refresh=false&nocleanup=false
+.
+</verbatim>
+
+*Response:*
+
+<verbatim>
+HTTP/1.1 200 OK
+</verbatim>
+
+
+---+++++ Changing endtime/concurrency/pausetime of a Coordinator Job
+
+A coordinator job not in =KILLED= status can have it's endtime, concurrency, or pausetime changed.
+
+A change request is done with an HTTP PUT request with a =change= =action=.
+
+The =value= parameter can contain any of the following:
+* endtime: the end time of the coordinator job.
+* concurrency: the concurrency of the coordinator job.
+* pausetime: the pause time of the coordinator job.
+
+Multiple arguments can be passed to the =value= parameter by separating them with a ';' character.
+
+If an already-succeeded job changes its end time, its status will become running.
+
+*Request:*
+
+<verbatim>
+PUT /oozie/v1/job/job-3?action=change&value=endtime=2011-12-01T05:00Z
+.
+</verbatim>
+
+or
+
+<verbatim>
+PUT /oozie/v1/job/job-3?action=change&value=concurrency=100
+.
+</verbatim>
+
+or
+
+<verbatim>
+PUT /oozie/v1/job/job-3?action=change&value=pausetime=2011-12-01T05:00Z
+.
+</verbatim>
+
+or
+
+<verbatim>
+PUT /oozie/v1/job/job-3?action=change&value=endtime=2011-12-01T05:00Z;concurrency=100;pausetime=2011-12-01T05:00Z
 .
 </verbatim>
 
@@ -505,13 +863,11 @@ HTTP/1.1 200 OK
 Content-Type: application/json;charset=UTF-8
 .
 { 
-**jobType: "workflow",
   id: "0-200905191240-oozie-W",
   appName: "indexer-workflow",
   appPath: "hdfs://user/bansalm/indexer.wf",
   externalId: "0-200905191230-oozie-pepe",
   user: "bansalm",
-  group: "other",
   status: "RUNNING",
   conf: "<configuration> ... </configuration>",
   createdTime: "Thu, 01 Jan 2009 00:00:00 GMT",
@@ -549,21 +905,28 @@ HTTP/1.1 200 OK
 Content-Type: application/json;charset=UTF-8
 .
 {
-  jobType: "coordinator",
   id: "0-200905191240-oozie-C",
   appName: "indexer-Coord",
   appPath: "hdfs://user/bansalm/myapp/logprocessor-coord.xml",
   externalId: "0-200905191230-oozie-pepe",
   user: "bansalm",
-  group: "other",
   status: "RUNNING",
   conf: "<configuration> ... </configuration>",
   createdTime: "Thu, 01 Jan 2009 00:00:00 GMT",
   startTime: "Fri, 02 Jan 2009 00:00:00 GMT",
   endTime: "Fri, 31 Dec 2009 00:00:00 GMT",
   frequency: "${days(1)}"
+  actions: [
+    {
+      id: "0000010-130426111815091-oozie-bansalm-C@1",
+      createdTime: "Fri, 26 Apr 2013 20:57:07 GMT",
+      externalId: "",
+      missingDependencies: "",
+      runConf: null,
+      createdConf: null,
+      consoleUrl: null,
+      nominalTime: "Fri, 01 Jan 2010 01:00:00 GMT",
   ...
-  **************TBD********************
 }
 </verbatim>
 
@@ -580,14 +943,23 @@ Content-Type: application/json;charset=UTF-8
   appPath: "hdfs://user/bansalm/myapp/logprocessor-bundle.xml",
   externalId: "0-200905191230-oozie-pepe",
   user: "bansalm",
-  group: "other",
   status: "RUNNING",
   conf: "<configuration> ... </configuration>",
   createdTime: "Thu, 01 Jan 2009 00:00:00 GMT",
   startTime: "Fri, 02 Jan 2009 00:00:00 GMT",
   endTime: "Fri, 31 Dec 2009 00:00:00 GMT"
+  bundleCoordJobs: [
+    {
+      status: "RUNNING",
+      concurrency: 1,
+      conf: "<configuration> ... </configuration>",
+      executionPolicy: "FIFO",
+      toString: "Coordinator application id[0000010-130426111815091-oozie-bansalm-C] status[RUNNING]",
+      coordJobName: "coord-1",
+      endTime: "Fri, 01 Jan 2010 03:00:00 GMT",
+      ...
+    }
   ...
-  **************TBD********************
 }
 </verbatim>
 
@@ -710,7 +1082,7 @@ A HTTP GET request retrieves workflow and coordinator jobs information.
 GET /oozie/v1/jobs?filter=user%3Dbansalm&offset=1&len=50&timezone=GMT
 </verbatim>
 
-Note that the filter is URL encoded, its decoded value is <code>user=tucu</code>.
+Note that the filter is URL encoded, its decoded value is <code>user=bansalm</code>.
 
 *Response:*
 
@@ -782,9 +1154,10 @@ The query will do an AND among all the filter names.
 The query will do an OR among all the filter values for the same name. Multiple values must be specified as different
 name value pairs.
 
-Additionally the =start= and =len= parameters can be used for pagination. The start parameter is base 1.
+Additionally the =offset= and =len= parameters can be used for pagination. The start parameter is base 1.
+
 Moreover, the =jobtype= parameter could be used to determine what type of job is looking for.
-The valid values of job type are: =workflow=, =coordinator= or =bundle=.
+The valid values of job type are: =wf=, =coordinator= or =bundle=.
 
 ---++++ Jobs information using Bulk API
 

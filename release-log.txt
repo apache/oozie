@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1183 Update WebServices API documentation (rkanter)
 OOZIE-1368 Error message when using an incorrect oozie url with kerberos is misleading (rkanter)
 OOZIE-1352 Write documentation for OOzie Hive CLI (rkanter)
 OOZIE-1353 hive CLI fails with -X argument (rkanter)
