@@ -59,15 +59,16 @@ public class TestWorkflowXClient extends DagServletTestCase {
                 conf.setProperty(OozieClient.LIBPATH, libPath.toString());
                 conf.setProperty(XOozieClient.JT, "localhost:9001");
                 conf.setProperty(XOozieClient.NN, "hdfs://localhost:9000");
+                String[] params = new String[]{"INPUT=input.txt"};
 
 
 
                 String pigScriptFile = getTestCaseDir() + "/test";
                 BufferedWriter writer = new BufferedWriter(new FileWriter(pigScriptFile));
-                writer.write("a = load 'input.txt';\n dump a;");
+                writer.write("a = load '${INPUT}';\n dump a;");
                 writer.close();
                 assertEquals(MockDagEngineService.JOB_ID + wfCount + MockDagEngineService.JOB_ID_END,
-                             wc.submitScriptLanguage(conf, pigScriptFile, null, "pig"));
+                             wc.submitScriptLanguage(conf, pigScriptFile, null, params, "pig"));
 
                 assertTrue(MockDagEngineService.started.get(wfCount));
                 return null;
@@ -88,16 +89,16 @@ public class TestWorkflowXClient extends DagServletTestCase {
                 conf.setProperty(OozieClient.LIBPATH, libPath.toString());
                 conf.setProperty(XOozieClient.JT, "localhost:9001");
                 conf.setProperty(XOozieClient.NN, "hdfs://localhost:9000");
-
+                String[] params = new String[]{"NAME=test"};
 
 
                 String hiveScriptFile = getTestCaseDir() + "/test";
                 System.out.println(hiveScriptFile);
                 BufferedWriter writer = new BufferedWriter(new FileWriter(hiveScriptFile));
-                writer.write("CREATE EXTERNAL TABLE test (a INT);");
+                writer.write("CREATE EXTERNAL TABLE ${NAME} (a INT);");
                 writer.close();
                 assertEquals(MockDagEngineService.JOB_ID + wfCount + MockDagEngineService.JOB_ID_END,
-                        wc.submitScriptLanguage(conf, hiveScriptFile, null, "hive"));
+                        wc.submitScriptLanguage(conf, hiveScriptFile, null, params, "hive"));
 
                 assertTrue(MockDagEngineService.started.get(wfCount));
                 return null;

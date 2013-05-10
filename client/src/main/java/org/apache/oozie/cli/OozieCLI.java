@@ -390,12 +390,15 @@ public class OozieCLI {
         Option file = new Option(SCRIPTFILE_OPTION, true, jobType + " script");
         Option property = OptionBuilder.withArgName("property=value").hasArgs(2).withValueSeparator().withDescription(
                 "set/override value for given property").create("D");
+        Option params = OptionBuilder.withArgName("property=value").hasArgs(2).withValueSeparator().withDescription(
+                "set parameters for script").create("P");
         Option doAs = new Option(DO_AS_OPTION, true, "doAs user, impersonates as the specified user");
         Options Options = new Options();
         Options.addOption(oozie);
         Options.addOption(doAs);
         Options.addOption(config);
         Options.addOption(property);
+        Options.addOption(params);
         Options.addOption(file);
         addAuthOptions(Options);
         return Options;
@@ -456,10 +459,10 @@ public class OozieCLI {
         parser.addCommand(ADMIN_CMD, "", "admin operations", createAdminOptions(), false);
         parser.addCommand(VALIDATE_CMD, "", "validate a workflow XML file", new Options(), true);
         parser.addCommand(SLA_CMD, "", "sla operations (Supported in Oozie-2.0 or later)", createSlaOptions(), false);
-        parser.addCommand(PIG_CMD, "-X ", "submit a pig job, everything after '-X' are pass-through parameters to pig",
-                createScriptLanguageOptions(PIG_CMD), true);
-        parser.addCommand(HIVE_CMD, "-X ", "submit a hive job, everything after '-X' are pass-through parameters to hive",
-                createScriptLanguageOptions(HIVE_CMD), true);
+        parser.addCommand(PIG_CMD, "-X ", "submit a pig job, everything after '-X' are pass-through parameters to pig, any '-D' "
+                + "arguments after '-X' are put in <configuration>", createScriptLanguageOptions(PIG_CMD), true);
+        parser.addCommand(HIVE_CMD, "-X ", "submit a hive job, everything after '-X' are pass-through parameters to hive, any '-D' "
+                + "arguments after '-X' are put in <configuration>", createScriptLanguageOptions(HIVE_CMD), true);
         parser.addCommand(INFO_CMD, "", "get more detailed info about specific topics", createInfoOptions(), false);
         parser.addCommand(MR_CMD, "", "submit a mapreduce job", createMROptions(), false);
 
@@ -1549,6 +1552,8 @@ public class OozieCLI {
                 sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
                         "hive-action-0.4.xsd")));
                 sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
+                        "hive-action-0.5.xsd")));
+                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
                         "sqoop-action-0.2.xsd")));
                 sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
                         "sqoop-action-0.3.xsd")));
@@ -1574,34 +1579,36 @@ public class OozieCLI {
     }
 
     private void scriptLanguageCommand(CommandLine commandLine, String jobType) throws IOException, OozieCLIException {
-        List<String> Args = commandLine.getArgList();
-        if (Args.size() > 0) {
-            // checking is a pigArgs starts with -X (because CLIParser cannot check this)
-            if (!Args.get(0).equals("-X")) {
-                throw new OozieCLIException("Unrecognized option: " + Args.get(0) + " Expecting -X");
+        List<String> args = commandLine.getArgList();
+        if (args.size() > 0) {
+            // checking if args starts with -X (because CLIParser cannot check this)
+            if (!args.get(0).equals("-X")) {
+                throw new OozieCLIException("Unrecognized option: " + args.get(0) + " Expecting -X");
             }
-            Args.remove(0);
+            args.remove(0);
         }
 
-        List<String> options = new ArrayList<String>();
-        for (Option option : commandLine.getOptions()) {
-            options.add(option.getOpt());
-        }
-
-        if (!options.contains(SCRIPTFILE_OPTION)) {
+        if (!commandLine.hasOption(SCRIPTFILE_OPTION)) {
             throw new OozieCLIException("Need to specify -file <scriptfile>");
         }
 
-        if (!options.contains(CONFIG_OPTION)) {
+        if (!commandLine.hasOption(CONFIG_OPTION)) {
             throw new OozieCLIException("Need to specify -config <configfile>");
         }
-
 
         try {
             XOozieClient wc = createXOozieClient(commandLine);
             Properties conf = getConfiguration(wc, commandLine);
             String script = commandLine.getOptionValue(SCRIPTFILE_OPTION);
-            System.out.println(JOB_ID_PREFIX + wc.submitScriptLanguage(conf, script, Args.toArray(new String[Args.size()]), jobType));
+            List<String> paramsList = new ArrayList<String>();
+            if (commandLine.hasOption("P")) {
+                Properties params = commandLine.getOptionProperties("P");
+                for (String key : params.stringPropertyNames()) {
+                    paramsList.add(key + "=" + params.getProperty(key));
+                }
+            }
+            System.out.println(JOB_ID_PREFIX + wc.submitScriptLanguage(conf, script, args.toArray(new String[args.size()]),
+                    paramsList.toArray(new String[paramsList.size()]), jobType));
         }
         catch (OozieClientException ex) {
             throw new OozieCLIException(ex.toString(), ex);

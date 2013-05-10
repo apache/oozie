@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1353 hive CLI fails with -X argument (rkanter)
 OOZIE-1303 CLI API for Bulk Monitoring (mona)
 OOZIE-611 distcp action does not have documentation (rkanter)
 OOZIE-1318 Action Main classes should be overridable via action configuration settings (rkanter)

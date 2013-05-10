@@ -46,6 +46,7 @@ public class HiveActionExecutor extends ScriptLanguageActionExecutor {
     private static final String HIVE_MAIN_CLASS_NAME = "org.apache.oozie.action.hadoop.HiveMain";
     static final String HIVE_SCRIPT = "oozie.hive.script";
     static final String HIVE_PARAMS = "oozie.hive.params";
+    static final String HIVE_ARGS = "oozie.hive.args";
 
     public HiveActionExecutor() {
         super("hive");
@@ -90,14 +91,23 @@ public class HiveActionExecutor extends ScriptLanguageActionExecutor {
         for (int i = 0; i < params.size(); i++) {
             strParams[i] = params.get(i).getTextTrim();
         }
+        String[] strArgs = null;
+        List<Element> eArgs = actionXml.getChildren("argument", ns);
+        if (eArgs != null && eArgs.size() > 0) {
+            strArgs = new String[eArgs.size()];
+            for (int i = 0; i < eArgs.size(); i++) {
+                strArgs[i] = eArgs.get(i).getTextTrim();
+            }
+        }
 
-        setHiveScript(conf, scriptName, strParams);
+        setHiveScript(conf, scriptName, strParams, strArgs);
         return conf;
     }
 
-    public static void setHiveScript(Configuration conf, String script, String[] params) {
+    public static void setHiveScript(Configuration conf, String script, String[] params, String[] args) {
         conf.set(HIVE_SCRIPT, script);
         MapReduceMain.setStrings(conf, HIVE_PARAMS, params);
+        MapReduceMain.setStrings(conf, HIVE_ARGS, args);
     }
 
     @Override

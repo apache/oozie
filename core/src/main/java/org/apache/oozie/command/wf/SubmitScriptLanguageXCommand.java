@@ -28,29 +28,21 @@ import org.jdom.Namespace;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: bzhang
- * Date: 12/26/12
- * Time: 2:27 PM
- * To change this template use File | Settings | File Templates.
- */
-public class SubmitScriptLanguageXCommand extends SubmitHttpXCommand {
+public abstract class SubmitScriptLanguageXCommand extends SubmitHttpXCommand {
     public SubmitScriptLanguageXCommand(String name, String type, Configuration conf, String authToken) {
         super(name, type, conf, authToken);
     }
 
-    protected String getLanguageName() throws UnsupportedOperationException{
-        throw new UnsupportedOperationException("subclass needs to implement this method");
-    }
+    protected abstract String getLanguageName();
 
-    protected String getOptions() throws UnsupportedOperationException{
-        throw new UnsupportedOperationException("subclass needs to implement this method");
-    }
+    protected abstract String getOptions();
 
-    protected Namespace getSectionNamespace(){
+    protected abstract String getScriptParamters();
+
+    protected Namespace getSectionNamespace() {
         return Namespace.getNamespace("uri:oozie:workflow:0.2");
     }
+
     private Element generateSection(Configuration conf, Namespace ns) {
         String name = getLanguageName();
         Element ele = new Element(name, ns);
@@ -63,8 +55,8 @@ public class SubmitScriptLanguageXCommand extends SubmitHttpXCommand {
 
         List<String> Dargs = new ArrayList<String>();
         List<String> otherArgs = new ArrayList<String>();
-        String[] Args = MapReduceMain.getStrings(conf, getOptions());
-        for (String arg : Args) {
+        String[] args = MapReduceMain.getStrings(conf, getOptions());
+        for (String arg : args) {
             if (arg.startsWith("-D")) {
                 Dargs.add(arg);
             }
@@ -72,6 +64,7 @@ public class SubmitScriptLanguageXCommand extends SubmitHttpXCommand {
                 otherArgs.add(arg);
             }
         }
+        String [] params = MapReduceMain.getStrings(conf, getScriptParamters());
 
         // configuration section
         if (Dargs.size() > 0) {
@@ -82,6 +75,13 @@ public class SubmitScriptLanguageXCommand extends SubmitHttpXCommand {
         Element script = new Element("script", ns);
         script.addContent("dummy." + name);
         ele.addContent(script);
+
+        // parameter section
+        for (String param : params) {
+            Element parameter = new Element("param", ns);
+            parameter.addContent(param);
+            ele.addContent(parameter);
+        }
 
         // argument section
         for (String arg : otherArgs) {

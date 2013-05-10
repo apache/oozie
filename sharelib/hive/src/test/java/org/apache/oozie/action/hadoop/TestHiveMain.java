@@ -28,6 +28,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.URL;
+import java.util.Properties;
 
 public class TestHiveMain extends MainTestCase {
     private SecurityManager SECURITY_MANAGER;
@@ -96,7 +97,7 @@ public class TestHiveMain extends MainTestCase {
             SharelibUtils.addToDistributedCache("hive", fs, getFsTestCaseDir(), jobConf);
 
             HiveActionExecutor.setHiveScript(jobConf, script.toString(), new String[]{"IN=" + inputDir.toUri().getPath(),
-                    "OUT=" + outputDir.toUri().getPath()});
+                    "OUT=" + outputDir.toUri().getPath()}, new String[] { "-v" });
 
             File actionXml = new File(getTestCaseDir(), "action.xml");
             OutputStream os = new FileOutputStream(actionXml);
@@ -107,6 +108,8 @@ public class TestHiveMain extends MainTestCase {
             URL url = Thread.currentThread().getContextClassLoader().getResource("HiveMain.txt");
             File classPathDir = new File(url.getPath()).getParentFile();
             assertTrue(classPathDir.exists());
+            Properties props = jobConf.toProperties();
+            assertEquals(props.getProperty("oozie.hive.args.size"), "1");
             File hiveSite = new File(classPathDir, "hive-site.xml");
 
             File outputDataFile = new File(getTestCaseDir(), "outputdata.properties");

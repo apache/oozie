@@ -26,9 +26,11 @@ import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.apache.hadoop.conf.Configuration;
@@ -40,10 +42,25 @@ public class HiveMain extends LauncherMain {
     private static final Pattern[] HIVE_JOB_IDS_PATTERNS = {
       Pattern.compile("Ended Job = (job_\\S*)")
     };
+    private static final Set<String> DISALLOWED_HIVE_OPTIONS = new HashSet<String>();
 
     public static final String HIVE_L4J_PROPS = "hive-log4j.properties";
     public static final String HIVE_EXEC_L4J_PROPS = "hive-exec-log4j.properties";
     public static final String HIVE_SITE_CONF = "hive-site.xml";
+
+    static {
+        DISALLOWED_HIVE_OPTIONS.add("-d");
+        DISALLOWED_HIVE_OPTIONS.add("--define");
+        DISALLOWED_HIVE_OPTIONS.add("-e");
+        DISALLOWED_HIVE_OPTIONS.add("-f");
+        DISALLOWED_HIVE_OPTIONS.add("-H");
+        DISALLOWED_HIVE_OPTIONS.add("--help");
+        DISALLOWED_HIVE_OPTIONS.add("--hiveconf");
+        DISALLOWED_HIVE_OPTIONS.add("--hivevar");
+        DISALLOWED_HIVE_OPTIONS.add("-s");
+        DISALLOWED_HIVE_OPTIONS.add("--silent");
+        DISALLOWED_HIVE_OPTIONS.add("-D");
+    }
 
     public static void main(String[] args) throws Exception {
         run(HiveMain.class, args);
@@ -229,6 +246,13 @@ public class HiveMain extends LauncherMain {
         arguments.add("-f");
         arguments.add(scriptPath);
 
+        String[] hiveArgs = MapReduceMain.getStrings(hiveConf, HiveActionExecutor.HIVE_ARGS);
+        for (String hiveArg : hiveArgs) {
+            if (DISALLOWED_HIVE_OPTIONS.contains(hiveArg)) {
+                throw new RuntimeException("Error: Hive argument " + hiveArg + " is not supported");
+            }
+            arguments.add(hiveArg);
+        }
 
         System.out.println("Hive command arguments :");
         for (String arg : arguments) {

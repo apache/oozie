@@ -149,28 +149,29 @@ property =oozie.hive.log.level=. The default value is =INFO=.
 
 ---+++ AE.A Appendix A, Hive XML-Schema
 
----++++ Hive Action Schema Version 0.3
+---++++ Hive Action Schema Version 0.5
 <verbatim>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns:hive="uri:oozie:hive-action:0.3" elementFormDefault="qualified"
-           targetNamespace="uri:oozie:hive-action:0.3">
-
+           xmlns:hive="uri:oozie:hive-action:0.5" elementFormDefault="qualified"
+           targetNamespace="uri:oozie:hive-action:0.5">
+.
     <xs:element name="hive" type="hive:ACTION"/>
-
+.
     <xs:complexType name="ACTION">
         <xs:sequence>
-            <xs:element name="job-tracker" type="xs:string" minOccurs="1" maxOccurs="1"/>
-            <xs:element name="name-node" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="job-tracker" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="name-node" type="xs:string" minOccurs="0" maxOccurs="1"/>
             <xs:element name="prepare" type="hive:PREPARE" minOccurs="0" maxOccurs="1"/>
             <xs:element name="job-xml" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
             <xs:element name="configuration" type="hive:CONFIGURATION" minOccurs="0" maxOccurs="1"/>
             <xs:element name="script" type="xs:string" minOccurs="1" maxOccurs="1"/>
             <xs:element name="param" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="argument" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
             <xs:element name="file" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
             <xs:element name="archive" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
     </xs:complexType>
-
+.
     <xs:complexType name="CONFIGURATION">
         <xs:sequence>
             <xs:element name="property" minOccurs="1" maxOccurs="unbounded">
@@ -184,22 +185,130 @@ property =oozie.hive.log.level=. The default value is =INFO=.
             </xs:element>
         </xs:sequence>
     </xs:complexType>
-
+.
     <xs:complexType name="PREPARE">
         <xs:sequence>
             <xs:element name="delete" type="hive:DELETE" minOccurs="0" maxOccurs="unbounded"/>
             <xs:element name="mkdir" type="hive:MKDIR" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
     </xs:complexType>
-
+.
     <xs:complexType name="DELETE">
         <xs:attribute name="path" type="xs:string" use="required"/>
     </xs:complexType>
-
+.
     <xs:complexType name="MKDIR">
         <xs:attribute name="path" type="xs:string" use="required"/>
     </xs:complexType>
+.
+</xs:schema>
+</verbatim>
 
+---++++ Hive Action Schema Version 0.4
+<verbatim>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:hive="uri:oozie:hive-action:0.4" elementFormDefault="qualified"
+           targetNamespace="uri:oozie:hive-action:0.4">
+.
+    <xs:element name="hive" type="hive:ACTION"/>
+.
+    <xs:complexType name="ACTION">
+        <xs:sequence>
+            <xs:element name="job-tracker" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="name-node" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="prepare" type="hive:PREPARE" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="job-xml" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="configuration" type="hive:CONFIGURATION" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="script" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="param" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="file" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="archive" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+.
+    <xs:complexType name="CONFIGURATION">
+        <xs:sequence>
+            <xs:element name="property" minOccurs="1" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="name" minOccurs="1" maxOccurs="1" type="xs:string"/>
+                        <xs:element name="value" minOccurs="1" maxOccurs="1" type="xs:string"/>
+                        <xs:element name="description" minOccurs="0" maxOccurs="1" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+.
+    <xs:complexType name="PREPARE">
+        <xs:sequence>
+            <xs:element name="delete" type="hive:DELETE" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="mkdir" type="hive:MKDIR" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+.
+    <xs:complexType name="DELETE">
+        <xs:attribute name="path" type="xs:string" use="required"/>
+    </xs:complexType>
+.
+    <xs:complexType name="MKDIR">
+        <xs:attribute name="path" type="xs:string" use="required"/>
+    </xs:complexType>
+.
+</xs:schema>
+</verbatim>
+
+---++++ Hive Action Schema Version 0.3
+<verbatim>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:hive="uri:oozie:hive-action:0.3" elementFormDefault="qualified"
+           targetNamespace="uri:oozie:hive-action:0.3">
+.
+    <xs:element name="hive" type="hive:ACTION"/>
+.
+    <xs:complexType name="ACTION">
+        <xs:sequence>
+            <xs:element name="job-tracker" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="name-node" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="prepare" type="hive:PREPARE" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="job-xml" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="configuration" type="hive:CONFIGURATION" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="script" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="param" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="file" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="archive" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+.
+    <xs:complexType name="CONFIGURATION">
+        <xs:sequence>
+            <xs:element name="property" minOccurs="1" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="name" minOccurs="1" maxOccurs="1" type="xs:string"/>
+                        <xs:element name="value" minOccurs="1" maxOccurs="1" type="xs:string"/>
+                        <xs:element name="description" minOccurs="0" maxOccurs="1" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+.
+    <xs:complexType name="PREPARE">
+        <xs:sequence>
+            <xs:element name="delete" type="hive:DELETE" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="mkdir" type="hive:MKDIR" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+.
+    <xs:complexType name="DELETE">
+        <xs:attribute name="path" type="xs:string" use="required"/>
+    </xs:complexType>
+.
+    <xs:complexType name="MKDIR">
+        <xs:attribute name="path" type="xs:string" use="required"/>
+    </xs:complexType>
+.
 </xs:schema>
 </verbatim>
 

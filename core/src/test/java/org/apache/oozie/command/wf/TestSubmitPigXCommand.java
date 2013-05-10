@@ -55,6 +55,8 @@ public class TestSubmitPigXCommand extends XFsTestCase {
         String pigArgsStr = "-a aaa -b bbb -c ccc -M -Da=aaa -Db=bbb -param input=abc";
         String[] args = pigArgsStr.split(" ");
         MapReduceMain.setStrings(conf, XOozieClient.PIG_OPTIONS, args);
+        String[] params = new String[]{"INPUT=/some/path", "OUTPUT=/some/other/path", "abc=xyz"};
+        MapReduceMain.setStrings(conf, XOozieClient.PIG_SCRIPT_PARAMS, params);
 
         SubmitPigXCommand submitPigCmd = new SubmitPigXCommand(conf, "token");
         String xml = submitPigCmd.getWorkflowXml(conf);
@@ -79,6 +81,9 @@ public class TestSubmitPigXCommand extends XFsTestCase {
         sb.append("</property>");
         sb.append("</configuration>");
         sb.append("<script>dummy.pig</script>");
+        sb.append("<param>INPUT=/some/path</param>");
+        sb.append("<param>OUTPUT=/some/other/path</param>");
+        sb.append("<param>abc=xyz</param>");
         sb.append("<argument>-a</argument>");
         sb.append("<argument>aaa</argument>");
         sb.append("<argument>-b</argument>");
