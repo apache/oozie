@@ -817,6 +817,7 @@ A synchronous coordinator definition is a is defined by a name, start time and e
          * =FIFO= (oldest first) *default*.
          * =LIFO= (newest first).
          * =LAST_ONLY= (discards all older materializations).
+      * *%BLUE% throttle: %ENDCOLOR%* The maximum coordinator actions are allowed to be in WAITING state concurrently. The default value is =12=.
    * *%BLUE% datasets: %ENDCOLOR%* The datasets coordinator application uses.
    * *%BLUE% input-events: %ENDCOLOR%* The coordinator job input events. 
       * *%BLUE% data-in: %ENDCOLOR%* It defines one job input condition that resolves to one or more instances of a dataset. 
