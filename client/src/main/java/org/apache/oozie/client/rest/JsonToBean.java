@@ -103,7 +103,7 @@ public class JsonToBean {
         WF_JOB.put("getStatus", new Property(JsonTags.WORKFLOW_STATUS, WorkflowJob.Status.class));
         WF_JOB.put("getLastModifiedTime", new Property(JsonTags.WORKFLOW_LAST_MOD_TIME, Date.class));
         WF_JOB.put("getCreatedTime", new Property(JsonTags.WORKFLOW_CREATED_TIME, Date.class));
-        WF_JOB.put("getStartTime", new Property(JsonTags.WORKFLOW_CREATED_TIME, Date.class));
+        WF_JOB.put("getStartTime", new Property(JsonTags.WORKFLOW_START_TIME, Date.class));
         WF_JOB.put("getEndTime", new Property(JsonTags.WORKFLOW_END_TIME, Date.class));
         WF_JOB.put("getUser", new Property(JsonTags.WORKFLOW_USER, String.class));
         WF_JOB.put("getGroup", new Property(JsonTags.WORKFLOW_GROUP, String.class));
