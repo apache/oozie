@@ -33,10 +33,8 @@ import org.apache.oozie.util.IOUtils;
 
 import java.io.FileReader;
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
@@ -193,4 +191,30 @@ public class TestAuthFilterAuthOozieClient extends XTestCase {
         assertEquals(currentCache, newCache);
     }
 
+    /**
+     * Test authentication
+     */
+    public void testClientAuthMethod() throws Exception {
+
+        runTest(new Callable<Void>() {
+            public Void call() throws Exception {
+                String oozieUrl = getContextURL();
+                String[] args = new String[] { "admin", "-status", "-oozie",
+                        oozieUrl, "-auth", "SIMPLE" };
+                assertEquals(0, new OozieCLI().run(args));
+                return null;
+            }
+        });
+        // bad method
+        runTest(new Callable<Void>() {
+            public Void call() throws Exception {
+                String oozieUrl = getContextURL();
+                String[] args = new String[] { "admin", "-status", "-oozie",
+                        oozieUrl, "-auth", "fake" };
+                assertEquals(-1, new OozieCLI().run(args));
+                return null;
+            }
+        });
+
+    }
 }
