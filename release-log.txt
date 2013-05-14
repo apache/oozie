@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1313 coverage fix for org.apache.oozie.client (aleksgor via virag)
 OOZIE-1360 Oozie CLI shows created time of workflow as started time (ryota via virag)
 OOZIE-1359 mention default value of throttle in doc (ryota via virag)
 OOZIE-1370 oozie create db script throws classNotFound exception (bowenzhangusa via virag)
