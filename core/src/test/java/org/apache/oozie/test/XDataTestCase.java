@@ -86,6 +86,8 @@ import org.apache.oozie.workflow.lite.StartNodeDef;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 
+import com.google.common.annotations.VisibleForTesting;
+
 public abstract class XDataTestCase extends XHCatTestCase {
 
     protected static String slaXml = " <sla:info xmlns:sla='uri:oozie:sla:0.1'>"
@@ -99,6 +101,24 @@ public abstract class XDataTestCase extends XHCatTestCase {
 
     protected String bundleName;
     protected String CREATE_TIME = "2012-07-22T00:00Z";
+
+    public XDataTestCase() {
+    }
+
+    /*
+     * The following 2 methods are "published" versions of
+     * #setUp() and #tearDown() respectively. Created to be able to
+     * use them in composition.
+     */
+    @VisibleForTesting
+    public void setUpPub() throws Exception {
+        setUp();
+    }
+
+    @VisibleForTesting
+    public void tearDownPub() throws Exception {
+        tearDown();
+    }
 
     /**
      * Insert coord job for testing.
@@ -763,7 +783,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
      * @return bundle job bean
      * @throws Exception
      */
-    protected BundleJobBean addRecordToBundleJobTable(Job.Status jobStatus, boolean pending) throws Exception {
+    public BundleJobBean addRecordToBundleJobTable(Job.Status jobStatus, boolean pending) throws Exception {
         BundleJobBean bundle = createBundleJob(jobStatus, pending);
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
@@ -1139,11 +1159,13 @@ public abstract class XDataTestCase extends XHCatTestCase {
 
         Path bundleAppPath = new Path(getFsTestCaseDir(), "bundle");
         String bundleAppXml = getBundleXml("bundle-submit-job.xml");
+        assertNotNull(bundleAppXml);
+        assertTrue(bundleAppXml.length() > 0);
 
         bundleAppXml = bundleAppXml
-                .replaceAll("#app_path1", coordPath1.toString() + File.separator + "coordinator.xml");
+                .replaceAll("#app_path1", Matcher.quoteReplacement(coordPath1.toString() + File.separator + "coordinator.xml"));
         bundleAppXml = bundleAppXml
-                .replaceAll("#app_path2", coordPath2.toString() + File.separator + "coordinator.xml");
+                .replaceAll("#app_path2", Matcher.quoteReplacement(coordPath2.toString() + File.separator + "coordinator.xml"));
 
         writeToFile(bundleAppXml, bundleAppPath, "bundle.xml");
 

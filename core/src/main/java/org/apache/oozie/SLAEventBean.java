@@ -21,9 +21,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.text.MessageFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 import javax.persistence.Basic;
 import javax.persistence.Column;
@@ -32,13 +30,10 @@ import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 
 import org.apache.hadoop.io.Writable;
-import org.apache.oozie.client.SLAEvent;
 import org.apache.oozie.client.rest.JsonSLAEvent;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.XLog;
 import org.jdom.Element;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 
 @Entity
 @NamedQueries({
@@ -183,39 +178,6 @@ public class SLAEventBean extends JsonSLAEvent implements Writable {
         return MessageFormat.format("Event id[{0}] status[{1}]", getEvent_id(), getJobStatus());
     }
 
-    /**
-     * Convert a SLAEvent list into a JSONArray.
-     *
-     * @param SLAEVent list.
-     * @param timeZoneId time zone to use for dates in the JSON array.
-     * @return the corresponding JSON array.
-     */
-    @SuppressWarnings("unchecked")
-    public static JSONArray toJSONArray(List<? extends SLAEventBean> events, String timeZoneId) {
-        JSONArray array = new JSONArray();
-        if (events != null) {
-            for (JsonSLAEvent node : events) {
-                array.add(node.toJSONObject(timeZoneId));
-            }
-        }
-        return array;
-    }
-
-    /**
-     * Convert a JSONArray into a SLAEvent list.
-     *
-     * @param array JSON array.
-     * @return the corresponding SLA event list.
-     */
-    @SuppressWarnings("unchecked")
-    public static List<SLAEvent> fromJSONArray(JSONArray array) {
-        List<SLAEvent> list = new ArrayList<SLAEvent>();
-        for (Object obj : array) {
-            list.add(new JsonSLAEvent((JSONObject) obj));
-        }
-        return list;
-    }
-
     public Element toXml() {
         Element retElem = null;
         if (getJobStatus() == Status.CREATED) {
@@ -280,12 +242,6 @@ public class SLAEventBean extends JsonSLAEvent implements Writable {
         if (content == null) {
             content = "";
         }
-        Element e = new Element(tag);
-        e.addContent(content);
-        return e;
-    }
-
-    private Element createATagElement(String tag, Element content) {
         Element e = new Element(tag);
         e.addContent(content);
         return e;

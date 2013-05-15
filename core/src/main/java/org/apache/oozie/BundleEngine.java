@@ -55,6 +55,8 @@ import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XLogStreamer;
 
+import com.google.common.annotations.VisibleForTesting;
+
 public class BundleEngine extends BaseEngine {
     /**
      * Create a system Bundle engine, with no user and no group.
@@ -323,7 +325,8 @@ public class BundleEngine extends BaseEngine {
      * @return filter key and value map
      * @throws CoordinatorEngineException thrown if failed to parse filter string
      */
-    private Map<String, List<String>> parseFilter(String filter) throws BundleEngineException {
+    @VisibleForTesting
+    Map<String, List<String>> parseFilter(String filter) throws BundleEngineException {
         Map<String, List<String>> map = new HashMap<String, List<String>>();
         if (filter != null) {
             StringTokenizer st = new StringTokenizer(filter, ";");

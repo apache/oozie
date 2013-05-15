@@ -21,7 +21,7 @@ package org.apache.oozie.util;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -45,7 +45,8 @@ public class CoordActionsInDateRange {
      * Get the list of Coordinator action Ids for given date ranges
      *
      * @param jobId coordinator job id
-     * @param scope the date range for log. format is comma-separated list of date ranges. Each date range element is specified with two dates separated by '::'
+     * @param scope the date range for log. format is comma-separated list of date ranges.
+     * Each date range element is specified with two dates separated by '::'
      * @return the list of coordinator action Ids for the date range
      *
      * Internally involves a database operation by invoking method 'getActionIdsFromDateRange'.
@@ -53,7 +54,8 @@ public class CoordActionsInDateRange {
     public static List<String> getCoordActionIdsFromDates(String jobId, String scope) throws XException {
         ParamChecker.notEmpty(jobId, "jobId");
         ParamChecker.notEmpty(scope, "scope");
-        Set<String> actionSet = new HashSet<String>();
+        // Use an ordered set to achieve reproducible behavior.
+        Set<String> actionSet = new LinkedHashSet<String>();
         String[] list = scope.split(",");
         for (String s : list) {
             s = s.trim();
@@ -79,7 +81,9 @@ public class CoordActionsInDateRange {
             String[] dateRange = range.split("::");
             // This block checks for errors in the format of specifying date range
             if (dateRange.length != 2) {
-                throw new XException(ErrorCode.E0308, "'" + range + "'. Date value expected on both sides of the scope resolution operator '::' to signify start and end of range");
+                throw new XException(ErrorCode.E0308, "'" + range +
+                    "'. Date value expected on both sides of the scope resolution operator '::' to signify start and end of range");
+
             }
             Date start;
             Date end;
@@ -92,7 +96,8 @@ public class CoordActionsInDateRange {
                 throw new XException(ErrorCode.E0308, "Error in parsing start or end date. " + dx);
             }
             if (start.after(end)) {
-                throw new XException(ErrorCode.E0308, "'" + range + "'. Start date '" + start + "' is older than end date: '" + end + "'");
+                throw new XException(ErrorCode.E0308, "'" + range + "'. Start date '" + start + "' is older than end date: '" + end
+                        + "'");
             }
             List<CoordinatorActionBean> listOfActions = getActionsFromDateRange(jobId, start, end);
             return listOfActions;
@@ -109,7 +114,9 @@ public class CoordActionsInDateRange {
             String[] dateRange = range.split("::");
             // This block checks for errors in the format of specifying date range
             if (dateRange.length != 2) {
-                throw new XException(ErrorCode.E0308, "'" + range + "'. Date value expected on both sides of the scope resolution operator '::' to signify start and end of range");
+                throw new XException(ErrorCode.E0308, "'" + range
+                  + "'. Date value expected on both sides of the scope resolution operator '::' to signify start and end of range");
+
             }
             Date start;
             Date end;
@@ -122,7 +129,8 @@ public class CoordActionsInDateRange {
                 throw new XException(ErrorCode.E0308, "Error in parsing start or end date. " + dx);
             }
             if (start.after(end)) {
-                throw new XException(ErrorCode.E0308, "'" + range + "'. Start date '" + start + "' is older than end date: '" + end + "'");
+                throw new XException(ErrorCode.E0308, "'" + range + "'. Start date '" + start + "' is older than end date: '" + end
++ "'");
             }
             List<String> list = null;
             JPAService jpaService = Services.get().get(JPAService.class);

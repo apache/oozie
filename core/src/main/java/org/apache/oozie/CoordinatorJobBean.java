@@ -461,7 +461,7 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
         setTimeUnit(CoordinatorJob.Timeunit.valueOf(WritableUtils.readStr(dataInput)));
         setTimeZone(WritableUtils.readStr(dataInput));
         setConcurrency(dataInput.readInt());
-        setExecutionOrder(Execution.valueOf(WritableUtils.readStr(dataInput)));
+        setExecution(Execution.valueOf(WritableUtils.readStr(dataInput)));
 
         long d = dataInput.readLong();
         if (d != -1) {
