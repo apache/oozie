@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -492,7 +492,8 @@ public class SshActionExecutor extends ActionExecutor {
     private void initSshScripts() {
         String dirLocation = Services.get().getRuntimeDir() + "/ssh";
         File path = new File(dirLocation);
-        if (!path.mkdirs()) {
+        path.mkdirs();
+        if (!path.exists()) {
             throw new RuntimeException(XLog.format("Not able to create required directory {0}", dirLocation));
         }
         try {
@@ -586,17 +587,17 @@ public class SshActionExecutor extends ActionExecutor {
                                 } // Permission denied while connecting
                                 else {
                                     if (errorMessage.contains("Permission denied")) {
-                                        throw new ActionExecutorException(ActionExecutorException.ErrorType.NON_TRANSIENT, ERR_AUTH_FAILED, ex
-                                                .getMessage(), ex);
+                                        throw new ActionExecutorException(ActionExecutorException.ErrorType.NON_TRANSIENT,
+                                                ERR_AUTH_FAILED, ex.getMessage(), ex);
                                     } // Permission denied while executing
                                     else {
                                         if (errorMessage.contains(": Permission denied")) {
-                                            throw new ActionExecutorException(ActionExecutorException.ErrorType.NON_TRANSIENT, ERR_NO_EXEC_PERM, ex
-                                                    .getMessage(), ex);
+                                            throw new ActionExecutorException(ActionExecutorException.ErrorType.NON_TRANSIENT,
+                                                    ERR_NO_EXEC_PERM, ex.getMessage(), ex);
                                         }
                                         else {
-                                            throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, ERR_UNKNOWN_ERROR, ex
-                                                    .getMessage(), ex);
+                                            throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR,
+                                                    ERR_UNKNOWN_ERROR, ex.getMessage(), ex);
                                         }
                                     }
                                 }
@@ -631,7 +632,8 @@ public class SshActionExecutor extends ActionExecutor {
             if (host.contains("@")) {
                 if (!host.toLowerCase().startsWith(oozieUser + "@")) {
                     throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, ERR_USER_MISMATCH,
-                                                      XLog.format("user mismatch between oozie user [{0}] and ssh host [{1}]", oozieUser, host));
+                                                      XLog.format("user mismatch between oozie user [{0}] and ssh host [{1}]",
+                                                              oozieUser, host));
                 }
             }
             else {
@@ -641,6 +643,7 @@ public class SshActionExecutor extends ActionExecutor {
         return host;
     }
 
+    @Override
     public boolean isCompleted(String externalStatus) {
         return true;
     }

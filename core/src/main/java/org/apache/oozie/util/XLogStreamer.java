@@ -33,6 +33,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 
+import com.google.common.annotations.VisibleForTesting;
+
 /**
  * XLogStreamer streams the given log file to logWriter after applying the given filter.
  */
@@ -46,7 +48,7 @@ public class XLogStreamer {
      */
     public static class Filter {
         private Map<String, Integer> logLevels;
-        private Map<String, String> filterParams;
+        private final Map<String, String> filterParams;
         private static List<String> parameters = new ArrayList<String>();
         private boolean noFilter;
         private Pattern filterPattern;
@@ -171,6 +173,11 @@ public class XLogStreamer {
 
         public static void reset() {
             parameters.clear();
+        }
+
+        @VisibleForTesting
+        public final Map<String, String> getFilterParams() {
+          return filterParams;
         }
     }
 
@@ -312,7 +319,7 @@ public class XLogStreamer {
         Collections.sort(fileList);
         return fileList;
     }
-    
+
     /**
      * This pattern matches the end of a gzip filename to have a format like "-YYYY-MM-dd-HH.gz" with capturing groups for each part
      * of the date
@@ -330,7 +337,7 @@ public class XLogStreamer {
     private long getGZFileCreationTime(String fileName, long startTime, long endTime) {
         // Default return value of -1 to exclude the file
         long returnVal = -1;
-        
+
         // Include oozie.log as oozie.log.gz if it is accidentally GZipped
         if (fileName.equals("oozie.log.gz")) {
             LOG.warn("oozie.log has been GZipped, which is unexpected");
