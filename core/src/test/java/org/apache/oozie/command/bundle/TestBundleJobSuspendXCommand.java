@@ -95,6 +95,27 @@ public class TestBundleJobSuspendXCommand extends XDataTestCase {
         job = jpaService.execute(bundleJobGetCmd);
         assertEquals(Job.Status.SUSPENDEDWITHERROR, job.getStatus());
     }
+
+    /**
+     * Test : Suspend bundle job in PAUSEDWITHERROR state
+     *
+     * @throws Exception
+     */
+    public void testBundleSuspendWithError2() throws Exception {
+        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PAUSEDWITHERROR, false);
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+        BundleJobGetJPAExecutor bundleJobGetCmd = new BundleJobGetJPAExecutor(job.getId());
+        job = jpaService.execute(bundleJobGetCmd);
+        assertEquals(Job.Status.PAUSEDWITHERROR, job.getStatus());
+
+        new BundleJobSuspendXCommand(job.getId()).call();
+
+        job = jpaService.execute(bundleJobGetCmd);
+        assertEquals(Job.Status.SUSPENDEDWITHERROR, job.getStatus());
+    }
+
     /**
      * Test : Suspend bundle job
      *

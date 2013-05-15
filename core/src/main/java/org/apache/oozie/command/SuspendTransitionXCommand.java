@@ -52,7 +52,7 @@ public abstract class SuspendTransitionXCommand extends TransitionXCommand<Void>
         else if (job.getStatus() == Job.Status.RUNNING) {
             job.setStatus(Job.Status.SUSPENDED);
         }
-        else if (job.getStatus() == Job.Status.RUNNINGWITHERROR){
+        else if (job.getStatus() == Job.Status.RUNNINGWITHERROR || job.getStatus() == Job.Status.PAUSEDWITHERROR){
             job.setStatus(Job.Status.SUSPENDEDWITHERROR);
         }
         else if (job.getStatus() == Job.Status.PAUSED) {
