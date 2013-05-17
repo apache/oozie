@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1371 oozie.coord.action.notification.url has no documentation (rkanter)
 OOZIE-1328 Cover package org.apache.oozie.cli with unit tests (vbondarev via virag)
 OOZIE-1327 enhance unit-test coverage of package org.apache.oozie (iveselovsky via rkanter)
 OOZIE-1356 Bundle job in PAUSEWITHERROR state does not goto SUSPENDEDWITHERROR state on suspending it (bowenzhangusa via virag)

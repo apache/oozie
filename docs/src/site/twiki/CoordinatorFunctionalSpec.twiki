@@ -3069,6 +3069,27 @@ After the command is executed the rerun coordiator action will be in =WAITING= s
 
 Refer to the [[DG_CoordinatorRerun][Rerunning Coordinator Actions]] for details on rerun.
 
+#CoordinatorNotifications
+---++ 15. Coordinator Notifications
+
+Coordinator jobs can be configured to make an HTTP GET notification upon whenever a coordinator action changes its status.
+
+Oozie will make a best effort to deliver the notifications, in case of failure it will retry the notification a
+pre-configured number of times at a pre-configured interval before giving up.
+
+See also [[WorkflowFunctionalSpec#WorkflowNotifications][Workflow Notifications]]
+
+---+++ 15.1 Coordinator Action Status Notification
+
+If the =oozie.coord.workflow.notification.url= property is present in the coordinator job properties when submitting the job,
+Oozie will make a notification to the provided URL when any of the coordinator's actions changes its status.
+
+If the URL contains any of the following tokens, they will be replaced with the actual values by Oozie before making
+the notification:
+
+   * =$actionId= : The coordinator action ID
+   * =$status= : The coordinator action's current status
+
 
 ---++ Appendixes
 

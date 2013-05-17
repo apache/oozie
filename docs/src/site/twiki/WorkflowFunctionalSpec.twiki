@@ -2071,13 +2071,15 @@ hcat://[metastore server]:[port]/[database name]/[table name]/[partkey1]=[value]
 It returns =true= or =false= based on if the partitions in the table exists or not.
 
 #WorkflowNotifications
----++ 5 Oozie Notifications
+---++ 5 Workflow Notifications
 
 Workflow jobs can be configured to make an HTTP GET notification upon start and end of a workflow action node and upon
 the completion of a workflow job.
 
 Oozie will make a best effort to deliver the notifications, in case of failure it will retry the notification a
 pre-configured number of times at a pre-configured interval before giving up.
+
+See also [[CoordinatorFunctionalSpec#CoordinatorNotifications][Coordinator Notifications]]
 
 ---+++ 5.1 Workflow Job Status Notification
 
