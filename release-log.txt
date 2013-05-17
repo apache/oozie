@@ -1,5 +1,6 @@
 -- Oozie 4.0.0 (unreleased)
 
+OOZIE-1303 CLI API for Bulk Monitoring (mona)
 OOZIE-1350 Improve client debug output information (rkanter)
 OOZIE-1343 Sqoop sharelib should have hsqldb jar (rkanter)
 OOZIE-1344 We should use Sqoop 1.4.3 instead of 1.5.0-incubating-SNAPSHOT (rkanter)

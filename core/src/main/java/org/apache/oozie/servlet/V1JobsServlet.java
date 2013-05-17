@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -303,7 +303,7 @@ public class V1JobsServlet extends BaseJobsServlet {
             String filter = request.getParameter(RestConstants.JOBS_FILTER_PARAM);
             String startStr = request.getParameter(RestConstants.OFFSET_PARAM);
             String lenStr = request.getParameter(RestConstants.LEN_PARAM);
-            String timeZoneId = request.getParameter(RestConstants.TIME_ZONE_PARAM) == null 
+            String timeZoneId = request.getParameter(RestConstants.TIME_ZONE_PARAM) == null
                     ? "GMT" : request.getParameter(RestConstants.TIME_ZONE_PARAM);
             int start = (startStr != null) ? Integer.parseInt(startStr) : 1;
             start = (start < 1) ? 1 : start;
@@ -337,7 +337,7 @@ public class V1JobsServlet extends BaseJobsServlet {
             String filter = request.getParameter(RestConstants.JOBS_FILTER_PARAM);
             String startStr = request.getParameter(RestConstants.OFFSET_PARAM);
             String lenStr = request.getParameter(RestConstants.LEN_PARAM);
-            String timeZoneId = request.getParameter(RestConstants.TIME_ZONE_PARAM) == null 
+            String timeZoneId = request.getParameter(RestConstants.TIME_ZONE_PARAM) == null
                     ? "GMT" : request.getParameter(RestConstants.TIME_ZONE_PARAM);
             int start = (startStr != null) ? Integer.parseInt(startStr) : 1;
             start = (start < 1) ? 1 : start;
@@ -366,7 +366,7 @@ public class V1JobsServlet extends BaseJobsServlet {
             String filter = request.getParameter(RestConstants.JOBS_FILTER_PARAM);
             String startStr = request.getParameter(RestConstants.OFFSET_PARAM);
             String lenStr = request.getParameter(RestConstants.LEN_PARAM);
-            String timeZoneId = request.getParameter(RestConstants.TIME_ZONE_PARAM) == null 
+            String timeZoneId = request.getParameter(RestConstants.TIME_ZONE_PARAM) == null
                     ? "GMT" : request.getParameter(RestConstants.TIME_ZONE_PARAM);
             int start = (startStr != null) ? Integer.parseInt(startStr) : 1;
             start = (start < 1) ? 1 : start;
@@ -407,9 +407,9 @@ public class V1JobsServlet extends BaseJobsServlet {
             BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request),
                     getAuthToken(request));
             BulkResponseInfo bulkResponse = bundleEngine.getBulkJobs(bulkFilter, start, len);
-            List<BulkResponseImpl> jsonResponse = bulkResponse.getResponses();
+            List<BulkResponseImpl> responsesToJson = bulkResponse.getResponses();
 
-            json.put(JsonTags.BULK_RESPONSES, BulkResponseImpl.toJSONArray(jsonResponse, timeZoneId));
+            json.put(JsonTags.BULK_RESPONSES, BulkResponseImpl.toJSONArray(responsesToJson, timeZoneId));
             json.put(JsonTags.BULK_RESPONSE_TOTAL, bulkResponse.getTotal());
             json.put(JsonTags.BULK_RESPONSE_OFFSET, bulkResponse.getStart());
             json.put(JsonTags.BULK_RESPONSE_LEN, bulkResponse.getLen());

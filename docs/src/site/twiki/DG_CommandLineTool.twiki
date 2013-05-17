@@ -617,16 +617,78 @@ Example:
 <verbatim>
 $ oozie jobs -oozie http://localhost:11000/oozie -jobtype bundle
 Job ID                                   Bundle Name    Status    Kickoff             Created             User         Group
-------------------------------------------------------------------------------------------------------------------------------------
+.------------------------------------------------------------------------------------------------------------------------------------
 0000027-110322105610515-oozie-chao-B     BUNDLE-TEST    RUNNING   2012-01-15 00:24    2011-03-22 18:07    joe        users
-------------------------------------------------------------------------------------------------------------------------------------
+.------------------------------------------------------------------------------------------------------------------------------------
 0000001-110322105610515-oozie-chao-B     BUNDLE-TEST    RUNNING   2012-01-15 00:24    2011-03-22 18:06    joe        users
-------------------------------------------------------------------------------------------------------------------------------------
+.------------------------------------------------------------------------------------------------------------------------------------
 0000000-110322105610515-oozie-chao-B     BUNDLE-TEST    DONEWITHERROR2012-01-15 00:24    2011-03-22 17:58    joe        users
-------------------------------------------------------------------------------------------------------------------------------------
+.------------------------------------------------------------------------------------------------------------------------------------
 </verbatim>
 
 The =jobtype= option specified the job type to display, default value is 'wf'. To see the bundle jobs, value is 'bundle'.
+
+---+++ Bulk monitoring for jobs launched via Bundles
+
+* This command-line query helps to directly query for a bulk of jobs using a set of rich filters.
+The jobs need to have a parent *Bundle*, and this performs a deep query to provide results about all the workflows that satisfy your filters.
+These results display relevant job-ids, app-names, and error message (if any) and are most helpful when you need to monitor a bulk of jobs and get a gist,
+while avoiding typing multiple queries.
+
+This feature is only supported in Oozie 3.3 or later.
+
+Example 1:
+
+<verbatim>
+$ oozie jobs -oozie http://localhost:11000/oozie -bulk bundle=bundle-app-1
+.
+Bundle Name  Bundle ID                             Coord Name  Coord Action ID                         External ID                            Status    Created Time          Error Message
+.-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+bundle-app-1 0000000-130408151805946-oozie-chit-B  coord-1     0000001-130408151805946-oozie-chit-C@1  0000002-130408151805946-oozie-chit-W   KILLED    2013-04-08 22:20 GMT  null
+.-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+</verbatim>
+
+Example 2: This example illustrates giving multiple arguments and -verbose option.
+
+_NOTE: The filter string after -bulk should be enclosed within quotes_
+
+<verbatim>
+.
+$ oozie jobs -oozie http://localhost:11000/oozie -bulk 'bundle=bundle-app-2;actionstatus=SUCCEEDED' -verbose
+.
+Bundle Name : bundle-app-2
+.------------------------------------------------------------------------------------------------------------------------------------
+Bundle ID        : 0000000-130422184245158-oozie-chit-B
+Coordinator Name : coord-1
+Coord Action ID  : 0000001-130422184245158-oozie-chit-C@1
+Action Status    : SUCCEEDED
+External ID      : 0000002-130422184245158-oozie-chit-W
+Created Time     : 2013-04-23 01:43 GMT
+User             : user_xyz
+Error Message    : -
+.------------------------------------------------------------------------------------------------------------------------------------
+</verbatim>
+
+You can type 'help' to view usage for the CLI options and filters available. Namely:
+
+   * bundle: Bundle app-name (mandatory)
+   * coordinators: multiple, comma-separated Coordinator app-names. By default, if none specified, all coordinators pertaining to the bundle are included
+   * actionstatus: status of jobs (default job-type is coordinator action aka workflow job) you wish to filter on. Default value is (KILLED,FAILED)
+   * startcreatedtime/endcreatedtime: specify boundaries for the created-time. Only jobs created within this window are included.
+   * startscheduledtime/endscheduledtime: specify boundaries for the nominal-time. Only jobs scheduled to run within this window are included.
+
+<verbatim>
+$ oozie jobs <OPTIONS> : jobs status
+                 -bulk <arg>       key-value pairs to filter bulk jobs response. e.g.
+                                   bundle=<B>\;coordinators=<C>\;actionstatus=<S>\;
+                                   startcreatedtime=<SC>\;endcreatedtime=<EC>\;
+                                   startscheduledtime=<SS>\;endscheduledtime=<ES>\;
+                                   coordinators and actionstatus can be multiple comma
+                                   separated values. "bundle" and "coordinators" are 'names' of those jobs.
+                                   Bundle name is mandatory, other params are optional
+</verbatim>
+
+Similar to the usual jobs filter, different filter arguments here should be separated by semicolon (;).
 
 ---++ Admin Operations
 
