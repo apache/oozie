@@ -23,7 +23,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.event.Event;
+import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.util.XLog;
 
 /**
@@ -39,12 +41,13 @@ public class MemoryEventQueue implements EventQueue {
     private static int batchSize;
 
     @Override
-    public void init(int queueSize, int batchsize) {
+    public void init(Configuration conf) {
         eventQueue = new ConcurrentLinkedQueue<EventQueueElement>();
-        maxSize = queueSize;
+        maxSize = conf.getInt(EventHandlerService.CONF_QUEUE_SIZE, 10000);
         currentSize = new AtomicInteger();
-        batchSize = batchsize;
+        batchSize = conf.getInt(EventHandlerService.CONF_BATCH_SIZE, 10);
         LOG = XLog.getLog(getClass());
+        LOG.info("Memory Event Queue initialized with Max size = [{0}], Batch drain size = [{1}]", maxSize, batchSize);
     }
 
     @Override
@@ -56,13 +59,13 @@ public class MemoryEventQueue implements EventQueue {
     public void add(Event e) {
         EventQueueElement eqe = new EventQueueElement(e);
         try {
-            if(getCurrentSize() <= maxSize) {
-                if(eventQueue.add(eqe)) {
+            if (size() <= maxSize) {
+                if (eventQueue.add(eqe)) {
                     currentSize.incrementAndGet();
                 }
             }
             else {
-                LOG.warn("Queue size [{0}] reached max limit. Element [{1}] not added", getCurrentSize(), e);
+                LOG.warn("Queue size [{0}] reached max limit. Element [{1}] not added", size(), e);
             }
         }
         catch (IllegalStateException ise) {
@@ -81,7 +84,7 @@ public class MemoryEventQueue implements EventQueue {
                 eventBatch.add(polled.event);
             }
             else {
-                LOG.debug("Current queue size [{0}] less than polling batch size [{1}]", currentSize.get(), batchSize);
+                LOG.trace("Current queue size [{0}] less than polling batch size [{1}]", currentSize.get(), batchSize);
                 break;
             }
         }
@@ -100,11 +103,11 @@ public class MemoryEventQueue implements EventQueue {
 
     @Override
     public boolean isEmpty() {
-        return getCurrentSize() == 0;
+        return size() == 0;
     }
 
     @Override
-    public int getCurrentSize() {
+    public int size() {
         return currentSize.intValue();
     }
 
@@ -115,6 +118,11 @@ public class MemoryEventQueue implements EventQueue {
             return peeked.event;
         }
         return null;
+    }
+
+    @Override
+    public void clear() {
+        eventQueue.clear();
     }
 
 }

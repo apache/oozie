@@ -25,7 +25,6 @@ import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.executor.jpa.CoordActionGetForTimeoutJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
@@ -60,7 +59,7 @@ public class CoordActionTimeOutXCommand extends CoordinatorXCommand<Void> {
                 queue(new CoordActionNotificationXCommand(actionBean), 100);
                 actionBean.setLastModifiedTime(new Date());
                 jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionUpdateStatusJPAExecutor(actionBean));
-                if (EventHandlerService.isEventsConfigured()) {
+                if (EventHandlerService.isEnabled()) {
                     generateEvent(actionBean, user, appName);
                 }
             }

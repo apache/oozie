@@ -19,7 +19,7 @@ package org.apache.oozie.client.event.message;
 
 import org.apache.oozie.client.event.Event;
 import org.apache.oozie.client.event.Event.MessageType;
-import org.apache.oozie.client.event.Event.AppType;
+import org.apache.oozie.AppType;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
 /**
@@ -28,7 +28,7 @@ import org.codehaus.jackson.annotate.JsonIgnore;
  */
 public abstract class EventMessage {
 
-    private Event.AppType appType;
+    private AppType appType;
     private Event.MessageType messageType;
 
     /**

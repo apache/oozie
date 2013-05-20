@@ -44,7 +44,6 @@ import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.client.SLAEvent.Status;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.executor.jpa.BulkUpdateInsertForCoordActionStartJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 import org.jdom.Element;
@@ -56,6 +55,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+@SuppressWarnings("deprecation")
 public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
 
     public static final String EL_ERROR = "EL_ERROR";
@@ -122,7 +122,7 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
         // extract 'property' tags under 'configuration' block in the
         // coordinator.xml (saved in actionxml column)
         // convert Element to XConfiguration
-        Element configElement = (Element) workflowProperties.getChild("action", workflowProperties.getNamespace())
+        Element configElement = workflowProperties.getChild("action", workflowProperties.getNamespace())
                 .getChild("workflow", workflowProperties.getNamespace()).getChild("configuration",
                                                                                   workflowProperties.getNamespace());
         if (configElement != null) {
@@ -194,7 +194,7 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
                     updateList.add(coordAction);
                     try {
                         jpaService.execute(new BulkUpdateInsertForCoordActionStartJPAExecutor(updateList, insertList));
-                        if (EventHandlerService.isEventsConfigured()) {
+                        if (EventHandlerService.isEnabled()) {
                             generateEvent(coordAction, user, appName);
                         }
                     }
@@ -250,7 +250,7 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
                     try {
                         // call JPAExecutor to do the bulk writes
                         jpaService.execute(new BulkUpdateInsertForCoordActionStartJPAExecutor(updateList, insertList));
-                        if (EventHandlerService.isEventsConfigured()) {
+                        if (EventHandlerService.isEnabled()) {
                             generateEvent(coordAction, user, appName);
                         }
                     }

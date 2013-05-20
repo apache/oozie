@@ -26,6 +26,7 @@ import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
 
+@Deprecated
 public class TestSLAEventsGetJPAExecutor extends XDataTestCase {
     Services services;
 

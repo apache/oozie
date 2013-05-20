@@ -25,8 +25,7 @@ import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.client.event.Event;
-import org.apache.oozie.client.event.Event.AppType;
+import org.apache.oozie.AppType;
 import org.apache.oozie.event.CoordinatorActionEvent;
 import org.apache.oozie.event.WorkflowJobEvent;
 import org.apache.oozie.executor.jpa.BundleJobGetForUserJPAExecutor;

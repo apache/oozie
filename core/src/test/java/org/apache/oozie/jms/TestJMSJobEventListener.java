@@ -29,7 +29,7 @@ import org.apache.activemq.broker.BrokerService;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.WorkflowJob;
-import org.apache.oozie.client.event.Event.AppType;
+import org.apache.oozie.AppType;
 import org.apache.oozie.client.event.JobEvent.EventStatus;
 import org.apache.oozie.client.event.Event.MessageType;
 import org.apache.oozie.client.event.jms.JMSMessagingUtils;
@@ -52,13 +52,14 @@ import org.junit.Test;
 
 public class TestJMSJobEventListener extends XTestCase {
     private Services services;
+    private Configuration conf;
 
     @Before
     @Override
     protected void setUp() throws Exception {
         super.setUp();
         services = new Services();
-        Configuration conf = services.getConf();
+        conf = services.getConf();
         conf.set(Services.CONF_SERVICE_EXT_CLASSES,
                 JMSAccessorService.class.getName() + "," + JMSTopicService.class.getName());
         conf.set(JMSJobEventListener.JMS_CONNECTION_PROPERTIES, "java.naming.factory.initial#" + ActiveMQConnFactory
@@ -77,7 +78,7 @@ public class TestJMSJobEventListener extends XTestCase {
     @Test
     public void testOnWorkflowJobStartedEvent() throws ParseException {
         JMSJobEventListener wfEventListener = new JMSJobEventListener();
-        wfEventListener.init();
+        wfEventListener.init(conf);
         Date startDate = DateUtils.parseDateUTC("2012-07-22T00:00Z");
         WorkflowJobEvent wfe = new WorkflowJobEvent("wfId1", "caId1", WorkflowJob.Status.RUNNING, "user1",
                 "wf-app-name1", startDate, null);
@@ -110,7 +111,7 @@ public class TestJMSJobEventListener extends XTestCase {
     @Test
     public void testOnWorkflowJobSuccessEvent() throws ParseException {
         JMSJobEventListener wfEventListener = new JMSJobEventListener();
-        wfEventListener.init();
+        wfEventListener.init(conf);
         Date startDate = DateUtils.parseDateUTC("2012-07-22T00:00Z");
         Date endDate = new Date();
         WorkflowJobEvent wfe = new WorkflowJobEvent("wfId1", "caId1", WorkflowJob.Status.SUCCEEDED, "user1",
@@ -145,7 +146,7 @@ public class TestJMSJobEventListener extends XTestCase {
     @Test
     public void testOnWorkflowJobFailureEvent() throws ParseException {
         JMSJobEventListener wfEventListener = new JMSJobEventListener();
-        wfEventListener.init();
+        wfEventListener.init(conf);
         Date startDate = DateUtils.parseDateUTC("2012-07-22T00:00Z");
         Date endDate = new Date();
         WorkflowJobEvent wfe = new WorkflowJobEvent("wfId1", "caId1", WorkflowJob.Status.FAILED, "user1",
@@ -182,7 +183,7 @@ public class TestJMSJobEventListener extends XTestCase {
     @Test
     public void testOnWorkflowJobSuspendEvent() throws ParseException {
         JMSJobEventListener wfEventListener = new JMSJobEventListener();
-        wfEventListener.init();
+        wfEventListener.init(conf);
         Date startDate = DateUtils.parseDateUTC("2012-07-22T00:00Z");
         WorkflowJobEvent wfe = new WorkflowJobEvent("wfId1", "caId1", WorkflowJob.Status.SUSPENDED, "user1",
                 "wf-app-name1", startDate, null);
@@ -216,7 +217,7 @@ public class TestJMSJobEventListener extends XTestCase {
     @Test
     public void testWorkflowJobSelectors() throws ParseException {
         JMSJobEventListener wfEventListener = new JMSJobEventListener();
-        wfEventListener.init();
+        wfEventListener.init(conf);
         WorkflowJobEvent wfe = new WorkflowJobEvent("wfId1", "caId1", WorkflowJob.Status.FAILED, "user_1",
                 "wf-app-name1", new Date(), new Date());
         ConnectionContext jmsContext = getConnectionContext();
@@ -241,7 +242,7 @@ public class TestJMSJobEventListener extends XTestCase {
     @Test
     public void testWorkflowJobSelectorsNegative() {
         JMSJobEventListener wfEventListener = new JMSJobEventListener();
-        wfEventListener.init();
+        wfEventListener.init(conf);
         WorkflowJobEvent wfe = new WorkflowJobEvent("wfId1", "caId1", WorkflowJob.Status.FAILED, "user1",
                 "wf-app-name1", new Date(), new Date());
         ConnectionContext jmsContext = getConnectionContext();
@@ -264,7 +265,7 @@ public class TestJMSJobEventListener extends XTestCase {
     @Test
     public void testWorkflowJobSelectorsOr() {
         JMSJobEventListener wfEventListener = new JMSJobEventListener();
-        wfEventListener.init();
+        wfEventListener.init(conf);
         WorkflowJobEvent wfe = new WorkflowJobEvent("wfId1", "caId1", WorkflowJob.Status.FAILED, "user1",
                 "wf-app-name1", new Date(), new Date());
         ConnectionContext jmsContext = getConnectionContext();
@@ -291,7 +292,7 @@ public class TestJMSJobEventListener extends XTestCase {
     @Test
     public void testWorkflowJobSelectorsAnd() {
         JMSJobEventListener wfEventListener = new JMSJobEventListener();
-        wfEventListener.init();
+        wfEventListener.init(conf);
         WorkflowJobEvent wfe = new WorkflowJobEvent("wfId1", "caId1", WorkflowJob.Status.FAILED, "user1",
                 "wf-app-name1", new Date(), new Date());
         ConnectionContext jmsContext = getConnectionContext();
@@ -331,7 +332,7 @@ public class TestJMSJobEventListener extends XTestCase {
                     + "ConnectionFactory");
             services.init();
             JMSJobEventListener wfEventListener = new JMSJobEventListener();
-            wfEventListener.init();
+            wfEventListener.init(conf);
             BrokerService broker = new BrokerService();
             broker.addConnector(brokerURl);
             broker.start();
@@ -366,7 +367,7 @@ public class TestJMSJobEventListener extends XTestCase {
     @Test
     public void testOnCoordinatorActionWaitingEvent() throws ParseException {
         JMSJobEventListener wfEventListner = new JMSJobEventListener();
-        wfEventListner.init();
+        wfEventListner.init(conf);
         Date startDate = DateUtils.parseDateUTC("2012-07-22T00:00Z");
         Date nominalTime = DateUtils.parseDateUTC("2011-07-11T00:00Z");
         CoordinatorActionEvent cae = new CoordinatorActionEvent("caId1", "caJobId1", CoordinatorAction.Status.WAITING,
@@ -403,7 +404,7 @@ public class TestJMSJobEventListener extends XTestCase {
     @Test
     public void testOnCoordinatorActionStartEvent() throws ParseException {
         JMSJobEventListener coordEventListener = new JMSJobEventListener();
-        coordEventListener.init();
+        coordEventListener.init(conf);
         Date startDate = DateUtils.parseDateUTC("2012-07-22T00:00Z");
         Date nominalTime = DateUtils.parseDateUTC("2011-07-11T00:00Z");
         CoordinatorActionEvent cae = new CoordinatorActionEvent("caId1", "caJobId1", CoordinatorAction.Status.RUNNING,
@@ -439,7 +440,7 @@ public class TestJMSJobEventListener extends XTestCase {
     @Test
     public void testOnCoordinatorJobSuccessEvent() throws ParseException {
         JMSJobEventListener coordEventListener = new JMSJobEventListener();
-        coordEventListener.init();
+        coordEventListener.init(conf);
         Date startDate = DateUtils.parseDateUTC("2012-07-22T00:00Z");
         Date nominalTime = DateUtils.parseDateUTC("2011-07-11T00:00Z");
         Date endDate = new Date();
@@ -477,7 +478,7 @@ public class TestJMSJobEventListener extends XTestCase {
     @Test
     public void testOnCoordinatorJobFailureEvent() throws ParseException {
         JMSJobEventListener coordEventListener = new JMSJobEventListener();
-        coordEventListener.init();
+        coordEventListener.init(conf);
         Date startDate = DateUtils.parseDateUTC("2012-07-22T00:00Z");
         Date nominalTime = DateUtils.parseDateUTC("2011-07-11T00:00Z");
         Date endDate = new Date();
@@ -517,7 +518,7 @@ public class TestJMSJobEventListener extends XTestCase {
     @Test
     public void testCoordinatorActionSelectors() throws ParseException {
         JMSJobEventListener coordEventListener = new JMSJobEventListener();
-        coordEventListener.init();
+        coordEventListener.init(conf);
         Date startDate = DateUtils.parseDateUTC("2012-07-22T00:00Z");
         Date nominalTime = DateUtils.parseDateUTC("2011-07-11T00:00Z");
         CoordinatorActionEvent cae = new CoordinatorActionEvent("caId1", "caJobId1", CoordinatorAction.Status.FAILED,
@@ -544,7 +545,7 @@ public class TestJMSJobEventListener extends XTestCase {
     @Test
     public void testCoordinatorActionSelectorsNegative() throws ParseException {
         JMSJobEventListener coordEventListener = new JMSJobEventListener();
-        coordEventListener.init();
+        coordEventListener.init(conf);
         Date startDate = DateUtils.parseDateUTC("2012-07-22T00:00Z");
         Date nominalTime = DateUtils.parseDateUTC("2011-07-11T00:00Z");
         CoordinatorActionEvent cae = new CoordinatorActionEvent("caId1", "caJobId1", CoordinatorAction.Status.FAILED,

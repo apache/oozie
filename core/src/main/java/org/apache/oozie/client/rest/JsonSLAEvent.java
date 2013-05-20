@@ -35,6 +35,7 @@ import javax.persistence.Transient;
 import org.apache.oozie.client.SLAEvent;
 import org.json.simple.JSONObject;
 
+@Deprecated
 @Entity
 @Table(name = "SLA_EVENTS")
 @DiscriminatorColumn(name = "bean_type", discriminatorType = DiscriminatorType.STRING)

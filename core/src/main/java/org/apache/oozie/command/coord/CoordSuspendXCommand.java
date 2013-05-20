@@ -185,6 +185,7 @@ public class CoordSuspendXCommand extends SuspendTransitionXCommand {
     public void performWrites() throws CommandException {
         try {
             jpaService.execute(new BulkUpdateInsertForCoordActionStatusJPAExecutor(updateList, null));
+            generateEvents(coordJob);
         }
         catch (JPAExecutorException jex) {
             throw new CommandException(jex);

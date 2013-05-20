@@ -62,9 +62,8 @@ public class JMSJobEventListener extends JobEventListener {
     private static XLog LOG;
 
     @Override
-    public void init() {
+    public void init(Configuration conf) {
         LOG = XLog.getLog(getClass());
-        Configuration conf = Services.get().getConf();
         String jmsProps = conf.get(JMS_CONNECTION_PROPERTIES);
         LOG.info("JMS producer connection properties [{0}]", jmsProps);
         connInfo = new JMSConnectionInfo(jmsProps);

@@ -47,7 +47,10 @@ public class SchemaService implements Service {
 
     public static final String SLA_CONF_EXT_SCHEMAS = CONF_PREFIX + "sla.ext.schemas";
 
+    @Deprecated
     public static final String SLA_NAME_SPACE_URI = "uri:oozie:sla:0.1";
+
+    public static final String SLA_NAMESPACE_URI_2 = "uri:oozie:sla:0.2";
 
     public static final String COORDINATOR_NAMESPACE_URI_1 = "uri:oozie:coordinator:0.1";
 
@@ -65,11 +68,11 @@ public class SchemaService implements Service {
         "oozie-workflow-0.2.5.xsd",
         "oozie-workflow-0.3.xsd",
         "oozie-workflow-0.4.xsd",
-        "oozie-workflow-0.4.5.xsd"};
+        "oozie-workflow-0.5.xsd"};
     private static final String OOZIE_COORDINATOR_XSD[] = { "oozie-coordinator-0.1.xsd", "oozie-coordinator-0.2.xsd",
         "oozie-coordinator-0.3.xsd", "oozie-coordinator-0.4.xsd"};
     private static final String OOZIE_BUNDLE_XSD[] = { "oozie-bundle-0.1.xsd", "oozie-bundle-0.2.xsd" };
-    private static final String OOZIE_SLA_SEMANTIC_XSD[] = { "gms-oozie-sla-0.1.xsd" };
+    private static final String OOZIE_SLA_SEMANTIC_XSD[] = { "gms-oozie-sla-0.1.xsd", "oozie-sla-0.2.xsd" };
 
     private Schema loadSchema(Configuration conf, String[] baseSchemas, String extSchema) throws SAXException,
     IOException {
@@ -80,7 +83,10 @@ public class SchemaService implements Service {
         String[] schemas = conf.getStrings(extSchema);
         if (schemas != null) {
             for (String schema : schemas) {
-                sources.add(new StreamSource(IOUtils.getResourceAsStream(schema, -1)));
+                schema = schema.trim();
+                if (!schema.isEmpty()) {
+                    sources.add(new StreamSource(IOUtils.getResourceAsStream(schema, -1)));
+                }
             }
         }
         SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);

@@ -70,6 +70,7 @@ import org.jdom.JDOMException;
  * <p/>
  * The "noCleanup" is used to indicate if user wants to cleanup output events for given rerun actions
  */
+@SuppressWarnings("deprecation")
 public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActionInfo> {
 
     private String rerunType;
@@ -406,7 +407,7 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
     public void performWrites() throws CommandException {
         try {
             jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, insertList));
-            if (EventHandlerService.isEventsConfigured()) {
+            if (EventHandlerService.isEnabled()) {
                 for (JsonBean bean : updateList) {
                     if (bean instanceof CoordinatorActionBean) {
                         CoordinatorXCommand.generateEvent((CoordinatorActionBean) bean, coordJob.getUser(),

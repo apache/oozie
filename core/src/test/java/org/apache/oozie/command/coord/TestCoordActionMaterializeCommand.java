@@ -32,6 +32,7 @@ import org.apache.oozie.store.StoreException;
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.DateUtils;
 
+@SuppressWarnings("deprecation")
 public class TestCoordActionMaterializeCommand extends XTestCase {
     private Services services;
 

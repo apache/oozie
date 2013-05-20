@@ -253,7 +253,7 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
             try {
                 if (isChangeInDependency) {
                     jpaService.execute(new CoordActionUpdatePushInputCheckJPAExecutor(coordAction));
-                    if (EventHandlerService.isEventsConfigured()
+                    if (EventHandlerService.isEnabled()
                             && coordAction.getStatus() != CoordinatorAction.Status.READY) {
                         //since event is not to be generated unless action RUNNING via StartX
                         generateEvent(coordAction, coordJob.getUser(), coordJob.getAppName());

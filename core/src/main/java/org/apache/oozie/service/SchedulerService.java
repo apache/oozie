@@ -17,6 +17,7 @@
  */
 package org.apache.oozie.service;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
 import org.apache.oozie.util.XLog;
 
@@ -47,7 +48,7 @@ public class SchedulerService implements Service {
      */
     @Override
     public void init(Services services) {
-        scheduler = new ScheduledThreadPoolExecutor(services.getConf().getInt(SCHEDULER_THREADS, 5));
+        scheduler = new ScheduledThreadPoolExecutor(getSchedulableThreads(services.getConf()));
     }
 
     /**
@@ -88,6 +89,15 @@ public class SchedulerService implements Service {
      */
     public ScheduledExecutorService getScheduler() {
         return scheduler;
+    }
+
+    /**
+     * Return the number of threads configured with the Scheduler Service
+     * @param conf
+     * @return int num threads
+     */
+    public int getSchedulableThreads(Configuration conf) {
+        return conf.getInt(SCHEDULER_THREADS, 10);
     }
 
     public enum Unit {

@@ -20,7 +20,7 @@ package org.apache.oozie.client.event.jms;
 import org.apache.oozie.client.event.message.CoordinatorActionMessage;
 import org.apache.oozie.client.event.message.EventMessage;
 import org.apache.oozie.client.event.message.WorkflowJobMessage;
-import org.apache.oozie.client.event.Event;
+import org.apache.oozie.AppType;
 import javax.jms.Message;
 import javax.jms.TextMessage;
 import javax.jms.JMSException;
@@ -47,7 +47,7 @@ public abstract class MessageDeserializer {
                     + "AppType and/or MessageBody is null/empty." + "Apptype is " + appTypeString + " MessageBody is "
                     + messageBody);
         }
-        switch (Event.AppType.valueOf(appTypeString)) {
+        switch (AppType.valueOf(appTypeString)) {
             case WORKFLOW_JOB:
                 WorkflowJobMessage wfJobMsg = getDeserializedObject(messageBody, WorkflowJobMessage.class);
                 return setProperties(wfJobMsg, textMessage);

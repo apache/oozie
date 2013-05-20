@@ -204,7 +204,7 @@
 
     <property>
         <name>oozie.service.SchedulerService.threads</name>
-        <value>5</value>
+        <value>10</value>
         <description>
             The number of threads to be used by the SchedulerService to run deamon tasks.
             If maxed out, scheduled daemon tasks will be queued up and delayed until threads become available.
@@ -1255,7 +1255,7 @@
 
     <property>
         <name>oozie.service.SchemaService.wf.ext.schemas</name>
-        <value>oozie-sla-0.1.xsd</value>
+        <value>oozie-sla-0.1.xsd,oozie-sla-0.2.xsd</value>
         <description>
             Schemas for additional actions types.
 
@@ -1266,7 +1266,7 @@
     
     <property>
         <name>oozie.service.SchemaService.coord.ext.schemas</name>
-        <value>oozie-sla-0.1.xsd</value>
+        <value>oozie-sla-0.1.xsd,oozie-sla-0.2.xsd</value>
         <description>
             Schemas for additional actions types.
 
@@ -1827,7 +1827,7 @@
     </property>
 
     <property>
-        <name>oozie.service.EventHandlerService.app.types</name>
+        <name>oozie.service.EventHandlerService.filter.app.types</name>
         <value>workflow_job, coordinator_action</value>
         <description>
             The app-types among workflow/coordinator/bundle job/action for which
@@ -1845,7 +1845,9 @@
 
     <property>
         <name>oozie.service.EventHandlerService.event.listeners</name>
-        <value>org.apache.oozie.jms.JMSJobEventListener</value>
+        <value>org.apache.oozie.jms.JMSJobEventListener,
+               org.apache.oozie.sla.listener.SLAJobEventListener
+        </value>
     </property>
 
     <property>
@@ -1870,6 +1872,38 @@
         <value>10</value>
         <description>
             The batch size for batched draining per thread from the event queue.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.EventHandlerService.worker.threads</name>
+        <value>3</value>
+        <description>
+            Number of worker threads to be scheduled to run and process events.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.sla.service.SLAService.capacity</name>
+        <value>5000</value>
+        <description>
+             Maximum number of sla records to be contained in the memory structure.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.sla.service.SLAService.alert.types</name>
+        <value>END_MISS</value>
+        <description>
+             Default types of SLA events for being alerted of.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.sla.service.SLAService.calculator.impl</name>
+        <value>org.apache.oozie.sla.SLACalculatorMemory</value>
+        <description>
+             The implementation for SLACalculator in use by the SLAService.
         </description>
     </property>
 

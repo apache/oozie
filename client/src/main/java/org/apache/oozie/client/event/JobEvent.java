@@ -20,59 +20,39 @@ package org.apache.oozie.client.event;
 import java.io.Serializable;
 import java.util.Date;
 
-import org.apache.oozie.client.event.Event;
+import org.apache.oozie.AppType;
 
 /**
  * An abstract implementation of the Event interface, related to
  * notification events after job status changes
  */
-public abstract class JobEvent implements Event, Serializable {
+public abstract class JobEvent extends Event implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     /**
      * Coarse-grained status of the job event
-     *
      */
     public static enum EventStatus {
         WAITING, STARTED, SUCCESS, SUSPEND, FAILURE
     }
 
-    private AppType appType;
-    private MessageType msgType;
     private String id;
     private String parentId;
-    private EventStatus eventStatus;
-    private String appName;
     private String user;
+    private AppType appType;
+    private String appName;
+    private EventStatus eventStatus;
     private Date startTime;
     private Date endTime;
 
-    public JobEvent(AppType appType, String id, String parentId, String user, String appName) {
-        this.appType = appType;
-        this.msgType = MessageType.JOB;
+    public JobEvent(String id, String parentId, String user, AppType appType, String appName) {
+        super(MessageType.JOB);
         this.id = id;
         this.parentId = parentId;
         this.user = user;
+        this.appType = appType;
         this.appName = appName;
-    }
-
-    @Override
-    public AppType getAppType() {
-        return appType;
-    }
-
-    public void setAppType(AppType type) {
-        appType = type;
-    }
-
-    @Override
-    public MessageType getMsgType() {
-        return msgType;
-    }
-
-    public void setMsgType(MessageType type) {
-        msgType = type;
     }
 
     public String getId() {
@@ -91,15 +71,24 @@ public abstract class JobEvent implements Event, Serializable {
         parentId = id;
     }
 
-    public EventStatus getEventStatus() {
-        return eventStatus;
+    /**
+     * Get the AppType of the event
+     *
+     * @return AppType
+     */
+    public AppType getAppType() {
+        return appType;
     }
 
-    public void setEventStatus(EventStatus eStatus) {
-        eventStatus = eStatus;
+    public void setAppType(AppType type) {
+        appType = type;
     }
 
-    @Override
+    /**
+     * Get the app-name of the job generating this event
+     *
+     * @return String app-name
+     */
     public String getAppName() {
         return appName;
     }
@@ -108,6 +97,11 @@ public abstract class JobEvent implements Event, Serializable {
         appName = name;
     }
 
+    /**
+     * Get user name
+     *
+     * @return user
+     */
     public String getUser() {
         return user;
     }
@@ -115,6 +109,20 @@ public abstract class JobEvent implements Event, Serializable {
     public void setUser(String euser) {
         user = euser;
     }
+
+    /**
+     * Get the coarse status
+     *
+     * @return EventStatus
+     */
+    public EventStatus getEventStatus() {
+        return eventStatus;
+    }
+
+    public void setEventStatus(EventStatus eStatus) {
+        eventStatus = eStatus;
+    }
+
 
     public Date getStartTime() {
         return startTime;
@@ -134,8 +142,8 @@ public abstract class JobEvent implements Event, Serializable {
 
     @Override
     public String toString() {
-        return "ID: " + getId() + ", AppType: " + getAppType() + ", Appname: " + getAppName() + ", Status: "
-                + getEventStatus();
+        return "ID: " + getId() + ", MsgType:" + getMsgType() + ", AppType: " + getAppType() + ", Appname: "
+                + getAppName() + ", Status: " + getEventStatus();
     }
 
 }

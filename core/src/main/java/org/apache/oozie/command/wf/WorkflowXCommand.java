@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,13 +17,12 @@
  */
 package org.apache.oozie.command.wf;
 
+import org.apache.oozie.AppType;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
-import org.apache.oozie.client.event.Event.AppType;
 import org.apache.oozie.command.XCommand;
 import org.apache.oozie.event.WorkflowActionEvent;
 import org.apache.oozie.event.WorkflowJobEvent;
-import org.apache.oozie.util.ParamChecker;
 
 /**
  * Abstract coordinator command class derived from XCommand
@@ -55,8 +54,7 @@ public abstract class WorkflowXCommand<T> extends XCommand<T> {
     }
 
     protected static void generateEvent(WorkflowJobBean wfJob, String errorCode, String errorMsg) {
-        if (eventService.checkSupportedApptype(AppType.WORKFLOW_JOB.name())) {
-            ParamChecker.notNull(wfJob, "wfJob");
+        if (eventService.isSupportedApptype(AppType.WORKFLOW_JOB.name())) {
             WorkflowJobEvent event = new WorkflowJobEvent(wfJob.getId(), wfJob.getParentId(), wfJob.getStatus(),
                     wfJob.getUser(), wfJob.getAppName(), wfJob.getStartTime(), wfJob.getEndTime());
             event.setErrorCode(errorCode);
@@ -70,14 +68,12 @@ public abstract class WorkflowXCommand<T> extends XCommand<T> {
     }
 
     protected void generateEvent(WorkflowActionBean wfAction, String wfUser) {
-        if (eventService.checkSupportedApptype(AppType.WORKFLOW_ACTION.name())) {
-            ParamChecker.notNull(wfAction, "wfAction");
-            WorkflowActionEvent event = new WorkflowActionEvent(wfAction.getId(), wfAction.getJobId(),
-                    wfAction.getStatus(), wfUser, wfAction.getName(), wfAction.getStartTime(), wfAction.getEndTime());
-            event.setErrorCode(wfAction.getErrorCode());
-            event.setErrorMessage(wfAction.getErrorMessage());
-            eventService.queueEvent(event);
-        }
+        // Workflow action events not filtered since required for sla
+        WorkflowActionEvent event = new WorkflowActionEvent(wfAction.getId(), wfAction.getJobId(),
+                wfAction.getStatus(), wfUser, wfAction.getName(), wfAction.getStartTime(), wfAction.getEndTime());
+        event.setErrorCode(wfAction.getErrorCode());
+        event.setErrorMessage(wfAction.getErrorMessage());
+        eventService.queueEvent(event);
     }
 
 }

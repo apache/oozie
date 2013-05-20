@@ -788,9 +788,13 @@ public class OozieDBCLI {
         args.add("org.apache.oozie.CoordinatorActionBean");
         args.add("org.apache.oozie.client.rest.JsonSLAEvent");
         args.add("org.apache.oozie.SLAEventBean");
+        args.add("org.apache.oozie.client.rest.sla.JsonSLARegistrationEvent");
+        args.add("org.apache.oozie.sla.SLARegistrationBean");
         args.add("org.apache.oozie.client.rest.JsonBundleJob");
         args.add("org.apache.oozie.BundleJobBean");
         args.add("org.apache.oozie.BundleActionBean");
+        args.add("org.apache.oozie.sla.SLACalculatorBean");
+        args.add("org.apache.oozie.sla.SLASummaryBean");
         args.add("org.apache.oozie.util.db.ValidateConnectionBean");
         return args.toArray(new String[args.size()]);
     }

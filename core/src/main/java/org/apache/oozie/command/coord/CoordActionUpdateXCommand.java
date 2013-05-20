@@ -44,6 +44,7 @@ import org.apache.oozie.executor.jpa.CoordActionGetForExternalIdJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordinatorJobGetForUserAppnameJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 
+@SuppressWarnings("deprecation")
 public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
     private WorkflowJobBean workflow;
     private CoordinatorActionBean coordAction = null;
@@ -133,7 +134,7 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
             }
 
             jpaService.execute(new BulkUpdateInsertForCoordActionStatusJPAExecutor(updateList, insertList));
-            if (EventHandlerService.isEventsConfigured()) {
+            if (EventHandlerService.isEnabled()) {
                 CoordinatorJobBean coordJob = jpaService.execute(new CoordinatorJobGetForUserAppnameJPAExecutor(coordAction
                         .getJobId()));
                 generateEvent(coordAction, coordJob.getUser(), coordJob.getAppName());

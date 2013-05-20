@@ -20,6 +20,7 @@ package org.apache.oozie.event;
 
 import java.util.Date;
 
+import org.apache.oozie.AppType;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.event.JobEvent;
 import org.apache.oozie.service.EventHandlerService;
@@ -38,11 +39,11 @@ public class WorkflowJobEvent extends JobEvent {
 
     public WorkflowJobEvent(String id, String parentId, WorkflowJob.Status status, String user, String appName,
             Date startTime, Date endTime) {
-        super(AppType.WORKFLOW_JOB, id, parentId, user, appName);
+        super(id, parentId, user, AppType.WORKFLOW_JOB, appName);
         setStatus(status);
         setStartTime(startTime);
         setEndTime(endTime);
-        XLog.getLog(EventHandlerService.class).debug("Event generated - " + this.toString());
+        XLog.getLog(EventHandlerService.class).trace("Event generated - " + this.toString());
     }
 
     public String getCoordJobId() {

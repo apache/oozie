@@ -30,6 +30,7 @@ import org.apache.oozie.client.OozieClient;
 /**
  * Load the list of SLAEventBean for a seqId and return the list.
  */
+@Deprecated
 public class SLAEventsGetForFilterJPAExecutor implements JPAExecutor<List<SLAEventBean>> {
 
     private static final String selectStr = "SELECT OBJECT(w) FROM SLAEventBean w WHERE w.event_id > :seqid";

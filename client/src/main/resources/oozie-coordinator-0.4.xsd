@@ -120,7 +120,7 @@
     <xs:complexType name="ACTION">
         <xs:sequence minOccurs="1" maxOccurs="1">
             <xs:element name="workflow" type="coordinator:WORKFLOW" minOccurs="1" maxOccurs="1"/>
-            <xs:any namespace="uri:oozie:sla:0.1" minOccurs="0" maxOccurs="1"/>
+            <xs:any namespace="uri:oozie:sla:0.1 uri:oozie:sla:0.2" minOccurs="0" maxOccurs="1"/>
         </xs:sequence>
     </xs:complexType>
     <xs:complexType name="WORKFLOW">

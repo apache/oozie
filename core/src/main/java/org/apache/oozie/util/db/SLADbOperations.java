@@ -31,6 +31,7 @@ import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
 
+@Deprecated
 public class SLADbOperations {
     public static final String CLIENT_ID_TAG = "oozie:sla:client-id";
 
@@ -188,7 +189,9 @@ public class SLADbOperations {
         try {
             Element eSla = XmlUtils.parseXml(slaXml);
             Element eAppName = eSla.getChild("app-name", eSla.getNamespace());
-            return createSlaStatusEvent(id, stat, appType, eAppName.getText(), log);
+            //stop-gap null handling till deprecated class is removed
+            String appNameStr = eAppName != null ? eAppName.getText() : null;
+            return createSlaStatusEvent(id, stat, appType, appNameStr, log);
         }
         catch (Exception e) {
             throw new CommandException(ErrorCode.E1007, " id " + id, e.getMessage(), e);

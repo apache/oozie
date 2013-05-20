@@ -20,6 +20,7 @@ package org.apache.oozie.event;
 
 import java.util.Date;
 
+import org.apache.oozie.AppType;
 import org.apache.oozie.client.BundleJob;
 import org.apache.oozie.client.event.JobEvent;
 import org.apache.oozie.service.EventHandlerService;
@@ -34,11 +35,11 @@ public class BundleJobEvent extends JobEvent {
     private BundleJob.Status status;
 
     public BundleJobEvent(String id, BundleJob.Status status, String user, String appName, Date startTime, Date endTime) {
-        super(AppType.BUNDLE_JOB, id, null, user, appName); //parentId is null
+        super(id, null, user, AppType.BUNDLE_JOB, appName); // parentId is null
         setStatus(status);
         setStartTime(startTime);
         setEndTime(endTime);
-        XLog.getLog(EventHandlerService.class).debug("Event generated - " + this.toString());
+        XLog.getLog(EventHandlerService.class).trace("Event generated - " + this.toString());
     }
 
     public BundleJob.Status getStatus() {

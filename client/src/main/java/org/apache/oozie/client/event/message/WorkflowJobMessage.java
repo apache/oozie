@@ -19,8 +19,8 @@ package org.apache.oozie.client.event.message;
 
 import java.util.Date;
 
+import org.apache.oozie.AppType;
 import org.apache.oozie.client.WorkflowJob;
-import org.apache.oozie.client.event.Event;
 import org.apache.oozie.client.event.JobEvent.EventStatus;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
@@ -62,7 +62,7 @@ public class WorkflowJobMessage extends JobMessage {
     public WorkflowJobMessage(EventStatus eventStatus, String workflowJobId,
             String coordinatorActionId, Date startTime, Date endTime, WorkflowJob.Status status, String user,
             String appName, String errorCode, String errorMessage) {
-        super(eventStatus, Event.AppType.WORKFLOW_JOB, workflowJobId, coordinatorActionId, startTime,
+        super(eventStatus, AppType.WORKFLOW_JOB, workflowJobId, coordinatorActionId, startTime,
                 endTime, user, appName);
         this.status = status;
         this.errorCode = errorCode;

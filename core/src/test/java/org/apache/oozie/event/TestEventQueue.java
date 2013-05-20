@@ -23,7 +23,11 @@ import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JMSAccessorService;
 import org.apache.oozie.service.JMSTopicService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.sla.service.SLAService;
 import org.apache.oozie.test.XDataTestCase;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Test case to check correct functioning of MemoryEventQueue
@@ -32,22 +36,25 @@ public class TestEventQueue extends XDataTestCase {
 
     private Services services;
 
+    @Before
     protected void setUp() throws Exception {
         super.setUp();
         services = new Services();
         Configuration conf = services.getConf();
         conf.set(Services.CONF_SERVICE_EXT_CLASSES,
                 JMSAccessorService.class.getName() + "," + JMSTopicService.class.getName() + ","
-                        + EventHandlerService.class.getName());
+                        + EventHandlerService.class.getName() + "," + SLAService.class.getName());
         conf.setInt(EventHandlerService.CONF_BATCH_SIZE, 3);
         services.init();
     }
 
+    @After
     protected void tearDown() throws Exception {
         services.destroy();
         super.tearDown();
     }
 
+    @Test
     public void testMemoryEventQueueBasic() throws Exception {
         EventHandlerService ehs = Services.get().get(EventHandlerService.class);
         assertNotNull(ehs);
@@ -56,18 +63,20 @@ public class TestEventQueue extends XDataTestCase {
         assertTrue(eventQ instanceof MemoryEventQueue); //default
     }
 
+    @Test
     public void testQueueOperations() throws Exception {
         EventHandlerService ehs = Services.get().get(EventHandlerService.class);
         EventQueue eventQ = ehs.getEventQueue();
-        assertEquals(eventQ.getCurrentSize(), 0);
+        assertEquals(eventQ.size(), 0);
         assertEquals(eventQ.getBatchSize(), 3);
 
         // create some events to enqueue
         WorkflowJobEvent wfEvent = new WorkflowJobEvent("1234-W", "1234-C", WorkflowJob.Status.RUNNING, getTestUser(),
                 "myapp", null, null);
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < 10; i++) {
             ehs.queueEvent(wfEvent);
-        assertEquals(eventQ.getCurrentSize(), 10);
+        }
+        assertEquals(eventQ.size(), 10);
 
         // test single threads polling from queue
         int numThreads = 1;
@@ -76,13 +85,14 @@ public class TestEventQueue extends XDataTestCase {
             thread[i] = new Thread(ehs.new EventWorker());
             thread[i].run();
         }
-        assertEquals(eventQ.getCurrentSize(), 7); // n(events) - n(batch) i.e.
+        assertEquals(eventQ.size(), 7); // n(events) - n(batch) i.e.
                                                   // 10-3 = 7
 
         // restore events count to 10
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < 3; i++) {
             ehs.queueEvent(wfEvent);
-        assertEquals(eventQ.getCurrentSize(), 10);
+        }
+        assertEquals(eventQ.size(), 10);
         // test two threads polling concurrently from queue
         numThreads = 2;
         thread = new Thread[numThreads];
@@ -90,26 +100,28 @@ public class TestEventQueue extends XDataTestCase {
             thread[i] = new Thread(ehs.new EventWorker());
             thread[i].run();
         }
-        assertEquals(eventQ.getCurrentSize(), 4); // n(events) - n(batch)*n(threads)
+        assertEquals(eventQ.size(), 4); // n(events) - n(batch)*n(threads)
                                                   // i.e. 10 - 3*2 = 4
 
         // enqueue events again
-        for (int i = 0; i < 6; i++)
+        for (int i = 0; i < 6; i++) {
             ehs.queueEvent(wfEvent);
-        assertEquals(eventQ.getCurrentSize(), 10);
+        }
+        assertEquals(eventQ.size(), 10);
         // test the 2 threads draining repeatedly (mimicking SchedulerService)
         // from queue
         int repetition = 3;
         int r = 0;
         while (r < repetition) {
-            if (eventQ.isEmpty())
+            if (eventQ.isEmpty()) {
                 break;
+            }
             for (int i = 0; i < numThreads; i++) {
                 thread[i].run();
             }
             r++;
         }
-        assertEquals(eventQ.getCurrentSize(), 0);
+        assertEquals(eventQ.size(), 0);
     }
 
 }

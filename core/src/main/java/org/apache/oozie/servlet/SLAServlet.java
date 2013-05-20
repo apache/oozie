@@ -40,6 +40,7 @@ import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
 
+@SuppressWarnings("deprecation")
 public class SLAServlet extends JsonRestServlet {
 
     private static final Set<String> SLA_FILTER_NAMES = new HashSet<String>();

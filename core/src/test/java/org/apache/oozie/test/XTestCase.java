@@ -65,6 +65,9 @@ import org.apache.oozie.service.PartitionDependencyManagerService;
 import org.apache.oozie.service.ServiceException;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.URIHandlerService;
+import org.apache.oozie.sla.SLACalculatorBean;
+import org.apache.oozie.sla.SLARegistrationBean;
+import org.apache.oozie.sla.SLASummaryBean;
 import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.test.MiniHCatServer.RUNMODE;
@@ -712,6 +715,27 @@ public abstract class XTestCase extends TestCase {
             entityManager.remove(w);
         }
 
+        q = entityManager.createQuery("select OBJECT(w) from SLARegistrationBean w");
+        List<SLARegistrationBean> slaRegBeans = q.getResultList();
+        int slaRegSize = slaRegBeans.size();
+        for (SLARegistrationBean w : slaRegBeans) {
+            entityManager.remove(w);
+        }
+
+        q = entityManager.createQuery("select OBJECT(w) from SLACalculatorBean w");
+        List<SLACalculatorBean> scBeans = q.getResultList();
+        int scSize = scBeans.size();
+        for (SLACalculatorBean w : scBeans) {
+            entityManager.remove(w);
+        }
+
+        q = entityManager.createQuery("select OBJECT(w) from SLASummaryBean w");
+        List<SLASummaryBean> sdBeans = q.getResultList();
+        int ssSize = sdBeans.size();
+        for (SLASummaryBean w : sdBeans) {
+            entityManager.remove(w);
+        }
+
         store.commitTrx();
         store.closeTrx();
         log.info(wfjSize + " entries in WF_JOBS removed from DB!");
@@ -721,6 +745,10 @@ public abstract class XTestCase extends TestCase {
         log.info(bjSize + " entries in BUNDLE_JOBS removed from DB!");
         log.info(baSize + " entries in BUNDLE_ACTIONS removed from DB!");
         log.info(slaSize + " entries in SLA_EVENTS removed from DB!");
+        log.info(slaRegSize + " entries in SLA_REGISTRATION removed from DB!");
+        log.info(scSize + " entries in SLA_CALCULATOR removed from DB!");
+        log.info(ssSize + " entries in SLA_SUMMARY removed from DB!");
+
     }
 
     private static MiniDFSCluster dfsCluster = null;

@@ -43,13 +43,13 @@ import org.apache.oozie.action.hadoop.MapperReducerForTest;
 import org.apache.oozie.client.BundleJob;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
+import org.apache.oozie.client.CoordinatorJob.Execution;
+import org.apache.oozie.client.CoordinatorJob.Timeunit;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.SLAEvent;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
-import org.apache.oozie.client.CoordinatorJob.Execution;
-import org.apache.oozie.client.CoordinatorJob.Timeunit;
 import org.apache.oozie.executor.jpa.BundleActionInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
@@ -68,9 +68,9 @@ import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
+import org.apache.oozie.service.UUIDService.ApplicationType;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.service.WorkflowStoreService;
-import org.apache.oozie.service.UUIDService.ApplicationType;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
@@ -726,6 +726,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
      * @param status sla status
      * @throws Exception thrown if unable to create sla bean
      */
+    @Deprecated
     protected void addRecordToSLAEventTable(String slaId, SLAEvent.Status status, Date today) throws Exception {
         addRecordToSLAEventTable(slaId, "app-name", status, today);
     }
@@ -738,7 +739,9 @@ public abstract class XDataTestCase extends XHCatTestCase {
      * @param status sla status
      * @throws Exception thrown if unable to create sla bean
      */
-    protected void addRecordToSLAEventTable(String slaId, String appName, SLAEvent.Status status, Date today) throws Exception {
+    @Deprecated
+    protected void addRecordToSLAEventTable(String slaId, String appName, SLAEvent.Status status, Date today)
+            throws Exception {
         SLAEventBean sla = new SLAEventBean();
         sla.setSlaId(slaId);
         sla.setAppName(appName);
@@ -772,8 +775,6 @@ public abstract class XDataTestCase extends XHCatTestCase {
             throw je;
         }
     }
-
-
 
     /**
      * Insert bundle job for testing.
@@ -1463,4 +1464,13 @@ public abstract class XDataTestCase extends XHCatTestCase {
         action.setMissingDependencies(missingDependencies);
         jpaService.execute(new CoordActionUpdateJPAExecutor(action));
     }
+
+    protected void modifyCoordForRunning(CoordinatorJobBean coord) throws Exception {
+        String wfXml = IOUtils.getResourceAsString("wf-credentials.xml", -1);
+        writeToFile(wfXml, getFsTestCaseDir(), "workflow.xml");
+        String coordXml = coord.getJobXml();
+        coord.setJobXml(coordXml.replace("hdfs:///tmp/workflows/", getFsTestCaseDir() + "/workflow.xml"));
+        Services.get().get(JPAService.class).execute(new CoordJobUpdateJPAExecutor(coord));
+    }
+
 }
