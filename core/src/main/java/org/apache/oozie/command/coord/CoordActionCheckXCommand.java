@@ -50,6 +50,7 @@ import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 /**
  * The command checks workflow status for coordinator action.
  */
+@SuppressWarnings("deprecation")
 public class CoordActionCheckXCommand extends CoordinatorXCommand<Void> {
     private String actionId;
     private int actionCheckDelay;
@@ -118,7 +119,7 @@ public class CoordActionCheckXCommand extends CoordinatorXCommand<Void> {
             }
 
             jpaService.execute(new BulkUpdateInsertForCoordActionStatusJPAExecutor(updateList, insertList));
-            if (EventHandlerService.isEventsConfigured()) {
+            if (EventHandlerService.isEnabled()) {
                 CoordinatorJobBean coordJob = jpaService.execute(new CoordinatorJobGetForUserAppnameJPAExecutor(
                         coordAction.getJobId()));
                 generateEvent(coordAction, coordJob.getUser(), coordJob.getAppName());

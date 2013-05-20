@@ -17,6 +17,7 @@
  */
 package org.apache.oozie.service;
 
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.event.BundleJobEvent;
@@ -30,10 +31,8 @@ import org.apache.oozie.event.MemoryEventQueue;
 import org.apache.oozie.event.WorkflowActionEvent;
 import org.apache.oozie.event.WorkflowJobEvent;
 import org.apache.oozie.event.listener.JobEventListener;
-import org.apache.oozie.service.ServiceException;
-import org.apache.oozie.service.Services;
+import org.apache.oozie.sla.listener.SLAEventListener;
 import org.apache.oozie.client.event.SLAEvent;
-import org.apache.oozie.sla.event.listener.SLAEventListener;
 import org.apache.oozie.util.XLog;
 
 import java.util.ArrayList;
@@ -55,47 +54,45 @@ public class EventHandlerService implements Service {
     public static final String CONF_QUEUE_SIZE = CONF_PREFIX + "queue.size";
     public static final String CONF_EVENT_QUEUE = CONF_PREFIX + "event.queue";
     public static final String CONF_LISTENERS = CONF_PREFIX + "event.listeners";
-    public static final String CONF_APP_TYPES = CONF_PREFIX + "app.types";
+    public static final String CONF_FILTER_APP_TYPES = CONF_PREFIX + "filter.app.types";
     public static final String CONF_BATCH_SIZE = CONF_PREFIX + "batch.size";
+    public static final String CONF_WORKER_THREADS = CONF_PREFIX + "worker.threads";
     public static final String CONF_WORKER_INTERVAL = CONF_PREFIX + "worker.interval";
 
     private static EventQueue eventQueue;
-    private int queueMaxSize;
     private XLog LOG;
     private Map<MessageType, List<?>> listenerMap = new HashMap<MessageType, List<?>>();
     private Set<String> apptypes;
-    private static int batchSize;
-    private static boolean eventsConfigured = false;
+    private static boolean eventsEnabled = false;
+    private int numWorkers;
 
-    @SuppressWarnings("unchecked")
+    @Override
     public void init(Services services) throws ServiceException {
         try {
-            eventsConfigured = true;
             Configuration conf = services.getConf();
-            queueMaxSize = conf.getInt(CONF_QUEUE_SIZE, 10000);
             LOG = XLog.getLog(getClass());
             Class<? extends EventQueue> queueImpl = (Class<? extends EventQueue>) conf.getClass(CONF_EVENT_QUEUE, null);
             eventQueue = queueImpl == null ? new MemoryEventQueue() : (EventQueue) queueImpl.newInstance();
-            batchSize = conf.getInt(CONF_BATCH_SIZE, 10);
-            eventQueue.init(queueMaxSize, batchSize);
+            eventQueue.init(conf);
             // initialize app-types to switch on events for
             initApptypes(conf);
             // initialize event listeners
             initEventListeners(conf);
             // initialize worker threads via Scheduler
             initWorkerThreads(conf, services);
-            LOG.info(
-                    "EventHandlerService initialized. Event queue = [{0}], Event listeners configured = [{1}], Events configured for App-types = [{3}]",
-                    eventQueue.getClass().getName(), listenerMap.toString(), apptypes);
+            eventsEnabled = true;
+            LOG.info("EventHandlerService initialized. Event queue = [{0}], Event listeners configured = [{1}],"
+                    + " Events configured for App-types = [{2}], Num Worker Threads = [{3}]", eventQueue.getClass()
+                    .getName(), listenerMap.toString(), apptypes, numWorkers);
         }
         catch (Exception ex) {
-            throw new ServiceException(ErrorCode.E0102, ex.getMessage(), ex);
+            throw new ServiceException(ErrorCode.E0100, ex.getMessage(), ex);
         }
     }
 
     private void initApptypes(Configuration conf) {
         apptypes = new HashSet<String>();
-        for (String jobtype : conf.getStringCollection(CONF_APP_TYPES)) {
+        for (String jobtype : conf.getStringCollection(CONF_FILTER_APP_TYPES)) {
             String tmp = jobtype.trim().toLowerCase();
             if (tmp.length() == 0) {
                 continue;
@@ -104,8 +101,10 @@ public class EventHandlerService implements Service {
         }
     }
 
-    private void initEventListeners(Configuration conf) {
-        Class<?>[] listenerClass = (Class<?>[]) conf.getClasses(CONF_LISTENERS, org.apache.oozie.jms.JMSJobEventListener.class);
+    private void initEventListeners(Configuration conf) throws Exception {
+        Class<?>[] listenerClass = conf.getClasses(CONF_LISTENERS,
+                org.apache.oozie.jms.JMSJobEventListener.class,
+                org.apache.oozie.sla.listener.SLAJobEventListener.class);
         for (int i = 0; i < listenerClass.length; i++) {
             Object listener = null;
             try {
@@ -117,49 +116,59 @@ public class EventHandlerService implements Service {
             catch (IllegalAccessException e) {
                 LOG.warn("Illegal access to event listener instance, " + e);
             }
-            addEventListener(listener);
+            addEventListener(listener, conf, listenerClass[i].getName());
         }
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    public void addEventListener(Object listener) {
+    public void addEventListener(Object listener, Configuration conf, String name) throws Exception {
         if (listener instanceof JobEventListener) {
             List listenersList = listenerMap.get(MessageType.JOB);
             if (listenersList == null) {
                 listenersList = new ArrayList();
-                listenerMap.put(MessageType.JOB, (List<? extends JobEventListener>) listenersList);
+                listenerMap.put(MessageType.JOB, listenersList);
             }
             listenersList.add(listener);
-            ((JobEventListener) listener).init();
+            ((JobEventListener) listener).init(conf);
         }
         else if (listener instanceof SLAEventListener) {
             List listenersList = listenerMap.get(MessageType.SLA);
             if (listenersList == null) {
                 listenersList = new ArrayList();
-                listenerMap.put(MessageType.SLA, (List<? extends SLAEventListener>) listenersList);
+                listenerMap.put(MessageType.SLA, listenersList);
             }
             listenersList.add(listener);
-            ((SLAEventListener) listener).init();
+            ((SLAEventListener) listener).init(conf);
         }
         else {
-            LOG.warn("Event listener [{0}] is of undefined type", listener.getClass().getCanonicalName());
+            LOG.warn("Event listener [{0}] is of undefined type", name);
         }
     }
 
-    public static boolean isEventsConfigured() {
-        return eventsConfigured;
+    public static boolean isEnabled() {
+        return eventsEnabled;
     }
 
-    private void initWorkerThreads(Configuration conf, Services services) {
+    private void initWorkerThreads(Configuration conf, Services services) throws ServiceException {
+        numWorkers = conf.getInt(CONF_WORKER_THREADS, 3);
+        int interval = conf.getInt(CONF_WORKER_INTERVAL, 30);
+        SchedulerService ss = services.get(SchedulerService.class);
+        int available = ss.getSchedulableThreads(conf);
+        if (numWorkers + 3 > available) {
+            throw new ServiceException(ErrorCode.E0100, getClass().getName(), "Event worker threads requested ["
+                    + numWorkers + "] cannot be handled with current settings. Increase "
+                    + SchedulerService.SCHEDULER_THREADS);
+        }
         Runnable eventWorker = new EventWorker();
-        // schedule runnable by default every 5 min
-        services.get(SchedulerService.class).schedule(eventWorker, 10, conf.getInt(CONF_WORKER_INTERVAL, 60),
-                SchedulerService.Unit.SEC);
+        // schedule staggered runnables every 1 min interval by default
+        for (int i = 0; i < numWorkers; i++) {
+            ss.schedule(eventWorker, 10 + i * 20, interval, SchedulerService.Unit.SEC);
+        }
     }
 
     @Override
     public void destroy() {
-        eventsConfigured=false;
+        eventsEnabled = false;
         for (MessageType type : listenerMap.keySet()) {
             Iterator<?> iter = listenerMap.get(type).iterator();
             while (iter.hasNext()) {
@@ -178,7 +187,7 @@ public class EventHandlerService implements Service {
         return EventHandlerService.class;
     }
 
-    public boolean checkSupportedApptype(String appType) {
+    public boolean isSupportedApptype(String appType) {
         if (!apptypes.contains(appType.toLowerCase())) {
             return false;
         }
@@ -193,6 +202,10 @@ public class EventHandlerService implements Service {
         return apptypes;
     }
 
+    public String listEventListeners() {
+        return listenerMap.toString();
+    }
+
     public void queueEvent(Event event) {
         eventQueue.add(event);
     }
@@ -203,6 +216,7 @@ public class EventHandlerService implements Service {
 
     public class EventWorker implements Runnable {
 
+        @Override
         public void run() {
             if (Thread.currentThread().isInterrupted()) {
                 return;
@@ -216,10 +230,13 @@ public class EventHandlerService implements Service {
                         Iterator<?> iter = listeners.iterator();
                         while (iter.hasNext()) {
                             if (msgType == MessageType.JOB) {
-                                invokeJobEventListener(iter, (JobEvent) event);
+                                invokeJobEventListener((JobEventListener) iter.next(), (JobEvent) event);
                             }
                             else if (msgType == MessageType.SLA) {
-                                invokeSLAEventListener(iter, (SLAEvent) event);
+                                invokeSLAEventListener((SLAEventListener) iter.next(), (SLAEvent) event);
+                            }
+                            else {
+                                iter.next();
                             }
                         }
                     }
@@ -227,23 +244,22 @@ public class EventHandlerService implements Service {
             }
         }
 
-        private void invokeJobEventListener(Iterator<?> iter, JobEvent event) {
-            JobEventListener el = (JobEventListener) iter.next();
+        private void invokeJobEventListener(JobEventListener jobListener, JobEvent event) {
             switch (event.getAppType()) {
                 case WORKFLOW_JOB:
-                    el.onWorkflowJobEvent((WorkflowJobEvent)event);
+                    jobListener.onWorkflowJobEvent((WorkflowJobEvent)event);
                     break;
                 case WORKFLOW_ACTION:
-                    el.onWorkflowActionEvent((WorkflowActionEvent)event);
+                    jobListener.onWorkflowActionEvent((WorkflowActionEvent)event);
                     break;
                 case COORDINATOR_JOB:
-                    el.onCoordinatorJobEvent((CoordinatorJobEvent)event);
+                    jobListener.onCoordinatorJobEvent((CoordinatorJobEvent)event);
                     break;
                 case COORDINATOR_ACTION:
-                    el.onCoordinatorActionEvent((CoordinatorActionEvent)event);
+                    jobListener.onCoordinatorActionEvent((CoordinatorActionEvent)event);
                     break;
                 case BUNDLE_JOB:
-                    el.onBundleJobEvent((BundleJobEvent)event);
+                    jobListener.onBundleJobEvent((BundleJobEvent)event);
                     break;
                 default:
                     XLog.getLog(EventHandlerService.class).info("Undefined Job Event app-type - {0}",
@@ -251,29 +267,28 @@ public class EventHandlerService implements Service {
             }
         }
 
-        private void invokeSLAEventListener(Iterator<?> iter, SLAEvent event) {
-            SLAEventListener sel = (SLAEventListener) iter.next();
-            switch (event.getEventType()) {
+        private void invokeSLAEventListener(SLAEventListener slaListener, SLAEvent event) {
+            switch (event.getEventStatus()) {
                 case START_MET:
-                    sel.onStartMet((SLAEvent) event);
+                    slaListener.onStartMet(event);
                     break;
                 case START_MISS:
-                    sel.onStartMiss((SLAEvent) event);
+                    slaListener.onStartMiss(event);
                     break;
                 case END_MET:
-                    sel.onEndMet((SLAEvent) event);
+                    slaListener.onEndMet(event);
                     break;
                 case END_MISS:
-                    sel.onEndMiss((SLAEvent) event);
+                    slaListener.onEndMiss(event);
                     break;
                 case DURATION_MET:
-                    sel.onDurationMet((SLAEvent) event);
+                    slaListener.onDurationMet(event);
                     break;
                 case DURATION_MISS:
-                    sel.onDurationMiss((SLAEvent) event);
+                    slaListener.onDurationMiss(event);
                     break;
                 default:
-                    XLog.getLog(EventHandlerService.class).info("Undefined SLA event type - {0}", event.getEventType());
+                    XLog.getLog(EventHandlerService.class).info("Undefined SLA event type - {0}", event.getSLAStatus());
             }
         }
     }

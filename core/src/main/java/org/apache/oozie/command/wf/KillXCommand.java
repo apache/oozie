@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,6 +52,7 @@ import java.util.List;
  * Kill workflow job and its workflow instance and queue a {@link WorkflowActionKillXCommand} to kill the workflow
  * actions.
  */
+@SuppressWarnings("deprecation")
 public class KillXCommand extends WorkflowXCommand<Void> {
 
     private String wfId;
@@ -156,8 +157,8 @@ public class KillXCommand extends WorkflowXCommand<Void> {
             wfJob.setLastModifiedTime(new Date());
             updateList.add(wfJob);
             jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, insertList));
-            if (EventHandlerService.isEventsConfigured()) {
-                generateEvent(wfJob, null, null);
+            if (EventHandlerService.isEnabled()) {
+                generateEvent(wfJob);
             }
             queue(new NotificationXCommand(wfJob));
         }

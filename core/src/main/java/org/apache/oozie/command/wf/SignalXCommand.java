@@ -39,7 +39,6 @@ import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 import org.apache.oozie.service.ELService;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
-import org.apache.oozie.service.SchemaService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.WorkflowStoreService;
@@ -55,8 +54,6 @@ import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.util.db.SLADbXOperations;
 import org.jdom.Element;
-import org.jdom.Namespace;
-
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Date;
@@ -64,6 +61,7 @@ import java.util.List;
 import java.util.Map;
 import org.apache.oozie.client.OozieClient;
 
+@SuppressWarnings("deprecation")
 public class SignalXCommand extends WorkflowXCommand<Void> {
 
     protected static final String INSTR_SUCCEEDED_JOBS_COUNTER_NAME = "succeeded";
@@ -312,12 +310,12 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
             updateList.add(wfJob);
             // call JPAExecutor to do the bulk writes
             jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, insertList));
-            if (EventHandlerService.isEventsConfigured()) {
+            if (EventHandlerService.isEnabled()) {
                 if (wfAction != null) {
                     generateEvent(wfJob, wfAction.getErrorCode(), wfAction.getErrorMessage());
                 }
                 else {
-                    generateEvent(wfJob, null, null);
+                    generateEvent(wfJob);
                 }
             }
         }
@@ -352,7 +350,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                 if (action.getAttributeValue("name").equals(actionName) == false) {
                     continue;
                 }
-                Element eSla = action.getChild("info", Namespace.getNamespace(SchemaService.SLA_NAME_SPACE_URI));
+                Element eSla = XmlUtils.getSLAElement(action);
                 if (eSla != null) {
                     slaXml = XmlUtils.prettyPrint(eSla).toString();
                     break;
@@ -384,7 +382,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
             Element eWfJob = XmlUtils.parseXml(wfXml);
             Configuration conf = new XConfiguration(new StringReader(strConf));
             for (Element action : (List<Element>) eWfJob.getChildren("action", eWfJob.getNamespace())) {
-                Element eSla = action.getChild("info", Namespace.getNamespace(SchemaService.SLA_NAME_SPACE_URI));
+                Element eSla = XmlUtils.getSLAElement(action);
                 if (eSla != null) {
                     String slaXml = resolveSla(eSla, conf);
                     eSla = XmlUtils.parseXml(slaXml);

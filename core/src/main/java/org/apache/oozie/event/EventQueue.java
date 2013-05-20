@@ -20,6 +20,7 @@ package org.apache.oozie.event;
 import java.io.Serializable;
 import java.util.Set;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.event.Event;
 
 /**
@@ -39,10 +40,9 @@ public interface EventQueue {
 
     /**
      * Initialize the event queue
-     * @param queueSize
-     * @param batchSize
+     * @param conf
      */
-    public void init(int queueSize, int batchSize);
+    public void init(Configuration conf);
 
     /**
      * Add event to queue
@@ -72,7 +72,7 @@ public interface EventQueue {
      * Get current queue size
      * @return size
      */
-    public int getCurrentSize();
+    public int size();
 
     /**
      * Read topmost event from queue but do not pop from it
@@ -85,5 +85,10 @@ public interface EventQueue {
      * @return batchSize
      */
     public int getBatchSize();
+
+    /**
+     * Clear the events queue
+     */
+    public void clear();
 
 }

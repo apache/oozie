@@ -16,7 +16,7 @@
   limitations under the License.
 -->
 <coordinator-app name="aggregator-coord" frequency="${coord:hours(1)}" start="${start}" end="${end}" timezone="UTC"
-                 xmlns="uri:oozie:coordinator:0.2" xmlns:sla="uri:oozie:sla:0.1">
+                 xmlns="uri:oozie:coordinator:0.4" xmlns:sla="uri:oozie:sla:0.2">
     <controls>
         <concurrency>1</concurrency>
     </controls>
@@ -67,23 +67,22 @@
                     <name>outputData</name>
                     <value>${coord:dataOut('output')}</value>
                 </property>
+                <property>
+                    <name>nominalTime</name>
+                    <value>${coord:nominalTime()}</value>
+                </property>
             </configuration>
         </workflow>
 
       <sla:info>
-              <sla:app-name>${appName}</sla:app-name>
-              <sla:nominal-time>${coord:nominalTime()}</sla:nominal-time>
-              <sla:should-start>${shouldStart}</sla:should-start>
-              <sla:should-end>${shouldEnd}</sla:should-end>
-              <sla:notification-msg>${notificationMsg}</sla:notification-msg>
-              <sla:alert-contact>${alertContact}</sla:alert-contact>
-              <sla:dev-contact>${devContact}</sla:dev-contact>
-              <sla:qa-contact>${qaContact}</sla:qa-contact>
-              <sla:se-contact>${seContact}</sla:se-contact>
-              <sla:alert-frequency>${alertFrequency}</sla:alert-frequency>
-              <sla:alert-percentage>${alertPercentage}</sla:alert-percentage>
-              <sla:upstream-apps>${upstreamApps}</sla:upstream-apps>
-    </sla:info>
+          <sla:nominal-time>${coord:nominalTime()}</sla:nominal-time>
+          <sla:should-start>${shouldStart}</sla:should-start>
+          <sla:should-end>${shouldEnd}</sla:should-end>
+          <sla:max-duration>${duration}</sla:max-duration>
+          <sla:alert-contact>${alertContact}</sla:alert-contact>
+          <sla:notification-msg>${notificationMsg}</sla:notification-msg>
+          <sla:upstream-apps>${upstreamApps}</sla:upstream-apps>
+      </sla:info>
 </action>
 </coordinator-app>
 

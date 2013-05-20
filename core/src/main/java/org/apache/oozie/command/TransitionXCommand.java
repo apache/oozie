@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,8 +20,12 @@ package org.apache.oozie.command;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.oozie.CoordinatorActionBean;
+import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.rest.JsonBean;
+import org.apache.oozie.command.coord.CoordinatorXCommand;
+import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.util.ParamChecker;
 
 /**
@@ -64,6 +68,25 @@ public abstract class TransitionXCommand<T> extends XCommand<T> {
      * @throws CommandException
      */
     public abstract void notifyParent() throws CommandException;
+
+    /**
+     * This will be used to generate Job Notification events on status changes
+     *
+     * @param user
+     * @param appName
+     * @param em
+     * @throws CommandException
+     */
+    public void generateEvents(CoordinatorJobBean coordJob) throws CommandException {
+        for (JsonBean actionBean : updateList) {
+            if (actionBean instanceof CoordinatorActionBean) {
+                if (EventHandlerService.isEnabled()) {
+                    CoordinatorXCommand.generateEvent((CoordinatorActionBean) actionBean, coordJob.getUser(),
+                            coordJob.getAppName());
+                }
+            }
+        }
+    }
 
     /**
      * This will be used to perform atomically all the writes within this command.

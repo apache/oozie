@@ -18,49 +18,38 @@
 package org.apache.oozie.client.event;
 
 /**
- * This interface defines an Event that can be generated via
- * Job status changes or SLA related events
+ * This interface defines an Event that can be generated via Job status changes
+ * or SLA related events
  */
-public interface Event {
+public abstract class Event {
+
+    protected MessageType msgType;
 
     /**
      * Events will be messages, broadly of type - Job related or SLA related
-     *
      */
     public static enum MessageType {
-        JOB,
-        SLA
+        JOB, SLA
     }
 
-    /**
-     * Events carry the associated app-type or job-type to enable toggling on/off
-     * events generated only for specific app-types or filtering on receiving side
-     */
-    public static enum AppType {
-        WORKFLOW_JOB,
-        WORKFLOW_ACTION,
-        COORDINATOR_JOB,
-        COORDINATOR_ACTION,
-        BUNDLE_JOB,
-        BUNDLE_ACTION
+    public Event(MessageType msgType) {
+        this.msgType = msgType;
     }
 
-    /**
-     * Get the AppType of the event
-     * @return AppType
-     */
-    public AppType getAppType();
+    public Event() {
+    }
 
     /**
      * Get the MessageType of the event
+     *
      * @return MessageType
      */
-    public MessageType getMsgType();
+    public MessageType getMsgType() {
+        return msgType;
+    }
 
-    /**
-     * Get the app-name of the job generating this event
-     * @return String app-name
-     */
-    public String getAppName();
+    public void setMsgType(MessageType type) {
+        msgType = type;
+    }
 
 }

@@ -35,6 +35,7 @@ import org.apache.oozie.service.Services;
  * The command to get a list of SLAEvents which are greater than given seqId.
  *
  */
+@SuppressWarnings("deprecation")
 public class SLAEventsXCommand extends XCommand<List<SLAEventBean>> {
 
     private long seqId = 0;

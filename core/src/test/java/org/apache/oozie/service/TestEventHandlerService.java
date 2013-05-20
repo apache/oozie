@@ -30,11 +30,15 @@ import org.apache.oozie.event.WorkflowActionEvent;
 import org.apache.oozie.event.WorkflowJobEvent;
 import org.apache.oozie.event.listener.JobEventListener;
 import org.apache.oozie.test.XDataTestCase;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 public class TestEventHandlerService extends XDataTestCase {
 
     static StringBuilder output = new StringBuilder();
 
+    @Before
     protected void setUp() throws Exception {
         super.setUp();
         Services services = new Services();
@@ -44,11 +48,13 @@ public class TestEventHandlerService extends XDataTestCase {
         services.init();
     }
 
+    @After
     protected void tearDown() throws Exception {
         Services.get().destroy();
         super.tearDown();
     }
 
+    @Test
     public void testService() throws Exception {
         EventHandlerService ehs = _testEventHandlerService();
         // check default initializations
@@ -56,8 +62,17 @@ public class TestEventHandlerService extends XDataTestCase {
         Set<String> jobtypes = ehs.getAppTypes();
         assertTrue(jobtypes.contains("workflow_job"));
         assertTrue(jobtypes.contains("coordinator_action"));
+
+        Services services = Services.get();
+        services.destroy();
+        services = new Services();
+        Configuration conf = services.getConf();
+        conf.set(Services.CONF_SERVICE_EXT_CLASSES, "");
+        services.init();
+        assertFalse(EventHandlerService.isEnabled());
     }
 
+    @Test
     public void testEventListener() throws Exception {
         EventHandlerService ehs = _testEventHandlerService();
         /*
@@ -133,6 +148,7 @@ public class TestEventHandlerService extends XDataTestCase {
         Services services = Services.get();
         EventHandlerService ehs = services.get(EventHandlerService.class);
         assertNotNull(ehs);
+        assertTrue(EventHandlerService.isEnabled());
         return ehs;
     }
 
@@ -174,7 +190,7 @@ public class TestEventHandlerService extends XDataTestCase {
         }
 
         @Override
-        public void init() {
+        public void init(Configuration conf) {
         }
 
         @Override

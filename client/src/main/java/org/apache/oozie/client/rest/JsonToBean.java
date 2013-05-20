@@ -25,7 +25,7 @@ import org.apache.oozie.client.JMSConnectionInfo;
 import org.apache.oozie.client.JMSConnectionInfoWrapper;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
-import org.apache.oozie.client.event.Event.AppType;
+import org.apache.oozie.AppType;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;

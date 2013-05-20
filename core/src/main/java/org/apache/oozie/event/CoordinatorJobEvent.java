@@ -19,6 +19,8 @@
 package org.apache.oozie.event;
 
 import java.util.Date;
+
+import org.apache.oozie.AppType;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.event.JobEvent;
 import org.apache.oozie.service.EventHandlerService;
@@ -33,11 +35,11 @@ public class CoordinatorJobEvent extends JobEvent {
 
     public CoordinatorJobEvent(String id, String parentId, CoordinatorJob.Status status, String user, String appName,
             Date startTime, Date endTime) {
-        super(AppType.COORDINATOR_JOB, id, parentId, user, appName);
+        super(id, parentId, user, AppType.COORDINATOR_JOB, appName);
         setStatus(status);
         setStartTime(startTime);
         setEndTime(endTime);
-        XLog.getLog(EventHandlerService.class).debug("Event generated - " + this.toString());
+        XLog.getLog(EventHandlerService.class).trace("Event generated - " + this.toString());
     }
 
     public CoordinatorJob.Status getStatus() {

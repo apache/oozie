@@ -21,7 +21,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.oozie.client.event.Event.AppType;
+import org.apache.oozie.AppType;
 import org.apache.oozie.client.event.Event.MessageType;
 import org.apache.oozie.client.event.JobEvent;
 import org.apache.oozie.client.event.jms.JMSHeaderConstants;

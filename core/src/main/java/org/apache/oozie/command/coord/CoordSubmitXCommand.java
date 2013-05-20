@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -214,12 +214,12 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
             LOG.debug("jobXml after initial validation " + XmlUtils.prettyPrint(appXml).toString());
 
             Element eXml = XmlUtils.parseXml(appXml);
-            
+
             String appNamespace = readAppNamespace(eXml);
             coordJob.setAppNamespace(appNamespace);
 
             ParameterVerifier.verifyParameters(conf, eXml);
-            
+
             appXml = XmlUtils.removeComments(appXml);
             initEvaluators();
             Element eJob = basicResolveAndIncludeDS(appXml, conf, coordJob);
@@ -748,8 +748,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
      * @throws CommandException thrown if failed to resolve sla events
      */
     private void resolveSLA(Element eAppXml, CoordinatorJobBean coordJob) throws CommandException {
-        Element eSla = eAppXml.getChild("action", eAppXml.getNamespace()).getChild("info",
-                Namespace.getNamespace(SchemaService.SLA_NAME_SPACE_URI));
+        Element eSla = XmlUtils.getSLAElement(eAppXml.getChild("action", eAppXml.getNamespace()));
 
         if (eSla != null) {
             String slaXml = XmlUtils.prettyPrint(eSla).toString();

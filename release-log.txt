@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1244 SLA Support in Oozie (mona)
 OOZIE-1371 oozie.coord.action.notification.url has no documentation (rkanter)
 OOZIE-1328 Cover package org.apache.oozie.cli with unit tests (vbondarev via virag)
 OOZIE-1327 enhance unit-test coverage of package org.apache.oozie (iveselovsky via rkanter)
@@ -12,7 +13,6 @@ OOZIE-1183 Update WebServices API documentation (rkanter)
 OOZIE-1368 Error message when using an incorrect oozie url with kerberos is misleading (rkanter)
 OOZIE-1352 Write documentation for OOzie Hive CLI (rkanter)
 OOZIE-1353 hive CLI fails with -X argument (rkanter)
-OOZIE-1303 CLI API for Bulk Monitoring (mona)
 OOZIE-611 distcp action does not have documentation (rkanter)
 OOZIE-1318 Action Main classes should be overridable via action configuration settings (rkanter)
 OOZIE-1347 Additions to JMS topic API (virag)
@@ -55,6 +55,7 @@ OOZIE-1239 Bump up trunk to 4.1.0-SNAPSHOT (virag)
 
 -- Oozie 4.0.0 (unreleased)
 
+OOZIE-1303 CLI API for Bulk Monitoring (mona)
 OOZIE-1350 Improve client debug output information (rkanter)
 OOZIE-1343 Sqoop sharelib should have hsqldb jar (rkanter)
 OOZIE-1344 We should use Sqoop 1.4.3 instead of 1.5.0-incubating-SNAPSHOT (rkanter)

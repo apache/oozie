@@ -212,7 +212,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             try {
                 if (isChangeInDependency) {
                     jpaService.execute(new CoordActionUpdateForInputCheckJPAExecutor(coordAction));
-                    if (EventHandlerService.isEventsConfigured()
+                    if (EventHandlerService.isEnabled()
                             && coordAction.getStatus() != CoordinatorAction.Status.READY) {
                         //since event is not to be generated unless action RUNNING via StartX
                         generateEvent(coordAction, coordJob.getUser(), coordJob.getAppName());

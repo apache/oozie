@@ -17,6 +17,7 @@
  */
 package org.apache.oozie.event.listener;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.event.BundleJobEvent;
 import org.apache.oozie.event.CoordinatorActionEvent;
 import org.apache.oozie.event.CoordinatorJobEvent;
@@ -31,8 +32,9 @@ public abstract class JobEventListener {
 
     /**
      * Initialize the listener
+     * @param conf
      */
-    public abstract void init();
+    public abstract void init(Configuration conf);
 
     /**
      * Destroy the listener
@@ -55,18 +57,18 @@ public abstract class JobEventListener {
      * On coordinator job transition
      * @param CoordinatorJobEvent
      */
-    public abstract void onCoordinatorJobEvent(CoordinatorJobEvent wje);
+    public abstract void onCoordinatorJobEvent(CoordinatorJobEvent cje);
 
     /**
      * On coordinator action transition
      * @param CoordinatorActionEvent
      */
-    public abstract void onCoordinatorActionEvent(CoordinatorActionEvent wae);
+    public abstract void onCoordinatorActionEvent(CoordinatorActionEvent cae);
 
     /**
      * On bundle job transition
      * @param BundleJobEvent
      */
-    public abstract void onBundleJobEvent(BundleJobEvent wje);
+    public abstract void onBundleJobEvent(BundleJobEvent bje);
 
 }

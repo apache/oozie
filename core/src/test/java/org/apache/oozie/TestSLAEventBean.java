@@ -24,13 +24,13 @@ import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
 
+@Deprecated
 public class TestSLAEventBean extends XTestCase {
 
     private static final Date ee = new Date(1L);
     private static final Date es = new Date(2L);
     private static final Date st = new Date(3L);
 
-    @SuppressWarnings("deprecation")
     private void set(SLAEventBean bean) {
         bean.setAlertContact("ac");
         bean.setAlertFrequency("af");
@@ -58,7 +58,6 @@ public class TestSLAEventBean extends XTestCase {
         bean.setUser("u");
     }
 
-    @SuppressWarnings("deprecation")
     public void testSetGet() {
         final SLAEventBean bean = new SLAEventBean();
 
@@ -106,7 +105,6 @@ public class TestSLAEventBean extends XTestCase {
                 + "    <app-name>an</app-name>\r\n" + "  </status>\r\n" + "</event>", actualXml);
     }
 
-    @SuppressWarnings("deprecation")
     public void testToXmlRegistrationEvent() {
         final SLAEventBean bean = new SLAEventBean();
         set(bean);

@@ -19,6 +19,8 @@
 package org.apache.oozie.event;
 
 import java.util.Date;
+
+import org.apache.oozie.AppType;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.event.JobEvent;
 import org.apache.oozie.service.EventHandlerService;
@@ -39,12 +41,12 @@ public class CoordinatorActionEvent extends JobEvent {
 
     public CoordinatorActionEvent(String id, String parentId, CoordinatorAction.Status status, String user,
             String appName, Date nomTime, Date startTime, String missDeps) {
-        super(AppType.COORDINATOR_ACTION, id, parentId, user, appName);
+        super(id, parentId, user, AppType.COORDINATOR_ACTION, appName);
         setStatus(status);
         setNominalTime(nomTime);
         setStartTime(startTime);
         setMissingDeps(missDeps);
-        XLog.getLog(EventHandlerService.class).debug("Event generated - " + this.toString());
+        XLog.getLog(EventHandlerService.class).trace("Event generated - " + this.toString());
     }
 
     public String getBundleJobId() {
