@@ -124,7 +124,7 @@ public class TestOozieCLI extends DagServletTestCase {
         return path;
     }
 
-    private String createMRProperties(String appPath) throws Exception {
+    private String createMRProperties(String appPath, boolean useNewAPI) throws Exception {
         String path = getTestCaseDir() + "/" + getName() + ".properties";
         Properties props = new Properties();
         props.setProperty(OozieClient.USER_NAME, getTestUser());
@@ -133,8 +133,14 @@ public class TestOozieCLI extends DagServletTestCase {
         props.setProperty(OozieClient.RERUN_SKIP_NODES, "node");
         props.setProperty(XOozieClient.NN, "localhost:9000");
         props.setProperty(XOozieClient.JT, "localhost:9001");
-        props.setProperty("mapred.mapper.class", "mapper.class");
-        props.setProperty("mapred.reducer.class", "reducer.class");
+        if (useNewAPI) {
+            props.setProperty("mapreduce.map.class", "mapper.class");
+            props.setProperty("mapreduce.reduce.class", "reducer.class");
+        }
+        else {
+            props.setProperty("mapred.mapper.class", "mapper.class");
+            props.setProperty("mapred.reducer.class", "reducer.class");
+        }
         props.setProperty("mapred.input.dir", "input");
         props.setProperty("mapred.output.dir", "output");
         props.setProperty("oozie.libpath", appPath);
@@ -234,7 +240,28 @@ public class TestOozieCLI extends DagServletTestCase {
                 Path appPath = new Path(getFsTestCaseDir(), "app");
                 getFileSystem().mkdirs(appPath);
 
-                String[] args = new String[]{"mapreduce", "-oozie", oozieUrl, "-config", createMRProperties(appPath.toString())};
+                String[] args = new String[]{"mapreduce", "-oozie", oozieUrl, "-config",
+                    createMRProperties(appPath.toString(), false)};
+                assertEquals(0, new OozieCLI().run(args));
+                assertEquals("submitMR", MockDagEngineService.did);
+                assertTrue(MockDagEngineService.started.get(wfCount));
+                return null;
+            }
+        });
+    }
+
+    public void testSubmitMapReduce2() throws Exception {
+        runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                String oozieUrl = getContextURL();
+                int wfCount = MockDagEngineService.INIT_WF_COUNT;
+
+                Path appPath = new Path(getFsTestCaseDir(), "app");
+                getFileSystem().mkdirs(appPath);
+
+                String[] args = new String[]{"mapreduce", "-oozie", oozieUrl, "-config",
+                        createMRProperties(appPath.toString(), true)};
                 assertEquals(0, new OozieCLI().run(args));
                 assertEquals("submitMR", MockDagEngineService.did);
                 assertTrue(MockDagEngineService.started.get(wfCount));
