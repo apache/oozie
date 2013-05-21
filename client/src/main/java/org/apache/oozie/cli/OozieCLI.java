@@ -154,7 +154,9 @@ public class OozieCLI {
     private static final String INSTANCE_SEPARATOR = "#";
 
     private static final String MAPRED_MAPPER = "mapred.mapper.class";
+    private static final String MAPRED_MAPPER_2 = "mapreduce.map.class";
     private static final String MAPRED_REDUCER = "mapred.reducer.class";
+    private static final String MAPRED_REDUCER_2 = "mapreduce.reduce.class";
     private static final String MAPRED_INPUT = "mapred.input.dir";
     private static final String MAPRED_OUTPUT = "mapred.output.dir";
 
@@ -1658,24 +1660,25 @@ public class OozieCLI {
             XOozieClient wc = createXOozieClient(commandLine);
             Properties conf = getConfiguration(wc, commandLine);
 
-            String mapper = conf.getProperty(MAPRED_MAPPER);
+            String mapper = conf.getProperty(MAPRED_MAPPER, conf.getProperty(MAPRED_MAPPER_2));
             if (mapper == null) {
-                throw new OozieCLIException("mapper is not specified in conf");
+                throw new OozieCLIException("mapper (" + MAPRED_MAPPER + " or " + MAPRED_MAPPER_2 + ") must be specified in conf");
             }
 
-            String reducer = conf.getProperty(MAPRED_REDUCER);
+            String reducer = conf.getProperty(MAPRED_REDUCER, conf.getProperty(MAPRED_REDUCER_2));
             if (reducer == null) {
-                throw new OozieCLIException("reducer is not specified in conf");
+                throw new OozieCLIException("reducer (" + MAPRED_REDUCER + " or " + MAPRED_REDUCER_2
+                        + ") must be specified in conf");
             }
 
             String inputDir = conf.getProperty(MAPRED_INPUT);
             if (inputDir == null) {
-                throw new OozieCLIException("mapred.input.dir is not specified in conf");
+                throw new OozieCLIException("input dir (" + MAPRED_INPUT +") must be specified in conf");
             }
 
             String outputDir = conf.getProperty(MAPRED_OUTPUT);
             if (outputDir == null) {
-                throw new OozieCLIException("mapred.output.dir is not specified in conf");
+                throw new OozieCLIException("output dir (" + MAPRED_OUTPUT +") must be specified in conf");
             }
 
             System.out.println(JOB_ID_PREFIX + wc.submitMapReduce(conf));

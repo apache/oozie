@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1387 Proxysubmission from the Oozie client doesn't allow the mapreduce API (rkanter)
 OOZIE-1244 SLA Support in Oozie (mona)
 OOZIE-1371 oozie.coord.action.notification.url has no documentation (rkanter)
 OOZIE-1328 Cover package org.apache.oozie.cli with unit tests (vbondarev via virag)
