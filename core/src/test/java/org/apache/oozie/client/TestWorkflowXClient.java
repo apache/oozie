@@ -118,6 +118,10 @@ public class TestWorkflowXClient extends DagServletTestCase {
                 Path libPath = new Path(getFsTestCaseDir(), "lib");
                 getFileSystem().mkdirs(libPath);
 
+                String localPath = libPath.toUri().getPath();
+                int startPosition = libPath.toString().indexOf(localPath);
+                String nn = libPath.toString().substring(0, startPosition);
+
                 // try to submit without JT and NN
                 try {
                     wc.submitMapReduce(conf);
@@ -129,28 +133,32 @@ public class TestWorkflowXClient extends DagServletTestCase {
                 conf.setProperty(XOozieClient.JT, "localhost:9001");
                 try {
                     wc.submitMapReduce(conf);
-                    fail("submit client without NN should throuhg exception");
+                    fail("submit client without NN should throw exception");
                 }
                 catch (RuntimeException exception) {
                     assertEquals("java.lang.RuntimeException: namenode is not specified in conf", exception.toString());
                 }
-                conf.setProperty(XOozieClient.NN, "hdfs://localhost:9000");
+                // set fs.default.name
+                conf.setProperty(XOozieClient.NN, nn);
                 try {
                     wc.submitMapReduce(conf);
-                    fail("submit client without LIBPATH should throuhg exception");
+                    fail("submit client without LIBPATH should throw exception");
+                }
+                catch (RuntimeException exception) {
+                    assertEquals("java.lang.RuntimeException: libpath is not specified in conf", exception.toString());
+                }
+                // set fs.defaultFS instead
+                conf.remove(XOozieClient.NN);
+                conf.setProperty(XOozieClient.NN_2, nn);
+                try {
+                    wc.submitMapReduce(conf);
+                    fail("submit client without LIBPATH should throw exception");
                 }
                 catch (RuntimeException exception) {
                     assertEquals("java.lang.RuntimeException: libpath is not specified in conf", exception.toString());
                 }
 
-                File tmp = new File("target");
-                int startPosition = libPath.toString().indexOf(tmp.getAbsolutePath());
-                String localPath = libPath.toString().substring(startPosition);
-
-                wc.setLib(conf, libPath.toString());
-
                 conf.setProperty(OozieClient.LIBPATH, localPath.substring(1));
-
                 try {
                     wc.submitMapReduce(conf);
                     fail("lib path can not be relative");
@@ -158,7 +166,8 @@ public class TestWorkflowXClient extends DagServletTestCase {
                 catch (RuntimeException e) {
                     assertEquals("java.lang.RuntimeException: libpath should be absolute", e.toString());
                 }
-                wc.setLib(conf, libPath.toString());
+
+                conf.setProperty(OozieClient.LIBPATH, localPath);
 
                 assertEquals(MockDagEngineService.JOB_ID + wfCount + MockDagEngineService.JOB_ID_END,
                         wc.submitMapReduce(conf));

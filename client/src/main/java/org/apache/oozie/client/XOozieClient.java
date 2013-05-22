@@ -123,6 +123,8 @@ public class XOozieClient extends OozieClient {
         if (NN == null) {
             if(NN_2 == null) {
                 throw new RuntimeException("namenode is not specified in conf");
+            } else {
+                NN = NN_2;
             }
         }
 
