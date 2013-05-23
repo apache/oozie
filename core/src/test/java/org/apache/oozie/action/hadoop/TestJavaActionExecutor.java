@@ -1442,6 +1442,10 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
     }
 
     public void testInjectLauncherUseUberMode() throws Exception {
+        // TODO: Delete these two lines once uber mode is set back to the default (OOZIE-1385)
+        assertFalse(Services.get().getConf().getBoolean("oozie.action.launcher.mapreduce.job.ubertask.enable", true));
+        Services.get().getConf().setBoolean("oozie.action.launcher.mapreduce.job.ubertask.enable", true);
+
         // default -- should set to true
         JavaActionExecutor jae = new JavaActionExecutor();
         Configuration conf = new Configuration(false);

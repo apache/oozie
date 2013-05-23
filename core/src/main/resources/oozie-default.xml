@@ -1430,7 +1430,7 @@
 
     <property>
         <name>oozie.action.launcher.mapreduce.job.ubertask.enable</name>
-        <value>true</value>
+        <value>false</value>
         <description>
             Enables Uber Mode for the launcher job in YARN/Hadoop 2 (no effect in Hadoop 1).
             Setting oozie.launcher.mapreduce.job.ubertask.enable in a an action's configuration section overrides this for that
