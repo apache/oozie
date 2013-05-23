@@ -92,13 +92,13 @@ import org.apache.oozie.util.XLog;
  * From within testcases, system properties must be changed using the {@link #setSystemProperty} method.
  */
 public abstract class XTestCase extends TestCase {
-    private Map<String, String> sysProps;
+    protected Map<String, String> sysProps;
     private String testCaseDir;
     private String testCaseConfDir;
     private String hadoopVersion;
     protected XLog log = new XLog(LogFactory.getLog(getClass()));
 
-    private static File OOZIE_SRC_DIR = null;
+    protected static File OOZIE_SRC_DIR = null;
     private static final String OOZIE_TEST_PROPERTIES = "oozie.test.properties";
 
     public static float WAITFOR_RATIO = Float.parseFloat(System.getProperty("oozie.test.waitfor.ratio", "1"));
