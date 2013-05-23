@@ -254,7 +254,7 @@ public class JavaActionExecutor extends ActionExecutor {
     void injectLauncherUseUberMode(Configuration launcherConf) {
         // Set Uber Mode for the launcher (YARN only, ignored by MR1) if not set by action conf and not disabled in oozie-site
         if (launcherConf.get(HADOOP_YARN_UBER_MODE) == null) {
-            if (getOozieConf().getBoolean("oozie.action.launcher.mapreduce.job.ubertask.enable", true)) {
+            if (getOozieConf().getBoolean("oozie.action.launcher.mapreduce.job.ubertask.enable", false)) {
                 launcherConf.setBoolean(HADOOP_YARN_UBER_MODE, true);
             }
         }

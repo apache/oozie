@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1384 Make Uber Mode not the default (rkanter via virag)
 OOZIE-1386 NPE in XOozieClient if fs.default.name is not defined but fs.defaultFS is (wypoon via rkanter)
 OOZIE-1387 Proxysubmission from the Oozie client doesn't allow the mapreduce API (rkanter)
 OOZIE-1244 SLA Support in Oozie (mona)
