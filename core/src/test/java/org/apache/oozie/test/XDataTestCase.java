@@ -121,6 +121,25 @@ public abstract class XDataTestCase extends XHCatTestCase {
     }
 
     /**
+     * Inserts the passed coord job
+     * @param coord job bean
+     * @throws Exception
+     */
+    protected void addRecordToCoordJobTable(CoordinatorJobBean coordJob) throws Exception {
+        try {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            assertNotNull(jpaService);
+            CoordJobInsertJPAExecutor coordInsertCmd = new CoordJobInsertJPAExecutor(coordJob);
+            jpaService.execute(coordInsertCmd);
+        }
+        catch (JPAExecutorException je) {
+            je.printStackTrace();
+            fail("Unable to insert the test coord job record to table");
+            throw je;
+        }
+    }
+
+    /**
      * Insert coord job for testing.
      *
      * @param status coord job status

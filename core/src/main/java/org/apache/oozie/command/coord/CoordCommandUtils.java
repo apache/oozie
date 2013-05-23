@@ -63,28 +63,36 @@ public class CoordCommandUtils {
      * <p/>
      *
      * @param function
-     * @param event
-     * @param appInst
-     * @param conf
      * @param restArg
      * @return int instanceNumber
      * @throws Exception
      */
-    public static int getInstanceNumber(String function, Element event, SyncCoordAction appInst, Configuration conf,
-            StringBuilder restArg) throws Exception {
-        ELEvaluator eval = CoordELEvaluator
-                .createInstancesELEvaluator("coord-action-create-inst", event, appInst, conf);
-        String newFunc = CoordELFunctions.evalAndWrap(eval, function);
-        int funcType = getFuncType(newFunc);
+    public static int getInstanceNumber(String function, StringBuilder restArg) throws Exception {
+        int funcType = getFuncType(function);
         if (funcType == CURRENT || funcType == LATEST) {
-            return parseOneArg(newFunc);
+            return parseOneArg(function);
         }
         else {
-            return parseMoreArgs(newFunc, restArg);
+            return parseMoreArgs(function, restArg);
         }
     }
 
-    private static int parseOneArg(String funcName) throws Exception {
+    /**
+     * Evaluates function for coord-action-create-inst tag
+     * @param event
+     * @param appInst
+     * @param conf
+     * @param function
+     * @return evaluation result
+     * @throws Exception
+     */
+    private static String evaluateInstanceFunction(Element event, SyncCoordAction appInst, Configuration conf,
+            String function) throws Exception {
+        ELEvaluator eval = CoordELEvaluator.createInstancesELEvaluator("coord-action-create-inst", event, appInst, conf);
+        return CoordELFunctions.evalAndWrap(eval, function);
+    }
+
+    public static int parseOneArg(String funcName) throws Exception {
         int firstPos = funcName.indexOf("(");
         int lastPos = funcName.lastIndexOf(")");
         if (firstPos >= 0 && lastPos > firstPos) {
@@ -181,17 +189,17 @@ public class CoordCommandUtils {
         Element eStartInst = event.getChild("start-instance", event.getNamespace());
         Element eEndInst = event.getChild("end-instance", event.getNamespace());
         if (eStartInst != null && eEndInst != null) {
-            String strStart = eStartInst.getTextTrim();
-            String strEnd = eEndInst.getTextTrim();
+            String strStart = evaluateInstanceFunction(event, appInst, conf, eStartInst.getTextTrim());
+            String strEnd = evaluateInstanceFunction(event, appInst, conf, eEndInst.getTextTrim());
             checkIfBothSameType(strStart, strEnd);
             StringBuilder restArg = new StringBuilder(); // To store rest
                                                          // arguments for
                                                          // future
                                                          // function
-            int startIndex = getInstanceNumber(strStart, event, appInst, conf, restArg);
+            int startIndex = getInstanceNumber(strStart, restArg);
             String startRestArg = restArg.toString();
             restArg.delete(0, restArg.length());
-            int endIndex = getInstanceNumber(strEnd, event, appInst, conf, restArg);
+            int endIndex = getInstanceNumber(strEnd, restArg);
             String endRestArg = restArg.toString();
             int funcType = getFuncType(strStart);
             if (funcType == OFFSET) {
