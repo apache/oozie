@@ -207,6 +207,7 @@ public class EventHandlerService implements Service {
     }
 
     public void queueEvent(Event event) {
+        LOG.trace("Stack trace while queueing event : " + event, new Throwable());
         eventQueue.add(event);
     }
 

@@ -123,6 +123,7 @@ public class MemoryEventQueue implements EventQueue {
     @Override
     public void clear() {
         eventQueue.clear();
+        currentSize.set(0);
     }
 
 }

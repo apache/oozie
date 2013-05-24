@@ -80,9 +80,10 @@ public abstract class TransitionXCommand<T> extends XCommand<T> {
     public void generateEvents(CoordinatorJobBean coordJob) throws CommandException {
         for (JsonBean actionBean : updateList) {
             if (actionBean instanceof CoordinatorActionBean) {
+                CoordinatorActionBean caBean = (CoordinatorActionBean) actionBean;
+                caBean.setJobId(coordJob.getId());
                 if (EventHandlerService.isEnabled()) {
-                    CoordinatorXCommand.generateEvent((CoordinatorActionBean) actionBean, coordJob.getUser(),
-                            coordJob.getAppName());
+                    CoordinatorXCommand.generateEvent(caBean, coordJob.getUser(), coordJob.getAppName());
                 }
             }
         }

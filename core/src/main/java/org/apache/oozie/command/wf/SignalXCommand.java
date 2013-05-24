@@ -73,6 +73,9 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
     private WorkflowActionBean wfAction;
     private List<JsonBean> updateList = new ArrayList<JsonBean>();
     private List<JsonBean> insertList = new ArrayList<JsonBean>();
+    private boolean generateEvent;
+    private String wfJobErrorCode;
+    private String wfJobErrorMsg;
 
 
     public SignalXCommand(String name, int priority, String jobId) {
@@ -146,6 +149,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                 wfJob.setStatus(WorkflowJob.Status.RUNNING);
                 wfJob.setStartTime(new Date());
                 wfJob.setWorkflowInstance(workflowInstance);
+                generateEvent = true;
                 // 1. Add SLA status event for WF-JOB with status STARTED
                 SLAEventBean slaEvent = SLADbXOperations.createStatusEvent(wfJob.getSlaXml(), jobId,
                         Status.STARTED, SlaAppType.WORKFLOW_JOB);
@@ -162,6 +166,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
             }
         }
         else {
+            WorkflowInstance.Status initialStatus = workflowInstance.getStatus();
             String skipVar = workflowInstance.getVar(wfAction.getName() + WorkflowInstance.NODE_VAR_SEPARATOR
                     + ReRunXCommand.TO_SKIP);
             if (skipVar != null) {
@@ -180,6 +185,10 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                 queue(new NotificationXCommand(wfJob, wfAction));
             }
             updateList.add(wfAction);
+            WorkflowInstance.Status endStatus = workflowInstance.getStatus();
+            if (endStatus != initialStatus) {
+                generateEvent = true;
+            }
         }
 
         if (completed) {
@@ -200,6 +209,10 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                             actionToFailId));
                     actionToFail.resetPending();
                     actionToFail.setStatus(WorkflowActionBean.Status.FAILED);
+                    if (wfJobErrorCode != null) {
+                        wfJobErrorCode = actionToFail.getErrorCode();
+                        wfJobErrorMsg = actionToFail.getErrorMessage();
+                    }
                     queue(new NotificationXCommand(wfJob, actionToFail));
                     SLAEventBean slaEvent = SLADbXOperations.createStatusEvent(wfAction.getSlaXml(), wfAction.getId(),
                             Status.FAILED, SlaAppType.WORKFLOW_ACTION);
@@ -310,12 +323,10 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
             updateList.add(wfJob);
             // call JPAExecutor to do the bulk writes
             jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, insertList));
-            if (EventHandlerService.isEnabled()) {
+            if (generateEvent && EventHandlerService.isEnabled()) {
+                generateEvent(wfJob, wfJobErrorCode, wfJobErrorMsg);
                 if (wfAction != null) {
-                    generateEvent(wfJob, wfAction.getErrorCode(), wfAction.getErrorMessage());
-                }
-                else {
-                    generateEvent(wfJob);
+                    generateEvent(wfAction, wfJob.getUser());
                 }
             }
         }
