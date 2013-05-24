@@ -134,9 +134,9 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
             }
 
             jpaService.execute(new BulkUpdateInsertForCoordActionStatusJPAExecutor(updateList, insertList));
-            if (EventHandlerService.isEnabled()) {
-                CoordinatorJobBean coordJob = jpaService.execute(new CoordinatorJobGetForUserAppnameJPAExecutor(coordAction
-                        .getJobId()));
+            if (preCoordStatus != coordAction.getStatus() && EventHandlerService.isEnabled()) {
+                CoordinatorJobBean coordJob = jpaService.execute(new CoordinatorJobGetForUserAppnameJPAExecutor(
+                        coordAction.getJobId()));
                 generateEvent(coordAction, coordJob.getUser(), coordJob.getAppName());
             }
 

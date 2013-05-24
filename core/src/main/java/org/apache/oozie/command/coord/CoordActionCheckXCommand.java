@@ -74,6 +74,7 @@ public class CoordActionCheckXCommand extends CoordinatorXCommand<Void> {
             InstrumentUtils.incrJobCounter(getName(), 1, getInstrumentation());
             WorkflowJobBean wf = jpaService.execute(new WorkflowJobGetJPAExecutor(coordAction.getExternalId()));
             Status slaStatus = null;
+            CoordinatorAction.Status initialStatus = coordAction.getStatus();
 
             if (wf.getStatus() == WorkflowJob.Status.SUCCEEDED) {
                 coordAction.setStatus(CoordinatorAction.Status.SUCCEEDED);
@@ -119,7 +120,8 @@ public class CoordActionCheckXCommand extends CoordinatorXCommand<Void> {
             }
 
             jpaService.execute(new BulkUpdateInsertForCoordActionStatusJPAExecutor(updateList, insertList));
-            if (EventHandlerService.isEnabled()) {
+            CoordinatorAction.Status endStatus = coordAction.getStatus();
+            if (endStatus != initialStatus && EventHandlerService.isEnabled()) {
                 CoordinatorJobBean coordJob = jpaService.execute(new CoordinatorJobGetForUserAppnameJPAExecutor(
                         coordAction.getJobId()));
                 generateEvent(coordAction, coordJob.getUser(), coordJob.getAppName());
