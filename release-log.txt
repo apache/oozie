@@ -1,6 +1,5 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
-OOZIE-1392 Add commons-io-*.jar to addtowar for hadoop-2.0 (virag)
 OOZIE-674 resolveInstanceRange doesn't work for EL extensions (shwethags via mona)
 OOZIE-1384 Make Uber Mode not the default (rkanter via virag)
 OOZIE-1386 NPE in XOozieClient if fs.default.name is not defined but fs.defaultFS is (wypoon via rkanter)
@@ -60,6 +59,7 @@ OOZIE-1239 Bump up trunk to 4.1.0-SNAPSHOT (virag)
 
 -- Oozie 4.0.0 (unreleased)
 
+OOZIE-1392 Add commons-io-*.jar to addtowar for hadoop-2.0 (virag)
 OOZIE-1303 CLI API for Bulk Monitoring (mona)
 OOZIE-1350 Improve client debug output information (rkanter)
 OOZIE-1343 Sqoop sharelib should have hsqldb jar (rkanter)
