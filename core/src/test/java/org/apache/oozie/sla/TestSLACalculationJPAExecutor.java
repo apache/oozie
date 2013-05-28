@@ -29,7 +29,6 @@ import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.SkipCommitFaultInjection;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.sla.SLACalculationInsertUpdateJPAExecutor;
-import org.apache.oozie.executor.jpa.sla.SLACalculatorGetJPAExecutor;
 import org.apache.oozie.executor.jpa.sla.SLASummaryGetJPAExecutor;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
@@ -39,7 +38,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
- * Testcase to check db operations on tables SLA_CALCULATOR and SLA_SUMMARY
+ * Testcase to check db operations on SLA_SUMMARY table
  */
 public class TestSLACalculationJPAExecutor extends XDataTestCase {
     Services services;
@@ -73,7 +72,6 @@ public class TestSLACalculationJPAExecutor extends XDataTestCase {
         assertNotNull(jpaService);
 
         String wfId = "workflow-1";
-        SLACalculatorBean bean1 = _createSLACalcBean(wfId, false, false);
 
         cal.setTime(new Date());
         cal.add(Calendar.DAY_OF_MONTH, -2);
@@ -84,33 +82,27 @@ public class TestSLACalculationJPAExecutor extends XDataTestCase {
         cal.add(Calendar.DAY_OF_MONTH, 2);
         Date actEnd = cal.getTime();
         SLASummaryBean bean2 = _createSLASummaryBean(wfId, "RUNNING", EventStatus.START_MISS, expStart, expEnd, 1000,
-                actStart, actEnd, 2000);
+                actStart, actEnd, 2000, (byte) 1, actEnd);
 
         List<JsonBean> list = new ArrayList<JsonBean>();
-        list.add(bean1);
         list.add(bean2);
         SLACalculationInsertUpdateJPAExecutor writeCmd = new SLACalculationInsertUpdateJPAExecutor();
         writeCmd.setInsertList(list);
         jpaService.execute(writeCmd);
 
-        SLACalculatorGetJPAExecutor readCmd1 = new SLACalculatorGetJPAExecutor(wfId);
-        SLACalculatorBean scBean = jpaService.execute(readCmd1);
-        assertNotNull(scBean);
-        assertEquals(wfId, scBean.getJobId());
-        assertFalse(scBean.isStartProcessed());
-        assertFalse(scBean.isEndProcessed());
-
         SLASummaryGetJPAExecutor readCmd2 = new SLASummaryGetJPAExecutor(wfId);
-        SLASummaryBean ssBean = jpaService.execute(readCmd2);
-        assertEquals(wfId, ssBean.getJobId());
-        assertEquals("RUNNING", ssBean.getJobStatus());
-        assertEquals(EventStatus.START_MISS, ssBean.getEventStatus());
-        assertEquals(expStart, ssBean.getExpectedStart());
-        assertEquals(expEnd, ssBean.getExpectedEnd());
-        assertEquals(1000, ssBean.getExpectedDuration());
-        assertEquals(actStart, ssBean.getActualStart());
-        assertEquals(actEnd, ssBean.getActualEnd());
-        assertEquals(2000, ssBean.getActualDuration());
+        SLASummaryBean sBean = jpaService.execute(readCmd2);
+        assertEquals(wfId, sBean.getJobId());
+        assertEquals("RUNNING", sBean.getJobStatus());
+        assertEquals(EventStatus.START_MISS, sBean.getEventStatus());
+        assertEquals(expStart, sBean.getExpectedStart());
+        assertEquals(expEnd, sBean.getExpectedEnd());
+        assertEquals(1000, sBean.getExpectedDuration());
+        assertEquals(actStart, sBean.getActualStart());
+        assertEquals(actEnd, sBean.getActualEnd());
+        assertEquals(2000, sBean.getActualDuration());
+        assertEquals(1, sBean.getSlaProcessed());
+        assertEquals(actEnd, sBean.getLastModifiedTime());
 
     }
 
@@ -126,8 +118,6 @@ public class TestSLACalculationJPAExecutor extends XDataTestCase {
 
         String wfId = "workflow-1";
         // initial insert
-        SLACalculatorBean bean1 = _createSLACalcBean(wfId, false, false);
-
         cal.setTime(new Date());
         cal.add(Calendar.DAY_OF_MONTH, -2);
         Date expStart = cal.getTime();
@@ -135,9 +125,8 @@ public class TestSLACalculationJPAExecutor extends XDataTestCase {
         Date expEnd = cal.getTime();
         Date actStart = new Date();
         SLASummaryBean bean2 = _createSLASummaryBean(wfId, "RUNNING", EventStatus.START_MISS, expStart, expEnd, 1000,
-                actStart, null, 2000);
+                actStart, null, 2000, (byte) 0, actStart);
         List<JsonBean> list = new ArrayList<JsonBean>();
-        list.add(bean1);
         list.add(bean2);
         SLACalculationInsertUpdateJPAExecutor writeCmd = new SLACalculationInsertUpdateJPAExecutor();
         writeCmd.setInsertList(list);
@@ -145,34 +134,27 @@ public class TestSLACalculationJPAExecutor extends XDataTestCase {
 
         // update existing record
         Date newDate = new Date();
-        bean1 = _createSLACalcBean(wfId, true, true);
         bean2 = _createSLASummaryBean(wfId, "RUNNING", EventStatus.DURATION_MISS, expStart, expEnd, 1000, actStart,
-                newDate, 2000);
+                newDate, 2000, (byte) 1, newDate);
         list = new ArrayList<JsonBean>();
-        list.add(bean1);
         list.add(bean2);
         writeCmd.setUpdateList(list);
         writeCmd.setInsertList(null);
         jpaService.execute(writeCmd);
 
-        SLACalculatorGetJPAExecutor readCmd1 = new SLACalculatorGetJPAExecutor(wfId);
-        SLACalculatorBean scBean = jpaService.execute(readCmd1);
-        assertNotNull(scBean);
-        assertEquals(wfId, scBean.getJobId());
-        assertTrue(scBean.isStartProcessed());
-        assertTrue(scBean.isEndProcessed());
-
         SLASummaryGetJPAExecutor readCmd2 = new SLASummaryGetJPAExecutor(wfId);
-        SLASummaryBean sdBean = jpaService.execute(readCmd2);
+        SLASummaryBean sBean = jpaService.execute(readCmd2);
         // check updated + original fields
-        assertEquals(wfId, sdBean.getJobId());
-        assertEquals(EventStatus.DURATION_MISS, sdBean.getEventStatus());
-        assertEquals(expStart, sdBean.getExpectedStart());
-        assertEquals(expEnd, sdBean.getExpectedEnd());
-        assertEquals(1000, sdBean.getExpectedDuration());
-        assertEquals(actStart, sdBean.getActualStart());
-        assertEquals(newDate, sdBean.getActualEnd());
-        assertEquals(2000, sdBean.getActualDuration());
+        assertEquals(wfId, sBean.getJobId());
+        assertEquals(EventStatus.DURATION_MISS, sBean.getEventStatus());
+        assertEquals(expStart, sBean.getExpectedStart());
+        assertEquals(expEnd, sBean.getExpectedEnd());
+        assertEquals(1000, sBean.getExpectedDuration());
+        assertEquals(actStart, sBean.getActualStart());
+        assertEquals(newDate, sBean.getActualEnd());
+        assertEquals(2000, sBean.getActualDuration());
+        assertEquals(1, sBean.getSlaProcessed());
+        assertEquals(newDate, sBean.getLastModifiedTime());
 
     }
 
@@ -189,31 +171,26 @@ public class TestSLACalculationJPAExecutor extends XDataTestCase {
         String wfId1 = "workflow-1";
         String wfId2 = "workflow-2";
         // initial insert
-        SLACalculatorBean bean1 = _createSLACalcBean(wfId1, false, false);
-        SLASummaryBean bean2 = _createSLASummaryBean(wfId1, "RUNNING", EventStatus.START_MISS, new Date(), new Date(),
-                1000, null, null, 2000);
+        SLASummaryBean bean1 = _createSLASummaryBean(wfId1, "RUNNING", EventStatus.START_MISS, new Date(), new Date(),
+                1000, null, null, 2000, 0, null);
         List<JsonBean> list = new ArrayList<JsonBean>();
         list.add(bean1);
-        list.add(bean2);
         SLACalculationInsertUpdateJPAExecutor writeCmd = new SLACalculationInsertUpdateJPAExecutor(list, null);
         jpaService.execute(writeCmd);
 
         // update existing record and insert another
         Date newDate = new Date();
-        bean1 = _createSLACalcBean(wfId1, true, true);
-        bean2 = new SLASummaryBean();
-        bean2.setJobId(wfId1);
-        bean2.setActualEnd(newDate);
+        bean1 = new SLASummaryBean();
+        bean1.setJobId(wfId1);
+        bean1.setActualEnd(newDate);
+        bean1.setSlaProcessed(1);
         List<JsonBean> updateList = new ArrayList<JsonBean>();
         updateList.add(bean1);
-        updateList.add(bean2);
 
-        SLACalculatorBean bean3 = _createSLACalcBean(wfId2, false, false);
-        SLASummaryBean bean4 = _createSLASummaryBean(wfId2, "RUNNING", EventStatus.END_MISS, new Date(), new Date(),
-                1000, null, null, 2000);
+        SLASummaryBean bean2 = _createSLASummaryBean(wfId2, "RUNNING", EventStatus.END_MISS, new Date(), new Date(),
+                1000, null, null, 2000, 0, null);
         List<JsonBean> insertList = new ArrayList<JsonBean>();
-        insertList.add(bean3);
-        insertList.add(bean4);
+        insertList.add(bean2);
         writeCmd = new SLACalculationInsertUpdateJPAExecutor(insertList, updateList);
 
         // set fault injection to true, so transaction is roll backed
@@ -228,35 +205,25 @@ public class TestSLACalculationJPAExecutor extends XDataTestCase {
         FaultInjection.deactivate("org.apache.oozie.command.SkipCommitFaultInjection");
 
         // Check whether transactions are rolled back or not
-        SLACalculatorGetJPAExecutor readCmd1 = new SLACalculatorGetJPAExecutor(wfId1);
-        SLACalculatorBean scBean = jpaService.execute(readCmd1);
-        // isStartProcessed should NOT be toggled to true
-        assertFalse(scBean.isStartProcessed());
-        SLASummaryGetJPAExecutor readCmd2 = new SLASummaryGetJPAExecutor(wfId1);
-        SLASummaryBean sdBean = jpaService.execute(readCmd2);
+        SLASummaryGetJPAExecutor readCmd = new SLASummaryGetJPAExecutor(wfId1);
+        SLASummaryBean sBean = jpaService.execute(readCmd);
+        // isSlaProcessed should NOT be changed to 1
+        assertFalse(sBean.getSlaProcessed() == 1);
         // actualEnd should be null as before
-        assertNull(sdBean.getActualEnd());
+        assertNull(sBean.getActualEnd());
 
-        readCmd1 = new SLACalculatorGetJPAExecutor(wfId2);
+        SLASummaryGetJPAExecutor readCmd1 = new SLASummaryGetJPAExecutor(wfId2);
         try {
-            scBean = jpaService.execute(readCmd1);
-            fail("Expected exception but didnt get any");
+            sBean = jpaService.execute(readCmd1);
+            fail("Expected not found exception but didnt get any");
         }
         catch (JPAExecutorException jpaee) {
             assertEquals(ErrorCode.E0603, jpaee.getErrorCode());
         }
     }
 
-    private SLACalculatorBean _createSLACalcBean(String jobId, boolean startProc, boolean endProc) {
-        SLACalculatorBean bean = new SLACalculatorBean();
-        bean.setJobId(jobId);
-        bean.setStartProcessed(startProc);
-        bean.setEndProcessed(endProc);
-        return bean;
-    }
-
     private SLASummaryBean _createSLASummaryBean(String jobId, String status, EventStatus slaType, Date eStart,
-            Date eEnd, long eDur, Date aStart, Date aEnd, long aDur) {
+            Date eEnd, long eDur, Date aStart, Date aEnd, long aDur, int slaProc, Date lastMod) {
         SLASummaryBean bean = new SLASummaryBean();
         bean.setJobId(jobId);
         bean.setJobStatus(status);
@@ -267,6 +234,9 @@ public class TestSLACalculationJPAExecutor extends XDataTestCase {
         bean.setActualStart(aStart);
         bean.setActualEnd(aEnd);
         bean.setActualDuration(aDur);
+        bean.setSlaProcessed((byte) slaProc);
+        bean.setLastModifiedTime(lastMod);
         return bean;
     }
+
 }

@@ -44,7 +44,6 @@ import org.apache.oozie.client.rest.JsonWorkflowJob;
 import org.apache.oozie.client.rest.sla.JsonSLARegistrationEvent;
 import org.apache.oozie.executor.jpa.JPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
-import org.apache.oozie.sla.SLACalculatorBean;
 import org.apache.oozie.sla.SLARegistrationBean;
 import org.apache.oozie.sla.SLASummaryBean;
 import org.apache.oozie.util.IOUtils;
@@ -56,6 +55,7 @@ import org.apache.openjpa.persistence.OpenJPAEntityManagerFactorySPI;
 /**
  * Service that manages JPA and executes {@link JPAExecutor}.
  */
+@SuppressWarnings("deprecation")
 public class JPAService implements Service, Instrumentable {
     private static final String INSTRUMENTATION_GROUP = "jpa";
 
@@ -175,7 +175,6 @@ public class JPAService implements Service, Instrumentable {
         entityManager.find(BundleActionBean.class, 1);
         entityManager.find(SLARegistrationBean.class, 1);
         entityManager.find(JsonSLARegistrationEvent.class, 1);
-        entityManager.find(SLACalculatorBean.class, 1);
         entityManager.find(SLASummaryBean.class, 1);
 
         LOG.info(XLog.STD, "All entities initialized");

@@ -102,14 +102,19 @@ public class TestSLAService extends XDataTestCase {
         SLARegistrationBean sla2 = _createSLARegistration("job-3", AppType.COORDINATOR_JOB);
         sla2.setExpectedStart(new Date(System.currentTimeMillis() + 1 * 3600 * 1000)); //1 hour ahead only for testing
         sla2.setExpectedEnd(new Date(System.currentTimeMillis() - 2 * 3600 * 1000)); //2 hours back
+        sla2.setExpectedDuration(10); //to process duration too
         slas.addRegistrationEvent(sla2);
         assertEquals(3, slas.getSLACalculator().size());
-        slas.addStatusEvent(sla2.getJobId(), CoordinatorJob.Status.SUCCEEDED.name(), EventStatus.SUCCESS, new Date(),
+        Date startTime = new Date();
+        slas.addStatusEvent(sla2.getJobId(), CoordinatorJob.Status.RUNNING.name(), EventStatus.STARTED, startTime,
+                null);
+        slas.addStatusEvent(sla2.getJobId(), CoordinatorJob.Status.SUCCEEDED.name(), EventStatus.SUCCESS, startTime,
                 new Date());
         slas.runSLAWorker();
         ehs.new EventWorker().run();
         assertTrue(output.toString().contains(sla1.getJobId() + " Sla START - MET!!!"));
         assertTrue(output.toString().contains(sla2.getJobId() + " Sla END - MISS!!!"));
+        assertTrue(output.toString().contains(sla2.getJobId() + " Sla DURATION - MET!!!"));
         output.setLength(0);
 
         // test same job multiple events (start-miss, end-miss) through regular check
@@ -117,10 +122,8 @@ public class TestSLAService extends XDataTestCase {
         sla2.setExpectedStart(new Date(System.currentTimeMillis() - 2 * 3600 * 1000)); //2 hours back
         sla2.setExpectedEnd(new Date(System.currentTimeMillis() - 1 * 3600 * 1000)); //1 hour back
         slas.addRegistrationEvent(sla2);
-        assertEquals(3, slas.getSLACalculator().size()); // remains same as before since
-                                                         // sla-END stage job is removed from map
+        assertEquals(3, slas.getSLACalculator().size()); // tests job slaProcessed == 7 removed from map
         slas.runSLAWorker();
-        assertEquals(2, ehs.getEventQueue().size());
         ehs.new EventWorker().run();
         System.out.println(output);
         assertTrue(output.toString().contains(sla2.getJobId() + " Sla START - MISS!!!"));
@@ -132,7 +135,7 @@ public class TestSLAService extends XDataTestCase {
         sla1.setExpectedStart(new Date(System.currentTimeMillis() + 1 * 3600 * 1000)); //1 hour ahead
         sla1.setExpectedEnd(new Date(System.currentTimeMillis() + 2 * 3600 * 1000)); //2 hours ahead
         slas.addRegistrationEvent(sla1);
-        assertEquals(3, slas.getSLACalculator().size());
+        assertEquals(4, slas.getSLACalculator().size());
         slas.addStatusEvent(sla1.getJobId(), CoordinatorAction.Status.RUNNING.name(), EventStatus.STARTED, new Date(),
                 new Date());
         slas.addStatusEvent(sla1.getJobId(), CoordinatorAction.Status.SUCCEEDED.name(), EventStatus.SUCCESS,

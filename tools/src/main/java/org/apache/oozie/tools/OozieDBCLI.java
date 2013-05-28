@@ -793,7 +793,6 @@ public class OozieDBCLI {
         args.add("org.apache.oozie.client.rest.JsonBundleJob");
         args.add("org.apache.oozie.BundleJobBean");
         args.add("org.apache.oozie.BundleActionBean");
-        args.add("org.apache.oozie.sla.SLACalculatorBean");
         args.add("org.apache.oozie.sla.SLASummaryBean");
         args.add("org.apache.oozie.util.db.ValidateConnectionBean");
         return args.toArray(new String[args.size()]);

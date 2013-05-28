@@ -177,7 +177,7 @@ public class TestSLAEventGeneration extends XDataTestCase {
         // test that sla processes the Job Event from Start command
         new StartXCommand(jobId).call();
         slaEvent = slas.getSLACalculator().get(jobId);
-        slaEvent.setStartProcessed(false); //resetting flag for testing sla event
+        slaEvent.setEventProcessed(0); //resetting to receive sla events
         ehs.new EventWorker().run();
         Thread.sleep(300); //time for event listeners to run
         slaEvent = (SLACalcStatus) ehs.getEventQueue().poll();
@@ -237,7 +237,7 @@ public class TestSLAEventGeneration extends XDataTestCase {
         String expectedEnd = DateUtils.formatDateOozieTZ(cal.getTime());
         String appName = "test-coord-sla";
 
-        // testing creation of new sla registration via Submit+Materialize
+        // testing creation of new sla registration via Submit + Materialize
         // command
         CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
         String jobId = sc.call();
@@ -266,7 +266,7 @@ public class TestSLAEventGeneration extends XDataTestCase {
         jpa.execute(writeCmd);
         new CoordActionStartXCommand(actionId, getTestUser(), appName, "authtoken", jobId).call();
         slaEvent = slas.getSLACalculator().get(actionId);
-        slaEvent.setStartProcessed(false); //resetting flag for testing sla event
+        slaEvent.setEventProcessed(0); //resetting for testing sla event
         ehs.new EventWorker().run();
         Thread.sleep(300); //time for event listeners to run
         slaEvent = (SLACalcStatus) ehs.getEventQueue().poll();
