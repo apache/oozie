@@ -115,15 +115,15 @@ public class SLAService implements Service {
 
     public boolean addRegistrationEvent(SLARegistrationBean reg) throws ServiceException {
         try {
-            if (calcImpl.addRegistration(reg.getJobId(), reg)) {
+            if (calcImpl.addRegistration(reg.getId(), reg)) {
                 return true;
             }
             else {
-                LOG.warn("SLA queue full. Unable to add new SLA entry for job [{0}]", reg.getJobId());
+                LOG.warn("SLA queue full. Unable to add new SLA entry for job [{0}]", reg.getId());
             }
         }
         catch (JPAExecutorException ex) {
-            LOG.warn("Could not add new SLA entry for job [{0}]", reg.getJobId(), ex);
+            LOG.warn("Could not add new SLA entry for job [{0}]", reg.getId(), ex);
         }
         return false;
     }

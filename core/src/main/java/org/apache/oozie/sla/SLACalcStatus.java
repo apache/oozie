@@ -59,7 +59,7 @@ public class SLACalcStatus extends SLAEvent {
         setActualDuration(summary.getActualDuration());
         setSLAStatus(summary.getSLAStatus());
         setSLARegistrationBean(reg);
-        setJobId(reg.getJobId());
+        setJobId(reg.getId());
         setJobStatus(summary.getJobStatus());
         setEventStatus(summary.getEventStatus());
         setLastModifiedTime(summary.getLastModifiedTime());
@@ -102,8 +102,8 @@ public class SLACalcStatus extends SLAEvent {
     }
 
     @Override
-    public String getJobId() {
-        return regBean.getJobId();
+    public String getId() {
+        return regBean.getId();
     }
 
     public void setJobId(String id) {

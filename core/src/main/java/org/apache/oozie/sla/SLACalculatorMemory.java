@@ -196,7 +196,7 @@ public class SLACalculatorMemory implements SLACalculator {
             else {
                 XLog.getLog(SLAService.class).error(
                         "SLACalculator memory capacity reached. Cannot add new SLA Registration entry for job [{0}]",
-                        reg.getJobId());
+                        reg.getId());
             }
         }
         catch (JPAExecutorException jpa) {

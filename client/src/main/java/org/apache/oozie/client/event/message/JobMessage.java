@@ -21,8 +21,12 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.jms.JMSException;
+import javax.jms.Message;
+
 import org.apache.oozie.AppType;
 import org.apache.oozie.client.event.Event.MessageType;
+import org.apache.oozie.client.event.JobEvent.EventStatus;
 import org.apache.oozie.client.event.JobEvent;
 import org.apache.oozie.client.event.jms.JMSHeaderConstants;
 import org.codehaus.jackson.annotate.JsonIgnore;
@@ -46,9 +50,9 @@ public class JobMessage extends EventMessage {
     @JsonProperty
     private Date endTime;
 
+    private Map<String, String> jmsMessageProperties = new HashMap<String, String>();
     private JobEvent.EventStatus eventStatus;
     private String appName;
-    private Map<String, String> jmsMessageProperties;
     private String user;
 
     /**
@@ -237,4 +241,11 @@ public class JobMessage extends EventMessage {
         return eventStatus;
     }
 
+    @Override
+    public void setProperties(Message message) throws JMSException {
+        super.setProperties(message);
+        setEventStatus(EventStatus.valueOf(message.getStringProperty(JMSHeaderConstants.EVENT_STATUS)));
+        setAppName(message.getStringProperty(JMSHeaderConstants.APP_NAME));
+        setUser(message.getStringProperty(JMSHeaderConstants.USER));
+    }
 }

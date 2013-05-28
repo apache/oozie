@@ -97,7 +97,7 @@ public class TestSLAService extends XDataTestCase {
         sla1.setExpectedStart(new Date(System.currentTimeMillis() + 1 * 3600 * 1000)); //1 hour ahead
         sla1.setExpectedEnd(new Date(System.currentTimeMillis() + 2 * 3600 * 1000)); //2 hours ahead
         slas.addRegistrationEvent(sla1);
-        slas.addStatusEvent(sla1.getJobId(), WorkflowJob.Status.RUNNING.name(), EventStatus.STARTED, new Date(),
+        slas.addStatusEvent(sla1.getId(), WorkflowJob.Status.RUNNING.name(), EventStatus.STARTED, new Date(),
                 new Date());
         SLARegistrationBean sla2 = _createSLARegistration("job-3", AppType.COORDINATOR_JOB);
         sla2.setExpectedStart(new Date(System.currentTimeMillis() + 1 * 3600 * 1000)); //1 hour ahead only for testing
@@ -106,15 +106,15 @@ public class TestSLAService extends XDataTestCase {
         slas.addRegistrationEvent(sla2);
         assertEquals(3, slas.getSLACalculator().size());
         Date startTime = new Date();
-        slas.addStatusEvent(sla2.getJobId(), CoordinatorJob.Status.RUNNING.name(), EventStatus.STARTED, startTime,
+        slas.addStatusEvent(sla2.getId(), CoordinatorJob.Status.RUNNING.name(), EventStatus.STARTED, startTime,
                 null);
-        slas.addStatusEvent(sla2.getJobId(), CoordinatorJob.Status.SUCCEEDED.name(), EventStatus.SUCCESS, startTime,
+        slas.addStatusEvent(sla2.getId(), CoordinatorJob.Status.SUCCEEDED.name(), EventStatus.SUCCESS, startTime,
                 new Date());
         slas.runSLAWorker();
         ehs.new EventWorker().run();
-        assertTrue(output.toString().contains(sla1.getJobId() + " Sla START - MET!!!"));
-        assertTrue(output.toString().contains(sla2.getJobId() + " Sla END - MISS!!!"));
-        assertTrue(output.toString().contains(sla2.getJobId() + " Sla DURATION - MET!!!"));
+        assertTrue(output.toString().contains(sla1.getId() + " Sla START - MET!!!"));
+        assertTrue(output.toString().contains(sla2.getId() + " Sla END - MISS!!!"));
+        assertTrue(output.toString().contains(sla2.getId() + " Sla DURATION - MET!!!"));
         output.setLength(0);
 
         // test same job multiple events (start-miss, end-miss) through regular check
@@ -125,9 +125,8 @@ public class TestSLAService extends XDataTestCase {
         assertEquals(3, slas.getSLACalculator().size()); // tests job slaProcessed == 7 removed from map
         slas.runSLAWorker();
         ehs.new EventWorker().run();
-        System.out.println(output);
-        assertTrue(output.toString().contains(sla2.getJobId() + " Sla START - MISS!!!"));
-        assertTrue(output.toString().contains(sla2.getJobId() + " Sla END - MISS!!!"));
+        assertTrue(output.toString().contains(sla2.getId() + " Sla START - MISS!!!"));
+        assertTrue(output.toString().contains(sla2.getId() + " Sla END - MISS!!!"));
         output.setLength(0);
 
         // test same job multiple events (start-met, end-met) through job status event
@@ -136,16 +135,15 @@ public class TestSLAService extends XDataTestCase {
         sla1.setExpectedEnd(new Date(System.currentTimeMillis() + 2 * 3600 * 1000)); //2 hours ahead
         slas.addRegistrationEvent(sla1);
         assertEquals(4, slas.getSLACalculator().size());
-        slas.addStatusEvent(sla1.getJobId(), CoordinatorAction.Status.RUNNING.name(), EventStatus.STARTED, new Date(),
+        slas.addStatusEvent(sla1.getId(), CoordinatorAction.Status.RUNNING.name(), EventStatus.STARTED, new Date(),
                 new Date());
-        slas.addStatusEvent(sla1.getJobId(), CoordinatorAction.Status.SUCCEEDED.name(), EventStatus.SUCCESS,
+        slas.addStatusEvent(sla1.getId(), CoordinatorAction.Status.SUCCEEDED.name(), EventStatus.SUCCESS,
                 new Date(), new Date());
         slas.runSLAWorker();
         assertEquals(3, ehs.getEventQueue().size());
         ehs.new EventWorker().run();
-        System.out.println(output);
-        assertTrue(output.toString().contains(sla1.getJobId() + " Sla START - MET!!!"));
-        assertTrue(output.toString().contains(sla1.getJobId() + " Sla END - MET!!!"));
+        assertTrue(output.toString().contains(sla1.getId() + " Sla START - MET!!!"));
+        assertTrue(output.toString().contains(sla1.getId() + " Sla END - MET!!!"));
     }
 
     private SLARegistrationBean _createSLARegistration(String jobId, AppType appType) {
@@ -159,32 +157,32 @@ public class TestSLAService extends XDataTestCase {
 
         @Override
         public void onStartMet(SLAEvent sla) {
-            output.append(sla.getJobId() + " Sla START - MET!!!");
+            output.append(sla.getId() + " Sla START - MET!!!");
         }
 
         @Override
         public void onStartMiss(SLAEvent sla) {
-            output.append(sla.getJobId() + " Sla START - MISS!!!");
+            output.append(sla.getId() + " Sla START - MISS!!!");
         }
 
         @Override
         public void onEndMet(SLAEvent sla) {
-            output.append(sla.getJobId() + " Sla END - MET!!!");
+            output.append(sla.getId() + " Sla END - MET!!!");
         }
 
         @Override
         public void onEndMiss(SLAEvent sla) {
-            output.append(sla.getJobId() + " Sla END - MISS!!!");
+            output.append(sla.getId() + " Sla END - MISS!!!");
         }
 
         @Override
         public void onDurationMet(SLAEvent sla) {
-            output.append(sla.getJobId() + " Sla DURATION - MET!!!");
+            output.append(sla.getId() + " Sla DURATION - MET!!!");
         }
 
         @Override
         public void onDurationMiss(SLAEvent sla) {
-            output.append(sla.getJobId() + " Sla DURATION - MISS!!!");
+            output.append(sla.getId() + " Sla DURATION - MISS!!!");
         }
 
         @Override

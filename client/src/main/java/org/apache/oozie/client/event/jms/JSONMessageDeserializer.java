@@ -17,15 +17,9 @@
  */
 package org.apache.oozie.client.event.jms;
 
-import javax.jms.JMSException;
-import javax.jms.Message;
-import org.apache.oozie.AppType;
-import org.apache.oozie.client.event.JobEvent.EventStatus;
-import org.apache.oozie.client.event.Event.MessageType;
-import org.apache.oozie.client.event.message.CoordinatorActionMessage;
-import org.apache.oozie.client.event.message.WorkflowJobMessage;
 import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
+
 
 /**
  * Message deserializer to convert from JSON to java object
@@ -48,30 +42,4 @@ public class JSONMessageDeserializer extends MessageDeserializer {
                     + clazz.getCanonicalName(), exception);
         }
     }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public  WorkflowJobMessage  setProperties(WorkflowJobMessage workflowJobMsg, Message message)
-            throws JMSException {
-        workflowJobMsg.setAppType(AppType.valueOf(message.getStringProperty(JMSHeaderConstants.APP_TYPE)));
-        workflowJobMsg.setMessageType(MessageType.valueOf(message.getStringProperty(JMSHeaderConstants.MESSAGE_TYPE)));
-        workflowJobMsg.setEventStatus(EventStatus.valueOf(message.getStringProperty(JMSHeaderConstants.EVENT_STATUS)));
-        workflowJobMsg.setAppName(message.getStringProperty(JMSHeaderConstants.APP_NAME));
-        workflowJobMsg.setUser(message.getStringProperty(JMSHeaderConstants.USER));
-        return workflowJobMsg;
-
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public CoordinatorActionMessage setProperties(CoordinatorActionMessage coordActionMsg, Message message)
-            throws JMSException {
-        coordActionMsg.setAppType(AppType.valueOf(message.getStringProperty(JMSHeaderConstants.APP_TYPE)));
-        coordActionMsg.setMessageType(MessageType.valueOf(message.getStringProperty(JMSHeaderConstants.MESSAGE_TYPE)));
-        coordActionMsg.setEventStatus(EventStatus.valueOf(message.getStringProperty(JMSHeaderConstants.EVENT_STATUS)));
-        coordActionMsg.setAppName(message.getStringProperty(JMSHeaderConstants.APP_NAME));
-        coordActionMsg.setUser(message.getStringProperty(JMSHeaderConstants.USER));
-        return coordActionMsg;
-    }
-
 }

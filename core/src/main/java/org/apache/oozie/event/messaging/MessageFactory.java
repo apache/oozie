@@ -18,8 +18,10 @@
 package org.apache.oozie.event.messaging;
 
 import org.apache.hadoop.util.ReflectionUtils;
+import org.apache.oozie.client.event.SLAEvent;
 import org.apache.oozie.client.event.message.CoordinatorActionMessage;
 import org.apache.oozie.client.event.message.WorkflowJobMessage;
+import org.apache.oozie.client.event.message.SLAMessage;
 import org.apache.oozie.event.CoordinatorActionEvent;
 import org.apache.oozie.event.WorkflowJobEvent;
 import org.apache.oozie.service.Services;
@@ -86,5 +88,18 @@ public class MessageFactory {
                 coordActionEvent.getUser(), coordActionEvent.getAppName(), coordActionEvent.getMissingDeps(),
                 coordActionEvent.getErrorCode(), coordActionEvent.getErrorMessage());
         return coordActionMessage;
+    }
+
+    /**
+     * Constructs and returns SLA notification message
+     * @param event SLA event
+     * @return
+     */
+    public static SLAMessage createSLAMessage(SLAEvent event) {
+        SLAMessage slaMessage = new SLAMessage(event.getEventStatus(), event.getSLAStatus(), event.getAppType(),
+                event.getAppName(), event.getUser(), event.getId(), event.getParentId(), event.getNominalTime(),
+                event.getExpectedStart(), event.getActualStart(), event.getExpectedEnd(), event.getActualEnd(),
+                event.getExpectedDuration(), event.getNotificationMsg(), event.getUpstreamApps());
+        return slaMessage;
     }
 }

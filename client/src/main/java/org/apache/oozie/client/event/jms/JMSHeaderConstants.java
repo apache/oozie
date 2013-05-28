@@ -24,6 +24,7 @@ package org.apache.oozie.client.event.jms;
 public final class JMSHeaderConstants {
     // JMS Application specific properties for selectors
     public static final String EVENT_STATUS = "eventStatus";
+    public static final String SLA_STATUS = "slaStatus";
     public static final String APP_NAME = "appName";
     public static final String USER = "user";
     public static final String MESSAGE_TYPE = "msgType";
