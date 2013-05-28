@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1361 Remove SLACalculatorBean and add columns to SummaryBean indicating events processed and sla processed (mona)
 OOZIE-674 resolveInstanceRange doesn't work for EL extensions (shwethags via mona)
 OOZIE-1384 Make Uber Mode not the default (rkanter via virag)
 OOZIE-1386 NPE in XOozieClient if fs.default.name is not defined but fs.defaultFS is (wypoon via rkanter)

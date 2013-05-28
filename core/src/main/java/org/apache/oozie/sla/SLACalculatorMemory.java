@@ -104,49 +104,52 @@ public class SLACalculatorMemory implements SLACalculator {
         List<JsonBean> updateList = new ArrayList<JsonBean>();
         synchronized (slaCalc) {
             boolean change = false;
+            byte eventProc = slaCalc.getEventProcessed();
             SLARegistrationBean reg = slaCalc.getSLARegistrationBean();
             // calculation w.r.t current time and status
-            if (reg.getExpectedStart() == null) {
-                slaCalc.setStartProcessed(true); //disable further processing
-            }
-            if (!slaCalc.isStartProcessed()) {
-                if (reg.getExpectedStart().getTime() < Calendar.getInstance(TimeZone.getTimeZone("UTC"))
-                        .getTimeInMillis()) {
-                    slaCalc.setEventStatus(EventStatus.START_MISS);
-                    slaCalc.setStartProcessed(true);
-                    change = true;
-                    eventHandler.queueEvent(new SLACalcStatus(slaCalc));
+            if ((eventProc & 1) == 0) { // first bit (start-processed) unset
+                if (reg.getExpectedStart() != null) {
+                    if (reg.getExpectedStart().getTime() < Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+                            .getTimeInMillis()) {
+                        slaCalc.setEventStatus(EventStatus.START_MISS);
+                        change = true;
+                        eventHandler.queueEvent(new SLACalcStatus(slaCalc));
+                        eventProc++;
+                    }
+                }
+                else {
+                    eventProc++; //disable further processing for optional start sla condition
                 }
             }
-            if (!slaCalc.isDurationProcessed()) {
+            byte eventProcCopy = eventProc;
+            if (((eventProcCopy >> 1) & 1) == 0) { // check if second bit (duration-processed) is unset
                 if (slaCalc.getActualStart() != null) {
                     if (reg.getExpectedDuration() < Calendar.getInstance(TimeZone.getTimeZone("UTC")).getTimeInMillis()
                             - slaCalc.getActualStart().getTime()) {
                         slaCalc.setEventStatus(EventStatus.DURATION_MISS);
-                        slaCalc.setDurationProcessed(true);
                         change = true;
                         eventHandler.queueEvent(new SLACalcStatus(slaCalc));
+                        eventProc += 2;
                     }
                 }
             }
-            if (!slaCalc.isEndProcessed()) {
+            if (eventProc < 5) {
                 if (reg.getExpectedEnd().getTime() < Calendar.getInstance(TimeZone.getTimeZone("UTC"))
                         .getTimeInMillis()) {
                     slaCalc.setEventStatus(EventStatus.END_MISS);
                     slaCalc.setSLAStatus(SLAStatus.MISS);
-                    slaCalc.setEndProcessed(true);
+                    slaCalc.setSlaProcessed(1);
                     change = true;
                     eventHandler.queueEvent(new SLACalcStatus(slaCalc));
+                    eventProc += 4;
                 }
             }
             if (change) {
-                // TODO:Future enhancement - priority queue implementation for
-                // calculation, update lastmodified to after every run, so
-                // service can prioritize on checking LRU style
-                updateList.add(slaCalc.getSLACalculatorBean());
+                slaCalc.setEventProcessed(eventProc);
+                slaCalc.setLastModifiedTime(new Date());
                 updateList.add(new SLASummaryBean(slaCalc));
                 jpa.execute(new SLACalculationInsertUpdateJPAExecutor(null, updateList));
-                if (slaCalc.isEndProcessed()) {
+                if (slaCalc.getEventProcessed() == 7 && slaCalc.getSlaProcessed() != 2) {
                     historySet.add(jobId);
                     slaMap.remove(jobId);
                     XLog.getLog(SLAService.class).trace("Removed Job [{0}] from map after End-processed", jobId);
@@ -156,8 +159,8 @@ public class SLACalculatorMemory implements SLACalculator {
     }
 
     /**
-     * Periodically run by the SLAService worker threads to update SLA status
-     * by iterating through all the jobs in the map
+     * Periodically run by the SLAService worker threads to update SLA status by
+     * iterating through all the jobs in the map
      */
     @Override
     public void updateAllSlaStatus() {
@@ -185,7 +188,6 @@ public class SLACalculatorMemory implements SLACalculator {
                 slaCalc.setSLAStatus(SLAStatus.NOT_STARTED);
                 slaMap.put(jobId, slaCalc);
                 insertList.add(reg);
-                insertList.add(slaCalc.getSLACalculatorBean());
                 insertList.add(new SLASummaryBean(slaCalc));
                 jpa.execute(new SLACalculationInsertUpdateJPAExecutor(insertList, null));
                 XLog.getLog(SLAService.class).trace("SLA Registration Event - Job:" + jobId);
@@ -216,23 +218,30 @@ public class SLACalculatorMemory implements SLACalculator {
         boolean ret = false;
         if (slaCalc != null) {
             synchronized (slaCalc) {
+                byte eventProc = slaCalc.getEventProcessed();
                 slaCalc.setJobStatus(jobStatus);
                 switch (jobEventStatus) {
                     case STARTED:
                         slaInfo = processJobStartSLA(slaCalc, startTime);
+                        eventProc += 1;
                         break;
                     case SUCCESS:
                         slaInfo = processJobEndSuccessSLA(slaCalc, startTime, endTime);
+                        slaInfo.setSlaProcessed(2);
+                        eventProc += 6;
                         break;
                     case FAILURE:
                         slaInfo = processJobEndFailureSLA(slaCalc, startTime, endTime);
+                        slaInfo.setSlaProcessed(2);
+                        eventProc += 6;
                         break;
                     default:
                         XLog.getLog(SLAService.class).debug("Unknown Job Status [{0}]", jobEventStatus);
                         return false;
                 }
-                updateList.add(slaCalc.getSLACalculatorBean());
-                if (slaCalc.isEndProcessed()) {
+                slaCalc.setEventProcessed(eventProc);
+                slaInfo.setLastModifiedTime(new Date());
+                if (slaInfo.getSlaProcessed() == 2) {
                     slaMap.remove(jobId);
                 }
                 ret = true;
@@ -246,9 +255,11 @@ public class SLACalculatorMemory implements SLACalculator {
             if (endTime != null) {
                 slaInfo.setActualDuration(endTime.getTime() - startTime.getTime());
             }
+            slaInfo.setSlaProcessed(2);
             historySet.remove(jobId);
             ret = true;
         }
+        slaInfo.setLastModifiedTime(new Date());
         updateList.add(slaInfo);
         if (jpa != null) {
             jpa.execute(new SLACalculationInsertUpdateJPAExecutor(null, updateList));
@@ -270,14 +281,14 @@ public class SLACalculatorMemory implements SLACalculator {
         slaCalc.setSLAStatus(SLAStatus.IN_PROCESS);
         SLARegistrationBean reg = slaCalc.getSLARegistrationBean();
         Date expecStart = reg.getExpectedStart();
-        if (!slaCalc.isStartProcessed() && expecStart != null) {
+        byte eventProc = slaCalc.getEventProcessed();
+        if (((eventProc & 1) == 0) && expecStart != null) {
             if (actualStart.getTime() > expecStart.getTime()) {
                 slaCalc.setEventStatus(EventStatus.START_MISS);
             }
             else {
                 slaCalc.setEventStatus(EventStatus.START_MET);
             }
-            slaCalc.setStartProcessed(true);
             eventHandler.queueEvent(new SLACalcStatus(slaCalc));
         }
         return new SLASummaryBean(slaCalc);
@@ -305,7 +316,6 @@ public class SLACalculatorMemory implements SLACalculator {
         else {
             slaCalc.setEventStatus(EventStatus.DURATION_MET);
         }
-        slaCalc.setDurationProcessed(true);
         eventHandler.queueEvent(new SLACalcStatus(slaCalc));
 
         Date expectedEnd = reg.getExpectedEnd();
@@ -317,7 +327,6 @@ public class SLACalculatorMemory implements SLACalculator {
             slaCalc.setEventStatus(EventStatus.END_MET);
             slaCalc.setSLAStatus(SLAStatus.MET);
         }
-        slaCalc.setEndProcessed(true);
         eventHandler.queueEvent(new SLACalcStatus(slaCalc));
         return new SLASummaryBean(slaCalc);
     }
@@ -346,10 +355,8 @@ public class SLACalculatorMemory implements SLACalculator {
         else {
             slaCalc.setEventStatus(EventStatus.DURATION_MET);
         }
-        slaCalc.setDurationProcessed(true);
         slaCalc.setEventStatus(EventStatus.END_MISS);
         slaCalc.setSLAStatus(SLAStatus.MISS);
-        slaCalc.setEndProcessed(true);
         eventHandler.queueEvent(new SLACalcStatus(slaCalc));
         summ = new SLASummaryBean(slaCalc);
         return summ;

@@ -29,32 +29,23 @@ import org.apache.oozie.client.event.SLAEvent;
 public class SLACalcStatus extends SLAEvent {
 
     private SLARegistrationBean regBean;
-    private SLACalculatorBean calcBean;
     private String jobStatus;
     private SLAStatus slaStatus;
     private EventStatus eventStatus;
     private Date actualStart;
     private Date actualEnd;
     private long actualDuration;
-
-    public SLACalcStatus(SLARegistrationBean reg, String jobStatus, EventStatus eventStatus) {
-        setSLARegistrationBean(reg);
-        calcBean = new SLACalculatorBean();
-        setJobId(reg.getJobId());
-        setJobStatus(jobStatus);
-        setEventStatus(eventStatus);
-    }
-
-    public SLACalcStatus(SLARegistrationBean reg, SLACalculatorBean calcBean) {
-        setSLARegistrationBean(reg);
-        setSLACalculatorBean(calcBean);
-    }
+    private Date lastModifiedTime;
+    private byte slaProcessed;
+    private byte eventProcessed;
 
     public SLACalcStatus(SLARegistrationBean reg) {
-        this(reg, null, null);
+        this();
+        setSLARegistrationBean(reg);
     }
 
     public SLACalcStatus(SLASummaryBean summary) {
+        this();
         SLARegistrationBean reg = new SLARegistrationBean();
         reg.setUser(summary.getUser());
         reg.setAppName(summary.getAppName());
@@ -68,29 +59,38 @@ public class SLACalcStatus extends SLAEvent {
         setActualDuration(summary.getActualDuration());
         setSLAStatus(summary.getSLAStatus());
         setSLARegistrationBean(reg);
-        calcBean = new SLACalculatorBean();
         setJobId(reg.getJobId());
         setJobStatus(summary.getJobStatus());
         setEventStatus(summary.getEventStatus());
+        setLastModifiedTime(summary.getLastModifiedTime());
+        setSlaProcessed(summary.getSlaProcessed());
+        setEventProcessed((byte) summary.getEventStatus().ordinal());
     }
 
     /**
      * copy constructor
-     * @return
+     * @return SLACalcStatus
      */
     public SLACalcStatus(SLACalcStatus a) {
-        this.setSLARegistrationBean(a.getSLARegistrationBean());
-        this.setSLACalculatorBean(a.getSLACalculatorBean());
-        this.setJobStatus(a.getJobStatus());
-        this.setSLAStatus(a.getSLAStatus());
-        this.setEventStatus(a.getEventStatus());
-        this.setActualStart(a.getActualStart());
-        this.setActualEnd(a.getActualEnd());
-        this.setActualDuration(a.getActualDuration());
+        this();
+        setSLARegistrationBean(a.getSLARegistrationBean());
+        setJobStatus(a.getJobStatus());
+        setSLAStatus(a.getSLAStatus());
+        setEventStatus(a.getEventStatus());
+        setActualStart(a.getActualStart());
+        setActualEnd(a.getActualEnd());
+        setActualDuration(a.getActualDuration());
+        setLastModifiedTime(a.getLastModifiedTime());
+        setSlaProcessed(a.getSlaProcessed());
+        setEventProcessed(a.getEventProcessed());
     }
 
     public SLACalcStatus() {
         setMsgType(MessageType.SLA);
+        setSlaProcessed((byte) 0);
+        setEventProcessed((byte) 0);
+        setActualDuration(-1);
+        setLastModifiedTime(new Date());
     }
 
     public SLARegistrationBean getSLARegistrationBean() {
@@ -101,14 +101,6 @@ public class SLACalcStatus extends SLAEvent {
         this.regBean = slaBean;
     }
 
-    public SLACalculatorBean getSLACalculatorBean() {
-        return calcBean;
-    }
-
-    public void setSLACalculatorBean(SLACalculatorBean calcBean) {
-        this.calcBean = calcBean;
-    }
-
     @Override
     public String getJobId() {
         return regBean.getJobId();
@@ -116,7 +108,6 @@ public class SLACalcStatus extends SLAEvent {
 
     public void setJobId(String id) {
         regBean.setJobId(id);
-        calcBean.setJobId(id);
     }
 
     @Override
@@ -173,28 +164,44 @@ public class SLACalcStatus extends SLAEvent {
         this.eventStatus = es;
     }
 
-    public boolean isStartProcessed() {
-        return calcBean.isStartProcessed();
+    public Date getLastModifiedTime() {
+        return lastModifiedTime;
     }
 
-    public void setStartProcessed(boolean startProcessed) {
-        calcBean.setStartProcessed(startProcessed);
+    public void setLastModifiedTime(Date lastModifiedTime) {
+        this.lastModifiedTime = lastModifiedTime;
     }
 
-    public boolean isEndProcessed() {
-        return calcBean.isEndProcessed();
+    /**
+     * Get whether sla has been processed
+     * and actual times stored for this job
+     *
+     * @return 0 = sla not processed
+     * 1 = sla processed but actual times not stored
+     * 2 = sla processed as well as actual times stored
+     */
+    public byte getSlaProcessed() {
+        return slaProcessed;
     }
 
-    public void setEndProcessed(boolean endProcessed) {
-        calcBean.setEndProcessed(endProcessed);
+    public void setSlaProcessed(int slaProcessed) {
+        this.slaProcessed = (byte) slaProcessed;
     }
 
-    public boolean isDurationProcessed() {
-        return calcBean.isDurationProcessed();
+    /**
+     * Get which type of sla event has been processed needed when calculator
+     * periodically loops to update all jobs' sla
+     *
+     * @return byte 1st bit set (from LSB) = start processed
+     * 2nd bit set = duration processed
+     * 3rd bit set = end processed
+     */
+    public byte getEventProcessed() {
+        return eventProcessed;
     }
 
-    public void setDurationProcessed(boolean durationProcessed) {
-        calcBean.setDurationProcessed(durationProcessed);
+    public void setEventProcessed(int eventProcessed) {
+        this.eventProcessed = (byte) eventProcessed;
     }
 
     @Override

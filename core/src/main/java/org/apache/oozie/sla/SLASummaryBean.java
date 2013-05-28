@@ -31,12 +31,16 @@ import javax.persistence.Table;
 import org.apache.oozie.client.event.SLAEvent;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.util.DateUtils;
+import org.apache.openjpa.persistence.jdbc.Index;
 import org.json.simple.JSONObject;
 
 @Entity
 @Table(name = "SLA_SUMMARY")
 @NamedQueries({
  @NamedQuery(name = "GET_SLA_SUMMARY", query = "select OBJECT(w) from SLASummaryBean w where w.jobId = :id") })
+/**
+ * Class to store all the SLA related details (summary) per job
+ */
 public class SLASummaryBean implements JsonBean {
 
     @Id
@@ -49,14 +53,17 @@ public class SLASummaryBean implements JsonBean {
     private String user;
 
     @Basic
+    @Index
     @Column(name = "app_name")
     private String appName;
 
     @Basic
+    @Index
     @Column(name = "parent_id")
     private String parentId;
 
     @Basic
+    @Index
     @Column(name = "nominal_time")
     private Timestamp nominalTimeTS = null;
 
@@ -82,7 +89,7 @@ public class SLASummaryBean implements JsonBean {
 
     @Basic
     @Column(name = "actual_duration")
-    private long actualDuration;
+    private long actualDuration = -1;
 
     @Basic
     @Column(name = "job_status")
@@ -95,6 +102,16 @@ public class SLASummaryBean implements JsonBean {
     @Basic
     @Column(name = "sla_status")
     private String slaStatus;
+
+    @Basic
+    @Index
+    @Column(name = "sla_processed")
+    private byte slaProcessed = 0;
+
+    @Basic
+    @Index
+    @Column(name = "last_modified")
+    private Timestamp lastModifiedTS = null;
 
     public SLASummaryBean() {
     }
@@ -109,6 +126,8 @@ public class SLASummaryBean implements JsonBean {
         setJobStatus(slaCalc.getJobStatus());
         setSLAStatus(slaCalc.getSLAStatus());
         setEventStatus(slaCalc.getEventStatus());
+        setSlaProcessed(slaCalc.getSlaProcessed());
+        setLastModifiedTime(slaCalc.getLastModifiedTime());
         setUser(reg.getUser());
         setParentId(reg.getParentId());
     }
@@ -224,6 +243,22 @@ public class SLASummaryBean implements JsonBean {
 
     public void setAppName(String appName) {
         this.appName = appName;
+    }
+
+    public byte getSlaProcessed() {
+        return slaProcessed;
+    }
+
+    public void setSlaProcessed(int slaProcessed) {
+        this.slaProcessed = (byte) slaProcessed;
+    }
+
+    public Date getLastModifiedTime() {
+        return DateUtils.toDate(lastModifiedTS);
+    }
+
+    public void setLastModifiedTime(Date lastModified) {
+        this.lastModifiedTS = DateUtils.convertDateToTimestamp(lastModified);
     }
 
     @Override

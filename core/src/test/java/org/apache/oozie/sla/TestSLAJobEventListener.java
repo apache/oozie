@@ -30,7 +30,6 @@ import org.apache.oozie.event.CoordinatorActionEvent;
 import org.apache.oozie.event.CoordinatorJobEvent;
 import org.apache.oozie.event.WorkflowActionEvent;
 import org.apache.oozie.event.WorkflowJobEvent;
-import org.apache.oozie.executor.jpa.sla.SLACalculatorGetJPAExecutor;
 import org.apache.oozie.executor.jpa.sla.SLASummaryGetJPAExecutor;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
@@ -89,8 +88,9 @@ public class TestSLAJobEventListener extends XTestCase {
         listener.onWorkflowJobEvent(wfe);
         SLACalcStatus serviceObj = slas.getSLACalculator().get("wf1");
         // check that start sla has been calculated
-        assertTrue(serviceObj.isStartProcessed());
         assertEquals(EventStatus.START_MISS, serviceObj.getEventStatus());
+        assertEquals(0, serviceObj.getSlaProcessed()); //Job switching to running is only partially
+                                                       //sla processed. so state = zero
 
         job = _createSLARegBean("wa1", AppType.WORKFLOW_ACTION);
         slas.addRegistrationEvent(job);
@@ -101,7 +101,6 @@ public class TestSLAJobEventListener extends XTestCase {
         listener.onWorkflowActionEvent(wae);
         serviceObj = slas.getSLACalculator().get("wa1");
         // check that start sla has been calculated
-        assertTrue(serviceObj.isStartProcessed());
         assertEquals(EventStatus.START_MISS, serviceObj.getEventStatus());
 
         job = _createSLARegBean("cj1", AppType.COORDINATOR_JOB);
@@ -114,10 +113,10 @@ public class TestSLAJobEventListener extends XTestCase {
         listener.onCoordinatorJobEvent(cje);
 
         // Since serviceObj is removed from memory after END stage
-        SLACalculatorBean calc = Services.get().get(JPAService.class).execute(new SLACalculatorGetJPAExecutor("cj1"));
         SLASummaryBean summary = Services.get().get(JPAService.class).execute(new SLASummaryGetJPAExecutor("cj1"));
         // check that end sla has been calculated
-        assertTrue(calc.isEndProcessed());
+        assertEquals(2, summary.getSlaProcessed()); //Job in terminal state has finished
+                                                    //sla processing. so state = 2
         assertEquals(EventStatus.END_MET, summary.getEventStatus());
 
         job = _createSLARegBean("ca1", AppType.COORDINATOR_ACTION);
@@ -127,10 +126,9 @@ public class TestSLAJobEventListener extends XTestCase {
         CoordinatorActionEvent cae = new CoordinatorActionEvent("ca1", "cj1", CoordinatorAction.Status.KILLED, "user1",
                 "coord-app-name1", null, actualEnd, null);
         listener.onCoordinatorActionEvent(cae);
-        calc = Services.get().get(JPAService.class).execute(new SLACalculatorGetJPAExecutor("ca1"));
         summary = Services.get().get(JPAService.class).execute(new SLASummaryGetJPAExecutor("ca1"));
         // check that start sla has been calculated
-        assertTrue(calc.isEndProcessed());
+        assertEquals(2, summary.getSlaProcessed());
         assertEquals(EventStatus.END_MISS, summary.getEventStatus());
 
     }
