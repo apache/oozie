@@ -58,7 +58,7 @@ public abstract class SLAEvent extends Event {
      *
      * @return String job-id
      */
-    public abstract String getJobId();
+    public abstract String getId();
 
     /**
      * Get the id of the parent job

@@ -17,9 +17,11 @@
  */
 package org.apache.oozie.client.event.jms;
 
+import org.apache.oozie.client.event.Event.MessageType;
 import org.apache.oozie.client.event.message.CoordinatorActionMessage;
 import org.apache.oozie.client.event.message.EventMessage;
 import org.apache.oozie.client.event.message.WorkflowJobMessage;
+import org.apache.oozie.client.event.message.SLAMessage;
 import org.apache.oozie.AppType;
 import javax.jms.Message;
 import javax.jms.TextMessage;
@@ -37,53 +39,47 @@ public abstract class MessageDeserializer {
      * @return EventMessage
      * @throws JMSException
      */
+    @SuppressWarnings("unchecked")
     public <T extends EventMessage> T getEventMessage(Message message) throws JMSException {
         TextMessage textMessage = (TextMessage) message;
         String appTypeString = textMessage.getStringProperty(JMSHeaderConstants.APP_TYPE);
+        String msgType = textMessage.getStringProperty(JMSHeaderConstants.MESSAGE_TYPE);
         String messageBody = textMessage.getText();
+        T eventMsg = null;
 
         if (appTypeString == null || appTypeString.isEmpty() || messageBody == null || messageBody.isEmpty()) {
             throw new IllegalArgumentException("Could not extract OozieEventMessage. "
                     + "AppType and/or MessageBody is null/empty." + "Apptype is " + appTypeString + " MessageBody is "
                     + messageBody);
         }
-        switch (AppType.valueOf(appTypeString)) {
-            case WORKFLOW_JOB:
-                WorkflowJobMessage wfJobMsg = getDeserializedObject(messageBody, WorkflowJobMessage.class);
-                return setProperties(wfJobMsg, textMessage);
-            case COORDINATOR_ACTION:
-                CoordinatorActionMessage caActionMsg = getDeserializedObject(messageBody,
-                        CoordinatorActionMessage.class);
-                return setProperties(caActionMsg, textMessage);
-            default:
-                throw new UnsupportedOperationException("Conversion of " + appTypeString
-                        + " to Event message is not supported");
+
+        if (MessageType.valueOf(msgType) == MessageType.JOB) {
+            switch (AppType.valueOf(appTypeString)) {
+                case WORKFLOW_JOB:
+                    WorkflowJobMessage wfJobMsg = getDeserializedObject(messageBody, WorkflowJobMessage.class);
+                    wfJobMsg.setProperties(textMessage);
+                    eventMsg = (T) wfJobMsg;
+                    break;
+                case COORDINATOR_ACTION:
+                    CoordinatorActionMessage caActionMsg = getDeserializedObject(messageBody,
+                            CoordinatorActionMessage.class);
+                    caActionMsg.setProperties(textMessage);
+                    eventMsg = (T) caActionMsg;
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Conversion of " + appTypeString
+                            + " to Event message is not supported");
+            }
+        }
+        else if (MessageType.valueOf(msgType) == MessageType.SLA) {
+            SLAMessage SLAMsg = getDeserializedObject(messageBody, SLAMessage.class);
+            SLAMsg.setProperties(textMessage);
+            eventMsg = (T) SLAMsg;
         }
 
+        return eventMsg;
     }
 
     protected abstract <T> T getDeserializedObject(String s, Class<T> clazz);
-
-    /**
-     * Set the JMS selector properties for the workflow job message object
-     *
-     * @param wfJobMessage the workflow job message
-     * @param message the JMS message
-     * @return WorkflowJobMessage
-     * @throws JMSException
-     */
-    protected abstract <T extends EventMessage> T setProperties(WorkflowJobMessage wfJobMessage, Message message)
-            throws JMSException;
-
-    /**
-     * Set the JMS selector properties for coordinator action message
-     *
-     * @param coordActionMessage the coordinator action message
-     * @param message the JMS message
-     * @return CoordinatorActionMessage
-     * @throws JMSException
-     */
-    protected abstract <T extends EventMessage> T setProperties(CoordinatorActionMessage coordActionMessage,
-            Message message) throws JMSException;
 
 }

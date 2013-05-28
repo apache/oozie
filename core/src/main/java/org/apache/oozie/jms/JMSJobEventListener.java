@@ -119,7 +119,7 @@ public class JMSJobEventListener extends JobEventListener {
 
     protected String getTopic(WorkflowJobEvent event) {
         if (jmsTopicService != null) {
-            return jmsTopicService.getTopic(event);
+            return jmsTopicService.getTopic(event.getAppType(), event.getUser(), event.getId(), event.getParentId());
         }
         else {
             throw new RuntimeException("JMSTopicService is not initialized");
@@ -128,7 +128,7 @@ public class JMSJobEventListener extends JobEventListener {
 
     protected String getTopic(CoordinatorActionEvent event) {
         if (jmsTopicService != null) {
-            return jmsTopicService.getTopic(event);
+            return jmsTopicService.getTopic(event.getAppType(), event.getUser(), event.getId(), event.getParentId());
         }
         else {
             throw new RuntimeException("JMSTopicService is not initialized");

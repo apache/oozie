@@ -58,7 +58,7 @@ public class TestSLARegistrationGetJPAExecutor extends XDataTestCase {
 
         SLARegistrationGetJPAExecutor readCmd = new SLARegistrationGetJPAExecutor(jobId);
         SLARegistrationBean bean = jpaService.execute(readCmd);
-        assertEquals(jobId, bean.getJobId());
+        assertEquals(jobId, bean.getId());
         assertEquals(AppType.WORKFLOW_JOB, bean.getAppType());
         assertEquals(current, bean.getExpectedStart());
         assertEquals(2, bean.getSlaConfigMap().size());

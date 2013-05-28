@@ -118,7 +118,7 @@ public class SLASummaryBean implements JsonBean {
 
     public SLASummaryBean(SLACalcStatus slaCalc) {
         SLARegistrationBean reg = slaCalc.getSLARegistrationBean();
-        setJobId(slaCalc.getJobId());
+        setJobId(slaCalc.getId());
         setAppName(reg.getAppName());
         setExpectedStart(reg.getExpectedStart());
         setExpectedEnd(reg.getExpectedEnd());

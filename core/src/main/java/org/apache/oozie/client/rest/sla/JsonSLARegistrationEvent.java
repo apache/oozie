@@ -109,7 +109,7 @@ public class JsonSLARegistrationEvent extends SLAEvent implements JsonBean {
     }
 
     @Override
-    public String getJobId() {
+    public String getId() {
         return jobId;
     }
 

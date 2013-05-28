@@ -26,7 +26,7 @@ import java.util.Properties;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.AppType;
-import org.apache.oozie.event.CoordinatorActionEvent;
+import org.apache.oozie.client.event.SLAEvent;
 import org.apache.oozie.event.WorkflowJobEvent;
 import org.apache.oozie.executor.jpa.BundleJobGetForUserJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordinatorJobGetForUserJPAExecutor;
@@ -174,41 +174,37 @@ public class JMSTopicService implements Service {
     }
 
     /**
-     * Retrieve topic from coord event
-     * @param event the coordinatorAction event
-     * @return
+     * Retrieve Topic
+     *
+     * @param appType
+     * @param user
+     * @param jobId
+     * @param parentJobId
+     * @return topicName
      */
-    public String getTopic(CoordinatorActionEvent event) {
-        String topicName = topicMap.get(JobType.COORDINATOR.value);
+
+    public String getTopic(AppType appType, String user, String jobId, String parentJobId) {
+        String topicName = null;
+        String id = jobId;
+        if (appType == AppType.COORDINATOR_JOB || appType == AppType.COORDINATOR_ACTION) {
+            topicName = topicMap.get(JobType.COORDINATOR.value);
+            if (appType == AppType.COORDINATOR_ACTION) {
+                id = parentJobId;
+            }
+        }
+        else if (appType == AppType.WORKFLOW_JOB || appType == AppType.WORKFLOW_ACTION) {
+            topicName = topicMap.get(JobType.WORKFLOW);
+        }
+
         if (topicName == null) {
             if (defaultTopicName.equals(TopicType.USER.value)) {
-                topicName = event.getUser();
+                topicName = user;
             }
             else if (defaultTopicName.equals(TopicType.JOBID.value)) {
-                topicName = event.getParentId();
+                topicName = id;
             }
         }
         return topicPrefix + topicName;
-
-    }
-
-    /**
-     * Retrieve topic for workflow job event
-     * @param event the wf job event
-     * @return
-     */
-    public String getTopic(WorkflowJobEvent event) {
-        String topicName = topicMap.get(JobType.WORKFLOW.value);
-        if (topicName == null) {
-            if (defaultTopicName.equals(TopicType.USER.value)) {
-                topicName = event.getUser();
-            }
-            else if (defaultTopicName.equals(TopicType.JOBID.value)) {
-                topicName = event.getId();
-            }
-        }
-        return topicPrefix + topicName;
-
     }
 
     private String getTopicForWorkflow(String jobId) throws JPAExecutorException {
