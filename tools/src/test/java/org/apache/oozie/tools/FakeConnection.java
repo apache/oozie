@@ -47,6 +47,7 @@ import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.Executor;
 
 import static org.mockito.Mockito.*;
 
@@ -324,6 +325,38 @@ public class FakeConnection implements Connection {
     @Override
     public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
 
+    }
+
+    /**
+     * Null implementation for JDK7
+     */
+    public void setSchema(String schema) throws SQLException {
+    }
+
+    /**
+     * Null implementation for JDK7
+     */
+    public String getSchema() throws SQLException {
+        return null;
+    }
+
+    /**
+     * Null implementation for JDK7
+     */
+    public void abort(Executor executor) throws SQLException {
+    }
+
+    /**
+     * Null implementation for JDK7
+     */
+    public void setNetworkTimeout(Executor executor, int milliseconds) throws SQLException {
+    }
+
+    /**
+     * Null implementation for JDK7
+     */
+    public int getNetworkTimeout() throws SQLException {
+        return 0;
     }
 
     @SuppressWarnings( "deprecation" )
@@ -1284,5 +1317,20 @@ public class FakeConnection implements Connection {
             return false;
         }
 
+        /**
+         * Null implementation for JDK7
+         */
+        public <T> T getObject(int columnIndex, Class<T> type) throws SQLException {
+            return null;
+        }
+
+        /**
+         * Null implementation for JDK7
+         */
+        public <T> T getObject(String columnLabel, Class<T> type) throws SQLException {
+            return null;
+        }
+
     }
+
 }
