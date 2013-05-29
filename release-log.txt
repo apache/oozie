@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1373 Oozie compilation fails with jdk7 (tucu, rohini via rohini)
 OOZIE-1296 SLA JMS Event Listener for publishing notifications related to SLA information (ryota via mona)
 OOZIE-1361 Remove SLACalculatorBean and add columns to SummaryBean indicating events processed and sla processed (mona)
 OOZIE-674 resolveInstanceRange doesn't work for EL extensions (shwethags via mona)
