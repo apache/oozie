@@ -780,9 +780,11 @@ public abstract class XTestCase extends TestCase {
             UserGroupInformation.createUserForTesting(getTestUser3(), new String[] { "users" } );
             conf.set("hadoop.tmp.dir", "target/test-data"+"/minicluster");
 
-            // Scheduler properties required for YARN to work
+            // Scheduler properties required for YARN CapacityScheduler to work
             conf.set("yarn.scheduler.capacity.root.queues", "default");
             conf.set("yarn.scheduler.capacity.root.default.capacity", "100");
+            // Required to prevent deadlocks with YARN CapacityScheduler
+            conf.set("yarn.scheduler.capacity.maximum-am-resource-percent", "0.5");
 
             try {
                 dfsCluster = new MiniDFSCluster(conf, dataNodes, true, null);
