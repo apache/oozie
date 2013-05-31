@@ -39,7 +39,7 @@ public class SLAService implements Service {
     public static final String CONF_PREFIX = "oozie.sla.service.SLAService.";
     public static final String CONF_CALCULATOR_IMPL = CONF_PREFIX + "calculator.impl";
     public static final String CONF_CAPACITY = CONF_PREFIX + "capacity";
-    public static final String CONF_ALERT_TYPES = CONF_PREFIX + "alert.types";
+    public static final String CONF_ALERT_EVENTS = CONF_PREFIX + "alert.events";
 
     private static SLACalculator calcImpl;
     private static boolean slaEnabled = false;

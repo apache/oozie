@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,6 +46,14 @@ import org.jdom.Namespace;
  * out an email.
  */
 public class EmailActionExecutor extends ActionExecutor {
+
+    public static final String CONF_PREFIX = "oozie.email.";
+    public static final String EMAIL_SMTP_HOST = CONF_PREFIX + "smtp.host";
+    public static final String EMAIL_SMTP_PORT = CONF_PREFIX + "smtp.port";
+    public static final String EMAIL_SMTP_AUTH = CONF_PREFIX + "smtp.auth";
+    public static final String EMAIL_SMTP_USER = CONF_PREFIX + "smtp.username";
+    public static final String EMAIL_SMTP_PASS = CONF_PREFIX + "smtp.password";
+    public static final String EMAIL_SMTP_FROM = CONF_PREFIX + "from.address";
 
     private final static String TO = "to";
     private final static String CC = "cc";
@@ -112,14 +120,12 @@ public class EmailActionExecutor extends ActionExecutor {
 
     protected void email(Context context, String[] to, String[] cc, String subject, String body) throws ActionExecutorException {
         // Get mailing server details.
-        String smtpHost = getOozieConf().get("oozie.email.smtp.host",
-            "localhost");
-        String smtpPort = getOozieConf().get("oozie.email.smtp.port", "25");
-        Boolean smtpAuth = getOozieConf().getBoolean("oozie.email.smtp.auth", false);
-        String smtpUser = getOozieConf().get("oozie.email.smtp.username", "");
-        String smtpPassword = getOozieConf().get("oozie.email.smtp.password", "");
-        String fromAddr = getOozieConf().get("oozie.email.from.address",
-            "oozie@localhost");
+        String smtpHost = getOozieConf().get(EMAIL_SMTP_HOST, "localhost");
+        String smtpPort = getOozieConf().get(EMAIL_SMTP_PORT, "25");
+        Boolean smtpAuth = getOozieConf().getBoolean(EMAIL_SMTP_AUTH, false);
+        String smtpUser = getOozieConf().get(EMAIL_SMTP_USER, "");
+        String smtpPassword = getOozieConf().get(EMAIL_SMTP_PASS, "");
+        String fromAddr = getOozieConf().get(EMAIL_SMTP_FROM, "oozie@localhost");
 
         Properties properties = new Properties();
         properties.setProperty("mail.smtp.host", smtpHost);
@@ -207,7 +213,7 @@ public class EmailActionExecutor extends ActionExecutor {
         return true;
     }
 
-    private static class JavaMailAuthenticator extends Authenticator {
+    public static class JavaMailAuthenticator extends Authenticator {
 
         String user;
         String password;

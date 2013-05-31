@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1294 SLA Email Notification (ryota via virag)
 OOZIE-1395 Using Yarn's CapacityScheduler causes some tests to time out (rkanter)
 OOZIE-1373 Oozie compilation fails with jdk7 (tucu, rohini via rohini)
 OOZIE-1296 SLA JMS Event Listener for publishing notifications related to SLA information (ryota via mona)

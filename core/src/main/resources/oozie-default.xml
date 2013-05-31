@@ -1892,7 +1892,7 @@
     </property>
 
     <property>
-        <name>oozie.sla.service.SLAService.alert.types</name>
+        <name>oozie.sla.service.SLAService.alert.events</name>
         <value>END_MISS</value>
         <description>
              Default types of SLA events for being alerted of.
