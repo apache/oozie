@@ -19,7 +19,6 @@
 
 import java.io.File;
 import java.util.Date;
-import java.util.HashMap;
 
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
@@ -38,7 +37,6 @@ public class TestCoordELExtensions extends XDataTestCase {
 
     @Override
     protected void setUp() throws Exception {
-        sysProps = new HashMap<String, String>();
         setSystemProperty("oozie.test.config.file", new File(OOZIE_SRC_DIR,
                 "core/src/test/resources/oozie-site-coordel.xml").getAbsolutePath());
         super.setUp();

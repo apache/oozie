@@ -91,7 +91,7 @@ import org.apache.oozie.util.XLog;
  * From within testcases, system properties must be changed using the {@link #setSystemProperty} method.
  */
 public abstract class XTestCase extends TestCase {
-    protected Map<String, String> sysProps;
+    private Map<String, String> sysProps;
     private String testCaseDir;
     private String testCaseConfDir;
     private String hadoopVersion;
@@ -261,7 +261,6 @@ public abstract class XTestCase extends TestCase {
             System.exit(-1);
         }
         hadoopVersion = System.getProperty(HADOOP_VERSION, "0.20.0");
-        sysProps = new HashMap<String, String>();
         testCaseDir = createTestCaseDir(this, true);
 
         //setting up Oozie HOME and Oozie conf directory
@@ -516,6 +515,9 @@ public abstract class XTestCase extends TestCase {
      * @param value value to set.
      */
     protected void setSystemProperty(String name, String value) {
+        if (sysProps == null) {
+            sysProps = new HashMap<String, String>();
+        }
         if (!sysProps.containsKey(name)) {
             String currentValue = System.getProperty(name);
             sysProps.put(name, currentValue);
@@ -532,15 +534,17 @@ public abstract class XTestCase extends TestCase {
      * Reset changed system properties to their original values. <p/> Called from {@link #tearDown}.
      */
     private void resetSystemProperties() {
-        for (Map.Entry<String, String> entry : sysProps.entrySet()) {
-            if (entry.getValue() != null) {
-                System.setProperty(entry.getKey(), entry.getValue());
+        if (sysProps != null) {
+            for (Map.Entry<String, String> entry : sysProps.entrySet()) {
+                if (entry.getValue() != null) {
+                    System.setProperty(entry.getKey(), entry.getValue());
+                }
+                else {
+                    System.getProperties().remove(entry.getKey());
+                }
             }
-            else {
-                System.getProperties().remove(entry.getKey());
-            }
+            sysProps.clear();
         }
-        sysProps.clear();
     }
 
     /**
