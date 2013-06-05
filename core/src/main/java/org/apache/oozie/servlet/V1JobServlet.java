@@ -779,7 +779,7 @@ public class V1JobServlet extends BaseJobServlet {
      * @throws XServletException
      * @throws BaseEngineException
      */
-    private JsonBean getCoordinatorJob(HttpServletRequest request, HttpServletResponse response)
+    protected JsonBean getCoordinatorJob(HttpServletRequest request, HttpServletResponse response)
             throws XServletException, BaseEngineException {
         JsonBean jobBean = null;
         CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(
@@ -788,6 +788,8 @@ public class V1JobServlet extends BaseJobServlet {
         String startStr = request.getParameter(RestConstants.OFFSET_PARAM);
         String lenStr = request.getParameter(RestConstants.LEN_PARAM);
         String filter = request.getParameter(RestConstants.JOB_FILTER_PARAM);
+        String orderStr = request.getParameter(RestConstants.ORDER_PARAM);
+        boolean order = (orderStr != null && orderStr.equals("desc")) ? true : false;
         int start = (startStr != null) ? Integer.parseInt(startStr) : 1;
         start = (start < 1) ? 1 : start;
         // Get default number of coordinator actions to be retrieved
@@ -795,7 +797,7 @@ public class V1JobServlet extends BaseJobServlet {
         int len = (lenStr != null) ? Integer.parseInt(lenStr) : 0;
         len = (len < 1) ? defaultLen : len;
         try {
-            JsonCoordinatorJob coordJob = coordEngine.getCoordJob(jobId, filter, start, len);
+            JsonCoordinatorJob coordJob = coordEngine.getCoordJob(jobId, filter, start, len, order);
             jobBean = coordJob;
         }
         catch (CoordinatorEngineException ex) {

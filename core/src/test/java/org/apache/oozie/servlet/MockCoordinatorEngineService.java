@@ -161,7 +161,8 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
         }
 
         @Override
-        public CoordinatorJobBean getCoordJob(String jobId, String filter, int start, int length) throws BaseEngineException {
+        public CoordinatorJobBean getCoordJob(String jobId, String filter, int start, int length, boolean desc)
+                throws BaseEngineException {
             did = RestConstants.JOB_SHOW_INFO;
             int idx = validateCoordinatorIdx(jobId);
             return (CoordinatorJobBean) coordJobs.get(idx);

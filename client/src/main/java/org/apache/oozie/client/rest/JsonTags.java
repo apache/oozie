@@ -98,6 +98,8 @@ public interface JsonTags {
     public static final String COORDINATOR_JOB_CONSOLE_URL = "consoleUrl";
     public static final String COORDINATOR_JOB_ACTIONS = "actions";
     public static final String COORDINATOR_JOB_USER = "user";
+    public static final String COORDINATOR_JOB_NUM_ACTION = "total";
+
     @Deprecated
     public static final String COORDINATOR_JOB_GROUP = "group";
     public static final String COORDINATOR_JOB_ACL = "acl";

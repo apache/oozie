@@ -44,7 +44,7 @@ public class TestBundleEngineSimple extends TestCase {
     public void testGetCoordJob4() {
         BundleEngine be = new BundleEngine();
         try {
-            CoordinatorJob cj = be.getCoordJob("foo", "filter", 0, 1);
+            CoordinatorJob cj = be.getCoordJob("foo", "filter", 0, 1, false);
             fail("Expected BundleEngineException was not thrown.");
         }
         catch (BundleEngineException bee) {
