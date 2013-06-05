@@ -21,6 +21,7 @@ import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.event.BundleJobEvent;
 import org.apache.oozie.event.CoordinatorActionEvent;
@@ -142,6 +143,47 @@ public class TestEventHandlerService extends XDataTestCase {
         ehs.new EventWorker().run();
         assertTrue(output.toString().contains("Coord Action event FAILURE"));
         output.setLength(0);
+
+        /*
+         * Workflow Action events
+         */
+        WorkflowActionEvent event3 = new WorkflowActionEvent("waction-1", "parentid",
+                WorkflowAction.Status.RUNNING, getTestUser(), "myapp", null, null);
+        ehs.queueEvent(event3);
+        ehs.new EventWorker().run();
+        assertTrue(output.toString().contains("Workflow Action event STARTED"));
+        output.setLength(0);
+
+        event3.setStatus(WorkflowAction.Status.START_MANUAL);
+        ehs.queueEvent(event3);
+        ehs.new EventWorker().run();
+        assertTrue(output.toString().contains("Workflow Action event SUSPEND"));
+        output.setLength(0);
+
+        event3.setStatus(WorkflowAction.Status.OK);
+        ehs.queueEvent(event3);
+        ehs.new EventWorker().run();
+        assertTrue(output.toString().contains("Workflow Action event SUCCESS"));
+        output.setLength(0);
+
+        event3.setStatus(WorkflowAction.Status.ERROR);
+        ehs.queueEvent(event3);
+        ehs.new EventWorker().run();
+        assertTrue(output.toString().contains("Workflow Action event FAILURE"));
+        output.setLength(0);
+
+        event3.setStatus(WorkflowAction.Status.KILLED);
+        ehs.queueEvent(event3);
+        ehs.new EventWorker().run();
+        assertTrue(output.toString().contains("Workflow Action event FAILURE"));
+        output.setLength(0);
+
+        event3.setStatus(WorkflowAction.Status.FAILED);
+        ehs.queueEvent(event3);
+        ehs.new EventWorker().run();
+        assertTrue(output.toString().contains("Workflow Action event FAILURE"));
+        output.setLength(0);
+
     }
 
     private EventHandlerService _testEventHandlerService() throws Exception {
@@ -171,21 +213,21 @@ public class TestEventHandlerService extends XDataTestCase {
         @Override
         public void onCoordinatorJobEvent(CoordinatorJobEvent cje) {
             if (cje != null) {
-                output.append("Dummy Coord Job event "+cje.getEventStatus());
+                output.append("Dummy Coord Job event " + cje.getEventStatus());
             }
         }
 
         @Override
         public void onCoordinatorActionEvent(CoordinatorActionEvent cae) {
             if (cae != null) {
-                output.append("Dummy Coord Action event "+cae.getEventStatus());
+                output.append("Dummy Coord Action event " + cae.getEventStatus());
             }
         }
 
         @Override
         public void onBundleJobEvent(BundleJobEvent bje) {
             if (bje != null) {
-                output.append("Dummy Bundle Job event "+bje.getEventStatus());
+                output.append("Dummy Bundle Job event " + bje.getEventStatus());
             }
         }
 

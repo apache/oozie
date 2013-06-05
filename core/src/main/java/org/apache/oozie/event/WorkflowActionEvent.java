@@ -64,6 +64,7 @@ public class WorkflowActionEvent extends JobEvent {
             case KILLED:
             case FAILED:
                 setEventStatus(EventStatus.FAILURE);
+                break;
             case START_MANUAL:
             case END_MANUAL:
                 setEventStatus(EventStatus.SUSPEND);
@@ -91,7 +92,7 @@ public class WorkflowActionEvent extends JobEvent {
     }
 
     public void setErrorMessage(String msg) {
-        errorCode = msg;
+        errorMessage = msg;
     }
 
 }

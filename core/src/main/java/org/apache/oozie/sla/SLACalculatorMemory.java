@@ -215,7 +215,7 @@ public class SLACalculatorMemory implements SLACalculator {
         SLACalcStatus slaCalc = slaMap.get(jobId);
         List<JsonBean> updateList = new ArrayList<JsonBean>();
         SLASummaryBean slaInfo = null;
-        boolean ret = false;
+        boolean hasSla = false;
         if (slaCalc != null) {
             synchronized (slaCalc) {
                 byte eventProc = slaCalc.getEventProcessed();
@@ -244,7 +244,7 @@ public class SLACalculatorMemory implements SLACalculator {
                 if (slaInfo.getSlaProcessed() == 2) {
                     slaMap.remove(jobId);
                 }
-                ret = true;
+                hasSla = true;
             }
         }
         else if (historySet.contains(jobId)) {
@@ -257,16 +257,19 @@ public class SLACalculatorMemory implements SLACalculator {
             }
             slaInfo.setSlaProcessed(2);
             historySet.remove(jobId);
-            ret = true;
+            hasSla = true;
         }
-        slaInfo.setLastModifiedTime(new Date());
-        updateList.add(slaInfo);
-        if (jpa != null) {
-            jpa.execute(new SLACalculationInsertUpdateJPAExecutor(null, updateList));
+        if (hasSla) {
+            slaInfo.setLastModifiedTime(new Date());
+            updateList.add(slaInfo);
+            if (jpa != null) {
+                jpa.execute(new SLACalculationInsertUpdateJPAExecutor(null, updateList));
+            }
+            XLog.getLog(SLAService.class)
+                    .trace("SLA Status Event - Job:" + jobId + " Status:" + slaCalc.getSLAStatus());
         }
-        XLog.getLog(SLAService.class).trace("SLA Status Event - Job:" + jobId + " Status:" + slaCalc.getSLAStatus());
 
-        return ret;
+        return hasSla;
     }
 
     /**

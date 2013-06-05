@@ -179,7 +179,7 @@ public class TestSLAEventGeneration extends XDataTestCase {
         slaEvent = slas.getSLACalculator().get(jobId);
         slaEvent.setEventProcessed(0); //resetting to receive sla events
         ehs.new EventWorker().run();
-        Thread.sleep(300); //time for event listeners to run
+        Thread.sleep(300); // time for listeners to run
         slaEvent = (SLACalcStatus) ehs.getEventQueue().poll();
         assertEquals(jobId, slaEvent.getId());
         assertNotNull(slaEvent.getActualStart());
@@ -189,8 +189,9 @@ public class TestSLAEventGeneration extends XDataTestCase {
 
         // test that sla processes the Job Event from Kill command
         new KillXCommand(jobId).call();
+        ehs.getEventQueue().poll(); //ignore the wf-action event generated
         ehs.new EventWorker().run();
-        Thread.sleep(300);
+        Thread.sleep(300); // time for listeners to run
         slaEvent = (SLACalcStatus) ehs.getEventQueue().poll();
         assertEquals(jobId, slaEvent.getId());
         assertNotNull(slaEvent.getActualEnd());
@@ -268,7 +269,6 @@ public class TestSLAEventGeneration extends XDataTestCase {
         slaEvent = slas.getSLACalculator().get(actionId);
         slaEvent.setEventProcessed(0); //resetting for testing sla event
         ehs.new EventWorker().run();
-        Thread.sleep(300); //time for event listeners to run
         slaEvent = (SLACalcStatus) ehs.getEventQueue().poll();
         assertEquals(actionId, slaEvent.getId());
         assertNotNull(slaEvent.getActualStart());
@@ -278,7 +278,6 @@ public class TestSLAEventGeneration extends XDataTestCase {
         // test that sla processes the Job Event from Kill command
         new CoordKillXCommand(jobId).call();
         ehs.new EventWorker().run();
-        Thread.sleep(300); //time for event listeners to run
         slaEvent = (SLACalcStatus) ehs.getEventQueue().poll();
         assertEquals(actionId, slaEvent.getId());
         assertNotNull(slaEvent.getActualEnd());
