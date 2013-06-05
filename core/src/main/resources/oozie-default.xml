@@ -1845,9 +1845,7 @@
 
     <property>
         <name>oozie.service.EventHandlerService.event.listeners</name>
-        <value>org.apache.oozie.jms.JMSJobEventListener,
-               org.apache.oozie.sla.listener.SLAJobEventListener
-        </value>
+        <value>org.apache.oozie.jms.JMSJobEventListener</value>
     </property>
 
     <property>

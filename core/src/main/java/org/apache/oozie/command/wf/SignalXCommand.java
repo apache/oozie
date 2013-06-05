@@ -73,7 +73,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
     private WorkflowActionBean wfAction;
     private List<JsonBean> updateList = new ArrayList<JsonBean>();
     private List<JsonBean> insertList = new ArrayList<JsonBean>();
-    private boolean generateEvent;
+    private boolean generateEvent = false;
     private String wfJobErrorCode;
     private String wfJobErrorMsg;
 
@@ -325,9 +325,6 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
             jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, insertList));
             if (generateEvent && EventHandlerService.isEnabled()) {
                 generateEvent(wfJob, wfJobErrorCode, wfJobErrorMsg);
-                if (wfAction != null) {
-                    generateEvent(wfAction, wfJob.getUser());
-                }
             }
         }
         catch (JPAExecutorException je) {

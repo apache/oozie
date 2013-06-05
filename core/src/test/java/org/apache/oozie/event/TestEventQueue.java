@@ -45,6 +45,8 @@ public class TestEventQueue extends XDataTestCase {
                 JMSAccessorService.class.getName() + "," + JMSTopicService.class.getName() + ","
                         + EventHandlerService.class.getName() + "," + SLAService.class.getName());
         conf.setInt(EventHandlerService.CONF_BATCH_SIZE, 3);
+        conf.set(EventHandlerService.CONF_LISTENERS, ""); // this unit test is meant to
+                                                          // target queue operations only
         services.init();
     }
 

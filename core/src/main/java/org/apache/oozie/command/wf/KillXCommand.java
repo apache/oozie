@@ -138,7 +138,7 @@ public class KillXCommand extends WorkflowXCommand<Void> {
 
                     queue(new ActionKillXCommand(action.getId(), action.getType()));
                 }
-                if (action.getStatus() == WorkflowActionBean.Status.PREP
+                else if (action.getStatus() == WorkflowActionBean.Status.PREP
                         || action.getStatus() == WorkflowActionBean.Status.START_RETRY
                         || action.getStatus() == WorkflowActionBean.Status.START_MANUAL
                         || action.getStatus() == WorkflowActionBean.Status.END_RETRY
@@ -152,6 +152,9 @@ public class KillXCommand extends WorkflowXCommand<Void> {
                         insertList.add(slaEvent);
                     }
                     updateList.add(action);
+                    if (EventHandlerService.isEnabled()) {
+                        generateEvent(action, wfJob.getUser());
+                    }
                 }
             }
             wfJob.setLastModifiedTime(new Date());

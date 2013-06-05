@@ -68,12 +68,13 @@ public abstract class WorkflowXCommand<T> extends XCommand<T> {
     }
 
     protected void generateEvent(WorkflowActionBean wfAction, String wfUser) {
-        // Workflow action events not filtered since required for sla
-        WorkflowActionEvent event = new WorkflowActionEvent(wfAction.getId(), wfAction.getJobId(),
-                wfAction.getStatus(), wfUser, wfAction.getName(), wfAction.getStartTime(), wfAction.getEndTime());
-        event.setErrorCode(wfAction.getErrorCode());
-        event.setErrorMessage(wfAction.getErrorMessage());
-        eventService.queueEvent(event);
+        if (eventService.isSupportedApptype(AppType.WORKFLOW_ACTION.name())) {
+            WorkflowActionEvent event = new WorkflowActionEvent(wfAction.getId(), wfAction.getJobId(),
+                    wfAction.getStatus(), wfUser, wfAction.getName(), wfAction.getStartTime(), wfAction.getEndTime());
+            event.setErrorCode(wfAction.getErrorCode());
+            event.setErrorMessage(wfAction.getErrorMessage());
+            eventService.queueEvent(event);
+        }
     }
 
 }

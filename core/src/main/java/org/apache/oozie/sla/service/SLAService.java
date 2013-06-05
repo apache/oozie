@@ -31,7 +31,6 @@ import org.apache.oozie.sla.SLACalculator;
 import org.apache.oozie.sla.SLACalculatorMemory;
 import org.apache.oozie.sla.SLARegistrationBean;
 import org.apache.oozie.util.XLog;
-
 import com.google.common.annotations.VisibleForTesting;
 
 public class SLAService implements Service {
@@ -60,6 +59,9 @@ public class SLAService implements Service {
                         + Services.CONF_SERVICE_EXT_CLASSES + " or declare it BEFORE SLAService");
             }
             LOG = XLog.getLog(getClass());
+            java.util.Set<String> appTypes = eventHandler.getAppTypes();
+            appTypes.add("workflow_action");
+            eventHandler.setAppTypes(appTypes);
 
             Runnable slaThread = new SLAWorker(calcImpl);
             // schedule runnable by default every 30 sec

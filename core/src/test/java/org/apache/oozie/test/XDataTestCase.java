@@ -88,6 +88,7 @@ import org.jdom.JDOMException;
 
 import com.google.common.annotations.VisibleForTesting;
 
+@SuppressWarnings("deprecation")
 public abstract class XDataTestCase extends XHCatTestCase {
 
     protected static String slaXml = " <sla:info xmlns:sla='uri:oozie:sla:0.1'>"
@@ -717,12 +718,17 @@ public abstract class XDataTestCase extends XHCatTestCase {
      */
     protected WorkflowActionBean addRecordToWfActionTable(String wfId, String actionName, WorkflowAction.Status status)
             throws Exception {
-        return addRecordToWfActionTable(wfId, actionName, status, "");
+        return addRecordToWfActionTable(wfId, actionName, status, "", false);
     }
 
     protected WorkflowActionBean addRecordToWfActionTable(String wfId, String actionName, WorkflowAction.Status status,
-            String execPath) throws Exception {
-        WorkflowActionBean action = createWorkflowAction(wfId, actionName, status);
+            boolean pending) throws Exception {
+        return addRecordToWfActionTable(wfId, actionName, status, "", pending);
+    }
+
+    protected WorkflowActionBean addRecordToWfActionTable(String wfId, String actionName, WorkflowAction.Status status,
+            String execPath, boolean pending) throws Exception {
+        WorkflowActionBean action = createWorkflowAction(wfId, actionName, status, pending);
         action.setExecutionPath(execPath);
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
@@ -1127,8 +1133,8 @@ public abstract class XDataTestCase extends XHCatTestCase {
      * @return workflow action bean
      * @throws Exception thrown if unable to create workflow action bean
      */
-    protected WorkflowActionBean createWorkflowAction(String wfId, String actionName, WorkflowAction.Status status)
-            throws Exception {
+    protected WorkflowActionBean createWorkflowAction(String wfId, String actionName, WorkflowAction.Status status,
+            boolean pending) throws Exception {
         WorkflowActionBean action = new WorkflowActionBean();
         action.setName(actionName);
         action.setId(Services.get().get(UUIDService.class).generateChildId(wfId, actionName));
@@ -1139,7 +1145,13 @@ public abstract class XDataTestCase extends XHCatTestCase {
         action.setStartTime(new Date());
         action.setEndTime(new Date());
         action.setLastCheckTime(new Date());
-        action.resetPendingOnly();
+        action.setCred("null");
+        if (pending) {
+            action.setPendingOnly();
+        }
+        else {
+            action.resetPendingOnly();
+        }
 
         Path inputDir = new Path(getFsTestCaseDir(), "input");
         Path outputDir = new Path(getFsTestCaseDir(), "output");
@@ -1161,6 +1173,11 @@ public abstract class XDataTestCase extends XHCatTestCase {
         action.setConf(actionXml);
 
         return action;
+    }
+
+    protected WorkflowActionBean createWorkflowAction(String wfId, String actionName, WorkflowAction.Status status)
+            throws Exception {
+        return createWorkflowAction(wfId, actionName, status, false);
     }
 
     /**
