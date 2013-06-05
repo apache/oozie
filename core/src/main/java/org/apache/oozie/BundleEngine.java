@@ -125,8 +125,10 @@ public class BundleEngine extends BaseEngine {
      * @see org.apache.oozie.BaseEngine#getCoordJob(java.lang.String, int, int)
      */
     @Override
-    public CoordinatorJob getCoordJob(String jobId, String filter, int start, int length) throws BundleEngineException {
-        throw new BundleEngineException(new XException(ErrorCode.E0301, "cannot get a coordinator job from BundleEngine"));
+    public CoordinatorJob getCoordJob(String jobId, String filter, int start, int length, boolean desc)
+            throws BundleEngineException {
+        throw new BundleEngineException(new XException(ErrorCode.E0301,
+                "cannot get a coordinator job from BundleEngine"));
     }
 
     /* (non-Javadoc)

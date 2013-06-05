@@ -46,6 +46,8 @@ public interface RestConstants {
 
     public static final String LEN_PARAM = "len";
 
+    public static final String ORDER_PARAM = "order";
+
     public static final String JOB_FILTER_PARAM = "filter";
 
     public static final String JOB_RESOURCE = "/job";
@@ -61,6 +63,7 @@ public interface RestConstants {
     public static final String JOB_ACTION_KILL = "kill";
 
     public static final String JOB_ACTION_CHANGE = "change";
+
     public static final String JOB_CHANGE_VALUE = "value";
 
     public static final String JOB_ACTION_RERUN = "rerun";

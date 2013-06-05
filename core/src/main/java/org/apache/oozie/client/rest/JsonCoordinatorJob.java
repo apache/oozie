@@ -130,6 +130,8 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
     @Transient
     private int pending = 0;
 
+    @Transient
+    private int numActions = 0;
 
     public JsonCoordinatorJob() {
         actions = new ArrayList<JsonCoordinatorAction>();
@@ -168,6 +170,7 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
         json.put(JsonTags.COORDINATOR_JOB_MAT_THROTTLING, getMatThrottling());
         json.put(JsonTags.COORDINATOR_ACTIONS, JsonCoordinatorAction.toJSONArray(actions, timeZoneId));
         json.put(JsonTags.TO_STRING,toString());
+        json.put(JsonTags.COORDINATOR_JOB_NUM_ACTION, numActions);
 
         return json;
     }
@@ -415,6 +418,14 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
      */
     public void resetPending() {
         this.pending = 0;
+    }
+
+    public int getNumActions() {
+        return numActions;
+    }
+
+    public void setNumActions(int numAction) {
+        this.numActions = numAction;
     }
 
 }

@@ -470,7 +470,7 @@ public class DagEngine extends BaseEngine {
     }
 
     @Override
-    public CoordinatorJob getCoordJob(String jobId, String filter, int start, int length) throws BaseEngineException {
+    public CoordinatorJob getCoordJob(String jobId, String filter, int start, int length, boolean desc) throws BaseEngineException {
         throw new BaseEngineException(new XException(ErrorCode.E0301, "cannot get a coordinator job from DagEngine"));
     }
 

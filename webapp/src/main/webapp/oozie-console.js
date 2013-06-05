@@ -1,5 +1,5 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
+' * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership.  The ASF licenses this file
@@ -777,9 +777,16 @@ function coordJobDetailsPopup(response, request) {
     var coordJobId = jobDetails["coordJobId"];
     var appName = jobDetails["coordJobName"];
     var jobActionStatus = new Ext.data.JsonStore({
-        data: jobDetails["actions"],
-        fields: ['id', 'name', 'type', 'createdConf', 'runConf', 'actionNumber', 'createdTime', 'externalId', 'lastModifiedTime', 'nominalTime', 'status', 'missingDependencies', 'externalStatus', 'trackerUri', 'consoleUrl', 'errorCode', 'errorMessage', 'actions', 'externalChildIDs']
-
+        autoLoad: {params:{offset: 0, len: 50}},
+        totalProperty: 'total',
+        root: 'actions',
+        fields: ['id', 'name', 'type', 'createdConf', 'runConf', 'actionNumber', 'createdTime', 'externalId',
+                 'lastModifiedTime', 'nominalTime', 'status', 'missingDependencies', 'externalStatus', 'trackerUri',
+                 'consoleUrl', 'errorCode', 'errorMessage', 'actions', 'externalChildIDs'],
+        proxy: new Ext.data.HttpProxy({
+           url: getOozieBase() + 'job/' + coordJobId + "?timezone=" + getTimeZone() + "&order=desc",
+           method: 'GET'
+        })
     });
 
     var formFieldSet = new Ext.form.FieldSet({
@@ -872,7 +879,6 @@ function coordJobDetailsPopup(response, request) {
                     url: getOozieBase() + 'job/' + coordJobId + "?timezone=" + getTimeZone(),
                     success: function(response, request) {
                         jobDetails = eval("(" + response.responseText + ")");
-                        jobActionStatus.loadData(jobDetails["actions"]);
                         fs.getForm().setValues(jobDetails);
                     }
 
@@ -928,6 +934,7 @@ function coordJobDetailsPopup(response, request) {
         height: 400,
         width: 1600,
         title: 'Actions',
+        bbar: getPagingBar(jobActionStatus),
         listeners: {
             cellclick: {
                 fn: showWorkflowPopup
@@ -1389,7 +1396,7 @@ function coordJobDetailsGridWindow(coordJobId) {
          icon: Ext.MessageBox.INFO
          });
          */
-        url: getOozieBase() + 'job/' + coordJobId + "?timezone=" + getTimeZone(),
+        url: getOozieBase() + 'job/' + coordJobId + "?timezone=" + getTimeZone() + "&offset=0&len=0",
         success: coordJobDetailsPopup
     });
 }

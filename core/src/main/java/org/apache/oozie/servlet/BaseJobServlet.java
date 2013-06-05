@@ -49,7 +49,8 @@ public abstract class BaseJobServlet extends JsonRestServlet {
     static {
         RESOURCES_INFO[0] = new ResourceInfo("*", Arrays.asList("PUT", "GET"), Arrays.asList(new ParameterInfo(
                 RestConstants.ACTION_PARAM, String.class, true, Arrays.asList("PUT")), new ParameterInfo(
-                RestConstants.JOB_SHOW_PARAM, String.class, false, Arrays.asList("GET"))));
+                RestConstants.JOB_SHOW_PARAM, String.class, false, Arrays.asList("GET")), new ParameterInfo(
+                        RestConstants.ORDER_PARAM, String.class, false, Arrays.asList("GET"))));
     }
 
     public BaseJobServlet(String instrumentationName) {

@@ -149,10 +149,12 @@ public abstract class BaseEngine {
      * @param filter the status filter
      * @param start starting from this index in the list of actions belonging to the job
      * @param length number of actions to be returned
+     * @param order true if actions are sorted in a descending order of nominal time, false if asc order
      * @return the coord job info.
      * @throws BaseEngineException thrown if the job info could not be obtained.
      */
-    public abstract CoordinatorJob getCoordJob(String jobId, String filter, int start, int length) throws BaseEngineException;
+    public abstract CoordinatorJob getCoordJob(String jobId, String filter, int start, int length, boolean desc)
+            throws BaseEngineException;
 
     /**
      * Return the a job definition.
