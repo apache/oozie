@@ -307,31 +307,31 @@ public class JavaActionExecutor extends ActionExecutor {
 
     Configuration addToCache(Configuration conf, Path appPath, String filePath, boolean archive)
             throws ActionExecutorException {
-        Path path = null;
+
+        URI uri = null;
         try {
-            if (filePath.startsWith("/")) {
-                path = new Path(filePath);
+            uri = new URI(filePath);
+            URI baseUri = appPath.toUri();
+            if (uri.getScheme() == null) {
+                String resolvedPath = uri.getPath();
+                if (!resolvedPath.startsWith("/")) {
+                    resolvedPath = baseUri.getPath() + "/" + resolvedPath;
+                }
+                uri = new URI(baseUri.getScheme(), baseUri.getAuthority(), resolvedPath, uri.getQuery(), uri.getFragment());
             }
-            else {
-                path = new Path(appPath, filePath);
-            }
-            URI uri = new URI(path.toUri().getPath());
             if (archive) {
-                DistributedCache.addCacheArchive(uri, conf);
+                DistributedCache.addCacheArchive(uri.normalize(), conf);
             }
             else {
                 String fileName = filePath.substring(filePath.lastIndexOf("/") + 1);
-                if (fileName.endsWith(".so") || fileName.contains(".so.")) {  // .so files
-                    uri = new Path(path.toString() + "#" + fileName).toUri();
-                    uri = new URI(uri.getPath());
-                    DistributedCache.addCacheFile(uri, conf);
+                if (fileName.endsWith(".so") || fileName.contains(".so.")) { // .so files
+                    uri = new URI(uri.getScheme(), uri.getAuthority(), uri.getPath(), uri.getQuery(), fileName);
+                    DistributedCache.addCacheFile(uri.normalize(), conf);
                 }
                 else if (fileName.endsWith(".jar")) { // .jar files
                     if (!fileName.contains("#")) {
-                        path = new Path(uri.toString());
-
                         String user = conf.get("user.name");
-                        Services.get().get(HadoopAccessorService.class).addFileToClassPath(user, path, conf);
+                        Services.get().get(HadoopAccessorService.class).addFileToClassPath(user, new Path(uri.normalize()), conf);
                     }
                     else {
                         DistributedCache.addCacheFile(uri, conf);
@@ -339,10 +339,9 @@ public class JavaActionExecutor extends ActionExecutor {
                 }
                 else { // regular files
                     if (!fileName.contains("#")) {
-                        uri = new Path(path.toString() + "#" + fileName).toUri();
-                        uri = new URI(uri.getPath());
+                        uri = new URI(uri.getScheme(), uri.getAuthority(), uri.getPath(), uri.getQuery(), fileName);
                     }
-                    DistributedCache.addCacheFile(uri, conf);
+                    DistributedCache.addCacheFile(uri.normalize(), conf);
                 }
             }
             DistributedCache.createSymlink(conf);
@@ -350,7 +349,7 @@ public class JavaActionExecutor extends ActionExecutor {
         }
         catch (Exception ex) {
             XLog.getLog(getClass()).debug(
-                    "Errors when add to DistributedCache. Path=" + path + ", archive=" + archive + ", conf="
+                    "Errors when add to DistributedCache. Path=" + uri.toString() + ", archive=" + archive + ", conf="
                             + XmlUtils.prettyPrint(conf).toString());
             throw convertException(ex);
         }

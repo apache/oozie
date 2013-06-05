@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1381 Oozie does not support access to the distributed cache file under different name node (ryota)
 OOZIE-1298 TestPartitionDependencyManagerEhcache.testEvictionOnTimeToIdle is flakey (rohini)
 OOZIE-1397 failure in running test cases (aklochkov via rohini)
 OOZIE-1294 SLA Email Notification (ryota via virag)
