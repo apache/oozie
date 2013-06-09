@@ -147,6 +147,23 @@ public interface JsonTags {
     public static final String BUNDLE_JOB_EXTERNAL_ID = "bundleExternalId";
     public static final String BUNDLE_COORDINATOR_JOBS = "bundleCoordJobs";
 
+    public static final String SLA_SUMMARY_LIST = "slaSummaryList";
+    public static final String SLA_SUMMARY_ID = "id";
+    public static final String SLA_SUMMARY_PARENT_ID = "parentId";
+    public static final String SLA_SUMMARY_APP_NAME = "appName";
+    public static final String SLA_SUMMARY_APP_TYPE = "appType";
+    public static final String SLA_SUMMARY_USER = "user";
+    public static final String SLA_SUMMARY_NOMINAL_TIME = "nominalTime";
+    public static final String SLA_SUMMARY_EXPECTED_START = "expectedStart";
+    public static final String SLA_SUMMARY_ACTUAL_START = "actualStart";
+    public static final String SLA_SUMMARY_EXPECTED_END = "expectedEnd";
+    public static final String SLA_SUMMARY_ACTUAL_END = "actualEnd";
+    public static final String SLA_SUMMARY_EXPECTED_DURATION = "expectedDuration";
+    public static final String SLA_SUMMARY_ACTUAL_DURATION = "actualDuration";
+    public static final String SLA_SUMMARY_JOB_STATUS = "jobStatus";
+    public static final String SLA_SUMMARY_SLA_STATUS = "slaStatus";
+    public static final String SLA_SUMMARY_LAST_MODIFIED = "lastModified";
+
     public static final String TO_STRING = "toString";
 
 

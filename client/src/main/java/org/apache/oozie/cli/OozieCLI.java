@@ -461,7 +461,7 @@ public class OozieCLI {
         parser.addCommand(JOBS_CMD, "", "jobs status", createJobsOptions(), false);
         parser.addCommand(ADMIN_CMD, "", "admin operations", createAdminOptions(), false);
         parser.addCommand(VALIDATE_CMD, "", "validate a workflow XML file", new Options(), true);
-        parser.addCommand(SLA_CMD, "", "sla operations (Supported in Oozie-2.0 or later)", createSlaOptions(), false);
+        parser.addCommand(SLA_CMD, "", "sla operations (Deprecated with Oozie 4.0)", createSlaOptions(), false);
         parser.addCommand(PIG_CMD, "-X ", "submit a pig job, everything after '-X' are pass-through parameters to pig, any '-D' "
                 + "arguments after '-X' are put in <configuration>", createScriptLanguageOptions(PIG_CMD), true);
         parser.addCommand(HIVE_CMD, "-X ", "submit a hive job, everything after '-X' are pass-through parameters to hive, any '-D' "
