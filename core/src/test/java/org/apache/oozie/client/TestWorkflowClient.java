@@ -35,6 +35,7 @@ import org.apache.oozie.servlet.V1JobServlet;
 import org.apache.oozie.servlet.V1JobsServlet;
 import org.apache.oozie.servlet.V2AdminServlet;
 import org.apache.oozie.servlet.V2JobServlet;
+import org.apache.oozie.servlet.V2SLAServlet;
 import org.json.simple.JSONArray;
 
 import java.io.*;
@@ -48,24 +49,32 @@ public class TestWorkflowClient extends DagServletTestCase {
 
     static {
         new HeaderTestingVersionServlet();
-        new V0JobServlet();
         new V0JobsServlet();
         new V1JobsServlet();
-        new V1AdminServlet();
+        new V0JobServlet();
         new V1JobServlet();
         new V2JobServlet();
+        new V1AdminServlet();
         new V2AdminServlet();
         new SLAServlet();
+        new V2SLAServlet();
     }
 
     private static final boolean IS_SECURITY_ENABLED = false;
-    static final String VERSION = "/v" + OozieClient.WS_PROTOCOL_VERSION;
-    static final String[] END_POINTS = {"/versions", VERSION + "/jobs", VERSION + "/job/*", VERSION + "/admin/*",
-            VERSION + "/sla/*" };
+    static final String VERSION_0 = "/v" + OozieClient.WS_PROTOCOL_VERSION_0;
+    static final String VERSION_1 = "/v" + OozieClient.WS_PROTOCOL_VERSION_1;
+    static final String VERSION_2 = "/v" + OozieClient.WS_PROTOCOL_VERSION;
+    static final String[] END_POINTS = { "/versions",
+            VERSION_0 + "/jobs", VERSION_1 + "/jobs", VERSION_2 + "/jobs",
+            VERSION_0 + "/job/*", VERSION_1 + "/job/*", VERSION_2 + "/job/*",
+            VERSION_1 + "/admin/*", VERSION_2 + "/admin/*",
+            VERSION_1 + "/sla/*", VERSION_2 + "/sla/*" };
     @SuppressWarnings("rawtypes")
-    static final Class[] SERVLET_CLASSES = {HeaderTestingVersionServlet.class, V0JobsServlet.class,
-            V0JobServlet.class, V1AdminServlet.class, SLAServlet.class, V2AdminServlet.class,  V1JobServlet.class,
-            V2JobServlet.class, V1JobsServlet.class};
+    static final Class[] SERVLET_CLASSES = {HeaderTestingVersionServlet.class,
+            V0JobsServlet.class, V1JobsServlet.class, V1JobsServlet.class,
+            V0JobServlet.class, V1JobServlet.class, V2JobServlet.class,
+            V1AdminServlet.class, V2AdminServlet.class,
+            SLAServlet.class, V2SLAServlet.class};
 
     protected void setUp() throws Exception {
         super.setUp();

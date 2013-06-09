@@ -132,6 +132,16 @@ public class OozieClient {
 
     public static final String FILTER_APPNAME = "appname";
 
+    public static final String FILTER_SLA_APPNAME = "app_name";
+
+    public static final String FILTER_SLA_ID = "id";
+
+    public static final String FILTER_SLA_PARENT_ID = "parent_id";
+
+    public static final String FILTER_SLA_NOMINAL_START = "nominal_start";
+
+    public static final String FILTER_SLA_NOMINAL_END = "nominal_end";
+
     public static final String CHANGE_VALUE_ENDTIME = "endtime";
 
     public static final String CHANGE_VALUE_PAUSETIME = "pausetime";
@@ -156,6 +166,7 @@ public class OozieClient {
     private String baseUrl;
     private String protocolUrl;
     private boolean validatedVersion = false;
+    private JSONArray supportedVersions;
     private final Map<String, String> headers = new HashMap<String, String>();
 
     private static ThreadLocal<String> USER_NAME_TL = new ThreadLocal<String>();
@@ -239,6 +250,27 @@ public class OozieClient {
         this.debugMode = debugMode;
     }
 
+    private String getBaseURLForVersion(long protocolVersion) throws OozieClientException {
+        try {
+            if (supportedVersions == null) {
+                supportedVersions = getSupportedProtocolVersions();
+            }
+            if (supportedVersions == null) {
+                throw new OozieClientException("HTTP error", "no response message");
+            }
+            if (supportedVersions.contains(protocolVersion)) {
+                return baseUrl + "v" + protocolVersion + "/";
+            }
+            else {
+                throw new OozieClientException(OozieClientException.UNSUPPORTED_VERSION, "Protocol version "
+                        + protocolVersion + " is not supported");
+            }
+        }
+        catch (IOException e) {
+            throw new OozieClientException(OozieClientException.IO_ERROR, e);
+        }
+    }
+
     /**
      * Validate that the Oozie client and server instances are protocol compatible.
      *
@@ -247,39 +279,33 @@ public class OozieClient {
     public synchronized void validateWSVersion() throws OozieClientException {
         if (!validatedVersion) {
             try {
-                URL url = new URL(baseUrl + RestConstants.VERSIONS);
-                HttpURLConnection conn = createConnection(url, "GET");
-                if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                    JSONArray array = (JSONArray) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
-                    if (array == null) {
-                        throw new OozieClientException("HTTP error", "no response message");
+                supportedVersions = getSupportedProtocolVersions();
+                if (supportedVersions == null) {
+                    throw new OozieClientException("HTTP error", "no response message");
+                }
+                if (!supportedVersions.contains(WS_PROTOCOL_VERSION)
+                        && !supportedVersions.contains(WS_PROTOCOL_VERSION_1)
+                        && !supportedVersions.contains(WS_PROTOCOL_VERSION_0)) {
+                    StringBuilder msg = new StringBuilder();
+                    msg.append("Supported version [").append(WS_PROTOCOL_VERSION)
+                            .append("] or less, Unsupported versions[");
+                    String separator = "";
+                    for (Object version : supportedVersions) {
+                        msg.append(separator).append(version);
                     }
-                    if (!array.contains(WS_PROTOCOL_VERSION) && !array.contains(WS_PROTOCOL_VERSION_1)
-                            && !array.contains(WS_PROTOCOL_VERSION_0)) {
-                        StringBuilder msg = new StringBuilder();
-                        msg.append("Supported version [").append(WS_PROTOCOL_VERSION).append(
-                                "] or less, Unsupported versions[");
-                        String separator = "";
-                        for (Object version : array) {
-                            msg.append(separator).append(version);
-                        }
-                        msg.append("]");
-                        throw new OozieClientException(OozieClientException.UNSUPPORTED_VERSION, msg.toString());
-                    }
-                    if (array.contains(WS_PROTOCOL_VERSION)) {
-                        protocolUrl = baseUrl + "v" + WS_PROTOCOL_VERSION + "/";
-                    }
-                    else if (array.contains(WS_PROTOCOL_VERSION_1)) {
-                        protocolUrl = baseUrl + "v" + WS_PROTOCOL_VERSION_1 + "/";
-                    }
-                    else {
-                        if (array.contains(WS_PROTOCOL_VERSION_0)) {
-                            protocolUrl = baseUrl + "v" + WS_PROTOCOL_VERSION_0 + "/";
-                        }
-                    }
+                    msg.append("]");
+                    throw new OozieClientException(OozieClientException.UNSUPPORTED_VERSION, msg.toString());
+                }
+                if (supportedVersions.contains(WS_PROTOCOL_VERSION)) {
+                    protocolUrl = baseUrl + "v" + WS_PROTOCOL_VERSION + "/";
+                }
+                else if (supportedVersions.contains(WS_PROTOCOL_VERSION_1)) {
+                    protocolUrl = baseUrl + "v" + WS_PROTOCOL_VERSION_1 + "/";
                 }
                 else {
-                    handleError(conn);
+                    if (supportedVersions.contains(WS_PROTOCOL_VERSION_0)) {
+                        protocolUrl = baseUrl + "v" + WS_PROTOCOL_VERSION_0 + "/";
+                    }
                 }
             }
             catch (IOException ex) {
@@ -287,6 +313,19 @@ public class OozieClient {
             }
             validatedVersion = true;
         }
+    }
+
+    private JSONArray getSupportedProtocolVersions() throws IOException, OozieClientException {
+        JSONArray versions = null;
+        URL url = new URL(baseUrl + RestConstants.VERSIONS);
+        HttpURLConnection conn = createConnection(url, "GET");
+        if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
+            versions = (JSONArray) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+        }
+        else {
+            handleError(conn);
+        }
+        return versions;
     }
 
     /**
@@ -351,11 +390,17 @@ public class OozieClient {
         return Collections.unmodifiableMap(headers).keySet().iterator();
     }
 
-    private URL createURL(String collection, String resource, Map<String, String> parameters) throws IOException,
-            OozieClientException {
+    private URL createURL(Long protocolVersion, String collection, String resource, Map<String, String> parameters)
+            throws IOException, OozieClientException {
         validateWSVersion();
         StringBuilder sb = new StringBuilder();
-        sb.append(protocolUrl).append(collection);
+        if (protocolVersion == null) {
+            sb.append(protocolUrl);
+        }
+        else {
+            sb.append(getBaseURLForVersion(protocolVersion));
+        }
+        sb.append(collection);
         if (resource != null && resource.length() > 0) {
             sb.append("/").append(resource);
         }
@@ -409,9 +454,15 @@ public class OozieClient {
         private final String collection;
         private final String resource;
         private final Map<String, String> params;
+        private final Long protocolVersion;
 
         public ClientCallable(String method, String collection, String resource, Map<String, String> params) {
+            this(method, null, collection, resource, params);
+        }
+
+        public ClientCallable(String method, Long protocolVersion, String collection, String resource, Map<String, String> params) {
             this.method = method;
+            this.protocolVersion = protocolVersion;
             this.collection = collection;
             this.resource = resource;
             this.params = params;
@@ -419,7 +470,7 @@ public class OozieClient {
 
         public T call() throws OozieClientException {
             try {
-                URL url = createURL(collection, resource, params);
+                URL url = createURL(protocolVersion, collection, resource, params);
                 if (validateCommand(url.toString())) {
                     if (getDebugMode() > 0) {
                         System.out.println(method + " " + url);
@@ -1283,7 +1334,7 @@ public class OozieClient {
     private class SlaInfo extends ClientCallable<Void> {
 
         SlaInfo(int start, int len, String filter) {
-            super("GET", RestConstants.SLA, "", prepareParams(RestConstants.SLA_GT_SEQUENCE_ID,
+            super("GET", WS_PROTOCOL_VERSION_1, RestConstants.SLA, "", prepareParams(RestConstants.SLA_GT_SEQUENCE_ID,
                     Integer.toString(start), RestConstants.MAX_EVENTS, Integer.toString(len),
                     RestConstants.JOBS_FILTER_PARAM, filter));
         }

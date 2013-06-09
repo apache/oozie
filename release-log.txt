@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1400 REST API to fetch SLA (rohini)
 OOZIE-1375 Generate Job notification events for Workflow Actions (mona)
 OOZIE-1357 Can't view more than 1000 actions of a coordinator and paging does not work (ryota)
 OOZIE-1381 Oozie does not support access to the distributed cache file under different name node (ryota)

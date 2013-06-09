@@ -19,6 +19,7 @@ package org.apache.oozie.sla;
 
 import java.sql.Timestamp;
 import java.util.Date;
+import java.util.List;
 
 import javax.persistence.Basic;
 import javax.persistence.Column;
@@ -28,10 +29,14 @@ import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 
+import org.apache.oozie.AppType;
 import org.apache.oozie.client.event.SLAEvent;
 import org.apache.oozie.client.rest.JsonBean;
+import org.apache.oozie.client.rest.JsonTags;
+import org.apache.oozie.client.rest.JsonUtils;
 import org.apache.oozie.util.DateUtils;
 import org.apache.openjpa.persistence.jdbc.Index;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 @Entity
@@ -49,8 +54,9 @@ public class SLASummaryBean implements JsonBean {
     private String jobId;
 
     @Basic
-    @Column(name = "user")
-    private String user;
+    @Index
+    @Column(name = "parent_id")
+    private String parentId;
 
     @Basic
     @Index
@@ -58,9 +64,12 @@ public class SLASummaryBean implements JsonBean {
     private String appName;
 
     @Basic
-    @Index
-    @Column(name = "parent_id")
-    private String parentId;
+    @Column(name = "app_type")
+    private String appType;
+
+    @Basic
+    @Column(name = "user")
+    private String user;
 
     @Basic
     @Index
@@ -245,6 +254,14 @@ public class SLASummaryBean implements JsonBean {
         this.appName = appName;
     }
 
+    public AppType getAppType() {
+        return AppType.valueOf(appType);
+    }
+
+    public void setAppType(AppType appType) {
+        this.appType = appType.toString();
+    }
+
     public byte getSlaProcessed() {
         return slaProcessed;
     }
@@ -261,16 +278,89 @@ public class SLASummaryBean implements JsonBean {
         this.lastModifiedTS = DateUtils.convertDateToTimestamp(lastModified);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public JSONObject toJSONObject() {
-        // TODO Auto-generated method stub
-        return null;
+        JSONObject json = new JSONObject();
+        json.put(JsonTags.SLA_SUMMARY_ID, jobId);
+        if (parentId != null) {
+            json.put(JsonTags.SLA_SUMMARY_PARENT_ID, parentId);
+        }
+        json.put(JsonTags.SLA_SUMMARY_APP_NAME, appName);
+        json.put(JsonTags.SLA_SUMMARY_APP_TYPE, appType);
+        json.put(JsonTags.SLA_SUMMARY_USER, user);
+        json.put(JsonTags.SLA_SUMMARY_NOMINAL_TIME, nominalTimeTS.getTime());
+        if (expectedStartTS != null) {
+            json.put(JsonTags.SLA_SUMMARY_EXPECTED_START, expectedStartTS.getTime());
+        }
+        if (actualStartTS != null) {
+            json.put(JsonTags.SLA_SUMMARY_ACTUAL_START, actualStartTS.getTime());
+        }
+        json.put(JsonTags.SLA_SUMMARY_EXPECTED_END, expectedEndTS.getTime());
+        if (actualEndTS != null) {
+            json.put(JsonTags.SLA_SUMMARY_ACTUAL_END, actualEndTS.getTime());
+        }
+        json.put(JsonTags.SLA_SUMMARY_EXPECTED_DURATION, expectedDuration);
+        json.put(JsonTags.SLA_SUMMARY_ACTUAL_DURATION, actualDuration);
+        json.put(JsonTags.SLA_SUMMARY_JOB_STATUS, jobStatus);
+        json.put(JsonTags.SLA_SUMMARY_SLA_STATUS, slaStatus);
+        json.put(JsonTags.SLA_SUMMARY_LAST_MODIFIED, lastModifiedTS.getTime());
+        return json;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public JSONObject toJSONObject(String timeZoneId) {
-        // TODO Auto-generated method stub
-        return null;
+        if (timeZoneId == null) {
+            return toJSONObject();
+        }
+        else {
+            JSONObject json = new JSONObject();
+            json.put(JsonTags.SLA_SUMMARY_ID, jobId);
+            if (parentId != null) {
+                json.put(JsonTags.SLA_SUMMARY_PARENT_ID, parentId);
+            }
+            json.put(JsonTags.SLA_SUMMARY_APP_NAME, appName);
+            json.put(JsonTags.SLA_SUMMARY_APP_TYPE, appType);
+            json.put(JsonTags.SLA_SUMMARY_USER, user);
+            json.put(JsonTags.SLA_SUMMARY_NOMINAL_TIME, JsonUtils.formatDateRfc822(nominalTimeTS, timeZoneId));
+            if (expectedStartTS != null) {
+                json.put(JsonTags.SLA_SUMMARY_EXPECTED_START, JsonUtils.formatDateRfc822(expectedStartTS, timeZoneId));
+            }
+            if (actualStartTS != null) {
+                json.put(JsonTags.SLA_SUMMARY_ACTUAL_START, JsonUtils.formatDateRfc822(actualStartTS, timeZoneId));
+            }
+            json.put(JsonTags.SLA_SUMMARY_EXPECTED_END, JsonUtils.formatDateRfc822(expectedEndTS, timeZoneId));
+            if (actualEndTS != null) {
+                json.put(JsonTags.SLA_SUMMARY_ACTUAL_END, JsonUtils.formatDateRfc822(actualEndTS, timeZoneId));
+            }
+            json.put(JsonTags.SLA_SUMMARY_EXPECTED_DURATION, expectedDuration);
+            json.put(JsonTags.SLA_SUMMARY_ACTUAL_DURATION, actualDuration);
+            json.put(JsonTags.SLA_SUMMARY_JOB_STATUS, jobStatus);
+            json.put(JsonTags.SLA_SUMMARY_SLA_STATUS, slaStatus);
+            json.put(JsonTags.SLA_SUMMARY_LAST_MODIFIED, JsonUtils.formatDateRfc822(lastModifiedTS, timeZoneId));
+            return json;
+        }
+    }
+
+    /**
+     * Convert a sla summary list into a json object.
+     *
+     * @param slaSummaryList sla summary list.
+     * @param timeZoneId time zone to use for dates in the JSON array.
+     * @return the corresponding JSON object.
+     */
+    @SuppressWarnings("unchecked")
+    public static JSONObject toJSONObject(List<? extends SLASummaryBean> slaSummaryList, String timeZoneId) {
+        JSONObject json = new JSONObject();
+        JSONArray array = new JSONArray();
+        if (slaSummaryList != null) {
+            for (SLASummaryBean summary : slaSummaryList) {
+                array.add(summary.toJSONObject(timeZoneId));
+            }
+        }
+        json.put(JsonTags.SLA_SUMMARY_LIST, array);
+        return json;
     }
 
 }

@@ -66,6 +66,10 @@ public class SLAServlet extends JsonRestServlet {
         super(INSTRUMENTATION_NAME, RESOURCES_INFO);
     }
 
+    public SLAServlet(String instrumentationName, ResourceInfo... resourcesInfo) {
+        super(INSTRUMENTATION_NAME, resourcesInfo);
+    }
+
     /**
      * Return information about SLA Events.
      */
@@ -79,7 +83,7 @@ public class SLAServlet extends JsonRestServlet {
             String gtSequenceNum = request.getParameter(RestConstants.SLA_GT_SEQUENCE_ID);
             String strMaxEvents = request.getParameter(RestConstants.MAX_EVENTS);
             String filter = request.getParameter(RestConstants.JOBS_FILTER_PARAM);
-            Map<String, List<String>> filterList = parseFilter(filter);
+            Map<String, List<String>> filterList = parseFilter(filter, SLA_FILTER_NAMES);
 
             int maxNoEvents = 100; // Default
             XLog.getLog(getClass()).debug(
@@ -127,10 +131,10 @@ public class SLAServlet extends JsonRestServlet {
         }
     }
 
-    protected Map<String, List<String>> parseFilter(String filter) throws ServletException {
+    protected Map<String, List<String>> parseFilter(String filterString, Set<String> allowedFilters) throws ServletException {
         Map<String, List<String>> map = new HashMap<String, List<String>>();
-        if (filter != null) {
-            StringTokenizer st = new StringTokenizer(filter, ";");
+        if (filterString != null) {
+            StringTokenizer st = new StringTokenizer(filterString, ";");
             while (st.hasMoreTokens()) {
                 String token = st.nextToken();
                 if (token.contains("=")) {
@@ -139,7 +143,7 @@ public class SLAServlet extends JsonRestServlet {
                         throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0401,
                                 "elements must be name=value pairs");
                     }
-                    if (!SLA_FILTER_NAMES.contains(pair[0])) {
+                    if (!allowedFilters.contains(pair[0])) {
                         throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0401,
                                 "invalid/unsupported names in filter");
                     }
