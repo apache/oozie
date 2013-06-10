@@ -42,7 +42,15 @@ import org.json.simple.JSONObject;
 @Entity
 @Table(name = "SLA_SUMMARY")
 @NamedQueries({
- @NamedQuery(name = "GET_SLA_SUMMARY", query = "select OBJECT(w) from SLASummaryBean w where w.jobId = :id") })
+
+ @NamedQuery(name = "UPDATE_SLA_SUMMARY_FOR_SLA_STATUS", query = "update  SLASummaryBean w set w.slaStatus = :slaStatus, w.eventStatus = :eventStatus, w.eventProcessed = :eventProcessed, w.lastModifiedTS = :lastModifiedTS where w.jobId = :jobId"),
+
+ @NamedQuery(name = "UPDATE_SLA_SUMMARY_FOR_STATUS_ACTUAL_TIMES", query = "update SLASummaryBean w set w.slaStatus = :slaStatus, w.eventStatus = :eventStatus, w.eventProcessed = :eventProcessed, w.jobStatus = :jobStatus, w.lastModifiedTS = :lastModifiedTS, w.actualStartTS = :actualStartTS, w.actualEndTS = :actualEndTS, w.actualDuration = :actualDuration where w.jobId = :jobId"),
+
+ @NamedQuery(name = "GET_SLA_SUMMARY", query = "select OBJECT(w) from SLASummaryBean w where w.jobId = :id"),
+
+ @NamedQuery(name = "GET_SLA_SUMMARY_RECORDS_RESTART", query = "select OBJECT(w) from SLASummaryBean w where w.eventProcessed <= 7 AND w.lastModifiedTS >= :lastModifiedTime") })
+
 /**
  * Class to store all the SLA related details (summary) per job
  */
@@ -114,8 +122,8 @@ public class SLASummaryBean implements JsonBean {
 
     @Basic
     @Index
-    @Column(name = "sla_processed")
-    private byte slaProcessed = 0;
+    @Column(name = "event_processed")
+    private byte eventProcessed = 0;
 
     @Basic
     @Index
@@ -129,16 +137,21 @@ public class SLASummaryBean implements JsonBean {
         SLARegistrationBean reg = slaCalc.getSLARegistrationBean();
         setJobId(slaCalc.getId());
         setAppName(reg.getAppName());
+        setAppType(reg.getAppType());
+        setNominalTime(reg.getNominalTime());
         setExpectedStart(reg.getExpectedStart());
         setExpectedEnd(reg.getExpectedEnd());
         setExpectedDuration(reg.getExpectedDuration());
         setJobStatus(slaCalc.getJobStatus());
         setSLAStatus(slaCalc.getSLAStatus());
         setEventStatus(slaCalc.getEventStatus());
-        setSlaProcessed(slaCalc.getSlaProcessed());
         setLastModifiedTime(slaCalc.getLastModifiedTime());
         setUser(reg.getUser());
         setParentId(reg.getParentId());
+        setEventProcessed(slaCalc.getEventProcessed());
+        setActualDuration(slaCalc.getActualDuration());
+        setActualEnd(slaCalc.getActualEnd());
+        setActualStart(slaCalc.getActualStart());
     }
 
     public String getJobId() {
@@ -234,6 +247,14 @@ public class SLASummaryBean implements JsonBean {
         return (slaStatus != null ? SLAEvent.SLAStatus.valueOf(slaStatus) : null);
     }
 
+    public String getSLAStatusString() {
+        return slaStatus;
+    }
+
+    public String getEventStatusString() {
+        return eventStatus;
+    }
+
     public void setSLAStatus(SLAEvent.SLAStatus stage) {
         this.slaStatus = (stage != null ? stage.name() : null);
     }
@@ -262,12 +283,12 @@ public class SLASummaryBean implements JsonBean {
         this.appType = appType.toString();
     }
 
-    public byte getSlaProcessed() {
-        return slaProcessed;
+    public byte getEventProcessed() {
+        return eventProcessed;
     }
 
-    public void setSlaProcessed(int slaProcessed) {
-        this.slaProcessed = (byte) slaProcessed;
+    public void setEventProcessed(int eventProcessed) {
+        this.eventProcessed = (byte)eventProcessed;
     }
 
     public Date getLastModifiedTime() {

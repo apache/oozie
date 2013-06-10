@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1339 Implement SLA Bootstrap Service and fix bugs in SLACalculator (virag)
 OOZIE-1400 REST API to fetch SLA (rohini)
 OOZIE-1375 Generate Job notification events for Workflow Actions (mona)
 OOZIE-1357 Can't view more than 1000 actions of a coordinator and paging does not work (ryota)

@@ -24,6 +24,9 @@ import org.apache.oozie.AppType;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.event.SLAEvent.EventStatus;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.executor.jpa.sla.SLARegistrationGetJPAExecutor;
+import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.ServiceException;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.sla.SLARegistrationBean;
@@ -41,7 +44,7 @@ public class SLAOperations {
     private static final String ALERT_EVENTS = "alert-events";
 
     public static SLARegistrationBean createSlaRegistrationEvent(Element eSla, String jobId, String parentId,
-            AppType appType, String user, String appName, XLog log) throws CommandException {
+            AppType appType, String user, String appName, XLog log, boolean rerun) throws CommandException {
         if (eSla == null || !SLAService.isEnabled()) {
             log.debug("Not registering SLA for job [{0}]. Sla-Xml null OR SLAService not enabled", jobId);
             return null;
@@ -134,15 +137,38 @@ public class SLAOperations {
         sla.setUser(user);
         sla.setParentId(parentId);
 
-            SLAService slaService = Services.get().get(SLAService.class);
-            try {
+        SLAService slaService = Services.get().get(SLAService.class);
+        try {
+            if (!rerun) {
                 slaService.addRegistrationEvent(sla);
             }
-            catch (ServiceException e) {
-                throw new CommandException(ErrorCode.E1007, " id " + jobId, e.getMessage(), e);
+            else {
+                slaService.updateRegistrationEvent(sla);
             }
+        }
+        catch (ServiceException e) {
+            throw new CommandException(ErrorCode.E1007, " id " + jobId, e.getMessage(), e);
+        }
 
         return sla;
+    }
+
+    /**
+     * Retrieve registration event
+     * @param jobId the jobId
+     * @throws CommandException
+     * @throws JPAExecutorException
+     */
+    public static void updateRegistrationEvent(String jobId) throws CommandException, JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
+        SLAService slaService = Services.get().get(SLAService.class);
+        try {
+            slaService.updateRegistrationEvent(jpaService.execute(new SLARegistrationGetJPAExecutor(jobId)));
+        }
+        catch (ServiceException e) {
+            throw new CommandException(ErrorCode.E1007, " id " + jobId, e.getMessage(), e);
+        }
+
     }
 
     /*
@@ -150,7 +176,7 @@ public class SLAOperations {
      */
     public static SLARegistrationBean createSlaRegistrationEvent(Element eSla, String jobId, AppType appType,
             String user, String appName, XLog log) throws CommandException {
-        return createSlaRegistrationEvent(eSla, jobId, null, appType, user, appName, log);
+        return createSlaRegistrationEvent(eSla, jobId, null, appType, user, appName, log, false);
     }
 
     /*
@@ -158,7 +184,7 @@ public class SLAOperations {
      */
     public static SLARegistrationBean createSlaRegistrationEvent(Element eSla, String jobId, String parentId,
             AppType appType, String user, XLog log) throws CommandException {
-        return createSlaRegistrationEvent(eSla, jobId, parentId, appType, user, null, log);
+        return createSlaRegistrationEvent(eSla, jobId, parentId, appType, user, null, log, false);
     }
 
     /*
@@ -166,7 +192,7 @@ public class SLAOperations {
      */
     public static SLARegistrationBean createSlaRegistrationEvent(Element eSla, String jobId, AppType appType,
             String user, XLog log) throws CommandException {
-        return createSlaRegistrationEvent(eSla, jobId, null, appType, user, null, log);
+        return createSlaRegistrationEvent(eSla, jobId, null, appType, user, null, log, false);
     }
 
     private static String getTagElement(Element elem, String tagName) {

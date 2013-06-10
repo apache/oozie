@@ -36,7 +36,11 @@ import org.apache.oozie.client.event.SLAEvent.SLAStatus;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.sla.SLACalculationInsertUpdateJPAExecutor;
+import org.apache.oozie.executor.jpa.sla.SLARegistrationGetOnRestartJPAExecutor;
 import org.apache.oozie.executor.jpa.sla.SLASummaryGetJPAExecutor;
+import org.apache.oozie.executor.jpa.sla.SLASummaryGetRecordsOnRestartJPAExecutor;
+import org.apache.oozie.executor.jpa.sla.SLASummaryUpdateForSLAStatusActualTimesJPAExecutor;
+import org.apache.oozie.executor.jpa.sla.SLASummaryUpdateForSLAStatusJPAExecutor;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.ServiceException;
@@ -53,16 +57,48 @@ public class SLACalculatorMemory implements SLACalculator {
     private static Map<String, SLACalcStatus> slaMap;
     private static Set<String> historySet;
     private static int capacity;
-    private static JPAService jpa;
+    private static JPAService jpaService;
     private EventHandlerService eventHandler;
+    private static int modifiedAfter;
 
     @Override
     public void init(Configuration conf) throws ServiceException {
         capacity = conf.getInt(SLAService.CONF_CAPACITY, 5000);
         slaMap = new ConcurrentHashMap<String, SLACalcStatus>();
         historySet = Collections.synchronizedSet(new HashSet<String>());
-        jpa = Services.get().get(JPAService.class);
+        jpaService = Services.get().get(JPAService.class);
         eventHandler = Services.get().get(EventHandlerService.class);
+        // load events modified after
+        modifiedAfter = conf.getInt(SLAService.CONF_EVENTS_MODIFIED_AFTER, 7);
+        loadOnRestart();
+
+    }
+
+    private void loadOnRestart() {
+        try {
+            List<SLASummaryBean> summaryBeans = jpaService.execute(new SLASummaryGetRecordsOnRestartJPAExecutor(
+                    modifiedAfter));
+            for (SLASummaryBean summaryBean : summaryBeans) {
+                String jobId = summaryBean.getJobId();
+                if (summaryBean.getEventProcessed() == 7) {
+                    historySet.add(jobId);
+                }
+                else {
+                    try {
+                        SLARegistrationBean slaRegBean = jpaService.execute(new SLARegistrationGetOnRestartJPAExecutor(
+                                jobId));
+                        SLACalcStatus slaCalcStatus = new SLACalcStatus(summaryBean, slaRegBean);
+                        slaMap.put(jobId, slaCalcStatus);
+                    }
+                    catch (JPAExecutorException e) {
+                        XLog.getLog(SLAService.class).warn("Cannot retrieve registration record for " + jobId, e);
+                    }
+                }
+            }
+        }
+        catch (JPAExecutorException e) {
+            XLog.getLog(SLAService.class).warn("Failed to retrieve SLASummary records on restart", e);
+        }
     }
 
     @Override
@@ -101,7 +137,6 @@ public class SLACalculatorMemory implements SLACalculator {
     @Override
     public void updateSlaStatus(String jobId) throws JPAExecutorException, ServiceException {
         SLACalcStatus slaCalc = slaMap.get(jobId);
-        List<JsonBean> updateList = new ArrayList<JsonBean>();
         synchronized (slaCalc) {
             boolean change = false;
             byte eventProc = slaCalc.getEventProcessed();
@@ -119,10 +154,11 @@ public class SLACalculatorMemory implements SLACalculator {
                 }
                 else {
                     eventProc++; //disable further processing for optional start sla condition
+                    change = true;
                 }
+
             }
-            byte eventProcCopy = eventProc;
-            if (((eventProcCopy >> 1) & 1) == 0) { // check if second bit (duration-processed) is unset
+            if (((eventProc >> 1) & 1) == 0) { // check if second bit (duration-processed) is unset
                 if (slaCalc.getActualStart() != null) {
                     if (reg.getExpectedDuration() < Calendar.getInstance(TimeZone.getTimeZone("UTC")).getTimeInMillis()
                             - slaCalc.getActualStart().getTime()) {
@@ -133,12 +169,11 @@ public class SLACalculatorMemory implements SLACalculator {
                     }
                 }
             }
-            if (eventProc < 5) {
+            if (eventProc < 4) {
                 if (reg.getExpectedEnd().getTime() < Calendar.getInstance(TimeZone.getTimeZone("UTC"))
                         .getTimeInMillis()) {
                     slaCalc.setEventStatus(EventStatus.END_MISS);
                     slaCalc.setSLAStatus(SLAStatus.MISS);
-                    slaCalc.setSlaProcessed(1);
                     change = true;
                     eventHandler.queueEvent(new SLACalcStatus(slaCalc));
                     eventProc += 4;
@@ -146,14 +181,18 @@ public class SLACalculatorMemory implements SLACalculator {
             }
             if (change) {
                 slaCalc.setEventProcessed(eventProc);
-                slaCalc.setLastModifiedTime(new Date());
-                updateList.add(new SLASummaryBean(slaCalc));
-                jpa.execute(new SLACalculationInsertUpdateJPAExecutor(null, updateList));
-                if (slaCalc.getEventProcessed() == 7 && slaCalc.getSlaProcessed() != 2) {
+                SLASummaryBean slaSummaryBean = new SLASummaryBean();
+                slaSummaryBean.setJobId(slaCalc.getId());
+                slaSummaryBean.setEventProcessed(eventProc);
+                slaSummaryBean.setSLAStatus(slaCalc.getSLAStatus());
+                slaSummaryBean.setEventStatus(slaCalc.getEventStatus());
+                jpaService.execute(new SLASummaryUpdateForSLAStatusJPAExecutor(slaSummaryBean));
+                if (eventProc == 7) {
                     historySet.add(jobId);
                     slaMap.remove(jobId);
                     XLog.getLog(SLAService.class).trace("Removed Job [{0}] from map after End-processed", jobId);
                 }
+
             }
         }
     }
@@ -181,22 +220,51 @@ public class SLACalculatorMemory implements SLACalculator {
      */
     @Override
     public boolean addRegistration(String jobId, SLARegistrationBean reg) throws JPAExecutorException {
-        List<JsonBean> insertList = new ArrayList<JsonBean>();
         try {
             if (slaMap.size() < capacity) {
                 SLACalcStatus slaCalc = new SLACalcStatus(reg);
                 slaCalc.setSLAStatus(SLAStatus.NOT_STARTED);
                 slaMap.put(jobId, slaCalc);
+                List<JsonBean> insertList = new ArrayList<JsonBean>();
                 insertList.add(reg);
                 insertList.add(new SLASummaryBean(slaCalc));
-                jpa.execute(new SLACalculationInsertUpdateJPAExecutor(insertList, null));
+                jpaService.execute(new SLACalculationInsertUpdateJPAExecutor(insertList, null));
                 XLog.getLog(SLAService.class).trace("SLA Registration Event - Job:" + jobId);
                 return true;
             }
             else {
-                XLog.getLog(SLAService.class).error(
-                        "SLACalculator memory capacity reached. Cannot add new SLA Registration entry for job [{0}]",
-                        reg.getId());
+                XLog.getLog(SLAService.class)
+                .error("SLACalculator memory capacity reached. Cannot add or update new SLA Registration entry for job [{0}]",
+                reg.getId());
+            }
+        }
+        catch (JPAExecutorException jpa) {
+            throw jpa;
+        }
+        return false;
+    }
+
+    /**
+     * Update job into the map for SLA tracking
+     */
+    @Override
+    public boolean updateRegistration(String jobId, SLARegistrationBean reg) throws JPAExecutorException {
+        try {
+            if (slaMap.size() < capacity) {
+                SLACalcStatus slaCalc = new SLACalcStatus(reg);
+                slaCalc.setSLAStatus(SLAStatus.NOT_STARTED);
+                slaMap.put(jobId, slaCalc);
+                List<JsonBean> updateList = new ArrayList<JsonBean>();
+                updateList.add(reg);
+                updateList.add(new SLASummaryBean(slaCalc));
+                jpaService.execute(new SLACalculationInsertUpdateJPAExecutor(null, updateList));
+                XLog.getLog(SLAService.class).trace("SLA Registration Event - Job:" + jobId);
+                return true;
+            }
+            else {
+                XLog.getLog(SLAService.class)
+                .error("SLACalculator memory capacity reached. Cannot add or update new SLA Registration entry for job [{0}]",
+                reg.getId());
             }
         }
         catch (JPAExecutorException jpa) {
@@ -213,62 +281,50 @@ public class SLACalculatorMemory implements SLACalculator {
     public boolean addJobStatus(String jobId, String jobStatus, JobEvent.EventStatus jobEventStatus, Date startTime,
             Date endTime) throws JPAExecutorException, ServiceException {
         SLACalcStatus slaCalc = slaMap.get(jobId);
-        List<JsonBean> updateList = new ArrayList<JsonBean>();
         SLASummaryBean slaInfo = null;
         boolean hasSla = false;
         if (slaCalc != null) {
             synchronized (slaCalc) {
-                byte eventProc = slaCalc.getEventProcessed();
                 slaCalc.setJobStatus(jobStatus);
                 switch (jobEventStatus) {
                     case STARTED:
                         slaInfo = processJobStartSLA(slaCalc, startTime);
-                        eventProc += 1;
                         break;
                     case SUCCESS:
                         slaInfo = processJobEndSuccessSLA(slaCalc, startTime, endTime);
-                        slaInfo.setSlaProcessed(2);
-                        eventProc += 6;
                         break;
                     case FAILURE:
                         slaInfo = processJobEndFailureSLA(slaCalc, startTime, endTime);
-                        slaInfo.setSlaProcessed(2);
-                        eventProc += 6;
                         break;
                     default:
                         XLog.getLog(SLAService.class).debug("Unknown Job Status [{0}]", jobEventStatus);
                         return false;
                 }
-                slaCalc.setEventProcessed(eventProc);
-                slaInfo.setLastModifiedTime(new Date());
-                if (slaInfo.getSlaProcessed() == 2) {
+
+                if (slaCalc.getEventProcessed() == 7) {
+                    slaInfo.setEventProcessed(8);
                     slaMap.remove(jobId);
                 }
                 hasSla = true;
             }
+            XLog.getLog(SLAService.class).trace("SLA Status Event - Job:" + jobId + " Status:" + slaCalc.getSLAStatus());
         }
         else if (historySet.contains(jobId)) {
-            slaInfo = jpa.execute(new SLASummaryGetJPAExecutor(jobId));
+            slaInfo = jpaService.execute(new SLASummaryGetJPAExecutor(jobId));
             slaInfo.setJobStatus(jobStatus);
             slaInfo.setActualStart(startTime);
             slaInfo.setActualEnd(endTime);
             if (endTime != null) {
                 slaInfo.setActualDuration(endTime.getTime() - startTime.getTime());
             }
-            slaInfo.setSlaProcessed(2);
+            slaInfo.setEventProcessed(8);
             historySet.remove(jobId);
             hasSla = true;
         }
-        if (hasSla) {
-            slaInfo.setLastModifiedTime(new Date());
-            updateList.add(slaInfo);
-            if (jpa != null) {
-                jpa.execute(new SLACalculationInsertUpdateJPAExecutor(null, updateList));
-            }
-            XLog.getLog(SLAService.class)
-                    .trace("SLA Status Event - Job:" + jobId + " Status:" + slaCalc.getSLAStatus());
-        }
 
+        if (hasSla) {
+            jpaService.execute(new SLASummaryUpdateForSLAStatusActualTimesJPAExecutor(slaInfo));
+        }
         return hasSla;
     }
 
@@ -281,20 +337,27 @@ public class SLACalculatorMemory implements SLACalculator {
      */
     public SLASummaryBean processJobStartSLA(SLACalcStatus slaCalc, Date actualStart) {
         slaCalc.setActualStart(actualStart);
-        slaCalc.setSLAStatus(SLAStatus.IN_PROCESS);
+        if (slaCalc.getSLAStatus().equals(SLAStatus.NOT_STARTED)) {
+            slaCalc.setSLAStatus(SLAStatus.IN_PROCESS);
+        }
         SLARegistrationBean reg = slaCalc.getSLARegistrationBean();
         Date expecStart = reg.getExpectedStart();
         byte eventProc = slaCalc.getEventProcessed();
-        if (((eventProc & 1) == 0) && expecStart != null) {
-            if (actualStart.getTime() > expecStart.getTime()) {
-                slaCalc.setEventStatus(EventStatus.START_MISS);
+        // set event proc here
+        if (((eventProc & 1) == 0)) {
+            if (expecStart != null) {
+                if (actualStart.getTime() > expecStart.getTime()) {
+                    slaCalc.setEventStatus(EventStatus.START_MISS);
+                }
+                else {
+                    slaCalc.setEventStatus(EventStatus.START_MET);
+                }
+                eventHandler.queueEvent(new SLACalcStatus(slaCalc));
             }
-            else {
-                slaCalc.setEventStatus(EventStatus.START_MET);
-            }
-            eventHandler.queueEvent(new SLACalcStatus(slaCalc));
+            eventProc += 1;
+            slaCalc.setEventProcessed(eventProc);
         }
-        return new SLASummaryBean(slaCalc);
+        return getSLASummaryBean(slaCalc);
     }
 
     /**
@@ -313,25 +376,35 @@ public class SLACalculatorMemory implements SLACalculator {
         long expectedDuration = reg.getExpectedDuration();
         long actualDuration = actualEnd.getTime() - actualStart.getTime();
         slaCalc.setActualDuration(actualDuration);
-        if (actualDuration > expectedDuration) {
-            slaCalc.setEventStatus(EventStatus.DURATION_MISS);
+        //check event proc
+        byte eventProc = slaCalc.getEventProcessed();
+        if (((eventProc >> 1) & 1) == 0) {
+            if (actualDuration > expectedDuration) {
+                slaCalc.setEventStatus(EventStatus.DURATION_MISS);
+            }
+            else {
+                slaCalc.setEventStatus(EventStatus.DURATION_MET);
+            }
+            eventProc += 2;
+            slaCalc.setEventProcessed(eventProc);
+            eventHandler.queueEvent(new SLACalcStatus(slaCalc));
         }
-        else {
-            slaCalc.setEventStatus(EventStatus.DURATION_MET);
-        }
-        eventHandler.queueEvent(new SLACalcStatus(slaCalc));
 
-        Date expectedEnd = reg.getExpectedEnd();
-        if (actualEnd.getTime() > expectedEnd.getTime()) {
-            slaCalc.setEventStatus(EventStatus.END_MISS);
-            slaCalc.setSLAStatus(SLAStatus.MISS);
+        if (eventProc < 4) {
+            Date expectedEnd = reg.getExpectedEnd();
+            if (actualEnd.getTime() > expectedEnd.getTime()) {
+                slaCalc.setEventStatus(EventStatus.END_MISS);
+                slaCalc.setSLAStatus(SLAStatus.MISS);
+            }
+            else {
+                slaCalc.setEventStatus(EventStatus.END_MET);
+                slaCalc.setSLAStatus(SLAStatus.MET);
+            }
+            eventProc += 4;
+            slaCalc.setEventProcessed(eventProc);
+            eventHandler.queueEvent(new SLACalcStatus(slaCalc));
         }
-        else {
-            slaCalc.setEventStatus(EventStatus.END_MET);
-            slaCalc.setSLAStatus(SLAStatus.MET);
-        }
-        eventHandler.queueEvent(new SLACalcStatus(slaCalc));
-        return new SLASummaryBean(slaCalc);
+        return getSLASummaryBean(slaCalc);
     }
 
     /**
@@ -344,25 +417,46 @@ public class SLACalculatorMemory implements SLACalculator {
      * @return SLASummaryBean
      */
     public SLASummaryBean processJobEndFailureSLA(SLACalcStatus slaCalc, Date actualStart, Date actualEnd) {
-        SLASummaryBean summ;
         slaCalc.setActualStart(actualStart);
         slaCalc.setActualEnd(actualEnd);
         SLARegistrationBean reg = slaCalc.getSLARegistrationBean();
         long expectedDuration = reg.getExpectedDuration();
         long actualDuration = actualEnd.getTime() - actualStart.getTime();
         slaCalc.setActualDuration(actualDuration);
-        if (actualDuration > expectedDuration) {
-            slaCalc.setEventStatus(EventStatus.DURATION_MISS);
+
+        byte eventProc = slaCalc.getEventProcessed();
+        if (((eventProc >> 1) & 1) == 0) {
+            if (actualDuration > expectedDuration) {
+                slaCalc.setEventStatus(EventStatus.DURATION_MISS);
+            }
+            else {
+                slaCalc.setEventStatus(EventStatus.DURATION_MET);
+            }
+            eventProc += 2;
+            slaCalc.setEventProcessed(eventProc);
             eventHandler.queueEvent(new SLACalcStatus(slaCalc));
         }
-        else {
-            slaCalc.setEventStatus(EventStatus.DURATION_MET);
+        if (eventProc < 4) {
+            slaCalc.setEventStatus(EventStatus.END_MISS);
+            slaCalc.setSLAStatus(SLAStatus.MISS);
+            eventProc += 4;
+            slaCalc.setEventProcessed(eventProc);
+            eventHandler.queueEvent(new SLACalcStatus(slaCalc));
         }
-        slaCalc.setEventStatus(EventStatus.END_MISS);
-        slaCalc.setSLAStatus(SLAStatus.MISS);
-        eventHandler.queueEvent(new SLACalcStatus(slaCalc));
-        summ = new SLASummaryBean(slaCalc);
-        return summ;
+        return getSLASummaryBean(slaCalc);
+    }
+
+    private SLASummaryBean getSLASummaryBean (SLACalcStatus slaCalc) {
+        SLASummaryBean slaSummaryBean = new SLASummaryBean();
+        slaSummaryBean.setActualStart(slaCalc.getActualStart());
+        slaSummaryBean.setActualEnd(slaCalc.getActualEnd());
+        slaSummaryBean.setActualDuration(slaCalc.getActualDuration());
+        slaSummaryBean.setSLAStatus(slaCalc.getSLAStatus());
+        slaSummaryBean.setEventStatus(slaCalc.getEventStatus());
+        slaSummaryBean.setEventProcessed(slaCalc.getEventProcessed());
+        slaSummaryBean.setJobId(slaCalc.getId());
+        slaSummaryBean.setJobStatus(slaCalc.getJobStatus());
+        return slaSummaryBean;
     }
 
 }

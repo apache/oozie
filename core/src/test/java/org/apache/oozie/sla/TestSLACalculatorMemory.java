@@ -1,0 +1,316 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.oozie.sla;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.AppType;
+import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.client.event.SLAEvent;
+import org.apache.oozie.client.event.JobEvent.EventStatus;
+import org.apache.oozie.client.event.SLAEvent.SLAStatus;
+import org.apache.oozie.client.rest.JsonBean;
+import org.apache.oozie.executor.jpa.sla.SLACalculationInsertUpdateJPAExecutor;
+import org.apache.oozie.executor.jpa.sla.SLASummaryGetJPAExecutor;
+import org.apache.oozie.service.EventHandlerService;
+import org.apache.oozie.service.JPAService;
+import org.apache.oozie.service.Services;
+import org.apache.oozie.test.XDataTestCase;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+public class TestSLACalculatorMemory extends XDataTestCase {
+
+    private JPAService jpaService;
+
+    @Override
+    @Before
+    protected void setUp() throws Exception {
+        super.setUp();
+        Services services = new Services();
+        Configuration conf = services.getConf();
+        conf.set(Services.CONF_SERVICE_EXT_CLASSES, "org.apache.oozie.service.EventHandlerService,"
+                + "org.apache.oozie.sla.service.SLAService");
+        services.init();
+        jpaService = Services.get().get(JPAService.class);
+        cleanUpDBTables();
+    }
+
+    @Override
+    @After
+    protected void tearDown() throws Exception {
+        Services.get().destroy();
+        super.tearDown();
+    }
+
+    @Test
+    public void testLoadOnRestart() throws Exception {
+        SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
+        slaCalcMemory.init(new Configuration(false));
+        SLARegistrationBean slaRegBean1 = _createSLARegistration("job-1", AppType.WORKFLOW_JOB);
+        String jobId1 = slaRegBean1.getId();
+        SLARegistrationBean slaRegBean2 = _createSLARegistration("job-2", AppType.WORKFLOW_JOB);
+        String jobId2 = slaRegBean2.getId();
+        SLARegistrationBean slaRegBean3 = _createSLARegistration("job-3", AppType.WORKFLOW_JOB);
+        String jobId3 = slaRegBean3.getId();
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd");
+        slaRegBean1.setAppName("app-name");
+        slaRegBean1.setExpectedDuration(123);
+        slaRegBean1.setExpectedEnd(sdf.parse("2012-02-07"));
+        slaRegBean1.setExpectedStart(sdf.parse("2011-02-07"));
+        slaRegBean1.setNominalTime(sdf.parse("2012-01-06"));
+        slaRegBean1.setUser("user");
+        slaRegBean1.setParentId("parentId");
+        slaRegBean1.setUpstreamApps("upstreamApps");
+        slaRegBean1.setNotificationMsg("notificationMsg");
+        slaRegBean1.setAlertContact("a@abc.com");
+        slaRegBean1.setAlertEvents("MISS");
+        slaRegBean1.setJobData("jobData");
+
+        slaCalcMemory.addRegistration(jobId1, slaRegBean1);
+        slaCalcMemory.addRegistration(jobId2, slaRegBean2);
+        slaCalcMemory.addRegistration(jobId3, slaRegBean3);
+
+        SLACalcStatus calc1 = slaCalcMemory.get(jobId1);
+        SLACalcStatus calc2 = slaCalcMemory.get(jobId2);
+        SLACalcStatus calc3 = slaCalcMemory.get(jobId3);
+
+        calc1.setEventProcessed(5);
+        calc2.setEventProcessed(6);
+        calc3.setEventProcessed(7);
+
+        calc1.setEventStatus(SLAEvent.EventStatus.END_MISS);
+        calc1.setSLAStatus(SLAEvent.SLAStatus.MISS);
+        calc1.setJobStatus(WorkflowJob.Status.FAILED.toString());
+        // set last modified time 5 days back
+        Date lastModifiedTime = new Date(System.currentTimeMillis() - 5*24*60*60*1000);
+        calc1.setLastModifiedTime(lastModifiedTime);
+
+        List<JsonBean> list = new ArrayList<JsonBean>();
+        SLASummaryBean bean = new SLASummaryBean(calc1);
+        bean.setActualStart(sdf.parse("2011-03-09"));
+        bean.setActualEnd(sdf.parse("2011-03-10"));
+        bean.setActualDuration(456);
+        list.add(bean);
+        list.add(new SLASummaryBean(calc2));
+        list.add(new SLASummaryBean(calc3));
+
+        jpaService.execute(new SLACalculationInsertUpdateJPAExecutor(null, list));
+
+        slaCalcMemory = new SLACalculatorMemory();
+        slaCalcMemory.init(new Configuration(false));
+
+        assertEquals(2, slaCalcMemory.size());
+
+        SLACalcStatus calc = slaCalcMemory.get(jobId1);
+        assertEquals("job-1", calc.getId());
+        assertEquals(AppType.WORKFLOW_JOB, calc.getAppType());
+        assertEquals("app-name", calc.getAppName());
+        assertEquals(123, calc.getExpectedDuration());
+        assertEquals(sdf.parse("2012-02-07"), calc.getExpectedEnd());
+        assertEquals(sdf.parse("2011-02-07"), calc.getExpectedStart());
+        assertEquals(sdf.parse("2012-01-06"), calc.getNominalTime());
+        assertEquals("user", calc.getUser());
+        assertEquals("parentId", calc.getParentId());
+        assertEquals("upstreamApps", calc.getUpstreamApps());
+        assertEquals("notificationMsg", calc.getNotificationMsg());
+        assertEquals("a@abc.com", calc.getAlertContact());
+        assertEquals("MISS", calc.getAlertEvents());
+        assertEquals("jobData", calc.getJobData());
+        assertEquals(sdf.parse("2011-03-09"), calc.getActualStart());
+        assertEquals(sdf.parse("2011-03-10"), calc.getActualEnd());
+        assertEquals(456, calc.getActualDuration());
+        assertEquals(SLAEvent.EventStatus.END_MISS, calc1.getEventStatus());
+        assertEquals(SLAEvent.SLAStatus.MISS, calc1.getSLAStatus());
+        assertEquals(WorkflowJob.Status.FAILED.toString(), calc1.getJobStatus());
+        assertEquals(lastModifiedTime, calc1.getLastModifiedTime());
+
+        assertEquals(5, calc.getEventProcessed());
+        assertEquals(6, slaCalcMemory.get(jobId2).getEventProcessed());
+        // jobId3 should be in history set as eventprocessed is 7 (111)
+        assertNull(slaCalcMemory.get(jobId3));
+        slaCalcMemory.addJobStatus(jobId3, WorkflowJob.Status.SUCCEEDED.toString(), EventStatus.SUCCESS,
+                sdf.parse("2011-03-09"), sdf.parse("2011-04-09"));
+        SLASummaryBean slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(jobId3));
+        assertEquals(8, slaSummary.getEventProcessed());
+        assertEquals(sdf.parse("2011-03-09"), slaSummary.getActualStart());
+        assertEquals(sdf.parse("2011-04-09"), slaSummary.getActualEnd());
+        assertEquals(WorkflowJob.Status.SUCCEEDED.toString(), slaSummary.getJobStatus());
+    }
+
+    @Test
+    public void testSLAEvents() throws Exception {
+        SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
+        EventHandlerService ehs = Services.get().get(EventHandlerService.class);
+        slaCalcMemory.init(new Configuration(false));
+        SLARegistrationBean slaRegBean = _createSLARegistration("job-1", AppType.WORKFLOW_JOB);
+        slaRegBean.setExpectedStart(new Date(System.currentTimeMillis() - 1 * 1 * 3600 * 1000)); // 1
+        slaRegBean.setExpectedDuration(2 * 3600 * 1000);
+        slaRegBean.setExpectedEnd(new Date(System.currentTimeMillis() - 1 * 1 * 3600 * 1000)); // 1
+                                                                                               // hour
+        String jobId = slaRegBean.getId();
+        slaCalcMemory.addRegistration(jobId, slaRegBean);
+        assertEquals(1, slaCalcMemory.size());
+        SLASummaryBean slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(jobId));
+        assertEquals(SLAStatus.NOT_STARTED, slaSummary.getSLAStatus());
+        slaCalcMemory.updateSlaStatus(jobId);
+        assertEquals(2, ehs.getEventQueue().size());
+        slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(jobId));
+        // both start miss and end miss (101)
+        assertEquals(5, slaSummary.getEventProcessed());
+        assertEquals(SLAEvent.EventStatus.END_MISS, slaSummary.getEventStatus());
+        assertEquals(SLAStatus.MISS, slaSummary.getSLAStatus());
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+
+        assertEquals(SLAStatus.MISS, slaSummary.getSLAStatus());
+        slaCalcMemory.addJobStatus(jobId, WorkflowJob.Status.RUNNING.toString(), EventStatus.STARTED,
+                sdf.parse("2012-01-01"), null);
+        slaCalcMemory.addJobStatus(jobId, WorkflowJob.Status.SUCCEEDED.toString(), EventStatus.SUCCESS,
+                sdf.parse("2012-01-01"), sdf.parse("2012-01-02"));
+
+        assertEquals(3, ehs.getEventQueue().size());
+        slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(jobId));
+        // All events processed and actual times stored (1000)
+        assertEquals(8, slaSummary.getEventProcessed());
+        assertEquals(SLAStatus.MISS, slaSummary.getSLAStatus());
+        assertEquals(WorkflowJob.Status.SUCCEEDED.toString(), slaSummary.getJobStatus());
+        assertEquals(SLAEvent.EventStatus.DURATION_MISS, slaSummary.getEventStatus());
+        assertEquals(sdf.parse("2012-01-01").getTime(), slaSummary.getActualStart().getTime());
+        assertEquals(sdf.parse("2012-01-02").getTime(), slaSummary.getActualEnd().getTime());
+        assertEquals(sdf.parse("2012-01-02").getTime() - sdf.parse("2012-01-01").getTime(),
+                slaSummary.getActualDuration());
+        assertEquals(0, slaCalcMemory.size());
+    }
+
+    @Test
+    public void testDuplicateStartMiss() throws Exception {
+        // test start-miss
+        EventHandlerService ehs = Services.get().get(EventHandlerService.class);
+        SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
+        slaCalcMemory.init(new Configuration(false));
+        SLARegistrationBean slaRegBean = _createSLARegistration("job-1", AppType.WORKFLOW_JOB);
+        Date startTime = new Date(System.currentTimeMillis() - 1 * 1 * 3600 * 1000); // 1
+                                                                                     // hour
+                                                                                     // back
+        slaRegBean.setExpectedStart(startTime);
+        slaRegBean.setExpectedDuration(3600 * 1000);
+        slaRegBean.setExpectedEnd(new Date(System.currentTimeMillis() + 1 * 1 * 3600 * 1000)); // 1
+                                                                                               // hour
+                                                                                               // ahead
+        String jobId = slaRegBean.getId();
+        slaCalcMemory.addRegistration(slaRegBean.getId(), slaRegBean);
+        slaCalcMemory.updateSlaStatus(jobId);
+        SLASummaryBean slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(jobId));
+        assertEquals(1, slaSummary.getEventProcessed());
+        assertEquals(SLAStatus.NOT_STARTED, slaSummary.getSLAStatus());
+        slaCalcMemory.addJobStatus(jobId, WorkflowJob.Status.RUNNING.toString(), EventStatus.STARTED,
+                new Date(System.currentTimeMillis()), null);
+        slaCalcMemory.updateSlaStatus(jobId);
+        slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(jobId));
+        assertEquals(1, slaSummary.getEventProcessed());
+        assertEquals(SLAStatus.IN_PROCESS, slaSummary.getSLAStatus());
+        assertEquals(WorkflowJob.Status.RUNNING.toString(), slaSummary.getJobStatus());
+        assertEquals(1, ehs.getEventQueue().size());
+    }
+
+    @Test
+    public void testDuplicateEndMiss() throws Exception {
+        EventHandlerService ehs = Services.get().get(EventHandlerService.class);
+        SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
+        slaCalcMemory.init(new Configuration(false));
+        SLARegistrationBean slaRegBean = _createSLARegistration("job-1", AppType.WORKFLOW_JOB);
+        Date startTime = new Date(System.currentTimeMillis() + 1 * 1 * 3600 * 1000); // 1 hour ahead
+        slaRegBean.setExpectedStart(startTime);
+        slaRegBean.setExpectedDuration(3600 * 1000);
+        slaRegBean.setExpectedEnd(new Date(System.currentTimeMillis() - 1 * 1 * 3600 * 1000)); // 1
+                                                                                               // hour
+                                                                                               // back
+        String jobId = slaRegBean.getId();
+        slaCalcMemory.addRegistration(slaRegBean.getId(), slaRegBean);
+        slaCalcMemory.updateSlaStatus(jobId);
+        SLASummaryBean slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(jobId));
+        // Only end sla should be processed (100)
+        assertEquals(4, slaSummary.getEventProcessed());
+        slaCalcMemory.updateSlaStatus(jobId);
+        slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(jobId));
+        assertEquals(4, slaSummary.getEventProcessed());
+        assertEquals(SLAStatus.MISS, slaSummary.getSLAStatus());
+        slaCalcMemory.addJobStatus(jobId, WorkflowJob.Status.SUCCEEDED.toString(), EventStatus.SUCCESS,
+                new Date(System.currentTimeMillis()), new Date(System.currentTimeMillis() + 1 * 1 * 3600 * 1000));
+        slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(jobId));
+        // Only Duration sla should be processed as end is already processed
+        // (110)
+        assertEquals(6, slaSummary.getEventProcessed());
+        assertEquals(SLAStatus.MISS, slaSummary.getSLAStatus());
+        // Recieve start event
+        assertTrue(slaCalcMemory.addJobStatus(jobId, WorkflowJob.Status.RUNNING.toString(), EventStatus.STARTED,
+                new Date(System.currentTimeMillis()), new Date(System.currentTimeMillis() + 1 * 1 * 3600 * 1000)));
+        slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(jobId));
+        // Start event received so all bits should be processed (111)
+        assertEquals(8, slaSummary.getEventProcessed());
+        assertEquals(SLAStatus.MISS, slaSummary.getSLAStatus());
+        assertEquals(0, slaCalcMemory.size());
+        assertEquals(3, ehs.getEventQueue().size());
+
+    }
+
+    public void testSLAHistorySet() throws Exception {
+            EventHandlerService ehs = Services.get().get(EventHandlerService.class);
+            SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
+            slaCalcMemory.init(new Configuration(false));
+            SLARegistrationBean slaRegBean = _createSLARegistration("job-1", AppType.WORKFLOW_JOB);
+            Date startTime = new Date(System.currentTimeMillis() - 1 * 1 * 3600 * 1000);
+            slaRegBean.setExpectedStart(startTime); // 1 hour back
+            slaRegBean.setExpectedDuration(1000);
+            slaRegBean.setExpectedEnd(new Date(System.currentTimeMillis() - 1 * 1 * 3600 * 1000));
+            String jobId = slaRegBean.getId();
+            slaCalcMemory.addRegistration(slaRegBean.getId(), slaRegBean);
+            slaCalcMemory.updateSlaStatus(jobId);
+            slaCalcMemory.addJobStatus(jobId, WorkflowJob.Status.RUNNING.toString(), EventStatus.STARTED, new Date(
+                    System.currentTimeMillis() - 3600 * 1000), null);
+            slaCalcMemory.updateSlaStatus(jobId);
+            SLASummaryBean slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(jobId));
+            // The actual end times are not stored, but sla's processed so (111)
+            assertEquals(7, slaSummary.getEventProcessed());
+            // Moved from map to history set
+            assertEquals(0, slaCalcMemory.size());
+            // Add terminal state event so actual end time is stored
+            slaCalcMemory.addJobStatus(jobId, WorkflowJob.Status.SUCCEEDED.toString(), EventStatus.SUCCESS, new Date(
+                    System.currentTimeMillis() - 3600 * 1000), new Date(System.currentTimeMillis()));
+            slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(jobId));
+            // The actual times are stored, so event processed(1000)
+            assertEquals(8, slaSummary.getEventProcessed());
+            assertEquals(3, ehs.getEventQueue().size());
+
+    }
+
+    private SLARegistrationBean _createSLARegistration(String jobId, AppType appType) {
+        SLARegistrationBean bean = new SLARegistrationBean();
+        bean.setJobId(jobId);
+        bean.setAppType(appType);
+        return bean;
+    }
+
+}

@@ -49,6 +49,8 @@ import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.sla.SLAOperations;
+import org.apache.oozie.sla.service.SLAService;
 import org.apache.oozie.util.InstrumentUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
@@ -333,7 +335,9 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
                         refreshAction(coordJob, coordAction);
                     }
                     updateAction(coordJob, coordAction, actionXml);
-
+                    if (SLAService.isEnabled()) {
+                        SLAOperations.updateRegistrationEvent(coordAction.getId());
+                    }
                     queue(new CoordActionNotificationXCommand(coordAction), 100);
                     queue(new CoordActionInputCheckXCommand(coordAction.getId(), coordAction.getJobId()), 100);
                 }

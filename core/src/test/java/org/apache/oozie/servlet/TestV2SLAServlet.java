@@ -183,7 +183,6 @@ public class TestV2SLAServlet extends DagServletTestCase {
             bean.setActualEnd(actualEnd.getTime());
             bean.setExpectedDuration(10);
             bean.setActualDuration(15);
-            bean.setSlaProcessed((byte) 1);
             bean.setUser("testuser");
             bean.setLastModifiedTime(currentTime);
             list.add(bean);

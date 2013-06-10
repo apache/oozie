@@ -99,7 +99,7 @@ public class MessageFactory {
         SLAMessage slaMessage = new SLAMessage(event.getEventStatus(), event.getSLAStatus(), event.getAppType(),
                 event.getAppName(), event.getUser(), event.getId(), event.getParentId(), event.getNominalTime(),
                 event.getExpectedStart(), event.getActualStart(), event.getExpectedEnd(), event.getActualEnd(),
-                event.getExpectedDuration(), event.getNotificationMsg(), event.getUpstreamApps());
+                event.getExpectedDuration(), event.getActualDuration(), event.getNotificationMsg(), event.getUpstreamApps());
         return slaMessage;
     }
 }
