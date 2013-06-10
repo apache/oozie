@@ -101,7 +101,6 @@ public class TestSLACalculationJPAExecutor extends XDataTestCase {
         assertEquals(actStart, sBean.getActualStart());
         assertEquals(actEnd, sBean.getActualEnd());
         assertEquals(2000, sBean.getActualDuration());
-        assertEquals(1, sBean.getSlaProcessed());
         assertEquals(actEnd, sBean.getLastModifiedTime());
 
     }
@@ -153,7 +152,6 @@ public class TestSLACalculationJPAExecutor extends XDataTestCase {
         assertEquals(actStart, sBean.getActualStart());
         assertEquals(newDate, sBean.getActualEnd());
         assertEquals(2000, sBean.getActualDuration());
-        assertEquals(1, sBean.getSlaProcessed());
         assertEquals(newDate, sBean.getLastModifiedTime());
 
     }
@@ -183,7 +181,6 @@ public class TestSLACalculationJPAExecutor extends XDataTestCase {
         bean1 = new SLASummaryBean();
         bean1.setJobId(wfId1);
         bean1.setActualEnd(newDate);
-        bean1.setSlaProcessed(1);
         List<JsonBean> updateList = new ArrayList<JsonBean>();
         updateList.add(bean1);
 
@@ -208,7 +205,6 @@ public class TestSLACalculationJPAExecutor extends XDataTestCase {
         SLASummaryGetJPAExecutor readCmd = new SLASummaryGetJPAExecutor(wfId1);
         SLASummaryBean sBean = jpaService.execute(readCmd);
         // isSlaProcessed should NOT be changed to 1
-        assertFalse(sBean.getSlaProcessed() == 1);
         // actualEnd should be null as before
         assertNull(sBean.getActualEnd());
 
@@ -234,7 +230,6 @@ public class TestSLACalculationJPAExecutor extends XDataTestCase {
         bean.setActualStart(aStart);
         bean.setActualEnd(aEnd);
         bean.setActualDuration(aDur);
-        bean.setSlaProcessed((byte) slaProc);
         bean.setLastModifiedTime(lastMod);
         return bean;
     }

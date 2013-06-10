@@ -17,38 +17,42 @@
  */
 package org.apache.oozie.executor.jpa.sla;
 
+import java.sql.Timestamp;
+import java.util.List;
+
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.executor.jpa.JPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
-import org.apache.oozie.sla.SLARegistrationBean;
+import org.apache.oozie.sla.SLASummaryBean;
 
 /**
- * Load the list of SLARegistrationBean and return the list.
+ * Load the list of SLASummaryBean when Oozie restarts and return the list.
  */
-public class SLARegistrationGetJPAExecutor implements JPAExecutor<SLARegistrationBean> {
+public class SLASummaryGetRecordsOnRestartJPAExecutor implements JPAExecutor<List<SLASummaryBean>> {
 
-    private String id = null;
-
-    public SLARegistrationGetJPAExecutor(String id) {
-        this.id = id;
+    private int days;
+    public SLASummaryGetRecordsOnRestartJPAExecutor (int days) {
+        this.days = days;
     }
 
     @Override
     public String getName() {
-        return "SLARegistrationGetJPAExecutor";
+        return "SLASummaryGetRecordsOnRestartJPAExecutor";
     }
 
-    @Override
-    public SLARegistrationBean execute(EntityManager em) throws JPAExecutorException {
+    @SuppressWarnings("unchecked")
+	@Override
+    public List<SLASummaryBean> execute(EntityManager em) throws JPAExecutorException {
+        List<SLASummaryBean> ssBean;
         try {
-            Query q = em.createNamedQuery("GET_SLA_REG_ALL");
-            q.setParameter("id", id);
-            SLARegistrationBean slaRegBean= (SLARegistrationBean) q.getSingleResult();
-            slaRegBean.setSlaConfig(slaRegBean.getSlaConfig());
-            return slaRegBean;
+            Query q = em.createNamedQuery("GET_SLA_SUMMARY_RECORDS_RESTART");
+            Timestamp ts = new Timestamp(System.currentTimeMillis() - days * 24 * 60 * 60 * 1000);
+            q.setParameter("lastModifiedTime", ts);
+            ssBean = q.getResultList();
+            return ssBean;
         }
         catch (Exception e) {
             throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);

@@ -390,7 +390,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         }
         // inserting into new table also
         SLAOperations.createSlaRegistrationEvent(eSla, actionBean.getId(), actionBean.getJobId(),
-                AppType.COORDINATOR_ACTION, coordJob.getUser(), coordJob.getAppName(), LOG);
+                AppType.COORDINATOR_ACTION, coordJob.getUser(), coordJob.getAppName(), LOG, false);
     }
 
     private void updateJobMaterializeInfo(CoordinatorJobBean job) throws CommandException {

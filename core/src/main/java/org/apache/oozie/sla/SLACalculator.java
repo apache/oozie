@@ -48,4 +48,6 @@ public interface SLACalculator {
 
     SLACalcStatus get(String jobId);
 
+    boolean updateRegistration(String jobId, SLARegistrationBean reg) throws JPAExecutorException;
+
 }

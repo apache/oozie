@@ -91,8 +91,8 @@ public class TestSLAJobEventListener extends XTestCase {
         SLACalcStatus serviceObj = slas.getSLACalculator().get("wf1");
         // check that start sla has been calculated
         assertEquals(EventStatus.START_MISS, serviceObj.getEventStatus());
-        assertEquals(0, serviceObj.getSlaProcessed()); //Job switching to running is only partially
-                                                       //sla processed. so state = zero
+        assertEquals(1, serviceObj.getEventProcessed()); //Job switching to running is only partially
+                                                       //sla processed. so state = 1
 
         job = _createSLARegBean("wa1", AppType.WORKFLOW_ACTION);
         slas.addRegistrationEvent(job);
@@ -114,24 +114,27 @@ public class TestSLAJobEventListener extends XTestCase {
                 "coord-app-name1", actualStart, actualEnd);
         listener.onCoordinatorJobEvent(cje);
 
-        // Since serviceObj is removed from memory after END stage
         SLASummaryBean summary = Services.get().get(JPAService.class).execute(new SLASummaryGetJPAExecutor("cj1"));
-        // check that end sla has been calculated
-        assertEquals(2, summary.getSlaProcessed()); //Job in terminal state has finished
-                                                    //sla processing. so state = 2
+        // check that end and duration sla has been calculated
+        assertEquals(6, summary.getEventProcessed());
+
         assertEquals(EventStatus.END_MET, summary.getEventStatus());
 
         job = _createSLARegBean("ca1", AppType.COORDINATOR_ACTION);
         actualEnd = DateUtils.parseDateUTC("2012-07-22T02:00Z");
         slas.addRegistrationEvent(job);
-        assertEquals(3, slas.getSLACalculator().size());
-        CoordinatorActionEvent cae = new CoordinatorActionEvent("ca1", "cj1", CoordinatorAction.Status.KILLED, "user1",
+        assertEquals(4, slas.getSLACalculator().size());
+        CoordinatorActionEvent cae = new CoordinatorActionEvent("ca1", "cj1", CoordinatorAction.Status.RUNNING, "user1",
+                "coord-app-name1", null, actualEnd, null);
+        listener.onCoordinatorActionEvent(cae);
+        cae = new CoordinatorActionEvent("ca1", "cj1", CoordinatorAction.Status.KILLED, "user1",
                 "coord-app-name1", null, actualEnd, null);
         listener.onCoordinatorActionEvent(cae);
         summary = Services.get().get(JPAService.class).execute(new SLASummaryGetJPAExecutor("ca1"));
-        // check that start sla has been calculated
-        assertEquals(2, summary.getSlaProcessed());
+        // check that all events are processed
+        assertEquals(8, summary.getEventProcessed());
         assertEquals(EventStatus.END_MISS, summary.getEventStatus());
+        assertEquals(3, slas.getSLACalculator().size());
 
     }
 

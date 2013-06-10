@@ -180,6 +180,8 @@ public class TestJMSSLAEventListener extends XTestCase {
         durationMissBean.setExpectedEnd(expectedEndDate);
         durationMiss.setActualEnd(actualEndDate);
         durationMissBean.setExpectedDuration(expectedDuration);
+        long actualDuration = actualEndDate.getTime() - actualStartDate.getTime();
+        durationMiss.setActualDuration(actualDuration);
 
         ConnectionContext jmsContext = getConnectionContext();
         Session session = jmsContext.createSession(Session.AUTO_ACKNOWLEDGE);
@@ -202,7 +204,7 @@ public class TestJMSSLAEventListener extends XTestCase {
         assertEquals(expectedEndDate, durationMissMsg.getExpectedEndTime());
         assertEquals(actualEndDate, durationMissMsg.getActualEndTime());
         assertEquals(expectedDuration, durationMissMsg.getExpectedDuration());
-        assertEquals((actualEndDate.getTime() - actualStartDate.getTime()) / (1000 * 60), durationMissMsg.getActualDuration());
+        assertEquals(actualDuration, durationMissMsg.getActualDuration());
         assertEquals("notification of duration miss", durationMissMsg.getNotificationMessage());
     }
 
@@ -363,6 +365,8 @@ public class TestJMSSLAEventListener extends XTestCase {
         durationMetBean.setExpectedEnd(expectedEndDate);
         durationMet.setActualEnd(actualEndDate);
         durationMetBean.setExpectedDuration(expectedDuration);
+        long actualDuration = actualEndDate.getTime() - actualStartDate.getTime();
+        durationMet.setActualDuration(actualDuration);
 
         ConnectionContext jmsContext = getConnectionContext();
 
@@ -386,7 +390,7 @@ public class TestJMSSLAEventListener extends XTestCase {
         assertEquals(expectedEndDate, durationMissMsg.getExpectedEndTime());
         assertEquals(actualEndDate, durationMissMsg.getActualEndTime());
         assertEquals(expectedDuration, durationMissMsg.getExpectedDuration());
-        assertEquals((actualEndDate.getTime() - actualStartDate.getTime()) / (1000 * 60), durationMissMsg.getActualDuration());
+        assertEquals(actualDuration, durationMissMsg.getActualDuration());
         assertEquals("notification of duration met", durationMissMsg.getNotificationMessage());
     }
 }

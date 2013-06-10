@@ -279,7 +279,7 @@ public class CoordActionMaterializeCommand extends CoordinatorCommand<Void> {
         }
         // insert into new sla reg table too
         SLAOperations.createSlaRegistrationEvent(eSla, actionBean.getId(), actionBean.getJobId(),
-                AppType.COORDINATOR_ACTION, user, appName, log);
+                AppType.COORDINATOR_ACTION, user, appName, log, false);
     }
 
     /**

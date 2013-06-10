@@ -18,18 +18,25 @@
 package org.apache.oozie.sla.service;
 
 import java.util.Date;
+import java.util.List;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.event.JobEvent.EventStatus;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.executor.jpa.sla.SLARegistrationGetOnRestartJPAExecutor;
+import org.apache.oozie.executor.jpa.sla.SLASummaryGetRecordsOnRestartJPAExecutor;
 import org.apache.oozie.service.EventHandlerService;
+import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.SchedulerService;
 import org.apache.oozie.service.Service;
 import org.apache.oozie.service.ServiceException;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.sla.SLACalcStatus;
 import org.apache.oozie.sla.SLACalculator;
 import org.apache.oozie.sla.SLACalculatorMemory;
 import org.apache.oozie.sla.SLARegistrationBean;
+import org.apache.oozie.sla.SLASummaryBean;
 import org.apache.oozie.util.XLog;
 import com.google.common.annotations.VisibleForTesting;
 
@@ -39,11 +46,13 @@ public class SLAService implements Service {
     public static final String CONF_CALCULATOR_IMPL = CONF_PREFIX + "calculator.impl";
     public static final String CONF_CAPACITY = CONF_PREFIX + "capacity";
     public static final String CONF_ALERT_EVENTS = CONF_PREFIX + "alert.events";
+    public static final String CONF_EVENTS_MODIFIED_AFTER = CONF_PREFIX + "events.modified.after";
 
     private static SLACalculator calcImpl;
     private static boolean slaEnabled = false;
     private EventHandlerService eventHandler;
     public static XLog LOG;
+    private JPAService jpaService;
 
     @Override
     public void init(Services services) throws ServiceException {
@@ -126,6 +135,21 @@ public class SLAService implements Service {
         }
         catch (JPAExecutorException ex) {
             LOG.warn("Could not add new SLA entry for job [{0}]", reg.getId(), ex);
+        }
+        return false;
+    }
+
+    public boolean updateRegistrationEvent(SLARegistrationBean reg) throws ServiceException {
+        try {
+            if (calcImpl.updateRegistration(reg.getId(), reg)) {
+                return true;
+            }
+            else {
+                LOG.warn("SLA queue full. Unable to update the SLA entry for job [{0}]", reg.getId());
+            }
+        }
+        catch (JPAExecutorException ex) {
+            LOG.warn("Could not update SLA entry for job [{0}]", reg.getId(), ex);
         }
         return false;
     }

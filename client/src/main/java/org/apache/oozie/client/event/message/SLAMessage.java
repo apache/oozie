@@ -68,7 +68,7 @@ public class SLAMessage extends EventMessage {
 
     public SLAMessage(SLAEvent.EventStatus eventStatus, SLAEvent.SLAStatus slaStatus, AppType appType, String appName,
             String user, String jobId, String parentJobId, Date nominalTime, Date expectedStartTime,
-            Date actualStartTime, Date expectedEndTime, Date actualEndTime, long expectedDuration,
+            Date actualStartTime, Date expectedEndTime, Date actualEndTime, long expectedDuration, long actualDuration,
             String notificationMessage, String upstreamApps) {
 
         super(MessageType.SLA, appType);
@@ -84,8 +84,7 @@ public class SLAMessage extends EventMessage {
         this.expectedEndTime = expectedEndTime;
         this.actualEndTime = actualEndTime;
         this.expectedDuration = expectedDuration;
-        this.actualDuration = (actualEndTime != null && actualStartTime != null) ? ( actualEndTime.getTime()
-                - actualStartTime.getTime()) / (1000 * 60) : -1;
+        this.actualDuration = actualDuration;
         this.notificationMessage = notificationMessage;
         this.upstreamApps = upstreamApps;
     }
@@ -183,7 +182,7 @@ public class SLAMessage extends EventMessage {
     /**
      * Get expected end time
      *
-     * @return
+     * @return expectedEndTime
      */
     public Date getExpectedEndTime() {
         return expectedEndTime;

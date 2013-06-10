@@ -309,9 +309,7 @@ public class SLAEmailEventListener extends SLAEventListener {
         printField(body, EmailField.EXPECTED_END_TIME.toString(), event.getExpectedEnd(), false);
         printField(body, EmailField.ACTUAL_END_TIME.toString(), event.getActualEnd(), false);
         printField(body, EmailField.EXPECTED_DURATION.toString(), event.getExpectedDuration(), false);
-        long actualDuration = (event.getActualEnd() != null && event.getActualStart() != null) ? (event.getActualEnd()
-                .getTime() - event.getActualStart().getTime()) / (1000 * 60) : -1;
-        printField(body, EmailField.ACTUAL_DURATION.toString(), actualDuration, false);
+        printField(body, EmailField.ACTUAL_DURATION.toString(), event.getActualDuration(), false);
 
         try {
             msg.setText(body.toString());

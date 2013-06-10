@@ -271,7 +271,7 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
                 }
                 // insert into new table
                 SLAOperations.createSlaRegistrationEvent(eSla, jobId, parentId, AppType.WORKFLOW_JOB, user, appName,
-                        log);
+                        log, false);
             }
             // Add sla for wf actions
             for (Element action : (List<Element>) eWfJob.getChildren("action", eWfJob.getNamespace())) {
@@ -282,7 +282,7 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
                     String actionId = Services.get().get(UUIDService.class)
                             .generateChildId(jobId, action.getAttributeValue("name") + "");
                     SLAOperations.createSlaRegistrationEvent(actionSla, actionId, jobId, AppType.WORKFLOW_ACTION,
-                            user, appName, log);
+                            user, appName, log, false);
                 }
             }
         }

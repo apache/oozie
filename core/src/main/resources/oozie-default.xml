@@ -1905,4 +1905,12 @@
         </description>
     </property>
 
+    <property>
+        <name>oozie.sla.service.SLAService.events.modified.after</name>
+        <value>7</value>
+        <description> Retrive records which have been modified in last x amount of days (x is 7 by default)
+        </description>
+    </property>
+
+
 </configuration>

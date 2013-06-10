@@ -26,33 +26,49 @@ import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.sla.SLARegistrationBean;
 
 /**
- * Load the list of SLARegistrationBean and return the list.
+ * Load SLARegistrationBean on restart
  */
-public class SLARegistrationGetJPAExecutor implements JPAExecutor<SLARegistrationBean> {
+public class SLARegistrationGetOnRestartJPAExecutor implements JPAExecutor<SLARegistrationBean> {
 
-    private String id = null;
+    private String id;
 
-    public SLARegistrationGetJPAExecutor(String id) {
+    public SLARegistrationGetOnRestartJPAExecutor(String id) {
         this.id = id;
     }
 
     @Override
     public String getName() {
-        return "SLARegistrationGetJPAExecutor";
+        return "SLARegistrationGetOnRestartJPAExecutor";
     }
 
     @Override
     public SLARegistrationBean execute(EntityManager em) throws JPAExecutorException {
         try {
-            Query q = em.createNamedQuery("GET_SLA_REG_ALL");
+            Query q = em.createNamedQuery("GET_SLA_REG_ON_RESTART");
             q.setParameter("id", id);
-            SLARegistrationBean slaRegBean= (SLARegistrationBean) q.getSingleResult();
-            slaRegBean.setSlaConfig(slaRegBean.getSlaConfig());
-            return slaRegBean;
+            Object[] obj = (Object[]) q.getSingleResult();
+            return getBeanFromObj(obj);
         }
         catch (Exception e) {
             throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
         }
+    }
+
+    private SLARegistrationBean getBeanFromObj(Object[] arr) {
+        SLARegistrationBean bean = new SLARegistrationBean();
+        if (arr[0] != null) {
+            bean.setNotificationMsg((String) arr[0]);
+        }
+        if (arr[1] != null) {
+            bean.setUpstreamApps((String) arr[1]);
+        }
+        if (arr[2] != null) {
+            bean.setSlaConfig((String) arr[2]);
+        }
+        if (arr[3] != null) {
+            bean.setJobData((String) arr[3]);
+        }
+        return bean;
     }
 
 }

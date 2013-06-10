@@ -42,9 +42,10 @@ import org.json.simple.JSONObject;
 
 @Entity
 @NamedQueries({
- @NamedQuery(name = "GET_SLA_REG_ALL", query = "select w.jobId, w.appType, w.appName, w.user, w.nominalTimeTS," +
-        "w.expectedStartTS, w.expectedEndTS, w.expectedDuration, w.jobData, w.parentId, w.notificationMsg," +
-        "w.upstreamApps, w.slaConfig from SLARegistrationBean w where w.jobId = :id") })
+
+ @NamedQuery(name = "GET_SLA_REG_ON_RESTART", query = "select w.notificationMsg, w.upstreamApps, w.slaConfig, w.jobData from SLARegistrationBean w where w.jobId = :id"),
+
+ @NamedQuery(name = "GET_SLA_REG_ALL", query = "select OBJECT(w) from SLARegistrationBean w where w.jobId = :id") })
 public class SLARegistrationBean extends JsonSLARegistrationEvent implements Writable {
 
     @Basic
