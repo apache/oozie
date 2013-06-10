@@ -17,7 +17,6 @@
  */
 package org.apache.oozie.action.hadoop;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.mapred.JobConf;
@@ -29,7 +28,6 @@ import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
@@ -43,8 +41,6 @@ import java.io.FileInputStream;
 import java.io.StringReader;
 import java.io.Writer;
 import java.io.OutputStreamWriter;
-import java.util.ArrayList;
-import java.util.List;
 
 public class TestMapReduceActionError extends ActionExecutorTestCase {
 
@@ -52,109 +48,6 @@ public class TestMapReduceActionError extends ActionExecutorTestCase {
     protected void setSystemProps() throws Exception {
         super.setSystemProps();
         setSystemProperty("oozie.service.ActionService.executor.classes", MapReduceActionExecutor.class.getName());
-    }
-
-    public void testLauncherJar() throws Exception {
-        MapReduceActionExecutor ae = new MapReduceActionExecutor();
-        Path jar = new Path(ae.getOozieRuntimeDir(), ae.getLauncherJarName());
-        assertTrue(new File(jar.toString()).exists());
-    }
-
-    public void testSetupMethods() throws Exception {
-        MapReduceActionExecutor ae = new MapReduceActionExecutor();
-
-        assertEquals("map-reduce", ae.getType());
-
-        assertEquals("map-reduce-launcher.jar", ae.getLauncherJarName());
-
-        List<Class> classes = new ArrayList<Class>();
-        classes.add(LauncherMapper.class);
-        classes.add(LauncherSecurityManager.class);
-        classes.add(LauncherException.class);
-        classes.add(LauncherMainException.class);
-        classes.add(PrepareActionsDriver.class);
-        classes.addAll(Services.get().get(URIHandlerService.class).getClassesForLauncher());
-        classes.add(ActionStats.class);
-        classes.add(ActionType.class);
-        classes.add(LauncherMain.class);
-        classes.add(MapReduceMain.class);
-        classes.add(PipesMain.class);
-        assertEquals(classes, ae.getLauncherClasses());
-
-        Element actionXml = XmlUtils.parseXml("<map-reduce>" +
-                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
-                "<name-node>" + getNameNodeUri() + "</name-node>" +
-                "<configuration>" +
-                "<property><name>mapred.input.dir</name><value>IN</value></property>" +
-                "<property><name>mapred.output.dir</name><value>OUT</value></property>" +
-                "</configuration>" +
-                "</map-reduce>");
-
-        XConfiguration protoConf = new XConfiguration();
-        protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
-
-
-        WorkflowJobBean wf = createBaseWorkflow(protoConf, "mr-action");
-        WorkflowActionBean action = (WorkflowActionBean) wf.getActions().get(0);
-        action.setType(ae.getType());
-
-        Context context = new Context(wf, action);
-
-        Configuration conf = ae.createBaseHadoopConf(context, actionXml);
-        ae.setupActionConf(conf, context, actionXml, getFsTestCaseDir());
-        assertEquals("IN", conf.get("mapred.input.dir"));
-
-        actionXml = XmlUtils.parseXml("<map-reduce>" +
-                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
-                "<name-node>" + getNameNodeUri() + "</name-node>" +
-                "<streaming>" +
-                "<mapper>M</mapper>" +
-                "<reducer>R</reducer>" +
-                "<record-reader>RR</record-reader>" +
-                "<record-reader-mapping>RRM1=1</record-reader-mapping>" +
-                "<record-reader-mapping>RRM2=2</record-reader-mapping>" +
-                "<env>e=E</env>" +
-                "<env>ee=EE</env>" +
-                "</streaming>" +
-                "<configuration>" +
-                "<property><name>mapred.input.dir</name><value>IN</value></property>" +
-                "<property><name>mapred.output.dir</name><value>OUT</value></property>" +
-                "</configuration>" +
-                "</map-reduce>");
-
-        conf = ae.createBaseHadoopConf(context, actionXml);
-        ae.setupActionConf(conf, context, actionXml, getFsTestCaseDir());
-        assertEquals("M", conf.get("oozie.streaming.mapper"));
-        assertEquals("R", conf.get("oozie.streaming.reducer"));
-        assertEquals("RR", conf.get("oozie.streaming.record-reader"));
-        assertEquals("2", conf.get("oozie.streaming.record-reader-mapping.size"));
-        assertEquals("2", conf.get("oozie.streaming.env.size"));
-
-        actionXml = XmlUtils.parseXml("<map-reduce>" +
-                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
-                "<name-node>" + getNameNodeUri() + "</name-node>" +
-                "<pipes>" +
-                "<map>M</map>" +
-                "<reduce>R</reduce>" +
-                "<inputformat>IF</inputformat>" +
-                "<partitioner>P</partitioner>" +
-                "<writer>W</writer>" +
-                "<program>PP</program>" +
-                "</pipes>" +
-                "<configuration>" +
-                "<property><name>mapred.input.dir</name><value>IN</value></property>" +
-                "<property><name>mapred.output.dir</name><value>OUT</value></property>" +
-                "</configuration>" +
-                "</map-reduce>");
-
-        conf = ae.createBaseHadoopConf(context, actionXml);
-        ae.setupActionConf(conf, context, actionXml, getFsTestCaseDir());
-        assertEquals("M", conf.get("oozie.pipes.map"));
-        assertEquals("R", conf.get("oozie.pipes.reduce"));
-        assertEquals("IF", conf.get("oozie.pipes.inputformat"));
-        assertEquals("P", conf.get("oozie.pipes.partitioner"));
-        assertEquals("W", conf.get("oozie.pipes.writer"));
-        assertEquals(getFsTestCaseDir()+"/PP", conf.get("oozie.pipes.program"));
     }
 
     private Context createContext(String actionXml) throws Exception {

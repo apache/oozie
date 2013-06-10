@@ -65,15 +65,44 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
                 HiveActionExecutor.class.getName());
     }
 
-    public void testSetupMethods() throws Exception {
-        HiveActionExecutor ae = new HiveActionExecutor();
-        assertEquals("hive", ae.getType());
+    public void testSetupMethodsWithLauncherJar() throws Exception {
+        String defaultVal = Services.get().getConf().get("oozie.action.ship.launcher.jar");
+        try {
+            Services.get().getConf().set("oozie.action.ship.launcher.jar", "true");
+            _testSetupMethods(true);
+        }
+        finally {
+            // back to default
+            if (defaultVal != null) {
+                Services.get().getConf().set("oozie.action.ship.launcher.jar", defaultVal);
+            }
+        }
+     }
+
+    public void testSetupMethodsWithoutLauncherJar() throws Exception {
+        String defaultVal = Services.get().getConf().get("oozie.action.ship.launcher.jar");
+        try {
+            Services.get().getConf().set("oozie.action.ship.launcher.jar", "false");
+            _testSetupMethods(false);
+        }
+        finally {
+            // back to default
+            if (defaultVal != null) {
+                Services.get().getConf().set("oozie.action.ship.launcher.jar", defaultVal);
+            }
+        }
     }
 
-    public void testLauncherJar() throws Exception {
+    public void _testSetupMethods(boolean launcherJarShouldExist) throws Exception {
         HiveActionExecutor ae = new HiveActionExecutor();
         Path jar = new Path(ae.getOozieRuntimeDir(), ae.getLauncherJarName());
-        assertTrue(new File(jar.toString()).exists());
+        File fJar = new File(jar.toString());
+        fJar.delete();
+        assertFalse(fJar.exists());
+        ae.createLauncherJar();
+        assertEquals(launcherJarShouldExist, fJar.exists());
+
+        assertEquals("hive", ae.getType());
     }
 
     private String getHiveScript(String inputPath, String outputPath) {
@@ -144,7 +173,7 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
         });
         assertTrue(launcherJob.isSuccessful());
 
-        assertFalse(LauncherMapper.hasIdSwap(launcherJob));
+        assertFalse(LauncherMapperHelper.hasIdSwap(launcherJob));
 
         HiveActionExecutor ae = new HiveActionExecutor();
         ae.check(context, context.getAction());

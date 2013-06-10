@@ -295,8 +295,14 @@ public abstract class XTestCase extends TestCase {
                 System.exit(-1);
             }
         }
+        // Copy the specified oozie-site file from oozieSiteSourceStream to the test case dir as oozie-site.xml
+        // We also need to inject oozie.action.ship.launcher.jar as false (if not already set) or else a lot of tests will fail in
+        // weird ways because the ActionExecutors can't find their corresponding Main classes
+        Configuration oozieSiteConf = new Configuration(false);
+        oozieSiteConf.addResource(oozieSiteSourceStream);
+        oozieSiteConf.setBooleanIfUnset("oozie.action.ship.launcher.jar", false);
         File target = new File(testCaseConfDir, "oozie-site.xml");
-        IOUtils.copyStream(oozieSiteSourceStream, new FileOutputStream(target));
+        oozieSiteConf.writeXml(new FileOutputStream(target));
 
         File hadoopConfDir = new File(testCaseConfDir, "hadoop-conf");
         hadoopConfDir.mkdir();

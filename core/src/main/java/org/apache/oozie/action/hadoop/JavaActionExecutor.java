@@ -91,6 +91,8 @@ public class JavaActionExecutor extends ActionExecutor {
     public static final String ACL_VIEW_JOB = "mapreduce.job.acl-view-job";
     public static final String ACL_MODIFY_JOB = "mapreduce.job.acl-modify-job";
     private static final String HADOOP_YARN_UBER_MODE = "mapreduce.job.ubertask.enable";
+    public static final String OOZIE_ACTION_SHIP_LAUNCHER_JAR = "oozie.action.ship.launcher.jar";
+    private boolean useLauncherJar;
     private static int maxActionOutputLen;
     private static int maxExternalStatsSize;
 
@@ -111,12 +113,12 @@ public class JavaActionExecutor extends ActionExecutor {
 
     public JavaActionExecutor() {
         this("java");
-        requiresNNJT = true;
     }
 
     protected JavaActionExecutor(String type) {
         super(type);
         requiresNNJT = true;
+        useLauncherJar = getOozieConf().getBoolean(OOZIE_ACTION_SHIP_LAUNCHER_JAR, true);
     }
 
     protected String getLauncherJarName() {
@@ -151,33 +153,40 @@ public class JavaActionExecutor extends ActionExecutor {
         //Get the limit for the maximum allowed size of action stats
         maxExternalStatsSize = getOozieConf().getInt(JavaActionExecutor.MAX_EXTERNAL_STATS_SIZE, MAX_EXTERNAL_STATS_SIZE_DEFAULT);
         maxExternalStatsSize = (maxExternalStatsSize == -1) ? Integer.MAX_VALUE : maxExternalStatsSize;
-        try {
-            List<Class> classes = getLauncherClasses();
-            Class[] launcherClasses = classes.toArray(new Class[classes.size()]);
-            IOUtils.createJar(new File(getOozieRuntimeDir()), getLauncherJarName(), launcherClasses);
 
-            registerError(UnknownHostException.class.getName(), ActionExecutorException.ErrorType.TRANSIENT, "JA001");
-            registerError(AccessControlException.class.getName(), ActionExecutorException.ErrorType.NON_TRANSIENT,
-                    "JA002");
-            registerError(DiskChecker.DiskOutOfSpaceException.class.getName(),
-                    ActionExecutorException.ErrorType.NON_TRANSIENT, "JA003");
-            registerError(org.apache.hadoop.hdfs.protocol.QuotaExceededException.class.getName(),
-                    ActionExecutorException.ErrorType.NON_TRANSIENT, "JA004");
-            registerError(org.apache.hadoop.hdfs.server.namenode.SafeModeException.class.getName(),
-                    ActionExecutorException.ErrorType.NON_TRANSIENT, "JA005");
-            registerError(ConnectException.class.getName(), ActionExecutorException.ErrorType.TRANSIENT, "  JA006");
-            registerError(JDOMException.class.getName(), ActionExecutorException.ErrorType.ERROR, "JA007");
-            registerError(FileNotFoundException.class.getName(), ActionExecutorException.ErrorType.ERROR, "JA008");
-            registerError(IOException.class.getName(), ActionExecutorException.ErrorType.TRANSIENT, "JA009");
-        }
-        catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
-        catch (java.lang.NoClassDefFoundError err) {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            err.printStackTrace(new PrintStream(baos));
-            log.warn(baos.toString());
-        }
+        createLauncherJar();
+
+        registerError(UnknownHostException.class.getName(), ActionExecutorException.ErrorType.TRANSIENT, "JA001");
+        registerError(AccessControlException.class.getName(), ActionExecutorException.ErrorType.NON_TRANSIENT,
+                "JA002");
+        registerError(DiskChecker.DiskOutOfSpaceException.class.getName(),
+                ActionExecutorException.ErrorType.NON_TRANSIENT, "JA003");
+        registerError(org.apache.hadoop.hdfs.protocol.QuotaExceededException.class.getName(),
+                ActionExecutorException.ErrorType.NON_TRANSIENT, "JA004");
+        registerError(org.apache.hadoop.hdfs.server.namenode.SafeModeException.class.getName(),
+                ActionExecutorException.ErrorType.NON_TRANSIENT, "JA005");
+        registerError(ConnectException.class.getName(), ActionExecutorException.ErrorType.TRANSIENT, "  JA006");
+        registerError(JDOMException.class.getName(), ActionExecutorException.ErrorType.ERROR, "JA007");
+        registerError(FileNotFoundException.class.getName(), ActionExecutorException.ErrorType.ERROR, "JA008");
+        registerError(IOException.class.getName(), ActionExecutorException.ErrorType.TRANSIENT, "JA009");
+    }
+
+    public void createLauncherJar() {
+        if (useLauncherJar) {
+            try {
+                List<Class> classes = getLauncherClasses();
+                Class[] launcherClasses = classes.toArray(new Class[classes.size()]);
+                IOUtils.createJar(new File(getOozieRuntimeDir()), getLauncherJarName(), launcherClasses);
+            }
+            catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+            catch (java.lang.NoClassDefFoundError err) {
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                err.printStackTrace(new PrintStream(baos));
+                log.warn(baos.toString());
+            }
+         }
     }
 
     /**
@@ -370,8 +379,13 @@ public class JavaActionExecutor extends ActionExecutor {
             Path tempActionDir = new Path(actionDir.getParent(), actionDir.getName() + ".tmp");
             if (!actionFs.exists(actionDir)) {
                 try {
-                    actionFs.copyFromLocalFile(new Path(getOozieRuntimeDir(), getLauncherJarName()), new Path(
-                            tempActionDir, getLauncherJarName()));
+                    if (useLauncherJar) {
+                        actionFs.copyFromLocalFile(new Path(getOozieRuntimeDir(), getLauncherJarName()), new Path(
+                                tempActionDir, getLauncherJarName()));
+                    }
+                    else {
+                        actionFs.mkdirs(tempActionDir);
+                    }
                     actionFs.rename(tempActionDir, actionDir);
                 }
                 catch (IOException ex) {
@@ -478,7 +492,9 @@ public class JavaActionExecutor extends ActionExecutor {
         Configuration proto = context.getProtoActionConf();
 
         // launcher JAR
-        addToCache(conf, appPath, getOozieLauncherJar(context), false);
+        if (useLauncherJar) {
+            addToCache(conf, appPath, getOozieLauncherJar(context), false);
+        }
 
         // Workflow lib/
         String[] paths = proto.getStrings(WorkflowAppService.APP_LIB_PATH_LIST);
@@ -597,20 +613,20 @@ public class JavaActionExecutor extends ActionExecutor {
                     prepareXML = XmlUtils.prettyPrint(prepareElement).toString().trim();
                 }
             }
-            LauncherMapper.setupLauncherInfo(launcherJobConf, jobId, actionId, actionDir, recoveryId, actionConf,
+            LauncherMapperHelper.setupLauncherInfo(launcherJobConf, jobId, actionId, actionDir, recoveryId, actionConf,
                     prepareXML);
 
-            LauncherMapper.setupMainClass(launcherJobConf, getLauncherMain(launcherJobConf, actionXml));
-            LauncherMapper.setupLauncherURIHandlerConf(launcherJobConf);
-            LauncherMapper.setupMaxOutputData(launcherJobConf, maxActionOutputLen);
-            LauncherMapper.setupMaxExternalStatsSize(launcherJobConf, maxExternalStatsSize);
+            LauncherMapperHelper.setupMainClass(launcherJobConf, getLauncherMain(launcherJobConf, actionXml));
+            LauncherMapperHelper.setupLauncherURIHandlerConf(launcherJobConf);
+            LauncherMapperHelper.setupMaxOutputData(launcherJobConf, maxActionOutputLen);
+            LauncherMapperHelper.setupMaxExternalStatsSize(launcherJobConf, maxExternalStatsSize);
 
             List<Element> list = actionXml.getChildren("arg", ns);
             String[] args = new String[list.size()];
             for (int i = 0; i < list.size(); i++) {
                 args[i] = list.get(i).getTextTrim();
             }
-            LauncherMapper.setupMainArguments(launcherJobConf, args);
+            LauncherMapperHelper.setupMainArguments(launcherJobConf, args);
 
             List<Element> javaopts = actionXml.getChildren("java-opt", ns);
             for (Element opt: javaopts) {
@@ -725,7 +741,7 @@ public class JavaActionExecutor extends ActionExecutor {
             injectLauncherCallback(context, launcherJobConf);
             XLog.getLog(getClass()).debug("Creating Job Client for action " + action.getId());
             jobClient = createJobClient(context, launcherJobConf);
-            String launcherId = LauncherMapper.getRecoveryId(launcherJobConf, context.getActionDir(), context
+            String launcherId = LauncherMapperHelper.getRecoveryId(launcherJobConf, context.getActionDir(), context
                     .getRecoveryId());
             boolean alreadyRunning = launcherId != null;
             RunningJob runningJob;
@@ -999,9 +1015,9 @@ public class JavaActionExecutor extends ActionExecutor {
 
                 String user = context.getWorkflow().getUser();
                 String group = context.getWorkflow().getGroup();
-                if (LauncherMapper.hasIdSwap(runningJob, user, group, actionDir)) {
+                if (LauncherMapperHelper.hasIdSwap(runningJob, user, group, actionDir)) {
                     String launcherId = action.getExternalId();
-                    Path idSwapPath = LauncherMapper.getIdSwapPath(context.getActionDir());
+                    Path idSwapPath = LauncherMapperHelper.getIdSwapPath(context.getActionDir());
                     InputStream is = actionFs.open(idSwapPath);
                     BufferedReader reader = new BufferedReader(new InputStreamReader(is));
                     Properties props = PropertiesUtils.readProperties(reader, maxActionOutputLen);
@@ -1022,14 +1038,14 @@ public class JavaActionExecutor extends ActionExecutor {
                 if (runningJob.isComplete()) {
                     XLog.getLog(getClass()).info(XLog.STD, "action completed, external ID [{0}]",
                             action.getExternalId());
-                    if (runningJob.isSuccessful() && LauncherMapper.isMainSuccessful(runningJob)) {
+                    if (runningJob.isSuccessful() && LauncherMapperHelper.isMainSuccessful(runningJob)) {
                         getActionData(actionFs, runningJob, action, context);
                         XLog.getLog(getClass()).info(XLog.STD, "action produced output");
                     }
                     else {
                         XLog log = XLog.getLog(getClass());
                         String errorReason;
-                        Path actionError = LauncherMapper.getErrorPath(context.getActionDir());
+                        Path actionError = LauncherMapperHelper.getErrorPath(context.getActionDir());
                         if (actionFs.exists(actionError)) {
                             InputStream is = actionFs.open(actionError);
                             BufferedReader reader = new BufferedReader(new InputStreamReader(is));
@@ -1110,8 +1126,8 @@ public class JavaActionExecutor extends ActionExecutor {
         Properties props = null;
         if (getCaptureOutput(action)) {
             props = new Properties();
-            if (LauncherMapper.hasOutputData(runningJob)) {
-                Path actionOutput = LauncherMapper.getOutputDataPath(context.getActionDir());
+            if (LauncherMapperHelper.hasOutputData(runningJob)) {
+                Path actionOutput = LauncherMapperHelper.getOutputDataPath(context.getActionDir());
                 InputStream is = actionFs.open(actionOutput);
                 BufferedReader reader = new BufferedReader(new InputStreamReader(is));
                 props = PropertiesUtils.readProperties(reader, maxActionOutputLen);

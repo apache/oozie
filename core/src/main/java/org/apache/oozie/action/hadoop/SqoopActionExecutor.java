@@ -62,7 +62,7 @@ public class SqoopActionExecutor extends JavaActionExecutor {
             classes.add(Class.forName(SQOOP_MAIN_CLASS_NAME));
         }
         catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Class not found", e);
         }
         return classes;
     }

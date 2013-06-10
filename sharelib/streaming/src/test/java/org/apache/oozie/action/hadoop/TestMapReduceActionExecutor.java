@@ -25,6 +25,7 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.mapred.JobID;
+import org.apache.hadoop.streaming.StreamJob;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowAction;
@@ -65,12 +66,6 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         setSystemProperty("oozie.credentials.credentialclasses", "cred=org.apache.oozie.action.hadoop.CredentialForTest");
     }
 
-    public void testLauncherJar() throws Exception {
-        MapReduceActionExecutor ae = new MapReduceActionExecutor();
-        Path jar = new Path(ae.getOozieRuntimeDir(), ae.getLauncherJarName());
-        assertTrue(new File(jar.toString()).exists());
-    }
-
     public Element createUberJarActionXML(String uberJarPath, String additional) throws Exception{
         return XmlUtils.parseXml("<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>"
                 + "<name-node>" + getNameNodeUri() + "</name-node>" + additional + "<configuration>"
@@ -78,27 +73,63 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
                 + "</configuration>" + "</map-reduce>");
     }
 
-    public void testSetupMethods() throws Exception {
+    public void testSetupMethodsWithLauncherJar() throws Exception {
+        String defaultVal = Services.get().getConf().get("oozie.action.ship.launcher.jar");
+        try {
+            Services.get().getConf().set("oozie.action.ship.launcher.jar", "true");
+            _testSetupMethods(true);
+        }
+        finally {
+            // back to default
+            if (defaultVal != null) {
+                Services.get().getConf().set("oozie.action.ship.launcher.jar", defaultVal);
+            }
+        }
+     }
+
+    public void testSetupMethodsWithoutLauncherJar() throws Exception {
+        String defaultVal = Services.get().getConf().get("oozie.action.ship.launcher.jar");
+        try {
+            Services.get().getConf().set("oozie.action.ship.launcher.jar", "false");
+            _testSetupMethods(false);
+        }
+        finally {
+            // back to default
+            if (defaultVal != null) {
+                Services.get().getConf().set("oozie.action.ship.launcher.jar", defaultVal);
+            }
+        }
+    }
+
+    public void _testSetupMethods(boolean launcherJarShouldExist) throws Exception {
         MapReduceActionExecutor ae = new MapReduceActionExecutor();
+        Path jar = new Path(ae.getOozieRuntimeDir(), ae.getLauncherJarName());
+        File fJar = new File(jar.toString());
+        fJar.delete();
+        assertFalse(fJar.exists());
+        ae.createLauncherJar();
+        assertEquals(launcherJarShouldExist, fJar.exists());
 
         assertEquals("map-reduce", ae.getType());
 
         assertEquals("map-reduce-launcher.jar", ae.getLauncherJarName());
 
-        List<Class> classes = new ArrayList<Class>();
-        classes.add(LauncherMapper.class);
-        classes.add(LauncherSecurityManager.class);
-        classes.add(LauncherException.class);
-        classes.add(LauncherMainException.class);
-        classes.add(PrepareActionsDriver.class);
-        classes.addAll(Services.get().get(URIHandlerService.class).getClassesForLauncher());
-        classes.add(ActionStats.class);
-        classes.add(ActionType.class);
-        classes.add(LauncherMain.class);
-        classes.add(MapReduceMain.class);
-        classes.add(PipesMain.class);
-        // TODO - Remove comment when Main class refactoring is done
-        //assertEquals(classes, ae.getLauncherClasses());
+        if (launcherJarShouldExist) {
+            List<Class> classes = new ArrayList<Class>();
+            classes.add(LauncherMapper.class);
+            classes.add(LauncherSecurityManager.class);
+            classes.add(LauncherException.class);
+            classes.add(LauncherMainException.class);
+            classes.add(PrepareActionsDriver.class);
+            classes.addAll(Services.get().get(URIHandlerService.class).getClassesForLauncher());
+            classes.add(ActionStats.class);
+            classes.add(ActionType.class);
+            classes.add(LauncherMain.class);
+            classes.add(MapReduceMain.class);
+            classes.add(PipesMain.class);
+            classes.add(StreamingMain.class);
+            assertEquals(classes, ae.getLauncherClasses());
+        }
 
         Element actionXml = XmlUtils.parseXml("<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>"
                 + "<name-node>" + getNameNodeUri() + "</name-node>" + "<configuration>"
@@ -300,7 +331,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         return runningJob;
     }
 
-    protected String _testSubmit(String name, String actionXml) throws Exception {
+    private String _testSubmit(String name, String actionXml) throws Exception {
 
         Context context = createContext(name, actionXml);
         final RunningJob launcherJob = submitAction(context);
@@ -312,7 +343,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         });
         assertTrue(launcherJob.isSuccessful());
 
-        assertTrue(LauncherMapper.hasIdSwap(launcherJob));
+        assertTrue(LauncherMapperHelper.hasIdSwap(launcherJob));
 
         MapReduceActionExecutor ae = new MapReduceActionExecutor();
         ae.check(context, context.getAction());
@@ -361,7 +392,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         });
         assertTrue(launcherJob.isSuccessful());
 
-        assertTrue(LauncherMapper.hasIdSwap(launcherJob));
+        assertTrue(LauncherMapperHelper.hasIdSwap(launcherJob));
 
         MapReduceActionExecutor ae = new MapReduceActionExecutor();
         ae.check(context, context.getAction());
@@ -568,6 +599,37 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         }
     }
 
+    protected XConfiguration getStreamingConfig(String inputDir, String outputDir) {
+        XConfiguration conf = new XConfiguration();
+        conf.set("mapred.input.dir", inputDir);
+        conf.set("mapred.output.dir", outputDir);
+        return conf;
+    }
+
+    public void testStreaming() throws Exception {
+        FileSystem fs = getFileSystem();
+        Path streamingJar = new Path(getFsTestCaseDir(), "jar/hadoop-streaming.jar");
+
+        InputStream is = new FileInputStream(ClassUtils.findContainingJar(StreamJob.class));
+        OutputStream os = fs.create(new Path(getAppPath(), streamingJar));
+        IOUtils.copyStream(is, os);
+
+        Path inputDir = new Path(getFsTestCaseDir(), "input");
+        Path outputDir = new Path(getFsTestCaseDir(), "output");
+
+        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+        w.write("dummy\n");
+        w.write("dummy\n");
+        w.close();
+
+        String actionXml = "<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+                + getNameNodeUri() + "</name-node>" + "      <streaming>" + "        <mapper>cat</mapper>"
+                + "        <reducer>wc</reducer>" + "      </streaming>"
+                + getStreamingConfig(inputDir.toString(), outputDir.toString()).toXmlString(false) + "<file>"
+                + streamingJar + "</file>" + "</map-reduce>";
+        _testSubmit("streaming", actionXml);
+    }
+
     protected XConfiguration getPipesConfig(String inputDir, String outputDir) {
         XConfiguration conf = new XConfiguration();
         conf.setBoolean("hadoop.pipes.java.recordreader", true);
@@ -653,7 +715,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         });
         assertTrue(launcherJob.isSuccessful());
 
-        assertTrue(LauncherMapper.hasIdSwap(launcherJob));
+        assertTrue(LauncherMapperHelper.hasIdSwap(launcherJob));
 
         MapReduceActionExecutor ae = new MapReduceActionExecutor();
         ae.check(context, context.getAction());
@@ -728,7 +790,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         });
         assertTrue(launcherJob.isSuccessful());
 
-        assertTrue(LauncherMapper.hasIdSwap(launcherJob));
+        assertTrue(LauncherMapperHelper.hasIdSwap(launcherJob));
 
         MapReduceActionExecutor ae = new MapReduceActionExecutor();
         ae.check(context, context.getAction());
@@ -809,7 +871,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         });
 
         assertTrue(launcherJob.isSuccessful());
-        assertTrue(LauncherMapper.hasIdSwap(launcherJob));
+        assertTrue(LauncherMapperHelper.hasIdSwap(launcherJob));
         // Assert launcher job name has been set
         System.out.println("Launcher job name: " + launcherJob.getJobName());
         assertTrue(launcherJob.getJobName().equals(launcherJobName));
