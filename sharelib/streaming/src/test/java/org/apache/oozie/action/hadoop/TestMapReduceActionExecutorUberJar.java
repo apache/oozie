@@ -46,7 +46,12 @@ public class TestMapReduceActionExecutorUberJar extends TestMapReduceActionExecu
     }
 
     @Override
-    public void testLauncherJar() throws Exception {
+    public void testSetupMethodsWithLauncherJar() throws Exception {
+        // skip test
+    }
+
+    @Override
+    public void testSetupMethodsWithoutLauncherJar() throws Exception {
         // skip test
     }
 
@@ -71,7 +76,7 @@ public class TestMapReduceActionExecutorUberJar extends TestMapReduceActionExecu
     }
 
     @Override
-    public void testSetupMethods() throws Exception {
+    public void testStreaming() throws Exception {
         // skip test
     }
 

@@ -82,14 +82,42 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         setSystemProperty("oozie.service.ActionService.executor.classes", PigActionExecutor.class.getName());
     }
 
-    public void testLauncherJar() throws Exception {
-        PigActionExecutor ae = new PigActionExecutor();
-        Path jar = new Path(ae.getOozieRuntimeDir(), ae.getLauncherJarName());
-        assertTrue(new File(jar.toString()).exists());
+    public void testSetupMethodsWithLauncherJar() throws Exception {
+        String defaultVal = Services.get().getConf().get("oozie.action.ship.launcher.jar");
+        try {
+            Services.get().getConf().set("oozie.action.ship.launcher.jar", "true");
+            _testSetupMethods(true);
+        }
+        finally {
+            // back to default
+            if (defaultVal != null) {
+                Services.get().getConf().set("oozie.action.ship.launcher.jar", defaultVal);
+            }
+        }
+     }
+
+    public void testSetupMethodsWithoutLauncherJar() throws Exception {
+        String defaultVal = Services.get().getConf().get("oozie.action.ship.launcher.jar");
+        try {
+            Services.get().getConf().set("oozie.action.ship.launcher.jar", "false");
+            _testSetupMethods(false);
+        }
+        finally {
+            // back to default
+            if (defaultVal != null) {
+                Services.get().getConf().set("oozie.action.ship.launcher.jar", defaultVal);
+            }
+        }
     }
 
-    public void testSetupMethods() throws Exception {
+    public void _testSetupMethods(boolean launcherJarShouldExist) throws Exception {
         PigActionExecutor ae = new PigActionExecutor();
+        Path jar = new Path(ae.getOozieRuntimeDir(), ae.getLauncherJarName());
+        File fJar = new File(jar.toString());
+        fJar.delete();
+        assertFalse(fJar.exists());
+        ae.createLauncherJar();
+        assertEquals(launcherJarShouldExist, fJar.exists());
 
         assertEquals("pig", ae.getType());
 
@@ -198,9 +226,9 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         assertTrue(launcherJob.isSuccessful());
 
         sleep(2000);
-        assertFalse(LauncherMapper.hasIdSwap(launcherJob));
+        assertFalse(LauncherMapperHelper.hasIdSwap(launcherJob));
         if (checkForSuccess) {
-            assertTrue(LauncherMapper.hasStatsData(launcherJob));
+            assertTrue(LauncherMapperHelper.hasStatsData(launcherJob));
         }
 
         PigActionExecutor ae = new PigActionExecutor();
@@ -234,7 +262,7 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         final RunningJob launcherJob = submitAction(context);
         evaluateLauncherJob(launcherJob);
         assertTrue(launcherJob.isSuccessful());
-        assertTrue(LauncherMapper.hasStatsData(launcherJob));
+        assertTrue(LauncherMapperHelper.hasStatsData(launcherJob));
 
         PigActionExecutor ae = new PigActionExecutor();
         WorkflowAction wfAction = context.getAction();
@@ -321,7 +349,7 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         final RunningJob launcherJob = submitAction(context);
         evaluateLauncherJob(launcherJob);
         assertTrue(launcherJob.isSuccessful());
-        assertFalse(LauncherMapper.hasStatsData(launcherJob));
+        assertFalse(LauncherMapperHelper.hasStatsData(launcherJob));
 
         PigActionExecutor ae = new PigActionExecutor();
         WorkflowAction wfAction = context.getAction();

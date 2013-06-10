@@ -58,7 +58,7 @@ public class TestFSPrepareActions extends XFsTestCase {
         String prepareXML = "<prepare>" + "<delete path='" + newDir + "'/>" + "</prepare>";
 
         JobConf conf = createJobConf();
-        LauncherMapper.setupLauncherURIHandlerConf(conf);
+        LauncherMapperHelper.setupLauncherURIHandlerConf(conf);
         PrepareActionsDriver.doOperations(prepareXML, conf);
         assertFalse(fs.exists(newDir));
     }
@@ -77,7 +77,7 @@ public class TestFSPrepareActions extends XFsTestCase {
         String prepareXML = "<prepare>" + "<mkdir path='" + newDir + "'/>" + "</prepare>";
 
         JobConf conf = createJobConf();
-        LauncherMapper.setupLauncherURIHandlerConf(conf);
+        LauncherMapperHelper.setupLauncherURIHandlerConf(conf);
         PrepareActionsDriver.doOperations(prepareXML, conf);
         assertTrue(fs.exists(newDir));
     }
@@ -96,7 +96,7 @@ public class TestFSPrepareActions extends XFsTestCase {
 
         try {
             JobConf conf = createJobConf();
-            LauncherMapper.setupLauncherURIHandlerConf(conf);
+            LauncherMapperHelper.setupLauncherURIHandlerConf(conf);
             PrepareActionsDriver.doOperations(prepareXML, conf);
             fail("Expected to catch an exception but did not encounter any");
         } catch (LauncherException le) {
@@ -126,7 +126,7 @@ public class TestFSPrepareActions extends XFsTestCase {
 
         try {
             JobConf conf = createJobConf();
-            LauncherMapper.setupLauncherURIHandlerConf(conf);
+            LauncherMapperHelper.setupLauncherURIHandlerConf(conf);
             PrepareActionsDriver.doOperations(prepareXML, conf);
             fail("Expected to catch an exception but did not encounter any");
         } catch (LauncherException le) {

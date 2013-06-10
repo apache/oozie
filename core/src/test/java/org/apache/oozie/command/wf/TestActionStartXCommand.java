@@ -30,7 +30,7 @@ import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
-import org.apache.oozie.action.hadoop.LauncherMapper;
+import org.apache.oozie.action.hadoop.LauncherMapperHelper;
 import org.apache.oozie.action.hadoop.MapReduceActionExecutor;
 import org.apache.oozie.action.hadoop.MapperReducerForTest;
 import org.apache.oozie.client.OozieClient;
@@ -171,7 +171,7 @@ public class TestActionStartXCommand extends XDataTestCase {
             }
         });
         assertTrue(launcherJob.isSuccessful());
-        assertTrue(LauncherMapper.hasIdSwap(launcherJob));
+        assertTrue(LauncherMapperHelper.hasIdSwap(launcherJob));
     }
 
     public void testActionReuseWfJobAppPath() throws Exception {
@@ -236,7 +236,7 @@ public class TestActionStartXCommand extends XDataTestCase {
         });
         // check if launcher job succeeds
         assertTrue(launcherJob.isSuccessful());
-        assertTrue(LauncherMapper.hasIdSwap(launcherJob));
+        assertTrue(LauncherMapperHelper.hasIdSwap(launcherJob));
     }
 
     /**

@@ -613,10 +613,22 @@ command line tool.
 
 ---++ Oozie Share Lib
 
-The Oozie share lib TAR.GZ file bundled with the distribution contains the necessary files to run Oozie map-reduce
-streaming and pig actions.
+The Oozie sharelib TAR.GZ file bundled with the distribution contains the necessary files to run Oozie map-reduce streaming, pig,
+hive, sqooop, and distcp actions.  There is also a sharelib for HCatalog.  The sharelib is required for these actions to work; any
+other actions (mapreduce, shell, ssh, and java) do not require the sharelib to be installed.
 
-The bundled Streaming and Pig JARs are the ones used by Oozie testcases.
+As of Oozie 4.0, the following property is included.  If true, Oozie will create and ship a "launcher jar" that contains classes
+necessary for the launcher job.  If false, Oozie will not do this, and it is assumed that the necessary classes are in their
+respective sharelib jars or the "oozie" sharelib instead.  When false, the sharelib is required for ALL actions; when true, the
+sharelib is only required for actions that need additional jars (the original list from above).  The main advantage of setting this
+to false is that launching jobs should be slightly faster.
+
+<verbatim>
+<property>
+    <name>oozie.action.ship.launcher.jar</name>
+    <value>true</value>
+</property>
+</verbatim>
 
 ---++ Oozie Coordinators/Bundles Processing Timezone
 

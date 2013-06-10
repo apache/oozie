@@ -36,6 +36,8 @@ import java.io.File;
 
 public class MapReduceMain extends LauncherMain {
 
+    public static final String OOZIE_MAPREDUCE_UBER_JAR = "oozie.mapreduce.uber.jar";
+
     public static void main(String[] args) throws Exception {
         run(MapReduceMain.class, args);
     }
@@ -80,7 +82,7 @@ public class MapReduceMain extends LauncherMain {
         addActionConf(jobConf, actionConf);
 
         // Set for uber jar
-        String uberJar = actionConf.get(MapReduceActionExecutor.OOZIE_MAPREDUCE_UBER_JAR);
+        String uberJar = actionConf.get(OOZIE_MAPREDUCE_UBER_JAR);
         if (uberJar != null && uberJar.trim().length() > 0) {
             jobConf.setJar(uberJar);
         }

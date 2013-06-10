@@ -59,9 +59,7 @@ public class HiveActionExecutor extends ScriptLanguageActionExecutor {
             classes.add(Class.forName(HIVE_MAIN_CLASS_NAME));
         }
         catch (ClassNotFoundException e) {
-            //TODO - A temporary fix as hive class is in hive sharelib
-            // - Change this to RuntimeException when classes are refactored
-            log.error("HiveMain class not found " +e);
+            throw new RuntimeException("Class not found", e);
 	}
         return classes;
     }
@@ -132,7 +130,7 @@ public class HiveActionExecutor extends ScriptLanguageActionExecutor {
         super.setActionCompletionData(context, actionFs);
 
         // Load stored Hadoop jobs ids and promote them as external child ids on job failure
-        Path externalChildIDs = LauncherMapper.getExternalChildIDsDataPath(context.getActionDir());
+        Path externalChildIDs = LauncherMapperHelper.getExternalChildIDsDataPath(context.getActionDir());
         if (actionFs.exists(externalChildIDs)) {
             InputStream is = actionFs.open(externalChildIDs);
             BufferedReader reader = new BufferedReader(new InputStreamReader(is));

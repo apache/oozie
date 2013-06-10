@@ -54,43 +54,69 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         setSystemProperty("oozie.service.ActionService.executor.classes", ShellActionExecutor.class.getName());
     }
 
-    /**
-     * Verify if the launcher jar is created.
-     *
-     * @throws Exception
-     */
-    public void testLauncherJar() throws Exception {
-        ShellActionExecutor ae = new ShellActionExecutor();
-        Path jar = new Path(ae.getOozieRuntimeDir(), ae.getLauncherJarName());
-        assertTrue(new File(jar.toString()).exists());
+    public void testSetupMethodsWithLauncherJar() throws Exception {
+        String defaultVal = Services.get().getConf().get("oozie.action.ship.launcher.jar");
+        try {
+            Services.get().getConf().set("oozie.action.ship.launcher.jar", "true");
+            _testSetupMethods(true);
+        }
+        finally {
+            // back to default
+            if (defaultVal != null) {
+                Services.get().getConf().set("oozie.action.ship.launcher.jar", defaultVal);
+            }
+        }
+     }
+
+    public void testSetupMethodsWithoutLauncherJar() throws Exception {
+        String defaultVal = Services.get().getConf().get("oozie.action.ship.launcher.jar");
+        try {
+            Services.get().getConf().set("oozie.action.ship.launcher.jar", "false");
+            _testSetupMethods(false);
+        }
+        finally {
+            // back to default
+            if (defaultVal != null) {
+                Services.get().getConf().set("oozie.action.ship.launcher.jar", defaultVal);
+            }
+        }
     }
 
     /**
      * Verify if the ShellActionExecutor indeed setups the basic stuffs
      *
+     * @param launcherJarShouldExist
      * @throws Exception
      */
-    public void testSetupMethods() throws Exception {
+    public void _testSetupMethods(boolean launcherJarShouldExist) throws Exception {
         ShellActionExecutor ae = new ShellActionExecutor();
+        Path jar = new Path(ae.getOozieRuntimeDir(), ae.getLauncherJarName());
+        File fJar = new File(jar.toString());
+        fJar.delete();
+        assertFalse(fJar.exists());
+        ae.createLauncherJar();
+        assertEquals(launcherJarShouldExist, fJar.exists());
 
         assertEquals("shell", ae.getType());// ActionExcutor type is 'shell'
         // Verify the launcher jar filename
         assertEquals("shell-launcher.jar", ae.getLauncherJarName());
 
-        List<Class> classes = new ArrayList<Class>();
-        classes.add(LauncherMapper.class);
-        classes.add(LauncherSecurityManager.class);
-        classes.add(LauncherException.class);
-        classes.add(LauncherMainException.class);
-        classes.add(PrepareActionsDriver.class);
-        classes.addAll(Services.get().get(URIHandlerService.class).getClassesForLauncher());
-        classes.add(ActionStats.class);
-        classes.add(ActionType.class);
-        classes.add(LauncherMain.class);
-        classes.add(MapReduceMain.class);
-        classes.add(ShellMain.class);
-        classes.add(ShellMain.OutputWriteThread.class);
-        assertEquals(classes, ae.getLauncherClasses());// Verify the class
+        if (launcherJarShouldExist) {
+            List<Class> classes = new ArrayList<Class>();
+            classes.add(LauncherMapper.class);
+            classes.add(LauncherSecurityManager.class);
+            classes.add(LauncherException.class);
+            classes.add(LauncherMainException.class);
+            classes.add(PrepareActionsDriver.class);
+            classes.addAll(Services.get().get(URIHandlerService.class).getClassesForLauncher());
+            classes.add(ActionStats.class);
+            classes.add(ActionType.class);
+            classes.add(LauncherMain.class);
+            classes.add(MapReduceMain.class);
+            classes.add(ShellMain.class);
+            classes.add(ShellMain.OutputWriteThread.class);
+            assertEquals(classes, ae.getLauncherClasses());// Verify the class
+        }
 
         Element actionXml = XmlUtils.parseXml("<shell>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>"
                 + "<name-node>" + getNameNodeUri() + "</name-node>" + "<exec>SCRIPT</exec>"
@@ -247,7 +273,7 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         assertTrue(launcherJob.isSuccessful());
 
         sleep(2000);// Wait more to make sure no ID swap happens
-        assertFalse(LauncherMapper.hasIdSwap(launcherJob));
+        assertFalse(LauncherMapperHelper.hasIdSwap(launcherJob));
 
         ShellActionExecutor ae = new ShellActionExecutor();
         ae.check(context, context.getAction());

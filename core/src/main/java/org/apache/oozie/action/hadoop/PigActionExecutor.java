@@ -58,9 +58,7 @@ public class PigActionExecutor extends ScriptLanguageActionExecutor {
             classes.add(Class.forName(OOZIE_PIG_STATS));
         }
         catch (ClassNotFoundException e) {
-          //TODO - A temporary fix as pig class is in pig sharelib
-            // - Change this to RuntimeException when classes are refactored
-            log.error("PigMain class not found " +e);
+            throw new RuntimeException("Class not found", e);
         }
         return classes;
     }
@@ -134,7 +132,7 @@ public class PigActionExecutor extends ScriptLanguageActionExecutor {
 
     private String getStats(Context context, FileSystem actionFs) throws IOException, HadoopAccessorException,
             URISyntaxException {
-        Path actionOutput = LauncherMapper.getActionStatsDataPath(context.getActionDir());
+        Path actionOutput = LauncherMapperHelper.getActionStatsDataPath(context.getActionDir());
         String stats = null;
         if (actionFs.exists(actionOutput)) {
             stats = getDataFromPath(actionOutput, actionFs);
@@ -152,7 +150,7 @@ public class PigActionExecutor extends ScriptLanguageActionExecutor {
 
     private String getExternalChildIDs(Context context, FileSystem actionFs) throws IOException,
             HadoopAccessorException, URISyntaxException {
-        Path actionOutput = LauncherMapper.getExternalChildIDsDataPath(context.getActionDir());
+        Path actionOutput = LauncherMapperHelper.getExternalChildIDsDataPath(context.getActionDir());
         String externalIDs = null;
         if (actionFs.exists(actionOutput)) {
             externalIDs = getDataFromPath(actionOutput, actionFs);

@@ -84,26 +84,57 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         IOUtils.copyStream(is, os);
     }
 
-    public void testLauncherJar() throws Exception {
-        JavaActionExecutor ae = new JavaActionExecutor();
-        Path jar = new Path(ae.getOozieRuntimeDir(), ae.getLauncherJarName());
-        assertTrue(new File(jar.toString()).exists());
+    public void testSetupMethodsWithLauncherJar() throws Exception {
+        String defaultVal = Services.get().getConf().get("oozie.action.ship.launcher.jar");
+        try {
+            Services.get().getConf().set("oozie.action.ship.launcher.jar", "true");
+            _testSetupMethods(true);
+        }
+        finally {
+            // back to default
+            if (defaultVal != null) {
+                Services.get().getConf().set("oozie.action.ship.launcher.jar", defaultVal);
+            }
+        }
+     }
+
+    public void testSetupMethodsWithoutLauncherJar() throws Exception {
+        String defaultVal = Services.get().getConf().get("oozie.action.ship.launcher.jar");
+        try {
+            Services.get().getConf().set("oozie.action.ship.launcher.jar", "false");
+            _testSetupMethods(false);
+        }
+        finally {
+            // back to default
+            if (defaultVal != null) {
+                Services.get().getConf().set("oozie.action.ship.launcher.jar", defaultVal);
+            }
+        }
     }
 
-    public void testSetupMethods() throws Exception {
+    public void _testSetupMethods(boolean launcherJarShouldExist) throws Exception {
         JavaActionExecutor ae = new JavaActionExecutor();
+        Path jar = new Path(ae.getOozieRuntimeDir(), ae.getLauncherJarName());
+        File fJar = new File(jar.toString());
+        fJar.delete();
+        assertFalse(fJar.exists());
+        ae.createLauncherJar();
+        assertEquals(launcherJarShouldExist, fJar.exists());
+
         assertEquals("java", ae.getType());
         assertEquals("java-launcher.jar", ae.getLauncherJarName());
-        List<Class> classes = new ArrayList<Class>();
-        classes.add(LauncherMapper.class);
-        classes.add(LauncherSecurityManager.class);
-        classes.add(LauncherException.class);
-        classes.add(LauncherMainException.class);
-        classes.add(PrepareActionsDriver.class);
-        classes.addAll(Services.get().get(URIHandlerService.class).getClassesForLauncher());
-        classes.add(ActionStats.class);
-        classes.add(ActionType.class);
-        assertEquals(classes, ae.getLauncherClasses());
+        if (launcherJarShouldExist) {
+            List<Class> classes = new ArrayList<Class>();
+            classes.add(LauncherMapper.class);
+            classes.add(LauncherSecurityManager.class);
+            classes.add(LauncherException.class);
+            classes.add(LauncherMainException.class);
+            classes.add(PrepareActionsDriver.class);
+            classes.addAll(Services.get().get(URIHandlerService.class).getClassesForLauncher());
+            classes.add(ActionStats.class);
+            classes.add(ActionType.class);
+            assertEquals(classes, ae.getLauncherClasses());
+        }
 
         Configuration conf = new XConfiguration();
         conf.set("user.name", "a");
@@ -235,7 +266,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertFalse(getFileSystem().exists(context.getActionDir()));
         ae.prepareActionDir(getFileSystem(), context);
         assertTrue(getFileSystem().exists(context.getActionDir()));
-        assertTrue(getFileSystem().exists(new Path(context.getActionDir(), ae.getLauncherJarName())));
+        assertEquals(launcherJarShouldExist, getFileSystem().exists(new Path(context.getActionDir(), ae.getLauncherJarName())));
 
         ae.cleanUpActionDir(getFileSystem(), context);
         assertFalse(getFileSystem().exists(context.getActionDir()));
@@ -517,7 +548,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
             }
         });
         assertTrue(runningJob.isSuccessful());
-        assertFalse(LauncherMapper.isMainSuccessful(runningJob));
+        assertFalse(LauncherMapperHelper.isMainSuccessful(runningJob));
         ActionExecutor ae = new JavaActionExecutor();
         ae.check(context, context.getAction());
         assertTrue(ae.isCompleted(context.getAction().getExternalStatus()));
@@ -546,7 +577,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
             }
         });
         assertTrue(runningJob.isSuccessful());
-        assertFalse(LauncherMapper.isMainSuccessful(runningJob));
+        assertFalse(LauncherMapperHelper.isMainSuccessful(runningJob));
         ActionExecutor ae = new JavaActionExecutor();
         ae.check(context, context.getAction());
         assertTrue(ae.isCompleted(context.getAction().getExternalStatus()));
@@ -597,7 +628,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
             public boolean evaluate() throws Exception {
                 JavaActionExecutor ae = new JavaActionExecutor();
                 Configuration conf = ae.createBaseHadoopConf(context, XmlUtils.parseXml(actionXml));
-                return LauncherMapper.getRecoveryId(conf, context.getActionDir(), context.getRecoveryId()) != null;
+                return LauncherMapperHelper.getRecoveryId(conf, context.getActionDir(), context.getRecoveryId()) != null;
             }
         });
 
