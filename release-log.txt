@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1377 OpenJPA runtime enhancement should be disabled and update OpenJPA to 2.2.2 (tucu)
 OOZIE-1339 Implement SLA Bootstrap Service and fix bugs in SLACalculator (virag)
 OOZIE-1400 REST API to fetch SLA (rohini)
 OOZIE-1375 Generate Job notification events for Workflow Actions (mona)

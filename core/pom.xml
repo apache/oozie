@@ -354,52 +354,49 @@
               </executions>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-antrun-plugin</artifactId>
+                <groupId>org.apache.openjpa</groupId>
+                <artifactId>openjpa-maven-plugin</artifactId>
                 <executions>
                     <execution>
+                        <id>enhancer</id>
                         <phase>process-classes</phase>
-                        <configuration>
-                            <target>
-                                <path id="cp">
-                                    <path refid="maven.test.classpath"/>
-                                    <path refid="maven.compile.classpath"/>
-                                    <path refid="maven.dependency.classpath"/>
-                                </path>
-                                <taskdef name="openjpac" classname="org.apache.openjpa.ant.PCEnhancerTask">
-                                    <classpath refid="cp"/>
-                                </taskdef>
-                                <fileset id="enhance.path.ref" dir="../core/target/classes">
-                                    <include name="**/JsonWorkflowJob.class"/>
-                                    <include name="**/JsonWorkflowAction.class"/>
-                                    <include name="**/JsonCoordinatorJob.class"/>
-                                    <include name="**/JsonCoordinatorAction.class"/>
-                                    <include name="**/JsonSLAEvent.class"/>
-                                    <include name="**/JsonSLARegistrationEvent.class"/>
-                                    <include name="**/JsonBundleJob.class"/>
-
-                                    <include name="**/WorkflowJobBean.class"/>
-                                    <include name="**/WorkflowActionBean.class"/>
-                                    <include name="**/CoordinatorJobBean.class"/>
-                                    <include name="**/CoordinatorActionBean.class"/>
-                                    <include name="**/SLAEventBean.class"/>
-                                    <include name="**/SLARegistrationBean.class"/>
-                                    <include name="**/SLACalculatorBean.class"/>
-                                    <include name="**/SLASummaryBean.class"/>
-                                    <include name="**/BundleJobBean.class"/>
-                                    <include name="**/BundleActionBean.class"/>
-                                </fileset>
-                                <openjpac>
-                                    <classpath refid="cp"/>
-                                    <fileset refid="enhance.path.ref"/>
-                                </openjpac>
-                            </target>
-                        </configuration>
                         <goals>
-                            <goal>run</goal>
+                            <goal>enhance</goal>
                         </goals>
+                        <configuration>
+                            <includes>
+                                **/JsonWorkflowJob.class,
+                                **/JsonWorkflowAction.class,
+                                **/JsonCoordinatorJob.class,
+                                **/JsonCoordinatorAction.class,
+                                **/JsonSLAEvent.class,
+                                **/JsonSLARegistrationEvent.class,
+                                **/JsonBundleJob.class,
+
+                                **/WorkflowJobBean.class,
+                                **/WorkflowActionBean.class,
+                                **/CoordinatorJobBean.class,
+                                **/CoordinatorActionBean.class,
+                                **/SLAEventBean.class,
+                                **/SLARegistrationBean.class,
+                                **/SLACalculatorBean.class,
+                                **/SLASummaryBean.class,
+                                **/BundleJobBean.class,
+                                **/BundleActionBean.class,
+                                **/ValidateConnectionBean.class,
+                            </includes>
+                            <addDefaultConstructor>true</addDefaultConstructor>
+                            <enforcePropertyRestrictions>true</enforcePropertyRestrictions>
+                        </configuration>
                     </execution>
                 </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.openjpa</groupId>
+                        <artifactId>openjpa</artifactId>
+                        <version>${openjpa.version}</version>
+                    </dependency>
+                </dependencies>
             </plugin>
         </plugins>
     </build>
