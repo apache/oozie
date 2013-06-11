@@ -27,7 +27,7 @@
     </parent>
     <groupId>org.apache.oozie</groupId>
     <artifactId>oozie-hadoop-distcp</artifactId>
-    <version>0.23.6.oozie-4.1.0-SNAPSHOT</version>
+    <version>0.23.5.oozie-4.1.0-SNAPSHOT</version>
     <description>Apache Oozie Hadoop Distcp ${project.version}</description>
     <name>Apache Oozie Hadoop Distcp ${project.version}</name>
     <packaging>jar</packaging>
@@ -36,7 +36,7 @@
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-distcp</artifactId>
-            <version>0.23.6</version>
+            <version>0.23.5</version>
             <scope>compile</scope>
             <exclusions>
                 <exclusion>

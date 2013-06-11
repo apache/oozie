@@ -102,7 +102,7 @@ public class MiniHCatServer {
         hiveConf.set("hive.metastore.local", "true"); // For hive 0.9
         hiveConf.set(HiveConf.ConfVars.METASTORECONNECTURLKEY.varname, "jdbc:derby:target/metastore_db;create=true");
 
-        setSystemProperty(HiveConf.ConfVars.METASTORE_MODE.varname, "true");
+        setSystemProperty("hive.metastore.local", "true");
         setSystemProperty(HiveConf.ConfVars.METASTOREWAREHOUSE.varname, new File("target/warehouse").getAbsolutePath());
         setSystemProperty(HiveConf.ConfVars.METASTORECONNECTURLKEY.varname,
                 "jdbc:derby:target/metastore_db;create=true");

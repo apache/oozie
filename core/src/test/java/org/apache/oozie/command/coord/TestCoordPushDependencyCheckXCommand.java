@@ -267,7 +267,8 @@ public class TestCoordPushDependencyCheckXCommand extends XDataTestCase {
         checkDependencies(actionId, newHCatDependency + CoordELFunctions.INSTANCE_SEPARATOR + newHCatDependency3,
                 newHCatDependency1);
         new CoordPushDependencyCheckXCommand(actionId).call();
-        Thread.sleep(300);
+        // Somehow with hive 0.10 it takes 1 second more.
+        Thread.sleep(1300);
 
         checkDependencies(actionId, newHCatDependency3, "");
         assertNull(pdms.getWaitingActions(new HCatURI(newHCatDependency1)));

@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,8 +17,13 @@
  */
 package org.apache.oozie.command.wf;
 
+import java.net.URI;
 import java.util.Date;
 
+import org.apache.hadoop.examples.SleepJob;
+import org.apache.hadoop.mapred.JobClient;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.RunningJob;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.action.hadoop.MapperReducerForTest;
@@ -27,6 +32,7 @@ import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionInsertJPAExecutor;
+import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
@@ -56,23 +62,24 @@ public class TestWorkflowActionKillXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testWfActionKillSuccess() throws Exception {
-
+        String externalJobID = launchSleepJob();
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.KILLED, WorkflowInstance.Status.KILLED);
-        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.KILLED);
+        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), externalJobID, "1",
+                WorkflowAction.Status.KILLED);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
         WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(action.getId());
 
         action = jpaService.execute(wfActionGetCmd);
-        assertEquals(action.getStatus(), WorkflowAction.Status.KILLED);
-        assertEquals(action.getExternalStatus(), "RUNNING");
+        assertEquals(WorkflowAction.Status.KILLED, action.getStatus());
+        assertEquals("RUNNING", action.getExternalStatus());
 
         new ActionKillXCommand(action.getId()).call();
 
         action = jpaService.execute(wfActionGetCmd);
-        assertEquals(action.getStatus(), WorkflowAction.Status.KILLED);
-        assertEquals(action.getExternalStatus(), "KILLED");
+        assertEquals(WorkflowAction.Status.KILLED, action.getStatus());
+        assertEquals("KILLED", action.getExternalStatus());
     }
 
     /**
@@ -82,9 +89,10 @@ public class TestWorkflowActionKillXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testWfActionKillFailed() throws Exception {
-
+        String externalJobID = launchSleepJob();
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
-        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.RUNNING);
+        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), externalJobID, "1",
+                WorkflowAction.Status.RUNNING);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
@@ -102,8 +110,8 @@ public class TestWorkflowActionKillXCommand extends XDataTestCase {
         assertEquals(action.getExternalStatus(), "RUNNING");
     }
 
-    @Override
-    protected WorkflowActionBean addRecordToWfActionTable(String wfId, String actionName, WorkflowAction.Status status) throws Exception {
+    protected WorkflowActionBean addRecordToWfActionTable(String wfId, String externalJobID, String actionName,
+            WorkflowAction.Status status) throws Exception {
         WorkflowActionBean action = new WorkflowActionBean();
         action.setId(Services.get().get(UUIDService.class).generateChildId(wfId, actionName));
         action.setJobId(wfId);
@@ -114,7 +122,7 @@ public class TestWorkflowActionKillXCommand extends XDataTestCase {
         action.setEndTime(new Date());
         action.setLastCheckTime(new Date());
         action.setPending();
-        action.setExternalId("job_201011110000_00000");
+        action.setExternalId(externalJobID);
         action.setExternalStatus("RUNNING");
 
         String actionXml = "<map-reduce>" +
@@ -143,6 +151,19 @@ public class TestWorkflowActionKillXCommand extends XDataTestCase {
             throw je;
         }
         return action;
+    }
+
+    private String launchSleepJob() throws Exception {
+        JobConf jobConf = Services.get().get(HadoopAccessorService.class)
+                .createJobConf(new URI(getNameNodeUri()).getAuthority());
+        JobClient jobClient = createJobClient();
+
+        SleepJob sleepjob = new SleepJob();
+        sleepjob.setConf(jobConf);
+        jobConf = sleepjob.setupJobConf(1, 1, 1000, 1, 1000, 1);
+
+        final RunningJob runningJob = jobClient.submitJob(jobConf);
+        return runningJob.getID().toString();
     }
 
 }
