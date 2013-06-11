@@ -35,7 +35,6 @@ import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
-import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
@@ -412,12 +411,7 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
         try {
             jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, insertList));
             if (EventHandlerService.isEnabled()) {
-                for (JsonBean bean : updateList) {
-                    if (bean instanceof CoordinatorActionBean) {
-                        CoordinatorXCommand.generateEvent((CoordinatorActionBean) bean, coordJob.getUser(),
-                                coordJob.getAppName());
-                    }
-                }
+                generateEvents(coordJob);
             }
         }
         catch (JPAExecutorException e) {

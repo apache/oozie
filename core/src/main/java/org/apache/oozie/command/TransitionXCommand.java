@@ -82,10 +82,9 @@ public abstract class TransitionXCommand<T> extends XCommand<T> {
             if (actionBean instanceof CoordinatorActionBean) {
                 CoordinatorActionBean caBean = (CoordinatorActionBean) actionBean;
                 caBean.setJobId(coordJob.getId());
-                if (EventHandlerService.isEnabled()) {
-                    CoordinatorXCommand.generateEvent(caBean, coordJob.getUser(), coordJob.getAppName());
-                }
+                CoordinatorXCommand.generateEvent(caBean, coordJob.getUser(), coordJob.getAppName());
             }
+            // TODO generate Coord Job event
         }
     }
 
