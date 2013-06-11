@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1374 Make all unit tests run with Hadoop 2 (rohini)
 OOZIE-1394 Fix Bugs in Job and SLA Events (mona)
 OOZIE-1315 Refactor classes from launcher jar into Oozie sharelib (rkanter)
 OOZIE-1377 OpenJPA runtime enhancement should be disabled and update OpenJPA to 2.2.2 (tucu)

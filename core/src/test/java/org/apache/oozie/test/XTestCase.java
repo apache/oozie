@@ -29,6 +29,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -331,7 +332,7 @@ public abstract class XTestCase extends TestCase {
 
         if (mrCluster != null) {
             OutputStream os = new FileOutputStream(new File(hadoopConfDir, "core-site.xml"));
-            Configuration conf = mrCluster.createJobConf();
+            Configuration conf = createJobConfFromMRCluster();
             conf.writeXml(os);
             os.close();
         }
@@ -888,6 +889,20 @@ public abstract class XTestCase extends TestCase {
         }
     }
 
+    @SuppressWarnings("deprecation")
+    private JobConf createJobConfFromMRCluster() {
+        JobConf jobConf = new JobConf();
+        JobConf jobConfMR = mrCluster.createJobConf();
+        for ( Entry<String, String> entry : jobConfMR) {
+            // MiniMRClientClusterFactory sets the job jar in Hadoop 2.0 causing tests to fail
+            // TODO call conf.unset after moving completely to Hadoop 2.x
+            if (!(entry.getKey().equals("mapreduce.job.jar") || entry.getKey().equals("mapred.jar"))) {
+                jobConf.set(entry.getKey(), entry.getValue());
+            }
+        }
+        return jobConf;
+    }
+
     /**
      * Returns a jobconf preconfigured to talk with the test cluster/minicluster.
      * @return a jobconf preconfigured to talk with the test cluster/minicluster.
@@ -895,7 +910,7 @@ public abstract class XTestCase extends TestCase {
     protected JobConf createJobConf() {
         JobConf jobConf;
         if (mrCluster != null) {
-            jobConf = mrCluster.createJobConf();
+            jobConf = createJobConfFromMRCluster();
         }
         else {
             jobConf = new JobConf();

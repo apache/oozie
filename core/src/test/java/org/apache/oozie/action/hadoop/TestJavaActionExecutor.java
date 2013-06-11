@@ -1534,7 +1534,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         Path archiveFullPath = new Path(appPath, archivePath);
         ae.addToCache(conf, appPath, archiveFullPath.toString(), true);
         assertTrue(conf.get("mapred.cache.archives").contains(archiveFullPath.toString()));
-        assertTrue(conf.get("mapred.create.symlink").contains("yes"));
+        assertTrue(DistributedCache.getSymlink(conf));
 
         // test archive with fragment
         Path archiveFragmentPath = new Path("test.jar#a.jar");
@@ -1542,7 +1542,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         conf.clear();
         ae.addToCache(conf, appPath, archiveFragmentFullPath.toString(), true);
         assertTrue(conf.get("mapred.cache.archives").contains(archiveFragmentFullPath.toString()));
-        assertTrue(conf.get("mapred.create.symlink").contains("yes"));
+        assertTrue(DistributedCache.getSymlink(conf));
 
         // test .so without fragment
         Path appSoPath = new Path("lib/a.so");
@@ -1550,7 +1550,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         conf.clear();
         ae.addToCache(conf, appPath, appSoFullPath.toString(), false);
         assertTrue(conf.get("mapred.cache.files").contains(appSoFullPath.toString()));
-        assertTrue(conf.get("mapred.create.symlink").contains("yes"));
+        assertTrue(DistributedCache.getSymlink(conf));
 
         // test .so with fragment
         Path appSoFragmentPath = new Path("lib/a.so#a.so");
@@ -1558,7 +1558,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         conf.clear();
         ae.addToCache(conf, appPath, appSoFragmentFullPath.toString(), false);
         assertTrue(conf.get("mapred.cache.files").contains(appSoFragmentFullPath.toString()));
-        assertTrue(conf.get("mapred.create.symlink").contains("yes"));
+        assertTrue(DistributedCache.getSymlink(conf));
 
         // test .jar without fragment
         Path appJarPath = new Path("lib/a.jar");
@@ -1567,7 +1567,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         conf.set(WorkflowAppService.HADOOP_USER, getTestUser());
         ae.addToCache(conf, appPath, appJarFullPath.toString(), false);
         assertTrue(conf.get("mapred.cache.files").contains(appJarFullPath.toString()));
-        assertTrue(conf.get("mapred.create.symlink").contains("yes"));
+        assertTrue(DistributedCache.getSymlink(conf));
 
         // test .jar with fragment
         Path appJarFragmentPath = new Path("lib/a.jar#a.jar");
@@ -1576,7 +1576,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         conf.set(WorkflowAppService.HADOOP_USER, getTestUser());
         ae.addToCache(conf, appPath, appJarFragmentFullPath.toString(), false);
         assertTrue(conf.get("mapred.cache.files").contains(appJarFragmentFullPath.toString()));
-        assertTrue(conf.get("mapred.create.symlink").contains("yes"));
+        assertTrue(DistributedCache.getSymlink(conf));
 
         // test regular file without fragment
         Path appFilePath = new Path("lib/a.txt");
@@ -1584,7 +1584,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         conf.clear();
         ae.addToCache(conf, appPath, appFileFullPath.toString(), false);
         assertTrue(conf.get("mapred.cache.files").contains(appFileFullPath.toString()));
-        assertTrue(conf.get("mapred.create.symlink").contains("yes"));
+        assertTrue(DistributedCache.getSymlink(conf));
 
         // test regular file with fragment
         Path appFileFragmentPath = new Path("lib/a.txt#a.txt");
@@ -1592,44 +1592,44 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         conf.clear();
         ae.addToCache(conf, appPath, appFileFragmentFullPath.toString(), false);
         assertTrue(conf.get("mapred.cache.files").contains(appFileFragmentFullPath.toString()));
-        assertTrue(conf.get("mapred.create.symlink").contains("yes"));
+        assertTrue(DistributedCache.getSymlink(conf));
 
         // test path starting with "/" for archive
         Path testPath = new Path("/tmp/testpath/a.jar#a.jar");
         conf.clear();
         ae.addToCache(conf, appPath, testPath.toString(), true);
         assertTrue(conf.get("mapred.cache.archives").contains(testPath.toString()));
-        assertTrue(conf.get("mapred.create.symlink").contains("yes"));
+        assertTrue(DistributedCache.getSymlink(conf));
 
         // test path starting with "/" for cache.file
         conf.clear();
         ae.addToCache(conf, appPath, testPath.toString(), false);
         assertTrue(conf.get("mapred.cache.files").contains(testPath.toString()));
-        assertTrue(conf.get("mapred.create.symlink").contains("yes"));
+        assertTrue(DistributedCache.getSymlink(conf));
 
         // test absolute path for archive
         Path testAbsolutePath = new Path("hftp://namenode.test.com:8020/tmp/testpath/a.jar#a.jar");
         conf.clear();
         ae.addToCache(conf, appPath, testAbsolutePath.toString(), true);
         assertTrue(conf.get("mapred.cache.archives").contains(testAbsolutePath.toString()));
-        assertTrue(conf.get("mapred.create.symlink").contains("yes"));
+        assertTrue(DistributedCache.getSymlink(conf));
 
         // test absolute path for cache files
         conf.clear();
         ae.addToCache(conf, appPath, testAbsolutePath.toString(), false);
         assertTrue(conf.get("mapred.cache.files").contains(testAbsolutePath.toString()));
-        assertTrue(conf.get("mapred.create.symlink").contains("yes"));
+        assertTrue(DistributedCache.getSymlink(conf));
 
         // test relative path for archive
         conf.clear();
         ae.addToCache(conf, appPath, "lib/a.jar#a.jar", true);
         assertTrue(conf.get("mapred.cache.archives").contains(appUri.getPath() + "/lib/a.jar#a.jar"));
-        assertTrue(conf.get("mapred.create.symlink").contains("yes"));
+        assertTrue(DistributedCache.getSymlink(conf));
 
         // test relative path for cache files
         conf.clear();
         ae.addToCache(conf, appPath, "lib/a.jar#a.jar", false);
         assertTrue(conf.get("mapred.cache.files").contains(appUri.getPath() + "/lib/a.jar#a.jar"));
-        assertTrue(conf.get("mapred.create.symlink").contains("yes"));
+        assertTrue(DistributedCache.getSymlink(conf));
     }
 }

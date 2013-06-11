@@ -48,10 +48,9 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-minicluster</artifactId>
-            <version>1.1.1</version>
-            <scope>compile</scope>
+            <groupId>org.apache.oozie</groupId>
+            <artifactId>oozie-hadoop-test</artifactId>
+            <scope>test</scope>
         </dependency>
          <dependency>
             <groupId>org.apache.oozie</groupId>
