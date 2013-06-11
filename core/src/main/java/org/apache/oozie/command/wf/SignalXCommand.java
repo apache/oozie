@@ -23,6 +23,7 @@ import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.client.SLAEvent.Status;
 import org.apache.oozie.client.rest.JsonBean;
+import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
@@ -33,6 +34,7 @@ import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.coord.CoordActionUpdateXCommand;
 import org.apache.oozie.command.wf.ActionXCommand.ActionExecutorContext;
 import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionGetForExternalIdJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
@@ -324,6 +326,11 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
             // call JPAExecutor to do the bulk writes
             jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, insertList));
             if (generateEvent && EventHandlerService.isEnabled()) {
+                CoordinatorActionBean coordAction = jpaService.execute(new CoordActionGetForExternalIdJPAExecutor(wfJob
+                        .getId()));
+                if (coordAction != null) {
+                    wfJob.setParentId(coordAction.getId());
+                }
                 generateEvent(wfJob, wfJobErrorCode, wfJobErrorMsg);
             }
         }

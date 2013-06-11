@@ -60,10 +60,12 @@ public class SLACalculatorMemory implements SLACalculator {
     private static JPAService jpaService;
     private EventHandlerService eventHandler;
     private static int modifiedAfter;
+    private static long jobEventLatency;
 
     @Override
     public void init(Configuration conf) throws ServiceException {
         capacity = conf.getInt(SLAService.CONF_CAPACITY, 5000);
+        jobEventLatency = conf.getInt(SLAService.CONF_JOB_EVENT_LATENCY, 90 * 1000);
         slaMap = new ConcurrentHashMap<String, SLACalcStatus>();
         historySet = Collections.synchronizedSet(new HashSet<String>());
         jpaService = Services.get().get(JPAService.class);
@@ -144,7 +146,7 @@ public class SLACalculatorMemory implements SLACalculator {
             // calculation w.r.t current time and status
             if ((eventProc & 1) == 0) { // first bit (start-processed) unset
                 if (reg.getExpectedStart() != null) {
-                    if (reg.getExpectedStart().getTime() < Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+                    if (reg.getExpectedStart().getTime() + jobEventLatency < Calendar.getInstance(TimeZone.getTimeZone("UTC"))
                             .getTimeInMillis()) {
                         slaCalc.setEventStatus(EventStatus.START_MISS);
                         change = true;
@@ -160,8 +162,8 @@ public class SLACalculatorMemory implements SLACalculator {
             }
             if (((eventProc >> 1) & 1) == 0) { // check if second bit (duration-processed) is unset
                 if (slaCalc.getActualStart() != null) {
-                    if (reg.getExpectedDuration() < Calendar.getInstance(TimeZone.getTimeZone("UTC")).getTimeInMillis()
-                            - slaCalc.getActualStart().getTime()) {
+                    if (reg.getExpectedDuration() + jobEventLatency < Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+                            .getTimeInMillis() - slaCalc.getActualStart().getTime()) {
                         slaCalc.setEventStatus(EventStatus.DURATION_MISS);
                         change = true;
                         eventHandler.queueEvent(new SLACalcStatus(slaCalc));
@@ -170,8 +172,8 @@ public class SLACalculatorMemory implements SLACalculator {
                 }
             }
             if (eventProc < 4) {
-                if (reg.getExpectedEnd().getTime() < Calendar.getInstance(TimeZone.getTimeZone("UTC"))
-                        .getTimeInMillis()) {
+                if (reg.getExpectedEnd().getTime() + jobEventLatency < Calendar
+                        .getInstance(TimeZone.getTimeZone("UTC")).getTimeInMillis()) {
                     slaCalc.setEventStatus(EventStatus.END_MISS);
                     slaCalc.setSLAStatus(SLAStatus.MISS);
                     change = true;
@@ -335,7 +337,7 @@ public class SLACalculatorMemory implements SLACalculator {
      * @param actualStart
      * @return SLASummaryBean
      */
-    public SLASummaryBean processJobStartSLA(SLACalcStatus slaCalc, Date actualStart) {
+    private SLASummaryBean processJobStartSLA(SLACalcStatus slaCalc, Date actualStart) {
         slaCalc.setActualStart(actualStart);
         if (slaCalc.getSLAStatus().equals(SLAStatus.NOT_STARTED)) {
             slaCalc.setSLAStatus(SLAStatus.IN_PROCESS);
@@ -368,8 +370,9 @@ public class SLACalculatorMemory implements SLACalculator {
      * @param actualStart
      * @param actualEnd
      * @return SLASummaryBean
+     * @throws JPAExecutorException
      */
-    public SLASummaryBean processJobEndSuccessSLA(SLACalcStatus slaCalc, Date actualStart, Date actualEnd) {
+    private SLASummaryBean processJobEndSuccessSLA(SLACalcStatus slaCalc, Date actualStart, Date actualEnd) throws JPAExecutorException {
         SLARegistrationBean reg = slaCalc.getSLARegistrationBean();
         slaCalc.setActualStart(actualStart);
         slaCalc.setActualEnd(actualEnd);
@@ -415,8 +418,9 @@ public class SLACalculatorMemory implements SLACalculator {
      * @param actualStart
      * @param actualEnd
      * @return SLASummaryBean
+     * @throws JPAExecutorException
      */
-    public SLASummaryBean processJobEndFailureSLA(SLACalcStatus slaCalc, Date actualStart, Date actualEnd) {
+    private SLASummaryBean processJobEndFailureSLA(SLACalcStatus slaCalc, Date actualStart, Date actualEnd) throws JPAExecutorException {
         slaCalc.setActualStart(actualStart);
         slaCalc.setActualEnd(actualEnd);
         SLARegistrationBean reg = slaCalc.getSLARegistrationBean();

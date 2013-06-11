@@ -42,10 +42,13 @@ import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.event.JobEvent;
 import org.apache.oozie.client.event.JobEvent.EventStatus;
+import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.coord.CoordActionCheckXCommand;
 import org.apache.oozie.command.coord.CoordActionInputCheckXCommand;
 import org.apache.oozie.command.coord.CoordMaterializeTransitionXCommand;
+import org.apache.oozie.command.coord.CoordRerunXCommand;
+import org.apache.oozie.command.coord.CoordResumeXCommand;
 import org.apache.oozie.command.coord.CoordinatorXCommand;
 import org.apache.oozie.command.wf.ActionCheckXCommand;
 import org.apache.oozie.command.wf.ActionKillXCommand;
@@ -295,6 +298,40 @@ public class TestEventGeneration extends XDataTestCase {
         assertEquals(coord.getUser(), event.getUser());
         assertEquals(coord.getAppName(), event.getAppName());
 
+        // Action start on Coord Resume
+        coord.setStatus(CoordinatorJobBean.Status.SUSPENDED);
+        jpaService.execute(new CoordJobUpdateJPAExecutor(coord));
+        action.setStatus(CoordinatorAction.Status.SUSPENDED);
+        jpaService.execute(new CoordActionUpdateJPAExecutor(action));
+        new CoordResumeXCommand(coord.getId()).call();
+        CoordinatorActionEvent cevent = (CoordinatorActionEvent) queue.poll();
+        assertEquals(EventStatus.STARTED, cevent.getEventStatus());
+        assertEquals(AppType.COORDINATOR_ACTION, cevent.getAppType());
+        assertEquals(action.getId(), cevent.getId());
+        assertEquals(action.getJobId(), cevent.getParentId());
+        assertEquals(action.getNominalTime(), cevent.getNominalTime());
+        assertEquals(action.getCreatedTime(), cevent.getStartTime());
+
+        // Action going to WAITING on Coord Rerun
+        action.setStatus(CoordinatorAction.Status.SUCCEEDED);
+        jpaService.execute(new CoordActionUpdateJPAExecutor(action));
+        new CoordRerunXCommand(coord.getId(), RestConstants.JOB_COORD_RERUN_ACTION, "1", false, true)
+                .call();
+        waitFor(3 * 100, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                return jpaService.execute(coordGetCmd).getStatus() == CoordinatorAction.Status.WAITING;
+            }
+        });
+        cevent = (CoordinatorActionEvent) queue.poll();
+        assertEquals(EventStatus.WAITING, cevent.getEventStatus());
+        assertEquals(AppType.COORDINATOR_ACTION, cevent.getAppType());
+        assertEquals(action.getId(), cevent.getId());
+        assertEquals(action.getJobId(), cevent.getParentId());
+        assertEquals(action.getNominalTime(), cevent.getNominalTime());
+        assertEquals(action.getCreatedTime(), event.getStartTime());
+        assertNotNull(cevent.getMissingDeps());
+
     }
 
     @Test
@@ -458,7 +495,7 @@ public class TestEventGeneration extends XDataTestCase {
         _modifyCoordForFailureAction(coord);
         new CoordMaterializeTransitionXCommand(coord.getId(), 3600).call();
         final CoordJobGetJPAExecutor readCmd1 = new CoordJobGetJPAExecutor(coord.getId());
-        waitFor(1 * 300, new Predicate() {
+        waitFor(1 * 100, new Predicate() {
             @Override
             public boolean evaluate() throws Exception {
                 CoordinatorJobBean bean = jpaService.execute(readCmd1);

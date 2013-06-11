@@ -33,6 +33,7 @@ import org.apache.oozie.executor.jpa.BulkUpdateInsertForCoordActionStatusJPAExec
 import org.apache.oozie.executor.jpa.CoordJobGetActionsNotCompletedJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.LogUtils;
@@ -168,7 +169,9 @@ public class CoordKillXCommand extends KillTransitionXCommand {
     public void performWrites() throws CommandException {
         try {
             jpaService.execute(new BulkUpdateInsertForCoordActionStatusJPAExecutor(updateList, null));
-            generateEvents(coordJob);
+            if (EventHandlerService.isEnabled()) {
+                generateEvents(coordJob);
+            }
         }
         catch (JPAExecutorException e) {
             throw new CommandException(e);

@@ -1870,7 +1870,7 @@
 
     <property>
         <name>oozie.service.EventHandlerService.worker.interval</name>
-        <value>60</value>
+        <value>30</value>
         <description>
             The default interval (seconds) at which the worker threads will be scheduled to run
             and process events.
@@ -1918,11 +1918,12 @@
     </property>
 
     <property>
-        <name>oozie.sla.service.SLAService.events.modified.after</name>
-        <value>7</value>
-        <description> Retrive records which have been modified in last x amount of days (x is 7 by default)
+        <name>oozie.sla.service.SLAService.job.event.latency</name>
+        <value>90000</value>
+        <description>
+             Time in milliseconds to account of latency of getting the job status event
+             to compare against and decide sla miss/met
         </description>
     </property>
-
 
 </configuration>

@@ -35,6 +35,7 @@ import org.apache.oozie.executor.jpa.BulkUpdateInsertForCoordActionStatusJPAExec
 import org.apache.oozie.executor.jpa.CoordJobGetActionsRunningJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.InstrumentUtils;
@@ -185,7 +186,9 @@ public class CoordSuspendXCommand extends SuspendTransitionXCommand {
     public void performWrites() throws CommandException {
         try {
             jpaService.execute(new BulkUpdateInsertForCoordActionStatusJPAExecutor(updateList, null));
-            generateEvents(coordJob);
+            if (EventHandlerService.isEnabled()) {
+                generateEvents(coordJob);
+            }
         }
         catch (JPAExecutorException jex) {
             throw new CommandException(jex);
