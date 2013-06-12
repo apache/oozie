@@ -53,11 +53,10 @@ public class CoordinatorEngineService implements Service {
      * Return a Coordinator engine.
      *
      * @param user user for the coordinator engine.
-     * @param authToken the authentication token.
      * @return the coordinator engine for the specified user.
      */
-    public CoordinatorEngine getCoordinatorEngine(String user, String authToken) {
-        return new CoordinatorEngine(user, authToken);
+    public CoordinatorEngine getCoordinatorEngine(String user) {
+        return new CoordinatorEngine(user);
     }
 
     /**

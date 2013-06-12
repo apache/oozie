@@ -87,7 +87,7 @@ public class TestCoordinatorEngineStreamLog extends XFsTestCase {
     }
 
     private CoordinatorEngine createCoordinatorEngine() {
-        return new CoordinatorEngine(getTestUser(), "UNIT_TESTING");
+        return new CoordinatorEngine(getTestUser());
     }
 
     /**

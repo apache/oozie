@@ -398,7 +398,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
         WorkflowAppService wps = Services.get().get(WorkflowAppService.class);
         WorkflowJob wf = oozieClient.getJobInfo(action.getExternalId());
         Configuration childConf = new XConfiguration(new StringReader(wf.getConf()));
-        childConf = wps.createProtoActionConf(childConf, "authToken", true);
+        childConf = wps.createProtoActionConf(childConf, true);
         assertEquals(childConf.get(WorkflowAppService.APP_LIB_PATH_LIST), subwfLibJar.toString());
     }
 }

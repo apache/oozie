@@ -116,7 +116,7 @@ public class TestBulkUpdateInsertJPAExecutor extends XDataTestCase {
         conf.set(OozieClient.LOG_TOKEN, "testToken");
         conf.set(OozieClient.USER_NAME, getTestUser());
 
-        WorkflowJobBean job = createWorkflow(app, conf, "auth", WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
+        WorkflowJobBean job = createWorkflow(app, conf, WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
         WorkflowActionBean action1 = createWorkflowAction(job.getId(), "1", WorkflowAction.Status.PREP);
         WorkflowActionBean action2 = createWorkflowAction(job.getId(), "2", WorkflowAction.Status.PREP);
 

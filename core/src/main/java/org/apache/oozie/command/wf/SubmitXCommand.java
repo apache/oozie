@@ -74,7 +74,6 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
     public static final String CONFIG_DEFAULT = "config-default.xml";
 
     private Configuration conf;
-    private String authToken;
     private List<JsonBean> insertList = new ArrayList<JsonBean>();
 
     /**
@@ -83,10 +82,9 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
      * @param conf : Configuration for workflow job
      * @param authToken : To be used for authentication
      */
-    public SubmitXCommand(Configuration conf, String authToken) {
+    public SubmitXCommand(Configuration conf) {
         super("submit", "submit", 1);
         this.conf = ParamChecker.notNull(conf, "conf");
-        this.authToken = ParamChecker.notEmpty(authToken, "authToken");
     }
 
     /**
@@ -96,8 +94,8 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
      * @param conf : Configuration for workflow job
      * @param authToken : To be used for authentication
      */
-    public SubmitXCommand(boolean dryrun, Configuration conf, String authToken) {
-        this(conf, authToken);
+    public SubmitXCommand(boolean dryrun, Configuration conf) {
+        this(conf);
         this.dryrun = dryrun;
     }
 
@@ -122,8 +120,8 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
         WorkflowAppService wps = Services.get().get(WorkflowAppService.class);
         try {
             XLog.Info.get().setParameter(DagXLogInfoService.TOKEN, conf.get(OozieClient.LOG_TOKEN));
-            WorkflowApp app = wps.parseDef(conf, authToken);
-            XConfiguration protoActionConf = wps.createProtoActionConf(conf, authToken, true);
+            WorkflowApp app = wps.parseDef(conf);
+            XConfiguration protoActionConf = wps.createProtoActionConf(conf, true);
             WorkflowLib workflowLib = Services.get().get(WorkflowStoreService.class).getWorkflowLibWithNoDB();
 
             String user = conf.get(OozieClient.USER_NAME);
@@ -188,7 +186,6 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
             workflow.setRun(0);
             workflow.setUser(conf.get(OozieClient.USER_NAME));
             workflow.setGroup(conf.get(OozieClient.GROUP_NAME));
-            workflow.setAuthToken(authToken);
             workflow.setWorkflowInstance(wfInstance);
             workflow.setExternalId(conf.get(OozieClient.EXTERNAL_ID));
             // Set parent id if it doesn't already have one (for subworkflows)

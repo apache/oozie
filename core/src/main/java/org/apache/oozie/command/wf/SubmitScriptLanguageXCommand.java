@@ -29,8 +29,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class SubmitScriptLanguageXCommand extends SubmitHttpXCommand {
-    public SubmitScriptLanguageXCommand(String name, String type, Configuration conf, String authToken) {
-        super(name, type, conf, authToken);
+    public SubmitScriptLanguageXCommand(String name, String type, Configuration conf) {
+        super(name, type, conf);
     }
 
     protected abstract String getLanguageName();

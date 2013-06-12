@@ -60,7 +60,7 @@ public class TestSubmitMRXCommand extends XFsTestCase {
         conf.set(XOozieClient.FILES, "/user/oozie/input1.txt,/user/oozie/input2.txt#my.txt");
         conf.set(XOozieClient.ARCHIVES, "/user/oozie/udf1.jar,/user/oozie/udf2.jar#my.jar");
 
-        SubmitMRXCommand submitMRCmd = new SubmitMRXCommand(conf, "token");
+        SubmitMRXCommand submitMRCmd = new SubmitMRXCommand(conf);
         String xml = submitMRCmd.getWorkflowXml(conf);
 
         XLog.getLog(getClass()).info("xml = " + xml);
@@ -104,7 +104,7 @@ public class TestSubmitMRXCommand extends XFsTestCase {
         conf.set("name_b", "value_b");
         conf.set("name_c", "value_c");
 
-        SubmitMRXCommand submitMRCmd = new SubmitMRXCommand(conf, "token");
+        SubmitMRXCommand submitMRCmd = new SubmitMRXCommand(conf);
         try {
             submitMRCmd.getWorkflowXml(conf);
             fail("shoud have already failed - missing libpath def");
@@ -126,7 +126,7 @@ public class TestSubmitMRXCommand extends XFsTestCase {
             conf.set(OozieClient.LIBPATH, "libpath");
             conf.set("mapreduce.job.user.name", "test_user");
 
-            SubmitMRXCommand submitMRCmd = new SubmitMRXCommand(conf, "token");
+            SubmitMRXCommand submitMRCmd = new SubmitMRXCommand(conf);
             String xml = submitMRCmd.getWorkflowXml(conf);
 
             //verifying is a valid WF

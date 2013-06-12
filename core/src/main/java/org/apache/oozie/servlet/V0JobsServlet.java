@@ -60,7 +60,7 @@ public class V0JobsServlet extends BaseJobsServlet {
             }
             boolean startJob = (action != null);
             String user = conf.get(OozieClient.USER_NAME);
-            DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(user, getAuthToken(request));
+            DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(user);
             String id = dagEngine.submitJob(conf, startJob);
             json.put(JsonTags.JOB_ID, id);
         }
@@ -79,7 +79,7 @@ public class V0JobsServlet extends BaseJobsServlet {
         JSONObject json = new JSONObject();
         try {
             DagEngine dagEngine = Services.get().get(DagEngineService.class)
-            .getDagEngine(getUser(request), getAuthToken(request));
+            .getDagEngine(getUser(request));
             String jobId = dagEngine.getJobIdForExternalId(externalId);
             json.put(JsonTags.JOB_ID, jobId);
         }
@@ -105,7 +105,7 @@ public class V0JobsServlet extends BaseJobsServlet {
             int len = (lenStr != null) ? Integer.parseInt(lenStr) : 50;
             len = (len < 1) ? 50 : len;
             DagEngine dagEngine = Services.get().get(DagEngineService.class)
-            .getDagEngine(getUser(request), getAuthToken(request));
+            .getDagEngine(getUser(request));
             WorkflowsInfo jobs = dagEngine.getJobs(filter, start, len);
             List<WorkflowJobBean> jsonWorkflows = jobs.getWorkflows();
             json.put(JsonTags.WORKFLOWS_JOBS, WorkflowJobBean.toJSONArray(jsonWorkflows, "GMT"));

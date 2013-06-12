@@ -70,8 +70,8 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
     }
 
     @Override
-    public CoordinatorEngine getCoordinatorEngine(String user, String authToken) {
-        return new MockCoordinatorEngine(user, authToken);
+    public CoordinatorEngine getCoordinatorEngine(String user) {
+        return new MockCoordinatorEngine(user);
     }
 
     @Override
@@ -84,8 +84,8 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
         public MockCoordinatorEngine() {
         }
 
-        public MockCoordinatorEngine(String user, String authToken) {
-            super(user, authToken);
+        public MockCoordinatorEngine(String user) {
+            super(user);
         }
 
         @Override
@@ -217,7 +217,6 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
         coordJob.setLastModifiedTime(new Date());
         coordJob.setUser(USER);
         coordJob.setGroup(GROUP);
-        coordJob.setAuthToken("notoken");
         coordJob.setConf(CONFIGURATION);
         coordJob.setLastActionNumber(0);
         coordJob.setFrequency(1);
@@ -250,7 +249,6 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
         coordJob.setLastModifiedTime(new Date());
         coordJob.setUser(USER);
         coordJob.setGroup(GROUP);
-        coordJob.setAuthToken("notoken");
         coordJob.setConf(conf.toString());
         coordJob.setLastActionNumber(0);
         coordJob.setFrequency(1);

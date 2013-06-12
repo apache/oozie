@@ -156,7 +156,7 @@ public class TestSLAEventGeneration extends XDataTestCase {
         String expectedEnd = DateUtils.formatDateOozieTZ(cal.getTime());
 
         // Call SubmitX
-        SubmitXCommand sc = new SubmitXCommand(conf, "UNIT_TESTING");
+        SubmitXCommand sc = new SubmitXCommand(conf);
         String jobId = sc.call();
         SLACalcStatus slaEvent = slas.getSLACalculator().get(jobId);
         assertEquals(jobId, slaEvent.getId());
@@ -191,7 +191,7 @@ public class TestSLAEventGeneration extends XDataTestCase {
         cal.add(Calendar.MINUTE, 30); // as per the sla xml
         expectedEnd = DateUtils.formatDateOozieTZ(cal.getTime());
 
-        ReRunXCommand rerun = new ReRunXCommand(jobId, conf, "UNIT_TESTING");
+        ReRunXCommand rerun = new ReRunXCommand(jobId, conf);
         rerun.call();
         slaEvent = slas.getSLACalculator().get(jobId);
         // assert for new conf
@@ -245,7 +245,7 @@ public class TestSLAEventGeneration extends XDataTestCase {
         conf.set("nominal_time", nominalTime);
 
         // Call SubmitX
-        SubmitXCommand sc = new SubmitXCommand(conf, "UNIT_TESTING");
+        SubmitXCommand sc = new SubmitXCommand(conf);
         String jobId = sc.call();
         String actionId = jobId+"@grouper";
 
@@ -267,7 +267,7 @@ public class TestSLAEventGeneration extends XDataTestCase {
         cal.add(Calendar.MINUTE, 30); // as per the sla xml
         String expectedEnd = DateUtils.formatDateOozieTZ(cal.getTime());
 
-        ReRunXCommand rerun = new ReRunXCommand(jobId, conf, "UNIT_TESTING");
+        ReRunXCommand rerun = new ReRunXCommand(jobId, conf);
         rerun.call();
         SLACalcStatus slaEvent = slas.getSLACalculator().get(actionId);
         assertNotNull(slaEvent);
@@ -317,7 +317,7 @@ public class TestSLAEventGeneration extends XDataTestCase {
         String expectedEnd = DateUtils.formatDateOozieTZ(cal.getTime());
 
         // testing creation of new sla registration via Submit command
-        SubmitXCommand sc = new SubmitXCommand(conf, "UNIT_TESTING");
+        SubmitXCommand sc = new SubmitXCommand(conf);
         String jobId = sc.call();
         SLACalcStatus slaEvent = slas.getSLACalculator().get(jobId);
         assertEquals(jobId, slaEvent.getId());
@@ -402,7 +402,7 @@ public class TestSLAEventGeneration extends XDataTestCase {
 
         // testing creation of new sla registration via Submit + Materialize
         // command
-        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);
         String jobId = sc.call();
         Thread.sleep(500); // waiting for materialize command to run
         final CoordActionGetJPAExecutor getCmd = new CoordActionGetJPAExecutor(jobId + "@1");
@@ -427,7 +427,7 @@ public class TestSLAEventGeneration extends XDataTestCase {
         action.setStatus(CoordinatorAction.Status.SUBMITTED);
         final CoordActionUpdateJPAExecutor writeCmd = new CoordActionUpdateJPAExecutor(action);
         jpa.execute(writeCmd);
-        new CoordActionStartXCommand(actionId, getTestUser(), appName, "authtoken", jobId).call();
+        new CoordActionStartXCommand(actionId, getTestUser(), appName, jobId).call();
         slaEvent = slas.getSLACalculator().get(actionId);
         slaEvent.setEventProcessed(0); //resetting for testing sla event
         ehs.new EventWorker().run();

@@ -31,7 +31,6 @@ public abstract class BaseEngine {
     public static final String USE_XCOMMAND = "oozie.useXCommand";
 
     protected String user;
-    protected String authToken;
 
     /**
      * Return the user name.
@@ -40,15 +39,6 @@ public abstract class BaseEngine {
      */
     public String getUser() {
         return user;
-    }
-
-    /**
-     * Return the authentication token.
-     *
-     * @return the authentication token.
-     */
-    protected String getAuthToken() {
-        return authToken;
     }
 
     /**

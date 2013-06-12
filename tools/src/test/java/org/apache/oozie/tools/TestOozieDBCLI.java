@@ -115,6 +115,9 @@ public class TestOozieDBCLI extends XTestCase {
         // generate an upgrade script
         File upgrade = new File(getTestCaseConfDir() + File.separator + "update.sql");
         execSQL("DROP table OOZIE_SYS");
+        execSQL("ALTER TABLE BUNDLE_JOBS ADD COLUMN AUTH_TOKEN CLOB");
+        execSQL("ALTER TABLE COORD_JOBS ADD COLUMN AUTH_TOKEN CLOB");
+        execSQL("ALTER TABLE WF_JOBS ADD COLUMN AUTH_TOKEN CLOB");
         String[] argsUpgrade = { "upgrade", "-sqlfile", upgrade.getAbsolutePath(), "-run" };
         assertEquals(0, execOozieDBCLICommands(argsUpgrade));
 

@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1398 Reduce the number of CLOB columns used (ryota)
 OOZIE-1374 Make all unit tests run with Hadoop 2 (rohini)
 OOZIE-1394 Fix Bugs in Job and SLA Events (mona)
 OOZIE-1315 Refactor classes from launcher jar into Oozie sharelib (rkanter)

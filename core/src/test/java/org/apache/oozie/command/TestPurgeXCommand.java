@@ -3726,7 +3726,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         conf.set(OozieClient.LOG_TOKEN, "testToken");
         conf.set(OozieClient.USER_NAME, getTestUser());
 
-        WorkflowJobBean wfBean = createWorkflow(app, conf, "auth", jobStatus, instanceStatus);
+        WorkflowJobBean wfBean = createWorkflow(app, conf, jobStatus, instanceStatus);
         wfBean.setStartTime(DateUtils.parseDateOozieTZ("2015-12-18T01:00Z"));
         wfBean.setEndTime(DateUtils.parseDateOozieTZ("2015-12-18T03:00Z"));
 
@@ -3745,10 +3745,10 @@ public class TestPurgeXCommand extends XDataTestCase {
     }
 
     @Override
-    protected WorkflowJobBean createWorkflow(WorkflowApp app, Configuration conf, String authToken,
+    protected WorkflowJobBean createWorkflow(WorkflowApp app, Configuration conf,
             WorkflowJob.Status jobStatus, WorkflowInstance.Status instanceStatus) throws Exception {
         WorkflowAppService wps = Services.get().get(WorkflowAppService.class);
-        Configuration protoActionConf = wps.createProtoActionConf(conf, authToken, true);
+        Configuration protoActionConf = wps.createProtoActionConf(conf, true);
         WorkflowLib workflowLib = Services.get().get(WorkflowStoreService.class).getWorkflowLibWithNoDB();
         WorkflowInstance wfInstance = workflowLib.createInstance(app, conf);
         ((LiteWorkflowInstance) wfInstance).setStatus(instanceStatus);
@@ -3764,7 +3764,6 @@ public class TestPurgeXCommand extends XDataTestCase {
         workflow.setRun(0);
         workflow.setUser(conf.get(OozieClient.USER_NAME));
         workflow.setGroup(conf.get(OozieClient.GROUP_NAME));
-        workflow.setAuthToken(authToken);
         workflow.setWorkflowInstance(wfInstance);
         workflow.setStartTime(DateUtils.parseDateOozieTZ("2009-12-18T01:00Z"));
         workflow.setEndTime(DateUtils.parseDateOozieTZ("2009-12-18T03:00Z"));

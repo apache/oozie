@@ -113,7 +113,7 @@ public class TestRecoveryService extends XDataTestCase {
         createTestCaseSubDir("lib");
         IOUtils.copyCharStream(reader, writer);
 
-        final DagEngine engine = new DagEngine(getTestUser(), "a");
+        final DagEngine engine = new DagEngine(getTestUser());
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, "file://" +  getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
@@ -253,7 +253,7 @@ public class TestRecoveryService extends XDataTestCase {
         final String jobId = "0000000-" + new Date().getTime() + "-testCoordRecoveryService-C";
         final int actionNum = 1;
         final String actionId = jobId + "@" + actionNum;
-        final CoordinatorEngine ce = new CoordinatorEngine(getTestUser(), "UNIT_TESTING");
+        final CoordinatorEngine ce = new CoordinatorEngine(getTestUser());
         CoordinatorStore store = Services.get().get(StoreService.class).getStore(CoordinatorStore.class);
         store.beginTrx();
         try {
@@ -670,7 +670,6 @@ public class TestRecoveryService extends XDataTestCase {
         coordJob.setLastModifiedTime(new Date());
         coordJob.setUser(getTestUser());
         coordJob.setGroup(getTestGroup());
-        coordJob.setAuthToken("notoken");
         coordJob.setTimeZone("UTC");
 
         String baseURI = baseDir + "/workflows";

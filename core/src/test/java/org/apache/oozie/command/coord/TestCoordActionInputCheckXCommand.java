@@ -622,7 +622,6 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         coordJob.setLastModifiedTime(new Date());
         coordJob.setUser("testUser");
         coordJob.setGroup("testGroup");
-        coordJob.setAuthToken("notoken");
         coordJob.setTimeZone("UTC");
         coordJob.setTimeUnit(Timeunit.DAY);
         coordJob.setMatThrottling(2);
@@ -803,7 +802,6 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         coordJob.setLastModifiedTime(new Date());
         coordJob.setUser("testUser");
         coordJob.setGroup("testGroup");
-        coordJob.setAuthToken("notoken");
         coordJob.setTimeZone("UTC");
         coordJob.setTimeUnit(Timeunit.DAY);
         coordJob.setMatThrottling(2);

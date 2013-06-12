@@ -192,7 +192,7 @@ public class RecoveryService implements Service {
                                 if (name.getValue().equals(baction.getCoordName())) {
                                     Configuration coordConf = mergeConfig(coordElem, bundleJob);
                                     coordConf.set(OozieClient.BUNDLE_ID, baction.getBundleId());
-                                    queueCallable(new CoordSubmitXCommand(coordConf, bundleJob.getAuthToken(),
+                                    queueCallable(new CoordSubmitXCommand(coordConf,
                                             bundleJob.getId(), name.getValue()));
                                 }
                             }
@@ -256,7 +256,7 @@ public class RecoveryService implements Service {
                         CoordinatorJobBean coordJob = jpaService
                                 .execute(new CoordJobGetJPAExecutor(caction.getJobId()));
                         queueCallable(new CoordActionStartXCommand(caction.getId(), coordJob.getUser(),
-                                coordJob.getAppName(), coordJob.getAuthToken(), caction.getJobId()));
+                                coordJob.getAppName(), caction.getJobId()));
 
                         log.info("Recover a SUBMITTED coord action and resubmit CoordActionStartCommand :"
                                 + caction.getId());

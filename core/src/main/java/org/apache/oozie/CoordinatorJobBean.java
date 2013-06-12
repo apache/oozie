@@ -39,7 +39,7 @@ import org.apache.openjpa.persistence.jdbc.Index;
 
 @Entity
 @NamedQueries( {
-        @NamedQuery(name = "UPDATE_COORD_JOB", query = "update CoordinatorJobBean w set w.appName = :appName, w.appPath = :appPath, w.concurrency = :concurrency, w.conf = :conf, w.externalId = :externalId, w.frequency = :frequency, w.lastActionNumber = :lastActionNumber, w.timeOut = :timeOut, w.timeZone = :timeZone, w.authToken = :authToken, w.createdTimestamp = :createdTime, w.endTimestamp = :endTime, w.execution = :execution, w.jobXml = :jobXml, w.lastActionTimestamp = :lastAction, w.lastModifiedTimestamp = :lastModifiedTime, w.nextMaterializedTimestamp = :nextMaterializedTime, w.origJobXml = :origJobXml, w.slaXml=:slaXml, w.startTimestamp = :startTime, w.status = :status, w.timeUnitStr = :timeUnit where w.id = :id"),
+        @NamedQuery(name = "UPDATE_COORD_JOB", query = "update CoordinatorJobBean w set w.appName = :appName, w.appPath = :appPath,w.concurrency = :concurrency, w.conf = :conf, w.externalId = :externalId, w.frequency = :frequency, w.lastActionNumber = :lastActionNumber, w.timeOut = :timeOut, w.timeZone = :timeZone, w.createdTimestamp = :createdTime, w.endTimestamp = :endTime, w.execution = :execution, w.jobXml = :jobXml, w.lastActionTimestamp = :lastAction, w.lastModifiedTimestamp = :lastModifiedTime, w.nextMaterializedTimestamp = :nextMaterializedTime, w.origJobXml = :origJobXml, w.slaXml=:slaXml, w.startTimestamp = :startTime, w.status = :status, w.timeUnitStr = :timeUnit where w.id = :id"),
 
         @NamedQuery(name = "UPDATE_COORD_JOB_STATUS", query = "update CoordinatorJobBean w set w.status = :status, w.lastModifiedTimestamp = :lastModifiedTime where w.id = :id"),
 
@@ -86,11 +86,6 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
     @Index
     @Column(name = "status")
     private String status = CoordinatorJob.Status.PREP.toString();
-
-    @Basic
-    @Column(name = "auth_token")
-    @Lob
-    private String authToken = null;
 
     @Basic
     @Column(name = "start_time")
@@ -144,8 +139,8 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
     @Lob
     private String origJobXml = null;
 
-    @Column(name = "sla_xml")
-    @Lob
+    @Basic
+    @Column(name = "sla_xml", length = 4000)
     private String slaXml = null;
 
     @Basic
@@ -324,15 +319,6 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
     public void setLastActionTimestamp(java.sql.Timestamp lastActionTimestamp) {
         super.setLastActionTime(DateUtils.toDate(lastActionTimestamp));
         this.lastActionTimestamp = lastActionTimestamp;
-    }
-
-    /**
-     * Set auth token
-     *
-     * @param authToken auth token
-     */
-    public void setAuthToken(String authToken) {
-        this.authToken = authToken;
     }
 
     /**
@@ -724,15 +710,6 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
      */
     public Timestamp getCreatedTimestamp() {
         return createdTimestamp;
-    }
-
-    /**
-     * Get auth token
-     *
-     * @return auth token
-     */
-    public String getAuthToken() {
-        return this.authToken;
     }
 
 }

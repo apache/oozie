@@ -99,7 +99,7 @@ public class TestBundleKillXCommand extends XDataTestCase {
         Path appPath = new Path(jobConf.get(OozieClient.BUNDLE_APP_PATH), "bundle.xml");
         jobConf.set(OozieClient.BUNDLE_APP_PATH, appPath.toString());
 
-        BundleSubmitXCommand submitCmd = new BundleSubmitXCommand(jobConf, job.getAuthToken());
+        BundleSubmitXCommand submitCmd = new BundleSubmitXCommand(jobConf);
         submitCmd.call();
 
         BundleJobGetJPAExecutor bundleJobGetCmd = new BundleJobGetJPAExecutor(submitCmd.getJob().getId());
@@ -179,7 +179,7 @@ public class TestBundleKillXCommand extends XDataTestCase {
         Path appPath = new Path(jobConf.get(OozieClient.BUNDLE_APP_PATH), "bundle.xml");
         jobConf.set(OozieClient.BUNDLE_APP_PATH, appPath.toString());
 
-        BundleSubmitXCommand submitCmd = new BundleSubmitXCommand(jobConf, job.getAuthToken());
+        BundleSubmitXCommand submitCmd = new BundleSubmitXCommand(jobConf);
         submitCmd.call();
 
         BundleJobGetJPAExecutor bundleJobGetCmd = new BundleJobGetJPAExecutor(submitCmd.getJob().getId());

@@ -55,8 +55,7 @@ public class V2JobServlet extends V1JobServlet {
             IOException {
         String topicName;
         String jobId = getResourceName(request);
-        DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
-                getAuthToken(request));
+        DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request));
         try {
             topicName = dagEngine.getJMSTopicName(jobId);
         }

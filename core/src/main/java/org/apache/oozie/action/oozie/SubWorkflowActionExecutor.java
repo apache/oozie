@@ -76,8 +76,7 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
             WorkflowJobBean workflow = (WorkflowJobBean) context.getWorkflow();
             String user = workflow.getUser();
             String group = workflow.getGroup();
-            String authToken = workflow.getAuthToken();
-            DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(user, authToken);
+            DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(user);
             oozieClient = new LocalOozieClient(dagEngine);
         }
         else {

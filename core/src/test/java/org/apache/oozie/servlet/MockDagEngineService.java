@@ -80,8 +80,8 @@ public class MockDagEngineService extends DagEngineService {
     }
 
     @Override
-    public DagEngine getDagEngine(String user, String authToken) {
-        return new MockDagEngine(user, authToken);
+    public DagEngine getDagEngine(String user) {
+        return new MockDagEngine(user);
     }
 
     private static class MockDagEngine extends DagEngine {
@@ -89,8 +89,8 @@ public class MockDagEngineService extends DagEngineService {
         public MockDagEngine() {
         }
 
-        public MockDagEngine(String user, String authToken) {
-            super(user, authToken);
+        public MockDagEngine(String user) {
+            super(user);
         }
 
         @Override

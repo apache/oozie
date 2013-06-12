@@ -21,8 +21,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.XOozieClient;
 
 public class SubmitPigXCommand extends SubmitScriptLanguageXCommand {
-    public SubmitPigXCommand(Configuration conf, String authToken) {
-        super("submitPig", "submitPig", conf, authToken);
+    public SubmitPigXCommand(Configuration conf) {
+        super("submitPig", "submitPig", conf);
     }
 
     protected String getLanguageName(){

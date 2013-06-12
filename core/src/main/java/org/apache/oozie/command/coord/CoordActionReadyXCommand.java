@@ -97,7 +97,6 @@ public class CoordActionReadyXCommand extends CoordinatorXCommand<Void> {
         }
         log.debug("Number of READY actions = " + actions.size());
         String user = coordJob.getUser();
-        String authToken = coordJob.getAuthToken();
         // make sure auth token is not null
         // log.denug("user=" + user + ", token=" + authToken);
         int counter = 0;
@@ -109,7 +108,7 @@ public class CoordActionReadyXCommand extends CoordinatorXCommand<Void> {
                 // change state of action to SUBMITTED
                 action.setStatus(CoordinatorAction.Status.SUBMITTED);
                 // queue action to start action
-                queue(new CoordActionStartXCommand(action.getId(), user, coordJob.getAppName(), authToken,
+                queue(new CoordActionStartXCommand(action.getId(), user, coordJob.getAppName(),
                         action.getJobId()), 100);
                 try {
                     jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionUpdateStatusJPAExecutor(action));
