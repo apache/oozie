@@ -330,7 +330,6 @@ public abstract class XDataTestCase extends XHCatTestCase {
         coordJob.setLastModifiedTime(new Date());
         coordJob.setUser(getTestUser());
         coordJob.setGroup(getTestGroup());
-        coordJob.setAuthToken("notoken");
         if (pending) {
             coordJob.setPending();
         }
@@ -383,7 +382,6 @@ public abstract class XDataTestCase extends XHCatTestCase {
         coordJob.setLastModifiedTime(new Date());
         coordJob.setUser(getTestUser());
         coordJob.setGroup(getTestGroup());
-        coordJob.setAuthToken("notoken");
         if (pending) {
             coordJob.setPending();
         }
@@ -439,7 +437,6 @@ public abstract class XDataTestCase extends XHCatTestCase {
         coordJob.setLastModifiedTime(new Date());
         coordJob.setUser(getTestUser());
         coordJob.setGroup(getTestGroup());
-        coordJob.setAuthToken("notoken");
         if (pending) {
             coordJob.setPending();
         }
@@ -686,7 +683,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
         conf.set(OozieClient.LOG_TOKEN, "testToken");
         conf.set(OozieClient.USER_NAME, getTestUser());
 
-        WorkflowJobBean wfBean = createWorkflow(app, conf, "auth", jobStatus, instanceStatus);
+        WorkflowJobBean wfBean = createWorkflow(app, conf, jobStatus, instanceStatus);
 
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
@@ -1099,10 +1096,10 @@ public abstract class XDataTestCase extends XHCatTestCase {
      * @return workflow job bean
      * @throws Exception thrown if unable to create workflow job bean
      */
-    protected WorkflowJobBean createWorkflow(WorkflowApp app, Configuration conf, String authToken,
+    protected WorkflowJobBean createWorkflow(WorkflowApp app, Configuration conf,
             WorkflowJob.Status jobStatus, WorkflowInstance.Status instanceStatus) throws Exception {
         WorkflowAppService wps = Services.get().get(WorkflowAppService.class);
-        Configuration protoActionConf = wps.createProtoActionConf(conf, authToken, true);
+        Configuration protoActionConf = wps.createProtoActionConf(conf, true);
         WorkflowLib workflowLib = Services.get().get(WorkflowStoreService.class).getWorkflowLibWithNoDB();
         WorkflowInstance wfInstance = workflowLib.createInstance(app, conf);
         ((LiteWorkflowInstance) wfInstance).setStatus(instanceStatus);
@@ -1119,7 +1116,6 @@ public abstract class XDataTestCase extends XHCatTestCase {
         workflow.setRun(0);
         workflow.setUser(conf.get(OozieClient.USER_NAME));
         workflow.setGroup(conf.get(OozieClient.GROUP_NAME));
-        workflow.setAuthToken(authToken);
         workflow.setWorkflowInstance(wfInstance);
         return workflow;
     }
@@ -1217,7 +1213,6 @@ public abstract class XDataTestCase extends XHCatTestCase {
         bundle.setId(Services.get().get(UUIDService.class).generateId(ApplicationType.BUNDLE));
         bundle.setAppName("BUNDLE-TEST");
         bundle.setAppPath(bundleAppPath.toString());
-        bundle.setAuthToken("authToken");
         bundle.setConf(XmlUtils.prettyPrint(conf).toString());
         bundle.setConsoleUrl("consoleUrl");
         bundle.setCreatedTime(new Date());
@@ -1272,7 +1267,6 @@ public abstract class XDataTestCase extends XHCatTestCase {
         bundle.setId(Services.get().get(UUIDService.class).generateId(ApplicationType.BUNDLE));
         bundle.setAppName("BUNDLE-TEST");
         bundle.setAppPath(bundleAppPath.toString());
-        bundle.setAuthToken("authToken");
         bundle.setConf(XmlUtils.prettyPrint(conf).toString());
         bundle.setConsoleUrl("consoleUrl");
         bundle.setCreatedTime(new Date());

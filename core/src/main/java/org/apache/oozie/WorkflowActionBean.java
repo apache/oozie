@@ -119,8 +119,8 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
     @Transient
     private Date pendingAge;
 
-    @Column(name = "sla_xml")
-    @Lob
+    @Basic
+    @Column(name = "sla_xml", length = 4000)
     private String slaXml = null;
 
     /**

@@ -57,7 +57,7 @@ public class TestSubmitHiveXCommand extends XFsTestCase {
         String[] params = new String[]{"INPUT=/some/path", "OUTPUT=/some/other/path", "abc=xyz"};
         MapReduceMain.setStrings(conf, XOozieClient.HIVE_SCRIPT_PARAMS, params);
 
-        SubmitHiveXCommand submitHiveCmd = new SubmitHiveXCommand(conf, "token");
+        SubmitHiveXCommand submitHiveCmd = new SubmitHiveXCommand(conf);
         String xml = submitHiveCmd.getWorkflowXml(conf);
 
         XLog.getLog(getClass()).info("xml = " + xml);

@@ -236,7 +236,7 @@ public abstract class ActionExecutorTestCase extends XFsTestCase {
         wfConf.set(OozieClient.APP_PATH, appUri.toString());
 
 
-        WorkflowJobBean workflow = createWorkflow(app, wfConf, protoConf, "auth");
+        WorkflowJobBean workflow = createWorkflow(app, wfConf, protoConf);
 
         WorkflowActionBean action = new WorkflowActionBean();
         action.setName(actionName);
@@ -270,7 +270,7 @@ public abstract class ActionExecutorTestCase extends XFsTestCase {
         wfConf.set(OozieClient.APP_PATH, appUri.toString());
 
 
-        WorkflowJobBean workflow = createWorkflow(app, wfConf, protoConf, "auth");
+        WorkflowJobBean workflow = createWorkflow(app, wfConf, protoConf);
 
         WorkflowActionBean action = new WorkflowActionBean();
         action.setName(actionName);
@@ -280,8 +280,8 @@ public abstract class ActionExecutorTestCase extends XFsTestCase {
         return workflow;
     }
 
-    private WorkflowJobBean createWorkflow(WorkflowApp app, Configuration conf, XConfiguration protoConf,
-            String authToken) throws Exception {
+    private WorkflowJobBean createWorkflow(WorkflowApp app, Configuration conf, XConfiguration protoConf)
+            throws Exception {
         WorkflowLib workflowLib = Services.get().get(WorkflowStoreService.class).getWorkflowLibWithNoDB();
         WorkflowInstance wfInstance;
         wfInstance = workflowLib.createInstance(app, conf);
@@ -297,7 +297,6 @@ public abstract class ActionExecutorTestCase extends XFsTestCase {
         workflow.setRun(0);
         workflow.setUser(conf.get(OozieClient.USER_NAME));
         workflow.setGroup(conf.get(OozieClient.GROUP_NAME));
-        workflow.setAuthToken(authToken);
         workflow.setWorkflowInstance(wfInstance);
         return workflow;
     }

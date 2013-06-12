@@ -1357,7 +1357,7 @@ public class TestStatusTransitService extends XDataTestCase {
         conf.set(OozieClient.LOG_TOKEN, "testToken");
         conf.set(OozieClient.USER_NAME, getTestUser());
 
-        WorkflowJobBean wfBean = createWorkflow(app, conf, "auth", jobStatus, instanceStatus);
+        WorkflowJobBean wfBean = createWorkflow(app, conf, jobStatus, instanceStatus);
         wfBean.setId(wfId);
         try {
             JPAService jpaService = Services.get().get(JPAService.class);

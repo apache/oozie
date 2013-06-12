@@ -84,8 +84,7 @@ public class JsonWorkflowAction implements WorkflowAction, JsonBean {
     @Column(name = "transition")
     private String transition = null;
 
-    @Column(name = "data")
-    @Lob
+    @Column(name = "data", length = 4000)
     private String data = null;
 
     @Column(name = "stats")
@@ -116,8 +115,7 @@ public class JsonWorkflowAction implements WorkflowAction, JsonBean {
     @Column(name = "error_code")
     private String errorCode = null;
 
-    @Column(name = "error_message")
-    @Lob
+    @Column(name = "error_message", length = 4000)
     private String errorMessage = null;
 
     public JsonWorkflowAction() {
@@ -267,6 +265,9 @@ public class JsonWorkflowAction implements WorkflowAction, JsonBean {
     }
 
     public void setData(String data) {
+        if( data != null && data.length() > 2000){
+            data = data.substring(0, 2000);
+        }
         this.data = data;
     }
 
@@ -328,6 +329,9 @@ public class JsonWorkflowAction implements WorkflowAction, JsonBean {
 
     public void setErrorInfo(String errorCode, String errorMessage) {
         this.errorCode = errorCode;
+        if(errorMessage != null && errorMessage.length() > 2000){
+            errorMessage = errorMessage.substring(0, 2000);
+        }
         this.errorMessage = errorMessage;
     }
 

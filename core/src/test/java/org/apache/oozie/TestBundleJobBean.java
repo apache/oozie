@@ -42,7 +42,6 @@ public class TestBundleJobBean extends XTestCase {
     private void set(BundleJobBean bean) {
         bean.setAppName("an");
         bean.setAppPath("ap");
-        bean.setAuthToken("at");
         bean.setConf("c");
         bean.setConsoleUrl("cu");
         bean.setCreatedTime(ct);
@@ -82,9 +81,6 @@ public class TestBundleJobBean extends XTestCase {
     private void _testGet(BundleJobBean bean, boolean checkAllFields) {
         assertEquals("an", bean.getAppName());
         assertEquals("ap", bean.getAppPath());
-        if (checkAllFields) {
-            assertEquals("at", bean.getAuthToken());
-        }
         assertEquals("c", bean.getConf());
         if (checkAllFields) {
             assertEquals("cu", bean.getConsoleUrl());

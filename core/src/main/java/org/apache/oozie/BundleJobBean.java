@@ -40,7 +40,7 @@ import org.apache.openjpa.persistence.jdbc.Index;
 
 @Entity
 @NamedQueries( {
-        @NamedQuery(name = "UPDATE_BUNDLE_JOB", query = "update BundleJobBean w set w.appName = :appName, w.appPath = :appPath, w.conf = :conf, w.externalId = :externalId, w.timeOut = :timeOut, w.authToken = :authToken, w.createdTimestamp = :createdTimestamp, w.endTimestamp = :endTimestamp, w.jobXml = :jobXml, w.lastModifiedTimestamp = :lastModifiedTimestamp, w.origJobXml = :origJobXml, w.startTimestamp = :startTimestamp, w.status = :status, w.timeUnitStr = :timeUnit, w.pending = :pending where w.id = :id"),
+        @NamedQuery(name = "UPDATE_BUNDLE_JOB", query = "update BundleJobBean w set w.appName = :appName, w.appPath = :appPath, w.conf = :conf, w.externalId = :externalId, w.timeOut = :timeOut, w.createdTimestamp = :createdTimestamp, w.endTimestamp = :endTimestamp, w.jobXml = :jobXml, w.lastModifiedTimestamp = :lastModifiedTimestamp, w.origJobXml = :origJobXml, w.startTimestamp = :startTimestamp, w.status = :status, w.timeUnitStr = :timeUnit, w.pending = :pending where w.id = :id"),
 
         @NamedQuery(name = "UPDATE_BUNDLE_JOB_STATUS", query = "update BundleJobBean w set w.status = :status, w.lastModifiedTimestamp = :lastModifiedTimestamp, w.pending = :pending where w.id = :id"),
 
@@ -85,11 +85,6 @@ public class BundleJobBean extends JsonBundleJob implements Writable {
     @Index
     @Column(name = "status")
     private String status = Job.Status.PREP.toString();
-
-    @Basic
-    @Column(name = "auth_token")
-    @Lob
-    private String authToken = null;
 
     @Basic
     @Column(name = "kickoff_time")
@@ -137,20 +132,6 @@ public class BundleJobBean extends JsonBundleJob implements Writable {
     @Column(name = "orig_job_xml")
     @Lob
     private String origJobXml = null;
-
-    /**
-     * @return the authToken
-     */
-    public String getAuthToken() {
-        return authToken;
-    }
-
-    /**
-     * @param authToken the authToken to set
-     */
-    public void setAuthToken(String authToken) {
-        this.authToken = authToken;
-    }
 
     /**
      * @return the kickoffTimestamp

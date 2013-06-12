@@ -183,8 +183,8 @@ public class CoordinatorActionBean extends JsonCoordinatorAction implements
     @Column(name = "external_id")
     private String externalId;
 
-    @Column(name = "sla_xml")
-    @Lob
+    @Basic
+    @Column(name = "sla_xml", length = 4000)
     private String slaXml = null;
 
     @Basic

@@ -82,7 +82,6 @@ import org.jdom.JDOMException;
 public class ReRunXCommand extends WorkflowXCommand<Void> {
     private final String jobId;
     private Configuration conf;
-    private final String authToken;
     private final Set<String> nodesToSkip = new HashSet<String>();
     public static final String TO_SKIP = "TO_SKIP";
     private WorkflowJobBean wfBean;
@@ -106,11 +105,10 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
         PropertiesUtils.createPropertySet(badDefaultProps, DISALLOWED_DEFAULT_PROPERTIES);
     }
 
-    public ReRunXCommand(String jobId, Configuration conf, String authToken) {
+    public ReRunXCommand(String jobId, Configuration conf) {
         super("rerun", "rerun", 1);
         this.jobId = ParamChecker.notEmpty(jobId, "jobId");
         this.conf = ParamChecker.notNull(conf, "conf");
-        this.authToken = ParamChecker.notEmpty(authToken, "authToken");
     }
 
     /* (non-Javadoc)
@@ -127,8 +125,8 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
         WorkflowAppService wps = Services.get().get(WorkflowAppService.class);
         try {
             XLog.Info.get().setParameter(DagXLogInfoService.TOKEN, conf.get(OozieClient.LOG_TOKEN));
-            WorkflowApp app = wps.parseDef(conf, authToken);
-            XConfiguration protoActionConf = wps.createProtoActionConf(conf, authToken, true);
+            WorkflowApp app = wps.parseDef(conf);
+            XConfiguration protoActionConf = wps.createProtoActionConf(conf, true);
             WorkflowLib workflowLib = Services.get().get(WorkflowStoreService.class).getWorkflowLibWithNoDB();
 
             appPath = conf.get(OozieClient.APP_PATH);

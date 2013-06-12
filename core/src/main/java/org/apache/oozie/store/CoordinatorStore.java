@@ -454,7 +454,6 @@ public class CoordinatorStore extends Store {
         q.setParameter("lastActionNumber", jBean.getLastActionNumber());
         q.setParameter("timeOut", jBean.getTimeout());
         q.setParameter("timeZone", jBean.getTimeZone());
-        q.setParameter("authToken", jBean.getAuthToken());
         q.setParameter("createdTime", jBean.getCreatedTimestamp());
         q.setParameter("endTime", jBean.getEndTimestamp());
         q.setParameter("execution", jBean.getExecution());

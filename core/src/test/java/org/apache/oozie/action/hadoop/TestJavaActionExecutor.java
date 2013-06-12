@@ -989,7 +989,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
     private WorkflowJobBean createWorkflow(WorkflowApp app, Configuration conf, String authToken) throws Exception {
         WorkflowAppService wps = Services.get().get(WorkflowAppService.class);
-        Configuration protoActionConf = wps.createProtoActionConf(conf, authToken, true);
+        Configuration protoActionConf = wps.createProtoActionConf(conf, true);
         WorkflowLib workflowLib = Services.get().get(WorkflowStoreService.class).getWorkflowLibWithNoDB();
         WorkflowInstance wfInstance;
         wfInstance = workflowLib.createInstance(app, conf);
@@ -1005,7 +1005,6 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         workflow.setRun(0);
         workflow.setUser(conf.get(OozieClient.USER_NAME));
         workflow.setGroup(conf.get(OozieClient.GROUP_NAME));
-        workflow.setAuthToken(authToken);
         workflow.setWorkflowInstance(wfInstance);
         return workflow;
     }

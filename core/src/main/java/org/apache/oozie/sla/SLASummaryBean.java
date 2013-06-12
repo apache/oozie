@@ -76,7 +76,7 @@ public class SLASummaryBean implements JsonBean {
     private String appType;
 
     @Basic
-    @Column(name = "user")
+    @Column(name = "user_name")
     private String user;
 
     @Basic

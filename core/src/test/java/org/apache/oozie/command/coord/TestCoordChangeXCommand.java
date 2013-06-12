@@ -401,7 +401,6 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         coordJob.setTimeUnit(Timeunit.MINUTE);
         coordJob.setUser("testUser");
         coordJob.setGroup("testGroup");
-        coordJob.setAuthToken("notoken");
 
         String confStr = "<configuration></configuration>";
         coordJob.setConf(confStr);

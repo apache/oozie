@@ -32,6 +32,7 @@ import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.sql.Clob;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -408,31 +409,120 @@ public class OozieDBCLI {
         PrintWriter writer = new PrintWriter(new FileWriter(sqlFile, true));
         writer.println();
         String dbVendor = getDBVendor();
-        String ddlQuery = null;
+        ArrayList<String> ddlQueries = new ArrayList<String>();
         if (dbVendor.equals("derby")) {
-            ddlQuery = "ALTER TABLE WF_ACTIONS ALTER COLUMN execution_path SET DATA TYPE VARCHAR(1024)";
+            ddlQueries.add("ALTER TABLE WF_ACTIONS ALTER COLUMN execution_path SET DATA TYPE VARCHAR(1024)");
+            // change coord_jobs.sla_xml from clob to varchar(4000)
+            ddlQueries.add("ALTER TABLE COORD_JOBS ADD COLUMN sla_xml_temp VARCHAR(4000)");
+            ddlQueries.add("UPDATE COORD_JOBS SET sla_xml_temp=sla_xml");
+            ddlQueries.add("ALTER TABLE COORD_JOBS DROP COLUMN sla_xml");
+            ddlQueries.add("RENAME COLUMN COORD_JOBS.sla_xml_temp TO sla_xml");
+            // change coord_actions.sla_xml from clob to varchar(4000)
+            ddlQueries.add("ALTER TABLE COORD_ACTIONS ADD COLUMN sla_xml_temp VARCHAR(4000)");
+            ddlQueries.add("UPDATE COORD_ACTIONS SET sla_xml_temp=sla_xml");
+            ddlQueries.add("ALTER TABLE COORD_ACTIONS DROP COLUMN sla_xml");
+            ddlQueries.add("RENAME COLUMN COORD_ACTIONS.sla_xml_temp TO sla_xml");
+            // change wf_jobs.sla_xml from clob to varchar(4000)
+            ddlQueries.add("ALTER TABLE WF_JOBS ADD COLUMN sla_xml_temp VARCHAR(4000)");
+            ddlQueries.add("UPDATE WF_JOBS SET sla_xml_temp=sla_xml");
+            ddlQueries.add("ALTER TABLE WF_JOBS DROP COLUMN sla_xml");
+            ddlQueries.add("RENAME COLUMN WF_JOBS.sla_xml_temp TO sla_xml");
+            // change wf_actions.sla_xml from clob to varchar(4000)
+            ddlQueries.add("ALTER TABLE WF_ACTIONS ADD COLUMN sla_xml_temp VARCHAR(4000)");
+            ddlQueries.add("UPDATE WF_ACTIONS SET sla_xml_temp=sla_xml");
+            ddlQueries.add("ALTER TABLE WF_ACTIONS DROP COLUMN sla_xml");
+            ddlQueries.add("RENAME COLUMN WF_ACTIONS.sla_xml_temp TO sla_xml");
+            // change wf_jobs.error_message from clob to varchar(4000)
+            ddlQueries.add("ALTER TABLE WF_ACTIONS ADD COLUMN error_message_temp VARCHAR(4000)");
+            ddlQueries.add("UPDATE WF_ACTIONS SET error_message_temp=error_message");
+            ddlQueries.add("ALTER TABLE WF_ACTIONS DROP COLUMN error_message");
+            ddlQueries.add("RENAME COLUMN WF_ACTIONS.error_message_temp TO error_message");
+            // change wf_jobs.data from clob to varchar(4000)
+            ddlQueries.add("ALTER TABLE WF_ACTIONS ADD COLUMN data_temp VARCHAR(4000)");
+            ddlQueries.add("UPDATE WF_ACTIONS SET data_temp=data");
+            ddlQueries.add("ALTER TABLE WF_ACTIONS DROP COLUMN data");
+            ddlQueries.add("RENAME COLUMN WF_ACTIONS.data_temp TO data");
         }
         else
         if (dbVendor.equals("oracle")) {
-            ddlQuery = "ALTER TABLE WF_ACTIONS MODIFY (execution_path VARCHAR2(1024))";
+            ddlQueries.add("ALTER TABLE WF_ACTIONS MODIFY (execution_path VARCHAR2(1024))");
+            // change coord_jobs.sla_xml from clob to varchar2(4000)
+            ddlQueries.add("ALTER TABLE COORD_JOBS ADD (sla_xml_temp VARCHAR2(4000))");
+            ddlQueries.add("UPDATE COORD_JOBS SET sla_xml_temp = sla_xml");
+            ddlQueries.add("ALTER TABLE COORD_JOBS DROP COLUMN sla_xml");
+            ddlQueries.add("ALTER TABLE COORD_JOBS RENAME COLUMN sla_xml_temp TO sla_xml");
+            // change coord_actions.sla_xml from clob to varchar2(4000)
+            ddlQueries.add("ALTER TABLE COORD_ACTIONS ADD (sla_xml_temp VARCHAR2(4000))");
+            ddlQueries.add("UPDATE COORD_ACTIONS SET sla_xml_temp = sla_xml");
+            ddlQueries.add("ALTER TABLE COORD_ACTIONS DROP COLUMN sla_xml");
+            ddlQueries.add("ALTER TABLE COORD_ACTIONS RENAME COLUMN sla_xml_temp TO sla_xml");
+            // change wf_jobs.sla_xml from clob to varchar2(4000)
+            ddlQueries.add("ALTER TABLE WF_JOBS ADD (sla_xml_temp VARCHAR2(4000))");
+            ddlQueries.add("UPDATE WF_JOBS SET sla_xml_temp = sla_xml");
+            ddlQueries.add("ALTER TABLE WF_JOBS DROP COLUMN sla_xml");
+            ddlQueries.add("ALTER TABLE WF_JOBS RENAME COLUMN sla_xml_temp TO sla_xml");
+            // change wf_actions.sla_xml from clob to varchar2(4000)
+            ddlQueries.add("ALTER TABLE WF_ACTIONS ADD (sla_xml_temp VARCHAR2(4000))");
+            ddlQueries.add("UPDATE WF_ACTIONS SET sla_xml_temp = sla_xml");
+            ddlQueries.add("ALTER TABLE WF_ACTIONS DROP COLUMN sla_xml");
+            ddlQueries.add("ALTER TABLE WF_ACTIONS RENAME COLUMN sla_xml_temp TO sla_xml");
+            // change wf_jobs.error_message from clob to varchar2(4000)
+            ddlQueries.add("ALTER TABLE WF_ACTIONS ADD (error_message_temp VARCHAR2(4000))");
+            ddlQueries.add("UPDATE WF_ACTIONS SET error_message_temp = error_message");
+            ddlQueries.add("ALTER TABLE WF_ACTIONS DROP COLUMN error_message");
+            ddlQueries.add("ALTER TABLE WF_ACTIONS RENAME COLUMN error_message_temp TO error_message");
+            // change wf_jobs.data from clob to varchar2(4000)
+            ddlQueries.add("ALTER TABLE WF_ACTIONS ADD (data_temp VARCHAR2(4000))");
+            ddlQueries.add("UPDATE WF_ACTIONS SET data_temp = data");
+            ddlQueries.add("ALTER TABLE WF_ACTIONS DROP COLUMN data");
+            ddlQueries.add("ALTER TABLE WF_ACTIONS RENAME COLUMN data_temp TO data");
         }
         else
         if (dbVendor.equals("mysql")) {
-            ddlQuery = "ALTER TABLE WF_ACTIONS MODIFY execution_path VARCHAR(1024)";
+            ddlQueries.add("ALTER TABLE WF_ACTIONS MODIFY execution_path VARCHAR(1024)");
+            ddlQueries.add("ALTER TABLE COORD_JOBS MODIFY sla_xml VARCHAR(4000)");
+            ddlQueries.add("ALTER TABLE COORD_ACTIONS MODIFY sla_xml VARCHAR(4000)");
+            ddlQueries.add("ALTER TABLE WF_JOBS MODIFY sla_xml VARCHAR(4000)");
+            ddlQueries.add("ALTER TABLE WF_ACTIONS MODIFY sla_xml VARCHAR(4000)");
+            ddlQueries.add("ALTER TABLE WF_ACTIONS MODIFY error_message VARCHAR(4000)");
+            ddlQueries.add("ALTER TABLE WF_ACTIONS MODIFY data VARCHAR(4000)");
         }
         else
         if (dbVendor.equals("postgresql")) {
-            ddlQuery = "ALTER TABLE WF_ACTIONS ALTER COLUMN execution_path TYPE VARCHAR(1024)";
+            ddlQueries.add("ALTER TABLE WF_ACTIONS ALTER COLUMN execution_path TYPE VARCHAR(1024)");
+            ddlQueries.add("ALTER TABLE COORD_JOBS ALTER COLUMN sla_xml TYPE VARCHAR(4000)");
+            ddlQueries.add("ALTER TABLE COORD_ACTIONS ALTER COLUMN sla_xml TYPE VARCHAR(4000)");
+            ddlQueries.add("ALTER TABLE WF_JOBS ALTER COLUMN sla_xml TYPE VARCHAR(4000)");
+            ddlQueries.add("ALTER TABLE WF_ACTIONS ALTER COLUMN sla_xml TYPE VARCHAR(4000)");
+            ddlQueries.add("ALTER TABLE WF_ACTIONS ALTER COLUMN error_message TYPE VARCHAR(4000)");
+            ddlQueries.add("ALTER TABLE WF_ACTIONS ALTER COLUMN data TYPE VARCHAR(4000)");
         }
         Connection conn = (run) ? createConnection() : null;
+
         try {
             System.out.println("Table 'WF_ACTIONS' column 'execution_path', length changed to 1024");
-            writer.println(ddlQuery + ";");
-            if (run) {
-                conn.setAutoCommit(true);
-                Statement st = conn.createStatement();
-                st.executeUpdate(ddlQuery);
-                st.close();
+            System.out.println("Table 'COORD_JOB/ACTIONS, WF_JOBS/ACTIONS' column 'sla_xml', changed to varchar/varchar2");
+            System.out.println("Table 'WF_ACTIONS, column 'error_message/data', changed to varchar/varchar2");
+            for(String query : ddlQueries){
+                writer.println(query + ";");
+                if (run) {
+                    conn.setAutoCommit(true);
+                    Statement st = conn.createStatement();
+                    st.executeUpdate(query);
+                    st.close();
+                }
+            }
+            System.out.println("DONE");
+
+            // Drop AUTH_TOKEN from BUNDLE_JOBS, COORD_JOBS, WF_JOBS (OOIZE-1398)
+            System.out.println("Post-upgrade BUNDLE_JOBS, COORD_JOBS, WF_JOBS to drop AUTH_TOKEN column");
+            for (String sql : DROP_AUTH_TOKEN_QUERIES){
+                writer.println(sql + ";");
+                if (run) {
+                    Statement st = conn.createStatement();
+                    st.executeUpdate(sql);
+                    st.close();
+                }
             }
             System.out.println("DONE");
             writer.close();
@@ -443,6 +533,10 @@ public class OozieDBCLI {
             }
         }
     }
+
+    private final static String[] DROP_AUTH_TOKEN_QUERIES = {"ALTER TABLE BUNDLE_JOBS DROP COLUMN AUTH_TOKEN",
+        "ALTER TABLE COORD_JOBS DROP COLUMN AUTH_TOKEN",
+        "ALTER TABLE WF_JOBS DROP COLUMN AUTH_TOKEN"};
 
     private final static String SET_SQL_MEDIUMTEXT_TRUE = "insert into OOZIE_SYS (name, data) values ('mysql.mediumtext', 'true')";
 
@@ -473,7 +567,6 @@ public class OozieDBCLI {
     }
 
     private final static String[] SQL_MEDIUMTEXT_DDL_QUERIES = {"ALTER TABLE BUNDLE_JOBS MODIFY conf MEDIUMTEXT",
-                                                                "ALTER TABLE BUNDLE_JOBS MODIFY auth_token MEDIUMTEXT",
                                                                 "ALTER TABLE BUNDLE_JOBS MODIFY job_xml MEDIUMTEXT",
                                                                 "ALTER TABLE BUNDLE_JOBS MODIFY orig_job_xml MEDIUMTEXT",
 
@@ -481,29 +574,21 @@ public class OozieDBCLI {
                                                                 "ALTER TABLE COORD_ACTIONS MODIFY created_conf MEDIUMTEXT",
                                                                 "ALTER TABLE COORD_ACTIONS MODIFY missing_dependencies MEDIUMTEXT",
                                                                 "ALTER TABLE COORD_ACTIONS MODIFY run_conf MEDIUMTEXT",
-                                                                "ALTER TABLE COORD_ACTIONS MODIFY sla_xml MEDIUMTEXT",
 
                                                                 "ALTER TABLE COORD_JOBS MODIFY conf MEDIUMTEXT",
-                                                                "ALTER TABLE COORD_JOBS MODIFY auth_token MEDIUMTEXT",
                                                                 "ALTER TABLE COORD_JOBS MODIFY job_xml MEDIUMTEXT",
                                                                 "ALTER TABLE COORD_JOBS MODIFY orig_job_xml MEDIUMTEXT",
-                                                                "ALTER TABLE COORD_JOBS MODIFY sla_xml MEDIUMTEXT",
 
                                                                 "ALTER TABLE SLA_EVENTS MODIFY job_data MEDIUMTEXT",
                                                                 "ALTER TABLE SLA_EVENTS MODIFY notification_msg MEDIUMTEXT",
                                                                 "ALTER TABLE SLA_EVENTS MODIFY upstream_apps MEDIUMTEXT",
 
                                                                 "ALTER TABLE WF_ACTIONS MODIFY conf MEDIUMTEXT",
-                                                                "ALTER TABLE WF_ACTIONS MODIFY data MEDIUMTEXT",
-                                                                "ALTER TABLE WF_ACTIONS MODIFY error_message MEDIUMTEXT",
                                                                 "ALTER TABLE WF_ACTIONS MODIFY external_child_ids MEDIUMTEXT",
                                                                 "ALTER TABLE WF_ACTIONS MODIFY stats MEDIUMTEXT",
-                                                                "ALTER TABLE WF_ACTIONS MODIFY sla_xml MEDIUMTEXT",
 
                                                                 "ALTER TABLE WF_JOBS MODIFY conf MEDIUMTEXT",
-                                                                "ALTER TABLE WF_JOBS MODIFY auth_token MEDIUMTEXT",
-                                                                "ALTER TABLE WF_JOBS MODIFY proto_action_conf MEDIUMTEXT",
-                                                                "ALTER TABLE WF_JOBS MODIFY sla_xml MEDIUMTEXT"};
+                                                                "ALTER TABLE WF_JOBS MODIFY proto_action_conf MEDIUMTEXT"};
 
     private void doSQLMediumTextTweaks(String sqlFile, boolean run) throws Exception {
         if (getDBVendor().equals("mysql")) {

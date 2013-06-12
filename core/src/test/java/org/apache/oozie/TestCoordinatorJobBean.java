@@ -51,7 +51,6 @@ public class TestCoordinatorJobBean extends XTestCase {
         bean.setAppName("an");
         bean.setAppNamespace("ans");
         bean.setAppPath("ap");
-        bean.setAuthToken("at");
         bean.setBundleId("bi");
         bean.setConcurrency(2);
         bean.setConf("c");
@@ -107,7 +106,6 @@ public class TestCoordinatorJobBean extends XTestCase {
         assertEquals("ans", bean.getAppNamespace());
         assertEquals("ap", bean.getAppPath());
         if (checkDeserialization) {
-            assertEquals("at", bean.getAuthToken());
             assertEquals("bi", bean.getBundleId());
         }
         assertEquals(2, bean.getConcurrency());

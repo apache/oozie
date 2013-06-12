@@ -1012,7 +1012,6 @@ public class TestCoordRerunXCommand extends XDataTestCase {
         coordJob.setLastModifiedTime(new Date());
         coordJob.setUser(getTestUser());
         coordJob.setGroup(getTestGroup());
-        coordJob.setAuthToken("notoken");
 
         Properties conf = getCoordProp(appPath);
         String confStr = XmlUtils.writePropToString(conf);

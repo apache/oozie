@@ -91,7 +91,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
 
             WorkflowAppService wps = services.get(WorkflowAppService.class);
             String wfDef = wps.readDefinition("file://" + getTestCaseDir() + File.separator + "workflow.xml",
-                                              getTestUser(), "authToken", conf);
+                                              getTestUser(), conf);
             assertNotNull(reader.toString(), wfDef);
         }
         finally {
@@ -118,7 +118,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
 
             WorkflowAppService wps = services.get(WorkflowAppService.class);
             wps.readDefinition("file://" + getTestCaseDir() + File.separator + "workflow.xml", getTestUser(),
-                    "authToken", conf);
+                    conf);
             fail("an exception should be thrown as the definition exceeds the given maximum");
         }
         catch (WorkflowException wfe) {
@@ -134,7 +134,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
         services.init();
         WorkflowAppService wps = services.get(WorkflowAppService.class);
         try {
-            assertNotNull(wps.parseDef(new XConfiguration(), "authToken"));
+            assertNotNull(wps.parseDef(new XConfiguration()));
             fail();
         }
         catch (Exception ex) {
@@ -161,7 +161,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             jobConf.set(OozieClient.USER_NAME, getTestUser());
 
 
-            WorkflowApp app = wps.parseDef(jobConf, "authToken");
+            WorkflowApp app = wps.parseDef(jobConf);
             assertNotNull(app);
             assertEquals("test-wf", app.getName());
 
@@ -170,7 +170,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             IOUtils.copyCharStream(reader, writer);
 
             try {
-                wps.parseDef(jobConf, "authToken");
+                wps.parseDef(jobConf);
                 fail();
             }
             catch (WorkflowException ex) {
@@ -201,7 +201,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             jobConf.set(OozieClient.USER_NAME, getTestUser());
 
 
-            LiteWorkflowApp app = (LiteWorkflowApp) wps.parseDef(jobConf, "authToken");
+            LiteWorkflowApp app = (LiteWorkflowApp) wps.parseDef(jobConf);
             assertNotNull(app);
             assertEquals("test-wf", app.getName());
 
@@ -210,7 +210,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             IOUtils.copyCharStream(reader, writer);
 
             try {
-                wps.parseDef(jobConf, "authToken");
+                wps.parseDef(jobConf);
                 fail();
             }
             catch (WorkflowException ex) {
@@ -240,7 +240,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
 
 
             try {
-                LiteWorkflowApp app = (LiteWorkflowApp) wps.parseDef(jobConf, "authToken");
+                LiteWorkflowApp app = (LiteWorkflowApp) wps.parseDef(jobConf);
                 fail();
             }
             catch (WorkflowException ex) {
@@ -268,7 +268,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             jobConf.set(OozieClient.USER_NAME, getTestUser());
 
 
-            LiteWorkflowApp app = (LiteWorkflowApp) wps.parseDef(jobConf, "authToken");
+            LiteWorkflowApp app = (LiteWorkflowApp) wps.parseDef(jobConf);
             assertNotNull(app);
             assertEquals("test-wf", app.getName());
             assertNotNull(app.getNode(StartNodeDef.START));
@@ -326,7 +326,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
             jobConf.set(OozieClient.USER_NAME, getTestUser());
 
-            Configuration protoConf = wps.createProtoActionConf(jobConf, "authToken", true);
+            Configuration protoConf = wps.createProtoActionConf(jobConf, true);
             assertEquals(getTestUser(), protoConf.get(OozieClient.USER_NAME));
 
             assertEquals(2, protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST).length);
@@ -368,7 +368,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             jobConf.set(OozieClient.LIBPATH, "file://" + getTestCaseDir() + "/libx");
             jobConf.set(OozieClient.USER_NAME, getTestUser());
 
-            Configuration protoConf = wps.createProtoActionConf(jobConf, "authToken", true);
+            Configuration protoConf = wps.createProtoActionConf(jobConf, true);
             assertEquals(getTestUser(), protoConf.get(OozieClient.USER_NAME));
 
             assertEquals(3, protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST).length);
@@ -427,7 +427,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
                     "file://" + getTestCaseDir() + "/liby", "file://" + getTestCaseDir() + "/libz");
             jobConf.set(OozieClient.USER_NAME, getTestUser());
 
-            Configuration protoConf = wps.createProtoActionConf(jobConf, "authToken", true);
+            Configuration protoConf = wps.createProtoActionConf(jobConf, true);
             assertEquals(getTestUser(), protoConf.get(OozieClient.USER_NAME));
 
             assertEquals(6, protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST).length);
@@ -622,7 +622,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             // Set the parent libs
             jobConf.setStrings(WorkflowAppService.APP_LIB_PATH_LIST, parentLibsFullPaths);
 
-            Configuration protoConf = wps.createProtoActionConf(jobConf, "authToken", true);
+            Configuration protoConf = wps.createProtoActionConf(jobConf, true);
             assertEquals(getTestUser(), protoConf.get(OozieClient.USER_NAME));
 
             String[] foundLibs = protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST);

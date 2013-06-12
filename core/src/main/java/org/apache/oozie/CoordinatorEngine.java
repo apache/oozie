@@ -75,12 +75,10 @@ public class CoordinatorEngine extends BaseEngine {
      * Create a Coordinator engine to perform operations on behave of a user.
      *
      * @param user user name.
-     * @param authToken the authentication token.
      */
-    public CoordinatorEngine(String user, String authToken) {
+    public CoordinatorEngine(String user) {
         this();
         this.user = ParamChecker.notEmpty(user, "user");
-        this.authToken = ParamChecker.notEmpty(authToken, "authToken");
     }
 
     /*
@@ -376,8 +374,7 @@ public class CoordinatorEngine extends BaseEngine {
     @Override
     public String submitJob(Configuration conf, boolean startJob) throws CoordinatorEngineException {
         try {
-            CoordSubmitXCommand submit = new CoordSubmitXCommand(conf,
-                    getAuthToken());
+            CoordSubmitXCommand submit = new CoordSubmitXCommand(conf);
             return submit.call();
         }
         catch (CommandException ex) {
@@ -394,8 +391,7 @@ public class CoordinatorEngine extends BaseEngine {
     @Override
     public String dryRunSubmit(Configuration conf) throws CoordinatorEngineException {
         try {
-            CoordSubmitXCommand submit = new CoordSubmitXCommand(true, conf,
-                    getAuthToken());
+            CoordSubmitXCommand submit = new CoordSubmitXCommand(true, conf);
             return submit.call();
         }
         catch (CommandException ex) {

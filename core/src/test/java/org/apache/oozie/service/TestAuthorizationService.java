@@ -120,7 +120,7 @@ public class TestAuthorizationService extends XDataTestCase {
         Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
         IOUtils.copyCharStream(reader, writer);
 
-        final DagEngine engine = new DagEngine(getTestUser(), "a");
+        final DagEngine engine = new DagEngine(getTestUser());
         Configuration jobConf = new XConfiguration();
         jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
         jobConf.set(OozieClient.USER_NAME, getTestUser());

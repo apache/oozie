@@ -269,7 +269,7 @@ public class BundleStartXCommand extends StartTransitionXCommand {
                     Configuration coordConf = mergeConfig(coordElem);
                     coordConf.set(OozieClient.BUNDLE_ID, jobId);
 
-                    queue(new CoordSubmitXCommand(coordConf, bundleJob.getAuthToken(), bundleJob.getId(), name.getValue()));
+                    queue(new CoordSubmitXCommand(coordConf, bundleJob.getId(), name.getValue()));
 
                 }
                 updateBundleAction();

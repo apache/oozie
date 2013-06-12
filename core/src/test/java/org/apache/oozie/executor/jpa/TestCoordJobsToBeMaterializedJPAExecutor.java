@@ -109,7 +109,6 @@ public class TestCoordJobsToBeMaterializedJPAExecutor extends XFsTestCase {
         coordJob.setLastModifiedTime(new Date());
         coordJob.setUser(getTestUser());
         coordJob.setGroup(getTestGroup());
-        coordJob.setAuthToken("notoken");
 
         Properties conf = getCoordConf(appPath);
         String confStr = XmlUtils.writePropToString(conf);

@@ -866,7 +866,6 @@ public class WorkflowStore extends Store {
         wfBean.setGroup(w.getGroup());
         wfBean.setRun(w.getRun());
         wfBean.setUser(w.getUser());
-        wfBean.setAuthToken(w.getAuthToken());
         wfBean.setCreatedTime(w.getCreatedTime());
         wfBean.setEndTime(w.getEndTime());
         wfBean.setExternalId(w.getExternalId());
@@ -960,7 +959,6 @@ public class WorkflowStore extends Store {
         q.setParameter("groupName", wfBean.getGroup());
         q.setParameter("run", wfBean.getRun());
         q.setParameter("user", wfBean.getUser());
-        q.setParameter("authToken", wfBean.getAuthToken());
         q.setParameter("createdTime", wfBean.getCreatedTimestamp());
         q.setParameter("endTime", wfBean.getEndTimestamp());
         q.setParameter("externalId", wfBean.getExternalId());

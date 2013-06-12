@@ -118,7 +118,7 @@ public class TestFutureActionsTimeOut extends XTestCase {
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
 
-        CoordinatorEngine ce = new CoordinatorEngine(getTestUser(), "UNIT_TESTING");
+        CoordinatorEngine ce = new CoordinatorEngine(getTestUser());
         String jobId = ce.submitJob(conf, true);
         assertEquals(jobId.substring(jobId.length() - 2), "-C");
         checkCoordJob(jobId);
@@ -168,7 +168,7 @@ public class TestFutureActionsTimeOut extends XTestCase {
      * @throws Exception thrown if failed
      */
     private void _testTimeout(final String jobId, Date createDate) throws Exception {
-        final CoordinatorEngine ce = new CoordinatorEngine(getTestUser(), "UNIT_TESTING");
+        final CoordinatorEngine ce = new CoordinatorEngine(getTestUser());
 
         waitFor(12000, new Predicate() {
             public boolean evaluate() throws Exception {

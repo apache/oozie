@@ -248,7 +248,7 @@ public class TestActionErrors extends XDataTestCase {
         Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
         IOUtils.copyCharStream(reader, writer);
 
-        final DagEngine engine = new DagEngine("u", "a");
+        final DagEngine engine = new DagEngine("u");
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
@@ -303,7 +303,7 @@ public class TestActionErrors extends XDataTestCase {
         Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
         IOUtils.copyCharStream(reader, writer);
 
-        final DagEngine engine = new DagEngine("u", "a");
+        final DagEngine engine = new DagEngine("u");
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
@@ -374,7 +374,7 @@ public class TestActionErrors extends XDataTestCase {
         Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
         IOUtils.copyCharStream(reader, writer);
 
-        final DagEngine engine = new DagEngine("u", "a");
+        final DagEngine engine = new DagEngine("u");
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
@@ -443,7 +443,7 @@ public class TestActionErrors extends XDataTestCase {
         final int maxRetries = 2;
         final int retryInterval = 10;
 
-        final DagEngine engine = new DagEngine("u", "a");
+        final DagEngine engine = new DagEngine("u");
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
@@ -528,7 +528,7 @@ public class TestActionErrors extends XDataTestCase {
         Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
         IOUtils.copyCharStream(reader, writer);
 
-        final DagEngine engine = new DagEngine("u", "a");
+        final DagEngine engine = new DagEngine("u");
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
@@ -566,7 +566,7 @@ public class TestActionErrors extends XDataTestCase {
         Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
         IOUtils.copyCharStream(reader, writer);
 
-        final DagEngine engine = new DagEngine("u", "a");
+        final DagEngine engine = new DagEngine("u");
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
@@ -620,7 +620,7 @@ public class TestActionErrors extends XDataTestCase {
         Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
         IOUtils.copyCharStream(reader, writer);
 
-        final DagEngine engine = new DagEngine("u", "a");
+        final DagEngine engine = new DagEngine("u");
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());

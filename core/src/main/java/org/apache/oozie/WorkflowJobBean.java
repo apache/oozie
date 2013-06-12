@@ -44,7 +44,7 @@ import org.apache.openjpa.persistence.jdbc.Index;
 @Entity
 @NamedQueries({
 
-    @NamedQuery(name = "UPDATE_WORKFLOW", query = "update WorkflowJobBean w set w.appName = :appName, w.appPath = :appPath, w.conf = :conf, w.group = :groupName, w.run = :run, w.user = :user, w.authToken = :authToken, w.createdTimestamp = :createdTime, w.endTimestamp = :endTime, w.externalId = :externalId, w.lastModifiedTimestamp = :lastModTime, w.logToken = :logToken, w.protoActionConf = :protoActionConf, w.slaXml =:slaXml, w.startTimestamp = :startTime, w.status = :status, w.wfInstance = :wfInstance where w.id = :id"),
+    @NamedQuery(name = "UPDATE_WORKFLOW", query = "update WorkflowJobBean w set w.appName = :appName, w.appPath = :appPath, w.conf = :conf, w.group = :groupName, w.run = :run, w.user = :user, w.createdTimestamp = :createdTime, w.endTimestamp = :endTime, w.externalId = :externalId, w.lastModifiedTimestamp = :lastModTime,w.logToken = :logToken, w.protoActionConf = :protoActionConf, w.slaXml =:slaXml, w.startTimestamp = :startTime, w.status = :status, w.wfInstance = :wfInstance where w.id = :id"),
 
     @NamedQuery(name = "DELETE_WORKFLOW", query = "delete from WorkflowJobBean w where w.id = :id"),
 
@@ -108,10 +108,6 @@ public class WorkflowJobBean extends JsonWorkflowJob implements Writable {
     @Column(name = "end_time")
     private java.sql.Timestamp endTimestamp = null;
 
-    @Column(name = "auth_token")
-    @Lob
-    private String authToken = null;
-
     @Basic
     @Index
     @Column(name = "last_modified_time")
@@ -123,8 +119,8 @@ public class WorkflowJobBean extends JsonWorkflowJob implements Writable {
     @Lob
     private byte[] wfInstance = null;
 
-    @Column(name = "sla_xml")
-    @Lob
+    @Basic
+    @Column(name = "sla_xml", length = 4000)
     private String slaXml = null;
 
     /**
@@ -153,7 +149,6 @@ public class WorkflowJobBean extends JsonWorkflowJob implements Writable {
         WritableUtils.writeStr(dataOutput, getUser());
         WritableUtils.writeStr(dataOutput, getGroup());
         dataOutput.writeInt(getRun());
-        WritableUtils.writeStr(dataOutput, authToken);
         WritableUtils.writeStr(dataOutput, logToken);
         WritableUtils.writeStr(dataOutput, protoActionConf);
     }
@@ -191,19 +186,10 @@ public class WorkflowJobBean extends JsonWorkflowJob implements Writable {
         setUser(WritableUtils.readStr(dataInput));
         setGroup(WritableUtils.readStr(dataInput));
         setRun(dataInput.readInt());
-        authToken = WritableUtils.readStr(dataInput);
         logToken = WritableUtils.readStr(dataInput);
         protoActionConf = WritableUtils.readStr(dataInput);
         setExternalId(getExternalId());
         setProtoActionConf(protoActionConf);
-    }
-
-    public String getAuthToken() {
-        return authToken;
-    }
-
-    public void setAuthToken(String authToken) {
-        this.authToken = authToken;
     }
 
     public String getLogToken() {

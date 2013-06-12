@@ -121,7 +121,6 @@ public class TestCoordJobsGetForPurgeJPAExecutor extends XFsTestCase {
         coordJob.setLastModifiedTime(d);
         coordJob.setUser(getTestUser());
         coordJob.setGroup(getTestGroup());
-        coordJob.setAuthToken("notoken");
 
         Properties conf = getCoordConf(appPath);
         String confStr = XmlUtils.writePropToString(conf);

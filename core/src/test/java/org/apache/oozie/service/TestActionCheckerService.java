@@ -90,7 +90,7 @@ public class TestActionCheckerService extends XDataTestCase {
         Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
         IOUtils.copyCharStream(reader, writer);
 
-        final DagEngine engine = new DagEngine(getTestUser(), "a");
+        final DagEngine engine = new DagEngine(getTestUser());
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(WorkflowAppService.HADOOP_USER, getTestUser());
@@ -153,7 +153,7 @@ public class TestActionCheckerService extends XDataTestCase {
         Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
         IOUtils.copyCharStream(reader, writer);
 
-        final DagEngine engine = new DagEngine("u", "a");
+        final DagEngine engine = new DagEngine("u");
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
         conf.setStrings(WorkflowAppService.HADOOP_USER, getTestUser());
@@ -223,7 +223,7 @@ public class TestActionCheckerService extends XDataTestCase {
      */
     public void testActionCheckerServiceCoord() throws Exception {
         final int actionNum = 1;
-        final CoordinatorEngine ce = new CoordinatorEngine(getTestUser(), "UNIT_TESTING");
+        final CoordinatorEngine ce = new CoordinatorEngine(getTestUser());
         String currentDatePlusMonth = XDataTestCase.getCurrentDateafterIncrementingInMonths(1);
         Date start = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
         Date end = DateUtils.parseDateOozieTZ(currentDatePlusMonth);

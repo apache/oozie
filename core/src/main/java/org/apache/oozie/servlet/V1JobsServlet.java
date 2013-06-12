@@ -175,7 +175,7 @@ public class V1JobsServlet extends BaseJobsServlet {
             }
             boolean startJob = (action != null);
             String user = conf.get(OozieClient.USER_NAME);
-            DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(user, getAuthToken(request));
+            DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(user);
             String id;
             boolean dryrun = false;
             if (action != null) {
@@ -214,7 +214,7 @@ public class V1JobsServlet extends BaseJobsServlet {
             boolean startJob = (action != null);
             String user = conf.get(OozieClient.USER_NAME);
             CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(
-                    user, getAuthToken(request));
+                    user);
             String id = null;
             boolean dryrun = false;
             if (action != null) {
@@ -251,8 +251,7 @@ public class V1JobsServlet extends BaseJobsServlet {
             }
             boolean startJob = (action != null);
             String user = conf.get(OozieClient.USER_NAME);
-            BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(user,
-                    getAuthToken(request));
+            BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(user);
             String id = null;
             boolean dryrun = false;
             if (action != null) {
@@ -281,8 +280,7 @@ public class V1JobsServlet extends BaseJobsServlet {
             throws XServletException {
         JSONObject json = new JSONObject();
         try {
-            DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
-                    getAuthToken(request));
+            DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request));
             String jobId = dagEngine.getJobIdForExternalId(externalId);
             json.put(JsonTags.JOB_ID, jobId);
         }
@@ -317,8 +315,7 @@ public class V1JobsServlet extends BaseJobsServlet {
             start = (start < 1) ? 1 : start;
             int len = (lenStr != null) ? Integer.parseInt(lenStr) : 50;
             len = (len < 1) ? 50 : len;
-            DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
-                    getAuthToken(request));
+            DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request));
             WorkflowsInfo jobs = dagEngine.getJobs(filter, start, len);
             List<WorkflowJobBean> jsonWorkflows = jobs.getWorkflows();
             json.put(JsonTags.WORKFLOWS_JOBS, WorkflowJobBean.toJSONArray(jsonWorkflows, timeZoneId));
@@ -352,7 +349,7 @@ public class V1JobsServlet extends BaseJobsServlet {
             int len = (lenStr != null) ? Integer.parseInt(lenStr) : 50;
             len = (len < 1) ? 50 : len;
             CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(
-                    getUser(request), getAuthToken(request));
+                    getUser(request));
             CoordinatorJobInfo jobs = coordEngine.getCoordJobs(filter, start, len);
             List<CoordinatorJobBean> jsonJobs = jobs.getCoordJobs();
             json.put(JsonTags.COORDINATOR_JOBS, CoordinatorJobBean.toJSONArray(jsonJobs, timeZoneId));
@@ -381,8 +378,7 @@ public class V1JobsServlet extends BaseJobsServlet {
             int len = (lenStr != null) ? Integer.parseInt(lenStr) : 50;
             len = (len < 1) ? 50 : len;
 
-            BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request),
-                    getAuthToken(request));
+            BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request));
             BundleJobInfo jobs = bundleEngine.getBundleJobs(filter, start, len);
             List<BundleJobBean> jsonJobs = jobs.getBundleJobs();
 
@@ -412,8 +408,7 @@ public class V1JobsServlet extends BaseJobsServlet {
             int len = (lenStr != null) ? Integer.parseInt(lenStr) : 50;
             len = (len < 1) ? 50 : len;
 
-            BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request),
-                    getAuthToken(request));
+            BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request));
             BulkResponseInfo bulkResponse = bundleEngine.getBulkJobs(bulkFilter, start, len);
             List<BulkResponseImpl> responsesToJson = bulkResponse.getResponses();
 
@@ -438,7 +433,7 @@ public class V1JobsServlet extends BaseJobsServlet {
 
         try {
             String user = conf.get(OozieClient.USER_NAME);
-            DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(user, getAuthToken(request));
+            DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(user);
             String id = dagEngine.submitHttpJob(conf, jobType);
             json.put(JsonTags.JOB_ID, id);
         }

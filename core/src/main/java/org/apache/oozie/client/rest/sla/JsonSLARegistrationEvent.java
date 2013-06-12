@@ -40,12 +40,10 @@ import org.json.simple.JSONObject;
 
 @Entity
 @Table(name = "SLA_REGISTRATION")
-@DiscriminatorColumn(name = "bean_type", discriminatorType = DiscriminatorType.STRING)
 public class JsonSLARegistrationEvent extends SLAEvent implements JsonBean {
 
     @Id
     @Basic
-    @Index
     @Column(name = "job_id")
     private String jobId;
 

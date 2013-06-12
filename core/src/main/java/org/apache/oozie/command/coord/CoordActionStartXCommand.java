@@ -68,20 +68,18 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
     private String actionId = null;
     private String user = null;
     private String appName = null;
-    private String authToken = null;
     private CoordinatorActionBean coordAction = null;
     private JPAService jpaService = null;
     private String jobId = null;
     private List<JsonBean> updateList = new ArrayList<JsonBean>();
     private List<JsonBean> insertList = new ArrayList<JsonBean>();
 
-    public CoordActionStartXCommand(String id, String user, String appName, String token, String jobId) {
+    public CoordActionStartXCommand(String id, String user, String appName, String jobId) {
         //super("coord_action_start", "coord_action_start", 1, XLog.OPS);
         super("coord_action_start", "coord_action_start", 1);
         this.actionId = ParamChecker.notEmpty(id, "id");
         this.user = ParamChecker.notEmpty(user, "user");
         this.appName = ParamChecker.notEmpty(appName, "appName");
-        this.authToken = ParamChecker.notEmpty(token, "token");
         this.jobId = jobId;
     }
 
@@ -156,7 +154,6 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
         String errCode = "";
         String errMsg = "";
         ParamChecker.notEmpty(user, "user");
-        ParamChecker.notEmpty(authToken, "authToken");
 
         log.debug("actionid=" + actionId + ", status=" + coordAction.getStatus());
         if (coordAction.getStatus() == CoordinatorAction.Status.SUBMITTED) {
@@ -166,7 +163,7 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
             coordAction.setRunConf(XmlUtils.prettyPrint(runConf).toString());
             // log.debug("%%% merged runconf=" +
             // XmlUtils.prettyPrint(runConf).toString());
-            DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(user, authToken);
+            DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(user);
             try {
                 boolean startJob = true;
                 Configuration conf = new XConfiguration(new StringReader(coordAction.getRunConf()));

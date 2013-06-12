@@ -22,8 +22,8 @@ import org.apache.oozie.client.XOozieClient;
 import org.jdom.Namespace;
 
 public class SubmitHiveXCommand extends SubmitScriptLanguageXCommand {
-    public SubmitHiveXCommand(Configuration conf, String authToken) {
-        super("submitHive", "submitHive", conf, authToken);
+    public SubmitHiveXCommand(Configuration conf) {
+        super("submitHive", "submitHive", conf);
     }
 
     protected String getLanguageName(){

@@ -96,7 +96,7 @@ public class TestPurgeService extends XDataTestCase {
         Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
         IOUtils.copyCharStream(reader, writer);
 
-        final DagEngine engine = new DagEngine("u", "a");
+        final DagEngine engine = new DagEngine("u");
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
         conf.setStrings(OozieClient.USER_NAME, getTestUser());
@@ -184,7 +184,7 @@ public class TestPurgeService extends XDataTestCase {
         Runnable purgeRunnable = new PurgeRunnable(1, 1, 1, 100);
         purgeRunnable.run();
 
-        final CoordinatorEngine engine = new CoordinatorEngine("u", "a");
+        final CoordinatorEngine engine = new CoordinatorEngine("u");
         waitFor(10000, new Predicate() {
             public boolean evaluate() throws Exception {
                 try {
@@ -247,7 +247,7 @@ public class TestPurgeService extends XDataTestCase {
         Runnable purgeRunnable = new PurgeRunnable(1, 1, 1, 100);
         purgeRunnable.run();
 
-        final BundleEngine engine = new BundleEngine("u", "a");
+        final BundleEngine engine = new BundleEngine("u");
         waitFor(10000, new Predicate() {
             public boolean evaluate() throws Exception {
                 try {

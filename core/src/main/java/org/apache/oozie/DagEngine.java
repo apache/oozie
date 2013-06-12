@@ -83,13 +83,11 @@ public class DagEngine extends BaseEngine {
      * Create a Dag engine to perform operations on behave of a user.
      *
      * @param user user name.
-     * @param authToken the authentication token.
      */
-    public DagEngine(String user, String authToken) {
+    public DagEngine(String user) {
         this();
 
         this.user = ParamChecker.notEmpty(user, "user");
-        this.authToken = ParamChecker.notEmpty(authToken, "authToken");
     }
 
     /**
@@ -105,13 +103,13 @@ public class DagEngine extends BaseEngine {
         validateSubmitConfiguration(conf);
 
         try {
-			String jobId;
-			SubmitXCommand submit = new SubmitXCommand(conf, getAuthToken());
-			jobId = submit.call();
-			if (startJob) {
-				start(jobId);
-			}
-			return jobId;
+            String jobId;
+            SubmitXCommand submit = new SubmitXCommand(conf);
+            jobId = submit.call();
+            if (startJob) {
+                start(jobId);
+            }
+            return jobId;
         }
         catch (CommandException ex) {
             throw new DagEngineException(ex);
@@ -135,13 +133,13 @@ public class DagEngine extends BaseEngine {
             String jobId;
             SubmitHttpXCommand submit = null;
             if (jobType.equals("pig")) {
-                submit = new SubmitPigXCommand(conf, getAuthToken());
+                submit = new SubmitPigXCommand(conf);
             }
             else if (jobType.equals("mapreduce")) {
-                submit = new SubmitMRXCommand(conf, getAuthToken());
+                submit = new SubmitMRXCommand(conf);
             }
             else if (jobType.equals("hive")) {
-                submit = new SubmitHiveXCommand(conf, getAuthToken());
+                submit = new SubmitHiveXCommand(conf);
             }
 
             jobId = submit.call();
@@ -256,7 +254,7 @@ public class DagEngine extends BaseEngine {
     public void reRun(String jobId, Configuration conf) throws DagEngineException {
         try {
             validateReRunConfiguration(conf);
-			new ReRunXCommand(jobId, conf, getAuthToken()).call();
+            new ReRunXCommand(jobId, conf).call();
             start(jobId);
         }
         catch (CommandException ex) {
@@ -489,7 +487,7 @@ public class DagEngine extends BaseEngine {
     @Override
     public String dryRunSubmit(Configuration conf) throws BaseEngineException {
         try {
-            SubmitXCommand submit = new SubmitXCommand(true, conf, getAuthToken());
+            SubmitXCommand submit = new SubmitXCommand(true, conf);
             return submit.call();
         } catch (CommandException ex) {
             throw new DagEngineException(ex);

@@ -105,7 +105,7 @@ public class TestWorkflowJobsGetForPurgeJPAExecutor extends XDataTestCase {
         conf.set(OozieClient.LOG_TOKEN, "testToken");
         conf.set(OozieClient.USER_NAME, getTestUser());
 
-        WorkflowJobBean wfBean = createWorkflow(app, conf, "auth", jobStatus, instanceStatus);
+        WorkflowJobBean wfBean = createWorkflow(app, conf, jobStatus, instanceStatus);
         Timestamp startTS = new Timestamp(System.currentTimeMillis() - (3 * DAY_IN_MS));
         Timestamp endTS = new Timestamp(System.currentTimeMillis() - (2 * DAY_IN_MS));
         wfBean.setStartTime(DateUtils.toDate(startTS));

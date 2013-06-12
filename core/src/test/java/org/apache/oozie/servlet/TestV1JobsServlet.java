@@ -103,7 +103,7 @@ public class TestV1JobsServlet extends DagServletTestCase {
                              obj.get(JsonTags.JOB_ID));
                 assertTrue(MockDagEngineService.started.get(wfCount));
                 Services services = Services.get();
-                DagEngine de = services.get(DagEngineService.class).getDagEngine(getTestUser(), "undef");
+                DagEngine de = services.get(DagEngineService.class).getDagEngine(getTestUser());
                 StringReader sr = new StringReader(de.getJob(MockDagEngineService.JOB_ID + wfCount).getConf());
                 Configuration conf1 = new XConfiguration(sr);
                 wfCount++;

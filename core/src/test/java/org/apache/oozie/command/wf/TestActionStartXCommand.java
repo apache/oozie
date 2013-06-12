@@ -258,7 +258,7 @@ public class TestActionStartXCommand extends XDataTestCase {
         conf.set(OozieClient.LOG_TOKEN, "testToken");
         conf.set(OozieClient.USER_NAME, getTestUser());
 
-        WorkflowJobBean wfBean = createWorkflow(app, conf, "auth", jobStatus, instanceStatus);
+        WorkflowJobBean wfBean = createWorkflow(app, conf, jobStatus, instanceStatus);
 
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
@@ -439,7 +439,7 @@ public class TestActionStartXCommand extends XDataTestCase {
         conf.set("testCDATA",
                         "<![CDATA[?redirect=http%3A%2F%2Ftest.apache.com%2Fa-webservices%2Fv1%2FurlSigner%2FsignUrl&amp;namespace=nova.proxy&amp;keyDBHash=Vsy6n_C7K6NG0z4R2eBlKg--]]>");
 
-        WorkflowJobBean wfBean = createWorkflow(app, conf, "auth", jobStatus, instanceStatus);
+        WorkflowJobBean wfBean = createWorkflow(app, conf, jobStatus, instanceStatus);
 
         try {
             JPAService jpaService = Services.get().get(JPAService.class);

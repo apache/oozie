@@ -75,7 +75,7 @@ public class TestBundleSubmitXCommand extends XDataTestCase {
         Path appPath = new Path(jobConf.get(OozieClient.BUNDLE_APP_PATH), "bundle.xml");
         jobConf.set(OozieClient.BUNDLE_APP_PATH, appPath.toString());
 
-        BundleSubmitXCommand command = new BundleSubmitXCommand(true, jobConf, CREATE_TIME);
+        BundleSubmitXCommand command = new BundleSubmitXCommand(true, jobConf);
         BundleJobBean bundleBean = (BundleJobBean)command.getJob();
         bundleBean.setStartTime(new Date());
         bundleBean.setEndTime(new Date());
