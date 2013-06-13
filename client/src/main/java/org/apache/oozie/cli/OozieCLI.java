@@ -178,7 +178,7 @@ public class OozieCLI {
      * @param args options and arguments for the Oozie CLI.
      */
     public static void main(String[] args) {
-        if (!System.getProperties().contains(AuthOozieClient.USE_AUTH_TOKEN_CACHE_SYS_PROP)) {
+        if (!System.getProperties().containsKey(AuthOozieClient.USE_AUTH_TOKEN_CACHE_SYS_PROP)) {
             System.setProperty(AuthOozieClient.USE_AUTH_TOKEN_CACHE_SYS_PROP, "true");
         }
         System.exit(new OozieCLI().run(args));
