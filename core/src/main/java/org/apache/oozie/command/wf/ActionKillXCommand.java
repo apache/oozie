@@ -130,6 +130,7 @@ public class ActionKillXCommand extends ActionXCommand<Void> {
 
                     wfAction.resetPending();
                     wfAction.setStatus(WorkflowActionBean.Status.KILLED);
+                    wfAction.setEndTime(new Date());
 
                     updateList.add(wfAction);
                     wfJob.setLastModifiedTime(new Date());
@@ -147,6 +148,8 @@ public class ActionKillXCommand extends ActionXCommand<Void> {
                     wfAction.setStatus(WorkflowActionBean.Status.FAILED);
                     wfAction.setErrorInfo(ex.getErrorCode().toString(),
                             "KILL COMMAND FAILED - exception while executing job kill");
+                    wfAction.setEndTime(new Date());
+
                     wfJob.setStatus(WorkflowJobBean.Status.KILLED);
                     updateList.add(wfAction);
                     wfJob.setLastModifiedTime(new Date());

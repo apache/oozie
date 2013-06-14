@@ -67,7 +67,7 @@ public class SLAServlet extends JsonRestServlet {
     }
 
     public SLAServlet(String instrumentationName, ResourceInfo... resourcesInfo) {
-        super(INSTRUMENTATION_NAME, resourcesInfo);
+        super(instrumentationName, resourcesInfo);
     }
 
     /**

@@ -163,7 +163,10 @@ public class SLAOperations {
         JPAService jpaService = Services.get().get(JPAService.class);
         SLAService slaService = Services.get().get(SLAService.class);
         try {
-            slaService.updateRegistrationEvent(jpaService.execute(new SLARegistrationGetJPAExecutor(jobId)));
+            SLARegistrationBean reg = jpaService.execute(new SLARegistrationGetJPAExecutor(jobId));
+            if (reg != null) { //handle coord rerun with different config without sla
+                slaService.updateRegistrationEvent(reg);
+            }
         }
         catch (ServiceException e) {
             throw new CommandException(ErrorCode.E1007, " id " + jobId, e.getMessage(), e);

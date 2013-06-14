@@ -380,6 +380,7 @@ public class TestEventGeneration extends XDataTestCase {
         // Killing job
         action.setStatus(WorkflowAction.Status.KILLED);
         action.setPendingOnly();
+        action.setEndTime(null); //its already set by XTestCase add action record method above
         jpaService.execute(new WorkflowActionUpdateJPAExecutor(action));
         new ActionKillXCommand(action.getId()).call();
         action = jpaService.execute(wfActionGetCmd);
@@ -393,6 +394,8 @@ public class TestEventGeneration extends XDataTestCase {
         assertEquals(job.getUser(), event.getUser());
         assertEquals(action.getName(), event.getAppName());
         assertEquals(action.getStartTime(), event.getStartTime());
+        assertNotNull(action.getEndTime());
+        assertNotNull(event.getEndTime());
         assertEquals(action.getEndTime(), event.getEndTime());
         assertEquals(0, queue.size());
 
