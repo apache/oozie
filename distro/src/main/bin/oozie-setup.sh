@@ -238,13 +238,18 @@ else
   components=""
 
   if [ "${secure}" != "" ]; then
-    OPTIONS="${OPTIONS} -secureWeb ${secureConfigsDir}/ssl-web.xml"
     #Use the SSL version of server.xml in oozie-server
+    checkFileExists ${secureConfigsDir}/ssl-server.xml
     cp ${secureConfigsDir}/ssl-server.xml ${CATALINA_BASE}/conf/server.xml
-    echo "INFO: Using secure server.xml"
+    #Inject the SSL version of web.xml in oozie war
+    checkFileExists ${secureConfigsDir}/ssl-web.xml
+    cp ${secureConfigsDir}/ssl-web.xml ${tmpWarDir}/WEB-INF/web.xml
+    echo "INFO: Using secure server.xml and secure web.xml"
   else
     #Use the regular version of server.xml in oozie-server
+    checkFileExists ${secureConfigsDir}/server.xml
     cp ${secureConfigsDir}/server.xml ${CATALINA_BASE}/conf/server.xml
+    #No need to restore web.xml because its already in the original WAR file
   fi
 
   if [ "${addExtjs}" = "true" ]; then
