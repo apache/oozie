@@ -26,15 +26,20 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.AppType;
 import org.apache.oozie.CoordinatorActionBean;
+import org.apache.oozie.CoordinatorJobBean;
+import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.CoordinatorAction;
+import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.event.SLAEvent.SLAStatus;
 import org.apache.oozie.client.event.SLAEvent.EventStatus;
+import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.coord.CoordActionStartXCommand;
 import org.apache.oozie.command.coord.CoordKillXCommand;
+import org.apache.oozie.command.coord.CoordRerunXCommand;
 import org.apache.oozie.command.coord.CoordSubmitXCommand;
 import org.apache.oozie.command.wf.KillXCommand;
 import org.apache.oozie.command.wf.ReRunXCommand;
@@ -280,6 +285,27 @@ public class TestSLAEventGeneration extends XDataTestCase {
         assertEquals(expectedStart, DateUtils.formatDateOozieTZ(slaEvent.getExpectedStart()));
         assertEquals(expectedEnd, DateUtils.formatDateOozieTZ(slaEvent.getExpectedEnd()));
 
+    }
+
+    /**
+     * Test coord rerun with no SLA config works as before
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testCoordRerunNoSLA() throws Exception {
+        CoordinatorJobBean job = this.addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
+        addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.FAILED, "coord-rerun-action1.xml", 0);
+
+        try {
+            new CoordRerunXCommand(job.getId(), RestConstants.JOB_COORD_RERUN_DATE, "2009-12-15T01:00Z", false, true)
+                    .call();
+        }
+        catch (CommandException ce) {
+            if (ce.getErrorCode() == ErrorCode.E0603) {
+                fail("Coord Rerun with no SLA should not throw 'no job found error' from SLA Summary table");
+            }
+        }
     }
 
     @Test

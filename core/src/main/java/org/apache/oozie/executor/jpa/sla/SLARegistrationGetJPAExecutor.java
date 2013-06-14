@@ -17,6 +17,8 @@
  */
 package org.apache.oozie.executor.jpa.sla;
 
+import java.util.List;
+
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
@@ -41,17 +43,26 @@ public class SLARegistrationGetJPAExecutor implements JPAExecutor<SLARegistratio
         return "SLARegistrationGetJPAExecutor";
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public SLARegistrationBean execute(EntityManager em) throws JPAExecutorException {
+        List<SLARegistrationBean> regBeans;
         try {
             Query q = em.createNamedQuery("GET_SLA_REG_ALL");
             q.setParameter("id", id);
-            SLARegistrationBean slaRegBean= (SLARegistrationBean) q.getSingleResult();
-            slaRegBean.setSlaConfig(slaRegBean.getSlaConfig());
-            return slaRegBean;
+            regBeans = q.getResultList();
         }
         catch (Exception e) {
             throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
+        }
+        SLARegistrationBean slaRegBean;
+        if (regBeans != null && regBeans.size() > 0) {
+            slaRegBean = regBeans.get(0);
+            slaRegBean.setSlaConfig(slaRegBean.getSlaConfig());
+            return slaRegBean;
+        }
+        else {
+            throw new JPAExecutorException(ErrorCode.E0604, id);
         }
     }
 

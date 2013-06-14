@@ -112,7 +112,12 @@ public class SLAService implements Service {
             if (Thread.currentThread().isInterrupted()) {
                 return;
             }
-            calc.updateAllSlaStatus();
+            try {
+                calc.updateAllSlaStatus();
+            }
+            catch (Throwable error) {
+                XLog.getLog(SLAService.class).debug("Throwable in SLAWorker thread run : ", error);
+            }
         }
     }
 

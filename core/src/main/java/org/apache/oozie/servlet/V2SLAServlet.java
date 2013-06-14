@@ -20,8 +20,8 @@ package org.apache.oozie.servlet;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.text.ParseException;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +40,7 @@ import org.apache.oozie.executor.jpa.sla.SLASummaryGetForFilterJPAExecutor.SLASu
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.sla.SLASummaryBean;
+import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.XLog;
 import org.json.simple.JSONObject;
 
@@ -120,10 +121,10 @@ public class V2SLAServlet extends SLAServlet {
                 filter.setAppName(filterList.get(OozieClient.FILTER_SLA_APPNAME).get(0));
             }
             if (filterList.containsKey(OozieClient.FILTER_SLA_NOMINAL_START)) {
-                filter.setNominalStart(new Date(Long.parseLong(filterList.get(OozieClient.FILTER_SLA_NOMINAL_START).get(0))));
+                filter.setNominalStart(DateUtils.parseDateUTC(filterList.get(OozieClient.FILTER_SLA_NOMINAL_START).get(0)));
             }
             if (filterList.containsKey(OozieClient.FILTER_SLA_NOMINAL_END)) {
-                filter.setNominalEnd(new Date(Long.parseLong(filterList.get(OozieClient.FILTER_SLA_NOMINAL_END).get(0))));
+                filter.setNominalEnd(DateUtils.parseDateUTC(filterList.get(OozieClient.FILTER_SLA_NOMINAL_END).get(0)));
             }
 
             if (filter.getAppName() == null && filter.getJobId() == null && filter.getParentId() == null) {
@@ -150,6 +151,11 @@ public class V2SLAServlet extends SLAServlet {
             throw new XServletException(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, ErrorCode.E0307,
                     "Unsupported Encoding", e);
         }
+        catch (ParseException e) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0303,
+                    filterString, e);
+        }
+
     }
 
 }

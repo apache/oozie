@@ -222,26 +222,38 @@ public class EventHandlerService implements Service {
             if (Thread.currentThread().isInterrupted()) {
                 return;
             }
-            if (!eventQueue.isEmpty()) {
-                Set<Event> work = eventQueue.pollBatch();
-                for (Event event : work) {
-                    MessageType msgType = event.getMsgType();
-                    List<?> listeners = listenerMap.get(msgType);
-                    if (listeners != null) {
-                        Iterator<?> iter = listeners.iterator();
-                        while (iter.hasNext()) {
-                            if (msgType == MessageType.JOB) {
-                                invokeJobEventListener((JobEventListener) iter.next(), (JobEvent) event);
-                            }
-                            else if (msgType == MessageType.SLA) {
-                                invokeSLAEventListener((SLAEventListener) iter.next(), (SLAEvent) event);
-                            }
-                            else {
-                                iter.next();
+            try {
+                if (!eventQueue.isEmpty()) {
+                    Set<Event> work = eventQueue.pollBatch();
+                    for (Event event : work) {
+                        MessageType msgType = event.getMsgType();
+                        List<?> listeners = listenerMap.get(msgType);
+                        if (listeners != null) {
+                            Iterator<?> iter = listeners.iterator();
+                            while (iter.hasNext()) {
+                                try {
+                                    if (msgType == MessageType.JOB) {
+                                        invokeJobEventListener((JobEventListener) iter.next(), (JobEvent) event);
+                                    }
+                                    else if (msgType == MessageType.SLA) {
+                                        invokeSLAEventListener((SLAEventListener) iter.next(), (SLAEvent) event);
+                                    }
+                                    else {
+                                        iter.next();
+                                    }
+                                }
+                                catch (Throwable error) {
+                                    XLog.getLog(EventHandlerService.class).debug("Throwable in EventWorker thread run : ",
+                                            error);
+                                }
                             }
                         }
                     }
                 }
+            }
+            catch (Throwable error) {
+                XLog.getLog(EventHandlerService.class).debug("Throwable in EventWorker thread run : ",
+                        error);
             }
         }
 
