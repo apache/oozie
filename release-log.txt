@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1365 The hive action popup in the web UI is broken when externalChildIDs is empty string (michalisk via rkanter)
 OOZIE-1412 Webapp contains all sharedlib dependencies after launcher refactor (rohini)
 OOZIE-1414 Configuring Oozie for HTTPS still allows HTTP connections to all resources (rkanter)
 OOZIE-1410 V2 servlets are missing from ssl-web.xml (rkanter, rohini via rkanter)
