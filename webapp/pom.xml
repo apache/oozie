@@ -93,43 +93,43 @@
         <dependency>
             <groupId>org.apache.oozie</groupId>
             <artifactId>oozie-sharelib-pig</artifactId>
-            <scope>compile</scope>
+            <scope>provided</scope>
          </dependency>
 
          <dependency>
             <groupId>org.apache.oozie</groupId>
             <artifactId>oozie-sharelib-hive</artifactId>
-            <scope>compile</scope>
+            <scope>provided</scope>
          </dependency>
 
          <dependency>
             <groupId>org.apache.oozie</groupId>
             <artifactId>oozie-sharelib-sqoop</artifactId>
-            <scope>compile</scope>
+            <scope>provided</scope>
          </dependency>
 
           <dependency>
             <groupId>org.apache.oozie</groupId>
             <artifactId>oozie-sharelib-streaming</artifactId>
-            <scope>compile</scope>
+            <scope>provided</scope>
          </dependency>
 
         <dependency>
             <groupId>org.apache.oozie</groupId>
             <artifactId>oozie-sharelib-oozie</artifactId>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>org.apache.oozie</groupId>
             <artifactId>oozie-sharelib-hcatalog</artifactId>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>org.apache.oozie</groupId>
             <artifactId>oozie-sharelib-distcp</artifactId>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 
@@ -161,6 +161,28 @@
                         <descriptor>../src/main/assemblies/empty.xml</descriptor>
                     </descriptors>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <includeArtifactIds>
+                                oozie-sharelib-pig,oozie-sharelib-hive,oozie-sharelib-sqoop,oozie-sharelib-streaming,
+                                oozie-sharelib-oozie,oozie-sharelib-hcatalog,oozie-sharelib-distcp
+                            </includeArtifactIds>
+                            <excludeTransitive>true</excludeTransitive>
+                            <outputDirectory>${project.build.directory}/oozie-webapp-${project.version}/WEB-INF/lib</outputDirectory>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                       </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
