@@ -565,7 +565,7 @@ function jobDetailsPopup(response, request) {
 	function populateUrlUnit(actionStatus, urlUnit) {
 		var consoleUrl = actionStatus["consoleUrl"];
         var externalChildIDs = actionStatus["externalChildIDs"];
-		if(!consoleUrl && !externalChildIDs) {
+		if(consoleUrl && externalChildIDs) {
 	        var urlPrefix = consoleUrl.trim().split(/_/)[0];
             //externalChildIds is a comma-separated string of each child job ID.
             //Create URL list by appending jobID portion after stripping "job"
