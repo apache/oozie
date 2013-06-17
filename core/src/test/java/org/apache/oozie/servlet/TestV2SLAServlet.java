@@ -96,7 +96,8 @@ public class TestV2SLAServlet extends DagServletTestCase {
                 assertSLAJSONResponse(array, 3, 6, "3-", "-W", "2-C", nominalTime3, "testapp-3", AppType.WORKFLOW_JOB,
                         currentTime);
 
-                queryParams.put(RestConstants.JOBS_FILTER_PARAM, "parent_id=2-C;nominal_start=2012-06-03T016:00Z;nominal_end=2012-06-03T017:00Z");
+                queryParams.put(RestConstants.JOBS_FILTER_PARAM,
+                        "parent_id=2-C;nominal_start=2012-06-03T016:00Z;nominal_end=2012-06-03T017:00Z");
                 array = getSLAJSONResponse(queryParams);
                 // Matches 3rd and 4th element - 3-3-W 3-4-W
                 assertSLAJSONResponse(array, 3, 4, "3-", "-W", "2-C", nominalTime3, "testapp-3", AppType.WORKFLOW_JOB,
