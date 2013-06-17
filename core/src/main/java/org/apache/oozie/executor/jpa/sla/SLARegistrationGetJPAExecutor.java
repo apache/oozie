@@ -55,15 +55,12 @@ public class SLARegistrationGetJPAExecutor implements JPAExecutor<SLARegistratio
         catch (Exception e) {
             throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
         }
-        SLARegistrationBean slaRegBean;
+        SLARegistrationBean slaRegBean = null;
         if (regBeans != null && regBeans.size() > 0) {
             slaRegBean = regBeans.get(0);
             slaRegBean.setSlaConfig(slaRegBean.getSlaConfig());
-            return slaRegBean;
         }
-        else {
-            throw new JPAExecutorException(ErrorCode.E0604, id);
-        }
+        return slaRegBean;
     }
 
 }

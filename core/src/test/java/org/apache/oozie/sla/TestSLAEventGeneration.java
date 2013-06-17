@@ -302,8 +302,8 @@ public class TestSLAEventGeneration extends XDataTestCase {
                     .call();
         }
         catch (CommandException ce) {
-            if (ce.getErrorCode() == ErrorCode.E0603) {
-                fail("Coord Rerun with no SLA should not throw 'no job found error' from SLA Summary table");
+            if (ce.getErrorCode() == ErrorCode.E0604) {
+                fail("Coord Rerun with no SLA should not throw " + ce.getMessage() + " exception");
             }
         }
     }
