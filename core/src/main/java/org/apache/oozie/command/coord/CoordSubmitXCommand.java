@@ -627,7 +627,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         String val = resolveAttribute("frequency", eAppXml, evalFreq);
         int ival = ParamChecker.checkInteger(val, "frequency");
         ParamChecker.checkGTZero(ival, "frequency");
-        coordJob.setFrequency(ival);
+        coordJob.setFrequency(Integer.toString(ival));
         TimeUnit tmp = (evalFreq.getVariable("timeunit") == null) ? TimeUnit.MINUTE : ((TimeUnit) evalFreq
                 .getVariable("timeunit"));
         addAnAttribute("freq_timeunit", eAppXml, tmp.toString());

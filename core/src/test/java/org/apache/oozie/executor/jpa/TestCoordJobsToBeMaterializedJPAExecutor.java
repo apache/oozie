@@ -116,7 +116,7 @@ public class TestCoordJobsToBeMaterializedJPAExecutor extends XFsTestCase {
         coordJob.setConf(confStr);
         coordJob.setJobXml(appXml);
         coordJob.setLastActionNumber(0);
-        coordJob.setFrequency(1);
+        coordJob.setFrequency("1");
         coordJob.setExecution(Execution.FIFO);
         coordJob.setConcurrency(1);
         try {

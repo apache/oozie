@@ -404,7 +404,7 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
         WritableUtils.writeStr(dataOutput, getId());
         WritableUtils.writeStr(dataOutput, getConf());
         WritableUtils.writeStr(dataOutput, getStatusStr());
-        dataOutput.writeInt(getFrequency());
+        WritableUtils.writeStr(dataOutput, getFrequency());
         WritableUtils.writeStr(dataOutput, getTimeUnit().toString());
         WritableUtils.writeStr(dataOutput, getTimeZone());
         dataOutput.writeInt(getConcurrency());
@@ -443,7 +443,7 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
         setId(WritableUtils.readStr(dataInput));
         setConf(WritableUtils.readStr(dataInput));
         setStatus(CoordinatorJob.Status.valueOf(WritableUtils.readStr(dataInput)));
-        setFrequency(dataInput.readInt());
+        setFrequency(WritableUtils.readStr(dataInput));
         setTimeUnit(CoordinatorJob.Timeunit.valueOf(WritableUtils.readStr(dataInput)));
         setTimeZone(WritableUtils.readStr(dataInput));
         setConcurrency(dataInput.readInt());

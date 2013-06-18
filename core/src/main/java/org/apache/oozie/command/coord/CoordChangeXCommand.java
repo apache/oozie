@@ -160,7 +160,7 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
         Calendar d = Calendar.getInstance(DateUtils.getTimeZone(coordJob.getTimeZone()));
         d.setTime(coordJob.getLastActionTime());
         TimeUnit timeUnit = TimeUnit.valueOf(coordJob.getTimeUnitStr());
-        d.add(timeUnit.getCalendarUnit(), -coordJob.getFrequency());
+        d.add(timeUnit.getCalendarUnit(), -Integer.valueOf(coordJob.getFrequency()));
         return d.getTime();
     }
 
@@ -227,7 +227,7 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
             while (true) {
                 if (!newPauseTime.after(d.getTime())) {
                     deleteAction(lastActionNumber);
-                    d.add(timeUnit.getCalendarUnit(), -coordJob.getFrequency());
+                    d.add(timeUnit.getCalendarUnit(), -Integer.valueOf(coordJob.getFrequency()));
                     lastActionNumber = lastActionNumber - 1;
 
                     hasChanged = true;
@@ -239,7 +239,7 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
 
             if (hasChanged == true) {
                 coordJob.setLastActionNumber(lastActionNumber);
-                d.add(timeUnit.getCalendarUnit(), coordJob.getFrequency());
+                d.add(timeUnit.getCalendarUnit(), Integer.valueOf(coordJob.getFrequency()));
                 Date d1 = d.getTime();
                 coordJob.setLastActionTime(d1);
                 coordJob.setNextMaterializedTime(d1);

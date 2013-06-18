@@ -219,7 +219,7 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
         coordJob.setGroup(GROUP);
         coordJob.setConf(CONFIGURATION);
         coordJob.setLastActionNumber(0);
-        coordJob.setFrequency(1);
+        coordJob.setFrequency("1");
         coordJob.setExecution(Execution.FIFO);
         coordJob.setConcurrency(1);
         try {
@@ -251,7 +251,7 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
         coordJob.setGroup(GROUP);
         coordJob.setConf(conf.toString());
         coordJob.setLastActionNumber(0);
-        coordJob.setFrequency(1);
+        coordJob.setFrequency("1");
         coordJob.setExecution(Execution.FIFO);
         coordJob.setConcurrency(1);
         try {
