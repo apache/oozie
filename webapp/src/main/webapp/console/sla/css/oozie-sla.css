@@ -1,0 +1,225 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+body {
+    font: 11px arial, tahoma, helvetica, sans-serif;
+}
+
+#inputArea {
+    background:
+        url("../../../ext-2.2/resources/images/default/toolbar/bg.gif")
+        repeat-x scroll left top rgb(208, 222, 240);
+    padding: 2px;
+    border-bottom: 1px solid rgb(153, 187, 232);
+    font: 11px tahoma, verdana, helvetica;
+}
+
+#inputArea input {
+    margin: 5px 0 5px 0;
+    padding: 0px;
+}
+
+.AppName {
+    margin: 5px 20px 5px 10px;
+}
+
+.OR {
+    margin-right: 20px;
+}
+
+.NominalStart {
+    margin: 0px 10px 0px 10px;
+}
+
+.ui-widget {
+    font-size: 60%;
+}
+
+.ui-widget-content a {
+    color: rgb(0, 0, 0);
+}
+
+.ui-widget-header {
+    border: 1px solid rgb(222, 236, 253);
+    color: rgb(0, 0, 0);
+    font-weight: normal;
+    font: 12px tahoma, arial, helvetica;
+    background: url("images/ui-bg_flat_100_DEECFD_40x100.png") repeat-x
+        scroll 50% 50% rgb(222, 236, 253);
+}
+
+.ui-widget-header .ui-state-hover {
+    border: 1px solid #DDDDDD
+}
+
+.ui-corner-tr {
+    border-bottom-right-radius: 0px;
+}
+
+.ui-corner-tl {
+    border-top-left-radius: 0px;
+}
+
+.ui-corner-br {
+    border-bottom-right-radius: 0px;
+}
+
+.ui-corner-bl {
+    border-bottom-left-radius: 0px;
+}
+
+.ui-corner-all {
+    border-bottom-right-radius: 0px;
+    border-bottom-left-radius: 0px;
+    border-top-right-radius: 0px;
+    border-top-left-radius: 0px;
+}
+
+.ui-state-default,.ui-widget-content .ui-state-default,.ui-widget-header .ui-state-default,.ui-datepicker
+    {
+    font-weight: normal; /** colvis and tabletools */
+    color: rgb(0, 0, 0);
+    font-size: 0.90em;
+    font: 11px tahoma, arial, helvetica;
+}
+
+.ui-state-default a,.ui-state-default a:link,.ui-state-default a:visited
+    {
+    color: #416AA3;
+    background:
+        url("../../../ext-2.2/resources/images/default/tabs/tabs-sprite.gif")
+        repeat-x scroll 0 -203px transparent;
+    border: none;
+}
+
+.ui-state-active a,.ui-widget-content .ui-state-active,.ui-state-active a:link,.ui-state-active a:visited
+    {
+    color: #15428B;
+    font-weight: bold;
+    border: 1px solid rgb(208, 222, 240);
+    font: 11px tahoma, arial, helvetica;
+}
+
+.ui-state-default .ui-icon {
+    background-image: url("images/ui-icons_222222_256x240.png");
+}
+
+.ui-widget-header .ui-icon {
+    background-image: url("images/ui-icons_222222_256x240.png");
+}
+
+.ui-datepicker .ui-datepicker-buttonpane button {
+    display: none;
+}
+
+.ui-timepicker-div .ui-widget-header {
+    margin-bottom: 8px;
+}
+
+.ui-timepicker-div dl {
+    text-align: left;
+}
+
+.ui-timepicker-div dl dt {
+    height: 25px;
+    margin-bottom: -25px;
+}
+
+.ui-timepicker-div dl dd {
+    margin: 0 10px 10px 65px;
+}
+
+.ui-timepicker-div td {
+    font-size: 90%;
+}
+
+.ui-tpicker-grid-label {
+    background: none;
+    border: none;
+    margin: 0;
+    padding: 0;
+}
+
+.ui-timepicker-rtl {
+    direction: rtl;
+}
+
+.ui-timepicker-rtl dl {
+    text-align: right;
+}
+
+.ui-timepicker-rtl dl dd {
+    margin: 0 65px 10px 10px;
+}
+
+.search-button {
+    margin-left: 20px;
+    height: 25px;
+}
+
+.search-span {
+    color: #416AA3;
+    font: 11px tahoma, arial, helvetica;
+    padding: 0px 10px 0px 10px;
+}
+
+.ui-tabs {
+    padding: 0;
+    color: #416AA3;
+    font: 11px tahoma, arial, helvetica;
+}
+
+.ui-tabs .ui-tabs-panel {
+    padding: 0;
+}
+
+.ui-tabs .ui-tabs-nav {
+    margin: 0;
+    padding: 0;
+}
+
+.ui-tabs .ui-tabs-nav li a {
+    padding: 0.3em 1em;
+}
+
+.ui-tabs .ui-tabs-nav li.ui-tabs-active {
+    padding-bottom: 0px;
+}
+
+.ui-tabs {
+    padding: 0;
+    color: #416AA3;
+    font: 11px tahoma, arial, helvetica;
+}
+
+.ui-tabs .ui-tabs-panel {
+    padding: 0;
+}
+
+.ui-tabs .ui-tabs-nav {
+    margin: 0;
+    padding: 0;
+}
+
+.ui-tabs .ui-tabs-nav li a {
+    padding: 0.3em 1em;
+}
+
+.ui-tabs .ui-tabs-nav li.ui-tabs-active {
+    padding-bottom: 0px;
+}

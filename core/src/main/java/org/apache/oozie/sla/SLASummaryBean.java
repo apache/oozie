@@ -314,12 +314,21 @@ public class SLASummaryBean implements JsonBean {
         if (expectedStartTS != null) {
             json.put(JsonTags.SLA_SUMMARY_EXPECTED_START, expectedStartTS.getTime());
         }
+        else {
+            json.put(JsonTags.SLA_SUMMARY_EXPECTED_START, null);
+        }
         if (actualStartTS != null) {
             json.put(JsonTags.SLA_SUMMARY_ACTUAL_START, actualStartTS.getTime());
+        }
+        else {
+            json.put(JsonTags.SLA_SUMMARY_ACTUAL_START, null);
         }
         json.put(JsonTags.SLA_SUMMARY_EXPECTED_END, expectedEndTS.getTime());
         if (actualEndTS != null) {
             json.put(JsonTags.SLA_SUMMARY_ACTUAL_END, actualEndTS.getTime());
+        }
+        else {
+            json.put(JsonTags.SLA_SUMMARY_ACTUAL_END, null);
         }
         json.put(JsonTags.SLA_SUMMARY_EXPECTED_DURATION, expectedDuration);
         json.put(JsonTags.SLA_SUMMARY_ACTUAL_DURATION, actualDuration);
@@ -348,12 +357,21 @@ public class SLASummaryBean implements JsonBean {
             if (expectedStartTS != null) {
                 json.put(JsonTags.SLA_SUMMARY_EXPECTED_START, JsonUtils.formatDateRfc822(expectedStartTS, timeZoneId));
             }
+            else {
+                json.put(JsonTags.SLA_SUMMARY_EXPECTED_START, null);
+            }
             if (actualStartTS != null) {
                 json.put(JsonTags.SLA_SUMMARY_ACTUAL_START, JsonUtils.formatDateRfc822(actualStartTS, timeZoneId));
+            }
+            else {
+                json.put(JsonTags.SLA_SUMMARY_ACTUAL_START, null);
             }
             json.put(JsonTags.SLA_SUMMARY_EXPECTED_END, JsonUtils.formatDateRfc822(expectedEndTS, timeZoneId));
             if (actualEndTS != null) {
                 json.put(JsonTags.SLA_SUMMARY_ACTUAL_END, JsonUtils.formatDateRfc822(actualEndTS, timeZoneId));
+            }
+            else {
+                json.put(JsonTags.SLA_SUMMARY_ACTUAL_END, null);
             }
             json.put(JsonTags.SLA_SUMMARY_EXPECTED_DURATION, expectedDuration);
             json.put(JsonTags.SLA_SUMMARY_ACTUAL_DURATION, actualDuration);

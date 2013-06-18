@@ -950,6 +950,12 @@
                         <exclude>sharelib/pig/src/test/resources/PigMain.txt</exclude>
                         <exclude>sharelib/hive/src/test/resources/HiveMain.txt</exclude>
                         <exclude>webapp/src/main/resources/.gitignore</exclude>
+                        <!-- MIT or 3 BSD licenses -->
+                        <exclude>webapp/src/main/webapp/console/sla/js/graph/*</exclude>
+                        <exclude>webapp/src/main/webapp/console/sla/js/table/*</exclude>
+                        <exclude>webapp/src/main/webapp/console/sla/css/jquery*.css</exclude>
+                        <exclude>webapp/src/main/webapp/console/sla/css/TableTools.css</exclude>
+                        <exclude>webapp/src/main/webapp/console/sla/css/ColVis.css</exclude>
                         <exclude>**/target/**</exclude>
                         <exclude>**/build/**</exclude>
                         <exclude>.git/**</exclude>

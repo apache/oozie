@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1421 UI for SLA (virag, rohini)
 OOZIE-1422 fix bug in SLARegistrationBean and CoordActionsCountForJobIdJPAExecutor (ryota)
 OOZIE-1408 Change column type of "frequency" from int to varchar for coordinators (rkanter)
 OOZIE-1420 OOZIE-1365 breaks the action popup in the Web UI (michalisk via rkanter)
