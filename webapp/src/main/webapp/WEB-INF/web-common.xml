@@ -177,7 +177,7 @@
 
     <!-- welcome-file -->
     <welcome-file-list>
-        <welcome-file>index.html</welcome-file>
+        <welcome-file>index.jsp</welcome-file>
     </welcome-file-list>
 
     <filter>
@@ -217,7 +217,7 @@
 
     <filter-mapping>
         <filter-name>authenticationfilter</filter-name>
-        <url-pattern>/index.html</url-pattern>
+        <url-pattern>/index.jsp</url-pattern>
     </filter-mapping>
 
     <filter-mapping>

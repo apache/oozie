@@ -1,14 +1,14 @@
 /**
-' * Licensed to the Apache Software Foundation (ASF) under one
+ * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership.  The ASF licenses this file
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -2015,6 +2015,15 @@ function initConsole() {
         title: 'Instrumentation'
 
     });
+
+    var slaDashboard = new Ext.Panel({
+        title: 'SLA',
+        autoLoad : {
+            url : 'console/sla/oozie-sla.html',
+            scripts: true
+        }
+    });
+
     var coordJobArea = new Ext.grid.GridPanel({
         store: coord_jobs_store,
         loadMask: true,
@@ -2191,13 +2200,16 @@ function initConsole() {
     // main tab panel containing Workflow Jobs, Coordinator Jobs, Bundle Jobs, System Info, ...
     var tabs = new Ext.TabPanel({
         renderTo: 'oozie-console',
-        height: 500,
+        height: 580,
         title: "Oozie Web Console"
 
     });
     tabs.add(jobs_grid);
     tabs.add(coordJobArea);
     tabs.add(bundleJobArea);
+    if (isSLAServiceEnabled == "true") {
+        tabs.add(slaDashboard);
+    }
     tabs.add(adminGrid);
     tabs.add(resultArea);
     tabs.add(settingsArea);

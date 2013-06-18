@@ -1,0 +1,86 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* Tool tip shown when clicking on a data point */
+#graphtooltip {
+    font-size: 12px;
+    color: rgb(15%, 15%, 15%);
+    padding: 2px;
+    background-color: rgba(95%, 95%, 95%, 0.8);
+}
+
+/* Rotate x-axis tick labels so that they don't overlap each other.
+   Remove this when moving to flot 0.9 which will have axis rotation */
+#sla-graph-div div.xAxis div.tickLabel {
+    transform: rotate(-30deg);
+    -ms-transform: rotate(-30deg); /* IE 9 */
+    -moz-transform: rotate(-30deg); /* Firefox */
+    -webkit-transform: rotate(-30deg); /* Safari and Chrome */
+    -o-transform: rotate(-30deg); /* Opera */
+    transform-origin: 5em 7em; /* For -60deg 5em 3em */
+    -o-transform-origin: 5em 7em;
+    -ms-transform-origin: 5em 7em;
+    -moz-transform-origin: 5em 7em;
+    -webkit-transform-origin: 5em 7em;
+}
+
+/* For Axis Label Name */
+#sla-graph-container div.axisLabel {
+    position: absolute;
+    text-align: center;
+    font-size: 13px;
+}
+
+#sla-graph-container div.xaxisLabel {
+    position: relative;
+    bottom: -420px;
+    left: 0;
+    right: 20px;
+}
+
+#sla-graph-container div.yaxisLabel {
+    top: 65%;
+    left: 2px;
+    transform: rotate(-90deg);
+    -o-transform: rotate(-90deg);
+    -ms-transform: rotate(-90deg);
+    -moz-transform: rotate(-90deg);
+    -webkit-transform: rotate(-90deg);
+    transform-origin: 0 0;
+    -o-transform-origin: 0 0;
+    -ms-transform-origin: 0 0;
+    -moz-transform-origin: 0 0;
+    -webkit-transform-origin: 0 0;
+}
+
+#sla-graph-div .button {
+    position: absolute;
+    cursor: pointer;
+}
+
+#sla-graph-div div.button {
+    font-size: smaller;
+    color: #999;
+    background-color: #eee;
+    padding: 2px;
+}
+
+.sla_table,.sla_table th,.sla_table td,.sla_table caption {
+    text-align: center;
+    font: 11px tahoma, verdana, helvetica
+}
