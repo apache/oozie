@@ -37,7 +37,7 @@ public class CoordActionsCountForJobIdJPAExecutor implements JPAExecutor<Integer
 
     @Override
     public String getName() {
-        return "CoordActionsCountJPAExecutor";
+        return "CoordActionsCountForJobIdJPAExecutor";
     }
 
     @Override

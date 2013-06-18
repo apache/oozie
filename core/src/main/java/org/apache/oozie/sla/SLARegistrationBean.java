@@ -17,36 +17,52 @@
  */
 package org.apache.oozie.sla;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
+import java.util.Map.Entry;
 
 import javax.persistence.Basic;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.Id;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.Table;
 import javax.persistence.Transient;
 
-import org.apache.hadoop.io.Writable;
 import org.apache.oozie.AppType;
-import org.apache.oozie.client.event.SLAEvent;
-import org.apache.oozie.client.rest.sla.JsonSLARegistrationEvent;
+import org.apache.oozie.client.event.Event.MessageType;
+import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.util.DateUtils;
 import org.apache.openjpa.persistence.jdbc.Index;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 @Entity
+@Table(name = "SLA_REGISTRATION")
 @NamedQueries({
 
  @NamedQuery(name = "GET_SLA_REG_ON_RESTART", query = "select w.notificationMsg, w.upstreamApps, w.slaConfig, w.jobData from SLARegistrationBean w where w.jobId = :id"),
 
  @NamedQuery(name = "GET_SLA_REG_ALL", query = "select OBJECT(w) from SLARegistrationBean w where w.jobId = :id") })
-public class SLARegistrationBean extends JsonSLARegistrationEvent implements Writable {
+public class SLARegistrationBean implements JsonBean {
+
+    @Id
+    @Basic
+    @Column(name = "job_id")
+    private String jobId;
+
+    @Basic
+    @Column(name = "parent_id")
+    private String parentId = null;
+
+    @Basic
+    @Column(name = "app_name")
+    private String appName = null;
 
     @Basic
     @Column(name = "app_type")
@@ -65,81 +81,211 @@ public class SLARegistrationBean extends JsonSLARegistrationEvent implements Wri
     @Column(name = "expected_end")
     private java.sql.Timestamp expectedEndTS = null;
 
+    @Basic
+    @Column(name = "expected_duration")
+    private long expectedDuration = 0;
+
+    @Basic
+    @Column(name = "user_name")
+    private String user = null;
+
+    @Basic
+    @Column(name = "upstream_apps")
+    private String upstreamApps = null;
+
+    @Basic
+    @Column(name = "job_data")
+    private String jobData = null;
+
+    @Basic
+    @Column(name = "sla_config")
+    private String slaConfig = null;
+
+    @Basic
+    @Column(name = "notification_msg")
+    private String notificationMsg = null;
+
     @Transient
-    private long expectedDuration;
+    private Map<String, String> slaConfigMap;
+
+    @Transient
+    private MessageType msgType;
+
+    private final String ALERT_EVENTS = "alert_events";
+    private final String ALERT_CONTACT = "alert_contact";
 
     public SLARegistrationBean() {
+        slaConfigMap = new HashMap<String, String>();
+        msgType = MessageType.SLA;
     }
 
-    @Override
+    public SLARegistrationBean(JSONObject obj) {
+        // TODO use JSONObject
+        this();
+    }
+
+    public String getId() {
+        return jobId;
+    }
+
+    public void setJobId(String jobId) {
+        this.jobId = jobId;
+    }
+
+    public String getParentId() {
+        return parentId;
+    }
+
+    public void setParentId(String parentId) {
+        this.parentId = parentId;
+    }
+
+    public String getAppName() {
+        return appName;
+    }
+
+    public void setAppName(String appName) {
+        this.appName = appName;
+    }
+
     public AppType getAppType() {
         return AppType.valueOf(appType);
     }
 
-    @Override
     public void setAppType(AppType appType) {
-        super.setAppType(appType);
         this.appType = appType.toString();
     }
 
-    @Override
     public Date getNominalTime() {
         return DateUtils.toDate(nominalTimeTS);
     }
 
-    @Override
     public void setNominalTime(Date nominalTime) {
-        super.setNominalTime(nominalTime);
         this.nominalTimeTS = DateUtils.convertDateToTimestamp(nominalTime);
     }
 
-    @Override
     public Date getExpectedStart() {
         return DateUtils.toDate(expectedStartTS);
     }
 
-    @Override
     public void setExpectedStart(Date expectedStart) {
-        super.setExpectedStart(expectedStart);
         this.expectedStartTS = DateUtils.convertDateToTimestamp(expectedStart);
     }
 
-    @Override
     public Date getExpectedEnd() {
         return DateUtils.toDate(expectedEndTS);
     }
 
-    @Override
     public void setExpectedEnd(Date expectedEnd) {
-        super.setExpectedEnd(expectedEnd);
         this.expectedEndTS = DateUtils.convertDateToTimestamp(expectedEnd);
     }
 
-    @Override
     public long getExpectedDuration() {
         return expectedDuration;
     }
 
-    @Override
     public void setExpectedDuration(long expectedDuration) {
-        super.setExpectedDuration(expectedDuration);
         this.expectedDuration = expectedDuration;
     }
 
-    @Override
-    public void write(DataOutput dataOut) throws IOException {
-        // required?
+    public String getUser() {
+        return user;
+    }
+
+    public void setUser(String user) {
+        this.user = user;
+    }
+
+    public String getUpstreamApps() {
+        return upstreamApps;
+    }
+
+    public void setUpstreamApps(String upstreamApps) {
+        this.upstreamApps = upstreamApps;
+    }
+
+    public String getJobData() {
+        return jobData;
+    }
+
+    public void setJobData(String jobData) {
+        this.jobData = jobData;
+    }
+
+    public String getSlaConfig() {
+        return slaConfig;
+    }
+
+    public void setSlaConfig(String configStr) {
+        this.slaConfig = configStr;
+        slaConfigStringToMap();
+    }
+
+    public String getNotificationMsg() {
+        return notificationMsg;
+    }
+
+    public void setNotificationMsg(String notificationMsg) {
+        this.notificationMsg = notificationMsg;
+    }
+
+    public String getAlertEvents() {
+        return slaConfigMap.get(ALERT_EVENTS);
+    }
+
+    public void setAlertEvents(String alertEvents) {
+        slaConfigMap.put(ALERT_EVENTS, alertEvents);
+        slaConfig = slaConfigMapToString();
+    }
+
+    public String getAlertContact() {
+        return slaConfigMap.get(ALERT_CONTACT);
+    }
+
+    public void setAlertContact(String alertContact) {
+        slaConfigMap.put(ALERT_CONTACT, alertContact);
+        slaConfig = slaConfigMapToString();
+    }
+
+    public Map<String, String> getSlaConfigMap() {
+        return slaConfigMap;
+    }
+
+    private void slaConfigStringToMap() {
+        StringTokenizer st = new StringTokenizer(slaConfig, "},");
+        while (st.hasMoreTokens()) {
+            String token = st.nextToken();
+            String[] pair = token.split("=");
+            if (pair.length == 2) {
+                slaConfigMap.put(pair[0].substring(1), pair[1]);
+            }
+        }
+    }
+
+    public String slaConfigMapToString() {
+        StringBuilder sb = new StringBuilder();
+        for (Entry<String, String> e : slaConfigMap.entrySet()) {
+            sb.append("{" + e.getKey() + "=" + e.getValue() + "},");
+        }
+        return sb.toString();
     }
 
     @Override
-    public void readFields(DataInput dataIn) throws IOException {
-        // required?
+    public JSONObject toJSONObject() {
+        // TODO
+        return null;
+    }
+
+    @Override
+    public JSONObject toJSONObject(String timeZoneId) {
+        // TODO
+        return null;
     }
 
     /**
-     * Convert a SLAEvent list into a JSONArray.
+     * Convert a SLARegistrationBean list into a JSONArray.
      *
-     * @param SLAEVent list.
+     * @param events SLARegistrationBean list.
      * @param timeZoneId time zone to use for dates in the JSON array.
      * @return the corresponding JSON array.
      */
@@ -147,7 +293,7 @@ public class SLARegistrationBean extends JsonSLARegistrationEvent implements Wri
     public static JSONArray toJSONArray(List<? extends SLARegistrationBean> events, String timeZoneId) {
         JSONArray array = new JSONArray();
         if (events != null) {
-            for (JsonSLARegistrationEvent node : events) {
+            for (SLARegistrationBean node : events) {
                 array.add(node.toJSONObject(timeZoneId));
             }
         }
@@ -155,17 +301,24 @@ public class SLARegistrationBean extends JsonSLARegistrationEvent implements Wri
     }
 
     /**
-     * Convert a JSONArray into a SLAEvent list.
+     * Convert a JSONArray into a SLARegistrationBean list.
      *
      * @param array JSON array.
-     * @return the corresponding SLA event list.
+     * @return the corresponding SLA SLARegistrationBean list.
      */
-    public static List<SLAEvent> fromJSONArray(JSONArray array) {
-        List<SLAEvent> list = new ArrayList<SLAEvent>();
+    public static List<SLARegistrationBean> fromJSONArray(JSONArray array) {
+        List<SLARegistrationBean> list = new ArrayList<SLARegistrationBean>();
         for (Object obj : array) {
-            list.add(new JsonSLARegistrationEvent((JSONObject) obj));
+            list.add(new SLARegistrationBean((JSONObject) obj));
         }
         return list;
     }
 
+    public MessageType getMsgType(){
+        return this.msgType;
+    }
+
+    public void setMsgType(MessageType msgType){
+        this.msgType = msgType;
+    }
 }

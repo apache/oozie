@@ -41,7 +41,6 @@ import org.apache.oozie.client.rest.JsonCoordinatorJob;
 import org.apache.oozie.client.rest.JsonSLAEvent;
 import org.apache.oozie.client.rest.JsonWorkflowAction;
 import org.apache.oozie.client.rest.JsonWorkflowJob;
-import org.apache.oozie.client.rest.sla.JsonSLARegistrationEvent;
 import org.apache.oozie.executor.jpa.JPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.sla.SLARegistrationBean;
@@ -174,7 +173,6 @@ public class JPAService implements Service, Instrumentable {
         entityManager.find(JsonBundleJob.class, 1);
         entityManager.find(BundleActionBean.class, 1);
         entityManager.find(SLARegistrationBean.class, 1);
-        entityManager.find(JsonSLARegistrationEvent.class, 1);
         entityManager.find(SLASummaryBean.class, 1);
 
         LOG.info(XLog.STD, "All entities initialized");

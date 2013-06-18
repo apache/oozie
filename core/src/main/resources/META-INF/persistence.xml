@@ -33,14 +33,12 @@
         <class>org.apache.oozie.BundleJobBean</class>
 		<class>org.apache.oozie.BundleActionBean</class>
         <class>org.apache.oozie.sla.SLARegistrationBean</class>
-        <class>org.apache.oozie.sla.SLACalculatorBean</class>
         <class>org.apache.oozie.sla.SLASummaryBean</class>
 		<class>org.apache.oozie.client.rest.JsonWorkflowJob</class>
         <class>org.apache.oozie.client.rest.JsonWorkflowAction</class>
         <class>org.apache.oozie.client.rest.JsonCoordinatorJob</class>
         <class>org.apache.oozie.client.rest.JsonCoordinatorAction</class>
         <class>org.apache.oozie.client.rest.JsonSLAEvent</class>
-        <class>org.apache.oozie.client.rest.sla.JsonSLARegistrationEvent</class>
         <class>org.apache.oozie.client.rest.JsonBundleJob</class>
         <class>org.apache.oozie.util.db.ValidateConnectionBean</class>
 
@@ -58,10 +56,8 @@
                              org.apache.oozie.BundleJobBean;
                              org.apache.oozie.BundleActionBean;
                              org.apache.oozie.sla.SLARegistrationBean;
-                             org.apache.oozie.sla.SLACalculatorBean;
                              org.apache.oozie.sla.SLASummaryBean;
                              org.apache.oozie.client.rest.JsonSLAEvent;
-                             org.apache.oozie.client.rest.sla.JsonSLARegistrationEvent;
                              org.apache.oozie.client.rest.JsonWorkflowJob;
                              org.apache.oozie.client.rest.JsonWorkflowAction;
                              org.apache.oozie.client.rest.JsonCoordinatorJob;
@@ -96,14 +92,12 @@
         <class>org.apache.oozie.BundleJobBean</class>
 		<class>org.apache.oozie.BundleActionBean</class>
         <class>org.apache.oozie.sla.SLARegistrationBean</class>
-        <class>org.apache.oozie.sla.SLACalculatorBean</class>
         <class>org.apache.oozie.sla.SLASummaryBean</class>
 		<class>org.apache.oozie.client.rest.JsonWorkflowJob</class>
         <class>org.apache.oozie.client.rest.JsonWorkflowAction</class>
         <class>org.apache.oozie.client.rest.JsonCoordinatorJob</class>
         <class>org.apache.oozie.client.rest.JsonCoordinatorAction</class>
         <class>org.apache.oozie.client.rest.JsonSLAEvent</class>
-        <class>org.apache.oozie.client.rest.sla.JsonSLARegistrationEvent</class>
         <class>org.apache.oozie.client.rest.JsonBundleJob</class>
         <class>org.apache.oozie.util.db.ValidateConnectionBean</class>
 
@@ -121,10 +115,8 @@
                              org.apache.oozie.BundleJobBean;
                              org.apache.oozie.BundleActionBean;
                              org.apache.oozie.sla.SLARegistrationBean;
-                             org.apache.oozie.sla.SLACalculatorBean;
                              org.apache.oozie.sla.SLASummaryBean;
                              org.apache.oozie.client.rest.JsonSLAEvent;
-                             org.apache.oozie.client.rest.sla.JsonSLARegistrationEvent;
                              org.apache.oozie.client.rest.JsonWorkflowJob;
                              org.apache.oozie.client.rest.JsonWorkflowAction;
                              org.apache.oozie.client.rest.JsonCoordinatorJob;
@@ -160,14 +152,12 @@
         <class>org.apache.oozie.BundleJobBean</class>
 		<class>org.apache.oozie.BundleActionBean</class>
         <class>org.apache.oozie.sla.SLARegistrationBean</class>
-        <class>org.apache.oozie.sla.SLACalculatorBean</class>
         <class>org.apache.oozie.sla.SLASummaryBean</class>
 		<class>org.apache.oozie.client.rest.JsonWorkflowJob</class>
         <class>org.apache.oozie.client.rest.JsonWorkflowAction</class>
         <class>org.apache.oozie.client.rest.JsonCoordinatorJob</class>
         <class>org.apache.oozie.client.rest.JsonCoordinatorAction</class>
         <class>org.apache.oozie.client.rest.JsonSLAEvent</class>
-        <class>org.apache.oozie.client.rest.sla.JsonSLARegistrationEvent</class>
         <class>org.apache.oozie.client.rest.JsonBundleJob</class>
         <class>org.apache.oozie.util.db.ValidateConnectionBean</class>
 
@@ -185,10 +175,8 @@
                              org.apache.oozie.BundleJobBean;
                              org.apache.oozie.BundleActionBean;
                              org.apache.oozie.sla.SLARegistrationBean;
-                             org.apache.oozie.sla.SLACalculatorBean;
                              org.apache.oozie.sla.SLASummaryBean;
                              org.apache.oozie.client.rest.JsonSLAEvent;
-                             org.apache.oozie.client.rest.sla.JsonSLARegistrationEvent;
                              org.apache.oozie.client.rest.JsonWorkflowJob;
                              org.apache.oozie.client.rest.JsonWorkflowAction;
                              org.apache.oozie.client.rest.JsonCoordinatorJob;
@@ -223,14 +211,12 @@
         <class>org.apache.oozie.BundleJobBean</class>
 		<class>org.apache.oozie.BundleActionBean</class>
         <class>org.apache.oozie.sla.SLARegistrationBean</class>
-        <class>org.apache.oozie.sla.SLACalculatorBean</class>
         <class>org.apache.oozie.sla.SLASummaryBean</class>
         <class>org.apache.oozie.client.rest.JsonWorkflowJob</class>
         <class>org.apache.oozie.client.rest.JsonWorkflowAction</class>
         <class>org.apache.oozie.client.rest.JsonCoordinatorJob</class>
         <class>org.apache.oozie.client.rest.JsonCoordinatorAction</class>
         <class>org.apache.oozie.client.rest.JsonSLAEvent</class>
-        <class>org.apache.oozie.client.rest.sla.JsonSLARegistrationEvent</class>
         <class>org.apache.oozie.client.rest.JsonBundleJob</class>
         <class>org.apache.oozie.util.db.ValidateConnectionBean</class>
 
@@ -248,10 +234,8 @@
                 org.apache.oozie.BundleJobBean;
                 org.apache.oozie.BundleActionBean;
                 org.apache.oozie.sla.SLARegistrationBean;
-                org.apache.oozie.sla.SLACalculatorBean;
                 org.apache.oozie.sla.SLASummaryBean;
                 org.apache.oozie.client.rest.JsonSLAEvent;
-                org.apache.oozie.client.rest.sla.JsonSLARegistrationEvent;
                 org.apache.oozie.client.rest.JsonWorkflowJob;
                 org.apache.oozie.client.rest.JsonWorkflowAction;
                 org.apache.oozie.client.rest.JsonCoordinatorJob;
@@ -287,14 +271,12 @@
         <class>org.apache.oozie.BundleJobBean</class>
         <class>org.apache.oozie.BundleActionBean</class>
         <class>org.apache.oozie.sla.SLARegistrationBean</class>
-        <class>org.apache.oozie.sla.SLACalculatorBean</class>
         <class>org.apache.oozie.sla.SLASummaryBean</class>
         <class>org.apache.oozie.client.rest.JsonWorkflowJob</class>
         <class>org.apache.oozie.client.rest.JsonWorkflowAction</class>
         <class>org.apache.oozie.client.rest.JsonCoordinatorJob</class>
         <class>org.apache.oozie.client.rest.JsonCoordinatorAction</class>
         <class>org.apache.oozie.client.rest.JsonSLAEvent</class>
-        <class>org.apache.oozie.client.rest.sla.JsonSLARegistrationEvent</class>
         <class>org.apache.oozie.client.rest.JsonBundleJob</class>
         <class>org.apache.oozie.util.db.ValidateConnectionBean</class>
 
@@ -312,10 +294,8 @@
                 org.apache.oozie.BundleJobBean;
                 org.apache.oozie.BundleActionBean;
                 org.apache.oozie.sla.SLARegistrationBean;
-                org.apache.oozie.sla.SLACalculatorBean;
                 org.apache.oozie.sla.SLASummaryBean;
                 org.apache.oozie.client.rest.JsonSLAEvent;
-                org.apache.oozie.client.rest.sla.JsonSLARegistrationEvent;
                 org.apache.oozie.client.rest.JsonWorkflowJob;
                 org.apache.oozie.client.rest.JsonWorkflowAction;
                 org.apache.oozie.client.rest.JsonCoordinatorJob;
