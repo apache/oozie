@@ -62,7 +62,7 @@ public class TestCoordinatorJobBean extends XTestCase {
         bean.setExecution(execution);
         bean.setExecutionOrder(execution);
         bean.setExternalId("ei");
-        bean.setFrequency(3);
+        bean.setFrequency("3");
         bean.setGroup("group");
         bean.setId("id");
         bean.setJobXml("jx");
@@ -122,7 +122,7 @@ public class TestCoordinatorJobBean extends XTestCase {
         }
         assertEquals(execution, bean.getExecutionOrder());
         assertEquals("ei", bean.getExternalId());
-        assertEquals(3, bean.getFrequency());
+        assertEquals("3", bean.getFrequency());
         assertEquals("group", bean.getGroup());
         assertEquals("id", bean.getId());
         if (checkDeserialization) {

@@ -442,6 +442,18 @@ public class OozieDBCLI {
             ddlQueries.add("UPDATE WF_ACTIONS SET data_temp=data");
             ddlQueries.add("ALTER TABLE WF_ACTIONS DROP COLUMN data");
             ddlQueries.add("RENAME COLUMN WF_ACTIONS.data_temp TO data");
+            // change coord_jobs.frequency from int to varchar(255)
+                // Derby doesn't support INTEGER to VARCHAR, so: INTEGER --> CHAR --> VARCHAR
+                    // http://java.dzone.com/articles/derby-casting-madness-–-sequel
+                // Also, max CHAR length is 254 (so can't use 255)
+                // And we have to trim when casting from CHAR to VARCHAR because of the added whitespace in CHAR
+            ddlQueries.add("ALTER TABLE COORD_JOBS ADD COLUMN frequency_temp_a CHAR(254)");
+            ddlQueries.add("UPDATE COORD_JOBS SET frequency_temp_a=CAST(frequency AS CHAR(254))");
+            ddlQueries.add("ALTER TABLE COORD_JOBS ADD COLUMN frequency_temp_b VARCHAR(255)");
+            ddlQueries.add("UPDATE COORD_JOBS SET frequency_temp_b=TRIM(CAST(frequency_temp_a AS VARCHAR(255)))");
+            ddlQueries.add("ALTER TABLE COORD_JOBS DROP COLUMN frequency_temp_a");
+            ddlQueries.add("ALTER TABLE COORD_JOBS DROP COLUMN frequency");
+            ddlQueries.add("RENAME COLUMN COORD_JOBS.frequency_temp_b TO frequency");
         }
         else
         if (dbVendor.equals("oracle")) {
@@ -476,6 +488,11 @@ public class OozieDBCLI {
             ddlQueries.add("UPDATE WF_ACTIONS SET data_temp = data");
             ddlQueries.add("ALTER TABLE WF_ACTIONS DROP COLUMN data");
             ddlQueries.add("ALTER TABLE WF_ACTIONS RENAME COLUMN data_temp TO data");
+            // change coord_jobs.frequency from int to varchar(255)
+            ddlQueries.add("ALTER TABLE COORD_JOBS ADD (frequency_temp VARCHAR2(255))");
+            ddlQueries.add("UPDATE COORD_JOBS SET frequency_temp = CAST(frequency AS VARCHAR(255))");
+            ddlQueries.add("ALTER TABLE COORD_JOBS DROP COLUMN frequency");
+            ddlQueries.add("ALTER TABLE COORD_JOBS RENAME COLUMN frequency_temp TO frequency");
         }
         else
         if (dbVendor.equals("mysql")) {
@@ -486,6 +503,7 @@ public class OozieDBCLI {
             ddlQueries.add("ALTER TABLE WF_ACTIONS MODIFY sla_xml VARCHAR(4000)");
             ddlQueries.add("ALTER TABLE WF_ACTIONS MODIFY error_message VARCHAR(4000)");
             ddlQueries.add("ALTER TABLE WF_ACTIONS MODIFY data VARCHAR(4000)");
+            ddlQueries.add("ALTER TABLE COORD_JOBS MODIFY frequency VARCHAR(255)");
         }
         else
         if (dbVendor.equals("postgresql")) {
@@ -496,6 +514,7 @@ public class OozieDBCLI {
             ddlQueries.add("ALTER TABLE WF_ACTIONS ALTER COLUMN sla_xml TYPE VARCHAR(4000)");
             ddlQueries.add("ALTER TABLE WF_ACTIONS ALTER COLUMN error_message TYPE VARCHAR(4000)");
             ddlQueries.add("ALTER TABLE WF_ACTIONS ALTER COLUMN data TYPE VARCHAR(4000)");
+            ddlQueries.add("ALTER TABLE COORD_JOBS ALTER COLUMN frequency TYPE VARCHAR(255)");
         }
         Connection conn = (run) ? createConnection() : null;
 
@@ -503,6 +522,7 @@ public class OozieDBCLI {
             System.out.println("Table 'WF_ACTIONS' column 'execution_path', length changed to 1024");
             System.out.println("Table 'COORD_JOB/ACTIONS, WF_JOBS/ACTIONS' column 'sla_xml', changed to varchar/varchar2");
             System.out.println("Table 'WF_ACTIONS, column 'error_message/data', changed to varchar/varchar2");
+            System.out.println("Table 'COORD_JOB' column 'frequency' changed to varchar/varchar2");
             for(String query : ddlQueries){
                 writer.println(query + ";");
                 if (run) {

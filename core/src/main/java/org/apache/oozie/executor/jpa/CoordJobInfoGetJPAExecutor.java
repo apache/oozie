@@ -143,7 +143,7 @@ public class CoordJobInfoGetJPAExecutor implements JPAExecutor<CoordinatorJobInf
             bean.setConcurrency(((Integer) arr[8]).intValue());
         }
         if (arr[9] != null) {
-            bean.setFrequency(((Integer) arr[9]).intValue());
+            bean.setFrequency((String) arr[9]);
         }
         if (arr[10] != null) {
             bean.setLastActionTime((Timestamp) arr[10]);

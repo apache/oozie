@@ -164,7 +164,7 @@ public class CoordActionMaterializeCommand extends CoordinatorCommand<Void> {
         // TODO: always UTC?
         TimeZone appTz = DateUtils.getTimeZone(jobBean.getTimeZone());
         // TimeZone appTz = DateUtils.getTimeZone("UTC");
-        int frequency = jobBean.getFrequency();
+        int frequency = Integer.valueOf(jobBean.getFrequency());
         TimeUnit freqTU = TimeUnit.valueOf(eJob.getAttributeValue("freq_timeunit"));
         TimeUnit endOfFlag = TimeUnit.valueOf(eJob.getAttributeValue("end_of_duration"));
         Calendar start = Calendar.getInstance(appTz);

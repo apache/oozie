@@ -293,7 +293,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         String jobXml = coordJob.getJobXml();
         Element eJob = XmlUtils.parseXml(jobXml);
         TimeZone appTz = DateUtils.getTimeZone(coordJob.getTimeZone());
-        int frequency = coordJob.getFrequency();
+        int frequency = Integer.valueOf(coordJob.getFrequency());
         TimeUnit freqTU = TimeUnit.valueOf(eJob.getAttributeValue("freq_timeunit"));
         TimeUnit endOfFlag = TimeUnit.valueOf(eJob.getAttributeValue("end_of_duration"));
         Calendar start = Calendar.getInstance(appTz);

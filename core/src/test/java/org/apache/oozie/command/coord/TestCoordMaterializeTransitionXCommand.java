@@ -225,7 +225,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         coordJob.setStartTime(startTime);
         coordJob.setEndTime(endTime);
         coordJob.setPauseTime(pauseTime);
-        coordJob.setFrequency(5);
+        coordJob.setFrequency("5");
         coordJob.setTimeUnit(Timeunit.MINUTE);
         coordJob.setTimeout(timeout);
         coordJob.setConcurrency(3);

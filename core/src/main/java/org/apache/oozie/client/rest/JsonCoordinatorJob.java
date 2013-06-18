@@ -78,7 +78,7 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
 
     @Basic
     @Column(name = "frequency")
-    private int frequency = 0;
+    private String frequency = "0";
 
     @Basic
     @Column(name = "time_zone")
@@ -223,11 +223,11 @@ public class JsonCoordinatorJob implements CoordinatorJob, JsonBean {
         this.status = status;
     }
 
-    public void setFrequency(int frequency) {
+    public void setFrequency(String frequency) {
         this.frequency = frequency;
     }
 
-    public int getFrequency() {
+    public String getFrequency() {
         return frequency;
     }
 

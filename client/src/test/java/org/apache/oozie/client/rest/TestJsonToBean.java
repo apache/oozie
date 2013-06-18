@@ -252,7 +252,7 @@ public class TestJsonToBean extends TestCase {
         json.put(JsonTags.COORDINATOR_JOB_CONF, "d");
         json.put(JsonTags.COORDINATOR_JOB_STATUS, CoordinatorJob.Status.RUNNING.toString());
         json.put(JsonTags.COORDINATOR_JOB_EXECUTIONPOLICY, CoordinatorJob.Execution.FIFO.toString());
-        json.put(JsonTags.COORDINATOR_JOB_FREQUENCY, (long)1);
+        json.put(JsonTags.COORDINATOR_JOB_FREQUENCY, "1");
         json.put(JsonTags.COORDINATOR_JOB_TIMEUNIT, CoordinatorJob.Timeunit.DAY.toString());
         json.put(JsonTags.COORDINATOR_JOB_TIMEZONE, "e");
         json.put(JsonTags.COORDINATOR_JOB_CONCURRENCY, (long)2);
@@ -291,7 +291,7 @@ public class TestJsonToBean extends TestCase {
         assertEquals("d", job.getConf());
         assertEquals(CoordinatorJob.Status.RUNNING, job.getStatus());
         assertEquals(CoordinatorJob.Execution.FIFO, job.getExecutionOrder());
-        assertEquals(1, job.getFrequency());
+        assertEquals("1", job.getFrequency());
         assertEquals(CoordinatorJob.Timeunit.DAY, job.getTimeUnit());
         assertEquals("e", job.getTimeZone());
         assertEquals(2, job.getConcurrency());

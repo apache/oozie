@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1408 Change column type of "frequency" from int to varchar for coordinators (rkanter)
 OOZIE-1420 OOZIE-1365 breaks the action popup in the Web UI (michalisk via rkanter)
 OOZIE-1418 Fix bugs around ActionKillX not setting end time, V2SLAServlet and exception handling for event threads (mona)
 OOZIE-1365 The hive action popup in the web UI is broken when externalChildIDs is empty string (michalisk via rkanter)

@@ -172,7 +172,7 @@ public class TestCoordActionMaterializeCommand extends XTestCase {
         }*/
         coordJob.setJobXml(appXml);
         coordJob.setLastActionNumber(0);
-        coordJob.setFrequency(1);
+        coordJob.setFrequency("1");
         try {
             coordJob.setEndTime(DateUtils.parseDateOozieTZ("2009-03-11T10:00Z"));
         }
@@ -264,7 +264,7 @@ public class TestCoordActionMaterializeCommand extends XTestCase {
 
         coordJob.setJobXml(appXml);
         coordJob.setLastActionNumber(0);
-        coordJob.setFrequency(5);
+        coordJob.setFrequency("5");
         try {
             store.beginTrx();
             store.insertCoordinatorJob(coordJob);

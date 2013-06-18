@@ -341,7 +341,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
         coordJob.setConf(XmlUtils.prettyPrint(conf).toString());
         coordJob.setJobXml(appXml);
         coordJob.setLastActionNumber(0);
-        coordJob.setFrequency(1);
+        coordJob.setFrequency("1");
         coordJob.setTimeUnit(Timeunit.DAY);
         coordJob.setExecution(Execution.FIFO);
         coordJob.setConcurrency(1);
@@ -393,7 +393,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
         Configuration conf = getCoordConf(appPath);
         coordJob.setConf(XmlUtils.prettyPrint(conf).toString());
         coordJob.setJobXml(appXml);
-        coordJob.setFrequency(1);
+        coordJob.setFrequency("1");
         coordJob.setTimeUnit(Timeunit.DAY);
         coordJob.setExecution(Execution.FIFO);
         coordJob.setConcurrency(1);
@@ -448,7 +448,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
         Configuration conf = getCoordConf(appPath);
         coordJob.setConf(XmlUtils.prettyPrint(conf).toString());
         coordJob.setJobXml(appXml);
-        coordJob.setFrequency(1);
+        coordJob.setFrequency("1");
         coordJob.setTimeUnit(Timeunit.DAY);
         coordJob.setExecution(Execution.FIFO);
         coordJob.setConcurrency(1);

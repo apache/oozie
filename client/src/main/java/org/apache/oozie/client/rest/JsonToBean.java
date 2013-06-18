@@ -143,7 +143,7 @@ public class JsonToBean {
         COORD_JOB.put("getStatus", new Property(JsonTags.COORDINATOR_JOB_STATUS, CoordinatorJob.Status.class));
         COORD_JOB.put("getExecutionOrder",
                       new Property(JsonTags.COORDINATOR_JOB_EXECUTIONPOLICY, CoordinatorJob.Execution.class));
-        COORD_JOB.put("getFrequency", new Property(JsonTags.COORDINATOR_JOB_FREQUENCY, Integer.TYPE));
+        COORD_JOB.put("getFrequency", new Property(JsonTags.COORDINATOR_JOB_FREQUENCY, String.class));
         COORD_JOB.put("getTimeUnit", new Property(JsonTags.COORDINATOR_JOB_TIMEUNIT, CoordinatorJob.Timeunit.class));
         COORD_JOB.put("getTimeZone", new Property(JsonTags.COORDINATOR_JOB_TIMEZONE, String.class));
         COORD_JOB.put("getConcurrency", new Property(JsonTags.COORDINATOR_JOB_CONCURRENCY, Integer.TYPE));
