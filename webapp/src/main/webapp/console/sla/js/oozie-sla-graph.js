@@ -134,7 +134,7 @@ function drawSLAGraph(jsonData, plotValues, drawExpectedStart) {
     if (drawExpectedStart) {
         datasetsToPlot.push({label: "Expected Start", data:plotValues.expectedStart, color: 6});
     }
-    datasetsToPlot.push({label: "Actual Start", data:plotValues.actualStart, color: 26});
+    datasetsToPlot.push({label: "Actual Start", data:plotValues.actualStart, color: "rgb(0,0,255)"});
     datasetsToPlot.push({label: "Expected End", data:plotValues.expectedEnd, color: 5});
     datasetsToPlot.push({label: "Actual End", data:plotValues.actualEnd, color: 25});
 
@@ -165,7 +165,7 @@ function drawSLAGraph(jsonData, plotValues, drawExpectedStart) {
         },
         yaxis : {
             show : true,
-            min : 0,
+            ticks: 14,
             tickFormatter: timeSinceTickFormatter
         },
         grid : {
