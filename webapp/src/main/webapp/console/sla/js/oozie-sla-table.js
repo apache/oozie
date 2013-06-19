@@ -20,7 +20,7 @@ var columnsToShow = [
               { "mData": null,  "bSortable": false, "sWidth":"0.1%", "bVisible": true},
               { "mData": "id"},
               { "mData": "slaStatus"},
-              { "mData": "nominalTimeTZ"},
+              { "mData": "nominalTimeTZ", "sDefaultContent": ""},
               { "mData": "expectedStartTZ", "sDefaultContent": ""},
               { "mData": "actualStartTZ", "sDefaultContent": "" },
               { "mData": "startDiff", "sDefaultContent": ""},
@@ -33,7 +33,6 @@ var columnsToShow = [
               { "mData": "slaMisses", "sDefaultContent": ""},
               { "mData": "jobStatus", "sDefaultContent": ""},
               { "mData": "parentId", "sDefaultContent": "", "bVisible": false},
-              { "mData": "user", "bVisible": false},
               { "mData": "appName", "bVisible": false},
              ];
 
@@ -126,50 +125,64 @@ function drawTable(jsonData) {
         }
         if (slaSummary.expectedStart && slaSummary.actualStart) {
             // timeElapsed in oozie-sla.js
-            slaSummary.startDiff = timeElapsed(slaSummary.actualStart - slaSummary.expectedStart);
+            slaSummary.startDiff = slaSummary.actualStart - slaSummary.expectedStart;
         }
         if (slaSummary.expectedEnd && slaSummary.actualEnd) {
-            slaSummary.endDiff = timeElapsed(slaSummary.actualEnd - slaSummary.expectedEnd);
+            slaSummary.endDiff = slaSummary.actualEnd - slaSummary.expectedEnd;
         }
-        if (slaSummary.actualDuration != -1) {
-            slaSummary.durDiff = timeElapsed(slaSummary.actualDuration - slaSummary.expectedDuration);
+        if (slaSummary.actualDuration != -1 && slaSummary.expectedDuration != -1) {
+            slaSummary.durDiff = slaSummary.actualDuration - slaSummary.expectedDuration;
             if (slaSummary.actualDuration > slaSummary.expectedDuration) {
                 slaMisses += "DURATION_MISS, ";
             }
         }
         slaSummary.slaMisses = slaMisses.length > 2 ? slaMisses.substring(0, slaMisses.length - 2) : "";
     }
-    oTable = $('#sla_table').dataTable( {
-            "bJQueryUI": true,
-            "sDom": 'CT<"clear"> <"H"lfr>t<"F"ip>',
-               "oColVis": {
-                   "buttonText": "Show/Hide columns",
-                "bRestore": true,
-                "aiExclude": [ 0 ]
-            },
-               "bStateSave": true,
-            "sScrollY": "360px",
-            "sScrollX": "100%",
-            "bPaginate": true,
-            "oTableTools": {
-                    "sSwfPath": "console/sla/js/table/copy_csv_xls_pdf.swf",
-                    "aButtons": [ "copy", "csv" ],
-            },
-            "aaData": jsonData.slaSummaryList,
-            "aoColumns": columnsToShow,
-            "fnRowCallback": function( nRow, aData, iDisplayIndex, iDisplayIndexFull ) {
-                var jobId = aData.id;
-                var rowAllColumns = this.fnGetTds(nRow);
-                  $(rowAllColumns[1]).html('<a href="/oozie?job='+jobId+'" target="_blank">' +
-                    jobId + '</a>');
-                if (aData.slaStatus == "MISS") {
-                    $(rowAllColumns[2]).css('color', 'red');
-                }
-                $("td:first", nRow).html(iDisplayIndexFull +1);
-                return nRow;
-            },
-            "aaSorting": [[ 1, 'desc' ]],
-            "bDestroy": true
-        } );
+    oTable = $('#sla_table').dataTable(
+            {
+                "bJQueryUI" : true,
+                "sDom" : 'CT<"clear"> <"H"lfr>t<"F"ip>',
+                "oColVis" : {
+                    "buttonText" : "Show/Hide columns",
+                    "bRestore" : true,
+                    "aiExclude" : [ 0 ]
+                },
+                "bStateSave" : true,
+                "sScrollY" : "360px",
+                "sScrollX" : "100%",
+                "bPaginate" : true,
+                "oTableTools" : {
+                    "sSwfPath" : "console/sla/js/table/copy_csv_xls_pdf.swf",
+                    "aButtons" : [ "copy", "csv" ],
+                },
+                "aaData" : jsonData.slaSummaryList,
+                "aoColumns" : columnsToShow,
+                "fnRowCallback" : function(nRow, aData, iDisplayIndex, iDisplayIndexFull) {
+                    var rowAllColumns = this.fnGetTds(nRow);
+                    $(rowAllColumns[1]).html(
+                            '<a href="/oozie?job=' + aData.id + '" target="_blank">' + aData.id
+                                    + '</a>');
+                    $(rowAllColumns[15]).html(
+                            '<a href="/oozie?job=' + aData.parentId + '" target="_blank">'
+                                    + aData.parentId + '</a>');
+                    if (aData.slaStatus == "MISS") {
+                        $(rowAllColumns[2]).css('color', 'red');
+                    }
+                    // Changing only the html with readable text to preserve sort order.
+                    if (aData.startDiff || aData.startDiff == 0) {
+                        $(rowAllColumns[6]).html(timeElapsed(aData.startDiff));
+                    }
+                    if (aData.endDiff || aData.endDiff == 0) {
+                        $(rowAllColumns[9]).html(timeElapsed(aData.endDiff));
+                    }
+                    if (aData.durDiff || aData.durDiff == 0) {
+                        $(rowAllColumns[12]).html(timeElapsed(aData.durDiff * 1000));
+                    }
+                    $("td:first", nRow).html(iDisplayIndexFull + 1);
+                    return nRow;
+                },
+                "aaSorting" : [ [ 1, 'desc' ] ],
+                "bDestroy" : true
+            });
 
 }

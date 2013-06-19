@@ -125,46 +125,69 @@ function buildTableAndGraph(jsonData) {
 }
 
 function timeElapsed(timeInMillis) {
+
+    if (!timeInMillis) {
+        if (timeInMillis == 0) {
+            return "00:00:00";
+        }
+        return;
+    }
+
     var timeSince = "";
+    var addHour = true;
+    var addMin = true;
     if (timeInMillis < 0) {
         timeSince = "-";
         timeInMillis = -timeInMillis;
     }
-    var seconds = Math.round(timeInMillis/1000);
+    var seconds = Math.floor(timeInMillis/1000);
     interval = Math.floor(seconds / 31536000);
 
-    if (interval > 1) {
+    if (interval > 0) {
         timeSince += interval + "y ";
         seconds = (seconds %= 31536000);
     }
 
     interval = Math.floor(seconds / 2592000);
-    if (interval > 1) {
+    if (interval > 0) {
         timeSince += interval + "m ";
         seconds = (seconds %= 2592000);
     }
 
     interval = Math.floor(seconds / 86400);
-    if (interval > 1) {
+    if (interval > 0) {
         timeSince += interval + "d ";
         seconds = (seconds %= 86400);
     }
 
     interval = Math.floor(seconds / 3600);
-    if (interval > 1) {
+    if (interval > 0) {
+        if (interval < 10)
+            timeSince += "0";
         timeSince += interval + ":";
         seconds = (seconds %= 3600);
+        addHour = false;
     }
 
     interval = Math.floor(seconds / 60);
-    if (interval > 1) {
+    if (interval > 0) {
+        if (addHour) {
+            timeSince += "00:";
+        }
+        addHour = false;
         if (interval < 10)
             timeSince += "0";
         timeSince += interval + ":";
         seconds = (seconds %= 60);
-        if (seconds < 10)
-            timeSince += "0";
+        addMin = false;
     }
-
+    if (addHour) {
+        timeSince += "00:";
+    }
+    if (addMin) {
+        timeSince += "00:";
+    }
+    if (seconds < 10)
+        timeSince += "0";
     return timeSince + seconds;
 }

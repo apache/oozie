@@ -876,10 +876,11 @@ function coordJobDetailsPopup(response, request) {
             icon: 'ext-2.2/resources/images/default/grid/refresh.gif',
             handler: function() {
                 Ext.Ajax.request({
-                    url: getOozieBase() + 'job/' + coordJobId + "?timezone=" + getTimeZone(),
+                    url: getOozieBase() + 'job/' + coordJobId + "?timezone=" + getTimeZone() + "&offset=0&len=0",
                     success: function(response, request) {
                         jobDetails = eval("(" + response.responseText + ")");
                         fs.getForm().setValues(jobDetails);
+                        jobActionStatus.reload();
                     }
 
                 });
@@ -1398,6 +1399,17 @@ function coordJobDetailsGridWindow(coordJobId) {
          */
         url: getOozieBase() + 'job/' + coordJobId + "?timezone=" + getTimeZone() + "&offset=0&len=0",
         success: coordJobDetailsPopup
+    });
+}
+
+function coordActionDetailsGridWindow(coordActionId) {
+    Ext.Ajax.request({
+        url: getOozieBase() + 'job/' + coordActionId + "?timezone=" + getTimeZone(),
+        success: function(response, request) {
+            var coordAction = JSON.parse(response.responseText);
+            var workflowId = coordAction.externalId;
+            jobDetailsGridWindow(workflowId);
+        }
     });
 }
 
@@ -2227,8 +2239,14 @@ function initConsole() {
         else if (jobId.endsWith("-B")) {
             bundleJobDetailsGridWindow(jobId);
         }
-        else
-        {
+        else if (jobId.endsWith("-W")) {
+            jobDetailsGridWindow(jobId);
+        }
+        else if (jobId.indexOf("-C@") !=-1) {
+            coordActionDetailsGridWindow(jobId);
+        }
+        else if (jobId.endsWith("-W@") !=-1) {
+            jobId = jobId.substring(0, index + 2);
             jobDetailsGridWindow(jobId);
         }
 
