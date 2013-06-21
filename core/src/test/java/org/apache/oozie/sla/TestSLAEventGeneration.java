@@ -216,7 +216,7 @@ public class TestSLAEventGeneration extends XDataTestCase {
         assertEquals(-1, slaSummary.getActualDuration());
         assertNull(slaSummary.getActualStart());
         assertNull(slaSummary.getActualEnd());
-        assertNull(slaSummary.getJobStatus());
+        assertEquals("PREP", slaSummary.getJobStatus());
         assertEquals(SLAStatus.NOT_STARTED, slaSummary.getSLAStatus());
         assertNull(slaEvent.getEventStatus());
 

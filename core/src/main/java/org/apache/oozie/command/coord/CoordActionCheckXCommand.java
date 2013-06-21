@@ -45,6 +45,8 @@ import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.executor.jpa.BulkUpdateInsertForCoordActionStatusJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionGetForCheckJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordinatorJobGetForUserAppnameJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowActionGetForSLAJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobGetForSLAJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 
 /**
@@ -55,6 +57,8 @@ public class CoordActionCheckXCommand extends CoordinatorXCommand<Void> {
     private String actionId;
     private int actionCheckDelay;
     private CoordinatorActionBean coordAction = null;
+    private CoordinatorJobBean coordJob;
+    private WorkflowJobBean workflowJob;
     private JPAService jpaService = null;
     private List<JsonBean> updateList = new ArrayList<JsonBean>();
     private List<JsonBean> insertList = new ArrayList<JsonBean>();
@@ -122,9 +126,7 @@ public class CoordActionCheckXCommand extends CoordinatorXCommand<Void> {
             jpaService.execute(new BulkUpdateInsertForCoordActionStatusJPAExecutor(updateList, insertList));
             CoordinatorAction.Status endStatus = coordAction.getStatus();
             if (endStatus != initialStatus && EventHandlerService.isEnabled()) {
-                CoordinatorJobBean coordJob = jpaService.execute(new CoordinatorJobGetForUserAppnameJPAExecutor(
-                        coordAction.getJobId()));
-                generateEvent(coordAction, coordJob.getUser(), coordJob.getAppName());
+                generateEvent(coordAction, coordJob.getUser(), coordJob.getAppName(), workflowJob.getStartTime());
             }
         }
         catch (XException ex) {
@@ -160,6 +162,9 @@ public class CoordActionCheckXCommand extends CoordinatorXCommand<Void> {
 
             if (jpaService != null) {
                 coordAction = jpaService.execute(new CoordActionGetForCheckJPAExecutor(actionId));
+                coordJob = jpaService.execute(new CoordinatorJobGetForUserAppnameJPAExecutor(
+                        coordAction.getJobId()));
+                workflowJob = jpaService.execute (new WorkflowJobGetForSLAJPAExecutor(coordAction.getExternalId()));
                 LogUtils.setLogInfo(coordAction, logInfo);
             }
             else {

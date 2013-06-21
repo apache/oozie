@@ -74,6 +74,8 @@ import org.apache.openjpa.persistence.jdbc.Index;
         // Select query used only by test cases
         @NamedQuery(name = "GET_COORD_ACTION", query = "select OBJECT(a) from CoordinatorActionBean a where a.id = :id"),
 
+        // Select query used by SLAService on restart
+        @NamedQuery(name = "GET_COORD_ACTION_FOR_SLA", query = "select a.id, a.jobId, a.status, a.externalId, a.lastModifiedTimestamp from CoordinatorActionBean a where a.id = :id"),
         // Select query used by ActionInfo command
         @NamedQuery(name = "GET_COORD_ACTION_FOR_INFO", query = "select a.id, a.jobId, a.actionNumber, a.consoleUrl, a.errorCode, a.errorMessage, a.externalId, a.externalStatus, a.trackerUri, a.createdTimestamp, a.nominalTimestamp, a.status, a.lastModifiedTimestamp, a.missingDependencies, a.pushMissingDependencies from CoordinatorActionBean a where a.id = :id"),
         // Select Query used by Timeout command
@@ -264,6 +266,14 @@ public class CoordinatorActionBean extends JsonCoordinatorAction implements
     @Override
     public Status getStatus() {
         return Status.valueOf(status);
+    }
+
+    /**
+     * Return the status in string
+     * @return
+     */
+    public String getStatusStr() {
+        return status;
     }
 
     @Override

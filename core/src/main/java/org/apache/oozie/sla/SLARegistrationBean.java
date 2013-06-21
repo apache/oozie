@@ -83,7 +83,7 @@ public class SLARegistrationBean implements JsonBean {
 
     @Basic
     @Column(name = "expected_duration")
-    private long expectedDuration = 0;
+    private long expectedDuration = -1;
 
     @Basic
     @Column(name = "user_name")

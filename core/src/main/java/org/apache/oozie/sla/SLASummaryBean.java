@@ -94,7 +94,7 @@ public class SLASummaryBean implements JsonBean {
 
     @Basic
     @Column(name = "expected_duration")
-    private long expectedDuration;
+    private long expectedDuration = -1;
 
     @Basic
     @Column(name = "actual_start")

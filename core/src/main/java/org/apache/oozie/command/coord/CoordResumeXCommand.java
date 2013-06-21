@@ -181,9 +181,6 @@ public class CoordResumeXCommand extends ResumeTransitionXCommand {
     public void performWrites() throws CommandException {
         try {
             jpaService.execute(new BulkUpdateInsertForCoordActionStatusJPAExecutor(updateList, null));
-            if (EventHandlerService.isEnabled()) {
-                generateEvents(coordJob);
-            }
         }
         catch (JPAExecutorException e) {
             throw new CommandException(e);

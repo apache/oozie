@@ -24,6 +24,7 @@ import java.io.Writer;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -40,6 +41,7 @@ import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.client.event.Event;
 import org.apache.oozie.client.event.JobEvent;
 import org.apache.oozie.client.event.JobEvent.EventStatus;
 import org.apache.oozie.client.rest.RestConstants;
@@ -215,7 +217,7 @@ public class TestEventGeneration extends XDataTestCase {
         ehs.setAppTypes(new HashSet<String>(Arrays.asList("coordinator_action")));
         assertEquals(queue.size(), 0);
         Date startTime = DateUtils.parseDateOozieTZ("2013-01-01T10:00Z");
-        Date endTime = DateUtils.parseDateOozieTZ("2013-01-01T10:14Z");
+        Date endTime = DateUtils.parseDateOozieTZ("2013-01-01T10:01Z");
         CoordinatorJobBean coord = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, false,
                 false, 0);
         modifyCoordForRunning(coord);
@@ -234,7 +236,7 @@ public class TestEventGeneration extends XDataTestCase {
         assertEquals(action.getId(), event.getId());
         assertEquals(action.getJobId(), event.getParentId());
         assertEquals(action.getNominalTime(), ((CoordinatorActionEvent) event).getNominalTime());
-        assertEquals(action.getCreatedTime(), event.getStartTime());
+        assertNull(event.getStartTime());
         assertEquals(coord.getUser(), event.getUser());
         assertEquals(coord.getAppName(), event.getAppName());
         assertEquals(0, queue.size());
@@ -251,13 +253,15 @@ public class TestEventGeneration extends XDataTestCase {
             }
         });
 
+        action = jpaService.execute(coordGetCmd);
         event = (JobEvent) queue.poll();
         assertEquals(EventStatus.STARTED, event.getEventStatus());
         assertEquals(AppType.COORDINATOR_ACTION, event.getAppType());
         assertEquals(action.getId(), event.getId());
         assertEquals(action.getJobId(), event.getParentId());
         assertEquals(action.getNominalTime(), ((CoordinatorActionEvent) event).getNominalTime());
-        assertEquals(action.getCreatedTime(), event.getStartTime());
+        WorkflowJobBean wjb = jpaService.execute(new WorkflowJobGetJPAExecutor(action.getExternalId()));
+        assertEquals(wjb.getStartTime(), event.getStartTime());
         assertEquals(coord.getUser(), event.getUser());
         assertEquals(coord.getAppName(), event.getAppName());
 
@@ -266,17 +270,19 @@ public class TestEventGeneration extends XDataTestCase {
         WorkflowJobBean wfJob = jpaService.execute(new WorkflowJobGetJPAExecutor(action.getExternalId()));
         wfJob.setStatus(WorkflowJob.Status.SUCCEEDED);
         jpaService.execute(new WorkflowJobUpdateJPAExecutor(wfJob));
+        action.setStatus(CoordinatorAction.Status.RUNNING);
+        jpaService.execute(new CoordActionUpdateJPAExecutor(action));
         new CoordActionCheckXCommand(action.getId(), 0).call();
-        Thread.sleep(300);
         action = jpaService.execute(coordGetCmd);
         assertEquals(CoordinatorAction.Status.SUCCEEDED, action.getStatus());
-        event = (JobEvent) queue.poll();
+        List<Event> list =  queue.pollBatch();
+        event = (JobEvent)list.get(list.size()-1);
         assertEquals(EventStatus.SUCCESS, event.getEventStatus());
         assertEquals(AppType.COORDINATOR_ACTION, event.getAppType());
         assertEquals(action.getId(), event.getId());
         assertEquals(action.getJobId(), event.getParentId());
         assertEquals(action.getNominalTime(), ((CoordinatorActionEvent) event).getNominalTime());
-        assertEquals(action.getCreatedTime(), event.getStartTime());
+        assertEquals(wfJob.getStartTime(), event.getStartTime());
         assertEquals(coord.getUser(), event.getUser());
         assertEquals(coord.getAppName(), event.getAppName());
 
@@ -294,7 +300,7 @@ public class TestEventGeneration extends XDataTestCase {
         assertEquals(action.getId(), event.getId());
         assertEquals(action.getJobId(), event.getParentId());
         assertEquals(action.getNominalTime(), ((CoordinatorActionEvent) event).getNominalTime());
-        assertEquals(action.getCreatedTime(), event.getStartTime());
+        assertEquals(wfJob.getStartTime(), event.getStartTime());
         assertEquals(coord.getUser(), event.getUser());
         assertEquals(coord.getAppName(), event.getAppName());
 
@@ -303,18 +309,25 @@ public class TestEventGeneration extends XDataTestCase {
         jpaService.execute(new CoordJobUpdateJPAExecutor(coord));
         action.setStatus(CoordinatorAction.Status.SUSPENDED);
         jpaService.execute(new CoordActionUpdateJPAExecutor(action));
+        wfJob.setStatus(WorkflowJob.Status.SUSPENDED);
+        WorkflowInstance wfInstance = wfJob.getWorkflowInstance();
+        ((LiteWorkflowInstance) wfInstance).setStatus(WorkflowInstance.Status.SUSPENDED);
+        wfJob.setWorkflowInstance(wfInstance);
+        jpaService.execute(new WorkflowJobUpdateJPAExecutor(wfJob));
         new CoordResumeXCommand(coord.getId()).call();
+        Thread.sleep(5000);
         CoordinatorActionEvent cevent = (CoordinatorActionEvent) queue.poll();
         assertEquals(EventStatus.STARTED, cevent.getEventStatus());
         assertEquals(AppType.COORDINATOR_ACTION, cevent.getAppType());
         assertEquals(action.getId(), cevent.getId());
         assertEquals(action.getJobId(), cevent.getParentId());
         assertEquals(action.getNominalTime(), cevent.getNominalTime());
-        assertEquals(action.getCreatedTime(), cevent.getStartTime());
+        assertEquals(wfJob.getStartTime(), cevent.getStartTime());
 
         // Action going to WAITING on Coord Rerun
         action.setStatus(CoordinatorAction.Status.SUCCEEDED);
         jpaService.execute(new CoordActionUpdateJPAExecutor(action));
+        queue.clear();
         new CoordRerunXCommand(coord.getId(), RestConstants.JOB_COORD_RERUN_ACTION, "1", false, true)
                 .call();
         waitFor(3 * 100, new Predicate() {
@@ -329,7 +342,7 @@ public class TestEventGeneration extends XDataTestCase {
         assertEquals(action.getId(), cevent.getId());
         assertEquals(action.getJobId(), cevent.getParentId());
         assertEquals(action.getNominalTime(), cevent.getNominalTime());
-        assertEquals(action.getCreatedTime(), event.getStartTime());
+        assertEquals(wfJob.getStartTime(), event.getStartTime());
         assertNotNull(cevent.getMissingDeps());
 
     }
@@ -426,12 +439,15 @@ public class TestEventGeneration extends XDataTestCase {
         final CoordinatorJobBean coord = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
         final CoordinatorActionBean action = addRecordToCoordActionTable(coord.getId(), 1,
                 CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0);
+        WorkflowJobBean wjb = new WorkflowJobBean();
+        wjb.setId(action.getExternalId());
         JPAService jpaService = services.get(JPAService.class);
+        jpaService.execute(new WorkflowJobUpdateJPAExecutor(wjb));
 
         CoordinatorXCommand<Void> myCmd = new CoordActionCheckXCommand(action.getId(), 0) {
             @Override
             protected Void execute() {
-                CoordinatorXCommand.generateEvent(action, coord.getUser(), coord.getAppName());
+                CoordinatorXCommand.generateEvent(action, coord.getUser(), coord.getAppName(), null);
                 return null;
             }
         };

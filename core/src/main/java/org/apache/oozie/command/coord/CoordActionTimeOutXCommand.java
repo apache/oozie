@@ -60,7 +60,7 @@ public class CoordActionTimeOutXCommand extends CoordinatorXCommand<Void> {
                 actionBean.setLastModifiedTime(new Date());
                 jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionUpdateStatusJPAExecutor(actionBean));
                 if (EventHandlerService.isEnabled()) {
-                    generateEvent(actionBean, user, appName);
+                    generateEvent(actionBean, user, appName, null);
                 }
             }
             catch (JPAExecutorException e) {

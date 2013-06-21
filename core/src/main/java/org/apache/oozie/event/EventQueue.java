@@ -18,7 +18,7 @@
 package org.apache.oozie.event;
 
 import java.io.Serializable;
-import java.util.Set;
+import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.event.Event;
@@ -54,7 +54,7 @@ public interface EventQueue {
      * Fetch events from queue in batch
      * @return events set
      */
-    public Set<Event> pollBatch();
+    public List<Event> pollBatch();
 
     /**
     * Fetch single event from queue

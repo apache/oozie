@@ -165,7 +165,6 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
             // XmlUtils.prettyPrint(runConf).toString());
             DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(user);
             try {
-                boolean startJob = true;
                 Configuration conf = new XConfiguration(new StringReader(coordAction.getRunConf()));
                 SLAEventBean slaEvent = SLADbOperations.createStatusEvent(coordAction.getSlaXml(), coordAction.getId(), Status.STARTED,
                         SlaAppType.COORDINATOR_ACTION, log);
@@ -175,7 +174,7 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
 
                 // Normalize workflow appPath here;
                 JobUtils.normalizeAppPath(conf.get(OozieClient.USER_NAME), conf.get(OozieClient.GROUP_NAME), conf);
-                String wfId = dagEngine.submitJob(conf, startJob);
+                String wfId = dagEngine.submitJobFromCoordinator(conf, actionId);
                 coordAction.setStatus(CoordinatorAction.Status.RUNNING);
                 coordAction.setExternalId(wfId);
                 coordAction.incrementAndGetPending();
@@ -192,7 +191,7 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
                     try {
                         jpaService.execute(new BulkUpdateInsertForCoordActionStartJPAExecutor(updateList, insertList));
                         if (EventHandlerService.isEnabled()) {
-                            generateEvent(coordAction, user, appName);
+                            generateEvent(coordAction, user, appName, wfJob.getStartTime());
                         }
                     }
                     catch (JPAExecutorException je) {
@@ -248,7 +247,7 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
                         // call JPAExecutor to do the bulk writes
                         jpaService.execute(new BulkUpdateInsertForCoordActionStartJPAExecutor(updateList, insertList));
                         if (EventHandlerService.isEnabled()) {
-                            generateEvent(coordAction, user, appName);
+                            generateEvent(coordAction, user, appName, null);
                         }
                     }
                     catch (JPAExecutorException je) {

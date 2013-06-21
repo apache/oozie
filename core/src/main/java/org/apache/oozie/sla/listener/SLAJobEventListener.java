@@ -68,17 +68,14 @@ public class SLAJobEventListener extends JobEventListener {
     }
 
     private void sendEventToSLAService(JobEvent event, String status) {
-        if (!status.equals(CoordinatorAction.Status.WAITING.name())
-                && !status.equals(CoordinatorAction.Status.SUSPENDED.name())) {
-            Date startTime = event.getStartTime();
-            Date endTime = event.getEndTime();
-            try {
-                Services.get().get(SLAService.class)
-                        .addStatusEvent(event.getId(), status, event.getEventStatus(), startTime, endTime);
-            }
-            catch (ServiceException se) {
-                XLog.getLog(SLAService.class).error("Exception happened while sending Job-Status event for SLA", se);
-            }
+        Date startTime = event.getStartTime();
+        Date endTime = event.getEndTime();
+        try {
+            Services.get().get(SLAService.class)
+                    .addStatusEvent(event.getId(), status, event.getEventStatus(), startTime, endTime);
+        }
+        catch (ServiceException se) {
+            XLog.getLog(SLAService.class).error("Exception happened while sending Job-Status event for SLA", se);
         }
     }
 

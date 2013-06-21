@@ -17,6 +17,8 @@
  */
 package org.apache.oozie.command.coord;
 
+import java.util.Date;
+
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.AppType;
@@ -53,7 +55,7 @@ public abstract class CoordinatorXCommand<T> extends XCommand<T> {
         super(name, type, priority, dryrun);
     }
 
-    public static void generateEvent(CoordinatorActionBean coordAction, String user, String appName) {
+    public static void generateEvent(CoordinatorActionBean coordAction, String user, String appName, Date startTime) {
         if (eventService.isSupportedApptype(AppType.COORDINATOR_ACTION.name())) {
             String missDep = coordAction.getMissingDependencies();
             if (missDep != null && missDep.length() > 0) {
@@ -66,7 +68,7 @@ public abstract class CoordinatorXCommand<T> extends XCommand<T> {
             String deps = missDep == null ? (pushMissDep == null ? null : pushMissDep) : (pushMissDep == null ? missDep
                     : missDep + CoordELFunctions.INSTANCE_SEPARATOR + pushMissDep);
             CoordinatorActionEvent event = new CoordinatorActionEvent(coordAction.getId(), coordAction.getJobId(),
-                    coordAction.getStatus(), user, appName, coordAction.getNominalTime(), coordAction.getCreatedTime(),
+                    coordAction.getStatus(), user, appName, coordAction.getNominalTime(), startTime,
                     deps);
             event.setErrorCode(coordAction.getErrorCode());
             event.setErrorMessage(coordAction.getErrorMessage());

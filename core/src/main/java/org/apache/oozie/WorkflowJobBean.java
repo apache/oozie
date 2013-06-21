@@ -63,6 +63,8 @@ import org.apache.openjpa.persistence.jdbc.Index;
 
     @NamedQuery(name = "GET_WORKFLOW_FOR_UPDATE", query = "select OBJECT(w) from WorkflowJobBean w where w.id = :id"),
 
+    @NamedQuery(name = "GET_WORKFLOW_FOR_SLA", query = "select w.id, w.status, w.startTimestamp, w.endTimestamp from WorkflowJobBean w where w.id = :id"),
+
     @NamedQuery(name = "GET_WORKFLOW_ID_FOR_EXTERNAL_ID", query = "select  w.id from WorkflowJobBean w where w.externalId = :externalId"),
 
     @NamedQuery(name = "GET_WORKFLOWS_COUNT_WITH_STATUS", query = "select count(w) from WorkflowJobBean w where w.status = :status"),
@@ -190,6 +192,20 @@ public class WorkflowJobBean extends JsonWorkflowJob implements Writable {
         protoActionConf = WritableUtils.readStr(dataInput);
         setExternalId(getExternalId());
         setProtoActionConf(protoActionConf);
+    }
+
+    public boolean inTerminalState() {
+        boolean inTerminalState = false;
+        switch (WorkflowJob.Status.valueOf(status)) {
+            case FAILED:
+            case KILLED:
+            case SUCCEEDED:
+                inTerminalState = true;
+                break;
+            default:
+                break;
+        }
+        return inTerminalState;
     }
 
     public String getLogToken() {
