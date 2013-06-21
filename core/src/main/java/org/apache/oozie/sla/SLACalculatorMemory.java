@@ -439,6 +439,16 @@ public class SLACalculatorMemory implements SLACalculator {
     }
 
     /**
+     * Remove job from being tracked in map
+     */
+    @Override
+    public void removeRegistration(String jobId) {
+        if (slaMap.remove(jobId) == null) {
+            historySet.remove(jobId);
+        }
+    }
+
+    /**
      * Triggered after receiving Job status change event, update SLA status
      * accordingly
      */

@@ -164,4 +164,8 @@ public class SLAService implements Service {
         return false;
     }
 
+    public void removeRegistration(String jobId) {
+        calcImpl.removeRegistration(jobId);
+    }
+
 }
