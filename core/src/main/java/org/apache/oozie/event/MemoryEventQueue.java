@@ -18,8 +18,8 @@
 
 package org.apache.oozie.event;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -74,9 +74,9 @@ public class MemoryEventQueue implements EventQueue {
     }
 
     @Override
-    public Set<Event> pollBatch() {
+    public List<Event> pollBatch() {
         // batch drain
-        Set<Event> eventBatch = new HashSet<Event>();
+        List<Event> eventBatch = new ArrayList<Event>();
         for (int i = 0; i < batchSize; i++) {
             EventQueueElement polled = eventQueue.poll();
             if (polled != null) {

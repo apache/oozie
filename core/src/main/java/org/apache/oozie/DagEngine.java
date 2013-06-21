@@ -117,6 +117,27 @@ public class DagEngine extends BaseEngine {
     }
 
     /**
+     * Submit a workflow through a coordinator. It validates configuration properties.
+     * @param conf job conf
+     * @param parentId parent of workflow
+     * @return
+     * @throws DagEngineException
+     */
+    public String submitJobFromCoordinator(Configuration conf, String parentId) throws DagEngineException {
+        validateSubmitConfiguration(conf);
+        try {
+            String jobId;
+            SubmitXCommand submit = new SubmitXCommand(conf);
+            jobId = submit.call();
+            new StartXCommand(jobId, parentId).call();
+            return jobId;
+        }
+        catch (CommandException ex) {
+            throw new DagEngineException(ex);
+        }
+    }
+
+    /**
      * Submit a pig/hive/mapreduce job through HTTP.
      * <p/>
      * It validates configuration properties.

@@ -266,7 +266,7 @@ public class SLACalcStatus extends SLAEvent {
 
     @Override
     public String toString() {
-        return "ID: " + getId() + " SLAStatus: " + slaStatus + " EventProcessed: "+eventProcessed;
+        return "ID: " + getId() + " SLAStatus: " + slaStatus + " EventStatus: "+eventStatus + "AppType " + getAppType();
     }
 
 }

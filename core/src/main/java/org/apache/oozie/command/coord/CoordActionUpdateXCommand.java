@@ -48,6 +48,7 @@ import org.apache.oozie.executor.jpa.JPAExecutorException;
 public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
     private WorkflowJobBean workflow;
     private CoordinatorActionBean coordAction = null;
+    private CoordinatorJobBean coordJob;
     private JPAService jpaService = null;
     private int maxRetries = 1;
     private List<JsonBean> updateList = new ArrayList<JsonBean>();
@@ -69,7 +70,6 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
         try {
             LOG.debug("STARTED CoordActionUpdateXCommand for wfId=" + workflow.getId());
             Status slaStatus = null;
-            CoordinatorAction.Status preCoordStatus = coordAction.getStatus();
             if (workflow.getStatus() == WorkflowJob.Status.SUCCEEDED) {
                 coordAction.setStatus(CoordinatorAction.Status.SUCCEEDED);
                 coordAction.setPending(0);
@@ -109,7 +109,7 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
                 return null;
             }
 
-            LOG.info("Updating Coordintaor action id :" + coordAction.getId() + " status from " + preCoordStatus
+            LOG.info("Updating Coordintaor action id :" + coordAction.getId() + " status "
                     + " to " + coordAction.getStatus() + ", pending = " + coordAction.getPending());
 
             coordAction.setLastModifiedTime(new Date());
@@ -134,10 +134,8 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
             }
 
             jpaService.execute(new BulkUpdateInsertForCoordActionStatusJPAExecutor(updateList, insertList));
-            if (preCoordStatus != coordAction.getStatus() && EventHandlerService.isEnabled()) {
-                CoordinatorJobBean coordJob = jpaService.execute(new CoordinatorJobGetForUserAppnameJPAExecutor(
-                        coordAction.getJobId()));
-                generateEvent(coordAction, coordJob.getUser(), coordJob.getAppName());
+            if (EventHandlerService.isEnabled()) {
+                generateEvent(coordAction, coordJob.getUser(), coordJob.getAppName(), workflow.getStartTime());
             }
 
             LOG.debug("ENDED CoordActionUpdateXCommand for wfId=" + workflow.getId());
@@ -180,6 +178,8 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
             try {
                 coordAction = jpaService.execute(new CoordActionGetForExternalIdJPAExecutor(workflow.getId()));
                 if (coordAction != null) {
+                    coordJob = jpaService.execute(new CoordinatorJobGetForUserAppnameJPAExecutor(
+                            coordAction.getJobId()));
                     break;
                 }
 

@@ -399,7 +399,6 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
                 coordJob.resetPending();
             }
         }
-
         updateList.add(coordJob);
     }
 

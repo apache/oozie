@@ -116,7 +116,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
                 if (actionBean instanceof CoordinatorActionBean) {
                     CoordinatorActionBean coordAction = (CoordinatorActionBean) actionBean;
                     if (EventHandlerService.isEnabled()) {
-                        CoordinatorXCommand.generateEvent(coordAction, coordJob.getUser(), coordJob.getAppName());
+                        CoordinatorXCommand.generateEvent(coordAction, coordJob.getUser(), coordJob.getAppName(), null);
                     }
                     if (coordAction.getPushMissingDependencies() != null) {
                         // TODO: Delay in catchup mode?

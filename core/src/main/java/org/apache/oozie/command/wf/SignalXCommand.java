@@ -71,6 +71,8 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
     private JPAService jpaService = null;
     private String jobId;
     private String actionId;
+    private String parentId;
+    private CoordinatorActionBean coordAction;
     private WorkflowJobBean wfJob;
     private WorkflowActionBean wfAction;
     private List<JsonBean> updateList = new ArrayList<JsonBean>();
@@ -80,13 +82,14 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
     private String wfJobErrorMsg;
 
 
-    public SignalXCommand(String name, int priority, String jobId) {
+    public SignalXCommand(String name, int priority, String jobId, String parentId) {
         super(name, name, priority);
         this.jobId = ParamChecker.notEmpty(jobId, "jobId");
+        this.parentId = parentId;
     }
 
     public SignalXCommand(String jobId, String actionId) {
-        this("signal", 1, jobId);
+        this("signal", 1, jobId, null);
         this.actionId = ParamChecker.notEmpty(actionId, "actionId");
     }
 
@@ -109,6 +112,8 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                 LogUtils.setLogInfo(wfJob, logInfo);
                 if (actionId != null) {
                     this.wfAction = jpaService.execute(new WorkflowActionGetJPAExecutor(actionId));
+                    coordAction = jpaService.execute(new CoordActionGetForExternalIdJPAExecutor(wfJob
+                            .getId()));
                     LogUtils.setLogInfo(wfAction, logInfo);
                 }
             }
@@ -326,10 +331,11 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
             // call JPAExecutor to do the bulk writes
             jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, insertList));
             if (generateEvent && EventHandlerService.isEnabled()) {
-                CoordinatorActionBean coordAction = jpaService.execute(new CoordActionGetForExternalIdJPAExecutor(wfJob
-                        .getId()));
                 if (coordAction != null) {
                     wfJob.setParentId(coordAction.getId());
+                }
+                else {
+                    wfJob.setParentId(parentId);
                 }
                 generateEvent(wfJob, wfJobErrorCode, wfJobErrorMsg);
             }

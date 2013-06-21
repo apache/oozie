@@ -224,7 +224,7 @@ public class EventHandlerService implements Service {
             }
             try {
                 if (!eventQueue.isEmpty()) {
-                    Set<Event> work = eventQueue.pollBatch();
+                    List<Event> work = eventQueue.pollBatch();
                     for (Event event : work) {
                         MessageType msgType = event.getMsgType();
                         List<?> listeners = listenerMap.get(msgType);
