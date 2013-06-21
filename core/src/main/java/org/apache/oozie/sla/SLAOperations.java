@@ -33,6 +33,7 @@ import org.apache.oozie.sla.SLARegistrationBean;
 import org.apache.oozie.sla.service.SLAService;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.XLog;
+import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
 
 public class SLAOperations {
@@ -150,6 +151,7 @@ public class SLAOperations {
             throw new CommandException(ErrorCode.E1007, " id " + jobId, e.getMessage(), e);
         }
 
+        log.debug("Job [{0}] reg for SLA. Size of Sla Xml = [{1}]", jobId, XmlUtils.prettyPrint(eSla).toString());
         return sla;
     }
 
