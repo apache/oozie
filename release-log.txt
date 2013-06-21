@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1423 Coordinator job change command not removing SLA Registration bean (mona)
 OOZIE-1424 Improve SLA reliability on restart, fix bugs related to SLA and event generation (virag)
 OOZIE-1417 Exlude **/oozie/store/* **/oozie/examples/* from clover reports (dennisyv via virag)
 OOZIE-1426 Fix bugs in SLA UI (rohini)
