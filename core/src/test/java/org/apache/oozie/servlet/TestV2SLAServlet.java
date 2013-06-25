@@ -60,9 +60,9 @@ public class TestV2SLAServlet extends DagServletTestCase {
             public Void call() throws Exception {
 
                 final Date currentTime = new Date(System.currentTimeMillis());
-                final Date nominalTime1 = DateUtils.parseDateUTC("2012-06-01T010:00Z");
-                final Date nominalTime2 = DateUtils.parseDateUTC("2012-06-02T010:20Z");
-                final Date nominalTime3 = DateUtils.parseDateUTC("2012-06-03T014:00Z");
+                final Date nominalTime1 = DateUtils.parseDateUTC("2012-06-01T10:00Z");
+                final Date nominalTime2 = DateUtils.parseDateUTC("2012-06-02T10:20Z");
+                final Date nominalTime3 = DateUtils.parseDateUTC("2012-06-03T14:00Z");
                 insertEntriesIntoSLASummaryTable(2, "1-", "-W", "1-C", nominalTime1, "testapp-1", AppType.WORKFLOW_JOB,
                         currentTime);
                 insertEntriesIntoSLASummaryTable(3, "2-", "-W", null, nominalTime2, "testapp-2", AppType.WORKFLOW_JOB,
@@ -90,14 +90,14 @@ public class TestV2SLAServlet extends DagServletTestCase {
                 assertSLAJSONResponse(array, 2, 2, "2-", "-W", null, nominalTime2, "testapp-2", AppType.WORKFLOW_JOB,
                         currentTime);
 
-                queryParams.put(RestConstants.JOBS_FILTER_PARAM, "app_name=testapp-3;nominal_start=2012-06-03T016:00Z");
+                queryParams.put(RestConstants.JOBS_FILTER_PARAM, "app_name=testapp-3;nominal_start=2012-06-03T16:00Z");
                 array = getSLAJSONResponse(queryParams);
                 // Matches 3-6 elements - 3-3-W 3-4-W 3-5-W 3-6-W
                 assertSLAJSONResponse(array, 3, 6, "3-", "-W", "2-C", nominalTime3, "testapp-3", AppType.WORKFLOW_JOB,
                         currentTime);
 
                 queryParams.put(RestConstants.JOBS_FILTER_PARAM,
-                        "parent_id=2-C;nominal_start=2012-06-03T016:00Z;nominal_end=2012-06-03T017:00Z");
+                        "parent_id=2-C;nominal_start=2012-06-03T016:00Z;nominal_end=2012-06-03T17:00Z");
                 array = getSLAJSONResponse(queryParams);
                 // Matches 3rd and 4th element - 3-3-W 3-4-W
                 assertSLAJSONResponse(array, 3, 4, "3-", "-W", "2-C", nominalTime3, "testapp-3", AppType.WORKFLOW_JOB,

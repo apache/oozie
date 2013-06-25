@@ -85,7 +85,7 @@ function initializeTable() {
         "sScrollY": "360px",
         "bPaginate": true,
         "bStateSave": true,
-        "aaSorting": [[ 1, 'desc' ]],
+        "aaSorting": [[ 3, 'desc' ]],
         "bDestroy": true
     });
 
@@ -101,8 +101,10 @@ function drawTable(jsonData) {
         slaSummary.nominalTimeTZ = new Date(slaSummary.nominalTime).toUTCString();
         if (slaSummary.expectedStart) {
             slaSummary.expectedStartTZ = new Date(slaSummary.expectedStart).toUTCString();
-            if (slaSummary.actualStart && slaSummary.actualStart > slaSummary.expectedStart) {
-                slaMisses = "START_MISS, ";
+            if (slaSummary.actualStart) {
+                if (slaSummary.actualStart > slaSummary.expectedStart) {
+                    slaMisses = "START_MISS, ";
+                }
             }
             else if (currentTime > slaSummary.expectedStart) {
                 slaMisses = "START_MISS, ";
@@ -113,8 +115,10 @@ function drawTable(jsonData) {
         }
         if (slaSummary.expectedEnd) {
             slaSummary.expectedEndTZ = new Date(slaSummary.expectedEnd).toUTCString();
-            if (slaSummary.actualEnd && slaSummary.actualEnd > slaSummary.expectedEnd) {
-                slaMisses += "END_MISS, ";
+            if (slaSummary.actualEnd) {
+                if (slaSummary.actualEnd > slaSummary.expectedEnd) {
+                    slaMisses += "END_MISS, ";
+                }
             }
             else if (currentTime > slaSummary.expectedEnd) {
                 slaMisses += "END_MISS, ";
@@ -151,9 +155,17 @@ function drawTable(jsonData) {
                 "sScrollY" : "360px",
                 "sScrollX" : "100%",
                 "bPaginate" : true,
+                "sPaginationType": "full_numbers",
                 "oTableTools" : {
                     "sSwfPath" : "console/sla/js/table/copy_csv_xls_pdf.swf",
-                    "aButtons" : [ "copy", "csv" ],
+                    "aButtons" : [
+                                   "copy",
+                                   {
+                                       "sExtends": "csv",
+                                       // Ignore column 0
+                                       "mColumns": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
+                                   },
+                                 ],
                 },
                 "aaData" : jsonData.slaSummaryList,
                 "aoColumns" : columnsToShow,
@@ -175,14 +187,25 @@ function drawTable(jsonData) {
                     if (aData.endDiff || aData.endDiff == 0) {
                         $(rowAllColumns[9]).html(timeElapsed(aData.endDiff));
                     }
+                    if (aData.expectedDuration == -1) {
+                        $(rowAllColumns[10]).html("");
+                    } else {
+                        // Convert from minutes to milliseconds
+                        $(rowAllColumns[10]).html(timeElapsed(aData.expectedDuration * 60000));
+                    }
+                    if (aData.actualDuration == -1) {
+                        $(rowAllColumns[11]).html("");
+                    } else {
+                        $(rowAllColumns[11]).html(timeElapsed(aData.actualDuration * 60000));
+                    }
                     if (aData.durDiff || aData.durDiff == 0) {
-                        $(rowAllColumns[12]).html(timeElapsed(aData.durDiff * 1000));
+                        $(rowAllColumns[12]).html(timeElapsed(aData.durDiff * 60000));
                     }
                     $("td:first", nRow).html(iDisplayIndexFull + 1);
                     return nRow;
                 },
-                "aaSorting" : [ [ 1, 'desc' ] ],
+                "aaSorting" : [ [ 3, 'desc' ] ],
                 "bDestroy" : true
             });
-
+    oTable.fnSetFilteringDelay(200);
 }

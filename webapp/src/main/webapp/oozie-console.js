@@ -551,6 +551,8 @@ function jobDetailsPopup(response, request) {
                 frame : true,
                 labelAlign : 'right',
                 labelWidth : 70,
+                height: 350,
+                width: 540,
                 items : urlUnit
             };
             if (actionStatus.type == "pig" || actionStatus.type == "hive" || actionStatus.type == "map-reduce") {
