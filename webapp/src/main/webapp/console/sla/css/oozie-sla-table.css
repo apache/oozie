@@ -163,3 +163,9 @@ a:active {
 .ui-buttonset {
     margin-right: 0;
 }
+
+.paging_full_numbers .ui-button {
+    cursor: pointer;
+    margin: 0;
+    padding: 2px 6px;
+}

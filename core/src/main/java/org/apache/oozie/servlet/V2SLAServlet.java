@@ -85,14 +85,12 @@ public class V2SLAServlet extends SLAServlet {
             }
         }
         catch (CommandException ce) {
-            ce.printStackTrace();
             XLog.getLog(getClass()).error("Command exception ", ce);
-            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ce);
+            throw new XServletException(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, ce);
         }
         catch (RuntimeException re) {
-            re.printStackTrace();
             XLog.getLog(getClass()).error("Runtime error ", re);
-            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0307, re.getMessage());
+            throw new XServletException(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, ErrorCode.E0307, re.getMessage());
         }
     }
 
@@ -106,6 +104,11 @@ public class V2SLAServlet extends SLAServlet {
 
         if (maxResults != null) {
             numMaxResults = Integer.parseInt(maxResults);
+        }
+
+        if (filterString == null || filterString.equals("")) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0305,
+                    RestConstants.JOBS_FILTER_PARAM);
         }
 
         try {
