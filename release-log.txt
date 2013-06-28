@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1435 StatusTransitService unnecessarily updates the lastModifiedTime of jobs which causes MaterializationService to bring same jobs in memory (virag)
 OOZIE-1433 ActionCheckX should override XCommand.getKey() to prevent duplicates (virag)
 OOZIE-1436 Revert SLA_XML and few other varchar columns back to clob (virag)
 OOZIE-1427 Update CredentialsModule docs to mention Hive (rkanter)
