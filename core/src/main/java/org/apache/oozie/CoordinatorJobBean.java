@@ -139,8 +139,9 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
     @Lob
     private String origJobXml = null;
 
-    @Basic
-    @Column(name = "sla_xml", length = 4000)
+
+    @Column(name = "sla_xml")
+    @Lob
     private String slaXml = null;
 
     @Basic
