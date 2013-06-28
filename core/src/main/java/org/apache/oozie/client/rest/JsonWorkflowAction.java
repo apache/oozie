@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -61,15 +61,15 @@ public class JsonWorkflowAction implements WorkflowAction, JsonBean {
     @Basic
     @Column(name = "retries")
     private int retries;
-    
+
     @Basic
     @Column(name = "user_retry_count")
     private int userRetryCount;
-    
+
     @Basic
     @Column(name = "user_retry_max")
     private int userRetryMax;
-    
+
     @Basic
     @Column(name = "user_retry_interval")
     private int userRetryInterval;
@@ -84,7 +84,8 @@ public class JsonWorkflowAction implements WorkflowAction, JsonBean {
     @Column(name = "transition")
     private String transition = null;
 
-    @Column(name = "data", length = 4000)
+    @Column(name = "data")
+    @Lob
     private String data = null;
 
     @Column(name = "stats")
@@ -125,7 +126,7 @@ public class JsonWorkflowAction implements WorkflowAction, JsonBean {
     public JSONObject toJSONObject() {
         return toJSONObject("GMT");
     }
-    
+
     @SuppressWarnings("unchecked")
     public JSONObject toJSONObject(String timeZoneId) {
         JSONObject json = new JSONObject();
@@ -207,7 +208,7 @@ public class JsonWorkflowAction implements WorkflowAction, JsonBean {
     public void setRetries(int retries) {
         this.retries = retries;
     }
-    
+
     public int getUserRetryCount() {
         return userRetryCount;
     }
@@ -215,11 +216,11 @@ public class JsonWorkflowAction implements WorkflowAction, JsonBean {
     public void setUserRetryCount(int retryCount) {
         this.userRetryCount = retryCount;
     }
-    
+
     public void incrmentUserRetryCount() {
         this.userRetryCount++;
     }
-    
+
     public int getUserRetryMax() {
         return userRetryMax;
     }
@@ -227,7 +228,7 @@ public class JsonWorkflowAction implements WorkflowAction, JsonBean {
     public void setUserRetryMax(int retryMax) {
         this.userRetryMax = retryMax;
     }
-    
+
     public int getUserRetryInterval() {
         return userRetryInterval;
     }
@@ -265,9 +266,6 @@ public class JsonWorkflowAction implements WorkflowAction, JsonBean {
     }
 
     public void setData(String data) {
-        if( data != null && data.length() > 2000){
-            data = data.substring(0, 2000);
-        }
         this.data = data;
     }
 
@@ -329,8 +327,8 @@ public class JsonWorkflowAction implements WorkflowAction, JsonBean {
 
     public void setErrorInfo(String errorCode, String errorMessage) {
         this.errorCode = errorCode;
-        if(errorMessage != null && errorMessage.length() > 2000){
-            errorMessage = errorMessage.substring(0, 2000);
+        if(errorMessage != null && errorMessage.length() > 500){
+            errorMessage = errorMessage.substring(0, 500);
         }
         this.errorMessage = errorMessage;
     }
