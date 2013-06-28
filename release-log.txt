@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1427 Update CredentialsModule docs to mention Hive (rkanter)
 OOZIE-1429 Fix bugs in SLA UI (rohini)
 OOZIE-1423 Coordinator job change command not removing SLA Registration bean (mona)
 OOZIE-1424 Improve SLA reliability on restart, fix bugs related to SLA and event generation (virag)
