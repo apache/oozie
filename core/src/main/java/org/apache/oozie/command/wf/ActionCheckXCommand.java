@@ -244,4 +244,9 @@ public class ActionCheckXCommand extends ActionXCommand<Void> {
         return (executor != null) ? executor.getRetryInterval() : ActionExecutor.RETRY_INTERVAL;
     }
 
+    @Override
+    public String getKey() {
+        return getName() + "_" + actionId;
+    }
+
 }
