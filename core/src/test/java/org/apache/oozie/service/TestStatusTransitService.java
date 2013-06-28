@@ -582,7 +582,25 @@ public class TestStatusTransitService extends XDataTestCase {
         assertEquals(job.getStatus(), Job.Status.RUNNINGWITHERROR);
     }
 
+    public void testCoordStatusTransitServiceUpdateLastModifiedTime() throws Exception {
+        String currentDatePlusMonth = XDataTestCase.getCurrentDateafterIncrementingInMonths(1);
+        Date start = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
+        Date end = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, start, end, true, false, 3);
+        Date lastModifiedDate = job.getLastModifiedTime();
+        addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 1);
 
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        Runnable runnable = new StatusTransitRunnable();
+        runnable.run();
+        sleep(1000);
+
+        CoordJobGetJPAExecutor coordGetCmd = new CoordJobGetJPAExecutor(job.getId());
+        job = jpaService.execute(coordGetCmd);
+        // As state of job has not changed, lastModified should not be updated
+        assertEquals(lastModifiedDate.getTime(), job.getLastModifiedTime().getTime());
+        assertEquals(Job.Status.RUNNING, job.getStatus());
+    }
 
     /**
      * Test : all coord actions are running, job pending is reset

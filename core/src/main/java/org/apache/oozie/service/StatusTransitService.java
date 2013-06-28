@@ -656,14 +656,17 @@ public class StatusTransitService implements Service {
                 }
             }
 
-            checkCoordPending(isPending, coordJob, false);
+            boolean isPendingStateChanged = checkCoordPending(isPending, coordJob, false);
             // Check for backward support when RUNNINGWITHERROR, SUSPENDEDWITHERROR and PAUSEDWITHERROR is
             // not supported
             coordJob.setStatus(StatusUtils.getStatusIfBackwardSupportTrue(coordStatus));
             // Backward support when coordinator namespace is 0.1
             coordJob.setStatus(StatusUtils.getStatus(coordJob));
-            coordJob.setLastModifiedTime(new Date());
-            jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
+            if (coordJob.getStatus() != prevStatus || isPendingStateChanged) {
+                LOG.debug("Updating coord job " + coordJob.getId());
+                coordJob.setLastModifiedTime(new Date());
+                jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
+            }
             // update bundle action only when status changes in coord job
             if (coordJob.getBundleId() != null) {
                 if (!prevStatus.equals(coordJob.getStatus())) {
@@ -673,8 +676,10 @@ public class StatusTransitService implements Service {
             }
         }
 
-        private void checkCoordPending(boolean isPending, CoordinatorJobBean coordJob, boolean saveToDB) throws JPAExecutorException {
+        private boolean checkCoordPending(boolean isPending, CoordinatorJobBean coordJob, boolean saveToDB)
+                throws JPAExecutorException {
             // Checking the coordinator pending should be updated or not
+            boolean prevPending = coordJob.isPending();
             if (isPending) {
                 coordJob.setPending();
                 LOG.info("Coord job [" + coordJob.getId() + "] Pending set to TRUE");
@@ -683,10 +688,12 @@ public class StatusTransitService implements Service {
                 coordJob.resetPending();
                 LOG.info("Coord job [" + coordJob.getId() + "] Pending set to FALSE");
             }
-
-            if (saveToDB) {
+            boolean hasChange = prevPending != coordJob.isPending();
+            if (saveToDB && hasChange) {
                 jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
             }
+            return hasChange;
+
         }
 
         /**
