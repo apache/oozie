@@ -1,4 +1,4 @@
--- Oozie 4.1.0 release (trunk - unreleased)
+-- Oozie 4.0.0 release
 
 OOZIE-1439 Job materialization happening even after coordinator is supposed to be killed (virag)
 OOZIE-1438 parentID is null in job event message of subworkflow action (ryota)
@@ -94,9 +94,6 @@ OOZIE-1264 The "parent" property of a subworkflow should be the ID of the parent
 OOZIE-1245 Add ability to automatically suspend workflow at specified actions (rkanter)
 OOZIE-894 support for hive in Oozie CLI (bowenzhangusa via tucu)
 OOZIE-1239 Bump up trunk to 4.1.0-SNAPSHOT (virag)
-
--- Oozie 4.0.0 (unreleased)
-
 OOZIE-1392 Add commons-io-*.jar to addtowar for hadoop-2.0 (virag)
 OOZIE-1303 CLI API for Bulk Monitoring (mona)
 OOZIE-1350 Improve client debug output information (rkanter)
