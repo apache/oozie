@@ -50,7 +50,7 @@ public class TestSLARegistrationGetRecordsOnRestartJPAExecutor extends XDataTest
         Date current = new Date();
         final String jobId = "0000000-" + current.getTime() + "-TestSLARegGetRestartJPAExecutor-W";
         SLARegistrationBean reg = new SLARegistrationBean();
-        reg.setJobId(jobId);
+        reg.setId(jobId);
         reg.setNotificationMsg("dummyMessage");
         reg.setUpstreamApps("upApps");
         reg.setAlertEvents("miss");

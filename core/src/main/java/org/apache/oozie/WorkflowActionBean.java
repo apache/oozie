@@ -281,6 +281,22 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
     }
 
     /**
+     * Return if the action is complete with failure.
+     *
+     * @return if the action is complete with failure.
+     */
+    public boolean isTerminalWithFailure() {
+        boolean result = false;
+        switch (getStatus()) {
+            case FAILED:
+            case KILLED:
+            case ERROR:
+                result = true;
+        }
+        return result;
+    }
+
+    /**
      * Set the action pending flag to true.
      */
     public void setPendingOnly() {

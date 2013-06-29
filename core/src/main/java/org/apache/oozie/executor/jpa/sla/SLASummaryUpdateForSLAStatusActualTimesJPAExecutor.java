@@ -51,7 +51,7 @@ public class SLASummaryUpdateForSLAStatusActualTimesJPAExecutor implements JPAEx
     public Void execute(EntityManager em) throws JPAExecutorException {
         try {
             Query q = em.createNamedQuery("UPDATE_SLA_SUMMARY_FOR_STATUS_ACTUAL_TIMES");
-            q.setParameter("jobId", slaSummaryBean.getJobId());
+            q.setParameter("jobId", slaSummaryBean.getId());
             q.setParameter("slaStatus", slaSummaryBean.getSLAStatusString());
             q.setParameter("lastModifiedTS", new Date());
             q.setParameter("eventStatus", slaSummaryBean.getEventStatusString());

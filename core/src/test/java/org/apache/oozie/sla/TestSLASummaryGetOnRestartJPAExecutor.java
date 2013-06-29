@@ -55,7 +55,7 @@ public class TestSLASummaryGetOnRestartJPAExecutor extends XDataTestCase {
         JPAService jpaService = Services.get().get(JPAService.class);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         SLASummaryBean sla1 = new SLASummaryBean();
-        sla1.setJobId("jobId");
+        sla1.setId("jobId");
         sla1.setAppName("appName");
         sla1.setUser("user");
         sla1.setParentId("parent");
@@ -64,7 +64,7 @@ public class TestSLASummaryGetOnRestartJPAExecutor extends XDataTestCase {
         sla1.setLastModifiedTime(new Date(System.currentTimeMillis() - 5*24*60*60*1000));
 
         SLASummaryBean sla2 = new SLASummaryBean();
-        sla2.setJobId("jobId2");
+        sla2.setId("jobId2");
         sla2.setEventProcessed(6);
         // set to long time back
         sla2.setLastModifiedTime(sdf.parse("2009-06-03"));
@@ -78,7 +78,7 @@ public class TestSLASummaryGetOnRestartJPAExecutor extends XDataTestCase {
         SLASummaryGetRecordsOnRestartJPAExecutor slaGetOnRestart = new SLASummaryGetRecordsOnRestartJPAExecutor(7);
         List<SLASummaryBean> beans = jpaService.execute(slaGetOnRestart);
         assertEquals(1, beans.size());
-        assertEquals("jobId", beans.get(0).getJobId());
+        assertEquals("jobId", beans.get(0).getId());
         assertEquals("appName", beans.get(0).getAppName());
         assertEquals("user", beans.get(0).getUser());
         assertEquals("parent", beans.get(0).getParentId());
