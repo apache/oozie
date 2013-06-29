@@ -128,7 +128,7 @@ public class SLARegistrationBean implements JsonBean {
         return jobId;
     }
 
-    public void setJobId(String jobId) {
+    public void setId(String jobId) {
         this.jobId = jobId;
     }
 

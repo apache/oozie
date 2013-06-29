@@ -334,8 +334,7 @@ public class ActionStartXCommand extends ActionXCommand<Void> {
         if(slaEvent2 != null) {
             insertList.add(slaEvent2);
         }
-        // update coordinator action
-        new CoordActionUpdateXCommand(workflow, 3).call();
+
         new WfEndXCommand(wfJob).call(); //To delete the WF temp dir
         return;
     }

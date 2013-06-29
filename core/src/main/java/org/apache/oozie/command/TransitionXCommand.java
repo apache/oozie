@@ -25,7 +25,6 @@ import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.coord.CoordinatorXCommand;
-import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.util.ParamChecker;
 
 /**

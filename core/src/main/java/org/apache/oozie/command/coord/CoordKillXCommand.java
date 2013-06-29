@@ -17,6 +17,7 @@
  */
 package org.apache.oozie.command.coord;
 
+import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.CoordinatorActionBean;
@@ -105,12 +106,17 @@ public class CoordKillXCommand extends KillTransitionXCommand {
     }
 
     private void updateCoordAction(CoordinatorActionBean action, boolean makePending) {
+        CoordinatorAction.Status prevStatus = action.getStatus();
         action.setStatus(CoordinatorActionBean.Status.KILLED);
         if (makePending) {
             action.incrementAndGetPending();
         } else {
             // set pending to false
             action.setPending(0);
+        }
+        if (EventHandlerService.isEnabled() && prevStatus != CoordinatorAction.Status.RUNNING
+                && prevStatus != CoordinatorAction.Status.SUSPENDED) {
+            CoordinatorXCommand.generateEvent(action, coordJob.getUser(), coordJob.getAppName(), null);
         }
         action.setLastModifiedTime(new Date());
         updateList.add(action);

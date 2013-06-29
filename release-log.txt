@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1379 Generate SLA end_miss event only after confirming against persistent store (mona)
 OOZIE-1439 Job materialization happening even after coordinator is supposed to be killed (virag)
 OOZIE-1438 parentID is null in job event message of subworkflow action (ryota)
 OOZIE-1435 StatusTransitService unnecessarily updates the lastModifiedTime of jobs which causes MaterializationService to bring same jobs in memory (virag)

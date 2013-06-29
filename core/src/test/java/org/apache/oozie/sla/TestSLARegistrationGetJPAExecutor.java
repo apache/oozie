@@ -69,7 +69,7 @@ public class TestSLARegistrationGetJPAExecutor extends XDataTestCase {
     private void _addRecordToSLARegistrationTable(String jobId, AppType appType, Date start, Date end,
             String alertEvent, String alertContact) throws Exception {
         SLARegistrationBean reg = new SLARegistrationBean();
-        reg.setJobId(jobId);
+        reg.setId(jobId);
         reg.setAppType(appType);
         reg.setExpectedStart(start);
         reg.setExpectedEnd(end);

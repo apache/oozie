@@ -89,7 +89,7 @@ public class TestSLAEmailEventListener extends XTestCase {
         Date actualstartDate = DateUtils.parseDateUTC("2013-01-01T01:00Z");
         event.setEventStatus(EventStatus.START_MISS);
         event.setJobStatus(JobEvent.EventStatus.STARTED.toString());
-        event.setJobId("0000000-000000000000001-oozie-wrkf-C@1");
+        event.setId("0000000-000000000000001-oozie-wrkf-C@1");
         eventBean.setParentId("0000000-000000000000001-oozie-wrkf-C");
         eventBean.setAppName("Test-SLA-Start-Miss");
         eventBean.setUser("dummyuser");
@@ -146,7 +146,7 @@ public class TestSLAEmailEventListener extends XTestCase {
         Date actualStartDate = DateUtils.parseDateUTC("2013-01-01T01:00Z");
         Date expectedEndDate = DateUtils.parseDateUTC("2013-01-01T12:00Z");
         Date actualEndDate = DateUtils.parseDateUTC("2013-01-01T13:00Z");
-        event.setJobId("0000000-000000000000001-oozie-wrkf-C@1");
+        event.setId("0000000-000000000000001-oozie-wrkf-C@1");
         eventBean.setParentId("0000000-000000000000001-oozie-wrkf-C");
         event.setEventStatus(EventStatus.END_MISS);
         event.setJobStatus(JobEvent.EventStatus.SUCCESS.toString());
@@ -215,7 +215,7 @@ public class TestSLAEmailEventListener extends XTestCase {
         Date actualEndDate = DateUtils.parseDateUTC("2013-01-01T00:40Z");
         long expectedDuration = (expectedEndDate.getTime() - expectedStartDate.getTime()) / (1000 * 60);
         long actualDuration = (actualEndDate.getTime() - actualStartDate.getTime()) / (1000 * 60);
-        event.setJobId("0000000-000000000000001-oozie-wrkf-C@1");
+        event.setId("0000000-000000000000001-oozie-wrkf-C@1");
         eventBean.setParentId("0000000-000000000000001-oozie-wrkf-C");
         event.setEventStatus(EventStatus.DURATION_MISS);
         event.setJobStatus(JobEvent.EventStatus.SUCCESS.toString());
@@ -288,7 +288,7 @@ public class TestSLAEmailEventListener extends XTestCase {
         Date startDate = DateUtils.parseDateUTC("2013-01-01T00:00Z");
         Date actualstartDate = DateUtils.parseDateUTC("2013-01-01T01:00Z");
         event.setEventStatus(EventStatus.START_MISS);
-        event.setJobId("0000000-000000000000001-oozie-wrkf-C@1");
+        event.setId("0000000-000000000000001-oozie-wrkf-C@1");
         eventBean.setAppName("Test-SLA-Start-Miss");
         eventBean.setUser("dummyuser");
         eventBean.setNominalTime(startDate);
@@ -323,7 +323,7 @@ public class TestSLAEmailEventListener extends XTestCase {
         // set invalid address as alert contact
         eventBean.setAlertContact("invalidAddress");
         event.setEventStatus(EventStatus.START_MISS);
-        event.setJobId("0000000-000000000000001-oozie-wrkf-C@1");
+        event.setId("0000000-000000000000001-oozie-wrkf-C@1");
         eventBean.setAppType(AppType.COORDINATOR_ACTION);
         eventBean.setAppName("Test-SLA-Start-Miss");
         eventBean.setUser("dummyuser");
@@ -345,7 +345,7 @@ public class TestSLAEmailEventListener extends XTestCase {
         // set multiple addresses as alert contact
         eventBean.setAlertContact("alert-receiver1@oozie.com, alert-receiver2@oozie.com");
         event.setEventStatus(EventStatus.START_MISS);
-        event.setJobId("0000000-000000000000001-oozie-wrkf-C@1");
+        event.setId("0000000-000000000000001-oozie-wrkf-C@1");
         eventBean.setAppType(AppType.COORDINATOR_ACTION);
         eventBean.setAppName("Test-SLA-Start-Miss");
         eventBean.setUser("dummyuser");
