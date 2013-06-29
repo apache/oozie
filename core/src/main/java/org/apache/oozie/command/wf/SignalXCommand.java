@@ -334,9 +334,10 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                 if (coordAction != null) {
                     wfJob.setParentId(coordAction.getId());
                 }
-                else {
+                else if (wfJob.getParentId() == null) {
                     wfJob.setParentId(parentId);
                 }
+                // doesn't overwrite parentId in subworkflow action
                 generateEvent(wfJob, wfJobErrorCode, wfJobErrorMsg);
             }
         }
