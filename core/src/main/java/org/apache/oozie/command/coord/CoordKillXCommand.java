@@ -142,7 +142,7 @@ public class CoordKillXCommand extends KillTransitionXCommand {
                 }
             }
         }
-
+        coordJob.setDoneMaterialization();
         updateList.add(coordJob);
 
         LOG.debug("Killed coord actions for the coordinator=[{0}]", jobId);

@@ -78,7 +78,7 @@ public class TestCoordKillXCommand extends XDataTestCase {
         Date start = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
         Date end = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
 
-        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, start, end, false, true, 0);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, start, end, false, false, 0);
         CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.READY, "coord-action-get.xml", 0);
 
         JPAService jpaService = Services.get().get(JPAService.class);
@@ -90,12 +90,14 @@ public class TestCoordKillXCommand extends XDataTestCase {
         action = jpaService.execute(coordActionGetCmd);
         assertEquals(job.getStatus(), CoordinatorJob.Status.RUNNING);
         assertEquals(action.getStatus(), CoordinatorAction.Status.READY);
+        assertFalse(job.isDoneMaterialization());
 
         new CoordKillXCommand(job.getId()).call();
 
         job = jpaService.execute(coordJobGetCmd);
         action = jpaService.execute(coordActionGetCmd);
         assertEquals(job.getStatus(), CoordinatorJob.Status.KILLED);
+        assertTrue(job.isDoneMaterialization());
         assertEquals(action.getStatus(), CoordinatorAction.Status.KILLED);
     }
 
