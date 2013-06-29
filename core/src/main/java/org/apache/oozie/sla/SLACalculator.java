@@ -42,13 +42,11 @@ public interface SLACalculator {
     boolean addJobStatus(String jobId, String jobStatus, EventStatus jobEventStatus, Date startTime, Date endTime)
             throws JPAExecutorException, ServiceException;
 
-    void updateSlaStatus(String jobId) throws JPAExecutorException, ServiceException;
-
     void updateAllSlaStatus();
 
     void clear();
 
-    SLACalcStatus get(String jobId);
+    SLACalcStatus get(String jobId) throws JPAExecutorException;
 
     boolean updateRegistration(String jobId, SLARegistrationBean reg) throws JPAExecutorException;
 

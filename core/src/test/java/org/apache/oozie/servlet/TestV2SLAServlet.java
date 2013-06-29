@@ -167,7 +167,7 @@ public class TestV2SLAServlet extends DagServletTestCase {
             Calendar actualEnd = (Calendar) expectedEnd.clone();
             actualEnd.add(Calendar.MINUTE, i);
             SLASummaryBean bean = new SLASummaryBean();
-            bean.setJobId(jobIDPrefix + i + jobIDSuffix);
+            bean.setId(jobIDPrefix + i + jobIDSuffix);
             bean.setParentId(parentId);
             bean.setAppName(appName);
             bean.setAppType(appType);

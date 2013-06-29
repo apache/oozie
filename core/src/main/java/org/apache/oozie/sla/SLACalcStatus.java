@@ -51,7 +51,7 @@ public class SLACalcStatus extends SLAEvent {
         reg.setAlertContact(regBean.getAlertContact());
         reg.setAlertEvents(regBean.getAlertEvents());
         reg.setJobData(regBean.getJobData());
-        reg.setJobId(summary.getJobId());
+        reg.setId(summary.getId());
         reg.setAppType(summary.getAppType());
         reg.setUser(summary.getUser());
         reg.setAppName(summary.getAppName());
@@ -106,8 +106,8 @@ public class SLACalcStatus extends SLAEvent {
         return regBean.getId();
     }
 
-    public void setJobId(String id) {
-        regBean.setJobId(id);
+    public void setId(String id) {
+        regBean.setId(id);
     }
 
     @Override

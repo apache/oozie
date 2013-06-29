@@ -135,7 +135,7 @@ public class SLASummaryBean implements JsonBean {
 
     public SLASummaryBean(SLACalcStatus slaCalc) {
         SLARegistrationBean reg = slaCalc.getSLARegistrationBean();
-        setJobId(slaCalc.getId());
+        setId(slaCalc.getId());
         setAppName(reg.getAppName());
         setAppType(reg.getAppType());
         setNominalTime(reg.getNominalTime());
@@ -154,11 +154,11 @@ public class SLASummaryBean implements JsonBean {
         setActualStart(slaCalc.getActualStart());
     }
 
-    public String getJobId() {
+    public String getId() {
         return jobId;
     }
 
-    public void setJobId(String jobId) {
+    public void setId(String jobId) {
         this.jobId = jobId;
     }
 

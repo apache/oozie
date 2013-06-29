@@ -140,7 +140,7 @@ public class TestSLAJobEventListener extends XTestCase {
 
     private SLARegistrationBean _createSLARegBean(String jobId, AppType appType) {
         SLARegistrationBean reg = new SLARegistrationBean();
-        reg.setJobId(jobId);
+        reg.setId(jobId);
         reg.setAppType(appType);
         return reg;
     }

@@ -92,7 +92,7 @@ public class TestSLACalculationJPAExecutor extends XDataTestCase {
 
         SLASummaryGetJPAExecutor readCmd2 = new SLASummaryGetJPAExecutor(wfId);
         SLASummaryBean sBean = jpaService.execute(readCmd2);
-        assertEquals(wfId, sBean.getJobId());
+        assertEquals(wfId, sBean.getId());
         assertEquals("RUNNING", sBean.getJobStatus());
         assertEquals(EventStatus.START_MISS, sBean.getEventStatus());
         assertEquals(expStart, sBean.getExpectedStart());
@@ -144,7 +144,7 @@ public class TestSLACalculationJPAExecutor extends XDataTestCase {
         SLASummaryGetJPAExecutor readCmd2 = new SLASummaryGetJPAExecutor(wfId);
         SLASummaryBean sBean = jpaService.execute(readCmd2);
         // check updated + original fields
-        assertEquals(wfId, sBean.getJobId());
+        assertEquals(wfId, sBean.getId());
         assertEquals(EventStatus.DURATION_MISS, sBean.getEventStatus());
         assertEquals(expStart, sBean.getExpectedStart());
         assertEquals(expEnd, sBean.getExpectedEnd());
@@ -179,7 +179,7 @@ public class TestSLACalculationJPAExecutor extends XDataTestCase {
         // update existing record and insert another
         Date newDate = new Date();
         bean1 = new SLASummaryBean();
-        bean1.setJobId(wfId1);
+        bean1.setId(wfId1);
         bean1.setActualEnd(newDate);
         List<JsonBean> updateList = new ArrayList<JsonBean>();
         updateList.add(bean1);
@@ -221,7 +221,7 @@ public class TestSLACalculationJPAExecutor extends XDataTestCase {
     private SLASummaryBean _createSLASummaryBean(String jobId, String status, EventStatus slaType, Date eStart,
             Date eEnd, long eDur, Date aStart, Date aEnd, long aDur, int slaProc, Date lastMod) {
         SLASummaryBean bean = new SLASummaryBean();
-        bean.setJobId(jobId);
+        bean.setId(jobId);
         bean.setJobStatus(status);
         bean.setEventStatus(slaType);
         bean.setExpectedStart(eStart);

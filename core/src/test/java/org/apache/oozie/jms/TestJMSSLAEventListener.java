@@ -84,7 +84,7 @@ public class TestJMSSLAEventListener extends XTestCase {
         SLACalcStatus startMiss = new SLACalcStatus(new SLARegistrationBean());
         SLARegistrationBean startMissBean = startMiss.getSLARegistrationBean();
         Date startDate = DateUtils.parseDateUTC("2013-01-01T00:00Z");
-        startMiss.setJobId("0000000-000000000000001-oozie-wrkf-C@1");
+        startMiss.setId("0000000-000000000000001-oozie-wrkf-C@1");
         startMissBean.setParentId("0000000-000000000000001-oozie-wrkf-C");
         startMissBean.setAppName("Test-SLA-Start-Miss");
         startMissBean.setUser("dummyuser");
@@ -124,7 +124,7 @@ public class TestJMSSLAEventListener extends XTestCase {
         SLARegistrationBean endMissBean = endMiss.getSLARegistrationBean();
         Date expectedEndDate = DateUtils.parseDateUTC("2013-01-01T00:00Z");
         Date actualEndDate = DateUtils.parseDateUTC("2013-01-01T01:00Z");
-        endMiss.setJobId("0000000-000000000000001-oozie-wrkf-C@1");
+        endMiss.setId("0000000-000000000000001-oozie-wrkf-C@1");
         endMissBean.setParentId("0000000-000000000000001-oozie-wrkf-C");
         endMissBean.setAppName("Test-SLA-End-Miss");
         endMiss.setEventStatus(EventStatus.END_MISS);
@@ -167,7 +167,7 @@ public class TestJMSSLAEventListener extends XTestCase {
         Date expectedEndDate = DateUtils.parseDateUTC("2013-01-01T12:00Z");
         Date actualEndDate = DateUtils.parseDateUTC("2013-01-01T14:00Z");
         long expectedDuration = ( expectedEndDate.getTime() - actualStartDate.getTime() ) / (1000 * 60);
-        durationMiss.setJobId("0000000-000000000000001-oozie-wrkf-C@1");
+        durationMiss.setId("0000000-000000000000001-oozie-wrkf-C@1");
         durationMissBean.setParentId("0000000-000000000000001-oozie-wrkf-C");
         durationMissBean.setAppName("Test-SLA-Duration-Miss");
         durationMiss.setEventStatus(EventStatus.DURATION_MISS);
@@ -214,7 +214,7 @@ public class TestJMSSLAEventListener extends XTestCase {
         slaListener.init(conf);
         SLACalcStatus startMiss = new SLACalcStatus(new SLARegistrationBean());
         SLARegistrationBean startMissBean = startMiss.getSLARegistrationBean();
-        startMiss.setJobId("0000000-000000000000001-oozie-wrkf-C@1");
+        startMiss.setId("0000000-000000000000001-oozie-wrkf-C@1");
         startMissBean.setAppName("Test-SLA-Start-Miss");
         startMissBean.setAppType(AppType.COORDINATOR_ACTION);
         startMissBean.setUser("dummyuser");
@@ -242,7 +242,7 @@ public class TestJMSSLAEventListener extends XTestCase {
         SLACalcStatus startMiss = new SLACalcStatus(new SLARegistrationBean());
         SLARegistrationBean startMissBean = startMiss.getSLARegistrationBean();
 
-        startMiss.setJobId("0000000-000000000000001-oozie-wrkf-C@1");
+        startMiss.setId("0000000-000000000000001-oozie-wrkf-C@1");
         startMissBean.setAppName("Test-SLA-Start-Miss");
         startMissBean.setAppType(AppType.COORDINATOR_ACTION);
         startMissBean.setUser("dummyuser");
@@ -273,7 +273,7 @@ public class TestJMSSLAEventListener extends XTestCase {
         startMet.setEventStatus(EventStatus.START_MET);
         startMet.setSLAStatus(SLAStatus.IN_PROCESS);
         startMetBean.setAppType(AppType.COORDINATOR_ACTION);
-        startMet.setJobId("0000000-000000000000001-oozie-wrkf-C@1");
+        startMet.setId("0000000-000000000000001-oozie-wrkf-C@1");
         startMetBean.setParentId("0000000-000000000000001-oozie-wrkf-C");
         startMetBean.setUser("dummyuser");
         startMetBean.setNotificationMsg("notification of start miss");
@@ -308,7 +308,7 @@ public class TestJMSSLAEventListener extends XTestCase {
         SLARegistrationBean endMetBean = endMet.getSLARegistrationBean();
         Date expectedEndDate = DateUtils.parseDateUTC("2013-01-01T12:00Z");
         Date actualEndDate = DateUtils.parseDateUTC("2013-01-01T11:00Z");
-        endMet.setJobId("0000000-000000000000001-oozie-wrkf-C@1");
+        endMet.setId("0000000-000000000000001-oozie-wrkf-C@1");
         endMetBean.setParentId("0000000-000000000000001-oozie-wrkf-C");
         endMetBean.setAppName("Test-SLA-End-Met");
         endMet.setEventStatus(EventStatus.END_MET);
@@ -352,7 +352,7 @@ public class TestJMSSLAEventListener extends XTestCase {
         Date expectedEndDate = DateUtils.parseDateUTC("2013-01-01T12:00Z");
         Date actualEndDate = DateUtils.parseDateUTC("2013-01-01T14:00Z");
         long expectedDuration = ( expectedEndDate.getTime() - actualStartDate.getTime() ) / (1000 * 60);
-        durationMet.setJobId("0000000-000000000000001-oozie-wrkf-C@1");
+        durationMet.setId("0000000-000000000000001-oozie-wrkf-C@1");
         durationMetBean.setParentId("0000000-000000000000001-oozie-wrkf-C");
         durationMetBean.setAppName("Test-SLA-Duration-Met");
         durationMet.setEventStatus(EventStatus.DURATION_MET);

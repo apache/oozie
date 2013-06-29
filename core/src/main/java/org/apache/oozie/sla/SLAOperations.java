@@ -132,7 +132,7 @@ public class SLAOperations {
         sla.setUpstreamApps(getTagElement(eSla, "upstream-apps"));
 
         // Oozie defined
-        sla.setJobId(jobId);
+        sla.setId(jobId);
         sla.setAppType(appType);
         sla.setAppName(appName);
         sla.setUser(user);

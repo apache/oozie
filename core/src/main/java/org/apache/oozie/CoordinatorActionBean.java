@@ -379,6 +379,22 @@ public class CoordinatorActionBean extends JsonCoordinatorAction implements
     }
 
     /**
+     * Return if the action is complete with failure.
+     *
+     * @return if the action is complete with failure.
+     */
+    public boolean isTerminalWithFailure() {
+        boolean result = false;
+        switch (getStatus()) {
+            case FAILED:
+            case KILLED:
+            case TIMEDOUT:
+                result = true;
+        }
+        return result;
+    }
+
+    /**
      * Set some actions are in progress for particular coordinator action.
      *
      * @param pending set pending to true

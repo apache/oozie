@@ -69,6 +69,7 @@ import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionGetJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowActionInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobInsertJPAExecutor;
@@ -77,6 +78,7 @@ import org.apache.oozie.service.ActionService;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.IOUtils;
@@ -102,6 +104,7 @@ public class TestEventGeneration extends XDataTestCase {
     EventQueue queue;
     Services services;
     EventHandlerService ehs;
+    JPAService jpaService;
 
     @Override
     @Before
@@ -113,6 +116,7 @@ public class TestEventGeneration extends XDataTestCase {
         services.init();
         ehs = services.get(EventHandlerService.class);
         queue = ehs.getEventQueue();
+        jpaService = services.get(JPAService.class);
     }
 
     @Override
@@ -126,7 +130,6 @@ public class TestEventGeneration extends XDataTestCase {
     public void testWorkflowJobEvent() throws Exception {
         assertEquals(0, queue.size());
         WorkflowJobBean job = addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
-        JPAService jpaService = services.get(JPAService.class);
 
         // Starting job
         new StartXCommand(job.getId()).call();
@@ -221,7 +224,6 @@ public class TestEventGeneration extends XDataTestCase {
         CoordinatorJobBean coord = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, false,
                 false, 0);
         modifyCoordForRunning(coord);
-        final JPAService jpaService = services.get(JPAService.class);
 
         // Action WAITING on materialization
         new CoordMaterializeTransitionXCommand(coord.getId(), 3600).call();
@@ -356,7 +358,6 @@ public class TestEventGeneration extends XDataTestCase {
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
         WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.PREP, true);
         WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(action.getId());
-        JPAService jpaService = Services.get().get(JPAService.class);
 
         // Starting job
         new ActionStartXCommand(action.getId(), "map-reduce").call();
@@ -441,7 +442,6 @@ public class TestEventGeneration extends XDataTestCase {
                 CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0);
         WorkflowJobBean wjb = new WorkflowJobBean();
         wjb.setId(action.getExternalId());
-        JPAService jpaService = services.get(JPAService.class);
         jpaService.execute(new WorkflowJobUpdateJPAExecutor(wjb));
 
         CoordinatorXCommand<Void> myCmd = new CoordActionCheckXCommand(action.getId(), 0) {
@@ -493,7 +493,6 @@ public class TestEventGeneration extends XDataTestCase {
 
         final String jobId1 = engine.submitJob(conf, true);
         final WorkflowJobGetJPAExecutor readCmd = new WorkflowJobGetJPAExecutor(jobId1);
-        final JPAService jpaService = services.get(JPAService.class);
 
         waitFor(1 * 100, new Predicate() {
             @Override
@@ -511,7 +510,7 @@ public class TestEventGeneration extends XDataTestCase {
         Date endTime = DateUtils.parseDateOozieTZ("2009-02-02T23:59Z");
         CoordinatorJobBean coord = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, false,
                 false, 0);
-        _modifyCoordForFailureAction(coord);
+        _modifyCoordForFailureAction(coord, "wf-invalid-fork.xml");
         new CoordMaterializeTransitionXCommand(coord.getId(), 3600).call();
         final CoordJobGetJPAExecutor readCmd1 = new CoordJobGetJPAExecutor(coord.getId());
         waitFor(1 * 100, new Predicate() {
@@ -525,6 +524,40 @@ public class TestEventGeneration extends XDataTestCase {
         assertEquals(2, queue.size());
         assertEquals(EventStatus.WAITING, ((JobEvent)queue.poll()).getEventStatus());
         assertEquals(EventStatus.FAILURE, ((JobEvent)queue.poll()).getEventStatus());
+
+        // test coordinator action events (failure from ActionStartX)
+        ehs.getAppTypes().add("workflow_action");
+        coord = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, false, false, 0);
+        CoordinatorActionBean action = addRecordToCoordActionTable(coord.getId(), 1, CoordinatorAction.Status.RUNNING,
+                "coord-action-sla1.xml", 0);
+        WorkflowJobBean wf = addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING,
+                action.getId());
+        action.setExternalId(wf.getId());
+        jpaService.execute(new CoordActionUpdateJPAExecutor(action));
+
+        String waId = _createWorkflowAction(wf.getId(), "wf-action");
+        new ActionStartXCommand(waId, action.getType()).call();
+
+        final WorkflowJobGetJPAExecutor readCmd2 = new WorkflowJobGetJPAExecutor(jobId1);
+        waitFor(1 * 100, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                return jpaService.execute(readCmd2).getStatus() == WorkflowJob.Status.KILLED;
+            }
+        });
+        assertEquals(3, queue.size());
+        JobEvent wfActionEvent = (JobEvent) queue.poll();
+        assertEquals(EventStatus.FAILURE, wfActionEvent.getEventStatus());
+        assertEquals(waId, wfActionEvent.getId());
+        assertEquals(AppType.WORKFLOW_ACTION, wfActionEvent.getAppType());
+        JobEvent wfJobEvent = (JobEvent) queue.poll();
+        assertEquals(EventStatus.FAILURE, wfJobEvent.getEventStatus());
+        assertEquals(wf.getId(), wfJobEvent.getId());
+        assertEquals(AppType.WORKFLOW_JOB, wfJobEvent.getAppType());
+        JobEvent coordActionEvent = (JobEvent) queue.poll();
+        assertEquals(EventStatus.FAILURE, coordActionEvent.getEventStatus());
+        assertEquals(action.getId(), coordActionEvent.getId());
+        assertEquals(AppType.COORDINATOR_ACTION, coordActionEvent.getAppType());
     }
 
     private class ActionCheckXCommandForTest extends ActionCheckXCommand {
@@ -573,7 +606,6 @@ public class TestEventGeneration extends XDataTestCase {
                 WorkflowInstance.Status.PREP);
         String executionPath = "/";
 
-        JPAService jpaService = services.get(JPAService.class);
         assertNotNull(jpaService);
         WorkflowJobInsertJPAExecutor wfInsertCmd = new WorkflowJobInsertJPAExecutor(workflow);
         jpaService.execute(wfInsertCmd);
@@ -586,12 +618,33 @@ public class TestEventGeneration extends XDataTestCase {
         return workflow;
     }
 
-    private void _modifyCoordForFailureAction(CoordinatorJobBean coord) throws Exception {
-        String wfXml = IOUtils.getResourceAsString("wf-invalid-fork.xml", -1);
+    private void _modifyCoordForFailureAction(CoordinatorJobBean coord, String resourceXml) throws Exception {
+        String wfXml = IOUtils.getResourceAsString(resourceXml, -1);
         writeToFile(wfXml, getFsTestCaseDir(), "workflow.xml");
         String coordXml = coord.getJobXml();
         coord.setJobXml(coordXml.replace("hdfs:///tmp/workflows/", getFsTestCaseDir() + "/workflow.xml"));
-        services.get(JPAService.class).execute(new CoordJobUpdateJPAExecutor(coord));
+        jpaService.execute(new CoordJobUpdateJPAExecutor(coord));
+    }
+
+    private String _createWorkflowAction(String wfId, String actionName) throws JPAExecutorException {
+        WorkflowActionBean action = new WorkflowActionBean();
+        action.setName(actionName);
+        action.setId(Services.get().get(UUIDService.class).generateChildId(wfId, actionName));
+        action.setJobId(wfId);
+        action.setType("java");
+        action.setTransition("transition");
+        action.setStatus(WorkflowAction.Status.PREP);
+        action.setStartTime(new Date());
+        action.setEndTime(new Date());
+        action.setLastCheckTime(new Date());
+        action.setCred("null");
+        action.setPendingOnly();
+
+        String actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+                + getNameNodeUri() + "</name-node>" + "<main-class>" + "${dummy}" + "</java>";
+        action.setConf(actionXml);
+        jpaService.execute(new WorkflowActionInsertJPAExecutor(action));
+        return action.getId();
     }
 
 }
