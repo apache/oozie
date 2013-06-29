@@ -206,6 +206,11 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
                     + " job is not in PREP or RUNNING but in " + coordJob.getStatus());
         }
 
+        if (coordJob.isDoneMaterialization()) {
+            throw new PreconditionException(ErrorCode.E1100, "CoordMaterializeTransitionXCommand for jobId =" + jobId
+                    + " job is already materialized");
+        }
+
         if (coordJob.getNextMaterializedTimestamp() != null
                 && coordJob.getNextMaterializedTimestamp().compareTo(coordJob.getEndTimestamp()) >= 0) {
             throw new PreconditionException(ErrorCode.E1100, "CoordMaterializeTransitionXCommand for jobId=" + jobId
