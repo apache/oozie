@@ -51,7 +51,7 @@ public class TestPrepareActionsDriver extends XFsTestCase {
         }
 
         JobConf conf = createJobConf();
-        LauncherMapper.setupLauncherURIHandlerConf(conf);
+        LauncherMapperHelper.setupLauncherURIHandlerConf(conf);
         PrepareActionsDriver.doOperations(prepareXML, conf);
         assertTrue(fs.exists(actionDir));
     }
@@ -71,7 +71,7 @@ public class TestPrepareActionsDriver extends XFsTestCase {
         try {
             prepareXML = "prepare>" + "<mkdir path='" + newDir + "'/>" + "</prepare>";
             JobConf conf = createJobConf();
-            LauncherMapper.setupLauncherURIHandlerConf(conf);
+            LauncherMapperHelper.setupLauncherURIHandlerConf(conf);
             PrepareActionsDriver.doOperations(prepareXML, conf);
             fail("Expected to catch an exception but did not encounter any");
         } catch (LauncherException le) {

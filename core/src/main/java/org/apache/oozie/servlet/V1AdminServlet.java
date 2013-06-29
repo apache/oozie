@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,18 +17,26 @@
  */
 package org.apache.oozie.servlet;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
+import org.apache.oozie.client.rest.JMSConnectionInfoBean;
+import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.RestConstants;
+import org.apache.oozie.jms.JMSConnectionInfo;
+import org.apache.oozie.jms.JMSJobEventListener;
 import org.apache.oozie.service.CallableQueueService;
+import org.apache.oozie.service.JMSTopicService;
 import org.apache.oozie.service.Services;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -37,7 +45,7 @@ public class V1AdminServlet extends BaseAdminServlet {
 
     private static final long serialVersionUID = 1L;
     private static final String INSTRUMENTATION_NAME = "v1admin";
-    private static final ResourceInfo RESOURCES_INFO[] = new ResourceInfo[8];
+    private static final ResourceInfo RESOURCES_INFO[] = new ResourceInfo[9];
 
     static {
         RESOURCES_INFO[0] = new ResourceInfo(RestConstants.ADMIN_STATUS_RESOURCE, Arrays.asList("PUT", "GET"),
@@ -57,11 +65,18 @@ public class V1AdminServlet extends BaseAdminServlet {
                 Collections.EMPTY_LIST);
         RESOURCES_INFO[7] = new ResourceInfo((RestConstants.ADMIN_TIME_ZONES_RESOURCE), Arrays.asList("GET"),
                 Collections.EMPTY_LIST);
+        RESOURCES_INFO[8] = new ResourceInfo((RestConstants.ADMIN_JMS_INFO), Arrays.asList("GET"),
+                Collections.EMPTY_LIST);
+
+    }
+
+    protected V1AdminServlet(String name) {
+        super(name, RESOURCES_INFO);
+        modeTag = RestConstants.ADMIN_SYSTEM_MODE_PARAM;
     }
 
     public V1AdminServlet() {
-        super(INSTRUMENTATION_NAME, RESOURCES_INFO);
-        modeTag = RestConstants.ADMIN_SYSTEM_MODE_PARAM;
+        this(INSTRUMENTATION_NAME);
     }
 
     /*
@@ -130,5 +145,12 @@ public class V1AdminServlet extends BaseAdminServlet {
         }
         json.put(JsonTags.UNIQUE_MAP_DUMP, uniqueDumpArray);
     }
+
+    @Override
+    protected JsonBean getJMSConnectionInfo(HttpServletRequest request, HttpServletResponse response) throws XServletException,
+            IOException {
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v1");
+    }
+
 
 }

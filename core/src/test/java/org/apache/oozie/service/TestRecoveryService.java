@@ -43,7 +43,7 @@ import org.apache.oozie.DagEngine;
 import org.apache.oozie.ForTestingActionExecutor;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
-import org.apache.oozie.action.hadoop.LauncherMapper;
+import org.apache.oozie.action.hadoop.LauncherMapperHelper;
 import org.apache.oozie.action.hadoop.MapReduceActionExecutor;
 import org.apache.oozie.action.hadoop.MapperReducerForTest;
 import org.apache.oozie.client.CoordinatorAction;
@@ -113,7 +113,7 @@ public class TestRecoveryService extends XDataTestCase {
         createTestCaseSubDir("lib");
         IOUtils.copyCharStream(reader, writer);
 
-        final DagEngine engine = new DagEngine(getTestUser(), "a");
+        final DagEngine engine = new DagEngine(getTestUser());
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, "file://" +  getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
@@ -239,7 +239,7 @@ public class TestRecoveryService extends XDataTestCase {
             }
         });
         assertTrue(launcherJob.isSuccessful());
-        assertTrue(LauncherMapper.hasIdSwap(launcherJob));
+        assertTrue(LauncherMapperHelper.hasIdSwap(launcherJob));
     }
 
 
@@ -253,7 +253,7 @@ public class TestRecoveryService extends XDataTestCase {
         final String jobId = "0000000-" + new Date().getTime() + "-testCoordRecoveryService-C";
         final int actionNum = 1;
         final String actionId = jobId + "@" + actionNum;
-        final CoordinatorEngine ce = new CoordinatorEngine(getTestUser(), "UNIT_TESTING");
+        final CoordinatorEngine ce = new CoordinatorEngine(getTestUser());
         CoordinatorStore store = Services.get().get(StoreService.class).getStore(CoordinatorStore.class);
         store.beginTrx();
         try {
@@ -670,7 +670,6 @@ public class TestRecoveryService extends XDataTestCase {
         coordJob.setLastModifiedTime(new Date());
         coordJob.setUser(getTestUser());
         coordJob.setGroup(getTestGroup());
-        coordJob.setAuthToken("notoken");
         coordJob.setTimeZone("UTC");
 
         String baseURI = baseDir + "/workflows";
@@ -717,7 +716,7 @@ public class TestRecoveryService extends XDataTestCase {
         appXml += "</coordinator-app>";
         coordJob.setJobXml(appXml);
         coordJob.setLastActionNumber(0);
-        coordJob.setFrequency(1);
+        coordJob.setFrequency("1");
         coordJob.setExecution(Execution.FIFO);
         coordJob.setConcurrency(1);
         try {

@@ -47,6 +47,7 @@ import java.util.HashSet;
 public class SubWorkflowActionExecutor extends ActionExecutor {
     public static final String ACTION_TYPE = "sub-workflow";
     public static final String LOCAL = "local";
+    public static final String PARENT_ID = "oozie.wf.parent.id";
 
     private static final Set<String> DISALLOWED_DEFAULT_PROPERTIES = new HashSet<String>();
 
@@ -75,8 +76,7 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
             WorkflowJobBean workflow = (WorkflowJobBean) context.getWorkflow();
             String user = workflow.getUser();
             String group = workflow.getGroup();
-            String authToken = workflow.getAuthToken();
-            DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(user, authToken);
+            DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(user);
             oozieClient = new LocalOozieClient(dagEngine);
         }
         else {
@@ -113,6 +113,10 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
 
     protected void injectRecovery(String externalId, Configuration conf) {
         conf.set(OozieClient.EXTERNAL_ID, externalId);
+    }
+
+    protected void injectParent(String parentId, Configuration conf) {
+        conf.set(PARENT_ID, parentId);
     }
 
     protected String checkIfRunning(OozieClient oozieClient, String extId) throws OozieClientException {
@@ -156,6 +160,7 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
                 injectInline(eConf.getChild("configuration", ns), subWorkflowConf);
                 injectCallback(context, subWorkflowConf);
                 injectRecovery(extId, subWorkflowConf);
+                injectParent(context.getWorkflow().getId(), subWorkflowConf);
 
                 //TODO: this has to be refactored later to be done in a single place for REST calls and this
                 JobUtils.normalizeAppPath(context.getWorkflow().getUser(), context.getWorkflow().getGroup(),

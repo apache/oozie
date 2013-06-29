@@ -57,11 +57,11 @@ import org.apache.oozie.client.BundleJob;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
 import org.apache.oozie.client.OozieClientException;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.XOozieClient;
-import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
 import org.apache.oozie.client.rest.RestConstants;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
@@ -70,6 +70,8 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 import org.xml.sax.SAXException;
+
+import com.google.common.annotations.VisibleForTesting;
 
 /**
  * Oozie command line utility.
@@ -88,6 +90,7 @@ public class OozieCLI {
     public static final String VALIDATE_CMD = "validate";
     public static final String SLA_CMD = "sla";
     public static final String PIG_CMD = "pig";
+    public static final String HIVE_CMD = "hive";
     public static final String MR_CMD = "mapreduce";
     public static final String INFO_CMD = "info";
 
@@ -132,7 +135,7 @@ public class OozieCLI {
     public static final String VERBOSE_DELIMITER = "\t";
     public static final String DEBUG_OPTION = "debug";
 
-    public static final String PIGFILE_OPTION = "file";
+    public static final String SCRIPTFILE_OPTION = "file";
 
     public static final String INFO_TIME_ZONES_OPTION = "timezones";
 
@@ -151,7 +154,9 @@ public class OozieCLI {
     private static final String INSTANCE_SEPARATOR = "#";
 
     private static final String MAPRED_MAPPER = "mapred.mapper.class";
+    private static final String MAPRED_MAPPER_2 = "mapreduce.map.class";
     private static final String MAPRED_REDUCER = "mapred.reducer.class";
+    private static final String MAPRED_REDUCER_2 = "mapreduce.reduce.class";
     private static final String MAPRED_INPUT = "mapred.input.dir";
     private static final String MAPRED_OUTPUT = "mapred.output.dir";
 
@@ -173,7 +178,7 @@ public class OozieCLI {
      * @param args options and arguments for the Oozie CLI.
      */
     public static void main(String[] args) {
-        if (!System.getProperties().contains(AuthOozieClient.USE_AUTH_TOKEN_CACHE_SYS_PROP)) {
+        if (!System.getProperties().containsKey(AuthOozieClient.USE_AUTH_TOKEN_CACHE_SYS_PROP)) {
             System.setProperty(AuthOozieClient.USE_AUTH_TOKEN_CACHE_SYS_PROP, "true");
         }
         System.exit(new OozieCLI().run(args));
@@ -378,25 +383,28 @@ public class OozieCLI {
     }
 
     /**
-     * Create option for command line option 'pig'
-     * @return pig options
+     * Create option for command line option 'pig' or 'hive'
+     * @return pig or hive options
      */
     @SuppressWarnings("static-access")
-    protected Options createPigOptions() {
+    protected Options createScriptLanguageOptions(String jobType) {
         Option oozie = new Option(OOZIE_OPTION, true, "Oozie URL");
         Option config = new Option(CONFIG_OPTION, true, "job configuration file '.properties'");
-        Option pigFile = new Option(PIGFILE_OPTION, true, "Pig script");
+        Option file = new Option(SCRIPTFILE_OPTION, true, jobType + " script");
         Option property = OptionBuilder.withArgName("property=value").hasArgs(2).withValueSeparator().withDescription(
                 "set/override value for given property").create("D");
+        Option params = OptionBuilder.withArgName("property=value").hasArgs(2).withValueSeparator().withDescription(
+                "set parameters for script").create("P");
         Option doAs = new Option(DO_AS_OPTION, true, "doAs user, impersonates as the specified user");
-        Options pigOptions = new Options();
-        pigOptions.addOption(oozie);
-        pigOptions.addOption(doAs);
-        pigOptions.addOption(config);
-        pigOptions.addOption(property);
-        pigOptions.addOption(pigFile);
-        addAuthOptions(pigOptions);
-        return pigOptions;
+        Options Options = new Options();
+        Options.addOption(oozie);
+        Options.addOption(doAs);
+        Options.addOption(config);
+        Options.addOption(property);
+        Options.addOption(params);
+        Options.addOption(file);
+        addAuthOptions(Options);
+        return Options;
     }
 
     /**
@@ -453,9 +461,11 @@ public class OozieCLI {
         parser.addCommand(JOBS_CMD, "", "jobs status", createJobsOptions(), false);
         parser.addCommand(ADMIN_CMD, "", "admin operations", createAdminOptions(), false);
         parser.addCommand(VALIDATE_CMD, "", "validate a workflow XML file", new Options(), true);
-        parser.addCommand(SLA_CMD, "", "sla operations (Supported in Oozie-2.0 or later)", createSlaOptions(), false);
-        parser.addCommand(PIG_CMD, "-X ", "submit a pig job, everything after '-X' are pass-through parameters to pig",
-                createPigOptions(), true);
+        parser.addCommand(SLA_CMD, "", "sla operations (Deprecated with Oozie 4.0)", createSlaOptions(), false);
+        parser.addCommand(PIG_CMD, "-X ", "submit a pig job, everything after '-X' are pass-through parameters to pig, any '-D' "
+                + "arguments after '-X' are put in <configuration>", createScriptLanguageOptions(PIG_CMD), true);
+        parser.addCommand(HIVE_CMD, "-X ", "submit a hive job, everything after '-X' are pass-through parameters to hive, any '-D' "
+                + "arguments after '-X' are put in <configuration>", createScriptLanguageOptions(HIVE_CMD), true);
         parser.addCommand(INFO_CMD, "", "get more detailed info about specific topics", createInfoOptions(), false);
         parser.addCommand(MR_CMD, "", "submit a mapreduce job", createMROptions(), false);
 
@@ -519,7 +529,10 @@ public class OozieCLI {
             slaCommand(command.getCommandLine());
         }
         else if (command.getName().equals(PIG_CMD)) {
-            pigCommand(command.getCommandLine());
+            scriptLanguageCommand(command.getCommandLine(), PIG_CMD);
+        }
+        else if (command.getName().equals(HIVE_CMD)) {
+            scriptLanguageCommand(command.getCommandLine(), HIVE_CMD);
         }
         else if (command.getName().equals(INFO_CMD)) {
             infoCommand(command.getCommandLine());
@@ -956,7 +969,8 @@ public class OozieCLI {
         }
     }
 
-    private void printCoordJob(CoordinatorJob coordJob, String timeZoneId, boolean verbose) {
+    @VisibleForTesting
+    void printCoordJob(CoordinatorJob coordJob, String timeZoneId, boolean verbose) {
         System.out.println("Job ID : " + coordJob.getId());
 
         System.out.println(RULER);
@@ -1010,7 +1024,8 @@ public class OozieCLI {
         }
     }
 
-    private void printBundleJob(BundleJob bundleJob, String timeZoneId, boolean verbose) {
+    @VisibleForTesting
+    void printBundleJob(BundleJob bundleJob, String timeZoneId, boolean verbose) {
         System.out.println("Job ID : " + bundleJob.getId());
 
         System.out.println(RULER);
@@ -1035,7 +1050,8 @@ public class OozieCLI {
         }
     }
 
-    private void printCoordAction(CoordinatorAction coordAction, String timeZoneId) {
+    @VisibleForTesting
+    void printCoordAction(CoordinatorAction coordAction, String timeZoneId) {
         System.out.println("ID : " + maskIfNull(coordAction.getId()));
 
         System.out.println(RULER);
@@ -1071,7 +1087,10 @@ public class OozieCLI {
         }
     }
 
-    private void printWorkflowAction(WorkflowAction action, String timeZoneId, boolean verbose) {
+
+    @VisibleForTesting
+    void printWorkflowAction(WorkflowAction action, String timeZoneId, boolean verbose) {
+
         System.out.println("ID : " + maskIfNull(action.getId()));
 
         System.out.println(RULER);
@@ -1106,7 +1125,8 @@ public class OozieCLI {
     private static final String COORD_ACTION_FORMATTER = "%-43s%-10s%-37s%-10s%-21s%-21s";
     private static final String BULK_RESPONSE_FORMATTER = "%-13s%-38s%-13s%-41s%-10s%-38s%-21s%-38s";
 
-    private void printJob(WorkflowJob job, String timeZoneId, boolean verbose) throws IOException {
+    @VisibleForTesting
+    void printJob(WorkflowJob job, String timeZoneId, boolean verbose) throws IOException {
         System.out.println("Job ID : " + maskIfNull(job.getId()));
 
         System.out.println(RULER);
@@ -1209,7 +1229,8 @@ public class OozieCLI {
         }
     }
 
-    private void printCoordJobs(List<CoordinatorJob> jobs, String timeZoneId, boolean verbose) throws IOException {
+    @VisibleForTesting
+    void printCoordJobs(List<CoordinatorJob> jobs, String timeZoneId, boolean verbose) throws IOException {
         if (jobs != null && jobs.size() > 0) {
             if (verbose) {
                 System.out.println("Job ID" + VERBOSE_DELIMITER + "App Name" + VERBOSE_DELIMITER + "App Path"
@@ -1255,7 +1276,8 @@ public class OozieCLI {
         }
     }
 
-    private void printBulkJobs(List<BulkResponse> jobs, String timeZoneId, boolean verbose) throws IOException {
+    @VisibleForTesting
+    void printBulkJobs(List<BulkResponse> jobs, String timeZoneId, boolean verbose) throws IOException {
         if (jobs != null && jobs.size() > 0) {
             for (BulkResponse response : jobs) {
                 BundleJob bundle = response.getBundle();
@@ -1296,7 +1318,8 @@ public class OozieCLI {
         }
     }
 
-    private void printBundleJobs(List<BundleJob> jobs, String timeZoneId, boolean verbose) throws IOException {
+    @VisibleForTesting
+    void printBundleJobs(List<BundleJob> jobs, String timeZoneId, boolean verbose) throws IOException {
         if (jobs != null && jobs.size() > 0) {
             if (verbose) {
                 System.out.println("Job ID" + VERBOSE_DELIMITER + "Bundle Name" + VERBOSE_DELIMITER + "Bundle Path"
@@ -1412,7 +1435,8 @@ public class OozieCLI {
                 + BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_VERSION));
     }
 
-    private void printJobs(List<WorkflowJob> jobs, String timeZoneId, boolean verbose) throws IOException {
+    @VisibleForTesting
+    void printJobs(List<WorkflowJob> jobs, String timeZoneId, boolean verbose) throws IOException {
         if (jobs != null && jobs.size() > 0) {
             if (verbose) {
                 System.out.println("Job ID" + VERBOSE_DELIMITER + "App Name" + VERBOSE_DELIMITER + "App Path"
@@ -1521,6 +1545,8 @@ public class OozieCLI {
                 sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
                         "oozie-workflow-0.4.xsd")));
                 sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
+                        "oozie-workflow-0.5.xsd")));
+                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
                         "oozie-coordinator-0.1.xsd")));
                 sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
                         "oozie-coordinator-0.2.xsd")));
@@ -1535,11 +1561,15 @@ public class OozieCLI {
                 sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
                         "oozie-sla-0.1.xsd")));
                 sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
+                        "oozie-sla-0.2.xsd")));
+                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
                         "hive-action-0.2.xsd")));
                 sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
                         "hive-action-0.3.xsd")));
                 sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
                         "hive-action-0.4.xsd")));
+                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
+                        "hive-action-0.5.xsd")));
                 sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
                         "sqoop-action-0.2.xsd")));
                 sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
@@ -1548,6 +1578,8 @@ public class OozieCLI {
                         "sqoop-action-0.4.xsd")));
                 sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
                         "ssh-action-0.1.xsd")));
+                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
+                        "ssh-action-0.2.xsd")));
                 SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
                 Schema schema = factory.newSchema(sources.toArray(new StreamSource[sources.size()]));
                 Validator validator = schema.newValidator();
@@ -1555,7 +1587,7 @@ public class OozieCLI {
                 System.out.println("Valid workflow-app");
             }
             catch (Exception ex) {
-                throw new OozieCLIException("Invalid workflow-app, " + ex.toString(), ex);
+                throw new OozieCLIException("Invalid app definition, " + ex.toString(), ex);
             }
         }
         else {
@@ -1563,35 +1595,37 @@ public class OozieCLI {
         }
     }
 
-    private void pigCommand(CommandLine commandLine) throws IOException, OozieCLIException {
-        List<String> pigArgs = commandLine.getArgList();
-        if (pigArgs.size() > 0) {
-            // checking is a pigArgs starts with -X (because CLIParser cannot check this)
-            if (!pigArgs.get(0).equals("-X")) {
-                throw new OozieCLIException("Unrecognized option: " + pigArgs.get(0) + " Expecting -X");
+    private void scriptLanguageCommand(CommandLine commandLine, String jobType) throws IOException, OozieCLIException {
+        List<String> args = commandLine.getArgList();
+        if (args.size() > 0) {
+            // checking if args starts with -X (because CLIParser cannot check this)
+            if (!args.get(0).equals("-X")) {
+                throw new OozieCLIException("Unrecognized option: " + args.get(0) + " Expecting -X");
             }
-            pigArgs.remove(0);
+            args.remove(0);
         }
 
-        List<String> options = new ArrayList<String>();
-        for (Option option : commandLine.getOptions()) {
-            options.add(option.getOpt());
-        }
-
-        if (!options.contains(PIGFILE_OPTION)) {
+        if (!commandLine.hasOption(SCRIPTFILE_OPTION)) {
             throw new OozieCLIException("Need to specify -file <scriptfile>");
         }
 
-        if (!options.contains(CONFIG_OPTION)) {
+        if (!commandLine.hasOption(CONFIG_OPTION)) {
             throw new OozieCLIException("Need to specify -config <configfile>");
         }
-
 
         try {
             XOozieClient wc = createXOozieClient(commandLine);
             Properties conf = getConfiguration(wc, commandLine);
-            String script = commandLine.getOptionValue(PIGFILE_OPTION);
-            System.out.println(JOB_ID_PREFIX + wc.submitPig(conf, script, pigArgs.toArray(new String[pigArgs.size()])));
+            String script = commandLine.getOptionValue(SCRIPTFILE_OPTION);
+            List<String> paramsList = new ArrayList<String>();
+            if (commandLine.hasOption("P")) {
+                Properties params = commandLine.getOptionProperties("P");
+                for (String key : params.stringPropertyNames()) {
+                    paramsList.add(key + "=" + params.getProperty(key));
+                }
+            }
+            System.out.println(JOB_ID_PREFIX + wc.submitScriptLanguage(conf, script, args.toArray(new String[args.size()]),
+                    paramsList.toArray(new String[paramsList.size()]), jobType));
         }
         catch (OozieClientException ex) {
             throw new OozieCLIException(ex.toString(), ex);
@@ -1626,24 +1660,25 @@ public class OozieCLI {
             XOozieClient wc = createXOozieClient(commandLine);
             Properties conf = getConfiguration(wc, commandLine);
 
-            String mapper = conf.getProperty(MAPRED_MAPPER);
+            String mapper = conf.getProperty(MAPRED_MAPPER, conf.getProperty(MAPRED_MAPPER_2));
             if (mapper == null) {
-                throw new OozieCLIException("mapper is not specified in conf");
+                throw new OozieCLIException("mapper (" + MAPRED_MAPPER + " or " + MAPRED_MAPPER_2 + ") must be specified in conf");
             }
 
-            String reducer = conf.getProperty(MAPRED_REDUCER);
+            String reducer = conf.getProperty(MAPRED_REDUCER, conf.getProperty(MAPRED_REDUCER_2));
             if (reducer == null) {
-                throw new OozieCLIException("reducer is not specified in conf");
+                throw new OozieCLIException("reducer (" + MAPRED_REDUCER + " or " + MAPRED_REDUCER_2
+                        + ") must be specified in conf");
             }
 
             String inputDir = conf.getProperty(MAPRED_INPUT);
             if (inputDir == null) {
-                throw new OozieCLIException("mapred.input.dir is not specified in conf");
+                throw new OozieCLIException("input dir (" + MAPRED_INPUT +") must be specified in conf");
             }
 
             String outputDir = conf.getProperty(MAPRED_OUTPUT);
             if (outputDir == null) {
-                throw new OozieCLIException("mapred.output.dir is not specified in conf");
+                throw new OozieCLIException("output dir (" + MAPRED_OUTPUT +") must be specified in conf");
             }
 
             System.out.println(JOB_ID_PREFIX + wc.submitMapReduce(conf));

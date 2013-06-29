@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,6 +28,7 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.util.DateUtils;
 import org.jdom.Element;
 
+@Deprecated
 public class SLADbXOperations {
     public static final String CLIENT_ID_TAG = "oozie:sla:client-id";
 
@@ -61,7 +62,7 @@ public class SLADbXOperations {
         // Setting expected start time
         String strRelExpectedStart = getTagElement(eSla, "should-start");
         if (strRelExpectedStart == null || strRelExpectedStart.length() == 0) {
-            throw new CommandException(ErrorCode.E1102);
+            throw new CommandException(ErrorCode.E1101);
         }
         int relExpectedStart = Integer.parseInt(strRelExpectedStart);
         if (relExpectedStart < 0) {

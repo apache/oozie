@@ -43,30 +43,34 @@ import org.apache.oozie.action.hadoop.MapperReducerForTest;
 import org.apache.oozie.client.BundleJob;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
+import org.apache.oozie.client.CoordinatorJob.Execution;
+import org.apache.oozie.client.CoordinatorJob.Timeunit;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.SLAEvent;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
-import org.apache.oozie.client.CoordinatorJob.Execution;
-import org.apache.oozie.client.CoordinatorJob.Timeunit;
 import org.apache.oozie.executor.jpa.BundleActionInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionUpdateJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.SLAEventInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobUpdateJPAExecutor;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
+import org.apache.oozie.service.UUIDService.ApplicationType;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.service.WorkflowStoreService;
-import org.apache.oozie.service.UUIDService.ApplicationType;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
@@ -82,6 +86,9 @@ import org.apache.oozie.workflow.lite.StartNodeDef;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 
+import com.google.common.annotations.VisibleForTesting;
+
+@SuppressWarnings("deprecation")
 public abstract class XDataTestCase extends XHCatTestCase {
 
     protected static String slaXml = " <sla:info xmlns:sla='uri:oozie:sla:0.1'>"
@@ -95,6 +102,43 @@ public abstract class XDataTestCase extends XHCatTestCase {
 
     protected String bundleName;
     protected String CREATE_TIME = "2012-07-22T00:00Z";
+
+    public XDataTestCase() {
+    }
+
+    /*
+     * The following 2 methods are "published" versions of
+     * #setUp() and #tearDown() respectively. Created to be able to
+     * use them in composition.
+     */
+    @VisibleForTesting
+    public void setUpPub() throws Exception {
+        setUp();
+    }
+
+    @VisibleForTesting
+    public void tearDownPub() throws Exception {
+        tearDown();
+    }
+
+    /**
+     * Inserts the passed coord job
+     * @param coord job bean
+     * @throws Exception
+     */
+    protected void addRecordToCoordJobTable(CoordinatorJobBean coordJob) throws Exception {
+        try {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            assertNotNull(jpaService);
+            CoordJobInsertJPAExecutor coordInsertCmd = new CoordJobInsertJPAExecutor(coordJob);
+            jpaService.execute(coordInsertCmd);
+        }
+        catch (JPAExecutorException je) {
+            je.printStackTrace();
+            fail("Unable to insert the test coord job record to table");
+            throw je;
+        }
+    }
 
     /**
      * Insert coord job for testing.
@@ -286,7 +330,6 @@ public abstract class XDataTestCase extends XHCatTestCase {
         coordJob.setLastModifiedTime(new Date());
         coordJob.setUser(getTestUser());
         coordJob.setGroup(getTestGroup());
-        coordJob.setAuthToken("notoken");
         if (pending) {
             coordJob.setPending();
         }
@@ -298,7 +341,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
         coordJob.setConf(XmlUtils.prettyPrint(conf).toString());
         coordJob.setJobXml(appXml);
         coordJob.setLastActionNumber(0);
-        coordJob.setFrequency(1);
+        coordJob.setFrequency("1");
         coordJob.setTimeUnit(Timeunit.DAY);
         coordJob.setExecution(Execution.FIFO);
         coordJob.setConcurrency(1);
@@ -339,7 +382,6 @@ public abstract class XDataTestCase extends XHCatTestCase {
         coordJob.setLastModifiedTime(new Date());
         coordJob.setUser(getTestUser());
         coordJob.setGroup(getTestGroup());
-        coordJob.setAuthToken("notoken");
         if (pending) {
             coordJob.setPending();
         }
@@ -351,7 +393,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
         Configuration conf = getCoordConf(appPath);
         coordJob.setConf(XmlUtils.prettyPrint(conf).toString());
         coordJob.setJobXml(appXml);
-        coordJob.setFrequency(1);
+        coordJob.setFrequency("1");
         coordJob.setTimeUnit(Timeunit.DAY);
         coordJob.setExecution(Execution.FIFO);
         coordJob.setConcurrency(1);
@@ -395,7 +437,6 @@ public abstract class XDataTestCase extends XHCatTestCase {
         coordJob.setLastModifiedTime(new Date());
         coordJob.setUser(getTestUser());
         coordJob.setGroup(getTestGroup());
-        coordJob.setAuthToken("notoken");
         if (pending) {
             coordJob.setPending();
         }
@@ -407,7 +448,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
         Configuration conf = getCoordConf(appPath);
         coordJob.setConf(XmlUtils.prettyPrint(conf).toString());
         coordJob.setJobXml(appXml);
-        coordJob.setFrequency(1);
+        coordJob.setFrequency("1");
         coordJob.setTimeUnit(Timeunit.DAY);
         coordJob.setExecution(Execution.FIFO);
         coordJob.setConcurrency(1);
@@ -532,6 +573,12 @@ public abstract class XDataTestCase extends XHCatTestCase {
             assertNotNull(jpaService);
             CoordActionInsertJPAExecutor coordActionInsertExecutor = new CoordActionInsertJPAExecutor(action);
             jpaService.execute(coordActionInsertExecutor);
+
+            if (wfId != null) {
+                WorkflowJobBean wfJob = jpaService.execute(new WorkflowJobGetJPAExecutor(wfId));
+                wfJob.setParentId(jobId);
+                jpaService.execute(new WorkflowJobUpdateJPAExecutor(wfJob));
+            }
         }
         catch (JPAExecutorException je) {
             je.printStackTrace();
@@ -592,6 +639,32 @@ public abstract class XDataTestCase extends XHCatTestCase {
     }
 
     /**
+     * Insert subwf job for testing.
+     *
+     * @param jobStatus workflow job status
+     * @param instanceStatus workflow instance status
+     * @param parentId the id of the parent workflow
+     * @return workflow job bean
+     * @throws Exception thrown if unable to create workflow job bean
+     */
+    protected WorkflowJobBean addRecordToWfJobTable(WorkflowJob.Status jobStatus, WorkflowInstance.Status instanceStatus,
+            String parentId) throws Exception {
+        WorkflowJobBean subwfBean = addRecordToWfJobTable(jobStatus, instanceStatus);
+        subwfBean.setParentId(parentId);
+        try {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            assertNotNull(jpaService);
+            jpaService.execute(new WorkflowJobUpdateJPAExecutor(subwfBean));
+        }
+        catch (JPAExecutorException je) {
+            je.printStackTrace();
+            fail("Unable to insert the test wf job record to table");
+            throw je;
+        }
+        return subwfBean;
+    }
+
+    /**
      * Insert wf job for testing.
      *
      * @param jobStatus workflow job status
@@ -610,7 +683,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
         conf.set(OozieClient.LOG_TOKEN, "testToken");
         conf.set(OozieClient.USER_NAME, getTestUser());
 
-        WorkflowJobBean wfBean = createWorkflow(app, conf, "auth", jobStatus, instanceStatus);
+        WorkflowJobBean wfBean = createWorkflow(app, conf, jobStatus, instanceStatus);
 
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
@@ -642,12 +715,17 @@ public abstract class XDataTestCase extends XHCatTestCase {
      */
     protected WorkflowActionBean addRecordToWfActionTable(String wfId, String actionName, WorkflowAction.Status status)
             throws Exception {
-        return addRecordToWfActionTable(wfId, actionName, status, "");
+        return addRecordToWfActionTable(wfId, actionName, status, "", false);
     }
 
     protected WorkflowActionBean addRecordToWfActionTable(String wfId, String actionName, WorkflowAction.Status status,
-            String execPath) throws Exception {
-        WorkflowActionBean action = createWorkflowAction(wfId, actionName, status);
+            boolean pending) throws Exception {
+        return addRecordToWfActionTable(wfId, actionName, status, "", pending);
+    }
+
+    protected WorkflowActionBean addRecordToWfActionTable(String wfId, String actionName, WorkflowAction.Status status,
+            String execPath, boolean pending) throws Exception {
+        WorkflowActionBean action = createWorkflowAction(wfId, actionName, status, pending);
         action.setExecutionPath(execPath);
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
@@ -670,6 +748,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
      * @param status sla status
      * @throws Exception thrown if unable to create sla bean
      */
+    @Deprecated
     protected void addRecordToSLAEventTable(String slaId, SLAEvent.Status status, Date today) throws Exception {
         addRecordToSLAEventTable(slaId, "app-name", status, today);
     }
@@ -682,7 +761,9 @@ public abstract class XDataTestCase extends XHCatTestCase {
      * @param status sla status
      * @throws Exception thrown if unable to create sla bean
      */
-    protected void addRecordToSLAEventTable(String slaId, String appName, SLAEvent.Status status, Date today) throws Exception {
+    @Deprecated
+    protected void addRecordToSLAEventTable(String slaId, String appName, SLAEvent.Status status, Date today)
+            throws Exception {
         SLAEventBean sla = new SLAEventBean();
         sla.setSlaId(slaId);
         sla.setAppName(appName);
@@ -717,8 +798,6 @@ public abstract class XDataTestCase extends XHCatTestCase {
         }
     }
 
-
-
     /**
      * Insert bundle job for testing.
      *
@@ -727,7 +806,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
      * @return bundle job bean
      * @throws Exception
      */
-    protected BundleJobBean addRecordToBundleJobTable(Job.Status jobStatus, boolean pending) throws Exception {
+    public BundleJobBean addRecordToBundleJobTable(Job.Status jobStatus, boolean pending) throws Exception {
         BundleJobBean bundle = createBundleJob(jobStatus, pending);
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
@@ -778,7 +857,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
      */
     protected BundleActionBean addRecordToBundleActionTable(String jobId, String coordName, int pending,
             Job.Status status) throws Exception {
-        BundleActionBean action = createBundleAction(jobId, coordName, pending, status);
+        BundleActionBean action = createBundleAction(jobId, coordName, coordName, pending, status);
 
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
@@ -796,22 +875,57 @@ public abstract class XDataTestCase extends XHCatTestCase {
     }
 
     /**
-     * Create bundle action bean
+     * Create bundle action bean and save to db
      *
      * @param jobId bundle job id
+     * @param coordId coordinator id
      * @param coordName coordinator name
      * @param pending true if action is pending
      * @param status job status
      * @return bundle action bean
      * @throws Exception
      */
-    protected BundleActionBean createBundleAction(String jobId, String coordName, int pending, Job.Status status)
+    protected BundleActionBean addRecordToBundleActionTable(String jobId, String coordId, String coordName, int pending,
+            Job.Status status) throws Exception {
+        BundleActionBean action = createBundleAction(jobId, coordId, coordName, pending, status);
+
+        try {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            assertNotNull(jpaService);
+            BundleActionInsertJPAExecutor bundleActionJPAExecutor = new BundleActionInsertJPAExecutor(action);
+            jpaService.execute(bundleActionJPAExecutor);
+
+            CoordinatorJobBean coordJob = jpaService.execute(new CoordJobGetJPAExecutor(coordId));
+            coordJob.setBundleId(jobId);
+            jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
+        }
+        catch (JPAExecutorException ex) {
+            ex.printStackTrace();
+            fail("Unable to insert the test bundle action record to table");
+            throw ex;
+        }
+
+        return action;
+    }
+
+    /**
+     * Create bundle action bean
+     *
+     * @param jobId bundle job id
+     * @param coordId coordinator id
+     * @param coordName coordinator name
+     * @param pending true if action is pending
+     * @param status job status
+     * @return bundle action bean
+     * @throws Exception
+     */
+    protected BundleActionBean createBundleAction(String jobId, String coordId, String coordName, int pending, Job.Status status)
             throws Exception {
         BundleActionBean action = new BundleActionBean();
         action.setBundleId(jobId);
         action.setBundleActionId(jobId + "_" + coordName);
         action.setPending(pending);
-        action.setCoordId(coordName);
+        action.setCoordId(coordId);
         action.setCoordName(coordName);
         action.setStatus(status);
         action.setLastModifiedTime(new Date());
@@ -982,10 +1096,10 @@ public abstract class XDataTestCase extends XHCatTestCase {
      * @return workflow job bean
      * @throws Exception thrown if unable to create workflow job bean
      */
-    protected WorkflowJobBean createWorkflow(WorkflowApp app, Configuration conf, String authToken,
+    protected WorkflowJobBean createWorkflow(WorkflowApp app, Configuration conf,
             WorkflowJob.Status jobStatus, WorkflowInstance.Status instanceStatus) throws Exception {
         WorkflowAppService wps = Services.get().get(WorkflowAppService.class);
-        Configuration protoActionConf = wps.createProtoActionConf(conf, authToken, true);
+        Configuration protoActionConf = wps.createProtoActionConf(conf, true);
         WorkflowLib workflowLib = Services.get().get(WorkflowStoreService.class).getWorkflowLibWithNoDB();
         WorkflowInstance wfInstance = workflowLib.createInstance(app, conf);
         ((LiteWorkflowInstance) wfInstance).setStatus(instanceStatus);
@@ -1002,7 +1116,6 @@ public abstract class XDataTestCase extends XHCatTestCase {
         workflow.setRun(0);
         workflow.setUser(conf.get(OozieClient.USER_NAME));
         workflow.setGroup(conf.get(OozieClient.GROUP_NAME));
-        workflow.setAuthToken(authToken);
         workflow.setWorkflowInstance(wfInstance);
         return workflow;
     }
@@ -1016,8 +1129,8 @@ public abstract class XDataTestCase extends XHCatTestCase {
      * @return workflow action bean
      * @throws Exception thrown if unable to create workflow action bean
      */
-    protected WorkflowActionBean createWorkflowAction(String wfId, String actionName, WorkflowAction.Status status)
-            throws Exception {
+    protected WorkflowActionBean createWorkflowAction(String wfId, String actionName, WorkflowAction.Status status,
+            boolean pending) throws Exception {
         WorkflowActionBean action = new WorkflowActionBean();
         action.setName(actionName);
         action.setId(Services.get().get(UUIDService.class).generateChildId(wfId, actionName));
@@ -1028,7 +1141,13 @@ public abstract class XDataTestCase extends XHCatTestCase {
         action.setStartTime(new Date());
         action.setEndTime(new Date());
         action.setLastCheckTime(new Date());
-        action.resetPendingOnly();
+        action.setCred("null");
+        if (pending) {
+            action.setPendingOnly();
+        }
+        else {
+            action.resetPendingOnly();
+        }
 
         Path inputDir = new Path(getFsTestCaseDir(), "input");
         Path outputDir = new Path(getFsTestCaseDir(), "output");
@@ -1052,6 +1171,11 @@ public abstract class XDataTestCase extends XHCatTestCase {
         return action;
     }
 
+    protected WorkflowActionBean createWorkflowAction(String wfId, String actionName, WorkflowAction.Status status)
+            throws Exception {
+        return createWorkflowAction(wfId, actionName, status, false);
+    }
+
     /**
      * Create bundle job bean
      *
@@ -1068,11 +1192,13 @@ public abstract class XDataTestCase extends XHCatTestCase {
 
         Path bundleAppPath = new Path(getFsTestCaseDir(), "bundle");
         String bundleAppXml = getBundleXml("bundle-submit-job.xml");
+        assertNotNull(bundleAppXml);
+        assertTrue(bundleAppXml.length() > 0);
 
         bundleAppXml = bundleAppXml
-                .replaceAll("#app_path1", coordPath1.toString() + File.separator + "coordinator.xml");
+                .replaceAll("#app_path1", Matcher.quoteReplacement(coordPath1.toString() + File.separator + "coordinator.xml"));
         bundleAppXml = bundleAppXml
-                .replaceAll("#app_path2", coordPath2.toString() + File.separator + "coordinator.xml");
+                .replaceAll("#app_path2", Matcher.quoteReplacement(coordPath2.toString() + File.separator + "coordinator.xml"));
 
         writeToFile(bundleAppXml, bundleAppPath, "bundle.xml");
 
@@ -1087,7 +1213,6 @@ public abstract class XDataTestCase extends XHCatTestCase {
         bundle.setId(Services.get().get(UUIDService.class).generateId(ApplicationType.BUNDLE));
         bundle.setAppName("BUNDLE-TEST");
         bundle.setAppPath(bundleAppPath.toString());
-        bundle.setAuthToken("authToken");
         bundle.setConf(XmlUtils.prettyPrint(conf).toString());
         bundle.setConsoleUrl("consoleUrl");
         bundle.setCreatedTime(new Date());
@@ -1142,7 +1267,6 @@ public abstract class XDataTestCase extends XHCatTestCase {
         bundle.setId(Services.get().get(UUIDService.class).generateId(ApplicationType.BUNDLE));
         bundle.setAppName("BUNDLE-TEST");
         bundle.setAppPath(bundleAppPath.toString());
-        bundle.setAuthToken("authToken");
         bundle.setConf(XmlUtils.prettyPrint(conf).toString());
         bundle.setConsoleUrl("consoleUrl");
         bundle.setCreatedTime(new Date());
@@ -1370,4 +1494,13 @@ public abstract class XDataTestCase extends XHCatTestCase {
         action.setMissingDependencies(missingDependencies);
         jpaService.execute(new CoordActionUpdateJPAExecutor(action));
     }
+
+    protected void modifyCoordForRunning(CoordinatorJobBean coord) throws Exception {
+        String wfXml = IOUtils.getResourceAsString("wf-credentials.xml", -1);
+        writeToFile(wfXml, getFsTestCaseDir(), "workflow.xml");
+        String coordXml = coord.getJobXml();
+        coord.setJobXml(coordXml.replace("hdfs:///tmp/workflows/", getFsTestCaseDir() + "/workflow.xml"));
+        Services.get().get(JPAService.class).execute(new CoordJobUpdateJPAExecutor(coord));
+    }
+
 }

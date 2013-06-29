@@ -25,6 +25,7 @@ import java.util.Date;
 import java.util.TimeZone;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.AppType;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
@@ -42,6 +43,7 @@ import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionsActiveCountJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
@@ -49,6 +51,7 @@ import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.sla.SLAOperations;
 import org.apache.oozie.util.StatusUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
@@ -58,6 +61,7 @@ import org.jdom.Element;
 /**
  * Materialize actions for specified start and end time for coordinator job.
  */
+@SuppressWarnings("deprecation")
 public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCommand {
     private static final int LOOKAHEAD_WINDOW = 300; // We look ahead 5 minutes for materialization;
     private JPAService jpaService = null;
@@ -111,6 +115,9 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
             for (JsonBean actionBean : insertList) {
                 if (actionBean instanceof CoordinatorActionBean) {
                     CoordinatorActionBean coordAction = (CoordinatorActionBean) actionBean;
+                    if (EventHandlerService.isEnabled()) {
+                        CoordinatorXCommand.generateEvent(coordAction, coordJob.getUser(), coordJob.getAppName(), null);
+                    }
                     if (coordAction.getPushMissingDependencies() != null) {
                         // TODO: Delay in catchup mode?
                         queue(new CoordPushDependencyCheckXCommand(coordAction.getId(), true), 100);
@@ -199,6 +206,11 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
                     + " job is not in PREP or RUNNING but in " + coordJob.getStatus());
         }
 
+        if (coordJob.isDoneMaterialization()) {
+            throw new PreconditionException(ErrorCode.E1100, "CoordMaterializeTransitionXCommand for jobId =" + jobId
+                    + " job is already materialized");
+        }
+
         if (coordJob.getNextMaterializedTimestamp() != null
                 && coordJob.getNextMaterializedTimestamp().compareTo(coordJob.getEndTimestamp()) >= 0) {
             throw new PreconditionException(ErrorCode.E1100, "CoordMaterializeTransitionXCommand for jobId=" + jobId
@@ -259,7 +271,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
             coordJob.resetPending();
         }
         catch (Exception e) {
-            LOG.error("Excepion thrown :", e);
+            LOG.error("Exception thrown :", e);
             throw new CommandException(ErrorCode.E1001, e.getMessage(), e);
         }
         cron.stop();
@@ -286,7 +298,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         String jobXml = coordJob.getJobXml();
         Element eJob = XmlUtils.parseXml(jobXml);
         TimeZone appTz = DateUtils.getTimeZone(coordJob.getTimeZone());
-        int frequency = coordJob.getFrequency();
+        int frequency = Integer.valueOf(coordJob.getFrequency());
         TimeUnit freqTU = TimeUnit.valueOf(eJob.getAttributeValue("freq_timeunit"));
         TimeUnit endOfFlag = TimeUnit.valueOf(eJob.getAttributeValue("end_of_duration"));
         Calendar start = Calendar.getInstance(appTz);
@@ -381,6 +393,9 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         if(slaEvent != null) {
             insertList.add(slaEvent);
         }
+        // inserting into new table also
+        SLAOperations.createSlaRegistrationEvent(eSla, actionBean.getId(), actionBean.getJobId(),
+                AppType.COORDINATOR_ACTION, coordJob.getUser(), coordJob.getAppName(), LOG, false);
     }
 
     private void updateJobMaterializeInfo(CoordinatorJobBean job) throws CommandException {

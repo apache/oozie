@@ -61,6 +61,7 @@ public class JMSAccessorService implements Service {
     private int retryInitialDelay;
     private int retryMultiplier;
     private int retryMaxAttempts;
+    private ConnectionContext jmsProducerConnContext;
 
     /**
      * Map of JMS connection info to established JMS Connection
@@ -254,13 +255,13 @@ public class JMSAccessorService implements Service {
         }
     }
 
-    protected ConnectionContext createConnectionContext(JMSConnectionInfo connInfo) {
+    public ConnectionContext createConnectionContext(JMSConnectionInfo connInfo) {
         ConnectionContext connCtxt = connectionMap.get(connInfo);
         if (connCtxt == null) {
             try {
                 connCtxt = getConnectionContextImpl();
                 connCtxt.createConnection(connInfo.getJNDIProperties());
-                connCtxt.setExceptionListener(new JMSExceptionListener(connInfo, connCtxt));
+                connCtxt.setExceptionListener(new JMSExceptionListener(connInfo, connCtxt, true));
                 connectionMap.put(connInfo, connCtxt);
                 LOG.info("Connection established to JMS Server for [{0}]", connInfo);
             }
@@ -270,6 +271,30 @@ public class JMSAccessorService implements Service {
             }
         }
         return connCtxt;
+    }
+
+    public ConnectionContext createProducerConnectionContext(JMSConnectionInfo connInfo) {
+        if (jmsProducerConnContext != null && jmsProducerConnContext.isConnectionInitialized()) {
+            return jmsProducerConnContext;
+        }
+        else {
+            synchronized (this) {
+                if (jmsProducerConnContext == null || !jmsProducerConnContext.isConnectionInitialized()) {
+                    try {
+                        jmsProducerConnContext = getConnectionContextImpl();
+                        jmsProducerConnContext.createConnection(connInfo.getJNDIProperties());
+                        jmsProducerConnContext.setExceptionListener(new JMSExceptionListener(connInfo,
+                                jmsProducerConnContext, false));
+                        LOG.info("Connection established to JMS Server for [{0}]", connInfo);
+                    }
+                    catch (Exception e) {
+                        LOG.warn("Exception while establishing connection to JMS Server for [{0}]", connInfo, e);
+                        return null;
+                    }
+                }
+            }
+        }
+        return jmsProducerConnContext;
     }
 
     private ConnectionContext getConnectionContextImpl() {
@@ -296,22 +321,14 @@ public class JMSAccessorService implements Service {
     @Override
     public void destroy() {
         LOG.info("Destroying JMSAccessor service ");
-        LOG.info("Closing JMS sessions");
-        for (Map<String, MessageReceiver> topicsMap : receiversMap.values()) {
-            for (MessageReceiver receiver : topicsMap.values()) {
-                try {
-                    receiver.getSession().close();
-                }
-                catch (JMSException e) {
-                    LOG.warn("Unable to close session " + receiver.getSession(), e);
-                }
-            }
-        }
         receiversMap.clear();
 
         LOG.info("Closing JMS connections");
         for (ConnectionContext conn : connectionMap.values()) {
             conn.close();
+        }
+        if (jmsProducerConnContext != null) {
+            jmsProducerConnContext.close();
         }
         connectionMap.clear();
     }
@@ -326,8 +343,8 @@ public class JMSAccessorService implements Service {
      * @param connInfo JMS connection info
      */
     public void reestablishConnection(JMSConnectionInfo connInfo) {
-        connectionMap.remove(connInfo);
         // Queue the connection and topics for retry
+        connectionMap.remove(connInfo);
         ConnectionRetryInfo connRetryInfo = queueConnectionForRetry(connInfo);
         Map<String, MessageReceiver> listeningTopicsMap = receiversMap.remove(connInfo);
         if (listeningTopicsMap != null) {
@@ -335,12 +352,6 @@ public class JMSAccessorService implements Service {
             for (Entry<String, MessageReceiver> topicEntry : listeningTopicsMap.entrySet()) {
                 MessageReceiver receiver = topicEntry.getValue();
                 retryTopicsMap.put(topicEntry.getKey(), receiver.getMessageHandler());
-                try {
-                    receiver.getSession().close();
-                }
-                catch (JMSException e) {
-                    LOG.warn("Unable to close session " + receiver.getSession(), e);
-                }
             }
         }
     }

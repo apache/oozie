@@ -34,6 +34,7 @@ import org.apache.oozie.command.wf.KillXCommand;
 import org.apache.oozie.command.wf.ReRunXCommand;
 import org.apache.oozie.command.wf.ResumeXCommand;
 import org.apache.oozie.command.wf.StartXCommand;
+import org.apache.oozie.command.wf.SubmitHiveXCommand;
 import org.apache.oozie.command.wf.SubmitHttpXCommand;
 import org.apache.oozie.command.wf.SubmitMRXCommand;
 import org.apache.oozie.command.wf.SubmitPigXCommand;
@@ -82,13 +83,11 @@ public class DagEngine extends BaseEngine {
      * Create a Dag engine to perform operations on behave of a user.
      *
      * @param user user name.
-     * @param authToken the authentication token.
      */
-    public DagEngine(String user, String authToken) {
+    public DagEngine(String user) {
         this();
 
         this.user = ParamChecker.notEmpty(user, "user");
-        this.authToken = ParamChecker.notEmpty(authToken, "authToken");
     }
 
     /**
@@ -104,13 +103,13 @@ public class DagEngine extends BaseEngine {
         validateSubmitConfiguration(conf);
 
         try {
-			String jobId;
-			SubmitXCommand submit = new SubmitXCommand(conf, getAuthToken());
-			jobId = submit.call();
-			if (startJob) {
-				start(jobId);
-			}
-			return jobId;
+            String jobId;
+            SubmitXCommand submit = new SubmitXCommand(conf);
+            jobId = submit.call();
+            if (startJob) {
+                start(jobId);
+            }
+            return jobId;
         }
         catch (CommandException ex) {
             throw new DagEngineException(ex);
@@ -118,12 +117,33 @@ public class DagEngine extends BaseEngine {
     }
 
     /**
-     * Submit a pig/mapreduce job through HTTP.
+     * Submit a workflow through a coordinator. It validates configuration properties.
+     * @param conf job conf
+     * @param parentId parent of workflow
+     * @return
+     * @throws DagEngineException
+     */
+    public String submitJobFromCoordinator(Configuration conf, String parentId) throws DagEngineException {
+        validateSubmitConfiguration(conf);
+        try {
+            String jobId;
+            SubmitXCommand submit = new SubmitXCommand(conf);
+            jobId = submit.call();
+            new StartXCommand(jobId, parentId).call();
+            return jobId;
+        }
+        catch (CommandException ex) {
+            throw new DagEngineException(ex);
+        }
+    }
+
+    /**
+     * Submit a pig/hive/mapreduce job through HTTP.
      * <p/>
      * It validates configuration properties.
      *
      * @param conf job configuration.
-     * @param jobType job type - can be "pig" or "mapreduce".
+     * @param jobType job type - can be "pig", "hive, or "mapreduce".
      * @return the job Id.
      * @throws DagEngineException thrown if the job could not be created.
      */
@@ -134,10 +154,13 @@ public class DagEngine extends BaseEngine {
             String jobId;
             SubmitHttpXCommand submit = null;
             if (jobType.equals("pig")) {
-                submit = new SubmitPigXCommand(conf, getAuthToken());
+                submit = new SubmitPigXCommand(conf);
             }
             else if (jobType.equals("mapreduce")) {
-                submit = new SubmitMRXCommand(conf, getAuthToken());
+                submit = new SubmitMRXCommand(conf);
+            }
+            else if (jobType.equals("hive")) {
+                submit = new SubmitHiveXCommand(conf);
             }
 
             jobId = submit.call();
@@ -252,7 +275,7 @@ public class DagEngine extends BaseEngine {
     public void reRun(String jobId, Configuration conf) throws DagEngineException {
         try {
             validateReRunConfiguration(conf);
-			new ReRunXCommand(jobId, conf, getAuthToken()).call();
+            new ReRunXCommand(jobId, conf).call();
             start(jobId);
         }
         catch (CommandException ex) {
@@ -466,7 +489,7 @@ public class DagEngine extends BaseEngine {
     }
 
     @Override
-    public CoordinatorJob getCoordJob(String jobId, String filter, int start, int length) throws BaseEngineException {
+    public CoordinatorJob getCoordJob(String jobId, String filter, int start, int length, boolean desc) throws BaseEngineException {
         throw new BaseEngineException(new XException(ErrorCode.E0301, "cannot get a coordinator job from DagEngine"));
     }
 
@@ -485,7 +508,7 @@ public class DagEngine extends BaseEngine {
     @Override
     public String dryRunSubmit(Configuration conf) throws BaseEngineException {
         try {
-            SubmitXCommand submit = new SubmitXCommand(true, conf, getAuthToken());
+            SubmitXCommand submit = new SubmitXCommand(true, conf);
             return submit.call();
         } catch (CommandException ex) {
             throw new DagEngineException(ex);

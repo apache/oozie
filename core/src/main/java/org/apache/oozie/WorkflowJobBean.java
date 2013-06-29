@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,7 +44,7 @@ import org.apache.openjpa.persistence.jdbc.Index;
 @Entity
 @NamedQueries({
 
-    @NamedQuery(name = "UPDATE_WORKFLOW", query = "update WorkflowJobBean w set w.appName = :appName, w.appPath = :appPath, w.conf = :conf, w.group = :groupName, w.run = :run, w.user = :user, w.authToken = :authToken, w.createdTimestamp = :createdTime, w.endTimestamp = :endTime, w.externalId = :externalId, w.lastModifiedTimestamp = :lastModTime, w.logToken = :logToken, w.protoActionConf = :protoActionConf, w.slaXml =:slaXml, w.startTimestamp = :startTime, w.status = :status, w.wfInstance = :wfInstance where w.id = :id"),
+    @NamedQuery(name = "UPDATE_WORKFLOW", query = "update WorkflowJobBean w set w.appName = :appName, w.appPath = :appPath, w.conf = :conf, w.group = :groupName, w.run = :run, w.user = :user, w.createdTimestamp = :createdTime, w.endTimestamp = :endTime, w.externalId = :externalId, w.lastModifiedTimestamp = :lastModTime,w.logToken = :logToken, w.protoActionConf = :protoActionConf, w.slaXml =:slaXml, w.startTimestamp = :startTime, w.status = :status, w.wfInstance = :wfInstance where w.id = :id"),
 
     @NamedQuery(name = "DELETE_WORKFLOW", query = "delete from WorkflowJobBean w where w.id = :id"),
 
@@ -57,16 +57,25 @@ import org.apache.openjpa.persistence.jdbc.Index;
 
     @NamedQuery(name = "GET_COMPLETED_WORKFLOWS_OLDER_THAN", query = "select w from WorkflowJobBean w where w.endTimestamp < :endTime"),
 
+    @NamedQuery(name = "GET_COMPLETED_WORKFLOWS_WITH_NO_PARENT_OLDER_THAN", query = "select w.id from WorkflowJobBean w where w.endTimestamp < :endTime and w.parentId is null"),
+
     @NamedQuery(name = "GET_WORKFLOW", query = "select OBJECT(w) from WorkflowJobBean w where w.id = :id"),
 
     @NamedQuery(name = "GET_WORKFLOW_FOR_UPDATE", query = "select OBJECT(w) from WorkflowJobBean w where w.id = :id"),
+
+    @NamedQuery(name = "GET_WORKFLOW_FOR_SLA", query = "select w.id, w.status, w.startTimestamp, w.endTimestamp from WorkflowJobBean w where w.id = :id"),
 
     @NamedQuery(name = "GET_WORKFLOW_ID_FOR_EXTERNAL_ID", query = "select  w.id from WorkflowJobBean w where w.externalId = :externalId"),
 
     @NamedQuery(name = "GET_WORKFLOWS_COUNT_WITH_STATUS", query = "select count(w) from WorkflowJobBean w where w.status = :status"),
 
-    @NamedQuery(name = "GET_WORKFLOWS_COUNT_WITH_STATUS_IN_LAST_N_SECS", query = "select count(w) from WorkflowJobBean w where w.status = :status and w.lastModifiedTimestamp > :lastModTime")
+    @NamedQuery(name = "GET_WORKFLOWS_COUNT_WITH_STATUS_IN_LAST_N_SECS", query = "select count(w) from WorkflowJobBean w where w.status = :status and w.lastModifiedTimestamp > :lastModTime"),
 
+    @NamedQuery(name = "GET_WORKFLOWS_WITH_PARENT_ID", query = "select w.id from WorkflowJobBean w where w.parentId = :parentId"),
+
+    @NamedQuery(name = "GET_WORKFLOWS_COUNT_WITH_PARENT_ID_NOT_READY_FOR_PURGE", query = "select count(w) from WorkflowJobBean w where w.parentId = :parentId and (w.status = 'PREP' OR w.status = 'RUNNING' OR w.status = 'SUSPENDED' OR w.endTimestamp >= :endTime)"),
+
+    @NamedQuery(name = "GET_WORKFLOW_FOR_USER", query = "select w.user from WorkflowJobBean w where w.id = :id")
         })
 public class WorkflowJobBean extends JsonWorkflowJob implements Writable {
 
@@ -100,10 +109,6 @@ public class WorkflowJobBean extends JsonWorkflowJob implements Writable {
     @Index
     @Column(name = "end_time")
     private java.sql.Timestamp endTimestamp = null;
-
-    @Column(name = "auth_token")
-    @Lob
-    private String authToken = null;
 
     @Basic
     @Index
@@ -146,7 +151,6 @@ public class WorkflowJobBean extends JsonWorkflowJob implements Writable {
         WritableUtils.writeStr(dataOutput, getUser());
         WritableUtils.writeStr(dataOutput, getGroup());
         dataOutput.writeInt(getRun());
-        WritableUtils.writeStr(dataOutput, authToken);
         WritableUtils.writeStr(dataOutput, logToken);
         WritableUtils.writeStr(dataOutput, protoActionConf);
     }
@@ -184,19 +188,24 @@ public class WorkflowJobBean extends JsonWorkflowJob implements Writable {
         setUser(WritableUtils.readStr(dataInput));
         setGroup(WritableUtils.readStr(dataInput));
         setRun(dataInput.readInt());
-        authToken = WritableUtils.readStr(dataInput);
         logToken = WritableUtils.readStr(dataInput);
         protoActionConf = WritableUtils.readStr(dataInput);
         setExternalId(getExternalId());
         setProtoActionConf(protoActionConf);
     }
 
-    public String getAuthToken() {
-        return authToken;
-    }
-
-    public void setAuthToken(String authToken) {
-        this.authToken = authToken;
+    public boolean inTerminalState() {
+        boolean inTerminalState = false;
+        switch (WorkflowJob.Status.valueOf(status)) {
+            case FAILED:
+            case KILLED:
+            case SUCCEEDED:
+                inTerminalState = true;
+                break;
+            default:
+                break;
+        }
+        return inTerminalState;
     }
 
     public String getLogToken() {

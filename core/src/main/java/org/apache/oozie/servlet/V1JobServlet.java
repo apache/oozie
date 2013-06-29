@@ -24,6 +24,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.*;
+import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.rest.*;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.coord.CoordRerunXCommand;
@@ -44,6 +46,10 @@ public class V1JobServlet extends BaseJobServlet {
 
     public V1JobServlet() {
         super(INSTRUMENTATION_NAME);
+    }
+
+    protected V1JobServlet(String instrumentation_name){
+        super(instrumentation_name);
     }
 
     /*
@@ -300,8 +306,7 @@ public class V1JobServlet extends BaseJobServlet {
      * @throws XServletException
      */
     private void startWorkflowJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
-        DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
-                getAuthToken(request));
+        DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request));
 
         String jobId = getResourceName(request);
         try {
@@ -320,8 +325,7 @@ public class V1JobServlet extends BaseJobServlet {
      * @throws XServletException
      */
     private void startBundleJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
-        BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request),
-                getAuthToken(request));
+        BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request));
         String jobId = getResourceName(request);
         try {
             bundleEngine.start(jobId);
@@ -339,8 +343,7 @@ public class V1JobServlet extends BaseJobServlet {
      * @throws XServletException
      */
     private void resumeWorkflowJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
-        DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
-                getAuthToken(request));
+        DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request));
 
         String jobId = getResourceName(request);
         try {
@@ -359,8 +362,7 @@ public class V1JobServlet extends BaseJobServlet {
      * @throws XServletException
      */
     private void resumeBundleJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
-        BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request),
-                getAuthToken(request));
+        BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request));
         String jobId = getResourceName(request);
         try {
             bundleEngine.resume(jobId);
@@ -382,7 +384,7 @@ public class V1JobServlet extends BaseJobServlet {
             throws XServletException {
         String jobId = getResourceName(request);
         CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(
-                getUser(request), getAuthToken(request));
+                getUser(request));
         try {
             coordEngine.resume(jobId);
         }
@@ -399,8 +401,7 @@ public class V1JobServlet extends BaseJobServlet {
      * @throws XServletException
      */
     private void suspendWorkflowJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
-        DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
-                getAuthToken(request));
+        DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request));
 
         String jobId = getResourceName(request);
         try {
@@ -419,8 +420,7 @@ public class V1JobServlet extends BaseJobServlet {
      * @throws XServletException
      */
     private void suspendBundleJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
-        BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request),
-                getAuthToken(request));
+        BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request));
         String jobId = getResourceName(request);
         try {
             bundleEngine.suspend(jobId);
@@ -440,7 +440,7 @@ public class V1JobServlet extends BaseJobServlet {
     private void suspendCoordinatorJob(HttpServletRequest request, HttpServletResponse response)
             throws XServletException {
         CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(
-                getUser(request), getAuthToken(request));
+                getUser(request));
         String jobId = getResourceName(request);
         try {
             coordEngine.suspend(jobId);
@@ -457,8 +457,7 @@ public class V1JobServlet extends BaseJobServlet {
      * @throws XServletException
      */
     private void killWorkflowJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
-        DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
-                getAuthToken(request));
+        DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request));
 
         String jobId = getResourceName(request);
         try {
@@ -477,7 +476,7 @@ public class V1JobServlet extends BaseJobServlet {
      */
     private void killCoordinatorJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
         CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(
-                getUser(request), getAuthToken(request));
+                getUser(request));
         String jobId = getResourceName(request);
         try {
             coordEngine.kill(jobId);
@@ -495,8 +494,7 @@ public class V1JobServlet extends BaseJobServlet {
      * @throws XServletException
      */
     private void killBundleJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
-        BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request),
-                getAuthToken(request));
+        BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request));
         String jobId = getResourceName(request);
         try {
             bundleEngine.kill(jobId);
@@ -516,7 +514,7 @@ public class V1JobServlet extends BaseJobServlet {
     private void changeCoordinatorJob(HttpServletRequest request, HttpServletResponse response)
             throws XServletException {
         CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(
-                getUser(request), getAuthToken(request));
+                getUser(request));
         String jobId = getResourceName(request);
         String changeValue = request.getParameter(RestConstants.JOB_CHANGE_VALUE);
         try {
@@ -536,8 +534,7 @@ public class V1JobServlet extends BaseJobServlet {
      */
     private void changeBundleJob(HttpServletRequest request, HttpServletResponse response)
             throws XServletException {
-        BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(
-                getUser(request), getAuthToken(request));
+        BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request));
         String jobId = getResourceName(request);
         String changeValue = request.getParameter(RestConstants.JOB_CHANGE_VALUE);
         try {
@@ -558,8 +555,7 @@ public class V1JobServlet extends BaseJobServlet {
      */
     private void reRunWorkflowJob(HttpServletRequest request, HttpServletResponse response, Configuration conf)
             throws XServletException {
-        DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
-                getAuthToken(request));
+        DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request));
 
         String jobId = getResourceName(request);
         try {
@@ -581,8 +577,7 @@ public class V1JobServlet extends BaseJobServlet {
     private void rerunBundleJob(HttpServletRequest request, HttpServletResponse response, Configuration conf)
             throws XServletException {
         JSONObject json = new JSONObject();
-        BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request),
-                getAuthToken(request));
+        BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request));
         String jobId = getResourceName(request);
 
         String coordScope = request.getParameter(RestConstants.JOB_BUNDLE_RERUN_COORD_SCOPE_PARAM);
@@ -614,8 +609,7 @@ public class V1JobServlet extends BaseJobServlet {
     private JSONObject reRunCoordinatorActions(HttpServletRequest request, HttpServletResponse response,
             Configuration conf) throws XServletException {
         JSONObject json = new JSONObject();
-        CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(getUser(request),
-                getAuthToken(request));
+        CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(getUser(request));
 
         String jobId = getResourceName(request);
 
@@ -664,7 +658,22 @@ public class V1JobServlet extends BaseJobServlet {
      * @return JsonBean WorkflowJobBean
      * @throws XServletException
      */
-    private JsonBean getWorkflowJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
+    protected JsonBean getWorkflowJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
+        JsonBean jobBean = getWorkflowJobBean(request, response);
+        // for backward compatibility (OOZIE-1231)
+        swapMRActionID((WorkflowJob)jobBean);
+        return jobBean;
+    }
+
+    /**
+     * Get workflow job
+     *
+     * @param request servlet request
+     * @param response servlet response
+     * @return JsonBean WorkflowJobBean
+     * @throws XServletException
+     */
+    protected JsonBean getWorkflowJobBean(HttpServletRequest request, HttpServletResponse response) throws XServletException {
         JsonBean jobBean = null;
         String jobId = getResourceName(request);
         String startStr = request.getParameter(RestConstants.OFFSET_PARAM);
@@ -673,16 +682,46 @@ public class V1JobServlet extends BaseJobServlet {
         start = (start < 1) ? 1 : start;
         int len = (lenStr != null) ? Integer.parseInt(lenStr) : 0;
         len = (len < 1) ? Integer.MAX_VALUE : len;
-        DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
-                getAuthToken(request));
+        DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request));
         try {
             jobBean = (JsonBean) dagEngine.getJob(jobId, start, len);
         }
         catch (DagEngineException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
         }
-
         return jobBean;
+    }
+
+    private void swapMRActionID(WorkflowJob wjBean) {
+        List<WorkflowAction> actions = wjBean.getActions();
+        if (actions != null) {
+            for (WorkflowAction wa : actions) {
+                swapMRActionID(wa);
+            }
+        }
+    }
+
+    private void swapMRActionID(WorkflowAction waBean) {
+        if (waBean.getType().equals("map-reduce")) {
+            String childId = waBean.getExternalChildIDs();
+            if (childId != null && !childId.equals("")) {
+                String consoleBase = getConsoleBase(waBean.getConsoleUrl());
+                ((WorkflowActionBean) waBean).setConsoleUrl(consoleBase + childId);
+                ((WorkflowActionBean) waBean).setExternalId(childId);
+                ((WorkflowActionBean) waBean).setExternalChildIDs("");
+            }
+        }
+    }
+
+    private String getConsoleBase(String url) {
+        String consoleBase = null;
+        if (url.indexOf("application") != -1) {
+            consoleBase = url.split("application_[0-9]+_[0-9]+")[0];
+        }
+        else {
+            consoleBase = url.split("job_[0-9]+_[0-9]+")[0];
+        }
+        return consoleBase;
     }
 
     /**
@@ -693,10 +732,18 @@ public class V1JobServlet extends BaseJobServlet {
      * @return JsonBean WorkflowActionBean
      * @throws XServletException
      */
-    private JsonBean getWorkflowAction(HttpServletRequest request, HttpServletResponse response)
+    protected JsonBean getWorkflowAction(HttpServletRequest request, HttpServletResponse response)
             throws XServletException {
-        DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
-                getAuthToken(request));
+
+        JsonBean actionBean = getWorkflowActionBean(request, response);
+        // for backward compatibility (OOZIE-1231)
+        swapMRActionID((WorkflowAction)actionBean);
+        return actionBean;
+    }
+
+    protected JsonBean getWorkflowActionBean(HttpServletRequest request, HttpServletResponse response)
+            throws XServletException {
+        DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request));
 
         JsonBean actionBean = null;
         String actionId = getResourceName(request);
@@ -706,7 +753,6 @@ public class V1JobServlet extends BaseJobServlet {
         catch (BaseEngineException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
         }
-
         return actionBean;
     }
 
@@ -719,15 +765,17 @@ public class V1JobServlet extends BaseJobServlet {
      * @throws XServletException
      * @throws BaseEngineException
      */
-    private JsonBean getCoordinatorJob(HttpServletRequest request, HttpServletResponse response)
+    protected JsonBean getCoordinatorJob(HttpServletRequest request, HttpServletResponse response)
             throws XServletException, BaseEngineException {
         JsonBean jobBean = null;
         CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(
-                getUser(request), getAuthToken(request));
+                getUser(request));
         String jobId = getResourceName(request);
         String startStr = request.getParameter(RestConstants.OFFSET_PARAM);
         String lenStr = request.getParameter(RestConstants.LEN_PARAM);
         String filter = request.getParameter(RestConstants.JOB_FILTER_PARAM);
+        String orderStr = request.getParameter(RestConstants.ORDER_PARAM);
+        boolean order = (orderStr != null && orderStr.equals("desc")) ? true : false;
         int start = (startStr != null) ? Integer.parseInt(startStr) : 1;
         start = (start < 1) ? 1 : start;
         // Get default number of coordinator actions to be retrieved
@@ -735,7 +783,7 @@ public class V1JobServlet extends BaseJobServlet {
         int len = (lenStr != null) ? Integer.parseInt(lenStr) : 0;
         len = (len < 1) ? defaultLen : len;
         try {
-            JsonCoordinatorJob coordJob = coordEngine.getCoordJob(jobId, filter, start, len);
+            JsonCoordinatorJob coordJob = coordEngine.getCoordJob(jobId, filter, start, len, order);
             jobBean = coordJob;
         }
         catch (CoordinatorEngineException ex) {
@@ -757,8 +805,7 @@ public class V1JobServlet extends BaseJobServlet {
     private JsonBean getBundleJob(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             BaseEngineException {
         JsonBean jobBean = null;
-        BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request),
-                getAuthToken(request));
+        BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request));
         String jobId = getResourceName(request);
 
         try {
@@ -784,7 +831,7 @@ public class V1JobServlet extends BaseJobServlet {
             throws XServletException, BaseEngineException {
         JsonBean actionBean = null;
         CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(
-                getUser(request), getAuthToken(request));
+                getUser(request));
         String actionId = getResourceName(request);
         try {
             actionBean = coordEngine.getCoordAction(actionId);
@@ -806,8 +853,7 @@ public class V1JobServlet extends BaseJobServlet {
      */
     private String getWorkflowJobDefinition(HttpServletRequest request, HttpServletResponse response)
             throws XServletException {
-        DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
-                getAuthToken(request));
+        DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request));
 
         String wfDefinition;
         String jobId = getResourceName(request);
@@ -829,8 +875,7 @@ public class V1JobServlet extends BaseJobServlet {
      * @throws XServletException
      */
     private String getBundleJobDefinition(HttpServletRequest request, HttpServletResponse response) throws XServletException {
-        BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request),
-                getAuthToken(request));
+        BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request));
         String bundleDefinition;
         String jobId = getResourceName(request);
         try {
@@ -854,7 +899,7 @@ public class V1JobServlet extends BaseJobServlet {
             throws XServletException {
 
         CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(
-                getUser(request), getAuthToken(request));
+                getUser(request));
 
         String jobId = getResourceName(request);
 
@@ -878,8 +923,7 @@ public class V1JobServlet extends BaseJobServlet {
      */
     private void streamWorkflowJobLog(HttpServletRequest request, HttpServletResponse response)
             throws XServletException, IOException {
-        DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
-                getAuthToken(request));
+        DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request));
         String jobId = getResourceName(request);
         try {
             dagEngine.streamLog(jobId, response.getWriter());
@@ -898,8 +942,7 @@ public class V1JobServlet extends BaseJobServlet {
      */
     private void streamBundleJob(HttpServletRequest request, HttpServletResponse response)
             throws XServletException, IOException {
-        BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request),
-                getAuthToken(request));
+        BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request));
         String jobId = getResourceName(request);
         try {
             bundleEngine.streamLog(jobId, response.getWriter());
@@ -921,7 +964,7 @@ public class V1JobServlet extends BaseJobServlet {
             throws XServletException, IOException {
 
         CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(
-                getUser(request), getAuthToken(request));
+                getUser(request));
         String jobId = getResourceName(request);
         String logRetrievalScope = request.getParameter(RestConstants.JOB_LOG_SCOPE_PARAM);
         String logRetrievalType = request.getParameter(RestConstants.JOB_LOG_TYPE_PARAM);
@@ -935,4 +978,11 @@ public class V1JobServlet extends BaseJobServlet {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
         }
     }
+
+    @Override
+    protected String getJMSTopicName(HttpServletRequest request, HttpServletResponse response) throws XServletException,
+            IOException {
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v1");
+    }
+
 }

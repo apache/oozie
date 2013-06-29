@@ -247,13 +247,13 @@ public class TestCoordinatorStore extends XTestCase {
         store.beginTrx();
         try {
             CoordinatorJobBean job = store.getCoordinatorJob(jobId, false);
-            int newFreq = job.getFrequency() + 1;
-            job.setFrequency(newFreq);
+            int newFreq = Integer.valueOf(job.getFrequency()) + 1;
+            job.setFrequency(Integer.toString(newFreq));
             store.updateCoordinatorJob(job);
             store.getEntityManager().flush();
             store.getEntityManager().merge(job);
             job = store.getCoordinatorJob(jobId, false);
-            assertEquals(newFreq, job.getFrequency());
+            assertEquals(Integer.toString(newFreq), job.getFrequency());
             store.commitTrx();
         }
         catch (Exception ex) {
@@ -371,7 +371,7 @@ public class TestCoordinatorStore extends XTestCase {
         appXml += "</coordinator-app>";
         coordJob.setJobXml(appXml);
         coordJob.setLastActionNumber(0);
-        coordJob.setFrequency(1);
+        coordJob.setFrequency("1");
         Date curr = new Date();
         coordJob.setNextMaterializedTime(curr);
         coordJob.setLastModifiedTime(curr);

@@ -622,7 +622,6 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         coordJob.setLastModifiedTime(new Date());
         coordJob.setUser("testUser");
         coordJob.setGroup("testGroup");
-        coordJob.setAuthToken("notoken");
         coordJob.setTimeZone("UTC");
         coordJob.setTimeUnit(Timeunit.DAY);
         coordJob.setMatThrottling(2);
@@ -660,7 +659,7 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         appXml += "</coordinator-app>";
         coordJob.setJobXml(appXml);
         coordJob.setLastActionNumber(0);
-        coordJob.setFrequency(1);
+        coordJob.setFrequency("1");
         coordJob.setConcurrency(1);
         JPAService jpaService = Services.get().get(JPAService.class);
         if (jpaService != null) {
@@ -803,7 +802,6 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         coordJob.setLastModifiedTime(new Date());
         coordJob.setUser("testUser");
         coordJob.setGroup("testGroup");
-        coordJob.setAuthToken("notoken");
         coordJob.setTimeZone("UTC");
         coordJob.setTimeUnit(Timeunit.DAY);
         coordJob.setMatThrottling(2);
@@ -871,7 +869,7 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         appXml += "</coordinator-app>";
         coordJob.setJobXml(appXml);
         coordJob.setLastActionNumber(0);
-        coordJob.setFrequency(1);
+        coordJob.setFrequency("1");
         coordJob.setExecution(Execution.FIFO);
         coordJob.setConcurrency(1);
 

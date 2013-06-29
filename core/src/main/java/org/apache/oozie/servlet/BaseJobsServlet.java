@@ -70,7 +70,6 @@ public abstract class BaseJobsServlet extends JsonRestServlet {
     @SuppressWarnings("unchecked")
     protected void doPost(HttpServletRequest request,
             HttpServletResponse response) throws ServletException, IOException {
-        String authTok = getAuthToken(request);
         /*
          * Enumeration p = request.getAttributeNames();
          * for(;p.hasMoreElements();){ String key = (String)p.nextElement();

@@ -161,7 +161,7 @@ public class LocalOozie {
             throw new IllegalStateException("LocalOozie is not initialized");
         }
         ParamChecker.notEmpty(user, "user");
-        DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(user, "undef");
+        DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(user);
         return new LocalOozieClient(dagEngine);
     }
 
@@ -186,8 +186,7 @@ public class LocalOozie {
             throw new IllegalStateException("LocalOozie is not initialized");
         }
         ParamChecker.notEmpty(user, "user");
-        CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(user,
-                "undef");
+        CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(user);
         return new LocalOozieClientCoord(coordEngine);
     }
 

@@ -46,6 +46,7 @@ import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 import org.apache.oozie.service.ActionService;
+import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
@@ -56,6 +57,7 @@ import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.util.db.SLADbXOperations;
 
+@SuppressWarnings("deprecation")
 public class ActionStartXCommand extends ActionXCommand<Void> {
     public static final String EL_ERROR = "EL_ERROR";
     public static final String EL_EVAL_ERROR = "EL_EVAL_ERROR";
@@ -158,10 +160,12 @@ public class ActionStartXCommand extends ActionXCommand<Void> {
             if (wfAction.getStatus() == WorkflowActionBean.Status.START_RETRY
                     || wfAction.getStatus() == WorkflowActionBean.Status.START_MANUAL) {
                 isRetry = true;
+                prepareForRetry(wfAction);
             }
             boolean isUserRetry = false;
             if (wfAction.getStatus() == WorkflowActionBean.Status.USER_RETRY) {
                 isUserRetry = true;
+                prepareForRetry(wfAction);
             }
             context = new ActionXCommand.ActionExecutorContext(wfJob, wfAction, isRetry, isUserRetry);
             boolean caught = false;
@@ -300,6 +304,9 @@ public class ActionStartXCommand extends ActionXCommand<Void> {
         finally {
             try {
                 jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, insertList));
+                if (!(executor instanceof ControlNodeActionExecutor) && EventHandlerService.isEnabled()) {
+                    generateEvent(wfAction, wfJob.getUser());
+                }
             }
             catch (JPAExecutorException e) {
                 throw new CommandException(e);
@@ -339,6 +346,13 @@ public class ActionStartXCommand extends ActionXCommand<Void> {
     @Override
     public String getKey(){
         return getName() + "_" + actionId;
+    }
+
+    private void prepareForRetry(WorkflowActionBean wfAction) {
+        if (wfAction.getType().equals("map-reduce")) {
+            // need to delete child job id of original run
+            wfAction.setExternalChildIDs("");
+        }
     }
 
 }

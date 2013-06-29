@@ -79,7 +79,7 @@ public interface CoordinatorJob extends Job {
      *
      * @return the frequency for the coord job in unit of minute
      */
-    int getFrequency();
+    String getFrequency();
 
     /**
      * Return the timeUnit for the coord job, it could be, Timeunit enum, e.g. MINUTE, HOUR, DAY, WEEK or MONTH

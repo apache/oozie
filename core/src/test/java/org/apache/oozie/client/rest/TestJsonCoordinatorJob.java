@@ -36,7 +36,7 @@ public class TestJsonCoordinatorJob extends TestCase {
         app.setId("c");
         app.setConf("cc");
         app.setStatus(CoordinatorJob.Status.PREP);
-        app.setFrequency(100);
+        app.setFrequency("100");
         app.setTimeUnit(CoordinatorJob.Timeunit.WEEK);
         app.setTimeZone("timeZone");
         app.setConcurrency(10);
@@ -59,7 +59,7 @@ public class TestJsonCoordinatorJob extends TestCase {
         assertEquals("c", app.getId());
         assertEquals("cc", app.getConf());
         assertEquals(CoordinatorJob.Status.PREP, app.getStatus());
-        assertEquals(100, app.getFrequency());
+        assertEquals("100", app.getFrequency());
         assertEquals(CoordinatorJob.Timeunit.WEEK, app.getTimeUnit());
         assertEquals("timeZone", app.getTimeZone());
         assertEquals(10, app.getConcurrency());

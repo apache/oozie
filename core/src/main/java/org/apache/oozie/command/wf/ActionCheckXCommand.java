@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,6 @@ import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
-import org.apache.oozie.client.WorkflowAction.Status;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
@@ -41,10 +40,10 @@ import org.apache.oozie.executor.jpa.WorkflowActionUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 import org.apache.oozie.service.ActionCheckerService;
 import org.apache.oozie.service.ActionService;
+import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
-import org.apache.oozie.util.InstrumentUtils;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.XLog;
@@ -64,6 +63,7 @@ public class ActionCheckXCommand extends ActionXCommand<Void> {
     private JPAService jpaService = null;
     private ActionExecutor executor = null;
     private List<JsonBean> updateList = new ArrayList<JsonBean>();
+    private boolean generateEvent = false;
 
     public ActionCheckXCommand(String actionId) {
         this(actionId, -1);
@@ -184,6 +184,7 @@ public class ActionCheckXCommand extends ActionXCommand<Void> {
                     wfAction.setErrorInfo(EXEC_DATA_MISSING,
                             "Execution Complete, but Execution Data Missing from Action");
                     failJob(context);
+                    generateEvent = true;
                 } else {
                     wfAction.setPending();
                     queue(new ActionEndXCommand(wfAction.getId(), wfAction.getType()));
@@ -199,10 +200,10 @@ public class ActionCheckXCommand extends ActionXCommand<Void> {
                     .getMessage(), ex);
 
             wfAction.setErrorInfo(ex.getErrorCode(), ex.getMessage());
-
             switch (ex.getErrorType()) {
                 case FAILED:
-                    failAction(wfJob, wfAction);
+                    failJob(context, wfAction);
+                    generateEvent = true;
                     break;
                 case ERROR:
                     handleUserRetry(wfAction);
@@ -210,6 +211,7 @@ public class ActionCheckXCommand extends ActionXCommand<Void> {
                 case TRANSIENT:                 // retry N times, then suspend workflow
                     if (!handleTransient(context, executor, WorkflowAction.Status.RUNNING)) {
                         handleNonTransient(context, executor, WorkflowAction.Status.START_MANUAL);
+                        generateEvent = true;
                         wfAction.setPendingAge(new Date());
                         wfAction.setRetries(0);
                         wfAction.setStartTime(null);
@@ -225,6 +227,9 @@ public class ActionCheckXCommand extends ActionXCommand<Void> {
         finally {
             try {
                 jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, null));
+                if (generateEvent && EventHandlerService.isEnabled()) {
+                    generateEvent(wfAction, wfJob.getUser());
+                }
             }
             catch (JPAExecutorException e) {
                 throw new CommandException(e);
@@ -235,18 +240,13 @@ public class ActionCheckXCommand extends ActionXCommand<Void> {
         return null;
     }
 
-    private void failAction(WorkflowJobBean workflow, WorkflowActionBean action) throws CommandException {
-        if (!handleUserRetry(action)) {
-            LOG.warn("Failing Job [{0}] due to failed action [{1}]", workflow.getId(), action.getId());
-            action.resetPending();
-            action.setStatus(Status.FAILED);
-            workflow.setStatus(WorkflowJob.Status.FAILED);
-            InstrumentUtils.incrJobCounter(INSTR_FAILED_JOBS_COUNTER, 1, getInstrumentation());
-        }
-    }
-
     protected long getRetryInterval() {
         return (executor != null) ? executor.getRetryInterval() : ActionExecutor.RETRY_INTERVAL;
+    }
+
+    @Override
+    public String getKey() {
+        return getName() + "_" + actionId;
     }
 
 }

@@ -300,7 +300,7 @@ public class JsonCoordinatorAction implements CoordinatorAction, JsonBean {
 
     @Override
     public String toString() {
-        return MessageFormat.format("WorkflowAction name[{0}] status[{1}]",
+        return MessageFormat.format("CoordinatorAction name[{0}] status[{1}]",
                                     getId(), getStatus());
     }
 

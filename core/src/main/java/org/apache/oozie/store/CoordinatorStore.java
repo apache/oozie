@@ -454,7 +454,6 @@ public class CoordinatorStore extends Store {
         q.setParameter("lastActionNumber", jBean.getLastActionNumber());
         q.setParameter("timeOut", jBean.getTimeout());
         q.setParameter("timeZone", jBean.getTimeZone());
-        q.setParameter("authToken", jBean.getAuthToken());
         q.setParameter("createdTime", jBean.getCreatedTimestamp());
         q.setParameter("endTime", jBean.getEndTimestamp());
         q.setParameter("execution", jBean.getExecution());
@@ -626,7 +625,7 @@ public class CoordinatorStore extends Store {
             bean.setConcurrency(((Integer) arr[8]).intValue());
         }
         if (arr[9] != null) {
-            bean.setFrequency(((Integer) arr[9]).intValue());
+            bean.setFrequency((String) arr[9]);
         }
         if (arr[10] != null) {
             bean.setLastActionTime((Timestamp) arr[10]);

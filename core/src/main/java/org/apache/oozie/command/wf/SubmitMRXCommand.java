@@ -35,8 +35,8 @@ public class SubmitMRXCommand extends SubmitHttpXCommand {
     private static final Set<String> SKIPPED_CONFS = new HashSet<String>();
     private static final Map<String, String> DEPRECATE_MAP = new HashMap<String, String>();
 
-    public SubmitMRXCommand(Configuration conf, String authToken) {
-        super("submitMR", "submitMR", conf, authToken);
+    public SubmitMRXCommand(Configuration conf) {
+        super("submitMR", "submitMR", conf);
     }
 
     static {

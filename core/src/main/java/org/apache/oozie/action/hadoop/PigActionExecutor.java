@@ -19,7 +19,6 @@ package org.apache.oozie.action.hadoop;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.oozie.action.ActionExecutorException;
@@ -39,7 +38,13 @@ import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.util.List;
 
-public class PigActionExecutor extends JavaActionExecutor {
+public class PigActionExecutor extends ScriptLanguageActionExecutor {
+
+    private static final String PIG_MAIN_CLASS_NAME = "org.apache.oozie.action.hadoop.PigMain";
+    private static final String OOZIE_PIG_STATS = "org.apache.oozie.action.hadoop.OoziePigStats";
+    static final String PIG_SCRIPT = "oozie.pig.script";
+    static final String PIG_PARAMS = "oozie.pig.params";
+    static final String PIG_ARGS = "oozie.pig.args";
 
     public PigActionExecutor() {
         super("pig");
@@ -48,65 +53,24 @@ public class PigActionExecutor extends JavaActionExecutor {
     @Override
     protected List<Class> getLauncherClasses() {
         List<Class> classes = super.getLauncherClasses();
-        classes.add(LauncherMain.class);
-        classes.add(MapReduceMain.class);
-        classes.add(PigMain.class);
-        classes.add(OoziePigStats.class);
+        try {
+            classes.add(Class.forName(PIG_MAIN_CLASS_NAME));
+            classes.add(Class.forName(OOZIE_PIG_STATS));
+        }
+        catch (ClassNotFoundException e) {
+            throw new RuntimeException("Class not found", e);
+        }
         return classes;
     }
 
 
     @Override
     protected String getLauncherMain(Configuration launcherConf, Element actionXml) {
-        return launcherConf.get(LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS, PigMain.class.getName());
+        return launcherConf.get(LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS, PIG_MAIN_CLASS_NAME);
     }
 
     @Override
     void injectActionCallback(Context context, Configuration launcherConf) {
-    }
-
-    @Override
-    protected Configuration setupLauncherConf(Configuration conf, Element actionXml, Path appPath, Context context)
-            throws ActionExecutorException {
-        super.setupLauncherConf(conf, actionXml, appPath, context);
-        Namespace ns = actionXml.getNamespace();
-        String script = actionXml.getChild("script", ns).getTextTrim();
-        String pigName = new Path(script).getName();
-        String pigScriptContent = context.getProtoActionConf().get(XOozieClient.PIG_SCRIPT);
-
-        Path pigScriptFile = null;
-        if (pigScriptContent != null) { // Create pig script on hdfs if this is
-            // an http submission pig job;
-            FSDataOutputStream dos = null;
-            try {
-                Path actionPath = context.getActionDir();
-                pigScriptFile = new Path(actionPath, script);
-                FileSystem fs = context.getAppFileSystem();
-                dos = fs.create(pigScriptFile);
-                dos.writeBytes(pigScriptContent);
-
-                addToCache(conf, actionPath, script + "#" + pigName, false);
-            }
-            catch (Exception ex) {
-                throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FAILED_OPERATION", XLog
-                        .format("Not able to write pig script file {0} on hdfs", pigScriptFile), ex);
-            }
-            finally {
-                try {
-                    if (dos != null) {
-                        dos.close();
-                    }
-                }
-                catch (IOException ex) {
-                    XLog.getLog(getClass()).error("Error: " + ex.getMessage());
-                }
-            }
-        }
-        else {
-            addToCache(conf, appPath, script + "#" + pigName, false);
-        }
-
-        return conf;
     }
 
     @Override
@@ -132,9 +96,16 @@ public class PigActionExecutor extends JavaActionExecutor {
                 strArgs[i] = eArgs.get(i).getTextTrim();
             }
         }
-        PigMain.setPigScript(actionConf, pigName, strParams, strArgs);
+        setPigScript(actionConf, pigName, strParams, strArgs);
         return actionConf;
     }
+
+    public static void setPigScript(Configuration conf, String script, String[] params, String[] args) {
+        conf.set(PIG_SCRIPT, script);
+        MapReduceMain.setStrings(conf, PIG_PARAMS, params);
+        MapReduceMain.setStrings(conf, PIG_ARGS, args);
+    }
+
 
     @Override
     protected boolean getCaptureOutput(WorkflowAction action) throws JDOMException {
@@ -161,7 +132,7 @@ public class PigActionExecutor extends JavaActionExecutor {
 
     private String getStats(Context context, FileSystem actionFs) throws IOException, HadoopAccessorException,
             URISyntaxException {
-        Path actionOutput = LauncherMapper.getActionStatsDataPath(context.getActionDir());
+        Path actionOutput = LauncherMapperHelper.getActionStatsDataPath(context.getActionDir());
         String stats = null;
         if (actionFs.exists(actionOutput)) {
             stats = getDataFromPath(actionOutput, actionFs);
@@ -179,7 +150,7 @@ public class PigActionExecutor extends JavaActionExecutor {
 
     private String getExternalChildIDs(Context context, FileSystem actionFs) throws IOException,
             HadoopAccessorException, URISyntaxException {
-        Path actionOutput = LauncherMapper.getExternalChildIDsDataPath(context.getActionDir());
+        Path actionOutput = LauncherMapperHelper.getExternalChildIDsDataPath(context.getActionDir());
         String externalIDs = null;
         if (actionFs.exists(actionOutput)) {
             externalIDs = getDataFromPath(actionOutput, actionFs);
@@ -214,6 +185,10 @@ public class PigActionExecutor extends JavaActionExecutor {
     @Override
     protected String getDefaultShareLibName(Element actionXml) {
         return "pig";
+    }
+
+    protected String getScriptName() {
+        return XOozieClient.PIG_SCRIPT;
     }
 
 }

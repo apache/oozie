@@ -75,7 +75,6 @@ import org.xml.sax.SAXException;
 public class BundleSubmitXCommand extends SubmitTransitionXCommand {
 
     private Configuration conf;
-    private final String authToken;
     public static final String CONFIG_DEFAULT = "bundle-config-default.xml";
     public static final String BUNDLE_XML_FILE = "bundle.xml";
     private final BundleJobBean bundleBean = new BundleJobBean();
@@ -102,12 +101,10 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
      * Constructor to create the bundle submit command.
      *
      * @param conf configuration for bundle job
-     * @param authToken to be used for authentication
      */
-    public BundleSubmitXCommand(Configuration conf, String authToken) {
+    public BundleSubmitXCommand(Configuration conf) {
         super("bundle_submit", "bundle_submit", 1);
         this.conf = ParamChecker.notNull(conf, "conf");
-        this.authToken = ParamChecker.notEmpty(authToken, "authToken");
     }
 
     /**
@@ -115,10 +112,9 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
      *
      * @param dryrun true if dryrun is enable
      * @param conf configuration for bundle job
-     * @param authToken to be used for authentication
      */
-    public BundleSubmitXCommand(boolean dryrun, Configuration conf, String authToken) {
-        this(conf, authToken);
+    public BundleSubmitXCommand(boolean dryrun, Configuration conf) {
+        this(conf);
         this.dryrun = dryrun;
     }
 
@@ -322,7 +318,6 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
      * @param appPath application path.
      * @param user user name.
      * @param group group name.
-     * @param autToken authentication token.
      * @return bundle definition.
      * @throws BundleJobException thrown if the definition could not be read.
      */
@@ -401,7 +396,6 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
             jobId = Services.get().get(UUIDService.class).generateId(ApplicationType.BUNDLE);
 
             bundleJob.setId(jobId);
-            bundleJob.setAuthToken(this.authToken);
             String name = XmlUtils.parseXml(bundleBean.getOrigJobXml()).getAttributeValue("name");
             name = ELUtils.resolveAppName(name, conf);
             bundleJob.setAppName(name);

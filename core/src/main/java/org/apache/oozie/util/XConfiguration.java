@@ -355,4 +355,20 @@ public class XConfiguration extends Configuration {
         return xml;
     }
 
+    /**
+     * Get the comma delimited values of the name property as an array of trimmed Strings. If no such property is specified then
+     * null is returned.
+     *
+     * @param name property name.
+     * @return property value as an array of trimmed Strings, or null.
+     */
+    public String[] getTrimmedStrings(String name) {
+        String[] values = getStrings(name);
+        if (values != null) {
+            for (int i = 0; i < values.length; i++) {
+                values[i] = values[i].trim();
+            }
+        }
+        return values;
+    }
 }

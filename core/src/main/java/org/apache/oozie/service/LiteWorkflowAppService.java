@@ -35,10 +35,10 @@ public class LiteWorkflowAppService extends WorkflowAppService {
      * @param authToken authorization token.
      * @return workflow application.
      */
-    public WorkflowApp parseDef(Configuration jobConf, String authToken) throws WorkflowException {
+    public WorkflowApp parseDef(Configuration jobConf) throws WorkflowException {
         String appPath = ParamChecker.notEmpty(jobConf.get(OozieClient.APP_PATH), OozieClient.APP_PATH);
         String user = ParamChecker.notEmpty(jobConf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
-        String workflowXml = readDefinition(appPath, user, authToken, jobConf);
+        String workflowXml = readDefinition(appPath, user, jobConf);
         return parseDef(workflowXml, jobConf);
     }
 

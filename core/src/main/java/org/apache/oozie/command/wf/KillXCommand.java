@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,6 +33,7 @@ import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionsGetForJobJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
+import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.workflow.WorkflowException;
@@ -51,6 +52,7 @@ import java.util.List;
  * Kill workflow job and its workflow instance and queue a {@link WorkflowActionKillXCommand} to kill the workflow
  * actions.
  */
+@SuppressWarnings("deprecation")
 public class KillXCommand extends WorkflowXCommand<Void> {
 
     private String wfId;
@@ -136,7 +138,7 @@ public class KillXCommand extends WorkflowXCommand<Void> {
 
                     queue(new ActionKillXCommand(action.getId(), action.getType()));
                 }
-                if (action.getStatus() == WorkflowActionBean.Status.PREP
+                else if (action.getStatus() == WorkflowActionBean.Status.PREP
                         || action.getStatus() == WorkflowActionBean.Status.START_RETRY
                         || action.getStatus() == WorkflowActionBean.Status.START_MANUAL
                         || action.getStatus() == WorkflowActionBean.Status.END_RETRY
@@ -150,11 +152,17 @@ public class KillXCommand extends WorkflowXCommand<Void> {
                         insertList.add(slaEvent);
                     }
                     updateList.add(action);
+                    if (EventHandlerService.isEnabled()) {
+                        generateEvent(action, wfJob.getUser());
+                    }
                 }
             }
             wfJob.setLastModifiedTime(new Date());
             updateList.add(wfJob);
             jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, insertList));
+            if (EventHandlerService.isEnabled()) {
+                generateEvent(wfJob);
+            }
             queue(new NotificationXCommand(wfJob));
         }
         catch (JPAExecutorException e) {

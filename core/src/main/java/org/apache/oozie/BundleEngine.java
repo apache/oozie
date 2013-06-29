@@ -55,6 +55,8 @@ import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XLogStreamer;
 
+import com.google.common.annotations.VisibleForTesting;
+
 public class BundleEngine extends BaseEngine {
     /**
      * Create a system Bundle engine, with no user and no group.
@@ -66,11 +68,9 @@ public class BundleEngine extends BaseEngine {
      * Create a Bundle engine to perform operations on behave of a user.
      *
      * @param user user name.
-     * @param authToken the authentication token.
      */
-    public BundleEngine(String user, String authToken) {
+    public BundleEngine(String user) {
         this.user = ParamChecker.notEmpty(user, "user");
-        this.authToken = ParamChecker.notEmpty(authToken, "authToken");
     }
 
     /* (non-Javadoc)
@@ -92,7 +92,7 @@ public class BundleEngine extends BaseEngine {
      */
     @Override
     public String dryRunSubmit(Configuration conf) throws BundleEngineException {
-        BundleSubmitXCommand submit = new BundleSubmitXCommand(true, conf, getAuthToken());
+        BundleSubmitXCommand submit = new BundleSubmitXCommand(true, conf);
         try {
             String jobId = submit.call();
             return jobId;
@@ -123,8 +123,10 @@ public class BundleEngine extends BaseEngine {
      * @see org.apache.oozie.BaseEngine#getCoordJob(java.lang.String, int, int)
      */
     @Override
-    public CoordinatorJob getCoordJob(String jobId, String filter, int start, int length) throws BundleEngineException {
-        throw new BundleEngineException(new XException(ErrorCode.E0301, "cannot get a coordinator job from BundleEngine"));
+    public CoordinatorJob getCoordJob(String jobId, String filter, int start, int length, boolean desc)
+            throws BundleEngineException {
+        throw new BundleEngineException(new XException(ErrorCode.E0301,
+                "cannot get a coordinator job from BundleEngine"));
     }
 
     /* (non-Javadoc)
@@ -260,7 +262,7 @@ public class BundleEngine extends BaseEngine {
     @Override
     public String submitJob(Configuration conf, boolean startJob) throws BundleEngineException {
         try {
-            String jobId = new BundleSubmitXCommand(conf, getAuthToken()).call();
+            String jobId = new BundleSubmitXCommand(conf).call();
 
             if (startJob) {
                 start(jobId);
@@ -323,7 +325,8 @@ public class BundleEngine extends BaseEngine {
      * @return filter key and value map
      * @throws CoordinatorEngineException thrown if failed to parse filter string
      */
-    private Map<String, List<String>> parseFilter(String filter) throws BundleEngineException {
+    @VisibleForTesting
+    Map<String, List<String>> parseFilter(String filter) throws BundleEngineException {
         Map<String, List<String>> map = new HashMap<String, List<String>>();
         if (filter != null) {
             StringTokenizer st = new StringTokenizer(filter, ";");

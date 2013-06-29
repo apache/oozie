@@ -1,0 +1,171 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+div.dataTables_wrapper {
+    font-size: 11px;
+}
+
+table.display tr td:first-child {
+    background:
+        url("../../../ext-2.2/resources/images/default/grid/grid3-special-col-bg.gif")
+        repeat-y scroll right center transparent;
+}
+
+table.dataTable thead th:first-child {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+table.dataTable tr.odd td.sorting_1 {
+    background-color: white;
+}
+
+table.dataTable tr.even td.sorting_1 {
+    background-color: #FAFAFA;
+}
+
+table.dataTable td:first-child {
+    padding: 0;
+    padding: 3px 5px 0px 0px !important;
+    text-align: right;
+    color: rgb(68, 68, 68);
+}
+
+table.dataTable td {
+    padding: 3px 3px 3px 5px;
+    font-size: 11px;
+}
+
+/** table.datatable not working, so table.display */
+table.display tr.odd {
+    background-color: white;
+}
+
+/** table.datatable not working, so table.display */
+table.display tr.even {
+    background-color: #FAFAFA;
+}
+
+table.display thead th div.DataTables_sort_wrapper {
+    padding-right: 20px;
+    position: relative;
+    font-weight: normal;
+    font-size: 11px;
+}
+
+table.display thead th div.DataTables_sort_wrapper span {
+    margin-top: -8px;
+    position: absolute;
+    right: 0;
+    top: 50%;
+}
+
+div.dataTables_length {
+    float: right;
+}
+
+div.dataTables_filter {
+    float: left;
+}
+
+div.dataTables_info {
+    float: left;
+}
+
+div.dataTables_paginate {
+    float: right;
+}
+
+div.dataTables_length,
+div.dataTables_filter,
+div.dataTables_paginate,
+div.dataTables_info {
+    padding: 6px;
+}
+
+.ColVis_Button {
+    background: -moz-linear-gradient(center top , #FFFFFF 0%, #F3F3F3 89%, #F9F9F9 100%) repeat scroll 0 0 transparent !important;
+    box-shadow: 1px 1px 3px #CCCCCC;
+    border-radius: 2px 2px 2px 2px;
+    height: 26px;
+    padding: 5px 8px;
+    margin-right: 2px;
+    float: right;
+    cursor: pointer;
+    text-align: center;
+}
+
+div.ColVis_collection button.ColVis_Button {
+    background-color: white;
+    height: 100%;
+    margin-bottom: 2px;
+}
+
+table.display tr.even:hover { /**background-color: #ECFFB3;**/
+    background: #efefef
+        url("../../../ext-2.2/resources/images/default/grid/row-over.gif") repeat-x
+        left top;
+}
+
+table.display tr.even:hover td.sorting_1 {
+    background: #efefef
+        url("../../../ext-2.2/resources/images/default/grid/row-over.gif") repeat-x
+        left top;
+}
+
+table.display tr.odd:hover {
+    background: #efefef
+        url("../../../ext-2.2/resources/images/default/grid/row-over.gif") repeat-x
+        left top;
+}
+
+table.display tr.odd:hover td.sorting_1 {
+    background: #efefef
+        url("../../../ext-2.2/resources/images/default/grid/row-over.gif") repeat-x
+        left top;
+}
+
+/* unvisited link */
+a:link {
+    color: #0000FF;
+}
+
+/* visited link */
+a:visited {
+    color: #800080;
+}
+
+/* selected link */
+a:active {
+    color: #FF0000;
+}
+
+.ui-buttonset .ui-button {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.ui-buttonset {
+    margin-right: 0;
+}
+
+.paging_full_numbers .ui-button {
+    cursor: pointer;
+    margin: 0;
+    padding: 2px 6px;
+}

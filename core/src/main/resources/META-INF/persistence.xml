@@ -32,6 +32,8 @@
         <class>org.apache.oozie.SLAEventBean</class>
         <class>org.apache.oozie.BundleJobBean</class>
 		<class>org.apache.oozie.BundleActionBean</class>
+        <class>org.apache.oozie.sla.SLARegistrationBean</class>
+        <class>org.apache.oozie.sla.SLASummaryBean</class>
 		<class>org.apache.oozie.client.rest.JsonWorkflowJob</class>
         <class>org.apache.oozie.client.rest.JsonWorkflowAction</class>
         <class>org.apache.oozie.client.rest.JsonCoordinatorJob</class>
@@ -53,6 +55,8 @@
                              org.apache.oozie.SLAEventBean;
                              org.apache.oozie.BundleJobBean;
                              org.apache.oozie.BundleActionBean;
+                             org.apache.oozie.sla.SLARegistrationBean;
+                             org.apache.oozie.sla.SLASummaryBean;
                              org.apache.oozie.client.rest.JsonSLAEvent;
                              org.apache.oozie.client.rest.JsonWorkflowJob;
                              org.apache.oozie.client.rest.JsonWorkflowAction;
@@ -70,7 +74,7 @@
             <property name="openjpa.jdbc.DBDictionary" value="UseSetBytesForBlobs=true"/>
             <property name="openjpa.jdbc.DBDictionary" value="BlobBufferSize=500000"/>
             <property name="openjpa.jdbc.DBDictionary" value="batchLimit=50"/>
-            <property name="openjpa.RuntimeUnenhancedClasses" value="supported"/>
+            <property name="openjpa.RuntimeUnenhancedClasses" value="unsupported"/>
             <property name="openjpa.Log" value="log4j"/>
         </properties>
     </persistence-unit>
@@ -87,6 +91,8 @@
         <class>org.apache.oozie.SLAEventBean</class>
         <class>org.apache.oozie.BundleJobBean</class>
 		<class>org.apache.oozie.BundleActionBean</class>
+        <class>org.apache.oozie.sla.SLARegistrationBean</class>
+        <class>org.apache.oozie.sla.SLASummaryBean</class>
 		<class>org.apache.oozie.client.rest.JsonWorkflowJob</class>
         <class>org.apache.oozie.client.rest.JsonWorkflowAction</class>
         <class>org.apache.oozie.client.rest.JsonCoordinatorJob</class>
@@ -108,6 +114,8 @@
                              org.apache.oozie.SLAEventBean;
                              org.apache.oozie.BundleJobBean;
                              org.apache.oozie.BundleActionBean;
+                             org.apache.oozie.sla.SLARegistrationBean;
+                             org.apache.oozie.sla.SLASummaryBean;
                              org.apache.oozie.client.rest.JsonSLAEvent;
                              org.apache.oozie.client.rest.JsonWorkflowJob;
                              org.apache.oozie.client.rest.JsonWorkflowAction;
@@ -126,7 +134,7 @@
             <property name="openjpa.jdbc.DBDictionary" value="BlobBufferSize=500000"/>
             <property name="openjpa.jdbc.DBDictionary" value="batchLimit=50"/>
             <property name="openjpa.jdbc.DBDictionary" value="ClobTypeName =MEDIUMTEXT"/>
-            <property name="openjpa.RuntimeUnenhancedClasses" value="supported"/>
+            <property name="openjpa.RuntimeUnenhancedClasses" value="unsupported"/>
             <property name="openjpa.Log" value="log4j"/>
         </properties>
     </persistence-unit>
@@ -143,6 +151,8 @@
         <class>org.apache.oozie.SLAEventBean</class>
         <class>org.apache.oozie.BundleJobBean</class>
 		<class>org.apache.oozie.BundleActionBean</class>
+        <class>org.apache.oozie.sla.SLARegistrationBean</class>
+        <class>org.apache.oozie.sla.SLASummaryBean</class>
 		<class>org.apache.oozie.client.rest.JsonWorkflowJob</class>
         <class>org.apache.oozie.client.rest.JsonWorkflowAction</class>
         <class>org.apache.oozie.client.rest.JsonCoordinatorJob</class>
@@ -164,6 +174,8 @@
                              org.apache.oozie.SLAEventBean;
                              org.apache.oozie.BundleJobBean;
                              org.apache.oozie.BundleActionBean;
+                             org.apache.oozie.sla.SLARegistrationBean;
+                             org.apache.oozie.sla.SLASummaryBean;
                              org.apache.oozie.client.rest.JsonSLAEvent;
                              org.apache.oozie.client.rest.JsonWorkflowJob;
                              org.apache.oozie.client.rest.JsonWorkflowAction;
@@ -181,7 +193,7 @@
             <property name="openjpa.jdbc.DBDictionary" value="UseSetBytesForBlobs=true"/>
             <property name="openjpa.jdbc.DBDictionary" value="BlobBufferSize=500000"/>
             <property name="openjpa.jdbc.DBDictionary" value="batchLimit=50"/>
-            <property name="openjpa.RuntimeUnenhancedClasses" value="supported"/>
+            <property name="openjpa.RuntimeUnenhancedClasses" value="unsupported"/>
             <property name="openjpa.Log" value="log4j"/>
         </properties>
     </persistence-unit>
@@ -198,6 +210,8 @@
         <class>org.apache.oozie.SLAEventBean</class>
         <class>org.apache.oozie.BundleJobBean</class>
 		<class>org.apache.oozie.BundleActionBean</class>
+        <class>org.apache.oozie.sla.SLARegistrationBean</class>
+        <class>org.apache.oozie.sla.SLASummaryBean</class>
         <class>org.apache.oozie.client.rest.JsonWorkflowJob</class>
         <class>org.apache.oozie.client.rest.JsonWorkflowAction</class>
         <class>org.apache.oozie.client.rest.JsonCoordinatorJob</class>
@@ -219,6 +233,8 @@
                 org.apache.oozie.SLAEventBean;
                 org.apache.oozie.BundleJobBean;
                 org.apache.oozie.BundleActionBean;
+                org.apache.oozie.sla.SLARegistrationBean;
+                org.apache.oozie.sla.SLASummaryBean;
                 org.apache.oozie.client.rest.JsonSLAEvent;
                 org.apache.oozie.client.rest.JsonWorkflowJob;
                 org.apache.oozie.client.rest.JsonWorkflowAction;
@@ -237,7 +253,7 @@
             <property name="openjpa.jdbc.DBDictionary" value="BlobBufferSize=500000"/>
             <property name="openjpa.jdbc.DBDictionary" value="batchLimit=50"/>
             <property name="openjpa.jdbc.DBDictionary" value="TimestampTypeName=TIMESTAMP"/>
-            <property name="openjpa.RuntimeUnenhancedClasses" value="supported"/>
+            <property name="openjpa.RuntimeUnenhancedClasses" value="unsupported"/>
             <property name="openjpa.Log" value="log4j"/>
         </properties>
     </persistence-unit>
@@ -254,6 +270,8 @@
         <class>org.apache.oozie.SLAEventBean</class>
         <class>org.apache.oozie.BundleJobBean</class>
         <class>org.apache.oozie.BundleActionBean</class>
+        <class>org.apache.oozie.sla.SLARegistrationBean</class>
+        <class>org.apache.oozie.sla.SLASummaryBean</class>
         <class>org.apache.oozie.client.rest.JsonWorkflowJob</class>
         <class>org.apache.oozie.client.rest.JsonWorkflowAction</class>
         <class>org.apache.oozie.client.rest.JsonCoordinatorJob</class>
@@ -275,6 +293,8 @@
                 org.apache.oozie.SLAEventBean;
                 org.apache.oozie.BundleJobBean;
                 org.apache.oozie.BundleActionBean;
+                org.apache.oozie.sla.SLARegistrationBean;
+                org.apache.oozie.sla.SLASummaryBean;
                 org.apache.oozie.client.rest.JsonSLAEvent;
                 org.apache.oozie.client.rest.JsonWorkflowJob;
                 org.apache.oozie.client.rest.JsonWorkflowAction;
@@ -292,7 +312,7 @@
             <property name="openjpa.jdbc.DBDictionary" value="UseSetBytesForBlobs=true"/>
             <property name="openjpa.jdbc.DBDictionary" value="BlobBufferSize=500000"/>
             <property name="openjpa.jdbc.DBDictionary" value="batchLimit=50"/>
-            <property name="openjpa.RuntimeUnenhancedClasses" value="supported"/>
+            <property name="openjpa.RuntimeUnenhancedClasses" value="unsupported"/>
             <property name="openjpa.Log" value="log4j"/>
         </properties>
     </persistence-unit>

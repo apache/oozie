@@ -25,6 +25,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.util.Properties;
 
+import org.apache.oozie.cli.OozieCLI;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.RestConstants;
 import org.json.simple.JSONObject;
@@ -48,6 +49,14 @@ public class XOozieClient extends OozieClient {
 
     public static final String PIG_OPTIONS = "oozie.pig.options";
 
+    public static final String PIG_SCRIPT_PARAMS = "oozie.pig.script.params";
+
+    public static final String HIVE_SCRIPT = "oozie.hive.script";
+
+    public static final String HIVE_OPTIONS = "oozie.hive.options";
+
+    public static final String HIVE_SCRIPT_PARAMS = "oozie.hive.script.params";
+
     public static final String FILES = "oozie.files";
 
     public static final String ARCHIVES = "oozie.archives";
@@ -66,9 +75,9 @@ public class XOozieClient extends OozieClient {
         super(oozieUrl);
     }
 
-    private String readPigScript(String script) throws IOException {
+    private String readScript(String script) throws IOException {
         if (!new File(script).exists()) {
-            throw new IOException("Error: Pig script file [" + script + "] does not exist");
+            throw new IOException("Error: script file [" + script + "] does not exist");
         }
 
         BufferedReader br = null;
@@ -114,6 +123,8 @@ public class XOozieClient extends OozieClient {
         if (NN == null) {
             if(NN_2 == null) {
                 throw new RuntimeException("namenode is not specified in conf");
+            } else {
+                NN = NN_2;
             }
         }
 
@@ -147,20 +158,69 @@ public class XOozieClient extends OozieClient {
      * @return the job Id.
      * @throws OozieClientException thrown if the job could not be submitted.
      */
+    @Deprecated
     public String submitPig(Properties conf, String pigScriptFile, String[] pigArgs) throws IOException, OozieClientException {
+        return submitScriptLanguage(conf, pigScriptFile, pigArgs, OozieCLI.PIG_CMD);
+    }
+
+    /**
+     * Submit a Pig or Hive job via HTTP.
+     *
+     * @param conf job configuration.
+     * @param scriptFile  script file.
+     * @param args  arguments string.
+     * @return the job Id.
+     * @throws OozieClientException thrown if the job could not be submitted.
+     */
+    public String submitScriptLanguage(Properties conf, String scriptFile, String[] args, String jobType)
+            throws IOException, OozieClientException {
+        return submitScriptLanguage(conf, scriptFile, args, null, jobType);
+    }
+
+    /**
+     * Submit a Pig or Hive job via HTTP.
+     *
+     * @param conf job configuration.
+     * @param scriptFile  script file.
+     * @param args  arguments string.
+     * @param params parameters string.
+     * @return the job Id.
+     * @throws OozieClientException thrown if the job could not be submitted.
+     */
+    public String submitScriptLanguage(Properties conf, String scriptFile, String[] args, String[] params, String jobType)
+            throws IOException, OozieClientException {
         if (conf == null) {
             throw new IllegalArgumentException("conf cannot be null");
         }
-        if (pigScriptFile == null) {
-            throw new IllegalArgumentException("pigScriptFile cannot be null");
+        if (scriptFile == null) {
+            throw new IllegalArgumentException("scriptFile cannot be null");
         }
 
         validateHttpSubmitConf(conf);
 
-        conf.setProperty(XOozieClient.PIG_SCRIPT, readPigScript(pigScriptFile));
-        setStrings(conf, XOozieClient.PIG_OPTIONS, pigArgs);
+        String script = "";
+        String options = "";
+        String scriptParams = "";
 
-        return (new HttpJobSubmit(conf, "pig")).call();
+        if (jobType.equals(OozieCLI.HIVE_CMD)) {
+            script = XOozieClient.HIVE_SCRIPT;
+            options = XOozieClient.HIVE_OPTIONS;
+            scriptParams = XOozieClient.HIVE_SCRIPT_PARAMS;
+        }
+        else if (jobType.equals(OozieCLI.PIG_CMD)) {
+            script =  XOozieClient.PIG_SCRIPT;
+            options = XOozieClient.PIG_OPTIONS;
+            scriptParams = XOozieClient.PIG_SCRIPT_PARAMS;
+        }
+        else {
+            throw new IllegalArgumentException("jobType must be either pig or hive");
+        }
+
+        conf.setProperty(script, readScript(scriptFile));
+        setStrings(conf, options, args);
+        setStrings(conf, scriptParams, params);
+
+        return (new HttpJobSubmit(conf, jobType)).call();
     }
 
     /**

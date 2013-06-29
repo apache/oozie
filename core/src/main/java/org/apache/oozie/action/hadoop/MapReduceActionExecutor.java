@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,6 +29,7 @@ import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
+import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.service.Services;
@@ -43,8 +44,8 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
 
     public static final String OOZIE_ACTION_EXTERNAL_STATS_WRITE = "oozie.action.external.stats.write";
     public static final String HADOOP_COUNTERS = "hadoop.counters";
-    public static final String OOZIE_MAPREDUCE_UBER_JAR = "oozie.mapreduce.uber.jar";
     public static final String OOZIE_MAPREDUCE_UBER_JAR_ENABLE = "oozie.action.mapreduce.uber.jar.enable";
+    private static final String STREAMING_MAIN_CLASS_NAME = "org.apache.oozie.action.hadoop.StreamingMain";
     private XLog log = XLog.getLog(getClass());
 
     public MapReduceActionExecutor() {
@@ -56,8 +57,13 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
         List<Class> classes = super.getLauncherClasses();
         classes.add(LauncherMain.class);
         classes.add(MapReduceMain.class);
-        classes.add(StreamingMain.class);
         classes.add(PipesMain.class);
+        try {
+            classes.add(Class.forName(STREAMING_MAIN_CLASS_NAME));
+        }
+        catch (ClassNotFoundException e) {
+            throw new RuntimeException("Class not found", e);
+        }
         return classes;
     }
 
@@ -66,7 +72,7 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
         String mainClass;
         Namespace ns = actionXml.getNamespace();
         if (actionXml.getChild("streaming", ns) != null) {
-            mainClass = launcherConf.get(LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS, StreamingMain.class.getName());
+            mainClass = launcherConf.get(LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS, STREAMING_MAIN_CLASS_NAME);
         }
         else {
             if (actionXml.getChild("pipes", ns) != null) {
@@ -107,7 +113,7 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
             for (int i = 0; i < list.size(); i++) {
                 env[i] = list.get(i).getTextTrim();
             }
-            StreamingMain.setStreaming(actionConf, mapper, reducer, recordReader, recordReaderMapping, env);
+            setStreaming(actionConf, mapper, reducer, recordReader, recordReaderMapping, env);
         }
         else {
             if (actionXml.getChild("pipes", ns) != null) {
@@ -129,12 +135,12 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
         // For "regular" (not streaming or pipes) MR jobs
         if (regularMR) {
             // Resolve uber jar path (has to be done after super because oozie.mapreduce.uber.jar is under <configuration>)
-            String uberJar = actionConf.get(OOZIE_MAPREDUCE_UBER_JAR);
+            String uberJar = actionConf.get(MapReduceMain.OOZIE_MAPREDUCE_UBER_JAR);
             if (uberJar != null) {
                 if (!Services.get().getConf().getBoolean(OOZIE_MAPREDUCE_UBER_JAR_ENABLE, false)) {
                     throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "MR003",
-                            "{0} property is not allowed.  Set {1} to true in oozie-site to enable.", OOZIE_MAPREDUCE_UBER_JAR,
-                            OOZIE_MAPREDUCE_UBER_JAR_ENABLE);
+                            "{0} property is not allowed.  Set {1} to true in oozie-site to enable.",
+                            MapReduceMain.OOZIE_MAPREDUCE_UBER_JAR, OOZIE_MAPREDUCE_UBER_JAR_ENABLE);
                 }
                 String nameNode = actionXml.getChildTextTrim("name-node", ns);
                 if (nameNode != null) {
@@ -144,20 +150,21 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
                             Path nameNodePath = new Path(nameNode);
                             String nameNodeSchemeAuthority = nameNodePath.toUri().getScheme()
                                     + "://" + nameNodePath.toUri().getAuthority();
-                            actionConf.set(OOZIE_MAPREDUCE_UBER_JAR, new Path(nameNodeSchemeAuthority + uberJarPath).toString());
+                            actionConf.set(MapReduceMain.OOZIE_MAPREDUCE_UBER_JAR,
+                                    new Path(nameNodeSchemeAuthority + uberJarPath).toString());
                         }
                         else {                              // relative path --> prepend app path
-                            actionConf.set(OOZIE_MAPREDUCE_UBER_JAR, new Path(appPath, uberJarPath).toString());
+                            actionConf.set(MapReduceMain.OOZIE_MAPREDUCE_UBER_JAR, new Path(appPath, uberJarPath).toString());
                         }
                     }
                 }
             }
         }
         else {
-            if (actionConf.get(OOZIE_MAPREDUCE_UBER_JAR) != null) {
-                log.warn("The " + OOZIE_MAPREDUCE_UBER_JAR + " property is only applicable for MapReduce (not streaming nor pipes)"
-                        + " workflows, ignoring");
-                actionConf.set(OOZIE_MAPREDUCE_UBER_JAR, "");
+            if (actionConf.get(MapReduceMain.OOZIE_MAPREDUCE_UBER_JAR) != null) {
+                log.warn("The " + MapReduceMain.OOZIE_MAPREDUCE_UBER_JAR + " property is only applicable for MapReduce (not"
+                        + "streaming nor pipes) workflows, ignoring");
+                actionConf.set(MapReduceMain.OOZIE_MAPREDUCE_UBER_JAR, "");
             }
         }
 
@@ -285,11 +292,43 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
         Namespace ns = actionXml.getNamespace();
         if (actionXml.getChild("streaming", ns) == null && actionXml.getChild("pipes", ns) == null) {
             // Set for uber jar
-            String uberJar = actionConf.get(MapReduceActionExecutor.OOZIE_MAPREDUCE_UBER_JAR);
+            String uberJar = actionConf.get(MapReduceMain.OOZIE_MAPREDUCE_UBER_JAR);
             if (uberJar != null && uberJar.trim().length() > 0) {
                 launcherJobConf.setJar(uberJar);
             }
         }
         return launcherJobConf;
+    }
+
+    public static void setStreaming(Configuration conf, String mapper, String reducer, String recordReader,
+                                    String[] recordReaderMapping, String[] env) {
+        if (mapper != null) {
+            conf.set("oozie.streaming.mapper", mapper);
+        }
+        if (reducer != null) {
+            conf.set("oozie.streaming.reducer", reducer);
+        }
+        if (recordReader != null) {
+            conf.set("oozie.streaming.record-reader", recordReader);
+        }
+        MapReduceMain.setStrings(conf, "oozie.streaming.record-reader-mapping", recordReaderMapping);
+        MapReduceMain.setStrings(conf, "oozie.streaming.env", env);
+    }
+
+    @Override
+    protected RunningJob getRunningJob(Context context, WorkflowAction action, JobClient jobClient) throws Exception{
+
+        RunningJob runningJob;
+        String launcherJobId = action.getExternalId();
+        String childJobId = action.getExternalChildIDs();
+
+        if (childJobId != null && childJobId.length() > 0) {
+            runningJob = jobClient.getJob(JobID.forName(childJobId));
+        }
+        else {
+            runningJob = jobClient.getJob(JobID.forName(launcherJobId));
+        }
+
+        return runningJob;
     }
 }

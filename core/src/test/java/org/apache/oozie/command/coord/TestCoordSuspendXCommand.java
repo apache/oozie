@@ -86,6 +86,24 @@ public class TestCoordSuspendXCommand extends XDataTestCase {
     }
 
     /**
+     * Test : suspend a PAUSEDWITHERROR coordinator job
+     *
+     * @throws Exception
+     */
+    public void testCoordSuspendWithErrorPostive2() throws Exception {
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PAUSEDWITHERROR, false, false);
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+        CoordJobGetJPAExecutor coordJobGetCmd = new CoordJobGetJPAExecutor(job.getId());
+        job = jpaService.execute(coordJobGetCmd);
+        assertEquals(job.getStatus(), CoordinatorJob.Status.PAUSEDWITHERROR);
+
+        new CoordSuspendXCommand(job.getId()).call();
+        job = jpaService.execute(coordJobGetCmd);
+        assertEquals(job.getStatus(), CoordinatorJob.Status.SUSPENDEDWITHERROR);
+    }
+    /**
      * Negative Test : suspend a SUCCEEDED coordinator job
      *
      * @throws Exception

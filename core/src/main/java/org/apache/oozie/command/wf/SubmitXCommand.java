@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,11 +20,14 @@ package org.apache.oozie.command.wf;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.oozie.AppType;
 import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.action.oozie.SubWorkflowActionExecutor;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.JPAService;
+import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.WorkflowStoreService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.service.HadoopAccessorService;
@@ -33,6 +36,7 @@ import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.ELUtils;
 import org.apache.oozie.util.LogUtils;
+import org.apache.oozie.sla.SLAOperations;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
@@ -41,7 +45,6 @@ import org.apache.oozie.command.CommandException;
 import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.ELService;
-import org.apache.oozie.service.SchemaService;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.workflow.WorkflowApp;
 import org.apache.oozie.workflow.WorkflowException;
@@ -57,8 +60,6 @@ import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.client.rest.JsonBean;
 import org.jdom.Element;
-import org.jdom.Namespace;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -68,11 +69,11 @@ import java.util.HashSet;
 import java.io.IOException;
 import java.net.URI;
 
+@SuppressWarnings("deprecation")
 public class SubmitXCommand extends WorkflowXCommand<String> {
     public static final String CONFIG_DEFAULT = "config-default.xml";
 
     private Configuration conf;
-    private String authToken;
     private List<JsonBean> insertList = new ArrayList<JsonBean>();
 
     /**
@@ -81,10 +82,9 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
      * @param conf : Configuration for workflow job
      * @param authToken : To be used for authentication
      */
-    public SubmitXCommand(Configuration conf, String authToken) {
+    public SubmitXCommand(Configuration conf) {
         super("submit", "submit", 1);
         this.conf = ParamChecker.notNull(conf, "conf");
-        this.authToken = ParamChecker.notEmpty(authToken, "authToken");
     }
 
     /**
@@ -94,8 +94,8 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
      * @param conf : Configuration for workflow job
      * @param authToken : To be used for authentication
      */
-    public SubmitXCommand(boolean dryrun, Configuration conf, String authToken) {
-        this(conf, authToken);
+    public SubmitXCommand(boolean dryrun, Configuration conf) {
+        this(conf);
         this.dryrun = dryrun;
     }
 
@@ -120,8 +120,8 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
         WorkflowAppService wps = Services.get().get(WorkflowAppService.class);
         try {
             XLog.Info.get().setParameter(DagXLogInfoService.TOKEN, conf.get(OozieClient.LOG_TOKEN));
-            WorkflowApp app = wps.parseDef(conf, authToken);
-            XConfiguration protoActionConf = wps.createProtoActionConf(conf, authToken, true);
+            WorkflowApp app = wps.parseDef(conf);
+            XConfiguration protoActionConf = wps.createProtoActionConf(conf, true);
             WorkflowLib workflowLib = Services.get().get(WorkflowStoreService.class).getWorkflowLibWithNoDB();
 
             String user = conf.get(OozieClient.USER_NAME);
@@ -186,9 +186,12 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
             workflow.setRun(0);
             workflow.setUser(conf.get(OozieClient.USER_NAME));
             workflow.setGroup(conf.get(OozieClient.GROUP_NAME));
-            workflow.setAuthToken(authToken);
             workflow.setWorkflowInstance(wfInstance);
             workflow.setExternalId(conf.get(OozieClient.EXTERNAL_ID));
+            // Set parent id if it doesn't already have one (for subworkflows)
+            if (workflow.getParentId() == null) {
+                workflow.setParentId(conf.get(SubWorkflowActionExecutor.PARENT_ID));
+            }
 
             LogUtils.setLogInfo(workflow, logInfo);
             LOG = XLog.resetPrefix(LOG);
@@ -197,7 +200,8 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
             ELEvaluator evalSla = createELEvaluatorForGroup(conf, "wf-sla-submit");
             String jobSlaXml = verifySlaElements(wfElem, evalSla);
             if (!dryrun) {
-                writeSLARegistration(jobSlaXml, workflow.getId(), workflow.getUser(), workflow.getGroup(), LOG);
+                writeSLARegistration(wfElem, jobSlaXml, workflow.getId(), workflow.getParentId(), workflow.getUser(),
+                        workflow.getGroup(), workflow.getAppName(), LOG, evalSla);
                 workflow.setSlaXml(jobSlaXml);
                 // System.out.println("SlaXml :"+ slaXml);
 
@@ -237,14 +241,14 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
     private String verifySlaElements(Element eWfJob, ELEvaluator evalSla) throws CommandException {
         String jobSlaXml = "";
         // Validate WF job
-        Element eSla = eWfJob.getChild("info", Namespace.getNamespace(SchemaService.SLA_NAME_SPACE_URI));
+        Element eSla = XmlUtils.getSLAElement(eWfJob);
         if (eSla != null) {
             jobSlaXml = resolveSla(eSla, evalSla);
         }
 
         // Validate all actions
         for (Element action : (List<Element>) eWfJob.getChildren("action", eWfJob.getNamespace())) {
-            eSla = action.getChild("info", Namespace.getNamespace(SchemaService.SLA_NAME_SPACE_URI));
+            eSla = XmlUtils.getSLAElement(eWfJob);
             if (eSla != null) {
                 resolveSla(eSla, evalSla);
             }
@@ -252,21 +256,36 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
         return jobSlaXml;
     }
 
-    private void writeSLARegistration(String slaXml, String id, String user, String group, XLog log)
-            throws CommandException {
+    private void writeSLARegistration(Element eWfJob, String slaXml, String jobId, String parentId, String user,
+            String group, String appName, XLog log, ELEvaluator evalSla) throws CommandException {
         try {
             if (slaXml != null && slaXml.length() > 0) {
                 Element eSla = XmlUtils.parseXml(slaXml);
-                SLAEventBean slaEvent = SLADbOperations.createSlaRegistrationEvent(eSla, id,
+                SLAEventBean slaEvent = SLADbOperations.createSlaRegistrationEvent(eSla, jobId,
                         SlaAppType.WORKFLOW_JOB, user, group, log);
                 if(slaEvent != null) {
                     insertList.add(slaEvent);
+                }
+                // insert into new table
+                SLAOperations.createSlaRegistrationEvent(eSla, jobId, parentId, AppType.WORKFLOW_JOB, user, appName,
+                        log, false);
+            }
+            // Add sla for wf actions
+            for (Element action : (List<Element>) eWfJob.getChildren("action", eWfJob.getNamespace())) {
+                Element actionSla = XmlUtils.getSLAElement(action);
+                if (actionSla != null) {
+                    String actionSlaXml = SubmitXCommand.resolveSla(actionSla, evalSla);
+                    actionSla = XmlUtils.parseXml(actionSlaXml);
+                    String actionId = Services.get().get(UUIDService.class)
+                            .generateChildId(jobId, action.getAttributeValue("name") + "");
+                    SLAOperations.createSlaRegistrationEvent(actionSla, actionId, jobId, AppType.WORKFLOW_ACTION,
+                            user, appName, log, false);
                 }
             }
         }
         catch (Exception e) {
             e.printStackTrace();
-            throw new CommandException(ErrorCode.E1007, "workflow " + id, e.getMessage(), e);
+            throw new CommandException(ErrorCode.E1007, "workflow " + jobId, e.getMessage(), e);
         }
     }
 
@@ -288,7 +307,7 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
             return slaXml;
         }
         catch (Exception e) {
-            throw new CommandException(ErrorCode.E1004, "Validation erro :" + e.getMessage(), e);
+            throw new CommandException(ErrorCode.E1004, "Validation error :" + e.getMessage(), e);
         }
     }
 

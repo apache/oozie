@@ -368,7 +368,7 @@ public class TestCoordChangeXCommand extends XDataTestCase {
     protected CoordinatorJobBean addRecordToCoordJobTableForPauseTimeTest(CoordinatorJob.Status status, Date start,
             Date end, Date lastActionTime, boolean pending, boolean doneMatd, int lastActionNum) throws Exception {
         CoordinatorJobBean coordJob = createCoordJob(status, start, end, pending, doneMatd, lastActionNum);
-        coordJob.setFrequency(1);
+        coordJob.setFrequency("1");
         coordJob.setTimeUnit(Timeunit.HOUR);
         coordJob.setLastActionNumber(lastActionNum);
         coordJob.setLastActionTime(lastActionTime);
@@ -401,7 +401,6 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         coordJob.setTimeUnit(Timeunit.MINUTE);
         coordJob.setUser("testUser");
         coordJob.setGroup("testGroup");
-        coordJob.setAuthToken("notoken");
 
         String confStr = "<configuration></configuration>";
         coordJob.setConf(confStr);
@@ -445,7 +444,7 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         appXml += "</coordinator-app>";
         coordJob.setJobXml(appXml);
         coordJob.setLastActionNumber(0);
-        coordJob.setFrequency(5);
+        coordJob.setFrequency("5");
         coordJob.setExecution(Execution.FIFO);
         coordJob.setConcurrency(1);
         try {

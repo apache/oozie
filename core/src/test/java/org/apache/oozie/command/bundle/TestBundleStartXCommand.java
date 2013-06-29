@@ -108,7 +108,7 @@ public class TestBundleStartXCommand extends XDataTestCase {
         Path appPath = new Path(jobConf.get(OozieClient.BUNDLE_APP_PATH), "bundle.xml");
         jobConf.set(OozieClient.BUNDLE_APP_PATH, appPath.toString());
 
-        BundleSubmitXCommand submitCmd = new BundleSubmitXCommand(jobConf, job.getAuthToken());
+        BundleSubmitXCommand submitCmd = new BundleSubmitXCommand(jobConf);
         submitCmd.call();
 
         BundleJobGetJPAExecutor bundleJobGetExecutor = new BundleJobGetJPAExecutor(submitCmd.getJob().getId());

@@ -55,8 +55,10 @@ public class TestSubmitPigXCommand extends XFsTestCase {
         String pigArgsStr = "-a aaa -b bbb -c ccc -M -Da=aaa -Db=bbb -param input=abc";
         String[] args = pigArgsStr.split(" ");
         MapReduceMain.setStrings(conf, XOozieClient.PIG_OPTIONS, args);
+        String[] params = new String[]{"INPUT=/some/path", "OUTPUT=/some/other/path", "abc=xyz"};
+        MapReduceMain.setStrings(conf, XOozieClient.PIG_SCRIPT_PARAMS, params);
 
-        SubmitPigXCommand submitPigCmd = new SubmitPigXCommand(conf, "token");
+        SubmitPigXCommand submitPigCmd = new SubmitPigXCommand(conf);
         String xml = submitPigCmd.getWorkflowXml(conf);
 
         XLog.getLog(getClass()).info("xml = " + xml);
@@ -79,6 +81,9 @@ public class TestSubmitPigXCommand extends XFsTestCase {
         sb.append("</property>");
         sb.append("</configuration>");
         sb.append("<script>dummy.pig</script>");
+        sb.append("<param>INPUT=/some/path</param>");
+        sb.append("<param>OUTPUT=/some/other/path</param>");
+        sb.append("<param>abc=xyz</param>");
         sb.append("<argument>-a</argument>");
         sb.append("<argument>aaa</argument>");
         sb.append("<argument>-b</argument>");
@@ -97,7 +102,7 @@ public class TestSubmitPigXCommand extends XFsTestCase {
         sb.append("<error to=\"fail\" />");
         sb.append("</action>");
         sb.append("<kill name=\"fail\">");
-        sb.append("<message>Pig failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>");
+        sb.append("<message>pig failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>");
         sb.append("</kill>");
         sb.append("<end name=\"end\" />");
         sb.append("</workflow-app>");
@@ -124,7 +129,7 @@ public class TestSubmitPigXCommand extends XFsTestCase {
         args[1] = "aaa bbb";
         MapReduceMain.setStrings(conf, XOozieClient.PIG_OPTIONS, args);
 
-        SubmitPigXCommand submitPigCmd = new SubmitPigXCommand(conf, "token");
+        SubmitPigXCommand submitPigCmd = new SubmitPigXCommand(conf);
         String xml = submitPigCmd.getWorkflowXml(conf);
 
         XLog.getLog(getClass()).info("xml = " + xml);
@@ -148,7 +153,7 @@ public class TestSubmitPigXCommand extends XFsTestCase {
         sb.append("<error to=\"fail\" />");
         sb.append("</action>");
         sb.append("<kill name=\"fail\">");
-        sb.append("<message>Pig failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>");
+        sb.append("<message>pig failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>");
         sb.append("</kill>");
         sb.append("<end name=\"end\" />");
         sb.append("</workflow-app>");
@@ -170,7 +175,7 @@ public class TestSubmitPigXCommand extends XFsTestCase {
         String pigArgsStr = "-a aaa -b bbb -c ccc -M -Da=aaa -Db=bbb -param input=abc";
         conf.set(XOozieClient.PIG_OPTIONS, pigArgsStr);
 
-        SubmitPigXCommand submitPigCmd = new SubmitPigXCommand(conf, "token");
+        SubmitPigXCommand submitPigCmd = new SubmitPigXCommand(conf);
         try {
             submitPigCmd.getWorkflowXml(conf);
             fail("shoud have already failed - missing libpath def");

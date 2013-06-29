@@ -32,6 +32,7 @@ import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.sql.Clob;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -408,31 +409,79 @@ public class OozieDBCLI {
         PrintWriter writer = new PrintWriter(new FileWriter(sqlFile, true));
         writer.println();
         String dbVendor = getDBVendor();
-        String ddlQuery = null;
+        ArrayList<String> ddlQueries = new ArrayList<String>();
         if (dbVendor.equals("derby")) {
-            ddlQuery = "ALTER TABLE WF_ACTIONS ALTER COLUMN execution_path SET DATA TYPE VARCHAR(1024)";
+            ddlQueries.add("ALTER TABLE WF_ACTIONS ALTER COLUMN execution_path SET DATA TYPE VARCHAR(1024)");
+            // change wf_action.error_message from clob to varchar(4000)
+            ddlQueries.add("ALTER TABLE WF_ACTIONS ADD COLUMN error_message_temp VARCHAR(4000)");
+            ddlQueries.add("UPDATE WF_ACTIONS SET error_message_temp=error_message");
+            ddlQueries.add("ALTER TABLE WF_ACTIONS DROP COLUMN error_message");
+            ddlQueries.add("RENAME COLUMN WF_ACTIONS.error_message_temp TO error_message");
+            // change coord_jobs.frequency from int to varchar(255)
+                // Derby doesn't support INTEGER to VARCHAR, so: INTEGER --> CHAR --> VARCHAR
+                    // http://java.dzone.com/articles/derby-casting-madness-–-sequel
+                // Also, max CHAR length is 254 (so can't use 255)
+                // And we have to trim when casting from CHAR to VARCHAR because of the added whitespace in CHAR
+            ddlQueries.add("ALTER TABLE COORD_JOBS ADD COLUMN frequency_temp_a CHAR(254)");
+            ddlQueries.add("UPDATE COORD_JOBS SET frequency_temp_a=CAST(frequency AS CHAR(254))");
+            ddlQueries.add("ALTER TABLE COORD_JOBS ADD COLUMN frequency_temp_b VARCHAR(255)");
+            ddlQueries.add("UPDATE COORD_JOBS SET frequency_temp_b=TRIM(CAST(frequency_temp_a AS VARCHAR(255)))");
+            ddlQueries.add("ALTER TABLE COORD_JOBS DROP COLUMN frequency_temp_a");
+            ddlQueries.add("ALTER TABLE COORD_JOBS DROP COLUMN frequency");
+            ddlQueries.add("RENAME COLUMN COORD_JOBS.frequency_temp_b TO frequency");
         }
         else
         if (dbVendor.equals("oracle")) {
-            ddlQuery = "ALTER TABLE WF_ACTIONS MODIFY (execution_path VARCHAR2(1024))";
+            ddlQueries.add("ALTER TABLE WF_ACTIONS MODIFY (execution_path VARCHAR2(1024))");
+            // change wf_action.error_message from clob to varchar2(4000)
+            ddlQueries.add("ALTER TABLE WF_ACTIONS ADD (error_message_temp VARCHAR2(4000))");
+            ddlQueries.add("UPDATE WF_ACTIONS SET error_message_temp = error_message");
+            ddlQueries.add("ALTER TABLE WF_ACTIONS DROP COLUMN error_message");
+            ddlQueries.add("ALTER TABLE WF_ACTIONS RENAME COLUMN error_message_temp TO error_message");
+            // change coord_jobs.frequency from int to varchar(255)
+            ddlQueries.add("ALTER TABLE COORD_JOBS ADD (frequency_temp VARCHAR2(255))");
+            ddlQueries.add("UPDATE COORD_JOBS SET frequency_temp = CAST(frequency AS VARCHAR(255))");
+            ddlQueries.add("ALTER TABLE COORD_JOBS DROP COLUMN frequency");
+            ddlQueries.add("ALTER TABLE COORD_JOBS RENAME COLUMN frequency_temp TO frequency");
         }
         else
         if (dbVendor.equals("mysql")) {
-            ddlQuery = "ALTER TABLE WF_ACTIONS MODIFY execution_path VARCHAR(1024)";
+            ddlQueries.add("ALTER TABLE WF_ACTIONS MODIFY execution_path VARCHAR(1024)");
+            ddlQueries.add("ALTER TABLE WF_ACTIONS MODIFY error_message VARCHAR(4000)");
+            ddlQueries.add("ALTER TABLE COORD_JOBS MODIFY frequency VARCHAR(255)");
         }
         else
         if (dbVendor.equals("postgresql")) {
-            ddlQuery = "ALTER TABLE WF_ACTIONS ALTER COLUMN execution_path TYPE VARCHAR(1024)";
+            ddlQueries.add("ALTER TABLE WF_ACTIONS ALTER COLUMN execution_path TYPE VARCHAR(1024)");
+            ddlQueries.add("ALTER TABLE WF_ACTIONS ALTER COLUMN error_message TYPE VARCHAR(4000)");
+            ddlQueries.add("ALTER TABLE COORD_JOBS ALTER COLUMN frequency TYPE VARCHAR(255)");
         }
         Connection conn = (run) ? createConnection() : null;
+
         try {
             System.out.println("Table 'WF_ACTIONS' column 'execution_path', length changed to 1024");
-            writer.println(ddlQuery + ";");
-            if (run) {
-                conn.setAutoCommit(true);
-                Statement st = conn.createStatement();
-                st.executeUpdate(ddlQuery);
-                st.close();
+            System.out.println("Table 'WF_ACTIONS, column 'error_message', changed to varchar/varchar2");
+            System.out.println("Table 'COORD_JOB' column 'frequency' changed to varchar/varchar2");
+            for(String query : ddlQueries){
+                writer.println(query + ";");
+                if (run) {
+                    conn.setAutoCommit(true);
+                    Statement st = conn.createStatement();
+                    st.executeUpdate(query);
+                    st.close();
+                }
+            }
+            System.out.println("DONE");
+
+            // Drop AUTH_TOKEN from BUNDLE_JOBS, COORD_JOBS, WF_JOBS (OOIZE-1398)
+            System.out.println("Post-upgrade BUNDLE_JOBS, COORD_JOBS, WF_JOBS to drop AUTH_TOKEN column");
+            for (String sql : DROP_AUTH_TOKEN_QUERIES){
+                writer.println(sql + ";");
+                if (run) {
+                    Statement st = conn.createStatement();
+                    st.executeUpdate(sql);
+                    st.close();
+                }
             }
             System.out.println("DONE");
             writer.close();
@@ -443,6 +492,10 @@ public class OozieDBCLI {
             }
         }
     }
+
+    private final static String[] DROP_AUTH_TOKEN_QUERIES = {"ALTER TABLE BUNDLE_JOBS DROP COLUMN AUTH_TOKEN",
+        "ALTER TABLE COORD_JOBS DROP COLUMN AUTH_TOKEN",
+        "ALTER TABLE WF_JOBS DROP COLUMN AUTH_TOKEN"};
 
     private final static String SET_SQL_MEDIUMTEXT_TRUE = "insert into OOZIE_SYS (name, data) values ('mysql.mediumtext', 'true')";
 
@@ -473,7 +526,6 @@ public class OozieDBCLI {
     }
 
     private final static String[] SQL_MEDIUMTEXT_DDL_QUERIES = {"ALTER TABLE BUNDLE_JOBS MODIFY conf MEDIUMTEXT",
-                                                                "ALTER TABLE BUNDLE_JOBS MODIFY auth_token MEDIUMTEXT",
                                                                 "ALTER TABLE BUNDLE_JOBS MODIFY job_xml MEDIUMTEXT",
                                                                 "ALTER TABLE BUNDLE_JOBS MODIFY orig_job_xml MEDIUMTEXT",
 
@@ -484,7 +536,6 @@ public class OozieDBCLI {
                                                                 "ALTER TABLE COORD_ACTIONS MODIFY sla_xml MEDIUMTEXT",
 
                                                                 "ALTER TABLE COORD_JOBS MODIFY conf MEDIUMTEXT",
-                                                                "ALTER TABLE COORD_JOBS MODIFY auth_token MEDIUMTEXT",
                                                                 "ALTER TABLE COORD_JOBS MODIFY job_xml MEDIUMTEXT",
                                                                 "ALTER TABLE COORD_JOBS MODIFY orig_job_xml MEDIUMTEXT",
                                                                 "ALTER TABLE COORD_JOBS MODIFY sla_xml MEDIUMTEXT",
@@ -494,16 +545,15 @@ public class OozieDBCLI {
                                                                 "ALTER TABLE SLA_EVENTS MODIFY upstream_apps MEDIUMTEXT",
 
                                                                 "ALTER TABLE WF_ACTIONS MODIFY conf MEDIUMTEXT",
-                                                                "ALTER TABLE WF_ACTIONS MODIFY data MEDIUMTEXT",
-                                                                "ALTER TABLE WF_ACTIONS MODIFY error_message MEDIUMTEXT",
                                                                 "ALTER TABLE WF_ACTIONS MODIFY external_child_ids MEDIUMTEXT",
                                                                 "ALTER TABLE WF_ACTIONS MODIFY stats MEDIUMTEXT",
+                                                                "ALTER TABLE WF_ACTIONS MODIFY data MEDIUMTEXT",
                                                                 "ALTER TABLE WF_ACTIONS MODIFY sla_xml MEDIUMTEXT",
 
                                                                 "ALTER TABLE WF_JOBS MODIFY conf MEDIUMTEXT",
-                                                                "ALTER TABLE WF_JOBS MODIFY auth_token MEDIUMTEXT",
                                                                 "ALTER TABLE WF_JOBS MODIFY proto_action_conf MEDIUMTEXT",
                                                                 "ALTER TABLE WF_JOBS MODIFY sla_xml MEDIUMTEXT"};
+
 
     private void doSQLMediumTextTweaks(String sqlFile, boolean run) throws Exception {
         if (getDBVendor().equals("mysql")) {
@@ -788,9 +838,11 @@ public class OozieDBCLI {
         args.add("org.apache.oozie.CoordinatorActionBean");
         args.add("org.apache.oozie.client.rest.JsonSLAEvent");
         args.add("org.apache.oozie.SLAEventBean");
+        args.add("org.apache.oozie.sla.SLARegistrationBean");
         args.add("org.apache.oozie.client.rest.JsonBundleJob");
         args.add("org.apache.oozie.BundleJobBean");
         args.add("org.apache.oozie.BundleActionBean");
+        args.add("org.apache.oozie.sla.SLASummaryBean");
         args.add("org.apache.oozie.util.db.ValidateConnectionBean");
         return args.toArray(new String[args.size()]);
     }

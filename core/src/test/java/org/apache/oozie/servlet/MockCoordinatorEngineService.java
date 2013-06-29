@@ -70,8 +70,8 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
     }
 
     @Override
-    public CoordinatorEngine getCoordinatorEngine(String user, String authToken) {
-        return new MockCoordinatorEngine(user, authToken);
+    public CoordinatorEngine getCoordinatorEngine(String user) {
+        return new MockCoordinatorEngine(user);
     }
 
     @Override
@@ -84,8 +84,8 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
         public MockCoordinatorEngine() {
         }
 
-        public MockCoordinatorEngine(String user, String authToken) {
-            super(user, authToken);
+        public MockCoordinatorEngine(String user) {
+            super(user);
         }
 
         @Override
@@ -161,7 +161,8 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
         }
 
         @Override
-        public CoordinatorJobBean getCoordJob(String jobId, String filter, int start, int length) throws BaseEngineException {
+        public CoordinatorJobBean getCoordJob(String jobId, String filter, int start, int length, boolean desc)
+                throws BaseEngineException {
             did = RestConstants.JOB_SHOW_INFO;
             int idx = validateCoordinatorIdx(jobId);
             return (CoordinatorJobBean) coordJobs.get(idx);
@@ -216,10 +217,9 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
         coordJob.setLastModifiedTime(new Date());
         coordJob.setUser(USER);
         coordJob.setGroup(GROUP);
-        coordJob.setAuthToken("notoken");
         coordJob.setConf(CONFIGURATION);
         coordJob.setLastActionNumber(0);
-        coordJob.setFrequency(1);
+        coordJob.setFrequency("1");
         coordJob.setExecution(Execution.FIFO);
         coordJob.setConcurrency(1);
         try {
@@ -249,10 +249,9 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
         coordJob.setLastModifiedTime(new Date());
         coordJob.setUser(USER);
         coordJob.setGroup(GROUP);
-        coordJob.setAuthToken("notoken");
         coordJob.setConf(conf.toString());
         coordJob.setLastActionNumber(0);
-        coordJob.setFrequency(1);
+        coordJob.setFrequency("1");
         coordJob.setExecution(Execution.FIFO);
         coordJob.setConcurrency(1);
         try {

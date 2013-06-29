@@ -88,7 +88,7 @@ public class TestCoordJobGetActionsSubsetJPAExecutor extends XDataTestCase {
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
         CoordJobGetActionsSubsetJPAExecutor actionGetCmd = new CoordJobGetActionsSubsetJPAExecutor(jobId,
-                Collections.<String> emptyList(), start, len);
+                Collections.<String> emptyList(), start, len, false);
         List<CoordinatorActionBean> actions = jpaService.execute(actionGetCmd);
         CoordinatorActionBean action = actions.get(0);
 
@@ -112,32 +112,54 @@ public class TestCoordJobGetActionsSubsetJPAExecutor extends XDataTestCase {
     public void testCoordActionOrderBy() throws Exception {
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
         // Add Coordinator action with nominal time: 2009-12-15T01:00Z
-        CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 0);
+        CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.WAITING,
+                "coord-action-get.xml", 0);
         // Add Coordinator action with nominal time: 2009-02-01T23:59Z
-        CoordinatorActionBean action1 = addRecordToCoordActionTable(job.getId(), 2, CoordinatorAction.Status.WAITING, "coord-action-for-action-input-check.xml", 0);
+        CoordinatorActionBean action1 = addRecordToCoordActionTable(job.getId(), 2, CoordinatorAction.Status.WAITING,
+                "coord-action-for-action-input-check.xml", 0);
         // test for the expected action number
-        _testGetActionsSubsetOrderBy(job.getId(), 2, 1, 2);
+        List<CoordinatorActionBean> actions = _testGetActionsSubsetOrderBy(job.getId(), 1, 2, false);
+        assertEquals(actions.size(), 2);
+        // As actions are sorted by nominal time, the first action should be
+        // with action number 2
+        assertEquals(actions.get(0).getActionNumber(), 2);
     }
 
-   private void _testGetActionsSubsetOrderBy(String jobId, int actionNum, int start, int len) throws Exception {
+    // Check the ordering of actions by nominal time
+    public void testCoordActionOrderByDesc() throws Exception {
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
+        // Add Coordinator action with nominal time: 2009-12-15T01:00Z
+        CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.WAITING,
+                "coord-action-get.xml", 0);
+        // Add Coordinator action with nominal time: 2009-02-01T23:59Z
+        CoordinatorActionBean action1 = addRecordToCoordActionTable(job.getId(), 2, CoordinatorAction.Status.WAITING,
+                "coord-action-for-action-input-check.xml", 0);
+        // test for the expected action number
+        List<CoordinatorActionBean> actions = _testGetActionsSubsetOrderBy(job.getId(), 1, 2, true);
+        assertEquals(actions.size(), 2);
+        // As actions are sorted by nominal time in desc order, the first action
+        // should be with action number 1
+        assertEquals(actions.get(0).getActionNumber(), 1);
+    }
+
+    private List<CoordinatorActionBean> _testGetActionsSubsetOrderBy(String jobId, int start, int len, boolean order)
+            throws Exception {
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
-        CoordJobGetActionsSubsetJPAExecutor actionGetCmd = new CoordJobGetActionsSubsetJPAExecutor(jobId, Collections.<String>emptyList(), start, len);
+        CoordJobGetActionsSubsetJPAExecutor actionGetCmd = new CoordJobGetActionsSubsetJPAExecutor(jobId,
+                Collections.<String> emptyList(), start, len, order);
         List<CoordinatorActionBean> actions = jpaService.execute(actionGetCmd);
-        assertEquals(actions.size(), 2);
-        // As actions are sorted by nominal time, the first action should be with action number 2
-        assertEquals(actions.get(0).getActionNumber(), actionNum);
+        return actions;
+
     }
 
     // Check status filters for Coordinator actions
-    public void testCoordActionFilter() throws Exception{
+    public void testCoordActionFilter() throws Exception {
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
         // Add Coordinator action with nominal time: 2009-12-15T01:00Z
-        addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.RUNNING,
-                "coord-action-get.xml", 0);
+        addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0);
         // Add Coordinator action with nominal time: 2009-02-01T23:59Z
-        addRecordToCoordActionTable(job.getId(), 2, CoordinatorAction.Status.WAITING,
-                "coord-action-get.xml", 0);
+        addRecordToCoordActionTable(job.getId(), 2, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 0);
         // Create lists for status filter
         List<String> filterList = new ArrayList<String>();
         filterList.add("RUNNING");
@@ -151,14 +173,15 @@ public class TestCoordJobGetActionsSubsetJPAExecutor extends XDataTestCase {
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
         CoordJobGetActionsSubsetJPAExecutor actionGetCmd = new CoordJobGetActionsSubsetJPAExecutor(jobId, filterList,
-                start, len);
+                start, len, false);
         List<CoordinatorActionBean> actions = jpaService.execute(actionGetCmd);
-        // As actions are filtered by RUNNING status, only 1 action should be returned
+        // As actions are filtered by RUNNING status, only 1 action should be
+        // returned
         assertEquals(actions.size(), 1);
         assertEquals(actions.get(0).getActionNumber(), 1);
     }
 
-    public void testGetActionAllColumns() throws Exception{
+    public void testGetActionAllColumns() throws Exception {
         services.destroy();
         setSystemProperty(CoordActionGetForInfoJPAExecutor.COORD_GET_ALL_COLS_FOR_ACTION, "true");
         services = new Services();
@@ -178,7 +201,7 @@ public class TestCoordJobGetActionsSubsetJPAExecutor extends XDataTestCase {
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
         CoordJobGetActionsSubsetJPAExecutor actionGetCmd = new CoordJobGetActionsSubsetJPAExecutor(jobId,
-                Collections.<String> emptyList(), start, len);
+                Collections.<String> emptyList(), start, len, false);
         List<CoordinatorActionBean> actions = jpaService.execute(actionGetCmd);
         CoordinatorActionBean action = actions.get(0);
 

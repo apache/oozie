@@ -186,7 +186,7 @@ public enum ErrorCode {
     E1004(XLog.STD, "Expression language evaluation error, {0}"),
     E1005(XLog.STD, "Could not read the coordinator job configuration read from DB, {0}"),
     E1006(XLog.STD, "Invalid coordinator application [{0}], {1}"),
-    E1007(XLog.STD, "Unable to add record to SLA table. [{0}], {1}"),
+    E1007(XLog.STD, "Unable to add record for SLA. [{0}], {1}"),
     E1008(XLog.STD, "Not implemented. [{0}]"),
     E1009(XLog.STD, "Unable to parse XML response. [{0}]"),
     E1010(XLog.STD, "Invalid data in coordinator xml. [{0}]"),
@@ -205,8 +205,7 @@ public enum ErrorCode {
 
     E1100(XLog.STD, "Command precondition does not hold before execution, [{0}]"),
 
-    E1101(XLog.STD, "SLA Nominal time is required."),
-    E1102(XLog.STD, "SLA should-start can't be empty."),
+    E1101(XLog.STD, "SLA <{0}> cannot be empty."),
 
     E1201(XLog.STD, "State [{0}] is invalid for job [{1}]."),
 
@@ -233,6 +232,9 @@ public enum ErrorCode {
     E1400(XLog.STD, "doAs (proxyuser) failure"),
 
     E1501(XLog.STD, "Error in getting HCat Access [{0}]"),
+
+    E1601(XLog.STD, "Cannot retrieve JMS connection info [{0}]"),
+    E1602(XLog.STD, "Cannot retrieve Topic name [{0}]"),
 
     ETEST(XLog.STD, "THIS SHOULD HAPPEN ONLY IN TESTING, invalid job id [{0}]"),;
 

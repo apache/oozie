@@ -94,6 +94,12 @@ public class CoordActionGetForExternalIdJPAExecutor implements JPAExecutor<Coord
         if (arr[6] != null){
             bean.setSlaXml((String) arr[6]);
         }
+        if (arr[7] != null){
+            bean.setNominalTime(DateUtils.toDate((Timestamp) arr[7]));
+        }
+        if (arr[8] != null){
+            bean.setCreatedTime(DateUtils.toDate((Timestamp) arr[8]));
+        }
         return bean;
     }
 

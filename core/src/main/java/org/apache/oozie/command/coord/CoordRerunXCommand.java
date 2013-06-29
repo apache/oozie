@@ -45,8 +45,11 @@ import org.apache.oozie.coord.CoordUtils;
 import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.sla.SLAOperations;
+import org.apache.oozie.sla.service.SLAService;
 import org.apache.oozie.util.InstrumentUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
@@ -68,6 +71,7 @@ import org.jdom.JDOMException;
  * <p/>
  * The "noCleanup" is used to indicate if user wants to cleanup output events for given rerun actions
  */
+@SuppressWarnings("deprecation")
 public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActionInfo> {
 
     private String rerunType;
@@ -330,7 +334,9 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
                         refreshAction(coordJob, coordAction);
                     }
                     updateAction(coordJob, coordAction, actionXml);
-
+                    if (SLAService.isEnabled()) {
+                        SLAOperations.updateRegistrationEvent(coordAction.getId());
+                    }
                     queue(new CoordActionNotificationXCommand(coordAction), 100);
                     queue(new CoordActionInputCheckXCommand(coordAction.getId(), coordAction.getJobId()), 100);
                 }
@@ -393,7 +399,6 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
                 coordJob.resetPending();
             }
         }
-
         updateList.add(coordJob);
     }
 
@@ -404,6 +409,9 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
     public void performWrites() throws CommandException {
         try {
             jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, insertList));
+            if (EventHandlerService.isEnabled()) {
+                generateEvents(coordJob);
+            }
         }
         catch (JPAExecutorException e) {
             throw new CommandException(e);

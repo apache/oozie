@@ -107,11 +107,10 @@ public abstract class WorkflowAppService implements Service {
      *
      * @param appPath application path.
      * @param user user name.
-     * @param autToken authentication token.
      * @return workflow definition.
      * @throws WorkflowException thrown if the definition could not be read.
      */
-    protected String readDefinition(String appPath, String user, String autToken, Configuration conf)
+    protected String readDefinition(String appPath, String user, Configuration conf)
             throws WorkflowException {
         try {
             URI uri = new URI(appPath);
@@ -158,12 +157,11 @@ public abstract class WorkflowAppService implements Service {
      * added to distributed cache. These paths include .jar,.so and the resource file paths.
      *
      * @param jobConf job configuration.
-     * @param authToken authentication token.
      * @param isWorkflowJob indicates if the job is a workflow job or not.
      * @return proto configuration.
      * @throws WorkflowException thrown if the proto action configuration could not be created.
      */
-    public XConfiguration createProtoActionConf(Configuration jobConf, String authToken, boolean isWorkflowJob)
+    public XConfiguration createProtoActionConf(Configuration jobConf, boolean isWorkflowJob)
             throws WorkflowException {
         try {
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
@@ -265,11 +263,10 @@ public abstract class WorkflowAppService implements Service {
      * Parse workflow definition.
      *
      * @param jobConf job configuration.
-     * @param authToken authentication token.
      * @return workflow application.
      * @throws WorkflowException thrown if the workflow application could not be parsed.
      */
-    public abstract WorkflowApp parseDef(Configuration jobConf, String authToken) throws WorkflowException;
+    public abstract WorkflowApp parseDef(Configuration jobConf) throws WorkflowException;
 
     /**
      * Parse workflow definition.

@@ -53,11 +53,10 @@ public class DagEngineService implements Service {
      * Return a Dag engine.
      *
      * @param user user for the dag engine.
-     * @param authToken the authentication token.
      * @return the dag engine for the specified user.
      */
-    public DagEngine getDagEngine(String user, String authToken) {
-        return new DagEngine(user, authToken);
+    public DagEngine getDagEngine(String user) {
+        return new DagEngine(user);
     }
 
     /**

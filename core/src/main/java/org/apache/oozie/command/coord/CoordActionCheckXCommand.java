@@ -23,10 +23,12 @@ import java.util.Date;
 import java.util.List;
 
 import org.apache.oozie.CoordinatorActionBean;
+import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.XException;
+import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.InstrumentUtils;
@@ -42,15 +44,21 @@ import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.executor.jpa.BulkUpdateInsertForCoordActionStatusJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionGetForCheckJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordinatorJobGetForUserAppnameJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowActionGetForSLAJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobGetForSLAJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 
 /**
  * The command checks workflow status for coordinator action.
  */
+@SuppressWarnings("deprecation")
 public class CoordActionCheckXCommand extends CoordinatorXCommand<Void> {
     private String actionId;
     private int actionCheckDelay;
     private CoordinatorActionBean coordAction = null;
+    private CoordinatorJobBean coordJob;
+    private WorkflowJobBean workflowJob;
     private JPAService jpaService = null;
     private List<JsonBean> updateList = new ArrayList<JsonBean>();
     private List<JsonBean> insertList = new ArrayList<JsonBean>();
@@ -69,8 +77,8 @@ public class CoordActionCheckXCommand extends CoordinatorXCommand<Void> {
         try {
             InstrumentUtils.incrJobCounter(getName(), 1, getInstrumentation());
             WorkflowJobBean wf = jpaService.execute(new WorkflowJobGetJPAExecutor(coordAction.getExternalId()));
-
             Status slaStatus = null;
+            CoordinatorAction.Status initialStatus = coordAction.getStatus();
 
             if (wf.getStatus() == WorkflowJob.Status.SUCCEEDED) {
                 coordAction.setStatus(CoordinatorAction.Status.SUCCEEDED);
@@ -116,6 +124,10 @@ public class CoordActionCheckXCommand extends CoordinatorXCommand<Void> {
             }
 
             jpaService.execute(new BulkUpdateInsertForCoordActionStatusJPAExecutor(updateList, insertList));
+            CoordinatorAction.Status endStatus = coordAction.getStatus();
+            if (endStatus != initialStatus && EventHandlerService.isEnabled()) {
+                generateEvent(coordAction, coordJob.getUser(), coordJob.getAppName(), workflowJob.getStartTime());
+            }
         }
         catch (XException ex) {
             LOG.warn("CoordActionCheckCommand Failed ", ex);
@@ -150,6 +162,9 @@ public class CoordActionCheckXCommand extends CoordinatorXCommand<Void> {
 
             if (jpaService != null) {
                 coordAction = jpaService.execute(new CoordActionGetForCheckJPAExecutor(actionId));
+                coordJob = jpaService.execute(new CoordinatorJobGetForUserAppnameJPAExecutor(
+                        coordAction.getJobId()));
+                workflowJob = jpaService.execute (new WorkflowJobGetForSLAJPAExecutor(coordAction.getExternalId()));
                 LogUtils.setLogInfo(coordAction, logInfo);
             }
             else {

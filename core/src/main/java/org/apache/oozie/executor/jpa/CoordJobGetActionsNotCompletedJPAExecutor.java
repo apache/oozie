@@ -17,6 +17,7 @@
  */
 package org.apache.oozie.executor.jpa;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,6 +27,7 @@ import javax.persistence.Query;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.CoordinatorAction;
+import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ParamChecker;
 
 /**
@@ -92,6 +94,12 @@ public class CoordJobGetActionsNotCompletedJPAExecutor implements JPAExecutor<Li
         }
         if (arr[4] != null) {
             bean.setPushMissingDependencies((String) arr[4]);
+        }
+        if (arr[5] != null){
+            bean.setNominalTime(DateUtils.toDate((Timestamp) arr[5]));
+        }
+        if (arr[6] != null){
+            bean.setCreatedTime(DateUtils.toDate((Timestamp) arr[6]));
         }
         return bean;
     }

@@ -18,6 +18,8 @@
 #
 
 sleep 1
+preserveArgs=${1}
+shift
 callbackCmnd=${1}
 shift
 callbackUrl=${1}
@@ -31,12 +33,25 @@ mpid=`echo $$`
 echo $mpid > $dir/$actionId.pid
 stdout="$dir/$mpid.$actionId.stdout"
 stderr="$dir/$mpid.$actionId.stderr"
-cmnd="${*}"
-if $cmnd >>${stdout} 2>>${stderr}; then
-    export callbackUrl=`echo ${callbackUrl} | sed -e 's/#status/OK/'`
+
+if [ $preserveArgs == "PRESERVE_ARGS" ]
+then
+    cmnd=${1}
+    shift
+    if $cmnd "$@" >>${stdout} 2>>${stderr}; then
+        export callbackUrl=`echo ${callbackUrl} | sed -e 's/#status/OK/'`
+    else
+        export callbackUrl=`echo ${callbackUrl} | sed -e 's/#status/ERROR/'`
+        touch $dir/$mpid.$actionId.error
+    fi
 else
-    export callbackUrl=`echo ${callbackUrl} | sed -e 's/#status/ERROR/'`
-    touch $dir/$mpid.$actionId.error
+    cmnd="${*}"
+    if $cmnd >>${stdout} 2>>${stderr}; then
+        export callbackUrl=`echo ${callbackUrl} | sed -e 's/#status/OK/'`
+    else
+        export callbackUrl=`echo ${callbackUrl} | sed -e 's/#status/ERROR/'`
+        touch $dir/$mpid.$actionId.error
+    fi
 fi
 sleep 1
 

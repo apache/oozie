@@ -30,6 +30,7 @@ import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.service.DagEngineService;
+import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.JobUtils;
@@ -54,6 +55,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+@SuppressWarnings("deprecation")
 public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
 
     public static final String EL_ERROR = "EL_ERROR";
@@ -65,19 +67,19 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
     private final XLog log = getLog();
     private String actionId = null;
     private String user = null;
-    private String authToken = null;
+    private String appName = null;
     private CoordinatorActionBean coordAction = null;
     private JPAService jpaService = null;
     private String jobId = null;
     private List<JsonBean> updateList = new ArrayList<JsonBean>();
     private List<JsonBean> insertList = new ArrayList<JsonBean>();
 
-    public CoordActionStartXCommand(String id, String user, String token, String jobId) {
+    public CoordActionStartXCommand(String id, String user, String appName, String jobId) {
         //super("coord_action_start", "coord_action_start", 1, XLog.OPS);
         super("coord_action_start", "coord_action_start", 1);
         this.actionId = ParamChecker.notEmpty(id, "id");
         this.user = ParamChecker.notEmpty(user, "user");
-        this.authToken = ParamChecker.notEmpty(token, "token");
+        this.appName = ParamChecker.notEmpty(appName, "appName");
         this.jobId = jobId;
     }
 
@@ -118,7 +120,7 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
         // extract 'property' tags under 'configuration' block in the
         // coordinator.xml (saved in actionxml column)
         // convert Element to XConfiguration
-        Element configElement = (Element) workflowProperties.getChild("action", workflowProperties.getNamespace())
+        Element configElement = workflowProperties.getChild("action", workflowProperties.getNamespace())
                 .getChild("workflow", workflowProperties.getNamespace()).getChild("configuration",
                                                                                   workflowProperties.getNamespace());
         if (configElement != null) {
@@ -152,7 +154,6 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
         String errCode = "";
         String errMsg = "";
         ParamChecker.notEmpty(user, "user");
-        ParamChecker.notEmpty(authToken, "authToken");
 
         log.debug("actionid=" + actionId + ", status=" + coordAction.getStatus());
         if (coordAction.getStatus() == CoordinatorAction.Status.SUBMITTED) {
@@ -162,9 +163,8 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
             coordAction.setRunConf(XmlUtils.prettyPrint(runConf).toString());
             // log.debug("%%% merged runconf=" +
             // XmlUtils.prettyPrint(runConf).toString());
-            DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(user, authToken);
+            DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(user);
             try {
-                boolean startJob = true;
                 Configuration conf = new XConfiguration(new StringReader(coordAction.getRunConf()));
                 SLAEventBean slaEvent = SLADbOperations.createStatusEvent(coordAction.getSlaXml(), coordAction.getId(), Status.STARTED,
                         SlaAppType.COORDINATOR_ACTION, log);
@@ -174,7 +174,7 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
 
                 // Normalize workflow appPath here;
                 JobUtils.normalizeAppPath(conf.get(OozieClient.USER_NAME), conf.get(OozieClient.GROUP_NAME), conf);
-                String wfId = dagEngine.submitJob(conf, startJob);
+                String wfId = dagEngine.submitJobFromCoordinator(conf, actionId);
                 coordAction.setStatus(CoordinatorAction.Status.RUNNING);
                 coordAction.setExternalId(wfId);
                 coordAction.incrementAndGetPending();
@@ -190,6 +190,9 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
                     updateList.add(coordAction);
                     try {
                         jpaService.execute(new BulkUpdateInsertForCoordActionStartJPAExecutor(updateList, insertList));
+                        if (EventHandlerService.isEnabled()) {
+                            generateEvent(coordAction, user, appName, wfJob.getStartTime());
+                        }
                     }
                     catch (JPAExecutorException je) {
                         throw new CommandException(je);
@@ -243,6 +246,9 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
                     try {
                         // call JPAExecutor to do the bulk writes
                         jpaService.execute(new BulkUpdateInsertForCoordActionStartJPAExecutor(updateList, insertList));
+                        if (EventHandlerService.isEnabled()) {
+                            generateEvent(coordAction, user, appName, null);
+                        }
                     }
                     catch (JPAExecutorException je) {
                         throw new CommandException(je);

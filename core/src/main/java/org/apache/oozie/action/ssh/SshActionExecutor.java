@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,8 +22,10 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
+import org.apache.hadoop.util.StringUtils;
 
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.OozieClient;
@@ -217,23 +219,47 @@ public class SshActionExecutor extends ActionExecutor {
             final Element commandElement = conf.getChild("command", nameSpace);
             final boolean ignoreOutput = conf.getChild("capture-output", nameSpace) == null;
 
+            boolean preserve = false;
             if (commandElement != null) {
+                String[] args = null;
+                // Will either have <args>, <arg>, or neither (but not both)
                 List<Element> argsList = conf.getChildren("args", nameSpace);
-                StringBuilder args = new StringBuilder("");
-                if ((argsList != null) && (argsList.size() > 0)) {
+                // Arguments in an <args> are "flattened" (spaces are delimiters)
+                if (argsList != null && argsList.size() > 0) {
+                    StringBuilder argsString = new StringBuilder("");
                     for (Element argsElement : argsList) {
-                        args = args.append(argsElement.getValue()).append(" ");
+                        argsString = argsString.append(argsElement.getValue()).append(" ");
                     }
-                    args.setLength(args.length() - 1);
+                    args = new String[]{argsString.toString()};
                 }
-                final String argsString = args.toString();
+                else {
+                    // Arguments in an <arg> are preserved, even with spaces
+                    argsList = conf.getChildren("arg", nameSpace);
+                    if (argsList != null && argsList.size() > 0) {
+                        preserve = true;
+                        args = new String[argsList.size()];
+                        for (int i = 0; i < argsList.size(); i++) {
+                            Element argsElement = argsList.get(i);
+                            args[i] = argsElement.getValue();
+                            // Even though we're keeping the args as an array, if they contain a space we still have to either quote
+                            // them or escape their space (because the scripts will split them up otherwise)
+                            if (args[i].contains(" ") &&
+                                    !(args[i].startsWith("\"") && args[i].endsWith("\"") ||
+                                      args[i].startsWith("'") && args[i].endsWith("'"))) {
+                                args[i] = StringUtils.escapeString(args[i], '\\', ' ');
+                            }
+                        }
+                    }
+                }
+                final String[] argsF = args;
                 final String recoveryId = context.getRecoveryId();
+                final boolean preserveF = preserve;
                 pid = execute(new Callable<String>() {
 
                     @Override
                     public String call() throws Exception {
-                        return doExecute(host, dirLocation, commandElement.getValue(), argsString, ignoreOutput,
-                                         action, recoveryId);
+                        return doExecute(host, dirLocation, commandElement.getValue(), argsF, ignoreOutput, action, recoveryId,
+                                preserveF);
                     }
 
                 });
@@ -364,23 +390,36 @@ public class SshActionExecutor extends ActionExecutor {
      * @param ignoreOutput ignore output option.
      * @param action action object.
      * @param recoveryId action id + run number to enable recovery in rerun
+     * @param preserveArgs tell the ssh scripts to preserve or flatten the arguments
      * @return process id of the running command.
      * @throws IOException thrown if failed to run the command.
      * @throws InterruptedException thrown if any interruption happens.
      */
-    protected String doExecute(String host, String dirLocation, String cmnd, String args, boolean ignoreOutput,
-                               WorkflowAction action, String recoveryId) throws IOException, InterruptedException {
+    protected String doExecute(String host, String dirLocation, String cmnd, String[] args, boolean ignoreOutput,
+                               WorkflowAction action, String recoveryId, boolean preserveArgs)
+                               throws IOException, InterruptedException {
         XLog log = XLog.getLog(getClass());
         Runtime runtime = Runtime.getRuntime();
         String callbackPost = ignoreOutput ? "_" : getOozieConf().get(HTTP_COMMAND_OPTIONS).replace(" ", "%%%");
+        String preserveArgsS = preserveArgs ? "PRESERVE_ARGS" : "FLATTEN_ARGS";
         // TODO check
         String callBackUrl = Services.get().get(CallbackService.class)
                 .createCallBackUrl(action.getId(), EXT_STATUS_VAR);
-        String command = XLog.format("{0}{1} {2}ssh-base.sh {3} \"{4}\" \"{5}\" {6} {7} {8} ", SSH_COMMAND_BASE, host,
-                                     dirLocation, getOozieConf().get(HTTP_COMMAND), callBackUrl, callbackPost, recoveryId, cmnd, args)
+        String command = XLog.format("{0}{1} {2}ssh-base.sh {3} {4} \"{5}\" \"{6}\" {7} {8} ", SSH_COMMAND_BASE, host, dirLocation,
+                                      preserveArgsS, getOozieConf().get(HTTP_COMMAND), callBackUrl, callbackPost, recoveryId, cmnd)
                 .toString();
-        log.trace("Executing ssh command [{0}]", command);
-        Process p = runtime.exec(command.split("\\s"));
+        String[] commandArray = command.split("\\s");
+        String[] finalCommand;
+        if (args == null) {
+            finalCommand = commandArray;
+        }
+        else {
+            finalCommand = new String[commandArray.length + args.length];
+            System.arraycopy(commandArray, 0, finalCommand, 0, commandArray.length);
+            System.arraycopy(args, 0, finalCommand, commandArray.length, args.length);
+        }
+        log.trace("Executing ssh command [{0}]", Arrays.toString(finalCommand));
+        Process p = runtime.exec(finalCommand);
         String pid = "";
 
         StringBuffer inputBuffer = new StringBuffer();
@@ -453,7 +492,8 @@ public class SshActionExecutor extends ActionExecutor {
     private void initSshScripts() {
         String dirLocation = Services.get().getRuntimeDir() + "/ssh";
         File path = new File(dirLocation);
-        if (!path.mkdirs()) {
+        path.mkdirs();
+        if (!path.exists()) {
             throw new RuntimeException(XLog.format("Not able to create required directory {0}", dirLocation));
         }
         try {
@@ -547,17 +587,17 @@ public class SshActionExecutor extends ActionExecutor {
                                 } // Permission denied while connecting
                                 else {
                                     if (errorMessage.contains("Permission denied")) {
-                                        throw new ActionExecutorException(ActionExecutorException.ErrorType.NON_TRANSIENT, ERR_AUTH_FAILED, ex
-                                                .getMessage(), ex);
+                                        throw new ActionExecutorException(ActionExecutorException.ErrorType.NON_TRANSIENT,
+                                                ERR_AUTH_FAILED, ex.getMessage(), ex);
                                     } // Permission denied while executing
                                     else {
                                         if (errorMessage.contains(": Permission denied")) {
-                                            throw new ActionExecutorException(ActionExecutorException.ErrorType.NON_TRANSIENT, ERR_NO_EXEC_PERM, ex
-                                                    .getMessage(), ex);
+                                            throw new ActionExecutorException(ActionExecutorException.ErrorType.NON_TRANSIENT,
+                                                    ERR_NO_EXEC_PERM, ex.getMessage(), ex);
                                         }
                                         else {
-                                            throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, ERR_UNKNOWN_ERROR, ex
-                                                    .getMessage(), ex);
+                                            throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR,
+                                                    ERR_UNKNOWN_ERROR, ex.getMessage(), ex);
                                         }
                                     }
                                 }
@@ -592,7 +632,8 @@ public class SshActionExecutor extends ActionExecutor {
             if (host.contains("@")) {
                 if (!host.toLowerCase().startsWith(oozieUser + "@")) {
                     throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, ERR_USER_MISMATCH,
-                                                      XLog.format("user mismatch between oozie user [{0}] and ssh host [{1}]", oozieUser, host));
+                                                      XLog.format("user mismatch between oozie user [{0}] and ssh host [{1}]",
+                                                              oozieUser, host));
                 }
             }
             else {
@@ -602,6 +643,7 @@ public class SshActionExecutor extends ActionExecutor {
         return host;
     }
 
+    @Override
     public boolean isCompleted(String externalStatus) {
         return true;
     }

@@ -527,17 +527,6 @@ public abstract class JsonRestServlet extends HttpServlet {
     protected static final String UNDEF = "?";
 
     /**
-     * Return the authentication token of the request if any.
-     *
-     * @param request request.
-     * @return the authentication token, <code>null</code> if there is none.
-     */
-    protected String getAuthToken(HttpServletRequest request) {
-        String authToken = (String) request.getAttribute(AUTH_TOKEN);
-        return (authToken != null) ? authToken : UNDEF;
-    }
-
-    /**
      * Return the user name of the request if any.
      *
      * @param request request.

@@ -87,7 +87,7 @@ public class TestCoordinatorEngine extends XTestCase {
         conf.set(OozieClient.USER_NAME, getTestUser());
 
 
-        final CoordinatorEngine ce = new CoordinatorEngine(getTestUser(), "UNIT_TESTING");
+        final CoordinatorEngine ce = new CoordinatorEngine(getTestUser());
         final String jobId = ce.submitJob(conf, true);
         waitFor(5000, new Predicate() {
             public boolean evaluate() throws Exception {
@@ -141,7 +141,7 @@ public class TestCoordinatorEngine extends XTestCase {
         conf.set(OozieClient.USER_NAME, getTestUser());
 
 
-        final CoordinatorEngine ce = new CoordinatorEngine(getTestUser(), "UNIT_TESTING");
+        final CoordinatorEngine ce = new CoordinatorEngine(getTestUser());
         final String jobId = ce.submitJob(conf, true);
 
         waitFor(5000, new Predicate() {
@@ -195,7 +195,7 @@ public class TestCoordinatorEngine extends XTestCase {
         conf.set(OozieClient.USER_NAME, getTestUser());
 
 
-        final CoordinatorEngine ce = new CoordinatorEngine(getTestUser(), "UNIT_TESTING");
+        final CoordinatorEngine ce = new CoordinatorEngine(getTestUser());
         final String jobId = ce.submitJob(conf, true);
 
         waitFor(5000, new Predicate() {
@@ -249,7 +249,7 @@ public class TestCoordinatorEngine extends XTestCase {
         conf.set(OozieClient.USER_NAME, getTestUser());
 
 
-        final CoordinatorEngine ce = new CoordinatorEngine(getTestUser(), "UNIT_TESTING");
+        final CoordinatorEngine ce = new CoordinatorEngine(getTestUser());
         final String jobId = ce.submitJob(conf, true);
 
         //create done flag
@@ -318,7 +318,7 @@ public class TestCoordinatorEngine extends XTestCase {
         conf.set(OozieClient.USER_NAME, getTestUser());
 
 
-        final CoordinatorEngine ce = new CoordinatorEngine(getTestUser(), "UNIT_TESTING");
+        final CoordinatorEngine ce = new CoordinatorEngine(getTestUser());
         final String jobId = ce.submitJob(conf, true);
         waitFor(5000, new Predicate() {
             public boolean evaluate() throws Exception {
@@ -337,7 +337,7 @@ public class TestCoordinatorEngine extends XTestCase {
     }
 
     private void _testGetJob(String jobId, String appPath) throws Exception {
-        CoordinatorEngine ce = new CoordinatorEngine(getTestUser(), "UNIT_TESTING");
+        CoordinatorEngine ce = new CoordinatorEngine(getTestUser());
         CoordinatorJob job = ce.getCoordJob(jobId);
         assertEquals(jobId, job.getId());
         assertEquals(job.getAppPath(), appPath);
@@ -349,7 +349,7 @@ public class TestCoordinatorEngine extends XTestCase {
      * @throws Exception
      */
     public void _testGetJobs(String jobId) throws Exception {
-        CoordinatorEngine ce = new CoordinatorEngine(getTestUser(), "UNIT_TESTING");
+        CoordinatorEngine ce = new CoordinatorEngine(getTestUser());
         // Test with no job filter specified
         CoordinatorJobInfo jobInfo = ce.getCoordJobs("", 1, 10);
         assertEquals(1, jobInfo.getCoordJobs().size());
@@ -386,7 +386,7 @@ public class TestCoordinatorEngine extends XTestCase {
     }
 
     private void _testGetDefinition(String jobId) throws Exception {
-        CoordinatorEngine ce = new CoordinatorEngine(getTestUser(), "UNIT_TESTING");
+        CoordinatorEngine ce = new CoordinatorEngine(getTestUser());
         CoordinatorJobBean job = ce.getCoordJob(jobId);
         System.out.println("JOBXML=" + job.getOrigJobXml());
         assertNotNull(job.getOrigJobXml());
@@ -430,42 +430,42 @@ public class TestCoordinatorEngine extends XTestCase {
     private void _testStatus(final String jobId) throws Exception {
         waitFor(6000, new Predicate() {
             public boolean evaluate() throws Exception {
-                CoordinatorEngine ce = new CoordinatorEngine(getTestUser(), "UNIT_TESTING");
+                CoordinatorEngine ce = new CoordinatorEngine(getTestUser());
                 CoordinatorJob job = ce.getCoordJob(jobId);
                 return !job.getStatus().equals(CoordinatorJob.Status.PREP);
             }
         });
 
-        CoordinatorEngine ce = new CoordinatorEngine(getTestUser(), "UNIT_TESTING");
+        CoordinatorEngine ce = new CoordinatorEngine(getTestUser());
         CoordinatorJob job = ce.getCoordJob(jobId);
         assertFalse(job.getStatus().equals(CoordinatorJob.Status.PREP));
     }
 
     private void _testSubsetActions(final String jobId) throws Exception {
-        CoordinatorEngine ce = new CoordinatorEngine(getTestUser(), "UNIT_TESTING");
+        CoordinatorEngine ce = new CoordinatorEngine(getTestUser());
         // Check for WAITING filter
-        CoordinatorJob job = ce.getCoordJob(jobId, "status=WAITING", 1, 2);
+        CoordinatorJob job = ce.getCoordJob(jobId, "status=WAITING", 1, 2, false);
         // As both actions are waiting, expected result size is 2
         assertEquals(job.getActions().size(), 2);
 
-        job = ce.getCoordJob(jobId, "status=RUNNING", 1, 2);
+        job = ce.getCoordJob(jobId, "status=RUNNING", 1, 2, false);
         assertEquals(job.getActions().size(), 0);
 
         //Check for actions WAITING OR RUNNING
-        job = ce.getCoordJob(jobId, "status=RUNNING;status=WAITING", 1, 2);
+        job = ce.getCoordJob(jobId, "status=RUNNING;status=WAITING", 1, 2, false);
         assertEquals(job.getActions().size(), 2);
 
         //Check without filters
-        job = ce.getCoordJob(jobId, null, 1, 2);
+        job = ce.getCoordJob(jobId, null, 1, 2, false);
         assertEquals(job.getActions().size(), 2);
 
         //Check for empty filter list
-        job = ce.getCoordJob(jobId, "", 1, 2);
+        job = ce.getCoordJob(jobId, "", 1, 2, false);
         assertEquals(job.getActions().size(), 2);
 
         //Check for missing "="
         try {
-            job = ce.getCoordJob(jobId, "statusRUNNING", 1, 2);
+            job = ce.getCoordJob(jobId, "statusRUNNING", 1, 2, false);
         }
         catch (CoordinatorEngineException ex) {
             assertEquals(ErrorCode.E0421, ex.getErrorCode());
@@ -474,7 +474,7 @@ public class TestCoordinatorEngine extends XTestCase {
 
         //Check for missing value after "="
         try {
-            job = ce.getCoordJob(jobId, "status=", 1, 2);
+            job = ce.getCoordJob(jobId, "status=", 1, 2, false);
         }
         catch (CoordinatorEngineException ex) {
             assertEquals(ErrorCode.E0421, ex.getErrorCode());
@@ -483,7 +483,7 @@ public class TestCoordinatorEngine extends XTestCase {
 
         // Check for invalid status value
         try {
-            job = ce.getCoordJob(jobId, "status=blahblah", 1, 2);
+            job = ce.getCoordJob(jobId, "status=blahblah", 1, 2, false);
         }
         catch (CoordinatorEngineException ex) {
             assertEquals(ErrorCode.E0421, ex.getErrorCode());
@@ -492,7 +492,7 @@ public class TestCoordinatorEngine extends XTestCase {
 
         // Check for empty status value
         try {
-            job = ce.getCoordJob(jobId, "status=\"\"", 1, 2);
+            job = ce.getCoordJob(jobId, "status=\"\"", 1, 2, false);
         }
         catch (CoordinatorEngineException ex) {
             assertEquals(ErrorCode.E0421, ex.getErrorCode());
@@ -501,7 +501,7 @@ public class TestCoordinatorEngine extends XTestCase {
 
         // Check for invalid filter option
         try {
-            job = ce.getCoordJob(jobId, "blahblah=blahblah", 1, 2);
+            job = ce.getCoordJob(jobId, "blahblah=blahblah", 1, 2, false);
         }
         catch (CoordinatorEngineException ex) {
             assertEquals(ErrorCode.E0421, ex.getErrorCode());

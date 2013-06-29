@@ -24,19 +24,24 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.WorkflowJobBean;
 
 /**
  * Load the list of completed WorkflowJob for purge ready.
  */
-public class WorkflowJobsGetForPurgeJPAExecutor implements JPAExecutor<List<WorkflowJobBean>> {
+public class WorkflowJobsGetForPurgeJPAExecutor implements JPAExecutor<List<String>> {
 
     private static final long DAY_IN_MS = 24 * 60 * 60 * 1000;
     private long olderThanDays;
     private int limit;
+    private int offset;
 
     public WorkflowJobsGetForPurgeJPAExecutor(long olderThanDays, int limit) {
+        this(olderThanDays, 0, limit);
+    }
+
+    public WorkflowJobsGetForPurgeJPAExecutor(long olderThanDays, int offset, int limit) {
         this.olderThanDays = olderThanDays;
+        this.offset = offset;
         this.limit = limit;
     }
 
@@ -53,13 +58,14 @@ public class WorkflowJobsGetForPurgeJPAExecutor implements JPAExecutor<List<Work
      */
     @Override
     @SuppressWarnings("unchecked")
-    public List<WorkflowJobBean> execute(EntityManager em) throws JPAExecutorException {
-        List<WorkflowJobBean> workflows = null;
+    public List<String> execute(EntityManager em) throws JPAExecutorException {
+        List<String> workflows = null;
         try {
             Timestamp maxEndTime = new Timestamp(System.currentTimeMillis() - (olderThanDays * DAY_IN_MS));
-            Query jobQ = em.createNamedQuery("GET_COMPLETED_WORKFLOWS_OLDER_THAN");
+            Query jobQ = em.createNamedQuery("GET_COMPLETED_WORKFLOWS_WITH_NO_PARENT_OLDER_THAN");
             jobQ.setParameter("endTime", maxEndTime);
             jobQ.setMaxResults(limit);
+            jobQ.setFirstResult(offset);
             workflows = jobQ.getResultList();
         }
         catch (Exception e) {

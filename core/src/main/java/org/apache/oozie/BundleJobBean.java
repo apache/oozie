@@ -40,7 +40,7 @@ import org.apache.openjpa.persistence.jdbc.Index;
 
 @Entity
 @NamedQueries( {
-        @NamedQuery(name = "UPDATE_BUNDLE_JOB", query = "update BundleJobBean w set w.appName = :appName, w.appPath = :appPath, w.conf = :conf, w.externalId = :externalId, w.timeOut = :timeOut, w.authToken = :authToken, w.createdTimestamp = :createdTimestamp, w.endTimestamp = :endTimestamp, w.jobXml = :jobXml, w.lastModifiedTimestamp = :lastModifiedTimestamp, w.origJobXml = :origJobXml, w.startTimestamp = :startTimestamp, w.status = :status, w.timeUnitStr = :timeUnit, w.pending = :pending where w.id = :id"),
+        @NamedQuery(name = "UPDATE_BUNDLE_JOB", query = "update BundleJobBean w set w.appName = :appName, w.appPath = :appPath, w.conf = :conf, w.externalId = :externalId, w.timeOut = :timeOut, w.createdTimestamp = :createdTimestamp, w.endTimestamp = :endTimestamp, w.jobXml = :jobXml, w.lastModifiedTimestamp = :lastModifiedTimestamp, w.origJobXml = :origJobXml, w.startTimestamp = :startTimestamp, w.status = :status, w.timeUnitStr = :timeUnit, w.pending = :pending where w.id = :id"),
 
         @NamedQuery(name = "UPDATE_BUNDLE_JOB_STATUS", query = "update BundleJobBean w set w.status = :status, w.lastModifiedTimestamp = :lastModifiedTimestamp, w.pending = :pending where w.id = :id"),
 
@@ -66,7 +66,7 @@ import org.apache.openjpa.persistence.jdbc.Index;
 
         @NamedQuery(name = "GET_BUNDLE_JOBS_OLDER_THAN_STATUS", query = "select OBJECT(w) from BundleJobBean w where w.status = :status AND w.lastModifiedTimestamp <= :lastModTime order by w.lastModifiedTimestamp"),
 
-        @NamedQuery(name = "GET_COMPLETED_BUNDLE_JOBS_OLDER_THAN", query = "select OBJECT(w) from BundleJobBean w where ( w.status = 'SUCCEEDED' OR w.status = 'FAILED' OR w.status = 'KILLED' OR w.status = 'DONEWITHERROR') AND w.lastModifiedTimestamp <= :lastModTime order by w.lastModifiedTimestamp"),
+        @NamedQuery(name = "GET_COMPLETED_BUNDLE_JOBS_OLDER_THAN", query = "select w.id from BundleJobBean w where ( w.status = 'SUCCEEDED' OR w.status = 'FAILED' OR w.status = 'KILLED' OR w.status = 'DONEWITHERROR') AND w.lastModifiedTimestamp <= :lastModTime order by w.lastModifiedTimestamp"),
 
         @NamedQuery(name = "BULK_MONITOR_BUNDLE_QUERY", query = "SELECT b.id, b.status, b.user FROM BundleJobBean b WHERE b.appName = :appName"),
 
@@ -76,18 +76,15 @@ import org.apache.openjpa.persistence.jdbc.Index;
                 "c.id, c.appName, c.status FROM CoordinatorActionBean a, CoordinatorJobBean c " +
                 "WHERE a.jobId = c.id AND c.bundleId = :bundleId ORDER BY a.jobId, a.createdTimestamp"),
 
-        @NamedQuery(name = "BULK_MONITOR_COUNT_QUERY", query = "SELECT COUNT(a) FROM CoordinatorActionBean a, CoordinatorJobBean c") })
+        @NamedQuery(name = "BULK_MONITOR_COUNT_QUERY", query = "SELECT COUNT(a) FROM CoordinatorActionBean a, CoordinatorJobBean c"),
+
+        @NamedQuery(name = "GET_BUNDLE_JOB_FOR_USER", query = "select w.user from BundleJobBean w where w.id = :id") })
 public class BundleJobBean extends JsonBundleJob implements Writable {
 
     @Basic
     @Index
     @Column(name = "status")
     private String status = Job.Status.PREP.toString();
-
-    @Basic
-    @Column(name = "auth_token")
-    @Lob
-    private String authToken = null;
 
     @Basic
     @Column(name = "kickoff_time")
@@ -135,20 +132,6 @@ public class BundleJobBean extends JsonBundleJob implements Writable {
     @Column(name = "orig_job_xml")
     @Lob
     private String origJobXml = null;
-
-    /**
-     * @return the authToken
-     */
-    public String getAuthToken() {
-        return authToken;
-    }
-
-    /**
-     * @param authToken the authToken to set
-     */
-    public void setAuthToken(String authToken) {
-        this.authToken = authToken;
-    }
 
     /**
      * @return the kickoffTimestamp
@@ -351,6 +334,15 @@ public class BundleJobBean extends JsonBundleJob implements Writable {
      */
     public void setLastModifiedTime(Date lastModifiedTime) {
         this.lastModifiedTimestamp = DateUtils.convertDateToTimestamp(lastModifiedTime);
+    }
+
+    /**
+     * Get last modified time
+     *
+     * @return last modified time
+     */
+    public Date getLastModifiedTime() {
+        return DateUtils.toDate(lastModifiedTimestamp);
     }
 
     /* (non-Javadoc)

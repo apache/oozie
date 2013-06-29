@@ -37,7 +37,9 @@ import org.apache.oozie.executor.jpa.WorkflowActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
+import org.apache.oozie.action.control.ControlNodeActionExecutor;
 import org.apache.oozie.service.ActionService;
+import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.Services;
@@ -49,6 +51,7 @@ import org.apache.oozie.util.db.SLADbXOperations;
  * Kill workflow action and invoke action executor to kill the underlying context.
  *
  */
+@SuppressWarnings("deprecation")
 public class ActionKillXCommand extends ActionXCommand<Void> {
     private String actionId;
     private String jobId;
@@ -127,6 +130,7 @@ public class ActionKillXCommand extends ActionXCommand<Void> {
 
                     wfAction.resetPending();
                     wfAction.setStatus(WorkflowActionBean.Status.KILLED);
+                    wfAction.setEndTime(new Date());
 
                     updateList.add(wfAction);
                     wfJob.setLastModifiedTime(new Date());
@@ -144,6 +148,8 @@ public class ActionKillXCommand extends ActionXCommand<Void> {
                     wfAction.setStatus(WorkflowActionBean.Status.FAILED);
                     wfAction.setErrorInfo(ex.getErrorCode().toString(),
                             "KILL COMMAND FAILED - exception while executing job kill");
+                    wfAction.setEndTime(new Date());
+
                     wfJob.setStatus(WorkflowJobBean.Status.KILLED);
                     updateList.add(wfAction);
                     wfJob.setLastModifiedTime(new Date());
@@ -160,6 +166,9 @@ public class ActionKillXCommand extends ActionXCommand<Void> {
                 finally {
                     try {
                         jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, insertList));
+                        if (!(executor instanceof ControlNodeActionExecutor) && EventHandlerService.isEnabled()) {
+                            generateEvent(wfAction, wfJob.getUser());
+                        }
                     }
                     catch (JPAExecutorException e) {
                         throw new CommandException(e);

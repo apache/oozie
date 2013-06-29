@@ -26,6 +26,7 @@ import org.apache.oozie.SLAEventBean;
 /**
  * Load the list of SLAEventBean for a seqId and return the list.
  */
+@Deprecated
 public class SLAEventsGetForSeqIdJPAExecutor implements JPAExecutor<List<SLAEventBean>> {
 
     private long seqId = 0;

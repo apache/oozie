@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,8 +20,11 @@ package org.apache.oozie.action.hadoop;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
@@ -93,7 +96,7 @@ public class FsActionExecutor extends ActionExecutor {
                     String nameNodeSchemeAuthority = nameNode.toUri().getScheme() + "://" + nameNode.toUri().getAuthority();
                     fullPath = new Path(nameNodeSchemeAuthority + path.toString());
                 } else {
-                    throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS011", 
+                    throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS011",
                             "Path [{0}] cannot be relative", path);
                 }
             } else {
@@ -128,7 +131,7 @@ public class FsActionExecutor extends ActionExecutor {
             if (!recovery) {
                 fs.mkdirs(getRecoveryPath(context));
             }
-            
+
             Path nameNodePath = null;
             Element nameNodeElement = element.getChild("name-node", element.getNamespace());
             if (nameNodeElement != null) {
@@ -139,7 +142,7 @@ public class FsActionExecutor extends ActionExecutor {
                     validatePath(nameNodePath, true);
                 }
             }
-            
+
             XConfiguration fsConf = new XConfiguration();
             Path appPath = new Path(context.getWorkflow().getAppPath());
             // app path could be a file
@@ -147,7 +150,7 @@ public class FsActionExecutor extends ActionExecutor {
                 appPath = appPath.getParent();
             }
             JavaActionExecutor.parseJobXmlAndConfiguration(context, element, appPath, fsConf);
-            
+
             for (Element commandElement : (List<Element>) element.getChildren()) {
                 String command = commandElement.getName();
                 if (command.equals("mkdir")) {
@@ -157,13 +160,13 @@ public class FsActionExecutor extends ActionExecutor {
                 else {
                     if (command.equals("delete")) {
                         Path path = getPath(commandElement, "path");
-                        delete(context, fsConf,nameNodePath, path);
+                        delete(context, fsConf, nameNodePath, path);
                     }
                     else {
                         if (command.equals("move")) {
                             Path source = getPath(commandElement, "source");
                             Path target = getPath(commandElement, "target");
-                            move(context, fsConf,nameNodePath, source, target, recovery);
+                            move(context, fsConf, nameNodePath, source, target, recovery);
                         }
                         else {
                             if (command.equals("chmod")) {
@@ -172,12 +175,24 @@ public class FsActionExecutor extends ActionExecutor {
                                 String str = commandElement.getAttributeValue("dir-files");
                                 boolean dirFiles = (str == null) || Boolean.parseBoolean(str);
                                 String permissionsMask = commandElement.getAttributeValue("permissions").trim();
-                                chmod(context, fsConf,nameNodePath, path, permissionsMask, dirFiles, recursive);
+                                chmod(context, fsConf, nameNodePath, path, permissionsMask, dirFiles, recursive);
                             }
                             else {
                                 if (command.equals("touchz")) {
                                     Path path = getPath(commandElement, "path");
-                                    touchz(context, fsConf,nameNodePath, path);
+                                    touchz(context, fsConf, nameNodePath, path);
+                                }
+                                else {
+                                    if (command.equals("chgrp")) {
+                                        Path path = getPath(commandElement, "path");
+                                        boolean recursive = commandElement.getChild("recursive",
+                                                commandElement.getNamespace()) != null;
+                                        String group = commandElement.getAttributeValue("group");
+                                        String str = commandElement.getAttributeValue("dir-files");
+                                        boolean dirFiles = (str == null) || Boolean.parseBoolean(str);
+                                        chgrp(context, fsConf, nameNodePath, path, context.getWorkflow().getUser(),
+                                                group, dirFiles, recursive);
+                                    }
                                 }
                             }
                         }
@@ -187,6 +202,73 @@ public class FsActionExecutor extends ActionExecutor {
         }
         catch (Exception ex) {
             throw convertException(ex);
+        }
+    }
+
+    void chgrp(Context context, XConfiguration fsConf, Path nameNodePath, Path path, String user, String group,
+            boolean dirFiles, boolean recursive) throws ActionExecutorException {
+
+        HashMap<String, String> argsMap = new HashMap<String, String>();
+        argsMap.put("user", user);
+        argsMap.put("group", group);
+        try {
+            FileSystem fs = getFileSystemFor(path, context, fsConf);
+            recursiveFsOperation("chgrp", fs, nameNodePath, path, argsMap, dirFiles, recursive, true);
+        }
+        catch (Exception ex) {
+            throw convertException(ex);
+        }
+    }
+
+    private void recursiveFsOperation(String op, FileSystem fs, Path nameNodePath, Path path,
+            Map<String, String> argsMap, boolean dirFiles, boolean recursive, boolean isRoot)
+            throws ActionExecutorException {
+
+        try {
+            path = resolveToFullPath(nameNodePath, path, true);
+            if (!fs.exists(path)) {
+                throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS009", op
+                        + ", path [{0}] does not exist", path);
+            }
+            FileStatus pathStatus = fs.getFileStatus(path);
+            List<Path> paths = new ArrayList<Path>();
+
+            if (dirFiles && pathStatus.isDir()) {
+                if (isRoot) {
+                    paths.add(path);
+                }
+                FileStatus[] filesStatus = fs.listStatus(path);
+                for (int i = 0; i < filesStatus.length; i++) {
+                    Path p = filesStatus[i].getPath();
+                    paths.add(p);
+                    if (recursive && filesStatus[i].isDir()) {
+                        recursiveFsOperation(op, fs, null, p, argsMap, dirFiles, recursive, false);
+                    }
+                }
+            }
+            else {
+                paths.add(path);
+            }
+            for (Path p : paths) {
+                doFsOperation(op, fs, p, argsMap);
+            }
+        }
+        catch (Exception ex) {
+            throw convertException(ex);
+        }
+    }
+
+    private void doFsOperation(String op, FileSystem fs, Path p, Map<String, String> argsMap)
+            throws ActionExecutorException, IOException {
+        if (op.equals("chmod")) {
+            String permissions = argsMap.get("permissions");
+            FsPermission newFsPermission = createShortPermission(permissions, p);
+            fs.setPermission(p, newFsPermission);
+        }
+        else if (op.equals("chgrp")) {
+            String user = argsMap.get("user");
+            String group = argsMap.get("group");
+            fs.setOwner(p, user, group);
         }
     }
 
@@ -258,7 +340,7 @@ public class FsActionExecutor extends ActionExecutor {
      *
      * @param context
      * @param fsConf
-     * @param nameNodePath 
+     * @param nameNodePath
      * @param path
      * @throws ActionExecutorException
      */
@@ -321,14 +403,14 @@ public class FsActionExecutor extends ActionExecutor {
      * Move source to target
      *
      * @param context
-     * @param fsConf 
+     * @param fsConf
      * @param nameNodePath
      * @param source
      * @param target
      * @param recovery
      * @throws ActionExecutorException
      */
-    public void move(Context context, XConfiguration fsConf, Path nameNodePath, Path source, Path target, boolean recovery) 
+    public void move(Context context, XConfiguration fsConf, Path nameNodePath, Path source, Path target, boolean recovery)
             throws ActionExecutorException {
         try {
             source = resolveToFullPath(nameNodePath, source, true);
@@ -354,39 +436,14 @@ public class FsActionExecutor extends ActionExecutor {
         chmod(context, null, null, path, permissions, dirFiles, recursive);
     }
 
-    void chmod(Context context, XConfiguration fsConf, Path nameNodePath, Path path, String permissions, boolean dirFiles, 
-            boolean recursive) throws ActionExecutorException {
+    void chmod(Context context, XConfiguration fsConf, Path nameNodePath, Path path, String permissions,
+            boolean dirFiles, boolean recursive) throws ActionExecutorException {
+
+        HashMap<String, String> argsMap = new HashMap<String, String>();
+        argsMap.put("permissions", permissions);
         try {
-            path = resolveToFullPath(nameNodePath, path, true);
             FileSystem fs = getFileSystemFor(path, context, fsConf);
-
-            if (!fs.exists(path)) {
-                throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS009",
-                                                  "chmod, path [{0}] does not exist", path);
-            }
-
-            FileStatus pathStatus = fs.getFileStatus(path);
-
-            Path[] paths;
-            if (dirFiles && pathStatus.isDir()) {
-                FileStatus[] filesStatus = fs.listStatus(path);
-                paths = new Path[filesStatus.length];
-                for (int i = 0; i < filesStatus.length; i++) {
-                    paths[i] = filesStatus[i].getPath();
-                    if (recursive && filesStatus[i].isDir()){
-                        chmod(context, fsConf, nameNodePath, paths[i], permissions, dirFiles, recursive);
-                    }
-                }
-            }
-            else {
-                paths = new Path[]{path};
-            }
-
-            FsPermission newFsPermission = createShortPermission(permissions, path);
-            fs.setPermission(path, newFsPermission);
-            for (Path p : paths) {
-                fs.setPermission(p, newFsPermission);
-            }
+            recursiveFsOperation("chmod", fs, nameNodePath, path, argsMap, dirFiles, recursive, true);
         }
         catch (Exception ex) {
             throw convertException(ex);

@@ -53,11 +53,10 @@ public class BundleEngineService implements Service {
      * Return a Bundle engine.
      *
      * @param user user for the bundle engine.
-     * @param authToken the authentication token.
      * @return the bundle engine for the specified user.
      */
-    public BundleEngine getBundleEngine(String user, String authToken) {
-        return new BundleEngine(user, authToken);
+    public BundleEngine getBundleEngine(String user) {
+        return new BundleEngine(user);
     }
 
     /**

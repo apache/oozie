@@ -219,7 +219,7 @@ public class TestJMSAccessorService extends XTestCase {
             connCtxt.createSession(Session.AUTO_ACKNOWLEDGE);
             fail("Exception expected");
         }
-        catch (JMSException e) {
+        catch (Exception e) {
             Thread.sleep(100);
             assertFalse(jmsService.isListeningToTopic(connInfo, topic));
             assertTrue(jmsService.isConnectionInRetryList(connInfo));

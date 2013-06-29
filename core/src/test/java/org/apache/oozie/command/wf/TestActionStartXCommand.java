@@ -30,7 +30,7 @@ import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
-import org.apache.oozie.action.hadoop.LauncherMapper;
+import org.apache.oozie.action.hadoop.LauncherMapperHelper;
 import org.apache.oozie.action.hadoop.MapReduceActionExecutor;
 import org.apache.oozie.action.hadoop.MapperReducerForTest;
 import org.apache.oozie.client.OozieClient;
@@ -171,7 +171,7 @@ public class TestActionStartXCommand extends XDataTestCase {
             }
         });
         assertTrue(launcherJob.isSuccessful());
-        assertTrue(LauncherMapper.hasIdSwap(launcherJob));
+        assertTrue(LauncherMapperHelper.hasIdSwap(launcherJob));
     }
 
     public void testActionReuseWfJobAppPath() throws Exception {
@@ -236,7 +236,7 @@ public class TestActionStartXCommand extends XDataTestCase {
         });
         // check if launcher job succeeds
         assertTrue(launcherJob.isSuccessful());
-        assertTrue(LauncherMapper.hasIdSwap(launcherJob));
+        assertTrue(LauncherMapperHelper.hasIdSwap(launcherJob));
     }
 
     /**
@@ -258,7 +258,7 @@ public class TestActionStartXCommand extends XDataTestCase {
         conf.set(OozieClient.LOG_TOKEN, "testToken");
         conf.set(OozieClient.USER_NAME, getTestUser());
 
-        WorkflowJobBean wfBean = createWorkflow(app, conf, "auth", jobStatus, instanceStatus);
+        WorkflowJobBean wfBean = createWorkflow(app, conf, jobStatus, instanceStatus);
 
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
@@ -439,7 +439,7 @@ public class TestActionStartXCommand extends XDataTestCase {
         conf.set("testCDATA",
                         "<![CDATA[?redirect=http%3A%2F%2Ftest.apache.com%2Fa-webservices%2Fv1%2FurlSigner%2FsignUrl&amp;namespace=nova.proxy&amp;keyDBHash=Vsy6n_C7K6NG0z4R2eBlKg--]]>");
 
-        WorkflowJobBean wfBean = createWorkflow(app, conf, "auth", jobStatus, instanceStatus);
+        WorkflowJobBean wfBean = createWorkflow(app, conf, jobStatus, instanceStatus);
 
         try {
             JPAService jpaService = Services.get().get(JPAService.class);

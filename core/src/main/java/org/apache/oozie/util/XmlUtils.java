@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,12 +45,13 @@ import javax.xml.validation.Validator;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.service.SchemaService;
-import org.apache.oozie.service.Services;
 import org.apache.oozie.service.SchemaService.SchemaName;
+import org.apache.oozie.service.Services;
 import org.jdom.Comment;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jdom.Namespace;
 import org.jdom.input.SAXBuilder;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
@@ -62,10 +63,10 @@ import org.xml.sax.SAXException;
  * XML utility methods.
  */
 public class XmlUtils {
-    public static final String SLA_NAME_SPACE_URI = "uri:oozie:sla:0.1";
 
     private static class NoExternalEntityEntityResolver implements EntityResolver {
 
+        @Override
         public InputSource resolveEntity(String publicId, String systemId) throws SAXException, IOException {
             return new InputSource(new ByteArrayInputStream(new byte[0]));
         }
@@ -398,6 +399,14 @@ public class XmlUtils {
             character = iterator.next();
         }
         return result.toString();
+    }
+
+    public static Element getSLAElement(Element elem) {
+        Element eSla_1 = elem.getChild("info", Namespace.getNamespace(SchemaService.SLA_NAME_SPACE_URI));
+        Element eSla_2 = elem.getChild("info", Namespace.getNamespace(SchemaService.SLA_NAMESPACE_URI_2));
+        Element eSla = (eSla_2 != null) ? eSla_2 : eSla_1;
+
+        return eSla;
     }
 
 }

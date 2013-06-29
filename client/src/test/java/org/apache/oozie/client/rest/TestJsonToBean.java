@@ -17,18 +17,22 @@
  */
 package org.apache.oozie.client.rest;
 
+import java.util.List;
+import java.util.Properties;
+
 import junit.framework.TestCase;
 
+import org.apache.oozie.AppType;
 import org.apache.oozie.client.BulkResponse;
 import org.apache.oozie.client.BundleJob;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
+import org.apache.oozie.client.JMSConnectionInfo;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-
-import java.util.List;
+import org.json.simple.JSONValue;
 
 public class TestJsonToBean extends TestCase {
 
@@ -248,7 +252,7 @@ public class TestJsonToBean extends TestCase {
         json.put(JsonTags.COORDINATOR_JOB_CONF, "d");
         json.put(JsonTags.COORDINATOR_JOB_STATUS, CoordinatorJob.Status.RUNNING.toString());
         json.put(JsonTags.COORDINATOR_JOB_EXECUTIONPOLICY, CoordinatorJob.Execution.FIFO.toString());
-        json.put(JsonTags.COORDINATOR_JOB_FREQUENCY, (long)1);
+        json.put(JsonTags.COORDINATOR_JOB_FREQUENCY, "1");
         json.put(JsonTags.COORDINATOR_JOB_TIMEUNIT, CoordinatorJob.Timeunit.DAY.toString());
         json.put(JsonTags.COORDINATOR_JOB_TIMEZONE, "e");
         json.put(JsonTags.COORDINATOR_JOB_CONCURRENCY, (long)2);
@@ -287,7 +291,7 @@ public class TestJsonToBean extends TestCase {
         assertEquals("d", job.getConf());
         assertEquals(CoordinatorJob.Status.RUNNING, job.getStatus());
         assertEquals(CoordinatorJob.Execution.FIFO, job.getExecutionOrder());
-        assertEquals(1, job.getFrequency());
+        assertEquals("1", job.getFrequency());
         assertEquals(CoordinatorJob.Timeunit.DAY, job.getTimeUnit());
         assertEquals("e", job.getTimeZone());
         assertEquals(2, job.getConcurrency());
@@ -313,6 +317,36 @@ public class TestJsonToBean extends TestCase {
         assertEquals(2, list.size());
         assertEquals("cj1", list.get(0).getId());
         assertEquals("cj2", list.get(1).getId());
+    }
+
+
+    private JSONObject createJMSInfoJSONObject(){
+        JSONObject json = new JSONObject();
+        json.put(JsonTags.JMS_TOPIC_PREFIX, "topicPrefix");
+        Properties topicProps = new Properties();
+        topicProps.put(AppType.WORKFLOW_JOB, "wfTopic");
+        topicProps.put(AppType.WORKFLOW_ACTION, "wfTopic");
+        topicProps.put(AppType.COORDINATOR_ACTION, "coordTopic");
+        json.put(JsonTags.JMS_TOPIC_PATTERN, JSONValue.toJSONString(topicProps));
+        Properties props = new Properties();
+        props.put("k1", "v1");
+        props.put("k2", "v2");
+        json.put(JsonTags.JMS_JNDI_PROPERTIES, JSONValue.toJSONString(props));
+        return json;
+    }
+
+    public void testParseJMSInfo() {
+        JSONObject json = createJMSInfoJSONObject();
+        JMSConnectionInfo jmsDetails = JsonToBean.createJMSConnectionInfo(json);
+        assertEquals("topicPrefix", jmsDetails.getTopicPrefix());
+        assertEquals("wfTopic", jmsDetails.getTopicPattern(AppType.WORKFLOW_JOB));
+        assertEquals("wfTopic", jmsDetails.getTopicPattern(AppType.WORKFLOW_ACTION));
+        assertEquals("coordTopic", jmsDetails.getTopicPattern(AppType.COORDINATOR_ACTION));
+        Properties jmsProps = jmsDetails.getJNDIProperties();
+        assertNotNull(jmsDetails.getJNDIProperties());
+        assertEquals("v1", jmsProps.get("k1"));
+        assertEquals("v2", jmsProps.get("k2"));
+
     }
 
     @SuppressWarnings("unchecked")

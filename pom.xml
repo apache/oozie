@@ -21,7 +21,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.apache.oozie</groupId>
     <artifactId>oozie-main</artifactId>
-    <version>4.0.0-SNAPSHOT</version>
+    <version>4.1.0-SNAPSHOT</version>
     <description>Apache Oozie Main</description>
     <name>Apache Oozie Main</name>
     <packaging>pom</packaging>
@@ -39,6 +39,9 @@
     </organization>
 
     <properties>
+        <javaVersion>1.6</javaVersion>
+        <targetJavaVersion>1.6</targetJavaVersion>
+
         <distMgmtSnapshotsName>Apache Development Snapshot Repository</distMgmtSnapshotsName>
         <distMgmtSnapshotsUrl>https://repository.apache.org/content/repositories/snapshots</distMgmtSnapshotsUrl>
 
@@ -82,8 +85,9 @@
         <hadoop.auth.version>2.0.2-alpha</hadoop.auth.version>
 
          <!-- Sharelib component versions -->
-         <hive.version>0.9.0</hive.version>
-         <pig.version>0.9.0</pig.version>
+         <hive.version>0.10.0</hive.version>
+         <pig.version>0.10.1</pig.version>
+         <pig.classifier></pig.classifier>
          <sqoop.version>1.4.3</sqoop.version>
          <sqoop.classifier>hadoop100</sqoop.classifier>
          <streaming.version>${hadoop.version}</streaming.version>
@@ -91,6 +95,8 @@
 
          <!-- Tomcat version -->
          <tomcat.version>6.0.36</tomcat.version>
+
+         <openjpa.version>2.2.2</openjpa.version>
     </properties>
 
     <modules>
@@ -99,7 +105,6 @@
         <module>hbaselibs</module>
         <module>hcataloglibs</module>
         <module>core</module>
-        <module>tests</module>
         <module>webapp</module>
         <module>examples</module>
         <module>docs</module>
@@ -225,6 +230,11 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
+                 <groupId>org.apache.oozie</groupId>
+                <artifactId>oozie-sharelib-hcatalog</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.apache.oozie</groupId>
                 <artifactId>oozie-docs</artifactId>
                 <version>${project.version}</version>
@@ -274,6 +284,18 @@
               <version>1.6.6</version>
           </dependency>
 
+            <dependency>
+                <groupId>org.codehaus.jackson</groupId>
+                <artifactId>jackson-mapper-asl</artifactId>
+                <version>1.8.8</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.codehaus.jackson</groupId>
+                <artifactId>jackson-core-asl</artifactId>
+                <version>1.8.8</version>
+            </dependency>
+
             <!-- core -->
             <dependency>
                 <groupId>org.apache.oozie</groupId>
@@ -302,7 +324,7 @@
             <dependency>
                 <groupId>org.apache.openjpa</groupId>
                 <artifactId>openjpa-persistence</artifactId>
-                <version>2.1.0</version>
+                <version>${openjpa.version}</version>
                 <exclusions>
                     <exclusion>
                         <groupId>junit</groupId>
@@ -320,7 +342,7 @@
             <dependency>
                 <groupId>org.apache.openjpa</groupId>
                 <artifactId>openjpa-jdbc</artifactId>
-                <version>2.1.0</version>
+                <version>${openjpa.version}</version>
                 <exclusions>
                     <exclusion>
                         <groupId>postgresql</groupId>
@@ -332,7 +354,7 @@
             <dependency>
                 <groupId>org.apache.openjpa</groupId>
                 <artifactId>openjpa-persistence-jdbc</artifactId>
-                <version>2.1.0</version>
+                <version>${openjpa.version}</version>
             </dependency>
 
             <dependency>
@@ -363,6 +385,7 @@
                 <groupId>org.apache.pig</groupId>
                 <artifactId>pig</artifactId>
                 <version>${pig.version}</version>
+                <classifier>${pig.classifier}</classifier>
                 <exclusions>
                     <exclusion>
                         <groupId>org.apache.hadoop</groupId>
@@ -693,7 +716,7 @@
 
     <build>
         <pluginManagement>
-            	<plugins>
+            <plugins>
 	            <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-enforcer-plugin</artifactId>
@@ -771,6 +794,11 @@
                     <artifactId>maven-dependency-plugin</artifactId>
                     <version>2.4</version>
                 </plugin>
+                <plugin>
+                    <groupId>org.apache.openjpa</groupId>
+                    <artifactId>openjpa-maven-plugin</artifactId>
+                    <version>${openjpa.version}</version>
+                </plugin>
             </plugins>
         </pluginManagement>
 
@@ -782,6 +810,10 @@
                     <licenseLocation>${clover.license}</licenseLocation>
                     <generateXml>true</generateXml>
                     <generateHtml>true</generateHtml>
+                    <excludes>
+                        <exclude>**/oozie/store/*.java</exclude>
+                        <exclude>**/oozie/example/*.java</exclude>
+                    </excludes>
                 </configuration>
             </plugin>
             <plugin>
@@ -823,7 +855,7 @@
                             <version>[3.0.0,)</version>
                         </requireMavenVersion>
                         <requireJavaVersion>
-                            <version>1.6</version>
+                            <version>[${javaVersion}.0,${javaVersion}.1000}]</version>
                         </requireJavaVersion>
                         <requireOS>
                             <family>unix</family>
@@ -859,7 +891,7 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
                     <source>1.6</source>
-                    <target>1.6</target>
+                    <target>${targetJavaVersion}</target>
                 </configuration>
             </plugin>
             <plugin>
@@ -885,10 +917,6 @@
                              to test the SSH action
                         -->
                         <exclude>**/TestSsh*.java</exclude>
-
-
-                        <!-- See 'testSqoop' profile in core/pom.xml and the Building doc-->
-                        <exclude>**/TestSqoop*.java</exclude>
 
                         <!-- Explictly use -Dtest=TestMapReduceActionExecutorUberJar to test the uber jar functionality.
                              Requires at least Hadoop 1.2.0 or 2.2.0.
@@ -923,8 +951,15 @@
                         <exclude>docs/src/site/twiki/*.twiki</exclude>
                         <exclude>examples/src/main/data/*</exclude>
                         <exclude>core/src/test/resources/test-ioutils.txt</exclude>
-                        <exclude>core/src/test/resources/PigMain.txt</exclude>
+                        <exclude>sharelib/pig/src/test/resources/PigMain.txt</exclude>
+                        <exclude>sharelib/hive/src/test/resources/HiveMain.txt</exclude>
                         <exclude>webapp/src/main/resources/.gitignore</exclude>
+                        <!-- MIT or 3 BSD licenses -->
+                        <exclude>webapp/src/main/webapp/console/sla/js/graph/*</exclude>
+                        <exclude>webapp/src/main/webapp/console/sla/js/table/*</exclude>
+                        <exclude>webapp/src/main/webapp/console/sla/css/jquery*.css</exclude>
+                        <exclude>webapp/src/main/webapp/console/sla/css/TableTools.css</exclude>
+                        <exclude>webapp/src/main/webapp/console/sla/css/ColVis.css</exclude>
                         <exclude>**/target/**</exclude>
                         <exclude>**/build/**</exclude>
                         <exclude>.git/**</exclude>
@@ -976,6 +1011,30 @@
             </build>
         </profile>
         <profile>
+            <id>hadoop-23</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+               <hadoop.version>0.23.5</hadoop.version>
+               <hadoop.auth.version>0.23.5</hadoop.auth.version>
+               <pig.classifier>h2</pig.classifier>
+               <sqoop.classifier>hadoop23</sqoop.classifier>
+            </properties>
+        </profile>
+        <profile>
+            <id>hadoop-2</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+               <hadoop.version>2.2.0-SNAPSHOT</hadoop.version>
+               <hadoop.auth.version>2.2.0-SNAPSHOT</hadoop.auth.version>
+               <pig.classifier>h2</pig.classifier>
+               <sqoop.classifier>hadoop200</sqoop.classifier>
+            </properties>
+        </profile>
+        <profile>
             <id>hadoop-3</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
@@ -983,6 +1042,8 @@
             <properties>
                <hadoop.version>3.0.0-SNAPSHOT</hadoop.version>
                <hadoop.auth.version>3.0.0-SNAPSHOT</hadoop.auth.version>
+               <pig.classifier>h2</pig.classifier>
+               <sqoop.classifier>hadoop200</sqoop.classifier>
             </properties>
         </profile>
         <profile>

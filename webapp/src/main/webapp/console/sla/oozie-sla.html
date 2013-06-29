@@ -1,0 +1,124 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+        <script type="text/javascript" src="console/sla/js/oozie-sla.js"></script>
+
+        <!-- For Table -->
+        <link rel="stylesheet" type="text/css" href="console/sla/css/ColVis.css">
+        <link rel="stylesheet" type="text/css" href="console/sla/css/TableTools.css">
+        <link rel="stylesheet" type="text/css" href="console/sla/css/jquery-ui-1.10.3.custom.min.css"/>
+        <link rel="stylesheet" type="text/css" href="console/sla/css/jquery.dataTables.css">
+        <script type="text/javascript" src="console/sla/js/table/ColVis.min.js" ></script>
+        <script type="text/javascript" src="console/sla/js/table/TableTools.min.js"></script>
+        <script type="text/javascript" src="console/sla/js/table/jquery.dataTables.min.js"></script>
+        <script type="text/javascript" src="console/sla/js/table/jquery-ui-timepicker-addon.js"></script>
+        <script type="text/javascript" src="console/sla/js/oozie-sla-table.js"></script>
+
+        <!-- For Graph -->
+        <script type="text/javascript" src="console/sla/js/graph/jquery.flot.min.js"></script>
+        <script type="text/javascript" src="console/sla/js/graph/jquery.flot.time.min.js"></script>
+        <script type="text/javascript" src="console/sla/js/graph/jquery.flot.selection.min.js"></script>
+        <script type="text/javascript" src="console/sla/js/graph/jquery.flot.navigate.min.js"></script>
+        <script type="text/javascript" src="console/sla/js/oozie-sla-graph.js"></script>
+
+        <!-- Defined last for overriding defaults -->
+        <link rel="stylesheet" type="text/css" href="console/sla/css/oozie-sla.css">
+        <link rel="stylesheet" type="text/css" href="console/sla/css/oozie-sla-table.css">
+        <link rel="stylesheet" type="text/css" href="console/sla/css/oozie-sla-graph.css">
+
+        <script>
+
+        jQuery(document).ready(function($) {
+            jQuery("#search").mouseover(function(){
+                jQuery(this).addClass("x-tab-strip-over");}).mouseout(function(){
+                jQuery(this).removeClass("x-tab-strip-over");});
+            $('.ui-datepicker-current').css('display','none');
+            initializeDatePicker();
+            $("#tabs").tabs();
+            $("#search").click(function(){
+                onSearchClick();
+            });
+
+        });
+
+        </script>
+
+    </head>
+    <body id="sla_grid">
+        <div id ="inputArea">
+            <div id = "inputAppJob">
+                <label><span class="AppName">AppName: <input type="text" id = "app_name" name="user"></span></label>
+                <label><span class="OR">(or)</span></label>
+                <label>JobId: <input type="text" id ="job_id" ><br></label>
+            </div>
+            <label><span class="NominalStart">Nominal Time Range (GMT) - From: <input id="startDate"></span></label>
+            <label>To: </label><input id="endDate">
+            <button id="search" class="search-button"><span class="search-span">Search</span></button>
+        </div>
+        <div id="tabs">
+            <ul>
+                <li><a href="#Table"><span class="x-tab-strip-text">Table</span></a></li>
+                <li><a href="#Graph">Graph</a></li>
+            </ul>
+            <div id="Table">
+                <table cellpadding="0" cellspacing="0" border="0" class="display"
+                    id="sla_table" style="display:none">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>Job Id</th>
+                            <th>SLA Status</th>
+                            <th id="sla_table_nt">Nominal Time</th>
+                            <th id="sla_table_es">Expected Start</th>
+                            <th id="sla_table_as">Actual Start</th>
+                            <th>Start Missed By</th>
+                            <th id="sla_table_ee">Expected End</th>
+                            <th id="sla_table_ae">Actual End</th>
+                            <th>End Missed By</th>
+                            <th>Expected Duration</th>
+                            <th>Actual Duration</th>
+                            <th>Duration Missed By</th>
+                            <th>SLA Misses</th>
+                            <th>Job Status</th>
+                            <th>Parent Id</th>
+                            <th>AppName</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+            <div id="Graph">
+                <div id="sla-graph-uber-container" style="position:relative;width:100%;display:none">
+                    <div id="sla-graph-container" style="height:420px;width:800px;top:30px;position:relative;">
+                        <h3 align="center" style="display:none"><b>Start and End SLA</b></h3>
+                        <div id="sla-graph-div" style="height:375px;width:700px;left:20px;position:absolute "></div>
+                        <div id="sla-graph-xaxisLabel" class='axisLabel xaxisLabel'><p>Nominal Time (in GMT)</p></div>
+                        <div id="sla-graph-yaxisLabel" class='axisLabel yaxisLabel'><p>Time Since Nominal Time</p></div>
+                    </div>
+                    <div id="sla-table-div" style="height:600px;width:400px;top:-400px;left:710px;position:relative;"></div>
+                </div>
+
+                <div style="position:absolute;z-index:99;display:none;" id="graphtooltip"></div>
+            </div>
+        </div>
+
+    </body>
+</html>

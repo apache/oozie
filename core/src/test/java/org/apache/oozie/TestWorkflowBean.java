@@ -109,11 +109,9 @@ public class TestWorkflowBean extends XTestCase {
 
     public void testWorkflow() {
         WorkflowJobBean workflow = new WorkflowJobBean();
-        workflow.setAuthToken("authToken");
         workflow.setLogToken("logToken");
         // workflow.setWorkflowInstance(new MyWorkflowInstance());
         workflow.setProtoActionConf("proto");
-        assertEquals("authToken", workflow.getAuthToken());
         assertEquals("logToken", workflow.getLogToken());
         // assertNotNull(workflow.getWorkflowInstance());
         assertEquals("proto", workflow.getProtoActionConf());

@@ -15,7 +15,16 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<workflow-app xmlns="uri:oozie:workflow:0.2" name="no-op-wf">
+<workflow-app xmlns="uri:oozie:workflow:0.5" xmlns:sla="uri:oozie:sla:0.2" name="no-op-wf">
     <start to="end"/>
     <end name="end"/>
+    <sla:info>
+          <sla:nominal-time>${nominalTime}</sla:nominal-time>
+          <sla:should-start>${shouldStart}</sla:should-start>
+          <sla:should-end>${shouldEnd}</sla:should-end>
+          <sla:max-duration>${duration}</sla:max-duration>
+          <sla:alert-contact>${alertContact}</sla:alert-contact>
+          <sla:notification-msg>${notificationMsg}</sla:notification-msg>
+          <sla:upstream-apps>${upstreamApps}</sla:upstream-apps>
+    </sla:info>
 </workflow-app>

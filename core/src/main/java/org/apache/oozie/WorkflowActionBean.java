@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,6 +58,8 @@ import org.apache.openjpa.persistence.jdbc.Index;
     @NamedQuery(name = "GET_ACTION", query = "select OBJECT(a) from WorkflowActionBean a where a.id = :id"),
 
     @NamedQuery(name = "GET_ACTION_FOR_UPDATE", query = "select OBJECT(a) from WorkflowActionBean a where a.id = :id"),
+
+    @NamedQuery(name = "GET_ACTION_FOR_SLA", query = "select a.id, a.status, a.startTimestamp, a.endTimestamp from WorkflowActionBean a where a.id = :id"),
 
     @NamedQuery(name = "GET_ACTIONS_FOR_WORKFLOW", query = "select OBJECT(a) from WorkflowActionBean a where a.wfId = :wfId order by a.startTimestamp"),
 
@@ -219,6 +221,26 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
     }
 
     /**
+     * Return whether workflow action in terminal state or not
+     *
+     * @return
+     */
+    public boolean inTerminalState() {
+        boolean isTerminalState = false;
+        switch (WorkflowAction.Status.valueOf(status)) {
+            case ERROR:
+            case FAILED:
+            case KILLED:
+            case OK:
+                isTerminalState = true;
+                break;
+            default:
+                break;
+        }
+        return isTerminalState;
+    }
+
+    /**
      * Return if the action execution is complete.
      *
      * @return if the action start is complete.
@@ -238,7 +260,7 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
         return (getStatus() == WorkflowAction.Status.START_RETRY || getStatus() == WorkflowAction.Status.START_MANUAL
                 || getStatus() == WorkflowAction.Status.END_RETRY || getStatus() == WorkflowAction.Status.END_MANUAL);
     }
-    
+
     /**
      * Return true if the action is USER_RETRY
      *

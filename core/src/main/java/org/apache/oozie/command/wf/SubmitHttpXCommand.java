@@ -65,12 +65,10 @@ public abstract class SubmitHttpXCommand extends WorkflowXCommand<String> {
     }
 
     private Configuration conf;
-    private String authToken;
 
-    public SubmitHttpXCommand(String name, String type, Configuration conf, String authToken) {
+    public SubmitHttpXCommand(String name, String type, Configuration conf) {
         super(name, type, 1);
         this.conf = ParamChecker.notNull(conf, "conf");
-        this.authToken = ParamChecker.notEmpty(authToken, "authToken");
     }
 
     private static final Set<String> DISALLOWED_DEFAULT_PROPERTIES = new HashSet<String>();
@@ -109,7 +107,7 @@ public abstract class SubmitHttpXCommand extends WorkflowXCommand<String> {
             LOG.debug("workflow xml created on the server side is :\n");
             LOG.debug(wfXml);
             WorkflowApp app = wps.parseDef(wfXml, conf);
-            XConfiguration protoActionConf = wps.createProtoActionConf(conf, authToken, false);
+            XConfiguration protoActionConf = wps.createProtoActionConf(conf, false);
             WorkflowLib workflowLib = Services.get().get(WorkflowStoreService.class).getWorkflowLibWithNoDB();
 
             PropertiesUtils.checkDisallowedProperties(conf, DISALLOWED_USER_PROPERTIES);
@@ -145,7 +143,6 @@ public abstract class SubmitHttpXCommand extends WorkflowXCommand<String> {
             workflow.setRun(0);
             workflow.setUser(conf.get(OozieClient.USER_NAME));
             workflow.setGroup(conf.get(OozieClient.GROUP_NAME));
-            workflow.setAuthToken(authToken);
             workflow.setWorkflowInstance(wfInstance);
             workflow.setExternalId(conf.get(OozieClient.EXTERNAL_ID));
 

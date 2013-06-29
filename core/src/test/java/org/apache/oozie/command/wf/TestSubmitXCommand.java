@@ -60,7 +60,7 @@ public class TestSubmitXCommand extends XDataTestCase {
       conf.set(OozieClient.APP_PATH, "file://" + appPath + "/workflow.xml");
       conf.set(OozieClient.USER_NAME, getTestUser());
       conf.set("appName", "var-app-name");
-      SubmitXCommand sc = new SubmitXCommand(conf, "UNIT_TESTING");
+      SubmitXCommand sc = new SubmitXCommand(conf);
       String jobId = sc.call();
       WorkflowStoreService wss = Services.get().get(WorkflowStoreService.class);
       WorkflowStore ws = wss.create();
@@ -78,7 +78,7 @@ public class TestSubmitXCommand extends XDataTestCase {
         conf.set(OozieClient.APP_PATH, "file://" + appPath + "/workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set("GB", "5");
-        SubmitXCommand sc = new SubmitXCommand(conf, "UNIT_TESTING");
+        SubmitXCommand sc = new SubmitXCommand(conf);
 
         try {
             sc.call();
@@ -99,7 +99,7 @@ public class TestSubmitXCommand extends XDataTestCase {
         conf.set(OozieClient.APP_PATH, "file://" + appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
 
-        SubmitXCommand sc = new SubmitXCommand(conf, "UNIT_TESTING");
+        SubmitXCommand sc = new SubmitXCommand(conf);
 
         try {
             sc.call();
@@ -119,7 +119,7 @@ public class TestSubmitXCommand extends XDataTestCase {
         conf.set(OozieClient.APP_PATH, "file://" + appPath + "/workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
 
-        SubmitXCommand sc = new SubmitXCommand(conf, "UNIT_TESTING");
+        SubmitXCommand sc = new SubmitXCommand(conf);
 
         try {
             sc.call();
@@ -139,7 +139,7 @@ public class TestSubmitXCommand extends XDataTestCase {
         conf.set(OozieClient.APP_PATH, "file://" + appPath + "/test.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
 
-        SubmitXCommand sc = new SubmitXCommand(conf, "UNIT_TESTING");
+        SubmitXCommand sc = new SubmitXCommand(conf);
 
         try {
             sc.call();
@@ -158,7 +158,7 @@ public class TestSubmitXCommand extends XDataTestCase {
         writeToFile(appXml, appPath + "/test.xml");
         conf.set(OozieClient.APP_PATH, "file://" + appPath + "/does_not_exist.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
-        SubmitXCommand sc = new SubmitXCommand(conf, "UNIT_TESTING");
+        SubmitXCommand sc = new SubmitXCommand(conf);
 
         try {
             sc.call();
@@ -176,7 +176,7 @@ public class TestSubmitXCommand extends XDataTestCase {
         writeToFile(appXml, appPath + "/workflow.xml");
         conf.set(OozieClient.APP_PATH, "file://" + appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
-        SubmitXCommand sc = new SubmitXCommand(true, conf, "UNIT_TESTING");
+        SubmitXCommand sc = new SubmitXCommand(true, conf);
         assertEquals("OK", sc.call());
     }
 
@@ -187,7 +187,7 @@ public class TestSubmitXCommand extends XDataTestCase {
         writeToFile(appXml, appPath + "/workflow.xml");
         conf.set(OozieClient.APP_PATH, "file://" + appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
-        SubmitXCommand sc = new SubmitXCommand(true, conf, "UNIT_TESTING");
+        SubmitXCommand sc = new SubmitXCommand(true, conf);
         try {
             sc.call();
             fail("Should have gotten E0707 because the XML has a loop");
@@ -202,7 +202,7 @@ public class TestSubmitXCommand extends XDataTestCase {
         writeToFile(appXml, appPath + "/workflow.xml");
         conf.set(OozieClient.APP_PATH, "file://" + appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
-        sc = new SubmitXCommand(true, conf, "UNIT_TESTING");
+        sc = new SubmitXCommand(true, conf);
         try {
             sc.call();
             fail("Should have gotten E0708 because the XML has an invalid transition");
@@ -217,7 +217,7 @@ public class TestSubmitXCommand extends XDataTestCase {
         writeToFile(appXml, appPath + "/workflow.xml");
         conf.set(OozieClient.APP_PATH, "file://" + appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
-        sc = new SubmitXCommand(true, conf, "UNIT_TESTING");
+        sc = new SubmitXCommand(true, conf);
         try {
             sc.call();
             fail("Should have gotten E0701 because the XML has an invalid element");

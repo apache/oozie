@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,6 +43,8 @@ import org.apache.oozie.client.rest.JsonWorkflowAction;
 import org.apache.oozie.client.rest.JsonWorkflowJob;
 import org.apache.oozie.executor.jpa.JPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.sla.SLARegistrationBean;
+import org.apache.oozie.sla.SLASummaryBean;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.Instrumentable;
 import org.apache.oozie.util.Instrumentation;
@@ -52,6 +54,7 @@ import org.apache.openjpa.persistence.OpenJPAEntityManagerFactorySPI;
 /**
  * Service that manages JPA and executes {@link JPAExecutor}.
  */
+@SuppressWarnings("deprecation")
 public class JPAService implements Service, Instrumentable {
     private static final String INSTRUMENTATION_GROUP = "jpa";
 
@@ -169,6 +172,8 @@ public class JPAService implements Service, Instrumentable {
         entityManager.find(BundleJobBean.class, 1);
         entityManager.find(JsonBundleJob.class, 1);
         entityManager.find(BundleActionBean.class, 1);
+        entityManager.find(SLARegistrationBean.class, 1);
+        entityManager.find(SLASummaryBean.class, 1);
 
         LOG.info(XLog.STD, "All entities initialized");
         // need to use a pseudo no-op transaction so all entities, datasource

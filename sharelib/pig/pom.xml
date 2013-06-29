@@ -22,12 +22,12 @@
     <parent>
         <groupId>org.apache.oozie</groupId>
         <artifactId>oozie-main</artifactId>
-        <version>4.0.0-SNAPSHOT</version>
+        <version>4.1.0-SNAPSHOT</version>
         <relativePath>../..</relativePath>
     </parent>
     <groupId>org.apache.oozie</groupId>
     <artifactId>oozie-sharelib-pig</artifactId>
-    <version>4.0.0-SNAPSHOT</version>
+    <version>4.1.0-SNAPSHOT</version>
     <description>Apache Oozie Share Lib Pig</description>
     <name>Apache Oozie Share Lib Pig</name>
     <packaging>jar</packaging>
@@ -41,6 +41,7 @@
         <dependency>
             <groupId>org.apache.pig</groupId>
             <artifactId>pig</artifactId>
+            <classifier>${pig.classifier}</classifier>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -66,6 +67,42 @@
             <scope>compile</scope>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.oozie</groupId>
+            <artifactId>oozie-core</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.oozie</groupId>
+            <artifactId>oozie-core</artifactId>
+            <classifier>tests</classifier>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.oozie</groupId>
+            <artifactId>oozie-hadoop</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.oozie</groupId>
+            <artifactId>oozie-hadoop-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.oozie</groupId>
+            <artifactId>oozie-hcatalog</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.oozie</groupId>
+            <artifactId>oozie-sharelib-oozie</artifactId>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -91,6 +128,39 @@
                             <outputFile>${project.build.directory}/classpath</outputFile>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>create-mrapp-generated-classpath</id>
+                        <phase>generate-test-resources</phase>
+                        <goals>
+                            <goal>build-classpath</goal>
+                        </goals>
+                        <configuration>
+                            <!-- needed to run the unit test for DS to generate the required classpath
+                            that is required in the env of the launch container in the mini mr/yarn cluster -->
+                            <outputFile>${project.build.directory}/test-classes/mrapp-generated-classpath</outputFile>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.6</version>
+                <executions>
+                    <execution>
+                        <configuration>
+                            <target>
+                                <!-- needed to include Main class in classpath for mini yarn cluster for unit tests -->
+                                <echo file="${project.build.directory}/test-classes/mrapp-generated-classpath"
+                                      append="true"
+                                      message=":${project.build.directory}/classes"/>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <phase>generate-test-resources</phase>
+                    </execution>
                 </executions>
             </plugin>
             <!--<plugin>-->
@@ -109,6 +179,17 @@
                     <descriptors>
                         <descriptor>../../src/main/assemblies/partial-sharelib.xml</descriptor>
                     </descriptors>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.rat</groupId>
+                <artifactId>apache-rat-plugin</artifactId>
+                <configuration>
+                    <excludeSubProjects>false</excludeSubProjects>
+                    <excludes>
+                        <!-- excluding all as the root POM does the full check -->
+                        <exclude>**</exclude>
+                    </excludes>
                 </configuration>
             </plugin>
         </plugins>

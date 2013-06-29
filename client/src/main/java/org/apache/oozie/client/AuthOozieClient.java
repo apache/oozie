@@ -133,7 +133,7 @@ public class AuthOozieClient extends XOozieClient {
                                                "Could not authenticate, " + ex.getMessage(), ex);
             }
         }
-        if (useAuthFile && !currentToken.equals(readToken)) {
+        if (useAuthFile && currentToken.isSet() && !currentToken.equals(readToken)) {
             writeAuthToken(currentToken);
         }
         HttpURLConnection conn = super.createConnection(url, method);

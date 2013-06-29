@@ -89,7 +89,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set("appName", "var-app-name");
-        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);
         String jobId = sc.call();
 
         assertEquals(jobId.substring(jobId.length() - 2), "-C");
@@ -123,7 +123,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         writeToFile(appXml, appPath);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
-        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);
 
         try {
             sc.call();
@@ -152,7 +152,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         IOUtils.copyCharStream(reader, writer);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
-        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);
 
         try {
             sc.call();
@@ -168,7 +168,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         reader = IOUtils.getResourceAsReader("coord-multiple-input-instance2.xml", -1);
         writer = new FileWriter(new URI(appPath).getPath());
         IOUtils.copyCharStream(reader, writer);
-        sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+        sc = new CoordSubmitXCommand(conf);
 
         try {
             sc.call();
@@ -184,7 +184,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         reader = IOUtils.getResourceAsReader("coord-multiple-input-instance3.xml", -1);
         writer = new FileWriter(new URI(appPath).getPath());
         IOUtils.copyCharStream(reader, writer);
-        sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+        sc = new CoordSubmitXCommand(conf);
 
         try {
             sc.call();
@@ -197,7 +197,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         reader = IOUtils.getResourceAsReader("coord-multiple-input-instance4.xml", -1);
         writer = new FileWriter(new URI(appPath).getPath());
         IOUtils.copyCharStream(reader, writer);
-        sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+        sc = new CoordSubmitXCommand(conf);
 
         try {
             sc.call();
@@ -223,7 +223,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         IOUtils.copyCharStream(reader, writer);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
-        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);
 
         try {
             sc.call();
@@ -240,7 +240,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         reader = IOUtils.getResourceAsReader("coord-multiple-input-start-instance2.xml", -1);
         writer = new FileWriter(new URI(appPath).getPath());
         IOUtils.copyCharStream(reader, writer);
-        sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+        sc = new CoordSubmitXCommand(conf);
 
         try {
             sc.call();
@@ -266,7 +266,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         IOUtils.copyCharStream(reader, writer);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
-        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);
 
         try {
             sc.call();
@@ -283,7 +283,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         reader = IOUtils.getResourceAsReader("coord-multiple-input-end-instance2.xml", -1);
         writer = new FileWriter(new URI(appPath).getPath());
         IOUtils.copyCharStream(reader, writer);
-        sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+        sc = new CoordSubmitXCommand(conf);
 
         try {
             sc.call();
@@ -310,7 +310,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
 
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
-        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);
 
         try {
             sc.call();
@@ -326,7 +326,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         reader = IOUtils.getResourceAsReader("coord-multiple-output-instance2.xml", -1);
         writer = new FileWriter(new URI(appPath).getPath());
         IOUtils.copyCharStream(reader, writer);
-        sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+        sc = new CoordSubmitXCommand(conf);
 
         try {
             sc.call();
@@ -342,7 +342,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         reader = IOUtils.getResourceAsReader("coord-multiple-output-instance3.xml", -1);
         writer = new FileWriter(new URI(appPath).getPath());
         IOUtils.copyCharStream(reader, writer);
-        sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+        sc = new CoordSubmitXCommand(conf);
 
         try {
             sc.call();
@@ -358,7 +358,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         reader = IOUtils.getResourceAsReader("coord-multiple-output-instance4.xml", -1);
         writer = new FileWriter(new URI(appPath).getPath());
         IOUtils.copyCharStream(reader, writer);
-        sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+        sc = new CoordSubmitXCommand(conf);
 
         try {
             sc.call();
@@ -398,7 +398,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
 
         this.addRecordToBundleActionTable(coordJob.getId(), "COORD-NAME", 0, Job.Status.PREP);
 
-        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING", coordJob.getId(), "COORD-NAME");
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, coordJob.getId(), "COORD-NAME");
         String jobId = sc.call();
 
         assertEquals(jobId.substring(jobId.length() - 2), "-C");
@@ -441,7 +441,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
 
         this.addRecordToBundleActionTable("OOZIE-B", "COORD-NAME", 0, Job.Status.PREP);
 
-        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING", "OOZIE-B", "COORD-NAME");
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "OOZIE-B", "COORD-NAME");
         try {
             sc.call();
             fail("Exception expected because namespace is too old when submit coordinator through bundle!");
@@ -493,7 +493,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set("SLA_OFFSET", "10");
-        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);
         String jobId = sc.call();
 
         assertEquals(jobId.substring(jobId.length() - 2), "-C");
@@ -527,7 +527,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         writeToFile(appXml, appPath);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
-        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);
         String jobId = sc.call();
 
         assertEquals(jobId.substring(jobId.length() - 2), "-C");
@@ -560,7 +560,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         writeToFile(appXml, appPath);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
-        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);
         try {
             sc.call();
             fail("Exception expected if schema has errors!");
@@ -588,7 +588,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         writeToFile(appXml, appPath);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
-        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);
         String jobId = sc.call();
 
         assertEquals(jobId.substring(jobId.length() - 2), "-C");
@@ -613,7 +613,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         writeToFile(appXml, appPath);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         // conf.set(OozieClient.USER_NAME, getTestUser());
-        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);
         try {
             sc.call();
             fail("Exception expected if user.name is not set!");
@@ -639,7 +639,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         writeToFile(appXml, appPath);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
-        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);
         String jobId = sc.call();
 
         assertEquals(jobId.substring(jobId.length() - 2), "-C");
@@ -679,7 +679,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set("MY_DONE_FLAG", "complete");
-        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);
         String jobId = sc.call();
 
         assertEquals(jobId.substring(jobId.length() - 2), "-C");
@@ -719,7 +719,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set("MY_DONE_FLAG", "complete");
         conf.set("NAME", "test_app_name");
-        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);
         String jobId = sc.call();
 
         assertEquals(jobId.substring(jobId.length() - 2), "-C");
@@ -746,7 +746,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set("MINUTES", "1");
-        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);
 
         try {
             sc.call();
@@ -770,7 +770,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
 
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
-        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);
         try {
             sc.call();
             fail("Expected to catch errors due to invalid dataset initial instance");
@@ -831,7 +831,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set("appName", "var-app-name");
-        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);
         String jobId = sc.call();
 
         assertEquals(jobId.substring(jobId.length() - 2), "-C");
@@ -901,7 +901,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set("appName", "var-app-name");
-        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);
         String jobId = sc.call();
 
         assertEquals(jobId.substring(jobId.length() - 2), "-C");
@@ -942,7 +942,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
 
-        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf, "UNIT_TESTING");
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);
 
         if (withDefaults) {
             String defaults = "<configuration><property><name>startTime</name>" +

@@ -97,7 +97,7 @@ public class TestPartitionDependencyManagerEhcache extends TestPartitionDependen
         LOG.info("Time taken to insert and retrive " + numItems + " items is "
                 + (System.currentTimeMillis() - startTime));
         // timeToLiveSeconds is 1
-        Thread.sleep(1000);
+        Thread.sleep(1100);
         for (int i = 0; i < numItems; i++) {
             assertNull(pdms.getWaitingActions(new HCatURI("hcat://hcat.server.com:5080/mydb/mytbl/id=" + "" + i)));
         }
@@ -112,18 +112,18 @@ public class TestPartitionDependencyManagerEhcache extends TestPartitionDependen
             HCatURI dep = new HCatURI("hcat://hcat.server.com:5080/mydb/mytbl/id=" + i);
             pdms.addMissingDependency(dep, "" + i);
         }
-        // First 500 should have been evicted. But it is LRU and the last 200 removed is between 300 and 700.
-        for (int i = 0; i < 300; i++) {
+        // First 500 should have been evicted. But it is LRU and the last 350 removed is between 250 and 750.
+        for (int i = 0; i < 150; i++) {
             assertNull(pdms.getWaitingActions(new HCatURI("hcat://hcat.server.com:5080/mydb/mytbl/id=" + "" + i)));
         }
         int evicted = 0;
-        for (int i = 300; i < 700; i++) {
+        for (int i = 150; i < 750; i++) {
             if (pdms.getWaitingActions(new HCatURI("hcat://hcat.server.com:5080/mydb/mytbl/id=" + "" + i)) == null) {
                 evicted++;
             }
         }
-        assertEquals(200, evicted);
-        for (int i = 700; i < 1000; i++) {
+        assertEquals(350, evicted);
+        for (int i = 750; i < 1000; i++) {
             String actionID = "" + i;
             HCatURI dep = new HCatURI("hcat://hcat.server.com:5080/mydb/mytbl/id=" + actionID);
             Collection<String> waitingActions = pdms.getWaitingActions(dep);

@@ -87,7 +87,7 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
     public void testActionStartCommand() throws IOException, JPAExecutorException, CommandException {
         String actionId = new Date().getTime() + "-COORD-ActionStartCommand-C@1";
         addRecordToActionTable(actionId, 1, null);
-        new CoordActionStartXCommand(actionId, "me", "mytoken", "myjob").call();
+        new CoordActionStartXCommand(actionId, "me", "myapp", "myjob").call();
         checkCoordAction(actionId);
     }
 
@@ -104,7 +104,7 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
         String actionId = new Date().getTime() + "-COORD-ActionStartCommand-C@1";
         String wfApp = "<start to='${someParam}' />";
         addRecordToActionTable(actionId, 1, wfApp);
-        new CoordActionStartXCommand(actionId, "me", "mytoken", "myjob").call();
+        new CoordActionStartXCommand(actionId, "me", "myapp", "myjob").call();
         final JPAService jpaService = Services.get().get(JPAService.class);
         CoordinatorActionBean action = jpaService.execute(new CoordActionGetForStartJPAExecutor(actionId));
         if (action.getStatus() == CoordinatorAction.Status.SUBMITTED) {
@@ -132,7 +132,7 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
                 CoordinatorAction.Status.SUBMITTED, "coord-action-start-escape-strings.xml", 0);
 
         String actionId = action.getId();
-        new CoordActionStartXCommand(actionId, getTestUser(), "undef","myjob").call();
+        new CoordActionStartXCommand(actionId, getTestUser(), "myapp", "myjob").call();
 
         final JPAService jpaService = Services.get().get(JPAService.class);
         action = jpaService.execute(new CoordActionGetJPAExecutor(actionId));

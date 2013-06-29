@@ -130,13 +130,12 @@ public class TestCoordMaterializeTriggerService extends XDataTestCase {
         coordJob.setLastModifiedTime(new Date());
         coordJob.setUser(getTestUser());
         coordJob.setGroup(getTestGroup());
-        coordJob.setAuthToken("notoken");
 
         Configuration conf = getCoordConf(appPath);
         coordJob.setConf(XmlUtils.prettyPrint(conf).toString());
         coordJob.setJobXml(appXml);
         coordJob.setLastActionNumber(0);
-        coordJob.setFrequency(1);
+        coordJob.setFrequency("1");
         coordJob.setTimeUnit(Timeunit.DAY);
         coordJob.setExecution(Execution.FIFO);
         coordJob.setConcurrency(1);

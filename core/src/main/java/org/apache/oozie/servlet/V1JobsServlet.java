@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,9 @@
 package org.apache.oozie.servlet;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -39,6 +41,7 @@ import org.apache.oozie.DagEngineException;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.WorkflowsInfo;
+import org.apache.oozie.cli.OozieCLI;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.rest.BulkResponseImpl;
 import org.apache.oozie.client.rest.JsonTags;
@@ -54,6 +57,11 @@ import org.json.simple.JSONObject;
 public class V1JobsServlet extends BaseJobsServlet {
 
     private static final String INSTRUMENTATION_NAME = "v1jobs";
+    private static final Set<String> httpJobType = new HashSet<String>(){{
+        this.add(OozieCLI.HIVE_CMD);
+        this.add(OozieCLI.PIG_CMD);
+        this.add(OozieCLI.MR_CMD);
+    }};
 
     public V1JobsServlet() {
         super(INSTRUMENTATION_NAME);
@@ -87,7 +95,7 @@ public class V1JobsServlet extends BaseJobsServlet {
             }
         }
         else { // This is a http submission job
-            if (jobType.equals("pig") || jobType.equals("mapreduce")) {
+            if (httpJobType.contains(jobType)) {
                 json = submitHttpJob(request, conf, jobType);
             }
             else {
@@ -167,7 +175,7 @@ public class V1JobsServlet extends BaseJobsServlet {
             }
             boolean startJob = (action != null);
             String user = conf.get(OozieClient.USER_NAME);
-            DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(user, getAuthToken(request));
+            DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(user);
             String id;
             boolean dryrun = false;
             if (action != null) {
@@ -206,7 +214,7 @@ public class V1JobsServlet extends BaseJobsServlet {
             boolean startJob = (action != null);
             String user = conf.get(OozieClient.USER_NAME);
             CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(
-                    user, getAuthToken(request));
+                    user);
             String id = null;
             boolean dryrun = false;
             if (action != null) {
@@ -243,8 +251,7 @@ public class V1JobsServlet extends BaseJobsServlet {
             }
             boolean startJob = (action != null);
             String user = conf.get(OozieClient.USER_NAME);
-            BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(user,
-                    getAuthToken(request));
+            BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(user);
             String id = null;
             boolean dryrun = false;
             if (action != null) {
@@ -273,8 +280,7 @@ public class V1JobsServlet extends BaseJobsServlet {
             throws XServletException {
         JSONObject json = new JSONObject();
         try {
-            DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
-                    getAuthToken(request));
+            DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request));
             String jobId = dagEngine.getJobIdForExternalId(externalId);
             json.put(JsonTags.JOB_ID, jobId);
         }
@@ -303,14 +309,13 @@ public class V1JobsServlet extends BaseJobsServlet {
             String filter = request.getParameter(RestConstants.JOBS_FILTER_PARAM);
             String startStr = request.getParameter(RestConstants.OFFSET_PARAM);
             String lenStr = request.getParameter(RestConstants.LEN_PARAM);
-            String timeZoneId = request.getParameter(RestConstants.TIME_ZONE_PARAM) == null
+            String timeZoneId = request.getParameter(RestConstants.TIME_ZONE_PARAM) == null 
                     ? "GMT" : request.getParameter(RestConstants.TIME_ZONE_PARAM);
             int start = (startStr != null) ? Integer.parseInt(startStr) : 1;
             start = (start < 1) ? 1 : start;
             int len = (lenStr != null) ? Integer.parseInt(lenStr) : 50;
             len = (len < 1) ? 50 : len;
-            DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request),
-                    getAuthToken(request));
+            DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request));
             WorkflowsInfo jobs = dagEngine.getJobs(filter, start, len);
             List<WorkflowJobBean> jsonWorkflows = jobs.getWorkflows();
             json.put(JsonTags.WORKFLOWS_JOBS, WorkflowJobBean.toJSONArray(jsonWorkflows, timeZoneId));
@@ -337,14 +342,14 @@ public class V1JobsServlet extends BaseJobsServlet {
             String filter = request.getParameter(RestConstants.JOBS_FILTER_PARAM);
             String startStr = request.getParameter(RestConstants.OFFSET_PARAM);
             String lenStr = request.getParameter(RestConstants.LEN_PARAM);
-            String timeZoneId = request.getParameter(RestConstants.TIME_ZONE_PARAM) == null
+            String timeZoneId = request.getParameter(RestConstants.TIME_ZONE_PARAM) == null 
                     ? "GMT" : request.getParameter(RestConstants.TIME_ZONE_PARAM);
             int start = (startStr != null) ? Integer.parseInt(startStr) : 1;
             start = (start < 1) ? 1 : start;
             int len = (lenStr != null) ? Integer.parseInt(lenStr) : 50;
             len = (len < 1) ? 50 : len;
             CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(
-                    getUser(request), getAuthToken(request));
+                    getUser(request));
             CoordinatorJobInfo jobs = coordEngine.getCoordJobs(filter, start, len);
             List<CoordinatorJobBean> jsonJobs = jobs.getCoordJobs();
             json.put(JsonTags.COORDINATOR_JOBS, CoordinatorJobBean.toJSONArray(jsonJobs, timeZoneId));
@@ -366,15 +371,14 @@ public class V1JobsServlet extends BaseJobsServlet {
             String filter = request.getParameter(RestConstants.JOBS_FILTER_PARAM);
             String startStr = request.getParameter(RestConstants.OFFSET_PARAM);
             String lenStr = request.getParameter(RestConstants.LEN_PARAM);
-            String timeZoneId = request.getParameter(RestConstants.TIME_ZONE_PARAM) == null
+            String timeZoneId = request.getParameter(RestConstants.TIME_ZONE_PARAM) == null 
                     ? "GMT" : request.getParameter(RestConstants.TIME_ZONE_PARAM);
             int start = (startStr != null) ? Integer.parseInt(startStr) : 1;
             start = (start < 1) ? 1 : start;
             int len = (lenStr != null) ? Integer.parseInt(lenStr) : 50;
             len = (len < 1) ? 50 : len;
 
-            BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request),
-                    getAuthToken(request));
+            BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request));
             BundleJobInfo jobs = bundleEngine.getBundleJobs(filter, start, len);
             List<BundleJobBean> jsonJobs = jobs.getBundleJobs();
 
@@ -404,8 +408,7 @@ public class V1JobsServlet extends BaseJobsServlet {
             int len = (lenStr != null) ? Integer.parseInt(lenStr) : 50;
             len = (len < 1) ? 50 : len;
 
-            BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request),
-                    getAuthToken(request));
+            BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request));
             BulkResponseInfo bulkResponse = bundleEngine.getBulkJobs(bulkFilter, start, len);
             List<BulkResponseImpl> responsesToJson = bulkResponse.getResponses();
 
@@ -430,7 +433,7 @@ public class V1JobsServlet extends BaseJobsServlet {
 
         try {
             String user = conf.get(OozieClient.USER_NAME);
-            DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(user, getAuthToken(request));
+            DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(user);
             String id = dagEngine.submitHttpJob(conf, jobType);
             json.put(JsonTags.JOB_ID, id);
         }

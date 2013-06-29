@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -98,6 +98,8 @@ public interface JsonTags {
     public static final String COORDINATOR_JOB_CONSOLE_URL = "consoleUrl";
     public static final String COORDINATOR_JOB_ACTIONS = "actions";
     public static final String COORDINATOR_JOB_USER = "user";
+    public static final String COORDINATOR_JOB_NUM_ACTION = "total";
+
     @Deprecated
     public static final String COORDINATOR_JOB_GROUP = "group";
     public static final String COORDINATOR_JOB_ACL = "acl";
@@ -144,6 +146,23 @@ public interface JsonTags {
     public static final String BUNDLE_JOB_ACL = "acl";
     public static final String BUNDLE_JOB_EXTERNAL_ID = "bundleExternalId";
     public static final String BUNDLE_COORDINATOR_JOBS = "bundleCoordJobs";
+
+    public static final String SLA_SUMMARY_LIST = "slaSummaryList";
+    public static final String SLA_SUMMARY_ID = "id";
+    public static final String SLA_SUMMARY_PARENT_ID = "parentId";
+    public static final String SLA_SUMMARY_APP_NAME = "appName";
+    public static final String SLA_SUMMARY_APP_TYPE = "appType";
+    public static final String SLA_SUMMARY_USER = "user";
+    public static final String SLA_SUMMARY_NOMINAL_TIME = "nominalTime";
+    public static final String SLA_SUMMARY_EXPECTED_START = "expectedStart";
+    public static final String SLA_SUMMARY_ACTUAL_START = "actualStart";
+    public static final String SLA_SUMMARY_EXPECTED_END = "expectedEnd";
+    public static final String SLA_SUMMARY_ACTUAL_END = "actualEnd";
+    public static final String SLA_SUMMARY_EXPECTED_DURATION = "expectedDuration";
+    public static final String SLA_SUMMARY_ACTUAL_DURATION = "actualDuration";
+    public static final String SLA_SUMMARY_JOB_STATUS = "jobStatus";
+    public static final String SLA_SUMMARY_SLA_STATUS = "slaStatus";
+    public static final String SLA_SUMMARY_LAST_MODIFIED = "lastModified";
 
     public static final String TO_STRING = "toString";
 
@@ -195,5 +214,11 @@ public interface JsonTags {
     public static final String AVAILABLE_TIME_ZONES = "available-timezones";
     public static final String TIME_ZOME_DISPLAY_NAME = "timezoneDisplayName";
     public static final String TIME_ZONE_ID = "timezoneId";
+
+    public static final String JMS_TOPIC_PATTERN = "jmsTopicPattern";
+    public static final String JMS_JNDI_PROPERTIES = "jmsJNDIProps";
+    public static final String JMS_TOPIC_PREFIX = "jmsTopicPrefix";
+
+    public static final String JMS_TOPIC_NAME = "jmsTopicName";
 
 }

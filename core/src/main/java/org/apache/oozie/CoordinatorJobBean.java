@@ -39,7 +39,7 @@ import org.apache.openjpa.persistence.jdbc.Index;
 
 @Entity
 @NamedQueries( {
-        @NamedQuery(name = "UPDATE_COORD_JOB", query = "update CoordinatorJobBean w set w.appName = :appName, w.appPath = :appPath, w.concurrency = :concurrency, w.conf = :conf, w.externalId = :externalId, w.frequency = :frequency, w.lastActionNumber = :lastActionNumber, w.timeOut = :timeOut, w.timeZone = :timeZone, w.authToken = :authToken, w.createdTimestamp = :createdTime, w.endTimestamp = :endTime, w.execution = :execution, w.jobXml = :jobXml, w.lastActionTimestamp = :lastAction, w.lastModifiedTimestamp = :lastModifiedTime, w.nextMaterializedTimestamp = :nextMaterializedTime, w.origJobXml = :origJobXml, w.slaXml=:slaXml, w.startTimestamp = :startTime, w.status = :status, w.timeUnitStr = :timeUnit where w.id = :id"),
+        @NamedQuery(name = "UPDATE_COORD_JOB", query = "update CoordinatorJobBean w set w.appName = :appName, w.appPath = :appPath,w.concurrency = :concurrency, w.conf = :conf, w.externalId = :externalId, w.frequency = :frequency, w.lastActionNumber = :lastActionNumber, w.timeOut = :timeOut, w.timeZone = :timeZone, w.createdTimestamp = :createdTime, w.endTimestamp = :endTime, w.execution = :execution, w.jobXml = :jobXml, w.lastActionTimestamp = :lastAction, w.lastModifiedTimestamp = :lastModifiedTime, w.nextMaterializedTimestamp = :nextMaterializedTime, w.origJobXml = :origJobXml, w.slaXml=:slaXml, w.startTimestamp = :startTime, w.status = :status, w.timeUnitStr = :timeUnit where w.id = :id"),
 
         @NamedQuery(name = "UPDATE_COORD_JOB_STATUS", query = "update CoordinatorJobBean w set w.status = :status, w.lastModifiedTimestamp = :lastModifiedTime where w.id = :id"),
 
@@ -63,22 +63,29 @@ import org.apache.openjpa.persistence.jdbc.Index;
 
         @NamedQuery(name = "GET_COMPLETED_COORD_JOBS_OLDER_THAN_STATUS", query = "select OBJECT(w) from CoordinatorJobBean w where ( w.status = 'SUCCEEDED' OR w.status = 'FAILED' or w.status = 'KILLED') AND w.lastModifiedTimestamp <= :lastModTime order by w.lastModifiedTimestamp"),
 
+        @NamedQuery(name = "GET_COMPLETED_COORD_JOBS_WITH_NO_PARENT_OLDER_THAN_STATUS", query = "select w.id from CoordinatorJobBean w where ( w.status = 'SUCCEEDED' OR w.status = 'FAILED' or w.status = 'KILLED' or w.status = 'DONEWITHERROR') AND w.lastModifiedTimestamp <= :lastModTime and w.bundleId is null order by w.lastModifiedTimestamp"),
+
         @NamedQuery(name = "GET_COORD_JOBS_UNPAUSED", query = "select OBJECT(w) from CoordinatorJobBean w where w.status = 'RUNNING' OR w.status = 'RUNNINGWITHERROR' OR w.status = 'PREP' order by w.lastModifiedTimestamp"),
 
         @NamedQuery(name = "GET_COORD_JOBS_PAUSED", query = "select OBJECT(w) from CoordinatorJobBean w where w.status = 'PAUSED' OR w.status = 'PAUSEDWITHERROR' OR w.status = 'PREPPAUSED' order by w.lastModifiedTimestamp"),
 
-        @NamedQuery(name = "GET_COORD_JOBS_FOR_BUNDLE", query = "select OBJECT(w) from CoordinatorJobBean w where w.bundleId = :bundleId order by w.lastModifiedTimestamp") })
+        @NamedQuery(name = "GET_COORD_JOBS_FOR_BUNDLE", query = "select OBJECT(w) from CoordinatorJobBean w where w.bundleId = :bundleId order by w.lastModifiedTimestamp"),
+
+        @NamedQuery(name = "GET_COORD_JOBS_WITH_PARENT_ID", query = "select w.id from CoordinatorJobBean w where w.bundleId = :parentId"),
+
+        @NamedQuery(name = "GET_COORD_COUNT_WITH_PARENT_ID_NOT_READY_FOR_PURGE", query = "select count(w) from CoordinatorJobBean w where w.bundleId = :parentId and (w.status NOT IN ('SUCCEEDED', 'FAILED', 'KILLED', 'DONEWITHERROR') OR w.lastModifiedTimestamp >= :lastModTime)"),
+
+        @NamedQuery(name = "GET_COORD_JOB_FOR_USER_APPNAME", query = "select w.user, w.appName from CoordinatorJobBean w where w.id = :id"),
+
+        @NamedQuery(name = "GET_COORD_JOB_FOR_USER", query = "select w.user from CoordinatorJobBean w where w.id = :id")
+
+})
 public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
 
     @Basic
     @Index
     @Column(name = "status")
     private String status = CoordinatorJob.Status.PREP.toString();
-
-    @Basic
-    @Column(name = "auth_token")
-    @Lob
-    private String authToken = null;
 
     @Basic
     @Column(name = "start_time")
@@ -131,6 +138,7 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
     @Column(name = "orig_job_xml")
     @Lob
     private String origJobXml = null;
+
 
     @Column(name = "sla_xml")
     @Lob
@@ -315,15 +323,6 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
     }
 
     /**
-     * Set auth token
-     *
-     * @param authToken auth token
-     */
-    public void setAuthToken(String authToken) {
-        this.authToken = authToken;
-    }
-
-    /**
      * Set pending to true
      */
     @Override
@@ -406,7 +405,7 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
         WritableUtils.writeStr(dataOutput, getId());
         WritableUtils.writeStr(dataOutput, getConf());
         WritableUtils.writeStr(dataOutput, getStatusStr());
-        dataOutput.writeInt(getFrequency());
+        WritableUtils.writeStr(dataOutput, getFrequency());
         WritableUtils.writeStr(dataOutput, getTimeUnit().toString());
         WritableUtils.writeStr(dataOutput, getTimeZone());
         dataOutput.writeInt(getConcurrency());
@@ -445,11 +444,11 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
         setId(WritableUtils.readStr(dataInput));
         setConf(WritableUtils.readStr(dataInput));
         setStatus(CoordinatorJob.Status.valueOf(WritableUtils.readStr(dataInput)));
-        setFrequency(dataInput.readInt());
+        setFrequency(WritableUtils.readStr(dataInput));
         setTimeUnit(CoordinatorJob.Timeunit.valueOf(WritableUtils.readStr(dataInput)));
         setTimeZone(WritableUtils.readStr(dataInput));
         setConcurrency(dataInput.readInt());
-        setExecutionOrder(Execution.valueOf(WritableUtils.readStr(dataInput)));
+        setExecution(Execution.valueOf(WritableUtils.readStr(dataInput)));
 
         long d = dataInput.readLong();
         if (d != -1) {
@@ -712,15 +711,6 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
      */
     public Timestamp getCreatedTimestamp() {
         return createdTimestamp;
-    }
-
-    /**
-     * Get auth token
-     *
-     * @return auth token
-     */
-    public String getAuthToken() {
-        return this.authToken;
     }
 
 }

@@ -23,11 +23,8 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 import javax.persistence.EntityManager;
-import javax.persistence.Query;
-
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.SLAEventBean;
-import org.apache.oozie.command.CommandException;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.SLAEventsGetForSeqIdJPAExecutor;
 import org.apache.oozie.service.InstrumentationService;
@@ -36,6 +33,7 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.ParamChecker;
 
+@Deprecated
 public class SLAStore extends Store {
     private EntityManager entityManager;
     private static final String INSTR_GROUP = "db";

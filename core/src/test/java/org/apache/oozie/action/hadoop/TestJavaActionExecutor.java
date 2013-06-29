@@ -84,26 +84,57 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         IOUtils.copyStream(is, os);
     }
 
-    public void testLauncherJar() throws Exception {
-        JavaActionExecutor ae = new JavaActionExecutor();
-        Path jar = new Path(ae.getOozieRuntimeDir(), ae.getLauncherJarName());
-        assertTrue(new File(jar.toString()).exists());
+    public void testSetupMethodsWithLauncherJar() throws Exception {
+        String defaultVal = Services.get().getConf().get("oozie.action.ship.launcher.jar");
+        try {
+            Services.get().getConf().set("oozie.action.ship.launcher.jar", "true");
+            _testSetupMethods(true);
+        }
+        finally {
+            // back to default
+            if (defaultVal != null) {
+                Services.get().getConf().set("oozie.action.ship.launcher.jar", defaultVal);
+            }
+        }
+     }
+
+    public void testSetupMethodsWithoutLauncherJar() throws Exception {
+        String defaultVal = Services.get().getConf().get("oozie.action.ship.launcher.jar");
+        try {
+            Services.get().getConf().set("oozie.action.ship.launcher.jar", "false");
+            _testSetupMethods(false);
+        }
+        finally {
+            // back to default
+            if (defaultVal != null) {
+                Services.get().getConf().set("oozie.action.ship.launcher.jar", defaultVal);
+            }
+        }
     }
 
-    public void testSetupMethods() throws Exception {
+    public void _testSetupMethods(boolean launcherJarShouldExist) throws Exception {
         JavaActionExecutor ae = new JavaActionExecutor();
+        Path jar = new Path(ae.getOozieRuntimeDir(), ae.getLauncherJarName());
+        File fJar = new File(jar.toString());
+        fJar.delete();
+        assertFalse(fJar.exists());
+        ae.createLauncherJar();
+        assertEquals(launcherJarShouldExist, fJar.exists());
+
         assertEquals("java", ae.getType());
         assertEquals("java-launcher.jar", ae.getLauncherJarName());
-        List<Class> classes = new ArrayList<Class>();
-        classes.add(LauncherMapper.class);
-        classes.add(LauncherSecurityManager.class);
-        classes.add(LauncherException.class);
-        classes.add(LauncherMainException.class);
-        classes.add(PrepareActionsDriver.class);
-        classes.addAll(Services.get().get(URIHandlerService.class).getClassesForLauncher());
-        classes.add(ActionStats.class);
-        classes.add(ActionType.class);
-        assertEquals(classes, ae.getLauncherClasses());
+        if (launcherJarShouldExist) {
+            List<Class> classes = new ArrayList<Class>();
+            classes.add(LauncherMapper.class);
+            classes.add(LauncherSecurityManager.class);
+            classes.add(LauncherException.class);
+            classes.add(LauncherMainException.class);
+            classes.add(PrepareActionsDriver.class);
+            classes.addAll(Services.get().get(URIHandlerService.class).getClassesForLauncher());
+            classes.add(ActionStats.class);
+            classes.add(ActionType.class);
+            assertEquals(classes, ae.getLauncherClasses());
+        }
 
         Configuration conf = new XConfiguration();
         conf.set("user.name", "a");
@@ -235,7 +266,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertFalse(getFileSystem().exists(context.getActionDir()));
         ae.prepareActionDir(getFileSystem(), context);
         assertTrue(getFileSystem().exists(context.getActionDir()));
-        assertTrue(getFileSystem().exists(new Path(context.getActionDir(), ae.getLauncherJarName())));
+        assertEquals(launcherJarShouldExist, getFileSystem().exists(new Path(context.getActionDir(), ae.getLauncherJarName())));
 
         ae.cleanUpActionDir(getFileSystem(), context);
         assertFalse(getFileSystem().exists(context.getActionDir()));
@@ -517,7 +548,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
             }
         });
         assertTrue(runningJob.isSuccessful());
-        assertFalse(LauncherMapper.isMainSuccessful(runningJob));
+        assertFalse(LauncherMapperHelper.isMainSuccessful(runningJob));
         ActionExecutor ae = new JavaActionExecutor();
         ae.check(context, context.getAction());
         assertTrue(ae.isCompleted(context.getAction().getExternalStatus()));
@@ -546,7 +577,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
             }
         });
         assertTrue(runningJob.isSuccessful());
-        assertFalse(LauncherMapper.isMainSuccessful(runningJob));
+        assertFalse(LauncherMapperHelper.isMainSuccessful(runningJob));
         ActionExecutor ae = new JavaActionExecutor();
         ae.check(context, context.getAction());
         assertTrue(ae.isCompleted(context.getAction().getExternalStatus()));
@@ -597,7 +628,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
             public boolean evaluate() throws Exception {
                 JavaActionExecutor ae = new JavaActionExecutor();
                 Configuration conf = ae.createBaseHadoopConf(context, XmlUtils.parseXml(actionXml));
-                return LauncherMapper.getRecoveryId(conf, context.getActionDir(), context.getRecoveryId()) != null;
+                return LauncherMapperHelper.getRecoveryId(conf, context.getActionDir(), context.getRecoveryId()) != null;
             }
         });
 
@@ -958,7 +989,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
     private WorkflowJobBean createWorkflow(WorkflowApp app, Configuration conf, String authToken) throws Exception {
         WorkflowAppService wps = Services.get().get(WorkflowAppService.class);
-        Configuration protoActionConf = wps.createProtoActionConf(conf, authToken, true);
+        Configuration protoActionConf = wps.createProtoActionConf(conf, true);
         WorkflowLib workflowLib = Services.get().get(WorkflowStoreService.class).getWorkflowLibWithNoDB();
         WorkflowInstance wfInstance;
         wfInstance = workflowLib.createInstance(app, conf);
@@ -974,7 +1005,6 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         workflow.setRun(0);
         workflow.setUser(conf.get(OozieClient.USER_NAME));
         workflow.setGroup(conf.get(OozieClient.GROUP_NAME));
-        workflow.setAuthToken(authToken);
         workflow.setWorkflowInstance(wfInstance);
         return workflow;
     }
@@ -1439,5 +1469,166 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertEquals("v2", conf.get("p2"));
         assertEquals("v3b", conf.get("p3"));
         assertEquals("v4", conf.get("p4"));
+    }
+
+    public void testInjectLauncherUseUberMode() throws Exception {
+        // TODO: Delete these two lines once uber mode is set back to the default (OOZIE-1385)
+        assertFalse(Services.get().getConf().getBoolean("oozie.action.launcher.mapreduce.job.ubertask.enable", true));
+        Services.get().getConf().setBoolean("oozie.action.launcher.mapreduce.job.ubertask.enable", true);
+
+        // default -- should set to true
+        JavaActionExecutor jae = new JavaActionExecutor();
+        Configuration conf = new Configuration(false);
+        assertNull(conf.get("mapreduce.job.ubertask.enable"));
+        jae.injectLauncherUseUberMode(conf);
+        assertEquals("true", conf.get("mapreduce.job.ubertask.enable"));
+
+        // action conf set to true -- should keep at true
+        conf = new Configuration(false);
+        assertNull(conf.get("mapreduce.job.ubertask.enable"));
+        conf.setBoolean("mapreduce.job.ubertask.enable", true);
+        jae.injectLauncherUseUberMode(conf);
+        assertEquals("true", conf.get("mapreduce.job.ubertask.enable"));
+
+        // action conf set to false -- should keep at false
+        conf = new Configuration(false);
+        assertNull(conf.get("mapreduce.job.ubertask.enable"));
+        conf.setBoolean("mapreduce.job.ubertask.enable", false);
+        jae.injectLauncherUseUberMode(conf);
+        assertEquals("false", conf.get("mapreduce.job.ubertask.enable"));
+
+        // disable at oozie-site level (default is to be enabled) -- redo above tests
+        Services.get().getConf().setBoolean("oozie.action.launcher.mapreduce.job.ubertask.enable", false);
+
+        // default -- should not set
+        conf = new Configuration(false);
+        assertNull(conf.get("mapreduce.job.ubertask.enable"));
+        jae.injectLauncherUseUberMode(conf);
+        assertNull(conf.get("mapreduce.job.ubertask.enable"));
+
+        // action conf set to true -- should keep at true
+        conf = new Configuration(false);
+        assertNull(conf.get("mapreduce.job.ubertask.enable"));
+        conf.setBoolean("mapreduce.job.ubertask.enable", true);
+        jae.injectLauncherUseUberMode(conf);
+        assertEquals("true", conf.get("mapreduce.job.ubertask.enable"));
+
+        // action conf set to false -- should keep at false
+        conf = new Configuration(false);
+        assertNull(conf.get("mapreduce.job.ubertask.enable"));
+        conf.setBoolean("mapreduce.job.ubertask.enable", false);
+        jae.injectLauncherUseUberMode(conf);
+        assertEquals("false", conf.get("mapreduce.job.ubertask.enable"));
+    }
+
+    public void testAddToCache() throws Exception {
+        JavaActionExecutor ae = new JavaActionExecutor();
+        Configuration conf = new XConfiguration();
+
+        Path appPath = new Path(getFsTestCaseDir(), "wf");
+        URI appUri = appPath.toUri();
+
+        // test archive without fragment
+        Path archivePath = new Path("test.jar");
+        Path archiveFullPath = new Path(appPath, archivePath);
+        ae.addToCache(conf, appPath, archiveFullPath.toString(), true);
+        assertTrue(conf.get("mapred.cache.archives").contains(archiveFullPath.toString()));
+        assertTrue(DistributedCache.getSymlink(conf));
+
+        // test archive with fragment
+        Path archiveFragmentPath = new Path("test.jar#a.jar");
+        Path archiveFragmentFullPath = new Path(appPath, archiveFragmentPath);
+        conf.clear();
+        ae.addToCache(conf, appPath, archiveFragmentFullPath.toString(), true);
+        assertTrue(conf.get("mapred.cache.archives").contains(archiveFragmentFullPath.toString()));
+        assertTrue(DistributedCache.getSymlink(conf));
+
+        // test .so without fragment
+        Path appSoPath = new Path("lib/a.so");
+        Path appSoFullPath = new Path(appPath, appSoPath);
+        conf.clear();
+        ae.addToCache(conf, appPath, appSoFullPath.toString(), false);
+        assertTrue(conf.get("mapred.cache.files").contains(appSoFullPath.toString()));
+        assertTrue(DistributedCache.getSymlink(conf));
+
+        // test .so with fragment
+        Path appSoFragmentPath = new Path("lib/a.so#a.so");
+        Path appSoFragmentFullPath = new Path(appPath, appSoFragmentPath);
+        conf.clear();
+        ae.addToCache(conf, appPath, appSoFragmentFullPath.toString(), false);
+        assertTrue(conf.get("mapred.cache.files").contains(appSoFragmentFullPath.toString()));
+        assertTrue(DistributedCache.getSymlink(conf));
+
+        // test .jar without fragment
+        Path appJarPath = new Path("lib/a.jar");
+        Path appJarFullPath = new Path(appPath, appJarPath);
+        conf.clear();
+        conf.set(WorkflowAppService.HADOOP_USER, getTestUser());
+        ae.addToCache(conf, appPath, appJarFullPath.toString(), false);
+        assertTrue(conf.get("mapred.cache.files").contains(appJarFullPath.toString()));
+        assertTrue(DistributedCache.getSymlink(conf));
+
+        // test .jar with fragment
+        Path appJarFragmentPath = new Path("lib/a.jar#a.jar");
+        Path appJarFragmentFullPath = new Path(appPath, appJarFragmentPath);
+        conf.clear();
+        conf.set(WorkflowAppService.HADOOP_USER, getTestUser());
+        ae.addToCache(conf, appPath, appJarFragmentFullPath.toString(), false);
+        assertTrue(conf.get("mapred.cache.files").contains(appJarFragmentFullPath.toString()));
+        assertTrue(DistributedCache.getSymlink(conf));
+
+        // test regular file without fragment
+        Path appFilePath = new Path("lib/a.txt");
+        Path appFileFullPath = new Path(appPath, appFilePath);
+        conf.clear();
+        ae.addToCache(conf, appPath, appFileFullPath.toString(), false);
+        assertTrue(conf.get("mapred.cache.files").contains(appFileFullPath.toString()));
+        assertTrue(DistributedCache.getSymlink(conf));
+
+        // test regular file with fragment
+        Path appFileFragmentPath = new Path("lib/a.txt#a.txt");
+        Path appFileFragmentFullPath = new Path(appPath, appFileFragmentPath);
+        conf.clear();
+        ae.addToCache(conf, appPath, appFileFragmentFullPath.toString(), false);
+        assertTrue(conf.get("mapred.cache.files").contains(appFileFragmentFullPath.toString()));
+        assertTrue(DistributedCache.getSymlink(conf));
+
+        // test path starting with "/" for archive
+        Path testPath = new Path("/tmp/testpath/a.jar#a.jar");
+        conf.clear();
+        ae.addToCache(conf, appPath, testPath.toString(), true);
+        assertTrue(conf.get("mapred.cache.archives").contains(testPath.toString()));
+        assertTrue(DistributedCache.getSymlink(conf));
+
+        // test path starting with "/" for cache.file
+        conf.clear();
+        ae.addToCache(conf, appPath, testPath.toString(), false);
+        assertTrue(conf.get("mapred.cache.files").contains(testPath.toString()));
+        assertTrue(DistributedCache.getSymlink(conf));
+
+        // test absolute path for archive
+        Path testAbsolutePath = new Path("hftp://namenode.test.com:8020/tmp/testpath/a.jar#a.jar");
+        conf.clear();
+        ae.addToCache(conf, appPath, testAbsolutePath.toString(), true);
+        assertTrue(conf.get("mapred.cache.archives").contains(testAbsolutePath.toString()));
+        assertTrue(DistributedCache.getSymlink(conf));
+
+        // test absolute path for cache files
+        conf.clear();
+        ae.addToCache(conf, appPath, testAbsolutePath.toString(), false);
+        assertTrue(conf.get("mapred.cache.files").contains(testAbsolutePath.toString()));
+        assertTrue(DistributedCache.getSymlink(conf));
+
+        // test relative path for archive
+        conf.clear();
+        ae.addToCache(conf, appPath, "lib/a.jar#a.jar", true);
+        assertTrue(conf.get("mapred.cache.archives").contains(appUri.getPath() + "/lib/a.jar#a.jar"));
+        assertTrue(DistributedCache.getSymlink(conf));
+
+        // test relative path for cache files
+        conf.clear();
+        ae.addToCache(conf, appPath, "lib/a.jar#a.jar", false);
+        assertTrue(conf.get("mapred.cache.files").contains(appUri.getPath() + "/lib/a.jar#a.jar"));
+        assertTrue(DistributedCache.getSymlink(conf));
     }
 }
