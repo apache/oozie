@@ -97,7 +97,6 @@
             <groupId>xerces</groupId>
             <artifactId>xercesImpl</artifactId>
             <scope>compile</scope>
-            <version>${xerces.version}</version>
         </dependency>
     </dependencies>
 
