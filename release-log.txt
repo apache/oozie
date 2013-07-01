@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1440 Build fails in certain environments due to xerces OpenJPA issue (mackrorysd via rkanter)
 OOZIE-1379 Generate SLA end_miss event only after confirming against persistent store (mona)
 OOZIE-1439 Job materialization happening even after coordinator is supposed to be killed (virag)
 OOZIE-1438 parentID is null in job event message of subworkflow action (ryota)
