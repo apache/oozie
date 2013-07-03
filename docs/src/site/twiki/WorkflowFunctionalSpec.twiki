@@ -14,6 +14,9 @@ Map/Reduce and Pig jobs.
 %TOC%
 
 ---++ Changelog
+---+++!! 2013JUL03
+
+   * #Appendix A, Added new workflow schema 0.5 and SLA schema 0.2
 ---+++!! 2012AUG30
 
    * #4.2.2 Added two EL functions (replaceAll and appendAll)
