@@ -17,23 +17,32 @@
  */
 package org.apache.oozie.command.coord;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
+import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.CoordinatorJob.Execution;
 import org.apache.oozie.client.CoordinatorJob.Timeunit;
+import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.executor.jpa.CoordJobGetActionByActionNumberJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.executor.jpa.sla.SLACalculationInsertUpdateJPAExecutor;
+import org.apache.oozie.executor.jpa.sla.SLARegistrationGetJPAExecutor;
+import org.apache.oozie.executor.jpa.sla.SLASummaryGetJPAExecutor;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.StatusTransitService;
+import org.apache.oozie.sla.SLARegistrationBean;
+import org.apache.oozie.sla.SLASummaryBean;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
@@ -311,13 +320,40 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         String pauseTimeChangeStr = "pausetime=" + DateUtils.formatDateOozieTZ(pauseTime);
         final CoordinatorJobBean job = addRecordToCoordJobTableForPauseTimeTest(CoordinatorJob.Status.RUNNING, start,
                 end, end, true, false, 4);
-        addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
-        addRecordToCoordActionTable(job.getId(), 2, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
-        addRecordToCoordActionTable(job.getId(), 3, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 0);
-        addRecordToCoordActionTable(job.getId(), 4, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 0);
+        CoordinatorActionBean ca1 = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
+                "coord-action-get.xml", 0);
+        CoordinatorActionBean ca2 = addRecordToCoordActionTable(job.getId(), 2, CoordinatorAction.Status.SUCCEEDED,
+                "coord-action-get.xml", 0);
+        CoordinatorActionBean ca3 = addRecordToCoordActionTable(job.getId(), 3, CoordinatorAction.Status.WAITING,
+                "coord-action-get.xml", 0);
+        CoordinatorActionBean ca4 = addRecordToCoordActionTable(job.getId(), 4, CoordinatorAction.Status.WAITING,
+                "coord-action-get.xml", 0);
+
+        SLARegistrationBean slaRegBean1 = new SLARegistrationBean();
+        slaRegBean1.setId(ca1.getId());
+        SLARegistrationBean slaRegBean2 = new SLARegistrationBean();
+        slaRegBean2.setId(ca2.getId());
+        SLARegistrationBean slaRegBean3 = new SLARegistrationBean();
+        slaRegBean3.setId(ca3.getId());
+        SLARegistrationBean slaRegBean4 = new SLARegistrationBean();
+        slaRegBean4.setId(ca4.getId());
+        SLASummaryBean slaSummaryBean1 = new SLASummaryBean();
+        slaSummaryBean1.setId(ca1.getId());
+        SLASummaryBean slaSummaryBean3 = new SLASummaryBean();
+        slaSummaryBean3.setId(ca3.getId());
+        List<JsonBean> insertList = new ArrayList<JsonBean>();
+        insertList.add(slaRegBean1);
+        insertList.add(slaRegBean2);
+        insertList.add(slaRegBean3);
+        insertList.add(slaRegBean4);
+        insertList.add(slaSummaryBean1);
+        insertList.add(slaSummaryBean3);
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        jpaService.execute(new SLACalculationInsertUpdateJPAExecutor(insertList, null));
 
         new CoordChangeXCommand(job.getId(), pauseTimeChangeStr).call();
-        JPAService jpaService = Services.get().get(JPAService.class);
+
         CoordJobGetJPAExecutor coordGetCmd = new CoordJobGetJPAExecutor(job.getId());
         CoordinatorJobBean coordJob = jpaService.execute(coordGetCmd);
         assertEquals(DateUtils.formatDateOozieTZ(coordJob.getPauseTime()), DateUtils.formatDateOozieTZ(pauseTime));
@@ -341,6 +377,18 @@ public class TestCoordChangeXCommand extends XDataTestCase {
             jpae.printStackTrace();
         }
 
+        slaRegBean1 = jpaService.execute(new SLARegistrationGetJPAExecutor(slaRegBean1.getId()));
+        assertNotNull(slaRegBean1);
+        slaRegBean2 = jpaService.execute(new SLARegistrationGetJPAExecutor(slaRegBean2.getId()));
+        assertNotNull(slaRegBean2);
+        slaRegBean3 = jpaService.execute(new SLARegistrationGetJPAExecutor(slaRegBean3.getId()));
+        assertNull(slaRegBean3);
+        slaRegBean4 = jpaService.execute(new SLARegistrationGetJPAExecutor(slaRegBean4.getId()));
+        assertNull(slaRegBean4);
+        slaSummaryBean3 = jpaService.execute(new SLASummaryGetJPAExecutor(slaSummaryBean3.getId()));
+        assertNull(slaSummaryBean3);
+        slaSummaryBean1 = jpaService.execute(new SLASummaryGetJPAExecutor(slaSummaryBean1.getId()));
+        assertNotNull(slaSummaryBean1);
     }
 
     //Checks that RUNNING coord action is not deleted

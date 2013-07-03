@@ -101,6 +101,9 @@ public class CoordJobGetActionsNotCompletedJPAExecutor implements JPAExecutor<Li
         if (arr[6] != null){
             bean.setCreatedTime(DateUtils.toDate((Timestamp) arr[6]));
         }
+        if (arr[7] != null) {
+            bean.setJobId((String) arr[7]);
+        }
         return bean;
     }
 

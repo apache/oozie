@@ -44,9 +44,11 @@ import org.apache.oozie.executor.jpa.CoordJobGetActionByActionNumberJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.sla.SLARegistrationGetJPAExecutor;
+import org.apache.oozie.executor.jpa.sla.SLASummaryGetJPAExecutor;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.sla.SLARegistrationBean;
+import org.apache.oozie.sla.SLASummaryBean;
 import org.apache.oozie.sla.service.SLAService;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.JobUtils;
@@ -262,11 +264,17 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
             CoordinatorActionBean bean = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
             // delete SLA registration entry (if any) for action
             if (SLAService.isEnabled()) {
-                Services.get().get(SLAService.class).removeRegistration(jobId);
+                Services.get().get(SLAService.class).removeRegistration(actionId);
             }
-            SLARegistrationBean slaReg = jpaService.execute(new SLARegistrationGetJPAExecutor(jobId));
+            SLARegistrationBean slaReg = jpaService.execute(new SLARegistrationGetJPAExecutor(actionId));
             if (slaReg != null) {
+                LOG.debug("Deleting registration bean corresponding to action " + slaReg.getId());
                 deleteList.add(slaReg);
+            }
+            SLASummaryBean slaSummaryBean = jpaService.execute(new SLASummaryGetJPAExecutor(actionId));
+            if (slaSummaryBean != null) {
+                LOG.debug("Deleting summary bean corresponding to action " + slaSummaryBean.getId());
+                deleteList.add(slaSummaryBean);
             }
             deleteList.add(bean);
         }

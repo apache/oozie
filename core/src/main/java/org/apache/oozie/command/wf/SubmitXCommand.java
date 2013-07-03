@@ -75,16 +75,27 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
 
     private Configuration conf;
     private List<JsonBean> insertList = new ArrayList<JsonBean>();
+    private String parentId;
 
     /**
      * Constructor to create the workflow Submit Command.
      *
      * @param conf : Configuration for workflow job
-     * @param authToken : To be used for authentication
      */
     public SubmitXCommand(Configuration conf) {
         super("submit", "submit", 1);
         this.conf = ParamChecker.notNull(conf, "conf");
+    }
+
+    /**
+     * Constructor for submitting wf through coordinator
+     *
+     * @param conf : Configuration for workflow job
+     * @param parentId: the coord action id
+     */
+    public SubmitXCommand(Configuration conf, String parentId) {
+        this(conf);
+        this.parentId = parentId;
     }
 
     /**
@@ -191,6 +202,10 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
             // Set parent id if it doesn't already have one (for subworkflows)
             if (workflow.getParentId() == null) {
                 workflow.setParentId(conf.get(SubWorkflowActionExecutor.PARENT_ID));
+            }
+            // Set to coord action Id if workflow submitted through coordinator
+            if (workflow.getParentId() == null) {
+                workflow.setParentId(parentId);
             }
 
             LogUtils.setLogInfo(workflow, logInfo);

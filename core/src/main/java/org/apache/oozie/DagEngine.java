@@ -127,9 +127,9 @@ public class DagEngine extends BaseEngine {
         validateSubmitConfiguration(conf);
         try {
             String jobId;
-            SubmitXCommand submit = new SubmitXCommand(conf);
+            SubmitXCommand submit = new SubmitXCommand(conf, parentId);
             jobId = submit.call();
-            new StartXCommand(jobId, parentId).call();
+            start(jobId);
             return jobId;
         }
         catch (CommandException ex) {
