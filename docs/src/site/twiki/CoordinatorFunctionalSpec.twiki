@@ -13,7 +13,7 @@ The goal of this document is to define a coordinator engine system specialized i
 ---++ Changelog
 ---+++!! 03/JUL/2013
 
-   * #Appendix A, Added new coordinator schema 0.4 and changed schemas ordering to newest first
+   * #Appendix A, Added new coordinator schema 0.4, sla schema 0.2 and changed schemas ordering to newest first
 ---+++!! 07/JAN/2013
 
    * #6.8 Added section on new EL functions for datasets defined with HCatalog
