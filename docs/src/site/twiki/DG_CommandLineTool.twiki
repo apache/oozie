@@ -82,7 +82,7 @@ usage:
 .
       oozie validate <ARGS> : validate a workflow XML file
 .
-      oozie sla <OPTIONS> : sla operations (Supported in Oozie-2.0 or later)
+      oozie sla <OPTIONS> : sla operations (Deprecated as of Oozie 4.0)
                 -auth <arg>           select authentication type [SIMPLE|KERBEROS]
                 -len <arg>            number of results (default '100', max limited by oozie server setting which defaults to '1000')
                 -offset <arg>         start offset (default '0')
@@ -782,11 +782,12 @@ Error: Invalid workflow-app, org.xml.sax.SAXParseException: cvc-complex-type.2.4
 
 It performs an XML Schema validation on the specified workflow XML file.
 
+#SLAOperations
 ---++ SLA Operations
 
 ---+++ Getting a list of SLA events
 
-* This feature is only supported in Oozie 2.0 or later.
+  This set of sla commands are deprecated as of Oozie 4.0 with a newer SLA monitoring system.
 
 Example:
 
