@@ -265,17 +265,6 @@ public class TestSLAService extends XDataTestCase {
         assertEquals(8, slaSummary.getEventProcessed());
         assertNull(slas.getSLACalculator().get(action1.getId())); //removed from memory
 
-        //testing rogue (Does not exist in DB) job miss and sla map update
-        sla = _createSLARegistration("rogue", AppType.WORKFLOW_ACTION);
-        sla.setExpectedEnd(new Date(System.currentTimeMillis() - 1 * 1800 * 1000));
-        slas.addRegistrationEvent(sla);
-        int prevSize = slas.getSLACalculator().size();
-        slas.runSLAWorker();
-        ehs.new EventWorker().run();
-        assertTrue(output.toString().contains("rogue Sla END - MISS!!!"));
-        assertEquals(prevSize - 1, slas.getSLACalculator().size());
-        assertNull(slas.getSLACalculator().get(sla.getId())); //not lying around in history set either
-
     }
 
     static SLARegistrationBean _createSLARegistration(String jobId, AppType appType) {

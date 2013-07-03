@@ -17,6 +17,8 @@
  */
 package org.apache.oozie.executor.jpa.sla;
 
+import java.util.List;
+
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
@@ -41,19 +43,24 @@ public class SLASummaryGetJPAExecutor implements JPAExecutor<SLASummaryBean> {
         return "SLASummaryGetJPAExecutor";
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public SLASummaryBean execute(EntityManager em) throws JPAExecutorException {
-        SLASummaryBean ssBean;
+        List<SLASummaryBean> ssBeans;
         Query q;
         try {
             q = em.createNamedQuery("GET_SLA_SUMMARY");
             q.setParameter("id", id);
-            ssBean = (SLASummaryBean) q.getSingleResult();
+            ssBeans = q.getResultList();
         }
         catch (Exception e) {
             throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
         }
-        return ssBean;
+        SLASummaryBean slaSummaryBean = null;
+        if (ssBeans != null && ssBeans.size() > 0) {
+            slaSummaryBean = ssBeans.get(0);
+        }
+        return slaSummaryBean;
     }
 
 }

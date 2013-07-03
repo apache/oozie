@@ -23,7 +23,6 @@ import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.client.SLAEvent.Status;
 import org.apache.oozie.client.rest.JsonBean;
-import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
@@ -34,7 +33,6 @@ import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.coord.CoordActionUpdateXCommand;
 import org.apache.oozie.command.wf.ActionXCommand.ActionExecutorContext;
 import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordActionGetForExternalIdJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
@@ -71,8 +69,6 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
     private JPAService jpaService = null;
     private String jobId;
     private String actionId;
-    private String parentId;
-    private CoordinatorActionBean coordAction;
     private WorkflowJobBean wfJob;
     private WorkflowActionBean wfAction;
     private List<JsonBean> updateList = new ArrayList<JsonBean>();
@@ -82,14 +78,13 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
     private String wfJobErrorMsg;
 
 
-    public SignalXCommand(String name, int priority, String jobId, String parentId) {
+    public SignalXCommand(String name, int priority, String jobId) {
         super(name, name, priority);
         this.jobId = ParamChecker.notEmpty(jobId, "jobId");
-        this.parentId = parentId;
     }
 
     public SignalXCommand(String jobId, String actionId) {
-        this("signal", 1, jobId, null);
+        this("signal", 1, jobId);
         this.actionId = ParamChecker.notEmpty(actionId, "actionId");
     }
 
@@ -112,8 +107,6 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                 LogUtils.setLogInfo(wfJob, logInfo);
                 if (actionId != null) {
                     this.wfAction = jpaService.execute(new WorkflowActionGetJPAExecutor(actionId));
-                    coordAction = jpaService.execute(new CoordActionGetForExternalIdJPAExecutor(wfJob
-                            .getId()));
                     LogUtils.setLogInfo(wfAction, logInfo);
                 }
             }
@@ -331,13 +324,6 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
             // call JPAExecutor to do the bulk writes
             jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, insertList));
             if (generateEvent && EventHandlerService.isEnabled()) {
-                if (coordAction != null) {
-                    wfJob.setParentId(coordAction.getId());
-                }
-                else if (wfJob.getParentId() == null) {
-                    wfJob.setParentId(parentId);
-                }
-                // doesn't overwrite parentId in subworkflow action
                 generateEvent(wfJob, wfJobErrorCode, wfJobErrorMsg);
             }
         }

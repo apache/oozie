@@ -207,5 +207,4 @@ function drawTable(jsonData) {
                 "aaSorting" : [ [ 3, 'desc' ] ],
                 "bDestroy" : true
             });
-    oTable.fnSetFilteringDelay(200);
 }

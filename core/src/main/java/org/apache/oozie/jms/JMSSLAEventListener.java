@@ -109,6 +109,7 @@ public class JMSSLAEventListener extends SLAEventListener {
                 textMessage.setStringProperty(JMSHeaderConstants.APP_NAME, slaMsg.getAppName());
                 textMessage.setStringProperty(JMSHeaderConstants.USER, slaMsg.getUser());
                 textMessage.setStringProperty(JMSHeaderConstants.MESSAGE_FORMAT, messageFormat);
+                LOG.trace("Event related JMS text body [{0}]", textMessage.getText());
                 LOG.trace("Event related JMS message [{0}]", textMessage.toString());
                 MessageProducer producer = jmsContext.createProducer(session, topicName);
                 producer.setDeliveryMode(jmsDeliveryMode);

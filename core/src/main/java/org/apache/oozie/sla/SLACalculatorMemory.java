@@ -32,6 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.AppType;
 import org.apache.oozie.CoordinatorActionBean;
+import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.CoordinatorAction;
@@ -494,6 +495,9 @@ public class SLACalculatorMemory implements SLACalculator {
         }
         else if (historySet.contains(jobId)) {
             slaInfo = jpaService.execute(new SLASummaryGetJPAExecutor(jobId));
+            if (slaInfo == null) {
+                throw new JPAExecutorException(ErrorCode.E0604, jobId);
+            }
             slaInfo.setJobStatus(jobStatus);
             slaInfo.setActualStart(startTime);
             slaInfo.setActualEnd(endTime);
@@ -712,6 +716,9 @@ public class SLACalculatorMemory implements SLACalculator {
                         slaCalc.setActualEnd(wf.getEndTime());
                         slaCalc.setActualStart(wf.getStartTime());
                     }
+                    else {
+                        isMiss = true;
+                    }
                     slaCalc.setJobStatus(ca.getStatusStr());
                     break;
                 default:
@@ -733,11 +740,10 @@ public class SLACalculatorMemory implements SLACalculator {
         }
         catch (Exception e) {
             XLog.getLog(SLAService.class).warn(
-                    "Error while confirming End_miss against DB: " + e
-                            + ". Setting END_MISS since time limit has been exceeded");
+                    "Error while confirming End_miss against DB: "
+                            + ". Setting END_MISS since time limit has been exceeded", e);
             slaCalc.setEventStatus(EventStatus.END_MISS);
             slaCalc.setSLAStatus(SLAStatus.MISS);
-            slaCalc.setEventProcessed(8);
         }
     }
 

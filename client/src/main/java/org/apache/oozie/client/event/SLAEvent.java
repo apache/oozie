@@ -186,4 +186,11 @@ public abstract class SLAEvent extends Event {
      */
     public abstract String getJobStatus();
 
+    /**
+     * Get the last modified time
+     *
+     * @return Date last modified time
+     */
+    public abstract Date getLastModifiedTime();
+
 }
