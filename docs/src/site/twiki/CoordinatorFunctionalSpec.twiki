@@ -11,66 +11,55 @@ The goal of this document is to define a coordinator engine system specialized i
 %TOC%
 
 ---++ Changelog
+---+++!! 03/JUL/2013
 
+   * #Appendix A, Added new coordinator schema 0.4, sla schema 0.2 and changed schemas ordering to newest first
 ---+++!! 07/JAN/2013
 
    * #6.8 Added section on new EL functions for datasets defined with HCatalog
-
 ---+++!! 26/JUL/2012
 
    * #Appendix A, updated XML schema 0.4 to include =parameters= element
    * #6.5 Updated to mention about =parameters= element as of schema 0.4
-
 ---+++!! 23/NOV/2011:
 
    * Update execution order typo 
-
 ---+++!! 05/MAY/2011:
 
    * Update coordinator schema 0.2
-
 ---+++!! 09/MAR/2011:
 
    * Update coordinator status
-
 ---+++!! 02/DEC/2010:
 
    * Update coordinator done-flag
-
 ---+++!! 26/AUG/2010:
 
    * Update coordinator rerun
-
 ---+++!! 09/JUN/2010:
 
    * Clean up unsupported functions
-
 ---+++!! 02/JUN/2010:
 
    * Update all EL functions in CoordFunctionSpec with "coord:" prefix
-
 ---+++!! 02/OCT/2009:
 
    * Added Appendix A, Oozie Coordinator XML-Schema
    * Change #5.3., Datasets definition supports 'include' element
-
 ---+++!! 29/SEP/2009:
 
    * Change #4.4.1, added =${coord:endOfDays(int n)}= EL function
    * Change #4.4.2, added =${coord:endOfMonths(int n)}= EL function
-
 ---+++!! 11/SEP/2009:
 
    * Change #6.6.4. =${coord:tzOffset()}= EL function now returns offset in minutes. Added more explanation on behavior
    * Removed 'oozie' URL from action workflow invocation, per arch review feedback coord&wf run on the same instance
-
 ---+++!! 07/SEP/2009:
 
    * Full rewrite of sections #4 and #7
    * Added sections #6.1.7, #6.6.2, #6.6.3 & #6.6.4
    * Rewording through the spec definitions
    * Updated all examples and syntax to latest changes
-
 ---+++!! 03/SEP/2009:
 
    * Change #2. Definitions. Some rewording in the definitions
