@@ -4,6 +4,7 @@ OOZIE-1440 Build fails in certain environments due to xerces OpenJPA issue (mack
 
 -- Oozie 4.0.0 release
 
+OOZIE-1249 SLA Documentation (mona,virag,rohini via rohini)
 OOZIE-1441 Fix bugs related to coordchange and parentId in events (mona,virag via virag)
 OOZIE-1444 Job DAG causes OOM. Remove refresh option (rohini)
 OOZIE-1379 Generate SLA end_miss event only after confirming against persistent store (mona)

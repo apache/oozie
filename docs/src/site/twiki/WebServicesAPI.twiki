@@ -18,6 +18,10 @@ Assuming Oozie is runing at =OOZIE_URL=, the following web services end points a
    * <OOZIE_URL>/v1/admin
    * <OOZIE_URL>/v1/job
    * <OOZIE_URL>/v1/jobs
+   * <OOZIE_URL>/v2/job
+   * <OOZIE_URL>/v2/jobs
+   * <OOZIE_URL>/v2/admin
+   * <OOZIE_URL>/v2/sla
 
 Documentation on the API is below; in some cases, looking at the corresponding command in the
 [[DG_CommandLineTool][Command Line Documentation]] page will provide additional details and examples.  Most of the functionality
@@ -34,7 +38,7 @@ It support only HTTP GET request and not sub-resources.
 
 It returns the supported Oozie protocol versions by the server.
 
-Current returned values are =0, 1=.
+Current returned values are =0, 1, 2=.
 
 *Request:*
 
