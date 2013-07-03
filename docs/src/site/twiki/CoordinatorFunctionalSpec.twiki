@@ -3347,25 +3347,11 @@ the notification:
         <xs:attribute name="end" type="xs:string" use="required"/>
         <xs:attribute name="timezone" type="xs:string" use="required"/>
     </xs:complexType>
-    <xs:complexType name="PARAMETERS">
-        <xs:sequence>
-            <xs:element name="property" minOccurs="1" maxOccurs="unbounded">
-                <xs:complexType>
-                    <xs:sequence>
-                        <xs:element name="name" minOccurs="1" maxOccurs="1" type="xs:string"/>
-                        <xs:element name="value" minOccurs="0" maxOccurs="1" type="xs:string"/>
-                        <xs:element name="description" minOccurs="0" maxOccurs="1" type="xs:string"/>
-                    </xs:sequence>
-                </xs:complexType>
-            </xs:element>
-        </xs:sequence>
-    </xs:complexType>
     <xs:complexType name="CONTROLS">
         <xs:sequence minOccurs="0" maxOccurs="1">
             <xs:element name="timeout" type="xs:string" minOccurs="0" maxOccurs="1"/>
             <xs:element name="concurrency" type="xs:string" minOccurs="0" maxOccurs="1"/>
             <xs:element name="execution" type="xs:string" minOccurs="0" maxOccurs="1"/>
-            <xs:element name="throttle" type="xs:string" minOccurs="0" maxOccurs="1"/>
         </xs:sequence>
     </xs:complexType>
     <xs:complexType name="DATASETS">
