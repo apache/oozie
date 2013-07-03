@@ -164,10 +164,6 @@ public class SLACalcStatus extends SLAEvent {
         this.eventStatus = es;
     }
 
-    public Date getLastModifiedTime() {
-        return lastModifiedTime;
-    }
-
     public void setLastModifiedTime(Date lastModifiedTime) {
         this.lastModifiedTime = lastModifiedTime;
     }
@@ -265,8 +261,13 @@ public class SLACalcStatus extends SLAEvent {
     }
 
     @Override
+    public Date getLastModifiedTime() {
+        return lastModifiedTime;
+    }
+
+    @Override
     public String toString() {
-        return "ID: " + getId() + " SLAStatus: " + slaStatus + " EventStatus: "+eventStatus + "AppType " + getAppType();
+        return "ID: " + getId() + " SLAStatus: " + slaStatus + " EventStatus: "+eventStatus + " AppType " + getAppType();
     }
 
 }

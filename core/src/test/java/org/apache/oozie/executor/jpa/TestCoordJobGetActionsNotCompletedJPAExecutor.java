@@ -89,6 +89,7 @@ public class TestCoordJobGetActionsNotCompletedJPAExecutor extends XDataTestCase
         assertEquals(action.getId(), actionId);
         assertEquals(action.getStatus(), status);
         assertEquals(action.getPending(), pending);
+        assertEquals(jobId, action.getJobId());
     }
 
     // test sql selection operator

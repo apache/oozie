@@ -25,6 +25,7 @@ import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.FaultInjection;
 import org.apache.oozie.client.rest.JsonBean;
+import org.apache.oozie.sla.SLARegistrationBean;
 import org.apache.oozie.util.ParamChecker;
 
 /**
@@ -111,13 +112,16 @@ public class BulkUpdateDeleteJPAExecutor implements JPAExecutor<Void> {
                     if (forRerun) {
                         em.remove(em.merge(entity));
                     }
-                    else {
+                    else if (entity instanceof CoordinatorActionBean) {
                         Query g = em.createNamedQuery("DELETE_UNSCHEDULED_ACTION");
                         String coordActionId = ((CoordinatorActionBean) entity).getId();
                         g.setParameter("id", coordActionId);
                         int actionsDeleted = g.executeUpdate();
                         if (actionsDeleted == 0)
                             throw new JPAExecutorException(ErrorCode.E1022, coordActionId);
+                    }
+                    else {
+                        em.remove(em.merge(entity));
                     }
                 }
             }

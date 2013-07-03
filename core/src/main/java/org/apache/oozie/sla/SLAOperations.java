@@ -151,7 +151,7 @@ public class SLAOperations {
             throw new CommandException(ErrorCode.E1007, " id " + jobId, e.getMessage(), e);
         }
 
-        log.debug("Job [{0}] reg for SLA. Size of Sla Xml = [{1}]", jobId, XmlUtils.prettyPrint(eSla).toString());
+        log.debug("Job [{0}] reg for SLA. Size of Sla Xml = [{1}]", jobId, XmlUtils.prettyPrint(eSla).toString().length());
         return sla;
     }
 

@@ -252,12 +252,14 @@ public class SLARegistrationBean implements JsonBean {
     }
 
     private void slaConfigStringToMap() {
-        StringTokenizer st = new StringTokenizer(slaConfig, "},");
-        while (st.hasMoreTokens()) {
-            String token = st.nextToken();
-            String[] pair = token.split("=");
-            if (pair.length == 2) {
-                slaConfigMap.put(pair[0].substring(1), pair[1]);
+        if (slaConfig != null) {
+            StringTokenizer st = new StringTokenizer(slaConfig, "},");
+            while (st.hasMoreTokens()) {
+                String token = st.nextToken();
+                String[] pair = token.split("=");
+                if (pair.length == 2) {
+                    slaConfigMap.put(pair[0].substring(1), pair[1]);
+                }
             }
         }
     }

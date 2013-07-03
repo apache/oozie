@@ -22,12 +22,10 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-import org.apache.oozie.ErrorCode;
 import org.apache.oozie.FaultInjection;
 import org.apache.oozie.client.event.SLAEvent.EventStatus;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.SkipCommitFaultInjection;
-import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.sla.SLACalculationInsertUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.sla.SLASummaryGetJPAExecutor;
 import org.apache.oozie.service.JPAService;
@@ -209,13 +207,9 @@ public class TestSLACalculationJPAExecutor extends XDataTestCase {
         assertNull(sBean.getActualEnd());
 
         SLASummaryGetJPAExecutor readCmd1 = new SLASummaryGetJPAExecutor(wfId2);
-        try {
-            sBean = jpaService.execute(readCmd1);
-            fail("Expected not found exception but didnt get any");
-        }
-        catch (JPAExecutorException jpaee) {
-            assertEquals(ErrorCode.E0603, jpaee.getErrorCode());
-        }
+        sBean = jpaService.execute(readCmd1);
+        assertNull(sBean); //new bean should not have been inserted due to rollback
+
     }
 
     private SLASummaryBean _createSLASummaryBean(String jobId, String status, EventStatus slaType, Date eStart,
