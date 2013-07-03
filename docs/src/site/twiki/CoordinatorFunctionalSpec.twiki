@@ -3224,7 +3224,6 @@ the notification:
     </xs:simpleType>
     <xs:complexType name="COORDINATOR-APP">
         <xs:sequence>
-            <xs:element name="parameters" type="coordinator:PARAMETERS" minOccurs="0" maxOccurs="1"/>
             <xs:element name="controls" type="coordinator:CONTROLS" minOccurs="0" maxOccurs="1"/>
             <xs:element name="datasets" type="coordinator:DATASETS" minOccurs="0" maxOccurs="1"/>
             <xs:element name="input-events" type="coordinator:INPUTEVENTS" minOccurs="0" maxOccurs="1"/>
