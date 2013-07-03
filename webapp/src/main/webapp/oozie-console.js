@@ -661,10 +661,11 @@ function jobDetailsPopup(response, request) {
             items: dagImg,
             tbar: [{
                 text: "&nbsp;&nbsp;&nbsp;",
-                icon: 'ext-2.2/resources/images/default/grid/refresh.gif',
+                // To avoid OOM
+                /*icon: 'ext-2.2/resources/images/default/grid/refresh.gif',
                 handler: function() {
                     fetchDAG(workflowId);
-                }
+                }*/
             }]
         }]
     });
