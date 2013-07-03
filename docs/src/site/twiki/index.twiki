@@ -61,6 +61,11 @@ Enough reading already? Follow the steps in [[DG_QuickStart][Oozie Quick Start]]
    * [[DG_DistCpActionExtension][DistCp Action]]
    * [[DG_CustomActionExecutor][Writing a Custom Action Executor]]
 
+---+++ Job Status and SLA Monitoring
+
+   * [[DG_JMSNotifications][JMS Notifications for Job and SLA]]
+   * [[DG_SLAMonitoring][Configuring and Monitoring SLA]]
+
 ---++ Administrator Documentation
 
    * [[AG_Install][Oozie Install]]

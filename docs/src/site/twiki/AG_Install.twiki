@@ -514,6 +514,99 @@ in =oozie.service.coord.push.check.requeue.interval= as a fallback.
 The defaults for =oozie.service.coord.input.check.requeue.interval= and =oozie.service.coord.push.check.requeue.interval=
 are 1 minute and 10 minutes respectively.
 
+---+++ Notifications Configuration
+
+Oozie supports publishing notifications to a JMS Provider for job status changes and SLA met and miss events. For
+more information on the feature, refer [[DG_JMSNotifications][JMS Notifications]] documentation. Oozie can also send email
+notifications on SLA misses.
+
+   * *Message Broker Installation*: <br/>
+For Oozie to send/receive messages, a JMS-compliant broker should be installed. Apache ActiveMQ is a popular JMS-compliant
+broker usable for this purpose. See [[http://activemq.apache.org/getting-started.html][here]] for instructions on
+installing and running ActiveMQ.
+
+   * *Services*: <br/>
+Add/modify =oozie.services.ext= property in =oozie-site.xml= to include the following services.
+     <verbatim>
+     <property>
+        <name>oozie.services.ext</name>
+        <value>
+            org.apache.oozie.service.JMSAccessorService,
+            org.apache.oozie.service.JMSTopicService,
+            org.apache.oozie.service.EventHandlerService,
+            org.apache.oozie.sla.service.SLAService
+        </value>
+     </property>
+     </verbatim>
+
+   * *Event Handlers*: <br/>
+   <verbatim>
+     <property>
+        <name>oozie.service.EventHandlerService.event.listeners</name>
+        <value>
+            org.apache.oozie.jms.JMSJobEventListener,
+            org.apache.oozie.sla.listener.SLAJobEventListener,
+            org.apache.oozie.jms.JMSSLAEventListener,
+            org.apache.oozie.sla.listener.SLAEmailEventListener
+        </value>
+     </property>
+     </verbatim>
+    It is also recommended to increase =oozie.service.SchedulerService.threads= to 15 for faster event processing and sending notifications. The services and their functions are as follows: <br/>
+      JMSJobEventListener - Sends JMS job notifications <br/>
+      JMSSLAEventListener - Sends JMS SLA notifications <br/>
+      SLAEmailEventListener - Sends Email SLA notifications <br/>
+      SLAJobEventListener - Processes job events and calculates SLA. Does not send any notifications
+   * *JMS properties*:  <br/>
+Add =oozie.jms.producer.connection.properties= property in =oozie-site.xml=. Its value corresponds to an
+identifier (e.g. default) assigned to a semi-colon separated key#value list of properties from your JMS broker's
+=jndi.properties= file. The important properties are =java.naming.factory.initial= and =java.naming.provider.url=.
+
+     As an example, if using ActiveMQ in local env, the property can be set to
+     <verbatim>
+     <property>
+        <name>oozie.jms.producer.connection.properties</name>
+        <value>
+            default=java.naming.factory.initial#org.apache.activemq.jndi.ActiveMQInitialContextFactory;java.naming.provider.url#tcp://localhost:61616
+        </value>
+     </property>
+     </verbatim>
+   * *JMS Topic name*: <br/>
+JMS consumers listen on a particular "topic". Hence Oozie needs to define a topic variable with which to publish messages
+about the various jobs.
+     <verbatim>
+     <property>
+        <name>oozie.service.JMSTopicService.topic.name</name>
+        <value>
+            default=${username}
+        </value>
+        <description>
+            Topic options are ${username} or a fixed string which can be specified as default or for a
+            particular job type.
+            For e.g To have a fixed string topic for workflows, coordinators and bundles,
+            specify in the following comma-separated format: {jobtype1}={some_string1}, {jobtype2}={some_string2}
+            where job type can be WORKFLOW, COORDINATOR or BUNDLE.
+            Following example defines topic for workflow job, workflow action, coordinator job, coordinator action,
+            bundle job and bundle action
+            WORKFLOW=workflow,
+            COORDINATOR=coordinator,
+            BUNDLE=bundle
+            For jobs with no defined topic, default topic will be ${username}
+        </description>
+     </property>
+     </verbatim>
+
+     Another related property is the topic prefix.
+     <verbatim>
+     <property>
+        <name>oozie.service.JMSTopicService.topic.prefix</name>
+        <value></value>
+        <description>
+            This can be used to append a prefix to the topic in oozie.service.JMSTopicService.topic.name. For eg: oozie.
+        </description>
+     </property>
+     </verbatim>
+
+
 ---+++ Setting Up Oozie with HTTPS (SSL)
 
 *IMPORTANT*:
@@ -675,7 +768,6 @@ the =oozie.action.mapreduce.uber.jar.enable= property in the =oozie-site.xml= (a
     </property>
 </configuration>
 </verbatim>
-
 
 ---++ Advanced/Custom Environment Settings
 

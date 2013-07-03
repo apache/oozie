@@ -82,8 +82,8 @@ public class SLAEmailEventListener extends SLAEventListener {
         EVENT_STATUS("SLA Status"), APP_TYPE("App Type"), APP_NAME("App Name"), USER("User"), JOBID("Job ID"), PARENT_JOBID(
                 "Parent Job ID"), JOB_URL("Job URL"), PARENT_JOB_URL("Parent Job URL"), NOMINAL_TIME("Nominal Time"),
                 EXPECTED_START_TIME("Expected Start Time"), ACTUAL_START_TIME("Actual Start Time"),
-                EXPECTED_END_TIME("Expected End Time"), ACTUAL_END_TIME("Actual End Time"), EXPECTED_DURATION("Expected Duration"),
-                ACTUAL_DURATION("Actual Duration"), NOTIFICATION_MESSAGE("Notification Message"), UPSTREAM_APPS("Upstream Apps"),
+                EXPECTED_END_TIME("Expected End Time"), ACTUAL_END_TIME("Actual End Time"), EXPECTED_DURATION("Expected Duration (in mins)"),
+                ACTUAL_DURATION("Actual Duration (in mins)"), NOTIFICATION_MESSAGE("Notification Message"), UPSTREAM_APPS("Upstream Apps"),
                 JOB_STATUS("Job Status");
         private String name;
 
@@ -286,30 +286,29 @@ public class SLAEmailEventListener extends SLAEventListener {
     private void setMessageBody(Message msg, SLAEvent event) throws MessagingException {
         StringBuilder body = new StringBuilder();
         printHeading(body, "Status");
-        printField(body, EmailField.EVENT_STATUS.toString(), event.getEventStatus(), false);
-        printField(body, EmailField.JOB_STATUS.toString(), event.getJobStatus(), false);
-        printField(body, EmailField.NOTIFICATION_MESSAGE.toString(), event.getNotificationMsg(), false);
+        printField(body, EmailField.EVENT_STATUS.toString(), event.getEventStatus());
+        printField(body, EmailField.JOB_STATUS.toString(), event.getJobStatus());
+        printField(body, EmailField.NOTIFICATION_MESSAGE.toString(), event.getNotificationMsg());
 
         printHeading(body, "Job Details");
-        printField(body, EmailField.APP_NAME.toString(), event.getAppName(), false);
-        printField(body, EmailField.APP_TYPE.toString(), event.getAppType(), false);
-        printField(body, EmailField.USER.toString(), event.getUser(), false);
-        printField(body, EmailField.JOBID.toString(), event.getId(), false);
-        printField(body, EmailField.JOB_URL.toString(), getJobLink(event.getId()), false);
-        printField(body, EmailField.PARENT_JOBID.toString(), event.getParentId() != null ? event.getParentId() : "N/A",
-                false);
+        printField(body, EmailField.APP_NAME.toString(), event.getAppName());
+        printField(body, EmailField.APP_TYPE.toString(), event.getAppType());
+        printField(body, EmailField.USER.toString(), event.getUser());
+        printField(body, EmailField.JOBID.toString(), event.getId());
+        printField(body, EmailField.JOB_URL.toString(), getJobLink(event.getId()));
+        printField(body, EmailField.PARENT_JOBID.toString(), event.getParentId() != null ? event.getParentId() : "N/A");
         printField(body, EmailField.PARENT_JOB_URL.toString(),
-                event.getParentId() != null ? getJobLink(event.getParentId()) : "N/A", false);
-        printField(body, EmailField.UPSTREAM_APPS.toString(), event.getUpstreamApps(), false);
+                event.getParentId() != null ? getJobLink(event.getParentId()) : "N/A");
+        printField(body, EmailField.UPSTREAM_APPS.toString(), event.getUpstreamApps());
 
         printHeading(body, "SLA Details");
-        printField(body, EmailField.NOMINAL_TIME.toString(), event.getNominalTime(), false);
-        printField(body, EmailField.EXPECTED_START_TIME.toString(), event.getExpectedStart(), false);
-        printField(body, EmailField.ACTUAL_START_TIME.toString(), event.getActualStart(), false);
-        printField(body, EmailField.EXPECTED_END_TIME.toString(), event.getExpectedEnd(), false);
-        printField(body, EmailField.ACTUAL_END_TIME.toString(), event.getActualEnd(), false);
-        printField(body, EmailField.EXPECTED_DURATION.toString(), event.getExpectedDuration(), false);
-        printField(body, EmailField.ACTUAL_DURATION.toString(), event.getActualDuration(), false);
+        printField(body, EmailField.NOMINAL_TIME.toString(), event.getNominalTime());
+        printField(body, EmailField.EXPECTED_START_TIME.toString(), event.getExpectedStart());
+        printField(body, EmailField.ACTUAL_START_TIME.toString(), event.getActualStart());
+        printField(body, EmailField.EXPECTED_END_TIME.toString(), event.getExpectedEnd());
+        printField(body, EmailField.ACTUAL_END_TIME.toString(), event.getActualEnd());
+        printField(body, EmailField.EXPECTED_DURATION.toString(), event.getExpectedDuration());
+        printField(body, EmailField.ACTUAL_DURATION.toString(), event.getActualDuration());
 
         try {
             msg.setText(body.toString());
@@ -329,15 +328,14 @@ public class SLAEmailEventListener extends SLAEventListener {
         return url.toString();
     }
 
-    private void printField(StringBuilder st, String name, Object value, boolean last) {
+    private void printField(StringBuilder st, String name, Object value) {
         String lineFeed = "\n";
         if (value != null) {
             st.append(EMAIL_BODY_FIELD_INDENT);
             st.append(name);
             st.append(EMAIL_BODY_FIELD_SEPARATER);
             st.append(value);
-            if (!last)
-                st.append(lineFeed);
+            st.append(lineFeed);
         }
     }
 

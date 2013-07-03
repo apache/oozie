@@ -167,16 +167,16 @@
         default=${username}
         </value>
         <description>
-        Other topic options are ${jobid} or a fixed string.
-        A fixed string can also be specified as topic for a particular job type.
+        Topic options are ${username} or ${jobId} or a fixed string which can be specified as default or for a
+        particular job type.
         For e.g To have a fixed string topic for workflows, coordinators and bundles,
         specify in the following comma-separated format: {jobtype1}={some_string1}, {jobtype2}={some_string2}
-        where job type can be WORKFLOW, COORDINATOR or BUNDLE
-        E.g Following defines topic for workflow job, workflow action, coordinator job, coordinator action,
+        where job type can be WORKFLOW, COORDINATOR or BUNDLE.
+        e.g. Following defines topic for workflow job, workflow action, coordinator job, coordinator action,
         bundle job and bundle action
         WORKFLOW=workflow,
         COORDINATOR=coordinator,
-        BUNDLE=${jobId}
+        BUNDLE=bundle
         For jobs with no defined topic, default topic will be ${username}
         </description>
     </property>
