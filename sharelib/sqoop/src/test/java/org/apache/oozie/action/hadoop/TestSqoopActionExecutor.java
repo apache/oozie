@@ -95,6 +95,27 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
             "<arg>I</arg>" +
             "</sqoop>";
 
+    private static final String SQOOP_ACTION_EVAL_XML =
+            "<sqoop xmlns=\"uri:oozie:sqoop-action:0.1\">" +
+            "<job-tracker>{0}</job-tracker>" +
+            "<name-node>{1}</name-node>" +
+            "<configuration>" +
+            "<property>" +
+            "<name>oozie.sqoop.log.level</name>" +
+            "<value>INFO</value>" +
+            "</property>" +
+            "</configuration>" +
+            "<arg>eval</arg>" +
+            "<arg>--connect</arg>" +
+            "<arg>{2}</arg>" +
+            "<arg>--username</arg>" +
+            "<arg>sa</arg>" +
+            "<arg>--password</arg>" +
+            "<arg></arg>" +
+            "<arg>--verbose</arg>" +
+            "<arg>--query</arg>" +
+            "<arg>{3}</arg>" +
+            "</sqoop>";
 
     @Override
     protected void setSystemProps() throws Exception {
@@ -168,6 +189,12 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
                                     "dummy", "dummyValue", command);
     }
 
+    private String getActionXmlEval() {
+      String query = "select TT.I, TT.S from TT";
+      return MessageFormat.format(SQOOP_ACTION_EVAL_XML, getJobTrackerUri(), getNameNodeUri(),
+        getActionJdbcUri(), query);
+    }
+
     private String getActionXmlFreeFromQuery() {
         String query = "select TT.I, TT.S from TT where $CONDITIONS";
         return MessageFormat.format(SQOOP_ACTION_ARGS_XML, getJobTrackerUri(), getNameNodeUri(),
@@ -231,6 +258,42 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
         outputData.load(new StringReader(context.getAction().getData()));
         assertTrue(outputData.containsKey(LauncherMain.HADOOP_JOBS));
         assertTrue(outputData.getProperty(LauncherMain.HADOOP_JOBS).trim().length() > 0);
+    }
+
+    public void testSqoopEval() throws Exception {
+        createDB();
+
+        Context context = createContext(getActionXmlEval());
+        final RunningJob launcherJob = submitAction(context);
+        String launcherId = context.getAction().getExternalId();
+        waitFor(120 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                return launcherJob.isComplete();
+            }
+        });
+        assertTrue(launcherJob.isSuccessful());
+
+        assertFalse(LauncherMapperHelper.hasIdSwap(launcherJob));
+
+        SqoopActionExecutor ae = new SqoopActionExecutor();
+        ae.check(context, context.getAction());
+        assertTrue(launcherId.equals(context.getAction().getExternalId()));
+        assertEquals("SUCCEEDED", context.getAction().getExternalStatus());
+        assertNotNull(context.getAction().getData());
+        assertNotNull(context.getAction().getExternalChildIDs());
+        assertEquals(0, context.getAction().getExternalChildIDs().length());
+        ae.end(context, context.getAction());
+        assertEquals(WorkflowAction.Status.OK, context.getAction().getStatus());
+
+        String hadoopCounters = context.getVar(MapReduceActionExecutor.HADOOP_COUNTERS);
+        assertNotNull(hadoopCounters);
+        assertTrue(hadoopCounters.isEmpty());
+
+        assertNotNull(context.getAction().getData());
+        Properties outputData = new Properties();
+        outputData.load(new StringReader(context.getAction().getData()));
+        assertTrue(outputData.containsKey(LauncherMain.HADOOP_JOBS));
+        assertEquals(0, outputData.getProperty(LauncherMain.HADOOP_JOBS).trim().length());
     }
 
     public void testSqoopActionFreeFormQuery() throws Exception {
