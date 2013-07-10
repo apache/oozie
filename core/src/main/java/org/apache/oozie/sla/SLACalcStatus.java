@@ -84,7 +84,6 @@ public class SLACalcStatus extends SLAEvent {
         setActualStart(a.getActualStart());
         setActualEnd(a.getActualEnd());
         setActualDuration(a.getActualDuration());
-        setLastModifiedTime(a.getLastModifiedTime());
         setEventProcessed(a.getEventProcessed());
     }
 
