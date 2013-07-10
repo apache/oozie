@@ -726,7 +726,9 @@ public class SLACalculatorMemory implements SLACalculator {
             }
             if (ended) {
                 slaCalc.setActualDuration(slaCalc.getActualEnd().getTime() - slaCalc.getActualStart().getTime());
-                processDurationSLA(slaCalc.getExpectedDuration(), slaCalc.getActualDuration(), slaCalc);
+                if (((slaCalc.getEventProcessed() >> 1) & 1) == 0) {
+                    processDurationSLA(slaCalc.getExpectedDuration(), slaCalc.getActualDuration(), slaCalc);
+                }
                 slaCalc.setEventProcessed(8);
             }
             if (isMiss) {
