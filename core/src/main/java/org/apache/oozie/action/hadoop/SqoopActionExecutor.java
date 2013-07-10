@@ -142,26 +142,29 @@ public class SqoopActionExecutor extends JavaActionExecutor {
                 // Cumulative counters for all Sqoop mapreduce jobs
                 Counters counters = null;
 
+                // Sqoop do not have to create mapreduce job each time
                 String externalIds = action.getExternalChildIDs();
-                String []jobIds = externalIds.split(",");
+                if (externalIds != null && !externalIds.trim().isEmpty()) {
+                    String []jobIds = externalIds.split(",");
 
-                for(String jobId : jobIds) {
-                    RunningJob runningJob = jobClient.getJob(JobID.forName(jobId));
-                    if (runningJob == null) {
-                      throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "SQOOP001",
-                        "Unknown hadoop job [{0}] associated with action [{1}].  Failing this action!", action
-                        .getExternalId(), action.getId());
-                    }
-
-                    Counters taskCounters = runningJob.getCounters();
-                    if(taskCounters != null) {
-                        if(counters == null) {
-                          counters = taskCounters;
-                        } else {
-                          counters.incrAllCounters(taskCounters);
+                    for(String jobId : jobIds) {
+                        RunningJob runningJob = jobClient.getJob(JobID.forName(jobId));
+                        if (runningJob == null) {
+                          throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "SQOOP001",
+                            "Unknown hadoop job [{0}] associated with action [{1}].  Failing this action!", action
+                            .getExternalId(), action.getId());
                         }
-                    } else {
-                      XLog.getLog(getClass()).warn("Could not find Hadoop Counters for job: [{0}]", jobId);
+
+                        Counters taskCounters = runningJob.getCounters();
+                        if(taskCounters != null) {
+                            if(counters == null) {
+                              counters = taskCounters;
+                            } else {
+                              counters.incrAllCounters(taskCounters);
+                            }
+                        } else {
+                          XLog.getLog(getClass()).warn("Could not find Hadoop Counters for job: [{0}]", jobId);
+                        }
                     }
                 }
 
