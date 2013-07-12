@@ -87,9 +87,6 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
         this.jobId = jobId;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#execute()
-     */
     @Override
     protected Void execute() throws CommandException {
         LOG.info("[" + actionId + "]::ActionInputCheck:: Action is in WAITING state.");
@@ -553,34 +550,16 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
         return null;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#getEntityKey()
-     */
     @Override
     public String getEntityKey() {
         return this.jobId;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#isLockRequired()
-     */
     @Override
     protected boolean isLockRequired() {
         return true;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#eagerLoadState()
-     */
-    // TODO - why loadState() is being called from eagerLoadState();
-    @Override
-    protected void eagerLoadState() throws CommandException {
-        loadState();
-    }
-
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#loadState()
-     */
     @Override
     protected void loadState() throws CommandException {
         if (jpaService == null) {
@@ -596,9 +575,6 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
         LogUtils.setLogInfo(coordAction, logInfo);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#verifyPrecondition()
-     */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
         if (coordAction.getStatus() != CoordinatorActionBean.Status.WAITING) {
@@ -621,9 +597,6 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#getKey()
-     */
     @Override
     public String getKey(){
         return getName() + "_" + actionId;
