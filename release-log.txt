@@ -1,5 +1,6 @@
 -- Oozie 4.0.0 release
 
+OOZIE-1451 CoordActionInputCheckX does a redundant eagerLoadState (rohini)
 OOZIE-1446 SLACalcStatus not updating the last modified time correctly and duplicate DURATION_* event (virag,mona via mona)
 OOZIE-1249 SLA Documentation (mona,virag,rohini via rohini)
 OOZIE-1441 Fix bugs related to coordchange and parentId in events (mona,virag via virag)
