@@ -264,9 +264,4 @@ public class SLACalcStatus extends SLAEvent {
         return lastModifiedTime;
     }
 
-    @Override
-    public String toString() {
-        return "ID: " + getId() + " SLAStatus: " + slaStatus + " EventStatus: "+eventStatus + " AppType " + getAppType();
-    }
-
 }

@@ -31,6 +31,7 @@ import org.apache.oozie.client.event.SLAEvent.SLAStatus;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobUpdateJPAExecutor;
+import org.apache.oozie.executor.jpa.sla.SLARegistrationGetJPAExecutor;
 import org.apache.oozie.executor.jpa.sla.SLASummaryGetJPAExecutor;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
@@ -38,7 +39,9 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.sla.listener.SLAEventListener;
 import org.apache.oozie.sla.service.SLAService;
 import org.apache.oozie.test.XDataTestCase;
+import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.workflow.WorkflowInstance;
+import org.jdom.Element;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -265,6 +268,24 @@ public class TestSLAService extends XDataTestCase {
         assertEquals(8, slaSummary.getEventProcessed());
         assertNull(slas.getSLACalculator().get(action1.getId())); //removed from memory
 
+    }
+
+    /**
+     * Test SLAOperations handles unexpected alert-events in xml
+     * @throws Exception
+     */
+    public void testSLAOperations() throws Exception {
+        String slaXml = " <sla:info xmlns:sla='uri:oozie:sla:0.2'>"
+                + " <sla:nominal-time>2009-03-06T10:00Z</sla:nominal-time>" + " <sla:should-start>5</sla:should-start>"
+                + " <sla:should-end>120</sla:should-end>" + " <sla:max-duration>100</sla:max-duration>"
+                + " <sla:alert-events>\"invalid_event_miss\'</sla:alert-events>"
+                + " <sla:alert-contact>abc@example.com</sla:alert-contact>" + "</sla:info>";
+        Element eSla = XmlUtils.parseXml(slaXml);
+        SLAOperations.createSlaRegistrationEvent(eSla, "job-id1", "parent-id1", AppType.WORKFLOW_JOB, getTestUser(),
+                "test-appname", log, false);
+        SLARegistrationBean reg = Services.get().get(JPAService.class)
+                .execute(new SLARegistrationGetJPAExecutor("job-id1"));
+        assertEquals("END_MISS", reg.getAlertEvents());
     }
 
     static SLARegistrationBean _createSLARegistration(String jobId, AppType appType) {

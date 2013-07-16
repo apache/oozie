@@ -19,7 +19,6 @@ package org.apache.oozie.sla;
 
 import java.text.ParseException;
 import java.util.Date;
-
 import org.apache.oozie.AppType;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.event.SLAEvent.EventStatus;
@@ -118,8 +117,11 @@ public class SLAOperations {
                     EventStatus.valueOf(event);
                 }
                 catch (IllegalArgumentException iae) {
-                    throw new CommandException(ErrorCode.E0302, "'" + event + "'",
-                            " for SLA Alert event. Should be one of " + EventStatus.values());
+                    XLog.getLog(SLAService.class).warn(
+                            "Invalid value: [" + event + "]" + " for SLA Alert-event. Should be one of "
+                                    + EventStatus.values() + ". Setting it to default [" + EventStatus.END_MISS.name()
+                                    + "]");
+                    event = EventStatus.END_MISS.name();
                 }
                 alertsStr.append(event).append(",");
             }
