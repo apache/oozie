@@ -424,7 +424,7 @@ public class CoordCommandUtils {
         appInst.setName(eAction.getAttributeValue("name"));
         appInst.setNominalTime(nominalTime);
         appInst.setActualTime(actualTime);
-        int frequency = Integer.parseInt(eAction.getAttributeValue("frequency"));
+        String frequency = eAction.getAttributeValue("frequency");
         appInst.setFrequency(frequency);
         appInst.setTimeUnit(TimeUnit.valueOf(eAction.getAttributeValue("freq_timeunit")));
         appInst.setTimeZone(DateUtils.getTimeZone(eAction.getAttributeValue("timezone")));
