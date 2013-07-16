@@ -168,6 +168,31 @@ public abstract class XDataTestCase extends XHCatTestCase {
         return coordJob;
     }
 
+    protected CoordinatorJobBean addRecordToCoordJobTable(String appXml) throws Exception {
+        Date start = DateUtils.parseDateOozieTZ("2009-02-01T01:00Z");
+        Date end = DateUtils.parseDateOozieTZ("2009-02-03T23:59Z");
+        appXml = appXml.replaceAll("#start", DateUtils.formatDateOozieTZ(start));
+        appXml = appXml.replaceAll("#end", DateUtils.formatDateOozieTZ(end));
+        Path appPath = new Path(getFsTestCaseDir(), "coord");
+        writeToFile(appXml, appPath, "coordinator.xml");
+        CoordinatorJobBean coordJob = createCoordBean(appPath, appXml, CoordinatorJob.Status.PREP, start, end, false,
+                false, 0);
+
+        try {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            assertNotNull(jpaService);
+            CoordJobInsertJPAExecutor coordInsertCmd = new CoordJobInsertJPAExecutor(coordJob);
+            jpaService.execute(coordInsertCmd);
+        }
+        catch (JPAExecutorException je) {
+            je.printStackTrace();
+            fail("Unable to insert the test coord job record to table");
+            throw je;
+        }
+
+        return coordJob;
+    }
+
     /**
      * Insert coord job for testing.
      *
@@ -320,39 +345,12 @@ public abstract class XDataTestCase extends XHCatTestCase {
         Path appPath = new Path(getFsTestCaseDir(), "coord");
         String appXml = writeCoordXml(appPath);
 
-        CoordinatorJobBean coordJob = new CoordinatorJobBean();
-        coordJob.setId(Services.get().get(UUIDService.class).generateId(ApplicationType.COORDINATOR));
-        coordJob.setAppName("COORD-TEST");
-        coordJob.setAppPath(appPath.toString());
-        coordJob.setStatus(status);
-        coordJob.setTimeZone("America/Los_Angeles");
-        coordJob.setCreatedTime(new Date());
-        coordJob.setLastModifiedTime(new Date());
-        coordJob.setUser(getTestUser());
-        coordJob.setGroup(getTestGroup());
-        if (pending) {
-            coordJob.setPending();
-        }
-        if (doneMatd) {
-            coordJob.setDoneMaterialization();
-        }
-
-        Configuration conf = getCoordConf(appPath);
-        coordJob.setConf(XmlUtils.prettyPrint(conf).toString());
-        coordJob.setJobXml(appXml);
-        coordJob.setLastActionNumber(0);
-        coordJob.setFrequency("1");
-        coordJob.setTimeUnit(Timeunit.DAY);
-        coordJob.setExecution(Execution.FIFO);
-        coordJob.setConcurrency(1);
-        coordJob.setMatThrottling(1);
         // Set the start and end time in future
         String currentDatePlusMonth = XDataTestCase.getCurrentDateafterIncrementingInMonths(1);
         Date start = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
         Date end = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
-        coordJob.setStartTime(start);
-        coordJob.setEndTime(end);
-        return coordJob;
+
+        return createCoordBean(appPath, appXml, status, start, end, pending, doneMatd, 0);
     }
 
     /**
@@ -372,41 +370,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
         Path appPath = new Path(getFsTestCaseDir(), "coord");
         String appXml = writeCoordXml(appPath, start, end);
 
-        CoordinatorJobBean coordJob = new CoordinatorJobBean();
-        coordJob.setId(Services.get().get(UUIDService.class).generateId(ApplicationType.COORDINATOR));
-        coordJob.setAppName("COORD-TEST");
-        coordJob.setAppPath(appPath.toString());
-        coordJob.setStatus(status);
-        coordJob.setTimeZone("America/Los_Angeles");
-        coordJob.setCreatedTime(new Date());
-        coordJob.setLastModifiedTime(new Date());
-        coordJob.setUser(getTestUser());
-        coordJob.setGroup(getTestGroup());
-        if (pending) {
-            coordJob.setPending();
-        }
-        if (doneMatd) {
-            coordJob.setDoneMaterialization();
-        }
-        coordJob.setLastActionNumber(lastActionNum);
-
-        Configuration conf = getCoordConf(appPath);
-        coordJob.setConf(XmlUtils.prettyPrint(conf).toString());
-        coordJob.setJobXml(appXml);
-        coordJob.setFrequency("1");
-        coordJob.setTimeUnit(Timeunit.DAY);
-        coordJob.setExecution(Execution.FIFO);
-        coordJob.setConcurrency(1);
-        coordJob.setMatThrottling(1);
-        try {
-            coordJob.setStartTime(start);
-            coordJob.setEndTime(end);
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-            fail("Could not set Date/time");
-        }
-        return coordJob;
+        return createCoordBean(appPath, appXml, status, start, end, pending, doneMatd, lastActionNum);
     }
 
     /**
@@ -427,6 +391,11 @@ public abstract class XDataTestCase extends XHCatTestCase {
         Path appPath = new Path(getFsTestCaseDir(), "coord");
         String appXml = writeCoordXml(appPath, testFileName);
 
+        return createCoordBean(appPath, appXml, status, start, end, pending, doneMatd, lastActionNum);
+    }
+
+    private CoordinatorJobBean createCoordBean(Path appPath, String appXml, CoordinatorJob.Status status, Date start,
+            Date end, boolean pending, boolean doneMatd, int lastActionNum) throws Exception {
         CoordinatorJobBean coordJob = new CoordinatorJobBean();
         coordJob.setId(Services.get().get(UUIDService.class).generateId(ApplicationType.COORDINATOR));
         coordJob.setAppName("COORD-TEST");

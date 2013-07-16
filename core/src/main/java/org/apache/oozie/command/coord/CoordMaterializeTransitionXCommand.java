@@ -266,9 +266,11 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
             updateJobMaterializeInfo(coordJob);
         }
         catch (CommandException ex) {
-            LOG.warn("Exception occurs:" + ex.getMessage() + " Making the job failed ", ex);
+            LOG.warn("Exception occurred:" + ex.getMessage() + " Making the job failed ", ex);
             coordJob.setStatus(Job.Status.FAILED);
             coordJob.resetPending();
+            // remove any materialized actions and slaEvents
+            insertList.clear();
         }
         catch (Exception e) {
             LOG.error("Exception thrown :", e);
@@ -378,14 +380,14 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         actionBean.setActionXml(actionXml);
 
         insertList.add(actionBean);
-        writeActionRegistration(actionXml, actionBean);
+        writeActionSlaRegistration(actionXml, actionBean);
 
         // TODO: time 100s should be configurable
         queue(new CoordActionNotificationXCommand(actionBean), 100);
         queue(new CoordActionInputCheckXCommand(actionBean.getId(), actionBean.getJobId()), 100);
     }
 
-    private void writeActionRegistration(String actionXml, CoordinatorActionBean actionBean) throws Exception {
+    private void writeActionSlaRegistration(String actionXml, CoordinatorActionBean actionBean) throws Exception {
         Element eAction = XmlUtils.parseXml(actionXml);
         Element eSla = eAction.getChild("action", eAction.getNamespace()).getChild("info", eAction.getNamespace("sla"));
         SLAEventBean slaEvent = SLADbOperations.createSlaRegistrationEvent(eSla, actionBean.getId(), SlaAppType.COORDINATOR_ACTION, coordJob

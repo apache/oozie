@@ -600,17 +600,17 @@ public class SLACalculatorMemory implements SLACalculator {
      * @throws JPAExecutorException
      */
     private SLASummaryBean processJobEndFailureSLA(SLACalcStatus slaCalc, Date actualStart, Date actualEnd) throws JPAExecutorException {
-        if (actualStart == null) {
-            // job failed before starting
-            slaCalc.setEventProcessed(7);
-            slaCalc.setActualEnd(actualEnd);
-            slaCalc.setEventStatus(EventStatus.END_MISS);
-            slaCalc.setSLAStatus(SLAStatus.MISS);
-            eventHandler.queueEvent(new SLACalcStatus(slaCalc));
-            return getSLASummaryBean(slaCalc);
-        }
         slaCalc.setActualStart(actualStart);
         slaCalc.setActualEnd(actualEnd);
+        if (actualStart == null) { // job failed before starting
+            if (slaCalc.getEventProcessed() != 5) { // 101 = end+start already processed
+                slaCalc.setEventStatus(EventStatus.END_MISS);
+                slaCalc.setSLAStatus(SLAStatus.MISS);
+                eventHandler.queueEvent(new SLACalcStatus(slaCalc));
+                slaCalc.setEventProcessed(7);
+                return getSLASummaryBean(slaCalc);
+            }
+        }
         SLARegistrationBean reg = slaCalc.getSLARegistrationBean();
         long expectedDuration = reg.getExpectedDuration();
         long actualDuration = actualEnd.getTime() - actualStart.getTime();
