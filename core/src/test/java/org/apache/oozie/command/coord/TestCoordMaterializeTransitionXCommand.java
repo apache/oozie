@@ -20,6 +20,7 @@ package org.apache.oozie.command.coord;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
+
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
@@ -199,6 +200,35 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, startTime, endTime, false, false, 0);
         new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
         checkCoordJobs(job.getId(), CoordinatorJob.Status.RUNNING);
+    }
+
+    /**
+     * Test a coordinator does not materialize actions upon CommandException
+     * leading to FAILED state
+     *
+     * @throws Exception
+     */
+    public void testFailedJobNotMaterializeActions() throws Exception {
+        String coordXml = "<coordinator-app xmlns=\"uri:oozie:coordinator:0.4\"" + " name=\"NAME\" frequency=\"5\""
+                + " start=\"#start\" end=\"#end\" timezone=\"America/Los_Angeles\""
+                + " freq_timeunit=\"DAY\" end_of_duration=\"NONE\">" + "<input-events>"
+                + "<data-in name=\"a\" dataset=\"a\">"
+                + "<dataset name=\"a\" frequency=\"7\" initial-instance=\"2010-01-01T00:00Z\" timezone=\"UTC\" "
+                + "freq_timeunit=\"MINUTE\" end_of_duration=\"NONE\">"
+                + "<uri-template>${hcatNode}/${db}/${table}/ds=${YEAR}-${MONTH}-${DAY};region=${region}</uri-template>"
+                + "</dataset>" + "<start-instance>${coord:current(0)}</start-instance>"
+                + "<end-instance>${coord:latest(0)}</end-instance>" + "</data-in>" + "</input-events>" + "<action>"
+                + "<workflow>" + "<app-path>hdfs:///tmp/workflows/</app-path>" + "</workflow>" + "</action>"
+                + "</coordinator-app>";
+        CoordinatorJobBean job = addRecordToCoordJobTable(coordXml);
+        new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
+        JPAService jpaService = Services.get().get(JPAService.class);
+        job = jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
+        assertEquals(CoordinatorJob.Status.FAILED, job.getStatus());
+        // GetActions for coord job, should be none
+        int actions = jpaService.execute(new CoordJobGetActionsJPAExecutor(job.getId()));
+        assertEquals(0, actions);
+
     }
 
     /**

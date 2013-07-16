@@ -193,4 +193,10 @@ public abstract class SLAEvent extends Event {
      */
     public abstract Date getLastModifiedTime();
 
+    @Override
+    public String toString() {
+        return "ID: " + getId() + ", MsgType:" + getMsgType() + ", SLAStatus: " + getSLAStatus() + ", EventStatus: "
+                + getEventStatus() + " AppType " + getAppType();
+    }
+
 }
