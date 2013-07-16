@@ -29,7 +29,7 @@ public class SyncCoordAction {
     private Date nominalTime;
     private Date actualTime;
     private TimeZone timeZone;
-    private int frequency;
+    private String frequency;
     private TimeUnit timeUnit;
     private TimeUnit endOfDuration; // End of Month or End of Days
 
@@ -57,11 +57,11 @@ public class SyncCoordAction {
         this.timeZone = timeZone;
     }
 
-    public int getFrequency() {
+    public String getFrequency() {
         return frequency;
     }
 
-    public void setFrequency(int frequency) {
+    public void setFrequency(String frequency) {
         this.frequency = frequency;
     }
 

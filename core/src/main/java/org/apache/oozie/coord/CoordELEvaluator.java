@@ -144,7 +144,7 @@ public class CoordELEvaluator {
         if (strNominalTime != null) {
             appInst.setNominalTime(DateUtils.parseDateOozieTZ(strNominalTime));
             appInst.setTimeZone(DateUtils.getTimeZone(eJob.getAttributeValue("timezone")));
-            appInst.setFrequency(Integer.parseInt(eJob.getAttributeValue("frequency")));
+            appInst.setFrequency(eJob.getAttributeValue("frequency"));
             appInst.setTimeUnit(TimeUnit.valueOf(eJob.getAttributeValue("freq_timeunit")));
             appInst.setActionId(actionId);
             appInst.setName(eJob.getAttributeValue("name"));
