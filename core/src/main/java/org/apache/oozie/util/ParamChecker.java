@@ -21,6 +21,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
 
+import org.apache.commons.lang.StringUtils;
+import org.quartz.CronExpression;
+import java.text.ParseException;
+
 /**
  * Utility class to check common parameter preconditions.
  */
@@ -214,6 +218,51 @@ public class ParamChecker {
         return ret;
     }
 
+    /**
+     * Check whether a value is a valid coordinator frequency.
+     *
+     * @param value : value to test
+     * @return If the value is a valid frequency, return the frequency, Otherwise throw IllegalArgumentException
+     */
+    public static String checkFrequency(String val) {
+        try {
+            Integer.parseInt(val);
+        }
+        catch (NumberFormatException ex) {
+            try {
+                // this part is necessary since Quartz
+                // doesn't support for specifying both a day-of-week
+                // and a day-of-month parameter, nor does it support
+                // using "?" in both fields, but we don't want to
+                // expose it to users.
+                String[] cronArray1 = val.split(" ");
+                String[] cronArray2 = val.split(" ");
+
+                if (cronArray1.length != 5) {
+                    throw new IllegalArgumentException(XLog.format(
+                            "parameter [{0}] = [{1}]  must have 5 bit fields. Parsing error {2}", "frequency",
+                            val, ex.getMessage(), ex));
+                }
+
+                if (!cronArray1[4].trim().equals("?")) {
+                    cronArray1[2] = "?";
+                }
+
+                if (!cronArray2[2].trim().equals("?")) {
+                    cronArray2[4] = "?";
+                }
+
+                new CronExpression("0 " + StringUtils.join(cronArray1, " "));
+                new CronExpression("0 " + StringUtils.join(cronArray2, " "));
+            }
+            catch (ParseException pex) {
+                throw new IllegalArgumentException(XLog.format(
+                        "parameter [{0}] = [{1}]  must be an integer or a cron syntax. Parsing error {2}", "frequency",
+                        val, ex.getMessage(), ex));
+            }
+        }
+        return val;
+    }
     /**
      * Check whether the value is Oozie processing timezone data format.
      *

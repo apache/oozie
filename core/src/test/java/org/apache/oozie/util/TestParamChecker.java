@@ -214,4 +214,28 @@ public class TestParamChecker extends XTestCase {
 
     }
 
+    public void testCheckFrequency() {
+        ParamChecker.checkFrequency("10");
+
+        String cron = "20,30 * * 10 *";
+        ParamChecker.checkFrequency(cron);
+
+        cron = "0/10 10-12 3 5 MON,FRI";
+        ParamChecker.checkFrequency(cron);
+
+        try {
+            ParamChecker.checkFrequency("frequency");
+            fail();
+        }
+        catch (IllegalArgumentException ex) {
+        }
+
+        try {
+            ParamChecker.checkFrequency("10 * w e 1-4");
+            fail();
+        }
+        catch (IllegalArgumentException ex) {
+        }
+    }
+
 }
