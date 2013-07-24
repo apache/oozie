@@ -272,6 +272,11 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>org.quartz-scheduler</groupId>
+            <artifactId>quartz</artifactId>
+        </dependency>
+
         <!-- For drawing runtime DAG -->
         <dependency>
             <groupId>net.sf.jung</groupId>
