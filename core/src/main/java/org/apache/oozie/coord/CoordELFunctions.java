@@ -524,8 +524,6 @@ public class CoordELFunctions {
      * @throws Exception
      */
     public static String ph2_coord_currentRange(int start, int end) throws Exception {
-        ParamChecker.checkLEZero(start, "current:n");
-        ParamChecker.checkLEZero(end, "current:n");
         if (isSyncDataSet()) { // For Sync Dataset
             return coord_currentRange_sync(start, end);
         }
