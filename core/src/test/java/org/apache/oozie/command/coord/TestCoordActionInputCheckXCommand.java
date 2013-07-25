@@ -154,10 +154,18 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         Date endTime = DateUtils.parseDateOozieTZ("2009-02-02T23:59" + TZ);
         CoordinatorJobBean job = addRecordToCoordJobTable(jobId, startTime, endTime);
         new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
-        createDir(getTestCaseDir() + "/2009/01/29/");
+        createDir(getTestCaseDir() + "/2009/02/05/");
         createDir(getTestCaseDir() + "/2009/01/15/");
         new CoordActionInputCheckXCommand(job.getId() + "@1", job.getId()).call();
-        checkCoordAction(job.getId() + "@1");
+        JPAService jpaService = Services.get().get(JPAService.class);
+        CoordinatorActionBean action = jpaService.execute(new CoordActionGetJPAExecutor(job.getId() + "@1"));
+        System.out.println("missingDeps " + action.getMissingDependencies() + " Xml " + action.getActionXml());
+        if (action.getMissingDependencies().indexOf("/2009/02/05/") >= 0) {
+            fail("directory should be resolved :" + action.getMissingDependencies());
+        }
+        if (action.getMissingDependencies().indexOf("/2009/01/15/") < 0) {
+            fail("directory should NOT be resolved :" + action.getMissingDependencies());
+        }
     }
 
     /**
@@ -172,8 +180,8 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
 
         // providing some of the dataset dirs required as per coordinator
-        // specification - /2009/02/12, /2009/02/05, /2009/01/29, /2009/01/22
-        createDir(getTestCaseDir() + "/2009/02/12/");
+        // specification - /2009/02/19, /2009/02/12, /2009/02/05, /2009/01/29, /2009/01/22
+        createDir(getTestCaseDir() + "/2009/02/19/");
         createDir(getTestCaseDir() + "/2009/01/29/");
 
         new CoordActionInputCheckXCommand(job.getId() + "@1", job.getId()).call();
@@ -188,9 +196,9 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
 
         // Missing dependencies recorded by the coordinator action after input check
         String missDepsOrder = action.getMissingDependencies();
-        // Expected missing dependencies are /2009/02/05, /2009/01/29, and /2009/01/22.
+        // Expected missing dependencies are /2009/02/12, /2009/02/05, /2009/01/29, and /2009/01/22.
 
-        int index = missDepsOrder.indexOf("/2009/02/12");
+        int index = missDepsOrder.indexOf("/2009/02/19");
         if( index >= 0) {
             fail("Dependency should be available! current list: " + missDepsOrder);
         }
@@ -836,9 +844,13 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
             appXml += "<start-instance>${coord:" + dataInType + "(0,5)}</start-instance>";
             appXml += "<end-instance>${coord:" + dataInType + "(3,5)}</end-instance>";
         }
-        else {
+        else if (dataInType.equals("latest")) {
             appXml += "<start-instance>${coord:" + dataInType + "(-3)}</start-instance>";
             appXml += "<end-instance>${coord:" + dataInType + "(0)}</end-instance>";
+        }
+        else if (dataInType.equals("current")) {
+            appXml += "<start-instance>${coord:" + dataInType + "(-3)}</start-instance>";
+            appXml += "<end-instance>${coord:" + dataInType + "(1)}</end-instance>";
         }
         appXml += "</data-in>";
         appXml += "</input-events>";
@@ -886,23 +898,6 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
             fail("Unable to insert the test job record to table");
         }
         return coordJob;
-    }
-
-    private void checkCoordAction(String actionId) {
-        try {
-            JPAService jpaService = Services.get().get(JPAService.class);
-            CoordinatorActionBean action = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
-            System.out.println("missingDeps " + action.getMissingDependencies() + " Xml " + action.getActionXml());
-            if (action.getMissingDependencies().indexOf("/2009/01/29/") >= 0) {
-                fail("directory should be resolved :" + action.getMissingDependencies());
-            }
-            if (action.getMissingDependencies().indexOf("/2009/01/15/") < 0) {
-                fail("directory should NOT be resolved :" + action.getMissingDependencies());
-            }
-        }
-        catch (JPAExecutorException se) {
-            fail("Action ID " + actionId + " was not stored properly in db");
-        }
     }
 
     private CoordinatorActionBean checkCoordAction(String actionId, String expDeps, CoordinatorAction.Status stat)
