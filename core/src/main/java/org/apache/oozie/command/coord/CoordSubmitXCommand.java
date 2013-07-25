@@ -1095,8 +1095,10 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
             try {
                 jpaService.execute(new CoordJobInsertJPAExecutor(coordJob));
             }
-            catch (JPAExecutorException je) {
-                throw new CommandException(je);
+            catch (JPAExecutorException jpaee) {
+                coordJob.setId(null);
+                coordJob.setStatus(CoordinatorJob.Status.FAILED);
+                throw new CommandException(jpaee);
             }
         }
         return jobId;

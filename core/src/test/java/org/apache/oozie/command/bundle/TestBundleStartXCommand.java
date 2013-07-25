@@ -25,14 +25,18 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
+import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.executor.jpa.BundleActionsGetJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobInsertJPAExecutor;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.UUIDService;
+import org.apache.oozie.service.StatusTransitService.StatusTransitRunnable;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.XConfiguration;
 
@@ -219,4 +223,53 @@ public class TestBundleStartXCommand extends XDataTestCase {
         job = jpaService.execute(bundleJobGetExecutor);
         assertEquals(Job.Status.FAILED, job.getStatus());
     }
+
+    public static class DummyUUIDService extends UUIDService {
+        boolean firstTime = true;
+        @Override
+        public String generateId(ApplicationType type) {
+            if (type.equals(ApplicationType.COORDINATOR) && firstTime) {
+                firstTime = false;
+                return "dummy-coord-id";
+            }
+            else {
+                return super.generateId(type);
+            }
+        }
+    }
+
+    public void testBundleStartWithFailedCoordinator() throws Exception {
+        services.destroy();
+        services = new Services();
+        String excludeServices[] = { "org.apache.oozie.service.UUIDService",
+                "org.apache.oozie.service.StatusTransitService" };
+        Configuration conf = services.getConf();
+        setClassesToBeExcluded(conf, excludeServices);
+        conf.set(Services.CONF_SERVICE_CLASSES,
+                conf.get(Services.CONF_SERVICE_CLASSES) + "," + DummyUUIDService.class.getName());
+        services.init();
+        CoordinatorJobBean coordJob = new CoordinatorJobBean();
+        coordJob.setId("dummy-coord-id");
+        JPAService jpaService = Services.get().get(JPAService.class);
+        CoordJobInsertJPAExecutor coordInsertCmd = new CoordJobInsertJPAExecutor(coordJob);
+        jpaService.execute(coordInsertCmd);
+        BundleJobBean job = addRecordToBundleJobTable(Job.Status.PREP, false);
+        BundleJobGetJPAExecutor bundleJobGetExecutor = new BundleJobGetJPAExecutor(job.getId());
+        job = jpaService.execute(bundleJobGetExecutor);
+        assertEquals(job.getStatus(), Job.Status.PREP);
+        new BundleStartXCommand(job.getId()).call();
+        job = jpaService.execute(bundleJobGetExecutor);
+        assertEquals(job.getStatus(), Job.Status.RUNNING);
+        sleep(2000);
+        BundleActionsGetJPAExecutor bundleActionsGetExecutor = new BundleActionsGetJPAExecutor(job.getId());
+        List<BundleActionBean> actions = jpaService.execute(bundleActionsGetExecutor);
+        assertNull(actions.get(0).getCoordId());
+        assertEquals(Job.Status.FAILED, actions.get(0).getStatus());
+        Runnable runnable = new StatusTransitRunnable();
+        runnable.run();
+        job = jpaService.execute(bundleJobGetExecutor);
+        assertEquals(job.getStatus(), Job.Status.KILLED);
+    }
+
+
 }
