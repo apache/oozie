@@ -21,7 +21,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.WorkflowJobBean;
@@ -29,9 +28,8 @@ import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.coord.CoordELFunctions;
-import org.apache.oozie.dependency.FSURIHandler;
-import org.apache.oozie.dependency.HCatURIHandler;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobUpdateJPAExecutor;
@@ -41,7 +39,6 @@ import org.apache.oozie.service.PartitionDependencyManagerService;
 import org.apache.oozie.service.SchemaService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.StatusTransitService;
-import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.HCatURI;
@@ -99,6 +96,29 @@ public class TestCoordKillXCommand extends XDataTestCase {
         assertEquals(job.getStatus(), CoordinatorJob.Status.KILLED);
         assertTrue(job.isDoneMaterialization());
         assertEquals(action.getStatus(), CoordinatorAction.Status.KILLED);
+
+        // Change job status to RUNNINGWITHERROR to simulate StatusTransitService changing it to
+        // RUNNINGWITHERROR if it had loaded status and had it as RUNNING in memory when CoordKill
+        // executes and updates status to KILLED in database.
+        job.setStatus(CoordinatorJob.Status.RUNNINGWITHERROR);
+        jpaService.execute(new CoordJobUpdateJPAExecutor(job));
+        job = jpaService.execute(coordJobGetCmd);
+        assertEquals(job.getStatus(), CoordinatorJob.Status.RUNNINGWITHERROR);
+        final CoordMaterializeTransitionXCommand transitionCmd = new CoordMaterializeTransitionXCommand(job.getId(), 3600);
+        try {
+            transitionCmd.loadState();
+            transitionCmd.verifyPrecondition();
+            fail();
+        }
+        catch (PreconditionException e) {
+            // Materialization should not happen as done materialization is set to true by coord kill
+        }
+        StatusTransitService.StatusTransitRunnable statusTransit = new StatusTransitService.StatusTransitRunnable();
+        statusTransit.run();
+        // StatusTransitService should change the job back to KILLED
+        job = jpaService.execute(coordJobGetCmd);
+        assertEquals(job.getStatus(), CoordinatorJob.Status.KILLED);
+        assertTrue(job.isDoneMaterialization());
     }
 
     /**
