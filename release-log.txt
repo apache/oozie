@@ -7,6 +7,7 @@ OOZIE-1440 Build fails in certain environments due to xerces OpenJPA issue (mack
 
 -- Oozie 4.0.0 release
 
+OOZIE-1467 Bundle not killed if coordinator fails due to db exception (rohini,virag via virag)
 OOZIE-1466 current EL should not check for less than or equal to zero (rohini)
 OOZIE-1465 Making constants in CoordELFunctions public for el extensions (shwethags via rohini)
 OOZIE-1450 Duplicate Coord_Action events on Waiting -> Timeout, and Coord Materialize not removing actions on Failure (mona)

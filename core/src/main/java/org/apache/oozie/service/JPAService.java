@@ -24,6 +24,7 @@ import java.util.Properties;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
+import javax.persistence.PersistenceException;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.BundleActionBean;
@@ -222,6 +223,9 @@ public class JPAService implements Service, Instrumentable {
                 em.getTransaction().commit();
             }
             return t;
+        }
+        catch (PersistenceException e) {
+            throw new JPAExecutorException(ErrorCode.E0603, e);
         }
         finally {
             cron.stop();
