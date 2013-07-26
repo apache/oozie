@@ -106,7 +106,7 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
      */
     @Override
     public String getEntityKey() {
-        return this.bundleaction.getBundleActionId();
+        return bundleaction.getBundleId();
     }
 
     /* (non-Javadoc)

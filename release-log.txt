@@ -1,5 +1,6 @@
 -- Oozie 4.0.0 release
 
+OOZIE-1470 BundleStatusUpdateXCommand should get lock for bundle job (virag)
 OOZIE-1469 loadState() and/or verifyPrecondition() are blank in some commands (virag)
 OOZIE-1467 Bundle not killed if coordinator fails due to db exception (rohini,virag via virag)
 OOZIE-1466 current EL should not check for less than or equal to zero (rohini)
