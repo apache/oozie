@@ -392,6 +392,7 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
      */
     @Override
     protected void loadState() throws CommandException {
+        eagerLoadState();
     }
 
     /* (non-Javadoc)
@@ -399,5 +400,6 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
      */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
+        eagerVerifyPrecondition();
     }
 }

@@ -215,6 +215,7 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
      */
     @Override
     protected void loadState() throws CommandException {
+        eagerLoadState();
     }
 
     /* (non-Javadoc)
