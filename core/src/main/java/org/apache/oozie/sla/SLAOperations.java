@@ -94,16 +94,14 @@ public class SLAOperations {
 
         // Setting expected duration in milliseconds
         String expectedDurationStr = getTagElement(eSla, MAX_DURATION);
-        long defaultDuration = 0;
-        if (sla.getExpectedStart() != null) {
-            defaultDuration = sla.getExpectedEnd().getTime() - sla.getExpectedStart().getTime();
-            sla.setExpectedDuration(defaultDuration);
-        }
         if (expectedDurationStr != null && expectedDurationStr.length() > 0) {
             float expectedDuration = Float.parseFloat(expectedDurationStr);
             if (expectedDuration > 0) {
                 sla.setExpectedDuration((long) (expectedDuration * 60 * 1000));
             }
+        }
+        else if (sla.getExpectedStart() != null) {
+            sla.setExpectedDuration(sla.getExpectedEnd().getTime() - sla.getExpectedStart().getTime());
         }
 
         // Parse desired alert-types i.e. start-miss, end-miss, start-met etc..

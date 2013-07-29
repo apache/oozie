@@ -35,8 +35,11 @@
             </configuration>
         </map-reduce>
         <ok to="end"/>
-        <error to="end"/>
+        <error to="fail"/>
     </action>
+    <kill name="fail">
+        <message>Workflow failed</message>
+    </kill>
     <end name="end"/>
     <sla:info>
         <sla:nominal-time>${nominal_time}</sla:nominal-time>

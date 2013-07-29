@@ -60,6 +60,7 @@ public class TestSLAService extends XDataTestCase {
                 + "org.apache.oozie.sla.service.SLAService");
         conf.setClass(EventHandlerService.CONF_LISTENERS, DummySLAEventListener.class, SLAEventListener.class);
         conf.setLong(SLAService.CONF_JOB_EVENT_LATENCY, 0);
+        conf.setInt(EventHandlerService.CONF_WORKER_THREADS, 0);
         services.init();
         cleanUpDBTables();
     }

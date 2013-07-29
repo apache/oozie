@@ -307,8 +307,8 @@ public class SLAEmailEventListener extends SLAEventListener {
         printField(body, EmailField.ACTUAL_START_TIME.toString(), event.getActualStart());
         printField(body, EmailField.EXPECTED_END_TIME.toString(), event.getExpectedEnd());
         printField(body, EmailField.ACTUAL_END_TIME.toString(), event.getActualEnd());
-        printField(body, EmailField.EXPECTED_DURATION.toString(), event.getExpectedDuration());
-        printField(body, EmailField.ACTUAL_DURATION.toString(), event.getActualDuration());
+        printField(body, EmailField.EXPECTED_DURATION.toString(), getDurationInMins(event.getExpectedDuration()));
+        printField(body, EmailField.ACTUAL_DURATION.toString(), getDurationInMins(event.getActualDuration()));
 
         try {
             msg.setText(body.toString());
@@ -317,6 +317,13 @@ public class SLAEmailEventListener extends SLAEventListener {
             LOG.error("Message Exception in setting message body of SLA alert email", me);
             throw me;
         }
+    }
+
+    private long getDurationInMins(long duration) {
+        if (duration < 0) {
+            return duration;
+        }
+        return duration / 60000; //Convert millis to minutes
     }
 
     private String getJobLink(String jobId) {
