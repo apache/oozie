@@ -216,36 +216,36 @@ public class SLAMessage extends EventMessage {
     }
 
     /**
-     * Get expected duration time (in minutes)
+     * Get expected duration time (in milliseconds)
      *
-     * @return expectedDuration (in minutes)
+     * @return expectedDuration (in milliseconds)
      */
     public long getExpectedDuration() {
         return expectedDuration;
     }
 
     /**
-     * Set expected duration (in minutes) for message
+     * Set expected duration (in milliseconds) for message
      *
-     * @param expectedDuration (in minutes)
+     * @param expectedDuration (in milliseconds)
      */
     public void setExpectedDuration(long expectedDuration) {
         this.expectedDuration = expectedDuration;
     }
 
     /**
-     * Get actual duration (in minutes)
+     * Get actual duration (in milliseconds)
      *
-     * @return actual duration (in minutes)
+     * @return actual duration (in milliseconds)
      */
     public long getActualDuration() {
         return actualDuration;
     }
 
     /**
-     * Set actual duration (in minutes) for message
+     * Set actual duration (in milliseconds) for message
      *
-     * @param actualDuration (in minutes)
+     * @param actualDuration (in milliseconds)
      */
     public void setActualDuration(long actualDuration) {
         this.actualDuration = actualDuration;

@@ -1,5 +1,6 @@
 -- Oozie 4.0.0 release
 
+OOZIE-1472 Confirm against database before generating start and duration miss events (rohini)
 OOZIE-1473 getKey() not overridden in some commands causing duplicates in queue (virag)
 OOZIE-1470 BundleStatusUpdateXCommand should get lock for bundle job (virag)
 OOZIE-1469 loadState() and/or verifyPrecondition() are blank in some commands (virag)

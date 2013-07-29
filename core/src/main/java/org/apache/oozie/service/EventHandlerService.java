@@ -207,7 +207,8 @@ public class EventHandlerService implements Service {
     }
 
     public void queueEvent(Event event) {
-        LOG.trace("Stack trace while queueing event : " + event, new Throwable());
+        LOG.debug("Queueing event : {0}", event);
+        LOG.trace("Stack trace while queueing event : {0}", event, new Throwable());
         eventQueue.add(event);
     }
 
@@ -226,6 +227,7 @@ public class EventHandlerService implements Service {
                 if (!eventQueue.isEmpty()) {
                     List<Event> work = eventQueue.pollBatch();
                     for (Event event : work) {
+                        LOG.debug("Processing event : {0}", event);
                         MessageType msgType = event.getMsgType();
                         List<?> listeners = listenerMap.get(msgType);
                         if (listeners != null) {

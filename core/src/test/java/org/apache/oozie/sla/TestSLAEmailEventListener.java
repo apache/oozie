@@ -213,8 +213,10 @@ public class TestSLAEmailEventListener extends XTestCase {
         Date actualStartDate = DateUtils.parseDateUTC("2013-01-01T00:10Z");
         Date expectedEndDate = DateUtils.parseDateUTC("2013-01-01T00:20Z");
         Date actualEndDate = DateUtils.parseDateUTC("2013-01-01T00:40Z");
-        long expectedDuration = (expectedEndDate.getTime() - expectedStartDate.getTime()) / (1000 * 60);
-        long actualDuration = (actualEndDate.getTime() - actualStartDate.getTime()) / (1000 * 60);
+        long expectedDuration = expectedEndDate.getTime() - expectedStartDate.getTime();
+        long actualDuration = actualEndDate.getTime() - actualStartDate.getTime();
+        long expectedDurationInMins = expectedDuration / 60000;
+        long actualDurationInMins = actualDuration / 60000;
         event.setId("0000000-000000000000001-oozie-wrkf-C@1");
         eventBean.setParentId("0000000-000000000000001-oozie-wrkf-C");
         event.setEventStatus(EventStatus.DURATION_MISS);
@@ -275,8 +277,8 @@ public class TestSLAEmailEventListener extends XTestCase {
         assertTrue(msgBody.indexOf(indent + EmailField.ACTUAL_START_TIME.toString() + sep + actualStartDate) > -1);
         assertTrue(msgBody.indexOf(indent + EmailField.EXPECTED_END_TIME.toString() + sep + expectedEndDate) > -1);
         assertTrue(msgBody.indexOf(indent + EmailField.ACTUAL_END_TIME.toString() + sep + actualEndDate) > -1);
-        assertTrue(msgBody.indexOf(indent + EmailField.EXPECTED_DURATION.toString() + sep + expectedDuration) > -1);
-        assertTrue(msgBody.indexOf(indent + EmailField.ACTUAL_DURATION.toString() + sep + actualDuration) > -1);
+        assertTrue(msgBody.indexOf(indent + EmailField.EXPECTED_DURATION.toString() + sep + expectedDurationInMins) > -1);
+        assertTrue(msgBody.indexOf(indent + EmailField.ACTUAL_DURATION.toString() + sep + actualDurationInMins) > -1);
     }
 
     public void testUserAlertEventSetting() throws Exception {

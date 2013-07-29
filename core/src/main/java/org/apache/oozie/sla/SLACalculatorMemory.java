@@ -18,7 +18,6 @@
 package org.apache.oozie.sla;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -26,7 +25,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.hadoop.conf.Configuration;
@@ -65,6 +63,8 @@ import org.apache.oozie.util.XLog;
  * start/end/duration of jobs using a memory-based map
  */
 public class SLACalculatorMemory implements SLACalculator {
+
+    private static final XLog LOG = XLog.getLog(SLACalculatorMemory.class);
     // TODO optimization priority based insertion/processing/bumping up-down
     private static Map<String, SLACalcStatus> slaMap;
     private static Set<String> historySet;
@@ -91,6 +91,8 @@ public class SLACalculatorMemory implements SLACalculator {
     private void loadOnRestart() {
         boolean isJobModified = false;
         try {
+            long slaPendingCount = 0;
+            long statusPendingCount = 0;
             List<SLASummaryBean> summaryBeans = jpaService.execute(new SLASummaryGetRecordsOnRestartJPAExecutor(
                     modifiedAfter));
             for (SLASummaryBean summaryBean : summaryBeans) {
@@ -114,28 +116,31 @@ public class SLACalculatorMemory implements SLACalculator {
                     }
                 }
                 catch (Exception e) {
-                    XLog.getLog(SLAService.class).warn("Failed to load records for " + jobId, e);
+                    LOG.warn("Failed to load records for " + jobId, e);
                 }
                 try {
                     if (summaryBean.getEventProcessed() == 7) {
                         historySet.add(jobId);
+                        statusPendingCount++;
                     }
                     else if (summaryBean.getEventProcessed() <= 7) {
                         SLARegistrationBean slaRegBean = jpaService.execute(new SLARegistrationGetOnRestartJPAExecutor(
                                 jobId));
                         SLACalcStatus slaCalcStatus = new SLACalcStatus(summaryBean, slaRegBean);
                         slaMap.put(jobId, slaCalcStatus);
+                        slaPendingCount++;
                     }
                 }
                 catch (Exception e) {
-                    XLog.getLog(SLAService.class).warn("Failed to fetch/update records for " + jobId, e);
+                    LOG.warn("Failed to fetch/update records for " + jobId, e);
                 }
 
             }
+            LOG.info("Loaded SLASummary pendingSLA=" + slaPendingCount + ", pendingStatusUpdate=" + statusPendingCount);
 
         }
         catch (Exception e) {
-            XLog.getLog(SLAService.class).warn("Failed to retrieve SLASummary records on restart", e);
+            LOG.warn("Failed to retrieve SLASummary records on restart", e);
         }
     }
 
@@ -145,21 +150,20 @@ public class SLACalculatorMemory implements SLACalculator {
         CoordinatorActionBean coordAction = null;
         coordAction = jpaService.execute(new CoordActionGetForSLAJPAExecutor(jobId));
         if (!coordAction.getStatusStr().equals(summaryBean.getJobStatus())) {
-            XLog.getLog(SLAService.class).trace(
-                    "Coordinator action status is " + coordAction.getStatusStr() + " and summary bean status is "
-                            + summaryBean.getJobStatus());
+            LOG.trace("Coordinator action status is " + coordAction.getStatusStr() + " and summary bean status is "
+                    + summaryBean.getJobStatus());
             isJobModified = true;
             summaryBean.setJobStatus(coordAction.getStatusStr());
             if (coordAction.isTerminalStatus()) {
                 WorkflowJobBean wfJob = jpaService.execute(new WorkflowJobGetForSLAJPAExecutor(coordAction
                         .getExternalId()));
-                setSLASummaryBean(summaryBean, wfJob.getStartTime(), coordAction.getLastModifiedTime(),
+                setEndForSLASummaryBean(summaryBean, wfJob.getStartTime(), coordAction.getLastModifiedTime(),
                         coordAction.getStatusStr());
             }
             else if (coordAction.getStatus() != CoordinatorAction.Status.WAITING) {
                 WorkflowJobBean wfJob = jpaService.execute(new WorkflowJobGetForSLAJPAExecutor(coordAction
                         .getExternalId()));
-                setSLASummaryBean(summaryBean, summaryBean.getEventProcessed(), wfJob.getStartTime());
+                setStartForSLASummaryBean(summaryBean, summaryBean.getEventProcessed(), wfJob.getStartTime());
             }
         }
         return isJobModified;
@@ -171,16 +175,15 @@ public class SLACalculatorMemory implements SLACalculator {
         WorkflowActionBean wfAction = null;
         wfAction = jpaService.execute(new WorkflowActionGetForSLAJPAExecutor(jobId));
         if (!wfAction.getStatusStr().equals(summaryBean.getJobStatus())) {
-            XLog.getLog(SLAService.class).trace(
-                    "Workflow action status is " + wfAction.getStatusStr() + "and summary bean status is "
-                            + summaryBean.getJobStatus());
+            LOG.trace("Workflow action status is " + wfAction.getStatusStr() + "and summary bean status is "
+                    + summaryBean.getJobStatus());
             isJobModified = true;
             summaryBean.setJobStatus(wfAction.getStatusStr());
             if (wfAction.inTerminalState()) {
-                setSLASummaryBean(summaryBean, wfAction.getStartTime(), wfAction.getEndTime(), wfAction.getStatusStr());
+                setEndForSLASummaryBean(summaryBean, wfAction.getStartTime(), wfAction.getEndTime(), wfAction.getStatusStr());
             }
             else if (wfAction.getStatus() != WorkflowAction.Status.PREP) {
-                setSLASummaryBean(summaryBean, summaryBean.getEventProcessed(), wfAction.getStartTime());
+                setStartForSLASummaryBean(summaryBean, summaryBean.getEventProcessed(), wfAction.getStartTime());
             }
         }
         return isJobModified;
@@ -192,22 +195,21 @@ public class SLACalculatorMemory implements SLACalculator {
         WorkflowJobBean wfJob = null;
         wfJob = jpaService.execute(new WorkflowJobGetForSLAJPAExecutor(jobId));
         if (!wfJob.getStatusStr().equals(summaryBean.getJobStatus())) {
-            XLog.getLog(SLAService.class).trace(
-                    "Workflow job status is " + wfJob.getStatusStr() + "and summary bean status is "
-                            + summaryBean.getJobStatus());
+            LOG.trace("Workflow job status is " + wfJob.getStatusStr() + "and summary bean status is "
+                    + summaryBean.getJobStatus());
             isJobModified = true;
             summaryBean.setJobStatus(wfJob.getStatusStr());
             if (wfJob.inTerminalState()) {
-                setSLASummaryBean(summaryBean, wfJob.getStartTime(), wfJob.getEndTime(), wfJob.getStatusStr());
+                setEndForSLASummaryBean(summaryBean, wfJob.getStartTime(), wfJob.getEndTime(), wfJob.getStatusStr());
             }
             else if (wfJob.getStatus() != WorkflowJob.Status.PREP) {
-                setSLASummaryBean(summaryBean, summaryBean.getEventProcessed(), wfJob.getStartTime());
+                setStartForSLASummaryBean(summaryBean, summaryBean.getEventProcessed(), wfJob.getStartTime());
             }
         }
         return isJobModified;
     }
 
-    private void setSLASummaryBean(SLASummaryBean summaryBean, Date startTime, Date endTime, String status) {
+    private void setEndForSLASummaryBean(SLASummaryBean summaryBean, Date startTime, Date endTime, String status) {
         byte eventProc = summaryBean.getEventProcessed();
         summaryBean.setEventProcessed(8);
         summaryBean.setActualStart(startTime);
@@ -231,7 +233,7 @@ public class SLACalculatorMemory implements SLACalculator {
 
     }
 
-    private void setSLASummaryBean(SLASummaryBean summaryBean, byte eventProc, Date startTime) {
+    private void setStartForSLASummaryBean(SLASummaryBean summaryBean, byte eventProc, Date startTime) {
         if (((eventProc & 1) == 0)) {
             eventProc += 1;
             summaryBean.setEventProcessed(eventProc);
@@ -286,12 +288,18 @@ public class SLACalculatorMemory implements SLACalculator {
             // calculation w.r.t current time and status
             if ((eventProc & 1) == 0) { // first bit (start-processed) unset
                 if (reg.getExpectedStart() != null) {
-                    if (reg.getExpectedStart().getTime() + jobEventLatency < Calendar.getInstance(TimeZone.getTimeZone("UTC"))
-                            .getTimeInMillis()) {
-                        slaCalc.setEventStatus(EventStatus.START_MISS);
+                    if (reg.getExpectedStart().getTime() + jobEventLatency < System.currentTimeMillis()) {
+                        confirmWithDB(slaCalc);
+                        if ((slaCalc.getEventProcessed() & 1 ) == 0) {
+                            //Some DB exception
+                            slaCalc.setEventStatus(EventStatus.START_MISS);
+                            eventHandler.queueEvent(new SLACalcStatus(slaCalc));
+                            eventProc++;
+                        }
+                        else {
+                            eventProc = slaCalc.getEventProcessed();
+                        }
                         change = true;
-                        eventHandler.queueEvent(new SLACalcStatus(slaCalc));
-                        eventProc++;
                     }
                 }
                 else {
@@ -305,22 +313,29 @@ public class SLACalculatorMemory implements SLACalculator {
                     change = true;
                 }
                 else if (slaCalc.getActualStart() != null) {
-                    if (reg.getExpectedDuration() + jobEventLatency < Calendar.getInstance(TimeZone.getTimeZone("UTC"))
-                            .getTimeInMillis() - slaCalc.getActualStart().getTime()) {
-                        slaCalc.setEventStatus(EventStatus.DURATION_MISS);
+                    if ((reg.getExpectedDuration() + jobEventLatency) < (System.currentTimeMillis() - slaCalc
+                            .getActualStart().getTime())) {
+                        slaCalc.setEventProcessed(eventProc);
+                        confirmWithDB(slaCalc);
+                        if (((slaCalc.getEventProcessed() >> 1) & 1 ) == 0) {
+                            //Some DB exception
+                            slaCalc.setEventStatus(EventStatus.DURATION_MISS);
+                            eventHandler.queueEvent(new SLACalcStatus(slaCalc));
+                            eventProc += 2;
+                        }
+                        else {
+                            eventProc = slaCalc.getEventProcessed();
+                        }
                         change = true;
-                        eventHandler.queueEvent(new SLACalcStatus(slaCalc));
-                        eventProc += 2;
                     }
                 }
             }
             if (eventProc < 4) {
-                if (reg.getExpectedEnd().getTime() + jobEventLatency < Calendar
-                        .getInstance(TimeZone.getTimeZone("UTC")).getTimeInMillis()) {
+                if (reg.getExpectedEnd().getTime() + jobEventLatency < System.currentTimeMillis()) {
+                    slaCalc.setEventProcessed(eventProc);
                     confirmWithDB(slaCalc);
+                    eventProc = slaCalc.getEventProcessed();
                     change = true;
-                    eventHandler.queueEvent(new SLACalcStatus(slaCalc));
-                    eventProc += 4;
                 }
             }
             if (change) {
@@ -344,7 +359,7 @@ public class SLACalculatorMemory implements SLACalculator {
                 if (eventProc == 7) {
                     historySet.add(jobId);
                     slaMap.remove(jobId);
-                    XLog.getLog(SLAService.class).trace("Removed Job [{0}] from map after End-processed", jobId);
+                    LOG.trace("Removed Job [{0}] from map after End-processed", jobId);
                 }
 
             }
@@ -357,14 +372,16 @@ public class SLACalculatorMemory implements SLACalculator {
      */
     @Override
     public void updateAllSlaStatus() {
+        LOG.info("Running periodic SLA check");
         Iterator<String> iterator = slaMap.keySet().iterator();
         while (iterator.hasNext()) {
             String jobId = iterator.next();
             try {
+                LOG.trace("Processing SLA for jobid={0}", jobId);
                 updateJobSla(jobId);
             }
             catch (Exception e) {
-                XLog.getLog(SLAService.class).error("Exception in SLA processing for job [{0}]", jobId, e);
+                LOG.error("Exception in SLA processing for job [{0}]", jobId, e);
             }
         }
     }
@@ -384,13 +401,13 @@ public class SLACalculatorMemory implements SLACalculator {
                 insertList.add(reg);
                 insertList.add(new SLASummaryBean(slaCalc));
                 jpaService.execute(new SLACalculationInsertUpdateJPAExecutor(insertList, null));
-                XLog.getLog(SLAService.class).trace("SLA Registration Event - Job:" + jobId);
+                LOG.trace("SLA Registration Event - Job:" + jobId);
                 return true;
             }
             else {
-                XLog.getLog(SLAService.class)
-                .error("SLACalculator memory capacity reached. Cannot add or update new SLA Registration entry for job [{0}]",
-                reg.getId());
+                LOG.error(
+                        "SLACalculator memory capacity reached. Cannot add or update new SLA Registration entry for job [{0}]",
+                        reg.getId());
             }
         }
         catch (JPAExecutorException jpa) {
@@ -432,13 +449,13 @@ public class SLACalculatorMemory implements SLACalculator {
                 updateList.add(reg);
                 updateList.add(new SLASummaryBean(slaCalc));
                 jpaService.execute(new SLACalculationInsertUpdateJPAExecutor(null, updateList));
-                XLog.getLog(SLAService.class).trace("SLA Registration Event - Job:" + jobId);
+                LOG.trace("SLA Registration Event - Job:" + jobId);
                 return true;
             }
             else {
-                XLog.getLog(SLAService.class)
-                .error("SLACalculator memory capacity reached. Cannot add or update new SLA Registration entry for job [{0}]",
-                reg.getId());
+                LOG.error(
+                        "SLACalculator memory capacity reached. Cannot add or update new SLA Registration entry for job [{0}]",
+                        reg.getId());
             }
         }
         catch (JPAExecutorException jpa) {
@@ -481,7 +498,7 @@ public class SLACalculatorMemory implements SLACalculator {
                         slaInfo = processJobEndFailureSLA(slaCalc, startTime, endTime);
                         break;
                     default:
-                        XLog.getLog(SLAService.class).debug("Unknown Job Status for SLA purpose[{0}]", jobEventStatus);
+                        LOG.debug("Unknown Job Status for SLA purpose[{0}]", jobEventStatus);
                         slaInfo = getSLASummaryBean(slaCalc);
                 }
 
@@ -491,7 +508,7 @@ public class SLACalculatorMemory implements SLACalculator {
                 }
                 hasSla = true;
             }
-            XLog.getLog(SLAService.class).trace("SLA Status Event - Job:" + jobId + " Status:" + slaCalc.getSLAStatus());
+            LOG.trace("SLA Status Event - Job:" + jobId + " Status:" + slaCalc.getSLAStatus());
         }
         else if (historySet.contains(jobId)) {
             slaInfo = jpaService.execute(new SLASummaryGetJPAExecutor(jobId));
@@ -618,7 +635,10 @@ public class SLACalculatorMemory implements SLACalculator {
 
         byte eventProc = slaCalc.getEventProcessed();
         if (((eventProc >> 1) & 1) == 0) {
-            processDurationSLA(expectedDuration, actualDuration, slaCalc);
+            if (expectedDuration != -1) {
+                slaCalc.setEventStatus(EventStatus.DURATION_MISS);
+                eventHandler.queueEvent(new SLACalcStatus(slaCalc));
+            }
             eventProc += 2;
             slaCalc.setEventProcessed(eventProc);
         }
@@ -627,7 +647,7 @@ public class SLACalculatorMemory implements SLACalculator {
             slaCalc.setSLAStatus(SLAStatus.MISS);
             eventProc += 4;
             slaCalc.setEventProcessed(eventProc);
-                eventHandler.queueEvent(new SLACalcStatus(slaCalc));
+            eventHandler.queueEvent(new SLACalcStatus(slaCalc));
         }
         return getSLASummaryBean(slaCalc);
     }
@@ -657,22 +677,19 @@ public class SLACalculatorMemory implements SLACalculator {
     }
 
     /*
-     * Confirm END_MISS alert against source of truth - DB
+     * Confirm alerts against source of truth - DB. Also required in case of High Availability
      */
     private void confirmWithDB(SLACalcStatus slaCalc) {
-        boolean isMiss = false, ended = false;
+        boolean ended = false, isEndMiss = false;
         try {
             switch (slaCalc.getAppType()) {
                 case WORKFLOW_JOB:
                     WorkflowJobBean wf = jpaService.execute(new WorkflowJobGetForSLAJPAExecutor(slaCalc.getId()));
-                    if (wf.getEndTime() == null) {
-                        isMiss = true;
-                    }
-                    else {
+                    if (wf.getEndTime() != null) {
                         ended = true;
                         if (wf.getStatus() == WorkflowJob.Status.KILLED || wf.getStatus() == WorkflowJob.Status.FAILED
                                 || wf.getEndTime().getTime() > slaCalc.getExpectedEnd().getTime()) {
-                            isMiss = true;
+                            isEndMiss = true;
                         }
                     }
                     slaCalc.setActualStart(wf.getStartTime());
@@ -681,14 +698,11 @@ public class SLACalculatorMemory implements SLACalculator {
                     break;
                 case WORKFLOW_ACTION:
                     WorkflowActionBean wa = jpaService.execute(new WorkflowActionGetForSLAJPAExecutor(slaCalc.getId()));
-                    if (wa.getEndTime() == null) {
-                        isMiss = true;
-                    }
-                    else {
+                    if (wa.getEndTime() != null) {
                         ended = true;
                         if (wa.isTerminalWithFailure()
                                 || wa.getEndTime().getTime() > slaCalc.getExpectedEnd().getTime()) {
-                            isMiss = true;
+                            isEndMiss = true;
                         }
                     }
                     slaCalc.setActualStart(wa.getStartTime());
@@ -698,54 +712,98 @@ public class SLACalculatorMemory implements SLACalculator {
                 case COORDINATOR_ACTION:
                     CoordinatorActionBean ca = jpaService.execute(new CoordActionGetForSLAJPAExecutor(slaCalc.getId()));
                     if (ca.isTerminalWithFailure()) {
-                        isMiss = ended = true;
+                        isEndMiss = ended = true;
                         slaCalc.setActualStart(null);
                         slaCalc.setActualEnd(ca.getLastModifiedTime());
                     }
                     if (ca.getExternalId() != null) {
                         wf = jpaService.execute(new WorkflowJobGetForSLAJPAExecutor(ca.getExternalId()));
-                        if (wf.getEndTime() == null) {
-                            isMiss = true;
-                        }
-                        else {
+                        if (wf.getEndTime() != null) {
                             ended = true;
                             if (wf.getEndTime().getTime() > slaCalc.getExpectedEnd().getTime()) {
-                                isMiss = true;
+                                isEndMiss = true;
                             }
                         }
                         slaCalc.setActualEnd(wf.getEndTime());
                         slaCalc.setActualStart(wf.getStartTime());
                     }
-                    else {
-                        isMiss = true;
-                    }
                     slaCalc.setJobStatus(ca.getStatusStr());
                     break;
                 default:
-                    XLog.getLog(SLAService.class).debug("Unsupported App-type for SLA - " + slaCalc.getAppType());
+                    LOG.debug("Unsupported App-type for SLA - " + slaCalc.getAppType());
             }
+
+            byte eventProc = slaCalc.getEventProcessed();
             if (ended) {
-                slaCalc.setActualDuration(slaCalc.getActualEnd().getTime() - slaCalc.getActualStart().getTime());
-                if (((slaCalc.getEventProcessed() >> 1) & 1) == 0) {
-                    processDurationSLA(slaCalc.getExpectedDuration(), slaCalc.getActualDuration(), slaCalc);
+                if (isEndMiss) {
+                    slaCalc.setSLAStatus(SLAStatus.MISS);
+                }
+                else {
+                    slaCalc.setSLAStatus(SLAStatus.MET);
+                }
+                if (slaCalc.getActualStart() != null) {
+                    slaCalc.setActualDuration(slaCalc.getActualEnd().getTime() - slaCalc.getActualStart().getTime());
+                    if (((eventProc >> 1) & 1) == 0) {
+                        processDurationSLA(slaCalc.getExpectedDuration(), slaCalc.getActualDuration(), slaCalc);
+                    }
+                }
+                if (eventProc < 4) {
+                    if (isEndMiss) {
+                        slaCalc.setEventStatus(EventStatus.END_MISS);
+                    }
+                    else {
+                        slaCalc.setEventStatus(EventStatus.END_MET);
+                    }
+                    eventHandler.queueEvent(new SLACalcStatus(slaCalc));
                 }
                 slaCalc.setEventProcessed(8);
             }
-            if (isMiss) {
-                slaCalc.setEventStatus(EventStatus.END_MISS);
-                slaCalc.setSLAStatus(SLAStatus.MISS);
-            }
             else {
-                slaCalc.setEventStatus(EventStatus.END_MET);
-                slaCalc.setSLAStatus(SLAStatus.MET);
+                if (slaCalc.getActualStart() != null) {
+                    slaCalc.setSLAStatus(SLAStatus.IN_PROCESS);
+                }
+                if ((eventProc & 1) == 0) {
+                    if (slaCalc.getActualStart() != null) {
+                        if (slaCalc.getExpectedStart().getTime() < slaCalc.getActualStart().getTime()) {
+                            slaCalc.setEventStatus(EventStatus.START_MISS);
+                        }
+                        else {
+                            slaCalc.setEventStatus(EventStatus.START_MET);
+                        }
+                        eventHandler.queueEvent(new SLACalcStatus(slaCalc));
+                        eventProc++;
+                    }
+                    else if (slaCalc.getExpectedStart().getTime() < System.currentTimeMillis()) {
+                        slaCalc.setEventStatus(EventStatus.START_MISS);
+                        eventHandler.queueEvent(new SLACalcStatus(slaCalc));
+                        eventProc++;
+                    }
+                }
+                if (((eventProc >> 1) & 1) == 0 && slaCalc.getActualStart() != null
+                        && slaCalc.getExpectedDuration() != -1) {
+                    if (System.currentTimeMillis() - slaCalc.getActualStart().getTime() > slaCalc.getExpectedDuration()) {
+                        slaCalc.setEventStatus(EventStatus.DURATION_MISS);
+                        eventHandler.queueEvent(new SLACalcStatus(slaCalc));
+                        eventProc += 2;
+                    }
+                }
+                if (eventProc < 4 && slaCalc.getExpectedEnd().getTime() < System.currentTimeMillis()) {
+                    slaCalc.setEventStatus(EventStatus.END_MISS);
+                    slaCalc.setSLAStatus(SLAStatus.MISS);
+                    eventHandler.queueEvent(new SLACalcStatus(slaCalc));
+                    eventProc += 4;
+                }
+                slaCalc.setEventProcessed(eventProc);
             }
         }
         catch (Exception e) {
-            XLog.getLog(SLAService.class).warn(
-                    "Error while confirming End_miss against DB: "
-                            + ". Setting END_MISS since time limit has been exceeded", e);
-            slaCalc.setEventStatus(EventStatus.END_MISS);
-            slaCalc.setSLAStatus(SLAStatus.MISS);
+            LOG.warn("Error while confirming against DB: ", e);
+            if (slaCalc.getEventProcessed() < 4 && slaCalc.getExpectedEnd().getTime() < System.currentTimeMillis()) {
+                slaCalc.setEventStatus(EventStatus.END_MISS);
+                slaCalc.setSLAStatus(SLAStatus.MISS);
+                eventHandler.queueEvent(new SLACalcStatus(slaCalc));
+                slaCalc.setEventProcessed(slaCalc.getEventProcessed() + 4);
+            }
         }
     }
 

@@ -103,9 +103,9 @@ For the list of tags usable under =<sla:info>=, refer to [[WorkflowFunctionalSpe
 This new schema is much more compact and meaningful, getting rid of redundant and unused tags.
 
    * ==nominal-time==: As the name suggests, this is the time relative to which your jobs' SLAs will be calculated. Generally since Oozie workflows are aligned with synchronous data dependencies, this nominal time can be parameterized to be passed the value of your coordinator nominal time. Nominal time is also required in case of independent workflows and you can specify the time in which you expect the workflow to be run if you don't have a synchronous dataset associated with it.
-   * ==should-start==: Relative to =nominal-time= this is the amount of time (alongwith time-unit) within which, your job should *start running*, to meet SLA. This is optional.
-   * ==should-end==: Relative to =nominal-time= this is the amount of time (alongwith time-unit) within which, your job should *finish*, to meet SLA.
-   * ==max-duration==: This is the maximum amount of time (alongwith time-unit) for your job run, to meet SLA. This is optional.
+   * ==should-start==: Relative to =nominal-time= this is the amount of time (along with time-unit - MINUTES, HOURS, DAYS) within which your job should *start running* to meet SLA. This is optional.
+   * ==should-end==: Relative to =nominal-time= this is the amount of time (along with time-unit - MINUTES, HOURS, DAYS) within which your job should *finish* to meet SLA.
+   * ==max-duration==: This is the maximum amount of time (along with time-unit - MINUTES, HOURS, DAYS) your job is expected to run. This is optional.
    * ==alert-events==: Specify the types of events for which *Email* alerts should be sent. Allowable values in this comma-separated list are start_miss, end_miss and duration_miss. *_met events can generally be deemed low priority and hence email alerting for these is not neccessary. However, note that this setting is only for alerts via *email* alerts and not via JMS messages, where all events send out notifications, and user can filter them using desired selectors. This is optional and only applicable when alert-contact is configured.
    * ==alert-contact==: Specify a comma separated list of email addresses where you wish your alerts to be sent. This is optional and need not be configured if you just want to view your job SLA history in the UI and do not want to receive email alerts.
 
@@ -293,6 +293,11 @@ SLA Details:
   Expected Duration (in mins) - 300000
   Actual Duration (in mins) - -1
 </verbatim>
+
+---++ Known issues
+There are two known issues when you define SLA for a workflow action.
+   * If there are decision nodes and SLA is defined for a workflow action not in the execution path because of the decision node, you will still get an SLA_MISS notification.
+   * If you have dangling action nodes in your workflow definition and SLA is defined for it, you will still get an SLA_MISS notification.
 
 [[index][::Go back to Oozie Documentation Index::]]
 

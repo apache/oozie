@@ -100,6 +100,7 @@ public class TestSLAEventGeneration extends XDataTestCase {
                 EventHandlerService.class.getName() + "," + SLAService.class.getName());
         conf.setClass(EventHandlerService.CONF_LISTENERS, SLAJobEventListener.class, JobEventListener.class);
         conf.setInt(EventHandlerService.CONF_WORKER_INTERVAL, 10000);
+        conf.setInt(EventHandlerService.CONF_WORKER_THREADS, 0);
         conf.setInt(EventHandlerService.CONF_BATCH_SIZE, 1);
         services.init();
         jpa = services.get(JPAService.class);
@@ -340,12 +341,10 @@ public class TestSLAEventGeneration extends XDataTestCase {
     @Test
     public void testCoordinatorActionCommands() throws Exception {
         EventHandlerService ehs = services.get(EventHandlerService.class);
-        assertNotNull(ehs);
         // reduce noise from WF Job events (also default) by setting it to only
         // coord action
         ehs.setAppTypes(new HashSet<String>(Arrays.asList(new String[] { "coordinator_action" })));
         SLAService slas = services.get(SLAService.class);
-        assertNotNull(slas);
 
         String coordXml = IOUtils.getResourceAsString("coord-action-sla.xml", -1);
         Path appPath = getFsTestCaseDir();
@@ -387,6 +386,7 @@ public class TestSLAEventGeneration extends XDataTestCase {
         assertEquals(expectedEnd, DateUtils.formatDateOozieTZ(slaEvent.getExpectedEnd()));
         assertEquals(30 * 60 * 1000, slaEvent.getExpectedDuration());
         assertEquals(alert_events, slaEvent.getAlertEvents());
+        waitForEventGeneration(200);
         ehs.getEventQueue().clear(); //clear the coord-action WAITING event generated
         slas.runSLAWorker();
         slaEvent = (SLACalcStatus) ehs.getEventQueue().poll();
@@ -408,9 +408,13 @@ public class TestSLAEventGeneration extends XDataTestCase {
         assertEquals(WorkflowJob.Status.RUNNING.name(), slaEvent.getJobStatus());
 
         // test that sla processes the Job Event from Kill command
+        ehs.getEventQueue().clear();
         new CoordKillXCommand(jobId).call();
+        waitForEventGeneration(200);
         ehs.new EventWorker().run();
-        ehs.getEventQueue().poll(); //ignore duration event
+        waitForEventGeneration(300);
+        slaEvent = (SLACalcStatus) ehs.getEventQueue().poll();
+        assertEquals(EventStatus.DURATION_MISS, slaEvent.getEventStatus());
         slaEvent = (SLACalcStatus) ehs.getEventQueue().poll();
         assertEquals(actionId, slaEvent.getId());
         assertNotNull(slaEvent.getActualEnd());
@@ -489,6 +493,16 @@ public class TestSLAEventGeneration extends XDataTestCase {
 
     }
 
+    private void waitForEventGeneration(int wait) {
+        final EventHandlerService ehs = Services.get().get(EventHandlerService.class);
+        waitFor(wait, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                return ehs.getEventQueue().peek() != null;
+            }
+        });
+    }
+
     private void _testWorkflowJobCommands(Configuration conf, EventHandlerService ehs, SLAService slas, boolean isNew)
             throws Exception {
         cal.setTime(new Date());
@@ -526,8 +540,9 @@ public class TestSLAEventGeneration extends XDataTestCase {
         new StartXCommand(jobId).call();
         slaEvent = slas.getSLACalculator().get(jobId);
         slaEvent.setEventProcessed(0); //resetting to receive sla events
+        waitForEventGeneration(200);
         ehs.new EventWorker().run();
-        Thread.sleep(300); // time for listeners to run
+        waitForEventGeneration(300);
         slaEvent = (SLACalcStatus) ehs.getEventQueue().poll();
         assertEquals(jobId, slaEvent.getId());
         assertNotNull(slaEvent.getActualStart());
@@ -536,17 +551,24 @@ public class TestSLAEventGeneration extends XDataTestCase {
         ehs.getEventQueue().clear();
 
         // test that sla processes the Job Event from Kill command
+        // job must already be killed (test xml) so set some status for KillX to work
+        JPAService jpaService = Services.get().get(JPAService.class);
+        WorkflowJobBean wf = jpaService.execute(new WorkflowJobGetJPAExecutor(jobId));
+        wf.setStatus(WorkflowJob.Status.FAILED);
+        jpaService.execute(new WorkflowJobUpdateJPAExecutor(wf));
         new KillXCommand(jobId).call();
+        waitForEventGeneration(1000);
         ehs.getEventQueue().poll(); //ignore the wf-action event generated
+        waitForEventGeneration(1000); //wait for wf job kill event to generate
         ehs.new EventWorker().run();
-        Thread.sleep(300); // time for listeners to run
+        waitForEventGeneration(2000); // time for listeners to run
         ehs.getEventQueue().poll(); // ignore duration event
         slaEvent = (SLACalcStatus) ehs.getEventQueue().poll();
         assertEquals(jobId, slaEvent.getId());
         assertNotNull(slaEvent.getActualEnd());
         assertEquals(EventStatus.END_MISS, slaEvent.getEventStatus());
         assertEquals(SLAStatus.MISS, slaEvent.getSLAStatus());
-        assertEquals(WorkflowJob.Status.KILLED.name(), slaEvent.getJobStatus());
+        assertEquals(WorkflowJob.Status.FAILED.name(), slaEvent.getJobStatus());
     }
 
 }
