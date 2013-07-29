@@ -85,6 +85,11 @@ public class ActionEndXCommand extends ActionXCommand<Void> {
     }
 
     @Override
+    public String getKey() {
+        return getName() + "_" + actionId;
+    }
+
+    @Override
     protected void loadState() throws CommandException {
         try {
             jpaService = Services.get().get(JPAService.class);
