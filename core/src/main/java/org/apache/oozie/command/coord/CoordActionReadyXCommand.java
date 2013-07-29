@@ -132,6 +132,11 @@ public class CoordActionReadyXCommand extends CoordinatorXCommand<Void> {
     }
 
     @Override
+    public String getKey() {
+        return getName() + "_" + jobId;
+    }
+
+    @Override
     protected boolean isLockRequired() {
         return true;
     }
