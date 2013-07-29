@@ -425,7 +425,9 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
         EventHandlerService ehs = Services.get().get(EventHandlerService.class);
         slaCalcMemory.init(new Configuration(false));
-        SLARegistrationBean slaRegBean = _createSLARegistration("job-1", AppType.WORKFLOW_JOB);
+
+        WorkflowJobBean job1 = addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
+        SLARegistrationBean slaRegBean = _createSLARegistration(job1.getId(), AppType.WORKFLOW_JOB);
         slaRegBean.setExpectedStart(new Date(System.currentTimeMillis() - 1 * 1 * 3600 * 1000));
         slaRegBean.setExpectedEnd(new Date(System.currentTimeMillis() + 2 * 1 * 3600 * 1000));
 
@@ -487,15 +489,12 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         EventHandlerService ehs = Services.get().get(EventHandlerService.class);
         SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
         slaCalcMemory.init(new Configuration(false));
-        SLARegistrationBean slaRegBean = _createSLARegistration("job-1", AppType.WORKFLOW_JOB);
-        Date startTime = new Date(System.currentTimeMillis() - 1 * 1 * 3600 * 1000); // 1
-                                                                                     // hour
-                                                                                     // back
+        WorkflowJobBean job1 = addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
+        SLARegistrationBean slaRegBean = _createSLARegistration(job1.getId(), AppType.WORKFLOW_JOB);
+        Date startTime = new Date(System.currentTimeMillis() - 1 * 1 * 3600 * 1000); // 1 hour back
         slaRegBean.setExpectedStart(startTime);
         slaRegBean.setExpectedDuration(3600 * 1000);
-        slaRegBean.setExpectedEnd(new Date(System.currentTimeMillis() + 1 * 1 * 3600 * 1000)); // 1
-                                                                                               // hour
-                                                                                               // ahead
+        slaRegBean.setExpectedEnd(new Date(System.currentTimeMillis() + 1 * 1 * 3600 * 1000)); // 1 hour ahead
         String jobId = slaRegBean.getId();
         slaCalcMemory.addRegistration(slaRegBean.getId(), slaRegBean);
         slaCalcMemory.updateJobSla(jobId);
@@ -522,9 +521,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         Date startTime = new Date(System.currentTimeMillis() + 1 * 1 * 3600 * 1000); // 1 hour ahead
         slaRegBean.setExpectedStart(startTime);
         slaRegBean.setExpectedDuration(3600 * 1000);
-        slaRegBean.setExpectedEnd(new Date(System.currentTimeMillis() - 1 * 1 * 3600 * 1000)); // 1
-                                                                                               // hour
-                                                                                               // back
+        slaRegBean.setExpectedEnd(new Date(System.currentTimeMillis() - 1 * 1 * 3600 * 1000)); // 1 hour back
         String jobId = slaRegBean.getId();
         slaCalcMemory.addRegistration(slaRegBean.getId(), slaRegBean);
         slaCalcMemory.updateJobSla(jobId);

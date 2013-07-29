@@ -37,6 +37,8 @@ public interface SLACalculator {
 
     boolean addRegistration(String jobId, SLARegistrationBean reg) throws JPAExecutorException;
 
+    boolean updateRegistration(String jobId, SLARegistrationBean reg) throws JPAExecutorException;
+
     void removeRegistration(String jobId);
 
     boolean addJobStatus(String jobId, String jobStatus, EventStatus jobEventStatus, Date startTime, Date endTime)
@@ -47,7 +49,5 @@ public interface SLACalculator {
     void clear();
 
     SLACalcStatus get(String jobId) throws JPAExecutorException;
-
-    boolean updateRegistration(String jobId, SLARegistrationBean reg) throws JPAExecutorException;
 
 }

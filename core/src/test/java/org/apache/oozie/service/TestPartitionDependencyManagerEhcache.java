@@ -77,7 +77,7 @@ public class TestPartitionDependencyManagerEhcache extends TestPartitionDependen
         LOG.info("Time taken to insert and retrive " + numItems + " items is "
                 + (System.currentTimeMillis() - startTime));
         // timeToIdleSeconds is 1
-        Thread.sleep(1000);
+        Thread.sleep(1100);
         for (int i = 0; i < numItems; i++) {
             assertNull(pdms.getWaitingActions(new HCatURI("hcat://hcat.server.com:5080/mydb/mytbl/id=" + "" + i)));
         }
