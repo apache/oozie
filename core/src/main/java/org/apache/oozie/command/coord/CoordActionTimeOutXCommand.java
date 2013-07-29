@@ -78,6 +78,11 @@ public class CoordActionTimeOutXCommand extends CoordinatorXCommand<Void> {
         return actionBean.getJobId();
     }
 
+    @Override
+    public String getKey() {
+        return getName() + "_" + actionBean.getId();
+    }
+
     /* (non-Javadoc)
      * @see org.apache.oozie.command.XCommand#isLockRequired()
      */

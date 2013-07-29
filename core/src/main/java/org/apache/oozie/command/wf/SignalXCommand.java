@@ -99,6 +99,11 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
     }
 
     @Override
+    public String getKey() {
+        return getName() + "_" + jobId + "_" + actionId;
+    }
+
+    @Override
     protected void loadState() throws CommandException {
         try {
             jpaService = Services.get().get(JPAService.class);
