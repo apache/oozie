@@ -116,7 +116,7 @@ public class JsonWorkflowAction implements WorkflowAction, JsonBean {
     @Column(name = "error_code")
     private String errorCode = null;
 
-    @Column(name = "error_message", length = 4000)
+    @Column(name = "error_message", length = 500)
     private String errorMessage = null;
 
     public JsonWorkflowAction() {

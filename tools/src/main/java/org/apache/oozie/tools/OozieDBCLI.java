@@ -412,9 +412,9 @@ public class OozieDBCLI {
         ArrayList<String> ddlQueries = new ArrayList<String>();
         if (dbVendor.equals("derby")) {
             ddlQueries.add("ALTER TABLE WF_ACTIONS ALTER COLUMN execution_path SET DATA TYPE VARCHAR(1024)");
-            // change wf_action.error_message from clob to varchar(4000)
-            ddlQueries.add("ALTER TABLE WF_ACTIONS ADD COLUMN error_message_temp VARCHAR(4000)");
-            ddlQueries.add("UPDATE WF_ACTIONS SET error_message_temp=error_message");
+            // change wf_action.error_message from clob to varchar(500)
+            ddlQueries.add("ALTER TABLE WF_ACTIONS ADD COLUMN error_message_temp VARCHAR(500)");
+            ddlQueries.add("UPDATE WF_ACTIONS SET error_message_temp = SUBSTR(error_message,1,500)");
             ddlQueries.add("ALTER TABLE WF_ACTIONS DROP COLUMN error_message");
             ddlQueries.add("RENAME COLUMN WF_ACTIONS.error_message_temp TO error_message");
             // change coord_jobs.frequency from int to varchar(255)
@@ -433,9 +433,9 @@ public class OozieDBCLI {
         else
         if (dbVendor.equals("oracle")) {
             ddlQueries.add("ALTER TABLE WF_ACTIONS MODIFY (execution_path VARCHAR2(1024))");
-            // change wf_action.error_message from clob to varchar2(4000)
-            ddlQueries.add("ALTER TABLE WF_ACTIONS ADD (error_message_temp VARCHAR2(4000))");
-            ddlQueries.add("UPDATE WF_ACTIONS SET error_message_temp = error_message");
+            // change wf_action.error_message from clob to varchar2(500)
+            ddlQueries.add("ALTER TABLE WF_ACTIONS ADD (error_message_temp VARCHAR2(500))");
+            ddlQueries.add("UPDATE WF_ACTIONS SET error_message_temp = dbms_lob.substr(error_message,500,1)");
             ddlQueries.add("ALTER TABLE WF_ACTIONS DROP COLUMN error_message");
             ddlQueries.add("ALTER TABLE WF_ACTIONS RENAME COLUMN error_message_temp TO error_message");
             // change coord_jobs.frequency from int to varchar(255)
@@ -447,13 +447,19 @@ public class OozieDBCLI {
         else
         if (dbVendor.equals("mysql")) {
             ddlQueries.add("ALTER TABLE WF_ACTIONS MODIFY execution_path VARCHAR(1024)");
-            ddlQueries.add("ALTER TABLE WF_ACTIONS MODIFY error_message VARCHAR(4000)");
+            ddlQueries.add("ALTER TABLE WF_ACTIONS ADD COLUMN error_message_temp VARCHAR(500)");
+            ddlQueries.add("UPDATE WF_ACTIONS SET error_message_temp = SUBSTR(error_message,1,500)");
+            ddlQueries.add("ALTER TABLE WF_ACTIONS DROP COLUMN error_message");
+            ddlQueries.add("ALTER TABLE WF_ACTIONS CHANGE error_message_temp error_message VARCHAR(500)");
             ddlQueries.add("ALTER TABLE COORD_JOBS MODIFY frequency VARCHAR(255)");
         }
         else
         if (dbVendor.equals("postgresql")) {
             ddlQueries.add("ALTER TABLE WF_ACTIONS ALTER COLUMN execution_path TYPE VARCHAR(1024)");
-            ddlQueries.add("ALTER TABLE WF_ACTIONS ALTER COLUMN error_message TYPE VARCHAR(4000)");
+            ddlQueries.add("ALTER TABLE WF_ACTIONS ADD COLUMN error_message_temp VARCHAR(500)");
+            ddlQueries.add("UPDATE WF_ACTIONS SET error_message_temp = SUBSTR(error_message,1,500)");
+            ddlQueries.add("ALTER TABLE WF_ACTIONS DROP COLUMN error_message");
+            ddlQueries.add("ALTER TABLE WF_ACTIONS RENAME error_message_temp TO error_message");
             ddlQueries.add("ALTER TABLE COORD_JOBS ALTER COLUMN frequency TYPE VARCHAR(255)");
         }
         Connection conn = (run) ? createConnection() : null;
