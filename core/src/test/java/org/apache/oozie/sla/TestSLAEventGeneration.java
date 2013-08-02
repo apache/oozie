@@ -557,9 +557,8 @@ public class TestSLAEventGeneration extends XDataTestCase {
         wf.setStatus(WorkflowJob.Status.FAILED);
         jpaService.execute(new WorkflowJobUpdateJPAExecutor(wf));
         new KillXCommand(jobId).call();
-        waitForEventGeneration(1000);
-        ehs.getEventQueue().poll(); //ignore the wf-action event generated
-        waitForEventGeneration(1000); //wait for wf job kill event to generate
+        waitForEventGeneration(1000); //wait for wf-action kill event to generate
+        Thread.sleep(200); //wait for wf job kill event to generate
         ehs.new EventWorker().run();
         waitForEventGeneration(2000); // time for listeners to run
         ehs.getEventQueue().poll(); // ignore duration event
