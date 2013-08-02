@@ -307,6 +307,13 @@ public class TestJsonToBean extends TestCase {
         assertEquals(2, job.getActions().size());
         assertEquals("ca1", job.getActions().get(0).getId());
         assertEquals("ca2", job.getActions().get(1).getId());
+
+        // Test backward compatibility with 3.x. 3.x will not be forward compatible with 4.x though.
+        // i.e 4.1 client can be used with 3.x server. But 3.x client cannot be used with 4.x server.
+        // Frequency was a int in 3.x but was changed to String in 4.x for cron support
+        json.put(JsonTags.COORDINATOR_JOB_FREQUENCY, 1L);
+        CoordinatorJob oozie3xjob = JsonToBean.createCoordinatorJob(json);
+        assertEquals("1", oozie3xjob.getFrequency());
     }
 
     @SuppressWarnings("unchecked")
