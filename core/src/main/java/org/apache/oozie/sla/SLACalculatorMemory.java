@@ -290,14 +290,12 @@ public class SLACalculatorMemory implements SLACalculator {
                 if (reg.getExpectedStart() != null) {
                     if (reg.getExpectedStart().getTime() + jobEventLatency < System.currentTimeMillis()) {
                         confirmWithDB(slaCalc);
-                        if ((slaCalc.getEventProcessed() & 1 ) == 0) {
+                        eventProc = slaCalc.getEventProcessed();
+                        if (eventProc != 8 && (eventProc & 1 ) == 0) {
                             //Some DB exception
                             slaCalc.setEventStatus(EventStatus.START_MISS);
                             eventHandler.queueEvent(new SLACalcStatus(slaCalc));
                             eventProc++;
-                        }
-                        else {
-                            eventProc = slaCalc.getEventProcessed();
                         }
                         change = true;
                     }
@@ -307,7 +305,7 @@ public class SLACalculatorMemory implements SLACalculator {
                     change = true;
                 }
             }
-            if (((eventProc >> 1) & 1) == 0) { // check if second bit (duration-processed) is unset
+            if (((eventProc >> 1) & 1) == 0 && eventProc != 8) { // check if second bit (duration-processed) is unset
                 if (reg.getExpectedDuration() == -1) {
                     eventProc += 2;
                     change = true;
@@ -317,14 +315,12 @@ public class SLACalculatorMemory implements SLACalculator {
                             .getActualStart().getTime())) {
                         slaCalc.setEventProcessed(eventProc);
                         confirmWithDB(slaCalc);
-                        if (((slaCalc.getEventProcessed() >> 1) & 1 ) == 0) {
+                        eventProc = slaCalc.getEventProcessed();
+                        if (eventProc != 8 && ((eventProc >> 1) & 1 ) == 0) {
                             //Some DB exception
                             slaCalc.setEventStatus(EventStatus.DURATION_MISS);
                             eventHandler.queueEvent(new SLACalcStatus(slaCalc));
                             eventProc += 2;
-                        }
-                        else {
-                            eventProc = slaCalc.getEventProcessed();
                         }
                         change = true;
                     }
@@ -339,8 +335,9 @@ public class SLACalculatorMemory implements SLACalculator {
                 }
             }
             if (change) {
-                if (slaCalc.getEventProcessed() == 8) { //no more processing, no transfer to history set
-                    eventProc = slaCalc.getEventProcessed();
+                if (slaCalc.getEventProcessed() >= 8) { //no more processing, no transfer to history set
+                    eventProc = 8;
+                    slaCalc.setEventProcessed(8); // Should not be > 8. But to handle any corner cases.
                     slaMap.remove(jobId);
                 }
                 else {
@@ -620,7 +617,7 @@ public class SLACalculatorMemory implements SLACalculator {
         slaCalc.setActualStart(actualStart);
         slaCalc.setActualEnd(actualEnd);
         if (actualStart == null) { // job failed before starting
-            if (slaCalc.getEventProcessed() != 5) { // 101 = end+start already processed
+            if (slaCalc.getEventProcessed() < 4) {
                 slaCalc.setEventStatus(EventStatus.END_MISS);
                 slaCalc.setSLAStatus(SLAStatus.MISS);
                 eventHandler.queueEvent(new SLACalcStatus(slaCalc));
@@ -742,6 +739,15 @@ public class SLACalculatorMemory implements SLACalculator {
                     slaCalc.setSLAStatus(SLAStatus.MET);
                 }
                 if (slaCalc.getActualStart() != null) {
+                    if ((eventProc & 1) == 0) {
+                        if (slaCalc.getExpectedStart().getTime() < slaCalc.getActualStart().getTime()) {
+                            slaCalc.setEventStatus(EventStatus.START_MISS);
+                        }
+                        else {
+                            slaCalc.setEventStatus(EventStatus.START_MET);
+                        }
+                        eventHandler.queueEvent(new SLACalcStatus(slaCalc));
+                    }
                     slaCalc.setActualDuration(slaCalc.getActualEnd().getTime() - slaCalc.getActualStart().getTime());
                     if (((eventProc >> 1) & 1) == 0) {
                         processDurationSLA(slaCalc.getExpectedDuration(), slaCalc.getActualDuration(), slaCalc);
@@ -797,7 +803,8 @@ public class SLACalculatorMemory implements SLACalculator {
             }
         }
         catch (Exception e) {
-            LOG.warn("Error while confirming against DB: ", e);
+            LOG.warn("Error while confirming SLA against DB for jobid= " + slaCalc.getId() + ". Exception is "
+                    + e.getClass().getName() + ": " + e.getMessage());
             if (slaCalc.getEventProcessed() < 4 && slaCalc.getExpectedEnd().getTime() < System.currentTimeMillis()) {
                 slaCalc.setEventStatus(EventStatus.END_MISS);
                 slaCalc.setSLAStatus(SLAStatus.MISS);

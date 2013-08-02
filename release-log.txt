@@ -7,6 +7,7 @@ OOZIE-1440 Build fails in certain environments due to xerces OpenJPA issue (mack
 
 -- Oozie 4.0.0 release
 
+OOZIE-1479 Duplicate end_miss events introduced by OOZIE-1472 (rohini)
 OOZIE-1472 Confirm against database before generating start and duration miss events (rohini)
 OOZIE-1473 getKey() not overridden in some commands causing duplicates in queue (virag)
 OOZIE-1470 BundleStatusUpdateXCommand should get lock for bundle job (virag)
