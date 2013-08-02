@@ -237,7 +237,7 @@ public class JsonToBean {
         @SuppressWarnings("unchecked")
         private Object parseType(Class type, Object obj) {
             if (type == String.class) {
-                return obj;
+                return obj == null ? obj : obj.toString();
             }
             else if (type == Integer.TYPE) {
                 return (obj != null) ? new Integer(((Long) obj).intValue()) : new Integer(0);
