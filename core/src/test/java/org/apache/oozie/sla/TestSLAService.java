@@ -18,6 +18,7 @@
 package org.apache.oozie.sla;
 
 import java.util.Date;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.AppType;
 import org.apache.oozie.CoordinatorActionBean;
@@ -97,12 +98,14 @@ public class TestSLAService extends XDataTestCase {
         // test start-miss
         SLARegistrationBean sla1 = _createSLARegistration("job-1", AppType.WORKFLOW_JOB);
         sla1.setExpectedStart(new Date(System.currentTimeMillis() - 1 * 1 * 3600 * 1000)); //1 hour back
-        sla1.setExpectedEnd(new Date(System.currentTimeMillis() + 1 * 1 * 3600 * 1000)); //1 hour ahead
+        sla1.setExpectedEnd(new Date(System.currentTimeMillis() - 1 * 1 * 3600 * 1000)); //1 hour back
+        sla1.setExpectedDuration(10 * 60 * 1000); //10 mins
         slas.addRegistrationEvent(sla1);
         assertEquals(1, slas.getSLACalculator().size());
         slas.runSLAWorker();
         ehs.new EventWorker().run();
-        assertTrue(output.toString().contains("Sla START - MISS!!!"));
+        assertEventNoDuplicates(output.toString(), "Sla START - MISS!!!");
+        assertEventNoDuplicates(output.toString(), "Sla END - MISS!!!");
         output.setLength(0);
 
         // test different jobs and events start-met and end-miss
@@ -213,11 +216,13 @@ public class TestSLAService extends XDataTestCase {
                 CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
         extWf = new WorkflowJobBean();
         extWf.setId(action3.getExternalId());
-        extWf.setEndTime(new Date(System.currentTimeMillis() - 1 * 1800 * 1000));
         extWf.setStartTime(new Date(System.currentTimeMillis() - 1 * 2100 * 1000));
+        extWf.setEndTime(new Date(System.currentTimeMillis() - 1 * 1800 * 1000));
         jpaService.execute(new WorkflowJobInsertJPAExecutor(extWf));
         sla = _createSLARegistration(action3.getId(), AppType.COORDINATOR_ACTION);
-        sla.setExpectedEnd(new Date(System.currentTimeMillis() - 1 * 1500 * 1000)); // in past but > actual end
+        sla.setExpectedStart(new Date(System.currentTimeMillis() - 1 * 3600 * 1000)); // cause start_miss
+        sla.setExpectedEnd(new Date(System.currentTimeMillis() - 1 * 1500 * 1000)); // in past but > actual end, end_met
+        sla.setExpectedDuration(0); //cause duration miss
         slas.addRegistrationEvent(sla);
 
         slas.runSLAWorker();
@@ -228,12 +233,14 @@ public class TestSLAService extends XDataTestCase {
             count++;
         }
         assertEquals(3, count); // only 3 out of the 5 are correct end_misses
-        assertTrue(output.toString().contains(job1.getId() + " Sla END - MISS!!!"));
-        assertTrue(output.toString().contains(action1.getId() + " Sla END - MISS!!!"));
-        assertTrue(output.toString().contains(action2.getId() + " Sla END - MISS!!!"));
-        assertTrue(output.toString().contains(job2.getId() + " Sla END - MET!!!"));
-        assertTrue(output.toString().contains(job2.getId() + " Sla DURATION - MISS!!!"));
-        assertTrue(output.toString().contains(action3.getId() + " Sla END - MET!!!"));
+        assertEventNoDuplicates(output.toString(), job1.getId() + " Sla END - MISS!!!");
+        assertEventNoDuplicates(output.toString(), action1.getId() + " Sla END - MISS!!!");
+        assertEventNoDuplicates(output.toString(), action2.getId() + " Sla END - MISS!!!");
+        assertEventNoDuplicates(output.toString(), job2.getId() + " Sla END - MET!!!");
+        assertEventNoDuplicates(output.toString(), job2.getId() + " Sla DURATION - MISS!!!");
+        assertEventNoDuplicates(output.toString(), action3.getId() + " Sla START - MISS!!!");
+        assertEventNoDuplicates(output.toString(), action3.getId() + " Sla DURATION - MISS!!!");
+        assertEventNoDuplicates(output.toString(), action3.getId() + " Sla END - MET!!!");
 
         // negative on MISS after DB check, updated with actual times
         SLASummaryBean slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(job2.getId()));
@@ -294,6 +301,13 @@ public class TestSLAService extends XDataTestCase {
         bean.setId(jobId);
         bean.setAppType(appType);
         return bean;
+    }
+
+    private void assertEventNoDuplicates(String outputStr, String eventMsg) {
+        int index = outputStr.indexOf(eventMsg);
+        assertTrue(index != -1);
+        //No duplicates
+        assertTrue(outputStr.indexOf(eventMsg, index + 1) == -1);
     }
 
     public static class DummySLAEventListener extends SLAEventListener {
