@@ -50,7 +50,10 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
 
     public static final String LOG = "log";
 
+    public static final String JOB_ID_END = "-C";
     public static String did = null;
+    public static Integer offset = null;
+    public static Integer length = null;
     public static List<CoordinatorJob> coordJobs;
     public static List<Boolean> started;
     public static final int INIT_COORD_COUNT = 4;
@@ -61,6 +64,8 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
 
     public static void reset() {
         did = null;
+        offset = null;
+        length = null;
         coordJobs = new ArrayList<CoordinatorJob>();
         started = new ArrayList<Boolean>();
         for (int i = 0; i < INIT_COORD_COUNT; i++) {
@@ -164,6 +169,8 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
         public CoordinatorJobBean getCoordJob(String jobId, String filter, int start, int length, boolean desc)
                 throws BaseEngineException {
             did = RestConstants.JOB_SHOW_INFO;
+            MockCoordinatorEngineService.offset = start;
+            MockCoordinatorEngineService.length = length;
             int idx = validateCoordinatorIdx(jobId);
             return (CoordinatorJobBean) coordJobs.get(idx);
         }
@@ -193,7 +200,14 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
         private int validateCoordinatorIdx(String jobId) throws CoordinatorEngineException {
             int idx = -1;
             try {
-                idx = Integer.parseInt(jobId.replace(JOB_ID, ""));
+                if (jobId.endsWith(JOB_ID_END)) {
+                    jobId = jobId.replace(JOB_ID, "");
+                    jobId = jobId.replace(JOB_ID_END, "");
+                }
+                else {
+                    jobId = jobId.replace(JOB_ID, "");
+                }
+                idx = Integer.parseInt(jobId);
             }
             catch (Exception e) {
                 throw new CoordinatorEngineException(ErrorCode.ETEST, jobId);

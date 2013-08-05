@@ -1079,7 +1079,7 @@ public class OozieClient {
      * @throws OozieClientException thrown if the job info could not be retrieved.
      */
     public CoordinatorJob getCoordJobInfo(String jobId) throws OozieClientException {
-        return new CoordJobInfo(jobId, null, 0, 0).call();
+        return new CoordJobInfo(jobId, null, -1, -1).call();
     }
 
     /**
