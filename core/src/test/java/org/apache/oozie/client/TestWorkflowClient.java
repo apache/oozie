@@ -26,6 +26,7 @@ import org.apache.oozie.BuildInfo;
 import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.servlet.DagServletTestCase;
+import org.apache.oozie.servlet.MockCoordinatorEngineService;
 import org.apache.oozie.servlet.MockDagEngineService;
 import org.apache.oozie.servlet.SLAServlet;
 import org.apache.oozie.servlet.V0JobServlet;
@@ -443,11 +444,14 @@ public class TestWorkflowClient extends DagServletTestCase {
                 WorkflowAction wfAction = wc.getWorkflowActionInfo(jobId);
 
                 assertEquals(jobId, wfAction.getId());
-                CoordinatorJob job = wc.getCoordJobInfo(jobId);
+                CoordinatorJob job = wc.getCoordJobInfo(MockCoordinatorEngineService.JOB_ID + "1"
+                        + MockCoordinatorEngineService.JOB_ID_END);
 
                 assertEquals("group", job.getAcl());
-                assertEquals("SUCCEEDED", job.getStatus().toString());
+                assertEquals("RUNNING", job.getStatus().toString());
                 assertEquals("user", job.getUser());
+                assertEquals(MockCoordinatorEngineService.offset, new Integer(1));
+                assertEquals(MockCoordinatorEngineService.length, new Integer(1000));
 
                 BundleJob bundleJob = wc.getBundleJobInfo(jobId);
                 assertEquals("SUCCEEDED", bundleJob.getStatus().toString());

@@ -448,6 +448,10 @@ public class TestCoordinatorEngine extends XTestCase {
         // As both actions are waiting, expected result size is 2
         assertEquals(job.getActions().size(), 2);
 
+        job = ce.getCoordJob(jobId, "status=WAITING", 1, 0, false);
+        // Since length is 0, number of actions returned should be 0.
+        assertEquals(job.getActions().size(), 0);
+
         job = ce.getCoordJob(jobId, "status=RUNNING", 1, 2, false);
         assertEquals(job.getActions().size(), 0);
 
