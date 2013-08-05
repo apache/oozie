@@ -1,5 +1,6 @@
 -- Oozie 4.0.0 release
 
+OOZIE-1480 Web-console Workflow Job Info popup should display parent-id field and no empty Nominal time field (mona)
 OOZIE-1484 Error in DB upgrade when error message exceeds 4K characters (ryota)
 OOZIE-1482 4.0 client does not work with 3.x server for coord jobs (rohini)
 OOZIE-1479 Duplicate end_miss events introduced by OOZIE-1472 (rohini)

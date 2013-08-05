@@ -302,18 +302,17 @@ function jobDetailsPopup(response, request) {
             width: 400,
             value: jobDetails["group"]
         }, {
+            fieldLabel: 'Parent Coord',
+            editable: false,
+            name: 'parentId',
+            width: 400,
+            value: jobDetails["parentId"]
+        }, {
             fieldLabel: 'Create Time',
             editable: false,
             name: 'createdTime',
             width: 400,
             value: jobDetails["createdTime"]
-        }, {
-            fieldLabel: 'Nominal Time',
-            editable: false,
-            name: 'nominalTime',
-            width: 400,
-            value: jobDetails["nominalTime"]
-
         }, {
             fieldLabel: 'Start Time',
             editable: false,
@@ -838,6 +837,12 @@ function coordJobDetailsPopup(response, request) {
             width: 400,
             value: jobDetails["timeUnit"]
         }, {
+            fieldLabel: 'Parent Bundle',
+            editable: false,
+            name: 'bundleId',
+            width: 400,
+            value: jobDetails["bundleId"]
+        }, {
             fieldLabel: 'Start Time',
             editable: false,
             name: 'startTime',
@@ -1191,7 +1196,7 @@ function bundleJobDetailsPopup(response, request) {
             width: 170,
             value: jobDetails["user"]
         }, {
-            fieldLabel: 'group',
+            fieldLabel: 'Group',
             editable: false,
             name: 'group',
             width: 170,
