@@ -867,36 +867,37 @@ public class OozieCLI {
             }
             else if (options.contains(INFO_OPTION)) {
                 String timeZoneId = getTimeZoneId(commandLine);
-                if (commandLine.getOptionValue(INFO_OPTION).endsWith("-B")) {
+                final String optionValue = commandLine.getOptionValue(INFO_OPTION);
+                if (optionValue.endsWith("-B")) {
                     String filter = commandLine.getOptionValue(FILTER_OPTION);
                     if (filter != null) {
                         throw new OozieCLIException("Filter option is currently not supported for a Bundle job");
                     }
-                    printBundleJob(wc.getBundleJobInfo(commandLine.getOptionValue(INFO_OPTION)), timeZoneId,
+                    printBundleJob(wc.getBundleJobInfo(optionValue), timeZoneId,
                             options.contains(VERBOSE_OPTION));
                 }
-                else if (commandLine.getOptionValue(INFO_OPTION).endsWith("-C")) {
+                else if (optionValue.endsWith("-C")) {
                     String s = commandLine.getOptionValue(OFFSET_OPTION);
-                    int start = Integer.parseInt((s != null) ? s : "0");
+                    int start = Integer.parseInt((s != null) ? s : "-1");
                     s = commandLine.getOptionValue(LEN_OPTION);
-                    int len = Integer.parseInt((s != null) ? s : "0");
+                    int len = Integer.parseInt((s != null) ? s : "-1");
                     String filter = commandLine.getOptionValue(FILTER_OPTION);
-                    printCoordJob(wc.getCoordJobInfo(commandLine.getOptionValue(INFO_OPTION), filter, start, len), timeZoneId,
+                    printCoordJob(wc.getCoordJobInfo(optionValue, filter, start, len), timeZoneId,
                             options.contains(VERBOSE_OPTION));
                 }
-                else if (commandLine.getOptionValue(INFO_OPTION).contains("-C@")) {
+                else if (optionValue.contains("-C@")) {
                     String filter = commandLine.getOptionValue(FILTER_OPTION);
                     if (filter != null) {
                         throw new OozieCLIException("Filter option is not supported for a Coordinator action");
                     }
-                    printCoordAction(wc.getCoordActionInfo(commandLine.getOptionValue(INFO_OPTION)), timeZoneId);
+                    printCoordAction(wc.getCoordActionInfo(optionValue), timeZoneId);
                 }
-                else if (commandLine.getOptionValue(INFO_OPTION).contains("-W@")) {
+                else if (optionValue.contains("-W@")) {
                     String filter = commandLine.getOptionValue(FILTER_OPTION);
                     if (filter != null) {
                         throw new OozieCLIException("Filter option is not supported for a Workflow action");
                     }
-                    printWorkflowAction(wc.getWorkflowActionInfo(commandLine.getOptionValue(INFO_OPTION)), timeZoneId,
+                    printWorkflowAction(wc.getWorkflowActionInfo(optionValue), timeZoneId,
                             options.contains(VERBOSE_OPTION));
                 }
                 else {
@@ -910,7 +911,7 @@ public class OozieCLI {
                     String jobtype = commandLine.getOptionValue(JOBTYPE_OPTION);
                     jobtype = (jobtype != null) ? jobtype : "wf";
                     int len = Integer.parseInt((s != null) ? s : "0");
-                    printJob(wc.getJobInfo(commandLine.getOptionValue(INFO_OPTION), start, len), timeZoneId,
+                    printJob(wc.getJobInfo(optionValue, start, len), timeZoneId,
                             options.contains(VERBOSE_OPTION));
                 }
             }
