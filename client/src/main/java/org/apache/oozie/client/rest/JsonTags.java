@@ -113,6 +113,7 @@ public interface JsonTags {
     public static final String COORDINATOR_ACTION_NUMBER = "actionNumber";
     public static final String COORDINATOR_ACTION_CREATED_TIME = "createdTime";
     public static final String COORDINATOR_ACTION_EXTERNALID = "externalId";
+    public static final String COORDINATOR_JOB_BUNDLE_ID = "bundleId";
     public static final String COORDINATOR_ACTION_LAST_MODIFIED_TIME = "lastModifiedTime";
     public static final String COORDINATOR_ACTION_NOMINAL_TIME = "nominalTime";
     public static final String COORDINATOR_ACTION_STATUS = "status";
