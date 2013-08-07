@@ -96,10 +96,23 @@ public class LiteWorkflowAppParser {
         VISITING, VISITED
     }
 
+    /**
+     * We use this to store a node name and its top (eldest) decision parent node name for the forkjoin validation
+     */
+    class NodeAndTopDecisionParent {
+        String node;
+        String topDecisionParent;
+
+        public NodeAndTopDecisionParent(String node, String topDecisionParent) {
+            this.node = node;
+            this.topDecisionParent = topDecisionParent;
+        }
+    }
+
     private List<String> forkList = new ArrayList<String>();
     private List<String> joinList = new ArrayList<String>();
     private StartNodeDef startNode;
-    private List<String> visitedOkNodes = new ArrayList<String>();
+    private List<NodeAndTopDecisionParent> visitedOkNodes = new ArrayList<NodeAndTopDecisionParent>();
     private List<String> visitedJoinNodes = new ArrayList<String>();
 
     public LiteWorkflowAppParser(Schema schema,
@@ -171,7 +184,8 @@ public class LiteWorkflowAppParser {
         if (!forkList.isEmpty()) {
             visitedOkNodes.clear();
             visitedJoinNodes.clear();
-            validateForkJoin(startNode, app, new LinkedList<String>(), new LinkedList<String>(), new LinkedList<String>(), true);
+            validateForkJoin(startNode, app, new LinkedList<String>(), new LinkedList<String>(), new LinkedList<String>(), true,
+                    null);
         }
     }
 
@@ -187,10 +201,11 @@ public class LiteWorkflowAppParser {
      * @param path a stack of the current path
      * @param okTo false if node (or an ancestor of node) was gotten to via an "error to" transition or via a join node that has
      * already been visited at least once before
+     * @param topDecisionParent The top (eldest) decision node along the path to this node, or null if there isn't one
      * @throws WorkflowException
      */
     private void validateForkJoin(NodeDef node, LiteWorkflowApp app, Deque<String> forkNodes, Deque<String> joinNodes,
-            Deque<String> path, boolean okTo) throws WorkflowException {
+            Deque<String> path, boolean okTo, String topDecisionParent) throws WorkflowException {
         if (path.contains(node.getName())) {
             // cycle
             throw new WorkflowException(ErrorCode.E0741, node.getName(), Arrays.toString(path.toArray()));
@@ -202,36 +217,64 @@ public class LiteWorkflowAppParser {
         // traverse through join nodes multiple times, we have to make sure not to throw an exception here when we're really just
         // re-walking the same execution path (this is why we need the visitedJoinNodes list used later)
         if (okTo && !(node instanceof KillNodeDef) && !(node instanceof JoinNodeDef) && !(node instanceof EndNodeDef)) {
-            if (visitedOkNodes.contains(node.getName())) {
-                throw new WorkflowException(ErrorCode.E0743, node.getName());
+            NodeAndTopDecisionParent natdp = findInVisitedOkNodes(node.getName());
+            if (natdp != null) {
+                // However, if we've visited the node and it's under a decision node, we may be seeing it again and it's only
+                // illegal if that decision node is not the same as what we're seeing now (because during execution we only go
+                // down one path of the decision node, so while we're seeing the node multiple times here, during runtime it will
+                // only be executed once).  Also, this decision node should be the top (eldest) decision node.  As null indicates
+                // that there isn't a decision node, when this happens they must both be null to be valid.  Here is a good example
+                // to visualize a node ("actionX") that has three "ok to" paths to it, but should still be a valid workflow (it may
+                // be easier to see if you draw it):
+                    // decisionA --> {actionX, decisionB}
+                    // decisionB --> {actionX, actionY}
+                    // actionY   --> {actionX}
+                // And, if we visit this node twice under the same decision node in an invalid way, the path cycle checking code
+                // will catch it, so we don't have to worry about that here.
+                if ((natdp.topDecisionParent == null && topDecisionParent == null)
+                     || (natdp.topDecisionParent == null && topDecisionParent != null)
+                     || (natdp.topDecisionParent != null && topDecisionParent == null)
+                     || !natdp.topDecisionParent.equals(topDecisionParent)) {
+                    // If we get here, then we've seen this node before from an "ok to" transition but they don't have the same
+                    // decision node top parent, which means that this node will be executed twice, which is illegal
+                    throw new WorkflowException(ErrorCode.E0743, node.getName());
+                }
             }
-            visitedOkNodes.add(node.getName());
+            else {
+                // If we haven't transitioned to this node before, add it and its top decision parent node
+                visitedOkNodes.add(new NodeAndTopDecisionParent(node.getName(), topDecisionParent));
+            }
         }
 
         if (node instanceof StartNodeDef) {
             String transition = node.getTransitions().get(0);   // start always has only 1 transition
             NodeDef tranNode = app.getNode(transition);
-            validateForkJoin(tranNode, app, forkNodes, joinNodes, path, okTo);
+            validateForkJoin(tranNode, app, forkNodes, joinNodes, path, okTo, topDecisionParent);
         }
         else if (node instanceof ActionNodeDef) {
             String transition = node.getTransitions().get(0);   // "ok to" transition
             NodeDef tranNode = app.getNode(transition);
-            validateForkJoin(tranNode, app, forkNodes, joinNodes, path, okTo);  // propogate okTo
+            validateForkJoin(tranNode, app, forkNodes, joinNodes, path, okTo, topDecisionParent);  // propogate okTo
             transition = node.getTransitions().get(1);          // "error to" transition
             tranNode = app.getNode(transition);
-            validateForkJoin(tranNode, app, forkNodes, joinNodes, path, false); // use false
+            validateForkJoin(tranNode, app, forkNodes, joinNodes, path, false, topDecisionParent); // use false
         }
         else if (node instanceof DecisionNodeDef) {
             for(String transition : (new HashSet<String>(node.getTransitions()))) {
                 NodeDef tranNode = app.getNode(transition);
-                validateForkJoin(tranNode, app, forkNodes, joinNodes, path, okTo);
+                // if there currently isn't a topDecisionParent (i.e. null), then use this node instead of propagating null
+                String parentDecisionNode = topDecisionParent;
+                if (parentDecisionNode == null) {
+                    parentDecisionNode = node.getName();
+                }
+                validateForkJoin(tranNode, app, forkNodes, joinNodes, path, okTo, parentDecisionNode);
             }
         }
         else if (node instanceof ForkNodeDef) {
             forkNodes.push(node.getName());
             for(String transition : (new HashSet<String>(node.getTransitions()))) {
                 NodeDef tranNode = app.getNode(transition);
-                validateForkJoin(tranNode, app, forkNodes, joinNodes, path, okTo);
+                validateForkJoin(tranNode, app, forkNodes, joinNodes, path, okTo, topDecisionParent);
             }
             forkNodes.pop();
             if (!joinNodes.isEmpty()) {
@@ -258,11 +301,11 @@ public class LiteWorkflowAppParser {
             // Or if we've already visited this join node, use false (because we've already traversed this path before and we don't
             // want to throw an exception from the check against visitedOkNodes)
             if (!okTo || visitedJoinNodes.contains(node.getName())) {
-                validateForkJoin(tranNode, app, forkNodes, joinNodes, path, false);
+                validateForkJoin(tranNode, app, forkNodes, joinNodes, path, false, topDecisionParent);
             // Else, use true because this is either the first time we've gone through this join node or okTo was already false
             } else {
                 visitedJoinNodes.add(node.getName());
-                validateForkJoin(tranNode, app, forkNodes, joinNodes, path, true);
+                validateForkJoin(tranNode, app, forkNodes, joinNodes, path, true, topDecisionParent);
             }
             forkNodes.push(currentForkNode);
             joinNodes.push(node.getName());
@@ -283,6 +326,24 @@ public class LiteWorkflowAppParser {
             throw new WorkflowException(ErrorCode.E0740, node.getName());
         }
         path.pop();
+    }
+
+    /**
+     * Return a {@link NodeAndTopDecisionParent} whose {@link NodeAndTopDecisionParent#node} is equal to the passed in name, or null
+     * if it isn't in the {@link LiteWorkflowAppParser#visitedOkNodes} list.
+     *
+     * @param name The name to search for
+     * @return a NodeAndTopDecisionParent or null
+     */
+    private NodeAndTopDecisionParent findInVisitedOkNodes(String name) {
+        NodeAndTopDecisionParent natdp = null;
+        for (NodeAndTopDecisionParent v : visitedOkNodes) {
+            if (v.node.equals(name)) {
+                natdp = v;
+                break;
+            }
+        }
+        return natdp;
     }
 
     /**
