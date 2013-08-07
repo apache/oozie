@@ -17,7 +17,7 @@
  */
 package org.apache.oozie.executor.jpa;
 
-import java.sql.Timestamp;
+import java.util.List;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -25,45 +25,46 @@ import javax.persistence.Query;
 import org.apache.oozie.ErrorCode;
 
 /**
- * Count the number of Workflow children of a parent Workflow or Coordinator that are not ready to be purged
+ * Load the list of WorkflowJob with the passed in coordinator parentId.  The parent id field for a workflow with a coordinator
+ * parent is the id of the coordinator action, not the coordinator job.  So, we have to use a wildcard to match (coordinator action
+ * ids start with the coordinator job id).
  */
-public class WorkflowJobsCountNotForPurgeFromParentIdJPAExecutor implements JPAExecutor<Long> {
+public class WorkflowJobsGetFromCoordParentIdJPAExecutor implements JPAExecutor<List<String>> {
 
-    private static final long DAY_IN_MS = 24 * 60 * 60 * 1000;
-    private long olderThanDays;
     private String parentId;
+    private int limit;
+    private int offset;
 
-    public WorkflowJobsCountNotForPurgeFromParentIdJPAExecutor(long olderThanDays, String parentId) {
-        this.olderThanDays = olderThanDays;
-        this.parentId = parentId;
+    public WorkflowJobsGetFromCoordParentIdJPAExecutor(String parentId, int limit) {
+        this(parentId, 0, limit);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
+    public WorkflowJobsGetFromCoordParentIdJPAExecutor(String parentId, int offset, int limit) {
+        this.parentId = parentId;
+        this.offset = offset;
+        this.limit = limit;
+    }
+
     @Override
     public String getName() {
-        return "WorkflowChildrenCountNotForPurgeJPAExecutor";
+        return "WorkflowJobsGetFromCoordParentIdJPAExecutor";
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     @SuppressWarnings("unchecked")
-    public Long execute(EntityManager em) throws JPAExecutorException {
-        Long count = 0L;
+    public List<String> execute(EntityManager em) throws JPAExecutorException {
+        List<String> workflows = null;
         try {
-            Timestamp maxEndTime = new Timestamp(System.currentTimeMillis() - (olderThanDays * DAY_IN_MS));
-            Query jobQ = em.createNamedQuery("GET_WORKFLOWS_COUNT_WITH_PARENT_ID_NOT_READY_FOR_PURGE");
-            jobQ.setParameter("parentId", parentId);
-            jobQ.setParameter("endTime", maxEndTime);
-            count = (Long) jobQ.getSingleResult();
+            Query jobQ = em.createNamedQuery("GET_WORKFLOWS_WITH_COORD_PARENT_ID");
+            jobQ.setParameter("parentId", parentId + "%");  // The '%' is the wildcard
+            jobQ.setMaxResults(limit);
+            jobQ.setFirstResult(offset);
+            workflows = jobQ.getResultList();
         }
         catch (Exception e) {
             throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
         }
-        return count;
+        return workflows;
     }
 
 }

@@ -25,41 +25,35 @@ import javax.persistence.Query;
 import org.apache.oozie.ErrorCode;
 
 /**
- * Load the list of WorkflowJob with the passed in parentId
+ * Load the list of WorkflowJob with the passed in workflow parentId
  */
-public class WorkflowJobsGetFromParentIdJPAExecutor implements JPAExecutor<List<String>> {
+public class WorkflowJobsGetFromWorkflowParentIdJPAExecutor implements JPAExecutor<List<String>> {
 
     private String parentId;
     private int limit;
     private int offset;
 
-    public WorkflowJobsGetFromParentIdJPAExecutor(String parentId, int limit) {
+    public WorkflowJobsGetFromWorkflowParentIdJPAExecutor(String parentId, int limit) {
         this(parentId, 0, limit);
     }
 
-    public WorkflowJobsGetFromParentIdJPAExecutor(String parentId, int offset, int limit) {
+    public WorkflowJobsGetFromWorkflowParentIdJPAExecutor(String parentId, int offset, int limit) {
         this.parentId = parentId;
         this.offset = offset;
         this.limit = limit;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
-        return "WorkflowJobsGetFromParentIdJPAExecutor";
+        return "WorkflowJobsGetFromWorkflowParentIdJPAExecutor";
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     @SuppressWarnings("unchecked")
     public List<String> execute(EntityManager em) throws JPAExecutorException {
         List<String> workflows = null;
         try {
-            Query jobQ = em.createNamedQuery("GET_WORKFLOWS_WITH_PARENT_ID");
+            Query jobQ = em.createNamedQuery("GET_WORKFLOWS_WITH_WORKFLOW_PARENT_ID");
             jobQ.setParameter("parentId", parentId);
             jobQ.setMaxResults(limit);
             jobQ.setFirstResult(offset);

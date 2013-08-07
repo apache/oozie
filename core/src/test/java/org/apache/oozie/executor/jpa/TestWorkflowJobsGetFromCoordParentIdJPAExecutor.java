@@ -34,7 +34,7 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.workflow.WorkflowInstance;
 
-public class TestWorkflowJobsGetFromParentIdJPAExecutor extends XDataTestCase {
+public class TestWorkflowJobsGetFromCoordParentIdJPAExecutor extends XDataTestCase {
     Services services;
     private String[] excludedServices = { "org.apache.oozie.service.StatusTransitService",
             "org.apache.oozie.service.PauseTransitService", "org.apache.oozie.service.PurgeService",
@@ -75,39 +75,12 @@ public class TestWorkflowJobsGetFromParentIdJPAExecutor extends XDataTestCase {
                 "coord-action-get.xml", wfJobB.getId(), "SUCCEEDED", 0);
 
         List<String> children = new ArrayList<String>();
-        children.addAll(jpaService.execute(new WorkflowJobsGetFromParentIdJPAExecutor(coordJobA.getId(), 10)));
+        children.addAll(jpaService.execute(new WorkflowJobsGetFromCoordParentIdJPAExecutor(coordJobA.getId(), 10)));
         checkChildren(children, wfJobA1.getId(), wfJobA2.getId());
 
         children = new ArrayList<String>();
-        children.addAll(jpaService.execute(new WorkflowJobsGetFromParentIdJPAExecutor(coordJobB.getId(), 10)));
+        children.addAll(jpaService.execute(new WorkflowJobsGetFromCoordParentIdJPAExecutor(coordJobB.getId(), 10)));
         checkChildren(children, wfJobB.getId());
-    }
-
-    public void testGetWorkflowParent() throws Exception {
-        JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
-
-        WorkflowJobBean wfJobA = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
-        WorkflowJobBean wfJobB = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
-        WorkflowJobBean subwfJobA1 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
-                wfJobA.getId());
-        WorkflowJobBean subwfJobA2 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
-                wfJobA.getId());
-        WorkflowJobBean subwfJobB = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
-                wfJobB.getId());
-        WorkflowActionBean wfActionA = addRecordToWfActionTable(wfJobA.getId(), "1", WorkflowAction.Status.OK);
-        WorkflowActionBean wfActionB = addRecordToWfActionTable(wfJobB.getId(), "1", WorkflowAction.Status.OK);
-        WorkflowActionBean subwfActionA1 = addRecordToWfActionTable(subwfJobA1.getId(), "1", WorkflowAction.Status.OK);
-        WorkflowActionBean subwfActionA2 = addRecordToWfActionTable(subwfJobA2.getId(), "1", WorkflowAction.Status.OK);
-        WorkflowActionBean subwfActionB = addRecordToWfActionTable(subwfJobB.getId(), "1", WorkflowAction.Status.OK);
-
-        List<String> children = new ArrayList<String>();
-        children.addAll(jpaService.execute(new WorkflowJobsGetFromParentIdJPAExecutor(wfJobA.getId(), 10)));
-        checkChildren(children, subwfJobA1.getId(), subwfJobA2.getId());
-
-        children = new ArrayList<String>();
-        children.addAll(jpaService.execute(new WorkflowJobsGetFromParentIdJPAExecutor(wfJobB.getId(), 10)));
-        checkChildren(children, subwfJobB.getId());
     }
 
     public void testGetWorkflowParentTooMany() throws Exception {
@@ -143,48 +116,12 @@ public class TestWorkflowJobsGetFromParentIdJPAExecutor extends XDataTestCase {
 
         List<String> children = new ArrayList<String>();
         // Get the first 3
-        children.addAll(jpaService.execute(new WorkflowJobsGetFromParentIdJPAExecutor(coordJob.getId(), 3)));
+        children.addAll(jpaService.execute(new WorkflowJobsGetFromCoordParentIdJPAExecutor(coordJob.getId(), 3)));
         assertEquals(3, children.size());
         // Get the next 3 (though there's only 2 more)
-        children.addAll(jpaService.execute(new WorkflowJobsGetFromParentIdJPAExecutor(coordJob.getId(), 3, 3)));
+        children.addAll(jpaService.execute(new WorkflowJobsGetFromCoordParentIdJPAExecutor(coordJob.getId(), 3, 3)));
         assertEquals(5, children.size());
         checkChildren(children, wfJob1.getId(), wfJob2.getId(), wfJob3.getId(), wfJob4.getId(), wfJob5.getId());
-    }
-
-    public void testGetCoordinatorParentTooMany() throws Exception {
-        JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
-
-        WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
-        WorkflowJobBean subwfJob1 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
-                wfJob.getId());
-        WorkflowJobBean subwfJob2 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
-                wfJob.getId());
-        WorkflowJobBean subwfJob3 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
-                wfJob.getId());
-        WorkflowJobBean subwfJob4 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
-                wfJob.getId());
-        WorkflowJobBean subwfJob5 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
-                wfJob.getId());
-        WorkflowActionBean wfAction1 = addRecordToWfActionTable(wfJob.getId(), "1", WorkflowAction.Status.OK);
-        WorkflowActionBean wfAction2 = addRecordToWfActionTable(wfJob.getId(), "2", WorkflowAction.Status.OK);
-        WorkflowActionBean wfAction3 = addRecordToWfActionTable(wfJob.getId(), "3", WorkflowAction.Status.OK);
-        WorkflowActionBean wfAction4 = addRecordToWfActionTable(wfJob.getId(), "4", WorkflowAction.Status.OK);
-        WorkflowActionBean wfAction5 = addRecordToWfActionTable(wfJob.getId(), "5", WorkflowAction.Status.OK);
-        WorkflowActionBean subwfAction1 = addRecordToWfActionTable(subwfJob1.getId(), "1", WorkflowAction.Status.OK);
-        WorkflowActionBean subwfAction2 = addRecordToWfActionTable(subwfJob2.getId(), "1", WorkflowAction.Status.OK);
-        WorkflowActionBean subwfAction3 = addRecordToWfActionTable(subwfJob3.getId(), "1", WorkflowAction.Status.OK);
-        WorkflowActionBean subwfAction4 = addRecordToWfActionTable(subwfJob4.getId(), "1", WorkflowAction.Status.OK);
-        WorkflowActionBean subwfAction5 = addRecordToWfActionTable(subwfJob5.getId(), "1", WorkflowAction.Status.OK);
-
-        List<String> children = new ArrayList<String>();
-        // Get the first 3
-        children.addAll(jpaService.execute(new WorkflowJobsGetFromParentIdJPAExecutor(wfJob.getId(), 3)));
-        assertEquals(3, children.size());
-        // Get the next 3 (though there's only 2 more)
-        children.addAll(jpaService.execute(new WorkflowJobsGetFromParentIdJPAExecutor(wfJob.getId(), 3, 3)));
-        assertEquals(5, children.size());
-        checkChildren(children, subwfJob1.getId(), subwfJob2.getId(), subwfJob3.getId(), subwfJob4.getId(), subwfJob5.getId());
     }
 
     private void checkChildren(List<String> children, String... wfJobIDs) {
