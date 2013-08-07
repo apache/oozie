@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1458 If a Credentials type is not defined, Oozie should say something (rkanter)
 OOZIE-1425 param checker should validate cron syntax (bowenzhangusa via rkanter)
 OOZIE-1453 Change "frequency" to string in SyncCoordAction.java (bowenzhangusa via rkanter)
 OOZIE-1447 Sqoop actions that don't launch a map reduce job fail with an IllegalArgumentException (jarcec via rkanter)

@@ -871,6 +871,9 @@ public class JavaActionExecutor extends ActionExecutor {
                     }
                     else {
                         log.debug("Credentials object is null for name= " + credName + ", type=" + credProps.getType());
+                        throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "JA020",
+                            "Could not load credentials of type [{0}] with name [{1}]]; perhaps it was not defined"
+                                + " in oozie-site.xml?", credProps.getType(), credName);
                     }
                 }
             }

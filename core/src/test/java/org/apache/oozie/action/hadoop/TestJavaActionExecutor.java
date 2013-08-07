@@ -951,15 +951,29 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertEquals("value2", prop.getProperties().get("property2"));
         assertEquals("val3", prop.getProperties().get("prop3"));
 
-        Configuration conf = Services.get().getConf();
-        conf.set("oozie.credentials.credentialclasses", "abc=org.apache.oozie.action.hadoop.InsertTestToken");
-
-        // Adding if action need to set more credential tokens
+        // Try to load the token without it being defined in oozie-site; should get an exception
         JobConf credentialsConf = new JobConf();
         Configuration launcherConf = ae.createBaseHadoopConf(context, actionXmlconf);
         XConfiguration.copy(launcherConf, credentialsConf);
-        ae.setCredentialTokens(credentialsConf, context, action, credProperties);
+        try {
+            ae.setCredentialTokens(credentialsConf, context, action, credProperties);
+            fail("Should have gotten an exception but did not");
+        }
+        catch (ActionExecutorException aee) {
+            assertEquals("JA020", aee.getErrorCode());
+            assertTrue(aee.getMessage().contains("type [abc]"));
+            assertTrue(aee.getMessage().contains("name [abcname]"));
+        }
 
+        // Define 'abc' token type in oozie-site
+        Configuration conf = Services.get().getConf();
+        conf.set("oozie.credentials.credentialclasses", "abc=org.apache.oozie.action.hadoop.InsertTestToken");
+
+        // Try to load the token after being defined in oozie-site; should work correctly
+        credentialsConf = new JobConf();
+        launcherConf = ae.createBaseHadoopConf(context, actionXmlconf);
+        XConfiguration.copy(launcherConf, credentialsConf);
+        ae.setCredentialTokens(credentialsConf, context, action, credProperties);
         Token<? extends TokenIdentifier> tk = credentialsConf.getCredentials().getToken(new Text("ABC Token"));
         assertNotNull(tk);
     }
