@@ -31,10 +31,12 @@ import org.apache.oozie.executor.jpa.CoordJobsDeleteJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobsGetForPurgeJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobsGetFromParentIdJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
-import org.apache.oozie.executor.jpa.WorkflowJobsCountNotForPurgeFromParentIdJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobsCountNotForPurgeFromCoordParentIdJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobsCountNotForPurgeFromWorkflowParentIdJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobsDeleteJPAExecutor;
-import org.apache.oozie.executor.jpa.WorkflowJobsGetFromParentIdJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobsGetFromWorkflowParentIdJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobsGetForPurgeJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobsGetFromCoordParentIdJPAExecutor;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 
@@ -176,7 +178,7 @@ public class PurgeXCommand extends XCommand<Void> {
         for (String wfId : wfs) {
             // We only purge the workflow and its children if they are all ready to be purged
             long numChildrenNotReady = jpaService.execute(
-                    new WorkflowJobsCountNotForPurgeFromParentIdJPAExecutor(wfOlderThan, wfId));
+                    new WorkflowJobsCountNotForPurgeFromWorkflowParentIdJPAExecutor(wfOlderThan, wfId));
             if (numChildrenNotReady == 0) {
                 wfsToPurge.add(wfId);
                 // Get all of the direct children for this workflow
@@ -184,7 +186,8 @@ public class PurgeXCommand extends XCommand<Void> {
                 int size;
                 do {
                     size = children.size();
-                    children.addAll(jpaService.execute(new WorkflowJobsGetFromParentIdJPAExecutor(wfId, children.size(), limit)));
+                    children.addAll(jpaService.execute(
+                            new WorkflowJobsGetFromWorkflowParentIdJPAExecutor(wfId, children.size(), limit)));
                 } while (size != children.size());
                 subwfs.addAll(children);
             }
@@ -206,7 +209,7 @@ public class PurgeXCommand extends XCommand<Void> {
         for (String coordId : coords) {
             // We only purge the coord and its children if they are all ready to be purged
             long numChildrenNotReady = jpaService.execute(
-                    new WorkflowJobsCountNotForPurgeFromParentIdJPAExecutor(wfOlderThan, coordId));
+                    new WorkflowJobsCountNotForPurgeFromCoordParentIdJPAExecutor(wfOlderThan, coordId));
             if (numChildrenNotReady == 0) {
                 coordsToPurge.add(coordId);
                 // Get all of the direct children for this coord
@@ -215,7 +218,7 @@ public class PurgeXCommand extends XCommand<Void> {
                 do {
                     size = children.size();
                     children.addAll(jpaService.execute(
-                            new WorkflowJobsGetFromParentIdJPAExecutor(coordId, children.size(), limit)));
+                            new WorkflowJobsGetFromCoordParentIdJPAExecutor(coordId, children.size(), limit)));
                 } while (size != children.size());
                 wfsToPurge.addAll(children);
             }
