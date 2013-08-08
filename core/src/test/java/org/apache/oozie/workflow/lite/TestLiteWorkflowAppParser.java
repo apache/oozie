@@ -1068,6 +1068,39 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         }
     }
 
+    /*
+     * f->(1,2,2)
+     * 1->ok->j
+     * 1->fail->k
+     * 2->ok->j
+     * 2->fail->k
+     * j->end
+     */
+    public void testForkJoinDuplicateTransitionsFromFork() throws WorkflowException {
+        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+                LiteWorkflowStoreService.LiteControlNodeHandler.class,
+                LiteWorkflowStoreService.LiteDecisionHandler.class,
+                LiteWorkflowStoreService.LiteActionHandler.class);
+        LiteWorkflowApp def = new LiteWorkflowApp("name", "def",
+            new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "f"))
+        .addNode(new ForkNodeDef("f", LiteWorkflowStoreService.LiteControlNodeHandler.class,
+                        Arrays.asList(new String[]{"one", "two", "two"})))
+        .addNode(new ActionNodeDef("one", dummyConf, TestActionNodeHandler.class, "j", "k"))
+        .addNode(new JoinNodeDef("j", LiteWorkflowStoreService.LiteControlNodeHandler.class, "end"))
+        .addNode(new ActionNodeDef("two", dummyConf, TestActionNodeHandler.class, "j", "k"))
+        .addNode(new KillNodeDef("k", "kill", LiteWorkflowStoreService.LiteControlNodeHandler.class))
+        .addNode(new EndNodeDef("end", LiteWorkflowStoreService.LiteControlNodeHandler.class));
+        try {
+            invokeForkJoin(parser, def);
+            fail("Expected to catch an exception but did not encounter any");
+        } catch (Exception ex) {
+            WorkflowException we = (WorkflowException) ex.getCause();
+            assertEquals(ErrorCode.E0744, we.getErrorCode());
+            assertTrue(we.getMessage().contains("fork, [f],"));
+            assertTrue(we.getMessage().contains("node, [two]"));
+        }
+    }
+
     // Invoke private validateForkJoin method using Reflection API
     private void invokeForkJoin(LiteWorkflowAppParser parser, LiteWorkflowApp def) throws Exception {
         Class<? extends LiteWorkflowAppParser> c = parser.getClass();
