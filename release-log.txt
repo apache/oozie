@@ -10,6 +10,7 @@ OOZIE-1440 Build fails in certain environments due to xerces OpenJPA issue (mack
 
 -- Oozie 4.0.0 release
 
+OOZIE-1405 Fix flakey SLA tests (mona)
 OOZIE-1480 Web-console Workflow Job Info popup should display parent-id field and no empty Nominal time field (mona)
 OOZIE-1481 Getting a coordinator job info with len=0 should return 0 actions (rohini)
 OOZIE-1484 Error in DB upgrade when error message exceeds 4K characters (ryota)
