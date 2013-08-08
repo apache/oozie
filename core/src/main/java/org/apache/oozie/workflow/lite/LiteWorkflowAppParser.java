@@ -272,7 +272,25 @@ public class LiteWorkflowAppParser {
         }
         else if (node instanceof ForkNodeDef) {
             forkNodes.push(node.getName());
-            for(String transition : (new HashSet<String>(node.getTransitions()))) {
+            List<String> transitionsList = node.getTransitions();
+            HashSet<String> transitionsSet = new HashSet<String>(transitionsList);
+            // Check that a fork doesn't go to the same node more than once
+            if (!transitionsList.isEmpty() && transitionsList.size() != transitionsSet.size()) {
+                // Now we have to figure out which node is the problem and what type of node they are (join and kill are ok)
+                for (int i = 0; i < transitionsList.size(); i++) {
+                    String a = transitionsList.get(i);
+                    NodeDef aNode = app.getNode(a);
+                    if (!(aNode instanceof JoinNodeDef) && !(aNode instanceof KillNodeDef)) {
+                        for (int k = i+1; k < transitionsList.size(); k++) {
+                            String b = transitionsList.get(k);
+                            if (a.equals(b)) {
+                                throw new WorkflowException(ErrorCode.E0744, node.getName(), a);
+                            }
+                        }
+                    }
+                }
+            }
+            for(String transition : transitionsSet) {
                 NodeDef tranNode = app.getNode(transition);
                 validateForkJoin(tranNode, app, forkNodes, joinNodes, path, okTo, topDecisionParent);
             }

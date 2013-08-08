@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1443 forkjoin validation should not allow a fork to go to the same node multiple times (rkanter)
 OOZIE-1471 Support glob in FS action and prepare blocks (ryota)
 OOZIE-1403 forkjoin validation blocks some valid cases involving decision nodes (rkanter)
 OOZIE-1449 Coordinator Workflow parent relationship is broken for purge service (rkanter)
