@@ -95,6 +95,7 @@ public class JavaActionExecutor extends ActionExecutor {
     private boolean useLauncherJar;
     private static int maxActionOutputLen;
     private static int maxExternalStatsSize;
+    private static int maxFSGlobMax;
 
     private static final String SUCCEEDED = "SUCCEEDED";
     private static final String KILLED = "KILLED";
@@ -153,6 +154,8 @@ public class JavaActionExecutor extends ActionExecutor {
         //Get the limit for the maximum allowed size of action stats
         maxExternalStatsSize = getOozieConf().getInt(JavaActionExecutor.MAX_EXTERNAL_STATS_SIZE, MAX_EXTERNAL_STATS_SIZE_DEFAULT);
         maxExternalStatsSize = (maxExternalStatsSize == -1) ? Integer.MAX_VALUE : maxExternalStatsSize;
+        //Get the limit for the maximum number of globbed files/dirs for FS operation
+        maxFSGlobMax = getOozieConf().getInt(LauncherMapper.CONF_OOZIE_ACTION_FS_GLOB_MAX, LauncherMapper.GLOB_MAX_DEFAULT);
 
         createLauncherJar();
 
@@ -620,6 +623,9 @@ public class JavaActionExecutor extends ActionExecutor {
             LauncherMapperHelper.setupLauncherURIHandlerConf(launcherJobConf);
             LauncherMapperHelper.setupMaxOutputData(launcherJobConf, maxActionOutputLen);
             LauncherMapperHelper.setupMaxExternalStatsSize(launcherJobConf, maxExternalStatsSize);
+            if (getOozieConf().get(LauncherMapper.CONF_OOZIE_ACTION_FS_GLOB_MAX) != null) {
+                LauncherMapperHelper.setupMaxFSGlob(launcherJobConf, maxFSGlobMax);
+            }
 
             List<Element> list = actionXml.getChildren("arg", ns);
             String[] args = new String[list.size()];

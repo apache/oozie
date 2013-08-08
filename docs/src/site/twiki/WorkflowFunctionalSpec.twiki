@@ -1033,6 +1033,8 @@ The FS commands are executed synchronously from within the FS action, the workfl
 file commands are completed before continuing to the next action.
 
 Path names specified in the =fs= action can be parameterized (templatized) using EL expressions.
+Path name should be specified as a absolute path. In case of =move=, =delete=, =chmod= and =chgrp= commands, a glob pattern can also be specified instead of an absolute path.
+For =move=, glob pattern can only be specified for source path and not the target.
 
 Each file path must specify the file system URI, for move operations, the target must not specified the system URI.
 
@@ -1404,6 +1406,7 @@ be assigned to it. The queue name must be specified as a configuration property.
 
 The =prepare= element, if present, indicates a list of paths to delete before starting the Java application. This should
 be used exclusively for directory cleanup or dropping of hcatalog table partitions for the Java application to be executed.
+In case of =delete=, a glob pattern can be used to specify path.
 The format to specify a hcatalog table partition URI is
 hcat://[metastore server]:[port]/[database name]/[table name]/[partkey1]=[value];[partkey2]=[value].
 In case of a hcatalog URI, the hive-site.xml needs to be shipped using =file= tag and the hcatalog and hive jars

@@ -23,6 +23,7 @@ import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
 
 public class FSLauncherURIHandler implements LauncherURIHandler {
@@ -54,14 +55,23 @@ public class FSLauncherURIHandler implements LauncherURIHandler {
         boolean status = false;
         try {
             FileSystem fs = FileSystem.get(uri, conf);
-            Path path = getNormalizedPath(uri);
-            if (fs.exists(path)) {
-                status = fs.delete(path, true);
-                if (status) {
-                    System.out.println("Deletion of path " + path + " succeeded.");
+            Path[] pathArr = FileUtil.stat2Paths(fs.globStatus(getNormalizedPath(uri)));
+            if (pathArr != null && pathArr.length > 0) {
+                int fsGlobMax = conf.getInt(LauncherMapper.CONF_OOZIE_ACTION_FS_GLOB_MAX, 1000);
+                if (pathArr.length > fsGlobMax) {
+                    throw new LauncherException("exceeds max number (" + fsGlobMax
+                            + ") of files/dirs to delete in <prepare>");
                 }
-                else {
-                    System.out.println("Deletion of path " + path + " failed.");
+                for (Path path : pathArr) {
+                    if (fs.exists(path)) {
+                        status = fs.delete(path, true);
+                        if (status) {
+                            System.out.println("Deletion of path " + path + " succeeded.");
+                        }
+                        else {
+                            System.out.println("Deletion of path " + path + " failed.");
+                        }
+                    }
                 }
             }
         }
