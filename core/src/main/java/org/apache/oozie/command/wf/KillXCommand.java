@@ -17,6 +17,7 @@
  */
 package org.apache.oozie.command.wf;
 
+import org.apache.oozie.action.control.ControlNodeActionExecutor;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.client.SLAEvent.Status;
@@ -33,6 +34,7 @@ import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionsGetForJobJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
+import org.apache.oozie.service.ActionService;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
@@ -58,6 +60,7 @@ public class KillXCommand extends WorkflowXCommand<Void> {
     private String wfId;
     private WorkflowJobBean wfJob;
     private List<WorkflowActionBean> actionList;
+    private ActionService actionService;
     private JPAService jpaService = null;
     private List<JsonBean> updateList = new ArrayList<JsonBean>();
     private List<JsonBean> insertList = new ArrayList<JsonBean>();
@@ -89,6 +92,7 @@ public class KillXCommand extends WorkflowXCommand<Void> {
             else {
                 throw new CommandException(ErrorCode.E0610);
             }
+            actionService = Services.get().get(ActionService.class);
         }
         catch (XException ex) {
             throw new CommandException(ex);
@@ -152,7 +156,8 @@ public class KillXCommand extends WorkflowXCommand<Void> {
                         insertList.add(slaEvent);
                     }
                     updateList.add(action);
-                    if (EventHandlerService.isEnabled()) {
+                    if (EventHandlerService.isEnabled()
+                            && !(actionService.getExecutor(action.getType()) instanceof ControlNodeActionExecutor)) {
                         generateEvent(action, wfJob.getUser());
                     }
                 }

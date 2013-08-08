@@ -33,6 +33,7 @@ import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.client.event.Event;
 import org.apache.oozie.client.event.JobEvent;
 import org.apache.oozie.client.event.SLAEvent.SLAStatus;
 import org.apache.oozie.client.event.SLAEvent.EventStatus;
@@ -70,6 +71,7 @@ import org.junit.Test;
 
 public class TestSLAEventGeneration extends XDataTestCase {
     Services services;
+    EventHandlerService ehs = null;
     JPAService jpa;
     Calendar cal;
     String alert_events = "START_MISS,END_MET,END_MISS";
@@ -96,6 +98,8 @@ public class TestSLAEventGeneration extends XDataTestCase {
         super.setUp();
         services = new Services();
         Configuration conf = services.getConf();
+        String excludeServices[] = { "org.apache.oozie.service.StatusTransitService" };
+        setClassesToBeExcluded(conf, excludeServices);
         conf.set(Services.CONF_SERVICE_EXT_CLASSES,
                 EventHandlerService.class.getName() + "," + SLAService.class.getName());
         conf.setClass(EventHandlerService.CONF_LISTENERS, SLAJobEventListener.class, JobEventListener.class);
@@ -104,6 +108,7 @@ public class TestSLAEventGeneration extends XDataTestCase {
         conf.setInt(EventHandlerService.CONF_BATCH_SIZE, 1);
         services.init();
         jpa = services.get(JPAService.class);
+        ehs = services.get(EventHandlerService.class);
         cal = Calendar.getInstance();
         cleanUpDBTables();
     }
@@ -122,7 +127,6 @@ public class TestSLAEventGeneration extends XDataTestCase {
      */
     @Test
     public void testWorkflowJobSLANew() throws Exception {
-        EventHandlerService ehs = services.get(EventHandlerService.class);
         assertNotNull(ehs);
         SLAService slas = services.get(SLAService.class);
         assertNotNull(slas);
@@ -133,7 +137,7 @@ public class TestSLAEventGeneration extends XDataTestCase {
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, appPath.toString());
         conf.set(OozieClient.USER_NAME, getTestUser());
-        _testWorkflowJobCommands(conf, ehs, slas, true);
+        _testWorkflowJobCommands(conf, slas, true);
     }
 
     /**
@@ -143,7 +147,6 @@ public class TestSLAEventGeneration extends XDataTestCase {
      */
     @Test
     public void testWorkflowJobSLARerun() throws Exception {
-        EventHandlerService ehs = services.get(EventHandlerService.class);
         SLAService slas = services.get(SLAService.class);
 
         String wfXml = IOUtils.getResourceAsString("wf-job-sla.xml", -1);
@@ -315,7 +318,6 @@ public class TestSLAEventGeneration extends XDataTestCase {
 
     @Test
     public void testSLASchema1BackwardCompatibility() throws Exception {
-        EventHandlerService ehs = services.get(EventHandlerService.class);
         assertNotNull(ehs);
         SLAService slas = services.get(SLAService.class);
         assertNotNull(slas);
@@ -330,7 +332,7 @@ public class TestSLAEventGeneration extends XDataTestCase {
         Date nominal = cal.getTime();
         String nominalTime = DateUtils.formatDateOozieTZ(nominal);
         conf.set("nominal_time", nominalTime);
-        _testWorkflowJobCommands(conf, ehs, slas, false);
+        _testWorkflowJobCommands(conf, slas, false);
     }
 
     /**
@@ -340,7 +342,6 @@ public class TestSLAEventGeneration extends XDataTestCase {
      */
     @Test
     public void testCoordinatorActionCommands() throws Exception {
-        EventHandlerService ehs = services.get(EventHandlerService.class);
         // reduce noise from WF Job events (also default) by setting it to only
         // coord action
         ehs.setAppTypes(new HashSet<String>(Arrays.asList(new String[] { "coordinator_action" })));
@@ -387,9 +388,8 @@ public class TestSLAEventGeneration extends XDataTestCase {
         assertEquals(30 * 60 * 1000, slaEvent.getExpectedDuration());
         assertEquals(alert_events, slaEvent.getAlertEvents());
         waitForEventGeneration(200);
-        ehs.getEventQueue().clear(); //clear the coord-action WAITING event generated
         slas.runSLAWorker();
-        slaEvent = (SLACalcStatus) ehs.getEventQueue().poll();
+        slaEvent = skipToSLAEvent();
         assertEquals(SLAStatus.NOT_STARTED, slaEvent.getSLAStatus());
         assertEquals(EventStatus.START_MISS, slaEvent.getEventStatus());
 
@@ -401,7 +401,7 @@ public class TestSLAEventGeneration extends XDataTestCase {
         slaEvent = slas.getSLACalculator().get(actionId);
         slaEvent.setEventProcessed(0); //resetting for testing sla event
         ehs.new EventWorker().run();
-        slaEvent = (SLACalcStatus) ehs.getEventQueue().poll();
+        slaEvent = skipToSLAEvent();
         assertEquals(actionId, slaEvent.getId());
         assertNotNull(slaEvent.getActualStart());
         assertEquals(SLAStatus.IN_PROCESS, slaEvent.getSLAStatus());
@@ -415,7 +415,7 @@ public class TestSLAEventGeneration extends XDataTestCase {
         waitForEventGeneration(300);
         slaEvent = (SLACalcStatus) ehs.getEventQueue().poll();
         assertEquals(EventStatus.DURATION_MISS, slaEvent.getEventStatus());
-        slaEvent = (SLACalcStatus) ehs.getEventQueue().poll();
+        slaEvent = skipToSLAEvent();
         assertEquals(actionId, slaEvent.getId());
         assertNotNull(slaEvent.getActualEnd());
         assertEquals(EventStatus.END_MISS, slaEvent.getEventStatus());
@@ -430,7 +430,6 @@ public class TestSLAEventGeneration extends XDataTestCase {
      * @throws Exception
      */
     public void testFailureAndMissEventsOnKill() throws Exception {
-        EventHandlerService ehs = services.get(EventHandlerService.class);
         assertEquals(0, ehs.getEventQueue().size());
         // CASE 1: Coord Job status - RUNNING (similar to RunningWithError,Paused and PausedWithError for
         // this test's purpose)
@@ -494,7 +493,6 @@ public class TestSLAEventGeneration extends XDataTestCase {
     }
 
     private void waitForEventGeneration(int wait) {
-        final EventHandlerService ehs = Services.get().get(EventHandlerService.class);
         waitFor(wait, new Predicate() {
             @Override
             public boolean evaluate() throws Exception {
@@ -503,7 +501,15 @@ public class TestSLAEventGeneration extends XDataTestCase {
         });
     }
 
-    private void _testWorkflowJobCommands(Configuration conf, EventHandlerService ehs, SLAService slas, boolean isNew)
+    private SLACalcStatus skipToSLAEvent() {
+        Event someEvent;
+        do {
+            someEvent = ehs.getEventQueue().poll();
+        } while (!(someEvent instanceof SLACalcStatus));
+        return (SLACalcStatus) someEvent;
+    }
+
+    private void _testWorkflowJobCommands(Configuration conf, SLAService slas, boolean isNew)
             throws Exception {
         cal.setTime(new Date());
         cal.add(Calendar.MINUTE, -20); // for start_miss
