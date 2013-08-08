@@ -95,6 +95,16 @@ public class LauncherMapperHelper {
         launcherConf.setInt(LauncherMapper.CONF_OOZIE_EXTERNAL_STATS_MAX_SIZE, maxStatsData);
     }
 
+    /**
+     * Set the maximum number of globbed files/dirs
+     *
+     * @param launcherConf the oozie launcher configuration
+     * @param fsGlobMax the maximum number of files/dirs for FS operation
+     */
+    public static void setupMaxFSGlob(Configuration launcherConf, int fsGlobMax){
+        launcherConf.setInt(LauncherMapper.CONF_OOZIE_ACTION_FS_GLOB_MAX, fsGlobMax);
+    }
+
     public static void setupLauncherInfo(JobConf launcherConf, String jobId, String actionId, Path actionDir,
             String recoveryId, Configuration actionConf, String prepareXML) throws IOException, HadoopAccessorException {
 

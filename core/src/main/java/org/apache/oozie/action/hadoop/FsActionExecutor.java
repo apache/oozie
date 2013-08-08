@@ -18,17 +18,16 @@
 package org.apache.oozie.action.hadoop;
 
 import java.io.IOException;
-import java.io.StringReader;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.mapred.JobConf;
@@ -47,8 +46,12 @@ import org.jdom.Element;
  */
 public class FsActionExecutor extends ActionExecutor {
 
+    private final int maxGlobCount;
+
     public FsActionExecutor() {
         super("fs");
+        maxGlobCount = getOozieConf().getInt(LauncherMapper.CONF_OOZIE_ACTION_FS_GLOB_MAX,
+                LauncherMapper.GLOB_MAX_DEFAULT);
     }
 
     Path getPath(Element element, String attribute) {
@@ -213,7 +216,13 @@ public class FsActionExecutor extends ActionExecutor {
         argsMap.put("group", group);
         try {
             FileSystem fs = getFileSystemFor(path, context, fsConf);
-            recursiveFsOperation("chgrp", fs, nameNodePath, path, argsMap, dirFiles, recursive, true);
+            Path[] pathArr = FileUtil.stat2Paths(fs.globStatus(path));
+            if (pathArr != null && pathArr.length > 0) {
+                checkGlobMax(pathArr);
+                for (Path p : pathArr) {
+                    recursiveFsOperation("chgrp", fs, nameNodePath, p, argsMap, dirFiles, recursive, true);
+                }
+            }
         }
         catch (Exception ex) {
             throw convertException(ex);
@@ -348,11 +357,16 @@ public class FsActionExecutor extends ActionExecutor {
         try {
             path = resolveToFullPath(nameNodePath, path, true);
             FileSystem fs = getFileSystemFor(path, context, fsConf);
-
-            if (fs.exists(path)) {
-                if (!fs.delete(path, true)) {
-                    throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS005",
-                                                      "delete, path [{0}] could not delete path", path);
+            Path[] pathArr = FileUtil.stat2Paths(fs.globStatus(path));
+            if (pathArr != null && pathArr.length > 0) {
+                checkGlobMax(pathArr);
+                for (Path p : pathArr) {
+                    if (fs.exists(p)) {
+                        if (!fs.delete(p, true)) {
+                            throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS005",
+                                    "delete, path [{0}] could not delete path", p);
+                        }
+                    }
                 }
             }
         }
@@ -416,15 +430,29 @@ public class FsActionExecutor extends ActionExecutor {
             source = resolveToFullPath(nameNodePath, source, true);
             validateSameNN(source, target);
             FileSystem fs = getFileSystemFor(source, context, fsConf);
-
-            if (!fs.exists(source) && !recovery) {
-                throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS006",
-                                                  "move, source path [{0}] does not exist", source);
+            Path[] pathArr = FileUtil.stat2Paths(fs.globStatus(source));
+            if (( pathArr == null || pathArr.length == 0 ) ){
+                if (!recovery) {
+                    throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS006",
+                        "move, source path [{0}] does not exist", source);
+                } else {
+                    return;
+                }
             }
-
-            if (!fs.rename(source, target) && !recovery) {
-                throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS008",
-                                                  "move, could not move [{0}] to [{1}]", source, target);
+            if (pathArr.length > 1 && (!fs.exists(target) || fs.isFile(target))) {
+                if(!recovery) {
+                    throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS012",
+                            "move, could not rename multiple sources to the same target name");
+                } else {
+                    return;
+                }
+            }
+            checkGlobMax(pathArr);
+            for (Path p : pathArr) {
+                if (!fs.rename(p, target) && !recovery) {
+                    throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS008",
+                            "move, could not move [{0}] to [{1}]", p, target);
+                }
             }
         }
         catch (Exception ex) {
@@ -443,7 +471,13 @@ public class FsActionExecutor extends ActionExecutor {
         argsMap.put("permissions", permissions);
         try {
             FileSystem fs = getFileSystemFor(path, context, fsConf);
-            recursiveFsOperation("chmod", fs, nameNodePath, path, argsMap, dirFiles, recursive, true);
+            Path[] pathArr = FileUtil.stat2Paths(fs.globStatus(path));
+            if (pathArr != null && pathArr.length > 0) {
+                checkGlobMax(pathArr);
+                for (Path p : pathArr) {
+                    recursiveFsOperation("chmod", fs, nameNodePath, p, argsMap, dirFiles, recursive, true);
+                }
+            }
         }
         catch (Exception ex) {
             throw convertException(ex);
@@ -550,6 +584,13 @@ public class FsActionExecutor extends ActionExecutor {
      */
     public Path getRecoveryPath(Context context) throws HadoopAccessorException, IOException, URISyntaxException {
         return new Path(context.getActionDir(), "fs-" + context.getRecoveryId());
+    }
+
+    private void checkGlobMax(Path[] pathArr) throws ActionExecutorException {
+        if(pathArr.length > maxGlobCount) {
+            throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS013",
+                    "too many globbed files/dirs to do FS operation");
+        }
     }
 
 }

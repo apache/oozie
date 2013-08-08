@@ -63,6 +63,35 @@ public class TestFSPrepareActions extends XFsTestCase {
         assertFalse(fs.exists(newDir));
     }
 
+    // Test for delete as prepare action with glob
+    @Test
+    public void testDeleteWithGlob() throws Exception {
+        Path actionDir = getFsTestCaseDir();
+        FileSystem fs = getFileSystem();
+        Path newDir = new Path(actionDir, "newDir");
+        // Delete the file if it is already there
+        if (fs.exists(newDir)) {
+            fs.delete(newDir, true);
+        }
+        fs.mkdirs(newDir);
+        fs.mkdirs(new Path(newDir, "2010"));
+        fs.mkdirs(new Path(newDir + "/2010/10"));
+        fs.mkdirs(new Path(newDir, "2011"));
+        fs.mkdirs(new Path(newDir + "/2011/10"));
+        fs.mkdirs(new Path(newDir, "2012"));
+        fs.mkdirs(new Path(newDir + "/2012/10"));
+        // Prepare block that contains delete action
+        String prepareXML = "<prepare>" + "<delete path='" + newDir + "/201[0-1]/*" + "'/>" + "</prepare>";
+
+        JobConf conf = createJobConf();
+        LauncherMapperHelper.setupLauncherURIHandlerConf(conf);
+        PrepareActionsDriver.doOperations(prepareXML, conf);
+        assertFalse(fs.exists(new Path(newDir + "/2010/10")));
+        assertFalse(fs.exists(new Path(newDir + "/2011/10")));
+        assertTrue(fs.exists(new Path(newDir + "/2012/10")));
+        fs.delete(newDir, true);
+    }
+
     // Test for mkdir as prepare action
     @Test
     public void testMkdir() throws Exception {

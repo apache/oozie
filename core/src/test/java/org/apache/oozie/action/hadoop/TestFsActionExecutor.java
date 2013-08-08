@@ -238,6 +238,32 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
         assertTrue(!fs.exists(path));
 
         ae.delete(context, path);
+
+    }
+
+    public void testDeleteWithGlob() throws Exception {
+
+        FsActionExecutor ae = new FsActionExecutor();
+        FileSystem fs = getFileSystem();
+        Context context = createContext("<fs/>");
+        Path basePath = new Path(getFsTestCaseDir(), "2010");
+        fs.mkdirs(basePath);
+        fs.mkdirs(new Path(basePath, "10"));
+        fs.createNewFile(new Path(basePath + "/10/newfile1"));
+        fs.createNewFile(new Path(basePath + "/10/newfile2"));
+        fs.mkdirs(new Path(basePath, "11"));
+        fs.createNewFile(new Path(basePath + "/11/newfile3"));
+        fs.mkdirs(new Path(basePath, "12"));
+        fs.createNewFile(new Path(basePath + "/12/newfile4"));
+
+        Path globPath = new Path(basePath +"/1{0,1}/*");
+        ae.delete(context, globPath);
+        assertFalse(fs.exists(new Path(basePath + "/10/newfile1")));
+        assertFalse(fs.exists(new Path(basePath + "/10/newfile2")));
+        assertFalse(fs.exists(new Path(basePath + "/11/newfile3")));
+        assertTrue(fs.exists(new Path(basePath + "/12/newfile4")));
+
+        fs.delete(basePath, true);
     }
 
     public void testMove() throws Exception {
@@ -293,6 +319,71 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
         assertTrue(fs.exists(target));
     }
 
+    public void testMoveWithGlob() throws Exception {
+        FsActionExecutor ae = new FsActionExecutor();
+        FileSystem fs = getFileSystem();
+        Path source = new Path(getFsTestCaseDir(), "source");
+        Path target = new Path(getFsTestCaseDir(), "target");
+        Context context = createContext("<fs/>");
+
+        // Test simple example of glob
+        fs.mkdirs(source);
+        fs.mkdirs(target);
+        fs.createNewFile(new Path(source,"newfile1"));
+        fs.createNewFile(new Path(source,"newfile2"));
+
+        ae.move(context, new Path(source.toString() + "/*"), target, false);
+        assertTrue(fs.exists(new Path(target, "newfile1")));
+        assertTrue(fs.exists(new Path(target, "newfile2")));
+
+        // Test another example of glob
+        fs.delete(target, true);
+        fs.mkdirs(target);
+        fs.mkdirs(new Path(source + "/2010"));
+        fs.mkdirs(new Path(source + "/2011"));
+        fs.mkdirs(new Path(source + "/2012"));
+        fs.mkdirs(new Path(source + "/2010/10"));
+        fs.mkdirs(new Path(source + "/2010/11"));
+        fs.createNewFile(new Path(source + "/2010/10/newfile1"));
+        fs.createNewFile(new Path(source + "/2010/11/newfile2"));
+        fs.mkdirs(new Path(source + "/2011/09"));
+        fs.mkdirs(new Path(source + "/2011/10"));
+        fs.createNewFile(new Path(source + "/2011/09/newfile3"));
+        fs.createNewFile(new Path(source + "/2011/10/newfile4"));
+
+        ae.move(context, new Path(source.toString() + "/201[0-1]/1{0,1}/*"), target, false);
+        assertTrue(fs.exists(new Path(target.toString() + "/newfile1")));
+        assertTrue(fs.exists(new Path(target.toString() + "/newfile2")));
+        assertFalse(fs.exists(new Path(target.toString() + "/newfile3")));
+        assertTrue(fs.exists(new Path(target.toString() + "/newfile4")));
+
+        fs.delete(new Path(source + "/2010"), true);
+        fs.delete(new Path(source + "/2011"), true);
+        fs.delete(new Path(source + "/2012"), true);
+
+        // Catch exception when trying to move multiple files (match glob) to
+        // the same name which doesn't exist
+        fs.delete(target, true);
+        try {
+            ae.move(context, new Path(source.toString() + "/*"), target, true);
+        }
+        catch (ActionExecutorException ex) {
+            assertEquals("FS012", ex.getErrorCode());
+        }
+
+        // Catch exception when trying to move multiple files (match glob) to
+        // the same file name which exists
+        fs.delete(target, true);
+        Path targetFile = new Path(target, "newfile1");
+        fs.createNewFile(targetFile);
+        try {
+            ae.move(context, new Path(source.toString() + "/*"), targetFile, true);
+        }
+        catch (ActionExecutorException ex) {
+            assertEquals("FS012", ex.getErrorCode());
+        }
+    }
+
     public void testChmod() throws Exception {
         FsActionExecutor ae = new FsActionExecutor();
         FileSystem fs = getFileSystem();
@@ -319,6 +410,59 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
         assertEquals("rwxr----x", fs.getFileStatus(path).getPermission().toString());
         assertEquals("rwxr----x", fs.getFileStatus(child).getPermission().toString());
         assertEquals("rwx---r--", fs.getFileStatus(grandchild).getPermission().toString());
+    }
+
+    public void testChmodWithGlob() throws Exception {
+        FsActionExecutor ae = new FsActionExecutor();
+        FileSystem fs = getFileSystem();
+        Context context = createContext("<fs/>");
+        Path basePath = new Path(getFsTestCaseDir(), "2010");
+        fs.mkdirs(basePath);
+        fs.mkdirs(new Path(basePath, "10"));
+        fs.mkdirs(new Path(basePath + "/10/dir1"));
+        fs.createNewFile(new Path(basePath + "/10/dir1/file1"));
+        fs.mkdirs(new Path(basePath + "/10/dir2"));
+        fs.mkdirs(new Path(basePath, "11"));
+        fs.mkdirs(new Path(basePath + "/11/dir3"));
+        fs.mkdirs(new Path(basePath, "12"));
+
+        fs.setPermission(new Path(basePath, "10"), FsPermission.valueOf("-rwxrwxrwx"));
+        fs.setPermission(new Path(basePath + "/10/dir1"), FsPermission.valueOf("-rwxrwxrwx"));
+        fs.setPermission(new Path(basePath + "/10/dir2"), FsPermission.valueOf("-rwxrwxrwx"));
+        fs.setPermission(new Path(basePath + "/10/dir1/file1"), FsPermission.valueOf("-rw-rw-rw-"));
+        fs.setPermission(new Path(basePath, "11"), FsPermission.valueOf("-rwxrwxrwx"));
+        fs.setPermission(new Path(basePath + "/11/dir3"), FsPermission.valueOf("-rwxrwxrwx"));
+        fs.setPermission(new Path(basePath, "12"), FsPermission.valueOf("-rwxrwxrwx"));
+
+        Path globPath = new Path(basePath +"/1[0-1]");
+        ae.chmod(context, globPath, "-rwx------", false, false);
+        assertEquals("rwx------", fs.getFileStatus(new Path(basePath, "10")).getPermission().toString());
+        assertEquals("rwx------", fs.getFileStatus(new Path(basePath, "11")).getPermission().toString());
+        assertEquals("rwxrwxrwx", fs.getFileStatus(new Path(basePath, "12")).getPermission().toString());
+        assertEquals("rwxrwxrwx", fs.getFileStatus(new Path(basePath + "/10/dir1")).getPermission().toString());
+        assertEquals("rwxrwxrwx", fs.getFileStatus(new Path(basePath + "/10/dir2")).getPermission().toString());
+        assertEquals("rwxrwxrwx", fs.getFileStatus(new Path(basePath + "/11/dir3")).getPermission().toString());
+        assertEquals("rw-rw-rw-", fs.getFileStatus(new Path(basePath + "/10/dir1/file1")).getPermission().toString());
+
+        ae.chmod(context, globPath, "-rwx------", true, false);
+        assertEquals("rwx------", fs.getFileStatus(new Path(basePath, "10")).getPermission().toString());
+        assertEquals("rwx------", fs.getFileStatus(new Path(basePath, "11")).getPermission().toString());
+        assertEquals("rwxrwxrwx", fs.getFileStatus(new Path(basePath, "12")).getPermission().toString());
+        assertEquals("rwx------", fs.getFileStatus(new Path(basePath + "/10/dir1")).getPermission().toString());
+        assertEquals("rwx------", fs.getFileStatus(new Path(basePath + "/10/dir2")).getPermission().toString());
+        assertEquals("rwx------", fs.getFileStatus(new Path(basePath + "/11/dir3")).getPermission().toString());
+        assertEquals("rw-rw-rw-", fs.getFileStatus(new Path(basePath + "/10/dir1/file1")).getPermission().toString());
+
+        ae.chmod(context, globPath, "-rwx------", true, true);
+        assertEquals("rwx------", fs.getFileStatus(new Path(basePath, "10")).getPermission().toString());
+        assertEquals("rwx------", fs.getFileStatus(new Path(basePath, "11")).getPermission().toString());
+        assertEquals("rwxrwxrwx", fs.getFileStatus(new Path(basePath, "12")).getPermission().toString());
+        assertEquals("rwx------", fs.getFileStatus(new Path(basePath + "/10/dir1")).getPermission().toString());
+        assertEquals("rwx------", fs.getFileStatus(new Path(basePath + "/10/dir2")).getPermission().toString());
+        assertEquals("rwx------", fs.getFileStatus(new Path(basePath + "/11/dir3")).getPermission().toString());
+        assertEquals("rw-------", fs.getFileStatus(new Path(basePath + "/10/dir1/file1")).getPermission().toString());
+
+        fs.delete(basePath, true);
     }
 
 public void testChmodRecursive() throws Exception {
@@ -814,5 +958,62 @@ public void testChmodRecursive() throws Exception {
         assertEquals(testGroup2, fs.getFileStatus(path).getGroup().toString());
         assertEquals(testGroup2, fs.getFileStatus(child).getGroup().toString());
         assertEquals(testGroup2, fs.getFileStatus(grandchild).getGroup().toString());
+    }
+
+    public void testChgrpWithGlob() throws Exception {
+
+        String testUser = getTestUser();
+        String testGroup = getTestGroup();
+        String testGroup2 = getTestGroup2();
+        FsActionExecutor ae = new FsActionExecutor();
+        FileSystem fs = getFileSystem();
+        Context context = createContext("<fs/>");
+        Path basePath = new Path(getFsTestCaseDir(), "2010");
+        fs.mkdirs(basePath);
+        fs.mkdirs(new Path(basePath, "10"));
+        fs.mkdirs(new Path(basePath + "/10/dir1"));
+        fs.createNewFile(new Path(basePath + "/10/dir1/file1"));
+        fs.mkdirs(new Path(basePath + "/10/dir2"));
+        fs.mkdirs(new Path(basePath, "11"));
+        fs.mkdirs(new Path(basePath + "/11/dir3"));
+        fs.mkdirs(new Path(basePath, "12"));
+
+        fs.setOwner(new Path(basePath, "10"), testUser, testGroup);
+        fs.setOwner(new Path(basePath + "/10/dir1"), testUser, testGroup);
+        fs.setOwner(new Path(basePath + "/10/dir1/file1"), testUser, testGroup);
+        fs.setOwner(new Path(basePath + "/10/dir2"), testUser, testGroup);
+        fs.setOwner(new Path(basePath, "11"), testUser, testGroup);
+        fs.setOwner(new Path(basePath + "/11/dir3"), testUser, testGroup);
+        fs.setOwner(new Path(basePath, "12"), testUser, testGroup);
+
+        Path globPath = new Path(basePath +"/1[0-1]");
+        ae.chgrp(context, null, null, globPath, testUser, testGroup2, false, false);
+        assertEquals(testGroup2, fs.getFileStatus(new Path(basePath, "10")).getGroup().toString());
+        assertEquals(testGroup2, fs.getFileStatus(new Path(basePath, "11")).getGroup().toString());
+        assertEquals(testGroup, fs.getFileStatus(new Path(basePath, "12")).getGroup().toString());
+        assertEquals(testGroup, fs.getFileStatus(new Path(basePath + "/10/dir1")).getGroup().toString());
+        assertEquals(testGroup, fs.getFileStatus(new Path(basePath + "/10/dir2")).getGroup().toString());
+        assertEquals(testGroup, fs.getFileStatus(new Path(basePath + "/11/dir3")).getGroup().toString());
+        assertEquals(testGroup, fs.getFileStatus(new Path(basePath + "/10/dir1/file1")).getGroup().toString());
+
+        ae.chgrp(context, null, null, globPath, testUser, testGroup2, true, false);
+        assertEquals(testGroup2, fs.getFileStatus(new Path(basePath, "10")).getGroup().toString());
+        assertEquals(testGroup2, fs.getFileStatus(new Path(basePath, "11")).getGroup().toString());
+        assertEquals(testGroup, fs.getFileStatus(new Path(basePath, "12")).getGroup().toString());
+        assertEquals(testGroup2, fs.getFileStatus(new Path(basePath + "/10/dir1")).getGroup().toString());
+        assertEquals(testGroup2, fs.getFileStatus(new Path(basePath + "/10/dir2")).getGroup().toString());
+        assertEquals(testGroup2, fs.getFileStatus(new Path(basePath + "/11/dir3")).getGroup().toString());
+        assertEquals(testGroup, fs.getFileStatus(new Path(basePath + "/10/dir1/file1")).getGroup().toString());
+
+        ae.chgrp(context, null, null, globPath, testUser, testGroup2, true, true);
+        assertEquals(testGroup2, fs.getFileStatus(new Path(basePath, "10")).getGroup().toString());
+        assertEquals(testGroup2, fs.getFileStatus(new Path(basePath, "11")).getGroup().toString());
+        assertEquals(testGroup, fs.getFileStatus(new Path(basePath, "12")).getGroup().toString());
+        assertEquals(testGroup2, fs.getFileStatus(new Path(basePath + "/10/dir1")).getGroup().toString());
+        assertEquals(testGroup2, fs.getFileStatus(new Path(basePath + "/10/dir2")).getGroup().toString());
+        assertEquals(testGroup2, fs.getFileStatus(new Path(basePath + "/11/dir3")).getGroup().toString());
+        assertEquals(testGroup2, fs.getFileStatus(new Path(basePath + "/10/dir1/file1")).getGroup().toString());
+
+        fs.delete(basePath, true);
     }
 }

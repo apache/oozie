@@ -21,9 +21,9 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.net.URISyntaxException;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
 import org.xml.sax.SAXException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -60,8 +60,9 @@ public class PrepareActionsDriver {
                 if (n.getAttributes() == null || n.getAttributes().getNamedItem("path") == null) {
                     continue;
                 }
-                String path = n.getAttributes().getNamedItem("path").getNodeValue().trim();
-                URI uri = new URI(path);
+                String pathStr = n.getAttributes().getNamedItem("path").getNodeValue().trim();
+                // use Path to avoid URIsyntax error caused by square bracket in glob
+                URI uri = new Path(pathStr).toUri();
                 LauncherURIHandler handler = factory.getURIHandler(uri);
                 execute(operation, uri, handler, conf);
             }
@@ -71,7 +72,7 @@ public class PrepareActionsDriver {
             throw new LauncherException(saxe.getMessage(), saxe);
         } catch (ParserConfigurationException pce) {
             throw new LauncherException(pce.getMessage(), pce);
-        } catch (URISyntaxException use) {
+        } catch (IllegalArgumentException use) {
             throw new LauncherException(use.getMessage(), use);
         }
     }
