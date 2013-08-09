@@ -20,7 +20,9 @@ package org.apache.oozie.command.wf;
 import org.apache.oozie.AppType;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.XCommand;
+import org.apache.oozie.command.coord.CoordActionUpdateXCommand;
 import org.apache.oozie.event.WorkflowActionEvent;
 import org.apache.oozie.event.WorkflowJobEvent;
 
@@ -77,4 +79,17 @@ public abstract class WorkflowXCommand<T> extends XCommand<T> {
         }
     }
 
+    protected void updateParentIfNecessary(WorkflowJobBean wfjob, int maxRetries) throws CommandException {
+        // update coordinator action if the wf was actually started by a coord
+        if (wfjob.getParentId() != null && wfjob.getParentId().contains("-C@")) {
+            new CoordActionUpdateXCommand(wfjob, maxRetries).call();
+        }
+    }
+
+    protected void updateParentIfNecessary(WorkflowJobBean wfjob) throws CommandException {
+        // update coordinator action if the wf was actually started by a coord
+        if (wfjob.getParentId() != null && wfjob.getParentId().contains("-C@")) {
+            new CoordActionUpdateXCommand(wfjob).call();
+        }
+    }
 }

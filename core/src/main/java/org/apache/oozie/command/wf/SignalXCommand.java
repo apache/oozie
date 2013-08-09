@@ -338,8 +338,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
         LOG.debug(
                 "Updated the workflow status to " + wfJob.getId() + "  status =" + wfJob.getStatusStr());
         if (wfJob.getStatus() != WorkflowJob.Status.RUNNING && wfJob.getStatus() != WorkflowJob.Status.SUSPENDED) {
-            // update coordinator action
-            new CoordActionUpdateXCommand(wfJob).call();    //Note: Called even if wf is not necessarily instantiated by coordinator
+            updateParentIfNecessary(wfJob);
             new WfEndXCommand(wfJob).call(); //To delete the WF temp dir
         }
         LOG.debug("ENDED SignalCommand for jobid=" + jobId + ", actionId=" + actionId);

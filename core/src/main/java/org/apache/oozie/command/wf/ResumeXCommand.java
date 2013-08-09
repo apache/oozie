@@ -153,8 +153,7 @@ public class ResumeXCommand extends WorkflowXCommand<Void> {
             throw new CommandException(ErrorCode.E0902, e.getMessage(), e);
         }
         finally {
-            // update coordinator action
-            new CoordActionUpdateXCommand(workflow).call();
+            updateParentIfNecessary(workflow);
         }
     }
 
