@@ -28,7 +28,6 @@ import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
-import org.apache.oozie.command.coord.CoordActionUpdateXCommand;
 import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionRetryManualGetJPAExecutor;
@@ -74,8 +73,7 @@ public class SuspendXCommand extends WorkflowXCommand<Void> {
             throw new CommandException(je);
         }
         finally {
-            // update coordinator action
-            new CoordActionUpdateXCommand(wfJobBean).call();
+            updateParentIfNecessary(wfJobBean);
         }
         return null;
     }

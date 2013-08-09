@@ -40,7 +40,6 @@ import org.apache.oozie.client.SLAEvent.Status;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
-import org.apache.oozie.command.coord.CoordActionUpdateXCommand;
 import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionGetJPAExecutor;
@@ -278,8 +277,7 @@ public class ActionStartXCommand extends ActionXCommand<Void> {
                 case FAILED:
                     try {
                         failJob(context);
-                        // update coordinator action
-                        new CoordActionUpdateXCommand(wfJob, 3).call();
+                        updateParentIfNecessary(wfJob, 3);
                         new WfEndXCommand(wfJob).call(); // To delete the WF temp dir
                         SLAEventBean slaEvent1 = SLADbXOperations.createStatusEvent(wfAction.getSlaXml(), wfAction.getId(), Status.FAILED,
                                 SlaAppType.WORKFLOW_ACTION);

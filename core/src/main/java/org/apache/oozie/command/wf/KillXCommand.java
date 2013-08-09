@@ -29,7 +29,6 @@ import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.XException;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
-import org.apache.oozie.command.coord.CoordActionUpdateXCommand;
 import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionsGetForJobJPAExecutor;
@@ -177,8 +176,7 @@ public class KillXCommand extends WorkflowXCommand<Void> {
             if(wfJob.getStatus() == WorkflowJob.Status.KILLED) {
                  new WfEndXCommand(wfJob).call(); //To delete the WF temp dir
             }
-            // update coordinator action
-            new CoordActionUpdateXCommand(wfJob).call();
+            updateParentIfNecessary(wfJob);
         }
 
         LOG.info("ENDED WorkflowKillXCommand for jobId=" + wfId);
