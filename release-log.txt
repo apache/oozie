@@ -194,7 +194,7 @@ OOZIE-1007 Add license headers to all files don't have them  (egashira via tucu)
 OOZIE-976 add workflowgenerator into distro tarball (egashira via tucu)
 OOZIE-944 Implement Workflow Generator UI Tool (egashira via virag)
 
--- Oozie 3.3.2 (unreleased)
+-- Oozie 3.3.2
 
 OOZIE-1132 update quick start docs with build instructions (rkanter)
 OOZIE-1268 Configuring Oozie to use SSL doesn't work if addtowar.sh is invoked directly (rkanter)
