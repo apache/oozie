@@ -24,7 +24,8 @@ import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import javax.imageio.ImageIO;
 import junit.framework.Assert;
-import org.apache.oozie.client.rest.JsonWorkflowJob;
+
+import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.test.XTestCase;
 
 public class TestGraphGenerator extends XTestCase {
@@ -42,9 +43,9 @@ public class TestGraphGenerator extends XTestCase {
         catch (IllegalArgumentException iae) {
             Assert.assertTrue("Construction with illegal args failed as expected: " + iae.getMessage(), true);
         }
-        Assert.assertNotNull(new GraphGenerator("<workflow></workflow>", new JsonWorkflowJob()));
-        Assert.assertNotNull(new GraphGenerator(null, new JsonWorkflowJob()));
-        JsonWorkflowJob jsonWFJob = new JsonWorkflowJob();
+        Assert.assertNotNull(new GraphGenerator("<workflow></workflow>", new WorkflowJobBean()));
+        Assert.assertNotNull(new GraphGenerator(null, new WorkflowJobBean()));
+        WorkflowJobBean jsonWFJob = new WorkflowJobBean();
         jsonWFJob.setAppName("My Test App");
         jsonWFJob.setId("My Test ID");
         Assert.assertNotNull(new GraphGenerator("<workflow></workflow>", jsonWFJob));
@@ -53,7 +54,7 @@ public class TestGraphGenerator extends XTestCase {
     }
 
     public void testWrite() {
-        JsonWorkflowJob jsonWFJob = new JsonWorkflowJob();
+        WorkflowJobBean jsonWFJob = new WorkflowJobBean();
         jsonWFJob.setAppName("My Test App");
         jsonWFJob.setId("My Test ID");
         String png1 = "src/test/resources/tmp1.png";

@@ -35,7 +35,6 @@ import org.apache.oozie.XException;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.CoordinatorJob.Execution;
-import org.apache.oozie.client.rest.JsonCoordinatorAction;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.service.CoordinatorEngineService;
 import org.apache.oozie.util.DateUtils;
@@ -234,7 +233,7 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
         coordJob.setConf(CONFIGURATION);
         coordJob.setLastActionNumber(0);
         coordJob.setFrequency("1");
-        coordJob.setExecution(Execution.FIFO);
+        coordJob.setExecutionOrder(Execution.FIFO);
         coordJob.setConcurrency(1);
         try {
             coordJob.setEndTime(DateUtils.parseDateOozieTZ("2009-02-03T23:59Z"));
@@ -244,7 +243,7 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
             e.printStackTrace();
         }
 
-        List<JsonCoordinatorAction> actions = new ArrayList<JsonCoordinatorAction>();
+        List<CoordinatorActionBean> actions = new ArrayList<CoordinatorActionBean>();
         for (int i = 0; i < idx; i++) {
             actions.add(createDummyAction(i, JOB_ID + idx));
         }
@@ -266,7 +265,7 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
         coordJob.setConf(conf.toString());
         coordJob.setLastActionNumber(0);
         coordJob.setFrequency("1");
-        coordJob.setExecution(Execution.FIFO);
+        coordJob.setExecutionOrder(Execution.FIFO);
         coordJob.setConcurrency(1);
         try {
             coordJob.setEndTime(DateUtils.parseDateOozieTZ("2009-02-03T23:59Z"));
@@ -276,7 +275,7 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
             e.printStackTrace();
         }
 
-        List<JsonCoordinatorAction> actions = new ArrayList<JsonCoordinatorAction>();
+        List<CoordinatorActionBean> actions = new ArrayList<CoordinatorActionBean>();
         for (int i = 0; i < idx; i++) {
             actions.add(createDummyAction(i, JOB_ID + idx));
         }
@@ -285,7 +284,7 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
         return coordJob;
     }
 
-    private static JsonCoordinatorAction createDummyAction(int idx, String jobId) {
+    private static CoordinatorActionBean createDummyAction(int idx, String jobId) {
         CoordinatorActionBean action = new CoordinatorActionBean();
         action.setId(ACTION_ID + idx);
         action.setJobId(jobId);

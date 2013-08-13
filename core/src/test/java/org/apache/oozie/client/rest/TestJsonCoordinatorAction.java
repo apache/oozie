@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,7 @@ package org.apache.oozie.client.rest;
 
 import junit.framework.TestCase;
 
+import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.client.CoordinatorAction;
 
 public class TestJsonCoordinatorAction extends TestCase {
@@ -28,8 +29,8 @@ public class TestJsonCoordinatorAction extends TestCase {
     static String missingDependencies = "a:a, a/a, a//a";
     static String pushMissingDependencies = "hcat://a/b/c/d/f, hcat://1/2/3/4/5";
 
-    static JsonCoordinatorAction createAppAction() {
-        JsonCoordinatorAction app = new JsonCoordinatorAction();
+    static CoordinatorActionBean createAppAction() {
+        CoordinatorActionBean app = new CoordinatorActionBean();
         app.setJobId("a");
         app.setId("c");
         app.setActionNumber(1);
@@ -46,7 +47,7 @@ public class TestJsonCoordinatorAction extends TestCase {
     }
 
     public void testProperties() {
-        JsonCoordinatorAction app = createAppAction();
+        CoordinatorActionBean app = createAppAction();
         assertEquals("a", app.getJobId());
         assertEquals("c", app.getId());
         assertEquals(1, app.getActionNumber());

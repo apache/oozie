@@ -286,7 +286,7 @@ public class V1JobServlet extends BaseJobServlet {
 
                 new GraphGenerator(
                         getWorkflowJobDefinition(request, response),
-                        (JsonWorkflowJob)getWorkflowJob(request, response),
+                        (WorkflowJobBean)getWorkflowJob(request, response),
                         sK).write(response.getOutputStream());
             }
             catch (Exception e) {
@@ -783,7 +783,7 @@ public class V1JobServlet extends BaseJobServlet {
         int len = (lenStr != null) ? Integer.parseInt(lenStr) : 0;
         len = (len < 0) ? defaultLen : len;
         try {
-            JsonCoordinatorJob coordJob = coordEngine.getCoordJob(jobId, filter, start, len, order);
+            CoordinatorJobBean coordJob = coordEngine.getCoordJob(jobId, filter, start, len, order);
             jobBean = coordJob;
         }
         catch (CoordinatorEngineException ex) {

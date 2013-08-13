@@ -28,11 +28,11 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.DagEngine;
 import org.apache.oozie.DagEngineException;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.WorkflowActionBean;
+import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.WorkflowsInfo;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.rest.JMSConnectionInfoBean;
-import org.apache.oozie.client.rest.JsonWorkflowAction;
-import org.apache.oozie.client.rest.JsonWorkflowJob;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.service.DagEngineService;
 import org.apache.oozie.util.XmlUtils;
@@ -240,7 +240,7 @@ public class MockDagEngineService extends DagEngineService {
     }
 
     private static WorkflowJob createDummyWorkflow(int idx) {
-        JsonWorkflowJob workflow = new JsonWorkflowJob();
+        WorkflowJobBean workflow = new WorkflowJobBean();
         workflow.setId(JOB_ID + idx + JOB_ID_END);
         workflow.setAppPath("hdfs://blah/blah/" + idx + "-blah");
         workflow.setStatus((idx % 2) == 0 ? WorkflowJob.Status.RUNNING : WorkflowJob.Status.SUCCEEDED);
@@ -253,7 +253,7 @@ public class MockDagEngineService extends DagEngineService {
         workflow.setGroup(GROUP);
         workflow.setUser(USER);
 
-        List<JsonWorkflowAction> actions = new ArrayList<JsonWorkflowAction>();
+        List<WorkflowActionBean> actions = new ArrayList<WorkflowActionBean>();
         for (int i = 0; i < idx; i++) {
             actions.add(createDummyAction(i));
         }
@@ -263,7 +263,7 @@ public class MockDagEngineService extends DagEngineService {
     }
 
     private static WorkflowJob createDummyWorkflow(int idx, String conf) {
-        JsonWorkflowJob workflow = new JsonWorkflowJob();
+        WorkflowJobBean workflow = new WorkflowJobBean();
         workflow.setId(JOB_ID + idx + JOB_ID_END);
         workflow.setAppPath("hdfs://blah/blah/" + idx + "-blah");
         workflow.setStatus((idx % 2) == 0 ? WorkflowJob.Status.RUNNING : WorkflowJob.Status.SUCCEEDED);
@@ -276,7 +276,7 @@ public class MockDagEngineService extends DagEngineService {
         workflow.setGroup(GROUP);
         workflow.setUser(USER);
 
-        List<JsonWorkflowAction> actions = new ArrayList<JsonWorkflowAction>();
+        List<WorkflowActionBean> actions = new ArrayList<WorkflowActionBean>();
         for (int i = 0; i < idx; i++) {
             actions.add(createDummyAction(i));
         }
@@ -285,8 +285,8 @@ public class MockDagEngineService extends DagEngineService {
         return workflow;
     }
 
-    private static JsonWorkflowAction createDummyAction(int idx) {
-        JsonWorkflowAction action = new JsonWorkflowAction();
+    private static WorkflowActionBean createDummyAction(int idx) {
+        WorkflowActionBean action = new WorkflowActionBean();
         int mod = idx % 5;
         action.setId(ACTION_ID + idx);
         action.setExternalId(EXT_ID + idx);

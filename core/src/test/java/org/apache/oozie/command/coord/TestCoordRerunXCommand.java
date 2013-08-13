@@ -1020,7 +1020,7 @@ public class TestCoordRerunXCommand extends XDataTestCase {
         coordJob.setJobXml(appXml);
         coordJob.setLastActionNumber(0);
         coordJob.setFrequency("1");
-        coordJob.setExecution(Execution.FIFO);
+        coordJob.setExecutionOrder(Execution.FIFO);
         coordJob.setConcurrency(1);
         try {
             coordJob.setStartTime(DateUtils.parseDateOozieTZ("2009-12-15T01:00Z"));

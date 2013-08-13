@@ -493,7 +493,7 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         coordJob.setJobXml(appXml);
         coordJob.setLastActionNumber(0);
         coordJob.setFrequency("5");
-        coordJob.setExecution(Execution.FIFO);
+        coordJob.setExecutionOrder(Execution.FIFO);
         coordJob.setConcurrency(1);
         try {
             coordJob.setStartTime(DateUtils.parseDateOozieTZ("2009-02-01T01:00Z"));

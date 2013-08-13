@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,7 +60,7 @@ public class WorkflowStore extends Store {
     private boolean selectForUpdate;
     private static final String INSTR_GROUP = "db";
     public static final int LOCK_TIMEOUT = 50000;
-    private static final String seletStr = "Select w.id, w.appName, w.status, w.run, w.user, w.group, w.createdTimestamp, "
+    private static final String seletStr = "Select w.id, w.appName, w.statusStr, w.run, w.user, w.group, w.createdTimestamp, "
             + "w.startTimestamp, w.lastModifiedTimestamp, w.endTimestamp from WorkflowJobBean w";
     private static final String countStr = "Select count(w) from WorkflowJobBean w";
 
@@ -451,7 +451,7 @@ public class WorkflowStore extends Store {
 
     /**
      * Load All the actions that are START_RETRY or START_MANUAL or END_RETRY or END_MANUAL.
-     * 
+     *
      * @param wfId String
      * @return List of action beans
      * @throws StoreException
@@ -545,13 +545,13 @@ public class WorkflowStore extends Store {
                                 colVar = "status";
                                 colVar = colVar + index;
                                 if (!isEnabled && !isStatus) {
-                                    sb.append(seletStr).append(" where w.status IN (:status" + index);
+                                    sb.append(seletStr).append(" where w.statusStr IN (:status" + index);
                                     isStatus = true;
                                     isEnabled = true;
                                 }
                                 else {
                                     if (isEnabled && !isStatus) {
-                                        sb.append(" and w.status IN (:status" + index);
+                                        sb.append(" and w.statusStr IN (:status" + index);
                                         isStatus = true;
                                     }
                                     else {

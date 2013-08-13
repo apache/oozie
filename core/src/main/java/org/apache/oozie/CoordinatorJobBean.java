@@ -21,27 +21,38 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import javax.persistence.Basic;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.Id;
 import javax.persistence.Lob;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import org.apache.hadoop.io.Writable;
+import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
-import org.apache.oozie.client.rest.JsonCoordinatorJob;
+import org.apache.oozie.client.rest.JsonBean;
+import org.apache.oozie.client.rest.JsonTags;
+import org.apache.oozie.client.rest.JsonUtils;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.WritableUtils;
 import org.apache.openjpa.persistence.jdbc.Index;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 @Entity
 @NamedQueries( {
-        @NamedQuery(name = "UPDATE_COORD_JOB", query = "update CoordinatorJobBean w set w.appName = :appName, w.appPath = :appPath,w.concurrency = :concurrency, w.conf = :conf, w.externalId = :externalId, w.frequency = :frequency, w.lastActionNumber = :lastActionNumber, w.timeOut = :timeOut, w.timeZone = :timeZone, w.createdTimestamp = :createdTime, w.endTimestamp = :endTime, w.execution = :execution, w.jobXml = :jobXml, w.lastActionTimestamp = :lastAction, w.lastModifiedTimestamp = :lastModifiedTime, w.nextMaterializedTimestamp = :nextMaterializedTime, w.origJobXml = :origJobXml, w.slaXml=:slaXml, w.startTimestamp = :startTime, w.status = :status, w.timeUnitStr = :timeUnit where w.id = :id"),
+        @NamedQuery(name = "UPDATE_COORD_JOB", query = "update CoordinatorJobBean w set w.appName = :appName, w.appPath = :appPath,w.concurrency = :concurrency, w.conf = :conf, w.externalId = :externalId, w.frequency = :frequency, w.lastActionNumber = :lastActionNumber, w.timeOut = :timeOut, w.timeZone = :timeZone, w.createdTimestamp = :createdTime, w.endTimestamp = :endTime, w.execution = :execution, w.jobXml = :jobXml, w.lastActionTimestamp = :lastAction, w.lastModifiedTimestamp = :lastModifiedTime, w.nextMaterializedTimestamp = :nextMaterializedTime, w.origJobXml = :origJobXml, w.slaXml=:slaXml, w.startTimestamp = :startTime, w.statusStr = :status, w.timeUnitStr = :timeUnit where w.id = :id"),
 
-        @NamedQuery(name = "UPDATE_COORD_JOB_STATUS", query = "update CoordinatorJobBean w set w.status = :status, w.lastModifiedTimestamp = :lastModifiedTime where w.id = :id"),
+        @NamedQuery(name = "UPDATE_COORD_JOB_STATUS", query = "update CoordinatorJobBean w set w.statusStr =:status, w.lastModifiedTimestamp = :lastModifiedTime where w.id = :id"),
 
         @NamedQuery(name = "UPDATE_COORD_JOB_PENDING", query = "update CoordinatorJobBean w set w.pending = :pending, w.lastModifiedTimestamp = :lastModifiedTime where w.id = :id"),
 
@@ -55,37 +66,102 @@ import org.apache.openjpa.persistence.jdbc.Index;
 
         @NamedQuery(name = "GET_COORD_JOBS_COUNT", query = "select count(w) from CoordinatorJobBean w"),
 
-        @NamedQuery(name = "GET_COORD_JOBS_COLUMNS", query = "select w.id, w.appName, w.status, w.user, w.group, w.startTimestamp, w.endTimestamp, w.appPath, w.concurrency, w.frequency, w.lastActionTimestamp, w.nextMaterializedTimestamp, w.createdTimestamp, w.timeUnitStr, w.timeZone, w.timeOut from CoordinatorJobBean w order by w.createdTimestamp desc"),
+        @NamedQuery(name = "GET_COORD_JOBS_COLUMNS", query = "select w.id, w.appName, w.statusStr, w.user, w.group, w.startTimestamp, w.endTimestamp, w.appPath, w.concurrency, w.frequency, w.lastActionTimestamp, w.nextMaterializedTimestamp, w.createdTimestamp, w.timeUnitStr, w.timeZone, w.timeOut from CoordinatorJobBean w order by w.createdTimestamp desc"),
 
-        @NamedQuery(name = "GET_COORD_JOBS_OLDER_THAN", query = "select OBJECT(w) from CoordinatorJobBean w where w.startTimestamp <= :matTime AND (w.status = 'PREP' OR w.status = 'RUNNING' or w.status = 'RUNNINGWITHERROR') AND (w.nextMaterializedTimestamp < :matTime OR w.nextMaterializedTimestamp IS NULL) AND (w.nextMaterializedTimestamp IS NULL OR (w.endTimestamp > w.nextMaterializedTimestamp AND (w.pauseTimestamp IS NULL OR w.pauseTimestamp > w.nextMaterializedTimestamp))) order by w.lastModifiedTimestamp"),
+        @NamedQuery(name = "GET_COORD_JOBS_OLDER_THAN", query = "select OBJECT(w) from CoordinatorJobBean w where w.startTimestamp <= :matTime AND (w.statusStr = 'PREP' OR w.statusStr = 'RUNNING' or w.statusStr = 'RUNNINGWITHERROR') AND (w.nextMaterializedTimestamp < :matTime OR w.nextMaterializedTimestamp IS NULL) AND (w.nextMaterializedTimestamp IS NULL OR (w.endTimestamp > w.nextMaterializedTimestamp AND (w.pauseTimestamp IS NULL OR w.pauseTimestamp > w.nextMaterializedTimestamp))) order by w.lastModifiedTimestamp"),
 
-        @NamedQuery(name = "GET_COORD_JOBS_OLDER_THAN_STATUS", query = "select OBJECT(w) from CoordinatorJobBean w where w.status = :status AND w.lastModifiedTimestamp <= :lastModTime order by w.lastModifiedTimestamp"),
+        @NamedQuery(name = "GET_COORD_JOBS_OLDER_THAN_STATUS", query = "select OBJECT(w) from CoordinatorJobBean w where w.statusStr = :status AND w.lastModifiedTimestamp <= :lastModTime order by w.lastModifiedTimestamp"),
 
-        @NamedQuery(name = "GET_COMPLETED_COORD_JOBS_OLDER_THAN_STATUS", query = "select OBJECT(w) from CoordinatorJobBean w where ( w.status = 'SUCCEEDED' OR w.status = 'FAILED' or w.status = 'KILLED') AND w.lastModifiedTimestamp <= :lastModTime order by w.lastModifiedTimestamp"),
+        @NamedQuery(name = "GET_COMPLETED_COORD_JOBS_OLDER_THAN_STATUS", query = "select OBJECT(w) from CoordinatorJobBean w where ( w.statusStr = 'SUCCEEDED' OR w.statusStr = 'FAILED' or w.statusStr = 'KILLED') AND w.lastModifiedTimestamp <= :lastModTime order by w.lastModifiedTimestamp"),
 
-        @NamedQuery(name = "GET_COMPLETED_COORD_JOBS_WITH_NO_PARENT_OLDER_THAN_STATUS", query = "select w.id from CoordinatorJobBean w where ( w.status = 'SUCCEEDED' OR w.status = 'FAILED' or w.status = 'KILLED' or w.status = 'DONEWITHERROR') AND w.lastModifiedTimestamp <= :lastModTime and w.bundleId is null order by w.lastModifiedTimestamp"),
+        @NamedQuery(name = "GET_COMPLETED_COORD_JOBS_WITH_NO_PARENT_OLDER_THAN_STATUS", query = "select w.id from CoordinatorJobBean w where ( w.statusStr = 'SUCCEEDED' OR w.statusStr = 'FAILED' or w.statusStr = 'KILLED' or w.statusStr = 'DONEWITHERROR') AND w.lastModifiedTimestamp <= :lastModTime and w.bundleId is null order by w.lastModifiedTimestamp"),
 
-        @NamedQuery(name = "GET_COORD_JOBS_UNPAUSED", query = "select OBJECT(w) from CoordinatorJobBean w where w.status = 'RUNNING' OR w.status = 'RUNNINGWITHERROR' OR w.status = 'PREP' order by w.lastModifiedTimestamp"),
+        @NamedQuery(name = "GET_COORD_JOBS_UNPAUSED", query = "select OBJECT(w) from CoordinatorJobBean w where w.statusStr = 'RUNNING' OR w.statusStr = 'RUNNINGWITHERROR' OR w.statusStr = 'PREP' order by w.lastModifiedTimestamp"),
 
-        @NamedQuery(name = "GET_COORD_JOBS_PAUSED", query = "select OBJECT(w) from CoordinatorJobBean w where w.status = 'PAUSED' OR w.status = 'PAUSEDWITHERROR' OR w.status = 'PREPPAUSED' order by w.lastModifiedTimestamp"),
+        @NamedQuery(name = "GET_COORD_JOBS_PAUSED", query = "select OBJECT(w) from CoordinatorJobBean w where w.statusStr = 'PAUSED' OR w.statusStr = 'PAUSEDWITHERROR' OR w.statusStr = 'PREPPAUSED' order by w.lastModifiedTimestamp"),
 
         @NamedQuery(name = "GET_COORD_JOBS_FOR_BUNDLE", query = "select OBJECT(w) from CoordinatorJobBean w where w.bundleId = :bundleId order by w.lastModifiedTimestamp"),
 
         @NamedQuery(name = "GET_COORD_JOBS_WITH_PARENT_ID", query = "select w.id from CoordinatorJobBean w where w.bundleId = :parentId"),
 
-        @NamedQuery(name = "GET_COORD_COUNT_WITH_PARENT_ID_NOT_READY_FOR_PURGE", query = "select count(w) from CoordinatorJobBean w where w.bundleId = :parentId and (w.status NOT IN ('SUCCEEDED', 'FAILED', 'KILLED', 'DONEWITHERROR') OR w.lastModifiedTimestamp >= :lastModTime)"),
+        @NamedQuery(name = "GET_COORD_COUNT_WITH_PARENT_ID_NOT_READY_FOR_PURGE", query = "select count(w) from CoordinatorJobBean w where w.bundleId = :parentId and (w.statusStr NOT IN ('SUCCEEDED', 'FAILED', 'KILLED', 'DONEWITHERROR') OR w.lastModifiedTimestamp >= :lastModTime)"),
 
         @NamedQuery(name = "GET_COORD_JOB_FOR_USER_APPNAME", query = "select w.user, w.appName from CoordinatorJobBean w where w.id = :id"),
 
         @NamedQuery(name = "GET_COORD_JOB_FOR_USER", query = "select w.user from CoordinatorJobBean w where w.id = :id")
 
 })
-public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
+@Table(name = "COORD_JOBS")
+public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
+
+    @Id
+    private String id;
+
+    @Basic
+    @Column(name = "app_path")
+    private String appPath = null;
+
+    @Basic
+    @Column(name = "app_name")
+    private String appName = null;
+
+    @Basic
+    @Column(name = "external_id")
+    private String externalId = null;
+
+    @Column(name = "conf")
+    @Lob
+    private String conf = null;
+
+    @Basic
+    @Column(name = "frequency")
+    private String frequency = "0";
+
+    @Basic
+    @Column(name = "time_zone")
+    private String timeZone = null;
+
+    @Basic
+    @Column(name = "concurrency")
+    private int concurrency = 0;
+
+    @Basic
+    @Column(name = "mat_throttling")
+    private int matThrottling = 0;
+
+    @Basic
+    @Column(name = "time_out")
+    private int timeOut = 0;
+
+    @Basic
+    @Column(name = "last_action_number")
+    private int lastActionNumber;
+
+    @Basic
+    @Column(name = "user_name")
+    private String user = null;
+
+    @Basic
+    @Column(name = "group_name")
+    private String group = null;
+
+    @Basic
+    @Column(name = "bundle_id")
+    private String bundleId = null;
+
+    @Transient
+    private String consoleUrl;
+
+    @Transient
+    private List<CoordinatorActionBean> actions;
+
+    @Transient
+    private int numActions = 0;
 
     @Basic
     @Index
     @Column(name = "status")
-    private String status = CoordinatorJob.Status.PREP.toString();
+    private String statusStr = CoordinatorJob.Status.PREP.toString();
 
     @Basic
     @Column(name = "start_time")
@@ -171,7 +247,6 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
      * @param startTimestamp start timestamp
      */
     public void setStartTimestamp(java.sql.Timestamp startTimestamp) {
-        super.setStartTime(DateUtils.toDate(startTimestamp));
         this.startTimestamp = startTimestamp;
     }
 
@@ -190,7 +265,6 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
      * @param endTimestamp end timestamp
      */
     public void setEndTimestamp(java.sql.Timestamp endTimestamp) {
-        super.setEndTime(DateUtils.toDate(endTimestamp));
         this.endTimestamp = endTimestamp;
     }
 
@@ -209,7 +283,6 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
      * @param nextMaterializedTimestamp next materialized timestamp
      */
     public void setNextMaterializedTimestamp(java.sql.Timestamp nextMaterializedTimestamp) {
-        super.setNextMaterializedTime(DateUtils.toDate(nextMaterializedTimestamp));
         this.nextMaterializedTimestamp = nextMaterializedTimestamp;
     }
 
@@ -303,14 +376,6 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
         this.slaXml = slaXml;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.client.rest.JsonCoordinatorJob#setTimeUnit(org.apache.oozie.client.CoordinatorJob.Timeunit)
-     */
-    @Override
-    public void setTimeUnit(Timeunit timeUnit) {
-        super.setTimeUnit(timeUnit);
-        this.timeUnitStr = timeUnit.toString();
-    }
 
     /**
      * Set last action timestamp
@@ -318,26 +383,7 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
      * @param lastActionTimestamp last action timestamp
      */
     public void setLastActionTimestamp(java.sql.Timestamp lastActionTimestamp) {
-        super.setLastActionTime(DateUtils.toDate(lastActionTimestamp));
         this.lastActionTimestamp = lastActionTimestamp;
-    }
-
-    /**
-     * Set pending to true
-     */
-    @Override
-    public void setPending() {
-        super.setPending();
-        this.pending = 1;
-    }
-
-    /**
-     * Set pending to false
-     */
-    @Override
-    public void resetPending() {
-        super.resetPending();
-        this.pending = 0;
     }
 
     /**
@@ -392,6 +438,7 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
     }
 
     public CoordinatorJobBean() {
+        actions = new ArrayList<CoordinatorActionBean>();
     }
 
     /*
@@ -448,7 +495,7 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
         setTimeUnit(CoordinatorJob.Timeunit.valueOf(WritableUtils.readStr(dataInput)));
         setTimeZone(WritableUtils.readStr(dataInput));
         setConcurrency(dataInput.readInt());
-        setExecution(Execution.valueOf(WritableUtils.readStr(dataInput)));
+        setExecutionOrder(Execution.valueOf(WritableUtils.readStr(dataInput)));
 
         long d = dataInput.readLong();
         if (d != -1) {
@@ -486,12 +533,10 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
         setAppNamespace(WritableUtils.readStr(dataInput));
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.client.rest.JsonCoordinatorJob#getStatus()
-     */
     @Override
     public Status getStatus() {
-        return Status.valueOf(this.status);
+        return Status.valueOf(this.statusStr);
+        //return null;
     }
 
     /**
@@ -500,16 +545,21 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
      * @return status
      */
     public String getStatusStr() {
-        return status;
+        return statusStr;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.client.rest.JsonCoordinatorJob#setStatus(org.apache.oozie.client.Job.Status)
+    /**
+     * Get status
+     *
+     * @return status
      */
+    public void setStatusStr(String status) {
+        this.statusStr = status;
+    }
+
     @Override
     public void setStatus(Status val) {
-        super.setStatus(val);
-        this.status = val.toString();
+        this.statusStr = val.toString();
     }
 
     /**
@@ -519,6 +569,18 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
      */
     public String getTimeUnitStr() {
         return timeUnitStr;
+    }
+
+    /**
+     * Set time unit
+     *
+     */
+    public void setTimeUnitStr(String timeunit) {
+        this.timeUnitStr = timeunit;
+    }
+
+    public void setTimeUnit(Timeunit timeUnit) {
+        this.timeUnitStr = timeUnit.toString();
     }
 
     /* (non-Javadoc)
@@ -534,9 +596,8 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
      *
      * @param order
      */
-    public void setExecution(Execution order) {
+    public void setExecutionOrder(Execution order) {
         this.execution = order.toString();
-        super.setExecutionOrder(order);
     }
 
     /* (non-Javadoc)
@@ -552,17 +613,21 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
      *
      * @return execution
      */
+    public void setExecution(String order) {
+        this.execution = order;
+    }
+
+    /**
+     * Get execution
+     *
+     * @return execution
+     */
     public String getExecution() {
         return execution;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.client.rest.JsonCoordinatorJob#setLastActionTime(java.util.Date)
-     */
-    @Override
     public void setLastActionTime(Date lastAction) {
         this.lastActionTimestamp = DateUtils.convertDateToTimestamp(lastAction);
-        super.setLastActionTime(lastAction);
     }
 
     /* (non-Javadoc)
@@ -582,12 +647,7 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
         return lastActionTimestamp;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.client.rest.JsonCoordinatorJob#setNextMaterializedTime(java.util.Date)
-     */
-    @Override
     public void setNextMaterializedTime(Date nextMaterializedTime) {
-        super.setNextMaterializedTime(nextMaterializedTime);
         this.nextMaterializedTimestamp = DateUtils.convertDateToTimestamp(nextMaterializedTime);
     }
 
@@ -635,12 +695,7 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
         return DateUtils.toDate(suspendedTimestamp);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.client.rest.JsonCoordinatorJob#setStartTime(java.util.Date)
-     */
-    @Override
     public void setStartTime(Date startTime) {
-        super.setStartTime(startTime);
         this.startTimestamp = DateUtils.convertDateToTimestamp(startTime);
     }
 
@@ -652,35 +707,19 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
         return DateUtils.toDate(startTimestamp);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.client.rest.JsonCoordinatorJob#setEndTime(java.util.Date)
-     */
-    @Override
     public void setEndTime(Date endTime) {
-        super.setEndTime(endTime);
         this.endTimestamp = DateUtils.convertDateToTimestamp(endTime);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.client.rest.JsonCoordinatorJob#setPauseTime(java.util.Date)
-     */
-    @Override
     public void setPauseTime(Date pauseTime) {
-        super.setPauseTime(pauseTime);
         this.pauseTimestamp = DateUtils.convertDateToTimestamp(pauseTime);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.client.rest.JsonCoordinatorJob#getEndTime()
-     */
     @Override
     public Date getEndTime() {
         return DateUtils.toDate(endTimestamp);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.client.rest.JsonCoordinatorJob#getPauseTime()
-     */
     @Override
     public Date getPauseTime() {
         return DateUtils.toDate(pauseTimestamp);
@@ -711,6 +750,235 @@ public class CoordinatorJobBean extends JsonCoordinatorJob implements Writable {
      */
     public Timestamp getCreatedTimestamp() {
         return createdTimestamp;
+    }
+
+    public String getAppPath() {
+        return appPath;
+    }
+
+    public void setAppPath(String appPath) {
+        this.appPath = appPath;
+    }
+
+    public String getAppName() {
+        return appName;
+    }
+
+    public void setAppName(String appName) {
+        this.appName = appName;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public void setExternalId(String externalId) {
+        this.externalId = externalId;
+    }
+
+    public String getExternalId() {
+        return externalId;
+    }
+
+    public String getConf() {
+        return conf;
+    }
+
+    public void setConf(String conf) {
+        this.conf = conf;
+    }
+
+    public void setFrequency(String frequency) {
+        this.frequency = frequency;
+    }
+
+    public String getFrequency() {
+        return frequency;
+    }
+
+
+    public void setTimeZone(String timeZone) {
+        this.timeZone = timeZone;
+    }
+
+    public String getTimeZone() {
+        return timeZone;
+    }
+
+    public void setConcurrency(int concurrency) {
+        this.concurrency = concurrency;
+    }
+
+    public int getConcurrency() {
+        return concurrency;
+    }
+
+    public int getMatThrottling() {
+        return matThrottling;
+    }
+
+    public void setMatThrottling(int matThrottling) {
+        this.matThrottling = matThrottling;
+    }
+
+    public void setTimeout(int timeOut) {
+        this.timeOut = timeOut;
+    }
+
+    public int getTimeout() {
+        return timeOut;
+    }
+
+    public String getUser() {
+        return user;
+    }
+
+    public void setUser(String user) {
+        this.user = user;
+    }
+
+    public String getGroup() {
+        return group;
+    }
+
+    @Override
+    public String getAcl() {
+        return getGroup();
+    }
+
+    public void setGroup(String group) {
+        this.group = group;
+    }
+
+    public String getBundleId() {
+        return bundleId;
+    }
+
+    public void setBundleId(String bundleId) {
+        this.bundleId = bundleId;
+    }
+
+    /**
+     * Return the coordinate application console URL.
+     *
+     * @return the coordinate application console URL.
+     */
+    public String getConsoleUrl() {
+        return consoleUrl;
+    }
+
+    /**
+     * Set the coordinate application console URL.
+     *
+     * @param consoleUrl the coordinate application console URL.
+     */
+    public void setConsoleUrl(String consoleUrl) {
+        this.consoleUrl = consoleUrl;
+    }
+
+    @Override
+    public String toString() {
+        return MessageFormat.format("Coordinator application id[{0}] status[{1}]", getId(), getStatus());
+    }
+
+    public void setActions(List<CoordinatorActionBean> nodes) {
+        this.actions = (nodes != null) ? nodes : new ArrayList<CoordinatorActionBean>();
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<CoordinatorAction> getActions() {
+        return (List) actions;
+    }
+
+    /**
+     * Convert a coordinator application list into a JSONArray.
+     *
+     * @param applications list.
+     * @param timeZoneId time zone to use for dates in the JSON array.
+     * @return the corresponding JSON array.
+     */
+    @SuppressWarnings("unchecked")
+    public static JSONArray toJSONArray(List<CoordinatorJobBean> applications, String timeZoneId) {
+        JSONArray array = new JSONArray();
+        if (applications != null) {
+            for (CoordinatorJobBean application : applications) {
+                array.add(application.toJSONObject(timeZoneId));
+            }
+        }
+        return array;
+    }
+
+    public int getLastActionNumber() {
+        return lastActionNumber;
+    }
+
+    public void setLastActionNumber(int lastActionNumber) {
+        this.lastActionNumber = lastActionNumber;
+    }
+
+    /**
+     * Set pending to true
+     */
+    public void setPending() {
+        this.pending = 1;
+    }
+
+    /**
+     * Set pending to false
+     */
+    public void resetPending() {
+        this.pending = 0;
+    }
+
+    public int getNumActions() {
+        return numActions;
+    }
+
+    public void setNumActions(int numAction) {
+        this.numActions = numAction;
+    }
+
+    @SuppressWarnings("unchecked")
+    public JSONObject toJSONObject() {
+        return toJSONObject("GMT");
+    }
+
+    @SuppressWarnings("unchecked")
+    public JSONObject toJSONObject(String timeZoneId) {
+        JSONObject json = new JSONObject();
+        json.put(JsonTags.COORDINATOR_JOB_PATH, getAppPath());
+        json.put(JsonTags.COORDINATOR_JOB_NAME, getAppName());
+        json.put(JsonTags.COORDINATOR_JOB_ID, getId());
+        json.put(JsonTags.COORDINATOR_JOB_EXTERNAL_ID, getExternalId());
+        json.put(JsonTags.COORDINATOR_JOB_BUNDLE_ID, getBundleId());
+        json.put(JsonTags.COORDINATOR_JOB_CONF, getConf());
+        json.put(JsonTags.COORDINATOR_JOB_STATUS, getStatus().toString());
+        json.put(JsonTags.COORDINATOR_JOB_EXECUTIONPOLICY, getExecutionOrder().toString());
+        json.put(JsonTags.COORDINATOR_JOB_FREQUENCY, getFrequency());
+        json.put(JsonTags.COORDINATOR_JOB_TIMEUNIT, getTimeUnit().toString());
+        json.put(JsonTags.COORDINATOR_JOB_TIMEZONE, getTimeZone());
+        json.put(JsonTags.COORDINATOR_JOB_CONCURRENCY, getConcurrency());
+        json.put(JsonTags.COORDINATOR_JOB_TIMEOUT, getTimeout());
+        json.put(JsonTags.COORDINATOR_JOB_LAST_ACTION_TIME, JsonUtils.formatDateRfc822(getLastActionTime(), timeZoneId));
+        json.put(JsonTags.COORDINATOR_JOB_NEXT_MATERIALIZED_TIME,
+                JsonUtils.formatDateRfc822(getNextMaterializedTime(), timeZoneId));
+        json.put(JsonTags.COORDINATOR_JOB_START_TIME, JsonUtils.formatDateRfc822(getStartTime(), timeZoneId));
+        json.put(JsonTags.COORDINATOR_JOB_END_TIME, JsonUtils.formatDateRfc822(getEndTime(), timeZoneId));
+        json.put(JsonTags.COORDINATOR_JOB_PAUSE_TIME, JsonUtils.formatDateRfc822(getPauseTime(), timeZoneId));
+        json.put(JsonTags.COORDINATOR_JOB_USER, getUser());
+        json.put(JsonTags.COORDINATOR_JOB_GROUP, getGroup());
+        json.put(JsonTags.COORDINATOR_JOB_ACL, getAcl());
+        json.put(JsonTags.COORDINATOR_JOB_CONSOLE_URL, getConsoleUrl());
+        json.put(JsonTags.COORDINATOR_JOB_MAT_THROTTLING, getMatThrottling());
+        json.put(JsonTags.COORDINATOR_ACTIONS, CoordinatorActionBean.toJSONArray(actions, timeZoneId));
+        json.put(JsonTags.TO_STRING,toString());
+        json.put(JsonTags.COORDINATOR_JOB_NUM_ACTION, numActions);
+
+        return json;
     }
 
 }

@@ -717,7 +717,7 @@ public class TestRecoveryService extends XDataTestCase {
         coordJob.setJobXml(appXml);
         coordJob.setLastActionNumber(0);
         coordJob.setFrequency("1");
-        coordJob.setExecution(Execution.FIFO);
+        coordJob.setExecutionOrder(Execution.FIFO);
         coordJob.setConcurrency(1);
         try {
             coordJob.setEndTime(DateUtils.parseDateOozieTZ("2009-02-03T23:59Z"));

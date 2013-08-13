@@ -28,8 +28,6 @@ import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.OozieClientException;
 import org.apache.oozie.client.WorkflowJob;
-import org.apache.oozie.client.rest.JsonCoordinatorAction;
-import org.apache.oozie.client.rest.JsonCoordinatorJob;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.coord.CoordRerunXCommand;

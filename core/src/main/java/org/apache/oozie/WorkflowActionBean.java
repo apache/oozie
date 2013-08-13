@@ -21,25 +21,32 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.text.MessageFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Properties;
 
 import javax.persistence.Basic;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.Id;
 import javax.persistence.Lob;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
-import javax.persistence.Transient;
+import javax.persistence.Table;
 
 import org.apache.hadoop.io.Writable;
 import org.apache.oozie.client.WorkflowAction;
-import org.apache.oozie.client.rest.JsonWorkflowAction;
+import org.apache.oozie.client.rest.JsonBean;
+import org.apache.oozie.client.rest.JsonTags;
+import org.apache.oozie.client.rest.JsonUtils;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.PropertiesUtils;
 import org.apache.oozie.util.WritableUtils;
 import org.apache.openjpa.persistence.jdbc.Index;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 /**
  * Bean that contains all the information to start an action for a workflow node.
@@ -47,7 +54,7 @@ import org.apache.openjpa.persistence.jdbc.Index;
 @Entity
 @NamedQueries({
 
-    @NamedQuery(name = "UPDATE_ACTION", query = "update WorkflowActionBean a set a.conf = :conf, a.consoleUrl = :consoleUrl, a.data = :data, a.stats = :stats, a.externalChildIDs = :externalChildIDs, a.errorCode = :errorCode, a.errorMessage = :errorMessage, a.externalId = :externalId, a.externalStatus = :externalStatus, a.name = :name, a.cred = :cred , a.retries = :retries, a.trackerUri = :trackerUri, a.transition = :transition, a.type = :type, a.endTimestamp = :endTime, a.executionPath = :executionPath, a.lastCheckTimestamp = :lastCheckTime, a.logToken = :logToken, a.pending = :pending, a.pendingAgeTimestamp = :pendingAge, a.signalValue = :signalValue, a.slaXml = :slaXml, a.startTimestamp = :startTime, a.status = :status, a.wfId=:wfId where a.id = :id"),
+    @NamedQuery(name = "UPDATE_ACTION", query = "update WorkflowActionBean a set a.conf = :conf, a.consoleUrl = :consoleUrl, a.data = :data, a.stats = :stats, a.externalChildIDs = :externalChildIDs, a.errorCode = :errorCode, a.errorMessage = :errorMessage, a.externalId = :externalId, a.externalStatus = :externalStatus, a.name = :name, a.cred = :cred , a.retries = :retries, a.trackerUri = :trackerUri, a.transition = :transition, a.type = :type, a.endTimestamp = :endTime, a.executionPath = :executionPath, a.lastCheckTimestamp = :lastCheckTime, a.logToken = :logToken, a.pending = :pending, a.pendingAgeTimestamp = :pendingAge, a.signalValue = :signalValue, a.slaXml = :slaXml, a.startTimestamp = :startTime, a.statusStr = :status, a.wfId=:wfId where a.id = :id"),
 
     @NamedQuery(name = "DELETE_ACTION", query = "delete from WorkflowActionBean a where a.id = :id"),
 
@@ -59,19 +66,24 @@ import org.apache.openjpa.persistence.jdbc.Index;
 
     @NamedQuery(name = "GET_ACTION_FOR_UPDATE", query = "select OBJECT(a) from WorkflowActionBean a where a.id = :id"),
 
-    @NamedQuery(name = "GET_ACTION_FOR_SLA", query = "select a.id, a.status, a.startTimestamp, a.endTimestamp from WorkflowActionBean a where a.id = :id"),
+    @NamedQuery(name = "GET_ACTION_FOR_SLA", query = "select a.id, a.statusStr, a.startTimestamp, a.endTimestamp from WorkflowActionBean a where a.id = :id"),
 
     @NamedQuery(name = "GET_ACTIONS_FOR_WORKFLOW", query = "select OBJECT(a) from WorkflowActionBean a where a.wfId = :wfId order by a.startTimestamp"),
 
     @NamedQuery(name = "GET_ACTIONS_OF_WORKFLOW_FOR_UPDATE", query = "select OBJECT(a) from WorkflowActionBean a where a.wfId = :wfId order by a.startTimestamp"),
 
-    @NamedQuery(name = "GET_PENDING_ACTIONS", query = "select OBJECT(a) from WorkflowActionBean a where a.pending = 1 AND a.pendingAgeTimestamp < :pendingAge AND a.status <> 'RUNNING'"),
+    @NamedQuery(name = "GET_PENDING_ACTIONS", query = "select OBJECT(a) from WorkflowActionBean a where a.pending = 1 AND a.pendingAgeTimestamp < :pendingAge AND a.statusStr <> 'RUNNING'"),
 
-    @NamedQuery(name = "GET_RUNNING_ACTIONS", query = "select OBJECT(a) from WorkflowActionBean a where a.pending = 1 AND a.status = 'RUNNING' AND a.lastCheckTimestamp < :lastCheckTime"),
+    @NamedQuery(name = "GET_RUNNING_ACTIONS", query = "select OBJECT(a) from WorkflowActionBean a where a.pending = 1 AND a.statusStr = 'RUNNING' AND a.lastCheckTimestamp < :lastCheckTime"),
 
-    @NamedQuery(name = "GET_RETRY_MANUAL_ACTIONS", query = "select OBJECT(a) from WorkflowActionBean a where a.wfId = :wfId AND (a.status = 'START_RETRY' OR a.status = 'START_MANUAL' OR a.status = 'END_RETRY' OR a.status = 'END_MANUAL')") })
+    @NamedQuery(name = "GET_RETRY_MANUAL_ACTIONS", query = "select OBJECT(a) from WorkflowActionBean a where a.wfId = :wfId AND (a.statusStr = 'START_RETRY' OR a.statusStr = 'START_MANUAL' OR a.statusStr = 'END_RETRY' OR a.statusStr = 'END_MANUAL')") })
 
-public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
+@Table(name = "WF_ACTIONS")
+public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
+
+
+    @Id
+    private String id;
 
     @Basic
     @Index
@@ -81,7 +93,7 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
     @Basic
     @Index
     @Column(name = "status")
-    private String status = WorkflowAction.Status.PREP.toString();
+    private String statusStr = WorkflowAction.Status.PREP.toString();
 
     @Basic
     @Column(name = "last_check_time")
@@ -103,8 +115,6 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
     @Column(name = "pending")
     private int pending = 0;
 
-    // @Temporal(TemporalType.TIME)
-    // @Column(name="pending_age",columnDefinition="timestamp default '0000-00-00 00:00:00'")
     @Basic
     @Index
     @Column(name = "pending_age")
@@ -118,12 +128,82 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
     @Column(name = "log_token")
     private String logToken = null;
 
-    @Transient
-    private Date pendingAge;
-
     @Column(name = "sla_xml")
     @Lob
     private String slaXml = null;
+
+    @Basic
+    @Column(name = "name")
+    private String name = null;
+
+    @Basic
+    @Column(name = "cred")
+    private String cred = null;
+
+    @Basic
+    @Column(name = "type")
+    private String type = null;
+
+    @Basic
+    @Column(name = "conf")
+    @Lob
+    private String conf = null;
+
+    @Basic
+    @Column(name = "retries")
+    private int retries;
+
+    @Basic
+    @Column(name = "user_retry_count")
+    private int userRetryCount;
+
+    @Basic
+    @Column(name = "user_retry_max")
+    private int userRetryMax;
+
+    @Basic
+    @Column(name = "user_retry_interval")
+    private int userRetryInterval;
+
+    @Basic
+    @Column(name = "transition")
+    private String transition = null;
+
+    @Column(name = "data")
+    @Lob
+    private String data = null;
+
+    @Column(name = "stats")
+    @Lob
+    private String stats = null;
+
+    @Column(name = "external_child_ids")
+    @Lob
+    private String externalChildIDs = null;
+
+    @Basic
+    @Column(name = "external_id")
+    private String externalId = null;
+
+    @Basic
+    @Column(name = "external_status")
+    private String externalStatus = null;
+
+    @Basic
+    @Column(name = "tracker_uri")
+    private String trackerUri = null;
+
+    @Basic
+    @Column(name = "console_url")
+    private String consoleUrl = null;
+
+    @Basic
+    @Column(name = "error_code")
+    private String errorCode = null;
+
+    @Column(name = "error_message", length = 500)
+    private String errorMessage = null;
+
 
     /**
      * Default constructor.
@@ -162,7 +242,7 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
         WritableUtils.writeStr(dataOutput, wfId);
         WritableUtils.writeStr(dataOutput, executionPath);
         dataOutput.writeInt(pending);
-        dataOutput.writeLong((pendingAge != null) ? pendingAge.getTime() : -1);
+        dataOutput.writeLong((getPendingAge() != null) ? getPendingAge().getTime() : -1);
         WritableUtils.writeStr(dataOutput, signalValue);
         WritableUtils.writeStr(dataOutput, logToken);
         dataOutput.writeInt(getUserRetryCount());
@@ -210,8 +290,7 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
         pending = dataInput.readInt();
         d = dataInput.readLong();
         if (d != -1) {
-            pendingAge = new Date(d);
-            pendingAgeTimestamp = DateUtils.convertDateToTimestamp(pendingAge);
+            pendingAgeTimestamp = DateUtils.convertDateToTimestamp(new Date(d));
         }
         signalValue = WritableUtils.readStr(dataInput);
         logToken = WritableUtils.readStr(dataInput);
@@ -227,7 +306,7 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
      */
     public boolean inTerminalState() {
         boolean isTerminalState = false;
-        switch (WorkflowAction.Status.valueOf(status)) {
+        switch (WorkflowAction.Status.valueOf(statusStr)) {
             case ERROR:
             case FAILED:
             case KILLED:
@@ -308,8 +387,7 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
      */
     public void setPending() {
         pending = 1;
-        pendingAge = new Date();
-        pendingAgeTimestamp = DateUtils.convertDateToTimestamp(pendingAge);
+        pendingAgeTimestamp = DateUtils.convertDateToTimestamp(new Date());
     }
 
     /**
@@ -318,7 +396,6 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
      * @param pendingAge the time when the action will be pending.
      */
     public void setPendingAge(Date pendingAge) {
-        this.pendingAge = pendingAge;
         this.pendingAgeTimestamp = DateUtils.convertDateToTimestamp(pendingAge);
     }
 
@@ -345,7 +422,6 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
      */
     public void resetPending() {
         pending = 0;
-        pendingAge = null;
         pendingAgeTimestamp = null;
     }
 
@@ -419,8 +495,9 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
      *
      * @return externalChildIDs as a string.
      */
+    @Override
     public String getExternalChildIDs() {
-        return super.getExternalChildIDs();
+        return externalChildIDs;
     }
 
     /**
@@ -429,7 +506,7 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
      * @param externalChildIDs as a string.
      */
     public void setExternalChildIDs(String externalChildIDs) {
-        super.setExternalChildIDs(externalChildIDs);
+        this.externalChildIDs = externalChildIDs;
     }
 
     /**
@@ -479,29 +556,50 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
         this.wfId = id;
     }
 
+    /**
+     * Get sla xml
+     * @return the sla xml
+     */
     public String getSlaXml() {
         return slaXml;
     }
 
+    /**
+     * Set sla Xml
+     * @param slaXml
+     */
     public void setSlaXml(String slaXml) {
         this.slaXml = slaXml;
     }
 
-    @Override
+    /**
+     * Set status of job
+     * @param val
+     */
     public void setStatus(Status val) {
-        this.status = val.toString();
-        super.setStatus(val);
-    }
-
-    public String getStatusStr() {
-        return status;
+        this.statusStr = val.toString();
     }
 
     @Override
     public Status getStatus() {
-        return Status.valueOf(this.status);
+        return Status.valueOf(this.statusStr);
     }
 
+    /**
+     * Set status
+     * @param statusStr
+     */
+    public void setStatusStr(String statusStr) {
+        this.statusStr = statusStr;
+    }
+
+    /**
+     * Get status
+     * @return
+     */
+    public String getStatusStr() {
+        return statusStr;
+    }
     /**
      * Return the node execution path.
      *
@@ -613,6 +711,10 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
         this.lastCheckTimestamp = DateUtils.convertDateToTimestamp(lastCheckTime);
     }
 
+    /**
+     * Get pending
+     * @return
+     */
     public boolean getPending() {
         return this.pending == 1 ? true : false;
     }
@@ -622,9 +724,11 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
         return DateUtils.toDate(startTimestamp);
     }
 
-    @Override
+    /**
+     * Set start time
+     * @param startTime
+     */
     public void setStartTime(Date startTime) {
-        super.setStartTime(startTime);
         this.startTimestamp = DateUtils.convertDateToTimestamp(startTime);
     }
 
@@ -633,10 +737,269 @@ public class WorkflowActionBean extends JsonWorkflowAction implements Writable {
         return DateUtils.toDate(endTimestamp);
     }
 
-    @Override
+    /**
+     * Set end time
+     * @param endTime
+     */
     public void setEndTime(Date endTime) {
-        super.setEndTime(endTime);
         this.endTimestamp = DateUtils.convertDateToTimestamp(endTime);
     }
+
+
+    @SuppressWarnings("unchecked")
+    public JSONObject toJSONObject() {
+        return toJSONObject("GMT");
+    }
+
+    @SuppressWarnings("unchecked")
+    public JSONObject toJSONObject(String timeZoneId) {
+        JSONObject json = new JSONObject();
+        json.put(JsonTags.WORKFLOW_ACTION_ID, id);
+        json.put(JsonTags.WORKFLOW_ACTION_NAME, name);
+        json.put(JsonTags.WORKFLOW_ACTION_AUTH, cred);
+        json.put(JsonTags.WORKFLOW_ACTION_TYPE, type);
+        json.put(JsonTags.WORKFLOW_ACTION_CONF, conf);
+        json.put(JsonTags.WORKFLOW_ACTION_STATUS, statusStr);
+        json.put(JsonTags.WORKFLOW_ACTION_RETRIES, (long) retries);
+        json.put(JsonTags.WORKFLOW_ACTION_START_TIME, JsonUtils.formatDateRfc822(getStartTime(), timeZoneId));
+        json.put(JsonTags.WORKFLOW_ACTION_END_TIME, JsonUtils.formatDateRfc822(getEndTime(), timeZoneId));
+        json.put(JsonTags.WORKFLOW_ACTION_TRANSITION, transition);
+        json.put(JsonTags.WORKFLOW_ACTION_DATA, data);
+        json.put(JsonTags.WORKFLOW_ACTION_STATS, stats);
+        json.put(JsonTags.WORKFLOW_ACTION_EXTERNAL_CHILD_IDS, externalChildIDs);
+        json.put(JsonTags.WORKFLOW_ACTION_EXTERNAL_ID, externalId);
+        json.put(JsonTags.WORKFLOW_ACTION_EXTERNAL_STATUS, externalStatus);
+        json.put(JsonTags.WORKFLOW_ACTION_TRACKER_URI, trackerUri);
+        json.put(JsonTags.WORKFLOW_ACTION_CONSOLE_URL, consoleUrl);
+        json.put(JsonTags.WORKFLOW_ACTION_ERROR_CODE, errorCode);
+        json.put(JsonTags.WORKFLOW_ACTION_ERROR_MESSAGE, errorMessage);
+        json.put(JsonTags.TO_STRING, toString());
+        return json;
+    }
+
+    @Override
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public String getCred() {
+        return cred;
+    }
+
+    public void setCred(String cred) {
+        this.cred = cred;
+    }
+
+    @Override
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    @Override
+    public String getConf() {
+        return conf;
+    }
+
+    public void setConf(String conf) {
+        this.conf = conf;
+    }
+
+    @Override
+    public int getRetries() {
+        return retries;
+    }
+
+    public void setRetries(int retries) {
+        this.retries = retries;
+    }
+
+    @Override
+    public int getUserRetryCount() {
+        return userRetryCount;
+    }
+
+    public void setUserRetryCount(int retryCount) {
+        this.userRetryCount = retryCount;
+    }
+
+    public void incrmentUserRetryCount() {
+        this.userRetryCount++;
+    }
+
+    @Override
+    public int getUserRetryMax() {
+        return userRetryMax;
+    }
+
+    /**
+     * Set user retry  max
+     * @param retryMax
+     */
+    public void setUserRetryMax(int retryMax) {
+        this.userRetryMax = retryMax;
+    }
+
+    @Override
+    public int getUserRetryInterval() {
+        return userRetryInterval;
+    }
+
+    public void setUserRetryInterval(int retryInterval) {
+        this.userRetryInterval = retryInterval;
+    }
+
+    @Override
+    public String getTransition() {
+        return transition;
+    }
+
+    /**
+     * Set transition
+     * @param transition
+     */
+    public void setTransition(String transition) {
+        this.transition = transition;
+    }
+
+    @Override
+    public String getData() {
+        return data;
+    }
+
+    /**
+     * Set data
+     * @param data
+     */
+    public void setData(String data) {
+        this.data = data;
+    }
+
+    @Override
+    public String getStats() {
+        return stats;
+    }
+
+    /**
+     * Set stats
+     * @param stats
+     */
+    public void setStats(String stats) {
+        this.stats = stats;
+    }
+
+    @Override
+    public String getExternalId() {
+        return externalId;
+    }
+
+    /**
+     * Set external Id
+     * @param externalId
+     */
+    public void setExternalId(String externalId) {
+        this.externalId = externalId;
+    }
+
+    @Override
+    public String getExternalStatus() {
+        return externalStatus;
+    }
+
+    /**
+     * Set external status
+     * @param externalStatus
+     */
+    public void setExternalStatus(String externalStatus) {
+        this.externalStatus = externalStatus;
+    }
+
+    @Override
+    public String getTrackerUri() {
+        return trackerUri;
+    }
+
+    /**
+     * Set tracker uri
+     * @param trackerUri
+     */
+    public void setTrackerUri(String trackerUri) {
+        this.trackerUri = trackerUri;
+    }
+
+    @Override
+    public String getConsoleUrl() {
+        return consoleUrl;
+    }
+
+    /**
+     * Set console URL
+     * @param consoleUrl
+     */
+    public void setConsoleUrl(String consoleUrl) {
+        this.consoleUrl = consoleUrl;
+    }
+
+    @Override
+    public String getErrorCode() {
+        return errorCode;
+    }
+
+    @Override
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    /**
+     * Set the error Info
+     * @param errorCode
+     * @param errorMessage
+     */
+    public void setErrorInfo(String errorCode, String errorMessage) {
+        this.errorCode = errorCode;
+        if(errorMessage != null && errorMessage.length() > 500){
+            errorMessage = errorMessage.substring(0, 500);
+        }
+        this.errorMessage = errorMessage;
+    }
+
+    @Override
+    public String toString() {
+        return MessageFormat.format("Action name[{0}] status[{1}]", getName(), getStatus());
+    }
+
+    /**
+     * Convert a nodes list into a JSONArray.
+     *
+     * @param nodes nodes list.
+     * @param timeZoneId time zone to use for dates in the JSON array.
+     * @return the corresponding JSON array.
+     */
+    @SuppressWarnings("unchecked")
+    public static JSONArray toJSONArray(List<WorkflowActionBean> nodes, String timeZoneId) {
+        JSONArray array = new JSONArray();
+        for (WorkflowActionBean node : nodes) {
+            array.add(node.toJSONObject(timeZoneId));
+        }
+        return array;
+    }
+
 
 }

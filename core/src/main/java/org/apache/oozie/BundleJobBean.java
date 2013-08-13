@@ -21,28 +21,41 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import javax.persistence.Basic;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.Id;
 import javax.persistence.Lob;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import org.apache.hadoop.io.Writable;
 import org.apache.oozie.client.BundleJob;
+import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.Job;
-import org.apache.oozie.client.rest.JsonBundleJob;
+import org.apache.oozie.client.BundleJob.Timeunit;
+import org.apache.oozie.client.Job.Status;
+import org.apache.oozie.client.rest.JsonBean;
+import org.apache.oozie.client.rest.JsonTags;
+import org.apache.oozie.client.rest.JsonUtils;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.WritableUtils;
 import org.apache.openjpa.persistence.jdbc.Index;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 @Entity
 @NamedQueries( {
-        @NamedQuery(name = "UPDATE_BUNDLE_JOB", query = "update BundleJobBean w set w.appName = :appName, w.appPath = :appPath, w.conf = :conf, w.externalId = :externalId, w.timeOut = :timeOut, w.createdTimestamp = :createdTimestamp, w.endTimestamp = :endTimestamp, w.jobXml = :jobXml, w.lastModifiedTimestamp = :lastModifiedTimestamp, w.origJobXml = :origJobXml, w.startTimestamp = :startTimestamp, w.status = :status, w.timeUnitStr = :timeUnit, w.pending = :pending where w.id = :id"),
+        @NamedQuery(name = "UPDATE_BUNDLE_JOB", query = "update BundleJobBean w set w.appName = :appName, w.appPath = :appPath, w.conf = :conf, w.externalId = :externalId, w.timeOut = :timeOut, w.createdTimestamp = :createdTimestamp, w.endTimestamp = :endTimestamp, w.jobXml = :jobXml, w.lastModifiedTimestamp = :lastModifiedTimestamp, w.origJobXml = :origJobXml, w.startTimestamp = :startTimestamp, w.statusStr = :status, w.timeUnitStr = :timeUnit, w.pending = :pending where w.id = :id"),
 
-        @NamedQuery(name = "UPDATE_BUNDLE_JOB_STATUS", query = "update BundleJobBean w set w.status = :status, w.lastModifiedTimestamp = :lastModifiedTimestamp, w.pending = :pending where w.id = :id"),
+        @NamedQuery(name = "UPDATE_BUNDLE_JOB_STATUS", query = "update BundleJobBean w set w.statusStr = :status, w.lastModifiedTimestamp = :lastModifiedTimestamp, w.pending = :pending where w.id = :id"),
 
         @NamedQuery(name = "DELETE_BUNDLE_JOB", query = "delete from BundleJobBean w where w.id = :id"),
 
@@ -52,39 +65,74 @@ import org.apache.openjpa.persistence.jdbc.Index;
 
         @NamedQuery(name = "GET_BUNDLE_JOBS_COUNT", query = "select count(w) from BundleJobBean w"),
 
-        @NamedQuery(name = "GET_BUNDLE_JOBS_COLUMNS", query = "select w.id, w.appName, w.appPath, w.conf, w.status, w.kickoffTimestamp, w.startTimestamp, w.endTimestamp, w.pauseTimestamp, w.createdTimestamp, w.user, w.group, w.timeUnitStr, w.timeOut from BundleJobBean w order by w.createdTimestamp desc"),
+        @NamedQuery(name = "GET_BUNDLE_JOBS_COLUMNS", query = "select w.id, w.appName, w.appPath, w.conf, w.statusStr, w.kickoffTimestamp, w.startTimestamp, w.endTimestamp, w.pauseTimestamp, w.createdTimestamp, w.user, w.group, w.timeUnitStr, w.timeOut from BundleJobBean w order by w.createdTimestamp desc"),
 
-        @NamedQuery(name = "GET_BUNDLE_JOBS_RUNNING_OR_PENDING", query = "select OBJECT(w) from BundleJobBean w where w.status = 'RUNNING' OR w.status = 'RUNNINGWITHERROR' OR w.pending = 1 order by w.lastModifiedTimestamp"),
+        @NamedQuery(name = "GET_BUNDLE_JOBS_RUNNING_OR_PENDING", query = "select OBJECT(w) from BundleJobBean w where w.statusStr = 'RUNNING' OR w.statusStr = 'RUNNINGWITHERROR' OR w.pending = 1 order by w.lastModifiedTimestamp"),
 
-        @NamedQuery(name = "GET_BUNDLE_JOBS_NEED_START", query = "select OBJECT(w) from BundleJobBean w where w.status = 'PREP' AND (w.kickoffTimestamp IS NULL OR (w.kickoffTimestamp IS NOT NULL AND w.kickoffTimestamp <= :currentTime)) order by w.lastModifiedTimestamp"),
+        @NamedQuery(name = "GET_BUNDLE_JOBS_NEED_START", query = "select OBJECT(w) from BundleJobBean w where w.statusStr = 'PREP' AND (w.kickoffTimestamp IS NULL OR (w.kickoffTimestamp IS NOT NULL AND w.kickoffTimestamp <= :currentTime)) order by w.lastModifiedTimestamp"),
 
-        @NamedQuery(name = "GET_BUNDLE_JOBS_PAUSED", query = "select OBJECT(w) from BundleJobBean w where w.status = 'PAUSED' OR w.status = 'PAUSEDWITHERROR' OR w.status = 'PREPPAUSED' order by w.lastModifiedTimestamp"),
+        @NamedQuery(name = "GET_BUNDLE_JOBS_PAUSED", query = "select OBJECT(w) from BundleJobBean w where w.statusStr = 'PAUSED' OR w.statusStr = 'PAUSEDWITHERROR' OR w.statusStr = 'PREPPAUSED' order by w.lastModifiedTimestamp"),
 
-        @NamedQuery(name = "GET_BUNDLE_JOBS_UNPAUSED", query = "select OBJECT(w) from BundleJobBean w where w.status = 'RUNNING' OR w.status = 'RUNNINGWITHERROR' OR w.status = 'PREP' order by w.lastModifiedTimestamp"),
+        @NamedQuery(name = "GET_BUNDLE_JOBS_UNPAUSED", query = "select OBJECT(w) from BundleJobBean w where w.statusStr = 'RUNNING' OR w.statusStr = 'RUNNINGWITHERROR' OR w.statusStr = 'PREP' order by w.lastModifiedTimestamp"),
 
-        @NamedQuery(name = "GET_BUNDLE_JOBS_OLDER_THAN", query = "select OBJECT(w) from BundleJobBean w where w.startTimestamp <= :matTime AND (w.status = 'PREP' OR w.status = 'RUNNING' or w.status = 'RUNNINGWITHERROR')  order by w.lastModifiedTimestamp"),
+        @NamedQuery(name = "GET_BUNDLE_JOBS_OLDER_THAN", query = "select OBJECT(w) from BundleJobBean w where w.startTimestamp <= :matTime AND (w.statusStr = 'PREP' OR w.statusStr = 'RUNNING' or w.statusStr = 'RUNNINGWITHERROR')  order by w.lastModifiedTimestamp"),
 
-        @NamedQuery(name = "GET_BUNDLE_JOBS_OLDER_THAN_STATUS", query = "select OBJECT(w) from BundleJobBean w where w.status = :status AND w.lastModifiedTimestamp <= :lastModTime order by w.lastModifiedTimestamp"),
+        @NamedQuery(name = "GET_BUNDLE_JOBS_OLDER_THAN_STATUS", query = "select OBJECT(w) from BundleJobBean w where w.statusStr = :status AND w.lastModifiedTimestamp <= :lastModTime order by w.lastModifiedTimestamp"),
 
-        @NamedQuery(name = "GET_COMPLETED_BUNDLE_JOBS_OLDER_THAN", query = "select w.id from BundleJobBean w where ( w.status = 'SUCCEEDED' OR w.status = 'FAILED' OR w.status = 'KILLED' OR w.status = 'DONEWITHERROR') AND w.lastModifiedTimestamp <= :lastModTime order by w.lastModifiedTimestamp"),
+        @NamedQuery(name = "GET_COMPLETED_BUNDLE_JOBS_OLDER_THAN", query = "select w.id from BundleJobBean w where ( w.statusStr = 'SUCCEEDED' OR w.statusStr = 'FAILED' OR w.statusStr = 'KILLED' OR w.statusStr = 'DONEWITHERROR') AND w.lastModifiedTimestamp <= :lastModTime order by w.lastModifiedTimestamp"),
 
-        @NamedQuery(name = "BULK_MONITOR_BUNDLE_QUERY", query = "SELECT b.id, b.status, b.user FROM BundleJobBean b WHERE b.appName = :appName"),
+        @NamedQuery(name = "BULK_MONITOR_BUNDLE_QUERY", query = "SELECT b.id, b.statusStr, b.user FROM BundleJobBean b WHERE b.appName = :appName"),
 
         // Join query
         @NamedQuery(name = "BULK_MONITOR_ACTIONS_QUERY", query = "SELECT a.id, a.actionNumber, a.errorCode, a.errorMessage, a.externalId, " +
-                "a.externalStatus, a.status, a.createdTimestamp, a.nominalTimestamp, a.missingDependencies, " +
-                "c.id, c.appName, c.status FROM CoordinatorActionBean a, CoordinatorJobBean c " +
+                "a.externalStatus, a.statusStr, a.createdTimestamp, a.nominalTimestamp, a.missingDependencies, " +
+                "c.id, c.appName, c.statusStr FROM CoordinatorActionBean a, CoordinatorJobBean c " +
                 "WHERE a.jobId = c.id AND c.bundleId = :bundleId ORDER BY a.jobId, a.createdTimestamp"),
 
         @NamedQuery(name = "BULK_MONITOR_COUNT_QUERY", query = "SELECT COUNT(a) FROM CoordinatorActionBean a, CoordinatorJobBean c"),
 
         @NamedQuery(name = "GET_BUNDLE_JOB_FOR_USER", query = "select w.user from BundleJobBean w where w.id = :id") })
-public class BundleJobBean extends JsonBundleJob implements Writable {
+@Table(name = "BUNDLE_JOBS")
+public class BundleJobBean implements Writable, BundleJob, JsonBean {
+
+    @Id
+    private String id;
+
+    @Basic
+    @Column(name = "app_path")
+    private String appPath = null;
+
+    @Basic
+    @Column(name = "app_name")
+    private String appName = null;
+
+    @Basic
+    @Column(name = "external_id")
+    private String externalId = null;
+
+    @Column(name = "conf")
+    @Lob
+    private String conf = null;
+
+    @Basic
+    @Column(name = "time_out")
+    private int timeOut = 0;
+
+    @Basic
+    @Column(name = "user_name")
+    private String user = null;
+
+    @Basic
+    @Column(name = "group_name")
+    private String group = null;
+
+    @Transient
+    private String consoleUrl;
 
     @Basic
     @Index
     @Column(name = "status")
-    private String status = Job.Status.PREP.toString();
+    private String statusStr = Job.Status.PREP.toString();
 
     @Basic
     @Column(name = "kickoff_time")
@@ -133,6 +181,14 @@ public class BundleJobBean extends JsonBundleJob implements Writable {
     @Lob
     private String origJobXml = null;
 
+
+    @Transient
+    private List<CoordinatorJobBean> coordJobs;
+
+    public BundleJobBean() {
+        coordJobs = new ArrayList<CoordinatorJobBean>();
+    }
+
     /**
      * @return the kickoffTimestamp
      */
@@ -151,7 +207,6 @@ public class BundleJobBean extends JsonBundleJob implements Writable {
      * @param kickoffTimestamp the kickoffTimestamp to set
      */
     public void setKickoffTimestamp(java.sql.Timestamp kickoffTimestamp) {
-        super.setKickoffTime(DateUtils.toDate(kickoffTimestamp));
         this.kickoffTimestamp = kickoffTimestamp;
     }
 
@@ -159,7 +214,6 @@ public class BundleJobBean extends JsonBundleJob implements Writable {
      * @param startTimestamp the startTimestamp to set
      */
     public void setStartTimestamp(java.sql.Timestamp startTimestamp) {
-        super.setStartTime(DateUtils.toDate(startTimestamp));
         this.startTimestamp = startTimestamp;
     }
 
@@ -168,9 +222,7 @@ public class BundleJobBean extends JsonBundleJob implements Writable {
      *
      * @param startTime the startTime to set
      */
-    @Override
     public void setStartTime(Date startTime) {
-        super.setStartTime(startTime);
         this.startTimestamp = DateUtils.convertDateToTimestamp(startTime);
     }
 
@@ -185,7 +237,6 @@ public class BundleJobBean extends JsonBundleJob implements Writable {
      * @param endTimestamp the endTimestamp to set
      */
     public void setEndTimestamp(java.sql.Timestamp endTimestamp) {
-        super.setEndTime(DateUtils.toDate(endTimestamp));
         this.endTimestamp = endTimestamp;
     }
 
@@ -200,7 +251,6 @@ public class BundleJobBean extends JsonBundleJob implements Writable {
      * @param pauseTimestamp the pauseTimestamp to set
      */
     public void setPauseTimestamp(java.sql.Timestamp pauseTimestamp) {
-        super.setPauseTime(DateUtils.toDate(pauseTimestamp));
         this.pauseTimestamp = pauseTimestamp;
     }
 
@@ -240,7 +290,6 @@ public class BundleJobBean extends JsonBundleJob implements Writable {
      */
     @Override
     public void setPending() {
-        super.setPending();
         this.pending = 1;
     }
 
@@ -251,7 +300,6 @@ public class BundleJobBean extends JsonBundleJob implements Writable {
      */
     @Override
     public void resetPending() {
-        super.resetPending();
         this.pending = 0;
     }
 
@@ -323,9 +371,7 @@ public class BundleJobBean extends JsonBundleJob implements Writable {
     /**
      * @param createTime the createdTime to set
      */
-    @Override
     public void setCreatedTime(Date createTime) {
-        super.setCreatedTime(createTime);
         this.createdTimestamp = DateUtils.convertDateToTimestamp(createTime);
     }
 
@@ -345,9 +391,6 @@ public class BundleJobBean extends JsonBundleJob implements Writable {
         return DateUtils.toDate(lastModifiedTimestamp);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.hadoop.io.Writable#write(java.io.DataOutput)
-     */
     @Override
     public void write(DataOutput dataOutput) throws IOException {
         WritableUtils.writeStr(dataOutput, getAppPath());
@@ -365,9 +408,6 @@ public class BundleJobBean extends JsonBundleJob implements Writable {
         dataOutput.writeInt(getTimeout());
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.hadoop.io.Writable#readFields(java.io.DataInput)
-     */
     @Override
     public void readFields(DataInput dataInput) throws IOException {
 
@@ -396,96 +436,36 @@ public class BundleJobBean extends JsonBundleJob implements Writable {
         setTimeOut(dataInput.readInt());
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.client.rest.JsonBundleJob#getStatus()
-     */
-    @Override
-    public Status getStatus() {
-        return Status.valueOf(this.status);
-    }
 
-    /**
-     * @return status string
-     */
-    public String getStatusStr() {
-        return status;
-    }
-
-    /* (non-Javadoc)
-     * @see org.apache.oozie.client.rest.JsonBundleJob#getEndTime()
-     */
-    @Override
     public Date getEndTime() {
         return DateUtils.toDate(endTimestamp);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.client.rest.JsonBundleJob#getKickoffTime()
-     */
     @Override
     public Date getKickoffTime() {
         return DateUtils.toDate(kickoffTimestamp);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.client.rest.JsonBundleJob#getTimeUnit()
-     */
     @Override
     public Timeunit getTimeUnit() {
         return Timeunit.valueOf(this.timeUnitStr);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.client.rest.JsonBundleJob#setEndTime(java.util.Date)
-     */
-    @Override
     public void setEndTime(Date endTime) {
-        super.setEndTime(endTime);
         this.endTimestamp = DateUtils.convertDateToTimestamp(endTime);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.client.rest.JsonBundleJob#setKickoffTime(java.util.Date)
-     */
-    @Override
     public void setKickoffTime(Date kickoffTime) {
-        super.setKickoffTime(kickoffTime);
         this.kickoffTimestamp = DateUtils.convertDateToTimestamp(kickoffTime);
     }
 
     @Override
-    /* (non-Javadoc)
-     * @see org.apache.oozie.client.rest.JsonBundleJob#getPauseTime()
-     */
     public Date getPauseTime() {
         return DateUtils.toDate(pauseTimestamp);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.client.rest.JsonBundleJob#setPauseTime(java.util.Date)
-     */
-    @Override
     public void setPauseTime(Date pauseTime) {
-        super.setPauseTime(pauseTime);
         this.pauseTimestamp = DateUtils.convertDateToTimestamp(pauseTime);
-    }
-
-    /* (non-Javadoc)
-     * @see org.apache.oozie.client.rest.JsonBundleJob#setStatus(org.apache.oozie.client.BundleJob.Status)
-     */
-    @Override
-    public void setStatus(org.apache.oozie.client.BundleJob.Status val) {
-        super.setStatus(val);
-        this.status = val.toString();
-    }
-
-    /* (non-Javadoc)
-     * @see org.apache.oozie.client.rest.JsonBundleJob#setTimeUnit(org.apache.oozie.client.BundleJob.Timeunit)
-     */
-    @Override
-    public void setTimeUnit(Timeunit timeUnit) {
-        super.setTimeUnit(timeUnit);
-        this.timeUnitStr = timeUnit.toString();
     }
 
     /**
@@ -493,6 +473,259 @@ public class BundleJobBean extends JsonBundleJob implements Writable {
      */
     public void setSuspendedTime(Date suspendTime) {
         this.suspendedTimestamp = DateUtils.convertDateToTimestamp(suspendTime);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public JSONObject toJSONObject() {
+        return toJSONObject("GMT");
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public JSONObject toJSONObject(String timeZoneId) {
+        JSONObject json = new JSONObject();
+        json.put(JsonTags.BUNDLE_JOB_PATH, appPath);
+        json.put(JsonTags.BUNDLE_JOB_NAME, appName);
+        json.put(JsonTags.BUNDLE_JOB_ID, id);
+        json.put(JsonTags.BUNDLE_JOB_EXTERNAL_ID, externalId);
+        json.put(JsonTags.BUNDLE_JOB_CONF, conf);
+        json.put(JsonTags.BUNDLE_JOB_STATUS, getStatus().toString());
+        json.put(JsonTags.BUNDLE_JOB_TIMEUNIT, getTimeUnit().toString());
+        json.put(JsonTags.BUNDLE_JOB_TIMEOUT, timeOut);
+        json.put(JsonTags.BUNDLE_JOB_KICKOFF_TIME, JsonUtils.formatDateRfc822(getKickoffTime(), timeZoneId));
+        json.put(JsonTags.BUNDLE_JOB_START_TIME, JsonUtils.formatDateRfc822(getStartTime(), timeZoneId));
+        json.put(JsonTags.BUNDLE_JOB_END_TIME, JsonUtils.formatDateRfc822(getEndTime(), timeZoneId));
+        json.put(JsonTags.BUNDLE_JOB_PAUSE_TIME, JsonUtils.formatDateRfc822(getPauseTime(), timeZoneId));
+        json.put(JsonTags.BUNDLE_JOB_CREATED_TIME, JsonUtils.formatDateRfc822(getCreatedTime(), timeZoneId));
+        json.put(JsonTags.BUNDLE_JOB_USER, getUser());
+        json.put(JsonTags.BUNDLE_JOB_GROUP, getGroup());
+        json.put(JsonTags.BUNDLE_JOB_ACL, getAcl());
+        json.put(JsonTags.BUNDLE_JOB_CONSOLE_URL, getConsoleUrl());
+        json.put(JsonTags.BUNDLE_COORDINATOR_JOBS, CoordinatorJobBean.toJSONArray(coordJobs, timeZoneId));
+        json.put(JsonTags.TO_STRING, toString());
+
+        return json;
+    }
+
+    @Override
+    public String getAppName() {
+        return appName;
+    }
+
+    @Override
+    public String getAppPath() {
+        return appPath;
+    }
+
+    @Override
+    public String getConf() {
+        return conf;
+    }
+
+    @Override
+    public String getConsoleUrl() {
+        return consoleUrl;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public List<CoordinatorJob> getCoordinators() {
+        return (List) coordJobs;
+    }
+
+    @Override
+    @Deprecated
+    public String getGroup() {
+        return group;
+    }
+
+    @Override
+    public String getAcl() {
+        return getGroup();
+    }
+
+    @Override
+    public String getId() {
+        return id;
+    }
+
+    public int getTimeout() {
+        return timeOut;
+    }
+
+    public String getUser() {
+        return user;
+    }
+
+    /**
+     * Set id
+     *
+     * @param id the id to set
+     */
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    /**
+     * Set bundlePath
+     *
+     * @param bundlePath the bundlePath to set
+     */
+    public void setAppPath(String bundlePath) {
+        this.appPath = bundlePath;
+    }
+
+    /**
+     * Set bundleName
+     *
+     * @param bundleName the bundleName to set
+     */
+    public void setAppName(String bundleName) {
+        this.appName = bundleName;
+    }
+
+    /**
+     * Return externalId
+     *
+     * @return externalId
+     */
+    public String getExternalId() {
+        return this.externalId;
+    }
+
+    /**
+     * Set externalId
+     *
+     * @param externalId the externalId to set
+     */
+    public void setExternalId(String externalId) {
+        this.externalId = externalId;
+    }
+
+    /**
+     * Set conf
+     *
+     * @param conf the conf to set
+     */
+    public void setConf(String conf) {
+        this.conf = conf;
+    }
+
+    /**
+     * Set status
+     *
+     * @param status the status to set
+     */
+    public void setStatus(Status status) {
+        this.statusStr = status.toString();
+    }
+
+
+    @Override
+    public Status getStatus() {
+        return Status.valueOf(this.statusStr);
+    }
+
+    /**
+     * Set status
+     *
+     * @param status the status to set
+     */
+    public void setStatus(String statusStr) {
+        this.statusStr = statusStr;
+    }
+
+
+    /**
+     * @return status string
+     */
+    public String getStatusStr() {
+        return statusStr;
+    }
+
+
+    /**
+     * Set timeUnit
+     *
+     * @param timeUnit the timeUnit to set
+     */
+    public void setTimeUnit(Timeunit timeUnit) {
+        this.timeUnitStr = timeUnit.toString();
+    }
+
+    /**
+     * Set timeOut
+     *
+     * @param timeOut the timeOut to set
+     */
+    public void setTimeOut(int timeOut) {
+        this.timeOut = timeOut;
+    }
+
+    /**
+     * Set user
+     *
+     * @param user the user to set
+     */
+    public void setUser(String user) {
+        this.user = user;
+    }
+
+    /**
+     * Set group
+     *
+     * @param group the group to set
+     */
+    public void setGroup(String group) {
+        this.group = group;
+    }
+
+    /**
+     * Set consoleUrl
+     *
+     * @param consoleUrl the consoleUrl to set
+     */
+    public void setConsoleUrl(String consoleUrl) {
+        this.consoleUrl = consoleUrl;
+    }
+
+    /**
+     * Set coordJobs
+     *
+     * @param coordJobs the coordJobs to set
+     */
+    public void setCoordJobs(List<CoordinatorJobBean> coordJobs) {
+        this.coordJobs = (coordJobs != null) ? coordJobs : new ArrayList<CoordinatorJobBean>();
+    }
+
+    /**
+     * Convert a Bundle job list into a JSONArray.
+     *
+     * @param application list.
+     * @param timeZoneId time zone to use for dates in the JSON array.
+     * @return the corresponding JSON array.
+     */
+    @SuppressWarnings("unchecked")
+    public static JSONArray toJSONArray(List<BundleJobBean> applications, String timeZoneId) {
+        JSONArray array = new JSONArray();
+        if (applications != null) {
+            for (BundleJobBean application : applications) {
+                array.add(application.toJSONObject(timeZoneId));
+            }
+        }
+        return array;
+    }
+
+
+    @Override
+    public String toString() {
+        return MessageFormat.format("Bundle id[{0}] status[{1}]", getId(), getStatus());
+    }
+
+    @Override
+    public Date getStartTime() {
+        return DateUtils.toDate(startTimestamp);
     }
 
 }
