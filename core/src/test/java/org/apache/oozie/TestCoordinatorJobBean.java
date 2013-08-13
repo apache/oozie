@@ -29,7 +29,6 @@ import java.util.List;
 import org.apache.oozie.client.CoordinatorJob.Execution;
 import org.apache.oozie.client.CoordinatorJob.Timeunit;
 import org.apache.oozie.client.Job.Status;
-import org.apache.oozie.client.rest.JsonCoordinatorAction;
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.DateUtils;
 
@@ -43,7 +42,7 @@ public class TestCoordinatorJobBean extends XTestCase {
     private static final Date nmt = new Date(6L);
     private static final Date pt = new Date(7L);
     private static final Date spt = new Date(8L);
-    private static final List<? extends JsonCoordinatorAction> actionList = Collections.singletonList(new CoordinatorActionBean());
+    private static final List<CoordinatorActionBean> actionList = Collections.singletonList(new CoordinatorActionBean());
     private static final Execution execution = Execution.LIFO;
 
     private void set(CoordinatorJobBean bean) {
@@ -59,7 +58,6 @@ public class TestCoordinatorJobBean extends XTestCase {
         bean.setDoneMaterialization();
         bean.setEndTime(et);
         bean.setEndTimestamp(DateUtils.convertDateToTimestamp(et));
-        bean.setExecution(execution);
         bean.setExecutionOrder(execution);
         bean.setExternalId("ei");
         bean.setFrequency("3");

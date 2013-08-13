@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,9 @@
 package org.apache.oozie.client.rest;
 
 import junit.framework.TestCase;
+
+import org.apache.oozie.WorkflowActionBean;
+import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowJob;
 import java.util.Arrays;
 
@@ -27,8 +30,8 @@ public class TestJsonWorkflowJob extends TestCase {
     static String START_TIME = "Fri, 02 Jan 2009 00:00:00 GMT";
     static String END_TIME = "Sat, 03 Jan 2009 00:00:00 GMT";
 
-    static JsonWorkflowJob createWorkflow() {
-        JsonWorkflowJob wf = new JsonWorkflowJob();
+    static WorkflowJobBean createWorkflow() {
+        WorkflowJobBean wf = new WorkflowJobBean();
         wf.setAppPath("a");
         wf.setAppName("b");
         wf.setId("c");
@@ -45,7 +48,7 @@ public class TestJsonWorkflowJob extends TestCase {
     }
 
     public void testProperties() {
-        JsonWorkflowJob wf = createWorkflow();
+        WorkflowJobBean wf = createWorkflow();
         assertEquals("a", wf.getAppPath());
         assertEquals("b", wf.getAppName());
         assertEquals("c", wf.getId());
@@ -60,7 +63,7 @@ public class TestJsonWorkflowJob extends TestCase {
         assertEquals("cu", wf.getConsoleUrl());
         assertEquals(0, wf.getActions().size());
 
-        wf.setActions(Arrays.asList((JsonWorkflowAction) TestJsonWorkflowAction.createNode()));
+        wf.setActions(Arrays.asList((WorkflowActionBean) TestJsonWorkflowAction.createNode()));
         assertEquals(1, wf.getActions().size());
     }
 

@@ -703,7 +703,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         if (val == "") {
             val = Execution.FIFO.toString();
         }
-        coordJob.setExecution(Execution.valueOf(val));
+        coordJob.setExecutionOrder(Execution.valueOf(val));
         String[] acceptedVals = { Execution.LIFO.toString(), Execution.FIFO.toString(), Execution.LAST_ONLY.toString() };
         ParamChecker.isMember(val, acceptedVals, "execution");
 

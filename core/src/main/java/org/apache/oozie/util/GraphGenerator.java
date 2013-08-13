@@ -37,10 +37,10 @@ import javax.imageio.ImageIO;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import org.apache.commons.collections15.Transformer;
+import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowAction.Status;
 import org.apache.oozie.client.WorkflowJob;
-import org.apache.oozie.client.rest.JsonWorkflowJob;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -53,7 +53,7 @@ import org.xml.sax.helpers.DefaultHandler;
 public class GraphGenerator {
 
     private String xml;
-    private JsonWorkflowJob job;
+    private WorkflowJobBean job;
     private boolean showKill = false;
 
     /**
@@ -62,7 +62,7 @@ public class GraphGenerator {
      * @param job Current status of the job
      * @param showKill Flag to whether show 'kill' node
      */
-    public GraphGenerator(String xml, JsonWorkflowJob job, boolean showKill) {
+    public GraphGenerator(String xml, WorkflowJobBean job, boolean showKill) {
         if(job == null) {
             throw new IllegalArgumentException("JsonWorkflowJob can't be null");
         }
@@ -76,7 +76,7 @@ public class GraphGenerator {
      * @param xml
      * @param job
      */
-    public GraphGenerator(String xml, JsonWorkflowJob job) {
+    public GraphGenerator(String xml, WorkflowJobBean job) {
         this(xml, job, false);
     }
 

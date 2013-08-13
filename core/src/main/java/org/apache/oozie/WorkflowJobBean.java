@@ -19,7 +19,10 @@ package org.apache.oozie;
 
 import org.apache.oozie.workflow.WorkflowInstance;
 import org.apache.oozie.workflow.lite.LiteWorkflowInstance;
-import org.apache.oozie.client.rest.JsonWorkflowJob;
+import org.apache.oozie.client.rest.JsonBean;
+import org.apache.oozie.client.rest.JsonTags;
+import org.apache.oozie.client.rest.JsonUtils;
+import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.WritableUtils;
@@ -28,29 +31,38 @@ import org.apache.hadoop.io.Writable;
 import java.io.DataInput;
 import java.io.IOException;
 import java.io.DataOutput;
+import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import javax.persistence.Entity;
 import javax.persistence.Column;
+import javax.persistence.Id;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.Basic;
 import javax.persistence.Lob;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import java.sql.Timestamp;
 
 import org.apache.openjpa.persistence.jdbc.Index;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 @Entity
+
 @NamedQueries({
 
-    @NamedQuery(name = "UPDATE_WORKFLOW", query = "update WorkflowJobBean w set w.appName = :appName, w.appPath = :appPath, w.conf = :conf, w.group = :groupName, w.run = :run, w.user = :user, w.createdTimestamp = :createdTime, w.endTimestamp = :endTime, w.externalId = :externalId, w.lastModifiedTimestamp = :lastModTime,w.logToken = :logToken, w.protoActionConf = :protoActionConf, w.slaXml =:slaXml, w.startTimestamp = :startTime, w.status = :status, w.wfInstance = :wfInstance where w.id = :id"),
+    @NamedQuery(name = "UPDATE_WORKFLOW", query = "update WorkflowJobBean w set w.appName = :appName, w.appPath = :appPath, w.conf = :conf, w.group = :groupName, w.run = :run, w.user = :user, w.createdTimestamp = :createdTime, w.endTimestamp = :endTime, w.externalId = :externalId, w.lastModifiedTimestamp = :lastModTime,w.logToken = :logToken, w.protoActionConf = :protoActionConf, w.slaXml =:slaXml, w.startTimestamp = :startTime, w.statusStr = :status, w.wfInstance = :wfInstance where w.id = :id"),
 
     @NamedQuery(name = "DELETE_WORKFLOW", query = "delete from WorkflowJobBean w where w.id = :id"),
 
     @NamedQuery(name = "GET_WORKFLOWS", query = "select OBJECT(w) from WorkflowJobBean w order by w.startTimestamp desc"),
 
-    @NamedQuery(name = "GET_WORKFLOWS_COLUMNS", query = "select w.id, w.appName, w.status, w.run, w.user, w.group, w.createdTimestamp, "
+    @NamedQuery(name = "GET_WORKFLOWS_COLUMNS", query = "select w.id, w.appName, w.statusStr, w.run, w.user, w.group, w.createdTimestamp, "
             + "w.startTimestamp, w.lastModifiedTimestamp, w.endTimestamp, w.externalId from WorkflowJobBean w order by w.createdTimestamp desc"),
 
     @NamedQuery(name = "GET_WORKFLOWS_COUNT", query = "select count(w) from WorkflowJobBean w"),
@@ -63,25 +75,29 @@ import org.apache.openjpa.persistence.jdbc.Index;
 
     @NamedQuery(name = "GET_WORKFLOW_FOR_UPDATE", query = "select OBJECT(w) from WorkflowJobBean w where w.id = :id"),
 
-    @NamedQuery(name = "GET_WORKFLOW_FOR_SLA", query = "select w.id, w.status, w.startTimestamp, w.endTimestamp from WorkflowJobBean w where w.id = :id"),
+    @NamedQuery(name = "GET_WORKFLOW_FOR_SLA", query = "select w.id, w.statusStr, w.startTimestamp, w.endTimestamp from WorkflowJobBean w where w.id = :id"),
 
     @NamedQuery(name = "GET_WORKFLOW_ID_FOR_EXTERNAL_ID", query = "select  w.id from WorkflowJobBean w where w.externalId = :externalId"),
 
-    @NamedQuery(name = "GET_WORKFLOWS_COUNT_WITH_STATUS", query = "select count(w) from WorkflowJobBean w where w.status = :status"),
+    @NamedQuery(name = "GET_WORKFLOWS_COUNT_WITH_STATUS", query = "select count(w) from WorkflowJobBean w where w.statusStr = :status"),
 
-    @NamedQuery(name = "GET_WORKFLOWS_COUNT_WITH_STATUS_IN_LAST_N_SECS", query = "select count(w) from WorkflowJobBean w where w.status = :status and w.lastModifiedTimestamp > :lastModTime"),
+    @NamedQuery(name = "GET_WORKFLOWS_COUNT_WITH_STATUS_IN_LAST_N_SECS", query = "select count(w) from WorkflowJobBean w where w.statusStr = :status and w.lastModifiedTimestamp > :lastModTime"),
 
     @NamedQuery(name = "GET_WORKFLOWS_WITH_WORKFLOW_PARENT_ID", query = "select w.id from WorkflowJobBean w where w.parentId = :parentId"),
 
     @NamedQuery(name = "GET_WORKFLOWS_WITH_COORD_PARENT_ID", query = "select w.id from WorkflowJobBean w where w.parentId like :parentId"), // when setting parentId parameter, make sure to append a '%' (percent symbol) at the end (e.g. 0000004-130709155224435-oozie-rkan-C%")
 
-    @NamedQuery(name = "GET_WORKFLOWS_COUNT_WITH_WORKFLOW_PARENT_ID_NOT_READY_FOR_PURGE", query = "select count(w) from WorkflowJobBean w where w.parentId = :parentId and (w.status = 'PREP' OR w.status = 'RUNNING' OR w.status = 'SUSPENDED' OR w.endTimestamp >= :endTime)"),
+    @NamedQuery(name = "GET_WORKFLOWS_COUNT_WITH_WORKFLOW_PARENT_ID_NOT_READY_FOR_PURGE", query = "select count(w) from WorkflowJobBean w where w.parentId = :parentId and (w.statusStr = 'PREP' OR w.statusStr = 'RUNNING' OR w.statusStr = 'SUSPENDED' OR w.endTimestamp >= :endTime)"),
 
-    @NamedQuery(name = "GET_WORKFLOWS_COUNT_WITH_COORD_PARENT_ID_NOT_READY_FOR_PURGE", query = "select count(w) from WorkflowJobBean w where w.parentId like :parentId and (w.status = 'PREP' OR w.status = 'RUNNING' OR w.status = 'SUSPENDED' OR w.endTimestamp >= :endTime)"), // when setting parentId parameter, make sure to append a '%' (percent symbol) at the end (e.g. 0000004-130709155224435-oozie-rkan-C%")
+    @NamedQuery(name = "GET_WORKFLOWS_COUNT_WITH_COORD_PARENT_ID_NOT_READY_FOR_PURGE", query = "select count(w) from WorkflowJobBean w where w.parentId like :parentId and (w.statusStr = 'PREP' OR w.statusStr = 'RUNNING' OR w.statusStr = 'SUSPENDED' OR w.endTimestamp >= :endTime)"), // when setting parentId parameter, make sure to append a '%' (percent symbol) at the end (e.g. 0000004-130709155224435-oozie-rkan-C%")
 
     @NamedQuery(name = "GET_WORKFLOW_FOR_USER", query = "select w.user from WorkflowJobBean w where w.id = :id")
         })
-public class WorkflowJobBean extends JsonWorkflowJob implements Writable {
+@Table(name = "WF_JOBS")
+public class WorkflowJobBean implements Writable, WorkflowJob, JsonBean {
+
+    @Id
+    private String id;
 
     @Column(name = "proto_action_conf")
     @Lob
@@ -99,7 +115,7 @@ public class WorkflowJobBean extends JsonWorkflowJob implements Writable {
     @Basic
     @Index
     @Column(name = "status")
-    private String status = WorkflowJob.Status.PREP.toString();
+    private String statusStr = WorkflowJob.Status.PREP.toString();
 
     @Basic
     @Column(name = "created_time")
@@ -129,10 +145,47 @@ public class WorkflowJobBean extends JsonWorkflowJob implements Writable {
     @Lob
     private String slaXml = null;
 
+
+    @Basic
+    @Column(name = "app_name")
+    private String appName = null;
+
+    @Basic
+    @Column(name = "app_path")
+    private String appPath = null;
+
+    @Column(name = "conf")
+    @Lob
+    private String conf = null;
+
+    @Basic
+    @Column(name = "user_name")
+    private String user = null;
+
+    @Basic
+    @Column(name = "group_name")
+    private String group;
+
+    @Basic
+    @Column(name = "run")
+    private int run = 1;
+
+    @Basic
+    @Column(name = "parent_id")
+    private String parentId;
+
+    @Transient
+    private String consoleUrl;
+
+    @Transient
+    private List<WorkflowActionBean> actions;
+
+
     /**
      * Default constructor.
      */
     public WorkflowJobBean() {
+        actions = new ArrayList<WorkflowActionBean>();
     }
 
     /**
@@ -200,7 +253,7 @@ public class WorkflowJobBean extends JsonWorkflowJob implements Writable {
 
     public boolean inTerminalState() {
         boolean inTerminalState = false;
-        switch (WorkflowJob.Status.valueOf(status)) {
+        switch (WorkflowJob.Status.valueOf(statusStr)) {
             case FAILED:
             case KILLED:
             case SUCCEEDED:
@@ -264,10 +317,6 @@ public class WorkflowJobBean extends JsonWorkflowJob implements Writable {
         return logToken;
     }
 
-    public String getStatusStr() {
-        return status;
-    }
-
     public Timestamp getLastModifiedTimestamp() {
         return lastModifiedTimestamp;
     }
@@ -284,35 +333,24 @@ public class WorkflowJobBean extends JsonWorkflowJob implements Writable {
         return endTimestamp;
     }
 
-    @Override
-    public void setAppName(String val) {
-        super.setAppName(val);
+    public void setStatusStr (String statusStr) {
+        this.statusStr = statusStr;
     }
 
-    @Override
-    public void setAppPath(String val) {
-        super.setAppPath(val);
-    }
-
-    @Override
-    public void setConf(String val) {
-        super.setConf(val);
-    }
-
-    @Override
     public void setStatus(Status val) {
-        super.setStatus(val);
-        this.status = val.toString();
+        this.statusStr = val.toString();
     }
 
     @Override
     public Status getStatus() {
-        return Status.valueOf(this.status);
+        return Status.valueOf(statusStr);
     }
 
-    @Override
+    public String getStatusStr() {
+        return statusStr;
+    }
+
     public void setExternalId(String externalId) {
-        super.setExternalId(externalId);
         this.externalId = externalId;
     }
 
@@ -321,25 +359,19 @@ public class WorkflowJobBean extends JsonWorkflowJob implements Writable {
         return externalId;
     }
 
-    @Override
     public void setLastModifiedTime(Date lastModifiedTime) {
-        super.setLastModifiedTime(lastModifiedTime);
         this.lastModifiedTimestamp = DateUtils.convertDateToTimestamp(lastModifiedTime);
     }
 
-    @Override
     public Date getLastModifiedTime() {
         return DateUtils.toDate(lastModifiedTimestamp);
     }
 
-    @Override
     public Date getCreatedTime() {
         return DateUtils.toDate(createdTimestamp);
     }
 
-    @Override
     public void setCreatedTime(Date createdTime) {
-        super.setCreatedTime(createdTime);
         this.createdTimestamp = DateUtils.convertDateToTimestamp(createdTime);
     }
 
@@ -348,20 +380,15 @@ public class WorkflowJobBean extends JsonWorkflowJob implements Writable {
         return DateUtils.toDate(startTimestamp);
     }
 
-    @Override
     public void setStartTime(Date startTime) {
-        super.setStartTime(startTime);
         this.startTimestamp = DateUtils.convertDateToTimestamp(startTime);
     }
 
-    @Override
     public Date getEndTime() {
         return DateUtils.toDate(endTimestamp);
     }
 
-    @Override
     public void setEndTime(Date endTime) {
-        super.setEndTime(endTime);
         this.endTimestamp = DateUtils.convertDateToTimestamp(endTime);
     }
 
@@ -369,5 +396,165 @@ public class WorkflowJobBean extends JsonWorkflowJob implements Writable {
         LiteWorkflowInstance pInstance = WritableUtils.fromByteArray(array, LiteWorkflowInstance.class);
         return pInstance;
     }
+
+    @SuppressWarnings("unchecked")
+    public JSONObject toJSONObject() {
+        return toJSONObject("GMT");
+    }
+
+    @SuppressWarnings("unchecked")
+    public JSONObject toJSONObject(String timeZoneId) {
+        JSONObject json = new JSONObject();
+        json.put(JsonTags.WORKFLOW_APP_PATH, getAppPath());
+        json.put(JsonTags.WORKFLOW_APP_NAME, getAppName());
+        json.put(JsonTags.WORKFLOW_ID, getId());
+        json.put(JsonTags.WORKFLOW_EXTERNAL_ID, getExternalId());
+        json.put(JsonTags.WORKFLOW_PARENT_ID, getParentId());
+        json.put(JsonTags.WORKFLOW_CONF, getConf());
+        json.put(JsonTags.WORKFLOW_STATUS, getStatus().toString());
+        json.put(JsonTags.WORKFLOW_LAST_MOD_TIME, JsonUtils.formatDateRfc822(getLastModifiedTime(), timeZoneId));
+        json.put(JsonTags.WORKFLOW_CREATED_TIME, JsonUtils.formatDateRfc822(getCreatedTime(), timeZoneId));
+        json.put(JsonTags.WORKFLOW_START_TIME, JsonUtils.formatDateRfc822(getStartTime(), timeZoneId));
+        json.put(JsonTags.WORKFLOW_END_TIME, JsonUtils.formatDateRfc822(getEndTime(), timeZoneId));
+        json.put(JsonTags.WORKFLOW_USER, getUser());
+        json.put(JsonTags.WORKFLOW_GROUP, getGroup());
+        json.put(JsonTags.WORKFLOW_ACL, getAcl());
+        json.put(JsonTags.WORKFLOW_RUN, (long) getRun());
+        json.put(JsonTags.WORKFLOW_CONSOLE_URL, getConsoleUrl());
+        json.put(JsonTags.WORKFLOW_ACTIONS, WorkflowActionBean.toJSONArray(actions, timeZoneId));
+        json.put(JsonTags.TO_STRING, toString());
+        return json;
+    }
+
+    public String getAppPath() {
+        return appPath;
+    }
+
+    public void setAppPath(String appPath) {
+        this.appPath = appPath;
+    }
+
+    public String getAppName() {
+        return appName;
+    }
+
+    public void setAppName(String appName) {
+        this.appName = appName;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getConf() {
+        return conf;
+    }
+
+    public void setConf(String conf) {
+        this.conf = conf;
+    }
+
+    public String getUser() {
+        return user;
+    }
+
+    public void setUser(String user) {
+        this.user = user;
+    }
+
+    public String getGroup() {
+        return group;
+    }
+
+    @Override
+    public String getAcl() {
+        return getGroup();
+    }
+
+    public void setGroup(String group) {
+        this.group = group;
+    }
+
+    public int getRun() {
+        return run;
+    }
+
+    public void setRun(int run) {
+        this.run = run;
+    }
+
+    /**
+     * Return the workflow job console URL.
+     *
+     * @return the workflow job console URL.
+     */
+    public String getConsoleUrl() {
+        return consoleUrl;
+    }
+
+    /**
+     * Return the corresponding Action ID, if any.
+     *
+     * @return the coordinator Action Id.
+     */
+    public String getParentId() {
+        return parentId;
+    }
+
+    /**
+     * Set coordinator action id
+     *
+     * @param parentId : coordinator action id
+     */
+    public void setParentId(String parentId) {
+        this.parentId = parentId;
+    }
+
+    /**
+     * Set the workflow job console URL.
+     *
+     * @param consoleUrl the workflow job console URL.
+     */
+    public void setConsoleUrl(String consoleUrl) {
+        this.consoleUrl = consoleUrl;
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<WorkflowAction> getActions() {
+        return (List) actions;
+    }
+
+    public void setActions(List<WorkflowActionBean> nodes) {
+        this.actions = (nodes != null) ? nodes : new ArrayList<WorkflowActionBean>();
+    }
+
+    @Override
+    public String toString() {
+        return MessageFormat.format("Workflow id[{0}] status[{1}]", getId(), getStatus());
+    }
+
+    /**
+     * Convert a workflows list into a JSONArray.
+     *
+     * @param workflows workflows list.
+     * @param timeZoneId time zone to use for dates in the JSON array.
+     * @return the corresponding JSON array.
+     */
+    @SuppressWarnings("unchecked")
+    public static JSONArray toJSONArray(List<WorkflowJobBean> workflows, String timeZoneId) {
+        JSONArray array = new JSONArray();
+        if (workflows != null) {
+            for (WorkflowJobBean node : workflows) {
+                array.add(node.toJSONObject(timeZoneId));
+            }
+        }
+        return array;
+    }
+
+
 
 }

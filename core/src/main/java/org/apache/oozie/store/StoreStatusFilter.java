@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,15 +24,15 @@ import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.util.XLog;
 
 public class StoreStatusFilter {
-    public static final String coordSeletStr = "Select w.id, w.appName, w.status, w.user, w.group, w.startTimestamp, w.endTimestamp, w.appPath, w.concurrency, w.frequency, w.lastActionTimestamp, w.nextMaterializedTimestamp, w.createdTimestamp, w.timeUnitStr, w.timeZone, w.timeOut from CoordinatorJobBean w";
+    public static final String coordSeletStr = "Select w.id, w.appName, w.statusStr, w.user, w.group, w.startTimestamp, w.endTimestamp, w.appPath, w.concurrency, w.frequency, w.lastActionTimestamp, w.nextMaterializedTimestamp, w.createdTimestamp, w.timeUnitStr, w.timeZone, w.timeOut from CoordinatorJobBean w";
 
     public static final String coordCountStr = "Select count(w) from CoordinatorJobBean w";
 
-    public static final String wfSeletStr = "Select w.id, w.appName, w.status, w.run, w.user, w.group, w.createdTimestamp, w.startTimestamp, w.lastModifiedTimestamp, w.endTimestamp from WorkflowJobBean w";
+    public static final String wfSeletStr = "Select w.id, w.appName, w.statusStr, w.run, w.user, w.group, w.createdTimestamp, w.startTimestamp, w.lastModifiedTimestamp, w.endTimestamp from WorkflowJobBean w";
 
     public static final String wfCountStr = "Select count(w) from WorkflowJobBean w";
 
-    public static final String bundleSeletStr = "Select w.id, w.appName, w.appPath, w.conf, w.status, w.kickoffTimestamp, w.startTimestamp, w.endTimestamp, w.pauseTimestamp, w.createdTimestamp, w.user, w.group, w.timeUnitStr, w.timeOut from BundleJobBean w";
+    public static final String bundleSeletStr = "Select w.id, w.appName, w.appPath, w.conf, w.statusStr, w.kickoffTimestamp, w.startTimestamp, w.endTimestamp, w.pauseTimestamp, w.createdTimestamp, w.user, w.group, w.timeUnitStr, w.timeOut from BundleJobBean w";
 
     public static final String bundleCountStr = "Select count(w) from BundleJobBean w";
 
@@ -62,13 +62,13 @@ public class StoreStatusFilter {
                         colVar = "status";
                         colVar = colVar + index;
                         if (!isEnabled && !isStatus) {
-                            sb.append(seletStr).append(" where w.status IN (:status" + index);
+                            sb.append(seletStr).append(" where w.statusStr IN (:status" + index);
                             isStatus = true;
                             isEnabled = true;
                         }
                         else {
                             if (isEnabled && !isStatus) {
-                                sb.append(" and w.status IN (:status" + index);
+                                sb.append(" and w.statusStr IN (:status" + index);
                                 isStatus = true;
                             }
                             else {

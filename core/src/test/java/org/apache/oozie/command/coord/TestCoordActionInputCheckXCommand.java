@@ -882,7 +882,7 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         coordJob.setJobXml(appXml);
         coordJob.setLastActionNumber(0);
         coordJob.setFrequency("1");
-        coordJob.setExecution(Execution.FIFO);
+        coordJob.setExecutionOrder(Execution.FIFO);
         coordJob.setConcurrency(1);
 
         JPAService jpaService = Services.get().get(JPAService.class);

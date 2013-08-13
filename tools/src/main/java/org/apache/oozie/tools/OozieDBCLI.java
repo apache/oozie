@@ -834,18 +834,13 @@ public class OozieDBCLI {
             args.add("-sqlFile");
             args.add(sqlFile);
         }
-        args.add("org.apache.oozie.client.rest.JsonWorkflowJob");
         args.add("org.apache.oozie.WorkflowJobBean");
-        args.add("org.apache.oozie.client.rest.JsonWorkflowAction");
         args.add("org.apache.oozie.WorkflowActionBean");
-        args.add("org.apache.oozie.client.rest.JsonCoordinatorJob");
         args.add("org.apache.oozie.CoordinatorJobBean");
-        args.add("org.apache.oozie.client.rest.JsonCoordinatorAction");
         args.add("org.apache.oozie.CoordinatorActionBean");
         args.add("org.apache.oozie.client.rest.JsonSLAEvent");
         args.add("org.apache.oozie.SLAEventBean");
         args.add("org.apache.oozie.sla.SLARegistrationBean");
-        args.add("org.apache.oozie.client.rest.JsonBundleJob");
         args.add("org.apache.oozie.BundleJobBean");
         args.add("org.apache.oozie.BundleActionBean");
         args.add("org.apache.oozie.sla.SLASummaryBean");

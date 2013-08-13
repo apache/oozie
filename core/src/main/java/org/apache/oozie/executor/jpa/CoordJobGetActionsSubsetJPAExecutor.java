@@ -120,7 +120,7 @@ public class CoordJobGetActionsSubsetJPAExecutor implements JPAExecutor<List<Coo
         boolean isStatus = false;
         for (String statusVal : filterList) {
             if (!isStatus) {
-                sb.append(" and a.status IN (\'" + statusVal + "\'");
+                sb.append(" and a.statusStr IN (\'" + statusVal + "\'");
                 isStatus = true;
             }
             else {

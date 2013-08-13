@@ -419,7 +419,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
         coordJob.setJobXml(appXml);
         coordJob.setFrequency("1");
         coordJob.setTimeUnit(Timeunit.DAY);
-        coordJob.setExecution(Execution.FIFO);
+        coordJob.setExecutionOrder(Execution.FIFO);
         coordJob.setConcurrency(1);
         coordJob.setMatThrottling(1);
         try {

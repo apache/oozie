@@ -187,7 +187,7 @@ public class BulkJPAExecutor implements JPAExecutor<BulkResponseInfo> {
         boolean firstVal = true;
         for (String status : nullToEmpty(statuses)) {
             if (firstVal) {
-                sb.append(" AND a.status IN (\'" + status + "\'");
+                sb.append(" AND a.statusStr IN (\'" + status + "\'");
                 firstVal = false;
             }
             else {
@@ -198,7 +198,7 @@ public class BulkJPAExecutor implements JPAExecutor<BulkResponseInfo> {
             sb.append(") ");
         }
         else { // statuses was null. adding default
-            sb.append(" AND a.status IN ('KILLED', 'FAILED') ");
+            sb.append(" AND a.statusStr IN ('KILLED', 'FAILED') ");
         }
         return sb;
     }
