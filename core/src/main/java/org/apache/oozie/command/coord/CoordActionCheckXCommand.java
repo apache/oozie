@@ -45,9 +45,7 @@ import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.executor.jpa.BulkUpdateInsertForCoordActionStatusJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionGetForCheckJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordinatorJobGetForUserAppnameJPAExecutor;
-import org.apache.oozie.executor.jpa.WorkflowActionGetForSLAJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetForSLAJPAExecutor;
-import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 
 /**
  * The command checks workflow status for coordinator action.
@@ -76,32 +74,31 @@ public class CoordActionCheckXCommand extends CoordinatorXCommand<Void> {
     protected Void execute() throws CommandException {
         try {
             InstrumentUtils.incrJobCounter(getName(), 1, getInstrumentation());
-            WorkflowJobBean wf = jpaService.execute(new WorkflowJobGetJPAExecutor(coordAction.getExternalId()));
             Status slaStatus = null;
             CoordinatorAction.Status initialStatus = coordAction.getStatus();
 
-            if (wf.getStatus() == WorkflowJob.Status.SUCCEEDED) {
+            if (workflowJob.getStatus() == WorkflowJob.Status.SUCCEEDED) {
                 coordAction.setStatus(CoordinatorAction.Status.SUCCEEDED);
                 // set pending to false as the status is SUCCEEDED
                 coordAction.setPending(0);
                 slaStatus = Status.SUCCEEDED;
             }
             else {
-                if (wf.getStatus() == WorkflowJob.Status.FAILED) {
+                if (workflowJob.getStatus() == WorkflowJob.Status.FAILED) {
                     coordAction.setStatus(CoordinatorAction.Status.FAILED);
                     slaStatus = Status.FAILED;
                     // set pending to false as the status is FAILED
                     coordAction.setPending(0);
                 }
                 else {
-                    if (wf.getStatus() == WorkflowJob.Status.KILLED) {
+                    if (workflowJob.getStatus() == WorkflowJob.Status.KILLED) {
                         coordAction.setStatus(CoordinatorAction.Status.KILLED);
                         slaStatus = Status.KILLED;
                         // set pending to false as the status is KILLED
                         coordAction.setPending(0);
                     }
                     else {
-                        LOG.warn("Unexpected workflow " + wf.getId() + " STATUS " + wf.getStatus());
+                        LOG.warn("Unexpected workflow " + workflowJob.getId() + " STATUS " + workflowJob.getStatus());
                         coordAction.setLastModifiedTime(new Date());
                         updateList.add(coordAction);
                         jpaService.execute(new BulkUpdateInsertForCoordActionStatusJPAExecutor(updateList, null));

@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,8 @@ import org.apache.oozie.client.Job;
 /**
  * This is transition Base commands for all the jobs.
  */
-public abstract class KillTransitionXCommand extends TransitionXCommand<Void> {
+public abstract class KillTransitionXCommand<T> extends TransitionXCommand<T> {
+    protected T ret;
 
     public KillTransitionXCommand(String name, String type, int priority) {
         super(name, type, priority);
@@ -34,7 +35,7 @@ public abstract class KillTransitionXCommand extends TransitionXCommand<Void> {
      * @see org.apache.oozie.command.TransitionXCommand#transitToNext()
      */
     @Override
-    public final void transitToNext() {
+    public void transitToNext() {
         if (job == null) {
             job = this.getJob();
         }
@@ -46,7 +47,7 @@ public abstract class KillTransitionXCommand extends TransitionXCommand<Void> {
      * @see org.apache.oozie.command.TransitionXCommand#execute()
      */
     @Override
-    protected Void execute() throws CommandException {
+    protected T execute() throws CommandException {
         try {
             transitToNext();
             killChildren();
@@ -56,6 +57,6 @@ public abstract class KillTransitionXCommand extends TransitionXCommand<Void> {
         finally {
             notifyParent();
         }
-        return null;
+        return ret;
     }
 }

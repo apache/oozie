@@ -338,6 +338,48 @@ public class TestV1JobServlet extends DagServletTestCase {
         });
     }
 
+    /**
+     * Test Coord Action kill feature via REST API
+     * @throws Exception
+     */
+    public void testCoordActionKill() throws Exception {
+        runTest("/v1/job/*", V1JobServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
+            public Void call() throws Exception {
+                MockCoordinatorEngineService.reset();
+                Map<String, String> params = new HashMap<String, String>();
+                params.put(RestConstants.ACTION_PARAM, RestConstants.JOB_ACTION_KILL);
+                String rangeType = "action";
+                params.put(RestConstants.JOB_COORD_RANGE_TYPE_PARAM, rangeType);
+                String scope = "1-3";
+                params.put(RestConstants.JOB_COORD_SCOPE_PARAM, scope);
+                URL url = createURL(MockCoordinatorEngineService.JOB_ID + 1, params);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("PUT");
+                conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
+                conn.setDoOutput(true);
+                assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
+                assertEquals(RestConstants.JOB_ACTION_KILL, MockCoordinatorEngineService.did);
+
+                MockCoordinatorEngineService.reset();
+                params = new HashMap<String, String>();
+                params.put(RestConstants.ACTION_PARAM, RestConstants.JOB_ACTION_KILL);
+                rangeType = "date";
+                params.put(RestConstants.JOB_COORD_RANGE_TYPE_PARAM, rangeType);
+                scope = "2009-12-15T01:00Z::2009-12-16T01:00Z, 2009-12-20T01:00Z";
+                params.put(RestConstants.JOB_COORD_SCOPE_PARAM, scope);
+                url = createURL(MockCoordinatorEngineService.JOB_ID + 1, params);
+                conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("PUT");
+                conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
+                conn.setDoOutput(true);
+                assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
+                assertEquals(RestConstants.JOB_ACTION_KILL, MockCoordinatorEngineService.did);
+
+                return null;
+            }
+        });
+    }
+
     public void testGraph() throws Exception {
         runTest("/v1/job/*", V1JobServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
             @Override

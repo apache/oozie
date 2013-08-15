@@ -90,13 +90,13 @@ public interface RestConstants {
 
     public static final String JOB_BUNDLE_RERUN_DATE_SCOPE_PARAM = "date-scope";
 
-    public static final String JOB_COORD_RERUN_TYPE_PARAM = "type";
+    public static final String JOB_COORD_RANGE_TYPE_PARAM = "type";
 
-    public static final String JOB_COORD_RERUN_DATE = "date";
+    public static final String JOB_COORD_SCOPE_DATE = "date";
 
-    public static final String JOB_COORD_RERUN_ACTION = "action";
+    public static final String JOB_COORD_SCOPE_ACTION = "action";
 
-    public static final String JOB_COORD_RERUN_SCOPE_PARAM = "scope";
+    public static final String JOB_COORD_SCOPE_PARAM = "scope";
 
     public static final String JOB_COORD_RERUN_REFRESH_PARAM = "refresh";
 

@@ -29,6 +29,7 @@ import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
 import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetActionForNominalTimeJPAExecutor;
@@ -61,6 +62,26 @@ public class CoordUtils {
     }
 
     /**
+     * Get the list of actions for a given coordinator job
+     * @param rangeType the rerun type (date, action)
+     * @param jobId the coordinator job id
+     * @param scope the date scope or action id scope
+     * @return the list of Coordinator actions
+     * @throws CommandException
+     */
+    public static List<CoordinatorActionBean> getCoordActions(String rangeType, String jobId, String scope,
+            boolean active) throws CommandException {
+        List<CoordinatorActionBean> coordActions = null;
+        if (rangeType.equals(RestConstants.JOB_COORD_SCOPE_DATE)) {
+            coordActions = CoordUtils.getCoordActionsFromDates(jobId, scope, active);
+        }
+        else if (rangeType.equals(RestConstants.JOB_COORD_SCOPE_ACTION)) {
+            coordActions = CoordUtils.getCoordActionsFromIds(jobId, scope);
+        }
+        return coordActions;
+    }
+
+    /**
      * Get the list of actions for given date ranges
      *
      * @param jobId coordinator job id
@@ -68,7 +89,8 @@ public class CoordUtils {
      * @return the list of Coordinator actions for the date range
      * @throws CommandException thrown if failed to get coordinator actions by given date range
      */
-    public static List<CoordinatorActionBean> getCoordActionsFromDates(String jobId, String scope) throws CommandException {
+    static List<CoordinatorActionBean> getCoordActionsFromDates(String jobId, String scope, boolean active)
+            throws CommandException {
         JPAService jpaService = Services.get().get(JPAService.class);
         ParamChecker.notEmpty(jobId, "jobId");
         ParamChecker.notEmpty(scope, "scope");
@@ -82,7 +104,7 @@ public class CoordUtils {
             List<CoordinatorActionBean> listOfActions;
             try {
                 // Get list of actions within the range of date
-                listOfActions = CoordActionsInDateRange.getCoordActionsFromDateRange(jobId, s);
+                listOfActions = CoordActionsInDateRange.getCoordActionsFromDateRange(jobId, s, active);
             }
             catch (XException e) {
                 throw new CommandException(e);
@@ -128,7 +150,7 @@ public class CoordUtils {
      * @return the list of all Coordinator actions for action range
      * @throws CommandException thrown if failed to get coordinator actions by given id range
      */
-     public static List<CoordinatorActionBean> getCoordActionsFromIds(String jobId, String scope) throws CommandException {
+     static List<CoordinatorActionBean> getCoordActionsFromIds(String jobId, String scope) throws CommandException {
         JPAService jpaService = Services.get().get(JPAService.class);
         ParamChecker.notEmpty(jobId, "jobId");
         ParamChecker.notEmpty(scope, "scope");

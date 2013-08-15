@@ -83,7 +83,8 @@ public class TestCoordUtils extends  XDataTestCase{
         String jobId = job.getId();
         CoordinatorActionBean action1 = addRecordToCoordActionTable(jobId, actionNum,
                 CoordinatorAction.Status.SUCCEEDED, "coord-rerun-action1.xml", 0);
-        List<CoordinatorActionBean> coordActions = CoordUtils.getCoordActionsFromDates(jobId, "2009-12-15T01:00Z");
+        List<CoordinatorActionBean> coordActions = CoordUtils.getCoordActionsFromDates(jobId, "2009-12-15T01:00Z",
+                false);
 
         assertEquals(1, coordActions.size());
         assertEquals(action1, coordActions.get(0));
@@ -98,7 +99,7 @@ public class TestCoordUtils extends  XDataTestCase{
         addRecordToCoordActionTable(jobId, actionNum1, CoordinatorAction.Status.SUCCEEDED, "coord-rerun-action1.xml", 0);
         addRecordToCoordActionTable(jobId, actionNum2, CoordinatorAction.Status.SUCCEEDED, "coord-rerun-action2.xml", 0);
         String rerunScope = "2009-12-15T01:00Z" + "::" + "2009-12-16T01:00Z";
-        List<CoordinatorActionBean> coordActions = CoordUtils.getCoordActionsFromDates(jobId, rerunScope);
+        List<CoordinatorActionBean> coordActions = CoordUtils.getCoordActionsFromDates(jobId, rerunScope, false);
 
         assertEquals(2, coordActions.size());
     }

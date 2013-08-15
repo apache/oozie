@@ -28,7 +28,7 @@ import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.rest.*;
 import org.apache.oozie.command.CommandException;
-import org.apache.oozie.command.coord.CoordRerunXCommand;
+import org.apache.oozie.coord.CoordUtils;
 import org.apache.oozie.service.BundleEngineService;
 import org.apache.oozie.service.CoordinatorEngineService;
 import org.apache.oozie.service.DagEngineService;
@@ -132,7 +132,7 @@ public class V1JobServlet extends BaseJobServlet {
      * protected method to kill a job
      */
     @Override
-    protected void killJob(HttpServletRequest request, HttpServletResponse response) throws XServletException,
+    protected JSONObject killJob(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException {
         /*
          * Configuration conf = new XConfiguration(request.getInputStream());
@@ -142,6 +142,7 @@ public class V1JobServlet extends BaseJobServlet {
          * ServletUtilities.ValidateAppPath(wfPath, coordPath);
          */
         String jobId = getResourceName(request);
+        JSONObject json = null;
         if (jobId.endsWith("-W")) {
             killWorkflowJob(request, response);
         }
@@ -149,8 +150,9 @@ public class V1JobServlet extends BaseJobServlet {
             killBundleJob(request, response);
         }
         else {
-            killCoordinatorJob(request, response);
+            json = killCoordinator(request, response);
         }
+        return json;
     }
 
     /**
@@ -470,20 +472,47 @@ public class V1JobServlet extends BaseJobServlet {
 
     /**
      * Kill a coord job
+     *
      * @param request servlet request
      * @param response servlet response
      * @throws XServletException
      */
-    private void killCoordinatorJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
-        CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(
-                getUser(request));
+    @SuppressWarnings("unchecked")
+    private JSONObject killCoordinator(HttpServletRequest request, HttpServletResponse response) throws XServletException {
         String jobId = getResourceName(request);
+        CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class)
+                .getCoordinatorEngine(getUser(request));
+        JSONObject json = null;
+        String rangeType = request.getParameter(RestConstants.JOB_COORD_RANGE_TYPE_PARAM);
+        String scope = request.getParameter(RestConstants.JOB_COORD_SCOPE_PARAM);
+
         try {
-            coordEngine.kill(jobId);
+            if (rangeType != null && scope != null) {
+                XLog.getLog(getClass()).info(
+                        "Kill coordinator actions for jobId=" + jobId + ", rangeType=" + rangeType + ",scope=" + scope);
+
+                json = new JSONObject();
+                CoordinatorActionInfo coordInfo = coordEngine.killActions(jobId, rangeType, scope);
+                List<CoordinatorActionBean> coordActions;
+                if (coordInfo != null) {
+                    coordActions = coordInfo.getCoordActions();
+                }
+                else {
+                    coordActions = CoordUtils.getCoordActions(rangeType, jobId, scope, true);
+                }
+                json.put(JsonTags.COORDINATOR_ACTIONS, CoordinatorActionBean.toJSONArray(coordActions, "GMT"));
+            }
+            else {
+                coordEngine.kill(jobId);
+            }
         }
         catch (CoordinatorEngineException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
         }
+        catch (CommandException ex) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
+        }
+        return json;
     }
 
     /**
@@ -613,8 +642,8 @@ public class V1JobServlet extends BaseJobServlet {
 
         String jobId = getResourceName(request);
 
-        String rerunType = request.getParameter(RestConstants.JOB_COORD_RERUN_TYPE_PARAM);
-        String scope = request.getParameter(RestConstants.JOB_COORD_RERUN_SCOPE_PARAM);
+        String rerunType = request.getParameter(RestConstants.JOB_COORD_RANGE_TYPE_PARAM);
+        String scope = request.getParameter(RestConstants.JOB_COORD_SCOPE_PARAM);
         String refresh = request.getParameter(RestConstants.JOB_COORD_RERUN_REFRESH_PARAM);
         String noCleanup = request.getParameter(RestConstants.JOB_COORD_RERUN_NOCLEANUP_PARAM);
 
@@ -623,8 +652,8 @@ public class V1JobServlet extends BaseJobServlet {
                         + refresh + ", noCleanup=" + noCleanup);
 
         try {
-            if (!(rerunType.equals(RestConstants.JOB_COORD_RERUN_DATE) || rerunType
-                    .equals(RestConstants.JOB_COORD_RERUN_ACTION))) {
+            if (!(rerunType.equals(RestConstants.JOB_COORD_SCOPE_DATE) || rerunType
+                    .equals(RestConstants.JOB_COORD_SCOPE_ACTION))) {
                 throw new CommandException(ErrorCode.E1018, "date or action expected.");
             }
             CoordinatorActionInfo coordInfo = coordEngine.reRun(jobId, rerunType, scope, Boolean.valueOf(refresh),
@@ -634,7 +663,7 @@ public class V1JobServlet extends BaseJobServlet {
                 coordActions = coordInfo.getCoordActions();
             }
             else {
-                coordActions = CoordRerunXCommand.getCoordActions(rerunType, jobId, scope);
+                coordActions = CoordUtils.getCoordActions(rerunType, jobId, scope, false);
             }
             json.put(JsonTags.COORDINATOR_ACTIONS, CoordinatorActionBean.toJSONArray(coordActions, "GMT"));
         }

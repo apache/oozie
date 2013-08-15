@@ -26,7 +26,7 @@ usage:
       oozie version : show client version
 .
       oozie job <OPTIONS> : job operations
-                -action <arg>         coordinator rerun on action ids (requires -rerun); coordinator log retrieval on action ids (requires -log)
+                -action <arg>         coordinator rerun/kill on action ids (requires -rerun/-kill); coordinator log retrieval on action ids (requires -log)
                 -auth <arg>           select authentication type [SIMPLE|KERBEROS]
                 -change <arg>         change a coordinator/bundle job
                 -config <arg>         job configuration file '.xml' or '.properties'
@@ -36,7 +36,7 @@ usage:
                 -doas <arg>           doAs user, impersonates as the specified user
                 -dryrun               Dryrun a workflow (since 3.3.2) or coordinator (since 2.0) job without actually executing it
                 -info <arg>           info of a job
-                -kill <arg>           kill a job
+                -kill <arg>           kill a job (coordinator requires -action or -date)
                 -len <arg>            number of actions (default TOTAL ACTIONS, requires -info)
                 -localtime            use local time (same as passing your time zone to -timezone).
                                       Overrides -timezone option
@@ -288,6 +288,23 @@ The =kill= option kills a workflow job in =PREP=, =SUSPENDED= or =RUNNING= statu
 =PREP=, =RUNNING=, =PREPSUSPENDED=, =SUSPENDED=, =PREPPAUSED=, or =PAUSED=  status.
 
 After the command is executed the job will be in =KILLED= status.
+
+---+++ Killing a Coordinator Action or Multiple Actions
+
+Example:
+
+<verbatim>
+$oozie job -kill <coord_Job_id> [-action 1, 3-4, 7-40] [-date 2009-01-01T01:00Z::2009-05-31T23:59Z, 2009-11-10T01:00Z, 2009-12-31T22:00Z]
+</verbatim>
+
+   * The =kill= option here for a range of coordinator actions kills a non-terminal (=RUNNING=, =WAITING=, =READY=, =SUSPENDED=) coordinator action when coordinator job is not in =FAILED= or =KILLED= state.
+   * Either -action or -date should be given.
+   * If neither -action nor -date is given, the exception will be thrown. Also if BOTH -action and -date are given, an error will be thrown.
+   * Multiple ranges can be used in -action or -date. See the above example.
+   * If one of the actions in the given list of -action is already in terminal state, the output of this command will only include the other actions.
+   * The dates specified in -date must be UTC.
+   * Single date specified in -date must be able to find an action with matched nominal time to be effective.
+   * After the command is executed the killed coordiator action will have =KILLED= status.
 
 ---+++ Changing endtime/concurrency/pausetime of a Coordinator Job
 
