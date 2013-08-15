@@ -216,12 +216,15 @@ public class FsActionExecutor extends ActionExecutor {
         argsMap.put("group", group);
         try {
             FileSystem fs = getFileSystemFor(path, context, fsConf);
+            path = resolveToFullPath(nameNodePath, path, true);
             Path[] pathArr = FileUtil.stat2Paths(fs.globStatus(path));
-            if (pathArr != null && pathArr.length > 0) {
-                checkGlobMax(pathArr);
-                for (Path p : pathArr) {
-                    recursiveFsOperation("chgrp", fs, nameNodePath, p, argsMap, dirFiles, recursive, true);
-                }
+            if (pathArr == null || pathArr.length == 0) {
+                throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS009", "chgrp"
+                        + ", path(s) that matches [{0}] does not exist", path);
+            }
+            checkGlobMax(pathArr);
+            for (Path p : pathArr) {
+                recursiveFsOperation("chgrp", fs, nameNodePath, p, argsMap, dirFiles, recursive, true);
             }
         }
         catch (Exception ex) {
@@ -234,11 +237,6 @@ public class FsActionExecutor extends ActionExecutor {
             throws ActionExecutorException {
 
         try {
-            path = resolveToFullPath(nameNodePath, path, true);
-            if (!fs.exists(path)) {
-                throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS009", op
-                        + ", path [{0}] does not exist", path);
-            }
             FileStatus pathStatus = fs.getFileStatus(path);
             List<Path> paths = new ArrayList<Path>();
 
@@ -471,13 +469,17 @@ public class FsActionExecutor extends ActionExecutor {
         argsMap.put("permissions", permissions);
         try {
             FileSystem fs = getFileSystemFor(path, context, fsConf);
+            path = resolveToFullPath(nameNodePath, path, true);
             Path[] pathArr = FileUtil.stat2Paths(fs.globStatus(path));
-            if (pathArr != null && pathArr.length > 0) {
-                checkGlobMax(pathArr);
-                for (Path p : pathArr) {
-                    recursiveFsOperation("chmod", fs, nameNodePath, p, argsMap, dirFiles, recursive, true);
-                }
+            if (pathArr == null || pathArr.length == 0) {
+                throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS009", "chmod"
+                        + ", path(s) that matches [{0}] does not exist", path);
             }
+            checkGlobMax(pathArr);
+            for (Path p : pathArr) {
+                recursiveFsOperation("chmod", fs, nameNodePath, p, argsMap, dirFiles, recursive, true);
+            }
+
         }
         catch (Exception ex) {
             throw convertException(ex);

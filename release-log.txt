@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1495 inconsistent behavior of chmod/chgrp when path doesn't exist after glob support (ryota)
 OOZIE-1463 Remove discriminator column (virag)
 OOZIE-1448 A CoordActionUpdateXCommand gets queued for all workflows even if they were not launched by a coordinator (rkanter)
 OOZIE-1443 forkjoin validation should not allow a fork to go to the same node multiple times (rkanter)
