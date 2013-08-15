@@ -93,10 +93,16 @@ public abstract class BaseJobServlet extends JsonRestServlet {
             response.setStatus(HttpServletResponse.SC_OK);
         }
         else if (action.equals(RestConstants.JOB_ACTION_KILL)) {
+            validateContentType(request, RestConstants.XML_CONTENT_TYPE);
             stopCron();
-            killJob(request, response);
+            JSONObject json =  killJob(request, response);
             startCron();
-            response.setStatus(HttpServletResponse.SC_OK);
+            if (json != null) {
+                sendJsonResponse(response, HttpServletResponse.SC_OK, json);
+            }
+            else {
+                response.setStatus(HttpServletResponse.SC_OK);
+            }
         }
         else if (action.equals(RestConstants.JOB_ACTION_CHANGE)) {
             stopCron();
@@ -308,10 +314,11 @@ public abstract class BaseJobServlet extends JsonRestServlet {
      *
      * @param request
      * @param response
+     * @return
      * @throws XServletException
      * @throws IOException TODO
      */
-    abstract void killJob(HttpServletRequest request, HttpServletResponse response) throws XServletException,
+    abstract JSONObject killJob(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException;
 
     /**

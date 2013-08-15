@@ -30,7 +30,7 @@ import org.apache.oozie.client.OozieClientException;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.command.CommandException;
-import org.apache.oozie.command.coord.CoordRerunXCommand;
+import org.apache.oozie.coord.CoordUtils;
 import org.apache.oozie.util.XConfiguration;
 
 /**
@@ -253,8 +253,8 @@ public class LocalOozieClientCoord extends OozieClient {
     public List<CoordinatorAction> reRunCoord(String jobId, String rerunType, String scope, boolean refresh,
             boolean noCleanup) throws OozieClientException {
         try {
-            if (!(rerunType.equals(RestConstants.JOB_COORD_RERUN_DATE) || rerunType
-                    .equals(RestConstants.JOB_COORD_RERUN_ACTION))) {
+            if (!(rerunType.equals(RestConstants.JOB_COORD_SCOPE_DATE) || rerunType
+                    .equals(RestConstants.JOB_COORD_SCOPE_ACTION))) {
                 throw new CommandException(ErrorCode.E1018, "date or action expected.");
             }
             CoordinatorActionInfo coordInfo = coordEngine.reRun(jobId, rerunType, scope, Boolean.valueOf(refresh),
@@ -264,7 +264,7 @@ public class LocalOozieClientCoord extends OozieClient {
                 actionBeans = coordInfo.getCoordActions();
             }
             else {
-                actionBeans = CoordRerunXCommand.getCoordActions(rerunType, jobId, scope);
+                actionBeans = CoordUtils.getCoordActions(rerunType, jobId, scope, false);
             }
             List<CoordinatorAction> actions = new ArrayList<CoordinatorAction>();
             for (CoordinatorActionBean actionBean : actionBeans) {

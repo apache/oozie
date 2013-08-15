@@ -618,6 +618,7 @@ public class OozieClient {
 
         @Override
         protected Void call(HttpURLConnection conn) throws IOException, OozieClientException {
+            conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
             if (!(conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
                 handleError(conn);
             }
@@ -687,13 +688,25 @@ public class OozieClient {
     }
 
     /**
-     * Kill a workflow job.
+     * Kill a workflow/coord/bundle job.
      *
      * @param jobId job Id.
      * @throws OozieClientException thrown if the job could not be killed.
      */
     public void kill(String jobId) throws OozieClientException {
         new JobAction(jobId, RestConstants.JOB_ACTION_KILL).call();
+    }
+
+    /**
+     * Kill coordinator actions
+     * @param jobId coordinator Job Id
+     * @param rangeType type 'date' if -date is used, 'action-num' if -action is used
+     * @param scope kill scope for date or action nums
+     * @return list of coordinator actions that underwent kill
+     * @throws OozieClientException thrown if some actions could not be killed.
+     */
+    public List<CoordinatorAction> kill(String jobId, String rangeType, String scope) throws OozieClientException {
+        return new CoordActionsKill(jobId, rangeType, scope).call();
     }
 
     /**
@@ -1215,12 +1228,36 @@ public class OozieClient {
         }
     }
 
+    private class CoordActionsKill extends ClientCallable<List<CoordinatorAction>> {
+
+        CoordActionsKill(String jobId, String rangeType, String scope) {
+            super("PUT", RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.ACTION_PARAM,
+                    RestConstants.JOB_ACTION_KILL, RestConstants.JOB_COORD_RANGE_TYPE_PARAM, rangeType,
+                    RestConstants.JOB_COORD_SCOPE_PARAM, scope));
+        }
+
+        @Override
+        protected List<CoordinatorAction> call(HttpURLConnection conn) throws IOException, OozieClientException {
+            conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
+            if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
+                Reader reader = new InputStreamReader(conn.getInputStream());
+                JSONObject json = (JSONObject) JSONValue.parse(reader);
+                JSONArray coordActions = (JSONArray) json.get(JsonTags.COORDINATOR_ACTIONS);
+                return JsonToBean.createCoordinatorActionList(coordActions);
+            }
+            else {
+                handleError(conn);
+            }
+            return null;
+        }
+    }
+
     private class CoordRerun extends ClientCallable<List<CoordinatorAction>> {
 
         CoordRerun(String jobId, String rerunType, String scope, boolean refresh, boolean noCleanup) {
             super("PUT", RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.ACTION_PARAM,
-                    RestConstants.JOB_COORD_ACTION_RERUN, RestConstants.JOB_COORD_RERUN_TYPE_PARAM, rerunType,
-                    RestConstants.JOB_COORD_RERUN_SCOPE_PARAM, scope, RestConstants.JOB_COORD_RERUN_REFRESH_PARAM,
+                    RestConstants.JOB_COORD_ACTION_RERUN, RestConstants.JOB_COORD_RANGE_TYPE_PARAM, rerunType,
+                    RestConstants.JOB_COORD_SCOPE_PARAM, scope, RestConstants.JOB_COORD_RERUN_REFRESH_PARAM,
                     Boolean.toString(refresh), RestConstants.JOB_COORD_RERUN_NOCLEANUP_PARAM, Boolean
                             .toString(noCleanup)));
         }

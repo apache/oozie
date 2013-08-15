@@ -120,25 +120,6 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
     }
 
     /**
-     * Get the list of actions for a given coordinator job
-     * @param rerunType the rerun type (date, action)
-     * @param jobId the coordinator job id
-     * @param scope the date scope or action id scope
-     * @return the list of Coordinator actions
-     * @throws CommandException
-     */
-    public static List<CoordinatorActionBean> getCoordActions(String rerunType, String jobId, String scope) throws CommandException{
-        List<CoordinatorActionBean> coordActions = null;
-        if (rerunType.equals(RestConstants.JOB_COORD_RERUN_DATE)) {
-            coordActions = CoordUtils.getCoordActionsFromDates(jobId, scope);
-        }
-        else if (rerunType.equals(RestConstants.JOB_COORD_RERUN_ACTION)) {
-            coordActions = CoordUtils.getCoordActionsFromIds(jobId, scope);
-        }
-        return coordActions;
-    }
-
-    /**
      * Cleanup output-events directories
      *
      * @param eAction coordinator action xml
@@ -206,10 +187,9 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
      *
      * @param coordJob coordinator job bean
      * @param coordAction coordinator action bean
-     * @param actionXml coordinator action xml
      * @throws Exception thrown failed to update coordinator action bean or unable to write sla registration event
      */
-    private void updateAction(CoordinatorJobBean coordJob, CoordinatorActionBean coordAction, String actionXml)
+    private void updateAction(CoordinatorJobBean coordJob, CoordinatorActionBean coordAction)
             throws Exception {
         LOG.debug("updateAction for actionId=" + coordAction.getId());
         if (coordAction.getStatus() == CoordinatorAction.Status.TIMEDOUT) {
@@ -322,7 +302,7 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
         try {
             CoordinatorActionInfo coordInfo = null;
             InstrumentUtils.incrJobCounter(getName(), 1, getInstrumentation());
-            List<CoordinatorActionBean> coordActions = getCoordActions(rerunType, jobId, scope);
+            List<CoordinatorActionBean> coordActions = CoordUtils.getCoordActions(rerunType, jobId, scope, false);
             if (checkAllActionsRunnable(coordActions)) {
                 for (CoordinatorActionBean coordAction : coordActions) {
                     String actionXml = coordAction.getActionXml();
@@ -333,7 +313,7 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
                     if (refresh) {
                         refreshAction(coordJob, coordAction);
                     }
-                    updateAction(coordJob, coordAction, actionXml);
+                    updateAction(coordJob, coordAction);
                     if (SLAService.isEnabled()) {
                         SLAOperations.updateRegistrationEvent(coordAction.getId());
                     }

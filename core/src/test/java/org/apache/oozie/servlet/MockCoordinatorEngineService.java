@@ -132,6 +132,22 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
         }
 
         @Override
+        public CoordinatorActionInfo killActions(String jobId, String rangeType, String scope)
+                throws CoordinatorEngineException {
+            did = RestConstants.JOB_ACTION_KILL;
+            int idx = validateCoordinatorIdx(jobId);
+            started.set(idx, false);
+
+            List<CoordinatorAction> actions = coordJobs.get(idx).getActions();
+            List<CoordinatorActionBean> actionBeans = new ArrayList<CoordinatorActionBean>();
+            for (CoordinatorAction action : actions) {
+                actionBeans.add((CoordinatorActionBean) action);
+            }
+            return new CoordinatorActionInfo(actionBeans);
+
+        }
+
+        @Override
         public void change(String jobId, String changeValue) throws CoordinatorEngineException {
             did = RestConstants.JOB_ACTION_CHANGE;
             int idx = validateCoordinatorIdx(jobId);

@@ -39,6 +39,7 @@ import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.coord.CoordActionInfoXCommand;
 import org.apache.oozie.util.CoordActionsInDateRange;
+import org.apache.oozie.command.coord.CoordActionsKillXCommand;
 import org.apache.oozie.command.coord.CoordChangeXCommand;
 import org.apache.oozie.command.coord.CoordJobXCommand;
 import org.apache.oozie.command.coord.CoordJobsXCommand;
@@ -173,6 +174,15 @@ public class CoordinatorEngine extends BaseEngine {
         try {
             new CoordKillXCommand(jobId).call();
             LOG.info("User " + user + " killed the Coordinator job " + jobId);
+        }
+        catch (CommandException e) {
+            throw new CoordinatorEngineException(e);
+        }
+    }
+
+    public CoordinatorActionInfo killActions(String jobId, String rangeType, String scope) throws CoordinatorEngineException {
+        try {
+            return new CoordActionsKillXCommand(jobId, rangeType, scope).call();
         }
         catch (CommandException e) {
             throw new CoordinatorEngineException(e);

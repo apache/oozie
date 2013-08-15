@@ -330,7 +330,7 @@ public class TestEventGeneration extends XDataTestCase {
         action.setStatus(CoordinatorAction.Status.SUCCEEDED);
         jpaService.execute(new CoordActionUpdateJPAExecutor(action));
         queue.clear();
-        new CoordRerunXCommand(coord.getId(), RestConstants.JOB_COORD_RERUN_ACTION, "1", false, true)
+        new CoordRerunXCommand(coord.getId(), RestConstants.JOB_COORD_SCOPE_ACTION, "1", false, true)
                 .call();
         waitFor(3 * 100, new Predicate() {
             @Override

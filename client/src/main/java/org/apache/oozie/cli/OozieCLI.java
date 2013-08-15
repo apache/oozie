@@ -252,7 +252,7 @@ public class OozieCLI {
         Option start = new Option(START_OPTION, true, "start a job");
         Option suspend = new Option(SUSPEND_OPTION, true, "suspend a job");
         Option resume = new Option(RESUME_OPTION, true, "resume a job");
-        Option kill = new Option(KILL_OPTION, true, "kill a job");
+        Option kill = new Option(KILL_OPTION, true, "kill a job (coordinator can mention -action or -date)");
         Option change = new Option(CHANGE_OPTION, true, "change a coordinator job");
         Option changeValue = new Option(CHANGE_VALUE_OPTION, true,
                 "new endtime/concurrency/pausetime value for changing a coordinator job");
@@ -788,7 +788,32 @@ public class OozieCLI {
                 wc.resume(commandLine.getOptionValue(RESUME_OPTION));
             }
             else if (options.contains(KILL_OPTION)) {
-                wc.kill(commandLine.getOptionValue(KILL_OPTION));
+                if (commandLine.getOptionValue(KILL_OPTION).contains("-C")
+                        && (options.contains(DATE_OPTION) || options.contains(ACTION_OPTION))) {
+                    String coordJobId = commandLine.getOptionValue(KILL_OPTION);
+                    String scope = null;
+                    String rangeType = null;
+                    if (options.contains(DATE_OPTION) && options.contains(ACTION_OPTION)) {
+                        throw new OozieCLIException("Invalid options provided for rerun: either" + DATE_OPTION + " or "
+                                + ACTION_OPTION + " expected. Don't use both at the same time.");
+                    }
+                    if (options.contains(DATE_OPTION)) {
+                        rangeType = RestConstants.JOB_COORD_SCOPE_DATE;
+                        scope = commandLine.getOptionValue(DATE_OPTION);
+                    }
+                    else if (options.contains(ACTION_OPTION)) {
+                        rangeType = RestConstants.JOB_COORD_SCOPE_ACTION;
+                        scope = commandLine.getOptionValue(ACTION_OPTION);
+                    }
+                    else {
+                        throw new OozieCLIException("Invalid options provided for rerun: " + DATE_OPTION + " or "
+                                + ACTION_OPTION + " expected.");
+                    }
+                    printCoordActions(wc.kill(coordJobId, rangeType, scope));
+                }
+                else {
+                    wc.kill(commandLine.getOptionValue(KILL_OPTION));
+                }
             }
             else if (options.contains(CHANGE_OPTION)) {
                 wc.change(commandLine.getOptionValue(CHANGE_OPTION), getChangeValue(commandLine));
@@ -845,11 +870,11 @@ public class OozieCLI {
                                 + ACTION_OPTION + " expected. Don't use both at the same time.");
                     }
                     if (options.contains(DATE_OPTION)) {
-                        rerunType = RestConstants.JOB_COORD_RERUN_DATE;
+                        rerunType = RestConstants.JOB_COORD_SCOPE_DATE;
                         scope = commandLine.getOptionValue(DATE_OPTION);
                     }
                     else if (options.contains(ACTION_OPTION)) {
-                        rerunType = RestConstants.JOB_COORD_RERUN_ACTION;
+                        rerunType = RestConstants.JOB_COORD_SCOPE_ACTION;
                         scope = commandLine.getOptionValue(ACTION_OPTION);
                     }
                     else {
@@ -862,7 +887,7 @@ public class OozieCLI {
                     if (options.contains(RERUN_NOCLEANUP_OPTION)) {
                         noCleanup = true;
                     }
-                    printRerunCoordActions(wc.reRunCoord(coordJobId, rerunType, scope, refresh, noCleanup));
+                    printCoordActions(wc.reRunCoord(coordJobId, rerunType, scope, refresh, noCleanup));
                 }
             }
             else if (options.contains(INFO_OPTION)) {
@@ -1074,7 +1099,7 @@ public class OozieCLI {
         System.out.println(RULER);
     }
 
-    private void printRerunCoordActions(List<CoordinatorAction> actions) {
+    private void printCoordActions(List<CoordinatorAction> actions) {
         if (actions != null && actions.size() > 0) {
             System.out.println("Action ID" + VERBOSE_DELIMITER + "Nominal Time");
             System.out.println(RULER);
@@ -1084,7 +1109,7 @@ public class OozieCLI {
             }
         }
         else {
-            System.out.println("No Actions match your rerun criteria!");
+            System.out.println("No Actions match your criteria!");
         }
     }
 
