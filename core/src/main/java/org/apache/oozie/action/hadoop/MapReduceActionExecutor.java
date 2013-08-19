@@ -29,7 +29,6 @@ import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
-import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.service.Services;
@@ -181,11 +180,11 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
                 Element actionXml = XmlUtils.parseXml(action.getConf());
                 JobConf jobConf = createBaseHadoopConf(context, actionXml);
                 jobClient = createJobClient(context, jobConf);
-                RunningJob runningJob = jobClient.getJob(JobID.forName(action.getExternalId()));
+                RunningJob runningJob = jobClient.getJob(JobID.forName(action.getExternalChildIDs()));
                 if (runningJob == null) {
                     throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "MR002",
-                                                      "Unknown hadoop job [{0}] associated with action [{1}].  Failing this action!", action
-                            .getExternalId(), action.getId());
+                            "Unknown hadoop job [{0}] associated with action [{1}].  Failing this action!",
+                            action.getExternalChildIDs(), action.getId());
                 }
 
                 Counters counters = runningJob.getCounters();
@@ -207,7 +206,8 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
                 }
                 else {
                     context.setVar(HADOOP_COUNTERS, "");
-                    XLog.getLog(getClass()).warn("Could not find Hadoop Counters for: [{0}]", action.getExternalId());
+                    XLog.getLog(getClass()).warn("Could not find Hadoop Counters for: [{0}]",
+                            action.getExternalChildIDs());
                 }
             }
         }
