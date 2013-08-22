@@ -42,6 +42,7 @@ import org.apache.oozie.coord.TimeUnit;
 import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionsActiveCountJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
@@ -273,8 +274,15 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
             insertList.clear();
         }
         catch (Exception e) {
-            LOG.error("Exception thrown :", e);
-            throw new CommandException(ErrorCode.E1001, e.getMessage(), e);
+            LOG.error("Exception occurred:" + e.getMessage() + " Making the job failed ", e);
+            coordJob.setStatus(Job.Status.FAILED);
+            try {
+                jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
+            }
+            catch (JPAExecutorException jex) {
+                throw new CommandException(ErrorCode.E1011, jex);
+            }
+            throw new CommandException(ErrorCode.E1012, e.getMessage(), e);
         }
         cron.stop();
 

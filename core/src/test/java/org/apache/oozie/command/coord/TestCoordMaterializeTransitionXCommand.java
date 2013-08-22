@@ -98,7 +98,9 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         }
         catch (CommandException e) {
             e.printStackTrace();
-            assertEquals(ErrorCode.E1001, e.getErrorCode());
+            job = services.get(JPAService.class).execute(new CoordJobGetJPAExecutor(job.getId()));
+            assertEquals(CoordinatorJob.Status.FAILED, job.getStatus());
+            assertEquals(ErrorCode.E1012, e.getErrorCode());
         }
         catch (Exception e) {
             fail("Unexpected exception " + e.getMessage());
