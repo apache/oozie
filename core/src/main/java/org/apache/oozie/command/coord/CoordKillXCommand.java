@@ -69,6 +69,11 @@ public class CoordKillXCommand extends KillTransitionXCommand {
     }
 
     @Override
+    public String getKey() {
+        return getName() + "_" + this.jobId;
+    }
+
+    @Override
     protected void loadState() throws CommandException {
         try {
             jpaService = Services.get().get(JPAService.class);
@@ -168,9 +173,6 @@ public class CoordKillXCommand extends KillTransitionXCommand {
         updateList.add(coordJob);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.KillTransitionXCommand#performWrites()
-     */
     @Override
     public void performWrites() throws CommandException {
         try {
@@ -181,9 +183,6 @@ public class CoordKillXCommand extends KillTransitionXCommand {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#getJob()
-     */
     @Override
     public Job getJob() {
         return coordJob;

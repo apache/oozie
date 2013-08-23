@@ -53,9 +53,6 @@ public class SuspendXCommand extends WorkflowXCommand<Void> {
         this.wfid = ParamChecker.notEmpty(id, "wfid");
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#execute()
-     */
     @Override
     protected Void execute() throws CommandException {
         InstrumentUtils.incrJobCounter(getName(), 1, getInstrumentation());
@@ -140,9 +137,6 @@ public class SuspendXCommand extends WorkflowXCommand<Void> {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#eagerLoadState()
-     */
     @Override
     protected void eagerLoadState() throws CommandException {
         super.eagerLoadState();
@@ -161,9 +155,6 @@ public class SuspendXCommand extends WorkflowXCommand<Void> {
         LogUtils.setLogInfo(this.wfJobBean, logInfo);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#eagerVerifyPrecondition()
-     */
     @Override
     protected void eagerVerifyPrecondition() throws CommandException, PreconditionException {
         super.eagerVerifyPrecondition();
@@ -172,33 +163,26 @@ public class SuspendXCommand extends WorkflowXCommand<Void> {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#getEntityKey()
-     */
     @Override
     public String getEntityKey() {
         return this.wfid;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#isLockRequired()
-     */
+    @Override
+    public String getKey() {
+        return getName() + "_" + this.wfid;
+    }
+
     @Override
     protected boolean isLockRequired() {
         return true;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#loadState()
-     */
     @Override
     protected void loadState() throws CommandException {
         eagerLoadState();
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#verifyPrecondition()
-     */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
         eagerVerifyPrecondition();

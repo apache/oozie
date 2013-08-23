@@ -82,6 +82,11 @@ public class ActionKillXCommand extends ActionXCommand<Void> {
     }
 
     @Override
+    public String getKey() {
+        return getName() + "_" + this.actionId;
+    }
+
+    @Override
     protected void loadState() throws CommandException {
         try {
             jpaService = Services.get().get(JPAService.class);

@@ -35,7 +35,6 @@ import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
-import org.apache.oozie.command.coord.CoordActionUpdateXCommand;
 import org.apache.oozie.command.wf.ActionXCommand.ActionExecutorContext;
 import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
@@ -160,6 +159,11 @@ public class ResumeXCommand extends WorkflowXCommand<Void> {
     @Override
     public String getEntityKey() {
         return id;
+    }
+
+    @Override
+    public String getKey() {
+        return getName() + "_" + id;
     }
 
     @Override
