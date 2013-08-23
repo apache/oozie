@@ -24,7 +24,6 @@ import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
-import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.KillTransitionXCommand;
@@ -56,6 +55,11 @@ public class BundleKillXCommand extends KillTransitionXCommand {
     @Override
     public String getEntityKey() {
         return jobId;
+    }
+
+    @Override
+    public String getKey() {
+        return getName() + "_" + jobId;
     }
 
     /* (non-Javadoc)

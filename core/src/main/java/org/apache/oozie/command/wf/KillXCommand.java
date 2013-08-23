@@ -80,6 +80,11 @@ public class KillXCommand extends WorkflowXCommand<Void> {
     }
 
     @Override
+    public String getKey() {
+        return getName() + "_" + this.wfId;
+    }
+
+    @Override
     protected void loadState() throws CommandException {
         try {
             jpaService = Services.get().get(JPAService.class);
