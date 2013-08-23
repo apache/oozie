@@ -189,13 +189,10 @@ OOZIE-1036 Utility class to parse HCat URI (Ryota via Mohammad)
 OOZIE-1033 Generic utility class to register/unregister a JMS message handler(Mohammad)
 OOZIE-1032 Create JMSService used for any JMS compliant product (Mohammad)
 OOZIE-1045 Parameterize <unresolved-instances> tag currently hardcoded (egashira via mona)
-OOZIE-1096 Update wfgen README.txt to have the TLP mailing list (jun aoki via rkanter)
 OOZIE-1078 Help -> Documentation and Help -> Online Help should link to oozie.apache.org/ (jun via mohammad)
 OOZIE-809 MySQL TEXT columns should be MEDIUMTEXT (rkanter via tucu)
 OOZIE-979 bump up trunk version to 3.4.0-SNAPSHOT (tucu)
 OOZIE-1007 Add license headers to all files don't have them  (egashira via tucu)
-OOZIE-976 add workflowgenerator into distro tarball (egashira via tucu)
-OOZIE-944 Implement Workflow Generator UI Tool (egashira via virag)
 
 -- Oozie 3.3.2 release
 

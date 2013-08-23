@@ -129,21 +129,6 @@
 
     <profiles>
         <profile>
-            <id>wfgen</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-            </activation>
-            <dependencies>
-                <dependency>
-                    <groupId>org.apache.oozie</groupId>
-                    <artifactId>oozie-workflowgenerator</artifactId>
-                    <version>${project.version}</version>
-                    <scope>compile</scope>
-                    <type>war</type>
-                </dependency>
-             </dependencies>
-        </profile>
-        <profile>
             <id>loginServerExample</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
