@@ -141,8 +141,8 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                 nonExistList.append(CoordCommandUtils.RESOLVED_UNRESOLVED_SEPARATOR).append(nonResolvedList);
             }
             String nonExistListStr = nonExistList.toString();
-            if (!nonExistListStr.equals(missingDeps)) {
-                // missingDeps null means action should become READY
+            if (!nonExistListStr.equals(missingDeps) || missingDeps.isEmpty()) {
+                // missingDeps null or empty means action should become READY
                 isChangeInDependency = true;
                 coordAction.setMissingDependencies(nonExistListStr);
             }
