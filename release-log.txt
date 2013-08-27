@@ -16,6 +16,7 @@ OOZIE-1440 Build fails in certain environments due to xerces OpenJPA issue (mack
 
 -- Oozie 4.0.0 release
 
+OOZIE-1514 Rerunning a coordinator with no input dependencies puts actions in WAITING instead of READY and proceeding (bowenzhangusa via mona)
 OOZIE-1507 Command queue filling up with duplicate commands from RecoveryService (rohini)
 OOZIE-1502 Coordinator Job not going to Failed if a bad HCat-uri is specified (mona)
 OOZIE-1501 Mapreduce action counters are picked up from launcher job instead of mapreduce job (rohini)
