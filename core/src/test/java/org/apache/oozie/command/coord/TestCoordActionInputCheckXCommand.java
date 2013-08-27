@@ -695,6 +695,26 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
             fail("Action ID " + coordJob.getId() + "@1" + " was not stored properly in db");
         }
         assertEquals(action.getStatus(), CoordinatorAction.Status.READY);
+
+        action.setMissingDependencies("");
+        action.setStatus(CoordinatorAction.Status.WAITING);
+        try {
+            jpaService = Services.get().get(JPAService.class);
+            jpaService.execute(new CoordActionUpdateForInputCheckJPAExecutor(action));
+        }
+        catch (JPAExecutorException se) {
+            fail("Action ID " + coordJob.getId() + "@1" + " was not stored properly in db");
+        }
+
+        new CoordActionInputCheckXCommand(coordJob.getId() + "@1", coordJob.getId()).call();
+        try {
+            jpaService = Services.get().get(JPAService.class);
+            action = jpaService.execute(new CoordActionGetJPAExecutor(coordJob.getId() + "@1"));
+        }
+        catch (JPAExecutorException se) {
+            fail("Action ID " + coordJob.getId() + "@1" + " was not stored properly in db");
+        }
+        assertEquals(action.getStatus(), CoordinatorAction.Status.READY);
     }
 
     @Test
